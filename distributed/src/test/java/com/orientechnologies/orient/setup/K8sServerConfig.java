@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.test;
+package com.orientechnologies.orient.setup;
 
 // Configurations required to deploy an instance of OrientDB on Kubernetes.
 public class K8sServerConfig {

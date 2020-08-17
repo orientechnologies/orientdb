@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.enterprise.channel.binary;
 
+import com.orientechnologies.common.exception.OInvalidBinaryChunkException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -318,7 +319,7 @@ public abstract class OChannelBinary extends OChannel
       updateMetricTransmittedBytes(OBinaryProtocol.SIZE_INT);
     } else {
       if (iLength > maxChunkSize) {
-        throw new IOException(
+        throw new OInvalidBinaryChunkException(
             "Impossible to write a chunk of length:"
                 + iLength
                 + " max allowed chunk length:"

@@ -40,6 +40,7 @@ public interface OSecurity {
   static final String ONCREATE_IDENTITY_TYPE = "onCreate.identityType";
   static final String ONCREATE_FIELD = "onCreate.fields";
 
+  @Deprecated
   boolean isAllowed(final Set<OIdentifiable> iAllowAll, final Set<OIdentifiable> iAllowOperation);
 
   /**
@@ -57,6 +58,7 @@ public interface OSecurity {
    * @param iUserName User name to provide the access
    * @return The OIdentity instance allowed
    */
+  @Deprecated
   OIdentifiable allowUser(
       final ODocument iDocument, final ORestrictedOperation iOperationType, final String iUserName);
 
@@ -75,6 +77,7 @@ public interface OSecurity {
    * @param iRoleName Role name to provide the access
    * @return The OIdentity instance allowed
    */
+  @Deprecated
   OIdentifiable allowRole(
       final ODocument iDocument, final ORestrictedOperation iOperationType, final String iRoleName);
 
@@ -93,6 +96,7 @@ public interface OSecurity {
    * @param iUserName User name to deny the access
    * @return The OIdentity instance denied
    */
+  @Deprecated
   OIdentifiable denyUser(
       final ODocument iDocument, final ORestrictedOperation iOperationType, final String iUserName);
 
@@ -111,6 +115,7 @@ public interface OSecurity {
    * @param iRoleName Role name to deny the access
    * @return The OIdentity instance denied
    */
+  @Deprecated
   OIdentifiable denyRole(
       final ODocument iDocument, final ORestrictedOperation iOperationType, final String iRoleName);
 

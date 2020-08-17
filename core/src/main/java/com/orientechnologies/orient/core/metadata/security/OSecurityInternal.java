@@ -15,33 +15,39 @@ public interface OSecurityInternal {
   boolean isAllowed(
       ODatabaseSession session, Set<OIdentifiable> iAllowAll, Set<OIdentifiable> iAllowOperation);
 
+  @Deprecated
   OIdentifiable allowUser(
       ODatabaseSession session,
       ODocument iDocument,
       ORestrictedOperation iOperationType,
       String iUserName);
 
+  @Deprecated
   OIdentifiable allowRole(
       ODatabaseSession session,
       ODocument iDocument,
       ORestrictedOperation iOperationType,
       String iRoleName);
 
+  @Deprecated
   OIdentifiable denyUser(
       ODatabaseSession session,
       ODocument iDocument,
       ORestrictedOperation iOperationType,
       String iUserName);
 
+  @Deprecated
   OIdentifiable denyRole(
       ODatabaseSession session,
       ODocument iDocument,
       ORestrictedOperation iOperationType,
       String iRoleName);
 
+  @Deprecated
   OIdentifiable allowIdentity(
       ODatabaseSession session, ODocument iDocument, String iAllowFieldName, OIdentifiable iId);
 
+  @Deprecated
   OIdentifiable disallowIdentity(
       ODatabaseSession session, ODocument iDocument, String iAllowFieldName, OIdentifiable iId);
 

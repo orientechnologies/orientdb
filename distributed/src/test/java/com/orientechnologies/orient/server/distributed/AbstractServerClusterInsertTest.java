@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OClassDistributed;
+import com.orientechnologies.orient.setup.ServerRun;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -571,7 +572,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
                   .getInternal()
                   .size();
 
-          result.put(server.serverId, indexSize);
+          result.put(server.getServerId(), indexSize);
 
           final OIndex index =
               (database).getMetadata().getIndexManagerInternal().getIndex(database, indexName);
@@ -632,7 +633,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
     int missingKeys = 0;
     for (int s = 0; s < executeTestsOnServers.size(); ++s) {
       ServerRun srv = executeTestsOnServers.get(s);
-      final int srvId = Integer.parseInt(srv.serverId);
+      final int srvId = Integer.parseInt(srv.getServerId());
 
       for (int threadId = srvId * writerCount; threadId < (srvId + 1) * writerCount; ++threadId) {
 

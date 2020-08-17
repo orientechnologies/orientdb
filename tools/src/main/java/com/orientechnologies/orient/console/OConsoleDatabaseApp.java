@@ -3454,7 +3454,7 @@ public class OConsoleDatabaseApp extends OrientConsole
     float elapsedSeconds = getElapsedSecs(start);
 
     if (iIncludeResult) message(iMessageSuccess, result, elapsedSeconds);
-    else message(iMessageFailure, elapsedSeconds);
+    else message(iMessageSuccess, elapsedSeconds);
 
     return result;
   }

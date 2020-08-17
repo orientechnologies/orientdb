@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.setup.ServerRun;
 import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
@@ -95,7 +96,7 @@ public class SplitBraiNetworkIT extends AbstractHARemoveNode {
     for (ServerRun s : serverInstance) {
       OLogManager.instance().info(this, "MAP SERVER %s", s.getServerId());
       for (Map.Entry<String, Object> entry :
-          s.server.getDistributedManager().getConfigurationMap().entrySet()) {
+          s.getServerInstance().getDistributedManager().getConfigurationMap().entrySet()) {
         OLogManager.instance().info(this, " %s=%s", entry.getKey(), entry.getValue());
       }
     }
@@ -107,7 +108,7 @@ public class SplitBraiNetworkIT extends AbstractHARemoveNode {
     for (ServerRun s : serverInstance) {
       OLogManager.instance().info(this, "MAP SERVER %s", s.getServerId());
       for (Map.Entry<String, Object> entry :
-          s.server.getDistributedManager().getConfigurationMap().entrySet()) {
+          s.getServerInstance().getDistributedManager().getConfigurationMap().entrySet()) {
         OLogManager.instance().info(this, " %s=%s", entry.getKey(), entry.getValue());
       }
     }

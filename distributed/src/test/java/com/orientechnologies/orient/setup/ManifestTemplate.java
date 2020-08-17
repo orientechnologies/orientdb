@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.test;
+package com.orientechnologies.orient.setup;
 
 import java.io.IOException;
 import java.net.URISyntaxException;

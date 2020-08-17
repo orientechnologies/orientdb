@@ -24,6 +24,7 @@ import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OErrorCode;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.exception.OInvalidBinaryChunkException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
@@ -395,6 +396,11 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
                 endResponse();
               }
             }
+          } catch (OInvalidBinaryChunkException e) {
+            OLogManager.instance()
+                .warn(
+                    this, "I/O Error on client clientId=%d reqType=%d", clientTxId, requestType, e);
+            sendShutdown();
           } catch (IOException e) {
             OLogManager.instance()
                 .debug(

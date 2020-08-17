@@ -3,12 +3,14 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OServerCommandContext;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.util.Locale;
+import java.util.Map;
 
 public class OCreateDatabaseStatement extends OSimpleExecServerStatement {
 
@@ -63,8 +65,31 @@ public class OCreateDatabaseStatement extends OSimpleExecServerStatement {
 
   private OrientDBConfig toOrientDBConfig(OJson config, OServerCommandContext ctx) {
     OrientDBConfigBuilder builder = new OrientDBConfigBuilder();
-    builder.fromMap(config.toMap(new OResultInternal(), ctx));
+    Map<String, Object> configMap = config.toMap(new OResultInternal(), ctx);
+    Object globalConfig = configMap.get("config");
+    if (globalConfig != null && globalConfig instanceof Map) {
+      ((Map<String, Object>) globalConfig)
+          .entrySet().stream()
+              .filter(x -> OGlobalConfiguration.findByKey(x.getKey()) != null)
+              .forEach(
+                  x -> builder.addConfig(OGlobalConfiguration.findByKey(x.getKey()), x.getValue()));
+    }
     return builder.build();
+  }
+
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("CREATE DATABASE ");
+    name.toString(params, builder);
+    builder.append(" ");
+    type.toString(params, builder);
+    if (ifNotExists) {
+      builder.append(" IF NOT EXISTS");
+    }
+    if (config != null) {
+      builder.append(" ");
+      config.toString(params, builder);
+    }
   }
 
   /** Accept the visitor. */

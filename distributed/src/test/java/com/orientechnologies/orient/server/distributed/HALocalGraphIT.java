@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
+import com.orientechnologies.orient.setup.ServerRun;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.Date;
@@ -108,12 +109,12 @@ public class HALocalGraphIT extends AbstractServerClusterTxTest {
 
                           if (serverInstance
                                   .get(SERVERS - 1)
-                                  .server
+                                  .getServerInstance()
                                   .getPluginByClass(OHazelcastPlugin.class)
                               != null)
                             serverInstance
                                 .get(SERVERS - 1)
-                                .server
+                                .getServerInstance()
                                 .getPluginByClass(OHazelcastPlugin.class)
                                 .waitUntilNodeOnline();
 

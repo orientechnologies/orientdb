@@ -23,7 +23,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
 
 /**
  * OSecurity implementation that extends OSecurityShared but uses an external security plugin.
@@ -37,7 +36,7 @@ public class OSecurityExternal extends OSecurityShared {
     OUser user = null;
     final String dbName = session.getName();
 
-    if (!(((ODatabaseDocumentInternal) session).getStorage() instanceof OStorageProxy)) {
+    if (!((ODatabaseDocumentInternal) session).isRemote()) {
       if (Orient.instance().getSecurity() == null)
         throw new OSecurityAccessException(dbName, "External Security System is null!");
 

@@ -576,8 +576,8 @@ public class ODocumentSerializerDelta {
     Set<Map.Entry<String, ODocumentEntry>> entries = ODocumentInternal.rawEntries(document);
 
     OVarIntSerializer.write(bytes, count);
-    for (Map.Entry<String, ODocumentEntry> entry : entries) {
-      ODocumentEntry docEntry = entry.getValue();
+    for (final Map.Entry<String, ODocumentEntry> entry : entries) {
+      final ODocumentEntry docEntry = entry.getValue();
       if (!docEntry.isTxExists()) {
         serializeByte(bytes, REMOVED);
         writeString(bytes, entry.getKey());
@@ -589,6 +589,7 @@ public class ODocumentSerializerDelta {
         serializeFullEntry(bytes, oClass, entry.getKey(), docEntry);
       } else if (docEntry.isTxTrackedModified()) {
         serializeByte(bytes, CHANGED);
+        // timeline must not be NULL here. Else check that tracker is enabled
         serializeDeltaEntry(bytes, oClass, entry.getKey(), docEntry);
       } else {
         continue;
@@ -654,9 +655,9 @@ public class ODocumentSerializerDelta {
     int uuidPos = bytes.alloc(OUUIDSerializer.UUID_SIZE);
     OUUIDSerializer.INSTANCE.serialize(uuid, bytes.bytes, uuidPos);
 
-    OMultiValueChangeTimeLine<OIdentifiable, OIdentifiable> timeline =
+    final OMultiValueChangeTimeLine<OIdentifiable, OIdentifiable> timeline =
         value.getTransactionTimeLine();
-    assert timeline != null : "Cx ollection timeline required for link types serialization";
+    assert timeline != null : "Collection timeline required for serialization of link types";
     OVarIntSerializer.write(bytes, timeline.getMultiValueChangeEvents().size());
     for (OMultiValueChangeEvent<OIdentifiable, OIdentifiable> event :
         timeline.getMultiValueChangeEvents()) {

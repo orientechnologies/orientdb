@@ -19,7 +19,7 @@
  */
 package com.orientechnologies.orient.client.remote;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.CLIENT_CONNECTION_FETCH_HOST_LIST;
+import static com.orientechnologies.orient.client.remote.OStorageRemote.ADDRESS_SEPARATOR;
 
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
@@ -32,7 +32,93 @@ import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.client.ONotSendRequestException;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
-import com.orientechnologies.orient.client.remote.message.*;
+import com.orientechnologies.orient.client.remote.message.OAddClusterRequest;
+import com.orientechnologies.orient.client.remote.message.OAddClusterResponse;
+import com.orientechnologies.orient.client.remote.message.OBeginTransaction38Request;
+import com.orientechnologies.orient.client.remote.message.OBeginTransactionResponse;
+import com.orientechnologies.orient.client.remote.message.OBinaryPushRequest;
+import com.orientechnologies.orient.client.remote.message.OBinaryPushResponse;
+import com.orientechnologies.orient.client.remote.message.OCeilingPhysicalPositionsRequest;
+import com.orientechnologies.orient.client.remote.message.OCeilingPhysicalPositionsResponse;
+import com.orientechnologies.orient.client.remote.message.OCleanOutRecordRequest;
+import com.orientechnologies.orient.client.remote.message.OCleanOutRecordResponse;
+import com.orientechnologies.orient.client.remote.message.OCloseQueryRequest;
+import com.orientechnologies.orient.client.remote.message.OCommandRequest;
+import com.orientechnologies.orient.client.remote.message.OCommandResponse;
+import com.orientechnologies.orient.client.remote.message.OCommit37Response;
+import com.orientechnologies.orient.client.remote.message.OCommit38Request;
+import com.orientechnologies.orient.client.remote.message.OCountRecordsRequest;
+import com.orientechnologies.orient.client.remote.message.OCountRecordsResponse;
+import com.orientechnologies.orient.client.remote.message.OCountRequest;
+import com.orientechnologies.orient.client.remote.message.OCountResponse;
+import com.orientechnologies.orient.client.remote.message.OCreateRecordRequest;
+import com.orientechnologies.orient.client.remote.message.OCreateRecordResponse;
+import com.orientechnologies.orient.client.remote.message.ODeleteRecordRequest;
+import com.orientechnologies.orient.client.remote.message.ODeleteRecordResponse;
+import com.orientechnologies.orient.client.remote.message.ODropClusterRequest;
+import com.orientechnologies.orient.client.remote.message.ODropClusterResponse;
+import com.orientechnologies.orient.client.remote.message.OExperimentalRequest;
+import com.orientechnologies.orient.client.remote.message.OExperimentalResponse;
+import com.orientechnologies.orient.client.remote.message.OFetchTransaction38Request;
+import com.orientechnologies.orient.client.remote.message.OFetchTransaction38Response;
+import com.orientechnologies.orient.client.remote.message.OFloorPhysicalPositionsRequest;
+import com.orientechnologies.orient.client.remote.message.OFloorPhysicalPositionsResponse;
+import com.orientechnologies.orient.client.remote.message.OGetClusterDataRangeRequest;
+import com.orientechnologies.orient.client.remote.message.OGetClusterDataRangeResponse;
+import com.orientechnologies.orient.client.remote.message.OGetRecordMetadataRequest;
+import com.orientechnologies.orient.client.remote.message.OGetRecordMetadataResponse;
+import com.orientechnologies.orient.client.remote.message.OGetSizeRequest;
+import com.orientechnologies.orient.client.remote.message.OGetSizeResponse;
+import com.orientechnologies.orient.client.remote.message.OHigherPhysicalPositionsRequest;
+import com.orientechnologies.orient.client.remote.message.OHigherPhysicalPositionsResponse;
+import com.orientechnologies.orient.client.remote.message.OImportRequest;
+import com.orientechnologies.orient.client.remote.message.OImportResponse;
+import com.orientechnologies.orient.client.remote.message.OIncrementalBackupRequest;
+import com.orientechnologies.orient.client.remote.message.OIncrementalBackupResponse;
+import com.orientechnologies.orient.client.remote.message.OLiveQueryPushRequest;
+import com.orientechnologies.orient.client.remote.message.OLockRecordRequest;
+import com.orientechnologies.orient.client.remote.message.OLockRecordResponse;
+import com.orientechnologies.orient.client.remote.message.OLowerPhysicalPositionsRequest;
+import com.orientechnologies.orient.client.remote.message.OLowerPhysicalPositionsResponse;
+import com.orientechnologies.orient.client.remote.message.OOpen37Request;
+import com.orientechnologies.orient.client.remote.message.OOpen37Response;
+import com.orientechnologies.orient.client.remote.message.OPushDistributedConfigurationRequest;
+import com.orientechnologies.orient.client.remote.message.OPushFunctionsRequest;
+import com.orientechnologies.orient.client.remote.message.OPushIndexManagerRequest;
+import com.orientechnologies.orient.client.remote.message.OPushSchemaRequest;
+import com.orientechnologies.orient.client.remote.message.OPushSequencesRequest;
+import com.orientechnologies.orient.client.remote.message.OPushStorageConfigurationRequest;
+import com.orientechnologies.orient.client.remote.message.OQueryNextPageRequest;
+import com.orientechnologies.orient.client.remote.message.OQueryRequest;
+import com.orientechnologies.orient.client.remote.message.OQueryResponse;
+import com.orientechnologies.orient.client.remote.message.OReadRecordIfVersionIsNotLatestRequest;
+import com.orientechnologies.orient.client.remote.message.OReadRecordIfVersionIsNotLatestResponse;
+import com.orientechnologies.orient.client.remote.message.OReadRecordRequest;
+import com.orientechnologies.orient.client.remote.message.OReadRecordResponse;
+import com.orientechnologies.orient.client.remote.message.ORebeginTransaction38Request;
+import com.orientechnologies.orient.client.remote.message.OReloadRequest37;
+import com.orientechnologies.orient.client.remote.message.OReloadResponse37;
+import com.orientechnologies.orient.client.remote.message.ORemoteResultSet;
+import com.orientechnologies.orient.client.remote.message.OReopenRequest;
+import com.orientechnologies.orient.client.remote.message.OReopenResponse;
+import com.orientechnologies.orient.client.remote.message.ORollbackTransactionRequest;
+import com.orientechnologies.orient.client.remote.message.ORollbackTransactionResponse;
+import com.orientechnologies.orient.client.remote.message.OServerQueryRequest;
+import com.orientechnologies.orient.client.remote.message.OServerQueryResponse;
+import com.orientechnologies.orient.client.remote.message.OSubscribeDistributedConfigurationRequest;
+import com.orientechnologies.orient.client.remote.message.OSubscribeFunctionsRequest;
+import com.orientechnologies.orient.client.remote.message.OSubscribeIndexManagerRequest;
+import com.orientechnologies.orient.client.remote.message.OSubscribeLiveQueryRequest;
+import com.orientechnologies.orient.client.remote.message.OSubscribeLiveQueryResponse;
+import com.orientechnologies.orient.client.remote.message.OSubscribeSchemaRequest;
+import com.orientechnologies.orient.client.remote.message.OSubscribeSequencesRequest;
+import com.orientechnologies.orient.client.remote.message.OSubscribeStorageConfigurationRequest;
+import com.orientechnologies.orient.client.remote.message.OUnlockRecordRequest;
+import com.orientechnologies.orient.client.remote.message.OUnlockRecordResponse;
+import com.orientechnologies.orient.client.remote.message.OUnsubscribeLiveQueryRequest;
+import com.orientechnologies.orient.client.remote.message.OUnsubscribeRequest;
+import com.orientechnologies.orient.client.remote.message.OUpdateRecordRequest;
+import com.orientechnologies.orient.client.remote.message.OUpdateRecordResponse;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestAsynch;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -53,7 +139,6 @@ import com.orientechnologies.orient.core.db.document.OTransactionOptimisticClien
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
@@ -90,13 +175,11 @@ import com.orientechnologies.orient.enterprise.channel.binary.OTokenSecurityExce
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Hashtable;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -108,23 +191,13 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.naming.NamingException;
-import javax.naming.directory.Attribute;
-import javax.naming.directory.Attributes;
-import javax.naming.directory.DirContext;
-import javax.naming.directory.InitialDirContext;
 
 /** This object is bound to each remote ODatabase instances. */
 public class OStorageRemote extends OStorageAbstract implements OStorageProxy, ORemotePushHandler {
   @Deprecated public static final String PARAM_CONNECTION_STRATEGY = "connectionStrategy";
 
-  private static final String DEFAULT_HOST = "localhost";
-  private static final int DEFAULT_PORT = 2424;
-  private static final int DEFAULT_SSL_PORT = 2434;
-  public static final String ADDRESS_SEPARATOR = ";";
   public static final String DRIVER_NAME = "OrientDB Java";
-  private static final String LOCAL_IP = "127.0.0.1";
-  private static final String LOCALHOST = "localhost";
+
   private static AtomicInteger sessionSerialId = new AtomicInteger(-1);
 
   public enum CONNECTION_STRATEGY {
@@ -137,7 +210,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   private final OSBTreeCollectionManagerRemote sbTreeCollectionManager =
       new OSBTreeCollectionManagerRemote(this);
-  private final List<String> serverURLs = new ArrayList<String>();
+  private final ORemoteURLs serverURLs;
   private final Map<String, OCluster> clusterMap = new ConcurrentHashMap<String, OCluster>();
   private final ExecutorService asynchExecutor;
   private final ODocument clusterConfiguration = new ODocument();
@@ -154,28 +227,35 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   private final Map<Integer, OLiveQueryClientListener> liveQueryListener =
       new ConcurrentHashMap<>();
   private volatile OStorageRemotePushThread pushThread;
-  private final OrientDBRemote context;
-  private int nextServerToConnect = 0;
+  protected final OrientDBRemote context;
+
+  public static final String ADDRESS_SEPARATOR = ";";
+
+  private static String buildUrl(String[] hosts, String name) {
+    return String.join(ADDRESS_SEPARATOR, hosts) + "/" + name;
+  }
 
   public OStorageRemote(
-      final String iURL,
+      final String[] hosts,
+      String name,
       OrientDBRemote context,
       final String iMode,
       ORemoteConnectionManager connectionManager,
       OrientDBConfig config)
       throws IOException {
-    this(iURL, context, iMode, connectionManager, null, config);
+    this(hosts, name, context, iMode, connectionManager, null, config);
   }
 
   public OStorageRemote(
-      final String iURL,
+      final String[] hosts,
+      String name,
       OrientDBRemote context,
       final String iMode,
       ORemoteConnectionManager connectionManager,
       final STATUS status,
       OrientDBConfig config)
       throws IOException {
-    super(iURL, iURL, iMode); // NO TIMEOUT @SINCE 1.5
+    super(name, buildUrl(hosts, name), iMode); // NO TIMEOUT @SINCE 1.5
     if (status != null) this.status = status;
 
     configuration = null;
@@ -189,7 +269,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
         clientConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_RETRY);
     connectionRetryDelay =
         clientConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_RETRY_DELAY);
-    parseServerURLs();
+    serverURLs = new ORemoteURLs(hosts, clientConfiguration);
 
     asynchExecutor = new OScheduledThreadPoolExecutorWithLogging(1);
 
@@ -392,10 +472,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       } catch (OOfflineNodeException e) {
         connectionManager.release(network);
         // Remove the current url because the node is offline
-        synchronized (serverURLs) {
-          serverURLs.remove(serverUrl);
-          this.nextServerToConnect = 0;
-        }
+        this.serverURLs.remove(serverUrl);
         for (OStorageRemoteSession activeSession : sessions) {
           // Not thread Safe ...
           activeSession.removeServerSession(serverUrl);
@@ -541,33 +618,16 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     if (session != null) {
       final Collection<OStorageRemoteNodeSession> nodes = session.getAllServerSessions();
       if (!nodes.isEmpty()) {
-        for (OStorageRemoteNodeSession nodeSession : nodes) {
-          OChannelBinaryAsynchClient network = null;
-          try {
-            network = getNetwork(nodeSession.getServerURL());
-            OCloseRequest request = new OCloseRequest();
-            network.beginRequest(request.getCommand(), session);
-            request.write(network, session);
-            endRequest(network);
-            connectionManager.release(network);
-          } catch (OIOException ex) {
-            // IGNORING IF THE SERVER IS DOWN OR NOT REACHABLE THE SESSION IS AUTOMATICALLY CLOSED.
-            OLogManager.instance()
-                .debug(this, "Impossible to comunicate to the server for close: %s", ex);
-            connectionManager.remove(network);
-          } catch (IOException ex) {
-            // IGNORING IF THE SERVER IS DOWN OR NOT REACHABLE THE SESSION IS AUTOMATICALLY CLOSED.
-            OLogManager.instance()
-                .debug(this, "Impossible to comunicate to the server for close: %s", ex);
-            connectionManager.remove(network);
-          }
+        OContextConfiguration config = null;
+        if (configuration != null) {
+          config = configuration.getContextConfiguration();
         }
-        session.close();
-        sessions.remove(session);
+        session.closeAllSessions(connectionManager, config);
         if (!checkForClose(iForce)) return;
       } else {
         if (!iForce) return;
       }
+      sessions.remove(session);
       if (!checkForClose(iForce)) return;
     }
 
@@ -608,7 +668,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     stateLock.acquireWriteLock();
     try {
       // CLOSE ALL THE SOCKET POOLS
-      for (String url : serverURLs) {
+      for (String url : serverURLs.getUrls()) {
         connectionManager.closePool(url);
       }
       sbTreeCollectionManager.close();
@@ -1271,7 +1331,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   public List<ORecordOperation> commit(final OTransactionInternal iTx) {
     unstickToSession();
-    OCommit38Request request =
+    final OCommit38Request request =
         new OCommit38Request(
             iTx.getId(),
             true,
@@ -1279,7 +1339,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
             iTx.getRecordOperations(),
             iTx.getIndexOperations());
 
-    OCommit37Response response = networkOperationNoRetry(request, "Error on commit");
+    final OCommit37Response response = networkOperationNoRetry(request, "Error on commit");
     for (OCommit37Response.OCreatedRecordResponse created : response.getCreated()) {
       iTx.updateIdentityAfterCommit(created.getCurrentRid(), created.getCreatedRid());
       ORecordOperation rop = iTx.getRecordEntry(created.getCurrentRid());
@@ -1548,38 +1608,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     return false;
   }
 
-  @SuppressWarnings("unchecked")
-  public void updateDistributedNodes(List<String> hosts) {
-    if (!clientConfiguration.getValueAsBoolean(CLIENT_CONNECTION_FETCH_HOST_LIST)) {
-      List<String> definedHosts = parseAddressesFromUrl(url);
-      synchronized (serverURLs) {
-        for (String host : hosts) {
-          if (definedHosts.contains(host)) {
-            addHost(host);
-          }
-        }
-      }
-      return;
-    }
-    // UPDATE IT
-    synchronized (serverURLs) {
-      for (String host : hosts) {
-        addHost(host);
-      }
-    }
-  }
-
-  public void removeSessions(final String url) {
-    synchronized (serverURLs) {
-      serverURLs.remove(url);
-      this.nextServerToConnect = 0;
-    }
-
-    for (OStorageRemoteSession session : sessions) {
-      session.removeServerSession(url + "/" + getName());
-    }
-  }
-
   @Override
   public ORecordConflictStrategy getRecordConflictStrategy() {
     throw new UnsupportedOperationException("getRecordConflictStrategy");
@@ -1715,12 +1743,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     } while (currentURL != null);
 
     // REFILL ORIGINAL SERVER LIST
-    parseServerURLs();
+    serverURLs.reloadOriginalURLs();
 
-    synchronized (serverURLs) {
-      throw new OStorageException(
-          "Cannot create a connection to remote server address(es): " + serverURLs);
-    }
+    throw new OStorageException(
+        "Cannot create a connection to remote server address(es): " + serverURLs.getUrls());
   }
 
   protected void openRemoteDatabase() throws IOException {
@@ -1878,12 +1904,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     } while (currentURL != null);
 
     // REFILL ORIGINAL SERVER LIST
-    parseServerURLs();
+    serverURLs.reloadOriginalURLs();
 
-    synchronized (serverURLs) {
-      throw new OStorageException(
-          "Cannot create a connection to remote server address(es): " + serverURLs);
-    }
+    throw new OStorageException(
+        "Cannot create a connection to remote server address(es): " + serverURLs.getUrls());
   }
 
   protected String useNewServerURL(final String iUrl) {
@@ -1892,164 +1916,19 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       // IGNORE ENDING /
       pos = -1;
 
-    final String postFix = pos > -1 ? iUrl.substring(pos) : "";
     final String url = pos > -1 ? iUrl.substring(0, pos) : iUrl;
 
-    synchronized (serverURLs) {
-      // REMOVE INVALID URL
-      serverURLs.remove(url);
-      this.nextServerToConnect = 0;
-      for (OStorageRemoteSession activeSession : sessions) {
-        // Not thread Safe ...
-        activeSession.removeServerSession(url + "/" + getName());
-      }
-
-      OLogManager.instance().debug(this, "Updated server list: %s...", serverURLs);
-
-      if (!serverURLs.isEmpty()) return serverURLs.get(0) + postFix;
+    for (OStorageRemoteSession activeSession : sessions) {
+      // Not thread Safe ...
+      activeSession.removeServerSession(url + "/" + getName());
     }
 
-    return null;
-  }
-
-  public List<String> parseAddressesFromUrl(String url) {
-    List<String> addresses = new ArrayList<>();
-    int dbPos = url.indexOf('/');
-    if (dbPos == -1) {
-      // SHORT FORM
-      addresses.add(url);
-    } else {
-      for (String host : url.substring(0, dbPos).split(ADDRESS_SEPARATOR)) {
-        addresses.add(host);
-      }
-    }
-    return addresses;
+    return serverURLs.removeAndGet(url);
   }
 
   /** Parse the URLs. Multiple URLs must be separated by semicolon (;) */
   protected void parseServerURLs() {
-    int dbPos = url.indexOf('/');
-    if (dbPos == -1) {
-      // SHORT FORM
-      name = url;
-    } else {
-      name = url.substring(url.lastIndexOf("/") + 1);
-    }
-    String lastHost = null;
-    List<String> hosts = parseAddressesFromUrl(url);
-    for (String host : hosts) {
-      lastHost = host;
-      addHost(host);
-    }
-
-    synchronized (serverURLs) {
-      if (serverURLs.size() == 1
-          && getClientConfiguration()
-              .getValueAsBoolean(OGlobalConfiguration.NETWORK_BINARY_DNS_LOADBALANCING_ENABLED)) {
-        List<String> toAdd = fetchHostsFromDns(lastHost);
-        if (toAdd.size() > 0) {
-          serverURLs.clear();
-          this.nextServerToConnect = 0;
-          for (String host : toAdd) addHost(host);
-        }
-      }
-    }
-  }
-
-  private List<String> fetchHostsFromDns(final String primaryServer) {
-    OLogManager.instance()
-        .debug(
-            this,
-            "Retrieving URLs from DNS '%s' (timeout=%d)...",
-            primaryServer,
-            getClientConfiguration()
-                .getValueAsInteger(OGlobalConfiguration.NETWORK_BINARY_DNS_LOADBALANCING_TIMEOUT));
-
-    List<String> toAdd = new ArrayList<>();
-    try {
-      final Hashtable<String, String> env = new Hashtable<String, String>();
-      env.put("java.naming.factory.initial", "com.sun.jndi.dns.DnsContextFactory");
-      env.put(
-          "com.sun.jndi.ldap.connect.timeout",
-          getClientConfiguration()
-              .getValueAsString(OGlobalConfiguration.NETWORK_BINARY_DNS_LOADBALANCING_TIMEOUT));
-
-      final DirContext ictx = new InitialDirContext(env);
-      final String hostName =
-          !primaryServer.contains(":")
-              ? primaryServer
-              : primaryServer.substring(0, primaryServer.indexOf(":"));
-      final Attributes attrs = ictx.getAttributes(hostName, new String[] {"TXT"});
-      final Attribute attr = attrs.get("TXT");
-      if (attr != null) {
-        for (int i = 0; i < attr.size(); ++i) {
-          String configuration = (String) attr.get(i);
-          if (configuration.startsWith("\""))
-            configuration = configuration.substring(1, configuration.length() - 1);
-          if (configuration != null) {
-            final String[] parts = configuration.split(" ");
-            for (String part : parts) {
-              if (part.startsWith("s=")) {
-                toAdd.add(part.substring("s=".length()));
-              }
-            }
-          }
-        }
-      }
-    } catch (NamingException ignore) {
-    }
-    return toAdd;
-  }
-
-  /** Registers the remote server with port. */
-  protected String addHost(String host) {
-    if (host.startsWith(LOCALHOST)) host = LOCAL_IP + host.substring("localhost".length());
-
-    if (host.contains("/")) host = host.substring(0, host.indexOf("/"));
-
-    // REGISTER THE REMOTE SERVER+PORT
-    if (!host.contains(":")) {
-      if (clientConfiguration.getValueAsBoolean(OGlobalConfiguration.CLIENT_USE_SSL)) {
-        host += ":" + getDefaultSSLPort();
-      } else {
-        host += ":" + getDefaultPort();
-      }
-    } else if (host.split(":").length < 2 || host.split(":")[1].trim().length() == 0) {
-      if (clientConfiguration.getValueAsBoolean(OGlobalConfiguration.CLIENT_USE_SSL)) {
-        host += getDefaultSSLPort();
-      } else {
-        host += getDefaultPort();
-      }
-    }
-
-    // DISABLED BECAUSE THIS DID NOT ALLOW TO CONNECT TO LOCAL HOST ANYMORE IF THE SERVER IS BOUND
-    // TO 127.0.0.1
-    // CONVERT 127.0.0.1 TO THE PUBLIC IP IF POSSIBLE
-    // if (host.startsWith(LOCAL_IP)) {
-    // try {
-    // final String publicIP = InetAddress.getLocalHost().getHostAddress();
-    // host = publicIP + host.substring(LOCAL_IP.length());
-    // } catch (UnknownHostException e) {
-    // // IGNORE IT
-    // }
-    // }
-
-    synchronized (serverURLs) {
-      if (!serverURLs.contains(host)) {
-        serverURLs.add(host);
-        OLogManager.instance().debug(this, "Registered the new available server '%s'", host);
-      }
-    }
-
-    return host;
-  }
-
-  protected int getDefaultPort() {
-    return DEFAULT_PORT;
-  }
-
-  protected int getDefaultSSLPort() {
-    return DEFAULT_SSL_PORT;
+    this.name = serverURLs.parseServerUrls(this.url, getClientConfiguration());
   }
 
   /**
@@ -2068,108 +1947,30 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   protected String getNextAvailableServerURL(
       boolean iIsConnectOperation, OStorageRemoteSession session) {
-    String url = null;
-    CONNECTION_STRATEGY strategy = connectionStrategy;
-    if (session.isStickToSession()) {
-      strategy = CONNECTION_STRATEGY.STICKY;
-    }
-    switch (strategy) {
-      case STICKY:
-        url = session.getServerUrl();
-        if (url == null) url = getServerURFromList(false, session);
-        break;
 
-      case ROUND_ROBIN_CONNECT:
-        if (iIsConnectOperation || session.getServerUrl() == null) {
-          url = getNextConnectUrl(session);
-        } else {
-          url = session.getServerUrl();
-        }
-        OLogManager.instance()
-            .debug(
-                this,
-                "ROUND_ROBIN_CONNECT: Next remote operation will be executed on server: %s (isConnectOperation=%s)",
-                url,
-                iIsConnectOperation);
-        break;
-
-      case ROUND_ROBIN_REQUEST:
-        url = getServerURFromList(true, session);
-        OLogManager.instance()
-            .debug(
-                this,
-                "ROUND_ROBIN_REQUEST: Next remote operation will be executed on server: %s (isConnectOperation=%s)",
-                url,
-                iIsConnectOperation);
-        break;
-
-      default:
-        throw new OConfigurationException(
-            "Connection mode " + connectionStrategy + " is not supported");
-    }
-
-    return url;
-  }
-
-  public String getNextConnectUrl(OStorageRemoteSession session) {
-    synchronized (serverURLs) {
-      if (serverURLs.isEmpty()) {
-        parseServerURLs();
-        if (serverURLs.isEmpty())
-          throw new OStorageException(
-              "Cannot create a connection to remote server because url list is empty");
-      }
-
-      this.nextServerToConnect++;
-      if (this.nextServerToConnect >= serverURLs.size())
-        // RESET INDEX
-        this.nextServerToConnect = 0;
-
-      final String serverURL = serverURLs.get(this.nextServerToConnect) + "/" + getName();
-      if (session != null) session.serverURLIndex = this.nextServerToConnect;
-
-      return serverURL;
-    }
+    OContextConfiguration config = null;
+    if (configuration != null) config = configuration.getContextConfiguration();
+    return serverURLs.getNextAvailableServerURL(
+        iIsConnectOperation, session, config, name, connectionStrategy);
   }
 
   protected String getCurrentServerURL() {
-    return getServerURFromList(false, getCurrentSession());
-  }
-
-  protected String getServerURFromList(
-      final boolean iNextAvailable, OStorageRemoteSession session) {
-    synchronized (serverURLs) {
-      if (serverURLs.isEmpty()) {
-        parseServerURLs();
-        if (serverURLs.isEmpty())
-          throw new OStorageException(
-              "Cannot create a connection to remote server because url list is empty");
-      }
-
-      // GET CURRENT THREAD INDEX
-      int serverURLIndex;
-      if (session != null) serverURLIndex = session.serverURLIndex;
-      else serverURLIndex = 0;
-
-      if (iNextAvailable) serverURLIndex++;
-
-      if (serverURLIndex < 0 || serverURLIndex >= serverURLs.size())
-        // RESET INDEX
-        serverURLIndex = 0;
-
-      final String serverURL = serverURLs.get(serverURLIndex) + "/" + getName();
-
-      if (session != null) session.serverURLIndex = serverURLIndex;
-
-      return serverURL;
-    }
+    return serverURLs.getServerURFromList(
+        false, getCurrentSession(), configuration.getContextConfiguration(), name);
   }
 
   public OChannelBinaryAsynchClient getNetwork(final String iCurrentURL) {
+    return getNetwork(iCurrentURL, connectionManager, clientConfiguration);
+  }
+
+  public static OChannelBinaryAsynchClient getNetwork(
+      final String iCurrentURL,
+      ORemoteConnectionManager connectionManager,
+      OContextConfiguration config) {
     OChannelBinaryAsynchClient network;
     do {
       try {
-        network = connectionManager.acquire(iCurrentURL, clientConfiguration);
+        network = connectionManager.acquire(iCurrentURL, config);
       } catch (OIOException cause) {
         throw cause;
       } catch (Exception cause) {
@@ -2181,7 +1982,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
         // CANNOT LOCK IT, MAYBE HASN'T BE CORRECTLY UNLOCKED BY PREVIOUS USER?
         OLogManager.instance()
             .error(
-                this,
+                OStorageRemote.class,
                 "Removing locked network channel '%s' (connected=%s)...",
                 null,
                 iCurrentURL,
@@ -2193,8 +1994,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     return network;
   }
 
-  public void beginResponse(OChannelBinaryAsynchClient iNetwork, OStorageRemoteSession session)
-      throws IOException {
+  public static void beginResponse(
+      OChannelBinaryAsynchClient iNetwork, OStorageRemoteSession session) throws IOException {
     OStorageRemoteNodeSession nodeSession = session.getServerSession(iNetwork.getServerURL());
     byte[] newToken = iNetwork.beginResponse(nodeSession.getSessionId(), true);
     if (newToken != null && newToken.length > 0) {
@@ -2413,7 +2214,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   @Override
   public OBinaryPushResponse executeUpdateDistributedConfig(
       OPushDistributedConfigurationRequest request) {
-    updateDistributedNodes(request.getHosts());
+    serverURLs.updateDistributedNodes(request.getHosts(), configuration.getContextConfiguration());
     return null;
   }
 
@@ -2672,6 +2473,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   public List<String> getServerURLs() {
-    return serverURLs;
+    return serverURLs.getUrls();
   }
 }

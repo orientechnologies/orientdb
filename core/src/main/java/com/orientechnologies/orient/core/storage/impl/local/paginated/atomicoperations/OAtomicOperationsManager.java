@@ -48,6 +48,7 @@ import java.util.Objects;
  * @since 12/3/13
  */
 public class OAtomicOperationsManager {
+
   private static volatile ThreadLocal<OAtomicOperation> currentOperation = new ThreadLocal<>();
 
   static {
@@ -214,7 +215,9 @@ public class OAtomicOperationsManager {
     } catch (Exception e) {
       throw OException.wrapException(
           new OStorageException(
-              "Exception during execution of component operation inside of storage "
+              "Exception during execution of component operation inside component "
+                  + lockName
+                  + " in storage "
                   + storage.getName()),
           e);
     } finally {

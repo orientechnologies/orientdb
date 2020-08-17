@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.setup.ServerRun;
 import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.Callable;

@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.orient.setup.ServerRun;
 import org.junit.Test;
 
 /**

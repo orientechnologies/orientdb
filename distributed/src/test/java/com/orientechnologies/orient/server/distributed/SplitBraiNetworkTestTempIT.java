@@ -21,6 +21,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListenerAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.impl.proxy.OProxyServer;
+import com.orientechnologies.orient.setup.ServerRun;
 import java.util.List;
 import java.util.Map;
 import org.junit.Assert;

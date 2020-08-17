@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.setup.ServerRun;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -62,7 +63,7 @@ public class OneNodeBackupIT extends AbstractServerClusterTxTest {
     if (serverStarted == 0) {
       // INSTALL ON FIRST SERVER ONLY THE SERVER MONITOR TO CHECK IF HAS BEEN RESTARTED
       server
-          .server
+          .getServerInstance()
           .getDistributedManager()
           .registerLifecycleListener(
               new ODistributedLifecycleListener() {

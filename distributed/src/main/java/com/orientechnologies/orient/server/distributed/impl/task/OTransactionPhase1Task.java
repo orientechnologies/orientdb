@@ -383,6 +383,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask implements O
                       index, database.getMetadata().getIndexManagerInternal(), database)
                   .isUnique()) {
 
+                quorumType = OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE_ALL_MASTERS;
                 for (Object keyWithChange : changes.changesPerKey.keySet()) {
                   int version = storage.getVersionForKey(index, keyWithChange);
                   uniqueIndexKeys.add(new OTransactionUniqueKey(index, keyWithChange, version));

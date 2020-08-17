@@ -184,6 +184,32 @@ public class OrientDBRemoteTest {
   }
 
   @Test
+  public void createDatabaseNoUsers() {
+    factory.create(
+        "noUser",
+        ODatabaseType.MEMORY,
+        OrientDBConfig.builder()
+            .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
+            .build());
+    try (ODatabaseSession session = factory.open("noUser", "root", "root")) {
+      assertEquals(session.query("select from OUser").stream().count(), 0);
+    }
+  }
+
+  @Test
+  public void createDatabaseDefaultUsers() {
+    factory.create(
+        "noUser",
+        ODatabaseType.MEMORY,
+        OrientDBConfig.builder()
+            .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, true)
+            .build());
+    try (ODatabaseSession session = factory.open("noUser", "root", "root")) {
+      assertEquals(session.query("select from OUser").stream().count(), 3);
+    }
+  }
+
+  @Test
   public void testCopyOpenedDatabase() {
     factory.create("test", ODatabaseType.MEMORY);
     ODatabaseDocument db1;

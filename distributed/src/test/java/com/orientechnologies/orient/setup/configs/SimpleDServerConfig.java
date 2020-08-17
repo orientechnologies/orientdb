@@ -1,11 +1,11 @@
-package com.orientechnologies.orient.test.configs;
+package com.orientechnologies.orient.setup.configs;
 
-import com.orientechnologies.orient.test.K8sServerConfig;
-import com.orientechnologies.orient.test.TestConfig;
-import com.orientechnologies.orient.test.TestSetupUtil;
+import com.orientechnologies.orient.setup.K8sServerConfig;
+import com.orientechnologies.orient.setup.SetupConfig;
+import com.orientechnologies.orient.setup.TestSetupUtil;
 import java.util.*;
 
-public class SimpleDServerConfig implements TestConfig {
+public class SimpleDServerConfig implements SetupConfig {
   public static final String SERVER0 = "server0";
   public static final String SERVER1 = "server1";
   public static final String SERVER2 = "server2";

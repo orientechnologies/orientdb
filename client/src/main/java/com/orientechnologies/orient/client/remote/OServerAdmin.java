@@ -19,9 +19,7 @@
  */
 package com.orientechnologies.orient.client.remote;
 
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.message.OConnect37Request;
 import com.orientechnologies.orient.client.remote.message.OConnectResponse;
 import com.orientechnologies.orient.client.remote.message.OCreateDatabaseRequest;
@@ -54,10 +52,7 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OCredentialInterceptor;
 import com.orientechnologies.orient.core.security.OSecurityManager;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.util.OURLConnection;
-import com.orientechnologies.orient.core.util.OURLHelper;
 import java.io.IOException;
 import java.util.Map;
 
@@ -68,6 +63,9 @@ public class OServerAdmin {
   protected OStorageRemoteSession session = new OStorageRemoteSession(-1);
   protected String clientType = OStorageRemote.DRIVER_NAME;
   protected boolean collectStats = true;
+  private final ORemoteURLs urls;
+  private final OrientDBRemote remote;
+  private ORemoteConnectionManager connectionManager;
 
   /**
    * Creates the object passing a remote URL to connect. sessionToken
@@ -82,13 +80,19 @@ public class OServerAdmin {
 
     if (!url.contains("/")) url += "/";
 
-    OURLConnection connection = OURLHelper.parse(iURL);
-    OrientDBRemote remote =
-        (OrientDBRemote) ODatabaseDocumentTxInternal.getOrCreateRemoteFactory(connection.getPath());
-
+    remote = (OrientDBRemote) ODatabaseDocumentTxInternal.getOrCreateRemoteFactory(url);
+    connectionManager = remote.getConnectionManager();
+    urls = new ORemoteURLs(new String[] {}, remote.getContextConfiguration());
+    String name = urls.parseServerUrls(url, remote.getContextConfiguration());
     storage =
         new OStorageRemote(
-            url, null, "", remote.getConnectionManager(), OStorage.STATUS.OPEN, null) {
+            urls.getUrls().toArray(new String[] {}),
+            name,
+            null,
+            "",
+            connectionManager,
+            OStorage.STATUS.OPEN,
+            null) {
           @Override
           protected OStorageRemoteSession getCurrentSession() {
             return session;
@@ -97,10 +101,19 @@ public class OServerAdmin {
   }
 
   public OServerAdmin(OrientDBRemote remote, String url) throws IOException {
-    ORemoteConnectionManager connectionManager = remote.getConnectionManager();
-
+    this.remote = remote;
+    connectionManager = remote.getConnectionManager();
+    urls = new ORemoteURLs(new String[] {}, remote.getContextConfiguration());
+    String name = urls.parseServerUrls(url, remote.getContextConfiguration());
     storage =
-        new OStorageRemote(url, null, "", connectionManager, OStorage.STATUS.OPEN, null) {
+        new OStorageRemote(
+            urls.getUrls().toArray(new String[] {}),
+            name,
+            null,
+            "",
+            connectionManager,
+            OStorage.STATUS.OPEN,
+            null) {
           @Override
           protected OStorageRemoteSession getCurrentSession() {
             return session;
@@ -116,6 +129,9 @@ public class OServerAdmin {
   @Deprecated
   public OServerAdmin(final OStorageRemote iStorage) {
     storage = iStorage;
+    this.remote = iStorage.context;
+    urls = new ORemoteURLs(new String[] {}, remote.getContextConfiguration());
+    urls.parseServerUrls(iStorage.getURL(), remote.getContextConfiguration());
   }
 
   /**
@@ -144,7 +160,7 @@ public class OServerAdmin {
     }
     OConnect37Request request = new OConnect37Request(username, password);
 
-    networkAdminOperation(
+    remote.networkAdminOperation(
         (network, session) -> {
           OStorageRemoteNodeSession nodeSession =
               session.getOrCreateServerSession(network.getServerURL());
@@ -159,11 +175,12 @@ public class OServerAdmin {
             network.beginResponse(nodeSession.getSessionId(), true);
             response.read(network, session);
           } finally {
-            storage.endResponse(network);
+            network.endResponse();
           }
           return null;
         },
-        "Cannot connect to the remote server/database '" + storage.getURL() + "'");
+        "Cannot connect to the remote server/database '" + storage.getURL() + "'",
+        session);
 
     return this;
   }
@@ -259,7 +276,7 @@ public class OServerAdmin {
       OCreateDatabaseRequest request =
           new OCreateDatabaseRequest(iDatabaseName, iDatabaseName, storageMode, backupPath);
       OCreateDatabaseResponse response =
-          networkAdminOperation(request, "Cannot create the remote storage: " + storage.getName());
+          networkAdminOperation(request, "Cannot create the remote storage: " + iDatabaseName);
     }
 
     return this;
@@ -287,7 +304,7 @@ public class OServerAdmin {
     OExistsDatabaseRequest request = new OExistsDatabaseRequest(iDatabaseName, storageType);
     OExistsDatabaseResponse response =
         networkAdminOperation(
-            request, "Error on checking existence of the remote storage: " + storage.getName());
+            request, "Error on checking existence of the remote storage: " + iDatabaseName);
     return response.isExists();
   }
 
@@ -328,11 +345,8 @@ public class OServerAdmin {
 
     ODropDatabaseRequest request = new ODropDatabaseRequest(iDatabaseName, storageType);
     ODropDatabaseResponse response =
-        networkAdminOperation(request, "Cannot delete the remote storage: " + storage.getName());
+        networkAdminOperation(request, "Cannot delete the remote storage: " + iDatabaseName);
 
-    OURLConnection connection = OURLHelper.parse(getURL());
-    OrientDBRemote remote =
-        (OrientDBRemote) ODatabaseDocumentTxInternal.getOrCreateRemoteFactory(connection.getPath());
     remote.forceDatabaseClose(iDatabaseName);
 
     ODatabaseRecordThreadLocal.instance().remove();
@@ -395,7 +409,7 @@ public class OServerAdmin {
     ODistributedStatusRequest request = new ODistributedStatusRequest();
 
     ODistributedStatusResponse response =
-        storage.networkOperation(request, "Error on executing Cluster status ");
+        networkAdminOperation(request, "Error on executing Cluster status ");
 
     OLogManager.instance()
         .debug(this, "Cluster status %s", response.getClusterConfig().toJSON("prettyPrint"));
@@ -453,61 +467,6 @@ public class OServerAdmin {
 
   protected <T extends OBinaryResponse> T networkAdminOperation(
       final OBinaryRequest<T> request, final String errorMessage) {
-    return networkAdminOperation(
-        new OStorageRemoteOperation<T>() {
-          @Override
-          public T execute(OChannelBinaryAsynchClient network, OStorageRemoteSession session)
-              throws IOException {
-            try {
-              network.beginRequest(request.getCommand(), session);
-              request.write(network, session);
-            } finally {
-              network.endRequest();
-            }
-            T response = request.createResponse();
-            try {
-              storage.beginResponse(network, session);
-              response.read(network, session);
-            } finally {
-              storage.endResponse(network);
-            }
-            return response;
-          }
-        },
-        errorMessage);
-  }
-
-  protected <T> T networkAdminOperation(
-      final OStorageRemoteOperation<T> operation, final String errorMessage) {
-
-    OChannelBinaryAsynchClient network = null;
-    try {
-      // TODO:replace this api with one that get connection for only the specified url.
-      String serverUrl = storage.getNextAvailableServerURL(false, session);
-      do {
-        try {
-          network = storage.getNetwork(serverUrl);
-        } catch (OException e) {
-          serverUrl = storage.useNewServerURL(serverUrl);
-          if (serverUrl == null) throw e;
-        }
-      } while (network == null);
-
-      T res = operation.execute(network, storage.getCurrentSession());
-      storage.connectionManager.release(network);
-      return res;
-    } catch (Exception e) {
-      if (network != null) storage.connectionManager.release(network);
-      storage.close(true, false);
-      throw OException.wrapException(new OStorageException(errorMessage), e);
-    }
-  }
-
-  public OResultSet executeServerStatement(String statement, Object... params) {
-    return storage.serverCommand(statement, params).getResult();
-  }
-
-  public OResultSet executeServerStatement(String statement, Map<String, Object> params) {
-    return storage.serverCommand(statement, params).getResult();
+    return remote.networkAdminOperation(request, session, errorMessage);
   }
 }
