@@ -2,6 +2,7 @@ package com.orientechnologies.orient.setup;
 
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
@@ -21,6 +22,7 @@ import okhttp3.OkHttpClient;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -59,6 +61,13 @@ public class KubernetesTestSetup implements TestSetup {
     return content.replaceAll("\"", "\\\"");
   }
 
+  /**
+   * Can be called during the test to scale up a server that has been previously scaled to 0
+   * (shutdown).
+   *
+   * @param serverId
+   * @throws TestSetupException
+   */
   @Override
   public void startServer(String serverId) throws TestSetupException {
     K8sServerConfig serverConfig = setupConfig.getK8sConfigs(serverId);
@@ -87,9 +96,15 @@ public class KubernetesTestSetup implements TestSetup {
     }
   }
 
+  /**
+   * Should be called only once before the test starts. Assumes none of the servers already exists
+   * and starts them in parallel.
+   *
+   * @throws TestSetupException
+   */
   @Override
   public void setup() throws TestSetupException {
-    System.out.println("Starting servers...");
+    System.out.printf("%s Starting servers...\n", LocalDateTime.now());
     for (String serverId : setupConfig.getServerIds()) {
       K8sServerConfig serverConfig = setupConfig.getK8sConfigs(serverId);
       serverConfig.validate();
@@ -107,6 +122,9 @@ public class KubernetesTestSetup implements TestSetup {
     try {
       waitForInstances(
           readyReplicaTimeoutSeconds, setupConfig.getServerIds(), statefulSetLabelSelector);
+      for (String serverId : setupConfig.getServerIds()) {
+        setupPortForward(serverId, setupConfig.getK8sConfigs(serverId));
+      }
     } catch (IOException e) {
       throw new TestSetupException("Error waiting for server to start", e);
     } catch (ApiException e) {
@@ -117,7 +135,7 @@ public class KubernetesTestSetup implements TestSetup {
   private void waitForInstances(
       int timeoutSecond, Collection<String> serverIds, String labelSelector)
       throws ApiException, IOException {
-    System.out.printf("Wait till instances %s are ready\n", serverIds);
+    OLogManager.instance().info(this, "Wait till instances %s are ready.", serverIds);
     Set<String> ids = new HashSet<>(serverIds);
 
     ApiClient client = Configuration.getDefaultApiClient();
@@ -284,10 +302,9 @@ public class KubernetesTestSetup implements TestSetup {
   @Override
   public OrientDB createRemote(
       String serverId, String serverUser, String serverPassword, OrientDBConfig config) {
-    System.out.printf("Creating remote connection to server '%s'.\n", serverId);
-    config.getConfigurations().setValue(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT, 60 * 1000);
-    return new OrientDBIT(
-        "remote:" + getAddress(serverId, PortType.BINARY), serverUser, serverPassword, config);
+    String url = "remote:" + getAddress(serverId, PortType.BINARY);
+    System.out.printf("Creating remote connection to server '%s' at %s.\n", serverId, url);
+    return new OrientDBIT(url, serverUser, serverPassword, config);
   }
 
   private V1ConfigMap createConfigMap(String serverId, K8sServerConfig config)

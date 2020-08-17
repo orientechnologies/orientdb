@@ -9,10 +9,10 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 
 // Adds retries to the operations provided by OrientDB
 public class OrientDBIT extends OrientDB {
-  private static final int MAX_OPEN_RETRY = 10;
-  private static final int OPEN_RETRY_INTERVAL_SECONDS = 15;
+  private static final int MAX_OPEN_RETRY = 5;
+  private static final int OPEN_RETRY_INTERVAL_SECONDS = 5;
   private static final int MAX_DROP_RETRY = 5;
-  private static final int DROP_RETRY_INTERVAL_SECONDS = 15;
+  private static final int DROP_RETRY_INTERVAL_SECONDS = 5;
 
   public OrientDBIT(
       String url, String serverUser, String serverPassword, OrientDBConfig configuration) {

@@ -19,25 +19,26 @@ public class PortForwarder {
   private Server server;
   private String namespace, podName;
   private int targetPort;
+  private String pfId;
 
   public PortForwarder(String namespace, String podName, int targetPort)
       throws IOException, ApiException {
     this.namespace = namespace;
     this.podName = podName;
     this.targetPort = targetPort;
+    pfId = String.format("%s/%s:%d", namespace, podName, targetPort);
     ApiClient client = Config.defaultClient();
     Configuration.setDefaultApiClient(client);
     PortForward forward = new PortForward();
     List<Integer> ports = new ArrayList<>();
     ports.add(targetPort);
     final PortForward.PortForwardResult result = forward.forward(namespace, podName, ports);
-    server = new Server( result.getInputStream(targetPort), result.getOutboundStream(targetPort));
+    server = new Server(result.getInputStream(targetPort), result.getOutboundStream(targetPort));
   }
 
   public int start() {
     int localPort = server.start();
-    System.out.printf(
-        "Forwarding port %s/%s:%d -> localhost:%d...\n", namespace, podName, targetPort, localPort);
+    System.out.printf("Forwarding port %s -> localhost:%d...\n", pfId, localPort);
     return localPort;
   }
 
@@ -57,6 +58,7 @@ public class PortForwarder {
     private ServerSocket ss;
     private InputStream targetInputStream;
     private OutputStream targetOutputStream;
+    private volatile boolean active;
 
     public Server(InputStream targetInputStream, OutputStream targetOutputStream)
         throws IOException {
@@ -66,6 +68,7 @@ public class PortForwarder {
     }
 
     public int start() {
+      active = true;
       server =
           new Thread(
               () -> {
@@ -80,35 +83,44 @@ public class PortForwarder {
     }
 
     private void runCopiers() throws IOException {
-      final Socket s = ss.accept();
+      System.out.printf("Waiting for requests on port %d.\n", ss.getLocalPort());
+      while (active) {
+        final Socket s = ss.accept();
 
-      inputCopier =
-          new Thread(
-              () -> {
-                try {
-                  ByteStreams.copy(targetInputStream, s.getOutputStream());
-                } catch (Exception e) {
-                  throw new TestSetupException(e);
-                }
-              });
-      outputCopier =
-          new Thread(
-              () -> {
-                try {
-                  ByteStreams.copy(s.getInputStream(), targetOutputStream);
-                } catch (Exception e) {
-                  throw new TestSetupException(e);
-                }
-              });
+        inputCopier =
+            new Thread(
+                () -> {
+                  try {
+                    ByteStreams.copy(targetInputStream, s.getOutputStream());
+                  } catch (Exception e) {
+                    System.err.println("Error while copying target input stream.");
+                    e.printStackTrace();
+                    throw new TestSetupException(e);
+                  }
+                  System.out.printf("Exiting target input copier %s->%s.\n", pfId, s.getPort());
+                });
+        outputCopier =
+            new Thread(
+                () -> {
+                  try {
+                    ByteStreams.copy(s.getInputStream(), targetOutputStream);
+                  } catch (Exception e) {
+                    System.err.println("Error while copying local input stream.");
+                    e.printStackTrace();
+                    throw new TestSetupException(e);
+                  }
+                  System.out.printf("Exiting local input copier %s->%s.\n", pfId, s.getPort());
+                });
 
-      inputCopier.start();
-      outputCopier.start();
+        inputCopier.start();
+        outputCopier.start();
+        System.out.printf("Started copying threads for %s->%d.\n", pfId, s.getPort());
+      }
+      System.out.printf("Stopping port forwarder %s...\n", pfId);
     }
 
     public void stop() throws IOException {
-      if (inputCopier != null) inputCopier.interrupt();
-      if (outputCopier != null) outputCopier.interrupt();
-      if (server != null) server.interrupt();
+      active = false;
       ss.close();
     }
   }
