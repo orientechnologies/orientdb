@@ -748,7 +748,8 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
         final Path segmentPath = walLocation.resolve(segmentName);
 
         if (Files.exists(segmentPath)) {
-          try (final OWALFile file = OWALFile.createReadWALFile(segmentPath, allowDirectIO, blockSize)) {
+          try (final OWALFile file = OWALFile.createReadWALFile(segmentPath, allowDirectIO, blockSize,
+              segmentId)) {
             long chSize = Files.size(segmentPath);
             final WrittenUpTo written = this.writtenUpTo.get();
 
@@ -1206,6 +1207,16 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
         if (segmentId > currentSegment) {
           segmentId = currentSegment;
         }
+
+        if (walFile == null) {
+          return false;
+        }
+
+        final long processedSegmentId = walFile.segmentId();
+        if (segmentId > processedSegmentId) {
+          segmentId = processedSegmentId;
+        }
+
 
         final Map.Entry<OLogSequenceNumber, Integer> firsEntry = cutTillLimits.firstEntry();
 
@@ -1890,6 +1901,11 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
               if (!(record instanceof OMilestoneWALRecord) && !(record instanceof OStartWALRecord)) {
                 if (segmentId != lsn.getSegment()) {
+                  if (segmentId > lsn.getSegment()) {
+                    throw new IllegalStateException("Segment id can not be downgraded " +
+                        segmentId + " vs. " + lsn.getSegment());
+                  }
+
                   if (walFile != null) {
                     if (writeBufferPointer != null) {
                       writeBuffer(walFile, writeBuffer, lastLSN, checkPointLSN);
@@ -1907,7 +1923,8 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
                         writeFuture.get();
                       }
                     } catch (final InterruptedException e) {
-                      OLogManager.instance().errorNoDb(this, "WAL write was interrupted", e);
+                      OLogManager.instance().errorNoDb(this,
+                          "WAL write was interrupted", e);
                     }
 
                     assert walFile.position() == currentPosition;
@@ -1918,7 +1935,8 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
                   segmentId = lsn.getSegment();
 
-                  walFile = OWALFile.createWriteWALFile(walLocation.resolve(getSegmentName(segmentId)), allowDirectIO, blockSize);
+                  walFile = OWALFile.createWriteWALFile(walLocation.resolve(getSegmentName(segmentId)), allowDirectIO, blockSize,
+                      segmentId);
                   assert lsn.getPosition() == OCASWALPage.RECORDS_OFFSET;
                   currentPosition = 0;
                 }
@@ -2071,6 +2089,11 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
                 final int cqSize = fileCloseQueueSize.get();
                 if (cqSize > 0) {
+                  if (walFile == null) {
+                    throw new IllegalStateException("There is are queue of WAL files scheduled "
+                        + "for close, but reference to the currently processed WAL file is null");
+                  }
+
                   int counter = 0;
 
                   while (counter < cqSize) {
