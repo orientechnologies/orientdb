@@ -298,6 +298,7 @@ public class OHttpResponse {
 
                   OResult result = (OResult) r;
                   records.add(result.toElement());
+                  result.toElement().getSchemaType().ifPresent(x -> x.properties().forEach(prop -> colNames.add(prop.getName())));
 
                   for (String fieldName : result.getPropertyNames()) {
                     colNames.add(fieldName);
