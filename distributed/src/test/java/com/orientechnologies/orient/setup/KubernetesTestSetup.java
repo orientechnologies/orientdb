@@ -414,7 +414,10 @@ public class KubernetesTestSetup implements TestSetup {
     config.setHttpAddress(httpAddress);
     System.out.printf("  HTTP address for %s: %s\n", serverId, httpAddress);
 
-    portforwarders.put(serverId, Arrays.asList(binaryPortforward, httpPortforward));
+    List<PortForwarder> forwarders = new LinkedList<>();
+    forwarders.add(binaryPortforward);
+    forwarders.add(httpPortforward);
+    portforwarders.put(serverId, forwarders);
   }
 
   private void stopPortForward(String serverId) {

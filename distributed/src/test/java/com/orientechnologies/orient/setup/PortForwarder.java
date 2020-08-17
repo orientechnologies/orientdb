@@ -16,7 +16,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PortForwarder {
-  private Server server;
+//  private Server pf;
+  private KubectlPortForwarder pf;
   private String namespace, podName;
   private int targetPort;
   private String pfId;
@@ -29,25 +30,60 @@ public class PortForwarder {
     pfId = String.format("%s/%s:%d", namespace, podName, targetPort);
     ApiClient client = Config.defaultClient();
     Configuration.setDefaultApiClient(client);
-    PortForward forward = new PortForward();
-    List<Integer> ports = new ArrayList<>();
-    ports.add(targetPort);
-    final PortForward.PortForwardResult result = forward.forward(namespace, podName, ports);
-    server = new Server(result.getInputStream(targetPort), result.getOutboundStream(targetPort));
+//    PortForward forward = new PortForward();
+//    List<Integer> ports = new ArrayList<>();
+//    ports.add(targetPort);
+//    final PortForward.PortForwardResult result = forward.forward(namespace, podName, ports);
+//    pf = new Server(result.getInputStream(targetPort), result.getOutboundStream(targetPort));
+    pf = new KubectlPortForwarder(namespace, podName, targetPort);
   }
 
-  public int start() {
-    int localPort = server.start();
+  public int start() throws IOException {
+    int localPort = pf.start();
+    try {
+      Thread.sleep(10000);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
     System.out.printf("Forwarding port %s -> localhost:%d...\n", pfId, localPort);
     return localPort;
   }
 
   public void stop() {
-    try {
-      server.stop();
-    } catch (IOException e) {
-      System.err.println("Exception while stopping port forwarder: " + e.getMessage());
-      e.printStackTrace();
+    pf.stop();
+  }
+
+  private class KubectlPortForwarder {
+    private String namespace, podName;
+    private int targetPort;
+    private Process process;
+
+    public KubectlPortForwarder(String namespace, String podName, int targetPort) {
+      this.namespace = namespace;
+      this.podName = podName;
+      this.targetPort = targetPort;
+    }
+
+    public int start() throws IOException {
+      int port = getFreePort();
+      String cmd = String.format("kubectl -n %s port-forward %s %d:%d", namespace, podName, port, targetPort);
+      System.out.println("Running command: " + cmd);
+      process = Runtime.getRuntime().exec(cmd);
+//      process.isAlive()
+      return port;
+    }
+
+    public void stop() {
+      process.destroy();
+    }
+
+    private int getFreePort() {
+      try (ServerSocket ss = new ServerSocket(0)) {
+        ss.setReuseAddress(true);
+        return ss.getLocalPort();
+      } catch (IOException e) {
+        throw new TestSetupException("Error getting a free port.", e);
+      }
     }
   }
 
