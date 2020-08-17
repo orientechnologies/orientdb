@@ -297,35 +297,36 @@ public class OEnterpriseServerImpl
         .filter((c) -> c.getDatabase() != null && filter.map(f -> f.apply(c)).orElse(true))
         .flatMap(
             (c) ->
-                c.getDatabase().getActiveQueries().entrySet().stream()
-                    .map(
-                        (k) -> {
-                          OResultInternal internal = new OResultInternal();
-                          internal.setProperty("queryId", k.getKey());
-                          OResultSet resultSet = k.getValue();
+                new HashMap<>(c.getDatabase().getActiveQueries())
+                    .entrySet().stream()
+                        .map(
+                            (k) -> {
+                              OResultInternal internal = new OResultInternal();
+                              internal.setProperty("queryId", k.getKey());
+                              OResultSet resultSet = k.getValue();
 
-                          String user = "-";
+                              String user = "-";
 
-                          if (c.getDatabase() != null && c.getDatabase().getUser() != null) {
-                            user = c.getDatabase().getUser().getName();
-                          }
-                          internal.setProperty("sessionId", c.getId());
-                          internal.setProperty("user", user);
-                          internal.setProperty("database", c.getDatabase().getName());
+                              if (c.getDatabase() != null && c.getDatabase().getUser() != null) {
+                                user = c.getDatabase().getUser().getName();
+                              }
+                              internal.setProperty("sessionId", c.getId());
+                              internal.setProperty("user", user);
+                              internal.setProperty("database", c.getDatabase().getName());
 
-                          Optional<QueryInfo> info = getQueryInfo(resultSet);
+                              Optional<QueryInfo> info = getQueryInfo(resultSet);
 
-                          info.ifPresent(
-                              (it) -> {
-                                internal.setProperty("language", it.getLanguage());
-                                internal.setProperty("query", it.getStatement());
-                                internal.setProperty("startTime", it.getStartTime());
-                                internal.setProperty(
-                                    "elapsedTimeMillis", it.getElapsedTimeMillis());
-                              });
+                              info.ifPresent(
+                                  (it) -> {
+                                    internal.setProperty("language", it.getLanguage());
+                                    internal.setProperty("query", it.getStatement());
+                                    internal.setProperty("startTime", it.getStartTime());
+                                    internal.setProperty(
+                                        "elapsedTimeMillis", it.getElapsedTimeMillis());
+                                  });
 
-                          return internal;
-                        }))
+                              return internal;
+                            }))
         .collect(Collectors.toList());
   }
 
