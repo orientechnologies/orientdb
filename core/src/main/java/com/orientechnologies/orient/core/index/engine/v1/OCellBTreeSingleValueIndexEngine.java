@@ -101,7 +101,7 @@ public final class OCellBTreeSingleValueIndexEngine
   }
 
   @Override
-  public void delete(OAtomicOperation atomicOperation) {
+  public void delete(final OAtomicOperation atomicOperation) {
     try {
       doClearTree(atomicOperation);
       sbTree.delete(atomicOperation);

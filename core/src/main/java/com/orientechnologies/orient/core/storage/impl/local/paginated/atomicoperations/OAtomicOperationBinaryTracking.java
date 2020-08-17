@@ -262,7 +262,6 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
             (int) filledUpTo,
             new OCachePointer(null, null, fileId, (int) filledUpTo),
             false);
-
     return pageChangesContainer;
   }
 
@@ -293,13 +292,10 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
   @Override
   public long filledUpTo(long fileId) {
     fileId = checkFileIdCompatibility(fileId, storageId);
-
     if (deletedFiles.contains(fileId)) {
       throw new OStorageException("File with id " + fileId + " is deleted.");
     }
-
     final FileChanges changesContainer = fileChanges.get(fileId);
-
     return internalFilledUpTo(fileId, changesContainer);
   }
 

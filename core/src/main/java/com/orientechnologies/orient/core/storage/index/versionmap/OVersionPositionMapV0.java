@@ -30,10 +30,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import java.io.IOException;
 import java.util.Arrays;
 
-/**
- * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
- * @since 10/7/13
- */
 public final class OVersionPositionMapV0 extends OVersionPositionMap {
   private long fileId;
 
@@ -53,7 +49,7 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
           acquireExclusiveLock();
           try {
             // fileId = addFile(atomicOperation, getFullName());
-            // TODO: [DR] initCusterState(atomicOperation);
+            // TODO: [DR] something similar to initCusterState(atomicOperation);
             this.createVPM(atomicOperation);
           } finally {
             releaseExclusiveLock();
