@@ -17,18 +17,11 @@
  *  * For more information: http://orientdb.com
  *
  */
-package com.orientechnologies.orient.server;
+package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
-import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.OElement;
@@ -47,7 +40,6 @@ public class OSystemDatabase {
 
   public OSystemDatabase(final OrientDBInternal context) {
     this.context = context;
-    init();
   }
 
   public String getSystemDatabaseName() {
@@ -139,7 +131,7 @@ public class OSystemDatabase {
     }
   }
 
-  private void init() {
+  public void init() {
     final ODatabaseRecordThreadLocal tl = ODatabaseRecordThreadLocal.instance();
     final ODatabaseDocumentInternal oldDbInThread = tl != null ? tl.getIfDefined() : null;
     try {

@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OSystemDatabase;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
@@ -1274,6 +1275,7 @@ public class OServer {
 
   private void initSystemDatabase() {
     systemDatabase = new OSystemDatabase(this.getDatabases());
+    systemDatabase.init();
   }
 
   public OrientDBInternal getDatabases() {
