@@ -102,6 +102,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   private Timer timer;
   private TimerTask autoCloseTimer = null;
   private final OScriptManager scriptManager = new OScriptManager();
+  private final OSystemDatabase systemDatabase;
 
   protected final long maxWALSegmentSize;
   protected final long doubleWriteLogMaxSegSize;
@@ -179,6 +180,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
       final long delay = autoCloseDelay * 60 * 1000;
       initAutoClose(delay);
     }
+    systemDatabase = new OSystemDatabase(this);
   }
 
   protected OCachedDatabasePoolFactory createCachedDatabasePoolFactory(OrientDBConfig config) {
@@ -1134,5 +1136,10 @@ public class OrientDBEmbedded implements OrientDBInternal {
     //      result.addLifecycleListener(this);
     //    }
     return result;
+  }
+
+  @Override
+  public OSystemDatabase getSystemDatabase() {
+    return systemDatabase;
   }
 }

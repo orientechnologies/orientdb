@@ -332,4 +332,8 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
   default void rollbackOperationsFromThread(final Thread thread) {
     throw new UnsupportedOperationException();
   }
+
+  default OSystemDatabase getSystemDatabase() {
+    throw new UnsupportedOperationException();
+  }
 }

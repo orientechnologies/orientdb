@@ -119,7 +119,6 @@ public class OServer {
   private OPushManager pushManager;
   private ClassLoader extensionClassLoader;
   private OTokenHandler tokenHandler;
-  private OSystemDatabase systemDatabase;
   private OrientDB context;
   private OrientDBInternal databases;
   protected Date startedOn = new Date();
@@ -262,7 +261,7 @@ public class OServer {
   }
 
   public OSystemDatabase getSystemDatabase() {
-    return systemDatabase;
+    return databases.getSystemDatabase();
   }
 
   public String getServerId() {
@@ -1274,8 +1273,7 @@ public class OServer {
   }
 
   private void initSystemDatabase() {
-    systemDatabase = new OSystemDatabase(this.getDatabases());
-    systemDatabase.init();
+    databases.getSystemDatabase().init();
   }
 
   public OrientDBInternal getDatabases() {
