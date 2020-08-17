@@ -203,9 +203,7 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
           acquireExclusiveLock();
           try {
             fileId = addFile(atomicOperation, getFullName());
-
             initCusterState(atomicOperation);
-
             clusterPositionMap.create(atomicOperation);
           } finally {
             releaseExclusiveLock();
@@ -237,7 +235,6 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
       if (flush) {
         synch();
       }
-
       readCache.closeFile(fileId, flush, writeCache);
       clusterPositionMap.close(flush);
     } finally {
@@ -260,9 +257,7 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
                       + entries
                       + " records");
             }
-
             deleteFile(atomicOperation, fileId);
-
             clusterPositionMap.delete(atomicOperation);
           } finally {
             releaseExclusiveLock();

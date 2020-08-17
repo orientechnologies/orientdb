@@ -15,6 +15,8 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.OCellBTreeSingleValue;
 import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.CellBTreeSingleValueV1;
 import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v3.CellBTreeSingleValueV3;
+import com.orientechnologies.orient.core.storage.index.versionmap.OVersionPositionMap;
+import com.orientechnologies.orient.core.storage.index.versionmap.OVersionPositionMapV0;
 import java.io.IOException;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -25,7 +27,7 @@ public final class OCellBTreeSingleValueIndexEngine
   private static final String NULL_BUCKET_FILE_EXTENSION = ".nbt";
 
   private final OCellBTreeSingleValue<Object> sbTree;
-  // private final OVersionPositionMap versionPositionMap;
+  private final OVersionPositionMap versionPositionMap;
   private final String name;
   private final int id;
 
@@ -45,9 +47,14 @@ public final class OCellBTreeSingleValueIndexEngine
     } else {
       throw new IllegalStateException("Invalid tree version " + version);
     }
-    // versionPositionMap =
-    //    new OVersionPositionMapV0(storage, name, name + DATA_FILE_EXTENSION,
-    // OVersionPositionMap.DEF_EXTENSION);
+    // TODO: [DR] merge in[] into versionPositionMap
+    keyVersions = new int[DEFAULT_VERSION_ARRAY_SIZE];
+    for (int i = 0; i < DEFAULT_VERSION_ARRAY_SIZE; i++) {
+      keyVersions[i] = DEFAULT_VERSION;
+    }
+    versionPositionMap =
+        new OVersionPositionMapV0(
+            storage, name, name + DATA_FILE_EXTENSION, OVersionPositionMap.DEF_EXTENSION);
   }
 
   @Override
@@ -85,8 +92,9 @@ public final class OCellBTreeSingleValueIndexEngine
     try {
       //noinspection unchecked
       sbTree.create(atomicOperation, keySerializer, keyTypes, keySize, encryption);
-
-      // TODO: create version position map, lock on key level - lock manager
+      // TODO: [DR] create version position map OR better in constructor, lock on key level - lock
+      versionPositionMap.create(atomicOperation);
+      // manager
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error of creation of index " + name), e);
     }
@@ -96,8 +104,8 @@ public final class OCellBTreeSingleValueIndexEngine
   public void delete(OAtomicOperation atomicOperation) {
     try {
       doClearTree(atomicOperation);
-
       sbTree.delete(atomicOperation);
+      versionPositionMap.delete(atomicOperation);
     } catch (IOException e) {
       throw OException.wrapException(
           new OIndexException("Error during deletion of index " + name), e);
@@ -115,7 +123,6 @@ public final class OCellBTreeSingleValueIndexEngine
             }
           });
     }
-
     sbTree.remove(atomicOperation, null);
   }
 
@@ -128,6 +135,7 @@ public final class OCellBTreeSingleValueIndexEngine
       final OEncryption encryption) {
     //noinspection unchecked
     sbTree.load(indexName, keySize, keyTypes, keySerializer, encryption);
+    // TODO: [DR] VPM
   }
 
   @Override
@@ -160,7 +168,6 @@ public final class OCellBTreeSingleValueIndexEngine
     if (rid == null) {
       return Stream.empty();
     }
-
     return Stream.of(rid);
   }
 
@@ -170,7 +177,6 @@ public final class OCellBTreeSingleValueIndexEngine
     if (firstKey == null) {
       return Stream.empty();
     }
-
     return sbTree.iterateEntriesMajor(firstKey, true, true);
   }
 
@@ -180,7 +186,6 @@ public final class OCellBTreeSingleValueIndexEngine
     if (lastKey == null) {
       return Stream.empty();
     }
-
     return sbTree.iterateEntriesMinor(lastKey, true, false);
   }
 
@@ -256,13 +261,34 @@ public final class OCellBTreeSingleValueIndexEngine
   }
 
   @Override
-  public void updateUniqueIndexVersion(Object key) {
-    // TODO: [DR] implement
+  public void updateUniqueIndexVersion(final Object key) {
+    this.applyUniqueIndexChange(key);
   }
 
+  private final int[] keyVersions;
+  private static final int DEFAULT_VERSION = 0;
+  private static final int CONCURRENT_DISTRIBUTED_TRANSACTIONS = 1000;
+  private static final int SAFETY_FILL_FACTOR = 10;
+  private static final int DEFAULT_VERSION_ARRAY_SIZE =
+      CONCURRENT_DISTRIBUTED_TRANSACTIONS * SAFETY_FILL_FACTOR;
+
   @Override
-  public int getUniqueIndexVersion(Object key) {
-    // TODO: [DR] implement
-    return 0;
+  public int getUniqueIndexVersion(final Object key) {
+    final int keyHash = getKeyHash(key);
+    return keyVersions[keyHash];
+  }
+
+  private void applyUniqueIndexChange(final Object key) {
+    final int keyHash = getKeyHash(key);
+    final int version = ++keyVersions[keyHash];
+    keyVersions[keyHash] = version;
+  }
+
+  private int getKeyHash(final Object key) {
+    int keyHash = 0; // as for null values in hash map
+    if (key != null) {
+      keyHash = Math.abs(key.hashCode()) % DEFAULT_VERSION_ARRAY_SIZE;
+    }
+    return keyHash;
   }
 }
