@@ -38,12 +38,16 @@ import com.orientechnologies.orient.client.remote.message.ODropDatabaseRequest;
 import com.orientechnologies.orient.client.remote.message.ODropDatabaseResponse;
 import com.orientechnologies.orient.client.remote.message.OExistsDatabaseRequest;
 import com.orientechnologies.orient.client.remote.message.OExistsDatabaseResponse;
+import com.orientechnologies.orient.client.remote.message.OFreezeDatabaseRequest;
+import com.orientechnologies.orient.client.remote.message.OFreezeDatabaseResponse;
 import com.orientechnologies.orient.client.remote.message.OGetGlobalConfigurationRequest;
 import com.orientechnologies.orient.client.remote.message.OGetGlobalConfigurationResponse;
 import com.orientechnologies.orient.client.remote.message.OListDatabasesRequest;
 import com.orientechnologies.orient.client.remote.message.OListDatabasesResponse;
 import com.orientechnologies.orient.client.remote.message.OListGlobalConfigurationsRequest;
 import com.orientechnologies.orient.client.remote.message.OListGlobalConfigurationsResponse;
+import com.orientechnologies.orient.client.remote.message.OReleaseDatabaseRequest;
+import com.orientechnologies.orient.client.remote.message.OReleaseDatabaseResponse;
 import com.orientechnologies.orient.client.remote.message.ORemoteResultSet;
 import com.orientechnologies.orient.client.remote.message.OServerInfoRequest;
 import com.orientechnologies.orient.client.remote.message.OServerInfoResponse;
@@ -277,9 +281,13 @@ public class OrientDBRemote implements OrientDBInternal {
 
   @Override
   public Set<String> listDatabases(String user, String password) {
+    return getDatabases(user, password).keySet();
+  }
+
+  public Map<String, String> getDatabases(String user, String password) {
     OListDatabasesRequest request = new OListDatabasesRequest();
     OListDatabasesResponse response = connectAndSend(null, user, password, request);
-    return response.getDatabases().keySet();
+    return response.getDatabases();
   }
 
   @Override
@@ -494,6 +502,16 @@ public class OrientDBRemote implements OrientDBInternal {
   @Override
   public <X> Future<X> execute(String database, String user, ODatabaseTask<X> task) {
     throw new UnsupportedOperationException("execute with no session not available in remote");
+  }
+
+  public void releaseDatabase(String database, String user, String password) {
+    OReleaseDatabaseRequest request = new OReleaseDatabaseRequest(database, null);
+    OReleaseDatabaseResponse response = connectAndSend(database, user, password, request);
+  }
+
+  public void freezeDatabase(String database, String user, String password) {
+    OFreezeDatabaseRequest request = new OFreezeDatabaseRequest(database, null);
+    OFreezeDatabaseResponse response = connectAndSend(database, user, password, request);
   }
 
   @Override
