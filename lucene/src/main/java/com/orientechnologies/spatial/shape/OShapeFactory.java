@@ -19,7 +19,6 @@ import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -177,6 +176,15 @@ public class OShapeFactory extends OComplexShapeBuilder {
       }
     }
     return doc;
+  }
+
+  @Override
+  protected ODocument toDoc(Shape shape, Geometry geometry) {
+    if (Point.class.isAssignableFrom(shape.getClass())) {
+      return factories.get(OPointShapeBuilder.NAME).toDoc(shape, geometry);
+    } else {
+      return toDoc(shape);
+    }
   }
 
   @Override

@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.spatial.shape;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -22,12 +23,10 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.io.WKBWriter;
 import org.locationtech.jts.io.WKTReader;
 import org.locationtech.jts.operation.buffer.BufferOp;
@@ -39,7 +38,6 @@ import org.locationtech.spatial4j.context.jts.ValidationRule;
 import org.locationtech.spatial4j.shape.Rectangle;
 import org.locationtech.spatial4j.shape.Shape;
 import org.locationtech.spatial4j.shape.jts.JtsGeometry;
-import org.locationtech.spatial4j.shape.jts.JtsPoint;
 import org.locationtech.spatial4j.shape.jts.JtsShapeFactory;
 
 public abstract class OShapeBuilder<T extends Shape> {
@@ -141,15 +139,7 @@ public abstract class OShapeBuilder<T extends Shape> {
   }
 
   public T fromText(String wkt) throws ParseException, org.locationtech.jts.io.ParseException {
-    Object entity;
-    if (wkt.toLowerCase(Locale.ENGLISH).contains("z")) {
-      entity = wktReader.read(wkt);
-      if(entity instanceof Point){
-        entity = new JtsPoint((Point) entity, SPATIAL_CONTEXT);
-      }
-    } else {
-      entity = (T) SPATIAL_CONTEXT.getWktShapeParser().parse(wkt);
-    }
+    Object entity = (T) SPATIAL_CONTEXT.getWktShapeParser().parse(wkt);
 
     if (entity instanceof Rectangle) {
       Geometry geometryFrom = SHAPE_FACTORY.getGeometryFrom((Shape) entity);
@@ -160,9 +150,16 @@ public abstract class OShapeBuilder<T extends Shape> {
 
   public abstract ODocument toDoc(T shape);
 
+  protected ODocument toDoc(T parsed, Geometry geometry) {
+    if (geometry == null || Double.isNaN(geometry.getCoordinates()[0].getZ())) {
+      return toDoc(parsed);
+    }
+    throw new IllegalArgumentException("Invalid shape");
+  }
+
   public ODocument toDoc(String wkt) throws ParseException, org.locationtech.jts.io.ParseException {
     T parsed = fromText(wkt);
-    return toDoc(parsed);
+    return toDoc(parsed, OGlobalConfiguration.SPATIAL_ENABLE_DIRECT_WKT_READER.getValueAsBoolean() ? wktReader.read(wkt) : null);
   }
 
   public int getSRID(Shape shape) {
