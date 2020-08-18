@@ -19,11 +19,14 @@ import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.LineString;
 import org.locationtech.spatial4j.shape.Point;
 import org.locationtech.spatial4j.shape.Rectangle;
 import org.locationtech.spatial4j.shape.Shape;
@@ -182,6 +185,8 @@ public class OShapeFactory extends OComplexShapeBuilder {
   protected ODocument toDoc(Shape shape, Geometry geometry) {
     if (Point.class.isAssignableFrom(shape.getClass())) {
       return factories.get(OPointShapeBuilder.NAME).toDoc(shape, geometry);
+    } else if (geometry != null && "LineString".equals(geometry.getClass().getSimpleName())) {
+      return factories.get("OLineString").toDoc(shape, geometry);
     } else {
       return toDoc(shape);
     }
@@ -224,7 +229,7 @@ public class OShapeFactory extends OComplexShapeBuilder {
     }
     if (geometry instanceof org.locationtech.jts.geom.GeometryCollection) {
       org.locationtech.jts.geom.GeometryCollection gc =
-          (org.locationtech.jts.geom.GeometryCollection) geometry;
+              (org.locationtech.jts.geom.GeometryCollection) geometry;
       List<Shape> shapes = new ArrayList<Shape>();
       for (int i = 0; i < gc.getNumGeometries(); i++) {
         Geometry geo = gc.getGeometryN(i);
