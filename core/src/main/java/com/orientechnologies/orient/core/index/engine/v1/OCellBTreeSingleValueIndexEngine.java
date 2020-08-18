@@ -47,11 +47,6 @@ public final class OCellBTreeSingleValueIndexEngine
     } else {
       throw new IllegalStateException("Invalid tree version " + version);
     }
-    // TODO: [DR] merge in[] into versionPositionMap
-    keyVersions = new int[DEFAULT_VERSION_ARRAY_SIZE];
-    for (int i = 0; i < DEFAULT_VERSION_ARRAY_SIZE; i++) {
-      keyVersions[i] = DEFAULT_VERSION;
-    }
     versionPositionMap =
         new OVersionPositionMapV0(
             storage, name, name + DATA_FILE_EXTENSION, OVersionPositionMap.DEF_EXTENSION);
@@ -92,6 +87,12 @@ public final class OCellBTreeSingleValueIndexEngine
     try {
       //noinspection unchecked
       sbTree.create(atomicOperation, keySerializer, keyTypes, keySize, encryption);
+
+      // TODO: [DR] merge in[] into versionPositionMap
+      keyVersions = new int[DEFAULT_VERSION_ARRAY_SIZE];
+      for (int i = 0; i < DEFAULT_VERSION_ARRAY_SIZE; i++) {
+        keyVersions[i] = DEFAULT_VERSION;
+      }
       // TODO: [DR] create version position map OR better in constructor, lock on key level - lock
       versionPositionMap.create(atomicOperation);
       // manager
@@ -265,7 +266,7 @@ public final class OCellBTreeSingleValueIndexEngine
     this.applyUniqueIndexChange(key);
   }
 
-  private final int[] keyVersions;
+  private int[] keyVersions;
   private static final int DEFAULT_VERSION = 0;
   private static final int CONCURRENT_DISTRIBUTED_TRANSACTIONS = 1000;
   private static final int SAFETY_FILL_FACTOR = 10;

@@ -92,7 +92,6 @@ public final class OVersionPositionMapBucket extends ODurablePage {
     position += OLongSerializer.LONG_SIZE;
 
     final int recordPosition = getIntValue(position);
-
     setIntValue(SIZE_OFFSET, size - 1);
 
     addPageOperation(

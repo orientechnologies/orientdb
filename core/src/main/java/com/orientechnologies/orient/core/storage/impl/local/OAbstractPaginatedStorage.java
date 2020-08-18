@@ -2808,7 +2808,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                       cfgEncryption,
                       cfgEncryptionKey,
                       engineProperties);
-
               ((OClusterBasedStorageConfiguration) configuration)
                   .addIndexEngine(atomicOperation, engineName, engineData);
 
@@ -2821,7 +2820,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                         engineName, OIndexRIDContainerSBTree.INDEX_FILE_EXTENSION, this);
                 tree.createComponent(atomicOperation);
               }
-
               return generateIndexId(indexEngines.size() - 1, engine);
             });
       } catch (final IOException e) {

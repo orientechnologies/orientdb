@@ -30,7 +30,16 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import java.io.IOException;
 import java.util.Arrays;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISK_CACHE_PAGE_SIZE;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY;
+
 public final class OVersionPositionMapV0 extends OVersionPositionMap {
+  private static final int STATE_ENTRY_INDEX = 0;
+  private static final int DISK_PAGE_SIZE = DISK_CACHE_PAGE_SIZE.getValueAsInteger();
+  private static final int LOWEST_FREELIST_BOUNDARY =
+      PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY.getValueAsInteger();
+  private static final int FREE_LIST_SIZE = DISK_PAGE_SIZE - LOWEST_FREELIST_BOUNDARY;
+
   private long fileId;
 
   public OVersionPositionMapV0(
@@ -48,13 +57,37 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
         operation -> {
           acquireExclusiveLock();
           try {
-            // fileId = addFile(atomicOperation, getFullName());
-            // TODO: [DR] something similar to initCusterState(atomicOperation);
+            // TODO: [DR] init array with default versions
+            // this.initVersionState(atomicOperation);
             this.createVPM(atomicOperation);
           } finally {
             releaseExclusiveLock();
           }
         });
+  }
+
+  private void initVersionState(final OAtomicOperation atomicOperation) throws IOException {
+    final OCacheEntry stateEntry;
+    if (getFilledUpTo(atomicOperation, fileId) == 0) {
+      stateEntry = addPage(atomicOperation, fileId);
+    } else {
+      stateEntry = loadPageForWrite(atomicOperation, fileId, STATE_ENTRY_INDEX, false, false);
+    }
+
+    assert stateEntry.getPageIndex() == 0;
+    try {
+      final OPaginatedVersionStateV0 paginatedClusterState =
+          new OPaginatedVersionStateV0(stateEntry);
+      paginatedClusterState.setSize(0);
+      paginatedClusterState.setRecordsSize(0);
+      paginatedClusterState.setFileSize(0);
+
+      for (int i = 0; i < FREE_LIST_SIZE; i++) {
+        paginatedClusterState.setFreeListPage(i, -1);
+      }
+    } finally {
+      releasePageFromWrite(atomicOperation, stateEntry);
+    }
   }
 
   @Override
