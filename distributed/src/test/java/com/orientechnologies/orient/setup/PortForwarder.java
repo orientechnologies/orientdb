@@ -1,15 +1,16 @@
 package com.orientechnologies.orient.setup;
 
 import com.google.common.io.ByteStreams;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import io.kubernetes.client.PortForward;
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.Configuration;
 import io.kubernetes.client.util.Config;
+import org.joda.time.DateTime;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -65,12 +66,52 @@ public class PortForwarder {
     }
 
     public int start() throws IOException {
-      int port = getFreePort();
-      String cmd = String.format("kubectl -n %s port-forward %s %d:%d", namespace, podName, port, targetPort);
-      System.out.println("Running command: " + cmd);
-      process = Runtime.getRuntime().exec(cmd);
-//      process.isAlive()
-      return port;
+      for (int i = 0; i < 5; i++) {
+        int port = getFreePort();
+        String cmd =
+            String.format(
+                "kubectl -n %s port-forward %s %d:%d", namespace, podName, port, targetPort);
+        System.out.println("Running command: " + cmd);
+        process = Runtime.getRuntime().exec(cmd);
+        boolean stdout = false, stderr = false;
+        System.out.printf("Waiting for command to run '%s' ...\n", cmd);
+        while (!stdout && !stderr) {
+          try {
+            Thread.sleep(1000);
+          } catch (InterruptedException e) {
+          }
+          stdout = process.getInputStream().available() > 0;
+          stderr = process.getErrorStream().available() > 0;
+        }
+        if (stderr) {
+          BufferedReader reader =
+              new BufferedReader(new InputStreamReader(process.getErrorStream()));
+          System.out.println("error setting up kubectl: " + reader.readLine());
+        } else if (stdout) {
+          BufferedReader reader =
+              new BufferedReader(new InputStreamReader(process.getInputStream()));
+          System.out.println("Output of kubectl: " + reader.readLine());
+          if (targetPort != 2424) {
+            return port;
+          }
+          // check if working
+          OrientDB remote = new OrientDB(String.format("remote:localhost:%d", port), "root", "test", OrientDBConfig.defaultConfig());
+          try {
+            remote.list();
+            return port;
+          } catch (Exception e) {
+          } finally {
+            remote.close();
+          }
+        }
+        process.destroy();
+        System.out.println("Trying kubectl again!");
+        try {
+          Thread.sleep(5000);
+        } catch (InterruptedException e) {
+        }
+      }
+      throw new TestSetupException("Cannot setup kubectl port-forward.");
     }
 
     public void stop() {

@@ -187,9 +187,12 @@ public class KubernetesTestSetup implements TestSetup {
   }
 
   private boolean areThereReadyReplicas(V1StatefulSet statefulSet) {
+    System.out.printf("Status of %s is %s.\n\n", statefulSet.getMetadata().getName(), statefulSet.getStatus());
     if (statefulSet.getStatus() != null
         && statefulSet.getStatus().getReadyReplicas() != null
-        && statefulSet.getStatus().getReadyReplicas() > 0) {
+        && statefulSet.getStatus().getReadyReplicas() > 0
+        && statefulSet.getStatus().getCurrentReplicas() != null
+        && statefulSet.getStatus().getCurrentReplicas() > 0) {
       return true;
     }
     return false;
@@ -254,14 +257,14 @@ public class KubernetesTestSetup implements TestSetup {
       } catch (ApiException e) {
         System.out.printf("  Error deleting Service %s: %s\n", serviceName, e.getResponseBody());
       }
-      serviceName = config.getNodeName() + "-service";
-      try {
-        coreV1Api.deleteNamespacedService(
-            serviceName, namespace, null, null, null, null, null, null);
-        System.out.printf("  Deleted Service %s\n", serviceName);
-      } catch (ApiException e) {
-        System.out.printf("  Error deleting Service %s: %s\n", serviceName, e.getResponseBody());
-      }
+//      serviceName = config.getNodeName() + "-service";
+//      try {
+//        coreV1Api.deleteNamespacedService(
+//            serviceName, namespace, null, null, null, null, null, null);
+//        System.out.printf("  Deleted Service %s\n", serviceName);
+//      } catch (ApiException e) {
+//        System.out.printf("  Error deleting Service %s: %s\n", serviceName, e.getResponseBody());
+//      }
     }
     System.out.println("Removing PVCs.");
     for (Iterator<String> it = PVCsToDelete.iterator(); it.hasNext(); ) {

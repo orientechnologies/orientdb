@@ -4,10 +4,11 @@ import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
-import com.orientechnologies.orient.setup.configs.SimpleDServerConfig;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.setup.SetupConfig;
 import com.orientechnologies.orient.setup.TestSetup;
 import com.orientechnologies.orient.setup.TestSetupUtil;
+import com.orientechnologies.orient.setup.configs.SimpleDServerConfig;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -16,9 +17,9 @@ import static org.junit.Assert.assertEquals;
 
 public class BasicSyncIT {
 
-  private TestSetup   setup;
+  private TestSetup setup;
   private SetupConfig config;
-  private String      server0, server1, server2;
+  private String server0, server1, server2;
 
   @Before
   public void before() throws Exception {
@@ -115,13 +116,13 @@ public class BasicSyncIT {
 
   @After
   public void after() {
-//    try {
-//      OrientDB remote = setup.createRemote(server0, "root", "test", OrientDBConfig.defaultConfig());
-//      remote.drop("test");
-//      remote.close();
-//    } finally {
-//      setup.teardown();
-//      ODatabaseDocumentTx.closeAll();
-//    }
+    try {
+      OrientDB remote = setup.createRemote(server0, "root", "test", OrientDBConfig.defaultConfig());
+      remote.drop("test");
+      remote.close();
+    } finally {
+      setup.teardown();
+      ODatabaseDocumentTx.closeAll();
+    }
   }
 }
