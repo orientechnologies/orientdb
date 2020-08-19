@@ -3,7 +3,6 @@ package com.orientechnologies.orient.setup;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import io.kubernetes.client.openapi.ApiClient;
@@ -22,9 +21,10 @@ import okhttp3.OkHttpClient;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+
+import static com.orientechnologies.orient.setup.TestSetupUtil.log;
 
 public class KubernetesTestSetup implements TestSetup {
   // Used for listing OrientDB stateful sets.
@@ -104,7 +104,7 @@ public class KubernetesTestSetup implements TestSetup {
    */
   @Override
   public void setup() throws TestSetupException {
-    System.out.printf("%s Starting servers...\n", LocalDateTime.now());
+    log("Starting servers...");
     for (String serverId : setupConfig.getServerIds()) {
       K8sServerConfig serverConfig = setupConfig.getK8sConfigs(serverId);
       serverConfig.validate();
@@ -135,7 +135,7 @@ public class KubernetesTestSetup implements TestSetup {
   private void waitForInstances(
       int timeoutSecond, Collection<String> serverIds, String labelSelector)
       throws ApiException, IOException {
-    OLogManager.instance().info(this, "Wait till instances %s are ready.", serverIds);
+    log("Wait till instances %s are ready.", serverIds);
     Set<String> ids = new HashSet<>(serverIds);
 
     ApiClient client = Configuration.getDefaultApiClient();
@@ -165,14 +165,14 @@ public class KubernetesTestSetup implements TestSetup {
     try {
       for (Watch.Response<V1StatefulSet> item : watch) {
         if (item.type.equalsIgnoreCase("ERROR")) {
-          System.out.printf("Got error from watch: %s\n", item.status.getMessage());
+          log("  Got error from watch: %s", item.status.getMessage());
         } else {
           String id = item.object.getMetadata().getName();
           if (areThereReadyReplicas(item.object) && ids.contains(id)) {
-            System.out.printf("  Server %s has at least one ready replica.\n", id);
+            log("  Server %s has at least one ready replica.", id);
             ids.remove(id);
             if (ids.isEmpty()) {
-              System.out.printf("  All instances %s are ready.\n", serverIds);
+              log("  All instances %s are ready.", serverIds);
               break;
             }
           }
@@ -182,12 +182,11 @@ public class KubernetesTestSetup implements TestSetup {
       watch.close();
     }
     if (System.currentTimeMillis() > (started + timeoutSecond * 1000) && !ids.isEmpty()) {
-      throw new TestSetupException("Timed out waiting for instances to get ready.");
+      throw new TestSetupException("  Timed out waiting for instances to get ready.");
     }
   }
 
   private boolean areThereReadyReplicas(V1StatefulSet statefulSet) {
-    System.out.printf("Status of %s is %s.\n\n", statefulSet.getMetadata().getName(), statefulSet.getStatus());
     if (statefulSet.getStatus() != null
         && statefulSet.getStatus().getReadyReplicas() != null
         && statefulSet.getStatus().getReadyReplicas() > 0
@@ -211,7 +210,7 @@ public class KubernetesTestSetup implements TestSetup {
   }
 
   private void scaleStatefulSet(String statefulSetName, int newReplicaCount) throws ApiException {
-    System.out.printf("Scaling %s to %d replicas.\n", statefulSetName, newReplicaCount);
+    log("Scaling %s to %d replicas.", statefulSetName, newReplicaCount);
     AppsV1Api appsV1Api = new AppsV1Api();
     V1Scale scale = appsV1Api.readNamespacedStatefulSetScale(statefulSetName, namespace, null);
     V1Scale newScale =
@@ -227,44 +226,42 @@ public class KubernetesTestSetup implements TestSetup {
     AppsV1Api appsV1Api = new AppsV1Api();
 
     for (String serverId : setupConfig.getServerIds()) {
-      System.out.printf("Stop port-forward for node %s.\n", serverId);
+      log("Stop port-forward for node %s.", serverId);
       stopPortForward(serverId);
-      System.out.printf("Tearing down node %s.\n", serverId);
+      log("Tearing down node %s.", serverId);
       K8sServerConfig config = setupConfig.getK8sConfigs(serverId);
       String configMapName = config.getConfigMapName();
       String statefulSetName = config.getNodeName();
       try {
         coreV1Api.deleteNamespacedConfigMap(
             configMapName, namespace, null, null, null, null, null, null);
-        System.out.printf("  Deleted ConfigMap %s\n", configMapName);
+        log("  Deleted ConfigMap %s", configMapName);
       } catch (ApiException e) {
-        System.out.printf(
-            "  Error deleting ConfigMap %s: %s\n", configMapName, e.getResponseBody());
+        log("  Error deleting ConfigMap %s: %s", configMapName, e.getResponseBody());
       }
       try {
         appsV1Api.deleteNamespacedStatefulSet(
             statefulSetName, namespace, null, null, null, null, null, null);
-        System.out.printf("  Deleted StatefulSet %s\n", statefulSetName);
+        log("  Deleted StatefulSet %s", statefulSetName);
       } catch (ApiException e) {
-        System.out.printf(
-            "  Error deleting StatefulSet %s: %s\n", statefulSetName, e.getResponseBody());
+        log("  Error deleting StatefulSet %s: %s", statefulSetName, e.getResponseBody());
       }
       String serviceName = config.getNodeName();
       try {
         coreV1Api.deleteNamespacedService(
             serviceName, namespace, null, null, null, null, null, null);
-        System.out.printf("  Deleted Service %s\n", serviceName);
+        log("  Deleted Service %s", serviceName);
       } catch (ApiException e) {
-        System.out.printf("  Error deleting Service %s: %s\n", serviceName, e.getResponseBody());
+        log("  Error deleting Service %s: %s", serviceName, e.getResponseBody());
       }
-//      serviceName = config.getNodeName() + "-service";
-//      try {
-//        coreV1Api.deleteNamespacedService(
-//            serviceName, namespace, null, null, null, null, null, null);
-//        System.out.printf("  Deleted Service %s\n", serviceName);
-//      } catch (ApiException e) {
-//        System.out.printf("  Error deleting Service %s: %s\n", serviceName, e.getResponseBody());
-//      }
+      //      serviceName = config.getNodeName() + "-service";
+      //      try {
+      //        coreV1Api.deleteNamespacedService(
+      //            serviceName, namespace, null, null, null, null, null, null);
+      //        log("  Deleted Service %s", serviceName);
+      //      } catch (ApiException e) {
+      //        log("  Error deleting Service %s: %s", serviceName, e.getResponseBody());
+      //      }
     }
     System.out.println("Removing PVCs.");
     for (Iterator<String> it = PVCsToDelete.iterator(); it.hasNext(); ) {
@@ -272,13 +269,13 @@ public class KubernetesTestSetup implements TestSetup {
       try {
         coreV1Api.deleteNamespacedPersistentVolumeClaim(
             pvc, namespace, null, null, null, null, null, new V1DeleteOptions());
-        System.out.printf("  Deleted PVC %s\n", pvc);
+        log("  Deleted PVC %s", pvc);
       } catch (JsonSyntaxException e) {
         // There is a known bug with the auto-generated 'official' Kubernetes client for Java which
         // can lead to the following call throwing an exception, although it succeeds!
         // https://github.com/kubernetes-client/java/issues/86
       } catch (ApiException e) {
-        System.out.printf("  Error deleting PVC %s: %s\n", pvc, e.getResponseBody());
+        log("  Error deleting PVC %s: %s", pvc, e.getResponseBody());
       } finally {
         // TODO: to work-around the bug, double-check that PVC is gone here!
         it.remove();
@@ -306,7 +303,7 @@ public class KubernetesTestSetup implements TestSetup {
   public OrientDB createRemote(
       String serverId, String serverUser, String serverPassword, OrientDBConfig config) {
     String url = "remote:" + getAddress(serverId, PortType.BINARY);
-    System.out.printf("Creating remote connection to server '%s' at %s.\n", serverId, url);
+    log("Creating remote connection to server '%s' at %s.", serverId, url);
     return new OrientDBIT(url, serverUser, serverPassword, config);
   }
 
@@ -360,35 +357,35 @@ public class KubernetesTestSetup implements TestSetup {
   }
 
   private void createRBAC() throws IOException, URISyntaxException, ApiException {
+    log("Creating  RBAC.");
     CoreV1Api coreV1Api = new CoreV1Api();
     RbacAuthorizationV1Api rbacV1Api = new RbacAuthorizationV1Api();
     String manifests = ManifestTemplate.generateRBAC();
     for (Object obj : Yaml.loadAll(manifests)) {
       if (obj instanceof V1ServiceAccount) {
-        coreV1Api.createNamespacedServiceAccount(
-            namespace, (V1ServiceAccount) obj, null, null, null);
+        V1ServiceAccount sa = (V1ServiceAccount)obj;
+        coreV1Api.replaceNamespacedServiceAccount(sa.getMetadata().getName(), namespace, sa, null, null, null);
       } else if (obj instanceof V1Role) {
-        rbacV1Api.createNamespacedRole(namespace, (V1Role) obj, null, null, null);
+        V1Role r = (V1Role) obj;
+        rbacV1Api.replaceNamespacedRole(r.getMetadata().getName(), namespace, (V1Role) obj, null, null, null);
       } else if (obj instanceof V1RoleBinding) {
-        rbacV1Api.createNamespacedRoleBinding(namespace, (V1RoleBinding) obj, null, null, null);
+        V1RoleBinding rb = (V1RoleBinding)obj;
+        rbacV1Api.replaceNamespacedRoleBinding(rb.getMetadata().getName(), namespace, (V1RoleBinding) obj, null, null, null);
       } else {
-        System.out.printf(
-            "Ignoring Kubernetes object %s when creating RBAC.\n", obj.getClass().getSimpleName());
+        log("Ignoring Kubernetes object %s when creating RBAC.", obj.getClass().getSimpleName());
       }
     }
   }
 
   private void doStartServer(String serverId, K8sServerConfig config)
       throws ApiException, IOException, URISyntaxException {
-    System.out.printf("Starting instance %s.\n", serverId);
+    log("Starting instance %s.", serverId);
     V1ConfigMap cm = createConfigMap(serverId, config);
-    System.out.printf("  Created ConfigMap %s for %s.\n", cm.getMetadata().getName(), serverId);
+    log("  Created ConfigMap %s for %s.", cm.getMetadata().getName(), serverId);
     V1Service headless = createHeadlessService(serverId, config);
-    System.out.printf(
-        "  Created Headless Service %s for %s.\n", headless.getMetadata().getName(), serverId);
+    log("  Created Headless Service %s for %s.", headless.getMetadata().getName(), serverId);
     V1StatefulSet statefulSet = createStatefulSet(serverId, config);
-    System.out.printf(
-        "  Created StatefulSet %s for %s.\n", statefulSet.getMetadata().getName(), serverId);
+    log("  Created StatefulSet %s for %s.", statefulSet.getMetadata().getName(), serverId);
     // must also keep track of PVCs to remove later
     for (V1PersistentVolumeClaim pvc : statefulSet.getSpec().getVolumeClaimTemplates()) {
       PVCsToDelete.add(
@@ -399,6 +396,7 @@ public class KubernetesTestSetup implements TestSetup {
 
   private void setupPortForward(String serverId, K8sServerConfig config)
       throws IOException, ApiException {
+    log("Setting up port-forward for %s.", serverId);
     // Each server has its own StatefulSet with its name and has one replica. Therefore, pod name is
     // always the same.
     String serverPod = String.format("%s-0", serverId);
@@ -410,12 +408,12 @@ public class KubernetesTestSetup implements TestSetup {
     int localBinaryPort = binaryPortforward.start();
     String binaryAddress = String.format("localhost:%d", localBinaryPort);
     config.setBinaryAddress(binaryAddress);
-    System.out.printf("  Binary address for %s: %s\n", serverId, binaryAddress);
+    log("  Binary address for %s: %s", serverId, binaryAddress);
 
     int localHttpPort = httpPortforward.start();
     String httpAddress = String.format("localhost:%d", localHttpPort);
     config.setHttpAddress(httpAddress);
-    System.out.printf("  HTTP address for %s: %s\n", serverId, httpAddress);
+    log("  HTTP address for %s: %s", serverId, httpAddress);
 
     List<PortForwarder> forwarders = new LinkedList<>();
     forwarders.add(binaryPortforward);

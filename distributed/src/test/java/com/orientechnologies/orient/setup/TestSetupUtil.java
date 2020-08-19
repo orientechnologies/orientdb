@@ -1,6 +1,8 @@
 package com.orientechnologies.orient.setup;
 
 import io.kubernetes.client.openapi.StringUtil;
+import org.joda.time.DateTime;
+
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -25,10 +27,10 @@ public class TestSetupUtil {
   public static TestSetup create(SetupConfig SetupConfig) throws IOException {
     String kubeConfigFile = System.getProperty("kubeConfig");
     if (kubeConfigFile == null) {
-      System.out.println("Running with local JVMs");
+      log("Running with local JVMs.");
       return new LocalTestSetup(SetupConfig);
     }
-    System.out.println("Running with Kube Config file " + kubeConfigFile);
+    log("Running with Kube Config file " + kubeConfigFile);
     return new KubernetesTestSetup(kubeConfigFile, SetupConfig);
   }
 
@@ -67,5 +69,9 @@ public class TestSetupUtil {
     List<String> lines =
         Files.readAllLines(Paths.get(ManifestTemplate.class.getResource(resourceFileName).toURI()));
     return StringUtil.join(lines.toArray(new String[] {}), "\r\n");
+  }
+
+  public static void log(String msg, Object... args) {
+    System.out.printf("%s -- %s\n", DateTime.now(), String.format(msg, args));
   }
 }

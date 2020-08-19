@@ -16,6 +16,8 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.orientechnologies.orient.setup.TestSetupUtil.log;
+
 public class PortForwarder {
 //  private Server pf;
   private KubectlPortForwarder pf;
@@ -41,12 +43,7 @@ public class PortForwarder {
 
   public int start() throws IOException {
     int localPort = pf.start();
-    try {
-      Thread.sleep(10000);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
-    System.out.printf("Forwarding port %s -> localhost:%d...\n", pfId, localPort);
+    log("  Forwarding port %s -> localhost:%d...", pfId, localPort);
     return localPort;
   }
 
@@ -71,10 +68,10 @@ public class PortForwarder {
         String cmd =
             String.format(
                 "kubectl -n %s port-forward %s %d:%d", namespace, podName, port, targetPort);
-        System.out.println("Running command: " + cmd);
+        log("  Running command: " + cmd);
         process = Runtime.getRuntime().exec(cmd);
         boolean stdout = false, stderr = false;
-        System.out.printf("Waiting for command to run '%s' ...\n", cmd);
+//        System.out.printf("Waiting for command to run '%s' ...\n", cmd);
         while (!stdout && !stderr) {
           try {
             Thread.sleep(1000);
@@ -86,11 +83,11 @@ public class PortForwarder {
         if (stderr) {
           BufferedReader reader =
               new BufferedReader(new InputStreamReader(process.getErrorStream()));
-          System.out.println("error setting up kubectl: " + reader.readLine());
+          log("  Error setting up kubectl port-forward: " + reader.readLine());
         } else if (stdout) {
           BufferedReader reader =
               new BufferedReader(new InputStreamReader(process.getInputStream()));
-          System.out.println("Output of kubectl: " + reader.readLine());
+          log("  Output of kubectl port-forward: " + reader.readLine());
           if (targetPort != 2424) {
             return port;
           }
@@ -105,7 +102,7 @@ public class PortForwarder {
           }
         }
         process.destroy();
-        System.out.println("Trying kubectl again!");
+        log("  Trying kubectl again!");
         try {
           Thread.sleep(5000);
         } catch (InterruptedException e) {

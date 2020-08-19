@@ -33,7 +33,6 @@ public class BasicSyncIT {
     OrientDB remote = setup.createRemote(server0, "root", "test", OrientDBConfig.defaultConfig());
     remote.create("test", ODatabaseType.PLOCAL);
     remote.close();
-    System.out.println("Created database 'test'.");
   }
 
   @Test

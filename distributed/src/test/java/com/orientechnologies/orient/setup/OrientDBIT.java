@@ -25,7 +25,7 @@ public class OrientDBIT extends OrientDB {
     int i = 1;
     while (true) {
       try {
-        System.out.printf("Trying (%d/%d) to open database %s.\n", i, MAX_OPEN_RETRY, database);
+        TestSetupUtil.log("Trying (%d/%d) to open database '%s'.", i, MAX_OPEN_RETRY, database);
         return super.open(database, user, password);
       } catch (ODatabaseException e) {
         if (i++ >= MAX_OPEN_RETRY) {
@@ -41,7 +41,7 @@ public class OrientDBIT extends OrientDB {
 
   @Override
   public void create(String database, ODatabaseType type) {
-    System.out.printf("Creating database %s.\n", database);
+    TestSetupUtil.log("Creating database '%s'.", database);
     super.create(database, type);
   }
 
@@ -50,7 +50,7 @@ public class OrientDBIT extends OrientDB {
     int i = 1;
     while (true) {
       try {
-        System.out.printf("Trying (%d/%d) to drop database %s.\n", i, MAX_DROP_RETRY, database);
+        TestSetupUtil.log("Trying (%d/%d) to drop database %s.", i, MAX_DROP_RETRY, database);
         super.drop(database);
         break;
       } catch (OStorageException e) {
