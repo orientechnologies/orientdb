@@ -19,12 +19,10 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
-
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.io.WKBWriter;
@@ -123,8 +121,7 @@ public abstract class OShapeBuilder<T extends Shape> {
     return toDoc((T) shape);
   }
 
-  public void validate(ODocument doc) {
-  }
+  public void validate(ODocument doc) {}
 
   Geometry toGeometry(Shape shape) {
     return SHAPE_FACTORY.getGeometryFrom(shape);
@@ -159,7 +156,11 @@ public abstract class OShapeBuilder<T extends Shape> {
 
   public ODocument toDoc(String wkt) throws ParseException, org.locationtech.jts.io.ParseException {
     T parsed = fromText(wkt);
-    return toDoc(parsed, OGlobalConfiguration.SPATIAL_ENABLE_DIRECT_WKT_READER.getValueAsBoolean() ? wktReader.read(wkt) : null);
+    return toDoc(
+        parsed,
+        OGlobalConfiguration.SPATIAL_ENABLE_DIRECT_WKT_READER.getValueAsBoolean()
+            ? wktReader.read(wkt)
+            : null);
   }
 
   public int getSRID(Shape shape) {
