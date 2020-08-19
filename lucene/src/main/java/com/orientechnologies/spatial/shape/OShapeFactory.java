@@ -184,6 +184,8 @@ public class OShapeFactory extends OComplexShapeBuilder {
       return factories.get(OPointShapeBuilder.NAME).toDoc(shape, geometry);
     } else if (geometry != null && "LineString".equals(geometry.getClass().getSimpleName())) {
       return factories.get("OLineString").toDoc(shape, geometry);
+    } else if (geometry != null && "MultiLineString".equals(geometry.getClass().getSimpleName())) {
+      return factories.get("OMultiLineString").toDoc(shape, geometry);
     } else if (geometry != null && "Polygon".equals(geometry.getClass().getSimpleName())) {
       return factories.get("OPolygon").toDoc(shape, geometry);
     } else {

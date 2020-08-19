@@ -15,13 +15,17 @@
  */
 package com.orientechnologies.spatial.shape;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
 import java.util.ArrayList;
 import java.util.List;
+
+import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.MultiLineString;
 import org.locationtech.spatial4j.shape.jts.JtsGeometry;
@@ -55,6 +59,12 @@ public class OMultiLineStringShapeBuilder extends OComplexShapeBuilder<JtsGeomet
     OSchema schema = db.getMetadata().getSchema();
     OClass lineString = schema.createAbstractClass(getName(), superClass(db));
     lineString.createProperty(COORDINATES, OType.EMBEDDEDLIST, OType.EMBEDDEDLIST);
+
+    if (OGlobalConfiguration.SPATIAL_ENABLE_DIRECT_WKT_READER.getValueAsBoolean()) {
+      OClass lineStringZ = schema.createAbstractClass(getName() + "Z", superClass(db));
+      lineStringZ.createProperty(COORDINATES, OType.EMBEDDEDLIST, OType.EMBEDDEDLIST);
+    }
+
   }
 
   @Override
@@ -70,5 +80,23 @@ public class OMultiLineStringShapeBuilder extends OComplexShapeBuilder<JtsGeomet
 
     doc.field(COORDINATES, coordinates);
     return doc;
+  }
+
+  @Override
+  protected ODocument toDoc(JtsGeometry shape, Geometry geometry) {
+    if (geometry == null) {
+      return toDoc(shape);
+    }
+
+    List<List<List<Double>>> coordinates = new ArrayList<List<List<Double>>>();
+    ODocument doc = new ODocument(getName() + "Z");
+    for (int i = 0; i < geometry.getNumGeometries(); i++) {
+      final Geometry lineString = (LineString) geometry.getGeometryN(i);
+      coordinates.add(coordinatesFromLineStringZ(lineString));
+    }
+
+    doc.field(COORDINATES, coordinates);
+    return doc;
+
   }
 }
