@@ -1,43 +1,28 @@
 package com.orientechnologies.orient.setup;
 
-import com.google.common.io.ByteStreams;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
-import io.kubernetes.client.PortForward;
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.Configuration;
 import io.kubernetes.client.util.Config;
-import org.joda.time.DateTime;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.ServerSocket;
-import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
 
 import static com.orientechnologies.orient.setup.TestSetupUtil.log;
 
 public class PortForwarder {
-//  private Server pf;
   private KubectlPortForwarder pf;
-  private String namespace, podName;
-  private int targetPort;
   private String pfId;
 
   public PortForwarder(String namespace, String podName, int targetPort)
       throws IOException, ApiException {
-    this.namespace = namespace;
-    this.podName = podName;
-    this.targetPort = targetPort;
     pfId = String.format("%s/%s:%d", namespace, podName, targetPort);
     ApiClient client = Config.defaultClient();
     Configuration.setDefaultApiClient(client);
-//    PortForward forward = new PortForward();
-//    List<Integer> ports = new ArrayList<>();
-//    ports.add(targetPort);
-//    final PortForward.PortForwardResult result = forward.forward(namespace, podName, ports);
-//    pf = new Server(result.getInputStream(targetPort), result.getOutboundStream(targetPort));
     pf = new KubectlPortForwarder(namespace, podName, targetPort);
   }
 
@@ -71,7 +56,7 @@ public class PortForwarder {
         log("  Running command: " + cmd);
         process = Runtime.getRuntime().exec(cmd);
         boolean stdout = false, stderr = false;
-//        System.out.printf("Waiting for command to run '%s' ...\n", cmd);
+        // todo: have a timeout
         while (!stdout && !stderr) {
           try {
             Thread.sleep(1000);
@@ -92,7 +77,12 @@ public class PortForwarder {
             return port;
           }
           // check if working
-          OrientDB remote = new OrientDB(String.format("remote:localhost:%d", port), "root", "test", OrientDBConfig.defaultConfig());
+          OrientDB remote =
+              new OrientDB(
+                  String.format("remote:localhost:%d", port),
+                  "root",
+                  "test",
+                  OrientDBConfig.defaultConfig());
           try {
             remote.list();
             return port;
@@ -122,80 +112,6 @@ public class PortForwarder {
       } catch (IOException e) {
         throw new TestSetupException("Error getting a free port.", e);
       }
-    }
-  }
-
-  private class Server {
-    private Thread inputCopier;
-    private Thread outputCopier;
-    private Thread server;
-    private ServerSocket ss;
-    private InputStream targetInputStream;
-    private OutputStream targetOutputStream;
-    private volatile boolean active;
-
-    public Server(InputStream targetInputStream, OutputStream targetOutputStream)
-        throws IOException {
-      ss = new ServerSocket(0);
-      this.targetInputStream = targetInputStream;
-      this.targetOutputStream = targetOutputStream;
-    }
-
-    public int start() {
-      active = true;
-      server =
-          new Thread(
-              () -> {
-                try {
-                  runCopiers();
-                } catch (IOException e) {
-                  throw new TestSetupException(e);
-                }
-              });
-      server.start();
-      return ss.getLocalPort();
-    }
-
-    private void runCopiers() throws IOException {
-      System.out.printf("Waiting for requests on port %d.\n", ss.getLocalPort());
-      while (active) {
-        final Socket s = ss.accept();
-
-        inputCopier =
-            new Thread(
-                () -> {
-                  try {
-                    ByteStreams.copy(targetInputStream, s.getOutputStream());
-                  } catch (Exception e) {
-                    System.err.println("Error while copying target input stream.");
-                    e.printStackTrace();
-                    throw new TestSetupException(e);
-                  }
-                  System.out.printf("Exiting target input copier %s->%s.\n", pfId, s.getPort());
-                });
-        outputCopier =
-            new Thread(
-                () -> {
-                  try {
-                    ByteStreams.copy(s.getInputStream(), targetOutputStream);
-                  } catch (Exception e) {
-                    System.err.println("Error while copying local input stream.");
-                    e.printStackTrace();
-                    throw new TestSetupException(e);
-                  }
-                  System.out.printf("Exiting local input copier %s->%s.\n", pfId, s.getPort());
-                });
-
-        inputCopier.start();
-        outputCopier.start();
-        System.out.printf("Started copying threads for %s->%d.\n", pfId, s.getPort());
-      }
-      System.out.printf("Stopping port forwarder %s...\n", pfId);
-    }
-
-    public void stop() throws IOException {
-      active = false;
-      ss.close();
     }
   }
 }
