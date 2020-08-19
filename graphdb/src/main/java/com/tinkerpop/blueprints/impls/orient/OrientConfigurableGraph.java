@@ -658,9 +658,9 @@ public abstract class OrientConfigurableGraph {
   }
 
   /** Changes the setting to use the Vertex class for Vertex labels. */
+  @Deprecated
   public OrientConfigurableGraph setUseClassForVertexLabel(
       final boolean useCustomClassesForVertex) {
-    this.settings.setUseClassForVertexLabel(useCustomClassesForVertex);
     return this;
   }
 

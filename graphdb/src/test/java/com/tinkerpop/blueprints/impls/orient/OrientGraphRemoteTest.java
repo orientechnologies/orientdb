@@ -1,8 +1,8 @@
 package com.tinkerpop.blueprints.impls.orient;
 
-import com.orientechnologies.orient.client.remote.OServerAdmin;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.server.OServer;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
@@ -12,7 +12,6 @@ import com.tinkerpop.blueprints.IndexableGraphTestSuite;
 import com.tinkerpop.blueprints.KeyIndexableGraphTestSuite;
 import com.tinkerpop.blueprints.TestSuite;
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
@@ -33,8 +32,9 @@ public abstract class OrientGraphRemoteTest extends OrientGraphTest {
 
   private static String serverHome;
 
-  private Map<String, OrientGraphFactory> graphFactories =
-      new HashMap<String, OrientGraphFactory>();
+  private static OrientDB clientContext;
+
+  private final Map<String, OrientGraphFactory> graphFactories = new HashMap<>();
 
   @BeforeClass
   public static void startEmbeddedServer() throws Exception {
@@ -53,16 +53,17 @@ public abstract class OrientGraphRemoteTest extends OrientGraphTest {
     server = new OServer(false);
     server.startup(OrientGraphRemoteTest.class.getResourceAsStream("/embedded-server-config.xml"));
     server.activate();
+
+    clientContext =
+        new OrientDB(
+            "remote:localhost:" + serverPort, "root", "root", OrientDBConfig.defaultConfig());
   }
 
   @AfterClass
   public static void stopEmbeddedServer() throws Exception {
     server.shutdown();
     Thread.sleep(1000);
-    ODatabaseDocumentTx.closeAll();
-
-    Orient.instance().shutdown();
-    Orient.instance().startup();
+    clientContext.close();
 
     if (oldOrientDBHome != null) System.setProperty("ORIENTDB_HOME", oldOrientDBHome);
     else System.clearProperty("ORIENTDB_HOME");
@@ -80,17 +81,11 @@ public abstract class OrientGraphRemoteTest extends OrientGraphTest {
       else return graph;
     }
 
-    try {
-      final OServerAdmin serverAdmin = new OServerAdmin(url);
-      serverAdmin.connect("root", "root");
-      if (!serverAdmin.existsDatabase(OrientGraphTest.getStorageType()))
-        serverAdmin.createDatabase("graph", OrientGraphTest.getStorageType());
-
-      serverAdmin.close();
-
-    } catch (IOException e) {
-      throw new IllegalStateException(e);
+    if (clientContext.exists(graphDirectoryName)) {
+      clientContext.drop(graphDirectoryName);
     }
+    clientContext.create(
+        graphDirectoryName, ODatabaseType.valueOf(OrientGraphTest.getStorageType().toUpperCase()));
 
     OrientGraphFactory factory = graphFactories.get(url);
     if (factory == null) {
@@ -105,20 +100,6 @@ public abstract class OrientGraphRemoteTest extends OrientGraphTest {
     graph.setStandardExceptions(true);
 
     currentGraphs.put(url, graph);
-
-    //    StringWriter sw = new StringWriter();
-    //
-    //    Throwable th = new Throwable();
-    //    PrintWriter pw = new PrintWriter(sw);
-    //
-    //    th.printStackTrace(pw);
-    //    pw.append("\n");
-    //    pw.append("Vertex count ").append(String.valueOf(count(graph.getVertices())) + " graph
-    // name " + graphDirectoryName);
-    //
-    //    pw.flush();
-    //
-    //    System.out.println(sw.toString());
 
     return graph;
   }
@@ -135,13 +116,10 @@ public abstract class OrientGraphRemoteTest extends OrientGraphTest {
       final OrientGraphFactory factory = graphFactories.remove(url);
       if (factory != null) factory.close();
 
-      final OServerAdmin serverAdmin = new OServerAdmin(url);
-      serverAdmin.connect("root", "root");
+      if (clientContext.exists(graphDirectoryName)) {
+        clientContext.drop(graphDirectoryName);
+      }
 
-      if (serverAdmin.existsDatabase(OrientGraphTest.getStorageType()))
-        serverAdmin.dropDatabase(OrientGraphTest.getStorageType());
-
-      serverAdmin.close();
     } catch (Exception e) {
       throw new IllegalStateException(e);
     }
