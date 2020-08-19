@@ -1,10 +1,11 @@
 package com.orientechnologies.orient.setup;
 
+import org.apache.commons.text.StringSubstitutor;
+
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
-import org.apache.commons.text.StringSubstitutor;
 
 public class ManifestTemplate {
   // list of keys used in the manifest templates.
@@ -22,8 +23,6 @@ public class ManifestTemplate {
 
   public static final String ORIENTDB_HEADLESS_SERVICE_TEMPLATE =
       "/kubernetes/manifests/orientdb-headless-service.template.yaml";
-  public static final String ORIENTDB_NODEPORT_SERVICE_TEMPLATE =
-      "/kubernetes/manifests/orientdb-nodeport-service.template.yaml";
   public static final String ORIENTDB_STATEFULSET_TEMPLATE =
       "/kubernetes/manifests/orientdb-statefulset.template.yaml";
   public static final String ORIENTDB_RBAC_TEMPLATE = "/kubernetes/manifests/rbac.template.yaml";
@@ -38,13 +37,16 @@ public class ManifestTemplate {
     return generateManifest(configs, ORIENTDB_HEADLESS_SERVICE_TEMPLATE);
   }
 
-  public static String generateNodePortService(K8sServerConfig configs)
-      throws IOException, URISyntaxException {
-    return generateManifest(configs, ORIENTDB_NODEPORT_SERVICE_TEMPLATE);
-  }
-
   public static String generateRBAC() throws IOException, URISyntaxException {
-    return TestSetupUtil.readAllLines(ORIENTDB_RBAC_TEMPLATE);
+    StringSubstitutor substitutor =
+        new StringSubstitutor(
+            new HashMap<String, String>() {
+              {
+                put(KUBERNETES_NAMESPACE, TestSetupUtil.getKubernetesNamespace());
+              }
+            });
+    String template = TestSetupUtil.readAllLines(ORIENTDB_RBAC_TEMPLATE);
+    return substitutor.replace(template);
   }
 
   public static String generateManifest(K8sServerConfig configs, String templateFile)
