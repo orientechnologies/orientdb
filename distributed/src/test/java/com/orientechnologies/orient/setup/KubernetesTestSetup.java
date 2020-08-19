@@ -243,14 +243,6 @@ public class KubernetesTestSetup implements TestSetup {
       } catch (ApiException e) {
         log("  Error deleting Service %s: %s", serviceName, e.getResponseBody());
       }
-      //      serviceName = config.getNodeName() + "-service";
-      //      try {
-      //        coreV1Api.deleteNamespacedService(
-      //            serviceName, namespace, null, null, null, null, null, null);
-      //        log("  Deleted Service %s", serviceName);
-      //      } catch (ApiException e) {
-      //        log("  Error deleting Service %s: %s", serviceName, e.getResponseBody());
-      //      }
     }
     System.out.println("Removing PVCs.");
     for (Iterator<String> it = PVCsToDelete.iterator(); it.hasNext(); ) {
