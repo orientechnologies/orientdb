@@ -16,7 +16,6 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import java.io.IOException;
@@ -1150,7 +1149,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(7);
     OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(-1);
 
-    if (database.getStorage() instanceof OStorageProxy) {
+    if (database.isRemote()) {
       OServerAdmin server =
           new OServerAdmin(database.getURL())
               .connect("root", ODatabaseHelper.getServerRootPassword());
@@ -1243,7 +1242,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(7);
     OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(-1);
 
-    if (database.getStorage() instanceof OStorageProxy) {
+    if (database.isRemote()) {
       OServerAdmin server =
           new OServerAdmin(database.getURL())
               .connect("root", ODatabaseHelper.getServerRootPassword());

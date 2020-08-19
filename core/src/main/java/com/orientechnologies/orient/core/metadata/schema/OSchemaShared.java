@@ -41,7 +41,6 @@ import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClust
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -463,7 +462,7 @@ public abstract class OSchemaShared implements OCloseable {
     }
     assert count >= 0;
 
-    if (count == 0 && database.getStorage().getUnderlying() instanceof OStorageProxy) {
+    if (count == 0 && database.isRemote()) {
       database.getStorage().reload();
     }
   }

@@ -4,7 +4,6 @@ import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
 import java.io.IOException;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -41,7 +40,7 @@ public class OEmbeddedRidBagTest extends ORidBagTest {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(Integer.MAX_VALUE);
     OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(Integer.MAX_VALUE);
 
-    if (database.getStorage() instanceof OStorageProxy) {
+    if (database.isRemote()) {
       OServerAdmin server =
           new OServerAdmin(database.getURL())
               .connect("root", ODatabaseHelper.getServerRootPassword());
@@ -58,7 +57,7 @@ public class OEmbeddedRidBagTest extends ORidBagTest {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(topThreshold);
     OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(bottomThreshold);
 
-    if (database.getStorage() instanceof OStorageProxy) {
+    if (database.isRemote()) {
       OServerAdmin server =
           new OServerAdmin(database.getURL())
               .connect("root", ODatabaseHelper.getServerRootPassword());

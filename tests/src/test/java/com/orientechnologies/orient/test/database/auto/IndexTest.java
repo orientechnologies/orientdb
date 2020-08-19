@@ -39,7 +39,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.test.database.base.OrientTest;
@@ -112,7 +111,7 @@ public class IndexTest extends ObjectDBBaseTest {
     Assert.assertEquals(
         nickProperty.getIndexes().iterator().next().getType(), OClass.INDEX_TYPE.UNIQUE.toString());
 
-    final boolean localStorage = !(database.getStorage() instanceof OStorageProxy);
+    final boolean localStorage = !(database.getUnderlying().isRemote());
 
     boolean oldRecording = true;
     long indexQueries = 0L;
@@ -265,7 +264,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "populateIndexDocuments")
   public void testIndexInMajorSelect() {
-    if (database.getStorage() instanceof OStorageProxy) {
+    if (database.getUnderlying().isRemote()) {
       return;
     }
 
@@ -305,7 +304,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "populateIndexDocuments")
   public void testIndexInMajorEqualsSelect() {
-    if (database.getStorage() instanceof OStorageProxy) {
+    if (database.getUnderlying().isRemote()) {
       return;
     }
 
@@ -346,7 +345,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "populateIndexDocuments")
   public void testIndexInMinorSelect() {
-    if (database.getStorage() instanceof OStorageProxy) {
+    if (database.getUnderlying().isRemote()) {
       return;
     }
 
@@ -383,7 +382,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "populateIndexDocuments")
   public void testIndexInMinorEqualsSelect() {
-    if (database.getStorage() instanceof OStorageProxy) {
+    if (database.getUnderlying().isRemote()) {
       return;
     }
 
@@ -420,7 +419,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "populateIndexDocuments")
   public void testIndexBetweenSelect() {
-    if (database.getStorage() instanceof OStorageProxy) {
+    if (database.getUnderlying().isRemote()) {
       return;
     }
 
@@ -459,7 +458,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "populateIndexDocuments")
   public void testIndexInComplexSelectOne() {
-    if (database.getStorage() instanceof OStorageProxy) {
+    if (database.getUnderlying().isRemote()) {
       return;
     }
 
@@ -500,7 +499,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "populateIndexDocuments")
   public void testIndexInComplexSelectTwo() {
-    if (database.getStorage() instanceof OStorageProxy) {
+    if (database.getUnderlying().isRemote()) {
       return;
     }
 
@@ -606,7 +605,7 @@ public class IndexTest extends ObjectDBBaseTest {
         nickProperty.getIndexes().iterator().next().getType(),
         OClass.INDEX_TYPE.NOTUNIQUE.toString());
 
-    final boolean localStorage = !(database.getStorage() instanceof OStorageProxy);
+    final boolean localStorage = !(database.getUnderlying().isRemote());
 
     boolean oldRecording = true;
     long indexQueries = 0L;
@@ -1870,7 +1869,7 @@ public class IndexTest extends ObjectDBBaseTest {
     Assert.assertEquals(index.getInternal().size(), 2);
 
     // we support first and last keys check only for embedded storage
-    if (!(database.getStorage() instanceof OStorageProxy)) {
+    if (!(database.isRemote())) {
       try (Stream<Object> keyStreamAsc = index.getInternal().keyStream()) {
         Assert.assertEquals(
             keyStreamAsc.iterator().next(), new OCompositeKey((byte) 1, rid1, 12L, 14L, 12));
@@ -1899,7 +1898,7 @@ public class IndexTest extends ObjectDBBaseTest {
             .getIndexManagerInternal()
             .getIndex(database, "MultikeyWithoutFieldIndex");
     Assert.assertEquals(index.getInternal().size(), 1);
-    if (!(database.getStorage() instanceof OStorageProxy)) {
+    if (!(database.isRemote())) {
       try (Stream<Object> keyStream = index.getInternal().keyStream()) {
         Assert.assertEquals(
             keyStream.iterator().next(), new OCompositeKey((byte) 1, rid2, 12L, 14L, 12));
@@ -1923,7 +1922,7 @@ public class IndexTest extends ObjectDBBaseTest {
             .getIndex(database, "MultikeyWithoutFieldIndex");
 
     Assert.assertEquals(index.getInternal().size(), 1);
-    if (!(database.getStorage() instanceof OStorageProxy)) {
+    if (!(database.isRemote())) {
       try (Stream<Object> keyStreamAsc = index.getInternal().keyStream()) {
         Assert.assertEquals(
             keyStreamAsc.iterator().next(), new OCompositeKey((byte) 1, null, 12L, 14L, 12));
@@ -1945,7 +1944,7 @@ public class IndexTest extends ObjectDBBaseTest {
             .getIndex(database, "MultikeyWithoutFieldIndex");
 
     Assert.assertEquals(index.getInternal().size(), 1);
-    if (!(database.getStorage() instanceof OStorageProxy)) {
+    if (!(database.isRemote())) {
       try (Stream<Object> keyStream = index.getInternal().keyStream()) {
         Assert.assertEquals(
             keyStream.iterator().next(), new OCompositeKey((byte) 1, rid3, 12L, 14L, 12));
@@ -1966,7 +1965,7 @@ public class IndexTest extends ObjectDBBaseTest {
             .getIndex(database, "MultikeyWithoutFieldIndex");
     Assert.assertEquals(index.getInternal().size(), 2);
 
-    if (!(database.getStorage() instanceof OStorageProxy)) {
+    if (!(database.isRemote())) {
       try (Stream<Object> keyStream = index.getInternal().keyStream()) {
         Assert.assertEquals(
             keyStream.iterator().next(), new OCompositeKey((byte) 1, rid3, 12L, 14L, 12));
@@ -1990,7 +1989,7 @@ public class IndexTest extends ObjectDBBaseTest {
             .getIndex(database, "MultikeyWithoutFieldIndex");
     Assert.assertEquals(index.getInternal().size(), 1);
 
-    if (!(database.getStorage() instanceof OStorageProxy)) {
+    if (!(database.isRemote())) {
       try (Stream<Object> keyStream = index.getInternal().keyStream()) {
         Assert.assertEquals(
             keyStream.iterator().next(), new OCompositeKey((byte) 1, null, 12L, 14L, 12));
@@ -2056,7 +2055,7 @@ public class IndexTest extends ObjectDBBaseTest {
     Assert.assertEquals(index.getInternal().size(), 2);
 
     // we support first and last keys check only for embedded storage
-    if (!(database.getStorage() instanceof OStorageProxy)) {
+    if (!(database.isRemote())) {
       try (Stream<Object> keyStream = index.getInternal().keyStream()) {
         Assert.assertEquals(
             keyStream.iterator().next(), new OCompositeKey((byte) 1, rid1, 12L, 14L, 12));
@@ -2084,7 +2083,7 @@ public class IndexTest extends ObjectDBBaseTest {
             .getIndexManagerInternal()
             .getIndex(database, "MultikeyWithoutFieldIndexNoNullSupport");
     Assert.assertEquals(index.getInternal().size(), 1);
-    if (!(database.getStorage() instanceof OStorageProxy)) {
+    if (!(database.isRemote())) {
       try (Stream<Object> keyStream = index.getInternal().keyStream()) {
         Assert.assertEquals(
             keyStream.iterator().next(), new OCompositeKey((byte) 1, rid2, 12L, 14L, 12));
@@ -2124,7 +2123,7 @@ public class IndexTest extends ObjectDBBaseTest {
             .getIndex(database, "MultikeyWithoutFieldIndexNoNullSupport");
     Assert.assertEquals(index.getInternal().size(), 1);
 
-    if (!(database.getStorage() instanceof OStorageProxy)) {
+    if (!(database.isRemote())) {
       try (Stream<Object> keyStream = index.getInternal().keyStream()) {
         Assert.assertEquals(
             keyStream.iterator().next(), new OCompositeKey((byte) 1, rid3, 12L, 14L, 12));
@@ -2145,7 +2144,7 @@ public class IndexTest extends ObjectDBBaseTest {
             .getIndex(database, "MultikeyWithoutFieldIndexNoNullSupport");
     Assert.assertEquals(index.getInternal().size(), 2);
 
-    if (!(database.getStorage() instanceof OStorageProxy)) {
+    if (!(database.isRemote())) {
       try (Stream<Object> keyStream = index.getInternal().keyStream()) {
         Assert.assertEquals(
             keyStream.iterator().next(), new OCompositeKey((byte) 1, rid3, 12L, 14L, 12));

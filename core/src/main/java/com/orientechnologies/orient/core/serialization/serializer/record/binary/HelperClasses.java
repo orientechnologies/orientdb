@@ -41,7 +41,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
@@ -392,8 +391,7 @@ public class HelperClasses {
     OBonsaiCollectionPointer pointer = ridbag.getPointer();
 
     final ORecordSerializationContext context;
-    boolean remoteMode =
-        ODatabaseRecordThreadLocal.instance().get().getStorage() instanceof OStorageProxy;
+    boolean remoteMode = ODatabaseRecordThreadLocal.instance().get().isRemote();
     if (remoteMode) {
       context = null;
     } else context = ORecordSerializationContext.getContext();

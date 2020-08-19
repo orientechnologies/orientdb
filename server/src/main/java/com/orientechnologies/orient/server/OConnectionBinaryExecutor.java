@@ -54,7 +54,6 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.cluster.OOfflineClusterException;
 import com.orientechnologies.orient.core.storage.config.OClusterBasedStorageConfiguration;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -1153,7 +1152,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
           .connect(connection.getProtocol(), connection, token, server.getTokenHandler());
     }
 
-    if (connection.getDatabase().getStorage() instanceof OStorageProxy) {
+    if (connection.getDatabase().isRemote()) {
       connection
           .getDatabase()
           .getMetadata()

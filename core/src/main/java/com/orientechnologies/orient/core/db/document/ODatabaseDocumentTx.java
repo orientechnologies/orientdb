@@ -1644,7 +1644,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   @Override
   public boolean isRemote() {
     if (internal == null) {
-      return false;
+      return "remote".equals(type);
     }
     return internal.isRemote();
   }

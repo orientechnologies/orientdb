@@ -3,7 +3,6 @@ package com.orientechnologies.orient.test.database.auto;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -83,7 +82,7 @@ public class RecordReloadTest extends DocumentDBBaseTest {
   }
 
   public void documentReloadLatestVersionLinkedValueOne() throws Exception {
-    if (!(database.getStorage() instanceof OStorageProxy)) return;
+    if (!database.isRemote()) return;
 
     ExecutorService executor = Executors.newSingleThreadExecutor();
     final ODocument document = new ODocument();
@@ -125,7 +124,7 @@ public class RecordReloadTest extends DocumentDBBaseTest {
   }
 
   public void documentReloadLatestVersionLinkedValueTwo() throws Exception {
-    if (!(database.getStorage() instanceof OStorageProxy)) return;
+    if (!database.isRemote()) return;
 
     ExecutorService executor = Executors.newSingleThreadExecutor();
     final ODocument document = new ODocument();

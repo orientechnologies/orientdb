@@ -48,7 +48,6 @@ import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.parser.OBooleanExpression;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -249,7 +248,7 @@ public class OSecurityShared implements OSecurityInternal {
     if (user.getAccountStatus() != OSecurityUser.STATUSES.ACTIVE)
       throw new OSecurityAccessException(dbName, "User '" + iUserName + "' is not active");
 
-    if (!(((ODatabaseDocumentInternal) session).getStorage() instanceof OStorageProxy)) {
+    if (!((ODatabaseDocumentInternal) session).isRemote()) {
       // CHECK USER & PASSWORD
       if (!user.checkPassword(iUserPassword)) {
         // WAIT A BIT TO AVOID BRUTE FORCE
