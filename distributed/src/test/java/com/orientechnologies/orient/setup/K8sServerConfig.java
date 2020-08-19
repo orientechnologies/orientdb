@@ -14,33 +14,14 @@ public class K8sServerConfig {
   private String distributedDBConfig;
   private String serverLogConfig;
   private String clientLogConfig;
+  // Server user and password are required for setting up server and checking connection
+  private String serverUser;
+  private String serverPass;
   // Requested volume size for the database volume e.g. 2Gi
   private String dbVolumeSize;
   // Following two are set after successful deployment.
   private String httpAddress;
   private String binaryAddress;
-
-  public void validate() throws TestSetupException {
-    String missingField = null;
-    if (notSet(nodeName)) missingField = "nodeName";
-    if (notSet(httpPort)) missingField = "httpPort";
-    if (notSet(binaryPort)) missingField = "binaryPort";
-    if (notSet(hazelcastPort)) missingField = "hazelcastPort";
-    if (notSet(dockerImage)) missingField = "dockerImage";
-    if (notSet(serverConfig)) missingField = "serverConfig";
-    if (notSet(hazelcastConfig)) missingField = "hazelcastConfig";
-    if (notSet(distributedDBConfig)) missingField = "distributedDBConfig";
-    if (notSet(dbVolumeSize)) missingField = "dbVolumeSize";
-    // server and client log property files are not mandatory.
-    if (missingField != null) {
-      throw new TestSetupException(
-          "Missing value '" + missingField + "' in Kubernetes configuration for server.");
-    }
-  }
-
-  private boolean notSet(String s) {
-    return s == null || s.trim().equals("");
-  }
 
   public K8sServerConfig() {}
 
@@ -58,6 +39,32 @@ public class K8sServerConfig {
     this.dbVolumeSize = configs.dbVolumeSize;
     this.httpAddress = configs.httpAddress;
     this.binaryAddress = configs.binaryAddress;
+    this.serverUser = configs.serverUser;
+    this.serverPass = configs.serverPass;
+  }
+
+  public void validate() throws TestSetupException {
+    String missingField = null;
+    if (notSet(nodeName)) missingField = "nodeName";
+    if (notSet(httpPort)) missingField = "httpPort";
+    if (notSet(binaryPort)) missingField = "binaryPort";
+    if (notSet(hazelcastPort)) missingField = "hazelcastPort";
+    if (notSet(dockerImage)) missingField = "dockerImage";
+    if (notSet(serverConfig)) missingField = "serverConfig";
+    if (notSet(hazelcastConfig)) missingField = "hazelcastConfig";
+    if (notSet(distributedDBConfig)) missingField = "distributedDBConfig";
+    if (notSet(dbVolumeSize)) missingField = "dbVolumeSize";
+    if (notSet(serverUser)) missingField = "serverUser";
+    if (notSet(serverPass)) missingField = "serverPass";
+    // server and client log property files are not mandatory.
+    if (missingField != null) {
+      throw new TestSetupException(
+          "Missing value '" + missingField + "' in Kubernetes configuration for server.");
+    }
+  }
+
+  private boolean notSet(String s) {
+    return s == null || s.trim().equals("");
   }
 
   public String getNodeName() {
@@ -166,5 +173,21 @@ public class K8sServerConfig {
 
   public void setBinaryAddress(String binaryAddress) {
     this.binaryAddress = binaryAddress;
+  }
+
+  public String getServerUser() {
+    return serverUser;
+  }
+
+  public void setServerUser(String serverUser) {
+    this.serverUser = serverUser;
+  }
+
+  public String getServerPass() {
+    return serverPass;
+  }
+
+  public void setServerPass(String serverPass) {
+    this.serverPass = serverPass;
   }
 }

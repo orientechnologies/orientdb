@@ -378,7 +378,8 @@ public class KubernetesTestSetup implements TestSetup {
       if (api.readNamespacedServiceAccount(name, namespace, null, null, null) != null) {
         return true;
       }
-    } catch (ApiException e) {}
+    } catch (ApiException e) {
+    }
     return false;
   }
 
@@ -406,9 +407,21 @@ public class KubernetesTestSetup implements TestSetup {
     // always the same.
     String serverPod = String.format("%s-0", serverId);
     PortForwarder binaryPortforward =
-        new PortForwarder(namespace, serverPod, Integer.parseInt(config.getBinaryPort()));
+        new PortForwarder(
+            namespace,
+            serverPod,
+            Integer.parseInt(config.getBinaryPort()),
+            true,
+            config.getServerUser(),
+            config.getServerPass());
     PortForwarder httpPortforward =
-        new PortForwarder(namespace, serverPod, Integer.parseInt(config.getHttpPort()));
+        new PortForwarder(
+            namespace,
+            serverPod,
+            Integer.parseInt(config.getHttpPort()),
+            false,
+            config.getServerUser(),
+            config.getServerPass());
 
     int localBinaryPort = binaryPortforward.start();
     String binaryAddress = String.format("localhost:%d", localBinaryPort);

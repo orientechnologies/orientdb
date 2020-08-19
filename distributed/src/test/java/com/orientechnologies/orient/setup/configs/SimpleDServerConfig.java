@@ -3,6 +3,7 @@ package com.orientechnologies.orient.setup.configs;
 import com.orientechnologies.orient.setup.K8sServerConfig;
 import com.orientechnologies.orient.setup.SetupConfig;
 import com.orientechnologies.orient.setup.TestSetupUtil;
+
 import java.util.*;
 
 public class SimpleDServerConfig implements SetupConfig {
@@ -43,6 +44,8 @@ public class SimpleDServerConfig implements SetupConfig {
       config.setDistributedDBConfig("/kubernetes/default-distributed-db-config.json");
       config.setServerLogConfig("/kubernetes/orientdb-server-log.properties");
       config.setClientLogConfig("/kubernetes/orientdb-client-log.properties");
+      config.setServerUser("root");
+      config.setServerPass("test");
       serverK8sConfigs.put(serverId, config);
     }
     return config;

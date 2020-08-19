@@ -74,4 +74,11 @@ public class TestSetupUtil {
   public static void log(String msg, Object... args) {
     System.out.printf("%s -- %s\n", DateTime.now(), String.format(msg, args));
   }
+
+  public static void sleep(int seconds) {
+    try {
+      Thread.sleep(seconds * 1000);
+    } catch (InterruptedException e) {
+    }
+  }
 }
