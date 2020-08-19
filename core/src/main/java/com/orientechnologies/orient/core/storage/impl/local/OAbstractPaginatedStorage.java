@@ -5231,7 +5231,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
 
     if (transaction.get() != null) {
-      final OCluster cluster = doGetAndCheckCluster(rid.getClusterId());
+      final OCluster cluster;
+      try {
+        cluster = doGetAndCheckCluster(rid.getClusterId());
+      } catch (IllegalArgumentException e) {
+        throw OException.wrapException(new ORecordNotFoundException(rid), e);
+      }
       // Disabled this assert have no meaning anymore
       // assert iLockingStrategy.equals(LOCKING_STRATEGY.DEFAULT);
       return doReadRecord(cluster, rid, prefetchRecords);
@@ -5248,8 +5253,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       }
       checkOpenness();
       checkIfThreadIsBlocked();
-
-      final OCluster cluster = doGetAndCheckCluster(rid.getClusterId());
+      final OCluster cluster;
+      try {
+        cluster = doGetAndCheckCluster(rid.getClusterId());
+      } catch (IllegalArgumentException e) {
+        throw OException.wrapException(new ORecordNotFoundException(rid), e);
+      }
       return doReadRecord(cluster, rid, prefetchRecords);
     } finally {
       try {
