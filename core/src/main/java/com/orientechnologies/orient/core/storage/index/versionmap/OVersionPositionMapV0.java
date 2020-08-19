@@ -57,9 +57,9 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
         operation -> {
           acquireExclusiveLock();
           try {
-            // TODO: [DR] init array with default versions
-            // this.initVersionState(atomicOperation);
             this.createVPM(atomicOperation);
+            // TODO: [DR] init array with default versions
+            this.initVersionState(atomicOperation);
           } finally {
             releaseExclusiveLock();
           }
