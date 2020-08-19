@@ -2,7 +2,6 @@ package com.orientechnologies.orient.setup;
 
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import io.kubernetes.client.openapi.ApiClient;
@@ -45,13 +44,9 @@ public class KubernetesTestSetup implements TestSetup {
       KubeConfig kubeConfig = KubeConfig.loadKubeConfig(new FileReader(kubeConfigFile));
       ApiClient client = ClientBuilder.kubeconfig(kubeConfig).build();
       Configuration.setDefaultApiClient(client);
-      createRBAC();
-    } catch (URISyntaxException | IOException e) {
+    } catch (IOException e) {
       e.printStackTrace();
       throw new TestSetupException(e);
-    } catch (ApiException e) {
-      e.printStackTrace();
-      throw new TestSetupException(e.getResponseBody(), e);
     }
   }
 
@@ -104,31 +99,25 @@ public class KubernetesTestSetup implements TestSetup {
    */
   @Override
   public void setup() throws TestSetupException {
-    log("Starting servers...");
-    for (String serverId : setupConfig.getServerIds()) {
-      K8sServerConfig serverConfig = setupConfig.getK8sConfigs(serverId);
-      serverConfig.validate();
-      try {
-        doStartServer(serverId, serverConfig);
-      } catch (ApiException e) {
-        e.printStackTrace();
-        throw new TestSetupException(e.getResponseBody(), e);
-      } catch (IOException | URISyntaxException e) {
-        e.printStackTrace();
-        throw new TestSetupException(e);
-      }
-    }
-
     try {
+      createRBAC();
+      log("Starting servers...");
+      for (String serverId : setupConfig.getServerIds()) {
+        K8sServerConfig serverConfig = setupConfig.getK8sConfigs(serverId);
+        serverConfig.validate();
+        doStartServer(serverId, serverConfig);
+      }
       waitForInstances(
           readyReplicaTimeoutSeconds, setupConfig.getServerIds(), statefulSetLabelSelector);
       for (String serverId : setupConfig.getServerIds()) {
         setupPortForward(serverId, setupConfig.getK8sConfigs(serverId));
       }
-    } catch (IOException e) {
-      throw new TestSetupException("Error waiting for server to start", e);
     } catch (ApiException e) {
+      e.printStackTrace();
       throw new TestSetupException(e.getResponseBody(), e);
+    } catch (IOException | URISyntaxException e) {
+      e.printStackTrace();
+      throw new TestSetupException(e);
     }
   }
 
@@ -363,18 +352,34 @@ public class KubernetesTestSetup implements TestSetup {
     String manifests = ManifestTemplate.generateRBAC();
     for (Object obj : Yaml.loadAll(manifests)) {
       if (obj instanceof V1ServiceAccount) {
-        V1ServiceAccount sa = (V1ServiceAccount)obj;
-        coreV1Api.replaceNamespacedServiceAccount(sa.getMetadata().getName(), namespace, sa, null, null, null);
+        V1ServiceAccount sa = (V1ServiceAccount) obj;
+        String name = sa.getMetadata().getName();
+        if (serviceAccountExists(coreV1Api, namespace, name)) {
+          log("  Service account '%s' already exists.", name);
+        } else {
+          coreV1Api.createNamespacedServiceAccount(namespace, sa, null, null, null);
+        }
       } else if (obj instanceof V1Role) {
         V1Role r = (V1Role) obj;
-        rbacV1Api.replaceNamespacedRole(r.getMetadata().getName(), namespace, (V1Role) obj, null, null, null);
+        rbacV1Api.replaceNamespacedRole(
+            r.getMetadata().getName(), namespace, (V1Role) obj, null, null, null);
       } else if (obj instanceof V1RoleBinding) {
-        V1RoleBinding rb = (V1RoleBinding)obj;
-        rbacV1Api.replaceNamespacedRoleBinding(rb.getMetadata().getName(), namespace, (V1RoleBinding) obj, null, null, null);
+        V1RoleBinding rb = (V1RoleBinding) obj;
+        rbacV1Api.replaceNamespacedRoleBinding(
+            rb.getMetadata().getName(), namespace, (V1RoleBinding) obj, null, null, null);
       } else {
         log("Ignoring Kubernetes object %s when creating RBAC.", obj.getClass().getSimpleName());
       }
     }
+  }
+
+  private boolean serviceAccountExists(CoreV1Api api, String namespace, String name) {
+    try {
+      if (api.readNamespacedServiceAccount(name, namespace, null, null, null) != null) {
+        return true;
+      }
+    } catch (ApiException e) {}
+    return false;
   }
 
   private void doStartServer(String serverId, K8sServerConfig config)
