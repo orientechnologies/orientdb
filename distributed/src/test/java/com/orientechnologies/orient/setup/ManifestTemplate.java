@@ -22,8 +22,6 @@ public class ManifestTemplate {
 
   public static final String ORIENTDB_HEADLESS_SERVICE_TEMPLATE =
       "/kubernetes/manifests/orientdb-headless-service.template.yaml";
-  public static final String ORIENTDB_NODEPORT_SERVICE_TEMPLATE =
-      "/kubernetes/manifests/orientdb-nodeport-service.template.yaml";
   public static final String ORIENTDB_STATEFULSET_TEMPLATE =
       "/kubernetes/manifests/orientdb-statefulset.template.yaml";
   public static final String ORIENTDB_RBAC_TEMPLATE = "/kubernetes/manifests/rbac.template.yaml";
@@ -36,11 +34,6 @@ public class ManifestTemplate {
   public static String generateHeadlessService(K8sServerConfig configs)
       throws IOException, URISyntaxException {
     return generateManifest(configs, ORIENTDB_HEADLESS_SERVICE_TEMPLATE);
-  }
-
-  public static String generateNodePortService(K8sServerConfig configs)
-      throws IOException, URISyntaxException {
-    return generateManifest(configs, ORIENTDB_NODEPORT_SERVICE_TEMPLATE);
   }
 
   public static String generateRBAC() throws IOException, URISyntaxException {
