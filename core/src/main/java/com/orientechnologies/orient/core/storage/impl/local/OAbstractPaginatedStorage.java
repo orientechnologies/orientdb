@@ -5235,7 +5235,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         cluster = doGetAndCheckCluster(rid.getClusterId());
       } catch (IllegalArgumentException e) {
-        throw OException.wrapException(new ORecordNotFoundException(rid), e);
+        return null;
       }
       // Disabled this assert have no meaning anymore
       // assert iLockingStrategy.equals(LOCKING_STRATEGY.DEFAULT);
@@ -5257,7 +5257,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         cluster = doGetAndCheckCluster(rid.getClusterId());
       } catch (IllegalArgumentException e) {
-        throw OException.wrapException(new ORecordNotFoundException(rid), e);
+        return null;
       }
       return doReadRecord(cluster, rid, prefetchRecords);
     } finally {
