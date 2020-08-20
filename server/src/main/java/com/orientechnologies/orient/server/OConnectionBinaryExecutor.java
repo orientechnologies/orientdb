@@ -375,7 +375,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   @Override
   public OBinaryResponse executeDistributedStatus(ODistributedStatusRequest request) {
     final ODocument req = request.getStatus();
-    ODocument clusterConfig = null;
+    ODocument clusterConfig = new ODocument();
 
     final String operation = req.field("operation");
     if (operation == null) throw new IllegalArgumentException("Cluster operation is null");
