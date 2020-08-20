@@ -103,6 +103,7 @@ public class OServer {
   private              OSystemDatabase                                systemDatabase;
   private              OrientDB                                       context;
   private              OrientDBInternal                               databases;
+  private  volatile    MemoryManager                                  memoryManager;
   protected            Date                                           startedOn              = new Date();
 
   public OServer()
@@ -426,6 +427,13 @@ public class OServer {
       final OServerConfiguration configuration = serverCfg.getConfiguration();
 
       tokenHandler = new OTokenHandlerImpl(this);
+      if(OGlobalConfiguration.SERVER_HEAP_USAGE_LIMIT.getValueAsInteger() > 0) {
+        memoryManager =
+            new MXBeanMemoryManager(OGlobalConfiguration.SERVER_HEAP_USAGE_LIMIT.getValueAsInteger(),
+                OGlobalConfiguration.SERVER_HEAP_USAGE_SLEEP_INTERVAL.getValueAsInteger());
+      } else {
+        memoryManager = new NoOpMemoryManager();
+      }
 
       if (configuration.network != null) {
         // REGISTER/CREATE SOCKET FACTORIES
@@ -579,6 +587,7 @@ public class OServer {
         pushManager.shutdown();
         clientConnectionManager.shutdown();
         httpSessionManager.shutdown();
+        memoryManager.shutdown();
 
         if (pluginManager != null)
           pluginManager.shutdown();
@@ -1218,6 +1227,10 @@ public class OServer {
 
   public OrientDB getContext() {
     return context;
+  }
+
+  public MemoryManager getMemoryManager() {
+    return memoryManager;
   }
 
   public void dropDatabase(String databaseName) {
