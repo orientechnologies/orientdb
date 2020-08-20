@@ -15,7 +15,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-public class BasicSyncIT {
+public class ReverseStartSyncIT {
 
   private TestSetup setup;
   private SetupConfig config;
@@ -36,7 +36,7 @@ public class BasicSyncIT {
   }
 
   @Test
-  public void sync() {
+  public void reverseStartSync() {
     try (OrientDB remote = setup.createRemote(server0, OrientDBConfig.defaultConfig())) {
       try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
         session.createClass("One");
@@ -48,26 +48,27 @@ public class BasicSyncIT {
         session.save(session.newElement("One"));
       }
     }
-    setup.shutdownServer(server0);
     setup.shutdownServer(server1);
-
-    setup.startServer(server0);
-    setup.startServer(server1);
+    setup.shutdownServer(server0);
+    // Starting the servers in reverse shutdown order to trigger miss sync
+    // This start order can be guaranteed only when using the local synchronous setup.
     setup.startServer(server2);
+    setup.startServer(server1);
+    setup.startServer(server0);
     // Test server 0
-    try (OrientDB remote = setup.createRemote(server0, OrientDBConfig.defaultConfig())) {
+    try (OrientDB remote = new OrientDB("remote:localhost", OrientDBConfig.defaultConfig())) {
       try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
         assertEquals(session.countClass("One"), 3);
       }
     }
     // Test server 1
-    try (OrientDB remote = setup.createRemote(server1, OrientDBConfig.defaultConfig())) {
+    try (OrientDB remote = new OrientDB("remote:localhost:2425", OrientDBConfig.defaultConfig())) {
       try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
         assertEquals(session.countClass("One"), 3);
       }
     }
     // Test server 2
-    try (OrientDB remote = setup.createRemote(server2, OrientDBConfig.defaultConfig())) {
+    try (OrientDB remote = new OrientDB("remote:localhost:2426", OrientDBConfig.defaultConfig())) {
       try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
         assertEquals(session.countClass("One"), 3);
       }
