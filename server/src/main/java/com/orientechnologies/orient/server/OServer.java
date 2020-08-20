@@ -435,6 +435,8 @@ public class OServer {
         memoryManager = new NoOpMemoryManager();
       }
 
+      memoryManager.start();
+
       if (configuration.network != null) {
         // REGISTER/CREATE SOCKET FACTORIES
         if (configuration.network.sockets != null) {
