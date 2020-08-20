@@ -57,17 +57,19 @@ public class OSTGeomFromTextFunctionTest extends BaseSpatialLuceneTest {
               ((List<List<List<Double>>>) item.getProperty("coordinates")).get(0).get(0).get(2)));
 
       item =
-              (ODocument)
-                      func.execute(
-                              null,
-                              null,
-                              null,
-                              new Object[] {"MULTILINESTRING Z ((1 1 0, 1 2 0), (1 3 1, 2 2 0))"},
-                              null);
+          (ODocument)
+              func.execute(
+                  null,
+                  null,
+                  null,
+                  new Object[] {"MULTILINESTRING Z ((1 1 0, 1 2 0), (1 3 1, 2 2 0))"},
+                  null);
       Assert.assertEquals("OMultiLineStringZ", item.getClassName());
-      Assert.assertEquals(2, ((List<List<List<Double>>>) item.getProperty("coordinates")).get(0).size());
+      Assert.assertEquals(
+          2, ((List<List<List<Double>>>) item.getProperty("coordinates")).get(0).size());
       Assert.assertFalse(
-              Double.isNaN(((List<List<List<Double>>>) item.getProperty("coordinates")).get(0).get(0).get(2)));
+          Double.isNaN(
+              ((List<List<List<Double>>>) item.getProperty("coordinates")).get(0).get(0).get(2)));
     } finally {
       OGlobalConfiguration.SPATIAL_ENABLE_DIRECT_WKT_READER.setValue(prevValue);
     }

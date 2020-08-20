@@ -21,10 +21,8 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.util.ArrayList;
 import java.util.List;
-
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.MultiLineString;
@@ -64,7 +62,6 @@ public class OMultiLineStringShapeBuilder extends OComplexShapeBuilder<JtsGeomet
       OClass lineStringZ = schema.createAbstractClass(getName() + "Z", superClass(db));
       lineStringZ.createProperty(COORDINATES, OType.EMBEDDEDLIST, OType.EMBEDDEDLIST);
     }
-
   }
 
   @Override
@@ -97,6 +94,5 @@ public class OMultiLineStringShapeBuilder extends OComplexShapeBuilder<JtsGeomet
 
     doc.field(COORDINATES, coordinates);
     return doc;
-
   }
 }

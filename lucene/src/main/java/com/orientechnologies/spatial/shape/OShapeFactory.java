@@ -106,10 +106,17 @@ public class OShapeFactory extends OComplexShapeBuilder {
 
   @Override
   public String asText(ODocument document) {
-    OShapeBuilder oShapeBuilder = factories.get(document.getClassName());
+    String className = document.getClassName();
+    OShapeBuilder oShapeBuilder = factories.get(className);
     if (oShapeBuilder != null) {
       return oShapeBuilder.asText(document);
+    } else if (className.endsWith("Z")) {
+      oShapeBuilder = factories.get(className.substring(0, className.length() - 1));
+      if (oShapeBuilder != null) {
+        return oShapeBuilder.asText(document);
+      }
     }
+
     // TODO handle exception shape not found
     return null;
   }

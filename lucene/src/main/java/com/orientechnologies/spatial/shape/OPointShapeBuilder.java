@@ -62,9 +62,15 @@ public class OPointShapeBuilder extends OShapeBuilder<Point> {
   public Point fromDoc(ODocument document) {
     validate(document);
     List<Number> coordinates = document.field(COORDINATES);
-    Point point =
-        SHAPE_FACTORY.pointXY(coordinates.get(0).doubleValue(), coordinates.get(1).doubleValue());
-    return point;
+    if (coordinates.size() == 2) {
+      return SHAPE_FACTORY.pointXY(
+          coordinates.get(0).doubleValue(), coordinates.get(1).doubleValue());
+    } else {
+      return SHAPE_FACTORY.pointXYZ(
+          coordinates.get(0).doubleValue(),
+          coordinates.get(1).doubleValue(),
+          coordinates.get(2).doubleValue());
+    }
   }
 
   @Override
@@ -99,5 +105,21 @@ public class OPointShapeBuilder extends OShapeBuilder<Point> {
           }
         });
     return doc;
+  }
+
+  @Override
+  public String asText(ODocument document) {
+    if (document.getClassName().equals("OPointZ")) {
+      List<Double> coordinates = document.getProperty("coordinates");
+      return "POINT Z ("
+          + format(coordinates.get(0))
+          + " "
+          + format(coordinates.get(1))
+          + " "
+          + format(coordinates.get(2))
+          + ")";
+    } else {
+      return super.asText(document);
+    }
   }
 }

@@ -20,6 +20,8 @@ import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.io.IOException;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
@@ -48,6 +50,7 @@ public abstract class OShapeBuilder<T extends Shape> {
   protected static final WKTReader wktReader = new WKTReader();
   private static final Map<String, Integer> capStyles = new HashMap<String, Integer>();
   private static final Map<String, Integer> join = new HashMap<String, Integer>();
+  private static final DecimalFormat doubleFormat;
 
   static {
     JtsSpatialContextFactory factory = new JtsSpatialContextFactory();
@@ -65,6 +68,25 @@ public abstract class OShapeBuilder<T extends Shape> {
     join.put("round", 1);
     join.put("mitre", 2);
     join.put("bevel", 3);
+
+    DecimalFormatSymbols sym = new DecimalFormatSymbols();
+    sym.setDecimalSeparator('.');
+    doubleFormat = new DecimalFormat("0", sym);
+    doubleFormat.setMaximumFractionDigits(16);
+  }
+
+  public synchronized String format(double value) {
+    if (Double.isNaN(value)) {
+      return "NaN";
+    } else if (Double.isInfinite(value)) {
+      if (value > 0d) {
+        return "Inf";
+      } else {
+        return "-Inf";
+      }
+    } else {
+      return doubleFormat.format(value);
+    }
   }
 
   public abstract String getName();
