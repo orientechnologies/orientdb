@@ -3,7 +3,6 @@ package com.orientechnologies.orient.setup.configs;
 import com.orientechnologies.orient.setup.K8sServerConfig;
 import com.orientechnologies.orient.setup.SetupConfig;
 import com.orientechnologies.orient.setup.TestSetupUtil;
-
 import java.util.*;
 
 public class SimpleDServerConfig implements SetupConfig {

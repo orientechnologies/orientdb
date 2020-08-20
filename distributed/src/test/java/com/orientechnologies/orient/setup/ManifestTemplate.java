@@ -1,11 +1,10 @@
 package com.orientechnologies.orient.setup;
 
-import org.apache.commons.text.StringSubstitutor;
-
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
+import org.apache.commons.text.StringSubstitutor;
 
 public class ManifestTemplate {
   // list of keys used in the manifest templates.

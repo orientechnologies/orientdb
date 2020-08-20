@@ -1,19 +1,18 @@
 package com.orientechnologies.orient.setup;
 
+import static com.orientechnologies.orient.setup.TestSetupUtil.log;
+import static com.orientechnologies.orient.setup.TestSetupUtil.sleep;
+
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.Configuration;
 import io.kubernetes.client.util.Config;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.ServerSocket;
-
-import static com.orientechnologies.orient.setup.TestSetupUtil.log;
-import static com.orientechnologies.orient.setup.TestSetupUtil.sleep;
 
 /**
  * Uses 'kubectl port-forward' to expose the port and therefore needs 'kubectl' binary. While not a

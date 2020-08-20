@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.setup;
 
+import static com.orientechnologies.orient.setup.TestSetupUtil.log;
+
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.orientechnologies.orient.core.db.OrientDB;
@@ -15,15 +17,12 @@ import io.kubernetes.client.util.ClientBuilder;
 import io.kubernetes.client.util.KubeConfig;
 import io.kubernetes.client.util.Watch;
 import io.kubernetes.client.util.Yaml;
-import okhttp3.OkHttpClient;
-
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-
-import static com.orientechnologies.orient.setup.TestSetupUtil.log;
+import okhttp3.OkHttpClient;
 
 public class KubernetesTestSetup implements TestSetup {
   // Used for listing OrientDB stateful sets.
