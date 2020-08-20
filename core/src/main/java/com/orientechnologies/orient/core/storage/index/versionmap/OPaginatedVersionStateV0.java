@@ -23,15 +23,11 @@ package com.orientechnologies.orient.core.storage.index.versionmap;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v2.paginatedclusterstate.PaginatedClusterStateV2SetFileSizePO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v2.paginatedclusterstate.PaginatedClusterStateV2SetFreeListPagePO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v2.paginatedclusterstate.PaginatedClusterStateV2SetRecordsSizePO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v2.paginatedclusterstate.PaginatedClusterStateV2SetSizePO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.version.v0.paginatedversionstate.PaginatedVersionStateV0SetFileSizePO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.version.v0.paginatedversionstate.PaginatedVersionStateV0SetFreeListPagePO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.version.v0.paginatedversionstate.PaginatedVersionStateV0SetRecordsSizePO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.version.v0.paginatedversionstate.PaginatedVersionStateV0SetSizePO;
 
-/**
- * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
- * @since 20.08.13
- */
 public final class OPaginatedVersionStateV0 extends ODurablePage {
   private static final int RECORDS_SIZE_OFFSET = NEXT_FREE_POSITION;
   private static final int SIZE_OFFSET = RECORDS_SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
@@ -45,7 +41,7 @@ public final class OPaginatedVersionStateV0 extends ODurablePage {
   public void setSize(int size) {
     final int oldSize = getIntValue(SIZE_OFFSET);
     setIntValue(SIZE_OFFSET, size);
-    addPageOperation(new PaginatedClusterStateV2SetSizePO(oldSize, size));
+    addPageOperation(new PaginatedVersionStateV0SetSizePO(oldSize, size));
   }
 
   public int getSize() {
@@ -55,7 +51,7 @@ public final class OPaginatedVersionStateV0 extends ODurablePage {
   public void setRecordsSize(int recordsSize) {
     final int oldRecordsSize = getIntValue(RECORDS_SIZE_OFFSET);
     setIntValue(RECORDS_SIZE_OFFSET, recordsSize);
-    addPageOperation(new PaginatedClusterStateV2SetRecordsSizePO(oldRecordsSize, recordsSize));
+    addPageOperation(new PaginatedVersionStateV0SetRecordsSizePO(oldRecordsSize, recordsSize));
   }
 
   public int getRecordsSize() {
@@ -65,7 +61,7 @@ public final class OPaginatedVersionStateV0 extends ODurablePage {
   public void setFileSize(int size) {
     final int oldFileSize = getIntValue(FILE_SIZE_OFFSET);
     setIntValue(FILE_SIZE_OFFSET, size);
-    addPageOperation(new PaginatedClusterStateV2SetFileSizePO(oldFileSize, size));
+    addPageOperation(new PaginatedVersionStateV0SetFileSizePO(oldFileSize, size));
   }
 
   public int getFileSize() {
@@ -76,7 +72,7 @@ public final class OPaginatedVersionStateV0 extends ODurablePage {
     final int pageOffset = FREE_LIST_OFFSET + index * OIntegerSerializer.INT_SIZE;
     final int oldPageIndex = getIntValue(pageOffset);
     setIntValue(pageOffset, pageIndex);
-    addPageOperation(new PaginatedClusterStateV2SetFreeListPagePO(index, oldPageIndex, pageIndex));
+    addPageOperation(new PaginatedVersionStateV0SetFreeListPagePO(index, oldPageIndex, pageIndex));
   }
 
   public int getFreeListPage(int index) {

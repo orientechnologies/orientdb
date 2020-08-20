@@ -59,7 +59,7 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
           try {
             this.createVPM(atomicOperation);
             // TODO: [DR] init array with default versions
-            this.initVersionState(atomicOperation);
+            // this.initVersionState(atomicOperation);
           } finally {
             releaseExclusiveLock();
           }
@@ -73,17 +73,16 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     } else {
       stateEntry = loadPageForWrite(atomicOperation, fileId, STATE_ENTRY_INDEX, false, false);
     }
-
     assert stateEntry.getPageIndex() == 0;
     try {
-      final OPaginatedVersionStateV0 paginatedClusterState =
+      final OPaginatedVersionStateV0 paginatedVersionStateV0 =
           new OPaginatedVersionStateV0(stateEntry);
-      paginatedClusterState.setSize(0);
-      paginatedClusterState.setRecordsSize(0);
-      paginatedClusterState.setFileSize(0);
+      paginatedVersionStateV0.setSize(0);
+      paginatedVersionStateV0.setRecordsSize(0);
+      paginatedVersionStateV0.setFileSize(0);
 
       for (int i = 0; i < FREE_LIST_SIZE; i++) {
-        paginatedClusterState.setFreeListPage(i, -1);
+        paginatedVersionStateV0.setFreeListPage(i, -1);
       }
     } finally {
       releasePageFromWrite(atomicOperation, stateEntry);
@@ -161,6 +160,7 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
   @Override
   public void updateVersion(final int hash, final int version) {
     // TODO: [DR]
+    System.out.println("update: " + hash + ", " + version);
   }
 
   @Override
@@ -346,21 +346,21 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
   }
 
   public void update(
-      final long clusterPosition,
+      final long versionPosition,
       final OVersionPositionMapBucket.PositionEntry entry,
       final OAtomicOperation atomicOperation)
       throws IOException {
 
     // TODO: [DR] calculate version
-    final long pageIndex = clusterPosition / OVersionPositionMapBucket.MAX_ENTRIES + 1;
-    final int index = (int) (clusterPosition % OVersionPositionMapBucket.MAX_ENTRIES);
+    final long pageIndex = versionPosition / OVersionPositionMapBucket.MAX_ENTRIES + 1;
+    final int index = (int) (versionPosition % OVersionPositionMapBucket.MAX_ENTRIES);
 
     final long lastPage = getLastPage(atomicOperation);
     if (pageIndex > lastPage) {
       throw new OVersionPositionMapException(
-          "Passed in cluster position "
-              + clusterPosition
-              + " is outside of range of cluster-position map",
+          "Passed in version position "
+              + versionPosition
+              + " is outside of range of version-position map",
           this);
     }
     final OCacheEntry cacheEntry =
@@ -374,10 +374,10 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
   }
 
   public OVersionPositionMapBucket.PositionEntry get(
-      final long clusterPosition, int pageCount, final OAtomicOperation atomicOperation)
+      final long versionPosition, int pageCount, final OAtomicOperation atomicOperation)
       throws IOException {
-    final long pageIndex = clusterPosition / OVersionPositionMapBucket.MAX_ENTRIES + 1;
-    final int index = (int) (clusterPosition % OVersionPositionMapBucket.MAX_ENTRIES);
+    final long pageIndex = versionPosition / OVersionPositionMapBucket.MAX_ENTRIES + 1;
+    final int index = (int) (versionPosition % OVersionPositionMapBucket.MAX_ENTRIES);
     final long lastPage = getLastPage(atomicOperation);
 
     if (pageIndex > lastPage) {
@@ -395,10 +395,10 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     }
   }
 
-  public void remove(final long clusterPosition, final OAtomicOperation atomicOperation)
+  public void remove(final long versionPosition, final OAtomicOperation atomicOperation)
       throws IOException {
-    final long pageIndex = clusterPosition / OVersionPositionMapBucket.MAX_ENTRIES + 1;
-    final int index = (int) (clusterPosition % OVersionPositionMapBucket.MAX_ENTRIES);
+    final long pageIndex = versionPosition / OVersionPositionMapBucket.MAX_ENTRIES + 1;
+    final int index = (int) (versionPosition % OVersionPositionMapBucket.MAX_ENTRIES);
 
     final OCacheEntry cacheEntry =
         loadPageForWrite(atomicOperation, fileId, pageIndex, false, true);
@@ -410,25 +410,25 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     }
   }
 
-  long[] higherPositions(final long clusterPosition, final OAtomicOperation atomicOperation)
+  long[] higherPositions(final long versionPosition, final OAtomicOperation atomicOperation)
       throws IOException {
-    if (clusterPosition == Long.MAX_VALUE) {
+    if (versionPosition == Long.MAX_VALUE) {
       return OCommonConst.EMPTY_LONG_ARRAY;
     }
-    return ceilingPositions(clusterPosition + 1, atomicOperation);
+    return ceilingPositions(versionPosition + 1, atomicOperation);
   }
 
-  OClusterPositionEntry[] higherPositionsEntries(
-      final long clusterPosition, final OAtomicOperation atomicOperation) throws IOException {
-    if (clusterPosition == Long.MAX_VALUE) {
-      return new OClusterPositionEntry[] {};
+  OVersionPositionEntry[] higherPositionsEntries(
+      final long versionPosition, final OAtomicOperation atomicOperation) throws IOException {
+    if (versionPosition == Long.MAX_VALUE) {
+      return new OVersionPositionEntry[] {};
     }
 
     final long realPosition;
-    if (clusterPosition < 0) {
+    if (versionPosition < 0) {
       realPosition = 0;
     } else {
-      realPosition = clusterPosition + 1;
+      realPosition = versionPosition + 1;
     }
     long pageIndex = realPosition / OVersionPositionMapBucket.MAX_ENTRIES + 1;
     int index = (int) (realPosition % OVersionPositionMapBucket.MAX_ENTRIES);
@@ -436,10 +436,10 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     final long lastPage = getLastPage(atomicOperation);
 
     if (pageIndex > lastPage) {
-      return new OClusterPositionEntry[] {};
+      return new OVersionPositionEntry[] {};
     }
 
-    OClusterPositionEntry[] result = null;
+    OVersionPositionEntry[] result = null;
     do {
       final OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false, 1);
 
@@ -455,13 +455,13 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
         // final long startIndex =
         //     cacheEntry.getPageIndex() * OVersionPositionMapBucket.MAX_ENTRIES + index;
 
-        result = new OClusterPositionEntry[resultSize];
+        result = new OVersionPositionEntry[resultSize];
         for (int i = 0; i < resultSize; i++) {
           if (bucket.exists(i + index)) {
             final OVersionPositionMapBucket.PositionEntry val = bucket.get(i + index);
             assert val != null;
             result[entriesCount] =
-                new OClusterPositionEntry(index + i, val.getPageIndex(), val.getRecordPosition());
+                new OVersionPositionEntry(index + i, val.getPageIndex(), val.getRecordPosition());
             entriesCount++;
           }
         }
@@ -478,18 +478,18 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     } while (result == null && pageIndex <= lastPage);
 
     if (result == null) {
-      result = new OClusterPositionEntry[] {};
+      result = new OVersionPositionEntry[] {};
     }
     return result;
   }
 
-  long[] ceilingPositions(long clusterPosition, final OAtomicOperation atomicOperation)
+  long[] ceilingPositions(long versionPosition, final OAtomicOperation atomicOperation)
       throws IOException {
-    if (clusterPosition < 0) {
-      clusterPosition = 0;
+    if (versionPosition < 0) {
+      versionPosition = 0;
     }
-    long pageIndex = clusterPosition / OVersionPositionMapBucket.MAX_ENTRIES + 1;
-    int index = (int) (clusterPosition % OVersionPositionMapBucket.MAX_ENTRIES);
+    long pageIndex = versionPosition / OVersionPositionMapBucket.MAX_ENTRIES + 1;
+    int index = (int) (versionPosition % OVersionPositionMapBucket.MAX_ENTRIES);
 
     final long lastPage = getLastPage(atomicOperation);
 
@@ -537,21 +537,21 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     return result;
   }
 
-  long[] lowerPositions(final long clusterPosition, final OAtomicOperation atomicOperation)
+  long[] lowerPositions(final long versionPosition, final OAtomicOperation atomicOperation)
       throws IOException {
-    if (clusterPosition == 0) {
+    if (versionPosition == 0) {
       return OCommonConst.EMPTY_LONG_ARRAY;
     }
-    return floorPositions(clusterPosition - 1, atomicOperation);
+    return floorPositions(versionPosition - 1, atomicOperation);
   }
 
-  long[] floorPositions(final long clusterPosition, final OAtomicOperation atomicOperation)
+  long[] floorPositions(final long versionPosition, final OAtomicOperation atomicOperation)
       throws IOException {
-    if (clusterPosition < 0) {
+    if (versionPosition < 0) {
       return OCommonConst.EMPTY_LONG_ARRAY;
     }
-    long pageIndex = clusterPosition / OVersionPositionMapBucket.MAX_ENTRIES + 1;
-    int index = (int) (clusterPosition % OVersionPositionMapBucket.MAX_ENTRIES);
+    long pageIndex = versionPosition / OVersionPositionMapBucket.MAX_ENTRIES + 1;
+    int index = (int) (versionPosition % OVersionPositionMapBucket.MAX_ENTRIES);
 
     final long lastPage = getLastPage(atomicOperation);
     long[] result;
@@ -623,15 +623,15 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
         releasePageFromRead(atomicOperation, cacheEntry);
       }
     }
-    return ORID.CLUSTER_POS_INVALID;
+    return ORID.VERSION_POS_INVALID;
   }
 
-  public byte getStatus(final long clusterPosition, final OAtomicOperation atomicOperation)
+  public byte getStatus(final long versionPosition, final OAtomicOperation atomicOperation)
       throws IOException {
     final long pageIndex =
-        (clusterPosition + OVersionPositionMapBucket.MAX_ENTRIES)
+        (versionPosition + OVersionPositionMapBucket.MAX_ENTRIES)
             / OVersionPositionMapBucket.MAX_ENTRIES;
-    final int index = (int) (clusterPosition % OVersionPositionMapBucket.MAX_ENTRIES);
+    final int index = (int) (versionPosition % OVersionPositionMapBucket.MAX_ENTRIES);
 
     final long lastPage = getLastPage(atomicOperation);
     if (pageIndex > lastPage) {
@@ -666,7 +666,7 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
         releasePageFromRead(atomicOperation, cacheEntry);
       }
     }
-    return ORID.CLUSTER_POS_INVALID;
+    return ORID.VERSION_POS_INVALID;
   }
 
   /** Returns the next position available. */
@@ -690,12 +690,12 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     this.fileId = newFileId;
   }*/
 
-  public static final class OClusterPositionEntry {
+  public static final class OVersionPositionEntry {
     private final long position;
     private final long page;
     private final int offset;
 
-    OClusterPositionEntry(final long position, final long page, final int offset) {
+    OVersionPositionEntry(final long position, final long page, final int offset) {
       this.position = position;
       this.page = page;
       this.offset = offset;

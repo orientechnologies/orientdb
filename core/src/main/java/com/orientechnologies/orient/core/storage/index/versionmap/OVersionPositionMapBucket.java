@@ -100,22 +100,18 @@ public final class OVersionPositionMapBucket extends ODurablePage {
 
   public PositionEntry get(int index) {
     int size = getIntValue(SIZE_OFFSET);
-
     if (index >= size) {
       return null;
     }
-
     int position = entryPosition(index);
     if (getByteValue(position) != FILLED) {
       return null;
     }
-
     return readEntry(position);
   }
 
   public void set(final int index, final PositionEntry entry) {
     final int size = getIntValue(SIZE_OFFSET);
-
     if (index >= size) {
       throw new OStorageException("Provided index " + index + " is out of range");
     }
@@ -163,37 +159,29 @@ public final class OVersionPositionMapBucket extends ODurablePage {
 
   public void remove(int index) {
     int size = getIntValue(SIZE_OFFSET);
-
     if (index >= size) {
       return;
     }
-
     int position = entryPosition(index);
 
     if (getByteValue(position) != FILLED) {
       return;
     }
-
     updateStatus(index, REMOVED);
   }
 
   public void updateStatus(int index, byte status) {
     int position = entryPosition(index);
-
     final byte oldStatus = getByteValue(position);
-
     setByteValue(position, status);
     addPageOperation(new ClusterPositionMapBucketUpdateStatusPO(index, oldStatus, status));
   }
 
   private PositionEntry readEntry(int position) {
     position += OByteSerializer.BYTE_SIZE;
-
     final long pageIndex = getLongValue(position);
     position += OLongSerializer.LONG_SIZE;
-
     final int pagePosition = getIntValue(position);
-
     return new PositionEntry(pageIndex, pagePosition);
   }
 
@@ -202,7 +190,6 @@ public final class OVersionPositionMapBucket extends ODurablePage {
     if (index >= size) {
       return false;
     }
-
     final int position = entryPosition(index);
     return getByteValue(position) == FILLED;
   }
@@ -212,7 +199,6 @@ public final class OVersionPositionMapBucket extends ODurablePage {
     if (index >= size) {
       return NOT_EXISTENT;
     }
-
     final int position = entryPosition(index);
     return getByteValue(position);
   }

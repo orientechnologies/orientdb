@@ -143,7 +143,6 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     if (atomicOperation == null) {
       return readCache.loadForRead(fileId, pageIndex, checkPinnedPages, writeCache, true);
     }
-
     return atomicOperation.loadPageForRead(fileId, pageIndex, checkPinnedPages, pageCount);
   }
 
@@ -178,7 +177,6 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     if (atomicOperation == null) {
       return readCache.addFile(fileName, writeCache);
     }
-
     return atomicOperation.addFile(fileName);
   }
 
