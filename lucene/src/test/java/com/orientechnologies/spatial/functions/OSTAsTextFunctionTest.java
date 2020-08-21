@@ -16,7 +16,12 @@ public class OSTAsTextFunctionTest extends BaseSpatialLuceneTest {
     boolean prevValue = OGlobalConfiguration.SPATIAL_ENABLE_DIRECT_WKT_READER.getValueAsBoolean();
     OGlobalConfiguration.SPATIAL_ENABLE_DIRECT_WKT_READER.setValue(true);
 
-    String[] values = {"POINT (100.1 80.2)", "POINT Z (100.1 80.2 0.3)"};
+    String[] values = {
+      "POINT (100.1 80.2)",
+      "POINT Z (100.1 80.2 0.3)",
+      "LINESTRING (1 1, 1 2, 1 3, 2 2)",
+      "LINESTRING Z (1 1 0, 1 2 0, 1 3 1, 2 2 0)"
+    };
     try {
       OSTGeomFromTextFunction func = new OSTGeomFromTextFunction();
       OSTAsTextFunction func2 = new OSTAsTextFunction();

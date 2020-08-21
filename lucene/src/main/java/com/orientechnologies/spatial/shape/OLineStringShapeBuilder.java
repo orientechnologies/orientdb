@@ -22,6 +22,7 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LineString;
@@ -81,8 +82,25 @@ public class OLineStringShapeBuilder extends OComplexShapeBuilder<JtsGeometry> {
     }
 
     ODocument doc = new ODocument(getName() + "Z");
-    LineString lineString = (LineString) shape.getGeom();
     doc.field(COORDINATES, coordinatesFromLineStringZ(geometry));
     return doc;
+  }
+
+  @Override
+  public String asText(ODocument document) {
+    if (document.getClassName().equals("OLineStringZ")) {
+      List<List<Double>> coordinates = document.getProperty("coordinates");
+
+      String result =
+          coordinates.stream()
+              .map(
+                  point ->
+                      (point.stream().map(coord -> format(coord)).collect(Collectors.joining(" "))))
+              .collect(Collectors.joining(", "));
+      return "LINESTRING Z (" + result + ")";
+
+    } else {
+      return super.asText(document);
+    }
   }
 }
