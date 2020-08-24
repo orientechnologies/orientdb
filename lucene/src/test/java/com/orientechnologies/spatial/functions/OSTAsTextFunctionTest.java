@@ -20,7 +20,9 @@ public class OSTAsTextFunctionTest extends BaseSpatialLuceneTest {
       "POINT (100.1 80.2)",
       "POINT Z (100.1 80.2 0.3)",
       "LINESTRING (1 1, 1 2, 1 3, 2 2)",
-      "LINESTRING Z (1 1 0, 1 2 0, 1 3 1, 2 2 0)"
+      "LINESTRING Z (1 1 0, 1 2 0, 1 3 1, 2 2 0)",
+      "POLYGON ((0 0, 0 1, 1 1, 1 0, 0 0))",
+      "POLYGON Z ((0 0 1, 0 1 0, 1 1 0, 1 0 0, 0 0 0))",
     };
     try {
       OSTGeomFromTextFunction func = new OSTGeomFromTextFunction();

@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.locationtech.jts.geom.*;
 import org.locationtech.spatial4j.shape.jts.JtsGeometry;
 
@@ -133,5 +134,31 @@ public class OPolygonShapeBuilder extends OComplexShapeBuilder<JtsGeometry> {
       polyCoordinates.add(coordinatesFromLineStringZ(polygon.getGeometryN(i)));
     }
     return polyCoordinates;
+  }
+
+  @Override
+  public String asText(ODocument document) {
+    if (document.getClassName().equals("OPolygonZ")) {
+      List<List<List<Double>>> coordinates = document.getProperty("coordinates");
+
+      String result =
+          coordinates.stream()
+              .map(
+                  poly ->
+                      "("
+                          + poly.stream()
+                              .map(
+                                  point ->
+                                      (point.stream()
+                                          .map(coord -> format(coord))
+                                          .collect(Collectors.joining(" "))))
+                              .collect(Collectors.joining(", "))
+                          + ")")
+              .collect(Collectors.joining(" "));
+      return "POLYGON Z (" + result + ")";
+
+    } else {
+      return super.asText(document);
+    }
   }
 }
