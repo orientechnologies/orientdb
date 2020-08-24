@@ -23,6 +23,8 @@ public class OSTAsTextFunctionTest extends BaseSpatialLuceneTest {
       "LINESTRING Z (1 1 0, 1 2 0, 1 3 1, 2 2 0)",
       "POLYGON ((0 0, 0 1, 1 1, 1 0, 0 0))",
       "POLYGON Z ((0 0 1, 0 1 0, 1 1 0, 1 0 0, 0 0 0))",
+      "MULTILINESTRING ((10 10, 20 20, 10 40), (40 40, 30 30, 40 20, 30 10))",
+      "MULTILINESTRING Z((10 10 0, 20 20 1, 10 40 2), (40 40 3, 30 30 4, 40 20 5, 30 10 6))",
     };
     try {
       OSTGeomFromTextFunction func = new OSTGeomFromTextFunction();

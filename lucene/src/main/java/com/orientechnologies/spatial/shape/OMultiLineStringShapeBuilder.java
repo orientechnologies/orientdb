@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.MultiLineString;
@@ -81,7 +82,7 @@ public class OMultiLineStringShapeBuilder extends OComplexShapeBuilder<JtsGeomet
 
   @Override
   protected ODocument toDoc(JtsGeometry shape, Geometry geometry) {
-    if (geometry == null) {
+    if (geometry == null || Double.isNaN(geometry.getCoordinates()[0].getZ())) {
       return toDoc(shape);
     }
 
@@ -94,5 +95,31 @@ public class OMultiLineStringShapeBuilder extends OComplexShapeBuilder<JtsGeomet
 
     doc.field(COORDINATES, coordinates);
     return doc;
+  }
+
+  @Override
+  public String asText(ODocument document) {
+    if (document.getClassName().equals("OMultiLineStringZ")) {
+      List<List<List<Double>>> coordinates = document.getProperty("coordinates");
+
+      String result =
+          coordinates.stream()
+              .map(
+                  line ->
+                      "("
+                          + line.stream()
+                              .map(
+                                  point ->
+                                      (point.stream()
+                                          .map(coord -> format(coord))
+                                          .collect(Collectors.joining(" "))))
+                              .collect(Collectors.joining(", "))
+                          + ")")
+              .collect(Collectors.joining(", "));
+      return "MULTILINESTRING Z(" + result + ")";
+
+    } else {
+      return super.asText(document);
+    }
   }
 }
