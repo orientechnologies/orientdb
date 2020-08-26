@@ -357,13 +357,10 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
   @Override
   public long loadFile(final String fileName) throws IOException {
     Long fileId = newFileNamesId.get(fileName);
-
     if (fileId == null) {
       fileId = writeCache.loadFile(fileName);
     }
-
     this.fileChanges.computeIfAbsent(fileId, k -> new FileChanges());
-
     return fileId;
   }
 

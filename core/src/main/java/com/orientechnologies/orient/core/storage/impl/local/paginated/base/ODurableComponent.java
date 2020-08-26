@@ -185,7 +185,6 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     if (atomicOperation == null) {
       return writeCache.loadFile(fileName);
     }
-
     return atomicOperation.loadFile(fileName);
   }
 

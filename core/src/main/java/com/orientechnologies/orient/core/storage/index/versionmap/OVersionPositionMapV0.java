@@ -27,6 +27,8 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
+import com.orientechnologies.orient.core.storage.version.OVersionPage;
+
 import java.io.IOException;
 import java.util.Arrays;
 
@@ -58,35 +60,10 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
           acquireExclusiveLock();
           try {
             this.createVPM(atomicOperation);
-            // TODO: [DR] init array with default versions
-            // this.initVersionState(atomicOperation);
           } finally {
             releaseExclusiveLock();
           }
         });
-  }
-
-  private void initVersionState(final OAtomicOperation atomicOperation) throws IOException {
-    final OCacheEntry stateEntry;
-    if (getFilledUpTo(atomicOperation, fileId) == 0) {
-      stateEntry = addPage(atomicOperation, fileId);
-    } else {
-      stateEntry = loadPageForWrite(atomicOperation, fileId, STATE_ENTRY_INDEX, false, false);
-    }
-    assert stateEntry.getPageIndex() == 0;
-    try {
-      final OPaginatedVersionStateV0 paginatedVersionStateV0 =
-          new OPaginatedVersionStateV0(stateEntry);
-      paginatedVersionStateV0.setSize(0);
-      paginatedVersionStateV0.setRecordsSize(0);
-      paginatedVersionStateV0.setFileSize(0);
-
-      for (int i = 0; i < FREE_LIST_SIZE; i++) {
-        paginatedVersionStateV0.setFreeListPage(i, -1);
-      }
-    } finally {
-      releasePageFromWrite(atomicOperation, stateEntry);
-    }
   }
 
   @Override
@@ -176,12 +153,26 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
   public void createVPM(final OAtomicOperation atomicOperation) throws IOException {
     fileId = addFile(atomicOperation, getFullName());
     if (getFilledUpTo(atomicOperation, fileId) == 0) {
+      // TODO: first one page is added for the meta data
       final OCacheEntry cacheEntry = addPage(atomicOperation, fileId);
       try {
         final MapEntryPoint mapEntryPoint = new MapEntryPoint(cacheEntry);
         mapEntryPoint.setFileSize(0);
       } finally {
         releasePageFromWrite(atomicOperation, cacheEntry);
+      }
+
+      // TODO: then let us add several empty data pages
+      int numberOfPages = (int) Math.ceil((1000*10*4) / OVersionPage.PAGE_SIZE);
+      numberOfPages = (numberOfPages == 0) ? 1 : numberOfPages;
+      for (int i = 0; i < numberOfPages; i++) {
+        final OCacheEntry ce = addPage(atomicOperation, fileId);
+        try {
+          final MapEntryPoint mapEntryPoint = new MapEntryPoint(ce);
+          mapEntryPoint.setFileSize(0);
+        } finally {
+          releasePageFromWrite(atomicOperation, ce);
+        }
       }
     } else {
       final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, 0, false, false);
