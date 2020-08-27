@@ -40,8 +40,5 @@
               password="79498491C4D4F1360816D003E2004BC04606AA1C31B1A0E3BCF091A30EFDAB7D"
               name="replicator"/>
     </users>
-    <properties>
-        <entry name="server.database.path" value="target/server0/"/>
-    </properties>
     <isAfterFirstTime>true</isAfterFirstTime>
 </orient-server>
