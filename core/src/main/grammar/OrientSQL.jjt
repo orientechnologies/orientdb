@@ -5424,3 +5424,17 @@ OCreateDatabaseStatement CreateDatabaseStatement():
     [ jjtThis.config = Json() ]
   ) {return jjtThis; }
 }
+
+ODropDatabaseStatement DropDatabaseStatement():
+{}
+{
+  (
+    <DROP> <DATABASE>
+    (
+      jjtThis.name = Identifier()
+      |
+      jjtThis.nameParam = InputParameter()
+    )
+    [ <IF> <EXISTS> { jjtThis.ifExists = true; } ]
+  ) {return jjtThis; }
+}
