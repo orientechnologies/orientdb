@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.setup;
 
+import com.hazelcast.core.Hazelcast;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
@@ -64,7 +65,11 @@ public class LocalTestSetup implements TestSetup {
 
   @Override
   public void teardown() {
-    for (ServerRun server : servers.values()) server.getServerInstance().shutdown();
+    for (ServerRun server : servers.values()) {
+      server.getServerInstance().shutdown();
+      server.deleteNode();
+    }
+    Hazelcast.shutdownAll();
   }
 
   @Override

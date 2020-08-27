@@ -48,7 +48,7 @@ public class ServerRun {
   }
 
   public static String getServerHome(final String iServerId) {
-    return "target/server" + iServerId;
+    return "target/servers/" + iServerId;
   }
 
   @Override
