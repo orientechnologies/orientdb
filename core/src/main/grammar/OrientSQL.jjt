@@ -1021,6 +1021,8 @@ OServerStatement ServerStatement():
 {
     (
         result = CreateDatabaseStatement()
+        |
+        result = DropDatabaseStatement()
     )
 	{
 	    return result;
