@@ -51,24 +51,24 @@ public class ReverseStartSyncIT {
     setup.shutdownServer(server1);
     setup.shutdownServer(server0);
     // Starting the servers in reverse shutdown order to trigger miss sync
-    // This start order can be guaranteed only when using the local synchronous setup.
+    // This start order can be guaranteed only when nodes start synchronously.
     setup.startServer(server2);
     setup.startServer(server1);
     setup.startServer(server0);
     // Test server 0
-    try (OrientDB remote = new OrientDB("remote:localhost", OrientDBConfig.defaultConfig())) {
+    try (OrientDB remote = setup.createRemote(server0, OrientDBConfig.defaultConfig())) {
       try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
         assertEquals(session.countClass("One"), 3);
       }
     }
     // Test server 1
-    try (OrientDB remote = new OrientDB("remote:localhost:2425", OrientDBConfig.defaultConfig())) {
+    try (OrientDB remote = setup.createRemote(server1, OrientDBConfig.defaultConfig())) {
       try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
         assertEquals(session.countClass("One"), 3);
       }
     }
     // Test server 2
-    try (OrientDB remote = new OrientDB("remote:localhost:2426", OrientDBConfig.defaultConfig())) {
+    try (OrientDB remote = setup.createRemote(server2, OrientDBConfig.defaultConfig())) {
       try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
         assertEquals(session.countClass("One"), 3);
       }

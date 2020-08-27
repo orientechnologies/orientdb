@@ -23,16 +23,25 @@ public class TestSetupUtil {
     configVolumeStorageClass = System.getProperty("configVolumeStorageClass", "");
     databaseVolumeStorageClass = System.getProperty("databaseVolumeStorageClass", "");
     kubernetesNamespace = System.getProperty("kubernetesNamespace", "default");
-    log("Using template values: {"
-        + "'HTTP port': '%s', "
-        + "'binary port': '%s', "
-        + "'Hazelcast port': '%s', "
-        + "'Docker image': '%s', "
-        + "'DB volume size': %s, "
-        + "'OrientDB label': '%s', "
-        + "'config volume storage class': '%s', "
-        + "'DB volume storage class': '%s', "
-        + "'Kubernetes namespace': '%s'}",
+  }
+
+  public static TestSetup create(SetupConfig SetupConfig) throws IOException {
+    String kubeConfigFile = System.getProperty("kubeConfig");
+    if (kubeConfigFile == null) {
+      log("Running with local JVMs.");
+      return new LocalTestSetup(SetupConfig);
+    }
+    log(
+        "Using template values: {"
+            + "'HTTP port': '%s', "
+            + "'binary port': '%s', "
+            + "'Hazelcast port': '%s', "
+            + "'Docker image': '%s', "
+            + "'DB volume size': %s, "
+            + "'OrientDB label': '%s', "
+            + "'config volume storage class': '%s', "
+            + "'DB volume storage class': '%s', "
+            + "'Kubernetes namespace': '%s'}",
         templateConfigs.getHttpPort(),
         templateConfigs.getBinaryPort(),
         templateConfigs.getHazelcastPort(),
@@ -42,14 +51,6 @@ public class TestSetupUtil {
         configVolumeStorageClass,
         databaseVolumeStorageClass,
         kubernetesNamespace);
-  }
-
-  public static TestSetup create(SetupConfig SetupConfig) throws IOException {
-    String kubeConfigFile = System.getProperty("kubeConfig");
-    if (kubeConfigFile == null) {
-      log("Running with local JVMs.");
-      return new LocalTestSetup(SetupConfig);
-    }
     log("Running with Kube Config file " + kubeConfigFile);
     return new KubernetesTestSetup(kubeConfigFile, SetupConfig);
   }

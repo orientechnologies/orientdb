@@ -6,7 +6,7 @@ To run the integration tests on Kubernetes you must use the Maven `it-k8s` build
 
 Run a single test:
 ```
-mvn test -Dtest=BasicSyncIT -P it-k8s -DkubeConfig=/path/to/kubeconfig
+mvn failsafe:integration-test -Dit.test=BasicSyncIT -P it-k8s -DkubeConfig=/path/to/kubeconfig
 ```
 
 To run all integration tests that can be run on Kubernetes (defined in the build profile):

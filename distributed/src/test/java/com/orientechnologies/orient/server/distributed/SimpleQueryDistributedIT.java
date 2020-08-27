@@ -9,28 +9,37 @@ import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.setup.SetupConfig;
+import com.orientechnologies.orient.setup.TestSetup;
+import com.orientechnologies.orient.setup.TestSetupUtil;
+import com.orientechnologies.orient.setup.configs.SimpleDServerConfig;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 public class SimpleQueryDistributedIT {
 
-  private OServer server0;
-  private OServer server1;
-  private OServer server2;
+  private TestSetup setup;
+  private SetupConfig config;
+  private String server0, server1, server2;
+
   private OrientDB remote;
   private ODatabaseSession session;
 
   @Before
   public void before() throws Exception {
-    server0 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-0.xml");
-    server1 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-1.xml");
-    server2 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-2.xml");
-    remote = new OrientDB("remote:localhost", "root", "test", OrientDBConfig.defaultConfig());
+    config = new SimpleDServerConfig();
+    server0 = SimpleDServerConfig.SERVER0;
+    server1 = SimpleDServerConfig.SERVER1;
+    server2 = SimpleDServerConfig.SERVER2;
+    setup = TestSetupUtil.create(config);
+    setup.setup();
+
+    remote = setup.createRemote(server0, "root", "test", OrientDBConfig.defaultConfig());
     remote.create("test", ODatabaseType.PLOCAL);
     session = remote.open("test", "admin", "admin");
   }
@@ -40,32 +49,28 @@ public class SimpleQueryDistributedIT {
     OVertex vertex = session.newVertex("V");
     vertex.setProperty("name", "one");
     session.save(vertex);
+
+    // Query with SQL
     OResultSet res = session.query("select from V");
     assertTrue(res.hasNext());
     assertEquals(res.next().getProperty("name"), "one");
-  }
 
-  @Test
-  public void testExecute() {
-    OVertex vertex = session.newVertex("V");
-    vertex.setProperty("name", "one");
-    session.save(vertex);
-    OResultSet res = session.execute("sql", "select from V");
+    // Query with script
+    res = session.execute("sql", "select from V");
     assertTrue(res.hasNext());
     assertEquals(res.next().getProperty("name"), "one");
-  }
 
-  @Test
-  public void testRecords() {
+    // Query order by
+    OClass v2 = session.createVertexClass("V2");
     int records = (OGlobalConfiguration.QUERY_REMOTE_RESULTSET_PAGE_SIZE.getValueAsInteger() + 10);
     for (int i = 0; i < records; i++) {
-      OVertex vertex = session.newVertex("V");
+      vertex = session.newVertex("V2");
       vertex.setProperty("name", "one");
       vertex.setProperty("pos", i);
       session.save(vertex);
     }
 
-    OResultSet res = session.query("select from V order by pos");
+    res = session.query("select from V2 order by pos");
     for (int i = 0; i < records; i++) {
       assertTrue(res.hasNext());
       OResult ele = res.next();
@@ -76,12 +81,15 @@ public class SimpleQueryDistributedIT {
 
   @After
   public void after() throws InterruptedException {
-    remote.drop("test");
-    remote.close();
-
-    server0.shutdown();
-    server1.shutdown();
-    server2.shutdown();
-    ODatabaseDocumentTx.closeAll();
+    System.out.println("Tearing down test setup.");
+    try {
+      if (remote != null) {
+        remote.drop("test");
+        remote.close();
+      }
+    } finally {
+      setup.teardown();
+      ODatabaseDocumentTx.closeAll();
+    }
   }
 }
