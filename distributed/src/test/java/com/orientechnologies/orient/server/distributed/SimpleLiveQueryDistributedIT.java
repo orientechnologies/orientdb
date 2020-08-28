@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.server.distributed;
 
+import static org.junit.Assert.assertEquals;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.*;
@@ -11,13 +13,10 @@ import com.orientechnologies.orient.setup.SetupConfig;
 import com.orientechnologies.orient.setup.TestSetup;
 import com.orientechnologies.orient.setup.TestSetupUtil;
 import com.orientechnologies.orient.setup.configs.SimpleDServerConfig;
+import java.util.concurrent.CountDownLatch;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.concurrent.CountDownLatch;
-
-import static org.junit.Assert.assertEquals;
 
 public class SimpleLiveQueryDistributedIT {
 

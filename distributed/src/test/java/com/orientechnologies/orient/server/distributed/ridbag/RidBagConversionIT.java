@@ -13,13 +13,11 @@ import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.setup.LocalTestSetup;
 import com.orientechnologies.orient.setup.SetupConfig;
-import com.orientechnologies.orient.setup.TestSetupUtil;
 import com.orientechnologies.orient.setup.configs.SimpleDServerConfig;
+import java.util.stream.Collectors;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.stream.Collectors;
 
 public class RidBagConversionIT {
 
@@ -39,7 +37,8 @@ public class RidBagConversionIT {
   public void testConversion() {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(1);
     String server0Path = setup.getServer(server0).getServerHome();
-    OrientDB orientDB = new OrientDB("embedded:" + server0Path + "/databases/", OrientDBConfig.defaultConfig());
+    OrientDB orientDB =
+        new OrientDB("embedded:" + server0Path + "/databases/", OrientDBConfig.defaultConfig());
     orientDB.create("test", ODatabaseType.PLOCAL);
     ODatabaseSession database = orientDB.open("test", "admin", "admin");
     database.begin();
