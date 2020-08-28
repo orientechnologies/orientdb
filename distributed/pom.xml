@@ -114,6 +114,7 @@
                                 <include>**/SimpleQueryDistributedIT.java</include>
                                 <include>**/ReverseStartSyncIT.java</include>
                                 <include>**/ConcurrentIndexDefinitionIT.java</include>
+                                <include>**/SimpleMultiNodeConnectIT.java</include>
                             </includes>
                             <systemPropertyVariables>
                                 <kubeConfig></kubeConfig>
