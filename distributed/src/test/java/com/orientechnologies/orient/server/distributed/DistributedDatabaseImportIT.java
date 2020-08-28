@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.server.distributed;
 
+import static org.junit.Assert.assertTrue;
+
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
@@ -10,14 +12,11 @@ import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.setup.LocalTestSetup;
 import com.orientechnologies.orient.setup.SetupConfig;
 import com.orientechnologies.orient.setup.configs.SimpleDServerConfig;
+import java.io.File;
+import java.io.IOException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.io.File;
-import java.io.IOException;
-
-import static org.junit.Assert.assertTrue;
 
 public class DistributedDatabaseImportIT {
 

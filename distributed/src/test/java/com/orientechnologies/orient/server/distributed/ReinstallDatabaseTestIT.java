@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.server.distributed;
 
+import static org.junit.Assert.assertEquals;
+
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
@@ -11,15 +13,12 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.setup.LocalTestSetup;
 import com.orientechnologies.orient.setup.SetupConfig;
 import com.orientechnologies.orient.setup.configs.SimpleDServerConfig;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-
-import static org.junit.Assert.assertEquals;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 public class ReinstallDatabaseTestIT {
   public static final String DATABASE_NAME = "ReinstallDatabaseTestIT";
