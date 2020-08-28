@@ -1,40 +1,44 @@
 package com.orientechnologies.orient.server.distributed;
 
-import static org.junit.Assert.assertEquals;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
-import com.orientechnologies.orient.core.db.OLiveQueryMonitor;
-import com.orientechnologies.orient.core.db.OLiveQueryResultListener;
-import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-import com.orientechnologies.orient.server.OServer;
-import java.util.concurrent.CountDownLatch;
+import com.orientechnologies.orient.setup.SetupConfig;
+import com.orientechnologies.orient.setup.TestSetup;
+import com.orientechnologies.orient.setup.TestSetupUtil;
+import com.orientechnologies.orient.setup.configs.SimpleDServerConfig;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.concurrent.CountDownLatch;
+
+import static org.junit.Assert.assertEquals;
+
 public class SimpleLiveQueryDistributedIT {
 
-  private OServer server0;
-  private OServer server1;
+  private TestSetup setup;
+  private SetupConfig config;
+  private String server0, server1, server2;
+  private String databaseName = SimpleLiveQueryDistributedIT.class.getSimpleName();
 
   @Before
   public void before() throws Exception {
     OGlobalConfiguration.SERVER_BACKWARD_COMPATIBILITY.setValue(false);
-    server0 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-0.xml");
-    server1 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-1.xml");
-    OrientDB remote =
-        new OrientDB("remote:localhost", "root", "test", OrientDBConfig.defaultConfig());
-    remote.create(SimpleLiveQueryDistributedIT.class.getSimpleName(), ODatabaseType.PLOCAL);
-    ODatabaseSession session =
-        remote.open(SimpleLiveQueryDistributedIT.class.getSimpleName(), "admin", "admin");
+    config = new SimpleDServerConfig();
+    server0 = SimpleDServerConfig.SERVER0;
+    server1 = SimpleDServerConfig.SERVER1;
+    server2 = SimpleDServerConfig.SERVER2;
+    setup = TestSetupUtil.create(config);
+    setup.setup();
+
+    OrientDB remote = setup.createRemote(server0, "root", "test", OrientDBConfig.defaultConfig());
+    remote.create(databaseName, ODatabaseType.PLOCAL);
+    ODatabaseSession session = remote.open(databaseName, "admin", "admin");
     session.createClass("test");
     session.close();
     remote.close();
@@ -42,18 +46,14 @@ public class SimpleLiveQueryDistributedIT {
 
   @Test
   public void testLiveQueryDifferentNode() throws InterruptedException {
-    OrientDB remote1 =
-        new OrientDB("remote:localhost", "root", "test", OrientDBConfig.defaultConfig());
-    ODatabaseSession session =
-        remote1.open(SimpleLiveQueryDistributedIT.class.getSimpleName(), "admin", "admin");
+    OrientDB remote1 = setup.createRemote(server0, "root", "test", OrientDBConfig.defaultConfig());
+    ODatabaseSession session = remote1.open(databaseName, "admin", "admin");
 
     EventListener listener = new EventListener();
     OLiveQueryMonitor monitor = session.live("select from test", listener);
 
-    OrientDB remote2 =
-        new OrientDB("remote:localhost:2425", "root", "test", OrientDBConfig.defaultConfig());
-    ODatabaseSession session2 =
-        remote1.open(SimpleLiveQueryDistributedIT.class.getSimpleName(), "admin", "admin");
+    OrientDB remote2 = setup.createRemote(server1, "root", "test", OrientDBConfig.defaultConfig());
+    ODatabaseSession session2 = remote1.open(databaseName, "admin", "admin");
     OElement el = session2.save(session2.newElement("test"));
     el.setProperty("name", "name");
     session2.save(el);
@@ -73,13 +73,7 @@ public class SimpleLiveQueryDistributedIT {
 
   @After
   public void after() throws InterruptedException {
-    OrientDB remote =
-        new OrientDB("remote:localhost", "root", "test", OrientDBConfig.defaultConfig());
-    remote.drop(SimpleLiveQueryDistributedIT.class.getSimpleName());
-    remote.close();
-
-    server0.shutdown();
-    server1.shutdown();
+    setup.teardown();
     ODatabaseDocumentTx.closeAll();
   }
 

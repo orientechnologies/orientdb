@@ -295,7 +295,7 @@ public class KubernetesTestSetup implements TestSetup {
         serverIds.stream()
             .map(id -> "remote:" + getAddress(id, PortType.BINARY))
             .reduce((s1, s2) -> s1 + ";" + s2);
-    log("Creating remote connection to server(s) '%s' at %s.", serverIds, url.get());
+    log("Creating remote connection to server(s) '%s' at '%s'.", serverIds, url.get());
     return new OrientDBIT(url.orElse(""), serverUser, serverPassword, config);
   }
 
