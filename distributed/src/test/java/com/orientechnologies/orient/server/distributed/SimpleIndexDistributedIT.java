@@ -1,7 +1,5 @@
 package com.orientechnologies.orient.server.distributed;
 
-import static org.junit.Assert.assertTrue;
-
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
@@ -11,25 +9,34 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.setup.SetupConfig;
+import com.orientechnologies.orient.setup.TestSetup;
+import com.orientechnologies.orient.setup.TestSetupUtil;
+import com.orientechnologies.orient.setup.configs.SimpleDServerConfig;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import static org.junit.Assert.assertTrue;
+
 public class SimpleIndexDistributedIT {
 
-  private OServer server0;
-  private OServer server1;
-  private OServer server2;
+  private TestSetup setup;
+  private SetupConfig config;
+  private String server0, server1, server2;
   private OrientDB remote;
   private ODatabaseSession session;
 
   @Before
   public void before() throws Exception {
-    server0 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-0.xml");
-    server1 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-1.xml");
-    server2 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-2.xml");
-    remote = new OrientDB("remote:localhost", "root", "test", OrientDBConfig.defaultConfig());
+    config = new SimpleDServerConfig();
+    server0 = SimpleDServerConfig.SERVER0;
+    server1 = SimpleDServerConfig.SERVER1;
+    server2 = SimpleDServerConfig.SERVER2;
+    setup = TestSetupUtil.create(config);
+    setup.setup();
+
+    remote = setup.createRemote(server0, "root", "test", OrientDBConfig.defaultConfig());
     remote.create("test", ODatabaseType.PLOCAL);
     session = remote.open("test", "admin", "admin");
     OClass clazz = session.createClass("Test");
@@ -47,7 +54,7 @@ public class SimpleIndexDistributedIT {
       assertTrue(res.hasNext());
     }
 
-    OrientDB remote1 = new OrientDB("remote:localhost:2425", OrientDBConfig.defaultConfig());
+    OrientDB remote1 = setup.createRemote(server1, OrientDBConfig.defaultConfig());
     ODatabaseSession session1 = remote1.open("test", "admin", "admin");
     try (OResultSet res1 = session1.query("select from test where test =\"some\"")) {
       assertTrue(res1.hasNext());
@@ -57,14 +64,14 @@ public class SimpleIndexDistributedIT {
 
   @After
   public void after() throws InterruptedException {
-    session.activateOnCurrentThread();
-    session.close();
-    remote.drop("test");
-    remote.close();
-
-    server0.shutdown();
-    server1.shutdown();
-    server2.shutdown();
-    ODatabaseDocumentTx.closeAll();
+    try {
+      session.activateOnCurrentThread();
+      session.close();
+      remote.drop("test");
+      remote.close();
+    } finally {
+      setup.teardown();
+      ODatabaseDocumentTx.closeAll();
+    }
   }
 }
