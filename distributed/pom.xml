@@ -117,6 +117,7 @@
                                 <include>**/SimpleMultiNodeConnectIT.java</include>
                                 <include>**/SimpleLiveQueryDistributedIT.java</include>
                                 <include>**/SimpleIndexDistributedIT.java</include>
+                                <include>**/UniqueCompositeIndexDistributedIT.java</include>
                             </includes>
                             <systemPropertyVariables>
                                 <kubeConfig></kubeConfig>
