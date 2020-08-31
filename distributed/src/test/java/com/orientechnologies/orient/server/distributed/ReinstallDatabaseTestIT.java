@@ -41,7 +41,7 @@ public class ReinstallDatabaseTestIT {
 
     OrientDB remote = setup.createRemote(server0, "root", "test", OrientDBConfig.defaultConfig());
     remote.create(DATABASE_NAME, ODatabaseType.PLOCAL);
-    ODatabaseSession session = remote.open("ReinstallDatabaseTestIT", "admin", "admin");
+    ODatabaseSession session = remote.open(DATABASE_NAME, "admin", "admin");
     session.createClass("Person");
     session.createClass("Person1");
     OElement doc = session.newElement("Person");
@@ -129,9 +129,12 @@ public class ReinstallDatabaseTestIT {
         OGlobalConfiguration.DISTRIBUTED_DB_WORKERTHREADS.getDefValue());
     OGlobalConfiguration.DISTRIBUTED_LOCAL_QUEUESIZE.setValue(
         OGlobalConfiguration.DISTRIBUTED_LOCAL_QUEUESIZE.getDefValue());
-    OrientDB remote = setup.createRemote(server0, "root", "test", OrientDBConfig.defaultConfig());
-    remote.drop(DATABASE_NAME);
-    remote.close();
-    setup.teardown();
+    try {
+      OrientDB remote = setup.createRemote(server0, "root", "test", OrientDBConfig.defaultConfig());
+      remote.drop(DATABASE_NAME);
+      remote.close();
+    } finally {
+      setup.teardown();
+    }
   }
 }
