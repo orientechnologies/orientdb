@@ -41,7 +41,6 @@ import com.orientechnologies.orient.core.security.OSecuritySystemException;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.OServerLifecycleListener;
 import com.orientechnologies.orient.server.config.OServerConfigurationManager;
 import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
@@ -61,8 +60,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author S. Colin Leister
  */
-public class ODefaultServerSecurity
-    implements OSecurityFactory, OServerLifecycleListener, OServerSecurity {
+public class ODefaultServerSecurity implements OSecurityFactory, OServerSecurity {
   private boolean enabled = false; // Defaults to not
   // enabled at
   // first.
@@ -108,18 +106,20 @@ public class ODefaultServerSecurity
   private ConcurrentHashMap<String, Class<?>> securityClassMap =
       new ConcurrentHashMap<String, Class<?>>();
   private OSyslog sysLog;
+  private OSecurityServerLifecycleListener listener;
 
   public ODefaultServerSecurity(
       final OServer oServer, final OServerConfigurationManager serverCfg) {
     server = oServer;
     serverConfig = serverCfg;
 
-    oServer.registerLifecycleListener(this);
+    listener = new OSecurityServerLifecycleListener(this);
+    oServer.registerLifecycleListener(listener);
     OSecurityManager.instance().setSecurityFactory(this);
   }
 
   public void shutdown() {
-    server.unregisterLifecycleListener(this);
+    server.unregisterLifecycleListener(listener);
   }
 
   private Class<?> getClass(final ODocument jsonConfig) {
@@ -529,6 +529,10 @@ public class ODefaultServerSecurity
     return typeName;
   }
 
+  public void load(final String cfgPath) {
+    this.configDoc = loadConfig(cfgPath);
+  }
+
   // OSecuritySystem
   public void reload(final String cfgPath) {
     reload(null, cfgPath);
@@ -547,7 +551,7 @@ public class ODefaultServerSecurity
   @Override
   public void reload(OSecurityUser user, ODocument configDoc) {
     if (configDoc != null) {
-      onBeforeDeactivate();
+      close();
 
       this.configDoc = configDoc;
 
@@ -646,7 +650,7 @@ public class ODefaultServerSecurity
             });
   }
 
-  private void createSuperUser() {
+  protected void createSuperUser() {
     if (superUser == null)
       throw new OSecuritySystemException(
           "ODefaultServerSecurity.createSuperUser() SuperUser cannot be null");
@@ -732,32 +736,6 @@ public class ODefaultServerSecurity
     }
   }
 
-  /** * OServerLifecycleListener Interface * */
-  public void onBeforeActivate() {
-    createSuperUser();
-
-    // Default
-    String configFile =
-        OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}/config/security.json");
-
-    // The default "security.json" file can be overridden in the server config file.
-    String securityFile = getConfigProperty("server.security.file");
-    if (securityFile != null) configFile = securityFile;
-
-    String ssf =
-        server
-            .getContextConfiguration()
-            .getValueAsString(OGlobalConfiguration.SERVER_SECURITY_FILE);
-    if (ssf != null) configFile = ssf;
-
-    configDoc = loadConfig(configFile);
-  }
-
-  // OServerLifecycleListener Interface
-  public void onAfterActivate() {
-    // Does nothing now.
-  }
-
   // OServerSecurity
   public void onAfterDynamicPlugins() {
     onAfterDynamicPlugins(null);
@@ -777,48 +755,6 @@ public class ODefaultServerSecurity
       OLogManager.instance().warn(this, "onAfterDynamicPlugins() Configuration document is empty");
     }
   }
-
-  // OServerLifecycleListener Interface
-  public void onBeforeDeactivate() {
-    if (enabled) {
-      unregisterRESTCommands();
-
-      synchronized (importLDAPSynch) {
-        if (importLDAP != null) {
-          importLDAP.dispose();
-          importLDAP = null;
-        }
-      }
-
-      synchronized (passwordValidatorSynch) {
-        if (passwordValidator != null) {
-          passwordValidator.dispose();
-          passwordValidator = null;
-        }
-      }
-
-      synchronized (auditingSynch) {
-        if (auditingService != null) {
-          auditingService.dispose();
-          auditingService = null;
-        }
-      }
-
-      synchronized (authenticatorsList) {
-        // Notify all the security components that the server is active.
-        for (OSecurityAuthenticator sa : authenticatorsList) {
-          sa.dispose();
-        }
-
-        authenticatorsList.clear();
-      }
-
-      enabled = false;
-    }
-  }
-
-  // OServerLifecycleListener Interface
-  public void onAfterDeactivate() {}
 
   protected void loadComponents() {
     // Loads the top-level configuration properties ("enabled" and "debug").
@@ -1135,6 +1071,44 @@ public class ODefaultServerSecurity
   /** * OSecurityFactory Interface * */
   public OSecurityInternal newSecurity() {
     return new OSecurityServerExternal(server);
+  }
+
+  public void close() {
+    if (enabled) {
+      unregisterRESTCommands();
+
+      synchronized (importLDAPSynch) {
+        if (importLDAP != null) {
+          importLDAP.dispose();
+          importLDAP = null;
+        }
+      }
+
+      synchronized (passwordValidatorSynch) {
+        if (passwordValidator != null) {
+          passwordValidator.dispose();
+          passwordValidator = null;
+        }
+      }
+
+      synchronized (auditingSynch) {
+        if (auditingService != null) {
+          auditingService.dispose();
+          auditingService = null;
+        }
+      }
+
+      synchronized (authenticatorsList) {
+        // Notify all the security components that the server is active.
+        for (OSecurityAuthenticator sa : authenticatorsList) {
+          sa.dispose();
+        }
+
+        authenticatorsList.clear();
+      }
+
+      enabled = false;
+    }
   }
 
   private void registerRESTCommands() {
