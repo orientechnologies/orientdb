@@ -62,7 +62,7 @@ public class OLDAPImporter implements OSecurityComponent {
       ODatabase<?> odb = null;
 
       try {
-        odb = server.getSecurity().openDatabase(db.getName());
+        odb = server.openDatabase(db.getName());
 
         verifySchema(odb);
       } catch (Exception ex) {
@@ -447,7 +447,7 @@ public class OLDAPImporter implements OSecurityComponent {
       try {
         Database db = dbEntry.getValue();
 
-        ODatabase<?> odb = server.getSecurity().openDatabase(db.getName());
+        ODatabase<?> odb = server.openDatabase(db.getName());
 
         // This set will be filled with all users from the database (unless ignoreLocal is true).
         // As each usersRetrieved list is filled, any matching user will be removed.
