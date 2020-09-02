@@ -18,6 +18,8 @@ Note: if you do not have permissions to create the request, ask NAAS (Tobias Sch
 
 Put JAR file into folder: \\\\mediaserver.wdf.sap.corp\UPLINBOX\ORIENTDB_30_EE and inform NAAS (Tobias Schreck).
 
+Note for 3.0: https://launchpad.support.sap.com/#/notes/2875730
+
 Note for 3.1: https://launchpad.support.sap.com/#/notes/2915917
 
 ### CWB process
@@ -30,4 +32,6 @@ Then `Next` and select the correct branch e.g. `fa/rel-3.2` and patch level e.g.
 
 Copy the `ID` of the correction request to the initial comment in your PR e.g. `CR-Id: 002075125900001706292020`. After that the CWB voter will vote successfully.
 
-For patches do not check `Not Patch Relevant`! If you get a validity issue with the note, go into it, edit validity and save.
+> For patches do not check `Not Patch Relevant`! If you get a validity issue with the note, go into it, edit validity and save.
+
+> Put CWB CR to "patch request", only after the "stage, promote" was successful.

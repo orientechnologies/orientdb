@@ -13,6 +13,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.OSystemDatabase;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.executor.*;
@@ -24,7 +25,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OEnterpris
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerLifecycleListener;
-import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
@@ -297,35 +297,36 @@ public class OEnterpriseServerImpl
         .filter((c) -> c.getDatabase() != null && filter.map(f -> f.apply(c)).orElse(true))
         .flatMap(
             (c) ->
-                c.getDatabase().getActiveQueries().entrySet().stream()
-                    .map(
-                        (k) -> {
-                          OResultInternal internal = new OResultInternal();
-                          internal.setProperty("queryId", k.getKey());
-                          OResultSet resultSet = k.getValue();
+                new HashMap<>(c.getDatabase().getActiveQueries())
+                    .entrySet().stream()
+                        .map(
+                            (k) -> {
+                              OResultInternal internal = new OResultInternal();
+                              internal.setProperty("queryId", k.getKey());
+                              OResultSet resultSet = k.getValue();
 
-                          String user = "-";
+                              String user = "-";
 
-                          if (c.getDatabase() != null && c.getDatabase().getUser() != null) {
-                            user = c.getDatabase().getUser().getName();
-                          }
-                          internal.setProperty("sessionId", c.getId());
-                          internal.setProperty("user", user);
-                          internal.setProperty("database", c.getDatabase().getName());
+                              if (c.getDatabase() != null && c.getDatabase().getUser() != null) {
+                                user = c.getDatabase().getUser().getName();
+                              }
+                              internal.setProperty("sessionId", c.getId());
+                              internal.setProperty("user", user);
+                              internal.setProperty("database", c.getDatabase().getName());
 
-                          Optional<QueryInfo> info = getQueryInfo(resultSet);
+                              Optional<QueryInfo> info = getQueryInfo(resultSet);
 
-                          info.ifPresent(
-                              (it) -> {
-                                internal.setProperty("language", it.getLanguage());
-                                internal.setProperty("query", it.getStatement());
-                                internal.setProperty("startTime", it.getStartTime());
-                                internal.setProperty(
-                                    "elapsedTimeMillis", it.getElapsedTimeMillis());
-                              });
+                              info.ifPresent(
+                                  (it) -> {
+                                    internal.setProperty("language", it.getLanguage());
+                                    internal.setProperty("query", it.getStatement());
+                                    internal.setProperty("startTime", it.getStartTime());
+                                    internal.setProperty(
+                                        "elapsedTimeMillis", it.getElapsedTimeMillis());
+                                  });
 
-                          return internal;
-                        }))
+                              return internal;
+                            }))
         .collect(Collectors.toList());
   }
 
