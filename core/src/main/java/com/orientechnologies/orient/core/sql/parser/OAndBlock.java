@@ -255,6 +255,7 @@ public class OAndBlock extends OBooleanExpression {
   public OBooleanExpression rewriteIndexChainsAsSubqueries(OCommandContext ctx, OClass clazz) {
     for (OBooleanExpression exp : subBlocks) {
       exp.rewriteIndexChainsAsSubqueries(ctx, clazz);
+      return this;//this is on purpose. Multiple optimizations in this case in an AND block can lead to wrong results (no intersection)
     }
     return this;
   }

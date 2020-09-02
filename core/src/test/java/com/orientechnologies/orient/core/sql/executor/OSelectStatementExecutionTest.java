@@ -22,6 +22,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
+
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -4031,5 +4033,52 @@ public class OSelectStatementExecutionTest {
       Assert.fail();
     }
 
+  }
+
+  @Test
+  public void testComplexIndexChain() {
+
+    // A -b-> B -c-> C -d-> D.name
+    //               C.name
+
+    String classNamePrefix = "testComplexIndexChain_";
+    OClass a = db.getMetadata().getSchema().createClass(classNamePrefix + "A");
+    OClass b = db.getMetadata().getSchema().createClass(classNamePrefix + "C");
+    OClass c = db.getMetadata().getSchema().createClass(classNamePrefix + "B");
+    OClass d = db.getMetadata().getSchema().createClass(classNamePrefix + "D");
+
+    a.createProperty("b", OType.LINK, b).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+    b.createProperty("c", OType.LINK, c).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+    c.createProperty("d", OType.LINK, d).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+    c.createProperty("name", OType.STRING).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+    d.createProperty("name", OType.STRING).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+
+
+    OElement dDoc = db.newElement(d.getName());
+    dDoc.setProperty("name", "foo");
+    dDoc.save();
+
+    OElement cDoc = db.newElement(c.getName());
+    cDoc.setProperty("name", "foo");
+    cDoc.setProperty("d", dDoc);
+    cDoc.save();
+
+    OElement bDoc = db.newElement(b.getName());
+    bDoc.setProperty("c", cDoc);
+    bDoc.save();
+
+    OElement aDoc = db.newElement(a.getName());
+    aDoc.setProperty("b", bDoc);
+    aDoc.save();
+
+    try (OResultSet rs = db.query("SELECT FROM " + classNamePrefix + "A WHERE b.c.name IN ['foo'] AND b.c.d.name IN ['foo']")) {
+      Assert.assertTrue(rs.hasNext());
+    }
+
+
+    try (OResultSet rs = db.query("SELECT FROM " + classNamePrefix + "A WHERE b.c.name = 'foo' AND b.c.d.name = 'foo'")) {
+      Assert.assertTrue(rs.hasNext());
+      Assert.assertTrue(rs.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
+    }
   }
 }
