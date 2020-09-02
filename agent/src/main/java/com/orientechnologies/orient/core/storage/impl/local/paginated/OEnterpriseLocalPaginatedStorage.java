@@ -57,8 +57,12 @@ import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
+import java.nio.channels.OverlappingFileLockException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -75,6 +79,8 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
+
+  private static final String INCREMENTAL_BACKUP_LOCK = "backup.ibl";
 
   private static final String ALGORITHM_NAME = "AES";
   private static final String TRANSFORMATION = "AES/CTR/NoPadding";
@@ -126,109 +132,128 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
     }
   }
 
-  private String incrementalBackup(final File backupDirectory, OCallable<Void, Void> started) {
-    String fileName = "";
+    private String incrementalBackup(final File backupDirectory, OCallable<Void, Void> started) {
+        String fileName = "";
 
-    if (!backupDirectory.exists()) {
-      if (!backupDirectory.mkdirs()) {
-        throw new OStorageException(
-            "Backup directory "
-                + backupDirectory.getAbsolutePath()
-                + " does not exist and can not be created");
-      }
-    }
+        if (!backupDirectory.exists()) {
+            if (!backupDirectory.mkdirs()) {
+                throw new OStorageException(
+                        "Backup directory "
+                                + backupDirectory.getAbsolutePath()
+                                + " does not exist and can not be created");
+            }
+        }
 
-    RandomAccessFile rndIBUFile = null;
-    try {
-      final String[] files = fetchIBUFiles(backupDirectory);
+        final Path fileLockPath = backupDirectory.toPath().resolve(INCREMENTAL_BACKUP_LOCK);
+        try (FileChannel lockChannel = FileChannel.open(fileLockPath,
+                StandardOpenOption.CREATE, StandardOpenOption.WRITE)) {
+            try (FileLock fileLock = lockChannel.lock()) {
+                RandomAccessFile rndIBUFile = null;
+                try {
+                    final String[] files = fetchIBUFiles(backupDirectory);
 
-      final OLogSequenceNumber lastLsn;
-      final long nextIndex;
+                    final OLogSequenceNumber lastLsn;
+                    final long nextIndex;
 
-      if (files.length == 0) {
-        lastLsn = null;
-        nextIndex = 0;
-      } else {
-        lastLsn = extractIBULsn(backupDirectory, files[files.length - 1]);
-        nextIndex = extractIndexFromIBUFile(backupDirectory, files[files.length - 1]) + 1;
-      }
+                    if (files.length == 0) {
+                        lastLsn = null;
+                        nextIndex = 0;
+                    } else {
+                        lastLsn = extractIBULsn(backupDirectory, files[files.length - 1]);
+                        nextIndex = extractIndexFromIBUFile(backupDirectory, files[files.length - 1]) + 1;
+                    }
 
-      final SimpleDateFormat dateFormat = new SimpleDateFormat(INCREMENTAL_BACKUP_DATEFORMAT);
+                    final SimpleDateFormat dateFormat = new SimpleDateFormat(INCREMENTAL_BACKUP_DATEFORMAT);
 
-      if (lastLsn != null)
-        fileName =
-            getName() + "_" + dateFormat.format(new Date()) + "_" + nextIndex + IBU_EXTENSION_V2;
-      else
-        fileName =
-            getName()
-                + "_"
-                + dateFormat.format(new Date())
-                + "_"
-                + nextIndex
-                + "_full"
-                + IBU_EXTENSION_V2;
+                    if (lastLsn != null)
+                        fileName =
+                                getName() + "_" + dateFormat.format(new Date()) + "_" + nextIndex + IBU_EXTENSION_V2;
+                    else
+                        fileName =
+                                getName()
+                                        + "_"
+                                        + dateFormat.format(new Date())
+                                        + "_"
+                                        + nextIndex
+                                        + "_full"
+                                        + IBU_EXTENSION_V2;
 
-      final File ibuFile = new File(backupDirectory, fileName);
-      if (started != null) started.call(null);
-      rndIBUFile = new RandomAccessFile(ibuFile, "rw");
-      try {
-        final FileChannel ibuChannel = rndIBUFile.getChannel();
+                    final File ibuFile = new File(backupDirectory, fileName);
+                    if (started != null) started.call(null);
+                    rndIBUFile = new RandomAccessFile(ibuFile, "rw");
+                    try {
+                        final FileChannel ibuChannel = rndIBUFile.getChannel();
 
-        final ByteBuffer versionBuffer = ByteBuffer.allocate(OIntegerSerializer.INT_SIZE);
-        versionBuffer.putInt(INCREMENTAL_BACKUP_VERSION);
-        versionBuffer.rewind();
+                        final ByteBuffer versionBuffer = ByteBuffer.allocate(OIntegerSerializer.INT_SIZE);
+                        versionBuffer.putInt(INCREMENTAL_BACKUP_VERSION);
+                        versionBuffer.rewind();
 
-        OIOUtils.writeByteBuffer(versionBuffer, ibuChannel, 0);
+                        OIOUtils.writeByteBuffer(versionBuffer, ibuChannel, 0);
 
-        ibuChannel.position(
-            OIntegerSerializer.INT_SIZE
-                + 3 * OLongSerializer.LONG_SIZE
-                + OByteSerializer.BYTE_SIZE);
+                        ibuChannel.position(
+                                OIntegerSerializer.INT_SIZE
+                                        + 3 * OLongSerializer.LONG_SIZE
+                                        + OByteSerializer.BYTE_SIZE);
 
-        OutputStream stream = Channels.newOutputStream(ibuChannel);
-        OLogSequenceNumber maxLsn;
+                        OutputStream stream = Channels.newOutputStream(ibuChannel);
+                        OLogSequenceNumber maxLsn;
+                        try {
+                            maxLsn = incrementalBackup(stream, lastLsn, true);
+                            final ByteBuffer dataBuffer =
+                                    ByteBuffer.allocate(3 * OLongSerializer.LONG_SIZE + OByteSerializer.BYTE_SIZE);
+
+                            dataBuffer.putLong(nextIndex);
+                            dataBuffer.putLong(maxLsn.getSegment());
+                            dataBuffer.putLong(maxLsn.getPosition());
+
+                            if (lastLsn == null) dataBuffer.put((byte) 1);
+                            else dataBuffer.put((byte) 0);
+
+                            dataBuffer.rewind();
+
+                            ibuChannel.position(OIntegerSerializer.INT_SIZE);
+                            ibuChannel.write(dataBuffer);
+
+                        } finally {
+                            Utils.safeClose(this, stream);
+                        }
+                    } catch (RuntimeException e) {
+                        rndIBUFile.close();
+
+                        if (!ibuFile.delete()) {
+                            OLogManager.instance()
+                                    .error(this, ibuFile.getAbsolutePath() + " is closed but can not be deleted", null);
+                        }
+
+                        throw e;
+                    }
+                } catch (IOException e) {
+                    throw OException.wrapException(new OStorageException("Error during incremental backup"), e);
+                } finally {
+                    try {
+                        if (rndIBUFile != null) rndIBUFile.close();
+                    } catch (IOException e) {
+                        OLogManager.instance().error(this,"Can not close %s file", e, fileName);
+                    }
+                }
+            }
+        } catch (final OverlappingFileLockException e) {
+            OLogManager.instance().error(this,
+                    "Another incremental backup process is in progress, please wait till it will be finished"
+                    , null);
+        } catch (final IOException e) {
+            throw OException.wrapException(new OStorageException("Error during incremental backup"), e);
+        }
+
         try {
-          maxLsn = incrementalBackup(stream, lastLsn, true);
-          final ByteBuffer dataBuffer =
-              ByteBuffer.allocate(3 * OLongSerializer.LONG_SIZE + OByteSerializer.BYTE_SIZE);
-
-          dataBuffer.putLong(nextIndex);
-          dataBuffer.putLong(maxLsn.getSegment());
-          dataBuffer.putLong(maxLsn.getPosition());
-
-          if (lastLsn == null) dataBuffer.put((byte) 1);
-          else dataBuffer.put((byte) 0);
-
-          dataBuffer.rewind();
-
-          ibuChannel.position(OIntegerSerializer.INT_SIZE);
-          ibuChannel.write(dataBuffer);
-
-        } finally {
-          Utils.safeClose(this, stream);
-        }
-      } catch (RuntimeException e) {
-        rndIBUFile.close();
-
-        if (!ibuFile.delete()) {
-          OLogManager.instance()
-              .error(this, ibuFile.getAbsolutePath() + " is closed but can not be deleted", null);
+            Files.deleteIfExists(fileLockPath);
+        } catch (IOException e) {
+            throw OException.wrapException(new OStorageException("Error during incremental backup"), e);
         }
 
-        throw e;
-      }
-    } catch (IOException e) {
-      throw OException.wrapException(new OStorageException("Error during incremental backup"), e);
-    } finally {
-      try {
-        if (rndIBUFile != null) rndIBUFile.close();
-      } catch (IOException e) {
-        OLogManager.instance().error(this, "Can not close %s file", e, fileName);
-      }
-    }
-
-    return fileName;
+      return fileName;
   }
+
 
   public void registerStorageListener(OEnterpriseStorageOperationListener listener) {
     this.listeners.add(listener);
@@ -538,9 +563,9 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
       OLongSerializer.INSTANCE.serialize(fileId, binaryFileId, 0);
       stream.write(binaryFileId, 0, binaryFileId.length);
 
-      for (long pageIndex = 0; pageIndex < filledUpTo; pageIndex++) {
+      for (int pageIndex = 0; pageIndex < filledUpTo; pageIndex++) {
         final OCacheEntry cacheEntry =
-            readCache.loadForRead(fileId, pageIndex, true, writeCache, true);
+            readCache.silentLoadForRead(fileId, pageIndex, writeCache, true);
         cacheEntry.acquireSharedLock();
         try {
           final OLogSequenceNumber pageLsn =
