@@ -8,6 +8,10 @@ public interface OrientSqlVisitor {
 
   public Object visit(Oparse node, Object data);
 
+  public Object visit(OparseScript node, Object data);
+
+  public Object visit(OString node, Object data);
+
   public Object visit(OIdentifier node, Object data);
 
   public Object visit(OInteger node, Object data);
@@ -18,11 +22,21 @@ public interface OrientSqlVisitor {
 
   public Object visit(OStatement node, Object data);
 
+  public Object visit(OStatementSemicolon node, Object data);
+
+  public Object visit(OStatementInternal node, Object data);
+
+  public Object visit(OExpressionStatement node, Object data);
+
+  public Object visit(OQueryStatement node, Object data);
+
   public Object visit(OSelectWithoutTargetStatement node, Object data);
 
   public Object visit(OSelectStatement node, Object data);
 
   public Object visit(OTraverseStatement node, Object data);
+
+  public Object visit(OMatchStatement node, Object data);
 
   public Object visit(ODeleteStatement node, Object data);
 
@@ -39,6 +53,8 @@ public interface OrientSqlVisitor {
   public Object visit(ODeleteEdgeVToStatement node, Object data);
 
   public Object visit(ODeleteEdgeWhereStatement node, Object data);
+
+  public Object visit(OUpdateEdgeStatement node, Object data);
 
   public Object visit(OUpdateStatement node, Object data);
 
@@ -62,6 +78,8 @@ public interface OrientSqlVisitor {
 
   public Object visit(OCreateVertexStatementNoTarget node, Object data);
 
+  public Object visit(OMoveVertexStatement node, Object data);
+
   public Object visit(OCreateEdgeStatement node, Object data);
 
   public Object visit(OInputParameter node, Object data);
@@ -73,6 +91,10 @@ public interface OrientSqlVisitor {
   public Object visit(OProjection node, Object data);
 
   public Object visit(OProjectionItem node, Object data);
+
+  public Object visit(ONestedProjection node, Object data);
+
+  public Object visit(ONestedProjectionItem node, Object data);
 
   public Object visit(OArraySelector node, Object data);
 
@@ -100,6 +122,10 @@ public interface OrientSqlVisitor {
 
   public Object visit(OExpression node, Object data);
 
+  public Object visit(OArrayConcatExpression node, Object data);
+
+  public Object visit(OArrayConcatExpressionElement node, Object data);
+
   public Object visit(OMathExpression node, Object data);
 
   public Object visit(OFirstLevelExpression node, Object data);
@@ -118,7 +144,11 @@ public interface OrientSqlVisitor {
 
   public Object visit(OCluster node, Object data);
 
+  public Object visit(OClusterList node, Object data);
+
   public Object visit(OMetadataIdentifier node, Object data);
+
+  public Object visit(OIndexName node, Object data);
 
   public Object visit(OIndexIdentifier node, Object data);
 
@@ -152,11 +182,19 @@ public interface OrientSqlVisitor {
 
   public Object visit(OLuceneOperator node, Object data);
 
+  public Object visit(ONearOperator node, Object data);
+
+  public Object visit(OWithinOperator node, Object data);
+
+  public Object visit(OScAndOperator node, Object data);
+
   public Object visit(OContainsKeyOperator node, Object data);
 
   public Object visit(OContainsValueOperator node, Object data);
 
   public Object visit(OEqualsCompareOperator node, Object data);
+
+  public Object visit(ORightBinaryCondition node, Object data);
 
   public Object visit(OBinaryCondition node, Object data);
 
@@ -184,6 +222,8 @@ public interface OrientSqlVisitor {
 
   public Object visit(OContainsAllCondition node, Object data);
 
+  public Object visit(OContainsAnyCondition node, Object data);
+
   public Object visit(OContainsTextCondition node, Object data);
 
   public Object visit(OMatchesCondition node, Object data);
@@ -192,9 +232,13 @@ public interface OrientSqlVisitor {
 
   public Object visit(OGroupBy node, Object data);
 
+  public Object visit(OUnwind node, Object data);
+
   public Object visit(OLimit node, Object data);
 
   public Object visit(OSkip node, Object data);
+
+  public Object visit(OBatch node, Object data);
 
   public Object visit(OTimeout node, Object data);
 
@@ -211,5 +255,143 @@ public interface OrientSqlVisitor {
   public Object visit(OTraverseProjectionItem node, Object data);
 
   public Object visit(OJson node, Object data);
+
+  public Object visit(OMatchExpression node, Object data);
+
+  public Object visit(OMatchPathItem node, Object data);
+
+  public Object visit(OFieldMatchPathItem node, Object data);
+
+  public Object visit(OMatchPathItemFirst node, Object data);
+
+  public Object visit(OMultiMatchPathItem node, Object data);
+
+  public Object visit(OMultiMatchPathItemArrows node, Object data);
+
+  public Object visit(OMatchFilter node, Object data);
+
+  public Object visit(OMatchFilterItem node, Object data);
+
+  public Object visit(OOutPathItem node, Object data);
+
+  public Object visit(OInPathItem node, Object data);
+
+  public Object visit(OBothPathItem node, Object data);
+
+  public Object visit(OOutPathItemOpt node, Object data);
+
+  public Object visit(OInPathItemOpt node, Object data);
+
+  public Object visit(OBothPathItemOpt node, Object data);
+
+  public Object visit(OProfileStorageStatement node, Object data);
+
+  public Object visit(OTruncateClassStatement node, Object data);
+
+  public Object visit(OTruncateClusterStatement node, Object data);
+
+  public Object visit(OTruncateRecordStatement node, Object data);
+
+  public Object visit(OFindReferencesStatement node, Object data);
+
+  public Object visit(OCreateClassStatement node, Object data);
+
+  public Object visit(OCreateViewStatement node, Object data);
+
+  public Object visit(OAlterClassStatement node, Object data);
+
+  public Object visit(ODropClassStatement node, Object data);
+
+  public Object visit(ODropViewStatement node, Object data);
+
+  public Object visit(OIfNotExists node, Object data);
+
+  public Object visit(OCreatePropertyStatement node, Object data);
+
+  public Object visit(OCreatePropertyAttributeStatement node, Object data);
+
+  public Object visit(OAlterPropertyStatement node, Object data);
+
+  public Object visit(ODropPropertyStatement node, Object data);
+
+  public Object visit(OCreateIndexStatement node, Object data);
+
+  public Object visit(ORebuildIndexStatement node, Object data);
+
+  public Object visit(ODropIndexStatement node, Object data);
+
+  public Object visit(OCreateClusterStatement node, Object data);
+
+  public Object visit(OAlterClusterStatement node, Object data);
+
+  public Object visit(ODropClusterStatement node, Object data);
+
+  public Object visit(OAlterDatabaseStatement node, Object data);
+
+  public Object visit(OCommandLineOption node, Object data);
+
+  public Object visit(OOptimizeDatabaseStatement node, Object data);
+
+  public Object visit(OCreateLinkStatement node, Object data);
+
+  public Object visit(OExplainStatement node, Object data);
+
+  public Object visit(OProfileStatement node, Object data);
+
+  public Object visit(OPermission node, Object data);
+
+  public Object visit(OGrantStatement node, Object data);
+
+  public Object visit(ORevokeStatement node, Object data);
+
+  public Object visit(OCreateFunctionStatement node, Object data);
+
+  public Object visit(OCreateUserStatement node, Object data);
+
+  public Object visit(ODropUserStatement node, Object data);
+
+  public Object visit(OAlterRoleStatement node, Object data);
+
+  public Object visit(OLetStatement node, Object data);
+
+  public Object visit(OBeginStatement node, Object data);
+
+  public Object visit(OCommitStatement node, Object data);
+
+  public Object visit(ORollbackStatement node, Object data);
+
+  public Object visit(OReturnStatement node, Object data);
+
+  public Object visit(OIfStatement node, Object data);
+
+  public Object visit(OSleepStatement node, Object data);
+
+  public Object visit(OConsoleStatement node, Object data);
+
+  public Object visit(OCreateSequenceStatement node, Object data);
+
+  public Object visit(OAlterSequenceStatement node, Object data);
+
+  public Object visit(ODropSequenceStatement node, Object data);
+
+  public Object visit(OHaStatusStatement node, Object data);
+
+  public Object visit(OHaRemoveServerStatement node, Object data);
+
+  public Object visit(OHaSyncDatabaseStatement node, Object data);
+
+  public Object visit(OHaSyncClusterStatement node, Object data);
+
+  public Object visit(OHaSetStatement node, Object data);
+
+  public Object visit(OForEachBlock node, Object data);
+
+  public Object visit(OWhileBlock node, Object data);
+
+  public Object visit(OSecurityResourceSegment node, Object data);
+
+  public Object visit(OCreateSecurityPolicyStatement node, Object data);
+
+  public Object visit(OAlterSecurityPolicyStatement node, Object data);
 }
-/* JavaCC - OriginalChecksum=8d3793a570f491a71e55822e64ecdcef (do not edit this line) */
+/* JavaCC - OriginalChecksum=a305d6305f733f5229f4aa7aebafc238 (do not edit this line) */

@@ -435,95 +435,97 @@ public interface OrientSqlConstants {
   /** RegularExpression Id. */
   int BIT_AND = 222;
   /** RegularExpression Id. */
-  int BIT_OR = 223;
+  int NULL_COALESCING = 223;
   /** RegularExpression Id. */
-  int XOR = 224;
+  int BIT_OR = 224;
   /** RegularExpression Id. */
-  int REM = 225;
+  int XOR = 225;
   /** RegularExpression Id. */
-  int LSHIFT = 226;
+  int REM = 226;
   /** RegularExpression Id. */
-  int PLUSASSIGN = 227;
+  int LSHIFT = 227;
   /** RegularExpression Id. */
-  int MINUSASSIGN = 228;
+  int PLUSASSIGN = 228;
   /** RegularExpression Id. */
-  int STARASSIGN = 229;
+  int MINUSASSIGN = 229;
   /** RegularExpression Id. */
-  int SLASHASSIGN = 230;
+  int STARASSIGN = 230;
   /** RegularExpression Id. */
-  int ANDASSIGN = 231;
+  int SLASHASSIGN = 231;
   /** RegularExpression Id. */
-  int ORASSIGN = 232;
+  int ANDASSIGN = 232;
   /** RegularExpression Id. */
-  int XORASSIGN = 233;
+  int ORASSIGN = 233;
   /** RegularExpression Id. */
-  int REMASSIGN = 234;
+  int XORASSIGN = 234;
   /** RegularExpression Id. */
-  int LSHIFTASSIGN = 235;
+  int REMASSIGN = 235;
   /** RegularExpression Id. */
-  int RSIGNEDSHIFTASSIGN = 236;
+  int LSHIFTASSIGN = 236;
   /** RegularExpression Id. */
-  int RUNSIGNEDSHIFTASSIGN = 237;
+  int RSIGNEDSHIFTASSIGN = 237;
   /** RegularExpression Id. */
-  int RSHIFT = 238;
+  int RUNSIGNEDSHIFTASSIGN = 238;
   /** RegularExpression Id. */
-  int RUNSIGNEDSHIFT = 239;
+  int RSHIFT = 239;
   /** RegularExpression Id. */
-  int ELLIPSIS = 240;
+  int RUNSIGNEDSHIFT = 240;
   /** RegularExpression Id. */
-  int RANGE = 241;
+  int ELLIPSIS = 241;
   /** RegularExpression Id. */
-  int NOT = 242;
+  int RANGE = 242;
   /** RegularExpression Id. */
-  int IN = 243;
+  int NOT = 243;
   /** RegularExpression Id. */
-  int LIKE = 244;
+  int IN = 244;
   /** RegularExpression Id. */
-  int IS = 245;
+  int LIKE = 245;
   /** RegularExpression Id. */
-  int BETWEEN = 246;
+  int IS = 246;
   /** RegularExpression Id. */
-  int CONTAINS = 247;
+  int BETWEEN = 247;
   /** RegularExpression Id. */
-  int CONTAINSALL = 248;
+  int CONTAINS = 248;
   /** RegularExpression Id. */
-  int CONTAINSANY = 249;
+  int CONTAINSALL = 249;
   /** RegularExpression Id. */
-  int CONTAINSKEY = 250;
+  int CONTAINSANY = 250;
   /** RegularExpression Id. */
-  int CONTAINSVALUE = 251;
+  int CONTAINSKEY = 251;
   /** RegularExpression Id. */
-  int CONTAINSTEXT = 252;
+  int CONTAINSVALUE = 252;
   /** RegularExpression Id. */
-  int MATCHES = 253;
+  int CONTAINSTEXT = 253;
   /** RegularExpression Id. */
-  int KEY = 254;
+  int MATCHES = 254;
   /** RegularExpression Id. */
-  int INSTANCEOF = 255;
+  int KEY = 255;
   /** RegularExpression Id. */
-  int CLUSTER = 256;
+  int INSTANCEOF = 256;
   /** RegularExpression Id. */
-  int IDENTIFIER = 257;
+  int CLUSTER = 257;
   /** RegularExpression Id. */
-  int QUOTED_IDENTIFIER = 258;
+  int IDENTIFIER = 258;
   /** RegularExpression Id. */
-  int INDEX_COLON = 259;
+  int QUOTED_IDENTIFIER = 259;
   /** RegularExpression Id. */
-  int INDEXVALUES_IDENTIFIER = 260;
+  int INDEX_COLON = 260;
   /** RegularExpression Id. */
-  int INDEXVALUESASC_IDENTIFIER = 261;
+  int INDEXVALUES_IDENTIFIER = 261;
   /** RegularExpression Id. */
-  int INDEXVALUESDESC_IDENTIFIER = 262;
+  int INDEXVALUESASC_IDENTIFIER = 262;
   /** RegularExpression Id. */
-  int CLUSTER_IDENTIFIER = 263;
+  int INDEXVALUESDESC_IDENTIFIER = 263;
   /** RegularExpression Id. */
-  int CLUSTER_NUMBER_IDENTIFIER = 264;
+  int CLUSTER_IDENTIFIER = 264;
   /** RegularExpression Id. */
-  int METADATA_IDENTIFIER = 265;
+  int CLUSTER_NUMBER_IDENTIFIER = 265;
   /** RegularExpression Id. */
-  int LETTER = 266;
+  int METADATA_IDENTIFIER = 266;
   /** RegularExpression Id. */
-  int PART_LETTER = 267;
+  int LETTER = 267;
+  /** RegularExpression Id. */
+  int PART_LETTER = 268;
 
   /** Lexical state. */
   int DEFAULT = 0;
@@ -757,6 +759,7 @@ public interface OrientSqlConstants {
     "\"*\"",
     "\"/\"",
     "\"&\"",
+    "\"??\"",
     "\"|\"",
     "\"^\"",
     "\"%\"",
