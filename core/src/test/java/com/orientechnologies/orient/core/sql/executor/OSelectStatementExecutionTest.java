@@ -4292,4 +4292,87 @@ public class OSelectStatementExecutionTest {
               .anyMatch(x -> x instanceof FetchFromIndexStep));
     }
   }
+
+  @Test
+  public void testIndexWithSubquery() {
+    String classNamePrefix = "testIndexWithSubquery_";
+    db.command("create class " + classNamePrefix + "Ownership extends V abstract;").close();
+    db.command("create class " + classNamePrefix + "User extends V;").close();
+    db.command("create property " + classNamePrefix + "User.id String;").close();
+    db.command(
+            "create index "
+                + classNamePrefix
+                + "User.id ON "
+                + classNamePrefix
+                + "User(id) unique;")
+        .close();
+    db.command(
+            "create class " + classNamePrefix + "Report extends " + classNamePrefix + "Ownership;")
+        .close();
+    db.command("create property " + classNamePrefix + "Report.id String;").close();
+    db.command("create property " + classNamePrefix + "Report.label String;").close();
+    db.command("create property " + classNamePrefix + "Report.format String;").close();
+    db.command("create property " + classNamePrefix + "Report.source String;").close();
+    db.command("create class " + classNamePrefix + "hasOwnership extends E;").close();
+    db.command("insert into " + classNamePrefix + "User content {id:\"admin\"};");
+    db.command(
+            "insert into "
+                + classNamePrefix
+                + "Report content {format:\"PDF\", id:\"rep1\", label:\"Report 1\", source:\"Report1.src\"};")
+        .close();
+    db.command(
+            "insert into "
+                + classNamePrefix
+                + "Report content {format:\"CSV\", id:\"rep2\", label:\"Report 2\", source:\"Report2.src\"};")
+        .close();
+    db.command(
+            "create edge "
+                + classNamePrefix
+                + "hasOwnership from (select from "
+                + classNamePrefix
+                + "User) to (select from "
+                + classNamePrefix
+                + "Report);")
+        .close();
+
+    try (OResultSet rs =
+        db.query(
+            "select from "
+                + classNamePrefix
+                + "Report where id in (select out('"
+                + classNamePrefix
+                + "hasOwnership').id from "
+                + classNamePrefix
+                + "User where id = 'admin');")) {
+      Assert.assertTrue(rs.hasNext());
+      rs.next();
+      Assert.assertTrue(rs.hasNext());
+      rs.next();
+      Assert.assertFalse(rs.hasNext());
+    }
+
+    db.command(
+            "create index "
+                + classNamePrefix
+                + "Report.id ON "
+                + classNamePrefix
+                + "Report(id) unique;")
+        .close();
+
+    try (OResultSet rs =
+        db.query(
+            "select from "
+                + classNamePrefix
+                + "Report where id in (select out('"
+                + classNamePrefix
+                + "hasOwnership').id from "
+                + classNamePrefix
+                + "User where id = 'admin');")) {
+      Assert.assertTrue(rs.hasNext());
+      rs.next();
+      Assert.assertTrue(rs.hasNext());
+      rs.next();
+      Assert.assertFalse(rs.hasNext());
+    }
+  }
 }
