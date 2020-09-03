@@ -11,16 +11,15 @@ import com.orientechnologies.orient.core.metadata.security.OSystemUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import java.util.HashMap;
 import java.util.Map;
 
 public class OSecurityServerExternal extends OSecurityExternal {
-  private OServer server;
+  private OServerSecurity security;
 
-  public OSecurityServerExternal(OServer server) {
-    this.server = server;
+  public OSecurityServerExternal(OServerSecurity security) {
+    this.security = security;
   }
 
   @Override
@@ -28,7 +27,7 @@ public class OSecurityServerExternal extends OSecurityExternal {
     OUser user = super.getUser(session, username);
 
     if (user == null && username != null) {
-      OServerUserConfiguration serverUser = server.getUser(username);
+      OServerUserConfiguration serverUser = security.getUser(username);
       if (serverUser != null) {
         user = new OSystemUser(username, "null", "Server");
         user.addRole(createRole(serverUser));

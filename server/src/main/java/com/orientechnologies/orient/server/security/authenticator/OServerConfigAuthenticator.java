@@ -20,12 +20,8 @@
 package com.orientechnologies.orient.server.security.authenticator;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.security.OSecurityManager;
-import com.orientechnologies.orient.server.config.OServerConfigurationManager;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.security.OSecurityAuthenticatorAbstract;
-import com.orientechnologies.orient.server.security.OServerSecurity;
 
 /**
  * Provides an OSecurityAuthenticator for the users listed in orientdb-server-config.xml.
@@ -42,79 +38,18 @@ public class OServerConfigAuthenticator extends OSecurityAuthenticatorAbstract {
   // OSecurityAuthenticator
   // Returns the actual username if successful, null otherwise.
   public String authenticate(final String username, final String password) {
-    String principal = null;
-
-    try {
-      if (getServerConfig() != null) {
-        OServerUserConfiguration userCfg = null;
-
-        // This will throw an IllegalArgumentException if username is null or empty.
-        // However, a null or empty username is possible with some security implementations.
-        if (username != null && !username.isEmpty()) userCfg = getServerConfig().getUser(username);
-
-        if (userCfg != null && userCfg.password != null) {
-          if (OSecurityManager.instance().checkPassword(password, userCfg.password)) {
-            principal = userCfg.name;
-          }
-        }
-      } else {
-        OLogManager.instance()
-            .error(this, "OServerConfigAuthenticator.authenticate() ServerConfig is null", null);
-      }
-    } catch (Exception ex) {
-      OLogManager.instance().error(this, "OServerConfigAuthenticator.authenticate()", ex);
-    }
-
-    return principal;
-  }
-
-  // OSecurityAuthenticator
-  public void config(
-      final OServerConfigurationManager serverCfg,
-      final ODocument jsonConfig,
-      OServerSecurity security) {
-    super.config(serverCfg, jsonConfig, security);
+    return getSecurity().authenticateServerUser(username, password);
   }
 
   // OSecurityAuthenticator
   public OServerUserConfiguration getUser(final String username) {
-    OServerUserConfiguration userCfg = null;
-
-    if (getServerConfig() != null) {
-      userCfg = getServerConfig().getUser(username);
-    }
-
-    return userCfg;
+    return getSecurity().getServerUser(username);
   }
 
   // OSecurityAuthenticator
   // If not supported by the authenticator, return false.
   public boolean isAuthorized(final String username, final String resource) {
-    if (username == null || resource == null) return false;
-
-    if (getServerConfig() != null) {
-      // getUser() will throw an IllegalArgumentException if username is null or empty.
-      // However, a null or empty username is possible with some security implementations.
-      if (!username.isEmpty()) {
-        OServerUserConfiguration userCfg = getServerConfig().getUser(username);
-
-        if (userCfg != null) {
-          // Total Access
-          if (userCfg.resources.equals("*")) return true;
-
-          String[] resourceParts = userCfg.resources.split(",");
-
-          for (String r : resourceParts) {
-            if (r.equalsIgnoreCase(resource)) return true;
-          }
-        }
-      }
-    } else {
-      OLogManager.instance()
-          .error(this, "OServerConfigAuthenticator.isAuthorized() ServerConfig is null", null);
-    }
-
-    return false;
+    return getSecurity().isServerUserAuthorized(username, resource);
   }
 
   // Server configuration users are never case sensitive.

@@ -187,16 +187,21 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerSecurity
         OLogManager.instance().error(this, "ODefaultServerSecurity.authenticate()", ex);
       }
 
+      return null; // Indicates authentication failed.
     } else {
-      OServerUserConfiguration user = getUser(username);
+      return authenticateServerUser(username, password);
+    }
+  }
 
-      if (user != null && user.password != null) {
-        if (OSecurityManager.instance().checkPassword(password, user.password)) {
-          return user.name;
-        }
+  public String authenticateServerUser(final String username, final String password) {
+    OServerUserConfiguration user = getServerUser(username);
+
+    if (user != null && user.password != null) {
+      if (OSecurityManager.instance().checkPassword(password, user.password)) {
+        return user.name;
       }
     }
-    return null; // Indicates authentication failed.
+    return null;
   }
 
   public OServer getServer() {
@@ -364,19 +369,23 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerSecurity
           }
         }
       }
+      return false;
     } else {
-      final OServerUserConfiguration user = getUser(username);
-
-      if (user != null) {
-        if (user.resources.equals("*"))
-          // ACCESS TO ALL
-          return true;
-
-        String[] resourceParts = user.resources.split(",");
-        for (String r : resourceParts) if (r.equals(resource)) return true;
-      }
+      return isServerUserAuthorized(username, resource);
     }
+  }
 
+  public boolean isServerUserAuthorized(final String username, final String resource) {
+    final OServerUserConfiguration user = getServerUser(username);
+
+    if (user != null) {
+      if (user.resources.equals("*"))
+        // ACCESS TO ALL
+        return true;
+
+      String[] resourceParts = user.resources.split(",");
+      for (String r : resourceParts) if (r.equalsIgnoreCase(resource)) return true;
+    }
     return false;
   }
 
@@ -475,11 +484,17 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerSecurity
         }
       }
     } else {
-      // This will throw an IllegalArgumentException if iUserName is null or empty.
-      // However, a null or empty iUserName is possible with some security implementations.
-      if (username != null && !username.isEmpty()) userCfg = serverConfig.getUser(username);
+      userCfg = getServerUser(username);
     }
 
+    return userCfg;
+  }
+
+  public OServerUserConfiguration getServerUser(final String username) {
+    OServerUserConfiguration userCfg = null;
+    // This will throw an IllegalArgumentException if iUserName is null or empty.
+    // However, a null or empty iUserName is possible with some security implementations.
+    if (username != null && !username.isEmpty()) userCfg = serverConfig.getUser(username);
     return userCfg;
   }
 
@@ -688,7 +703,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerSecurity
                     OSecurityAuthenticator authPlugin =
                         (OSecurityAuthenticator) authClass.newInstance();
 
-                    authPlugin.config(serverConfig, authMethodDoc, this);
+                    authPlugin.config(authMethodDoc, this);
                     authPlugin.active();
 
                     authenticatorsList.add(authPlugin);
@@ -959,7 +974,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerSecurity
           if (cls != null) {
             if (OPasswordValidator.class.isAssignableFrom(cls)) {
               passwordValidator = (OPasswordValidator) cls.newInstance();
-              passwordValidator.config(serverConfig, passwdValDoc, this);
+              passwordValidator.config(passwdValDoc, this);
               passwordValidator.active();
             } else {
               OLogManager.instance()
@@ -996,7 +1011,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerSecurity
           if (cls != null) {
             if (OSecurityComponent.class.isAssignableFrom(cls)) {
               importLDAP = (OSecurityComponent) cls.newInstance();
-              importLDAP.config(serverConfig, ldapImportDoc, this);
+              importLDAP.config(ldapImportDoc, this);
               importLDAP.active();
             } else {
               OLogManager.instance()
@@ -1033,7 +1048,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerSecurity
           if (cls != null) {
             if (OAuditingService.class.isAssignableFrom(cls)) {
               auditingService = (OAuditingService) cls.newInstance();
-              auditingService.config(serverConfig, auditingDoc, this);
+              auditingService.config(auditingDoc, this);
               auditingService.active();
             } else {
               OLogManager.instance()
@@ -1058,7 +1073,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerSecurity
 
   /** * OSecurityFactory Interface * */
   public OSecurityInternal newSecurity() {
-    return new OSecurityServerExternal(server);
+    return new OSecurityServerExternal(this);
   }
 
   public void close() {

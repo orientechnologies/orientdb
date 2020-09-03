@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.server.security;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.server.config.OServerConfigurationManager;
 
 /**
  * Provides an interface for creating security components.
@@ -31,10 +30,7 @@ public interface OSecurityComponent {
   // Called once the Server is running.
   void active();
 
-  void config(
-      final OServerConfigurationManager serverCfg,
-      final ODocument jsonConfig,
-      OServerSecurity security);
+  void config(final ODocument jsonConfig, OServerSecurity security);
 
   // Called on removal of the component.
   void dispose();

@@ -24,11 +24,8 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.server.config.OServerConfigurationManager;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.security.OSecurityAuthenticatorAbstract;
-import com.orientechnologies.orient.server.security.OServerSecurity;
 
 /**
  * Provides a default password authenticator.
@@ -41,14 +38,6 @@ public class OSystemUserAuthenticator extends OSecurityAuthenticatorAbstract {
   // Called once the Server is running.
   public void active() {
     OLogManager.instance().info(this, "OSystemUserAuthenticator is active");
-  }
-
-  // OSecurityComponent
-  public void config(
-      final OServerConfigurationManager serverCfg,
-      final ODocument jsonConfig,
-      OServerSecurity security) {
-    super.config(serverCfg, jsonConfig, security);
   }
 
   // OSecurityComponent
