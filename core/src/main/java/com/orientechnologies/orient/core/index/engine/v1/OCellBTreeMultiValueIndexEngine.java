@@ -101,15 +101,15 @@ public final class OCellBTreeMultiValueIndexEngine
 
   @Override
   public void create(
-      OAtomicOperation atomicOperation,
-      OBinarySerializer valueSerializer,
-      boolean isAutomatic,
-      OType[] keyTypes,
-      boolean nullPointerSupport,
-      OBinarySerializer keySerializer,
-      int keySize,
-      Map<String, String> engineProperties,
-      OEncryption encryption) {
+          OAtomicOperation atomicOperation,
+          @SuppressWarnings("rawtypes") OBinarySerializer valueSerializer,
+          boolean isAutomatic,
+          OType[] keyTypes,
+          boolean nullPointerSupport,
+          @SuppressWarnings("rawtypes") OBinarySerializer keySerializer,
+          int keySize,
+          Map<String, String> engineProperties,
+          OEncryption encryption) {
     try {
       if (mvTree != null) {
         //noinspection unchecked
@@ -227,11 +227,11 @@ public final class OCellBTreeMultiValueIndexEngine
 
   @Override
   public void load(
-      final String name,
-      final int keySize,
-      final OType[] keyTypes,
-      final OBinarySerializer keySerializer,
-      final OEncryption encryption) {
+          final String name,
+          final int keySize,
+          final OType[] keyTypes,
+          @SuppressWarnings("rawtypes") final OBinarySerializer keySerializer,
+          final OEncryption encryption) {
     if (mvTree != null) {
       //noinspection unchecked
       mvTree.load(name, keySize, keyTypes, keySerializer, encryption);
@@ -566,12 +566,14 @@ public final class OCellBTreeMultiValueIndexEngine
   public boolean acquireAtomicExclusiveLock(Object key) {
     if (mvTree != null) {
       mvTree.acquireAtomicExclusiveLock();
-    }
-    assert svTree != null;
-    assert nullTree != null;
+    } else {
+      assert svTree != null;
+      assert nullTree != null;
 
-    svTree.acquireAtomicExclusiveLock();
-    nullTree.acquireAtomicExclusiveLock();
+      svTree.acquireAtomicExclusiveLock();
+      nullTree.acquireAtomicExclusiveLock();
+    }
+
     return true;
   }
 
