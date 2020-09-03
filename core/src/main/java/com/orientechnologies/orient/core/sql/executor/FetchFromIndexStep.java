@@ -434,6 +434,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
         secondValue = ((List) secondValue).get(0);
       }
       secondValue = unboxOResult(secondValue);
+      // TODO unwind collections!
       Object thirdValue = thirdValueCombinations.get(i).execute((OResult) null, ctx);
       if (thirdValue instanceof List
           && ((List) thirdValue).size() == 1
@@ -447,6 +448,44 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
         secondValue = convertToIndexDefinitionTypes(secondValue, indexDef.getTypes());
         thirdValue = convertToIndexDefinitionTypes(thirdValue, indexDef.getTypes());
       } catch (Exception e) {
+        // manage subquery that returns a single collection
+        if (secondValue instanceof Collection && secondValue.equals(thirdValue)) {
+          ((Collection) secondValue)
+              .forEach(
+                  item -> {
+                    Object itemVal = convertToIndexDefinitionTypes(item, indexDef.getTypes());
+                    if (index.supportsOrderedIterations()) {
+
+                      Object from = toBetweenIndexKey(indexDef, itemVal);
+                      Object to = toBetweenIndexKey(indexDef, itemVal);
+                      if (from == null && to == null) {
+                        // manage null value explicitly, as the index API does not seem to work
+                        // correctly in this
+                        // case
+                        stream = getStreamForNullKey();
+                        storeAcquiredStream(stream);
+                      } else {
+                        stream =
+                            index.streamEntriesBetween(
+                                from, fromKeyIncluded, to, toKeyIncluded, isOrderAsc());
+                        storeAcquiredStream(stream);
+                      }
+
+                    } else if (additionalRangeCondition == null
+                        && allEqualities((OAndBlock) condition)) {
+                      stream = index.streamEntries(toIndexKey(indexDef, itemVal), isOrderAsc());
+                      storeAcquiredStream(stream);
+                    } else if (isFullTextIndex(index)) {
+                      stream = index.streamEntries(toIndexKey(indexDef, itemVal), isOrderAsc());
+                      storeAcquiredStream(stream);
+                    } else {
+                      throw new UnsupportedOperationException(
+                          "Cannot evaluate " + this.condition + " on index " + index);
+                    }
+                    nextStreams.add(stream);
+                  });
+        }
+
         // some problems in key conversion, so the params do not match the key types
         continue;
       }
