@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.spatial.shape;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -22,10 +23,8 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.ArrayList;
 import java.util.List;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.LineString;
-import org.locationtech.jts.geom.LinearRing;
-import org.locationtech.jts.geom.Polygon;
+import java.util.stream.Collectors;
+import org.locationtech.jts.geom.*;
 import org.locationtech.spatial4j.shape.jts.JtsGeometry;
 
 /** Created by enricorisa on 24/04/14. */
@@ -45,7 +44,12 @@ public class OPolygonShapeBuilder extends OComplexShapeBuilder<JtsGeometry> {
 
     OSchema schema = db.getMetadata().getSchema();
     OClass polygon = schema.createAbstractClass(getName(), superClass(db));
-    polygon.createProperty("coordinates", OType.EMBEDDEDLIST, OType.EMBEDDEDLIST);
+    polygon.createProperty(COORDINATES, OType.EMBEDDEDLIST, OType.EMBEDDEDLIST);
+
+    if (OGlobalConfiguration.SPATIAL_ENABLE_DIRECT_WKT_READER.getValueAsBoolean()) {
+      OClass polygonZ = schema.createAbstractClass(getName() + "Z", superClass(db));
+      polygonZ.createProperty(COORDINATES, OType.EMBEDDEDLIST, OType.EMBEDDEDLIST);
+    }
   }
 
   @Override
@@ -99,6 +103,19 @@ public class OPolygonShapeBuilder extends OComplexShapeBuilder<JtsGeometry> {
     return doc;
   }
 
+  @Override
+  protected ODocument toDoc(JtsGeometry shape, Geometry geometry) {
+    if (geometry == null || Double.isNaN(geometry.getCoordinate().getZ())) {
+      return toDoc(shape);
+    }
+
+    ODocument doc = new ODocument(getName() + "Z");
+    Polygon polygon = (Polygon) shape.getGeom();
+    List<List<List<Double>>> polyCoordinates = coordinatesFromPolygonZ(geometry);
+    doc.field(COORDINATES, polyCoordinates);
+    return doc;
+  }
+
   protected List<List<List<Double>>> coordinatesFromPolygon(Polygon polygon) {
     List<List<List<Double>>> polyCoordinates = new ArrayList<List<List<Double>>>();
     LineString exteriorRing = polygon.getExteriorRing();
@@ -109,5 +126,39 @@ public class OPolygonShapeBuilder extends OComplexShapeBuilder<JtsGeometry> {
       polyCoordinates.add(coordinatesFromLineString(interiorRingN));
     }
     return polyCoordinates;
+  }
+
+  protected List<List<List<Double>>> coordinatesFromPolygonZ(Geometry polygon) {
+    List<List<List<Double>>> polyCoordinates = new ArrayList<>();
+    for (int i = 0; i < polygon.getNumGeometries(); i++) {
+      polyCoordinates.add(coordinatesFromLineStringZ(polygon.getGeometryN(i)));
+    }
+    return polyCoordinates;
+  }
+
+  @Override
+  public String asText(ODocument document) {
+    if (document.getClassName().equals("OPolygonZ")) {
+      List<List<List<Double>>> coordinates = document.getProperty("coordinates");
+
+      String result =
+          coordinates.stream()
+              .map(
+                  poly ->
+                      "("
+                          + poly.stream()
+                              .map(
+                                  point ->
+                                      (point.stream()
+                                          .map(coord -> format(coord))
+                                          .collect(Collectors.joining(" "))))
+                              .collect(Collectors.joining(", "))
+                          + ")")
+              .collect(Collectors.joining(" "));
+      return "POLYGON Z (" + result + ")";
+
+    } else {
+      return super.asText(document);
+    }
   }
 }

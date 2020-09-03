@@ -46,6 +46,17 @@ public abstract class OComplexShapeBuilder<T extends Shape> extends OShapeBuilde
     return numbers;
   }
 
+  protected List<List<Double>> coordinatesFromLineStringZ(Geometry ring) {
+
+    Coordinate[] coordinates = ring.getCoordinates();
+    List<List<Double>> numbers = new ArrayList<List<Double>>();
+    for (Coordinate coordinate : coordinates) {
+
+      numbers.add(Arrays.asList(coordinate.getX(), coordinate.getY(), coordinate.getZ()));
+    }
+    return numbers;
+  }
+
   protected LineString createLineString(List<List<Number>> coordinates) {
     Coordinate[] coords = new Coordinate[coordinates.size()];
     int i = 0;

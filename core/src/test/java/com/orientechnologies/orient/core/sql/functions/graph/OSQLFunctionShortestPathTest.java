@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.core.sql.functions.graph;
 
+import static java.util.Arrays.asList;
+
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
@@ -118,6 +120,22 @@ public class OSQLFunctionShortestPathTest {
     Assert.assertEquals(vertices.get(2).getIdentity(), result.get(1));
     Assert.assertEquals(vertices.get(3).getIdentity(), result.get(2));
     Assert.assertEquals(vertices.get(4).getIdentity(), result.get(3));
+  }
+
+  @Test
+  public void testExecuteOnlyEdge1AndEdge2() throws Exception {
+    final List<ORID> result =
+        function.execute(
+            null,
+            null,
+            null,
+            new Object[] {vertices.get(1), vertices.get(4), "BOTH", asList("Edge1", "Edge2")},
+            new OBasicCommandContext());
+
+    Assert.assertEquals(3, result.size());
+    Assert.assertEquals(vertices.get(1).getIdentity(), result.get(0));
+    Assert.assertEquals(vertices.get(3).getIdentity(), result.get(1));
+    Assert.assertEquals(vertices.get(4).getIdentity(), result.get(2));
   }
 
   @Test

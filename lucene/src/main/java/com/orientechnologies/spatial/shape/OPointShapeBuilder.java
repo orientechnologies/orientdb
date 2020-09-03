@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.spatial.shape;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -23,6 +24,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.ArrayList;
 import java.util.List;
+import org.locationtech.jts.geom.Geometry;
 import org.locationtech.spatial4j.shape.Point;
 
 public class OPointShapeBuilder extends OShapeBuilder<Point> {
@@ -47,15 +49,28 @@ public class OPointShapeBuilder extends OShapeBuilder<Point> {
     OProperty coordinates = point.createProperty(COORDINATES, OType.EMBEDDEDLIST, OType.DOUBLE);
     coordinates.setMin("2");
     coordinates.setMax("2");
+
+    if (OGlobalConfiguration.SPATIAL_ENABLE_DIRECT_WKT_READER.getValueAsBoolean()) {
+      OClass pointz = schema.createAbstractClass(getName() + "Z", superClass(db));
+      OProperty coordinatesz = pointz.createProperty(COORDINATES, OType.EMBEDDEDLIST, OType.DOUBLE);
+      coordinatesz.setMin("3");
+      coordinatesz.setMax("3");
+    }
   }
 
   @Override
   public Point fromDoc(ODocument document) {
     validate(document);
     List<Number> coordinates = document.field(COORDINATES);
-    Point point =
-        SHAPE_FACTORY.pointXY(coordinates.get(0).doubleValue(), coordinates.get(1).doubleValue());
-    return point;
+    if (coordinates.size() == 2) {
+      return SHAPE_FACTORY.pointXY(
+          coordinates.get(0).doubleValue(), coordinates.get(1).doubleValue());
+    } else {
+      return SHAPE_FACTORY.pointXYZ(
+          coordinates.get(0).doubleValue(),
+          coordinates.get(1).doubleValue(),
+          coordinates.get(2).doubleValue());
+    }
   }
 
   @Override
@@ -71,5 +86,40 @@ public class OPointShapeBuilder extends OShapeBuilder<Point> {
           }
         });
     return doc;
+  }
+
+  @Override
+  protected ODocument toDoc(Point parsed, Geometry geometry) {
+    if (geometry == null || Double.isNaN(geometry.getCoordinate().getZ())) {
+      return toDoc(parsed);
+    }
+
+    ODocument doc = new ODocument(getName() + "Z");
+    doc.field(
+        COORDINATES,
+        new ArrayList<Double>() {
+          {
+            add(geometry.getCoordinate().getX());
+            add(geometry.getCoordinate().getY());
+            add(geometry.getCoordinate().getZ());
+          }
+        });
+    return doc;
+  }
+
+  @Override
+  public String asText(ODocument document) {
+    if (document.getClassName().equals("OPointZ")) {
+      List<Double> coordinates = document.getProperty("coordinates");
+      return "POINT Z ("
+          + format(coordinates.get(0))
+          + " "
+          + format(coordinates.get(1))
+          + " "
+          + format(coordinates.get(2))
+          + ")";
+    } else {
+      return super.asText(document);
+    }
   }
 }

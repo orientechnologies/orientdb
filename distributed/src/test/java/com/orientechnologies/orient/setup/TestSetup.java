@@ -10,13 +10,13 @@ public interface TestSetup {
     BINARY
   }
 
-  void startServer(String serverId) throws TestSetupException;
-
-  void startServers() throws TestSetupException;
-
-  void shutdownServer(String serverId) throws TestSetupException;
+  void setup() throws TestSetupException;
 
   void teardown() throws TestSetupException;
+
+  void startServer(String serverId) throws TestSetupException;
+
+  void shutdownServer(String serverId) throws TestSetupException;
 
   String getAddress(String serverId, PortType port);
 

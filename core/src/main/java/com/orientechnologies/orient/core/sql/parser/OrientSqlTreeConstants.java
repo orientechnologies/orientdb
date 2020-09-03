@@ -200,6 +200,7 @@ public interface OrientSqlTreeConstants {
   public int JJTCREATESECURITYPOLICYSTATEMENT = 195;
   public int JJTALTERSECURITYPOLICYSTATEMENT = 196;
   public int JJTCREATEDATABASESTATEMENT = 197;
+  public int JJTDROPDATABASESTATEMENT = 198;
 
   public String[] jjtNodeName = {
     "Rid",
@@ -400,6 +401,7 @@ public interface OrientSqlTreeConstants {
     "CreateSecurityPolicyStatement",
     "AlterSecurityPolicyStatement",
     "CreateDatabaseStatement",
+    "DropDatabaseStatement",
   };
 }
-/* JavaCC - OriginalChecksum=483d830e5ff1a482b1fab6f6ac8ac30f (do not edit this line) */
+/* JavaCC - OriginalChecksum=a2eb11c01d63a4314c0e35adc9a71515 (do not edit this line) */

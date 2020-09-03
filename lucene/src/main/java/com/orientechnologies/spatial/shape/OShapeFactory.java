@@ -19,7 +19,6 @@ import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -84,7 +83,7 @@ public class OShapeFactory extends OComplexShapeBuilder {
     if (obj instanceof String) {
       try {
         return fromText((String) obj);
-      } catch (ParseException e) {
+      } catch (Exception e) {
         e.printStackTrace();
       }
     }
@@ -107,10 +106,17 @@ public class OShapeFactory extends OComplexShapeBuilder {
 
   @Override
   public String asText(ODocument document) {
-    OShapeBuilder oShapeBuilder = factories.get(document.getClassName());
+    String className = document.getClassName();
+    OShapeBuilder oShapeBuilder = factories.get(className);
     if (oShapeBuilder != null) {
       return oShapeBuilder.asText(document);
+    } else if (className.endsWith("Z")) {
+      oShapeBuilder = factories.get(className.substring(0, className.length() - 1));
+      if (oShapeBuilder != null) {
+        return oShapeBuilder.asText(document);
+      }
     }
+
     // TODO handle exception shape not found
     return null;
   }
@@ -177,6 +183,21 @@ public class OShapeFactory extends OComplexShapeBuilder {
       }
     }
     return doc;
+  }
+
+  @Override
+  protected ODocument toDoc(Shape shape, Geometry geometry) {
+    if (Point.class.isAssignableFrom(shape.getClass())) {
+      return factories.get(OPointShapeBuilder.NAME).toDoc(shape, geometry);
+    } else if (geometry != null && "LineString".equals(geometry.getClass().getSimpleName())) {
+      return factories.get("OLineString").toDoc(shape, geometry);
+    } else if (geometry != null && "MultiLineString".equals(geometry.getClass().getSimpleName())) {
+      return factories.get("OMultiLineString").toDoc(shape, geometry);
+    } else if (geometry != null && "Polygon".equals(geometry.getClass().getSimpleName())) {
+      return factories.get("OPolygon").toDoc(shape, geometry);
+    } else {
+      return toDoc(shape);
+    }
   }
 
   @Override

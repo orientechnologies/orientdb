@@ -464,6 +464,36 @@ public class OMathExpression extends SimpleNode {
         }
         return super.apply(left == null ? 0 : left, right == null ? 0 : right);
       }
+    },
+    NULL_COALESCING(25) {
+      @Override
+      public Number apply(Integer left, Integer right) {
+        return left != null ? left : right;
+      }
+
+      @Override
+      public Number apply(Long left, Long right) {
+        return left != null ? left : right;
+      }
+
+      @Override
+      public Number apply(Float left, Float right) {
+        return left != null ? left : right;
+      }
+
+      @Override
+      public Number apply(Double left, Double right) {
+        return left != null ? left : right;
+      }
+
+      @Override
+      public Number apply(BigDecimal left, BigDecimal right) {
+        return left != null ? left : right;
+      }
+
+      public Object apply(Object left, Object right) {
+        return left != null ? left : right;
+      }
     };
 
     private static Long toLong(Object left) {

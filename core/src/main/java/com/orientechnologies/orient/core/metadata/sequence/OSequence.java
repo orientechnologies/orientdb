@@ -392,8 +392,8 @@ public abstract class OSequence {
   }
 
   protected synchronized SequenceOrderType getOrderType() {
-    byte val = tlDocument.get().field(FIELD_ORDER_TYPE);
-    return SequenceOrderType.fromValue(val);
+    Byte val = tlDocument.get().field(FIELD_ORDER_TYPE);
+    return val == null ? SequenceOrderType.ORDER_POSITIVE : SequenceOrderType.fromValue(val);
   }
 
   protected synchronized void setIncrement(int value) {

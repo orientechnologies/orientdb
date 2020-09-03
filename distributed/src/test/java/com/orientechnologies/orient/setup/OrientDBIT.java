@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.setup;
 
 import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -8,10 +9,10 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 
 // Adds retries to the operations provided by OrientDB
 public class OrientDBIT extends OrientDB {
-  private static final int MAX_OPEN_RETRY = 10;
-  private static final int OPEN_RETRY_INTERVAL_SECONDS = 15;
+  private static final int MAX_OPEN_RETRY = 5;
+  private static final int OPEN_RETRY_INTERVAL_SECONDS = 10;
   private static final int MAX_DROP_RETRY = 5;
-  private static final int DROP_RETRY_INTERVAL_SECONDS = 15;
+  private static final int DROP_RETRY_INTERVAL_SECONDS = 5;
 
   public OrientDBIT(
       String url, String serverUser, String serverPassword, OrientDBConfig configuration) {
@@ -24,7 +25,7 @@ public class OrientDBIT extends OrientDB {
     int i = 1;
     while (true) {
       try {
-        System.out.printf("Trying (%d/%d) to open database %s.\n", i, MAX_OPEN_RETRY, database);
+        TestSetupUtil.log("Trying (%d/%d) to open database '%s'.", i, MAX_OPEN_RETRY, database);
         return super.open(database, user, password);
       } catch (ODatabaseException e) {
         if (i++ >= MAX_OPEN_RETRY) {
@@ -39,11 +40,17 @@ public class OrientDBIT extends OrientDB {
   }
 
   @Override
+  public void create(String database, ODatabaseType type) {
+    TestSetupUtil.log("Creating database '%s'.", database);
+    super.create(database, type);
+  }
+
+  @Override
   public void drop(String database) {
     int i = 1;
     while (true) {
       try {
-        System.out.printf("Trying (%d/%d) to drop database %s.\n", i, MAX_DROP_RETRY, database);
+        TestSetupUtil.log("Trying (%d/%d) to drop database %s.", i, MAX_DROP_RETRY, database);
         super.drop(database);
         break;
       } catch (OStorageException e) {

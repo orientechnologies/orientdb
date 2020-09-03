@@ -1825,6 +1825,12 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       String.class,
       "cloud.orientdb.com"),
 
+  SPATIAL_ENABLE_DIRECT_WKT_READER(
+      "spatial.enableDirectWktReader",
+      "Enable direct usage of WKTReader for additional dimention info",
+      Boolean.class,
+      false),
+
   /** Deprecated in v2.2.0 */
   @Deprecated
   JNA_DISABLE_USE_SYSTEM_LIBRARY(

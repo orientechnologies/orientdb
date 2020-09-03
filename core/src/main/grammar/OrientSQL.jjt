@@ -565,6 +565,7 @@ TOKEN :
 | < STAR: "*" >
 | < SLASH: "/" >
 | < BIT_AND: "&" >
+| < NULL_COALESCING: "??" >
 | < BIT_OR: "|" >
 | < XOR: "^" >
 | < REM: "%" >
@@ -1021,6 +1022,8 @@ OServerStatement ServerStatement():
 {
     (
         result = CreateDatabaseStatement()
+        |
+        result = DropDatabaseStatement()
     )
 	{
 	    return result;
@@ -2452,6 +2455,8 @@ OMathExpression MathExpression():
 	            <RUNSIGNEDSHIFT> { jjtThis.operators.add(OMathExpression.Operator.RUNSIGNEDSHIFT); }
 	            |
 	            <BIT_AND> { jjtThis.operators.add(OMathExpression.Operator.BIT_AND); }
+	            |
+	            <NULL_COALESCING> { jjtThis.operators.add(OMathExpression.Operator.NULL_COALESCING); }
 	            |
 	            <BIT_OR> { jjtThis.operators.add(OMathExpression.Operator.BIT_OR); }
 	            |
@@ -5422,5 +5427,19 @@ OCreateDatabaseStatement CreateDatabaseStatement():
     jjtThis.type = Identifier()
     [ <IF> <NOT> <EXISTS> { jjtThis.ifNotExists = true; } ]
     [ jjtThis.config = Json() ]
+  ) {return jjtThis; }
+}
+
+ODropDatabaseStatement DropDatabaseStatement():
+{}
+{
+  (
+    <DROP> <DATABASE>
+    (
+      jjtThis.name = Identifier()
+      |
+      jjtThis.nameParam = InputParameter()
+    )
+    [ <IF> <EXISTS> { jjtThis.ifExists = true; } ]
   ) {return jjtThis; }
 }

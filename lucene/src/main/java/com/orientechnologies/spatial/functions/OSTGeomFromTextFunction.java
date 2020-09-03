@@ -44,6 +44,7 @@ public class OSTGeomFromTextFunction extends OSQLFunctionAbstract {
     try {
       return factory.toDoc(geom);
     } catch (Exception e) {
+      e.printStackTrace();
       throw OException.wrapException(
           new OCommandExecutionException(String.format("Cannot parse geometry {%s}", geom)), e);
     }

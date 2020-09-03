@@ -50,7 +50,7 @@ public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
 
   // POINT
   @Test
-  public void testPointIO() throws ParseException {
+  public void testPointIO() throws ParseException, org.locationtech.jts.io.ParseException {
 
     ODocument doc = new ODocument("OPoint");
     doc.field(

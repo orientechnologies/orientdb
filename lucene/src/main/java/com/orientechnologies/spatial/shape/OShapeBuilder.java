@@ -15,16 +15,20 @@
  */
 package com.orientechnologies.spatial.shape;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.io.IOException;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.io.WKBWriter;
+import org.locationtech.jts.io.WKTReader;
 import org.locationtech.jts.operation.buffer.BufferOp;
 import org.locationtech.jts.operation.buffer.BufferParameters;
 import org.locationtech.spatial4j.context.SpatialContext;
@@ -43,8 +47,10 @@ public abstract class OShapeBuilder<T extends Shape> {
   protected static final JtsSpatialContext SPATIAL_CONTEXT;
   protected static final GeometryFactory GEOMETRY_FACTORY;
   protected static final JtsShapeFactory SHAPE_FACTORY;
+  protected static final WKTReader wktReader = new WKTReader();
   private static final Map<String, Integer> capStyles = new HashMap<String, Integer>();
   private static final Map<String, Integer> join = new HashMap<String, Integer>();
+  private static final DecimalFormat doubleFormat;
 
   static {
     JtsSpatialContextFactory factory = new JtsSpatialContextFactory();
@@ -62,6 +68,25 @@ public abstract class OShapeBuilder<T extends Shape> {
     join.put("round", 1);
     join.put("mitre", 2);
     join.put("bevel", 3);
+
+    DecimalFormatSymbols sym = new DecimalFormatSymbols();
+    sym.setDecimalSeparator('.');
+    doubleFormat = new DecimalFormat("0", sym);
+    doubleFormat.setMaximumFractionDigits(16);
+  }
+
+  public synchronized String format(double value) {
+    if (Double.isNaN(value)) {
+      return "NaN";
+    } else if (Double.isInfinite(value)) {
+      if (value > 0d) {
+        return "Inf";
+      } else {
+        return "-Inf";
+      }
+    } else {
+      return doubleFormat.format(value);
+    }
   }
 
   public abstract String getName();
@@ -132,21 +157,32 @@ public abstract class OShapeBuilder<T extends Shape> {
     return db.getMetadata().getSchema().getClass(BASE_CLASS);
   }
 
-  public T fromText(String wkt) throws ParseException {
-    T entity = (T) SPATIAL_CONTEXT.getWktShapeParser().parse(wkt);
+  public T fromText(String wkt) throws ParseException, org.locationtech.jts.io.ParseException {
+    Object entity = (T) SPATIAL_CONTEXT.getWktShapeParser().parse(wkt);
 
     if (entity instanceof Rectangle) {
-      Geometry geometryFrom = SHAPE_FACTORY.getGeometryFrom(entity);
+      Geometry geometryFrom = SHAPE_FACTORY.getGeometryFrom((Shape) entity);
       entity = (T) SHAPE_FACTORY.makeShape(geometryFrom);
     }
-    return entity;
+    return (T) entity;
   }
 
   public abstract ODocument toDoc(T shape);
 
-  public ODocument toDoc(String wkt) throws ParseException {
+  protected ODocument toDoc(T parsed, Geometry geometry) {
+    if (geometry == null || Double.isNaN(geometry.getCoordinates()[0].getZ())) {
+      return toDoc(parsed);
+    }
+    throw new IllegalArgumentException("Invalid shape");
+  }
+
+  public ODocument toDoc(String wkt) throws ParseException, org.locationtech.jts.io.ParseException {
     T parsed = fromText(wkt);
-    return toDoc(parsed);
+    return toDoc(
+        parsed,
+        OGlobalConfiguration.SPATIAL_ENABLE_DIRECT_WKT_READER.getValueAsBoolean()
+            ? wktReader.read(wkt)
+            : null);
   }
 
   public int getSRID(Shape shape) {
