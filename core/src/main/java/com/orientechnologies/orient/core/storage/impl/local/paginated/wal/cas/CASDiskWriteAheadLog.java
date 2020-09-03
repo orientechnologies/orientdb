@@ -76,10 +76,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.atomic.LongAdder;
+import java.util.concurrent.atomic.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -202,7 +199,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
 
   private final FileChannel masterRecordLSNHolder;
 
-  private final ConcurrentNavigableMap<OLogSequenceNumber, Runnable> events =
+  private final ConcurrentNavigableMap<OLogSequenceNumber, EventWrapper> events =
       new ConcurrentSkipListMap<>();
 
   private final ScalableRWLock segmentLock = new ScalableRWLock();
@@ -1039,9 +1036,11 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
 
     final OLogSequenceNumber localFlushedLsn = flushedLSN;
 
+    final EventWrapper wrapper = new EventWrapper(event);
+
     if (localFlushedLsn != null && lsn.compareTo(localFlushedLsn) <= 0) event.run();
     else {
-      events.put(lsn, event);
+      events.put(lsn, wrapper);
 
       final OLogSequenceNumber potentiallyUpdatedLocalFlushedLsn = flushedLSN;
       if (potentiallyUpdatedLocalFlushedLsn != null
@@ -1947,9 +1946,9 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
   private void fireEventsFor(final OLogSequenceNumber lsn) {
     // may be executed by only one thread at every instant of time
 
-    final Iterator<Runnable> eventsToFire = events.headMap(lsn, true).values().iterator();
+    final Iterator<EventWrapper> eventsToFire = events.headMap(lsn, true).values().iterator();
     while (eventsToFire.hasNext()) {
-      eventsToFire.next().run();
+      eventsToFire.next().fire();
       eventsToFire.remove();
     }
   }
@@ -2500,6 +2499,21 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
     WrittenUpTo(final OLogSequenceNumber lsn, final long position) {
       this.lsn = lsn;
       this.position = position;
+    }
+  }
+
+  private static final class EventWrapper {
+    private final Runnable event;
+    private final AtomicBoolean fired = new AtomicBoolean(false);
+
+    private EventWrapper(Runnable event) {
+      this.event = event;
+    }
+
+    private void fire() {
+      if (!fired.get() && fired.compareAndSet(false, true)) {
+        event.run();
+      }
     }
   }
 
