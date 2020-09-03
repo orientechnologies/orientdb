@@ -199,7 +199,10 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
     auditingQueue = new LinkedBlockingQueue<ODocument>();
     auditingThread =
         new OAuditingLoggingThread(
-            ODatabaseRecordThreadLocal.instance().get().getName(), auditingQueue, server);
+            ODatabaseRecordThreadLocal.instance().get().getName(),
+            auditingQueue,
+            server.getDatabases(),
+            server.getSecurity());
 
     auditingThread.start();
   }
@@ -207,7 +210,11 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
   public OAuditingHook(final OServer server) {
     auditingQueue = new LinkedBlockingQueue<ODocument>();
     auditingThread =
-        new OAuditingLoggingThread(OSystemDatabase.SYSTEM_DB_NAME, auditingQueue, server);
+        new OAuditingLoggingThread(
+            OSystemDatabase.SYSTEM_DB_NAME,
+            auditingQueue,
+            server.getDatabases(),
+            server.getSecurity());
 
     auditingThread.start();
   }

@@ -17,16 +17,17 @@ package com.orientechnologies.security.ldap;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerConfigurationManager;
 import com.orientechnologies.orient.server.security.OSecurityAuthenticator;
 import com.orientechnologies.orient.server.security.OSecurityComponent;
+import com.orientechnologies.orient.server.security.OServerSecurity;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.naming.directory.DirContext;
@@ -43,7 +44,7 @@ public class OLDAPImporter implements OSecurityComponent {
   private boolean debug = false;
   private boolean enabled = true;
 
-  private OServer server;
+  private OrientDBInternal context;
 
   private int importPeriod = 60; // Default to 60
   // seconds.
@@ -54,6 +55,8 @@ public class OLDAPImporter implements OSecurityComponent {
   private final ConcurrentHashMap<String, Database> databaseMap =
       new ConcurrentHashMap<String, Database>();
 
+  private OServerSecurity security;
+
   // OSecurityComponent
   public void active() {
     // Go through each database entry and check the _OLDAPUsers schema.
@@ -62,7 +65,7 @@ public class OLDAPImporter implements OSecurityComponent {
       ODatabase<?> odb = null;
 
       try {
-        odb = server.openDatabase(db.getName());
+        odb = context.openNoAuthenticate(db.getName(), "internal");
 
         verifySchema(odb);
       } catch (Exception ex) {
@@ -84,11 +87,12 @@ public class OLDAPImporter implements OSecurityComponent {
 
   // OSecurityComponent
   public void config(
-      final OServer oServer,
       final OServerConfigurationManager serverCfg,
-      final ODocument importDoc) {
+      final ODocument importDoc,
+      OServerSecurity security) {
     try {
-      server = oServer;
+      context = security.getServer().getDatabases();
+      this.security = security;
 
       databaseMap.clear();
 
@@ -426,8 +430,8 @@ public class OLDAPImporter implements OSecurityComponent {
     OSecurityAuthenticator authMethod = null;
 
     // If authName is null, use the primary authentication method.
-    if (authName == null) authMethod = server.getSecurity().getPrimaryAuthenticator();
-    else authMethod = server.getSecurity().getAuthenticator(authName);
+    if (authName == null) authMethod = security.getPrimaryAuthenticator();
+    else authMethod = security.getAuthenticator(authName);
 
     if (authMethod != null) subject = authMethod.getClientSubject();
 
@@ -436,7 +440,7 @@ public class OLDAPImporter implements OSecurityComponent {
 
   /** * LDAP Import * */
   private synchronized void importLDAP() {
-    if (server.getSecurity() == null) {
+    if (security == null) {
       OLogManager.instance().error(this, "OLDAPImporter.importLDAP() ServerSecurity is null", null);
       return;
     }
@@ -447,7 +451,7 @@ public class OLDAPImporter implements OSecurityComponent {
       try {
         Database db = dbEntry.getValue();
 
-        ODatabase<?> odb = server.openDatabase(db.getName());
+        ODatabase<?> odb = context.openNoAuthenticate(db.getName(), "internal");
 
         // This set will be filled with all users from the database (unless ignoreLocal is true).
         // As each usersRetrieved list is filled, any matching user will be removed.

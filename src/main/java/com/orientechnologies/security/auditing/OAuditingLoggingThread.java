@@ -18,11 +18,12 @@ package com.orientechnologies.security.auditing;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OAuditingOperation;
-import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.security.OServerSecurity;
 import java.util.concurrent.BlockingQueue;
 
 /**
@@ -35,18 +36,23 @@ public class OAuditingLoggingThread extends Thread {
   private final BlockingQueue<ODocument> auditingQueue;
   private volatile boolean running = true;
   private volatile boolean waitForAllLogs = true;
-  private OServer server;
+  private OrientDBInternal context;
 
   private String className;
+  private OServerSecurity security;
 
   public OAuditingLoggingThread(
-      final String iDatabaseName, final BlockingQueue auditingQueue, final OServer server) {
+      final String iDatabaseName,
+      final BlockingQueue auditingQueue,
+      final OrientDBInternal context,
+      OServerSecurity security) {
     super(
         Orient.instance().getThreadGroup(), "OrientDB Auditing Logging Thread - " + iDatabaseName);
 
     this.databaseName = iDatabaseName;
     this.auditingQueue = auditingQueue;
-    this.server = server;
+    this.context = context;
+    this.security = security;
     setDaemon(true);
 
     // This will create a cluster in the system database for logging auditing events for
@@ -57,7 +63,7 @@ public class OAuditingLoggingThread extends Thread {
 
     className = ODefaultAuditing.getClassName(databaseName);
 
-    server
+    context
         .getSystemDatabase()
         .executeInDBScope(
             new OCallable<Void, ODatabaseSession>() {
@@ -88,9 +94,9 @@ public class OAuditingLoggingThread extends Thread {
 
         log.setClassName(className);
 
-        server.getSystemDatabase().save(log);
+        context.getSystemDatabase().save(log);
 
-        if (server.getSecurity().getSyslog() != null) {
+        if (security.getSyslog() != null) {
           byte byteOp = OAuditingOperation.UNSPECIFIED.getByte();
 
           if (log.containsField("operation")) byteOp = log.field("operation");
@@ -99,8 +105,7 @@ public class OAuditingLoggingThread extends Thread {
           String message = log.field("note");
           String dbName = log.field("database");
 
-          server
-              .getSecurity()
+          security
               .getSyslog()
               .log(OAuditingOperation.getByByte(byteOp).toString(), dbName, username, message);
         }

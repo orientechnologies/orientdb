@@ -22,6 +22,7 @@ import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OSystemDatabase;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -33,6 +34,7 @@ import com.orientechnologies.orient.server.config.OServerConfigurationManager;
 import com.orientechnologies.orient.server.distributed.ODistributedLifecycleListener;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.security.OAuditingService;
+import com.orientechnologies.orient.server.security.OServerSecurity;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -45,6 +47,7 @@ public class ODefaultAuditing
   private boolean enabled = true;
   private Integer globalRetentionDays = -1;
   private OServer server;
+  private OrientDBInternal context;
 
   private Timer timer = new Timer();
   private OAuditingHook globalHook;
@@ -59,6 +62,9 @@ public class ODefaultAuditing
   private OAuditingDistribConfig distribConfig;
 
   private OSystemDBImporter systemDbImporter;
+
+  private OServerSecurity security;
+
   public static final String IMPORTER_FLAG = "AUDITING_IMPORTER";
 
   private class OAuditingDistribConfig extends OAuditingConfig {
@@ -393,7 +399,7 @@ public class ODefaultAuditing
     ODatabaseDocumentInternal sysdb = null;
 
     try {
-      sysdb = server.getSystemDatabase().openSystemDatabase();
+      sysdb = context.getSystemDatabase().openSystemDatabase();
 
       OSchema schema = sysdb.getMetadata().getSchema();
       OClass cls = schema.getClass(AUDITING_LOG_CLASSNAME);
@@ -462,7 +468,7 @@ public class ODefaultAuditing
 
   public void retainLogs(Date date) {
     long time = date.getTime();
-    server
+    context
         .getSystemDatabase()
         .executeWithDB(
             (db -> {
@@ -472,11 +478,11 @@ public class ODefaultAuditing
   }
 
   public void config(
-      final OServer oServer,
       final OServerConfigurationManager serverCfg,
-      final ODocument jsonConfig) {
-    server = oServer;
-
+      final ODocument jsonConfig,
+      OServerSecurity security) {
+    context = security.getServer().getDatabases();
+    this.security = security;
     try {
       if (jsonConfig.containsField("enabled")) {
         enabled = jsonConfig.field("enabled");
