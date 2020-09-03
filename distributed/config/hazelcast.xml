@@ -9,7 +9,7 @@
 	the specific language governing permissions and ~ limitations under the License. -->
 
 <hazelcast
-		xsi:schemaLocation="http://www.hazelcast.com/schema/config hazelcast-config-3.3.xsd"
+		xsi:schemaLocation="http://www.hazelcast.com/schema/config hazelcast-config-3.12.xsd"
 		xmlns="http://www.hazelcast.com/schema/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 	<group>
 		<name>orientdb</name>
@@ -37,6 +37,11 @@
 				<multicast-group>235.1.1.1</multicast-group>
 				<multicast-port>2434</multicast-port>
 			</multicast>
+			<kubernetes enabled="false">
+				<pod-label-name>orientdb-cluster-member</pod-label-name>
+				<pod-label-value>true</pod-label-value>
+				<service-port>2434</service-port>
+			</kubernetes>
 		</join>
 	</network>
 	<executor-service>
