@@ -22,10 +22,10 @@ package com.orientechnologies.orient.server.security.authenticator;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityManager;
-import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerConfigurationManager;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.security.OSecurityAuthenticatorAbstract;
+import com.orientechnologies.orient.server.security.OServerSecurity;
 
 /**
  * Provides an OSecurityAuthenticator for the users listed in orientdb-server-config.xml.
@@ -70,10 +70,10 @@ public class OServerConfigAuthenticator extends OSecurityAuthenticatorAbstract {
 
   // OSecurityAuthenticator
   public void config(
-      final OServer oServer,
       final OServerConfigurationManager serverCfg,
-      final ODocument jsonConfig) {
-    super.config(oServer, serverCfg, jsonConfig);
+      final ODocument jsonConfig,
+      OServerSecurity security) {
+    super.config(serverCfg, jsonConfig, security);
   }
 
   // OSecurityAuthenticator

@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.server.security;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerConfigurationManager;
 
 /**
@@ -33,9 +32,9 @@ public interface OSecurityComponent {
   void active();
 
   void config(
-      final OServer oServer,
       final OServerConfigurationManager serverCfg,
-      final ODocument jsonConfig);
+      final ODocument jsonConfig,
+      OServerSecurity security);
 
   // Called on removal of the component.
   void dispose();

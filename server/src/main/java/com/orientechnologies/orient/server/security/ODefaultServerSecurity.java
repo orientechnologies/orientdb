@@ -24,9 +24,9 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
@@ -44,8 +44,6 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerConfigurationManager;
 import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
-import com.orientechnologies.orient.server.network.OServerNetworkListener;
-import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 import java.io.File;
 import java.io.FileInputStream;
@@ -87,17 +85,13 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerSecurity
   // configuration.
   private OServer server;
   private OServerConfigurationManager serverConfig;
+  private OrientDBInternal context;
 
   private ODocument auditingDoc;
   private ODocument serverDoc;
   private ODocument authDoc;
   private ODocument passwdValDoc;
   private ODocument ldapImportDoc;
-
-  // The SuperUser is now only used by the ODefaultServerSecurity for self-authentication.
-  private final String superUser = "OSecurityModuleSuperUser";
-  private String superUserPassword;
-  private OServerUserConfiguration superUserCfg;
 
   // We use a list because the order indicates priority of method.
   private final List<OSecurityAuthenticator> authenticatorsList =
@@ -111,6 +105,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerSecurity
   public ODefaultServerSecurity(
       final OServer oServer, final OServerConfigurationManager serverCfg) {
     server = oServer;
+    context = oServer.getDatabases();
     serverConfig = serverCfg;
 
     listener = new OSecurityServerLifecycleListener(this);
@@ -162,9 +157,6 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerSecurity
                   this,
                   "ODefaultServerSecurity.authenticate() ** Authenticating username: %s",
                   username);
-
-        // This means it originates from us (used by openDatabase).
-        if (username.equals(superUser) && password.equals(superUserPassword)) return superUser;
       }
 
       List<OSecurityAuthenticator> active = new ArrayList<>();
@@ -189,7 +181,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerSecurity
     return null; // Indicates authentication failed.
   }
 
-  protected OServer getServer() {
+  public OServer getServer() {
     return server;
   }
 
@@ -324,7 +316,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerSecurity
     //  if (isEnabled() && !OSystemDatabase.SYSTEM_DB_NAME.equals(dbName)) {
     if (isEnabled()) {
       return (OUser)
-          server
+          context
               .getSystemDatabase()
               .execute(
                   (resultset) -> {
@@ -345,8 +337,6 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerSecurity
   public boolean isAuthorized(final String username, final String resource) {
     if (isEnabled()) {
       if (username == null || resource == null) return false;
-
-      if (username.equals(superUser)) return true;
 
       synchronized (authenticatorsList) {
         // Walk through the list of OSecurityAuthenticators.
@@ -445,7 +435,6 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerSecurity
     OServerUserConfiguration userCfg = null;
 
     if (isEnabled()) {
-      if (username.equals(superUser)) return superUserCfg;
 
       synchronized (authenticatorsList) {
         // Walk through the list of OSecurityAuthenticators.
@@ -459,19 +448,6 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerSecurity
     }
 
     return userCfg;
-  }
-
-  // OServerSecurity
-  public ODatabase<?> openDatabase(final String dbName) {
-    ODatabase<?> db = null;
-
-    if (isEnabled()) {
-      db =
-          server.openDatabase(
-              dbName, superUser, "", null, true); // true indicates bypassing security.
-    }
-
-    return db;
   }
 
   @Override
@@ -650,27 +626,6 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerSecurity
             });
   }
 
-  protected void createSuperUser() {
-    if (superUser == null)
-      throw new OSecuritySystemException(
-          "ODefaultServerSecurity.createSuperUser() SuperUser cannot be null");
-
-    try {
-      // Assign a temporary password so that we know if authentication requests coming from the
-      // SuperUser are from us.
-      superUserPassword =
-          OSecurityManager.instance()
-              .createSHA256(String.valueOf(new java.util.Random().nextLong()));
-
-      superUserCfg = new OServerUserConfiguration(superUser, superUserPassword, "*");
-    } catch (Exception ex) {
-      OLogManager.instance().error(this, "createSuperUser() Exception: ", ex);
-    }
-
-    if (superUserPassword == null)
-      throw new OSecuritySystemException("ODefaultServerSecurity Could not create SuperUser");
-  }
-
   private void loadAuthenticators(final ODocument authDoc) {
     synchronized (authenticatorsList) {
       for (OSecurityAuthenticator sa : authenticatorsList) {
@@ -700,7 +655,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerSecurity
                     OSecurityAuthenticator authPlugin =
                         (OSecurityAuthenticator) authClass.newInstance();
 
-                    authPlugin.config(server, serverConfig, authMethodDoc);
+                    authPlugin.config(serverConfig, authMethodDoc, this);
                     authPlugin.active();
 
                     authenticatorsList.add(authPlugin);
@@ -747,8 +702,6 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerSecurity
       loadComponents();
 
       if (isEnabled()) {
-        registerRESTCommands();
-
         log(OAuditingOperation.SECURITY, null, user, "The security module is now loaded");
       }
     } else {
@@ -971,7 +924,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerSecurity
           if (cls != null) {
             if (OPasswordValidator.class.isAssignableFrom(cls)) {
               passwordValidator = (OPasswordValidator) cls.newInstance();
-              passwordValidator.config(server, serverConfig, passwdValDoc);
+              passwordValidator.config(serverConfig, passwdValDoc, this);
               passwordValidator.active();
             } else {
               OLogManager.instance()
@@ -1008,7 +961,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerSecurity
           if (cls != null) {
             if (OSecurityComponent.class.isAssignableFrom(cls)) {
               importLDAP = (OSecurityComponent) cls.newInstance();
-              importLDAP.config(server, serverConfig, ldapImportDoc);
+              importLDAP.config(serverConfig, ldapImportDoc, this);
               importLDAP.active();
             } else {
               OLogManager.instance()
@@ -1045,7 +998,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerSecurity
           if (cls != null) {
             if (OAuditingService.class.isAssignableFrom(cls)) {
               auditingService = (OAuditingService) cls.newInstance();
-              auditingService.config(server, serverConfig, auditingDoc);
+              auditingService.config(serverConfig, auditingDoc, this);
               auditingService.active();
             } else {
               OLogManager.instance()
@@ -1075,7 +1028,6 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerSecurity
 
   public void close() {
     if (enabled) {
-      unregisterRESTCommands();
 
       synchronized (importLDAPSynch) {
         if (importLDAP != null) {
@@ -1108,45 +1060,6 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerSecurity
       }
 
       enabled = false;
-    }
-  }
-
-  private void registerRESTCommands() {
-    try {
-      final OServerNetworkListener listener =
-          server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
-
-      if (listener != null) {
-        // Register the REST API Command.
-        // listener.registerStatelessCommand(new OServerCommandPostSecurityReload(this));
-      } else {
-        OLogManager.instance()
-            .info(
-                this,
-                "ODefaultServerSecurity.registerRESTCommands() unable to retrieve Network Protocol listener.",
-                null);
-      }
-    } catch (Exception th) {
-      OLogManager.instance().error(this, "ODefaultServerSecurity.registerRESTCommands()", th);
-    }
-  }
-
-  private void unregisterRESTCommands() {
-    try {
-      final OServerNetworkListener listener =
-          server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
-
-      if (listener != null) {
-        // listener.unregisterStatelessCommand(OServerCommandPostSecurityReload.class);
-      } else {
-        OLogManager.instance()
-            .error(
-                this,
-                "ODefaultServerSecurity.unregisterRESTCommands() unable to retrieve Network Protocol listener.",
-                null);
-      }
-    } catch (Exception th) {
-      OLogManager.instance().error(this, "ODefaultServerSecurity.unregisterRESTCommands()", th);
     }
   }
 }

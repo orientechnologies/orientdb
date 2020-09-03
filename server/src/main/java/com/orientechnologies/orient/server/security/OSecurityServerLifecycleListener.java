@@ -14,7 +14,6 @@ public class OSecurityServerLifecycleListener implements OServerLifecycleListene
 
   /** * OServerLifecycleListener Interface * */
   public void onBeforeActivate() {
-    security.createSuperUser();
 
     // Default
     String configFile =

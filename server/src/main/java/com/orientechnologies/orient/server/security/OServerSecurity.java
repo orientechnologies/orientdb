@@ -19,9 +19,9 @@
  */
 package com.orientechnologies.orient.server.security;
 
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.security.OSecuritySystem;
+import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 
 /**
@@ -46,11 +46,11 @@ public interface OServerSecurity extends OSecuritySystem {
    */
   OServerUserConfiguration getUser(final String username);
 
-  ODatabase<?> openDatabase(final String dbName);
-
   void onAfterDynamicPlugins();
 
   default void onAfterDynamicPlugins(OSecurityUser user) {
     onAfterDynamicPlugins();
   }
+
+  OServer getServer();
 }
