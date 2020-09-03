@@ -53,4 +53,7 @@ public interface OServerSecurity extends OSecuritySystem {
   }
 
   OServer getServer();
+
+  OServerUserConfiguration authenticateAndAuthorize(
+      String iUserName, String iPassword, String iResourceToCheck);
 }

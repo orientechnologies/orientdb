@@ -19,6 +19,8 @@
  */
 package com.orientechnologies.orient.server.security;
 
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
@@ -47,6 +49,8 @@ import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -101,20 +105,23 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerSecurity
       new ConcurrentHashMap<String, Class<?>>();
   private OSyslog sysLog;
   private OSecurityServerLifecycleListener listener;
+  private SecureRandom random = new SecureRandom();
 
-  public ODefaultServerSecurity(
-      final OServer oServer, final OServerConfigurationManager serverCfg) {
+  public ODefaultServerSecurity() {}
+
+  public void activate(final OServer oServer, final OServerConfigurationManager serverCfg) {
     server = oServer;
     context = oServer.getDatabases();
     serverConfig = serverCfg;
-
     listener = new OSecurityServerLifecycleListener(this);
     oServer.registerLifecycleListener(listener);
     OSecurityManager.instance().setSecurityFactory(this);
   }
 
   public void shutdown() {
-    server.unregisterLifecycleListener(listener);
+    if (server != null) {
+      server.unregisterLifecycleListener(listener);
+    }
   }
 
   private Class<?> getClass(final ODocument jsonConfig) {
@@ -147,37 +154,48 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerSecurity
 
   // OSecuritySystem (via OServerSecurity)
   public String authenticate(final String username, final String password) {
-    try {
-      // It's possible for the username to be null or an empty string in the case of SPNEGO Kerberos
-      // tickets.
-      if (username != null && !username.isEmpty()) {
-        if (debug)
-          OLogManager.instance()
-              .info(
-                  this,
-                  "ODefaultServerSecurity.authenticate() ** Authenticating username: %s",
-                  username);
-      }
+    if (isEnabled()) {
+      try {
+        // It's possible for the username to be null or an empty string in the case of SPNEGO
+        // Kerberos
+        // tickets.
+        if (username != null && !username.isEmpty()) {
+          if (debug)
+            OLogManager.instance()
+                .info(
+                    this,
+                    "ODefaultServerSecurity.authenticate() ** Authenticating username: %s",
+                    username);
+        }
 
-      List<OSecurityAuthenticator> active = new ArrayList<>();
-      synchronized (authenticatorsList) {
-        // Walk through the list of OSecurityAuthenticators.
-        for (OSecurityAuthenticator sa : authenticatorsList) {
-          if (sa.isEnabled()) {
-            active.add(sa);
+        List<OSecurityAuthenticator> active = new ArrayList<>();
+        synchronized (authenticatorsList) {
+          // Walk through the list of OSecurityAuthenticators.
+          for (OSecurityAuthenticator sa : authenticatorsList) {
+            if (sa.isEnabled()) {
+              active.add(sa);
+            }
           }
         }
-      }
-      for (OSecurityAuthenticator sa : active) {
-        String principal = sa.authenticate(username, password);
+        for (OSecurityAuthenticator sa : active) {
+          String principal = sa.authenticate(username, password);
 
-        if (principal != null) return principal;
+          if (principal != null) return principal;
+        }
+
+      } catch (Exception ex) {
+        OLogManager.instance().error(this, "ODefaultServerSecurity.authenticate()", ex);
       }
 
-    } catch (Exception ex) {
-      OLogManager.instance().error(this, "ODefaultServerSecurity.authenticate()", ex);
+    } else {
+      OServerUserConfiguration user = getUser(username);
+
+      if (user != null && user.password != null) {
+        if (OSecurityManager.instance().checkPassword(password, user.password)) {
+          return user.name;
+        }
+      }
     }
-
     return null; // Indicates authentication failed.
   }
 
@@ -346,6 +364,17 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerSecurity
           }
         }
       }
+    } else {
+      final OServerUserConfiguration user = getUser(username);
+
+      if (user != null) {
+        if (user.resources.equals("*"))
+          // ACCESS TO ALL
+          return true;
+
+        String[] resourceParts = user.resources.split(",");
+        for (String r : resourceParts) if (r.equals(resource)) return true;
+      }
     }
 
     return false;
@@ -445,6 +474,10 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerSecurity
           }
         }
       }
+    } else {
+      // This will throw an IllegalArgumentException if iUserName is null or empty.
+      // However, a null or empty iUserName is possible with some security implementations.
+      if (username != null && !username.isEmpty()) userCfg = serverConfig.getUser(username);
     }
 
     return userCfg;
@@ -452,7 +485,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerSecurity
 
   @Override
   public OSyslog getSyslog() {
-    if (sysLog == null) {
+    if (sysLog == null && server != null) {
       OServerPluginInfo syslogPlugin = server.getPluginManager().getPluginByName("syslog");
       if (syslogPlugin != null) {
         sysLog = (OSyslog) syslogPlugin.getInstance();
@@ -834,7 +867,9 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerSecurity
   protected String getConfigProperty(final String name) {
     String value = null;
 
-    if (server.getConfiguration() != null && server.getConfiguration().properties != null) {
+    if (server != null
+        && server.getConfiguration() != null
+        && server.getConfiguration().properties != null) {
       for (OServerEntryConfiguration p : server.getConfiguration().properties) {
         if (p.name.equals(name)) {
           value = OSystemVariableResolver.resolveSystemVariables(p.value);
@@ -1061,5 +1096,65 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerSecurity
 
       enabled = false;
     }
+  }
+
+  @Override
+  public OServerUserConfiguration authenticateAndAuthorize(
+      String iUserName, String iPassword, String iResourceToCheck) {
+    // Returns the authenticated username, if successful, otherwise null.
+    String authUsername = authenticate(iUserName, iPassword);
+
+    // Authenticated, now see if the user is authorized.
+    if (authUsername != null) {
+      if (isAuthorized(authUsername, iResourceToCheck)) {
+        return getUser(authUsername);
+      }
+    }
+    return null;
+  }
+
+  public boolean existsUser(String user) {
+    return serverConfig.existsUser(user);
+  }
+
+  public void addUser(String user, String password, String permissions) {
+    if (password == null) {
+      // AUTO GENERATE PASSWORD
+      final byte[] buffer = new byte[32];
+      random.nextBytes(buffer);
+      password =
+          OSecurityManager.instance().createSHA256(OSecurityManager.byteArrayToHexStr(buffer));
+    }
+
+    // HASH THE PASSWORD
+    password =
+        OSecurityManager.instance()
+            .createHash(
+                password,
+                server
+                    .getContextConfiguration()
+                    .getValueAsString(
+                        OGlobalConfiguration.SECURITY_USER_PASSWORD_DEFAULT_ALGORITHM),
+                true);
+
+    serverConfig.setUser(user, password, permissions);
+    try {
+      serverConfig.saveConfiguration();
+    } catch (IOException e) {
+      OException.wrapException(new OIOException(""), e);
+    }
+  }
+
+  public void dropUser(String iUserName) {
+    serverConfig.dropUser(iUserName);
+    try {
+      serverConfig.saveConfiguration();
+    } catch (IOException e) {
+      OException.wrapException(new OIOException(""), e);
+    }
+  }
+
+  public void addTemporaryUser(String iName, String iPassword, String iPermissions) {
+    serverConfig.setEphemeralUser(iName, iPassword, iPermissions);
   }
 }
