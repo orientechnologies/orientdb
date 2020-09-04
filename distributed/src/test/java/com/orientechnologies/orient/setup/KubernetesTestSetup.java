@@ -282,9 +282,21 @@ public class KubernetesTestSetup implements TestSetup {
   @Override
   public OrientDB createRemote(
       String serverId, String serverUser, String serverPassword, OrientDBConfig config) {
-    String url = "remote:" + getAddress(serverId, PortType.BINARY);
-    log("Creating remote connection to server '%s' at %s.", serverId, url);
-    return new OrientDBIT(url, serverUser, serverPassword, config);
+    return createRemote(Collections.singleton(serverId), serverUser, serverPassword, config);
+  }
+
+  @Override
+  public OrientDB createRemote(
+      Collection<String> serverIds,
+      String serverUser,
+      String serverPassword,
+      OrientDBConfig config) {
+    Optional<String> url =
+        serverIds.stream()
+            .map(id -> "remote:" + getAddress(id, PortType.BINARY))
+            .reduce((s1, s2) -> s1 + ";" + s2);
+    log("Creating remote connection to server(s) '%s' at '%s'.", serverIds, url.get());
+    return new OrientDBIT(url.orElse(""), serverUser, serverPassword, config);
   }
 
   private V1ConfigMap createConfigMap(String serverId, K8sServerConfig config)

@@ -9,25 +9,32 @@ import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.server.OServer;
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
+import com.orientechnologies.orient.setup.SetupConfig;
+import com.orientechnologies.orient.setup.TestSetup;
+import com.orientechnologies.orient.setup.TestSetupUtil;
+import com.orientechnologies.orient.setup.configs.SimpleDServerConfig;
+import java.util.Arrays;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 public class SimpleMultiNodeConnectIT {
 
-  private OServer server0;
-  private OServer server1;
+  private TestSetup setup;
+  private SetupConfig config;
+  private String server0, server1, server2;
 
   @Before
   public void before() throws Exception {
     OGlobalConfiguration.SERVER_BACKWARD_COMPATIBILITY.setValue(false);
-    server0 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-0.xml");
-    server1 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-1.xml");
-    OrientDB remote =
-        new OrientDB("remote:localhost", "root", "test", OrientDBConfig.defaultConfig());
+    config = new SimpleDServerConfig();
+    server0 = SimpleDServerConfig.SERVER0;
+    server1 = SimpleDServerConfig.SERVER1;
+    server2 = SimpleDServerConfig.SERVER2;
+    setup = TestSetupUtil.create(config);
+    setup.setup();
+
+    OrientDB remote = setup.createRemote(server0, "root", "test", OrientDBConfig.defaultConfig());
     remote.create("test", ODatabaseType.PLOCAL);
     ODatabaseSession session = remote.open("test", "admin", "admin");
     session.createClass("test");
@@ -41,13 +48,13 @@ public class SimpleMultiNodeConnectIT {
   @Test
   public void testLiveQueryDifferentNode() {
     OrientDB remote1 =
-        new OrientDB(
-            "remote:localhost:2424;localhost:2425", "root", "test", OrientDBConfig.defaultConfig());
+        setup.createRemote(
+            Arrays.asList(server0, server1), "root", "test", OrientDBConfig.defaultConfig());
     ODatabaseSession session = remote1.open("test", "admin", "admin");
     try (OResultSet result = session.query("select from test")) {
       assertEquals(1, result.stream().count());
     }
-    server0.shutdown();
+    setup.shutdownServer(server0);
     try (OResultSet result = session.query("select from test")) {
       assertEquals(1, result.stream().count());
     }
@@ -55,17 +62,7 @@ public class SimpleMultiNodeConnectIT {
   }
 
   @After
-  public void after()
-      throws InstantiationException, IllegalAccessException, ClassNotFoundException,
-          NoSuchMethodException, IOException, InvocationTargetException {
-    server0.startupFromConfiguration();
-    server0.activate();
-    OrientDB remote =
-        new OrientDB("remote:localhost", "root", "test", OrientDBConfig.defaultConfig());
-    remote.drop("test");
-    remote.close();
-
-    server0.shutdown();
-    server1.shutdown();
+  public void after() {
+    setup.teardown();
   }
 }

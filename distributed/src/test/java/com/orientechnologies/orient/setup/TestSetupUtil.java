@@ -10,6 +10,7 @@ import org.joda.time.DateTime;
 
 public class TestSetupUtil {
   private static final K8sServerConfig templateConfigs;
+  // Following properties are not server-specific
   private static final String orientDBKubernetesLabel;
   private static final String configVolumeStorageClass;
   private static final String databaseVolumeStorageClass;
@@ -29,6 +30,26 @@ public class TestSetupUtil {
       log("Running with local JVMs.");
       return new LocalTestSetup(SetupConfig);
     }
+    log(
+        "Using template values: {"
+            + "'HTTP port': '%s', "
+            + "'binary port': '%s', "
+            + "'Hazelcast port': '%s', "
+            + "'Docker image': '%s', "
+            + "'DB volume size': %s, "
+            + "'OrientDB label': '%s', "
+            + "'config volume storage class': '%s', "
+            + "'DB volume storage class': '%s', "
+            + "'Kubernetes namespace': '%s'}",
+        templateConfigs.getHttpPort(),
+        templateConfigs.getBinaryPort(),
+        templateConfigs.getHazelcastPort(),
+        templateConfigs.getDockerImage(),
+        templateConfigs.getDbVolumeSize(),
+        orientDBKubernetesLabel,
+        configVolumeStorageClass,
+        databaseVolumeStorageClass,
+        kubernetesNamespace);
     log("Running with Kube Config file " + kubeConfigFile);
     return new KubernetesTestSetup(kubeConfigFile, SetupConfig);
   }
