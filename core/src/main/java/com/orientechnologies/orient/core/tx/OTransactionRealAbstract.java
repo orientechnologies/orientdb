@@ -74,6 +74,9 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract
   protected final Set<ODocument> changedDocuments = new HashSet<ODocument>();
 
   private Optional<List<byte[]>> serializedOperations = Optional.empty();
+  
+  protected Map<String, OClusterOperation> clustersOperations = new LinkedHashMap<String, OClusterOperation>();
+  protected Map<String, OIndexOperation> indexesOperations = new LinkedHashMap<String, OIndexOperation>();
 
   protected OTransactionRealAbstract(final ODatabaseDocumentInternal database, final int id) {
     super(database);
