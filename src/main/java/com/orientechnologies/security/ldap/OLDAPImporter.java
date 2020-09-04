@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.server.config.OServerConfigurationManager;
 import com.orientechnologies.orient.server.security.OSecurityAuthenticator;
 import com.orientechnologies.orient.server.security.OSecurityComponent;
 import com.orientechnologies.orient.server.security.OServerSecurity;
@@ -86,10 +85,7 @@ public class OLDAPImporter implements OSecurityComponent {
   }
 
   // OSecurityComponent
-  public void config(
-      final OServerConfigurationManager serverCfg,
-      final ODocument importDoc,
-      OServerSecurity security) {
+  public void config(final ODocument importDoc, OServerSecurity security) {
     try {
       context = security.getServer().getDatabases();
       this.security = security;

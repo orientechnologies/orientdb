@@ -18,7 +18,6 @@ package com.orientechnologies.security.password;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OInvalidPasswordException;
-import com.orientechnologies.orient.server.config.OServerConfigurationManager;
 import com.orientechnologies.orient.server.security.OPasswordValidator;
 import com.orientechnologies.orient.server.security.OServerSecurity;
 import java.util.regex.Pattern;
@@ -45,10 +44,7 @@ public class ODefaultPasswordValidator implements OPasswordValidator {
   }
 
   // OSecurityComponent
-  public void config(
-      final OServerConfigurationManager serverCfg,
-      final ODocument jsonConfig,
-      OServerSecurity security) {
+  public void config(final ODocument jsonConfig, OServerSecurity security) {
     try {
       if (jsonConfig.containsField("enabled")) {
         enabled = jsonConfig.field("enabled");

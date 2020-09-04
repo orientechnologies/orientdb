@@ -20,7 +20,6 @@ import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.kerberos.OKrb5ClientLoginModuleConfig;
-import com.orientechnologies.orient.server.config.OServerConfigurationManager;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.security.OSecurityAuthenticatorAbstract;
 import com.orientechnologies.orient.server.security.OSecurityAuthenticatorException;
@@ -185,11 +184,8 @@ public class OKerberosAuthenticator extends OSecurityAuthenticatorAbstract {
   }
 
   // OSecurityAuthenticator
-  public void config(
-      final OServerConfigurationManager serverCfg,
-      final ODocument kerbConfig,
-      OServerSecurity security) {
-    super.config(serverCfg, kerbConfig, security);
+  public void config(final ODocument kerbConfig, OServerSecurity security) {
+    super.config(kerbConfig, security);
 
     if (kerbConfig.containsField("krb5_config")) {
       krb5Config =

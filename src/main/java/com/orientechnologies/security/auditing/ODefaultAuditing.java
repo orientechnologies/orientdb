@@ -30,7 +30,6 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OAuditingOperation;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.config.OServerConfigurationManager;
 import com.orientechnologies.orient.server.distributed.ODistributedLifecycleListener;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.security.OAuditingService;
@@ -477,10 +476,7 @@ public class ODefaultAuditing
             }));
   }
 
-  public void config(
-      final OServerConfigurationManager serverCfg,
-      final ODocument jsonConfig,
-      OServerSecurity security) {
+  public void config(final ODocument jsonConfig, OServerSecurity security) {
     context = security.getServer().getDatabases();
     this.security = security;
     try {
