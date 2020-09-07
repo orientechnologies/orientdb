@@ -336,4 +336,6 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
   default OSystemDatabase getSystemDatabase() {
     throw new UnsupportedOperationException();
   }
+
+  public OrientDBConfig getConfigurations();
 }

@@ -19,9 +19,9 @@
  */
 package com.orientechnologies.orient.server.security;
 
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.security.OSecuritySystem;
-import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 
 /**
@@ -52,8 +52,6 @@ public interface OServerSecurity extends OSecuritySystem {
     onAfterDynamicPlugins();
   }
 
-  OServer getServer();
-
   OServerUserConfiguration authenticateAndAuthorize(
       String iUserName, String iPassword, String iResourceToCheck);
 
@@ -62,4 +60,6 @@ public interface OServerSecurity extends OSecuritySystem {
   OServerUserConfiguration getServerUser(String username);
 
   boolean isServerUserAuthorized(String username, String resource);
+
+  OrientDBInternal getContext();
 }

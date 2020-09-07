@@ -438,7 +438,7 @@ public class OServer {
   public OServer activate()
       throws ClassNotFoundException, InstantiationException, IllegalAccessException {
     try {
-      serverSecurity.activate(this, serverCfg);
+      serverSecurity.activate(this.databases, new OServerSecurityConfig(this, this.serverCfg));
 
       Orient.instance().setSecurity(serverSecurity);
       // Checks to see if the OrientDB System Database exists and creates it if not.
@@ -578,6 +578,7 @@ public class OServer {
       if (shutdownHook != null) shutdownHook.cancel();
 
       Orient.instance().getProfiler().unregisterHookValue("system.databases");
+      serverSecurity.close();
 
       for (OServerLifecycleListener l : lifecycleListeners) l.onBeforeDeactivate();
 

@@ -19,15 +19,10 @@
  */
 package com.orientechnologies.orient.server.security;
 
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
@@ -40,16 +35,9 @@ import com.orientechnologies.orient.core.security.OInvalidPasswordException;
 import com.orientechnologies.orient.core.security.OSecurityFactory;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.security.OSecuritySystemException;
-import com.orientechnologies.orient.server.OClientConnection;
-import com.orientechnologies.orient.server.OClientConnectionManager;
-import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.config.OServerConfigurationManager;
-import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
-import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -87,8 +75,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerSecurity
   private ODocument configDoc; // Holds the
   // current JSON
   // configuration.
-  private OServer server;
-  private OServerConfigurationManager serverConfig;
+  private OSecurityConfig serverConfig;
   private OrientDBInternal context;
 
   private ODocument auditingDoc;
@@ -103,26 +90,17 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerSecurity
 
   private ConcurrentHashMap<String, Class<?>> securityClassMap =
       new ConcurrentHashMap<String, Class<?>>();
-  private OSyslog sysLog;
-  private OSecurityServerLifecycleListener listener;
   private SecureRandom random = new SecureRandom();
 
   public ODefaultServerSecurity() {}
 
-  public void activate(final OServer oServer, final OServerConfigurationManager serverCfg) {
-    server = oServer;
-    context = oServer.getDatabases();
-    serverConfig = serverCfg;
-    listener = new OSecurityServerLifecycleListener(this);
-    oServer.registerLifecycleListener(listener);
-    OSecurityManager.instance().setSecurityFactory(this);
+  public void activate(final OrientDBInternal context, final OSecurityConfig serverCfg) {
+    this.context = context;
+    this.serverConfig = serverCfg;
+    this.load(serverConfig.getConfigurationFile());
   }
 
-  public void shutdown() {
-    if (server != null) {
-      server.unregisterLifecycleListener(listener);
-    }
-  }
+  public void shutdown() {}
 
   private Class<?> getClass(final ODocument jsonConfig) {
     Class<?> cls = null;
@@ -204,8 +182,8 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerSecurity
     return null;
   }
 
-  public OServer getServer() {
-    return server;
+  public OrientDBInternal getContext() {
+    return context;
   }
 
   // OSecuritySystem (via OServerSecurity)
@@ -500,13 +478,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerSecurity
 
   @Override
   public OSyslog getSyslog() {
-    if (sysLog == null && server != null) {
-      OServerPluginInfo syslogPlugin = server.getPluginManager().getPluginByName("syslog");
-      if (syslogPlugin != null) {
-        sysLog = (OSyslog) syslogPlugin.getInstance();
-      }
-    }
-    return sysLog;
+    return serverConfig.getSyslog();
   }
 
   // OSecuritySystem
@@ -629,49 +601,6 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerSecurity
         null,
         user,
         String.format("The %s security component has been reloaded", name));
-  }
-
-  /** Called each time one of the security classes (OUser, ORole, OServerRole) is modified. */
-  public void securityRecordChange(final String dbURL, final ODocument record) {
-
-    // The point of this is to notify any matching (via URL) active database that its user
-    // needs to be reloaded to pick up any changes that may affect its security permissions.
-
-    // We execute this in a new thread to avoid blocking the caller for too long.
-    Orient.instance()
-        .submit(
-            new Runnable() {
-              @Override
-              public void run() {
-                try {
-                  OClientConnectionManager ccm = server.getClientConnectionManager();
-                  if (ccm != null) {
-                    for (OClientConnection cc : ccm.getConnections()) {
-                      try {
-                        cc.acquire();
-                        ODatabaseDocumentInternal ccDB = cc.getDatabase();
-                        if (ccDB != null) {
-                          ccDB.activateOnCurrentThread();
-                          if (!ccDB.isClosed() && ccDB.getURL() != null) {
-                            if (ccDB.getURL().equals(dbURL)) {
-                              ccDB.reloadUser();
-                            }
-                          }
-                        }
-                      } catch (Exception ex) {
-                        OLogManager.instance()
-                            .error(this, "securityRecordChange() Exception: ", ex);
-                      } finally {
-                        cc.release();
-                      }
-                    }
-                  }
-                } catch (Exception ex) {
-                  OLogManager.instance().error(this, "securityRecordChange() Exception: ", ex);
-                }
-                ODatabaseRecordThreadLocal.instance().remove();
-              }
-            });
   }
 
   private void loadAuthenticators(final ODocument authDoc) {
@@ -819,10 +748,6 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerSecurity
         String configFile =
             OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}/config/security.json");
 
-        // The default "security.json" file can be overridden in the server config file.
-        String securityFile = getConfigProperty("server.security.file");
-        if (securityFile != null) configFile = securityFile;
-
         String ssf = OGlobalConfiguration.SERVER_SECURITY_FILE.getValueAsString();
         if (ssf != null) configFile = ssf;
 
@@ -877,23 +802,6 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerSecurity
     }
 
     return securityDoc;
-  }
-
-  protected String getConfigProperty(final String name) {
-    String value = null;
-
-    if (server != null
-        && server.getConfiguration() != null
-        && server.getConfiguration().properties != null) {
-      for (OServerEntryConfiguration p : server.getConfiguration().properties) {
-        if (p.name.equals(name)) {
-          value = OSystemVariableResolver.resolveSystemVariables(p.value);
-          break;
-        }
-      }
-    }
-
-    return value;
   }
 
   private boolean isEnabled(final ODocument sectionDoc) {
@@ -1146,27 +1054,20 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerSecurity
         OSecurityManager.instance()
             .createHash(
                 password,
-                server
-                    .getContextConfiguration()
+                context
+                    .getConfigurations()
+                    .getConfigurations()
                     .getValueAsString(
                         OGlobalConfiguration.SECURITY_USER_PASSWORD_DEFAULT_ALGORITHM),
                 true);
 
     serverConfig.setUser(user, password, permissions);
-    try {
-      serverConfig.saveConfiguration();
-    } catch (IOException e) {
-      OException.wrapException(new OIOException(""), e);
-    }
+    serverConfig.saveConfiguration();
   }
 
   public void dropUser(String iUserName) {
     serverConfig.dropUser(iUserName);
-    try {
-      serverConfig.saveConfiguration();
-    } catch (IOException e) {
-      OException.wrapException(new OIOException(""), e);
-    }
+    serverConfig.saveConfiguration();
   }
 
   public void addTemporaryUser(String iName, String iPassword, String iPermissions) {

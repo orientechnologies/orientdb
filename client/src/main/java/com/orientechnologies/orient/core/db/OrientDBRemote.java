@@ -702,4 +702,9 @@ public class OrientDBRemote implements OrientDBInternal {
     throw new ODatabaseException(
         "Reached maximum retry limit on admin operations, the server may be offline");
   }
+
+  @Override
+  public OrientDBConfig getConfigurations() {
+    return configurations;
+  }
 }
