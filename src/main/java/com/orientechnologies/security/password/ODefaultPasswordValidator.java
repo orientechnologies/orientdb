@@ -18,8 +18,8 @@ package com.orientechnologies.security.password;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OInvalidPasswordException;
-import com.orientechnologies.orient.server.security.OPasswordValidator;
-import com.orientechnologies.orient.server.security.OServerSecurity;
+import com.orientechnologies.orient.core.security.OPasswordValidator;
+import com.orientechnologies.orient.core.security.OServerSecurity;
 import java.util.regex.Pattern;
 
 /**
