@@ -198,6 +198,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     // do not remove this or we will get deadlock upon shutdown.
     if (isShutdownFlag()) return;
 
+    server.getMemoryManager().checkAndWaitMemoryThreshold();
+
     clientTxId = 0;
     okSent = false;
     try {
