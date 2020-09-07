@@ -7,9 +7,11 @@ import java.nio.channels.FileChannel;
 
 public class OWALChannelFile implements OWALFile {
   private final FileChannel channel;
+  private final long segmentId;
 
-  OWALChannelFile(FileChannel channel) {
+  OWALChannelFile(FileChannel channel, long segmentId) {
     this.channel = channel;
+    this.segmentId = segmentId;
   }
 
   @Override
@@ -25,6 +27,11 @@ public class OWALChannelFile implements OWALFile {
   @Override
   public void readBuffer(ByteBuffer buffer) throws IOException {
     OIOUtils.readByteBuffer(buffer, channel);
+  }
+
+  @Override
+  public long segmentId() {
+    return segmentId;
   }
 
   @Override
