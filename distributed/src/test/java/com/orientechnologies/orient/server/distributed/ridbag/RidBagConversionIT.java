@@ -11,24 +11,34 @@ import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.OServer;
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
+import com.orientechnologies.orient.setup.LocalTestSetup;
+import com.orientechnologies.orient.setup.SetupConfig;
+import com.orientechnologies.orient.setup.configs.SimpleDServerConfig;
 import java.util.stream.Collectors;
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MalformedObjectNameException;
-import javax.management.NotCompliantMBeanException;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 public class RidBagConversionIT {
 
+  private LocalTestSetup setup;
+  private SetupConfig config;
+  private String server0, server1;
+
+  @Before
+  public void before() {
+    config = new SimpleDServerConfig();
+    server0 = SimpleDServerConfig.SERVER0;
+    server1 = SimpleDServerConfig.SERVER1;
+    setup = new LocalTestSetup(config);
+  }
+
   @Test
-  public void testConversion()
-      throws IOException, InstantiationException, InvocationTargetException, NoSuchMethodException,
-          MBeanRegistrationException, IllegalAccessException, InstanceAlreadyExistsException,
-          NotCompliantMBeanException, ClassNotFoundException, MalformedObjectNameException {
+  public void testConversion() {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(1);
-    OrientDB orientDB = new OrientDB("embedded:target/server0/", OrientDBConfig.defaultConfig());
+    String server0Path = setup.getServer(server0).getServerHome();
+    OrientDB orientDB =
+        new OrientDB("embedded:" + server0Path + "/databases/", OrientDBConfig.defaultConfig());
     orientDB.create("test", ODatabaseType.PLOCAL);
     ODatabaseSession database = orientDB.open("test", "admin", "admin");
     database.begin();
@@ -42,10 +52,13 @@ public class RidBagConversionIT {
     database.commit();
     database.close();
     orientDB.close();
-    OServer server0 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-0.xml");
-    OServer server1 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-1.xml");
 
-    OrientDB embOri = server0.getContext();
+    setup.setup();
+
+    OServer server0Instance = setup.getServer(server0).getServerInstance();
+    OServer server1Instance = setup.getServer(server1).getServerInstance();
+
+    OrientDB embOri = server0Instance.getContext();
     ODatabaseSession data = embOri.open("test", "admin", "admin");
     try (OResultSet query = data.query("select from V")) {
       for (OResult res : query.stream().collect(Collectors.toList())) {
@@ -57,7 +70,10 @@ public class RidBagConversionIT {
     data.close();
     embOri.drop("test");
     embOri.close();
-    server0.shutdown();
-    server1.shutdown();
+  }
+
+  @After
+  public void after() {
+    setup.teardown();
   }
 }

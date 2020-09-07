@@ -15,7 +15,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-public class BasicSyncIT {
+public class ReverseStartSyncIT {
 
   private TestSetup setup;
   private SetupConfig config;
@@ -36,7 +36,7 @@ public class BasicSyncIT {
   }
 
   @Test
-  public void sync() {
+  public void reverseStartSync() {
     try (OrientDB remote = setup.createRemote(server0, OrientDBConfig.defaultConfig())) {
       try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
         session.createClass("One");
@@ -48,12 +48,13 @@ public class BasicSyncIT {
         session.save(session.newElement("One"));
       }
     }
-    setup.shutdownServer(server0);
     setup.shutdownServer(server1);
-
-    setup.startServer(server0);
-    setup.startServer(server1);
+    setup.shutdownServer(server0);
+    // Starting the servers in reverse shutdown order to trigger miss sync
+    // This start order can be guaranteed only when nodes start synchronously.
     setup.startServer(server2);
+    setup.startServer(server1);
+    setup.startServer(server0);
     // Test server 0
     try (OrientDB remote = setup.createRemote(server0, OrientDBConfig.defaultConfig())) {
       try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
