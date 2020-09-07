@@ -477,7 +477,7 @@ public class ODefaultAuditing
   }
 
   public void config(final ODocument jsonConfig, OServerSecurity security) {
-    context = security.getServer().getDatabases();
+    context = security.getContext();
     this.security = security;
     try {
       if (jsonConfig.containsField("enabled")) {

@@ -87,7 +87,7 @@ public class OLDAPImporter implements OSecurityComponent {
   // OSecurityComponent
   public void config(final ODocument importDoc, OServerSecurity security) {
     try {
-      context = security.getServer().getDatabases();
+      context = security.getContext();
       this.security = security;
 
       databaseMap.clear();
