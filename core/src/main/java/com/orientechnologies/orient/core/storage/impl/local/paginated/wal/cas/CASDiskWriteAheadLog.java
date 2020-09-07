@@ -784,7 +784,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
 
         if (Files.exists(segmentPath)) {
           try (final OWALFile file =
-              OWALFile.createReadWALFile(segmentPath, allowDirectIO, blockSize)) {
+              OWALFile.createReadWALFile(segmentPath, allowDirectIO, blockSize, segmentId)) {
             long chSize = Files.size(segmentPath);
             final WrittenUpTo written = this.writtenUpTo.get();
 
@@ -2069,7 +2069,8 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
 
                   walFile =
                       OWALFile.createWriteWALFile(
-                          walLocation.resolve(getSegmentName(segmentId)), allowDirectIO, blockSize);
+                          walLocation.resolve(getSegmentName(segmentId)), allowDirectIO, blockSize,
+                          segmentId);
                   assert lsn.getPosition() == CASWALPage.RECORDS_OFFSET;
                   currentPosition = 0;
                 }
