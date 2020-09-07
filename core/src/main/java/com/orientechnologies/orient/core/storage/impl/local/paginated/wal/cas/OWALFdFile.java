@@ -9,10 +9,12 @@ import java.nio.ByteBuffer;
 public class OWALFdFile implements OWALFile {
   private final int fd;
   private final int blockSize;
+  private final long segmentId;
 
-  OWALFdFile(int fd, int blockSize) {
+  OWALFdFile(int fd, int blockSize, long segmentId) {
     this.fd = fd;
     this.blockSize = blockSize;
+    this.segmentId = segmentId;
   }
 
   @Override
@@ -81,6 +83,11 @@ public class OWALFdFile implements OWALFile {
     }
 
     OIOUtils.readByteBuffer(buffer, fd);
+  }
+
+  @Override
+  public long segmentId() {
+    return segmentId;
   }
 
   @Override

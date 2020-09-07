@@ -12,6 +12,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
 public interface OWALFile extends Closeable {
+
   void force(boolean forceMetadata) throws IOException;
 
   int write(ByteBuffer buffer) throws IOException;
@@ -22,7 +23,10 @@ public interface OWALFile extends Closeable {
 
   void readBuffer(ByteBuffer buffer) throws IOException;
 
-  static OWALFile createWriteWALFile(Path path, boolean allowDirectIO, int blockSize)
+  long segmentId();
+
+  static OWALFile createWriteWALFile(Path path, boolean allowDirectIO, int blockSize,
+      long segmentId)
       throws IOException {
     if (allowDirectIO) {
       try {
@@ -35,7 +39,7 @@ public interface OWALFile extends Closeable {
                         | ONative.O_EXCL
                         | ONative.O_APPEND
                         | ONative.O_DIRECT);
-        return new OWALFdFile(fd, blockSize);
+        return new OWALFdFile(fd, blockSize, segmentId);
       } catch (LastErrorException e) {
         OLogManager.instance()
             .errorNoDb(
@@ -52,17 +56,17 @@ public interface OWALFile extends Closeable {
             path,
             StandardOpenOption.WRITE,
             StandardOpenOption.CREATE_NEW,
-            StandardOpenOption.APPEND));
+            StandardOpenOption.APPEND), segmentId);
   }
 
-  static OWALFile createReadWALFile(Path path, boolean allowDirectIO, int blockSize)
+  static OWALFile createReadWALFile(Path path, boolean allowDirectIO, int blockSize, long segmentId)
       throws IOException {
     if (allowDirectIO) {
       try {
         final int fd =
             ONative.instance()
                 .open(path.toAbsolutePath().toString(), ONative.O_RDONLY | ONative.O_DIRECT);
-        return new OWALFdFile(fd, blockSize);
+        return new OWALFdFile(fd, blockSize, segmentId);
       } catch (LastErrorException e) {
         OLogManager.instance()
             .errorNoDb(
@@ -72,6 +76,6 @@ public interface OWALFile extends Closeable {
       }
     }
 
-    return new OWALChannelFile(FileChannel.open(path, StandardOpenOption.READ));
+    return new OWALChannelFile(FileChannel.open(path, StandardOpenOption.READ), segmentId);
   }
 }
