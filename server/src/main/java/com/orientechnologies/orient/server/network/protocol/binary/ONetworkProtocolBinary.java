@@ -630,10 +630,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       if (connection.getServerUser() == null)
         throw new OSecurityAccessException("Server user not authenticated");
 
-      if (!server.isAllowed(connection.getServerUser().name, iResource))
+      if (!server.isAllowed(connection.getServerUser().getName(), iResource))
         throw new OSecurityAccessException(
             "User '"
-                + connection.getServerUser().name
+                + connection.getServerUser().getName()
                 + "' cannot access to the resource ["
                 + iResource
                 + "]. Use another server user or change permission in the file config/orientdb-server-config.xml");

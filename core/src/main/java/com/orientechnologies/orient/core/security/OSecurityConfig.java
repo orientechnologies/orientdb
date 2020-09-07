@@ -1,6 +1,4 @@
-package com.orientechnologies.orient.server.security;
-
-import com.orientechnologies.orient.server.config.OServerUserConfiguration;
+package com.orientechnologies.orient.core.security;
 
 public interface OSecurityConfig {
 
@@ -14,7 +12,7 @@ public interface OSecurityConfig {
 
   void setEphemeralUser(String iName, String iPassword, String iPermissions);
 
-  OServerUserConfiguration getUser(String username);
+  OGlobalUser getUser(String username);
 
   OSyslog getSyslog();
 

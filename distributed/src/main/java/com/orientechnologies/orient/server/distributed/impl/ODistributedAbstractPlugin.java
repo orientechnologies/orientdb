@@ -61,6 +61,7 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.security.OGlobalUser;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.cluster.OClusterPositionMap;
 import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
@@ -73,7 +74,6 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedLifecycleListener;
@@ -510,9 +510,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     }
 
     // STORE THE TEMP USER/PASSWD USED FOR REPLICATION
-    final OServerUserConfiguration user = serverInstance.getUser(REPLICATOR_USER);
+    final OGlobalUser user = serverInstance.getUser(REPLICATOR_USER);
     if (user != null)
-      nodeCfg.field("user_replicator", serverInstance.getUser(REPLICATOR_USER).password);
+      nodeCfg.field("user_replicator", serverInstance.getUser(REPLICATOR_USER).getPassword());
 
     nodeCfg.field("databases", getManagedDatabases());
 

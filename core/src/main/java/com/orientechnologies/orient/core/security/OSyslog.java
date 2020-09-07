@@ -17,7 +17,7 @@
  *  * For more information: http://orientdb.com
  *
  */
-package com.orientechnologies.orient.server.security;
+package com.orientechnologies.orient.core.security;
 
 /**
  * Provides an interface to syslog (and other such event logging systems).

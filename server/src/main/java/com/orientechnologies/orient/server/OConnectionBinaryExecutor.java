@@ -42,6 +42,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.security.OGlobalUser;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
@@ -66,7 +67,6 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionNoTx;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
-import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
@@ -849,7 +849,11 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   public OBinaryResponse executeFreezeDatabase(OFreezeDatabaseRequest request) {
     ODatabaseDocumentInternal database =
         server.openDatabase(
-            request.getName(), connection.getServerUser().name, null, connection.getData(), true);
+            request.getName(),
+            connection.getServerUser().getName(),
+            null,
+            connection.getData(),
+            true);
     connection.setDatabase(database);
 
     OLogManager.instance().info(this, "Freezing database '%s'", connection.getDatabase().getURL());
@@ -862,7 +866,11 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   public OBinaryResponse executeReleaseDatabase(OReleaseDatabaseRequest request) {
     ODatabaseDocumentInternal database =
         server.openDatabase(
-            request.getName(), connection.getServerUser().name, null, connection.getData(), true);
+            request.getName(),
+            connection.getServerUser().getName(),
+            null,
+            connection.getData(),
+            true);
 
     connection.setDatabase(database);
 
@@ -1059,7 +1067,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
           "Wrong user/password to [connect] to the remote OrientDB Server instance");
     byte[] token = null;
     if (connection.getData().protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_26) {
-      connection.getData().serverUsername = connection.getServerUser().name;
+      connection.getData().serverUsername = connection.getServerUser().getName();
       connection.getData().serverUser = true;
 
       if (Boolean.TRUE.equals(connection.getTokenBased())) {
@@ -1090,7 +1098,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
     byte[] token = null;
     if (connection.getData().protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_26) {
-      connection.getData().serverUsername = connection.getServerUser().name;
+      connection.getData().serverUsername = connection.getServerUser().getName();
       connection.getData().serverUser = true;
 
       if (Boolean.TRUE.equals(connection.getTokenBased())) {
@@ -1749,7 +1757,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     ((ONetworkProtocolBinary) connection.getProtocol()).setHandshakeInfo(handshakeInfo);
 
     // TODO:check auth type
-    OServerUserConfiguration serverUser =
+    OGlobalUser serverUser =
         server.serverLogin(request.getUsername(), request.getPassword(), "server.connect");
 
     if (serverUser == null) {
@@ -1777,7 +1785,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       throw new ODatabaseException("protocol version too old rejected connection");
     } else {
       connection.setServerUser(serverUser);
-      connection.getData().serverUsername = serverUser.name;
+      connection.getData().serverUsername = serverUser.getName();
       connection.getData().serverUser = true;
       byte[] token = server.getTokenHandler().getDistributedToken(connection.getData());
 

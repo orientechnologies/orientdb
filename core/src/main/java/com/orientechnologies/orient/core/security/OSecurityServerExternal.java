@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.server.security;
+package com.orientechnologies.orient.core.security;
 
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -11,7 +11,6 @@ import com.orientechnologies.orient.core.metadata.security.OSystemUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,7 +26,7 @@ public class OSecurityServerExternal extends OSecurityExternal {
     OUser user = super.getUser(session, username);
 
     if (user == null && username != null) {
-      OServerUserConfiguration serverUser = security.getUser(username);
+      OGlobalUser serverUser = security.getUser(username);
       if (serverUser != null) {
         user = new OSystemUser(username, "null", "Server");
         user.addRole(createRole(serverUser));
@@ -36,11 +35,12 @@ public class OSecurityServerExternal extends OSecurityExternal {
     return user;
   }
 
-  public ORole createRole(OServerUserConfiguration serverUser) {
+  public ORole createRole(OGlobalUser serverUser) {
 
-    final ORole role = new ORole(serverUser.name, null, OSecurityRole.ALLOW_MODES.ALLOW_ALL_BUT);
+    final ORole role =
+        new ORole(serverUser.getName(), null, OSecurityRole.ALLOW_MODES.ALLOW_ALL_BUT);
 
-    if (serverUser.resources.equalsIgnoreCase("*")) {
+    if (serverUser.getResources().equalsIgnoreCase("*")) {
       createRoot(role);
     } else {
       mapPermission(role, serverUser);
@@ -49,9 +49,9 @@ public class OSecurityServerExternal extends OSecurityExternal {
     return role;
   }
 
-  private void mapPermission(ORole role, OServerUserConfiguration user) {
+  private void mapPermission(ORole role, OGlobalUser user) {
 
-    String[] strings = user.resources.split(",");
+    String[] strings = user.getResources().split(",");
 
     for (String string : strings) {
       ORule.ResourceGeneric generic = ORule.mapLegacyResourceToGenericResource(string);

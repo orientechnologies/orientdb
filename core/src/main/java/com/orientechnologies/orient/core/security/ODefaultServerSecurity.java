@@ -17,7 +17,7 @@
  *  * For more information: http://orientdb.com
  *
  */
-package com.orientechnologies.orient.server.security;
+package com.orientechnologies.orient.core.security;
 
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -30,12 +30,6 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OSystemUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.security.OAuditingOperation;
-import com.orientechnologies.orient.core.security.OInvalidPasswordException;
-import com.orientechnologies.orient.core.security.OSecurityFactory;
-import com.orientechnologies.orient.core.security.OSecurityManager;
-import com.orientechnologies.orient.core.security.OSecuritySystemException;
-import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import java.io.File;
 import java.io.FileInputStream;
 import java.security.SecureRandom;
@@ -172,11 +166,11 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerSecurity
   }
 
   public String authenticateServerUser(final String username, final String password) {
-    OServerUserConfiguration user = getServerUser(username);
+    OGlobalUser user = getServerUser(username);
 
-    if (user != null && user.password != null) {
-      if (OSecurityManager.instance().checkPassword(password, user.password)) {
-        return user.name;
+    if (user != null && user.getPassword() != null) {
+      if (OSecurityManager.instance().checkPassword(password, user.getPassword())) {
+        return user.getName();
       }
     }
     return null;
@@ -354,14 +348,14 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerSecurity
   }
 
   public boolean isServerUserAuthorized(final String username, final String resource) {
-    final OServerUserConfiguration user = getServerUser(username);
+    final OGlobalUser user = getServerUser(username);
 
     if (user != null) {
-      if (user.resources.equals("*"))
+      if (user.getResources().equals("*"))
         // ACCESS TO ALL
         return true;
 
-      String[] resourceParts = user.resources.split(",");
+      String[] resourceParts = user.getResources().split(",");
       for (String r : resourceParts) if (r.equalsIgnoreCase(resource)) return true;
     }
     return false;
@@ -447,8 +441,8 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerSecurity
   }
 
   // OServerSecurity
-  public OServerUserConfiguration getUser(final String username) {
-    OServerUserConfiguration userCfg = null;
+  public OGlobalUser getUser(final String username) {
+    OGlobalUser userCfg = null;
 
     if (isEnabled()) {
 
@@ -468,8 +462,8 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerSecurity
     return userCfg;
   }
 
-  public OServerUserConfiguration getServerUser(final String username) {
-    OServerUserConfiguration userCfg = null;
+  public OGlobalUser getServerUser(final String username) {
+    OGlobalUser userCfg = null;
     // This will throw an IllegalArgumentException if iUserName is null or empty.
     // However, a null or empty iUserName is possible with some security implementations.
     if (username != null && !username.isEmpty()) userCfg = serverConfig.getUser(username);
@@ -1022,7 +1016,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerSecurity
   }
 
   @Override
-  public OServerUserConfiguration authenticateAndAuthorize(
+  public OGlobalUser authenticateAndAuthorize(
       String iUserName, String iPassword, String iResourceToCheck) {
     // Returns the authenticated username, if successful, otherwise null.
     String authUsername = authenticate(iUserName, iPassword);

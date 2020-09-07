@@ -4,11 +4,11 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.security.OSecurityConfig;
+import com.orientechnologies.orient.core.security.OSyslog;
 import com.orientechnologies.orient.server.config.OServerConfigurationManager;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
-import com.orientechnologies.orient.server.security.OSecurityConfig;
-import com.orientechnologies.orient.server.security.OSyslog;
 import java.io.IOException;
 
 public class OServerSecurityConfig implements OSecurityConfig {

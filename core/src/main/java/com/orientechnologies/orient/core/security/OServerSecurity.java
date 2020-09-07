@@ -17,12 +17,10 @@
  *  * For more information: http://orientdb.com
  *
  */
-package com.orientechnologies.orient.server.security;
+package com.orientechnologies.orient.core.security;
 
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
-import com.orientechnologies.orient.core.security.OSecuritySystem;
-import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 
 /**
  * Provides an interface for the server-specific security features. Extends OSecuritySystem.
@@ -44,7 +42,7 @@ public interface OServerSecurity extends OSecuritySystem {
    * Some authenticators support maintaining a list of users and associated resources (and sometimes
    * passwords).
    */
-  OServerUserConfiguration getUser(final String username);
+  OGlobalUser getUser(final String username);
 
   void onAfterDynamicPlugins();
 
@@ -52,12 +50,11 @@ public interface OServerSecurity extends OSecuritySystem {
     onAfterDynamicPlugins();
   }
 
-  OServerUserConfiguration authenticateAndAuthorize(
-      String iUserName, String iPassword, String iResourceToCheck);
+  OGlobalUser authenticateAndAuthorize(String iUserName, String iPassword, String iResourceToCheck);
 
   String authenticateServerUser(String username, String password);
 
-  OServerUserConfiguration getServerUser(String username);
+  OGlobalUser getServerUser(String username);
 
   boolean isServerUserAuthorized(String username, String resource);
 

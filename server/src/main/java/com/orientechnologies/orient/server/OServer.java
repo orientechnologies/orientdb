@@ -43,6 +43,9 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.security.OToken;
+import com.orientechnologies.orient.core.security.ODefaultServerSecurity;
+import com.orientechnologies.orient.core.security.OGlobalUser;
+import com.orientechnologies.orient.core.security.OServerSecurity;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.config.OServerConfigurationManager;
 import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
@@ -52,7 +55,6 @@ import com.orientechnologies.orient.server.config.OServerNetworkProtocolConfigur
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.config.OServerSocketFactoryConfiguration;
 import com.orientechnologies.orient.server.config.OServerStorageConfiguration;
-import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.config.ODistributedConfig;
 import com.orientechnologies.orient.server.handler.OConfigurableHooksManager;
@@ -68,8 +70,6 @@ import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtoco
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 import com.orientechnologies.orient.server.plugin.OServerPluginManager;
-import com.orientechnologies.orient.server.security.ODefaultServerSecurity;
-import com.orientechnologies.orient.server.security.OServerSecurity;
 import com.orientechnologies.orient.server.token.OTokenHandlerImpl;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -731,7 +731,7 @@ public class OServer {
     return threadGroup;
   }
 
-  public OServerUserConfiguration serverLogin(
+  public OGlobalUser serverLogin(
       final String iUser, final String iPassword, final String iResource) {
     // Returns null if authentication or authorization fails for any reason.
     return authenticateUser(iUser, iPassword, iResource);
@@ -752,7 +752,7 @@ public class OServer {
 
   // Returns null if the user cannot be authenticated. Otherwise returns the
   // OServerUserConfiguration user.
-  protected OServerUserConfiguration authenticateUser(
+  protected OGlobalUser authenticateUser(
       final String iUserName, final String iPassword, final String iResourceToCheck) {
     return serverSecurity.authenticateAndAuthorize(iUserName, iPassword, iResourceToCheck);
   }
@@ -767,7 +767,7 @@ public class OServer {
     return serverSecurity.isAuthorized(iUserName, iResourceToCheck);
   }
 
-  public OServerUserConfiguration getUser(final String iUserName) {
+  public OGlobalUser getUser(final String iUserName) {
     return serverSecurity.getUser(iUserName);
   }
 
@@ -901,9 +901,9 @@ public class OServer {
       database = databases.openNoAuthenticate(iDbUrl, user);
       serverAuth = true;
     } else {
-      OServerUserConfiguration serverUser = serverLogin(user, password, "database.passthrough");
+      OGlobalUser serverUser = serverLogin(user, password, "database.passthrough");
       if (serverUser != null) {
-        user = serverUser.name;
+        user = serverUser.getName();
         serverAuth = true;
         // Why do we use the returned serverUser name instead of just passing-in user?
         // Because in some security implementations the user is embedded inside a ticket of some

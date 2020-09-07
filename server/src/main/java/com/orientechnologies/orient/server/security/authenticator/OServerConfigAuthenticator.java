@@ -20,7 +20,7 @@
 package com.orientechnologies.orient.server.security.authenticator;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.server.config.OServerUserConfiguration;
+import com.orientechnologies.orient.core.security.OGlobalUser;
 import com.orientechnologies.orient.server.security.OSecurityAuthenticatorAbstract;
 
 /**
@@ -42,7 +42,7 @@ public class OServerConfigAuthenticator extends OSecurityAuthenticatorAbstract {
   }
 
   // OSecurityAuthenticator
-  public OServerUserConfiguration getUser(final String username) {
+  public OGlobalUser getUser(final String username) {
     return getSecurity().getServerUser(username);
   }
 

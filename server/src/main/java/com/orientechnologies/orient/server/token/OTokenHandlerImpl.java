@@ -16,12 +16,12 @@ import com.orientechnologies.orient.core.metadata.security.jwt.OJwtHeader;
 import com.orientechnologies.orient.core.metadata.security.jwt.OJwtPayload;
 import com.orientechnologies.orient.core.metadata.security.jwt.OKeyProvider;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.security.OGlobalUser;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OTokenHandler;
 import com.orientechnologies.orient.server.binary.impl.OBinaryToken;
-import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -206,7 +206,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
     return tokenByteOS.toByteArray();
   }
 
-  public byte[] getSignedWebTokenServerUser(final OServerUserConfiguration user) {
+  public byte[] getSignedWebTokenServerUser(final OGlobalUser user) {
     final ByteArrayOutputStream tokenByteOS = new ByteArrayOutputStream(1024);
     final OrientJwtHeader header = new OrientJwtHeader();
     header.setAlgorithm("HS256");
@@ -463,7 +463,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
     return doc.toJSON().getBytes("UTF-8");
   }
 
-  protected OJwtPayload createPayloadServerUser(OServerUserConfiguration serverUser) {
+  protected OJwtPayload createPayloadServerUser(OGlobalUser serverUser) {
     if (serverUser == null) throw new IllegalArgumentException("User is null");
 
     final OrientJwtPayload payload = new OrientJwtPayload();
@@ -475,7 +475,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
     final long currTime = System.currentTimeMillis();
     payload.setIssuedAt(currTime);
     payload.setNotBefore(currTime);
-    payload.setUserName(serverUser.name);
+    payload.setUserName(serverUser.getName());
     payload.setTokenId(UUID.randomUUID().toString());
     payload.setExpiry(currTime + expiryMinutes);
     return payload;

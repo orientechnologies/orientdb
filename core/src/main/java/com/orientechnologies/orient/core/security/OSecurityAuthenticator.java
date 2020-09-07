@@ -17,9 +17,8 @@
  *  * For more information: http://orientdb.com
  *
  */
-package com.orientechnologies.orient.server.security;
+package com.orientechnologies.orient.core.security;
 
-import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import java.util.HashMap;
 import java.util.Map;
 import javax.security.auth.Subject;
@@ -46,7 +45,7 @@ public interface OSecurityAuthenticator extends OSecurityComponent {
   // Returns the name of this OSecurityAuthenticator.
   String getName();
 
-  OServerUserConfiguration getUser(final String username);
+  OGlobalUser getUser(final String username);
 
   boolean isAuthorized(final String username, final String resource);
 

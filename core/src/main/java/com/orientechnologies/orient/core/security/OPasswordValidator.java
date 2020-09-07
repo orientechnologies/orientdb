@@ -17,23 +17,14 @@
  *  * For more information: http://orientdb.com
  *
  */
-package com.orientechnologies.orient.server.security;
-
-import com.orientechnologies.orient.core.record.impl.ODocument;
+package com.orientechnologies.orient.core.security;
 
 /**
- * Provides an interface for creating security components.
+ * Provides a simple interface for validating passwords.
  *
  * @author S. Colin Leister
  */
-public interface OSecurityComponent {
-  // Called once the Server is running.
-  void active();
-
-  void config(final ODocument jsonConfig, OServerSecurity security);
-
-  // Called on removal of the component.
-  void dispose();
-
-  boolean isEnabled();
+public interface OPasswordValidator extends OSecurityComponent {
+  void validatePassword(final String username, final String password)
+      throws OInvalidPasswordException;
 }
