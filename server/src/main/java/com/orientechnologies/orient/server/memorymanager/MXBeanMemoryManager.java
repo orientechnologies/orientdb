@@ -1,10 +1,8 @@
 package com.orientechnologies.orient.server.memorymanager;
 
 import com.orientechnologies.common.log.OLogManager;
-import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryNotificationInfo;
-import java.lang.management.MemoryPoolMXBean;
-import java.lang.management.MemoryType;
+
+import java.lang.management.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -32,11 +30,16 @@ public final class MXBeanMemoryManager implements NotificationListener, MemoryMa
 
   @Override
   public void start() {
+    final HashMap<String, MemoryPoolMXBean> beansByName = new HashMap<>();
+
     if (memoryThreshold <= 0) {
       return;
     }
 
-    final HashMap<String, MemoryPoolMXBean> beansByName = new HashMap<>();
+    final MemoryMXBean mbean = ManagementFactory.getMemoryMXBean();
+    final NotificationEmitter emitter = (NotificationEmitter) mbean;
+
+    emitter.addNotificationListener(this, null, null);
 
     final List<MemoryPoolMXBean> mxBeans = ManagementFactory.getMemoryPoolMXBeans();
     for (final MemoryPoolMXBean mxBean : mxBeans) {
@@ -45,9 +48,6 @@ public final class MXBeanMemoryManager implements NotificationListener, MemoryMa
         if (maxMemory > 0) {
           final long threshold = maxMemory * memoryThreshold / 100;
           mxBean.setUsageThreshold(threshold);
-
-          final NotificationEmitter emitter = (NotificationEmitter) mxBean;
-          emitter.addNotificationListener(this, null, null);
 
           beansByName.put(mxBean.getName(), mxBean);
 
@@ -66,17 +66,13 @@ public final class MXBeanMemoryManager implements NotificationListener, MemoryMa
 
   @Override
   public void shutdown() {
-    for (final MemoryPoolMXBean mxBean : memoryBeans.values()) {
-      final NotificationEmitter emitter = (NotificationEmitter) mxBean;
-      try {
-        emitter.removeNotificationListener(this);
-      } catch (final ListenerNotFoundException e) {
-        throw new IllegalStateException(
-            "Memory bean "
-                + mxBean.getName()
-                + " was processed by memory manager but manager was not added as a listener",
-            e);
-      }
+    final MemoryMXBean mbean = ManagementFactory.getMemoryMXBean();
+    final NotificationEmitter emitter = (NotificationEmitter) mbean;
+
+    try {
+      emitter.removeNotificationListener(this);
+    } catch (final ListenerNotFoundException e) {
+      throw new IllegalStateException("Memory manager was not added as a listener", e);
     }
   }
 
