@@ -6,16 +6,18 @@ To run the integration tests on Kubernetes you must use the Maven `it-k8s` build
 
 Run a single test:
 ```
-mvn failsafe:integration-test -Dit.test=BasicSyncIT -P it-k8s -DkubeConfig=/path/to/kubeconfig
+mvn failsafe:integration-test -Dit.test=BasicSyncIT -P it-k8s -DkubeConfig=/path/to/kubeconfig -DorientdbDockerImage=pxsalehi/orientdb:3.2.0-snapshot
 ```
 
 To run all integration tests that can be run on Kubernetes (defined in the build profile):
 ```
-mvn failsafe:integration-test -P it-k8s -DkubeConfig=/path/to/kubeconfig
+mvn failsafe:integration-test -P it-k8s -DkubeConfig=/path/to/kubeconfig -DorientdbDockerImage=pxsalehi/orientdb:3.2.0-snapshot
 ```
 
 The Kubernetes namespace used for the tests, is defined in the build profile and must exist before running the tests. You can use a different namespace by adding `-DkubernetesNamespace=name` to the above commands. The namespace and RBACs created by the tests, are not removed after the tests finish executing.
 
-The current OrientDB Docker image (3.1.1) does not support node discovery on Kubernetes. To run the tests you need to build the Docker image (under `distribution/docker/Dockerfile`) from the [3.2.0-Snapshot](https://oss.sonatype.org/content/repositories/snapshots/com/orientechnologies/orientdb-community/3.2.0-SNAPSHOT/orientdb-community-3.2.0-20200814.124313-31.tar.gz) and provide the image name with `-DorientdbDockerImage=repository/image:tag`. Alternatively, you can use `-DorientdbDockerImage=pxsalehi/orientdb:3.1.2`.
+The current OrientDB Docker image (3.1.2) does not support node discovery on Kubernetes. To run the tests you need to build the Docker image (under `distribution/docker/Dockerfile`) from the [3.2.0-Snapshot](https://oss.sonatype.org/content/repositories/snapshots/com/orientechnologies/orientdb-community/3.2.0-SNAPSHOT/) and provide the image name with `-DorientdbDockerImage=repository/image:tag`. Alternatively, you can use `-DorientdbDockerImage=pxsalehi/orientdb:3.2.0-snapshot` as above.
 
 Volume size and storage classes used for the PVs, can also be configured via the `it-k8s` build profile properties.
+
+Please note that due to issues that the official Kuberbenetes Java client has with some versions of JDK8 (broken pipe error), you should use JDK9 or later to run the tests. 
