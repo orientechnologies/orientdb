@@ -496,14 +496,14 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       ODistributedRequestId requestId,
       OTransactionId id,
       OTransactionInternal tx,
-      boolean local,
+      boolean isCoordinator,
       int retryCount) {
     final ODistributedDatabase localDistributedDatabase = getDistributedShared();
     final ONewDistributedTxContextImpl txContext =
         new ONewDistributedTxContextImpl(
             (ODistributedDatabaseImpl) localDistributedDatabase, requestId, tx, id);
     try {
-      internalBegin2pc(txContext, local);
+      internalBegin2pc(txContext, isCoordinator);
       txContext.setStatus(SUCCESS);
       register(requestId, localDistributedDatabase, txContext);
     } catch (OConcurrentCreateException ex) {
@@ -752,13 +752,13 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     }
   }
 
-  public void internalBegin2pc(ONewDistributedTxContextImpl txContext, boolean local) {
+  public void internalBegin2pc(ONewDistributedTxContextImpl txContext, boolean isCoordinator) {
     final ODistributedDatabaseImpl localDb = (ODistributedDatabaseImpl) getDistributedShared();
 
     localDb.resetLastValidBackup();
     OTransactionInternal transaction = txContext.getTransaction();
     // This is moved before checks because also the coordinator first node allocate before checks
-    if (!local) {
+    if (!isCoordinator) {
       ((OTransactionOptimisticDistributed) transaction).setDatabase(this);
       ((OTransactionOptimistic) transaction).begin();
     }
@@ -766,11 +766,11 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
     acquireLocksForTx(transaction, txContext);
 
-    firstPhaseDataChecks(local, transaction, txContext);
+    firstPhaseDataChecks(isCoordinator, transaction, txContext);
   }
 
   private void firstPhaseDataChecks(
-      final boolean local,
+      final boolean isCoordinator,
       final OTransactionInternal transaction,
       final ONewDistributedTxContextImpl txContext) {
     getDistributedShared().getManager().messageAfterOp("locks", txContext.getReqId());
@@ -819,7 +819,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         for (final OTransactionIndexChangesPerKey changesPerKey :
             change.getValue().changesPerKey.values()) {
           OIdentifiable old;
-          if (!local) {
+          if (!isCoordinator) {
             // Version check need to be done only from the nodes that are not coordinating the
             // transaction.
             final long version =
