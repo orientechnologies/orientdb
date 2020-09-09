@@ -23,6 +23,7 @@ import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.OrientDBEmbedded;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
@@ -44,7 +45,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author S. Colin Leister
  */
-public class ODefaultServerSecurity implements OSecurityFactory, OServerSecurity {
+public class ODefaultServerSecurity implements OSecurityFactory, OSecuritySystem {
   private boolean enabled = false; // Defaults to not
   // enabled at
   // first.
@@ -88,10 +89,16 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerSecurity
 
   public ODefaultServerSecurity() {}
 
+  public ODefaultServerSecurity(OrientDBEmbedded orientDBEmbedded, OSecurityConfig securityConfig) {
+    activate(orientDBEmbedded, securityConfig);
+  }
+
   public void activate(final OrientDBInternal context, final OSecurityConfig serverCfg) {
     this.context = context;
     this.serverConfig = serverCfg;
-    this.load(serverConfig.getConfigurationFile());
+    if (serverConfig != null) {
+      this.load(serverConfig.getConfigurationFile());
+    }
   }
 
   public void shutdown() {}

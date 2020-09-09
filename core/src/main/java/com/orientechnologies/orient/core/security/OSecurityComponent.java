@@ -30,7 +30,7 @@ public interface OSecurityComponent {
   // Called once the Server is running.
   void active();
 
-  void config(final ODocument jsonConfig, OServerSecurity security);
+  void config(final ODocument jsonConfig, OSecuritySystem security);
 
   // Called on removal of the component.
   void dispose();

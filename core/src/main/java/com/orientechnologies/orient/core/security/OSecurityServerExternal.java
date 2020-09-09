@@ -15,9 +15,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class OSecurityServerExternal extends OSecurityExternal {
-  private OServerSecurity security;
+  private OSecuritySystem security;
 
-  public OSecurityServerExternal(OServerSecurity security) {
+  public OSecurityServerExternal(OSecuritySystem security) {
     this.security = security;
   }
 

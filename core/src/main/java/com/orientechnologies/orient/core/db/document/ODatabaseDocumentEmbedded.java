@@ -858,7 +858,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
           changed = true;
         }
         if (clazz.isOuser()) {
-          changed = OUser.encodePassword(doc);
+          changed = OUser.encodePassword(this, doc);
         }
         if (clazz.isTriggered()) {
           triggerChanged = OClassTrigger.onRecordBeforeCreate(doc, this);
@@ -907,7 +907,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
           changed = true;
         }
         if (clazz.isOuser()) {
-          changed = OUser.encodePassword(doc);
+          changed = OUser.encodePassword(this, doc);
         }
         if (clazz.isTriggered()) {
           triggerChanged = OClassTrigger.onRecordBeforeUpdate(doc, this);

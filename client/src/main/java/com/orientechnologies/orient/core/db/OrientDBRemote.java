@@ -66,6 +66,7 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OCredentialInterceptor;
 import com.orientechnologies.orient.core.security.OSecurityManager;
+import com.orientechnologies.orient.core.security.OSecuritySystem;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -706,5 +707,10 @@ public class OrientDBRemote implements OrientDBInternal {
   @Override
   public OrientDBConfig getConfigurations() {
     return configurations;
+  }
+
+  @Override
+  public OSecuritySystem getSecuritySystem() {
+    throw new UnsupportedOperationException();
   }
 }

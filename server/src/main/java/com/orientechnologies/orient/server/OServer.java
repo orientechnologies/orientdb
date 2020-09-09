@@ -43,9 +43,8 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.security.OToken;
-import com.orientechnologies.orient.core.security.ODefaultServerSecurity;
 import com.orientechnologies.orient.core.security.OGlobalUser;
-import com.orientechnologies.orient.core.security.OServerSecurity;
+import com.orientechnologies.orient.core.security.OSecuritySystem;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.config.OServerConfigurationManager;
 import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
@@ -110,7 +109,6 @@ public class OServer {
   protected OServerPluginManager pluginManager;
   protected OConfigurableHooksManager hookManager;
   protected ODistributedServerManager distributedManager;
-  protected ODefaultServerSecurity serverSecurity = new ODefaultServerSecurity();
   private Map<String, Object> variables = new HashMap<String, Object>();
   private String serverRootDirectory;
   private String databaseDirectory;
@@ -225,8 +223,8 @@ public class OServer {
     return extensionClassLoader;
   }
 
-  public OServerSecurity getSecurity() {
-    return serverSecurity;
+  public OSecuritySystem getSecurity() {
+    return databases.getSecuritySystem();
   }
 
   public boolean isActive() {
@@ -376,7 +374,11 @@ public class OServer {
 
     if (!databaseDirectory.endsWith("/")) databaseDirectory += "/";
 
-    OrientDBConfig config = OrientDBConfig.builder().fromContext(contextConfiguration).build();
+    OrientDBConfig config =
+        OrientDBConfig.builder()
+            .fromContext(contextConfiguration)
+            .setSecurityConfig(new OServerSecurityConfig(this, this.serverCfg))
+            .build();
 
     if (contextConfiguration.getValueAsBoolean(
         OGlobalConfiguration.SERVER_BACKWARD_COMPATIBILITY)) {
@@ -438,9 +440,6 @@ public class OServer {
   public OServer activate()
       throws ClassNotFoundException, InstantiationException, IllegalAccessException {
     try {
-      serverSecurity.activate(this.databases, new OServerSecurityConfig(this, this.serverCfg));
-
-      Orient.instance().setSecurity(serverSecurity);
       // Checks to see if the OrientDB System Database exists and creates it if not.
       // Make sure this happens after setSecurity() is called.
       initSystemDatabase();
@@ -578,7 +577,6 @@ public class OServer {
       if (shutdownHook != null) shutdownHook.cancel();
 
       Orient.instance().getProfiler().unregisterHookValue("system.databases");
-      serverSecurity.close();
 
       for (OServerLifecycleListener l : lifecycleListeners) l.onBeforeDeactivate();
 
@@ -619,8 +617,6 @@ public class OServer {
         memoryManager.shutdown();
 
         if (pluginManager != null) pluginManager.shutdown();
-
-        serverSecurity.shutdown();
 
         networkListeners.clear();
       } finally {
@@ -754,7 +750,9 @@ public class OServer {
   // OServerUserConfiguration user.
   protected OGlobalUser authenticateUser(
       final String iUserName, final String iPassword, final String iResourceToCheck) {
-    return serverSecurity.authenticateAndAuthorize(iUserName, iPassword, iResourceToCheck);
+    return databases
+        .getSecuritySystem()
+        .authenticateAndAuthorize(iUserName, iPassword, iResourceToCheck);
   }
 
   /**
@@ -764,15 +762,15 @@ public class OServer {
    * @return true if authentication is ok, otherwise false
    */
   public boolean isAllowed(final String iUserName, final String iResourceToCheck) {
-    return serverSecurity.isAuthorized(iUserName, iResourceToCheck);
+    return databases.getSecuritySystem().isAuthorized(iUserName, iResourceToCheck);
   }
 
   public OGlobalUser getUser(final String iUserName) {
-    return serverSecurity.getUser(iUserName);
+    return databases.getSecuritySystem().getUser(iUserName);
   }
 
   public void dropUser(final String iUserName) throws IOException {
-    serverSecurity.dropUser(iUserName);
+    databases.getSecuritySystem().dropUser(iUserName);
   }
 
   public boolean existsStoragePath(final String iURL) {
@@ -858,7 +856,7 @@ public class OServer {
 
   public void addTemporaryUser(
       final String iName, final String iPassword, final String iPermissions) {
-    serverSecurity.addTemporaryUser(iName, iPassword, iPermissions);
+    databases.getSecuritySystem().addTemporaryUser(iName, iPassword, iPermissions);
   }
 
   public OServer registerLifecycleListener(final OServerLifecycleListener iListener) {
@@ -1011,7 +1009,8 @@ public class OServer {
 
   protected void createDefaultServerUsers() throws IOException {
 
-    if (serverSecurity != null && !serverSecurity.arePasswordsStored()) return;
+    if (databases.getSecuritySystem() != null
+        && !databases.getSecuritySystem().arePasswordsStored()) return;
 
     // ORIENTDB_ROOT_PASSWORD ENV OR JVM SETTING
     String rootPassword = OSystemVariableResolver.resolveVariable(ROOT_PASSWORD_VAR);
@@ -1022,7 +1021,7 @@ public class OServer {
     }
 
     if (rootPassword == null
-        && !serverSecurity.existsUser(OServerConfiguration.DEFAULT_ROOT_USER)) {
+        && !databases.getSecuritySystem().existsUser(OServerConfiguration.DEFAULT_ROOT_USER)) {
       try {
         // WAIT ANY LOG IS PRINTED
         Thread.sleep(1000);
@@ -1102,14 +1101,18 @@ public class OServer {
               "Found ORIENTDB_ROOT_PASSWORD variable, using this value as root's password",
               rootPassword);
 
-    if (!serverSecurity.existsUser(OServerConfiguration.DEFAULT_ROOT_USER)) {
-      serverSecurity.addUser(OServerConfiguration.DEFAULT_ROOT_USER, rootPassword, "*");
+    if (!databases.getSecuritySystem().existsUser(OServerConfiguration.DEFAULT_ROOT_USER)) {
+      databases
+          .getSecuritySystem()
+          .addUser(OServerConfiguration.DEFAULT_ROOT_USER, rootPassword, "*");
     }
-    if (!serverSecurity.existsUser(OServerConfiguration.GUEST_USER)) {
-      serverSecurity.addUser(
-          OServerConfiguration.GUEST_USER,
-          OServerConfiguration.GUEST_PASS,
-          "connect,server.listDatabases,server.dblist");
+    if (!databases.getSecuritySystem().existsUser(OServerConfiguration.GUEST_USER)) {
+      databases
+          .getSecuritySystem()
+          .addUser(
+              OServerConfiguration.GUEST_USER,
+              OServerConfiguration.GUEST_PASS,
+              "connect,server.listDatabases,server.dblist");
     }
   }
 
@@ -1122,8 +1125,6 @@ public class OServer {
     pluginManager = new OServerPluginManager();
     pluginManager.config(this);
     pluginManager.startup();
-
-    if (serverSecurity != null) serverSecurity.onAfterDynamicPlugins();
 
     // PLUGINS CONFIGURED IN XML
     final OServerConfiguration configuration = serverCfg.getConfiguration();

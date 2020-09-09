@@ -22,7 +22,7 @@ package com.orientechnologies.orient.server.security;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OGlobalUser;
 import com.orientechnologies.orient.core.security.OSecurityAuthenticator;
-import com.orientechnologies.orient.core.security.OServerSecurity;
+import com.orientechnologies.orient.core.security.OSecuritySystem;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import javax.security.auth.Subject;
 
@@ -36,9 +36,9 @@ public abstract class OSecurityAuthenticatorAbstract implements OSecurityAuthent
   private boolean debug = false;
   private boolean enabled = true;
   private boolean caseSensitive = true;
-  private OServerSecurity security;
+  private OSecuritySystem security;
 
-  protected OServerSecurity getSecurity() {
+  protected OSecuritySystem getSecurity() {
     return security;
   }
 
@@ -54,7 +54,7 @@ public abstract class OSecurityAuthenticatorAbstract implements OSecurityAuthent
   public void active() {}
 
   // OSecurityComponent
-  public void config(final ODocument jsonConfig, OServerSecurity security) {
+  public void config(final ODocument jsonConfig, OSecuritySystem security) {
     this.security = security;
 
     if (jsonConfig.containsField("name")) {
