@@ -24,7 +24,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityAuthenticator;
 import com.orientechnologies.orient.core.security.OSecurityComponent;
-import com.orientechnologies.orient.core.security.OServerSecurity;
+import com.orientechnologies.orient.core.security.OSecuritySystem;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.util.*;
@@ -54,7 +54,7 @@ public class OLDAPImporter implements OSecurityComponent {
   private final ConcurrentHashMap<String, Database> databaseMap =
       new ConcurrentHashMap<String, Database>();
 
-  private OServerSecurity security;
+  private OSecuritySystem security;
 
   // OSecurityComponent
   public void active() {
@@ -85,7 +85,7 @@ public class OLDAPImporter implements OSecurityComponent {
   }
 
   // OSecurityComponent
-  public void config(final ODocument importDoc, OServerSecurity security) {
+  public void config(final ODocument importDoc, OSecuritySystem security) {
     try {
       context = security.getContext();
       this.security = security;

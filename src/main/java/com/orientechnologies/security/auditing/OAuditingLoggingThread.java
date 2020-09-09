@@ -23,7 +23,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OAuditingOperation;
-import com.orientechnologies.orient.core.security.OServerSecurity;
+import com.orientechnologies.orient.core.security.OSecuritySystem;
 import java.util.concurrent.BlockingQueue;
 
 /**
@@ -39,13 +39,13 @@ public class OAuditingLoggingThread extends Thread {
   private OrientDBInternal context;
 
   private String className;
-  private OServerSecurity security;
+  private OSecuritySystem security;
 
   public OAuditingLoggingThread(
       final String iDatabaseName,
       final BlockingQueue auditingQueue,
       final OrientDBInternal context,
-      OServerSecurity security) {
+      OSecuritySystem security) {
     super(
         Orient.instance().getThreadGroup(), "OrientDB Auditing Logging Thread - " + iDatabaseName);
 

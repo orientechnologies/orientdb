@@ -30,7 +30,7 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OAuditingOperation;
 import com.orientechnologies.orient.core.security.OAuditingService;
-import com.orientechnologies.orient.core.security.OServerSecurity;
+import com.orientechnologies.orient.core.security.OSecuritySystem;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedLifecycleListener;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
@@ -62,7 +62,7 @@ public class ODefaultAuditing
 
   private OSystemDBImporter systemDbImporter;
 
-  private OServerSecurity security;
+  private OSecuritySystem security;
 
   public static final String IMPORTER_FLAG = "AUDITING_IMPORTER";
 
@@ -476,7 +476,7 @@ public class ODefaultAuditing
             }));
   }
 
-  public void config(final ODocument jsonConfig, OServerSecurity security) {
+  public void config(final ODocument jsonConfig, OSecuritySystem security) {
     context = security.getContext();
     this.security = security;
     try {
