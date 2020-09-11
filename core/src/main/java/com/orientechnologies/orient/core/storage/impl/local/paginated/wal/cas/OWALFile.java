@@ -43,7 +43,8 @@ public interface OWALFile extends Closeable {
     Files.deleteIfExists(path);
 
     return new OWALChannelFile(
-        FileChannel.open(path, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW, StandardOpenOption.APPEND),
+        path, FileChannel.open(path, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW,
+        StandardOpenOption.APPEND),
         segmentId);
   }
 
@@ -58,7 +59,7 @@ public interface OWALFile extends Closeable {
       }
     }
 
-    return new OWALChannelFile(FileChannel.open(path, StandardOpenOption.READ), segmentId);
+    return new OWALChannelFile(path, FileChannel.open(path, StandardOpenOption.READ), segmentId);
   }
 
 }
