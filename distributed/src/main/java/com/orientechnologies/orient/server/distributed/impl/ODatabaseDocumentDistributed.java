@@ -83,7 +83,6 @@ import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.*;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -421,8 +420,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       ODistributedServerManager dManager = getDistributedManager();
       final String localNodeName = dManager.getLocalNodeName();
       checkNodeIsMaster(localNodeName, dbCfg, "Transaction Commit");
-      ONewDistributedTransactionManager txManager =
-          new ONewDistributedTransactionManager(getStorage(), dManager, localDistributedDatabase);
+      ODistributedTxCoordinator txManager =
+          new ODistributedTxCoordinator(getStorage(), dManager, localDistributedDatabase);
       int quorum = 0;
       for (String clusterName : txManager.getInvolvedClusters(iTx.getRecordOperations())) {
         final List<String> clusterServers = dbCfg.getServers(clusterName, null);

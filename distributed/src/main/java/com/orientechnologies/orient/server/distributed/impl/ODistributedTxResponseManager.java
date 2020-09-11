@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class ONewDistributedResponseManager implements ODistributedResponseManager {
+public class ODistributedTxResponseManager implements ODistributedResponseManager {
 
   private final OTransactionPhase1Task iRequest;
   private final Collection<String> iNodes;
@@ -38,7 +38,7 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
   private volatile int stillRunning = 0;
   private volatile int stillRunningWaited = 0;
 
-  public ONewDistributedResponseManager(
+  public ODistributedTxResponseManager(
       OTransactionPhase1Task iRequest,
       Collection<String> iNodes,
       Set<String> nodesConcurToTheQuorum,

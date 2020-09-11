@@ -65,20 +65,13 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 
-/**
- * Distributed transaction manager.
- *
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- */
-public class ONewDistributedTransactionManager {
+public class ODistributedTxCoordinator {
   private final ODistributedServerManager dManager;
   private final OStorage storage;
   private final ODistributedDatabase localDistributedDatabase;
+  private ODistributedTxResponseManager responseManager;
 
-  private static final boolean SYNC_TX_COMPLETED = false;
-  private ONewDistributedResponseManager responseManager;
-
-  public ONewDistributedTransactionManager(
+  public ODistributedTxCoordinator(
       final OStorage storage,
       final ODistributedServerManager manager,
       final ODistributedDatabase iDDatabase) {
@@ -278,7 +271,7 @@ public class ONewDistributedTransactionManager {
                 groupByResponse,
                 waitLocalNode) -> {
               responseManager =
-                  new ONewDistributedResponseManager(
+                  new ODistributedTxResponseManager(
                       txTask,
                       iNodes,
                       nodesConcurToTheQuorum,
@@ -298,7 +291,7 @@ public class ONewDistributedTransactionManager {
   private void handleResponse(
       ODistributedRequestId requestId,
       OTransactionId transactionId,
-      ONewDistributedResponseManager responseManager,
+      ODistributedTxResponseManager responseManager,
       Set<String> involvedClusters,
       Set<String> nodes,
       ODatabaseDocumentDistributed database,
