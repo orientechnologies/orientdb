@@ -1,11 +1,10 @@
 package com.orientechnologies.orient.test.server.network.http;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.io.IOException;
 import org.apache.http.HttpResponse;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.io.IOException;
 
 public class HttpServerTest extends BaseHttpDatabaseTest {
   @Test
@@ -31,13 +30,13 @@ public class HttpServerTest extends BaseHttpDatabaseTest {
 
   @Test
   public void testCreateDatabase() throws IOException {
-    String dbName = getClass().getSimpleName()+"testCreateDatabase";
+    String dbName = getClass().getSimpleName() + "testCreateDatabase";
     HttpResponse res =
-            setUserName("root")
-                    .setUserPassword("root")
-                    .post("servercommand")
-                    .payload("{\"command\":\"create database "+dbName+" plocal\" }", CONTENT.JSON)
-                    .getResponse();
+        setUserName("root")
+            .setUserPassword("root")
+            .post("servercommand")
+            .payload("{\"command\":\"create database " + dbName + " plocal\" }", CONTENT.JSON)
+            .getResponse();
     System.out.println(res.getStatusLine().getReasonPhrase());
     Assert.assertEquals(res.getStatusLine().getStatusCode(), 200);
 
