@@ -825,7 +825,7 @@ public class OSecurityShared implements OSecurityInternal {
       adminRole.addRule(ORule.ResourceGeneric.FUNCTION, null, ORole.PERMISSION_ALL).save();
     }
 
-    OUser adminUser = getUser(session, OUser.ADMIN);
+    OUser adminUser = getUserInternal(session, OUser.ADMIN);
 
     if (adminUser == null) {
       // This will return the global value if a local storage context configuration value does not
@@ -1285,6 +1285,10 @@ public class OSecurityShared implements OSecurityInternal {
 
   @Override
   public OUser getUser(final ODatabaseSession session, final String iUserName) {
+    return getUserInternal(session, iUserName);
+  }
+
+  public OUser getUserInternal(final ODatabaseSession session, final String iUserName) {
     return (OUser)
         OScenarioThreadLocal.executeAsDistributed(
             () -> {
