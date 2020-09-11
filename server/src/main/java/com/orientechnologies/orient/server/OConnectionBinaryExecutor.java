@@ -1160,14 +1160,6 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
           .connect(connection.getProtocol(), connection, token, server.getTokenHandler());
     }
 
-    if (connection.getDatabase().isRemote()) {
-      connection
-          .getDatabase()
-          .getMetadata()
-          .getSecurity()
-          .authenticate(request.getUserName(), request.getUserPassword());
-    }
-
     final OStorage storage = connection.getDatabase().getStorage();
     final Set<String> clusters = storage.getClusterNames();
     final byte[] tokenToSend;

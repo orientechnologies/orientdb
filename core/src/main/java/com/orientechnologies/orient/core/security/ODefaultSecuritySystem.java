@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.db.OrientDBEmbedded;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
+import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OSystemUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
@@ -45,7 +46,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author S. Colin Leister
  */
-public class ODefaultServerSecurity implements OSecurityFactory, OSecuritySystem {
+public class ODefaultSecuritySystem implements OSecuritySystem {
   private boolean enabled = false; // Defaults to not
   // enabled at
   // first.
@@ -87,9 +88,9 @@ public class ODefaultServerSecurity implements OSecurityFactory, OSecuritySystem
       new ConcurrentHashMap<String, Class<?>>();
   private SecureRandom random = new SecureRandom();
 
-  public ODefaultServerSecurity() {}
+  public ODefaultSecuritySystem() {}
 
-  public ODefaultServerSecurity(OrientDBEmbedded orientDBEmbedded, OSecurityConfig securityConfig) {
+  public ODefaultSecuritySystem(OrientDBEmbedded orientDBEmbedded, OSecurityConfig securityConfig) {
     activate(orientDBEmbedded, securityConfig);
   }
 
@@ -176,7 +177,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OSecuritySystem
     OGlobalUser user = getServerUser(username);
 
     if (user != null && user.getPassword() != null) {
-      if (OSecurityManager.instance().checkPassword(password, user.getPassword())) {
+      if (OSecurityManager.checkPassword(password, user.getPassword())) {
         return user.getName();
       }
     }
@@ -982,11 +983,6 @@ public class ODefaultServerSecurity implements OSecurityFactory, OSecuritySystem
     }
   }
 
-  /** * OSecurityFactory Interface * */
-  public OSecurityInternal newSecurity() {
-    return new OSecurityServerExternal(this);
-  }
-
   public void close() {
     if (enabled) {
 
@@ -1048,21 +1044,18 @@ public class ODefaultServerSecurity implements OSecurityFactory, OSecuritySystem
       // AUTO GENERATE PASSWORD
       final byte[] buffer = new byte[32];
       random.nextBytes(buffer);
-      password =
-          OSecurityManager.instance().createSHA256(OSecurityManager.byteArrayToHexStr(buffer));
+      password = OSecurityManager.createSHA256(OSecurityManager.byteArrayToHexStr(buffer));
     }
 
     // HASH THE PASSWORD
     password =
-        OSecurityManager.instance()
-            .createHash(
-                password,
-                context
-                    .getConfigurations()
-                    .getConfigurations()
-                    .getValueAsString(
-                        OGlobalConfiguration.SECURITY_USER_PASSWORD_DEFAULT_ALGORITHM),
-                true);
+        OSecurityManager.createHash(
+            password,
+            context
+                .getConfigurations()
+                .getConfigurations()
+                .getValueAsString(OGlobalConfiguration.SECURITY_USER_PASSWORD_DEFAULT_ALGORITHM),
+            true);
 
     serverConfig.setUser(user, password, permissions);
     serverConfig.saveConfiguration();
@@ -1075,5 +1068,14 @@ public class ODefaultServerSecurity implements OSecurityFactory, OSecuritySystem
 
   public void addTemporaryUser(String iName, String iPassword, String iPermissions) {
     serverConfig.setEphemeralUser(iName, iPassword, iPermissions);
+  }
+
+  @Override
+  public OSecurityInternal newSecurity(String database) {
+    if (isEnabled()) {
+      return new OSecurityServerExternal(this);
+    } else {
+      return new OSecurityShared();
+    }
   }
 }

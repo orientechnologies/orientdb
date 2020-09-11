@@ -135,7 +135,7 @@ public class OImmutableUser implements OSecurityUser {
   }
 
   public boolean checkPassword(final String iPassword) {
-    return OSecurityManager.instance().checkPassword(iPassword, getPassword());
+    return OSecurityManager.checkPassword(iPassword, getPassword());
   }
 
   public String getName() {

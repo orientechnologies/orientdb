@@ -25,7 +25,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
-import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -50,9 +49,6 @@ public class OSecurityManager {
   public static final int HASH_SIZE = 24;
 
   private static final OSecurityManager instance = new OSecurityManager();
-  private volatile OSecurityFactory securityFactory = new OSecuritySharedFactory();
-
-  private MessageDigest md;
 
   private static Map<String, byte[]> SALT_CACHE = null;
 
@@ -64,13 +60,7 @@ public class OSecurityManager {
     }
   }
 
-  public OSecurityManager() {
-    try {
-      md = MessageDigest.getInstance(HASH_ALGORITHM);
-    } catch (NoSuchAlgorithmException e) {
-      OLogManager.instance().error(this, "Cannot use OSecurityManager", e);
-    }
-  }
+  public OSecurityManager() {}
 
   public static String createHash(final String iInput, String iAlgorithm)
       throws NoSuchAlgorithmException, UnsupportedEncodingException {
@@ -93,7 +83,7 @@ public class OSecurityManager {
    * @param iPassword
    * @return
    */
-  public boolean checkPassword(final String iPassword, final String iHash) {
+  public static boolean checkPassword(final String iPassword, final String iHash) {
     if (iHash.startsWith(HASH_ALGORITHM_PREFIX)) {
       final String s = iHash.substring(HASH_ALGORITHM_PREFIX.length());
       return createSHA256(iPassword).equals(s);
@@ -113,7 +103,7 @@ public class OSecurityManager {
     return MessageDigest.isEqual(digestSHA256(iPassword), digestSHA256(iHash));
   }
 
-  public String createSHA256(final String iInput) {
+  public static String createSHA256(final String iInput) {
     return byteArrayToHexStr(digestSHA256(iInput));
   }
 
@@ -124,7 +114,7 @@ public class OSecurityManager {
    * @param iIncludeAlgorithm Include the algorithm used or not
    * @return
    */
-  public String createHash(
+  public static String createHash(
       final String iInput, final String iAlgorithm, final boolean iIncludeAlgorithm) {
     if (iInput == null) throw new IllegalArgumentException("Input string is null");
 
@@ -162,28 +152,29 @@ public class OSecurityManager {
     return buffer.toString();
   }
 
-  public synchronized byte[] digestSHA256(final String iInput) {
+  public static synchronized byte[] digestSHA256(final String iInput) {
     if (iInput == null) return null;
 
     try {
+      MessageDigest md = MessageDigest.getInstance(HASH_ALGORITHM);
       return md.digest(iInput.getBytes("UTF-8"));
-    } catch (UnsupportedEncodingException e) {
+    } catch (UnsupportedEncodingException | NoSuchAlgorithmException e) {
       final String message =
           "The requested encoding is not supported: cannot execute security checks";
-      OLogManager.instance().error(this, message, e);
+      OLogManager.instance().error(OSecuritySystem.class, message, e);
 
       throw OException.wrapException(new OConfigurationException(message), e);
     }
   }
 
-  public String createHashWithSalt(final String iPassword) {
+  public static String createHashWithSalt(final String iPassword) {
     return createHashWithSalt(
         iPassword,
         OGlobalConfiguration.SECURITY_USER_PASSWORD_SALT_ITERATIONS.getValueAsInteger(),
         OGlobalConfiguration.SECURITY_USER_PASSWORD_DEFAULT_ALGORITHM.getValueAsString());
   }
 
-  public String createHashWithSalt(
+  public static String createHashWithSalt(
       final String iPassword, final int iIterations, final String algorithm) {
     final SecureRandom random = new SecureRandom();
     final byte[] salt = new byte[SALT_SIZE];
@@ -196,19 +187,23 @@ public class OSecurityManager {
     return byteArrayToHexStr(hash) + ":" + byteArrayToHexStr(salt) + ":" + iIterations;
   }
 
-  public boolean checkPasswordWithSalt(final String iPassword, final String iHash) {
+  public static boolean checkPasswordWithSalt(final String iPassword, final String iHash) {
     return checkPasswordWithSalt(
         iPassword,
         iHash,
         OGlobalConfiguration.SECURITY_USER_PASSWORD_DEFAULT_ALGORITHM.getValueAsString());
   }
 
-  public boolean checkPasswordWithSalt(
+  public static boolean checkPasswordWithSalt(
       final String iPassword, final String iHash, final String algorithm) {
 
     if (!isAlgorithmSupported(algorithm)) {
       OLogManager.instance()
-          .error(this, "The password hash algorithm is not supported: %s", null, algorithm);
+          .error(
+              OSecuritySystem.class,
+              "The password hash algorithm is not supported: %s",
+              null,
+              algorithm);
       return false;
     }
 
@@ -226,7 +221,7 @@ public class OSecurityManager {
     return MessageDigest.isEqual(hash, testHash);
   }
 
-  private byte[] getPbkdf2(
+  private static byte[] getPbkdf2(
       final String iPassword,
       final byte[] salt,
       final int iterations,
@@ -277,7 +272,7 @@ public class OSecurityManager {
     return true;
   }
 
-  private String validateAlgorithm(final String iAlgorithm) {
+  private static String validateAlgorithm(final String iAlgorithm) {
     String validAlgo = iAlgorithm;
 
     if (!isAlgorithmSupported(iAlgorithm)) {
@@ -286,7 +281,10 @@ public class OSecurityManager {
 
       OLogManager.instance()
           .debug(
-              this, "The %s algorithm is not supported, downgrading to %s", iAlgorithm, validAlgo);
+              OSecuritySystem.class,
+              "The %s algorithm is not supported, downgrading to %s",
+              iAlgorithm,
+              validAlgo);
     }
 
     return validAlgo;
@@ -333,20 +331,5 @@ public class OSecurityManager {
     }
 
     return ci;
-  }
-
-  public OSecurityFactory getSecurityFactory() {
-    return securityFactory;
-  }
-
-  public void setSecurityFactory(OSecurityFactory factory) {
-    if (factory != null) securityFactory = factory;
-    else securityFactory = new OSecuritySharedFactory();
-  }
-
-  public OSecurityInternal newSecurity() {
-    if (securityFactory != null) return securityFactory.newSecurity();
-
-    return null;
   }
 }

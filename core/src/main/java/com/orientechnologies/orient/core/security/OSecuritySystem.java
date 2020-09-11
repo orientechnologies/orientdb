@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.security;
 
 import com.orientechnologies.orient.core.db.OrientDBInternal;
+import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -143,4 +144,6 @@ public interface OSecuritySystem {
   void addUser(String user, String password, String resources);
 
   void addTemporaryUser(String user, String password, String resources);
+
+  OSecurityInternal newSecurity(String database);
 }

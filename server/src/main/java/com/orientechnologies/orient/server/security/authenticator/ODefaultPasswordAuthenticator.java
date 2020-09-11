@@ -106,7 +106,7 @@ public class ODefaultPasswordAuthenticator extends OSecurityAuthenticatorAbstrac
       OServerUserConfiguration user = getUser(username);
 
       if (isPasswordValid(user)) {
-        if (OSecurityManager.instance().checkPassword(password, user.password)) {
+        if (OSecurityManager.checkPassword(password, user.password)) {
           principal = user.name;
         }
       }

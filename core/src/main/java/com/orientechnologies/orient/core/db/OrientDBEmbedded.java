@@ -37,7 +37,7 @@ import com.orientechnologies.orient.core.engine.OEngine;
 import com.orientechnologies.orient.core.engine.OMemoryAndLocalPaginatedEnginesInitializer;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.security.ODefaultServerSecurity;
+import com.orientechnologies.orient.core.security.ODefaultSecuritySystem;
 import com.orientechnologies.orient.core.security.OSecuritySystem;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
@@ -184,7 +184,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
       initAutoClose(delay);
     }
     systemDatabase = new OSystemDatabase(this);
-    securitySystem = new ODefaultServerSecurity(this, this.configurations.getSecurityConfig());
+    securitySystem = new ODefaultSecuritySystem(this, this.configurations.getSecurityConfig());
   }
 
   protected OCachedDatabasePoolFactory createCachedDatabasePoolFactory(OrientDBConfig config) {

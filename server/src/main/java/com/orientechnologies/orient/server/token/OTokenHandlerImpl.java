@@ -65,8 +65,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
 
     if (configKey != null && configKey.length() > 0) key = Base64.getUrlDecoder().decode(configKey);
 
-    if (key == null)
-      key = OSecurityManager.instance().digestSHA256(String.valueOf(keyGenerator.nextLong()));
+    if (key == null) key = OSecurityManager.digestSHA256(String.valueOf(keyGenerator.nextLong()));
 
     keyProvider = new DefaultKeyProvider(key);
 

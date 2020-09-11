@@ -73,11 +73,10 @@ public class OUser extends OIdentity implements OSecurityUser {
   }
 
   public static final String encryptPassword(final String iPassword) {
-    return OSecurityManager.instance()
-        .createHash(
-            iPassword,
-            OGlobalConfiguration.SECURITY_USER_PASSWORD_DEFAULT_ALGORITHM.getValueAsString(),
-            true);
+    return OSecurityManager.createHash(
+        iPassword,
+        OGlobalConfiguration.SECURITY_USER_PASSWORD_DEFAULT_ALGORITHM.getValueAsString(),
+        true);
   }
 
   public static boolean encodePassword(
@@ -251,8 +250,7 @@ public class OUser extends OIdentity implements OSecurityUser {
   }
 
   public boolean checkPassword(final String iPassword) {
-    return OSecurityManager.instance()
-        .checkPassword(iPassword, (String) document.field(PASSWORD_FIELD));
+    return OSecurityManager.checkPassword(iPassword, (String) document.field(PASSWORD_FIELD));
   }
 
   public String getName() {
