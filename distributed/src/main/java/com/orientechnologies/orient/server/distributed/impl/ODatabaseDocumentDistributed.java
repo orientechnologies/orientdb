@@ -600,7 +600,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
    * @return null returned means that commit failed
    */
   public boolean commit2pc(
-      ODistributedRequestId transactionId, boolean local, ODistributedRequestId requestId) {
+      ODistributedRequestId transactionId, boolean isCoordinator, ODistributedRequestId requestId) {
     ODistributedDatabaseImpl localDistributedDatabase =
         (ODistributedDatabaseImpl) getDistributedShared();
     localDistributedDatabase.resetLastValidBackup();
@@ -664,7 +664,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
               localDistributedDatabase.popTxContext(transactionId);
               return true;
             } else if (validateResult != ValidationResult.MISSING_PREVIOUS) {
-              internalBegin2pc(txContext, local);
+              internalBegin2pc(txContext, isCoordinator);
               txContext.setStatus(SUCCESS);
               break;
             }
