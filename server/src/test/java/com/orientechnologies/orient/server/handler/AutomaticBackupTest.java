@@ -100,7 +100,7 @@ public class AutomaticBackupTest {
     server.startup();
     if (server.existsDatabase(DBNAME)) server.dropDatabase(DBNAME);
     server.createDatabase(DBNAME, ODatabaseType.PLOCAL, null);
-    database = server.openDatabase(DBNAME, null, null, null, true);
+    database = server.getDatabases().openNoAuthorization(DBNAME);
 
     new ODocument("TestBackup").field("name", DBNAME).save();
   }
@@ -149,7 +149,7 @@ public class AutomaticBackupTest {
 
     if (server.existsDatabase(DBNAME2)) server.dropDatabase(DBNAME2);
     server.createDatabase(DBNAME2, ODatabaseType.PLOCAL, null);
-    ODatabaseDocument database2 = server.openDatabase(DBNAME2, null, null, null, true);
+    ODatabaseDocument database2 = server.getDatabases().openNoAuthorization(DBNAME2);
 
     database2.restore(new FileInputStream(BACKUPDIR + "/testautobackup.zip"), null, null, null);
 
@@ -329,7 +329,7 @@ public class AutomaticBackupTest {
     if (server.existsDatabase(DBNAME3)) server.dropDatabase(DBNAME3);
     server.createDatabase(DBNAME3, ODatabaseType.PLOCAL, null);
 
-    ODatabaseDocumentInternal database2 = server.openDatabase(DBNAME3, null, null, null, true);
+    ODatabaseDocumentInternal database2 = server.getDatabases().openNoAuthorization(DBNAME3);
 
     new ODatabaseImport(database2, BACKUPDIR + "/fullExport.json.gz", null).importDatabase();
 

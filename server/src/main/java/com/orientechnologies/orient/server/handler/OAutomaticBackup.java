@@ -183,7 +183,7 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
                 if (include) {
                   ODatabaseDocumentInternal db = null;
                   try {
-                    db = serverInstance.openDatabase(dbName, null, null, null, true);
+                    db = serverInstance.getDatabases().openNoAuthorization(dbName);
 
                     final long begin = System.currentTimeMillis();
 

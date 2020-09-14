@@ -254,7 +254,7 @@ public class OCommandExecutorSQLHASyncCluster extends OCommandExecutorSQLAbstrac
 
       ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
       final boolean openDatabaseHere = db == null;
-      if (db == null) db = serverInstance.openDatabase("plocal:" + dbPath, "", "", null, true);
+      if (db == null) db = serverInstance.openDatabase(databaseName);
 
       try {
 

@@ -1072,7 +1072,7 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
 
   @Override
   public OSecurityInternal newSecurity(String database) {
-    if (isEnabled()) {
+    if (isEnabled() || (serverConfig != null && serverConfig.usersManagement())) {
       return new OSecurityServerExternal(this);
     } else {
       return new OSecurityShared();

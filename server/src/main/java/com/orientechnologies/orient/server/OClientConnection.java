@@ -241,7 +241,7 @@ public class OClientConnection {
       final String type = token.getDatabaseType();
       if (db != null && type != null) {
         if (data.serverUser) {
-          setDatabase(server.openDatabase(db, token.getUserName(), null, data, true));
+          setDatabase(server.getDatabases().openNoAuthenticate(db, token.getUserName()));
         } else setDatabase(server.openDatabase(db, token));
       }
     }

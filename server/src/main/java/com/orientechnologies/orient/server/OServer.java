@@ -42,6 +42,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxInternal
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.metadata.security.OSystemUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.security.OGlobalUser;
 import com.orientechnologies.orient.core.security.OSecuritySystem;
@@ -871,45 +872,16 @@ public class OServer {
 
   public ODatabaseDocumentInternal openDatabase(
       final String iDbUrl, final String user, final String password) {
-    return openDatabase(iDbUrl, user, password, null, false);
+    return openDatabase(iDbUrl, user, password, null);
   }
 
   public ODatabaseDocumentInternal openDatabase(
       final String iDbUrl, final String user, final String password, ONetworkProtocolData data) {
-    return openDatabase(iDbUrl, user, password, data, false);
-  }
-
-  public ODatabaseDocumentInternal openDatabase(
-      final String iDbUrl,
-      String user,
-      final String password,
-      ONetworkProtocolData data,
-      final boolean iBypassAccess) {
     final ODatabaseDocumentInternal database;
-    // TODO: memory used to be created on the fly not sure for which reason.
-    // TODO: final String path = getStoragePath(iDbUrl); it use to resolve the path in some way
     boolean serverAuth = false;
-    if (iBypassAccess) {
-      database = databases.openNoAuthenticate(iDbUrl, user);
+    database = databases.open(iDbUrl, user, password);
+    if (database.getUser().getUserType().equals(OSystemUser.SERVER_USER_TYPE)) {
       serverAuth = true;
-    } else {
-      OGlobalUser serverUser = authenticateUser(user, password, "database.passthrough");
-      if (serverUser != null) {
-        serverAuth = true;
-        user = serverUser.getName();
-        // Why do we use the returned serverUser name instead of just passing-in user?
-        // Because in some security implementations the user is embedded inside a ticket of some
-        // kind
-        // that must be decrypted to retrieve the actual user identity. If serverLogin() is
-        // successful,
-        // that user identity is returned.
-
-        // SERVER AUTHENTICATED, BYPASS SECURITY
-        database = databases.openNoAuthenticate(iDbUrl, user);
-      } else {
-        // TRY DATABASE AUTHENTICATION
-        database = databases.open(iDbUrl, user, password);
-      }
     }
     if (serverAuth && data != null) {
       data.serverUser = true;
@@ -922,7 +894,7 @@ public class OServer {
   }
 
   public ODatabaseDocumentInternal openDatabase(String database) {
-    return openDatabase(database, "internal", "internal", null, true);
+    return getDatabases().openNoAuthorization(database);
   }
 
   public ODistributedServerManager getDistributedManager() {

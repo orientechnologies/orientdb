@@ -190,12 +190,9 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
     // TODO: it should be here an additional check for open with the right user
     connection.setDatabase(
-        server.openDatabase(
-            request.getDatabaseName(),
-            connection.getData().serverUsername,
-            null,
-            connection.getData(),
-            true));
+        server
+            .getDatabases()
+            .openNoAuthenticate(request.getDatabaseName(), connection.getServerUser().getName()));
 
     return new OCreateDatabaseResponse();
   }
@@ -848,12 +845,9 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   @Override
   public OBinaryResponse executeFreezeDatabase(OFreezeDatabaseRequest request) {
     ODatabaseDocumentInternal database =
-        server.openDatabase(
-            request.getName(),
-            connection.getServerUser().getName(),
-            null,
-            connection.getData(),
-            true);
+        server
+            .getDatabases()
+            .openNoAuthenticate(request.getName(), connection.getServerUser().getName());
     connection.setDatabase(database);
 
     OLogManager.instance().info(this, "Freezing database '%s'", connection.getDatabase().getURL());
@@ -865,12 +859,9 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   @Override
   public OBinaryResponse executeReleaseDatabase(OReleaseDatabaseRequest request) {
     ODatabaseDocumentInternal database =
-        server.openDatabase(
-            request.getName(),
-            connection.getServerUser().getName(),
-            null,
-            connection.getData(),
-            true);
+        server
+            .getDatabases()
+            .openNoAuthenticate(request.getName(), connection.getServerUser().getName());
 
     connection.setDatabase(database);
 
