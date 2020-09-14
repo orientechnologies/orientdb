@@ -2,6 +2,7 @@ package com.orientechnologies.orient.server.distributed.impl;
 
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.concur.lock.OSimpleLockManager;
+import com.orientechnologies.common.concur.lock.OSimplePromiseManager;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
@@ -76,6 +77,16 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
           shared.getLocalNodeName(), rid, recordLockManager.getTimeout());
     }
     lockedRids.add(rid);
+  }
+
+  @Override
+  public void promise(ORID rid, int version) {
+    OSimplePromiseManager recordPromiseManager = shared.getRecordPromiseManager();
+    try {
+      recordPromiseManager.promise(rid, version);
+    } catch(OLockException ex) {
+      // release promises
+    }
   }
 
   @Override

@@ -26,6 +26,7 @@ import static com.orientechnologies.orient.server.distributed.ODistributedServer
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OSimpleLockManager;
 import com.orientechnologies.common.concur.lock.OSimpleLockManagerImpl;
+import com.orientechnologies.common.concur.lock.OSimplePromiseManager;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OProfiler;
@@ -108,6 +109,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   private final String localNodeName;
   private final OSimpleLockManager<ORID> recordLockManager;
+  private final OSimplePromiseManager recordPromiseManager;
   private final OSimpleLockManager<Object> indexKeyLockManager;
   private AtomicLong operationsRunnig = new AtomicLong(0);
   private ODistributedSynchronizedSequence sequenceManager;
@@ -167,6 +169,10 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     return recordLockManager;
   }
 
+  public OSimplePromiseManager getRecordPromiseManager() {
+    return recordPromiseManager;
+  }
+
   public OSimpleLockManager<Object> getIndexKeyLockManager() {
     return indexKeyLockManager;
   }
@@ -202,6 +208,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
     if (iDatabaseName.equals(OSystemDatabase.SYSTEM_DB_NAME)) {
       recordLockManager = null;
+      recordPromiseManager = null;
       indexKeyLockManager = null;
       return;
     }
@@ -289,6 +296,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
             .getContextConfiguration()
             .getValueAsInteger(DISTRIBUTED_TRANSACTION_SEQUENCE_SET_SIZE);
     recordLockManager = new OSimpleLockManagerImpl<>(timeout);
+    recordPromiseManager = new OSimplePromiseManager();
     indexKeyLockManager = new OSimpleLockManagerImpl<>(timeout);
     sequenceManager = new ODistributedSynchronizedSequence(localNodeName, sequenceSize);
   }
@@ -871,6 +879,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       }
 
       recordLockManager.reset();
+      recordPromiseManager.reset();
       indexKeyLockManager.reset();
     }
   }

@@ -34,6 +34,8 @@ import java.util.Set;
 public interface ODistributedTxContext {
   void lock(ORID rid);
 
+  void promise(ORID rid, int version);
+
   void lock(ORID rid, long timeout);
 
   void lockIndexKey(Object rid);
