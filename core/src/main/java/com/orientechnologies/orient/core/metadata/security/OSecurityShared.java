@@ -430,7 +430,7 @@ public class OSecurityShared implements OSecurityInternal {
   public OSecurityPolicy getSecurityPolicy(
       ODatabaseSession session, OSecurityRole role, String resource) {
     resource = normalizeSecurityResource(session, resource);
-    OElement roleDoc = session.reload(role.getDocument(), null, false);
+    OElement roleDoc = session.load(role.getIdentity().getIdentity(), null, false);
     if (roleDoc == null) {
       return null;
     }
@@ -466,7 +466,7 @@ public class OSecurityShared implements OSecurityInternal {
   public void setSecurityPolicy(
       ODatabaseSession session, OSecurityRole role, String resource, OSecurityPolicy policy) {
     resource = normalizeSecurityResource(session, resource);
-    OElement roleDoc = session.load(role.getDocument().getIdentity());
+    OElement roleDoc = session.load(role.getIdentity().getIdentity());
     if (roleDoc == null) {
       return;
     }

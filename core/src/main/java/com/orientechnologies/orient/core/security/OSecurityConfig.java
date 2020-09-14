@@ -14,6 +14,8 @@ public interface OSecurityConfig {
 
   OGlobalUser getUser(String username);
 
+  boolean usersManagement();
+
   OSyslog getSyslog();
 
   String getConfigurationFile();

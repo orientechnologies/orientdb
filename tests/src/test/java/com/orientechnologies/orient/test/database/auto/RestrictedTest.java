@@ -149,12 +149,7 @@ public class RestrictedTest extends DocumentDBBaseTest {
       // FORCE LOADING
       Set<OIdentifiable> allows = adminRecord.field(OSecurityShared.ALLOW_ALL_FIELD);
       allows.add(
-          database
-              .getMetadata()
-              .getSecurity()
-              .getUser(database.getUser().getName())
-              .getDocument()
-              .getIdentity());
+          database.getMetadata().getSecurity().getUser(database.getUser().getName()).getIdentity());
       adminRecord.save();
     } catch (OSecurityException e) {
       // OK AS EXCEPTION

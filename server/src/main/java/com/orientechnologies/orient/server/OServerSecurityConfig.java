@@ -58,6 +58,11 @@ public class OServerSecurityConfig implements OSecurityConfig {
   }
 
   @Override
+  public boolean usersManagement() {
+    return true;
+  }
+
+  @Override
   public OSyslog getSyslog() {
     if (sysLog == null && server != null) {
       OServerPluginInfo syslogPlugin = server.getPluginManager().getPluginByName("syslog");

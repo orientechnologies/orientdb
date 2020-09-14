@@ -123,10 +123,7 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
     try {
       db = (ODatabaseDocument) server.openDatabase(iDatabaseName, username, password);
 
-      userRid =
-          (db.getUser() == null
-              ? "<server user>"
-              : db.getUser().getDocument().getIdentity().toString());
+      userRid = (db.getUser() == null ? "<server user>" : db.getUser().getIdentity().toString());
     } catch (OSecurityAccessException e) {
       // WRONG USER/PASSWD
     } catch (OLockException e) {

@@ -28,7 +28,7 @@ public class OSecurityServerExternal extends OSecurityExternal {
     if (user == null && username != null) {
       OGlobalUser serverUser = security.getUser(username);
       if (serverUser != null) {
-        user = new OSystemUser(username, "null", "Server");
+        user = new OSystemUser(username, "null", OSystemUser.SERVER_USER_TYPE);
         user.addRole(createRole(serverUser));
       }
     }

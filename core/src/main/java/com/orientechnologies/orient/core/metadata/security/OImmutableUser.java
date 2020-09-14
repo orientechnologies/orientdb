@@ -4,7 +4,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import java.util.Collections;
 import java.util.HashSet;
@@ -26,7 +25,7 @@ public class OImmutableUser implements OSecurityUser {
 
   private final STATUSES status;
   private final ORID rid;
-  private final OUser user;
+  private final String userType;
 
   public OImmutableUser(long version, OUser user) {
     this.version = version;
@@ -34,7 +33,7 @@ public class OImmutableUser implements OSecurityUser {
     this.password = user.getPassword();
     this.status = user.getAccountStatus();
     this.rid = user.getIdentity().getIdentity();
-    this.user = user;
+    this.userType = user.getUserType();
 
     for (ORole role : user.getRoles()) {
       roles.add(new OImmutableRole(role));
@@ -211,12 +210,7 @@ public class OImmutableUser implements OSecurityUser {
   }
 
   @Override
-  public ODocument getDocument() {
-    return user.getDocument();
-  }
-
-  @Override
   public String getUserType() {
-    return user.getUserType();
+    return userType;
   }
 }

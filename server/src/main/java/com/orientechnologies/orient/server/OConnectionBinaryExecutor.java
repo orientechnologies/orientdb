@@ -1060,7 +1060,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     }
 
     connection.setServerUser(
-        server.serverLogin(request.getUsername(), request.getPassword(), "server.connect"));
+        server.authenticateUser(request.getUsername(), request.getPassword(), "server.connect"));
 
     if (connection.getServerUser() == null)
       throw new OSecurityAccessException(
@@ -1090,7 +1090,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     connection.getData().collectStats = true;
 
     connection.setServerUser(
-        server.serverLogin(request.getUsername(), request.getPassword(), "server.connect"));
+        server.authenticateUser(request.getUsername(), request.getPassword(), "server.connect"));
 
     if (connection.getServerUser() == null)
       throw new OSecurityAccessException(
@@ -1758,7 +1758,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
     // TODO:check auth type
     OGlobalUser serverUser =
-        server.serverLogin(request.getUsername(), request.getPassword(), "server.connect");
+        server.authenticateUser(request.getUsername(), request.getPassword(), "server.connect");
 
     if (serverUser == null) {
       throw new OSecurityAccessException(

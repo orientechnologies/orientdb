@@ -470,7 +470,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         connection.init(server);
 
         if (connection.getData().serverUser) {
-          connection.setServerUser(server.getUser(connection.getData().serverUsername));
+          connection.setServerUser(
+              server.getSecurity().getUser(connection.getData().serverUsername));
         }
       }
     } catch (RuntimeException e) {
@@ -545,7 +546,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         waitDistribuedIsOnline(connection);
         connection.init(server);
         if (connection.getData().serverUser) {
-          connection.setServerUser(server.getUser(connection.getData().serverUsername));
+          connection.setServerUser(
+              server.getSecurity().getUser(connection.getData().serverUsername));
         }
       } else {
         if (connection != null && !Boolean.TRUE.equals(connection.getTokenBased())) {
@@ -571,7 +573,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
           waitDistribuedIsOnline(connection);
           connection.init(server);
           if (connection.getData().serverUser) {
-            connection.setServerUser(server.getUser(connection.getData().serverUsername));
+            connection.setServerUser(
+                server.getSecurity().getUser(connection.getData().serverUsername));
           }
         }
       }
@@ -630,7 +633,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       if (connection.getServerUser() == null)
         throw new OSecurityAccessException("Server user not authenticated");
 
-      if (!server.isAllowed(connection.getServerUser().getName(), iResource))
+      if (!server.getSecurity().isAuthorized(connection.getServerUser().getName(), iResource))
         throw new OSecurityAccessException(
             "User '"
                 + connection.getServerUser().getName()
@@ -641,7 +644,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       if (!connection.getData().serverUser)
         throw new OSecurityAccessException("Server user not authenticated");
 
-      if (!server.isAllowed(connection.getData().serverUsername, iResource))
+      if (!server.getSecurity().isAuthorized(connection.getData().serverUsername, iResource))
         throw new OSecurityAccessException(
             "User '"
                 + connection.getData().serverUsername

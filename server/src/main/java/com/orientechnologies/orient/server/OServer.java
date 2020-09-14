@@ -727,12 +727,6 @@ public class OServer {
     return threadGroup;
   }
 
-  public OGlobalUser serverLogin(
-      final String iUser, final String iPassword, final String iResource) {
-    // Returns null if authentication or authorization fails for any reason.
-    return authenticateUser(iUser, iPassword, iResource);
-  }
-
   /**
    * Authenticate a server user.
    *
@@ -748,7 +742,7 @@ public class OServer {
 
   // Returns null if the user cannot be authenticated. Otherwise returns the
   // OServerUserConfiguration user.
-  protected OGlobalUser authenticateUser(
+  public OGlobalUser authenticateUser(
       final String iUserName, final String iPassword, final String iResourceToCheck) {
     return databases
         .getSecuritySystem()
@@ -899,10 +893,10 @@ public class OServer {
       database = databases.openNoAuthenticate(iDbUrl, user);
       serverAuth = true;
     } else {
-      OGlobalUser serverUser = serverLogin(user, password, "database.passthrough");
+      OGlobalUser serverUser = authenticateUser(user, password, "database.passthrough");
       if (serverUser != null) {
-        user = serverUser.getName();
         serverAuth = true;
+        user = serverUser.getName();
         // Why do we use the returned serverUser name instead of just passing-in user?
         // Because in some security implementations the user is embedded inside a ticket of some
         // kind

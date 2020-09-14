@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.io.Serializable;
 import java.util.Set;
 
@@ -57,8 +56,6 @@ public interface OSecurityUser extends Serializable {
   boolean hasRole(final String iRoleName, final boolean iIncludeInherited);
 
   OIdentifiable getIdentity();
-
-  ODocument getDocument();
 
   String getUserType();
 }

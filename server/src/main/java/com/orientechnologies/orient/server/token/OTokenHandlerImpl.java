@@ -487,7 +487,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
     final OrientJwtPayload payload = new OrientJwtPayload();
     payload.setAudience("OrientDB");
     payload.setDatabase(db.getName());
-    payload.setUserRid(user.getDocument().getIdentity());
+    payload.setUserRid(user.getIdentity().getIdentity());
 
     final long expiryMinutes = sessionInMills;
     final long currTime = System.currentTimeMillis();

@@ -20,7 +20,7 @@ public class OServerUserTokenTest {
   @Test
   public void testToken() throws Exception {
 
-    OGlobalUser root = server.serverLogin("root", "root", "*");
+    OGlobalUser root = server.authenticateUser("root", "root", "*");
 
     byte[] signedWebTokenServerUser = server.getTokenHandler().getSignedWebTokenServerUser(root);
 

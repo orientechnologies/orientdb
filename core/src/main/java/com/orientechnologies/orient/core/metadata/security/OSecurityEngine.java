@@ -402,7 +402,9 @@ public class OSecurityEngine {
       return true; // TODO check!
     }
     try {
-      final ODocument user = session.getUser().getDocument();
+      // Create a new instance of ODocument with a user record id, this will lazy load the user data
+      // at the first access with the same execution permission of the policy
+      final ODocument user = new ODocument(session.getUser().getIdentity().getIdentity());
       return ((ODatabaseInternal) session)
           .getSharedContext()
           .getOrientDB()
@@ -430,7 +432,9 @@ public class OSecurityEngine {
       return false;
     }
     try {
-      final ODocument user = session.getUser().getDocument();
+      // Create a new instance of ODocument with a user record id, this will lazy load the user data
+      // at the first access with the same execution permission of the policy
+      final ODocument user = new ODocument(session.getUser().getIdentity().getIdentity());
       return ((ODatabaseInternal) session)
           .getSharedContext()
           .getOrientDB()

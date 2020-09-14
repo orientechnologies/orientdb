@@ -473,7 +473,9 @@ public class ODefaultServerSecurity implements OSecurityFactory, OSecuritySystem
     OGlobalUser userCfg = null;
     // This will throw an IllegalArgumentException if iUserName is null or empty.
     // However, a null or empty iUserName is possible with some security implementations.
-    if (username != null && !username.isEmpty()) userCfg = serverConfig.getUser(username);
+    if (serverConfig.usersManagement()) {
+      if (username != null && !username.isEmpty()) userCfg = serverConfig.getUser(username);
+    }
     return userCfg;
   }
 

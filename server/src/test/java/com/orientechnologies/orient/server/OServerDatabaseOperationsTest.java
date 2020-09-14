@@ -69,7 +69,7 @@ public class OServerDatabaseOperationsTest {
 
   @Test
   public void testServerLoginDatabase() {
-    server.serverLogin("root", "root", "list");
+    assertNotNull(server.authenticateUser("root", "root", "list"));
   }
 
   @Test

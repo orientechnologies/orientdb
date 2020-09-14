@@ -33,6 +33,11 @@ public class ODefaultSecurityConfig implements OSecurityConfig {
   }
 
   @Override
+  public boolean usersManagement() {
+    return false;
+  }
+
+  @Override
   public OSyslog getSyslog() {
     throw new UnsupportedOperationException();
   }
