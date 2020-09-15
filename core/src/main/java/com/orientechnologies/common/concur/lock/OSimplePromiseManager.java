@@ -8,7 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-// Allows creating a promise and upgrading it to a lock.
+// Allows creating a promise and "upgrading" it to a lock which is a promise that cannot be broken!
 public class OSimplePromiseManager {
   private final Lock lock = new ReentrantLock();
   private final Map<ORID, Promise> map = new ConcurrentHashMap<>();
@@ -44,12 +44,18 @@ public class OSimplePromiseManager {
           throw new OLockException(String.format("Cannot acquire lock for resource: '%s'", rid));
         }
         if (force) {
-          // todo: must check version
-          OTransactionId kickedOut = p.getTxId();
-          p = new Promise(version, txId);
-          p.lock();
-          map.put(rid, p);
-          return kickedOut;
+          // If there is a promise for an older version, must wait and retry later
+          if (p.getVersion() < version) {
+            throw new OLockException(String.format("Cannot acquire lock for resource: '%s'", rid));
+          } else if (p.getVersion() > version) {
+            // Ignore?
+          } else {
+            OTransactionId kickedOut = p.getTxId();
+            p = new Promise(version, txId);
+            p.lock();
+            map.put(rid, p);
+            return kickedOut;
+          }
         } else {
           if (p.txId.equals(txId)) {
             p.lock();
