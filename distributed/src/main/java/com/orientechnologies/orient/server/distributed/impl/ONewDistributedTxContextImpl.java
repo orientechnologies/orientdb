@@ -83,9 +83,23 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
   public void promise(ORID rid, int version) {
     OSimplePromiseManager recordPromiseManager = shared.getRecordPromiseManager();
     try {
-      recordPromiseManager.promise(rid, version);
+      recordPromiseManager.promise(rid, version, transactionId);
     } catch(OLockException ex) {
-      // release promises
+      this.unlock();
+      throw new ODistributedRecordLockedException(
+          shared.getLocalNodeName(), rid, recordPromiseManager.getTimeout());
+    }
+  }
+
+  @Override
+  public OTransactionId lockPromise(ORID rid, int version, OTransactionId txId, boolean force) {
+    OSimplePromiseManager recordPromiseManager = shared.getRecordPromiseManager();
+    try {
+      return recordPromiseManager.lock(rid, version, transactionId, force);
+    } catch(OLockException ex) {
+      this.unlock();
+      throw new ODistributedRecordLockedException(
+          shared.getLocalNodeName(), rid, recordPromiseManager.getTimeout());
     }
   }
 

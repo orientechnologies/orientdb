@@ -96,6 +96,10 @@ public class OSimplePromiseManager {
     }
   }
 
+  public long getTimeout() {
+    return -1;
+  }
+
   public static class Promise {
     private final Integer version;
     private final OTransactionId txId;
