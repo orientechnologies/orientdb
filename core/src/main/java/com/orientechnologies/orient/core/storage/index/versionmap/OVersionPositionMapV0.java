@@ -73,7 +73,8 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
         operation -> {
           acquireExclusiveLock();
           try {
-            // TODO: [DR] final long entries = getEntries();
+            // TODO: [DR]
+            // final long entries = getEntries();
             // if (entries > 0) {
             //  throw new NotEmptyComponentCanNotBeRemovedException(
             //      getName()
@@ -136,7 +137,7 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
 
   @Override
   public void updateVersion(final int hash, final int version) {
-    // TODO: [DR]
+    // TODO: [DR] better use the existing update method?
     System.out.println("update: " + hash + ", " + version);
   }
 
@@ -153,26 +154,14 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
   public void createVPM(final OAtomicOperation atomicOperation) throws IOException {
     fileId = addFile(atomicOperation, getFullName());
     if (getFilledUpTo(atomicOperation, fileId) == 0) {
-      // TODO: first one page is added for the meta data
-      final OCacheEntry cacheEntry = addPage(atomicOperation, fileId);
-      try {
-        final MapEntryPoint mapEntryPoint = new MapEntryPoint(cacheEntry);
-        mapEntryPoint.setFileSize(0);
-      } finally {
-        releasePageFromWrite(atomicOperation, cacheEntry);
-      }
+      // first one page is added for the meta data
+      addInitializedPage(atomicOperation);
 
-      // TODO: then let us add several empty data pages
+      // then let us add several empty data pages
       int numberOfPages = (int) Math.ceil((1000*10*4) / OVersionPage.PAGE_SIZE);
       numberOfPages = (numberOfPages == 0) ? 1 : numberOfPages;
       for (int i = 0; i < numberOfPages; i++) {
-        final OCacheEntry ce = addPage(atomicOperation, fileId);
-        try {
-          final MapEntryPoint mapEntryPoint = new MapEntryPoint(ce);
-          mapEntryPoint.setFileSize(0);
-        } finally {
-          releasePageFromWrite(atomicOperation, ce);
-        }
+        addInitializedPage(atomicOperation);
       }
     } else {
       final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, 0, false, false);
@@ -182,6 +171,16 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
       } finally {
         releasePageFromWrite(atomicOperation, cacheEntry);
       }
+    }
+  }
+
+  private void addInitializedPage(final OAtomicOperation atomicOperation) throws IOException {
+    final OCacheEntry cacheEntry = addPage(atomicOperation, fileId);
+    try {
+      final MapEntryPoint mapEntryPoint = new MapEntryPoint(cacheEntry);
+      mapEntryPoint.setFileSize(0);
+    } finally {
+      releasePageFromWrite(atomicOperation, cacheEntry);
     }
   }
 
@@ -247,7 +246,6 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
         }
         if (bucket.isFull()) {
           releasePageFromWrite(atomicOperation, cacheEntry);
-
           assert lastPage <= filledUpTo - 1;
 
           if (lastPage == filledUpTo - 1) {
