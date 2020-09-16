@@ -22,24 +22,24 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.metadata.security.OSystemUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.security.OSecuritySystem;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
-import com.orientechnologies.orient.server.security.OServerSecurity;
 import java.io.IOException;
 
 public class OServerCommandPostSecurityReload extends OServerCommandAuthenticatedServerAbstract {
   private static final String[] NAMES = {"POST|security/reload"};
 
-  private OServerSecurity serverSecurity;
+  private OSecuritySystem serverSecurity;
 
   @Override
   public String[] getNames() {
     return NAMES;
   }
 
-  public OServerCommandPostSecurityReload(OServerSecurity serverSec) {
+  public OServerCommandPostSecurityReload(OSecuritySystem serverSec) {
     super(EnterprisePermissions.SERVER_SECURITY.toString());
 
     serverSecurity = serverSec;

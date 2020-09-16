@@ -2,9 +2,8 @@ package com.orientechnologies.agent;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OInvalidPasswordException;
-import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.config.OServerConfigurationManager;
-import com.orientechnologies.orient.server.security.OPasswordValidator;
+import com.orientechnologies.orient.core.security.OPasswordValidator;
+import com.orientechnologies.orient.core.security.OSecuritySystem;
 
 public class EnterprisePasswordValidator implements OPasswordValidator {
 
@@ -21,8 +20,7 @@ public class EnterprisePasswordValidator implements OPasswordValidator {
   public void active() {}
 
   @Override
-  public void config(
-      OServer oServer, OServerConfigurationManager serverCfg, ODocument jsonConfig) {}
+  public void config(ODocument jsonConfig, OSecuritySystem security) {}
 
   @Override
   public void dispose() {}

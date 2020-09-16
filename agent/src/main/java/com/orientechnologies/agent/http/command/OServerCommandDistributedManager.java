@@ -148,7 +148,7 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
     final String database = parts[2];
     final String cluster = parts[3];
 
-    ODatabaseDocumentInternal db = server.openDatabase(database, "", "", null, true);
+    ODatabaseDocumentInternal db = server.openDatabase(database);
     try {
       Object result =
           db.command(new OCommandSQL(String.format("ha sync cluster  %s ", cluster))).execute();

@@ -48,20 +48,18 @@ public class OSystemSymmetricKeyAuth extends OSystemUserAuthenticator {
     String principal = null;
 
     try {
-      if (getServer() != null) {
-        // dbName parameter is null because we don't need to filter any roles for this.
-        OUser user = getServer().getSecurity().getSystemUser(username, null);
+      // dbName parameter is null because we don't need to filter any roles for this.
+      OUser user = getSecurity().getSystemUser(username, null);
 
-        if (user != null && user.getAccountStatus() == OSecurityUser.STATUSES.ACTIVE) {
-          OUserSymmetricKeyConfig userConfig = new OUserSymmetricKeyConfig(user);
+      if (user != null && user.getAccountStatus() == OSecurityUser.STATUSES.ACTIVE) {
+        OUserSymmetricKeyConfig userConfig = new OUserSymmetricKeyConfig(user);
 
-          OSymmetricKey sk = OSymmetricKey.fromConfig(userConfig);
+        OSymmetricKey sk = OSymmetricKey.fromConfig(userConfig);
 
-          String decryptedUsername = sk.decryptAsString(password);
+        String decryptedUsername = sk.decryptAsString(password);
 
-          if (OSecurityManager.instance().checkPassword(username, decryptedUsername)) {
-            principal = username;
-          }
+        if (OSecurityManager.instance().checkPassword(username, decryptedUsername)) {
+          principal = username;
         }
       }
     } catch (Exception ex) {

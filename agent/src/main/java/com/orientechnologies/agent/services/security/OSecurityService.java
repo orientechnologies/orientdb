@@ -6,7 +6,7 @@ import com.orientechnologies.agent.http.command.OServerCommandPostSecurityReload
 import com.orientechnologies.agent.services.OEnterpriseService;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
-import com.orientechnologies.orient.server.security.OServerSecurity;
+import com.orientechnologies.orient.core.security.OSecuritySystem;
 
 /** Created by Enrico Risa on 18/09/2018. */
 public class OSecurityService implements OEnterpriseService {
@@ -46,7 +46,7 @@ public class OSecurityService implements OEnterpriseService {
             .registerSecurityClass(
                 com.orientechnologies.agent.security.authenticator.OSystemSymmetricKeyAuth.class);
 
-        OServerSecurity security = server.getSecurity();
+        OSecuritySystem security = server.getSecurity();
 
         // Disabled for now
         //        if (security instanceof ODefaultServerSecurity) {

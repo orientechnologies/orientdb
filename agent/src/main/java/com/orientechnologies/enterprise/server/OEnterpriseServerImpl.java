@@ -15,6 +15,7 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.OSystemDatabase;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.security.OSecuritySystem;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.executor.*;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
@@ -33,7 +34,6 @@ import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtoco
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
-import com.orientechnologies.orient.server.security.OServerSecurity;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
@@ -287,7 +287,7 @@ public class OEnterpriseServerImpl
   }
 
   @Override
-  public OServerSecurity getSecurity() {
+  public OSecuritySystem getSecurity() {
     return server.getSecurity();
   }
 
