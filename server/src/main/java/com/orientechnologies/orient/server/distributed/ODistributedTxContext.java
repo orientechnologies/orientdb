@@ -36,7 +36,7 @@ public interface ODistributedTxContext {
 
   void promise(ORID rid, int version);
 
-  OTransactionId lockPromise(ORID rid, int version, OTransactionId txId, boolean force);
+  OTransactionId lockPromise(ORID rid, int version, boolean force);
 
   void lock(ORID rid, long timeout);
 

@@ -109,7 +109,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   private final String localNodeName;
   private final OSimpleLockManager<ORID> recordLockManager;
-  private final OSimplePromiseManager recordPromiseManager;
+  private final OSimplePromiseManager<ORID> recordPromiseManager;
   private final OSimpleLockManager<Object> indexKeyLockManager;
   private AtomicLong operationsRunnig = new AtomicLong(0);
   private ODistributedSynchronizedSequence sequenceManager;
@@ -169,7 +169,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     return recordLockManager;
   }
 
-  public OSimplePromiseManager getRecordPromiseManager() {
+  public OSimplePromiseManager<ORID> getRecordPromiseManager() {
     return recordPromiseManager;
   }
 
@@ -296,7 +296,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
             .getContextConfiguration()
             .getValueAsInteger(DISTRIBUTED_TRANSACTION_SEQUENCE_SET_SIZE);
     recordLockManager = new OSimpleLockManagerImpl<>(timeout);
-    recordPromiseManager = new OSimplePromiseManager();
+    recordPromiseManager = new OSimplePromiseManager<>();
     indexKeyLockManager = new OSimpleLockManagerImpl<>(timeout);
     sequenceManager = new ODistributedSynchronizedSequence(localNodeName, sequenceSize);
   }

@@ -3,7 +3,9 @@ package com.orientechnologies.orient.server.distributed.impl;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.concur.lock.OSimpleLockManager;
 import com.orientechnologies.common.concur.lock.OSimplePromiseManager;
+import com.orientechnologies.common.concur.lock.Promise;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -18,11 +20,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
 import com.orientechnologies.orient.server.distributed.task.ODistributedKeyLockedException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 public class ONewDistributedTxContextImpl implements ODistributedTxContext {
 
@@ -36,8 +34,9 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
   private final ODistributedRequestId id;
   private final OTransactionInternal tx;
   private final long startedOn;
-  private final List<ORID> lockedRids = new ArrayList<>();
-  private final List<Object> lockedKeys = new ArrayList<>();
+  private final List<ORID>    lockedRids   = new ArrayList<>();
+  private final List<Promise<ORID>> promisedRids = new LinkedList<>();
+  private final List<Object>  lockedKeys   = new ArrayList<>();
   private Status status;
   private final OTransactionId transactionId;
 
@@ -81,7 +80,7 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
 
   @Override
   public void promise(ORID rid, int version) {
-    OSimplePromiseManager recordPromiseManager = shared.getRecordPromiseManager();
+    OSimplePromiseManager<ORID> recordPromiseManager = shared.getRecordPromiseManager();
     try {
       recordPromiseManager.promise(rid, version, transactionId);
     } catch(OLockException ex) {
@@ -89,18 +88,23 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
       throw new ODistributedRecordLockedException(
           shared.getLocalNodeName(), rid, recordPromiseManager.getTimeout());
     }
+    promisedRids.add(new Promise<>(rid, version, transactionId));
   }
 
   @Override
-  public OTransactionId lockPromise(ORID rid, int version, OTransactionId txId, boolean force) {
-    OSimplePromiseManager recordPromiseManager = shared.getRecordPromiseManager();
+  public OTransactionId lockPromise(ORID rid, int version, boolean force) {
+    OSimplePromiseManager<ORID> recordPromiseManager = shared.getRecordPromiseManager();
+    OTransactionId previousTxId = null;
     try {
-      return recordPromiseManager.lock(rid, version, transactionId, force);
+      previousTxId = recordPromiseManager.lock(rid, version, transactionId, force);
     } catch(OLockException ex) {
       this.unlock();
       throw new ODistributedRecordLockedException(
           shared.getLocalNodeName(), rid, recordPromiseManager.getTimeout());
     }
+    // todo: is it safe if this duplicates? happens when there is no previous promise and this is called directly.
+    promisedRids.add(new Promise<>(rid, version, transactionId));
+    return previousTxId;
   }
 
   @Override
@@ -165,6 +169,11 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
       shared.getRecordLockManager().unlock(lockedRid);
     }
     lockedRids.clear();
+    for (Promise<ORID> promise: promisedRids) {
+      shared.getRecordPromiseManager().release(promise.getKey(), promise.getVersion());
+    }
+    promisedRids.clear();
+
     for (Object lockedKey : lockedKeys) {
       shared.getIndexKeyLockManager().unlock(lockedKey);
     }
