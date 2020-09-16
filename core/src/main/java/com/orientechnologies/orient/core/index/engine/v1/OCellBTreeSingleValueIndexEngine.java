@@ -47,12 +47,6 @@ public final class OCellBTreeSingleValueIndexEngine
     } else {
       throw new IllegalStateException("Invalid tree version " + version);
     }
-    // TODO: [DR] merge in[] into versionPositionMap
-    keyVersions = new int[DEFAULT_VERSION_ARRAY_SIZE];
-    for (int i = 0; i < DEFAULT_VERSION_ARRAY_SIZE; i++) {
-      keyVersions[i] = DEFAULT_VERSION;
-    }
-
     versionPositionMap =
         new OVersionPositionMapV0(
             storage, name, name + DATA_FILE_EXTENSION, OVersionPositionMap.DEF_EXTENSION);
@@ -262,28 +256,20 @@ public final class OCellBTreeSingleValueIndexEngine
 
   @Override
   public void updateUniqueIndexVersion(final Object key) {
-    this.applyUniqueIndexChange(key);
+    final int keyHash = getKeyHash(key);
+    versionPositionMap.updateVersion(keyHash);
   }
 
   @Override
   public int getUniqueIndexVersion(final Object key) {
     final int keyHash = getKeyHash(key);
-    return keyVersions[keyHash];
+    return versionPositionMap.getVersion(keyHash);
   }
 
-  // TODO: move to VPM
-  private final int[] keyVersions;
-  private static final int DEFAULT_VERSION = 0;
   private static final int CONCURRENT_DISTRIBUTED_TRANSACTIONS = 1000;
   private static final int SAFETY_FILL_FACTOR = 10;
   private static final int DEFAULT_VERSION_ARRAY_SIZE =
       CONCURRENT_DISTRIBUTED_TRANSACTIONS * SAFETY_FILL_FACTOR;
-
-  private void applyUniqueIndexChange(final Object key) {
-    final int keyHash = getKeyHash(key);
-    final int version = ++keyVersions[keyHash];
-    keyVersions[keyHash] = version;
-  }
 
   private int getKeyHash(final Object key) {
     int keyHash = 0; // as for null values in hash map

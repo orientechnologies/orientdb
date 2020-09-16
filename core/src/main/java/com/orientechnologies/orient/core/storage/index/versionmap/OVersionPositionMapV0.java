@@ -44,12 +44,26 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
 
   private long fileId;
 
+  // TODO: move to VPM
+  private final int[] keyVersions;
+  private static final int DEFAULT_VERSION = 0;
+  private static final int CONCURRENT_DISTRIBUTED_TRANSACTIONS = 1000;
+  private static final int SAFETY_FILL_FACTOR = 10;
+  private static final int DEFAULT_VERSION_ARRAY_SIZE =
+      CONCURRENT_DISTRIBUTED_TRANSACTIONS * SAFETY_FILL_FACTOR;
+
   public OVersionPositionMapV0(
       final OAbstractPaginatedStorage storage,
       final String name,
       final String lockName,
       final String extension) {
     super(storage, name, extension, lockName);
+
+    // TODO: [DR] merge in[] into versionPositionMap
+    keyVersions = new int[DEFAULT_VERSION_ARRAY_SIZE];
+    for (int i = 0; i < DEFAULT_VERSION_ARRAY_SIZE; i++) {
+      keyVersions[i] = DEFAULT_VERSION;
+    }
   }
 
   @Override
@@ -136,15 +150,18 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
   }*/
 
   @Override
-  public void updateVersion(final int hash, final int version) {
+  public void updateVersion(final int hash) {
     // TODO: [DR] better use the existing update method?
+    final int version = ++keyVersions[hash];
+    keyVersions[hash] = version;
     System.out.println("update: " + hash + ", " + version);
   }
 
   @Override
   public int getVersion(final int hash) {
-    // TODO: [DR]
-    return 0;
+    final int version = keyVersions[hash];
+    System.out.println("get: " + hash + ", " + version);
+    return version;
   }
 
   public void openVPM(final OAtomicOperation atomicOperation) throws IOException {
