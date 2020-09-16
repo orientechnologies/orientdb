@@ -8,3 +8,4 @@ export * from "./stats";
 export * from "./dashboard.component";
 export * from "./settings";
 export * from "./profiler";
+export * from "./servercommands";

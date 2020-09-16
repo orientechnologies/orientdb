@@ -138,6 +138,13 @@ class PermissionService {
     }
 
     menus.push({
+      name: "servercommands",
+      title: "Server Commands",
+      template: "servercommands",
+      icon: "fa-bolt"
+    });
+
+    menus.push({
       name: "settings",
       title: "Settings",
       icon: "fa-cog"

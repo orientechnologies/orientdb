@@ -24,6 +24,7 @@ import { ImportManagerComponent } from "./importmanager";
 import { SecurityManagerComponent } from "./stats/security";
 import { StudioSettingsComponent } from "./settings";
 import { ProfilerComponent } from "./profiler";
+import { ServerCommandsComponent } from "./servercommands";
 
 declare const angular: any;
 
@@ -35,6 +36,7 @@ const subComponents = {
   importers: ImportManagerComponent,
   security: SecurityManagerComponent,
   settings: StudioSettingsComponent,
+  servercommands: ServerCommandsComponent,
   profiler: ProfilerComponent
 };
 
