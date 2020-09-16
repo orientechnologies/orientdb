@@ -377,6 +377,8 @@ public class ODefaultAuditing
         globalHook.log(operation, dbName, user, message);
       }
     } else { // Use the global hook.
+      String userName = null;
+      if (user != null) userName = user.getName();
       if (globalHook == null)
         OLogManager.instance()
             .error(
@@ -385,7 +387,7 @@ public class ODefaultAuditing
                 null,
                 operation,
                 dbName,
-                user.getName(),
+                userName,
                 message);
       else globalHook.log(operation, dbName, user, message);
     }
