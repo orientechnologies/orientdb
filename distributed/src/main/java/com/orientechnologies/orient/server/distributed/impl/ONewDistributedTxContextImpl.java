@@ -37,6 +37,8 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
   private final List<ORID>    lockedRids   = new ArrayList<>();
   private final List<Promise<ORID>> promisedRids = new LinkedList<>();
   private final List<Object>  lockedKeys   = new ArrayList<>();
+  private final List<Promise<Object>> promisedKeys = new LinkedList<>();
+
   private Status status;
   private final OTransactionId transactionId;
 
@@ -79,14 +81,55 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
   }
 
   @Override
-  public void promise(ORID rid, int version) {
-    OSimplePromiseManager<ORID> recordPromiseManager = shared.getRecordPromiseManager();
+  public void lock(ORID rid, long timeout) {
+    // TODO: the timeout is only in the lock manager, this implementation may need evolution
+    OSimpleLockManager<ORID> recordLockManager = shared.getRecordLockManager();
     try {
-      recordPromiseManager.promise(rid, version, transactionId);
-    } catch(OLockException ex) {
+      recordLockManager.lock(rid, timeout);
+    } catch (OLockException ex) {
       this.unlock();
+      throw new ODistributedRecordLockedException(shared.getLocalNodeName(), rid, timeout);
+    }
+    lockedRids.add(rid);
+  }
+
+  @Override
+  public void acquireIndexKeyPromise(Object key) {
+    OSimplePromiseManager<Object> promiseManager = shared.getIndexKeyPromiseManager();
+    try {
+      promiseManager.promise(key, -1, transactionId);
+    } catch (OLockException ex) {
+      this.release();
+      throw new ODistributedKeyLockedException(shared.getLocalNodeName(), key, promiseManager.getTimeout());
+    }
+    promisedKeys.add(new Promise<>(key, -1, transactionId));
+  }
+
+  @Override
+  public OTransactionId lockIndexKeyPromise(Object key, boolean force) {
+    OSimplePromiseManager<Object> promiseManager = shared.getIndexKeyPromiseManager();
+    OTransactionId previousTxId = null;
+    try {
+      previousTxId = promiseManager.lock(key, -1, transactionId, force);
+    } catch(OLockException ex) {
+      this.release();
+      throw new ODistributedKeyLockedException(
+          shared.getLocalNodeName(), key, promiseManager.getTimeout());
+    }
+    // todo: is it safe if this duplicates? happens when there is no previous promise and this is called directly.
+    promisedKeys.add(new Promise<>(key, -1, transactionId));
+    return previousTxId;
+  }
+
+  @Override
+  public void acquirePromise(ORID rid, int version) {
+    OSimplePromiseManager<ORID> promiseManager = shared.getRecordPromiseManager();
+    try {
+      promiseManager.promise(rid, version, transactionId);
+    } catch(OLockException ex) {
+      this.release();
       throw new ODistributedRecordLockedException(
-          shared.getLocalNodeName(), rid, recordPromiseManager.getTimeout());
+          shared.getLocalNodeName(), rid, promiseManager.getTimeout());
     }
     promisedRids.add(new Promise<>(rid, version, transactionId));
   }
@@ -98,26 +141,13 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
     try {
       previousTxId = recordPromiseManager.lock(rid, version, transactionId, force);
     } catch(OLockException ex) {
-      this.unlock();
+      this.release();
       throw new ODistributedRecordLockedException(
           shared.getLocalNodeName(), rid, recordPromiseManager.getTimeout());
     }
     // todo: is it safe if this duplicates? happens when there is no previous promise and this is called directly.
     promisedRids.add(new Promise<>(rid, version, transactionId));
     return previousTxId;
-  }
-
-  @Override
-  public void lock(ORID rid, long timeout) {
-    // TODO: the timeout is only in the lock manager, this implementation may need evolution
-    OSimpleLockManager<ORID> recordLockManager = shared.getRecordLockManager();
-    try {
-      recordLockManager.lock(rid, timeout);
-    } catch (OLockException ex) {
-      this.unlock();
-      throw new ODistributedRecordLockedException(shared.getLocalNodeName(), rid, timeout);
-    }
-    lockedRids.add(rid);
   }
 
   @Override
@@ -155,6 +185,7 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
   @Override
   public void destroy() {
     unlock();
+    release();
   }
 
   @Override
@@ -169,15 +200,23 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
       shared.getRecordLockManager().unlock(lockedRid);
     }
     lockedRids.clear();
-    for (Promise<ORID> promise: promisedRids) {
-      shared.getRecordPromiseManager().release(promise.getKey(), promise.getVersion());
-    }
-    promisedRids.clear();
-
     for (Object lockedKey : lockedKeys) {
       shared.getIndexKeyLockManager().unlock(lockedKey);
     }
     lockedKeys.clear();
+  }
+
+  @Override
+  public void release() {
+    shared.rollback(this.transactionId);
+    for (Promise<ORID> promise: promisedRids) {
+      shared.getRecordPromiseManager().release(promise.getKey(), promise.getVersion());
+    }
+    promisedRids.clear();
+    for (Object promisedKey : promisedKeys) {
+      shared.getIndexKeyPromiseManager().release(promisedKey, -1);
+    }
+    promisedKeys.clear();
   }
 
   @Override

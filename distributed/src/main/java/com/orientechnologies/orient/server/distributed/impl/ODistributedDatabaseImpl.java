@@ -111,6 +111,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private final OSimpleLockManager<ORID> recordLockManager;
   private final OSimplePromiseManager<ORID> recordPromiseManager;
   private final OSimpleLockManager<Object> indexKeyLockManager;
+  private final OSimplePromiseManager<Object> indexKeyPromiseManager;
   private AtomicLong operationsRunnig = new AtomicLong(0);
   private ODistributedSynchronizedSequence sequenceManager;
   private final AtomicLong pending = new AtomicLong();
@@ -177,6 +178,10 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     return indexKeyLockManager;
   }
 
+  public OSimplePromiseManager<Object> getIndexKeyPromiseManager() {
+    return indexKeyPromiseManager;
+  }
+
   public void startOperation() {
     waitDistributedIsReady();
     operationsRunnig.incrementAndGet();
@@ -210,6 +215,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       recordLockManager = null;
       recordPromiseManager = null;
       indexKeyLockManager = null;
+      indexKeyPromiseManager = null;
       return;
     }
 
@@ -298,6 +304,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     recordLockManager = new OSimpleLockManagerImpl<>(timeout);
     recordPromiseManager = new OSimplePromiseManager<>();
     indexKeyLockManager = new OSimpleLockManagerImpl<>(timeout);
+    indexKeyPromiseManager = new OSimplePromiseManager<>();
     sequenceManager = new ODistributedSynchronizedSequence(localNodeName, sequenceSize);
   }
 
@@ -881,6 +888,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       recordLockManager.reset();
       recordPromiseManager.reset();
       indexKeyLockManager.reset();
+      indexKeyPromiseManager.reset();
     }
   }
 

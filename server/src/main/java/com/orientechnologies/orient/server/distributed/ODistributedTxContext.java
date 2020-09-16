@@ -34,13 +34,19 @@ import java.util.Set;
 public interface ODistributedTxContext {
   void lock(ORID rid);
 
-  void promise(ORID rid, int version);
-
-  OTransactionId lockPromise(ORID rid, int version, boolean force);
-
   void lock(ORID rid, long timeout);
 
   void lockIndexKey(Object rid);
+
+  void acquirePromise(ORID rid, int version);
+
+  OTransactionId lockPromise(ORID rid, int version, boolean force);
+
+  void acquireIndexKeyPromise(Object key);
+
+  OTransactionId lockIndexKeyPromise(Object key, boolean force);
+
+  void release();
 
   ODistributedRequestId getReqId();
 
