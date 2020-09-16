@@ -413,7 +413,11 @@ public class OSecurityEngine {
               (db -> {
                 OBasicCommandContext ctx = new OBasicCommandContext();
                 ctx.setDatabase(db);
-                ctx.setVariable("$currentUser", user);
+                ctx.setDynamicVariable(
+                    "$currentUser",
+                    (inContext) -> {
+                      return user;
+                    });
                 return predicate.evaluate(record, ctx);
               }))
           .get();
@@ -443,7 +447,11 @@ public class OSecurityEngine {
               (db -> {
                 OBasicCommandContext ctx = new OBasicCommandContext();
                 ctx.setDatabase(db);
-                ctx.setVariable("$currentUser", user);
+                ctx.setDynamicVariable(
+                    "$currentUser",
+                    (inContext) -> {
+                      return user;
+                    });
                 return predicate.evaluate(record, ctx);
               }))
           .get();

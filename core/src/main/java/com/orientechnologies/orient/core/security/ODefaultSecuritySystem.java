@@ -474,7 +474,7 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
     OGlobalUser userCfg = null;
     // This will throw an IllegalArgumentException if iUserName is null or empty.
     // However, a null or empty iUserName is possible with some security implementations.
-    if (serverConfig.usersManagement()) {
+    if (serverConfig != null && serverConfig.usersManagement()) {
       if (username != null && !username.isEmpty()) userCfg = serverConfig.getUser(username);
     }
     return userCfg;
@@ -1036,7 +1036,11 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
   }
 
   public boolean existsUser(String user) {
-    return serverConfig.existsUser(user);
+    if (serverConfig != null && serverConfig.usersManagement()) {
+      return serverConfig.existsUser(user);
+    } else {
+      return false;
+    }
   }
 
   public void addUser(String user, String password, String permissions) {
@@ -1072,10 +1076,6 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
 
   @Override
   public OSecurityInternal newSecurity(String database) {
-    if (isEnabled() || (serverConfig != null && serverConfig.usersManagement())) {
-      return new OSecurityServerExternal(this);
-    } else {
-      return new OSecurityShared();
-    }
+    return new OSecurityShared(this);
   }
 }
