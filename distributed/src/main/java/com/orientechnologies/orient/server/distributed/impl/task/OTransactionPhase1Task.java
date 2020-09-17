@@ -58,7 +58,6 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TimerTask;
 import java.util.TreeSet;
-import java.util.stream.Collectors;
 
 /** @author luigi dell'aquila (l.dellaquila - at - orientdb.com) */
 public class OTransactionPhase1Task extends OAbstractReplicatedTask implements OLockKeySource {
@@ -487,17 +486,39 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask implements O
 
   @Override
   public SortedSet<ORID> getRids() {
-    Set<ORID> set;
+    SortedSet<ORID> set = new TreeSet<ORID>();
     if (operations.size() > 0) {
-      set = operations.stream().map((x) -> x.getId().copy()).collect(Collectors.toSet());
+      for (ORecordOperationRequest operation : operations) {
+        mapRidOp(set, operation);
+      }
     } else {
-      set = ops.stream().map((x) -> x.getRID().copy()).collect(Collectors.toSet());
+      for (ORecordOperation operation : ops) {
+        mapRid(set, operation);
+      }
     }
-    return new TreeSet<ORID>(set);
+    return set;
   }
 
   @Override
   public SortedSet<OTransactionUniqueKey> getUniqueKeys() {
     return uniqueIndexKeys;
+  }
+
+  private static void mapRidOp(Set<ORID> set, ORecordOperationRequest operation) {
+    if (operation.getType() == ORecordOperation.CREATED) {
+      // This guarantee that two allocation on the same cluster are not executed at
+      // the same time
+      set.add(new ORecordId(operation.getId().getClusterId(), -1));
+    }
+    set.add(operation.getId().copy());
+  }
+
+  public static void mapRid(Set<ORID> set, ORecordOperation operation) {
+    if (operation.getType() == ORecordOperation.CREATED) {
+      // This guarantee that two allocation on the same cluster are not executed at
+      // the same time
+      set.add(new ORecordId(operation.getRID().getClusterId(), -1));
+    }
+    set.add(operation.getRID().copy());
   }
 }
