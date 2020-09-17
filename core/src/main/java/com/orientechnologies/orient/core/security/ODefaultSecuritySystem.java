@@ -100,6 +100,7 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
     if (serverConfig != null) {
       this.load(serverConfig.getConfigurationFile());
     }
+    onAfterDynamicPlugins();
   }
 
   public void shutdown() {}

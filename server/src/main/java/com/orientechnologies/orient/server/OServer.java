@@ -880,7 +880,7 @@ public class OServer {
     final ODatabaseDocumentInternal database;
     boolean serverAuth = false;
     database = databases.open(iDbUrl, user, password);
-    if (database.getUser().getUserType().equals(OSystemUser.SERVER_USER_TYPE)) {
+    if (OSystemUser.SERVER_USER_TYPE.equals(database.getUser().getUserType())) {
       serverAuth = true;
     }
     if (serverAuth && data != null) {
