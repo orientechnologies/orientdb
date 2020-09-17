@@ -7496,7 +7496,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   private void applyUniqueIndexChange(final String indexName, final Object key) {
-    final OBaseIndexEngine indexEngine = indexEngineNameMap.get(indexName);
-    indexEngine.updateUniqueIndexVersion(key);
+    if (!isDistributedMode(lastMetadata)) {
+      final OBaseIndexEngine indexEngine = indexEngineNameMap.get(indexName);
+      indexEngine.updateUniqueIndexVersion(key);
+    }
   }
 }

@@ -100,12 +100,12 @@ public final class OVersionPositionMapBucket extends ODurablePage {
 
   public int getVersion(int index) {
     final int entryPosition = index; // ENTRIES_OFFSET + ridBagId * ENTRY_SIZE;
-    final int currentSize = getIntValue(entryPosition);
-    if (currentSize < 0) {
-      throw new OStorageException("RidBag is deleted and can not be used");
+    final int value = getIntValue(entryPosition);
+    if (value < 0) {
+      throw new OStorageException("Entry might be deleted and can not be used");
     }
-    System.out.println("get index " + index + " version=" + currentSize);
-    return currentSize;
+    System.out.print("(get index " + index + " version=" + value + ")->");
+    return value;
   }
 
   public void incrementVersion(int index) {
@@ -114,9 +114,8 @@ public final class OVersionPositionMapBucket extends ODurablePage {
     if (value < 0) {
       throw new OStorageException("RidBag is deleted and can not be used");
     }
-    System.out.println("inc index " + index + " from " + value + " to " + value + 1);
+    System.out.print("(inc index " + index + " from " + value + " to " + value + 1 + ")->");
     setIntValue(entryPosition, value + 1);
-
     assert value + 1 == getVersion(index);
   }
 

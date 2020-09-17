@@ -171,13 +171,11 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
             // final int pageIndex = ridBagId / Bucket.MAX_BUCKET_SIZE;
             // final int localRidBagId = pageIndex - ridBagId * Bucket.MAX_BUCKET_SIZE;
             final int startPosition = (hash - 1) * 4;
-            System.out.println("pos: " + startPosition);
-
             // which page?
             // final int numberOfEntriesPerPage = OVersionPage.PAGE_SIZE / 4;
             // first page is the metadata page
             final int pageIndex = (int) Math.ceil(startPosition / OVersionPage.PAGE_SIZE) + 1;
-            System.out.println("page: " + pageIndex);
+            System.out.print("hash: " + hash + "->" + "pos: " + startPosition + "->" + "page: " + pageIndex + "->");
 
             final OCacheEntry cacheEntry =
                 loadPageForWrite(atomicOperation, fileId, pageIndex, false, true);
@@ -191,9 +189,8 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
             releaseExclusiveLock();
           }
         });
-
     int version = getVersion(hash);
-    System.out.println("version (updated): " + version);
+    System.out.print("version (updated): " + version + "\n");
 
     // TODO: [DR] better use the existing update method?
     // version = ++keyVersions[hash];
@@ -210,24 +207,22 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
   @Override
   public int getVersion(final int hash) {
     final int startPosition = (hash - 1) * 4;
-    System.out.println("pos: " + startPosition);
-
     // on which page?
     // final int numberOfEntriesPerPage = OVersionPage.PAGE_SIZE / 4;
     final int pageIndex = (int) Math.ceil(startPosition / OVersionPage.PAGE_SIZE) + 1;
-    System.out.println("page: " + pageIndex);
+    System.out.print("pos: " + startPosition + "->" + "page: " + pageIndex + "->");
 
     // based on size map
     acquireSharedLock();
     try {
       // final int pageIndex = ridBagId / Bucket.MAX_BUCKET_SIZE;
       // final int localRidBagId = pageIndex - ridBagId * Bucket.MAX_BUCKET_SIZE;
-
       final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
       final OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
       try {
         final OVersionPositionMapBucket bucket = new OVersionPositionMapBucket(cacheEntry);
         final int version = bucket.getVersion(startPosition);
+        System.out.println();
         // return bucket.get(startPosition);
         return version;
       } finally {
