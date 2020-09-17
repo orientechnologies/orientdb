@@ -2434,7 +2434,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             }
             lockIndexes(indexOperations);
             checkReadOnlyConditions();
-
             commitIndexes(indexOperations);
           } catch (final IOException | RuntimeException e) {
             rollback = true;

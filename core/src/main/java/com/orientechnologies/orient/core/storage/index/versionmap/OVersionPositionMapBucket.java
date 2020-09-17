@@ -98,6 +98,28 @@ public final class OVersionPositionMapBucket extends ODurablePage {
         new ClusterPositionMapBucketTruncateLastEntryPO(status, pageIndex, recordPosition));
   }
 
+  public int getVersion(int index) {
+    final int entryPosition = index; // ENTRIES_OFFSET + ridBagId * ENTRY_SIZE;
+    final int currentSize = getIntValue(entryPosition);
+    if (currentSize < 0) {
+      throw new OStorageException("RidBag is deleted and can not be used");
+    }
+    System.out.println("get index " + index + " version=" + currentSize);
+    return currentSize;
+  }
+
+  public void incrementVersion(int index) {
+    final int entryPosition = index;
+    final int value = getIntValue(entryPosition);
+    if (value < 0) {
+      throw new OStorageException("RidBag is deleted and can not be used");
+    }
+    System.out.println("inc index " + index + " from " + value + " to " + value + 1);
+    setIntValue(entryPosition, value + 1);
+
+    assert value + 1 == getVersion(index);
+  }
+
   public PositionEntry get(int index) {
     int size = getIntValue(SIZE_OFFSET);
     if (index >= size) {

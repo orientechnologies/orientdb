@@ -492,7 +492,6 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
     if (prefetchRecords) {
       pagesToPrefetch = OGlobalConfiguration.QUERY_SCAN_PREFETCH_PAGES.getValueAsInteger();
     }
-
     return readRecord(clusterPosition, pagesToPrefetch);
   }
 
@@ -509,7 +508,6 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
         if (positionEntry == null) {
           return null;
         }
-
         return internalReadRecord(
             clusterPosition,
             positionEntry.getPageIndex(),
@@ -726,11 +724,9 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
           try {
             final OClusterPositionMapBucket.PositionEntry positionEntry =
                 clusterPositionMap.get(clusterPosition, 1, atomicOperation);
-
             if (positionEntry == null) {
               return;
             }
-
             int nextRecordPosition = positionEntry.getRecordPosition();
             long nextPageIndex = positionEntry.getPageIndex();
 

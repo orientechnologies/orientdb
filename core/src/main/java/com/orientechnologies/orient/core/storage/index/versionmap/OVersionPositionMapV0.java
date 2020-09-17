@@ -20,17 +20,28 @@
 
 package com.orientechnologies.orient.core.storage.index.versionmap;
 
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.serialization.types.OByteSerializer;
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.util.OCommonConst;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OVersionPositionMapException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
+import com.orientechnologies.orient.core.storage.cluster.OClusterPage;
+import com.orientechnologies.orient.core.storage.cluster.v2.OPaginatedClusterStateV2;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.version.OVersionPage;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISK_CACHE_PAGE_SIZE;
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY;
@@ -45,12 +56,12 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
   private long fileId;
 
   // TODO: move to VPM
-  private final int[] keyVersions;
-  private static final int DEFAULT_VERSION = 0;
-  private static final int CONCURRENT_DISTRIBUTED_TRANSACTIONS = 1000;
-  private static final int SAFETY_FILL_FACTOR = 10;
-  private static final int DEFAULT_VERSION_ARRAY_SIZE =
-      CONCURRENT_DISTRIBUTED_TRANSACTIONS * SAFETY_FILL_FACTOR;
+  // private final int[] keyVersions;
+  // private static final int DEFAULT_VERSION = 0;
+  // private static final int CONCURRENT_DISTRIBUTED_TRANSACTIONS = 1000;
+  // private static final int SAFETY_FILL_FACTOR = 10;
+  // private static final int DEFAULT_VERSION_ARRAY_SIZE =
+  //     CONCURRENT_DISTRIBUTED_TRANSACTIONS * SAFETY_FILL_FACTOR;
 
   public OVersionPositionMapV0(
       final OAbstractPaginatedStorage storage,
@@ -60,10 +71,10 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     super(storage, name, extension, lockName);
 
     // TODO: [DR] merge in[] into versionPositionMap
-    keyVersions = new int[DEFAULT_VERSION_ARRAY_SIZE];
-    for (int i = 0; i < DEFAULT_VERSION_ARRAY_SIZE; i++) {
-      keyVersions[i] = DEFAULT_VERSION;
-    }
+    // keyVersions = new int[DEFAULT_VERSION_ARRAY_SIZE];
+    // for (int i = 0; i < DEFAULT_VERSION_ARRAY_SIZE; i++) {
+    //   keyVersions[i] = DEFAULT_VERSION;
+    // }
   }
 
   @Override
@@ -151,18 +162,250 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
 
   @Override
   public void updateVersion(final int hash) {
+    final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+    executeInsideComponentOperation(
+        atomicOperation,
+        operation -> {
+          acquireExclusiveLock();
+          try {
+            // final int pageIndex = ridBagId / Bucket.MAX_BUCKET_SIZE;
+            // final int localRidBagId = pageIndex - ridBagId * Bucket.MAX_BUCKET_SIZE;
+            final int startPosition = (hash - 1) * 4;
+            System.out.println("pos: " + startPosition);
+
+            // which page?
+            // final int numberOfEntriesPerPage = OVersionPage.PAGE_SIZE / 4;
+            // first page is the metadata page
+            final int pageIndex = (int) Math.ceil(startPosition / OVersionPage.PAGE_SIZE) + 1;
+            System.out.println("page: " + pageIndex);
+
+            final OCacheEntry cacheEntry =
+                loadPageForWrite(atomicOperation, fileId, pageIndex, false, true);
+            try {
+              final OVersionPositionMapBucket bucket = new OVersionPositionMapBucket(cacheEntry);
+              bucket.incrementVersion(startPosition);
+            } finally {
+              releasePageFromWrite(atomicOperation, cacheEntry);
+            }
+          } finally {
+            releaseExclusiveLock();
+          }
+        });
+
+    int version = getVersion(hash);
+    System.out.println("version (updated): " + version);
+
     // TODO: [DR] better use the existing update method?
-    final int version = ++keyVersions[hash];
-    keyVersions[hash] = version;
-    System.out.println("update: " + hash + ", " + version);
+    // version = ++keyVersions[hash];
+    // keyVersions[hash] = version;
+    // System.out.println("update: " + hash + ", " + version);
+
+    // System.out.println(intToByteArray(version));
   }
+
+  // private byte[] intToByteArray(final int value) {
+  //  return ByteBuffer.allocate(4).putInt(value).array();
+  // }
 
   @Override
   public int getVersion(final int hash) {
-    final int version = keyVersions[hash];
-    System.out.println("get: " + hash + ", " + version);
-    return version;
+    final int startPosition = (hash - 1) * 4;
+    System.out.println("pos: " + startPosition);
+
+    // on which page?
+    // final int numberOfEntriesPerPage = OVersionPage.PAGE_SIZE / 4;
+    final int pageIndex = (int) Math.ceil(startPosition / OVersionPage.PAGE_SIZE) + 1;
+    System.out.println("page: " + pageIndex);
+
+    // based on size map
+    acquireSharedLock();
+    try {
+      // final int pageIndex = ridBagId / Bucket.MAX_BUCKET_SIZE;
+      // final int localRidBagId = pageIndex - ridBagId * Bucket.MAX_BUCKET_SIZE;
+
+      final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+      final OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
+      try {
+        final OVersionPositionMapBucket bucket = new OVersionPositionMapBucket(cacheEntry);
+        final int version = bucket.getVersion(startPosition);
+        // return bucket.get(startPosition);
+        return version;
+      } finally {
+        releasePageFromRead(atomicOperation, cacheEntry);
+      }
+    } catch (final IOException e) {
+      throw OException.wrapException(
+          new OStorageException("Error during reading the size of rid bag"), e);
+    } finally {
+      releaseSharedLock();
+    }
+
+    // based on paginaged cluster v2
+    /*try {
+      acquireSharedLock();
+
+      final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+      final OVersionPositionMapBucket.PositionEntry positionEntry =
+          new OVersionPositionMapBucket.PositionEntry(pageIndex, startPosition);
+      final int pageCount = 1;
+
+      internalReadRecord(
+          positionEntry.getPageIndex() + 1,
+          positionEntry.getRecordPosition(),
+          pageCount,
+          atomicOperation);
+    } catch (final IOException e) {
+      throw new IllegalArgumentException("damn");
+    } finally {
+      releaseSharedLock();
+    }*/
+
+    // final int version = keyVersions[hash];
+    // System.out.println("get: " + hash + ", " + version);
+    // return version;
   }
+
+  /*private ORawBuffer internalReadRecord(
+      final long pageIndex,
+      final int recordPosition,
+      int pageCount,
+      final OAtomicOperation atomicOperation)
+      throws IOException {
+    if (pageCount > 1) {
+      final OCacheEntry stateCacheEntry =
+          loadPageForRead(atomicOperation, fileId, STATE_ENTRY_INDEX, false);
+      try {
+        final OPaginatedClusterStateV2 state = new OPaginatedClusterStateV2(stateCacheEntry);
+        pageCount = (int) Math.min(state.getFileSize() + 1 - pageIndex, pageCount);
+      } finally {
+        releasePageFromRead(atomicOperation, stateCacheEntry);
+      }
+    }
+
+    int recordVersion;
+    final OCacheEntry cacheEntry =
+        loadPageForRead(atomicOperation, fileId, pageIndex, false, pageCount);
+    try {
+      final OClusterPage localPage = new OClusterPage(cacheEntry);
+      recordVersion = localPage.getRecordVersion(recordPosition);
+    } finally {
+      releasePageFromRead(atomicOperation, cacheEntry);
+    }
+
+    final byte[] fullContent = readFullEntry(pageIndex, recordPosition, atomicOperation, pageCount);
+    if (fullContent == null) {
+      return null;
+    }
+    int fullContentPosition = 0;
+
+    final byte recordType = fullContent[fullContentPosition];
+    fullContentPosition++;
+
+    final int readContentSize =
+        OIntegerSerializer.INSTANCE.deserializeNative(fullContent, fullContentPosition);
+    fullContentPosition += OIntegerSerializer.INT_SIZE;
+
+    byte[] recordContent =
+        Arrays.copyOfRange(fullContent, fullContentPosition, fullContentPosition + readContentSize);
+
+    return new ORawBuffer(recordContent, recordVersion, recordType);
+  }
+
+  private byte[] readFullEntry(
+      long pageIndex, int recordPosition, final OAtomicOperation atomicOperation, int pageCount)
+      throws IOException {
+    final List<byte[]> recordChunks = new ArrayList<>(2);
+    int contentSize = 0;
+
+    if (pageCount > 1) {
+      final OCacheEntry stateCacheEntry =
+          loadPageForRead(atomicOperation, fileId, STATE_ENTRY_INDEX, false);
+      try {
+        final OPaginatedClusterStateV2 state = new OPaginatedClusterStateV2(stateCacheEntry);
+        pageCount = (int) Math.min(state.getFileSize() + 1 - pageIndex, pageCount);
+      } finally {
+        releasePageFromRead(atomicOperation, stateCacheEntry);
+      }
+    }
+
+    long nextPagePointer;
+    boolean firstEntry = true;
+    do {
+      final OCacheEntry cacheEntry =
+          loadPageForRead(atomicOperation, fileId, pageIndex, false, pageCount);
+      try {
+        final OClusterPage localPage = new OClusterPage(cacheEntry);
+
+        if (localPage.isDeleted(recordPosition)) {
+          if (recordChunks.isEmpty()) {
+            return null;
+          } else {
+            // TODO: throw new OPaginatedClusterException(
+            //    "Content of record " + new ORecordId(id, clusterPosition) + " was broken", this);
+          }
+        }
+
+        final byte[] content =
+            localPage.getRecordBinaryValue(
+                recordPosition, 0, localPage.getRecordSize(recordPosition));
+        assert content != null;
+
+        if (firstEntry
+            && content[content.length - OLongSerializer.LONG_SIZE - OByteSerializer.BYTE_SIZE]
+                == 0) {
+          return null;
+        }
+
+        recordChunks.add(content);
+        nextPagePointer =
+            OLongSerializer.INSTANCE.deserializeNative(
+                content, content.length - OLongSerializer.LONG_SIZE);
+        contentSize += content.length - OLongSerializer.LONG_SIZE - OByteSerializer.BYTE_SIZE;
+
+        firstEntry = false;
+      } finally {
+        releasePageFromRead(atomicOperation, cacheEntry);
+      }
+
+      pageIndex = getPageIndex(nextPagePointer);
+      recordPosition = getRecordPosition(nextPagePointer);
+    } while (nextPagePointer >= 0);
+
+    return convertRecordChunksToSingleChunk(recordChunks, contentSize);
+  }
+
+  private static final int PAGE_INDEX_OFFSET = 16;
+  private static final int RECORD_POSITION_MASK = 0xFFFF;
+
+  private static int getRecordPosition(final long nextPagePointer) {
+    return (int) (nextPagePointer & RECORD_POSITION_MASK);
+  }
+
+  private static long getPageIndex(final long nextPagePointer) {
+    return nextPagePointer >>> PAGE_INDEX_OFFSET;
+  }
+
+  private static byte[] convertRecordChunksToSingleChunk(
+      final List<byte[]> recordChunks, final int contentSize) {
+    final byte[] fullContent;
+    if (recordChunks.size() == 1) {
+      fullContent = recordChunks.get(0);
+    } else {
+      fullContent = new byte[contentSize + OLongSerializer.LONG_SIZE + OByteSerializer.BYTE_SIZE];
+      int fullContentPosition = 0;
+      for (final byte[] recordChuck : recordChunks) {
+        System.arraycopy(
+            recordChuck,
+            0,
+            fullContent,
+            fullContentPosition,
+            recordChuck.length - OLongSerializer.LONG_SIZE - OByteSerializer.BYTE_SIZE);
+        fullContentPosition +=
+            recordChuck.length - OLongSerializer.LONG_SIZE - OByteSerializer.BYTE_SIZE;
+      }
+    }
+    return fullContent;
+  }*/
 
   public void openVPM(final OAtomicOperation atomicOperation) throws IOException {
     fileId = openFile(atomicOperation, getFullName());
@@ -175,8 +418,15 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
       addInitializedPage(atomicOperation);
 
       // then let us add several empty data pages
-      int numberOfPages = (int) Math.ceil((1000*10*4) / OVersionPage.PAGE_SIZE);
-      numberOfPages = (numberOfPages == 0) ? 1 : numberOfPages;
+      final int maxNumberOfExpectedThreads = 1000;
+      final int magicSafetyNumber = 10;
+      final int sizeOfIntInBytes = 4;
+      final int numberOfPages =
+          (int)
+                  Math.ceil(
+                      (maxNumberOfExpectedThreads * magicSafetyNumber * sizeOfIntInBytes)
+                          / OVersionPage.PAGE_SIZE)
+              + 1;
       for (int i = 0; i < numberOfPages; i++) {
         addInitializedPage(atomicOperation);
       }
@@ -201,13 +451,13 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     }
   }
 
-  public void flushVPM() {
-    writeCache.flush(fileId);
-  }
+  // public void flushVPM() {
+  //  writeCache.flush(fileId);
+  // }
 
-  public void closeVPM(final boolean flush) {
-    readCache.closeFile(fileId, flush, writeCache);
-  }
+  // public void closeVPM(final boolean flush) {
+  //  readCache.closeFile(fileId, flush, writeCache);
+  // }
 
   public void truncate(final OAtomicOperation atomicOperation) throws IOException {
     final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, 0, false, true);
@@ -228,7 +478,7 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     setName(newName);
   }
 
-  public long add(
+  /*public long add(
       final long pageIndex, final int recordPosition, final OAtomicOperation atomicOperation)
       throws IOException {
     OCacheEntry cacheEntry;
@@ -349,9 +599,9 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     } finally {
       releasePageFromWrite(atomicOperation, entryPointEntry);
     }
-  }
+  }*/
 
-  public void update(
+  /*public void update(
       final long versionPosition,
       final OVersionPositionMapBucket.PositionEntry entry,
       final OAtomicOperation atomicOperation)
@@ -675,7 +925,7 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     return ORID.VERSION_POS_INVALID;
   }
 
-  /** Returns the next position available. */
+  // Returns the next position available.
   long getNextPosition(final OAtomicOperation atomicOperation) throws IOException {
     final long pageIndex = getLastPage(atomicOperation);
     final OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false, 1);
@@ -686,7 +936,7 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     } finally {
       releasePageFromRead(atomicOperation, cacheEntry);
     }
-  }
+  }*/
 
   public long getFileId() {
     return fileId;
