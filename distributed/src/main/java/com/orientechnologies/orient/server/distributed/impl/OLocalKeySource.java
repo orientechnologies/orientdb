@@ -1,13 +1,14 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.server.distributed.impl.task.OLockKeySource;
+import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1Task;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionUniqueKey;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.stream.Collectors;
 
 public final class OLocalKeySource implements OLockKeySource {
   private final OTransactionId txId;
@@ -49,9 +50,10 @@ public final class OLocalKeySource implements OLockKeySource {
 
   @Override
   public SortedSet<ORID> getRids() {
-    return new TreeSet<ORID>(
-        iTx.getRecordOperations().stream()
-            .map((x) -> x.getRID().copy())
-            .collect(Collectors.toSet()));
+    SortedSet<ORID> set = new TreeSet<ORID>();
+    for (ORecordOperation operation : iTx.getRecordOperations()) {
+      OTransactionPhase1Task.mapRid(set, operation);
+    }
+    return set;
   }
 }
