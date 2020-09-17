@@ -30,7 +30,6 @@ import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.version.versionpage.*;
-
 import java.util.Set;
 
 public final class OVersionPage extends ODurablePage {

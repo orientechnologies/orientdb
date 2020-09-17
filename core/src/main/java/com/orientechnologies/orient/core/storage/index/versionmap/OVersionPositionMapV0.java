@@ -20,31 +20,17 @@
 
 package com.orientechnologies.orient.core.storage.index.versionmap;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISK_CACHE_PAGE_SIZE;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY;
+
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.serialization.types.OByteSerializer;
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.exception.OVersionPositionMapException;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
-import com.orientechnologies.orient.core.storage.cluster.OClusterPage;
-import com.orientechnologies.orient.core.storage.cluster.v2.OPaginatedClusterStateV2;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.version.OVersionPage;
-
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISK_CACHE_PAGE_SIZE;
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY;
 
 public final class OVersionPositionMapV0 extends OVersionPositionMap {
   private static final int STATE_ENTRY_INDEX = 0;
@@ -175,7 +161,16 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
             // final int numberOfEntriesPerPage = OVersionPage.PAGE_SIZE / 4;
             // first page is the metadata page
             final int pageIndex = (int) Math.ceil(startPosition / OVersionPage.PAGE_SIZE) + 1;
-            System.out.print("hash: " + hash + "->" + "pos: " + startPosition + "->" + "page: " + pageIndex + "->");
+            System.out.print(
+                "hash: "
+                    + hash
+                    + "->"
+                    + "pos: "
+                    + startPosition
+                    + "->"
+                    + "page: "
+                    + pageIndex
+                    + "->");
 
             final OCacheEntry cacheEntry =
                 loadPageForWrite(atomicOperation, fileId, pageIndex, false, true);

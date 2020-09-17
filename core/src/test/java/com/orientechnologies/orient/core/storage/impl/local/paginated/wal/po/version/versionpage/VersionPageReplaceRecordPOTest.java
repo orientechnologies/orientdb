@@ -5,14 +5,13 @@ import com.orientechnologies.common.directmemory.OPointer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
-import com.orientechnologies.orient.core.storage.version.OVersionPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
-import org.junit.Assert;
-import org.junit.Test;
-
+import com.orientechnologies.orient.core.storage.version.OVersionPage;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class VersionPageReplaceRecordPOTest {
   @Test

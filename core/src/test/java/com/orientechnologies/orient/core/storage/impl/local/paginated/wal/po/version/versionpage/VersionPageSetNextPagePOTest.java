@@ -7,11 +7,10 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.version.OVersionPage;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.nio.ByteBuffer;
 import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class VersionPageSetNextPagePOTest {
   @Test

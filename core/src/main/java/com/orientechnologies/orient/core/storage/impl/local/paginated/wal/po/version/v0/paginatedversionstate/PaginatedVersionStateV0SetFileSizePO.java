@@ -5,7 +5,6 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.versionmap.OPaginatedVersionStateV0;
-
 import java.nio.ByteBuffer;
 
 public final class PaginatedVersionStateV0SetFileSizePO extends PageOperationRecord {

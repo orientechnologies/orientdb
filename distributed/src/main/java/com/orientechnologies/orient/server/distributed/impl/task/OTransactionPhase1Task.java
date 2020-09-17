@@ -294,46 +294,46 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask implements O
       ORecord record = null;
       switch (type) {
         case ORecordOperation.CREATED:
-        {
-          record = ORecordSerializerNetworkDistributed.INSTANCE.fromStream(req.getRecord(), null);
-          ORecordInternal.setRecordSerializer(record, database.getSerializer());
-          break;
-        }
+          {
+            record = ORecordSerializerNetworkDistributed.INSTANCE.fromStream(req.getRecord(), null);
+            ORecordInternal.setRecordSerializer(record, database.getSerializer());
+            break;
+          }
         case ORecordOperation.UPDATED:
-        {
-          if (req.getRecordType() == ODocument.RECORD_TYPE) {
+          {
+            if (req.getRecordType() == ODocument.RECORD_TYPE) {
+              record = database.load(req.getId());
+              if (record == null) {
+                record = new ODocument();
+              }
+              ((ODocument) record).deserializeFields();
+              ODocumentInternal.clearTransactionTrackData((ODocument) record);
+              ODocumentSerializerDeltaDistributed.instance()
+                  .deserializeDelta(req.getRecord(), (ODocument) record);
+              /// Got record with empty deltas, at this level we mark the record dirty anyway.
+              if (!req.isContentChanged()) {
+                record.setDirtyNoChanged();
+              } else {
+                record.setDirty();
+              }
+            } else {
+              record =
+                  ORecordSerializerNetworkDistributed.INSTANCE.fromStream(req.getRecord(), null);
+              ORecordInternal.setRecordSerializer(record, database.getSerializer());
+            }
+            break;
+          }
+        case ORecordOperation.DELETED:
+          {
             record = database.load(req.getId());
             if (record == null) {
-              record = new ODocument();
+              record =
+                  Orient.instance()
+                      .getRecordFactoryManager()
+                      .newInstance(req.getRecordType(), req.getId().getClusterId(), database);
             }
-            ((ODocument) record).deserializeFields();
-            ODocumentInternal.clearTransactionTrackData((ODocument) record);
-            ODocumentSerializerDeltaDistributed.instance()
-                .deserializeDelta(req.getRecord(), (ODocument) record);
-            /// Got record with empty deltas, at this level we mark the record dirty anyway.
-            if (!req.isContentChanged()) {
-              record.setDirtyNoChanged();
-            } else {
-              record.setDirty();
-            }
-          } else {
-            record =
-                ORecordSerializerNetworkDistributed.INSTANCE.fromStream(req.getRecord(), null);
-            ORecordInternal.setRecordSerializer(record, database.getSerializer());
+            break;
           }
-          break;
-        }
-        case ORecordOperation.DELETED:
-        {
-          record = database.load(req.getId());
-          if (record == null) {
-            record =
-                Orient.instance()
-                    .getRecordFactoryManager()
-                    .newInstance(req.getRecordType(), req.getId().getClusterId(), database);
-          }
-          break;
-        }
       }
       ORecordInternal.setIdentity(record, (ORecordId) req.getId());
       ORecordInternal.setVersion(record, req.getVersion());
