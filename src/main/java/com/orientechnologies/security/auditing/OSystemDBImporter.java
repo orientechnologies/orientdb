@@ -18,11 +18,11 @@ package com.orientechnologies.security.auditing;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.server.OServer;
 import java.util.List;
 
 public class OSystemDBImporter extends Thread {
@@ -31,17 +31,17 @@ public class OSystemDBImporter extends Thread {
   private String auditingClass = "AuditingLog";
   private int limit = 1000; // How many records to import during each iteration.
   private int sleepPeriod = 1000; // How long to sleep (in ms) after importing 'limit' records.
-  private OServer server;
+  private OrientDBInternal context;
   private boolean isRunning = true;
 
   public boolean isEnabled() {
     return enabled;
   }
 
-  public OSystemDBImporter(final OServer oServer, final ODocument jsonConfig) {
+  public OSystemDBImporter(final OrientDBInternal context, final ODocument jsonConfig) {
     super(Orient.instance().getThreadGroup(), "OrientDB Auditing Log Importer Thread");
 
-    server = oServer;
+    this.context = context;
 
     try {
       if (jsonConfig.containsField("enabled")) {
@@ -91,7 +91,7 @@ public class OSystemDBImporter extends Thread {
     ODatabaseInternal sysdb = null;
 
     try {
-      db = server.openDatabase(dbName);
+      db = context.openNoAuthorization(dbName);
       db.setProperty(ODefaultAuditing.IMPORTER_FLAG, true);
 
       if (db == null) {
@@ -100,7 +100,7 @@ public class OSystemDBImporter extends Thread {
         return;
       }
 
-      sysdb = server.getSystemDatabase().openSystemDatabase();
+      sysdb = context.getSystemDatabase().openSystemDatabase();
 
       OLogManager.instance()
           .info(this, "Starting import of the auditing log from database: %s", dbName);

@@ -31,7 +31,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OAuditingOperation;
 import com.orientechnologies.orient.core.security.OAuditingService;
 import com.orientechnologies.orient.core.security.OSecuritySystem;
-import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.OServerAware;
 import com.orientechnologies.orient.server.distributed.ODistributedLifecycleListener;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import java.io.*;
@@ -45,7 +45,6 @@ public class ODefaultAuditing
 
   private boolean enabled = true;
   private Integer globalRetentionDays = -1;
-  private OServer server;
   private OrientDBInternal context;
 
   private Timer timer = new Timer();
@@ -168,7 +167,7 @@ public class ODefaultAuditing
       }
     }
     final ODocument cfg = new ODocument().fromJSON(content, "noMap");
-    return new OAuditingHook(cfg, server);
+    return new OAuditingHook(cfg, security);
   }
 
   private String getContent(File auditingFileConfig) {
@@ -254,7 +253,10 @@ public class ODefaultAuditing
 
   private File getConfigFile(String iDatabaseName) {
     return new File(
-        server.getDatabaseDirectory() + iDatabaseName + File.separator + FILE_AUDITING_DB_CONFIG);
+        security.getContext().getBasePath()
+            + iDatabaseName
+            + File.separator
+            + FILE_AUDITING_DB_CONFIG);
   }
 
   @Override
@@ -335,7 +337,7 @@ public class ODefaultAuditing
     if (iDatabaseName != null && iDatabaseName.equalsIgnoreCase(OSystemDatabase.SYSTEM_DB_NAME))
       return;
 
-    hooks.put(iDatabaseName, new OAuditingHook(cfg, server));
+    hooks.put(iDatabaseName, new OAuditingHook(cfg, security));
 
     updateConfigOnDisk(iDatabaseName, cfg);
 
@@ -432,7 +434,7 @@ public class ODefaultAuditing
   public void active() {
     createClassIfNotExists();
 
-    globalHook = new OAuditingHook(server);
+    globalHook = new OAuditingHook(security);
 
     retainTask =
         new TimerTask() {
@@ -447,9 +449,10 @@ public class ODefaultAuditing
     timer.scheduleAtFixedRate(retainTask, delay, period);
 
     Orient.instance().addDbLifecycleListener(this);
-
-    if (server.getDistributedManager() != null) {
-      server.getDistributedManager().registerLifecycleListener(this);
+    if (context instanceof OServerAware) {
+      if (((OServerAware) context).getDistributedManager() != null) {
+        ((OServerAware) context).getDistributedManager().registerLifecycleListener(this);
+      }
     }
 
     if (systemDbImporter != null && systemDbImporter.isEnabled()) {
@@ -498,7 +501,7 @@ public class ODefaultAuditing
       if (jsonConfig.containsField("systemImport")) {
         ODocument sysImport = jsonConfig.field("systemImport");
 
-        systemDbImporter = new OSystemDBImporter(server, sysImport);
+        systemDbImporter = new OSystemDBImporter(context, sysImport);
       }
     } catch (Exception ex) {
       OLogManager.instance().error(this, "config()", ex);
@@ -511,8 +514,10 @@ public class ODefaultAuditing
       systemDbImporter.shutdown();
     }
 
-    if (server.getDistributedManager() != null) {
-      server.getDistributedManager().unregisterLifecycleListener(this);
+    if (context instanceof OServerAware) {
+      if (((OServerAware) context).getDistributedManager() != null) {
+        ((OServerAware) context).getDistributedManager().unregisterLifecycleListener(this);
+      }
     }
 
     Orient.instance().removeDbLifecycleListener(this);

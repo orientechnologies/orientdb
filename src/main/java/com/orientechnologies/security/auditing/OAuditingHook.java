@@ -34,7 +34,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.security.OAuditingOperation;
-import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.core.security.OSecuritySystem;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -155,15 +155,15 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
     this(new ODocument().fromJSON(iConfiguration, "noMap"), null);
   }
 
-  public OAuditingHook(final String iConfiguration, final OServer server) {
-    this(new ODocument().fromJSON(iConfiguration, "noMap"), server);
+  public OAuditingHook(final String iConfiguration, final OSecuritySystem system) {
+    this(new ODocument().fromJSON(iConfiguration, "noMap"), system);
   }
 
   public OAuditingHook(final ODocument iConfiguration) {
     this(iConfiguration, null);
   }
 
-  public OAuditingHook(final ODocument iConfiguration, final OServer server) {
+  public OAuditingHook(final ODocument iConfiguration, final OSecuritySystem system) {
     this.iConfiguration = iConfiguration;
 
     onGlobalCreate = onGlobalRead = onGlobalUpdate = onGlobalDelete = false;
@@ -201,20 +201,17 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
         new OAuditingLoggingThread(
             ODatabaseRecordThreadLocal.instance().get().getName(),
             auditingQueue,
-            server.getDatabases(),
-            server.getSecurity());
+            system.getContext(),
+            system);
 
     auditingThread.start();
   }
 
-  public OAuditingHook(final OServer server) {
+  public OAuditingHook(final OSecuritySystem server) {
     auditingQueue = new LinkedBlockingQueue<ODocument>();
     auditingThread =
         new OAuditingLoggingThread(
-            OSystemDatabase.SYSTEM_DB_NAME,
-            auditingQueue,
-            server.getDatabases(),
-            server.getSecurity());
+            OSystemDatabase.SYSTEM_DB_NAME, auditingQueue, server.getContext(), server);
 
     auditingThread.start();
   }
