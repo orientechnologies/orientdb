@@ -103,7 +103,9 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
     onAfterDynamicPlugins();
   }
 
-  public void shutdown() {}
+  public void shutdown() {
+    close();
+  }
 
   private Class<?> getClass(final ODocument jsonConfig) {
     Class<?> cls = null;
