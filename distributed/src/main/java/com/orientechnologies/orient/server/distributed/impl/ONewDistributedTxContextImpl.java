@@ -184,8 +184,10 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
 
   @Override
   public void destroy() {
-    unlock();
-    release();
+    if (ODatabaseDocumentDistributed.USE_PROMISE)
+      release();
+    else
+      unlock();
   }
 
   @Override
@@ -246,6 +248,14 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
 
   public List<ORID> getLockedRids() {
     return lockedRids;
+  }
+
+  public List<Promise<ORID>> getPromisedRids() {
+    return promisedRids;
+  }
+
+  public List<Promise<Object>> getPromisedKeys() {
+    return promisedKeys;
   }
 
   @Override

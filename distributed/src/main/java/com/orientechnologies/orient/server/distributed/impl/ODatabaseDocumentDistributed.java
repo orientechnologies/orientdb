@@ -12,9 +12,11 @@ import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
+import com.orientechnologies.common.concur.lock.Promise;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -101,6 +103,8 @@ import java.util.stream.Stream;
 public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   private final OHazelcastPlugin distributedManager;
+  // will remove this flag!
+  public static final boolean USE_PROMISE = true;
 
   public ODatabaseDocumentDistributed(OStorage storage, OHazelcastPlugin hazelcastPlugin) {
     super(storage);
@@ -452,18 +456,41 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     }
   }
 
-  public void acquireLocksForTx(OTransactionInternal tx, ODistributedTxContext txContext) {
-    // Sort and lock transaction entry in distributed environment
-    Set<ORID> rids = new TreeSet<>();
-    for (ORecordOperation entry : tx.getRecordOperations()) {
-      if (entry.getType() != ORecordOperation.CREATED) {
-        rids.add(entry.getRID().copy());
-      } else {
-        rids.add(new ORecordId(entry.getRID().getClusterId(), -1));
+  public void acquireLocksForTx(OTransactionInternal tx, ODistributedTxContext txContext, boolean force) {
+    if (USE_PROMISE) {
+      Set<OPair<ORID, Integer>> rids = new TreeSet<>();
+      for (ORecordOperation entry : tx.getRecordOperations()) {
+        if (entry.getType() != ORecordOperation.CREATED) {
+          rids.add(new OPair<>(entry.getRID().copy(), entry.getRecord().getVersion()));
+        } else {
+          rids.add(new OPair<>(new ORecordId(entry.getRID().getClusterId(), -1), entry.getRecord().getVersion()));
+        }
       }
-    }
-    for (ORID rid : rids) {
-      txContext.lock(rid);
+      Set<OTransactionId> txsToCancel = new HashSet<>();
+      for (OPair<ORID, Integer> rid : rids) {
+        if (force) {
+          // TODO(PS): do I need to explicitly cancel the kicked out transactions?
+          OTransactionId txToCancel = txContext.lockPromise(rid.getKey(), rid.getValue(), true);
+          if (txToCancel != null) {
+            System.out.printf("Force locking resource '%s' removed promise for tx '%s'.\n", rid, txToCancel);
+          }
+        } else
+          txContext.acquirePromise(rid.getKey(), rid.getValue());
+      }
+
+    } else {
+      // Sort and lock transaction entry in distributed environment
+      Set<ORID> rids = new TreeSet<>();
+      for (ORecordOperation entry : tx.getRecordOperations()) {
+        if (entry.getType() != ORecordOperation.CREATED) {
+          rids.add(entry.getRID().copy());
+        } else {
+          rids.add(new ORecordId(entry.getRID().getClusterId(), -1));
+        }
+      }
+      for (ORID rid : rids) {
+        txContext.lock(rid);
+      }
     }
 
     // using OPair because there could be different types of values here, so falling back to
@@ -487,7 +514,15 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       }
     }
     for (String key : keys) {
-      txContext.lockIndexKey(key);
+      if (USE_PROMISE) {
+        if (force) {
+          txContext.lockIndexKeyPromise(key, true);
+        } else {
+          txContext.acquireIndexKeyPromise(key);
+        }
+      } else {
+        txContext.lockIndexKey(key);
+      }
     }
   }
 
@@ -516,7 +551,10 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
                   "Allocation of rid not match, expected:%s actual:%s waiting for re-enqueue request",
                   ex.getExpectedRid(),
                   ex.getActualRid());
-          txContext.unlock();
+          if (USE_PROMISE)
+            txContext.release();
+          else
+            txContext.unlock();
           return false;
         }
       }
@@ -535,7 +573,10 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
                   ex.getRid(),
                   ex.getEnhancedRecordVersion(),
                   ex.getEnhancedDatabaseVersion());
-          txContext.unlock();
+          if (USE_PROMISE)
+            txContext.release();
+          else
+            txContext.unlock();
           return false;
         }
       }
@@ -612,7 +653,12 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     if (txContext != null) {
       if (SUCCESS.equals(txContext.getStatus())) {
         try {
-
+          if (USE_PROMISE) {
+            // Convert all promises to locks
+            for(Promise<ORID> p :txContext.getPromisedRids()) {
+              txContext.lockPromise(p.getKey(), p.getVersion(), false);
+            }
+          }
           if (manager != null) {
             manager.messageCurrentPayload(requestId, txContext);
             manager.messageBeforeOp("commit", requestId);
@@ -621,6 +667,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           localDistributedDatabase.popTxContext(transactionId);
           OLiveQueryHook.notifyForTxChanges(this);
           OLiveQueryHookV2.notifyForTxChanges(this);
+        } catch (ODistributedRecordLockedException e) {
+          // TODO(PS): handle exception when already locked and timeout.
+          //  Just return false so second phase is tried again?
         } catch (OTransactionAlreadyPresentException e) {
           // DO Nothing already present
           txContext.destroy();
@@ -642,7 +691,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           OLiveQueryHookV2.removePendingDatabaseOps(this);
         }
         return true;
-      } else {
+      } else { // commit although first phase failed
         int nretry = getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY);
         int delay = getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY);
 
@@ -664,7 +713,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
               localDistributedDatabase.popTxContext(transactionId);
               return true;
             } else if (validateResult != ValidationResult.MISSING_PREVIOUS) {
-              internalBegin2pc(txContext, isCoordinator);
+              internalBegin2pcWithForceLock(txContext, isCoordinator);
               txContext.setStatus(SUCCESS);
               break;
             }
@@ -751,7 +800,15 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     }
   }
 
+  public void internalBegin2pcWithForceLock(ONewDistributedTxContextImpl txContext, boolean isCoordinator) {
+    internalBegin2pc(txContext, isCoordinator, true);
+  }
+
   public void internalBegin2pc(ONewDistributedTxContextImpl txContext, boolean isCoordinator) {
+    internalBegin2pc(txContext, isCoordinator, false);
+  }
+
+  public void internalBegin2pc(ONewDistributedTxContextImpl txContext, boolean isCoordinator, boolean forceLock) {
     final ODistributedDatabaseImpl localDb = (ODistributedDatabaseImpl) getDistributedShared();
 
     localDb.resetLastValidBackup();
@@ -763,7 +820,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     }
     localDb.getManager().messageBeforeOp("locks", txContext.getReqId());
 
-    acquireLocksForTx(transaction, txContext);
+    acquireLocksForTx(transaction, txContext, forceLock);
 
     firstPhaseDataChecks(isCoordinator, transaction, txContext);
   }

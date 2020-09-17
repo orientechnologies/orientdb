@@ -31,6 +31,7 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask implements O
 
   private OTransactionId transactionId;
   private ODistributedRequestId firstPhaseId;
+  // whether to commit or abort.
   private boolean success;
   private SortedSet<ORID> involvedRids;
   private SortedSet<OTransactionUniqueKey> uniqueIndexKeys = new TreeSet<>();
