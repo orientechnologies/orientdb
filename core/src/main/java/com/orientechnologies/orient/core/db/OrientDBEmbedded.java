@@ -1151,4 +1151,9 @@ public class OrientDBEmbedded implements OrientDBInternal {
   public OSecuritySystem getSecuritySystem() {
     return securitySystem;
   }
+
+  @Override
+  public String getBasePath() {
+    return basePath;
+  }
 }

@@ -338,6 +338,10 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
     throw new UnsupportedOperationException();
   }
 
+  default String getBasePath() {
+    throw new UnsupportedOperationException();
+  }
+
   OrientDBConfig getConfigurations();
 
   OSecuritySystem getSecuritySystem();
