@@ -93,17 +93,17 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
   }
 
   @Override
-  public OTransactionId acquireIndexKeyPromise(Object key, boolean force) {
+  public OTransactionId acquireIndexKeyPromise(Object key, int version, boolean force) {
     OTxPromiseManager<Object> promiseManager = shared.getIndexKeyPromiseManager();
     OTransactionId cancelledPromise = null;
     try {
-      cancelledPromise = promiseManager.promise(key, -1, transactionId, force);
+      cancelledPromise = promiseManager.promise(key, version, transactionId, force);
     } catch (OLockException ex) {
       this.release();
       throw new ODistributedKeyLockedException(shared.getLocalNodeName(), key, promiseManager.getTimeout());
     }
     // todo: is it safe if this duplicates? happens when there is no previous promise and this is called directly.
-    promisedKeys.add(new Promise<>(key, -1, transactionId));
+    promisedKeys.add(new Promise<>(key, version, transactionId));
     return cancelledPromise;
   }
 

@@ -458,8 +458,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       }
     }
     for (String key : keys) {
-      // todo: change interface to pass version here
-      OTransactionId txToCancel = txContext.acquireIndexKeyPromise(key, force);
+      // for now always use version 0
+      OTransactionId txToCancel = txContext.acquireIndexKeyPromise(key, 0, force);
       if (txToCancel != null) {
         txsToCancel.add(txToCancel);
       }
@@ -592,7 +592,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
             txContext.acquirePromise(p.getKey(), p.getVersion(), false);
           }
           for (Promise<Object> p : txContext.getPromisedKeys()) {
-            txContext.acquireIndexKeyPromise(p.getKey(), false);
+            // for now always use 0
+            txContext.acquireIndexKeyPromise(p.getKey(), 0, false);
           }
 
           if (manager != null) {

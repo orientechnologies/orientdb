@@ -40,7 +40,7 @@ public interface ODistributedTxContext {
 
   OTransactionId acquirePromise(ORID rid, int version, boolean force);
 
-  OTransactionId acquireIndexKeyPromise(Object key, boolean force);
+  OTransactionId acquireIndexKeyPromise(Object key, int version, boolean force);
 
   void release();
 
