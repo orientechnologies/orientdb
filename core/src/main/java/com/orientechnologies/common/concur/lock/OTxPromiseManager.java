@@ -34,6 +34,7 @@ public class OTxPromiseManager<T> {
           // Ignore?
         } else {
           cancelledPromise = p.getTxId();
+          map.put(key, new Promise<>(key, version, txId));
         }
         return cancelledPromise;
       } else {
