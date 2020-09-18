@@ -26,7 +26,7 @@ import static com.orientechnologies.orient.server.distributed.ODistributedServer
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OSimpleLockManager;
 import com.orientechnologies.common.concur.lock.OSimpleLockManagerImpl;
-import com.orientechnologies.common.concur.lock.OSimplePromiseManager;
+import com.orientechnologies.common.concur.lock.OTxPromiseManager;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OProfiler;
@@ -108,11 +108,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private AtomicBoolean parsing = new AtomicBoolean(true);
 
   private final String localNodeName;
-  private final OSimpleLockManager<ORID> recordLockManager;
-  private final OSimplePromiseManager<ORID> recordPromiseManager;
+  private final OSimpleLockManager<ORID>   recordLockManager;
+  private final OTxPromiseManager<ORID>    recordPromiseManager;
   private final OSimpleLockManager<Object> indexKeyLockManager;
-  private final OSimplePromiseManager<Object> indexKeyPromiseManager;
-  private AtomicLong operationsRunnig = new AtomicLong(0);
+  private final OTxPromiseManager<Object>  indexKeyPromiseManager;
+  private       AtomicLong                 operationsRunnig = new AtomicLong(0);
   private ODistributedSynchronizedSequence sequenceManager;
   private final AtomicLong pending = new AtomicLong();
   private ThreadPoolExecutor requestExecutor;
@@ -170,7 +170,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     return recordLockManager;
   }
 
-  public OSimplePromiseManager<ORID> getRecordPromiseManager() {
+  public OTxPromiseManager<ORID> getRecordPromiseManager() {
     return recordPromiseManager;
   }
 
@@ -178,7 +178,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     return indexKeyLockManager;
   }
 
-  public OSimplePromiseManager<Object> getIndexKeyPromiseManager() {
+  public OTxPromiseManager<Object> getIndexKeyPromiseManager() {
     return indexKeyPromiseManager;
   }
 
@@ -302,9 +302,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
             .getContextConfiguration()
             .getValueAsInteger(DISTRIBUTED_TRANSACTION_SEQUENCE_SET_SIZE);
     recordLockManager = new OSimpleLockManagerImpl<>(timeout);
-    recordPromiseManager = new OSimplePromiseManager<>();
+    recordPromiseManager = new OTxPromiseManager<>();
     indexKeyLockManager = new OSimpleLockManagerImpl<>(timeout);
-    indexKeyPromiseManager = new OSimplePromiseManager<>();
+    indexKeyPromiseManager = new OTxPromiseManager<>();
     sequenceManager = new ODistributedSynchronizedSequence(localNodeName, sequenceSize);
   }
 

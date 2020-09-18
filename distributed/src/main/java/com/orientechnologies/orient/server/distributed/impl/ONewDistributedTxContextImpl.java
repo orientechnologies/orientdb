@@ -2,10 +2,9 @@ package com.orientechnologies.orient.server.distributed.impl;
 
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.concur.lock.OSimpleLockManager;
-import com.orientechnologies.common.concur.lock.OSimplePromiseManager;
+import com.orientechnologies.common.concur.lock.OTxPromiseManager;
 import com.orientechnologies.common.concur.lock.Promise;
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -94,60 +93,34 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
   }
 
   @Override
-  public void acquireIndexKeyPromise(Object key) {
-    OSimplePromiseManager<Object> promiseManager = shared.getIndexKeyPromiseManager();
+  public OTransactionId acquireIndexKeyPromise(Object key, boolean force) {
+    OTxPromiseManager<Object> promiseManager = shared.getIndexKeyPromiseManager();
+    OTransactionId cancelledPromise = null;
     try {
-      promiseManager.promise(key, -1, transactionId);
+      cancelledPromise = promiseManager.promise(key, -1, transactionId, force);
     } catch (OLockException ex) {
       this.release();
       throw new ODistributedKeyLockedException(shared.getLocalNodeName(), key, promiseManager.getTimeout());
     }
-    promisedKeys.add(new Promise<>(key, -1, transactionId));
-  }
-
-  @Override
-  public OTransactionId lockIndexKeyPromise(Object key, boolean force) {
-    OSimplePromiseManager<Object> promiseManager = shared.getIndexKeyPromiseManager();
-    OTransactionId previousTxId = null;
-    try {
-      previousTxId = promiseManager.lock(key, -1, transactionId, force);
-    } catch(OLockException ex) {
-      this.release();
-      throw new ODistributedKeyLockedException(
-          shared.getLocalNodeName(), key, promiseManager.getTimeout());
-    }
     // todo: is it safe if this duplicates? happens when there is no previous promise and this is called directly.
     promisedKeys.add(new Promise<>(key, -1, transactionId));
-    return previousTxId;
+    return cancelledPromise;
   }
 
   @Override
-  public void acquirePromise(ORID rid, int version) {
-    OSimplePromiseManager<ORID> promiseManager = shared.getRecordPromiseManager();
+  public OTransactionId acquirePromise(ORID rid, int version, boolean force) {
+    OTxPromiseManager<ORID> promiseManager = shared.getRecordPromiseManager();
+    OTransactionId cancelledPromise = null;
     try {
-      promiseManager.promise(rid, version, transactionId);
+      cancelledPromise = promiseManager.promise(rid, version, transactionId, force);
     } catch(OLockException ex) {
       this.release();
       throw new ODistributedRecordLockedException(
           shared.getLocalNodeName(), rid, promiseManager.getTimeout());
     }
-    promisedRids.add(new Promise<>(rid, version, transactionId));
-  }
-
-  @Override
-  public OTransactionId lockPromise(ORID rid, int version, boolean force) {
-    OSimplePromiseManager<ORID> recordPromiseManager = shared.getRecordPromiseManager();
-    OTransactionId previousTxId = null;
-    try {
-      previousTxId = recordPromiseManager.lock(rid, version, transactionId, force);
-    } catch(OLockException ex) {
-      this.release();
-      throw new ODistributedRecordLockedException(
-          shared.getLocalNodeName(), rid, recordPromiseManager.getTimeout());
-    }
     // todo: is it safe if this duplicates? happens when there is no previous promise and this is called directly.
     promisedRids.add(new Promise<>(rid, version, transactionId));
-    return previousTxId;
+    return cancelledPromise;
   }
 
   @Override

@@ -457,6 +457,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   public void acquireLocksForTx(OTransactionInternal tx, ODistributedTxContext txContext, boolean force) {
+    Set<OTransactionId> txsToCancel = new HashSet<>();
     if (USE_PROMISE) {
       Set<OPair<ORID, Integer>> rids = new TreeSet<>();
       for (ORecordOperation entry : tx.getRecordOperations()) {
@@ -466,18 +467,13 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           rids.add(new OPair<>(new ORecordId(entry.getRID().getClusterId(), -1), entry.getRecord().getVersion()));
         }
       }
-      Set<OTransactionId> txsToCancel = new HashSet<>();
       for (OPair<ORID, Integer> rid : rids) {
-        if (force) {
-          // TODO(PS): do I need to explicitly cancel the kicked out transactions?
-          OTransactionId txToCancel = txContext.lockPromise(rid.getKey(), rid.getValue(), true);
-          if (txToCancel != null) {
-            System.out.printf("Force locking resource '%s' removed promise for tx '%s'.\n", rid, txToCancel);
-          }
-        } else
-          txContext.acquirePromise(rid.getKey(), rid.getValue());
+        // TODO(PS): do I need to explicitly cancel the kicked out transactions?
+        OTransactionId txToCancel = txContext.acquirePromise(rid.getKey(), rid.getValue(), force);
+        if (txToCancel != null) {
+          System.out.printf("Force locking resource '%s' removed promise for tx '%s'.\n", rid, txToCancel);
+        }
       }
-
     } else {
       // Sort and lock transaction entry in distributed environment
       Set<ORID> rids = new TreeSet<>();
@@ -515,10 +511,10 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     }
     for (String key : keys) {
       if (USE_PROMISE) {
-        if (force) {
-          txContext.lockIndexKeyPromise(key, true);
-        } else {
-          txContext.acquireIndexKeyPromise(key);
+        // todo: change interface to pass version here
+        OTransactionId txToCancel = txContext.acquireIndexKeyPromise(key, force);
+        if (txToCancel != null) {
+          txsToCancel.add(txToCancel);
         }
       } else {
         txContext.lockIndexKey(key);
@@ -654,9 +650,12 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       if (SUCCESS.equals(txContext.getStatus())) {
         try {
           if (USE_PROMISE) {
-            // Convert all promises to locks
+            // make sure you still have the promises
             for(Promise<ORID> p :txContext.getPromisedRids()) {
-              txContext.lockPromise(p.getKey(), p.getVersion(), false);
+              txContext.acquirePromise(p.getKey(), p.getVersion(), false);
+            }
+            for(Promise<Object> p: txContext.getPromisedKeys()) {
+              txContext.acquireIndexKeyPromise(p.getKey(), false);
             }
           }
           if (manager != null) {
@@ -808,7 +807,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     internalBegin2pc(txContext, isCoordinator, false);
   }
 
-  public void internalBegin2pc(ONewDistributedTxContextImpl txContext, boolean isCoordinator, boolean forceLock) {
+  public void internalBegin2pc(ONewDistributedTxContextImpl txContext, boolean isCoordinator, boolean force) {
     final ODistributedDatabaseImpl localDb = (ODistributedDatabaseImpl) getDistributedShared();
 
     localDb.resetLastValidBackup();
@@ -820,7 +819,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     }
     localDb.getManager().messageBeforeOp("locks", txContext.getReqId());
 
-    acquireLocksForTx(transaction, txContext, forceLock);
+    acquireLocksForTx(transaction, txContext, force);
 
     firstPhaseDataChecks(isCoordinator, transaction, txContext);
   }

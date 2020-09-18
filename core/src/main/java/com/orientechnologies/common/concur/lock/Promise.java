@@ -6,7 +6,6 @@ public class Promise<T> {
   private final T key;
   private final Integer version;
   private final OTransactionId txId;
-  private boolean locked = false;
 
   public Promise(T key, Integer version, OTransactionId txId) {
     this.key = key;
@@ -24,13 +23,5 @@ public class Promise<T> {
 
   public T getKey() {
     return key;
-  }
-
-  public void lock() {
-    locked = true;
-  }
-
-  public boolean isLocked() {
-    return locked;
   }
 }

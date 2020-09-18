@@ -38,13 +38,9 @@ public interface ODistributedTxContext {
 
   void lockIndexKey(Object rid);
 
-  void acquirePromise(ORID rid, int version);
+  OTransactionId acquirePromise(ORID rid, int version, boolean force);
 
-  OTransactionId lockPromise(ORID rid, int version, boolean force);
-
-  void acquireIndexKeyPromise(Object key);
-
-  OTransactionId lockIndexKeyPromise(Object key, boolean force);
+  OTransactionId acquireIndexKeyPromise(Object key, boolean force);
 
   void release();
 
