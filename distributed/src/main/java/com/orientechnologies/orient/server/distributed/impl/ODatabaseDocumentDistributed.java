@@ -68,8 +68,6 @@ import static com.orientechnologies.orient.server.distributed.impl.ONewDistribut
 /** Created by tglman on 30/03/17. */
 public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
-  // will remove this flag!
-  public static final boolean USE_PROMISE = true;
   private final OHazelcastPlugin distributedManager;
 
   public ODatabaseDocumentDistributed(OStorage storage, OHazelcastPlugin hazelcastPlugin) {
@@ -425,29 +423,19 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   public void acquireLocksForTx(
       OTransactionInternal tx, ODistributedTxContext txContext, boolean force) {
     Set<OTransactionId> txsToCancel = new HashSet<>();
-    if (USE_PROMISE) {
-      Set<OPair<ORID, Integer>> rids = new TreeSet<>();
-      for (ORecordOperation entry : tx.getRecordOperations()) {
-        rids.add(new OPair<>(entry.getRID().copy(), entry.getRecord().getVersion()));
-      }
-      for (OPair<ORID, Integer> rid : rids) {
-        // TODO(PS): do I need to explicitly cancel the kicked out transactions?
-        OTransactionId txToCancel = txContext.acquirePromise(rid.getKey(), rid.getValue(), force);
-        if (txToCancel != null) {
-          System.out.printf(
-              "Force locking resource '%s' removed promise for tx '%s'.\n", rid, txToCancel);
-        }
-      }
-    } else {
-      // Sort and lock transaction entry in distributed environment
-      Set<ORID> rids = new TreeSet<>();
-      for (ORecordOperation entry : tx.getRecordOperations()) {
-        rids.add(entry.getRID().copy());
-      }
-      for (ORID rid : rids) {
-        txContext.lock(rid);
+    Set<OPair<ORID, Integer>> rids = new TreeSet<>();
+    for (ORecordOperation entry : tx.getRecordOperations()) {
+      rids.add(new OPair<>(entry.getRID().copy(), entry.getRecord().getVersion()));
+    }
+    for (OPair<ORID, Integer> rid : rids) {
+      // TODO(PS): do I need to explicitly cancel the kicked out transactions?
+      OTransactionId txToCancel = txContext.acquirePromise(rid.getKey(), rid.getValue(), force);
+      if (txToCancel != null) {
+        System.out.printf(
+            "Force locking resource '%s' removed promise for tx '%s'.\n", rid, txToCancel);
       }
     }
+
 
     // using OPair because there could be different types of values here, so falling back to
     // lexicographic sorting
@@ -470,14 +458,10 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       }
     }
     for (String key : keys) {
-      if (USE_PROMISE) {
-        // todo: change interface to pass version here
-        OTransactionId txToCancel = txContext.acquireIndexKeyPromise(key, force);
-        if (txToCancel != null) {
-          txsToCancel.add(txToCancel);
-        }
-      } else {
-        txContext.lockIndexKey(key);
+      // todo: change interface to pass version here
+      OTransactionId txToCancel = txContext.acquireIndexKeyPromise(key, force);
+      if (txToCancel != null) {
+        txsToCancel.add(txToCancel);
       }
     }
   }
@@ -507,8 +491,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
                   "Allocation of rid not match, expected:%s actual:%s waiting for re-enqueue request",
                   ex.getExpectedRid(),
                   ex.getActualRid());
-          if (USE_PROMISE) txContext.release();
-          else txContext.unlock();
+          txContext.release();
           return false;
         }
       }
@@ -527,8 +510,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
                   ex.getRid(),
                   ex.getEnhancedRecordVersion(),
                   ex.getEnhancedDatabaseVersion());
-          if (USE_PROMISE) txContext.release();
-          else txContext.unlock();
+          txContext.release();
           return false;
         }
       }
@@ -605,15 +587,14 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     if (txContext != null) {
       if (SUCCESS.equals(txContext.getStatus())) {
         try {
-          if (USE_PROMISE) {
-            // make sure you still have the promises
-            for (Promise<ORID> p : txContext.getPromisedRids()) {
-              txContext.acquirePromise(p.getKey(), p.getVersion(), false);
-            }
-            for (Promise<Object> p : txContext.getPromisedKeys()) {
-              txContext.acquireIndexKeyPromise(p.getKey(), false);
-            }
+          // make sure you still have the promises
+          for (Promise<ORID> p : txContext.getPromisedRids()) {
+            txContext.acquirePromise(p.getKey(), p.getVersion(), false);
           }
+          for (Promise<Object> p : txContext.getPromisedKeys()) {
+            txContext.acquireIndexKeyPromise(p.getKey(), false);
+          }
+
           if (manager != null) {
             manager.messageCurrentPayload(requestId, txContext);
             manager.messageBeforeOp("commit", requestId);

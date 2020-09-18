@@ -157,10 +157,7 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
 
   @Override
   public void destroy() {
-    if (ODatabaseDocumentDistributed.USE_PROMISE)
-      release();
-    else
-      unlock();
+    release();
   }
 
   @Override
