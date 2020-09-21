@@ -302,9 +302,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
             .getContextConfiguration()
             .getValueAsInteger(DISTRIBUTED_TRANSACTION_SEQUENCE_SET_SIZE);
     recordLockManager = new OSimpleLockManagerImpl<>(timeout);
-    recordPromiseManager = new OTxPromiseManager<>();
+    recordPromiseManager = new OTxPromiseManager<>(timeout);
     indexKeyLockManager = new OSimpleLockManagerImpl<>(timeout);
-    indexKeyPromiseManager = new OTxPromiseManager<>();
+    indexKeyPromiseManager = new OTxPromiseManager<>(timeout);
     sequenceManager = new ODistributedSynchronizedSequence(localNodeName, sequenceSize);
   }
 
