@@ -1,5 +1,6 @@
 import {downgradeInjectable} from '@angular/upgrade/static';
-import {Http} from '@angular/http';
+import {Http, Headers} from '@angular/http';
+
 import 'rxjs/add/operator/toPromise';
 
 import {API} from '../../../constants';
@@ -12,14 +13,24 @@ class ServerCommandService {
   }
 
 
-  serverCommand(params : {query : any, limit?}) {
-    let startTime = new Date().getTime();
-    params.limit = params.limit || 20;
+  serverCommand(params : {command : any, limit?}) {
     let url = API + 'servercommand';
-    params.query = params.query.trim();
-    return this.http.post(url, params.query).toPromise();
+
+    return this.http.post(url, {command: params.command}, this.getOptions())
+          .toPromise()
+          .then(data => {
+            return data.json();
+          });
   }
 
+  getOptions() {
+    let headers = new Headers({
+      'Authorization': localStorage.getItem("SimpleAuth")
+    });
+    return {
+      headers: headers
+    }
+  }
 }
 
 
