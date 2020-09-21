@@ -31,6 +31,7 @@ import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -61,6 +62,8 @@ public class StorageStartupMetadata {
   private static final int VERSION = 3;
 
   private final Path filePath;
+  private final Path backupPath;
+
   private FileChannel channel;
   private FileLock fileLock;
 
@@ -69,6 +72,11 @@ public class StorageStartupMetadata {
   private volatile byte[] txMetadata;
 
   private final Lock lock = new ReentrantLock();
+
+  public StorageStartupMetadata(final Path filePath, final Path backupPath) {
+    this.filePath = filePath;
+    this.backupPath = backupPath;
+  }
 
   public void addFileToArchive(ZipOutputStream zos, String name) throws IOException {
     final ZipEntry ze = new ZipEntry(name);
@@ -80,10 +88,6 @@ public class StorageStartupMetadata {
     } finally {
       zos.closeEntry();
     }
-  }
-
-  public StorageStartupMetadata(Path filePath) {
-    this.filePath = filePath;
   }
 
   public void create() throws IOException {
@@ -124,13 +128,32 @@ public class StorageStartupMetadata {
 
       buffer.rewind();
 
-      OIOUtils.writeByteBuffer(buffer, channel, 0);
+      update(buffer);
 
       dirtyFlag = true;
       lastTxId = -1;
     } finally {
       lock.unlock();
     }
+  }
+
+  private void update(ByteBuffer buffer) throws IOException {
+    Files.deleteIfExists(backupPath);
+
+    try (final FileChannel backupChannel =
+        FileChannel.open(
+            filePath,
+            StandardOpenOption.READ,
+            StandardOpenOption.CREATE_NEW,
+            StandardOpenOption.WRITE,
+            StandardOpenOption.SYNC)) {
+      OIOUtils.writeByteBuffer(buffer, backupChannel, 0);
+    }
+
+    channel.truncate(0);
+    OIOUtils.writeByteBuffer(buffer, channel, 0);
+
+    Files.deleteIfExists(backupPath);
   }
 
   private void lockFile() throws IOException {
@@ -157,12 +180,22 @@ public class StorageStartupMetadata {
   public void open() throws IOException {
     lock.lock();
     try {
-      if (!Files.exists(filePath)) {
-        OLogManager.instance()
-            .infoNoDb(this, "File with startup metadata does not exist, creating new one");
-        create();
-        return;
-      } else {
+      while (true) {
+        if (!Files.exists(filePath)) {
+          if (Files.exists(backupPath)) {
+            Files.move(
+                backupPath,
+                filePath,
+                StandardCopyOption.REPLACE_EXISTING,
+                StandardCopyOption.ATOMIC_MOVE);
+          } else {
+            OLogManager.instance()
+                .infoNoDb(this, "File with startup metadata does not exist, creating new one");
+            create();
+            return;
+          }
+        }
+
         channel =
             FileChannel.open(
                 filePath,
@@ -194,14 +227,29 @@ public class StorageStartupMetadata {
 
           final long xxHash = XX_HASH_64.hash(buffer, 8, buffer.capacity() - 8, XX_HASH_SEED);
           if (xxHash != buffer.getLong(0)) {
-            OLogManager.instance()
-                .error(
-                    this,
-                    "File with startup metadata is broken and can not be used, creation new one",
-                    null);
+            if (!Files.exists(backupPath)) {
+              OLogManager.instance()
+                  .error(
+                      this,
+                      "File with startup metadata is broken and can not be used, "
+                          + "creation of new one",
+                      null);
+              channel.close();
+              create();
+              return;
+            } else {
+              OLogManager.instance()
+                  .error(
+                      this,
+                      "File with startup metadata is broken and can not be used, "
+                          + "will try to use backup version",
+                      null);
+            }
+
             channel.close();
-            create();
-            return;
+            Files.deleteIfExists(filePath);
+
+            continue;
           }
 
           buffer.position(8);
@@ -225,10 +273,12 @@ public class StorageStartupMetadata {
             txMetadata = txMeta;
           }
         }
-      }
 
-      if (OGlobalConfiguration.FILE_LOCK.getValueAsBoolean()) {
-        lockFile();
+        if (OGlobalConfiguration.FILE_LOCK.getValueAsBoolean()) {
+          lockFile();
+        }
+
+        break;
       }
 
     } finally {
@@ -287,7 +337,7 @@ public class StorageStartupMetadata {
 
       dirtyFlag = true;
 
-      OIOUtils.writeByteBuffer(serialize(), channel, 0);
+      update(serialize());
     } finally {
       lock.unlock();
     }
@@ -301,7 +351,7 @@ public class StorageStartupMetadata {
       if (!dirtyFlag) return;
 
       dirtyFlag = false;
-      OIOUtils.writeByteBuffer(serialize(), channel, 0);
+      update(serialize());
     } finally {
       lock.unlock();
     }
@@ -312,7 +362,7 @@ public class StorageStartupMetadata {
     try {
       this.lastTxId = lastTxId;
 
-      OIOUtils.writeByteBuffer(serialize(), channel, 0);
+      update(serialize());
     } finally {
       lock.unlock();
     }
@@ -323,7 +373,7 @@ public class StorageStartupMetadata {
     try {
       this.txMetadata = txMetadata;
 
-      OIOUtils.writeByteBuffer(serialize(), channel, 0);
+      update(serialize());
     } finally {
       lock.unlock();
     }
