@@ -628,7 +628,9 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
         try (final DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
           stream.forEach((p) -> {
             final String fileName = p.getFileName().toString();
-            if (fileName.equals("database.ocf") || (fileName.startsWith("config") && fileName.endsWith(".bd"))) {
+            if (fileName.equals("database.ocf") ||
+                (fileName.startsWith("config") && fileName.endsWith(".bd")
+                    || fileName.startsWith("dirty.fl"))) {
               exists[0] = true;
             }
           });
