@@ -465,11 +465,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     // Sort and lock transaction entry in distributed environment
     Set<ORID> rids = new TreeSet<>();
     for (ORecordOperation entry : tx.getRecordOperations()) {
-      if (entry.getType() != ORecordOperation.CREATED) {
-        rids.add(entry.getRID().copy());
-      } else {
-        rids.add(new ORecordId(entry.getRID().getClusterId(), -1));
-      }
+      rids.add(entry.getRID().copy());
     }
     for (ORID rid : rids) {
       txContext.lock(rid);
@@ -769,6 +765,10 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         .getManager()
         .messageBeforeOp("locks", txContext.getReqId());
 
+    if (local) {
+      ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(transaction);
+    }
+
     acquireLocksForTx(transaction, txContext);
 
     firstPhaseDataChecks(local, transaction, txContext);
@@ -785,7 +785,11 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         .getLocalDistributedDatabase()
         .getManager()
         .messageBeforeOp("allocate", txContext.getReqId());
-    ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(transaction);
+
+    if (!local) {
+      ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(transaction);
+    }
+
     getStorageDistributed()
         .getLocalDistributedDatabase()
         .getManager()
@@ -795,6 +799,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         .getLocalDistributedDatabase()
         .getManager()
         .messageBeforeOp("indexCheck", txContext.getReqId());
+
     for (Map.Entry<String, OTransactionIndexChanges> change :
         transaction.getIndexOperations().entrySet()) {
       OIndex index = getSharedContext().getIndexManager().getRawIndex(change.getKey());

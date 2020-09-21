@@ -25,9 +25,8 @@ public interface OWALFile extends Closeable {
 
   long segmentId();
 
-  static OWALFile createWriteWALFile(Path path, boolean allowDirectIO, int blockSize,
-      long segmentId)
-      throws IOException {
+  static OWALFile createWriteWALFile(
+      Path path, boolean allowDirectIO, int blockSize, long segmentId) throws IOException {
     if (allowDirectIO) {
       try {
         final int fd =
@@ -56,7 +55,8 @@ public interface OWALFile extends Closeable {
             path,
             StandardOpenOption.WRITE,
             StandardOpenOption.CREATE_NEW,
-            StandardOpenOption.APPEND), segmentId);
+            StandardOpenOption.APPEND),
+        segmentId);
   }
 
   static OWALFile createReadWALFile(Path path, boolean allowDirectIO, int blockSize, long segmentId)
