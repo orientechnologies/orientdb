@@ -107,26 +107,27 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   private static final String[] ALL_FILE_EXTENSIONS = {
     ".cm",
     ".ocf",
-    ".pls",
-    ".pcl",
-    ".oda",
-    ".odh",
-    ".otx",
-    ".ocs",
-    ".oef",
-    ".oem",
-    ".oet",
-    ".fl",
-    IV_EXT,
-    CASDiskWriteAheadLog.WAL_SEGMENT_EXTENSION,
-    CASDiskWriteAheadLog.MASTER_RECORD_EXTENSION,
-    OHashTableIndexEngine.BUCKET_FILE_EXTENSION,
-    OHashTableIndexEngine.METADATA_FILE_EXTENSION,
-    OHashTableIndexEngine.TREE_FILE_EXTENSION,
-    OHashTableIndexEngine.NULL_BUCKET_FILE_EXTENSION,
-    OClusterPositionMap.DEF_EXTENSION,
-    OSBTreeIndexEngine.DATA_FILE_EXTENSION,
-    OIndexRIDContainer.INDEX_FILE_EXTENSION,
+      ".pls",
+      ".pcl",
+      ".oda",
+      ".odh",
+      ".otx",
+      ".ocs",
+      ".oef",
+      ".oem",
+      ".oet",
+      ".fl",
+      ".flb",
+      IV_EXT,
+      CASDiskWriteAheadLog.WAL_SEGMENT_EXTENSION,
+      CASDiskWriteAheadLog.MASTER_RECORD_EXTENSION,
+      OHashTableIndexEngine.BUCKET_FILE_EXTENSION,
+      OHashTableIndexEngine.METADATA_FILE_EXTENSION,
+      OHashTableIndexEngine.TREE_FILE_EXTENSION,
+      OHashTableIndexEngine.NULL_BUCKET_FILE_EXTENSION,
+      OClusterPositionMap.DEF_EXTENSION,
+      OSBTreeIndexEngine.DATA_FILE_EXTENSION,
+      OIndexRIDContainer.INDEX_FILE_EXTENSION,
     OSBTreeCollectionManagerShared.DEFAULT_EXTENSION,
     OSBTreeIndexEngine.NULL_BUCKET_FILE_EXTENSION,
     OClusterBasedStorageConfiguration.MAP_FILE_EXTENSION,
@@ -190,7 +191,9 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     deleteMaxRetries = OGlobalConfiguration.FILE_DELETE_RETRY.getValueAsInteger();
     deleteWaitTime = OGlobalConfiguration.FILE_DELETE_DELAY.getValueAsInteger();
 
-    startupMetadata = new StorageStartupMetadata(storagePath.resolve("dirty.fl"));
+    startupMetadata =
+        new StorageStartupMetadata(
+            storagePath.resolve("dirty.fl"), storagePath.resolve("dirty.flb"));
   }
 
   @SuppressWarnings("CanBeFinal")
@@ -865,7 +868,9 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
               (p) -> {
                 final String fileName = p.getFileName().toString();
                 if (fileName.equals("database.ocf")
-                    || (fileName.startsWith("config") && fileName.endsWith(".bd"))) {
+                    || (fileName.startsWith("config") && fileName.endsWith(".bd"))
+                    || fileName.startsWith("dirty.fl")
+                    || fileName.startsWith("dirty.flb")) {
                   exists[0] = true;
                 }
               });
