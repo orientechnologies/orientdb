@@ -50,7 +50,6 @@ import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringBuilderSerializable;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerEmbedded;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -83,8 +82,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       // JUST THE REFERENCE
       rid = (ORID) iLinked;
 
-      assert rid.getIdentity().isValid()
-              || (ODatabaseRecordThreadLocal.instance().get().getStorage() instanceof OStorageProxy)
+      assert rid.getIdentity().isValid() || ODatabaseRecordThreadLocal.instance().get().isRemote()
           : "Impossible to serialize invalid link " + rid.getIdentity();
       resultRid = rid;
     } else {
@@ -101,8 +99,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       ORecord iLinkedRecord = ((OIdentifiable) iLinked).getRecord();
       rid = iLinkedRecord.getIdentity();
 
-      assert rid.getIdentity().isValid()
-              || (ODatabaseRecordThreadLocal.instance().get().getStorage() instanceof OStorageProxy)
+      assert rid.getIdentity().isValid() || ODatabaseRecordThreadLocal.instance().get().isRemote()
           : "Impossible to serialize invalid link " + rid.getIdentity();
 
       final ODatabaseDocument database = ODatabaseRecordThreadLocal.instance().get();
@@ -757,8 +754,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
           assert linkedType == OType.EMBEDDED
                   || id.getIdentity().isValid()
-                  || (ODatabaseRecordThreadLocal.instance().get().getStorage()
-                      instanceof OStorageProxy)
+                  || ODatabaseRecordThreadLocal.instance().get().isRemote()
               : "Impossible to serialize invalid link " + id.getIdentity();
 
           linkedClass = ODocumentInternal.getImmutableSchemaClass(doc);

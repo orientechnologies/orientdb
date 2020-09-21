@@ -1375,8 +1375,7 @@ public class OConsoleDatabaseApp extends OrientConsole
       final String defAlgo =
           OGlobalConfiguration.SECURITY_USER_PASSWORD_DEFAULT_ALGORITHM.getValueAsString();
 
-      final String hashedPassword =
-          OSecurityManager.instance().createHash(iServerUserPasswd, defAlgo, true);
+      final String hashedPassword = OSecurityManager.createHash(iServerUserPasswd, defAlgo, true);
 
       serverCfg.setUser(iServerUserName, hashedPassword, iPermissions);
       serverCfg.saveConfiguration();

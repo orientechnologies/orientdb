@@ -1,6 +1,6 @@
 /*
  *
- *  *  Copyright 2015 OrientDB LTD (info(-at-)orientdb.com)
+ *  *  Copyright 2016 OrientDB LTD (info(-at-)orientdb.com)
  *  *
  *  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  *  you may not use this file except in compliance with the License.
@@ -19,16 +19,12 @@
  */
 package com.orientechnologies.orient.core.security;
 
-import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
-import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
-
 /**
- * Implements the OSecurityFactory interface for OSecurityShared instances.
+ * Provides a simple interface for validating passwords.
  *
  * @author S. Colin Leister
  */
-public class OSecuritySharedFactory implements OSecurityFactory {
-  public OSecurityInternal newSecurity() {
-    return new OSecurityShared();
-  }
+public interface OPasswordValidator extends OSecurityComponent {
+  void validatePassword(final String username, final String password)
+      throws OInvalidPasswordException;
 }

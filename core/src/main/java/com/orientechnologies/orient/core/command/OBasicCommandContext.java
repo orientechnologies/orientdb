@@ -90,7 +90,7 @@ public class OBasicCommandContext implements OCommandContext {
         if (lastPart.startsWith("$")) result = parent.getVariable(lastPart.substring(1));
         else result = ODocumentHelper.getFieldValue(parent, lastPart);
 
-        return result != null ? result : iDefault;
+        return result != null ? resolveValue(result) : iDefault;
 
       } else if (firstPart.equalsIgnoreCase("ROOT")) {
         OCommandContext p = this;
@@ -99,7 +99,7 @@ public class OBasicCommandContext implements OCommandContext {
         if (lastPart.startsWith("$")) result = p.getVariable(lastPart.substring(1));
         else result = ODocumentHelper.getFieldValue(p, lastPart, this);
 
-        return result != null ? result : iDefault;
+        return result != null ? resolveValue(result) : iDefault;
       }
     } else {
       firstPart = iName;
@@ -122,7 +122,14 @@ public class OBasicCommandContext implements OCommandContext {
 
     if (pos > -1) result = ODocumentHelper.getFieldValue(result, lastPart, this);
 
-    return result != null ? result : iDefault;
+    return result != null ? resolveValue(result) : iDefault;
+  }
+
+  private Object resolveValue(Object value) {
+    if (value instanceof ODynamicVariable) {
+      value = ((ODynamicVariable) value).resolve(this);
+    }
+    return value;
   }
 
   protected Object getVariableFromParentHierarchy(String varName) {
@@ -133,6 +140,10 @@ public class OBasicCommandContext implements OCommandContext {
       return ((OBasicCommandContext) parent).getVariableFromParentHierarchy(varName);
     }
     return null;
+  }
+
+  public OCommandContext setDynamicVariable(String iName, final ODynamicVariable iValue) {
+    return setVariable(iName, iValue);
   }
 
   public OCommandContext setVariable(String iName, final Object iValue) {

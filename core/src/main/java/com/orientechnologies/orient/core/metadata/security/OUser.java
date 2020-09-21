@@ -20,13 +20,14 @@
 package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityManager;
+import com.orientechnologies.orient.core.security.OSecuritySystem;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -72,14 +73,14 @@ public class OUser extends OIdentity implements OSecurityUser {
   }
 
   public static final String encryptPassword(final String iPassword) {
-    return OSecurityManager.instance()
-        .createHash(
-            iPassword,
-            OGlobalConfiguration.SECURITY_USER_PASSWORD_DEFAULT_ALGORITHM.getValueAsString(),
-            true);
+    return OSecurityManager.createHash(
+        iPassword,
+        OGlobalConfiguration.SECURITY_USER_PASSWORD_DEFAULT_ALGORITHM.getValueAsString(),
+        true);
   }
 
-  public static boolean encodePassword(final ODocument iDocument) {
+  public static boolean encodePassword(
+      ODatabaseDocumentInternal session, final ODocument iDocument) {
     final String name = iDocument.field("name");
     if (name == null) throw new OSecurityException("User name not found");
 
@@ -87,10 +88,8 @@ public class OUser extends OIdentity implements OSecurityUser {
 
     if (password == null)
       throw new OSecurityException("User '" + iDocument.field("name") + "' has no password");
-
-    if (Orient.instance().getSecurity() != null) {
-      Orient.instance().getSecurity().validatePassword(name, password);
-    }
+    OSecuritySystem security = session.getSharedContext().getOrientDB().getSecuritySystem();
+    security.validatePassword(name, password);
 
     if (!password.startsWith("{")) {
       iDocument.field("password", encryptPassword(password));
@@ -251,8 +250,7 @@ public class OUser extends OIdentity implements OSecurityUser {
   }
 
   public boolean checkPassword(final String iPassword) {
-    return OSecurityManager.instance()
-        .checkPassword(iPassword, (String) document.field(PASSWORD_FIELD));
+    return OSecurityManager.checkPassword(iPassword, (String) document.field(PASSWORD_FIELD));
   }
 
   public String getName() {

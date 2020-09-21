@@ -44,11 +44,12 @@ import com.orientechnologies.orient.core.metadata.sequence.OSequence;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.security.OGlobalUser;
+import com.orientechnologies.orient.core.security.OSecuritySystem;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.parser.OBooleanExpression;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -91,6 +92,8 @@ public class OSecurityShared implements OSecurityInternal {
   /** set of all the security resources defined on properties (used for optimizations) */
   protected Set<OSecurityResourceProperty> filteredProperties;
 
+  private OSecuritySystem security;
+
   /** Uses the ORestrictedOperation ENUM instead. */
   @Deprecated
   public static final String ALLOW_ALL_FIELD = ORestrictedOperation.ALLOW_ALL.getFieldName();
@@ -121,7 +124,9 @@ public class OSecurityShared implements OSecurityInternal {
             }
           });
 
-  public OSecurityShared() {}
+  public OSecurityShared(OSecuritySystem security) {
+    this.security = security;
+  }
 
   @Override
   public OIdentifiable allowRole(
@@ -238,28 +243,68 @@ public class OSecurityShared implements OSecurityInternal {
     return true;
   }
 
+  @Override
   public OUser authenticate(
-      final ODatabaseSession session, final String iUserName, final String iUserPassword) {
+      ODatabaseSession session, final String iUsername, final String iUserPassword) {
+    OUser user = null;
     final String dbName = session.getName();
-    final OUser user = getUser(session, iUserName);
-    if (user == null)
-      throw new OSecurityAccessException(
-          dbName, "User or password not valid for database: '" + dbName + "'");
+    assert !((ODatabaseDocumentInternal) session).isRemote();
+    // Uses the external authenticator.
+    // username is returned if authentication is successful, otherwise null.
+    String username = security.authenticate(iUsername, iUserPassword);
 
-    if (user.getAccountStatus() != OSecurityUser.STATUSES.ACTIVE)
-      throw new OSecurityAccessException(dbName, "User '" + iUserName + "' is not active");
+    if (username != null) {
+      user = getUser(session, username);
 
-    if (!(((ODatabaseDocumentInternal) session).getStorage() instanceof OStorageProxy)) {
-      // CHECK USER & PASSWORD
-      if (!user.checkPassword(iUserPassword)) {
+      if (user == null)
+        throw new OSecurityAccessException(
+            dbName,
+            "User or password not valid for username: "
+                + username
+                + ", database: '"
+                + dbName
+                + "'");
+
+      if (user.getAccountStatus() != OSecurityUser.STATUSES.ACTIVE)
+        throw new OSecurityAccessException(dbName, "User '" + username + "' is not active");
+    } else {
+      // Will use the local database to authenticate.
+      if (security.isDefaultAllowed()) {
+        user = getUser(session, iUsername);
+        if (user == null)
+          throw new OSecurityAccessException(
+              dbName, "User or password not valid for database: '" + dbName + "'");
+
+        if (user.getAccountStatus() != OSecurityUser.STATUSES.ACTIVE)
+          throw new OSecurityAccessException(dbName, "User '" + iUsername + "' is not active");
+
+        // CHECK USER & PASSWORD
+        if (!user.checkPassword(iUserPassword)) {
+          // WAIT A BIT TO AVOID BRUTE FORCE
+          try {
+            Thread.sleep(200);
+          } catch (InterruptedException ignore) {
+            Thread.currentThread().interrupt();
+          }
+          throw new OSecurityAccessException(
+              dbName, "User or password not valid for database: '" + dbName + "'");
+        }
+
+      } else {
         // WAIT A BIT TO AVOID BRUTE FORCE
         try {
           Thread.sleep(200);
         } catch (InterruptedException ignore) {
           Thread.currentThread().interrupt();
         }
+
         throw new OSecurityAccessException(
-            dbName, "User or password not valid for database: '" + dbName + "'");
+            dbName,
+            "User or password not valid for username: "
+                + iUsername
+                + ", database: '"
+                + dbName
+                + "'");
       }
     }
 
@@ -431,7 +476,7 @@ public class OSecurityShared implements OSecurityInternal {
   public OSecurityPolicy getSecurityPolicy(
       ODatabaseSession session, OSecurityRole role, String resource) {
     resource = normalizeSecurityResource(session, resource);
-    OElement roleDoc = session.reload(role.getDocument(), null, false);
+    OElement roleDoc = session.load(role.getIdentity().getIdentity(), null, false);
     if (roleDoc == null) {
       return null;
     }
@@ -467,7 +512,7 @@ public class OSecurityShared implements OSecurityInternal {
   public void setSecurityPolicy(
       ODatabaseSession session, OSecurityRole role, String resource, OSecurityPolicy policy) {
     resource = normalizeSecurityResource(session, resource);
-    OElement roleDoc = session.load(role.getDocument().getIdentity());
+    OElement roleDoc = session.load(role.getIdentity().getIdentity());
     if (roleDoc == null) {
       return;
     }
@@ -1038,9 +1083,7 @@ public class OSecurityShared implements OSecurityInternal {
 
     setupPredicateSecurity(session);
 
-    if (!((ODatabaseDocumentInternal) session).isRemote()) {
-      initPredicateSecurityOptimizations(session);
-    }
+    initPredicateSecurityOptimizations(session);
   }
 
   private void setupPredicateSecurity(ODatabaseSession session) {
@@ -1072,8 +1115,7 @@ public class OSecurityShared implements OSecurityInternal {
       classTrigger = session.getMetadata().getSchema().createAbstractClass(OClassTrigger.CLASSNAME);
   }
 
-  @Override
-  public OUser getUser(final ODatabaseSession session, final String iUserName) {
+  public OUser getUserInternal(final ODatabaseSession session, final String iUserName) {
     return (OUser)
         OScenarioThreadLocal.executeAsDistributed(
             () -> {
@@ -1084,6 +1126,93 @@ public class OSecurityShared implements OSecurityInternal {
               }
               return null;
             });
+  }
+
+  @Override
+  public OUser getUser(ODatabaseSession session, String username) {
+    // See if there's a system user first.
+    OUser user = security.getSystemUser(username, session.getName());
+
+    // If not found, try the local database.
+    if (user == null) user = getUserInternal(session, username);
+
+    if (user == null && username != null) {
+      OGlobalUser serverUser = security.getUser(username);
+      if (serverUser != null) {
+        user = new OSystemUser(username, "null", OSystemUser.SERVER_USER_TYPE);
+        user.addRole(createRole(serverUser));
+      }
+    }
+    return user;
+  }
+
+  public static ORole createRole(OGlobalUser serverUser) {
+
+    final OSystemRole role =
+        new OSystemRole(serverUser.getName(), null, OSecurityRole.ALLOW_MODES.ALLOW_ALL_BUT);
+
+    if (serverUser.getResources().equalsIgnoreCase("*")) {
+      createRoot(role);
+    } else {
+      mapPermission(role, serverUser);
+    }
+
+    return role;
+  }
+
+  private static void mapPermission(ORole role, OGlobalUser user) {
+
+    String[] strings = user.getResources().split(",");
+
+    for (String string : strings) {
+      ORule.ResourceGeneric generic = ORule.mapLegacyResourceToGenericResource(string);
+      if (generic != null) {
+        role.addRule(generic, null, ORole.PERMISSION_ALL);
+      }
+    }
+  }
+
+  private static void createRoot(ORole role) {
+    role.addRule(ORule.ResourceGeneric.BYPASS_RESTRICTED, null, ORole.PERMISSION_ALL);
+    role.addRule(ORule.ResourceGeneric.ALL, null, ORole.PERMISSION_ALL);
+    //      role.addRule(ORule.ResourceGeneric.ALL_CLASSES, null, ORole.PERMISSION_ALL).save();
+    role.addRule(ORule.ResourceGeneric.CLASS, null, ORole.PERMISSION_ALL);
+    //      role.addRule(ORule.ResourceGeneric.ALL_CLUSTERS, null, ORole.PERMISSION_ALL).save();
+    role.addRule(ORule.ResourceGeneric.CLUSTER, null, ORole.PERMISSION_ALL);
+    role.addRule(ORule.ResourceGeneric.SYSTEM_CLUSTERS, null, ORole.PERMISSION_ALL);
+    role.addRule(ORule.ResourceGeneric.DATABASE, null, ORole.PERMISSION_ALL);
+    role.addRule(ORule.ResourceGeneric.SCHEMA, null, ORole.PERMISSION_ALL);
+    role.addRule(ORule.ResourceGeneric.COMMAND, null, ORole.PERMISSION_ALL);
+    role.addRule(ORule.ResourceGeneric.COMMAND_GREMLIN, null, ORole.PERMISSION_ALL);
+    role.addRule(ORule.ResourceGeneric.FUNCTION, null, ORole.PERMISSION_ALL);
+    createSecurityPolicyWithBitmask(role, "*", ORole.PERMISSION_ALL);
+  }
+
+  public static void createSecurityPolicyWithBitmask(
+      OSecurityRole role, String resource, int legacyPolicy) {
+    String policyName = "default_" + legacyPolicy;
+    OSecurityPolicy policy = new OSecurityPolicy(new ODocument().field("name", policyName));
+    policy.setCreateRule((legacyPolicy & ORole.PERMISSION_CREATE) > 0 ? "true" : "false");
+    policy.setReadRule((legacyPolicy & ORole.PERMISSION_READ) > 0 ? "true" : "false");
+    policy.setBeforeUpdateRule((legacyPolicy & ORole.PERMISSION_UPDATE) > 0 ? "true" : "false");
+    policy.setAfterUpdateRule((legacyPolicy & ORole.PERMISSION_UPDATE) > 0 ? "true" : "false");
+    policy.setDeleteRule((legacyPolicy & ORole.PERMISSION_DELETE) > 0 ? "true" : "false");
+    policy.setExecuteRule((legacyPolicy & ORole.PERMISSION_EXECUTE) > 0 ? "true" : "false");
+    addSecurityPolicy(role, resource, policy);
+  }
+
+  public static void addSecurityPolicy(
+      OSecurityRole role, String resource, OSecurityPolicy policy) {
+    OElement roleDoc = role.getDocument();
+    if (roleDoc == null) {
+      return;
+    }
+    Map<String, OIdentifiable> policies = roleDoc.getProperty("policies");
+    if (policies == null) {
+      policies = new HashMap<>();
+      roleDoc.setProperty("policies", policies);
+    }
+    policies.put(resource, policy.getElement());
   }
 
   public ORID getUserRID(final ODatabaseSession session, final String userName) {

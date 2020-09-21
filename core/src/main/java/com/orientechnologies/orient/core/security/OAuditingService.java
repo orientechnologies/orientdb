@@ -17,18 +17,30 @@
  *  * For more information: http://orientdb.com
  *
  */
-package com.orientechnologies.orient.server.security;
+package com.orientechnologies.orient.core.security;
+
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.io.IOException;
 
 /**
- * Provides an interface to syslog (and other such event logging systems).
+ * Provides an interface the auditing service.
  *
  * @author S. Colin Leister
  */
-public interface OSyslog {
-  void log(final String operation, final String message);
+public interface OAuditingService extends OSecurityComponent {
+  void changeConfig(OSecurityUser user, final String databaseName, final ODocument cfg)
+      throws IOException;
 
-  void log(final String operation, final String username, final String message);
+  ODocument getConfig(final String databaseName);
+
+  void log(final OAuditingOperation operation, final String message);
+
+  void log(final OAuditingOperation operation, OSecurityUser user, final String message);
 
   void log(
-      final String operation, final String dbName, final String username, final String message);
+      final OAuditingOperation operation,
+      final String dbName,
+      OSecurityUser user,
+      final String message);
 }

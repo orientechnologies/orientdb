@@ -39,7 +39,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.OSimpleMultiValueTracker;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORidBagDeleteSerializationOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORidBagUpdateSerializationOperation;
@@ -706,7 +705,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
   @Override
   public int getSerializedSize() {
     int result = 2 * OLongSerializer.LONG_SIZE + 3 * OIntegerSerializer.INT_SIZE;
-    if (ODatabaseRecordThreadLocal.instance().get().getStorage() instanceof OStorageProxy
+    if (ODatabaseRecordThreadLocal.instance().get().isRemote()
         || ORecordSerializationContext.getContext() == null) {
       result += getChangesSerializedSize();
     }
@@ -746,8 +745,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     applyNewEntries();
 
     final ORecordSerializationContext context;
-    boolean remoteMode =
-        ODatabaseRecordThreadLocal.instance().get().getStorage() instanceof OStorageProxy;
+    boolean remoteMode = ODatabaseRecordThreadLocal.instance().get().isRemote();
     if (remoteMode) {
       context = null;
     } else {

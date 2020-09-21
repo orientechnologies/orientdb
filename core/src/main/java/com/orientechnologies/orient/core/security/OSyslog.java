@@ -17,28 +17,18 @@
  *  * For more information: http://orientdb.com
  *
  */
-package com.orientechnologies.orient.server.security;
-
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.config.OServerConfigurationManager;
+package com.orientechnologies.orient.core.security;
 
 /**
- * Provides an interface for creating security components.
+ * Provides an interface to syslog (and other such event logging systems).
  *
  * @author S. Colin Leister
  */
-public interface OSecurityComponent {
-  // Called once the Server is running.
-  void active();
+public interface OSyslog {
+  void log(final String operation, final String message);
 
-  void config(
-      final OServer oServer,
-      final OServerConfigurationManager serverCfg,
-      final ODocument jsonConfig);
+  void log(final String operation, final String username, final String message);
 
-  // Called on removal of the component.
-  void dispose();
-
-  boolean isEnabled();
+  void log(
+      final String operation, final String dbName, final String username, final String message);
 }

@@ -42,6 +42,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.security.OGlobalUser;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
@@ -54,7 +55,6 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.cluster.OOfflineClusterException;
 import com.orientechnologies.orient.core.storage.config.OClusterBasedStorageConfiguration;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -67,7 +67,6 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionNoTx;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
-import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
@@ -191,12 +190,9 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
     // TODO: it should be here an additional check for open with the right user
     connection.setDatabase(
-        server.openDatabase(
-            request.getDatabaseName(),
-            connection.getData().serverUsername,
-            null,
-            connection.getData(),
-            true));
+        server
+            .getDatabases()
+            .openNoAuthenticate(request.getDatabaseName(), connection.getServerUser().getName()));
 
     return new OCreateDatabaseResponse();
   }
@@ -849,8 +845,9 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   @Override
   public OBinaryResponse executeFreezeDatabase(OFreezeDatabaseRequest request) {
     ODatabaseDocumentInternal database =
-        server.openDatabase(
-            request.getName(), connection.getServerUser().name, null, connection.getData(), true);
+        server
+            .getDatabases()
+            .openNoAuthenticate(request.getName(), connection.getServerUser().getName());
     connection.setDatabase(database);
 
     OLogManager.instance().info(this, "Freezing database '%s'", connection.getDatabase().getURL());
@@ -862,8 +859,9 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   @Override
   public OBinaryResponse executeReleaseDatabase(OReleaseDatabaseRequest request) {
     ODatabaseDocumentInternal database =
-        server.openDatabase(
-            request.getName(), connection.getServerUser().name, null, connection.getData(), true);
+        server
+            .getDatabases()
+            .openNoAuthenticate(request.getName(), connection.getServerUser().getName());
 
     connection.setDatabase(database);
 
@@ -1053,14 +1051,14 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     }
 
     connection.setServerUser(
-        server.serverLogin(request.getUsername(), request.getPassword(), "server.connect"));
+        server.authenticateUser(request.getUsername(), request.getPassword(), "server.connect"));
 
     if (connection.getServerUser() == null)
       throw new OSecurityAccessException(
           "Wrong user/password to [connect] to the remote OrientDB Server instance");
     byte[] token = null;
     if (connection.getData().protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_26) {
-      connection.getData().serverUsername = connection.getServerUser().name;
+      connection.getData().serverUsername = connection.getServerUser().getName();
       connection.getData().serverUser = true;
 
       if (Boolean.TRUE.equals(connection.getTokenBased())) {
@@ -1083,7 +1081,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     connection.getData().collectStats = true;
 
     connection.setServerUser(
-        server.serverLogin(request.getUsername(), request.getPassword(), "server.connect"));
+        server.authenticateUser(request.getUsername(), request.getPassword(), "server.connect"));
 
     if (connection.getServerUser() == null)
       throw new OSecurityAccessException(
@@ -1091,7 +1089,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
     byte[] token = null;
     if (connection.getData().protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_26) {
-      connection.getData().serverUsername = connection.getServerUser().name;
+      connection.getData().serverUsername = connection.getServerUser().getName();
       connection.getData().serverUser = true;
 
       if (Boolean.TRUE.equals(connection.getTokenBased())) {
@@ -1151,14 +1149,6 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       server
           .getClientConnectionManager()
           .connect(connection.getProtocol(), connection, token, server.getTokenHandler());
-    }
-
-    if (connection.getDatabase().getStorage() instanceof OStorageProxy) {
-      connection
-          .getDatabase()
-          .getMetadata()
-          .getSecurity()
-          .authenticate(request.getUserName(), request.getUserPassword());
     }
 
     final OStorage storage = connection.getDatabase().getStorage();
@@ -1750,8 +1740,8 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     ((ONetworkProtocolBinary) connection.getProtocol()).setHandshakeInfo(handshakeInfo);
 
     // TODO:check auth type
-    OServerUserConfiguration serverUser =
-        server.serverLogin(request.getUsername(), request.getPassword(), "server.connect");
+    OGlobalUser serverUser =
+        server.authenticateUser(request.getUsername(), request.getPassword(), "server.connect");
 
     if (serverUser == null) {
       throw new OSecurityAccessException(
@@ -1778,7 +1768,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       throw new ODatabaseException("protocol version too old rejected connection");
     } else {
       connection.setServerUser(serverUser);
-      connection.getData().serverUsername = serverUser.name;
+      connection.getData().serverUsername = serverUser.getName();
       connection.getData().serverUser = true;
       byte[] token = server.getTokenHandler().getDistributedToken(connection.getData());
 

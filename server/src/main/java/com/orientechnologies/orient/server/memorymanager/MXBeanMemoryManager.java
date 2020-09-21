@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.server.memorymanager;
 
 import com.orientechnologies.common.log.OLogManager;
-
 import java.lang.management.*;
 import java.util.HashMap;
 import java.util.List;

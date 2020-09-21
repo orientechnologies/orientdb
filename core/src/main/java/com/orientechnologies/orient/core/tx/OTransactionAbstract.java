@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import java.util.HashMap;
 import java.util.Map;
@@ -85,8 +84,7 @@ public abstract class OTransactionAbstract implements OTransaction {
 
   @Override
   public OTransaction setIsolationLevel(final ISOLATION_LEVEL isolationLevel) {
-    if (isolationLevel == ISOLATION_LEVEL.REPEATABLE_READ
-        && getDatabase().getStorage() instanceof OStorageProxy)
+    if (isolationLevel == ISOLATION_LEVEL.REPEATABLE_READ && getDatabase().isRemote())
       throw new IllegalArgumentException(
           "Remote storage does not support isolation level '" + isolationLevel + "'");
 

@@ -66,6 +66,7 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OCredentialInterceptor;
 import com.orientechnologies.orient.core.security.OSecurityManager;
+import com.orientechnologies.orient.core.security.OSecuritySystem;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -701,5 +702,15 @@ public class OrientDBRemote implements OrientDBInternal {
     // SHOULD NEVER REACH THIS POINT
     throw new ODatabaseException(
         "Reached maximum retry limit on admin operations, the server may be offline");
+  }
+
+  @Override
+  public OrientDBConfig getConfigurations() {
+    return configurations;
+  }
+
+  @Override
+  public OSecuritySystem getSecuritySystem() {
+    throw new UnsupportedOperationException();
   }
 }

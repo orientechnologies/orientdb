@@ -17,31 +17,23 @@
  *  * For more information: http://orientdb.com
  *
  */
-package com.orientechnologies.orient.server.security;
+package com.orientechnologies.orient.core.security;
 
-import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.security.OAuditingOperation;
-import java.io.IOException;
 
 /**
- * Provides an interface the auditing service.
+ * Provides an interface for creating security components.
  *
  * @author S. Colin Leister
  */
-public interface OAuditingService extends OSecurityComponent {
-  void changeConfig(OSecurityUser user, final String databaseName, final ODocument cfg)
-      throws IOException;
+public interface OSecurityComponent {
+  // Called once the Server is running.
+  void active();
 
-  ODocument getConfig(final String databaseName);
+  void config(final ODocument jsonConfig, OSecuritySystem security);
 
-  void log(final OAuditingOperation operation, final String message);
+  // Called on removal of the component.
+  void dispose();
 
-  void log(final OAuditingOperation operation, OSecurityUser user, final String message);
-
-  void log(
-      final OAuditingOperation operation,
-      final String dbName,
-      OSecurityUser user,
-      final String message);
+  boolean isEnabled();
 }

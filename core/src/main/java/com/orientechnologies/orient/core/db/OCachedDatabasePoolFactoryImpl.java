@@ -93,7 +93,7 @@ public class OCachedDatabasePoolFactoryImpl implements OCachedDatabasePoolFactor
       String database, String username, String password, OrientDBConfig parentConfig) {
     checkForClose();
 
-    String key = OSecurityManager.instance().createSHA256(database + username + password);
+    String key = OSecurityManager.createSHA256(database + username + password);
 
     ODatabasePoolInternal pool = poolCache.get(key);
     if (pool != null && !pool.isClosed()) {

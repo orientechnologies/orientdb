@@ -159,13 +159,11 @@ public class SQLFunctionsTest extends DocumentDBBaseTest {
 
     ODocument docAdmin = new ODocument("QueryCountExtendsRestrictedClass");
     docAdmin.field(
-        "_allowRead", new HashSet<OIdentifiable>(Arrays.asList(admin.getDocument().getIdentity())));
+        "_allowRead", new HashSet<OIdentifiable>(Arrays.asList(admin.getIdentity().getIdentity())));
     docAdmin.save();
 
     ODocument docReader = new ODocument("QueryCountExtendsRestrictedClass");
-    docReader.field(
-        "_allowRead",
-        new HashSet<OIdentifiable>(Arrays.asList(reader.getDocument().getIdentity())));
+    docReader.field("_allowRead", new HashSet<OIdentifiable>(Arrays.asList(reader.getIdentity())));
     docReader.save();
 
     List<ODocument> result =

@@ -42,8 +42,10 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxInternal
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.metadata.security.OSystemUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
-import com.orientechnologies.orient.core.security.OSecurityManager;
+import com.orientechnologies.orient.core.security.OGlobalUser;
+import com.orientechnologies.orient.core.security.OSecuritySystem;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.config.OServerConfigurationManager;
 import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
@@ -53,7 +55,6 @@ import com.orientechnologies.orient.server.config.OServerNetworkProtocolConfigur
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.config.OServerSocketFactoryConfiguration;
 import com.orientechnologies.orient.server.config.OServerStorageConfiguration;
-import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.config.ODistributedConfig;
 import com.orientechnologies.orient.server.handler.OConfigurableHooksManager;
@@ -69,15 +70,12 @@ import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtoco
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 import com.orientechnologies.orient.server.plugin.OServerPluginManager;
-import com.orientechnologies.orient.server.security.ODefaultServerSecurity;
-import com.orientechnologies.orient.server.security.OServerSecurity;
 import com.orientechnologies.orient.server.token.OTokenHandlerImpl;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
-import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -112,8 +110,6 @@ public class OServer {
   protected OServerPluginManager pluginManager;
   protected OConfigurableHooksManager hookManager;
   protected ODistributedServerManager distributedManager;
-  protected OServerSecurity serverSecurity;
-  private SecureRandom random = new SecureRandom();
   private Map<String, Object> variables = new HashMap<String, Object>();
   private String serverRootDirectory;
   private String databaseDirectory;
@@ -228,8 +224,8 @@ public class OServer {
     return extensionClassLoader;
   }
 
-  public OServerSecurity getSecurity() {
-    return serverSecurity;
+  public OSecuritySystem getSecurity() {
+    return databases.getSecuritySystem();
   }
 
   public boolean isActive() {
@@ -379,7 +375,11 @@ public class OServer {
 
     if (!databaseDirectory.endsWith("/")) databaseDirectory += "/";
 
-    OrientDBConfig config = OrientDBConfig.builder().fromContext(contextConfiguration).build();
+    OrientDBConfig config =
+        OrientDBConfig.builder()
+            .fromContext(contextConfiguration)
+            .setSecurityConfig(new OServerSecurityConfig(this, this.serverCfg))
+            .build();
 
     if (contextConfiguration.getValueAsBoolean(
         OGlobalConfiguration.SERVER_BACKWARD_COMPATIBILITY)) {
@@ -441,8 +441,6 @@ public class OServer {
   public OServer activate()
       throws ClassNotFoundException, InstantiationException, IllegalAccessException {
     try {
-      serverSecurity = new ODefaultServerSecurity(this, serverCfg);
-      Orient.instance().setSecurity(serverSecurity);
       // Checks to see if the OrientDB System Database exists and creates it if not.
       // Make sure this happens after setSecurity() is called.
       initSystemDatabase();
@@ -621,8 +619,6 @@ public class OServer {
 
         if (pluginManager != null) pluginManager.shutdown();
 
-        if (serverSecurity != null) serverSecurity.shutdown();
-
         networkListeners.clear();
       } finally {
         lock.unlock();
@@ -732,12 +728,6 @@ public class OServer {
     return threadGroup;
   }
 
-  public OServerUserConfiguration serverLogin(
-      final String iUser, final String iPassword, final String iResource) {
-    // Returns null if authentication or authorization fails for any reason.
-    return authenticateUser(iUser, iPassword, iResource);
-  }
-
   /**
    * Authenticate a server user.
    *
@@ -753,30 +743,11 @@ public class OServer {
 
   // Returns null if the user cannot be authenticated. Otherwise returns the
   // OServerUserConfiguration user.
-  protected OServerUserConfiguration authenticateUser(
+  public OGlobalUser authenticateUser(
       final String iUserName, final String iPassword, final String iResourceToCheck) {
-    if (serverSecurity != null && serverSecurity.isEnabled()) {
-      // Returns the authenticated username, if successful, otherwise null.
-      String authUsername = serverSecurity.authenticate(iUserName, iPassword);
-
-      // Authenticated, now see if the user is authorized.
-      if (authUsername != null) {
-        if (serverSecurity.isAuthorized(authUsername, iResourceToCheck)) {
-          return serverSecurity.getUser(authUsername);
-        }
-      }
-    } else {
-      OServerUserConfiguration user = getUser(iUserName);
-
-      if (user != null && user.password != null) {
-        if (OSecurityManager.instance().checkPassword(iPassword, user.password)
-            && isAllowed(iUserName, iResourceToCheck)) {
-          return user;
-        }
-      }
-    }
-
-    return null;
+    return databases
+        .getSecuritySystem()
+        .authenticateAndAuthorize(iUserName, iPassword, iResourceToCheck);
   }
 
   /**
@@ -786,45 +757,15 @@ public class OServer {
    * @return true if authentication is ok, otherwise false
    */
   public boolean isAllowed(final String iUserName, final String iResourceToCheck) {
-
-    if (serverSecurity != null && serverSecurity.isEnabled()) {
-      // Let the security plug-in check its users list first.
-      if (serverSecurity.isAuthorized(iUserName, iResourceToCheck)) return true;
-    } else {
-      final OServerUserConfiguration user = getUser(iUserName);
-
-      if (user != null) {
-        if (user.resources.equals("*"))
-          // ACCESS TO ALL
-          return true;
-
-        String[] resourceParts = user.resources.split(",");
-        for (String r : resourceParts) if (r.equals(iResourceToCheck)) return true;
-      }
-    }
-
-    // WRONG PASSWORD OR NO AUTHORIZATION
-    return false;
+    return databases.getSecuritySystem().isAuthorized(iUserName, iResourceToCheck);
   }
 
-  public OServerUserConfiguration getUser(final String iUserName) {
-    OServerUserConfiguration userCfg = null;
-
-    // First see if iUserName is a security plugin user.
-    if (serverSecurity != null && serverSecurity.isEnabled()) {
-      userCfg = serverSecurity.getUser(iUserName);
-    } else {
-      // This will throw an IllegalArgumentException if iUserName is null or empty.
-      // However, a null or empty iUserName is possible with some security implementations.
-      if (iUserName != null && !iUserName.isEmpty()) userCfg = serverCfg.getUser(iUserName);
-    }
-
-    return userCfg;
+  public OGlobalUser getUser(final String iUserName) {
+    return databases.getSecuritySystem().getUser(iUserName);
   }
 
   public void dropUser(final String iUserName) throws IOException {
-    serverCfg.dropUser(iUserName);
-    serverCfg.saveConfiguration();
+    databases.getSecuritySystem().dropUser(iUserName);
   }
 
   public boolean existsStoragePath(final String iURL) {
@@ -910,31 +851,7 @@ public class OServer {
 
   public void addTemporaryUser(
       final String iName, final String iPassword, final String iPermissions) {
-    serverCfg.setEphemeralUser(iName, iPassword, iPermissions);
-  }
-
-  public void addUser(final String iName, String iPassword, final String iPermissions)
-      throws IOException {
-    if (iPassword == null) {
-      // AUTO GENERATE PASSWORD
-      final byte[] buffer = new byte[32];
-      random.nextBytes(buffer);
-      iPassword =
-          OSecurityManager.instance().createSHA256(OSecurityManager.byteArrayToHexStr(buffer));
-    }
-
-    // HASH THE PASSWORD
-    iPassword =
-        OSecurityManager.instance()
-            .createHash(
-                iPassword,
-                getContextConfiguration()
-                    .getValueAsString(
-                        OGlobalConfiguration.SECURITY_USER_PASSWORD_DEFAULT_ALGORITHM),
-                true);
-
-    serverCfg.setUser(iName, iPassword, iPermissions);
-    serverCfg.saveConfiguration();
+    databases.getSecuritySystem().addTemporaryUser(iName, iPassword, iPermissions);
   }
 
   public OServer registerLifecycleListener(final OServerLifecycleListener iListener) {
@@ -955,45 +872,16 @@ public class OServer {
 
   public ODatabaseDocumentInternal openDatabase(
       final String iDbUrl, final String user, final String password) {
-    return openDatabase(iDbUrl, user, password, null, false);
+    return openDatabase(iDbUrl, user, password, null);
   }
 
   public ODatabaseDocumentInternal openDatabase(
       final String iDbUrl, final String user, final String password, ONetworkProtocolData data) {
-    return openDatabase(iDbUrl, user, password, data, false);
-  }
-
-  public ODatabaseDocumentInternal openDatabase(
-      final String iDbUrl,
-      String user,
-      final String password,
-      ONetworkProtocolData data,
-      final boolean iBypassAccess) {
     final ODatabaseDocumentInternal database;
-    // TODO: memory used to be created on the fly not sure for which reason.
-    // TODO: final String path = getStoragePath(iDbUrl); it use to resolve the path in some way
     boolean serverAuth = false;
-    if (iBypassAccess) {
-      database = databases.openNoAuthenticate(iDbUrl, user);
+    database = databases.open(iDbUrl, user, password);
+    if (OSystemUser.SERVER_USER_TYPE.equals(database.getUser().getUserType())) {
       serverAuth = true;
-    } else {
-      OServerUserConfiguration serverUser = serverLogin(user, password, "database.passthrough");
-      if (serverUser != null) {
-        user = serverUser.name;
-        serverAuth = true;
-        // Why do we use the returned serverUser name instead of just passing-in user?
-        // Because in some security implementations the user is embedded inside a ticket of some
-        // kind
-        // that must be decrypted to retrieve the actual user identity. If serverLogin() is
-        // successful,
-        // that user identity is returned.
-
-        // SERVER AUTHENTICATED, BYPASS SECURITY
-        database = databases.openNoAuthenticate(iDbUrl, user);
-      } else {
-        // TRY DATABASE AUTHENTICATION
-        database = databases.open(iDbUrl, user, password);
-      }
     }
     if (serverAuth && data != null) {
       data.serverUser = true;
@@ -1006,7 +894,7 @@ public class OServer {
   }
 
   public ODatabaseDocumentInternal openDatabase(String database) {
-    return openDatabase(database, "internal", "internal", null, true);
+    return getDatabases().openNoAuthorization(database);
   }
 
   public ODistributedServerManager getDistributedManager() {
@@ -1058,26 +946,6 @@ public class OServer {
     final OServerConfiguration configuration = serverCfg.getConfiguration();
 
     if (configuration.storages == null) return;
-    /*
-     * String type; for (OServerStorageConfiguration stg : configuration.storages) if (stg.loadOnStartup) { // @COMPATIBILITY if
-     * (stg.userName == null) stg.userName = OUser.ADMIN; if (stg.userPassword == null) stg.userPassword = OUser.ADMIN;
-     *
-     * int idx = stg.path.indexOf(':'); if (idx == -1) { OLogManager.instance().error(this, "-> Invalid path '" + stg.path +
-     * "' for database '" + stg.name + "'"); return; } type = stg.path.substring(0, idx);
-     *
-     * ODatabaseDocument db = null; try { db = new ODatabaseDocumentTx(stg.path);
-     *
-     * if (db.exists()) db.open(stg.userName, stg.userPassword); else { db.create(); if (stg.userName.equals(OUser.ADMIN)) { if
-     * (!stg.userPassword.equals(OUser.ADMIN)) // CHANGE ADMIN PASSWORD
-     * db.getMetadata().getSecurity().getUser(OUser.ADMIN).setPassword(stg.userPassword); } else { // CREATE A NEW USER AS ADMIN AND
-     * REMOVE THE DEFAULT ONE db.getMetadata().getSecurity().createUser(stg.userName, stg.userPassword, ORole.ADMIN);
-     * db.getMetadata().getSecurity().dropUser(OUser.ADMIN); db.close(); db.open(stg.userName, stg.userPassword); } }
-     *
-     * OLogManager.instance().info(this, "-> Loaded " + type + " database '" + stg.name + "'"); } catch (Exception e) {
-     * OLogManager.instance().error(this, "-> Cannot load " + type + " database '" + stg.name + "': " + e);
-     *
-     * } finally { if (db != null) db.close(); } }
-     */
     for (OServerStorageConfiguration stg : configuration.storages) {
       if (stg.loadOnStartup) {
         String url = stg.path;
@@ -1107,7 +975,8 @@ public class OServer {
 
   protected void createDefaultServerUsers() throws IOException {
 
-    if (serverSecurity != null && !serverSecurity.arePasswordsStored()) return;
+    if (databases.getSecuritySystem() != null
+        && !databases.getSecuritySystem().arePasswordsStored()) return;
 
     // ORIENTDB_ROOT_PASSWORD ENV OR JVM SETTING
     String rootPassword = OSystemVariableResolver.resolveVariable(ROOT_PASSWORD_VAR);
@@ -1117,7 +986,8 @@ public class OServer {
       if (rootPassword.isEmpty()) rootPassword = null;
     }
 
-    if (rootPassword == null && !serverCfg.existsUser(OServerConfiguration.DEFAULT_ROOT_USER)) {
+    if (rootPassword == null
+        && !databases.getSecuritySystem().existsUser(OServerConfiguration.DEFAULT_ROOT_USER)) {
       try {
         // WAIT ANY LOG IS PRINTED
         Thread.sleep(1000);
@@ -1197,14 +1067,18 @@ public class OServer {
               "Found ORIENTDB_ROOT_PASSWORD variable, using this value as root's password",
               rootPassword);
 
-    if (!serverCfg.existsUser(OServerConfiguration.DEFAULT_ROOT_USER)) {
-      addUser(OServerConfiguration.DEFAULT_ROOT_USER, rootPassword, "*");
+    if (!databases.getSecuritySystem().existsUser(OServerConfiguration.DEFAULT_ROOT_USER)) {
+      databases
+          .getSecuritySystem()
+          .addUser(OServerConfiguration.DEFAULT_ROOT_USER, rootPassword, "*");
     }
-    if (!serverCfg.existsUser(OServerConfiguration.GUEST_USER)) {
-      addUser(
-          OServerConfiguration.GUEST_USER,
-          OServerConfiguration.GUEST_PASS,
-          "connect,server.listDatabases,server.dblist");
+    if (!databases.getSecuritySystem().existsUser(OServerConfiguration.GUEST_USER)) {
+      databases
+          .getSecuritySystem()
+          .addUser(
+              OServerConfiguration.GUEST_USER,
+              OServerConfiguration.GUEST_PASS,
+              "connect,server.listDatabases,server.dblist");
     }
   }
 
@@ -1217,8 +1091,6 @@ public class OServer {
     pluginManager = new OServerPluginManager();
     pluginManager.config(this);
     pluginManager.startup();
-
-    if (serverSecurity != null) serverSecurity.onAfterDynamicPlugins();
 
     // PLUGINS CONFIGURED IN XML
     final OServerConfiguration configuration = serverCfg.getConfiguration();

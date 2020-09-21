@@ -217,4 +217,9 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       // IGNORE IT
     }
   }
+
+  @Override
+  public ODistributedServerManager getDistributedManager() {
+    return this.plugin;
+  }
 }

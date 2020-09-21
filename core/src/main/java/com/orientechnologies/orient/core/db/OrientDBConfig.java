@@ -22,6 +22,8 @@ package com.orientechnologies.orient.core.db;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
 import com.orientechnologies.orient.core.db.config.ONodeConfiguration;
+import com.orientechnologies.orient.core.security.ODefaultSecurityConfig;
+import com.orientechnologies.orient.core.security.OSecurityConfig;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -40,6 +42,7 @@ public class OrientDBConfig {
   private Set<ODatabaseListener> listeners;
   private ClassLoader classLoader;
   private ONodeConfiguration nodeConfiguration;
+  private OSecurityConfig securityConfig;
 
   protected OrientDBConfig() {
     configurations = new OContextConfiguration();
@@ -47,6 +50,7 @@ public class OrientDBConfig {
     parent = null;
     listeners = new HashSet<>();
     classLoader = this.getClass().getClassLoader();
+    this.securityConfig = new ODefaultSecurityConfig();
   }
 
   protected OrientDBConfig(
@@ -54,7 +58,8 @@ public class OrientDBConfig {
       Map<ATTRIBUTES, Object> attributes,
       Set<ODatabaseListener> listeners,
       ClassLoader classLoader,
-      ONodeConfiguration nodeConfiguration) {
+      ONodeConfiguration nodeConfiguration,
+      OSecurityConfig securityConfig) {
     this.configurations = configurations;
     this.attributes = attributes;
     parent = null;
@@ -64,6 +69,7 @@ public class OrientDBConfig {
       this.classLoader = classLoader;
     } else this.classLoader = this.getClass().getClassLoader();
     this.nodeConfiguration = nodeConfiguration;
+    this.securityConfig = securityConfig;
   }
 
   public static OrientDBConfig defaultConfig() {
@@ -92,6 +98,10 @@ public class OrientDBConfig {
 
   public ClassLoader getClassLoader() {
     return classLoader;
+  }
+
+  public OSecurityConfig getSecurityConfig() {
+    return securityConfig;
   }
 
   protected void setParent(OrientDBConfig parent) {

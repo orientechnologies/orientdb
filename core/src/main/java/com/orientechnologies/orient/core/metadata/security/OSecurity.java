@@ -119,8 +119,10 @@ public interface OSecurity {
   OIdentifiable denyRole(
       final ODocument iDocument, final ORestrictedOperation iOperationType, final String iRoleName);
 
+  @Deprecated
   OUser authenticate(String iUsername, String iUserPassword);
 
+  @Deprecated
   OUser authenticate(final OToken authToken);
 
   OUser getUser(String iUserName);

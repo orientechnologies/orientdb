@@ -102,7 +102,7 @@ public abstract class OServerCommandAuthenticatedServerAbstract extends OServerC
   }
 
   protected boolean checkGuestAccess() {
-    return server.isAllowed(OServerConfiguration.GUEST_USER, resource);
+    return server.getSecurity().isAuthorized(OServerConfiguration.GUEST_USER, resource);
   }
 
   protected void sendNotAuthorizedResponse(

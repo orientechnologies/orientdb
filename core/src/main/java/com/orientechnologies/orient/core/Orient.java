@@ -40,7 +40,6 @@ import com.orientechnologies.orient.core.db.OrientDBEmbedded;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.engine.OEngine;
 import com.orientechnologies.orient.core.record.ORecordFactoryManager;
-import com.orientechnologies.orient.core.security.OSecuritySystem;
 import com.orientechnologies.orient.core.shutdown.OShutdownHandler;
 import com.orientechnologies.orient.core.storage.OStorage;
 import java.lang.ref.ReferenceQueue;
@@ -135,7 +134,6 @@ public class Orient extends OListenerManger<OOrientListener> {
   private volatile boolean active = false;
   private ThreadPoolExecutor workers;
   private OSignalHandler signalHandler;
-  private volatile OSecuritySystem security;
   private boolean runningDistributed = false;
 
   /** Indicates that engine is initialized inside of web application container. */
@@ -701,14 +699,6 @@ public class Orient extends OListenerManger<OOrientListener> {
 
   public void setProfiler(final OAbstractProfiler iProfiler) {
     profiler = iProfiler;
-  }
-
-  public OSecuritySystem getSecurity() {
-    return this.security;
-  }
-
-  public void setSecurity(final OSecuritySystem security) {
-    this.security = security;
   }
 
   public void registerThreadDatabaseFactory(final ODatabaseThreadLocalFactory iDatabaseFactory) {

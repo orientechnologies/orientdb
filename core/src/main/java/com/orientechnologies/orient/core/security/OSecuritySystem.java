@@ -19,6 +19,8 @@
  */
 package com.orientechnologies.orient.core.security;
 
+import com.orientechnologies.orient.core.db.OrientDBInternal;
+import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -89,18 +91,11 @@ public interface OSecuritySystem {
 
   void reload(final ODocument jsonConfig);
 
-  default void reload(OSecurityUser user, final ODocument jsonConfig) {
-    reload(jsonConfig);
-  }
+  void reload(OSecurityUser user, final ODocument jsonConfig);
 
-  default void reload(OSecurityUser user, final String jsonConfig) {
-    reload(jsonConfig);
-  }
+  void reload(OSecurityUser user, final String jsonConfig);
 
   void reloadComponent(OSecurityUser user, final String name, final ODocument jsonConfig);
-
-  /** Called each time one of the security classes (OUser, ORole, OServerRole) is modified. */
-  void securityRecordChange(final String dbURL, final ODocument record);
 
   void unregisterSecurityClass(final Class<?> cls);
 
@@ -109,4 +104,46 @@ public interface OSecuritySystem {
   // the password validator's requirements.
   void validatePassword(final String username, final String password)
       throws OInvalidPasswordException;
+
+  OAuditingService getAuditing();
+
+  /** Returns the authenticator based on name, if one exists. */
+  OSecurityAuthenticator getAuthenticator(final String authName);
+
+  /** Returns the first authenticator in the list, which is the primary authenticator. */
+  OSecurityAuthenticator getPrimaryAuthenticator();
+
+  OSyslog getSyslog();
+
+  /**
+   * Some authenticators support maintaining a list of users and associated resources (and sometimes
+   * passwords).
+   */
+  OGlobalUser getUser(final String username);
+
+  void dropUser(String iUserName);
+
+  void onAfterDynamicPlugins();
+
+  default void onAfterDynamicPlugins(OSecurityUser user) {
+    onAfterDynamicPlugins();
+  }
+
+  OGlobalUser authenticateAndAuthorize(String iUserName, String iPassword, String iResourceToCheck);
+
+  String authenticateServerUser(String username, String password);
+
+  OGlobalUser getServerUser(String username);
+
+  boolean isServerUserAuthorized(String username, String resource);
+
+  OrientDBInternal getContext();
+
+  boolean existsUser(String defaultRootUser);
+
+  void addUser(String user, String password, String resources);
+
+  void addTemporaryUser(String user, String password, String resources);
+
+  OSecurityInternal newSecurity(String database);
 }

@@ -19,13 +19,14 @@
  */
 package com.orientechnologies.orient.server.config;
 
+import com.orientechnologies.orient.core.security.OGlobalUser;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlRootElement(name = "user")
 @XmlType(propOrder = {"resources", "password", "name"})
-public class OServerUserConfiguration {
+public class OServerUserConfiguration implements OGlobalUser {
   @XmlAttribute public String name;
 
   @XmlAttribute public String password;
@@ -39,5 +40,19 @@ public class OServerUserConfiguration {
     name = iName;
     password = iPassword;
     resources = iResources;
+  }
+
+  @Override
+  public String getName() {
+    return name;
+  }
+
+  @Override
+  public String getPassword() {
+    return password;
+  }
+
+  public String getResources() {
+    return resources;
   }
 }

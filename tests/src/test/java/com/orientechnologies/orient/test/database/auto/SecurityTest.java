@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.graph.gremlin.OCommandGremlin;
 import java.io.IOException;
 import java.util.Date;
@@ -157,7 +156,7 @@ public class SecurityTest extends DocumentDBBaseTest {
           Assert.assertFalse(child.hasRole("wrter", true));
 
           database.close();
-          if (!(database.getStorage() instanceof OStorageProxy)) {
+          if (!database.isRemote()) {
             database.open("writerChild", "writerChild");
 
             OSecurityUser user = database.getUser();

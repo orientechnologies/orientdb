@@ -89,7 +89,7 @@ public class OSymmetricKeySecurity implements OSecurityInternal {
 
       String decryptedUsername = sk.decryptAsString(password);
 
-      if (OSecurityManager.instance().checkPassword(username, decryptedUsername)) return user;
+      if (OSecurityManager.checkPassword(username, decryptedUsername)) return user;
     } catch (Exception ex) {
       throw OException.wrapException(
           new OSecurityAccessException(

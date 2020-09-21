@@ -22,8 +22,7 @@ package com.orientechnologies.orient.server.security.authenticator;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityManager;
-import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.config.OServerConfigurationManager;
+import com.orientechnologies.orient.core.security.OSecuritySystem;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.security.OSecurityAuthenticatorAbstract;
 import java.util.List;
@@ -47,11 +46,8 @@ public class ODefaultPasswordAuthenticator extends OSecurityAuthenticatorAbstrac
   }
 
   // OSecurityComponent
-  public void config(
-      final OServer oServer,
-      final OServerConfigurationManager serverCfg,
-      final ODocument jsonConfig) {
-    super.config(oServer, serverCfg, jsonConfig);
+  public void config(final ODocument jsonConfig, OSecuritySystem security) {
+    super.config(jsonConfig, security);
 
     try {
       if (jsonConfig.containsField("users")) {
@@ -110,7 +106,7 @@ public class ODefaultPasswordAuthenticator extends OSecurityAuthenticatorAbstrac
       OServerUserConfiguration user = getUser(username);
 
       if (isPasswordValid(user)) {
-        if (OSecurityManager.instance().checkPassword(password, user.password)) {
+        if (OSecurityManager.checkPassword(password, user.password)) {
           principal = user.name;
         }
       }

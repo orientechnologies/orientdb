@@ -17,39 +17,24 @@
  *  * For more information: http://orientdb.com
  *
  */
-package com.orientechnologies.orient.server.security;
+package com.orientechnologies.orient.core.security;
 
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OrientDBEmbedded;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
+import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OSystemUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.security.OAuditingOperation;
-import com.orientechnologies.orient.core.security.OInvalidPasswordException;
-import com.orientechnologies.orient.core.security.OSecurityFactory;
-import com.orientechnologies.orient.core.security.OSecurityManager;
-import com.orientechnologies.orient.core.security.OSecuritySystemException;
-import com.orientechnologies.orient.server.OClientConnection;
-import com.orientechnologies.orient.server.OClientConnectionManager;
-import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.OServerLifecycleListener;
-import com.orientechnologies.orient.server.config.OServerConfigurationManager;
-import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
-import com.orientechnologies.orient.server.config.OServerUserConfiguration;
-import com.orientechnologies.orient.server.network.OServerNetworkListener;
-import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
-import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 import java.io.File;
 import java.io.FileInputStream;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -61,8 +46,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author S. Colin Leister
  */
-public class ODefaultServerSecurity
-    implements OSecurityFactory, OServerLifecycleListener, OServerSecurity {
+public class ODefaultSecuritySystem implements OSecuritySystem {
   private boolean enabled = false; // Defaults to not
   // enabled at
   // first.
@@ -87,8 +71,8 @@ public class ODefaultServerSecurity
   private ODocument configDoc; // Holds the
   // current JSON
   // configuration.
-  private OServer server;
-  private OServerConfigurationManager serverConfig;
+  private OSecurityConfig serverConfig;
+  private OrientDBInternal context;
 
   private ODocument auditingDoc;
   private ODocument serverDoc;
@@ -96,30 +80,31 @@ public class ODefaultServerSecurity
   private ODocument passwdValDoc;
   private ODocument ldapImportDoc;
 
-  // The SuperUser is now only used by the ODefaultServerSecurity for self-authentication.
-  private final String superUser = "OSecurityModuleSuperUser";
-  private String superUserPassword;
-  private OServerUserConfiguration superUserCfg;
-
   // We use a list because the order indicates priority of method.
   private final List<OSecurityAuthenticator> authenticatorsList =
       new ArrayList<OSecurityAuthenticator>();
 
   private ConcurrentHashMap<String, Class<?>> securityClassMap =
       new ConcurrentHashMap<String, Class<?>>();
-  private OSyslog sysLog;
+  private SecureRandom random = new SecureRandom();
 
-  public ODefaultServerSecurity(
-      final OServer oServer, final OServerConfigurationManager serverCfg) {
-    server = oServer;
-    serverConfig = serverCfg;
+  public ODefaultSecuritySystem() {}
 
-    oServer.registerLifecycleListener(this);
-    OSecurityManager.instance().setSecurityFactory(this);
+  public ODefaultSecuritySystem(OrientDBEmbedded orientDBEmbedded, OSecurityConfig securityConfig) {
+    activate(orientDBEmbedded, securityConfig);
+  }
+
+  public void activate(final OrientDBInternal context, final OSecurityConfig serverCfg) {
+    this.context = context;
+    this.serverConfig = serverCfg;
+    if (serverConfig != null) {
+      this.load(serverConfig.getConfigurationFile());
+    }
+    onAfterDynamicPlugins();
   }
 
   public void shutdown() {
-    server.unregisterLifecycleListener(this);
+    close();
   }
 
   private Class<?> getClass(final ODocument jsonConfig) {
@@ -152,45 +137,58 @@ public class ODefaultServerSecurity
 
   // OSecuritySystem (via OServerSecurity)
   public String authenticate(final String username, final String password) {
-    try {
-      // It's possible for the username to be null or an empty string in the case of SPNEGO Kerberos
-      // tickets.
-      if (username != null && !username.isEmpty()) {
-        if (debug)
-          OLogManager.instance()
-              .info(
-                  this,
-                  "ODefaultServerSecurity.authenticate() ** Authenticating username: %s",
-                  username);
+    if (isEnabled()) {
+      try {
+        // It's possible for the username to be null or an empty string in the case of SPNEGO
+        // Kerberos
+        // tickets.
+        if (username != null && !username.isEmpty()) {
+          if (debug)
+            OLogManager.instance()
+                .info(
+                    this,
+                    "ODefaultServerSecurity.authenticate() ** Authenticating username: %s",
+                    username);
+        }
 
-        // This means it originates from us (used by openDatabase).
-        if (username.equals(superUser) && password.equals(superUserPassword)) return superUser;
-      }
-
-      List<OSecurityAuthenticator> active = new ArrayList<>();
-      synchronized (authenticatorsList) {
-        // Walk through the list of OSecurityAuthenticators.
-        for (OSecurityAuthenticator sa : authenticatorsList) {
-          if (sa.isEnabled()) {
-            active.add(sa);
+        List<OSecurityAuthenticator> active = new ArrayList<>();
+        synchronized (authenticatorsList) {
+          // Walk through the list of OSecurityAuthenticators.
+          for (OSecurityAuthenticator sa : authenticatorsList) {
+            if (sa.isEnabled()) {
+              active.add(sa);
+            }
           }
         }
-      }
-      for (OSecurityAuthenticator sa : active) {
-        String principal = sa.authenticate(username, password);
+        for (OSecurityAuthenticator sa : active) {
+          String principal = sa.authenticate(username, password);
 
-        if (principal != null) return principal;
+          if (principal != null) return principal;
+        }
+
+      } catch (Exception ex) {
+        OLogManager.instance().error(this, "ODefaultServerSecurity.authenticate()", ex);
       }
 
-    } catch (Exception ex) {
-      OLogManager.instance().error(this, "ODefaultServerSecurity.authenticate()", ex);
+      return null; // Indicates authentication failed.
+    } else {
+      return authenticateServerUser(username, password);
     }
-
-    return null; // Indicates authentication failed.
   }
 
-  protected OServer getServer() {
-    return server;
+  public String authenticateServerUser(final String username, final String password) {
+    OGlobalUser user = getServerUser(username);
+
+    if (user != null && user.getPassword() != null) {
+      if (OSecurityManager.checkPassword(password, user.getPassword())) {
+        return user.getName();
+      }
+    }
+    return null;
+  }
+
+  public OrientDBInternal getContext() {
+    return context;
   }
 
   // OSecuritySystem (via OServerSecurity)
@@ -324,7 +322,7 @@ public class ODefaultServerSecurity
     //  if (isEnabled() && !OSystemDatabase.SYSTEM_DB_NAME.equals(dbName)) {
     if (isEnabled()) {
       return (OUser)
-          server
+          context
               .getSystemDatabase()
               .execute(
                   (resultset) -> {
@@ -346,8 +344,6 @@ public class ODefaultServerSecurity
     if (isEnabled()) {
       if (username == null || resource == null) return false;
 
-      if (username.equals(superUser)) return true;
-
       synchronized (authenticatorsList) {
         // Walk through the list of OSecurityAuthenticators.
         for (OSecurityAuthenticator sa : authenticatorsList) {
@@ -356,8 +352,23 @@ public class ODefaultServerSecurity
           }
         }
       }
+      return false;
+    } else {
+      return isServerUserAuthorized(username, resource);
     }
+  }
 
+  public boolean isServerUserAuthorized(final String username, final String resource) {
+    final OGlobalUser user = getServerUser(username);
+
+    if (user != null) {
+      if (user.getResources().equals("*"))
+        // ACCESS TO ALL
+        return true;
+
+      String[] resourceParts = user.getResources().split(",");
+      for (String r : resourceParts) if (r.equalsIgnoreCase(resource)) return true;
+    }
     return false;
   }
 
@@ -441,11 +452,10 @@ public class ODefaultServerSecurity
   }
 
   // OServerSecurity
-  public OServerUserConfiguration getUser(final String username) {
-    OServerUserConfiguration userCfg = null;
+  public OGlobalUser getUser(final String username) {
+    OGlobalUser userCfg = null;
 
     if (isEnabled()) {
-      if (username.equals(superUser)) return superUserCfg;
 
       synchronized (authenticatorsList) {
         // Walk through the list of OSecurityAuthenticators.
@@ -456,33 +466,26 @@ public class ODefaultServerSecurity
           }
         }
       }
+    } else {
+      userCfg = getServerUser(username);
     }
 
     return userCfg;
   }
 
-  // OServerSecurity
-  public ODatabase<?> openDatabase(final String dbName) {
-    ODatabase<?> db = null;
-
-    if (isEnabled()) {
-      db =
-          server.openDatabase(
-              dbName, superUser, "", null, true); // true indicates bypassing security.
+  public OGlobalUser getServerUser(final String username) {
+    OGlobalUser userCfg = null;
+    // This will throw an IllegalArgumentException if iUserName is null or empty.
+    // However, a null or empty iUserName is possible with some security implementations.
+    if (serverConfig != null && serverConfig.usersManagement()) {
+      if (username != null && !username.isEmpty()) userCfg = serverConfig.getUser(username);
     }
-
-    return db;
+    return userCfg;
   }
 
   @Override
   public OSyslog getSyslog() {
-    if (sysLog == null) {
-      OServerPluginInfo syslogPlugin = server.getPluginManager().getPluginByName("syslog");
-      if (syslogPlugin != null) {
-        sysLog = (OSyslog) syslogPlugin.getInstance();
-      }
-    }
-    return sysLog;
+    return serverConfig.getSyslog();
   }
 
   // OSecuritySystem
@@ -529,6 +532,10 @@ public class ODefaultServerSecurity
     return typeName;
   }
 
+  public void load(final String cfgPath) {
+    this.configDoc = loadConfig(cfgPath);
+  }
+
   // OSecuritySystem
   public void reload(final String cfgPath) {
     reload(null, cfgPath);
@@ -547,7 +554,7 @@ public class ODefaultServerSecurity
   @Override
   public void reload(OSecurityUser user, ODocument configDoc) {
     if (configDoc != null) {
-      onBeforeDeactivate();
+      close();
 
       this.configDoc = configDoc;
 
@@ -603,70 +610,6 @@ public class ODefaultServerSecurity
         String.format("The %s security component has been reloaded", name));
   }
 
-  /** Called each time one of the security classes (OUser, ORole, OServerRole) is modified. */
-  public void securityRecordChange(final String dbURL, final ODocument record) {
-
-    // The point of this is to notify any matching (via URL) active database that its user
-    // needs to be reloaded to pick up any changes that may affect its security permissions.
-
-    // We execute this in a new thread to avoid blocking the caller for too long.
-    Orient.instance()
-        .submit(
-            new Runnable() {
-              @Override
-              public void run() {
-                try {
-                  OClientConnectionManager ccm = server.getClientConnectionManager();
-                  if (ccm != null) {
-                    for (OClientConnection cc : ccm.getConnections()) {
-                      try {
-                        cc.acquire();
-                        ODatabaseDocumentInternal ccDB = cc.getDatabase();
-                        if (ccDB != null) {
-                          ccDB.activateOnCurrentThread();
-                          if (!ccDB.isClosed() && ccDB.getURL() != null) {
-                            if (ccDB.getURL().equals(dbURL)) {
-                              ccDB.reloadUser();
-                            }
-                          }
-                        }
-                      } catch (Exception ex) {
-                        OLogManager.instance()
-                            .error(this, "securityRecordChange() Exception: ", ex);
-                      } finally {
-                        cc.release();
-                      }
-                    }
-                  }
-                } catch (Exception ex) {
-                  OLogManager.instance().error(this, "securityRecordChange() Exception: ", ex);
-                }
-                ODatabaseRecordThreadLocal.instance().remove();
-              }
-            });
-  }
-
-  private void createSuperUser() {
-    if (superUser == null)
-      throw new OSecuritySystemException(
-          "ODefaultServerSecurity.createSuperUser() SuperUser cannot be null");
-
-    try {
-      // Assign a temporary password so that we know if authentication requests coming from the
-      // SuperUser are from us.
-      superUserPassword =
-          OSecurityManager.instance()
-              .createSHA256(String.valueOf(new java.util.Random().nextLong()));
-
-      superUserCfg = new OServerUserConfiguration(superUser, superUserPassword, "*");
-    } catch (Exception ex) {
-      OLogManager.instance().error(this, "createSuperUser() Exception: ", ex);
-    }
-
-    if (superUserPassword == null)
-      throw new OSecuritySystemException("ODefaultServerSecurity Could not create SuperUser");
-  }
-
   private void loadAuthenticators(final ODocument authDoc) {
     synchronized (authenticatorsList) {
       for (OSecurityAuthenticator sa : authenticatorsList) {
@@ -696,7 +639,7 @@ public class ODefaultServerSecurity
                     OSecurityAuthenticator authPlugin =
                         (OSecurityAuthenticator) authClass.newInstance();
 
-                    authPlugin.config(server, serverConfig, authMethodDoc);
+                    authPlugin.config(authMethodDoc, this);
                     authPlugin.active();
 
                     authenticatorsList.add(authPlugin);
@@ -732,32 +675,6 @@ public class ODefaultServerSecurity
     }
   }
 
-  /** * OServerLifecycleListener Interface * */
-  public void onBeforeActivate() {
-    createSuperUser();
-
-    // Default
-    String configFile =
-        OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}/config/security.json");
-
-    // The default "security.json" file can be overridden in the server config file.
-    String securityFile = getConfigProperty("server.security.file");
-    if (securityFile != null) configFile = securityFile;
-
-    String ssf =
-        server
-            .getContextConfiguration()
-            .getValueAsString(OGlobalConfiguration.SERVER_SECURITY_FILE);
-    if (ssf != null) configFile = ssf;
-
-    configDoc = loadConfig(configFile);
-  }
-
-  // OServerLifecycleListener Interface
-  public void onAfterActivate() {
-    // Does nothing now.
-  }
-
   // OServerSecurity
   public void onAfterDynamicPlugins() {
     onAfterDynamicPlugins(null);
@@ -769,56 +686,12 @@ public class ODefaultServerSecurity
       loadComponents();
 
       if (isEnabled()) {
-        registerRESTCommands();
-
         log(OAuditingOperation.SECURITY, null, user, "The security module is now loaded");
       }
     } else {
       OLogManager.instance().warn(this, "onAfterDynamicPlugins() Configuration document is empty");
     }
   }
-
-  // OServerLifecycleListener Interface
-  public void onBeforeDeactivate() {
-    if (enabled) {
-      unregisterRESTCommands();
-
-      synchronized (importLDAPSynch) {
-        if (importLDAP != null) {
-          importLDAP.dispose();
-          importLDAP = null;
-        }
-      }
-
-      synchronized (passwordValidatorSynch) {
-        if (passwordValidator != null) {
-          passwordValidator.dispose();
-          passwordValidator = null;
-        }
-      }
-
-      synchronized (auditingSynch) {
-        if (auditingService != null) {
-          auditingService.dispose();
-          auditingService = null;
-        }
-      }
-
-      synchronized (authenticatorsList) {
-        // Notify all the security components that the server is active.
-        for (OSecurityAuthenticator sa : authenticatorsList) {
-          sa.dispose();
-        }
-
-        authenticatorsList.clear();
-      }
-
-      enabled = false;
-    }
-  }
-
-  // OServerLifecycleListener Interface
-  public void onAfterDeactivate() {}
 
   protected void loadComponents() {
     // Loads the top-level configuration properties ("enabled" and "debug").
@@ -882,10 +755,6 @@ public class ODefaultServerSecurity
         String configFile =
             OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}/config/security.json");
 
-        // The default "security.json" file can be overridden in the server config file.
-        String securityFile = getConfigProperty("server.security.file");
-        if (securityFile != null) configFile = securityFile;
-
         String ssf = OGlobalConfiguration.SERVER_SECURITY_FILE.getValueAsString();
         if (ssf != null) configFile = ssf;
 
@@ -940,21 +809,6 @@ public class ODefaultServerSecurity
     }
 
     return securityDoc;
-  }
-
-  protected String getConfigProperty(final String name) {
-    String value = null;
-
-    if (server.getConfiguration() != null && server.getConfiguration().properties != null) {
-      for (OServerEntryConfiguration p : server.getConfiguration().properties) {
-        if (p.name.equals(name)) {
-          value = OSystemVariableResolver.resolveSystemVariables(p.value);
-          break;
-        }
-      }
-    }
-
-    return value;
   }
 
   private boolean isEnabled(final ODocument sectionDoc) {
@@ -1035,7 +889,7 @@ public class ODefaultServerSecurity
           if (cls != null) {
             if (OPasswordValidator.class.isAssignableFrom(cls)) {
               passwordValidator = (OPasswordValidator) cls.newInstance();
-              passwordValidator.config(server, serverConfig, passwdValDoc);
+              passwordValidator.config(passwdValDoc, this);
               passwordValidator.active();
             } else {
               OLogManager.instance()
@@ -1072,7 +926,7 @@ public class ODefaultServerSecurity
           if (cls != null) {
             if (OSecurityComponent.class.isAssignableFrom(cls)) {
               importLDAP = (OSecurityComponent) cls.newInstance();
-              importLDAP.config(server, serverConfig, ldapImportDoc);
+              importLDAP.config(ldapImportDoc, this);
               importLDAP.active();
             } else {
               OLogManager.instance()
@@ -1109,7 +963,7 @@ public class ODefaultServerSecurity
           if (cls != null) {
             if (OAuditingService.class.isAssignableFrom(cls)) {
               auditingService = (OAuditingService) cls.newInstance();
-              auditingService.config(server, serverConfig, auditingDoc);
+              auditingService.config(auditingDoc, this);
               auditingService.active();
             } else {
               OLogManager.instance()
@@ -1132,47 +986,99 @@ public class ODefaultServerSecurity
     }
   }
 
-  /** * OSecurityFactory Interface * */
-  public OSecurityInternal newSecurity() {
-    return new OSecurityServerExternal(server);
-  }
+  public void close() {
+    if (enabled) {
 
-  private void registerRESTCommands() {
-    try {
-      final OServerNetworkListener listener =
-          server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
-
-      if (listener != null) {
-        // Register the REST API Command.
-        // listener.registerStatelessCommand(new OServerCommandPostSecurityReload(this));
-      } else {
-        OLogManager.instance()
-            .info(
-                this,
-                "ODefaultServerSecurity.registerRESTCommands() unable to retrieve Network Protocol listener.",
-                null);
+      synchronized (importLDAPSynch) {
+        if (importLDAP != null) {
+          importLDAP.dispose();
+          importLDAP = null;
+        }
       }
-    } catch (Exception th) {
-      OLogManager.instance().error(this, "ODefaultServerSecurity.registerRESTCommands()", th);
+
+      synchronized (passwordValidatorSynch) {
+        if (passwordValidator != null) {
+          passwordValidator.dispose();
+          passwordValidator = null;
+        }
+      }
+
+      synchronized (auditingSynch) {
+        if (auditingService != null) {
+          auditingService.dispose();
+          auditingService = null;
+        }
+      }
+
+      synchronized (authenticatorsList) {
+        // Notify all the security components that the server is active.
+        for (OSecurityAuthenticator sa : authenticatorsList) {
+          sa.dispose();
+        }
+
+        authenticatorsList.clear();
+      }
+
+      enabled = false;
     }
   }
 
-  private void unregisterRESTCommands() {
-    try {
-      final OServerNetworkListener listener =
-          server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
+  @Override
+  public OGlobalUser authenticateAndAuthorize(
+      String iUserName, String iPassword, String iResourceToCheck) {
+    // Returns the authenticated username, if successful, otherwise null.
+    String authUsername = authenticate(iUserName, iPassword);
 
-      if (listener != null) {
-        // listener.unregisterStatelessCommand(OServerCommandPostSecurityReload.class);
-      } else {
-        OLogManager.instance()
-            .error(
-                this,
-                "ODefaultServerSecurity.unregisterRESTCommands() unable to retrieve Network Protocol listener.",
-                null);
+    // Authenticated, now see if the user is authorized.
+    if (authUsername != null) {
+      if (isAuthorized(authUsername, iResourceToCheck)) {
+        return getUser(authUsername);
       }
-    } catch (Exception th) {
-      OLogManager.instance().error(this, "ODefaultServerSecurity.unregisterRESTCommands()", th);
     }
+    return null;
+  }
+
+  public boolean existsUser(String user) {
+    if (serverConfig != null && serverConfig.usersManagement()) {
+      return serverConfig.existsUser(user);
+    } else {
+      return false;
+    }
+  }
+
+  public void addUser(String user, String password, String permissions) {
+    if (password == null) {
+      // AUTO GENERATE PASSWORD
+      final byte[] buffer = new byte[32];
+      random.nextBytes(buffer);
+      password = OSecurityManager.createSHA256(OSecurityManager.byteArrayToHexStr(buffer));
+    }
+
+    // HASH THE PASSWORD
+    password =
+        OSecurityManager.createHash(
+            password,
+            context
+                .getConfigurations()
+                .getConfigurations()
+                .getValueAsString(OGlobalConfiguration.SECURITY_USER_PASSWORD_DEFAULT_ALGORITHM),
+            true);
+
+    serverConfig.setUser(user, password, permissions);
+    serverConfig.saveConfiguration();
+  }
+
+  public void dropUser(String iUserName) {
+    serverConfig.dropUser(iUserName);
+    serverConfig.saveConfiguration();
+  }
+
+  public void addTemporaryUser(String iName, String iPassword, String iPermissions) {
+    serverConfig.setEphemeralUser(iName, iPassword, iPermissions);
+  }
+
+  @Override
+  public OSecurityInternal newSecurity(String database) {
+    return new OSecurityShared(this);
   }
 }

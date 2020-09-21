@@ -24,9 +24,6 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.config.OServerConfigurationManager;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.security.OSecurityAuthenticatorAbstract;
 
@@ -44,14 +41,6 @@ public class OSystemUserAuthenticator extends OSecurityAuthenticatorAbstract {
   }
 
   // OSecurityComponent
-  public void config(
-      final OServer oServer,
-      final OServerConfigurationManager serverCfg,
-      final ODocument jsonConfig) {
-    super.config(oServer, serverCfg, jsonConfig);
-  }
-
-  // OSecurityComponent
   // Called on removal of the authenticator.
   public void dispose() {}
 
@@ -62,9 +51,9 @@ public class OSystemUserAuthenticator extends OSecurityAuthenticatorAbstract {
     String principal = null;
 
     try {
-      if (getServer() != null) {
+      if (getSecurity() != null) {
         // dbName parameter is null because we don't need to filter any roles for this.
-        OUser user = getServer().getSecurity().getSystemUser(username, null);
+        OUser user = getSecurity().getSystemUser(username, null);
 
         if (user != null && user.getAccountStatus() == OSecurityUser.STATUSES.ACTIVE) {
           if (user.checkPassword(password)) principal = username;
@@ -84,8 +73,8 @@ public class OSystemUserAuthenticator extends OSecurityAuthenticatorAbstract {
     if (username == null || resource == null) return false;
 
     try {
-      if (getServer() != null) {
-        OUser user = getServer().getSecurity().getSystemUser(username, null);
+      if (getSecurity() != null) {
+        OUser user = getSecurity().getSystemUser(username, null);
 
         if (user != null && user.getAccountStatus() == OSecurityUser.STATUSES.ACTIVE) {
           ORole role = null;
@@ -117,8 +106,8 @@ public class OSystemUserAuthenticator extends OSecurityAuthenticatorAbstract {
     OServerUserConfiguration userCfg = null;
 
     try {
-      if (getServer() != null) {
-        OUser user = getServer().getSecurity().getSystemUser(username, null);
+      if (getSecurity() != null) {
+        OUser user = getSecurity().getSystemUser(username, null);
 
         if (user != null && user.getAccountStatus() == OSecurityUser.STATUSES.ACTIVE) {
           userCfg = new OServerUserConfiguration(user.getName(), "", "");

@@ -37,6 +37,8 @@ import com.orientechnologies.orient.core.engine.OEngine;
 import com.orientechnologies.orient.core.engine.OMemoryAndLocalPaginatedEnginesInitializer;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.security.ODefaultSecuritySystem;
+import com.orientechnologies.orient.core.security.OSecuritySystem;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
@@ -103,6 +105,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   private TimerTask autoCloseTimer = null;
   private final OScriptManager scriptManager = new OScriptManager();
   private final OSystemDatabase systemDatabase;
+  private final OSecuritySystem securitySystem;
 
   protected final long maxWALSegmentSize;
   protected final long doubleWriteLogMaxSegSize;
@@ -181,6 +184,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
       initAutoClose(delay);
     }
     systemDatabase = new OSystemDatabase(this);
+    securitySystem = new ODefaultSecuritySystem(this, this.configurations.getSecurityConfig());
   }
 
   protected OCachedDatabasePoolFactory createCachedDatabasePoolFactory(OrientDBConfig config) {
@@ -887,6 +891,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   public void close() {
     if (!open) return;
     timer.cancel();
+    securitySystem.shutdown();
     executor.shutdown();
     try {
       while (!executor.awaitTermination(1, TimeUnit.MINUTES)) {
@@ -1141,5 +1146,14 @@ public class OrientDBEmbedded implements OrientDBInternal {
   @Override
   public OSystemDatabase getSystemDatabase() {
     return systemDatabase;
+  }
+
+  public OSecuritySystem getSecuritySystem() {
+    return securitySystem;
+  }
+
+  @Override
+  public String getBasePath() {
+    return basePath;
   }
 }

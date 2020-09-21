@@ -18,11 +18,7 @@ import java.util.stream.Collectors;
 
 public class OSecurityRemote implements OSecurityInternal {
 
-  private OSecurityInternal delegate;
-
-  public OSecurityRemote(OSecurityInternal delegate) {
-    this.delegate = delegate;
-  }
+  public OSecurityRemote() {}
 
   @Override
   public boolean isAllowed(
@@ -159,7 +155,7 @@ public class OSecurityRemote implements OSecurityInternal {
 
   @Override
   public OUser authenticate(ODatabaseSession session, OToken authToken) {
-    return delegate.authenticate(session, authToken);
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -235,13 +231,13 @@ public class OSecurityRemote implements OSecurityInternal {
   @Override
   public Map<String, OSecurityPolicy> getSecurityPolicies(
       ODatabaseSession session, OSecurityRole role) {
-    return delegate.getSecurityPolicies(session, role);
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public OSecurityPolicy getSecurityPolicy(
       ODatabaseSession session, OSecurityRole role, String resource) {
-    return delegate.getSecurityPolicy(session, role, resource);
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -296,7 +292,7 @@ public class OSecurityRemote implements OSecurityInternal {
 
   @Override
   public void createClassTrigger(ODatabaseSession session) {
-    delegate.createClassTrigger(session);
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -318,9 +314,7 @@ public class OSecurityRemote implements OSecurityInternal {
   public void load(ODatabaseSession session) {}
 
   @Override
-  public void close() {
-    delegate.close();
-  }
+  public void close() {}
 
   @Override
   public Set<String> getFilteredProperties(ODatabaseSession session, ODocument document) {
