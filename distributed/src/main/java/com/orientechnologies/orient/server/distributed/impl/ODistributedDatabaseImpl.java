@@ -1299,6 +1299,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     if (parsing) {
       while (operationsRunnig.get() != 0) {
         try {
+
           Thread.sleep(300);
         } catch (InterruptedException e) {
           break;
@@ -1336,7 +1337,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     List<OTransactionId> res = sequenceManager.checkSelfStatus(status);
     res.removeAll(this.inQueue);
     if (!res.isEmpty()) {
-      manager.installDatabase(false, databaseName, true, true);
+      Orient.instance()
+          .submit(
+              () -> {
+                manager.installDatabase(false, databaseName, true, true);
+              });
     }
   }
 

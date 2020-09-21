@@ -2069,7 +2069,9 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
 
                   walFile =
                       OWALFile.createWriteWALFile(
-                          walLocation.resolve(getSegmentName(segmentId)), allowDirectIO, blockSize,
+                          walLocation.resolve(getSegmentName(segmentId)),
+                          allowDirectIO,
+                          blockSize,
                           segmentId);
                   assert lsn.getPosition() == CASWALPage.RECORDS_OFFSET;
                   currentPosition = 0;
