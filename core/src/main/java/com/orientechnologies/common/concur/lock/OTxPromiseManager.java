@@ -2,7 +2,6 @@ package com.orientechnologies.common.concur.lock;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.tx.OTransactionId;
-
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -14,7 +13,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class OTxPromiseManager<T> {
   private final Lock lock = new ReentrantLock();
-  private final Map<T, Promise<T>> map = new ConcurrentHashMap<>();
+  private final Map<T, OTxPromise<T>> map = new ConcurrentHashMap<>();
   private final Map<T, Condition> conditions = new ConcurrentHashMap<>();
   private final long timeout; // in milliseconds
   private Set<T> reset;
@@ -27,9 +26,9 @@ public class OTxPromiseManager<T> {
   public OTransactionId promise(T key, int version, OTransactionId txId, boolean force) {
     lock.lock();
     try {
-      Promise<T> p = map.get(key);
+      OTxPromise<T> p = map.get(key);
       if (p == null) {
-        map.put(key, new Promise<>(key, version, txId));
+        map.put(key, new OTxPromise<>(key, version, txId));
         conditions.put(key, lock.newCondition());
         return null;
       }
@@ -40,7 +39,7 @@ public class OTxPromiseManager<T> {
         OTransactionId cancelledPromise = null;
         // If there is a promise for an older version, must wait and retry later
         if (p.getVersion() < version) {
-          throw new OPromiseException(
+          throw new OTxPromiseException(
               String.format(
                   "Cannot acquire promise for resource: '%s' (requested version: %d, existing version: %d)",
                   key, version, p.getVersion()));
@@ -52,7 +51,7 @@ public class OTxPromiseManager<T> {
           Condition c = conditions.remove(key);
           assert c != null; // todo: is this necessary?
           c.notifyAll();
-          map.put(key, new Promise<>(key, version, txId));
+          map.put(key, new OTxPromise<>(key, version, txId));
           conditions.put(key, lock.newCondition());
         }
         return cancelledPromise;
@@ -62,12 +61,12 @@ public class OTxPromiseManager<T> {
         while (p != null) {
           Condition c = conditions.get(key);
           if (c != null && !c.await(timeout, TimeUnit.MILLISECONDS)) {
-            throw new OPromiseException(
+            throw new OTxPromiseException(
                 String.format("Timed out waiting to acquire promise for resource '%s'", key));
           }
           p = map.get(key);
         }
-        map.put(key, new Promise<>(key, version, txId));
+        map.put(key, new OTxPromise<>(key, version, txId));
         conditions.put(key, lock.newCondition());
         return null;
       } catch (InterruptedException e) {
@@ -82,7 +81,7 @@ public class OTxPromiseManager<T> {
   public void release(T key, int version) { // todo: require txId? version needed?
     lock.lock();
     try {
-      Promise<T> p = map.get(key);
+      OTxPromise<T> p = map.get(key);
       if (p == null) {
         // The only way a release will not see the promise again is if there was a reset meanwhile.
         if (!reset.remove(key)) {
@@ -118,5 +117,14 @@ public class OTxPromiseManager<T> {
 
   public long getTimeout() {
     return timeout;
+  }
+
+  public long size() {
+    lock.lock();
+    try {
+      return map.size();
+    } finally {
+      lock.unlock();
+    }
   }
 }

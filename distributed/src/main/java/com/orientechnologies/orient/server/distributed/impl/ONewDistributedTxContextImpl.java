@@ -20,6 +20,9 @@ import java.util.*;
 
 public class ONewDistributedTxContextImpl implements ODistributedTxContext {
 
+  // This will be replaced once we have versioned keys.
+  public static final int DEFAULT_INDEX_KEY_VER = 0;
+
   public enum Status {
     FAILED,
     SUCCESS,
@@ -30,10 +33,8 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
   private final ODistributedRequestId id;
   private final OTransactionInternal tx;
   private final long startedOn;
-  private final List<ORID>    lockedRids   = new ArrayList<>();
-  private final List<Promise<ORID>> promisedRids = new LinkedList<>();
-  private final List<Object>  lockedKeys   = new ArrayList<>();
-  private final List<Promise<Object>> promisedKeys = new LinkedList<>();
+  private final List<OTxPromise<ORID>> promisedRids = new LinkedList<>();
+  private final List<OTxPromise<Object>> promisedKeys = new LinkedList<>();
 
   private Status status;
   private final OTransactionId transactionId;
@@ -51,56 +52,19 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
   }
 
   @Override
-  public void lockIndexKey(Object key) {
-    OSimpleLockManager<Object> recordLockManager = shared.getIndexKeyLockManager();
-    try {
-      recordLockManager.lock(key);
-    } catch (OLockException ex) {
-      this.unlock();
-      throw new ODistributedKeyLockedException(
-          shared.getLocalNodeName(), key, recordLockManager.getTimeout());
-    }
-    lockedKeys.add(key);
-  }
-
-  @Override
-  public void lock(ORID rid) {
-    OSimpleLockManager<ORID> recordLockManager = shared.getRecordLockManager();
-    try {
-      recordLockManager.lock(rid);
-    } catch (OLockException ex) {
-      this.unlock();
-      throw new ODistributedRecordLockedException(
-          shared.getLocalNodeName(), rid, recordLockManager.getTimeout());
-    }
-    lockedRids.add(rid);
-  }
-
-  @Override
-  public void lock(ORID rid, long timeout) {
-    // TODO: the timeout is only in the lock manager, this implementation may need evolution
-    OSimpleLockManager<ORID> recordLockManager = shared.getRecordLockManager();
-    try {
-      recordLockManager.lock(rid, timeout);
-    } catch (OLockException ex) {
-      this.unlock();
-      throw new ODistributedRecordLockedException(shared.getLocalNodeName(), rid, timeout);
-    }
-    lockedRids.add(rid);
-  }
-
-  @Override
   public OTransactionId acquireIndexKeyPromise(Object key, int version, boolean force) {
     OTxPromiseManager<Object> promiseManager = shared.getIndexKeyPromiseManager();
     OTransactionId cancelledPromise = null;
     try {
       cancelledPromise = promiseManager.promise(key, version, transactionId, force);
-    } catch (OPromiseException ex) {
-      this.release();
-      throw new ODistributedKeyLockedException(shared.getLocalNodeName(), key, promiseManager.getTimeout());
+    } catch (OTxPromiseException ex) {
+      this.releasePromises();
+      throw new ODistributedKeyLockedException(
+          shared.getLocalNodeName(), key, promiseManager.getTimeout());
     }
-    // todo: is it safe if this duplicates? happens when there is no previous promise and this is called directly.
-    promisedKeys.add(new Promise<>(key, version, transactionId));
+    // todo: is it safe if this duplicates? happens when there is no previous promise and this is
+    // called directly.
+    promisedKeys.add(new OTxPromise<>(key, version, transactionId));
     return cancelledPromise;
   }
 
@@ -110,14 +74,15 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
     OTransactionId cancelledPromise = null;
     try {
       cancelledPromise = promiseManager.promise(rid, version, transactionId, force);
-    } catch(OPromiseException ex) {
+    } catch (OTxPromiseException ex) {
       // todo(PS): should we distinguish between timeout and version mismatch when force=true?
-      this.release();
+      this.releasePromises();
       throw new ODistributedRecordLockedException(
           shared.getLocalNodeName(), rid, promiseManager.getTimeout());
     }
-    // todo: is it safe if this duplicates? happens when there is no previous promise and this is called directly.
-    promisedRids.add(new Promise<>(rid, version, transactionId));
+    // todo: is it safe if this duplicates? happens when there is no previous promise and this is
+    // called directly.
+    promisedRids.add(new OTxPromise<>(rid, version, transactionId));
     return cancelledPromise;
   }
 
@@ -155,7 +120,7 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
 
   @Override
   public void destroy() {
-    release();
+    releasePromises();
   }
 
   @Override
@@ -164,27 +129,14 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
   }
 
   @Override
-  public void unlock() {
+  public void releasePromises() {
     shared.rollback(this.transactionId);
-    for (ORID lockedRid : lockedRids) {
-      shared.getRecordLockManager().unlock(lockedRid);
-    }
-    lockedRids.clear();
-    for (Object lockedKey : lockedKeys) {
-      shared.getIndexKeyLockManager().unlock(lockedKey);
-    }
-    lockedKeys.clear();
-  }
-
-  @Override
-  public void release() {
-    shared.rollback(this.transactionId);
-    for (Promise<ORID> promise: promisedRids) {
+    for (OTxPromise<ORID> promise : promisedRids) {
       shared.getRecordPromiseManager().release(promise.getKey(), promise.getVersion());
     }
     promisedRids.clear();
     for (Object promisedKey : promisedKeys) {
-      shared.getIndexKeyPromiseManager().release(promisedKey, -1);
+      shared.getIndexKeyPromiseManager().release(promisedKey, DEFAULT_INDEX_KEY_VER);
     }
     promisedKeys.clear();
   }
@@ -214,15 +166,11 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
     return status;
   }
 
-  public List<ORID> getLockedRids() {
-    return lockedRids;
-  }
-
-  public List<Promise<ORID>> getPromisedRids() {
+  public List<OTxPromise<ORID>> getPromisedRids() {
     return promisedRids;
   }
 
-  public List<Promise<Object>> getPromisedKeys() {
+  public List<OTxPromise<Object>> getPromisedKeys() {
     return promisedKeys;
   }
 

@@ -32,17 +32,12 @@ import java.util.Set;
  * @author Luca Garulli
  */
 public interface ODistributedTxContext {
-  void lock(ORID rid);
-
-  void lock(ORID rid, long timeout);
-
-  void lockIndexKey(Object rid);
 
   OTransactionId acquirePromise(ORID rid, int version, boolean force);
 
   OTransactionId acquireIndexKeyPromise(Object key, int version, boolean force);
 
-  void release();
+  void releasePromises();
 
   ODistributedRequestId getReqId();
 
@@ -53,8 +48,6 @@ public interface ODistributedTxContext {
   void destroy();
 
   void clearUndo();
-
-  void unlock();
 
   long getStartedOn();
 

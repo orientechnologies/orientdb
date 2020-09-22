@@ -24,8 +24,6 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DIST
 import static com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION.OUT;
 
 import com.orientechnologies.common.concur.lock.OInterruptedException;
-import com.orientechnologies.common.concur.lock.OSimpleLockManager;
-import com.orientechnologies.common.concur.lock.OSimpleLockManagerImpl;
 import com.orientechnologies.common.concur.lock.OTxPromiseManager;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
@@ -44,20 +42,9 @@ import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
 import com.orientechnologies.orient.core.tx.ValidationResult;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedConfigurationManager;
-import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
-import com.orientechnologies.orient.server.distributed.ODistributedException;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest;
-import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedResponse;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.DB_STATUS;
-import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
-import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 import com.orientechnologies.orient.server.distributed.impl.lock.OLockGuard;
 import com.orientechnologies.orient.server.distributed.impl.lock.OLockManager;
 import com.orientechnologies.orient.server.distributed.impl.lock.OLockManagerImpl;
@@ -66,22 +53,8 @@ import com.orientechnologies.orient.server.distributed.impl.task.OUnreachableSer
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionUniqueKey;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TimerTask;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -97,7 +70,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   protected final ODistributedAbstractPlugin manager;
   protected final ODistributedMessageServiceImpl msgService;
   protected final String databaseName;
-
+  private final String localNodeName;
+  private final OTxPromiseManager<ORID> recordPromiseManager;
+  private final OTxPromiseManager<Object> indexKeyPromiseManager;
+  private final AtomicLong pending = new AtomicLong();
+  private final ODistributedConfigurationManager configurationManager;
   protected Map<ODistributedRequestId, ODistributedTxContext> activeTxContexts =
       new ConcurrentHashMap<>(64);
   private AtomicLong totalSentRequests = new AtomicLong();
@@ -106,90 +83,13 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private CountDownLatch waitForOnline = new CountDownLatch(1);
   private volatile boolean running = true;
   private AtomicBoolean parsing = new AtomicBoolean(true);
-
-  private final String localNodeName;
-  private final OSimpleLockManager<ORID>   recordLockManager;
-  private final OTxPromiseManager<ORID>    recordPromiseManager;
-  private final OSimpleLockManager<Object> indexKeyLockManager;
-  private final OTxPromiseManager<Object>  indexKeyPromiseManager;
-  private       AtomicLong                 operationsRunnig = new AtomicLong(0);
+  private AtomicLong operationsRunnig = new AtomicLong(0);
   private ODistributedSynchronizedSequence sequenceManager;
-  private final AtomicLong pending = new AtomicLong();
   private ThreadPoolExecutor requestExecutor;
   private OLockManager lockManager = new OLockManagerImpl();
   private Set<OTransactionId> inQueue = Collections.newSetFromMap(new ConcurrentHashMap<>());
   private OSyncSource lastValidBackup;
-  private final ODistributedConfigurationManager configurationManager;
   private volatile DB_STATUS freezePrevStatus;
-
-  public static boolean sendResponseBack(
-      final Object current,
-      final ODistributedServerManager manager,
-      final ODistributedRequestId iRequestId,
-      Object responsePayload) {
-
-    if (iRequestId.getMessageId() < 0)
-      // INTERNAL MSG
-      return true;
-
-    final String local = manager.getLocalNodeName();
-
-    final String sender = manager.getNodeNameById(iRequestId.getNodeId());
-
-    final ODistributedResponse response =
-        new ODistributedResponse(null, iRequestId, local, sender, responsePayload);
-
-    // TODO: check if using remote channel for local node still makes sense
-    //    if (!senderNodeName.equalsIgnoreCase(manager.getLocalNodeName()))
-    try {
-      // GET THE SENDER'S RESPONSE QUEUE
-      final ORemoteServerController remoteSenderServer = manager.getRemoteServer(sender);
-
-      ODistributedServerLog.debug(
-          current, local, sender, OUT, "Sending response %s back (reqId=%s)", response, iRequestId);
-
-      remoteSenderServer.sendResponse(response);
-
-    } catch (Exception e) {
-      ODistributedServerLog.debug(
-          current,
-          local,
-          sender,
-          OUT,
-          "Error on sending response '%s' back (reqId=%s err=%s)",
-          response,
-          iRequestId,
-          e.toString());
-      return false;
-    }
-
-    return true;
-  }
-
-  public OSimpleLockManager<ORID> getRecordLockManager() {
-    return recordLockManager;
-  }
-
-  public OTxPromiseManager<ORID> getRecordPromiseManager() {
-    return recordPromiseManager;
-  }
-
-  public OSimpleLockManager<Object> getIndexKeyLockManager() {
-    return indexKeyLockManager;
-  }
-
-  public OTxPromiseManager<Object> getIndexKeyPromiseManager() {
-    return indexKeyPromiseManager;
-  }
-
-  public void startOperation() {
-    waitDistributedIsReady();
-    operationsRunnig.incrementAndGet();
-  }
-
-  public void endOperation() {
-    operationsRunnig.decrementAndGet();
-  }
 
   public ODistributedDatabaseImpl(
       final OHazelcastPlugin manager,
@@ -212,9 +112,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     startAcceptingRequests();
 
     if (iDatabaseName.equals(OSystemDatabase.SYSTEM_DB_NAME)) {
-      recordLockManager = null;
       recordPromiseManager = null;
-      indexKeyLockManager = null;
       indexKeyPromiseManager = null;
       return;
     }
@@ -281,12 +179,12 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         .getProfiler()
         .registerHookValue(
             "distributed.db." + databaseName + ".recordLocks",
-            "Number of record locked",
+            "Number of records locked",
             OProfiler.METRIC_TYPE.COUNTER,
             new OAbstractProfiler.OProfilerHookValue() {
               @Override
               public Object getValue() {
-                return (long) recordLockManager.size() + indexKeyLockManager.size();
+                return recordPromiseManager.size() + indexKeyPromiseManager.size();
               }
             },
             "distributed.db.*.recordLocks");
@@ -301,11 +199,70 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
             .getServerInstance()
             .getContextConfiguration()
             .getValueAsInteger(DISTRIBUTED_TRANSACTION_SEQUENCE_SET_SIZE);
-    recordLockManager = new OSimpleLockManagerImpl<>(timeout);
     recordPromiseManager = new OTxPromiseManager<>(timeout);
-    indexKeyLockManager = new OSimpleLockManagerImpl<>(timeout);
     indexKeyPromiseManager = new OTxPromiseManager<>(timeout);
     sequenceManager = new ODistributedSynchronizedSequence(localNodeName, sequenceSize);
+  }
+
+  public static boolean sendResponseBack(
+      final Object current,
+      final ODistributedServerManager manager,
+      final ODistributedRequestId iRequestId,
+      Object responsePayload) {
+
+    if (iRequestId.getMessageId() < 0)
+      // INTERNAL MSG
+      return true;
+
+    final String local = manager.getLocalNodeName();
+
+    final String sender = manager.getNodeNameById(iRequestId.getNodeId());
+
+    final ODistributedResponse response =
+        new ODistributedResponse(null, iRequestId, local, sender, responsePayload);
+
+    // TODO: check if using remote channel for local node still makes sense
+    //    if (!senderNodeName.equalsIgnoreCase(manager.getLocalNodeName()))
+    try {
+      // GET THE SENDER'S RESPONSE QUEUE
+      final ORemoteServerController remoteSenderServer = manager.getRemoteServer(sender);
+
+      ODistributedServerLog.debug(
+          current, local, sender, OUT, "Sending response %s back (reqId=%s)", response, iRequestId);
+
+      remoteSenderServer.sendResponse(response);
+
+    } catch (Exception e) {
+      ODistributedServerLog.debug(
+          current,
+          local,
+          sender,
+          OUT,
+          "Error on sending response '%s' back (reqId=%s err=%s)",
+          response,
+          iRequestId,
+          e.toString());
+      return false;
+    }
+
+    return true;
+  }
+
+  public OTxPromiseManager<ORID> getRecordPromiseManager() {
+    return recordPromiseManager;
+  }
+
+  public OTxPromiseManager<Object> getIndexKeyPromiseManager() {
+    return indexKeyPromiseManager;
+  }
+
+  public void startOperation() {
+    waitDistributedIsReady();
+    operationsRunnig.incrementAndGet();
+  }
+
+  public void endOperation() {
+    operationsRunnig.decrementAndGet();
   }
 
   @Override
@@ -885,9 +842,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         }
       }
 
-      recordLockManager.reset();
       recordPromiseManager.reset();
-      indexKeyLockManager.reset();
       indexKeyPromiseManager.reset();
     }
   }

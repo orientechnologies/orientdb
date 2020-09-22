@@ -1,11 +1,15 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.*;
+import static com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl.Status.*;
+import static com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl.DEFAULT_INDEX_KEY_VER;
+
 import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
-import com.orientechnologies.common.concur.lock.Promise;
+import com.orientechnologies.common.concur.lock.OTxPromise;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
@@ -54,16 +58,12 @@ import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLo
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
-
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.*;
-import static com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl.Status.*;
 
 /** Created by tglman on 30/03/17. */
 public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
@@ -422,17 +422,15 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   public void acquireLocksForTx(
       OTransactionInternal tx, ODistributedTxContext txContext, boolean force) {
-    Set<OTransactionId> txsToCancel = new HashSet<>();
+    Set<OTransactionId> txsWithBrokenPromises = new HashSet<>();
     Set<OPair<ORID, Integer>> rids = new TreeSet<>();
     for (ORecordOperation entry : tx.getRecordOperations()) {
       rids.add(new OPair<>(entry.getRID().copy(), entry.getRecord().getVersion()));
     }
     for (OPair<ORID, Integer> rid : rids) {
-      // TODO(PS): do I need to explicitly cancel the kicked out transactions?
-      OTransactionId txToCancel = txContext.acquirePromise(rid.getKey(), rid.getValue(), force);
-      if (txToCancel != null) {
-        System.out.printf(
-            "Force locking resource '%s' removed promise for tx '%s'.\n", rid, txToCancel);
+      OTransactionId txId = txContext.acquirePromise(rid.getKey(), rid.getValue(), force);
+      if (txId != null) {
+        txsWithBrokenPromises.add(txId);
       }
     }
 
@@ -458,10 +456,19 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     }
     for (String key : keys) {
       // for now always use version 0
-      OTransactionId txToCancel = txContext.acquireIndexKeyPromise(key, 0, force);
-      if (txToCancel != null) {
-        txsToCancel.add(txToCancel);
+      OTransactionId txId = txContext.acquireIndexKeyPromise(key, DEFAULT_INDEX_KEY_VER, force);
+      if (txId != null) {
+        txsWithBrokenPromises.add(txId);
       }
+    }
+
+    if (!txsWithBrokenPromises.isEmpty() && OLogManager.instance().isDebugEnabled()) {
+      OLogManager.instance()
+          .debug(
+              this,
+              "Tx '%s' forcefully took over promises from transactions '%s'.",
+              txContext.getTransactionId(),
+              txsWithBrokenPromises.toString());
     }
   }
 
@@ -490,7 +497,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
                   "Allocation of rid not match, expected:%s actual:%s waiting for re-enqueue request",
                   ex.getExpectedRid(),
                   ex.getActualRid());
-          txContext.release();
+          txContext.releasePromises();
           return false;
         }
       }
@@ -509,7 +516,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
                   ex.getRid(),
                   ex.getEnhancedRecordVersion(),
                   ex.getEnhancedDatabaseVersion());
-          txContext.release();
+          txContext.releasePromises();
           return false;
         }
       }
@@ -585,15 +592,15 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
     if (txContext != null) {
       if (SUCCESS.equals(txContext.getStatus())) {
-        //todo(PS): is the following necessary?
+        // todo(PS): is the following necessary?
         try {
           // make sure you still have the promises
-          for (Promise<ORID> p : txContext.getPromisedRids()) {
+          for (OTxPromise<ORID> p : txContext.getPromisedRids()) {
             txContext.acquirePromise(p.getKey(), p.getVersion(), false);
           }
-          for (Promise<Object> p : txContext.getPromisedKeys()) {
+          for (OTxPromise<Object> p : txContext.getPromisedKeys()) {
             // for now always use 0
-            txContext.acquireIndexKeyPromise(p.getKey(), 0, false);
+            txContext.acquireIndexKeyPromise(p.getKey(), DEFAULT_INDEX_KEY_VER, false);
           }
         } catch (ODistributedRecordLockedException | ODistributedKeyLockedException e) {
           // Promise is no longer valid! Just return false so second phase is tried again
@@ -737,11 +744,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     } finally {
       txContext.destroy();
     }
-  }
-
-  public void internalBegin2pcWithForceLock(
-      ONewDistributedTxContextImpl txContext, boolean isCoordinator) {
-    internalBegin2pc(txContext, isCoordinator, true);
   }
 
   public void internalBegin2pc(ONewDistributedTxContextImpl txContext, boolean isCoordinator) {
