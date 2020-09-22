@@ -1,8 +1,8 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.*;
-import static com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl.Status.*;
 import static com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl.DEFAULT_INDEX_KEY_VER;
+import static com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl.Status.*;
 
 import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
@@ -592,14 +592,12 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
     if (txContext != null) {
       if (SUCCESS.equals(txContext.getStatus())) {
-        // todo(PS): is the following necessary?
         try {
           // make sure you still have the promises
           for (OTxPromise<ORID> p : txContext.getPromisedRids()) {
             txContext.acquirePromise(p.getKey(), p.getVersion(), false);
           }
           for (OTxPromise<Object> p : txContext.getPromisedKeys()) {
-            // for now always use 0
             txContext.acquireIndexKeyPromise(p.getKey(), DEFAULT_INDEX_KEY_VER, false);
           }
         } catch (ODistributedRecordLockedException | ODistributedKeyLockedException e) {

@@ -33,8 +33,8 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
   private final ODistributedRequestId id;
   private final OTransactionInternal tx;
   private final long startedOn;
-  private final List<OTxPromise<ORID>> promisedRids = new LinkedList<>();
-  private final List<OTxPromise<Object>> promisedKeys = new LinkedList<>();
+  private final Set<OTxPromise<ORID>> promisedRids = new HashSet<>();
+  private final Set<OTxPromise<Object>> promisedKeys = new HashSet<>();
 
   private Status status;
   private final OTransactionId transactionId;
@@ -62,8 +62,6 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
       throw new ODistributedKeyLockedException(
           shared.getLocalNodeName(), key, promiseManager.getTimeout());
     }
-    // todo: is it safe if this duplicates? happens when there is no previous promise and this is
-    // called directly.
     promisedKeys.add(new OTxPromise<>(key, version, transactionId));
     return cancelledPromise;
   }
@@ -80,8 +78,6 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
       throw new ODistributedRecordLockedException(
           shared.getLocalNodeName(), rid, promiseManager.getTimeout());
     }
-    // todo: is it safe if this duplicates? happens when there is no previous promise and this is
-    // called directly.
     promisedRids.add(new OTxPromise<>(rid, version, transactionId));
     return cancelledPromise;
   }
@@ -132,11 +128,11 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
   public void releasePromises() {
     shared.rollback(this.transactionId);
     for (OTxPromise<ORID> promise : promisedRids) {
-      shared.getRecordPromiseManager().release(promise.getKey(), promise.getVersion());
+      shared.getRecordPromiseManager().release(promise.getKey(), promise.getVersion(), transactionId);
     }
     promisedRids.clear();
     for (Object promisedKey : promisedKeys) {
-      shared.getIndexKeyPromiseManager().release(promisedKey, DEFAULT_INDEX_KEY_VER);
+      shared.getIndexKeyPromiseManager().release(promisedKey, DEFAULT_INDEX_KEY_VER, transactionId);
     }
     promisedKeys.clear();
   }
@@ -166,11 +162,11 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
     return status;
   }
 
-  public List<OTxPromise<ORID>> getPromisedRids() {
+  public Set<OTxPromise<ORID>> getPromisedRids() {
     return promisedRids;
   }
 
-  public List<OTxPromise<Object>> getPromisedKeys() {
+  public Set<OTxPromise<Object>> getPromisedKeys() {
     return promisedKeys;
   }
 

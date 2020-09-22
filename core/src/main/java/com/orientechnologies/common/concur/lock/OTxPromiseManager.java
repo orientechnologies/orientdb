@@ -22,7 +22,6 @@ public class OTxPromiseManager<T> {
     this.timeout = timeout;
   }
 
-  // todo: should I use Request ID instead of transaction ID?
   public OTransactionId promise(T key, int version, OTransactionId txId, boolean force) {
     lock.lock();
     try {
@@ -44,13 +43,18 @@ public class OTxPromiseManager<T> {
                   "Cannot acquire promise for resource: '%s' (requested version: %d, existing version: %d)",
                   key, version, p.getVersion()));
         } else if (p.getVersion() > version) {
-          // Ignore?
+          // TODO(PS): instead of retry should we throw away the tx right away? How?
+          throw new OTxPromiseException(
+              String.format(
+                  "Cannot acquire promise for resource: '%s' (requested version: %d, existing version: %d)",
+                  key, version, p.getVersion()));
         } else {
           cancelledPromise = p.getTxId();
           map.remove(key);
           Condition c = conditions.remove(key);
-          assert c != null; // todo: is this necessary?
-          c.notifyAll();
+          if (c != null) {
+            c.notifyAll();
+          }
           map.put(key, new OTxPromise<>(key, version, txId));
           conditions.put(key, lock.newCondition());
         }
@@ -78,18 +82,19 @@ public class OTxPromiseManager<T> {
     }
   }
 
-  public void release(T key, int version) { // todo: require txId? version needed?
+  // TODO(PS): does release need a version?
+  public void release(T key, int version, OTransactionId txId) {
     lock.lock();
     try {
       OTxPromise<T> p = map.get(key);
       if (p == null) {
+        // todo(PS): can release happen norma
         // The only way a release will not see the promise again is if there was a reset meanwhile.
         if (!reset.remove(key)) {
           assert p != null; // todo: use an exception with better message?
         }
       } else {
-        // todo: assert version and txId?
-        if (p.getVersion() == version) {
+        if (p.getTxId().equals(txId) && p.getVersion() == version) {
           map.remove(key);
           Condition c = conditions.remove(key);
           c.notifyAll();
