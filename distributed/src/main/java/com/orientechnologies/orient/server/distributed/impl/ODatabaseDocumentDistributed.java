@@ -436,7 +436,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       }
     }
 
-
     // using OPair because there could be different types of values here, so falling back to
     // lexicographic sorting
     Set<String> keys = new TreeSet<>();
@@ -586,6 +585,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
     if (txContext != null) {
       if (SUCCESS.equals(txContext.getStatus())) {
+        //todo(PS): is the following necessary?
         try {
           // make sure you still have the promises
           for (Promise<ORID> p : txContext.getPromisedRids()) {
@@ -595,7 +595,11 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
             // for now always use 0
             txContext.acquireIndexKeyPromise(p.getKey(), 0, false);
           }
-
+        } catch (ODistributedRecordLockedException | ODistributedKeyLockedException e) {
+          // Promise is no longer valid! Just return false so second phase is tried again
+          return false;
+        }
+        try {
           if (manager != null) {
             manager.messageCurrentPayload(requestId, txContext);
             manager.messageBeforeOp("commit", requestId);
@@ -604,9 +608,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           localDistributedDatabase.popTxContext(transactionId);
           OLiveQueryHook.notifyForTxChanges(this);
           OLiveQueryHookV2.notifyForTxChanges(this);
-        } catch (ODistributedRecordLockedException e) {
-          // TODO(PS): handle exception when already locked and timeout.
-          //  Just return false so second phase is tried again?
         } catch (OTransactionAlreadyPresentException e) {
           // DO Nothing already present
           txContext.destroy();
@@ -650,7 +651,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
               localDistributedDatabase.popTxContext(transactionId);
               return true;
             } else if (validateResult != ValidationResult.MISSING_PREVIOUS) {
-              internalBegin2pcWithForceLock(txContext, isCoordinator);
+              // must commit. try to force the promise.
+              internalBegin2pc(txContext, isCoordinator, true);
               txContext.setStatus(SUCCESS);
               break;
             }

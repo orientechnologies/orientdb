@@ -17,7 +17,7 @@ public class OTxPromiseManager<T> {
   private final Map<T, Promise<T>> map = new ConcurrentHashMap<>();
   private final Map<T, Condition> conditions = new ConcurrentHashMap<>();
   private final long timeout; // in milliseconds
-  private Set<T>     reset;
+  private Set<T> reset;
 
   public OTxPromiseManager(long timeout) {
     this.timeout = timeout;
@@ -40,8 +40,10 @@ public class OTxPromiseManager<T> {
         OTransactionId cancelledPromise = null;
         // If there is a promise for an older version, must wait and retry later
         if (p.getVersion() < version) {
-          // todo: use different exceptions
-          throw new OLockException(String.format("Cannot acquire lock for resource: '%s'", key));
+          throw new OPromiseException(
+              String.format(
+                  "Cannot acquire promise for resource: '%s' (requested version: %d, existing version: %d)",
+                  key, version, p.getVersion()));
         } else if (p.getVersion() > version) {
           // Ignore?
         } else {
@@ -60,10 +62,8 @@ public class OTxPromiseManager<T> {
         while (p != null) {
           Condition c = conditions.get(key);
           if (c != null && !c.await(timeout, TimeUnit.MILLISECONDS)) {
-            throw new OLockException(
-                String.format(
-                    "Resource '%s' is promised with version %d to tx '%s'",
-                    key, p.getVersion(), p.getTxId()));
+            throw new OPromiseException(
+                String.format("Timed out waiting to acquire promise for resource '%s'", key));
           }
           p = map.get(key);
         }

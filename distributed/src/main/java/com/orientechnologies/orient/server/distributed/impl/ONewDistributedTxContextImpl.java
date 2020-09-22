@@ -1,9 +1,6 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
-import com.orientechnologies.common.concur.lock.OLockException;
-import com.orientechnologies.common.concur.lock.OSimpleLockManager;
-import com.orientechnologies.common.concur.lock.OTxPromiseManager;
-import com.orientechnologies.common.concur.lock.Promise;
+import com.orientechnologies.common.concur.lock.*;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
@@ -98,7 +95,7 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
     OTransactionId cancelledPromise = null;
     try {
       cancelledPromise = promiseManager.promise(key, version, transactionId, force);
-    } catch (OLockException ex) {
+    } catch (OPromiseException ex) {
       this.release();
       throw new ODistributedKeyLockedException(shared.getLocalNodeName(), key, promiseManager.getTimeout());
     }
@@ -113,7 +110,8 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
     OTransactionId cancelledPromise = null;
     try {
       cancelledPromise = promiseManager.promise(rid, version, transactionId, force);
-    } catch(OLockException ex) {
+    } catch(OPromiseException ex) {
+      // todo(PS): should we distinguish between timeout and version mismatch when force=true?
       this.release();
       throw new ODistributedRecordLockedException(
           shared.getLocalNodeName(), rid, promiseManager.getTimeout());
