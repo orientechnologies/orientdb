@@ -91,6 +91,10 @@ public interface OBaseIndexEngine {
 
   String getIndexNameByKey(Object key);
 
+  int CONCURRENT_DISTRIBUTED_TRANSACTIONS = 1000;
+  int SAFETY_FILL_FACTOR = 10;
+  int DEFAULT_VERSION_ARRAY_SIZE = CONCURRENT_DISTRIBUTED_TRANSACTIONS * SAFETY_FILL_FACTOR;
+
   void updateUniqueIndexVersion(Object key);
 
   int getUniqueIndexVersion(Object key);

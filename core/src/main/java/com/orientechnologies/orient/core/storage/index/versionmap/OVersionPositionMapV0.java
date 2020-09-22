@@ -202,12 +202,11 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
   @Override
   public int getVersion(final int hash) {
     final int startPosition = (hash - 1) * 4;
-    // on which page?
     // final int numberOfEntriesPerPage = OVersionPage.PAGE_SIZE / 4;
     final int pageIndex = (int) Math.ceil(startPosition / OVersionPage.PAGE_SIZE) + 1;
     System.out.print("pos: " + startPosition + "->" + "page: " + pageIndex + "->");
 
-    // based on size map
+    // based on size of map
     acquireSharedLock();
     try {
       // final int pageIndex = ridBagId / Bucket.MAX_BUCKET_SIZE;

@@ -632,13 +632,22 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
   }
 
   @Override
-  public boolean acquireAtomicExclusiveLock(Object key) {
-    return true; // do nothing
+  public void updateUniqueIndexVersion(final Object key) {
+    // TODO: implement
   }
 
   @Override
-  public String getIndexNameByKey(final Object key) {
-    return name;
+  public int getUniqueIndexVersion(final Object key) {
+    // TODO: implement
+    return 0;
+  }
+
+  private int getKeyHash(final Object key) {
+    int keyHash = 0; // as for null values in hash map
+    if (key != null) {
+      keyHash = Math.abs(key.hashCode()) % DEFAULT_VERSION_ARRAY_SIZE;
+    }
+    return keyHash;
   }
 
   @Override

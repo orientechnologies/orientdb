@@ -685,7 +685,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   @Override
   public void create(final OContextConfiguration contextConfiguration) {
     checkPageSizeAndRelatedParametersInGlobalConfiguration();
-
     try {
       stateLock.acquireWriteLock();
       try {

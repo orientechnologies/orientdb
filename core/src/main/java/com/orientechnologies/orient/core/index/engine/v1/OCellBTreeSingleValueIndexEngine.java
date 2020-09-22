@@ -87,9 +87,7 @@ public final class OCellBTreeSingleValueIndexEngine
     try {
       //noinspection unchecked
       sbTree.create(atomicOperation, keySerializer, keyTypes, keySize, encryption);
-      // TODO: [DR] create version position map, lock on key level
       versionPositionMap.create(atomicOperation);
-      // manager
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error of creation of index " + name), e);
     }
@@ -265,11 +263,6 @@ public final class OCellBTreeSingleValueIndexEngine
     final int keyHash = getKeyHash(key);
     return versionPositionMap.getVersion(keyHash);
   }
-
-  private static final int CONCURRENT_DISTRIBUTED_TRANSACTIONS = 1000;
-  private static final int SAFETY_FILL_FACTOR = 10;
-  private static final int DEFAULT_VERSION_ARRAY_SIZE =
-      CONCURRENT_DISTRIBUTED_TRANSACTIONS * SAFETY_FILL_FACTOR;
 
   private int getKeyHash(final Object key) {
     int keyHash = 0; // as for null values in hash map
