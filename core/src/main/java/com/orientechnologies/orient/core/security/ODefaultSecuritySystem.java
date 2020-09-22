@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OSystemUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.security.authenticator.OServerConfigAuthenticator;
 import java.io.File;
 import java.io.FileInputStream;
 import java.security.SecureRandom;
@@ -92,6 +93,9 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
   public void activate(final OrientDBInternal context, final OSecurityConfig serverCfg) {
     this.context = context;
     this.serverConfig = serverCfg;
+    OServerConfigAuthenticator serverAuth = new OServerConfigAuthenticator();
+    serverAuth.config(null, this);
+    this.authenticatorsList.add(serverAuth);
     if (serverConfig != null) {
       this.load(serverConfig.getConfigurationFile());
     }
@@ -132,43 +136,39 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
 
   // OSecuritySystem (via OServerSecurity)
   public String authenticate(final String username, final String password) {
-    if (isEnabled()) {
-      try {
-        // It's possible for the username to be null or an empty string in the case of SPNEGO
-        // Kerberos
-        // tickets.
-        if (username != null && !username.isEmpty()) {
-          if (debug)
-            OLogManager.instance()
-                .info(
-                    this,
-                    "ODefaultServerSecurity.authenticate() ** Authenticating username: %s",
-                    username);
-        }
-
-        List<OSecurityAuthenticator> active = new ArrayList<>();
-        synchronized (authenticatorsList) {
-          // Walk through the list of OSecurityAuthenticators.
-          for (OSecurityAuthenticator sa : authenticatorsList) {
-            if (sa.isEnabled()) {
-              active.add(sa);
-            }
-          }
-        }
-        for (OSecurityAuthenticator sa : active) {
-          String principal = sa.authenticate(username, password);
-
-          if (principal != null) return principal;
-        }
-
-      } catch (Exception ex) {
-        OLogManager.instance().error(this, "ODefaultServerSecurity.authenticate()", ex);
+    try {
+      // It's possible for the username to be null or an empty string in the case of SPNEGO
+      // Kerberos
+      // tickets.
+      if (username != null && !username.isEmpty()) {
+        if (debug)
+          OLogManager.instance()
+              .info(
+                  this,
+                  "ODefaultServerSecurity.authenticate() ** Authenticating username: %s",
+                  username);
       }
 
-      return null; // Indicates authentication failed.
-    } else {
-      return authenticateServerUser(username, password);
+      List<OSecurityAuthenticator> active = new ArrayList<>();
+      synchronized (authenticatorsList) {
+        // Walk through the list of OSecurityAuthenticators.
+        for (OSecurityAuthenticator sa : authenticatorsList) {
+          if (sa.isEnabled()) {
+            active.add(sa);
+          }
+        }
+      }
+      for (OSecurityAuthenticator sa : active) {
+        String principal = sa.authenticate(username, password);
+
+        if (principal != null) return principal;
+      }
+
+    } catch (Exception ex) {
+      OLogManager.instance().error(this, "ODefaultServerSecurity.authenticate()", ex);
     }
+
+    return null; // Indicates authentication failed.
   }
 
   public String authenticateServerUser(final String username, final String password) {
