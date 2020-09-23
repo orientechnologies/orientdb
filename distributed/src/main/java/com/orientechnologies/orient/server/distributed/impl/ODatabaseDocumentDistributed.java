@@ -1,9 +1,5 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.*;
-import static com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl.DEFAULT_INDEX_KEY_VER;
-import static com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl.Status.*;
-
 import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.orientechnologies.common.concur.OOfflineNodeException;
@@ -55,15 +51,21 @@ import com.orientechnologies.orient.server.distributed.impl.task.ONewSQLCommandT
 import com.orientechnologies.orient.server.distributed.impl.task.ORunQueryExecutionPlanTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedKeyLockedException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
+import com.orientechnologies.orient.server.distributed.task.ODistributedTxPromiseRequestIsOldException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
+
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.*;
+import static com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl.DEFAULT_INDEX_KEY_VER;
+import static com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl.Status.*;
 
 /** Created by tglman on 30/03/17. */
 public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
@@ -663,6 +665,11 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
             }
           } catch (ODistributedRecordLockedException | ODistributedKeyLockedException ex) {
             // Just retry
+          } catch (ODistributedTxPromiseRequestIsOldException ex) {
+            txContext.setStatus(FAILED);
+            OLogManager.instance()
+                .warn(this, "Error committing transaction %s. %s", transactionId, ex.getMessage());
+            break;
           } catch (Exception ex) {
             OLogManager.instance()
                 .warn(

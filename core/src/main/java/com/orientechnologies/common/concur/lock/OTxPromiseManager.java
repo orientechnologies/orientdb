@@ -2,6 +2,7 @@ package com.orientechnologies.common.concur.lock;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.tx.OTransactionId;
+
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -36,18 +37,11 @@ public class OTxPromiseManager<T> {
       }
       if (force) {
         OTransactionId cancelledPromise = null;
-        // If there is a promise for an older version, must wait and retry later
-        if (p.getVersion() < version) {
+        if (p.getVersion() != version) {
           throw new OTxPromiseException(
-              String.format(
-                  "Cannot acquire promise for resource: '%s' (requested version: %d, existing version: %d)",
-                  key, version, p.getVersion()));
-        } else if (p.getVersion() > version) {
-          // TODO(PS): instead of retry should we throw away the tx right away? How?
-          throw new OTxPromiseException(
-              String.format(
-                  "Cannot acquire promise for resource: '%s' (requested version: %d, existing version: %d)",
-                  key, version, p.getVersion()));
+              String.format("Cannot acquire promise for resource: '%s'", key),
+              version,
+              p.getVersion());
         } else {
           cancelledPromise = p.getTxId();
           map.remove(key);
@@ -66,7 +60,9 @@ public class OTxPromiseManager<T> {
           Condition c = conditions.get(key);
           if (c != null && !c.await(timeout, TimeUnit.MILLISECONDS)) {
             throw new OTxPromiseException(
-                String.format("Timed out waiting to acquire promise for resource '%s'", key));
+                String.format("Timed out waiting to acquire promise for resource '%s'", key),
+                version,
+                p.getVersion());
           }
           p = map.get(key);
         }

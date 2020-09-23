@@ -1,6 +1,8 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
-import com.orientechnologies.common.concur.lock.*;
+import com.orientechnologies.common.concur.lock.OTxPromise;
+import com.orientechnologies.common.concur.lock.OTxPromiseException;
+import com.orientechnologies.common.concur.lock.OTxPromiseManager;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
@@ -8,36 +10,28 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
-import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
-import com.orientechnologies.orient.server.distributed.ODistributedException;
-import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
+import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.task.ODistributedKeyLockedException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
+import com.orientechnologies.orient.server.distributed.task.ODistributedTxPromiseRequestIsOldException;
+
 import java.io.IOException;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
 
 public class ONewDistributedTxContextImpl implements ODistributedTxContext {
 
   // This will be replaced once we have versioned keys.
   public static final int DEFAULT_INDEX_KEY_VER = 0;
-
-  public enum Status {
-    FAILED,
-    SUCCESS,
-    TIMEDOUT,
-  }
-
   private final ODistributedDatabaseImpl shared;
   private final ODistributedRequestId id;
   private final OTransactionInternal tx;
   private final long startedOn;
   private final Set<OTxPromise<ORID>> promisedRids = new HashSet<>();
   private final Set<OTxPromise<Object>> promisedKeys = new HashSet<>();
-
-  private Status status;
   private final OTransactionId transactionId;
+  private Status status;
 
   public ONewDistributedTxContextImpl(
       ODistributedDatabaseImpl shared,
@@ -59,6 +53,10 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
       cancelledPromise = promiseManager.promise(key, version, transactionId, force);
     } catch (OTxPromiseException ex) {
       this.releasePromises();
+      if (ex.getRequestedVersion() < ex.getExistingVersion()) {
+        throw new ODistributedTxPromiseRequestIsOldException(ex.getMessage());
+      }
+      // If there is a promise for an older version, or timed out, must wait and retry later
       throw new ODistributedKeyLockedException(
           shared.getLocalNodeName(), key, promiseManager.getTimeout());
     }
@@ -73,8 +71,11 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
     try {
       cancelledPromise = promiseManager.promise(rid, version, transactionId, force);
     } catch (OTxPromiseException ex) {
-      // todo(PS): should we distinguish between timeout and version mismatch when force=true?
       this.releasePromises();
+      if (ex.getRequestedVersion() < ex.getExistingVersion()) {
+        throw new ODistributedTxPromiseRequestIsOldException(ex.getMessage());
+      }
+      // If there is a promise for an older version, or timed out, must wait and retry later
       throw new ODistributedRecordLockedException(
           shared.getLocalNodeName(), rid, promiseManager.getTimeout());
     }
@@ -128,7 +129,9 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
   public void releasePromises() {
     shared.rollback(this.transactionId);
     for (OTxPromise<ORID> promise : promisedRids) {
-      shared.getRecordPromiseManager().release(promise.getKey(), promise.getVersion(), transactionId);
+      shared
+          .getRecordPromiseManager()
+          .release(promise.getKey(), promise.getVersion(), transactionId);
     }
     promisedRids.clear();
     for (Object promisedKey : promisedKeys) {
@@ -154,12 +157,12 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
     return tx;
   }
 
-  public void setStatus(Status status) {
-    this.status = status;
-  }
-
   public Status getStatus() {
     return status;
+  }
+
+  public void setStatus(Status status) {
+    this.status = status;
   }
 
   public Set<OTxPromise<ORID>> getPromisedRids() {
@@ -173,5 +176,11 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
   @Override
   public OTransactionId getTransactionId() {
     return transactionId;
+  }
+
+  public enum Status {
+    FAILED,
+    SUCCESS,
+    TIMEDOUT,
   }
 }
