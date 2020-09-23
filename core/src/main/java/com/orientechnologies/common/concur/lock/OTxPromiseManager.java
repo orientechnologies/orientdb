@@ -3,9 +3,7 @@ package com.orientechnologies.common.concur.lock;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.tx.OTransactionId;
 
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
@@ -17,7 +15,6 @@ public class OTxPromiseManager<T> {
   private final Map<T, OTxPromise<T>> map = new ConcurrentHashMap<>();
   private final Map<T, Condition> conditions = new ConcurrentHashMap<>();
   private final long timeout; // in milliseconds
-  private Set<T> reset;
 
   public OTxPromiseManager(long timeout) {
     this.timeout = timeout;
@@ -78,21 +75,15 @@ public class OTxPromiseManager<T> {
     }
   }
 
-  // TODO(PS): does release need a version?
-  public void release(T key, int version, OTransactionId txId) {
+  public void release(T key, OTransactionId txId) {
     lock.lock();
     try {
       OTxPromise<T> p = map.get(key);
-      if (p == null) {
-        // todo(PS): can release happen norma
-        // The only way a release will not see the promise again is if there was a reset meanwhile.
-        if (!reset.remove(key)) {
-          assert p != null; // todo: use an exception with better message?
-        }
-      } else {
-        if (p.getTxId().equals(txId) && p.getVersion() == version) {
-          map.remove(key);
-          Condition c = conditions.remove(key);
+      // The promise could have been forcefully taken away!
+      if (p != null && p.getTxId().equals(txId)) {
+        map.remove(key);
+        Condition c = conditions.remove(key);
+        if (c != null) {
           c.notifyAll();
         }
       }
@@ -104,11 +95,13 @@ public class OTxPromiseManager<T> {
   public void reset() {
     lock.lock();
     try {
-      reset = new HashSet<>(map.keySet());
       map.entrySet()
           .removeIf(
-              (c) -> {
-                conditions.remove(c.getKey()).notifyAll();
+              entry -> {
+                Condition c = conditions.remove(entry.getKey());
+                if (c != null) {
+                  c.notifyAll();
+                }
                 return true;
               });
     } finally {

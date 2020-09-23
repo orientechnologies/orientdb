@@ -131,11 +131,11 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
     for (OTxPromise<ORID> promise : promisedRids) {
       shared
           .getRecordPromiseManager()
-          .release(promise.getKey(), promise.getVersion(), transactionId);
+          .release(promise.getKey(), transactionId);
     }
     promisedRids.clear();
     for (Object promisedKey : promisedKeys) {
-      shared.getIndexKeyPromiseManager().release(promisedKey, DEFAULT_INDEX_KEY_VER, transactionId);
+      shared.getIndexKeyPromiseManager().release(promisedKey, transactionId);
     }
     promisedKeys.clear();
   }
