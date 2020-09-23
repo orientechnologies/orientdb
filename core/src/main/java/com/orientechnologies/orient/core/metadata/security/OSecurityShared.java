@@ -251,7 +251,7 @@ public class OSecurityShared implements OSecurityInternal {
     assert !((ODatabaseDocumentInternal) session).isRemote();
     // Uses the external authenticator.
     // username is returned if authentication is successful, otherwise null.
-    String username = security.authenticate(iUsername, iUserPassword);
+    String username = security.authenticate(session, iUsername, iUserPassword);
 
     if (username != null) {
       user = getUser(session, username);

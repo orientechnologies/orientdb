@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.security.authenticator;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
@@ -46,7 +47,8 @@ public class OSystemUserAuthenticator extends OSecurityAuthenticatorAbstract {
   // OSecurityAuthenticator
   // Returns the actual username if successful, null otherwise.
   // This will authenticate username using the system database.
-  public String authenticate(final String username, final String password) {
+  public String authenticate(
+      ODatabaseSession session, final String username, final String password) {
     String principal = null;
 
     try {

@@ -19,19 +19,6 @@
  */
 package com.orientechnologies.orient.core.security;
 
-import com.orientechnologies.common.io.OIOUtils;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.parser.OSystemVariableResolver;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.OrientDBInternal;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
-import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
-import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
-import com.orientechnologies.orient.core.metadata.security.OSystemUser;
-import com.orientechnologies.orient.core.metadata.security.OUser;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.security.authenticator.OServerConfigAuthenticator;
 import java.io.File;
 import java.io.FileInputStream;
 import java.security.SecureRandom;
@@ -42,6 +29,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+
+import com.orientechnologies.common.io.OIOUtils;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.parser.OSystemVariableResolver;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
+import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
+import com.orientechnologies.orient.core.metadata.security.OSystemUser;
+import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.security.authenticator.OServerConfigAuthenticator;
 
 /**
  * Provides an implementation of OServerSecurity.
@@ -139,7 +141,8 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
   }
 
   // OSecuritySystem (via OServerSecurity)
-  public String authenticate(final String username, final String password) {
+  public String authenticate(
+      ODatabaseSession session, final String username, final String password) {
     try {
       // It's possible for the username to be null or an empty string in the case of SPNEGO
       // Kerberos
@@ -154,7 +157,7 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
       }
 
       for (OSecurityAuthenticator sa : getEnabledAuthenticators()) {
-        String principal = sa.authenticate(username, password);
+        String principal = sa.authenticate(session, username, password);
 
         if (principal != null) return principal;
       }
@@ -974,7 +977,7 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
   public OGlobalUser authenticateAndAuthorize(
       String iUserName, String iPassword, String iResourceToCheck) {
     // Returns the authenticated username, if successful, otherwise null.
-    String authUsername = authenticate(iUserName, iPassword);
+    String authUsername = authenticate(null, iUserName, iPassword);
 
     // Authenticated, now see if the user is authorized.
     if (authUsername != null) {

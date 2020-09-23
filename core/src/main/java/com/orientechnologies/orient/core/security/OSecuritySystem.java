@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.security;
 
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
@@ -42,7 +43,7 @@ public interface OSecuritySystem {
   // Returns the actual username if successful, null otherwise.
   // Some token-based authentication (e.g., SPNEGO tokens have the user's name embedded in the
   // service ticket).
-  String authenticate(final String username, final String password);
+  String authenticate(ODatabaseSession session, final String username, final String password);
 
   // Used for generating the appropriate HTTP authentication mechanism. The chain of authenticators
   // is used for this.
