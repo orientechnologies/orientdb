@@ -157,7 +157,6 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
             // final int pageIndex = ridBagId / Bucket.MAX_BUCKET_SIZE;
             // final int localRidBagId = pageIndex - ridBagId * Bucket.MAX_BUCKET_SIZE;
             final int startPosition = (hash - 1) * 4;
-            // which page?
             // final int numberOfEntriesPerPage = OVersionPage.PAGE_SIZE / 4;
             // first page is the metadata page
             final int pageIndex = (int) Math.ceil(startPosition / OVersionPage.PAGE_SIZE) + 1;
@@ -171,7 +170,6 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
                     + "page: "
                     + pageIndex
                     + "->");
-
             final OCacheEntry cacheEntry =
                 loadPageForWrite(atomicOperation, fileId, pageIndex, false, true);
             try {
@@ -201,6 +199,14 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
 
   @Override
   public int getVersion(final int hash) {
+    /*if (fileId == 0) {
+      try {
+        this.open();
+      } catch (final IOException e) {
+        System.out.println("Problem No. 27." + e.getMessage());
+      }
+    }*/
+
     final int startPosition = (hash - 1) * 4;
     // final int numberOfEntriesPerPage = OVersionPage.PAGE_SIZE / 4;
     final int pageIndex = (int) Math.ceil(startPosition / OVersionPage.PAGE_SIZE) + 1;
@@ -216,6 +222,7 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
       try {
         final OVersionPositionMapBucket bucket = new OVersionPositionMapBucket(cacheEntry);
         final int version = bucket.getVersion(startPosition);
+        System.out.print("version=" + version);
         System.out.println();
         // return bucket.get(startPosition);
         return version;
@@ -398,10 +405,12 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
 
   public void openVPM(final OAtomicOperation atomicOperation) throws IOException {
     fileId = openFile(atomicOperation, getFullName());
+    System.out.println("OpenVPM for " + getFullName() + " with id " + fileId);
   }
 
   public void createVPM(final OAtomicOperation atomicOperation) throws IOException {
     fileId = addFile(atomicOperation, getFullName());
+    System.out.println("CreateVPM for " + getFullName() + " with id " + fileId);
     if (getFilledUpTo(atomicOperation, fileId) == 0) {
       // first one page is added for the meta data
       addInitializedPage(atomicOperation);

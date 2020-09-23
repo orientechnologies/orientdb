@@ -128,6 +128,12 @@ public final class OCellBTreeSingleValueIndexEngine
       final OEncryption encryption) {
     //noinspection unchecked
     sbTree.load(indexName, keySize, keyTypes, keySerializer, encryption);
+    try {
+      versionPositionMap.open();
+    } catch (final IOException e) {
+      throw OException.wrapException(
+          new OIndexException("Error during VPM load of index " + indexName), e);
+    }
   }
 
   @Override

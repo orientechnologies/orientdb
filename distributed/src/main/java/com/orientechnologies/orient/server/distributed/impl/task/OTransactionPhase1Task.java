@@ -372,10 +372,10 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask implements O
     return FACTORYID;
   }
 
-  public void init(OTransactionId transactionId, OTransactionInternal operations) {
+  public void init(final OTransactionId transactionId, final OTransactionInternal operations) {
     this.transactionId = transactionId;
     final ODatabaseDocumentInternal database = operations.getDatabase();
-    OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) database.getStorage();
+    final OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) database.getStorage();
     operations
         .getIndexOperations()
         .forEach(
@@ -386,7 +386,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask implements O
                   .isUnique()) {
 
                 quorumType = OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE_ALL_MASTERS;
-                for (Object keyWithChange : changes.changesPerKey.keySet()) {
+                for (final Object keyWithChange : changes.changesPerKey.keySet()) {
                   int version = storage.getVersionForKey(index, keyWithChange);
                   uniqueIndexKeys.add(new OTransactionUniqueKey(index, keyWithChange, version));
                 }
