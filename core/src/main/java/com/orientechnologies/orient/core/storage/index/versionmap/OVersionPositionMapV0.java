@@ -154,18 +154,15 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
         operation -> {
           acquireExclusiveLock();
           try {
-            // final int pageIndex = ridBagId / Bucket.MAX_BUCKET_SIZE;
-            // final int localRidBagId = pageIndex - ridBagId * Bucket.MAX_BUCKET_SIZE;
-            final int startPosition = (hash - 1) * 4;
-            // final int numberOfEntriesPerPage = OVersionPage.PAGE_SIZE / 4;
-            // first page is the metadata page
-            final int pageIndex = (int) Math.ceil(startPosition / OVersionPage.PAGE_SIZE) + 1;
+            final int startPositionWithOffset = OVersionPositionMapBucket.entryPosition(hash);
+            final int pageIndex =
+                (int) Math.ceil(startPositionWithOffset / OVersionPage.PAGE_SIZE) + 1;
             System.out.print(
                 "hash: "
                     + hash
                     + "->"
                     + "pos: "
-                    + startPosition
+                    + startPositionWithOffset
                     + "->"
                     + "page: "
                     + pageIndex
@@ -174,7 +171,8 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
                 loadPageForWrite(atomicOperation, fileId, pageIndex, false, true);
             try {
               final OVersionPositionMapBucket bucket = new OVersionPositionMapBucket(cacheEntry);
-              bucket.incrementVersion(startPosition);
+              // bucket.incrementVersion(startPosition);
+              bucket.incrementVersion(hash);
             } finally {
               releasePageFromWrite(atomicOperation, cacheEntry);
             }
@@ -199,18 +197,9 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
 
   @Override
   public int getVersion(final int hash) {
-    /*if (fileId == 0) {
-      try {
-        this.open();
-      } catch (final IOException e) {
-        System.out.println("Problem No. 27." + e.getMessage());
-      }
-    }*/
-
-    final int startPosition = (hash - 1) * 4;
-    // final int numberOfEntriesPerPage = OVersionPage.PAGE_SIZE / 4;
-    final int pageIndex = (int) Math.ceil(startPosition / OVersionPage.PAGE_SIZE) + 1;
-    System.out.print("pos: " + startPosition + "->" + "page: " + pageIndex + "->");
+    final int startPositionWithOffset = OVersionPositionMapBucket.entryPosition(hash);
+    final int pageIndex = (int) Math.ceil(startPositionWithOffset / OVersionPage.PAGE_SIZE) + 1;
+    System.out.print("pos: " + startPositionWithOffset + "->" + "page: " + pageIndex + "->");
 
     // based on size of map
     acquireSharedLock();
@@ -221,10 +210,11 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
       final OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
       try {
         final OVersionPositionMapBucket bucket = new OVersionPositionMapBucket(cacheEntry);
-        final int version = bucket.getVersion(startPosition);
+        // final int version = bucket.getVersion(startPositionWithOffset);
+        final int version = bucket.getVersion(hash);
         System.out.print("version=" + version);
         System.out.println();
-        // return bucket.get(startPosition);
+        // return bucket.get(startPositionWithOffset);
         return version;
       } finally {
         releasePageFromRead(atomicOperation, cacheEntry);
@@ -242,7 +232,7 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
 
       final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
       final OVersionPositionMapBucket.PositionEntry positionEntry =
-          new OVersionPositionMapBucket.PositionEntry(pageIndex, startPosition);
+          new OVersionPositionMapBucket.PositionEntry(pageIndex, startPositionWithOffset);
       final int pageCount = 1;
 
       internalReadRecord(
@@ -418,7 +408,7 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
       // then let us add several empty data pages
       final int maxNumberOfExpectedThreads = 1000;
       final int magicSafetyNumber = 10;
-      final int sizeOfIntInBytes = 4;
+      final int sizeOfIntInBytes = Integer.SIZE / 8;
       final int numberOfPages =
           (int)
                   Math.ceil(

@@ -99,20 +99,22 @@ public final class OVersionPositionMapBucket extends ODurablePage {
   }
 
   public int getVersion(int index) {
-    final int entryPosition = index; // ENTRIES_OFFSET + ridBagId * ENTRY_SIZE;
+    final int entryPosition = entryPosition(index); // ENTRIES_OFFSET + ridBagId * ENTRY_SIZE;
     final int value = getIntValue(entryPosition);
     if (value < 0) {
-      throw new OStorageException("Entry might be deleted and can not be used.");
+      throw new OStorageException(
+          "Entry with index " + index + " might be deleted and can not be used.");
     }
     System.out.print("(get index " + index + " version=" + value + ")->");
     return value;
   }
 
   public void incrementVersion(int index) {
-    final int entryPosition = index;
+    final int entryPosition = entryPosition(index);
     final int value = getIntValue(entryPosition);
     if (value < 0) {
-      throw new OStorageException("Entry might be deleted and can not be used.");
+      throw new OStorageException(
+          "Entry with index " + index + " might be deleted and can not be used.");
     }
     System.out.print("(inc index " + index + " from " + value + " to " + value + 1 + ")->");
     setIntValue(entryPosition, value + 1);
@@ -144,7 +146,6 @@ public final class OVersionPositionMapBucket extends ODurablePage {
     } else if (flag != FILLED) {
       throw new OStorageException("Provided index " + index + " points to removed entry");
     }
-
     updateEntry(index, (int) entry.pageIndex, entry.recordPosition, flag);
   }
 
@@ -166,7 +167,7 @@ public final class OVersionPositionMapBucket extends ODurablePage {
             index, oldStatus, oldPageIndex, oldRecordPosition, status, pageIndex, recordPosition));
   }
 
-  private static int entryPosition(int index) {
+  protected static int entryPosition(int index) {
     return index * VERSION_ENTRY_SIZE + POSITIONS_OFFSET;
   }
 
