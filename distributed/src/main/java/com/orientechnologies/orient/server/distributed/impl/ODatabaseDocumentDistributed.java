@@ -665,9 +665,12 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           } catch (ODistributedRecordLockedException | ODistributedKeyLockedException ex) {
             // Just retry
           } catch (ODistributedTxPromiseRequestIsOldException ex) {
-            txContext.setStatus(FAILED);
             OLogManager.instance()
-                .warn(this, "Error committing transaction %s. %s", transactionId, ex.getMessage());
+                .warn(
+                    ODatabaseDocumentDistributed.this,
+                    "Error committing transaction %s ",
+                    ex,
+                    transactionId);
             break;
           } catch (Exception ex) {
             OLogManager.instance()

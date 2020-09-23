@@ -43,7 +43,7 @@ public class OTxPromiseManager<T> {
           map.remove(key);
           Condition c = conditions.remove(key);
           if (c != null) {
-            c.notifyAll();
+            c.signalAll();
           }
           map.put(key, new OTxPromise<>(key, version, txId));
           conditions.put(key, lock.newCondition());
@@ -83,7 +83,7 @@ public class OTxPromiseManager<T> {
         map.remove(key);
         Condition c = conditions.remove(key);
         if (c != null) {
-          c.notifyAll();
+          c.signalAll();
         }
       }
     } finally {
@@ -99,7 +99,7 @@ public class OTxPromiseManager<T> {
               entry -> {
                 Condition c = conditions.remove(entry.getKey());
                 if (c != null) {
-                  c.notifyAll();
+                  c.signalAll();
                 }
                 return true;
               });
