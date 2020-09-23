@@ -2,7 +2,6 @@ package com.orientechnologies.common.concur.lock;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.tx.OTransactionId;
-
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;

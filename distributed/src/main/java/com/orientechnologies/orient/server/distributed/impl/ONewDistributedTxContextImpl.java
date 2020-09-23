@@ -14,7 +14,6 @@ import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.task.ODistributedKeyLockedException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedTxPromiseRequestIsOldException;
-
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Optional;
@@ -129,9 +128,7 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
   public void releasePromises() {
     shared.rollback(this.transactionId);
     for (OTxPromise<ORID> promise : promisedRids) {
-      shared
-          .getRecordPromiseManager()
-          .release(promise.getKey(), transactionId);
+      shared.getRecordPromiseManager().release(promise.getKey(), transactionId);
     }
     promisedRids.clear();
     for (Object promisedKey : promisedKeys) {

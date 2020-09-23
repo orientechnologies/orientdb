@@ -1,7 +1,6 @@
 package com.orientechnologies.common.concur.lock;
 
 import com.orientechnologies.orient.core.tx.OTransactionId;
-
 import java.util.Objects;
 
 public class OTxPromise<T> {
@@ -29,12 +28,12 @@ public class OTxPromise<T> {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
     OTxPromise<?> that = (OTxPromise<?>) o;
-    return version == that.version && Objects.equals(key, that.key) && Objects.equals(txId, that.txId);
+    return version == that.version
+        && Objects.equals(key, that.key)
+        && Objects.equals(txId, that.txId);
   }
 
   @Override
