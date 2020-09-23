@@ -21,7 +21,10 @@ declare var angular:any
 
 class ServerCommandsComponent implements OnInit{
 
-  codemirror: any;
+  codemirror_query: any;
+  codemirror_result: any;
+
+  result: any = {};
 
   private options = {
                         lineWrapping: true,
@@ -29,9 +32,18 @@ class ServerCommandsComponent implements OnInit{
                         readOnly: false
                       };
 
-  @ViewChild("codemirror", { read: ElementRef })
+  private resultOptions = {
+                        lineWrapping: true,
+                        lineNumbers: false,
+                        mode: {name: "javascript", json: true},
+                        readOnly: true
+                      };
+
+  @ViewChild("codemirror_query", { read: ElementRef })
   textArea: ElementRef;
 
+  @ViewChild("codemirror_result", { read: ElementRef })
+  resultArea: ElementRef;
 
   @Input()
   private queryText: string = "";
@@ -42,25 +54,36 @@ class ServerCommandsComponent implements OnInit{
   }
 
   ngOnInit() {
-    this.codemirror = Codemirror.fromTextArea(
+    this.codemirror_query = Codemirror.fromTextArea(
       this.textArea.nativeElement,
       this.options
     );
-    this.codemirror.setValue(this.queryText);
-    this.codemirror.on('change', () => {
-      this.queryText = this.codemirror.getValue();
-      console.log("changed to "+this.codemirror.getValue());
+    this.codemirror_query.setValue(this.queryText);
+    this.codemirror_query.on('change', () => {
+      this.queryText = this.codemirror_query.getValue();
+//      console.log("changed to "+this.codemirror_query.getValue());
     });
-  }
 
-  test() {
-    console.log("OK, it works");
+    this.codemirror_result = Codemirror.fromTextArea(
+      this.resultArea.nativeElement,
+      this.resultOptions
+    );
   }
 
   query() {
-    console.log("sending command: " + this.queryText);
+    this.codemirror_result.setValue("Executing...");
+    //console.log("sending command: " + this.queryText);
     var result = this.serverCommandService.serverCommand({"command": this.queryText.trim()});
-    result.then((val) => console.log(val));
+    result.then((val) => {
+        var jsonResult = JSON.stringify(val, null, 2)
+        //console.log(jsonResult);
+        this.result = jsonResult;
+        this.codemirror_result.setValue(jsonResult);
+      }).catch((error) => {
+        var errorString = JSON.stringify(error);
+        this.result = errorString;
+        this.codemirror_result.setValue(errorString);
+      });
   }
 
 }
