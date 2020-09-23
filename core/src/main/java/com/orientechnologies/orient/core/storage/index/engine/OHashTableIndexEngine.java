@@ -159,13 +159,12 @@ public final class OHashTableIndexEngine implements OIndexEngine {
 
   @Override
   public void updateUniqueIndexVersion(final Object key) {
-    // TODO: implement
+    // not implemented
   }
 
   @Override
   public int getUniqueIndexVersion(final Object key) {
-    // TODO: implement
-    return 0;
+    return 0; // not implemented
   }
 
   @Override

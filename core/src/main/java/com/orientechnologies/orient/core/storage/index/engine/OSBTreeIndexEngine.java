@@ -346,20 +346,11 @@ public class OSBTreeIndexEngine implements OIndexEngine {
 
   @Override
   public void updateUniqueIndexVersion(final Object key) {
-    // TODO: implement
+    // not implemented
   }
 
   @Override
   public int getUniqueIndexVersion(final Object key) {
-    // TODO: implement
-    return 0;
-  }
-
-  private int getKeyHash(final Object key) {
-    int keyHash = 0; // as for null values in hash map
-    if (key != null) {
-      keyHash = Math.abs(key.hashCode()) % DEFAULT_VERSION_ARRAY_SIZE;
-    }
-    return keyHash;
+    return 0; // not implemented
   }
 }
