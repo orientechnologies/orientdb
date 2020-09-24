@@ -21,9 +21,9 @@ public abstract class OVersionPositionMap extends ODurableComponent {
   public abstract void delete(OAtomicOperation atomicOperation) throws IOException;
 
   // VPM only stores an array of type integer for versions
-  public abstract void updateVersion(int hash);
+  public abstract void updateVersion(int versionHash);
 
-  public abstract int getVersion(int hash);
+  public abstract int getVersion(int versionHash);
 
   // public abstract void close();
 

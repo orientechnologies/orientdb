@@ -23,6 +23,7 @@ package com.orientechnologies.orient.core.storage.index.versionmap;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
@@ -33,6 +34,12 @@ public final class OVersionPositionMapBucket extends ODurablePage {
   private static final int NEXT_PAGE_OFFSET = NEXT_FREE_POSITION;
   private static final int SIZE_OFFSET = NEXT_PAGE_OFFSET + OLongSerializer.LONG_SIZE;
   private static final int POSITIONS_OFFSET = SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
+
+  private static final int PAGE_SIZE =
+      OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
+  private static final int ENTRIES_OFFSET = SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
+  private static final int ENTRY_SIZE = Integer.SIZE / 8;
+  public static final int MAX_BUCKET_SIZE = (PAGE_SIZE - ENTRIES_OFFSET) / ENTRY_SIZE;
 
   // NEVER USED ON DISK
   public static final byte NOT_EXISTENT = 0;

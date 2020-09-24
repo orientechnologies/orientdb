@@ -20,9 +20,6 @@
 
 package com.orientechnologies.orient.core.storage.index.versionmap;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISK_CACHE_PAGE_SIZE;
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
@@ -33,12 +30,11 @@ import com.orientechnologies.orient.core.storage.version.OVersionPage;
 import java.io.IOException;
 
 public final class OVersionPositionMapV0 extends OVersionPositionMap {
-  private static final int STATE_ENTRY_INDEX = 0;
-  private static final int DISK_PAGE_SIZE = DISK_CACHE_PAGE_SIZE.getValueAsInteger();
-  private static final int LOWEST_FREELIST_BOUNDARY =
-      PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY.getValueAsInteger();
-  private static final int FREE_LIST_SIZE = DISK_PAGE_SIZE - LOWEST_FREELIST_BOUNDARY;
-
+  // private static final int STATE_ENTRY_INDEX = 0;
+  // private static final int DISK_PAGE_SIZE = DISK_CACHE_PAGE_SIZE.getValueAsInteger();
+  // private static final int LOWEST_FREELIST_BOUNDARY =
+  //     PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY.getValueAsInteger();
+  // private static final int FREE_LIST_SIZE = DISK_PAGE_SIZE - LOWEST_FREELIST_BOUNDARY;
   private long fileId;
 
   // TODO: move to VPM
@@ -78,7 +74,7 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
   }
 
   @Override
-  public void delete(OAtomicOperation atomicOperation) {
+  public void delete(final OAtomicOperation atomicOperation) {
     executeInsideComponentOperation(
         atomicOperation,
         operation -> {
@@ -393,12 +389,12 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     return fullContent;
   }*/
 
-  public void openVPM(final OAtomicOperation atomicOperation) throws IOException {
+  private void openVPM(final OAtomicOperation atomicOperation) throws IOException {
     fileId = openFile(atomicOperation, getFullName());
     System.out.println("OpenVPM for " + getFullName() + " with id " + fileId);
   }
 
-  public void createVPM(final OAtomicOperation atomicOperation) throws IOException {
+  private void createVPM(final OAtomicOperation atomicOperation) throws IOException {
     fileId = addFile(atomicOperation, getFullName());
     System.out.println("CreateVPM for " + getFullName() + " with id " + fileId);
     if (getFilledUpTo(atomicOperation, fileId) == 0) {
@@ -457,7 +453,7 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     }
   }
 
-  public void deleteVPM(final OAtomicOperation atomicOperation) throws IOException {
+  private void deleteVPM(final OAtomicOperation atomicOperation) throws IOException {
     deleteFile(atomicOperation, fileId);
   }
 
@@ -930,9 +926,9 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     return fileId;
   }
 
-  /* void replaceFileId(final long newFileId) {
-    this.fileId = newFileId;
-  }*/
+  // void replaceFileId(final long newFileId) {
+  //  this.fileId = newFileId;
+  // }
 
   public static final class OVersionPositionEntry {
     private final long position;

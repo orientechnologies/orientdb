@@ -79,9 +79,7 @@ public abstract class LocalPaginatedClusterAbstract {
   public void testDeleteRecordAndAddNewOnItsPlace() throws IOException {
     byte[] smallRecord = new byte[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 0};
     final int recordVersion = 2;
-
-    OAtomicOperationsManager atomicOperationsManager = storage.getAtomicOperationsManager();
-
+    final OAtomicOperationsManager atomicOperationsManager = storage.getAtomicOperationsManager();
     final OPhysicalPosition[] physicalPosition = new OPhysicalPosition[1];
     try {
       atomicOperationsManager.executeInsideAtomicOperation(
@@ -94,8 +92,8 @@ public abstract class LocalPaginatedClusterAbstract {
             throw new RollbackException();
           });
     } catch (RollbackException ignore) {
+      // Exception ignored
     }
-
     Assert.assertEquals(0, paginatedCluster.getEntries());
     Assert.assertNull(paginatedCluster.readRecord(physicalPosition[0].clusterPosition, false));
 
@@ -107,14 +105,12 @@ public abstract class LocalPaginatedClusterAbstract {
                   smallRecord, recordVersion, (byte) 1, null, atomicOperation);
           paginatedCluster.deleteRecord(atomicOperation, physicalPosition[0].clusterPosition);
         });
-
     atomicOperationsManager.executeInsideAtomicOperation(
         null,
         atomicOperation ->
             physicalPosition[0] =
                 paginatedCluster.createRecord(
                     smallRecord, recordVersion, (byte) 1, null, atomicOperation));
-
     Assert.assertEquals(physicalPosition[0].recordVersion, recordVersion);
   }
 
@@ -134,8 +130,8 @@ public abstract class LocalPaginatedClusterAbstract {
             throw new RollbackException();
           });
     } catch (RollbackException ignore) {
+      // Exception ignored
     }
-
     Assert.assertEquals(0, paginatedCluster.getEntries());
     Assert.assertNull(paginatedCluster.readRecord(physicalPosition[0].clusterPosition, false));
 
@@ -145,8 +141,7 @@ public abstract class LocalPaginatedClusterAbstract {
             physicalPosition[0] =
                 paginatedCluster.createRecord(
                     smallRecord, recordVersion, (byte) 1, null, atomicOperation));
-
-    ORawBuffer rawBuffer = paginatedCluster.readRecord(physicalPosition[0].clusterPosition, false);
+    final ORawBuffer rawBuffer = paginatedCluster.readRecord(physicalPosition[0].clusterPosition, false);
     Assert.assertNotNull(rawBuffer);
 
     Assert.assertEquals(rawBuffer.version, recordVersion);
@@ -163,7 +158,7 @@ public abstract class LocalPaginatedClusterAbstract {
     final int recordVersion = 2;
 
     final OPhysicalPosition[] physicalPosition = new OPhysicalPosition[1];
-    OAtomicOperationsManager atomicOperationsManager = storage.getAtomicOperationsManager();
+    final OAtomicOperationsManager atomicOperationsManager = storage.getAtomicOperationsManager();
     try {
       atomicOperationsManager.executeInsideAtomicOperation(
           null,
@@ -186,7 +181,7 @@ public abstract class LocalPaginatedClusterAbstract {
                 paginatedCluster.createRecord(
                     bigRecord, recordVersion, (byte) 1, null, atomicOperation));
 
-    ORawBuffer rawBuffer = paginatedCluster.readRecord(physicalPosition[0].clusterPosition, false);
+    final ORawBuffer rawBuffer = paginatedCluster.readRecord(physicalPosition[0].clusterPosition, false);
     Assert.assertNotNull(rawBuffer);
 
     Assert.assertEquals(rawBuffer.version, recordVersion);
