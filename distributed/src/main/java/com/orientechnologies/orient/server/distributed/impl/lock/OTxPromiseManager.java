@@ -1,7 +1,9 @@
-package com.orientechnologies.common.concur.lock;
+package com.orientechnologies.orient.server.distributed.impl.lock;
 
+import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.tx.OTransactionId;
+import com.orientechnologies.orient.server.distributed.exception.OTxPromiseException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;

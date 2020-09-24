@@ -1,4 +1,4 @@
-package com.orientechnologies.common.concur.lock;
+package com.orientechnologies.orient.server.distributed.exception;
 
 import com.orientechnologies.common.exception.OSystemException;
 

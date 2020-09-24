@@ -1,4 +1,4 @@
-package com.orientechnologies.common.concur.lock;
+package com.orientechnologies.orient.server.distributed.impl.lock;
 
 import com.orientechnologies.orient.core.tx.OTransactionId;
 import java.util.Objects;

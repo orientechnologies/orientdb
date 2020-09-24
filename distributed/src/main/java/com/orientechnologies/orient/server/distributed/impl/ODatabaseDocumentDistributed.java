@@ -9,7 +9,6 @@ import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
-import com.orientechnologies.common.concur.lock.OTxPromise;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
@@ -48,14 +47,15 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.tx.*;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
+import com.orientechnologies.orient.server.distributed.exception.ODistributedTxPromiseRequestIsOldException;
 import com.orientechnologies.orient.server.distributed.exception.OTransactionAlreadyPresentException;
+import com.orientechnologies.orient.server.distributed.impl.lock.OTxPromise;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OClassDistributed;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
 import com.orientechnologies.orient.server.distributed.impl.task.ONewSQLCommandTask;
 import com.orientechnologies.orient.server.distributed.impl.task.ORunQueryExecutionPlanTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedKeyLockedException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
-import com.orientechnologies.orient.server.distributed.task.ODistributedTxPromiseRequestIsOldException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
@@ -437,7 +437,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
     // using OPair because there could be different types of values here, so falling back to
     // lexicographic sorting
-    Set<String> keys = new TreeSet<>();
+    Set<OPair<String, Integer>> keys = new TreeSet<>();
     for (Map.Entry<String, OTransactionIndexChanges> change : tx.getIndexOperations().entrySet()) {
       OIndex index = getMetadata().getIndexManagerInternal().getIndex(this, change.getKey());
       if (OClass.INDEX_TYPE.UNIQUE.name().equals(index.getType())
@@ -448,16 +448,15 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         String name = index.getName();
         for (OTransactionIndexChangesPerKey changesPerKey :
             change.getValue().changesPerKey.values()) {
-          keys.add(name + "#" + changesPerKey.key);
+          keys.add(new OPair<>(name + "#" + changesPerKey.key, DEFAULT_INDEX_KEY_VER));
         }
         if (!change.getValue().nullKeyChanges.entries.isEmpty()) {
-          keys.add(name + "#null");
+          keys.add(new OPair<>(name + "#null", DEFAULT_INDEX_KEY_VER));
         }
       }
     }
-    for (String key : keys) {
-      // for now always use version 0
-      OTransactionId txId = txContext.acquireIndexKeyPromise(key, DEFAULT_INDEX_KEY_VER, force);
+    for (OPair<String, Integer> key : keys) {
+      OTransactionId txId = txContext.acquireIndexKeyPromise(key.getKey(), key.getValue(), force);
       if (txId != null) {
         txsWithBrokenPromises.add(txId);
       }
@@ -599,7 +598,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
             txContext.acquirePromise(p.getKey(), p.getVersion(), false);
           }
           for (OTxPromise<Object> p : txContext.getPromisedKeys()) {
-            txContext.acquireIndexKeyPromise(p.getKey(), DEFAULT_INDEX_KEY_VER, false);
+            txContext.acquireIndexKeyPromise(p.getKey(), p.getVersion(), false);
           }
         } catch (ODistributedRecordLockedException | ODistributedKeyLockedException e) {
           // Promise is no longer valid! Just return false so second phase is tried again

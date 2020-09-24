@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.server.distributed.task;
+package com.orientechnologies.orient.server.distributed.exception;
 
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 
