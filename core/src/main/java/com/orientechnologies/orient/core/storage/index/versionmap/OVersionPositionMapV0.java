@@ -30,6 +30,9 @@ import com.orientechnologies.orient.core.storage.version.OVersionPage;
 import java.io.IOException;
 
 public final class OVersionPositionMapV0 extends OVersionPositionMap {
+  public static final int MAX_NUMBER_OF_EXPECTED_THREADS = 1000;
+  public static final int MAGIC_SAFETY_FACTOR = 10;
+
   // private static final int STATE_ENTRY_INDEX = 0;
   // private static final int DISK_PAGE_SIZE = DISK_CACHE_PAGE_SIZE.getValueAsInteger();
   // private static final int LOWEST_FREELIST_BOUNDARY =
@@ -402,13 +405,11 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
       addInitializedPage(atomicOperation);
 
       // then let us add several empty data pages
-      final int maxNumberOfExpectedThreads = 1000;
-      final int magicSafetyNumber = 10;
       final int sizeOfIntInBytes = Integer.SIZE / 8;
       final int numberOfPages =
           (int)
                   Math.ceil(
-                      (maxNumberOfExpectedThreads * magicSafetyNumber * sizeOfIntInBytes)
+                      (MAX_NUMBER_OF_EXPECTED_THREADS * MAGIC_SAFETY_FACTOR * sizeOfIntInBytes)
                           / OVersionPage.PAGE_SIZE)
               + 1;
       for (int i = 0; i < numberOfPages; i++) {
