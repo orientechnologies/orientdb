@@ -65,9 +65,11 @@ public class OServerSecurityConfig implements OSecurityConfig {
   @Override
   public OSyslog getSyslog() {
     if (sysLog == null && server != null) {
-      OServerPluginInfo syslogPlugin = server.getPluginManager().getPluginByName("syslog");
-      if (syslogPlugin != null) {
-        sysLog = (OSyslog) syslogPlugin.getInstance();
+      if (server.getPluginManager() != null) {
+        OServerPluginInfo syslogPlugin = server.getPluginManager().getPluginByName("syslog");
+        if (syslogPlugin != null) {
+          sysLog = (OSyslog) syslogPlugin.getInstance();
+        }
       }
     }
     return sysLog;

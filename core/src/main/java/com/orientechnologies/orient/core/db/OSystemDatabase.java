@@ -82,6 +82,7 @@ public class OSystemDatabase {
    * called and restoring it after the database is closed.
    */
   public ODatabaseDocumentInternal openSystemDatabase() {
+    if (!exists()) init();
     return context.openNoAuthorization(getSystemDatabaseName());
   }
 

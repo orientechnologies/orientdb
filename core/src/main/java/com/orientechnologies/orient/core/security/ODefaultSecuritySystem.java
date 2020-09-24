@@ -23,7 +23,6 @@ import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.OrientDBEmbedded;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
@@ -89,10 +88,6 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
   private SecureRandom random = new SecureRandom();
 
   public ODefaultSecuritySystem() {}
-
-  public ODefaultSecuritySystem(OrientDBEmbedded orientDBEmbedded, OSecurityConfig securityConfig) {
-    activate(orientDBEmbedded, securityConfig);
-  }
 
   public void activate(final OrientDBInternal context, final OSecurityConfig serverCfg) {
     this.context = context;
