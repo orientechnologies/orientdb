@@ -267,47 +267,19 @@ public class OSecurityShared implements OSecurityInternal {
 
       if (user.getAccountStatus() != OSecurityUser.STATUSES.ACTIVE)
         throw new OSecurityAccessException(dbName, "User '" + username + "' is not active");
+
     } else {
-      // Will use the local database to authenticate.
-      if (security.isDefaultAllowed()) {
-        user = getUser(session, iUsername);
-        if (user == null)
-          throw new OSecurityAccessException(
-              dbName, "User or password not valid for database: '" + dbName + "'");
-
-        if (user.getAccountStatus() != OSecurityUser.STATUSES.ACTIVE)
-          throw new OSecurityAccessException(dbName, "User '" + iUsername + "' is not active");
-
-        // CHECK USER & PASSWORD
-        if (!user.checkPassword(iUserPassword)) {
-          // WAIT A BIT TO AVOID BRUTE FORCE
-          try {
-            Thread.sleep(200);
-          } catch (InterruptedException ignore) {
-            Thread.currentThread().interrupt();
-          }
-          throw new OSecurityAccessException(
-              dbName, "User or password not valid for database: '" + dbName + "'");
-        }
-
-      } else {
-        // WAIT A BIT TO AVOID BRUTE FORCE
-        try {
-          Thread.sleep(200);
-        } catch (InterruptedException ignore) {
-          Thread.currentThread().interrupt();
-        }
-
-        throw new OSecurityAccessException(
-            dbName,
-            "User or password not valid for username: "
-                + iUsername
-                + ", database: '"
-                + dbName
-                + "'");
+      // WAIT A BIT TO AVOID BRUTE FORCE
+      try {
+        Thread.sleep(200);
+      } catch (InterruptedException ignore) {
+        Thread.currentThread().interrupt();
       }
-    }
 
+      throw new OSecurityAccessException(
+          dbName,
+          "User or password not valid for username: " + iUsername + ", database: '" + dbName + "'");
+    }
     return user;
   }
 

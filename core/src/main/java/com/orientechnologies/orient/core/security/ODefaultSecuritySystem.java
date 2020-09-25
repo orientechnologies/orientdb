@@ -19,17 +19,6 @@
  */
 package com.orientechnologies.orient.core.security;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
-
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
@@ -43,7 +32,18 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OSystemUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.security.authenticator.ODatabaseUserAuthenticator;
 import com.orientechnologies.orient.core.security.authenticator.OServerConfigAuthenticator;
+import java.io.File;
+import java.io.FileInputStream;
+import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * Provides an implementation of OServerSecurity.
@@ -97,15 +97,23 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
   public void activate(final OrientDBInternal context, final OSecurityConfig serverCfg) {
     this.context = context;
     this.serverConfig = serverCfg;
-    OServerConfigAuthenticator serverAuth = new OServerConfigAuthenticator();
-    serverAuth.config(null, this);
-    List<OSecurityAuthenticator> authenticators = new ArrayList<OSecurityAuthenticator>();
-    authenticators.add(serverAuth);
-    setAuthenticatorList(authenticators);
     if (serverConfig != null) {
       this.load(serverConfig.getConfigurationFile());
     }
     onAfterDynamicPlugins();
+  }
+
+  private void initDefultAuthenticators() {
+    OServerConfigAuthenticator serverAuth = new OServerConfigAuthenticator();
+    serverAuth.config(null, this);
+
+    ODatabaseUserAuthenticator databaseAuth = new ODatabaseUserAuthenticator();
+    databaseAuth.config(null, this);
+
+    List<OSecurityAuthenticator> authenticators = new ArrayList<OSecurityAuthenticator>();
+    authenticators.add(serverAuth);
+    authenticators.add(databaseAuth);
+    setAuthenticatorList(authenticators);
   }
 
   public void shutdown() {
@@ -628,7 +636,12 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
               .error(this, "ODefaultServerSecurity.loadAuthenticators() Exception: ", ex);
         }
       }
+      if (isDefaultAllowed()) {
+        autheticators.add(new ODatabaseUserAuthenticator());
+      }
       setAuthenticatorList(autheticators);
+    } else {
+      initDefultAuthenticators();
     }
   }
 
@@ -646,6 +659,7 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
         log(OAuditingOperation.SECURITY, null, user, "The security module is now loaded");
       }
     } else {
+      initDefultAuthenticators();
       OLogManager.instance().warn(this, "onAfterDynamicPlugins() Configuration document is empty");
     }
   }
