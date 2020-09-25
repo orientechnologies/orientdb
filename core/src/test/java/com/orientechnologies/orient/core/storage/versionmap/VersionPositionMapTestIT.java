@@ -7,10 +7,9 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.index.versionmap.OVersionPositionMap;
 import com.orientechnologies.orient.core.storage.index.versionmap.OVersionPositionMapV0;
-import org.junit.*;
-
 import java.io.File;
 import java.util.Random;
+import org.junit.*;
 
 public class VersionPositionMapTestIT {
   public static final String DIR_NAME = "/versionPositionMapTest";
@@ -99,6 +98,7 @@ public class VersionPositionMapTestIT {
         OVersionPositionMapV0.MAX_NUMBER_OF_EXPECTED_THREADS
             * OVersionPositionMapV0.MAGIC_SAFETY_FACTOR;
     final long seed = System.nanoTime();
+    System.out.printf("incrementVersion seed :%d%n", seed);
     final Random random = new Random(seed);
     for (int i = 0; i <= maxVPMSize; i++) {
       int randomNum = 0 + random.nextInt((maxVPMSize - 0) + 1);

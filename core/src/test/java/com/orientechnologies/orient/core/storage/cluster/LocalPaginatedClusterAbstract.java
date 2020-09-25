@@ -141,7 +141,8 @@ public abstract class LocalPaginatedClusterAbstract {
             physicalPosition[0] =
                 paginatedCluster.createRecord(
                     smallRecord, recordVersion, (byte) 1, null, atomicOperation));
-    final ORawBuffer rawBuffer = paginatedCluster.readRecord(physicalPosition[0].clusterPosition, false);
+    final ORawBuffer rawBuffer =
+        paginatedCluster.readRecord(physicalPosition[0].clusterPosition, false);
     Assert.assertNotNull(rawBuffer);
 
     Assert.assertEquals(rawBuffer.version, recordVersion);
@@ -181,7 +182,8 @@ public abstract class LocalPaginatedClusterAbstract {
                 paginatedCluster.createRecord(
                     bigRecord, recordVersion, (byte) 1, null, atomicOperation));
 
-    final ORawBuffer rawBuffer = paginatedCluster.readRecord(physicalPosition[0].clusterPosition, false);
+    final ORawBuffer rawBuffer =
+        paginatedCluster.readRecord(physicalPosition[0].clusterPosition, false);
     Assert.assertNotNull(rawBuffer);
 
     Assert.assertEquals(rawBuffer.version, recordVersion);

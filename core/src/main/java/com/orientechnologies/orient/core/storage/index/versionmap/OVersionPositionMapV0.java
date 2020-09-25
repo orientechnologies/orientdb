@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.core.storage.index.versionmap;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -170,7 +171,6 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
                 loadPageForWrite(atomicOperation, fileId, pageIndex, false, true);
             try {
               final OVersionPositionMapBucket bucket = new OVersionPositionMapBucket(cacheEntry);
-              // bucket.incrementVersion(startPosition);
               bucket.incrementVersion(hash);
             } finally {
               releasePageFromWrite(atomicOperation, cacheEntry);
@@ -209,7 +209,6 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
       final OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
       try {
         final OVersionPositionMapBucket bucket = new OVersionPositionMapBucket(cacheEntry);
-        // final int version = bucket.getVersion(startPositionWithOffset);
         final int version = bucket.getVersion(hash);
         System.out.print("version=" + version);
         System.out.println();
