@@ -184,7 +184,9 @@ public class OrientDBEmbedded implements OrientDBInternal {
       initAutoClose(delay);
     }
     systemDatabase = new OSystemDatabase(this);
-    securitySystem = new ODefaultSecuritySystem(this, this.configurations.getSecurityConfig());
+    securitySystem = new ODefaultSecuritySystem();
+    ((ODefaultSecuritySystem) securitySystem)
+        .activate(this, this.configurations.getSecurityConfig());
   }
 
   protected OCachedDatabasePoolFactory createCachedDatabasePoolFactory(OrientDBConfig config) {

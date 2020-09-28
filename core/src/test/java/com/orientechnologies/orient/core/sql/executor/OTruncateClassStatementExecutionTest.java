@@ -200,10 +200,6 @@ public class OTruncateClassStatementExecutionTest {
     OSchema schema = database.getMetadata().getSchema();
     OClass testClass = getOrCreateClass(schema);
 
-    boolean ccWasEnabled =
-        ((OMetadataInternal) database.getMetadata()).getCommandCache().isEnabled();
-    ((OMetadataInternal) database.getMetadata()).getCommandCache().enable();
-
     database.command("truncate class test_class");
 
     database.save(new ODocument(testClass).field("name", "x").field("data", Arrays.asList(1, 2)));
@@ -220,8 +216,5 @@ public class OTruncateClassStatementExecutionTest {
     result.close();
 
     schema.dropClass("test_class");
-    if (!ccWasEnabled) {
-      ((OMetadataInternal) database.getMetadata()).getCommandCache().disable();
-    }
   }
 }

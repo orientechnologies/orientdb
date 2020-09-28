@@ -25,7 +25,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.cache.OCommandCacheHook;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OScriptExecutor;
@@ -195,8 +194,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
       loadMetadata(this.sharedContext);
 
       installHooksEmbedded();
-      if (this.getMetadata().getCommandCache().isEnabled())
-        registerHook(new OCommandCacheHook(this), ORecordHook.HOOK_POSITION.REGULAR);
 
       user = null;
 
@@ -281,9 +278,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     metadata = new OMetadataDefault(this);
     installHooksEmbedded();
     createMetadata(ctx);
-
-    if (this.getMetadata().getCommandCache().isEnabled())
-      registerHook(new OCommandCacheHook(this), ORecordHook.HOOK_POSITION.REGULAR);
   }
 
   public void callOnCreateListeners() {

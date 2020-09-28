@@ -14,7 +14,6 @@ import com.orientechnologies.orient.client.remote.message.OCommitResponse.OUpdat
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.cache.OCommandCache;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -73,7 +72,6 @@ import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 import com.orientechnologies.orient.server.network.protocol.binary.HandshakeInfo;
 import com.orientechnologies.orient.server.network.protocol.binary.OAbstractCommandResultListener;
 import com.orientechnologies.orient.server.network.protocol.binary.OAsyncCommandResultListener;
-import com.orientechnologies.orient.server.network.protocol.binary.OCommandCacheRemoteResultListener;
 import com.orientechnologies.orient.server.network.protocol.binary.OLiveCommandResultListener;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 import com.orientechnologies.orient.server.network.protocol.binary.OSyncCommandResultListener;
@@ -601,12 +599,6 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
         listener = new OSyncCommandResultListener(null);
         command.setResultListener(liveListener);
       } else if (asynch) {
-        // IF COMMAND CACHE IS ENABLED, RESULT MUST BE COLLECTED
-        final OCommandCache cmdCache = connection.getDatabase().getMetadata().getCommandCache();
-        if (cmdCache.isEnabled())
-          // CREATE E COLLECTOR OF RESULT IN RAM TO CACHE THE RESULT
-          cmdResultListener = new OCommandCacheRemoteResultListener(cmdResultListener, cmdCache);
-
         listener = new OAsyncCommandResultListener(connection, cmdResultListener);
         command.setResultListener(listener);
       } else {

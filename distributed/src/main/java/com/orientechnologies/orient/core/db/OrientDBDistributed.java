@@ -3,7 +3,6 @@ package com.orientechnologies.orient.core.db;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.cache.OCommandCacheSoftRefs;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -90,7 +89,6 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         storage = storages.get(dbName);
 
         if (storage != null) {
-          OCommandCacheSoftRefs.clearFiles(storage);
           dropStorageFiles((OLocalPaginatedStorage) storage);
           OSharedContext context = sharedContexts.remove(dbName);
           context.close();

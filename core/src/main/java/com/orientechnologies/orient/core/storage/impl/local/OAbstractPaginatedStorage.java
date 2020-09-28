@@ -4480,55 +4480,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         }
         boolean foundInCache = false;
         Object result = null;
-        if (iCommand.isCacheableResult()
-            && executor.isCacheable()
-            && iCommand.getParameters() == null) {
-          // TRY WITH COMMAND CACHE
-          result =
-              db.getMetadata()
-                  .getCommandCache()
-                  .get(db.getUser(), iCommand.getText(), iCommand.getLimit());
-
-          if (result != null) {
-            foundInCache = true;
-
-            if (iCommand.getResultListener() != null) {
-              // INVOKE THE LISTENER IF ANY
-              if (result instanceof Collection) {
-                for (final Object o : (Collection) result) {
-                  iCommand.getResultListener().result(o);
-                }
-              } else {
-                iCommand.getResultListener().result(result);
-              }
-
-              // RESET THE RESULT TO AVOID TO SEND IT TWICE
-              result = null;
-            }
-          }
-        }
 
         if (!foundInCache) {
           // EXECUTE THE COMMAND
           final Map<Object, Object> params = iCommand.getParameters();
           result = executor.execute(params);
-
-          if (result != null
-              && iCommand.isCacheableResult()
-              && executor.isCacheable()
-              && (iCommand.getParameters() == null || iCommand.getParameters().isEmpty()))
-          // CACHE THE COMMAND RESULT
-          {
-            db.getMetadata()
-                .getCommandCache()
-                .put(
-                    db.getUser(),
-                    iCommand.getText(),
-                    result,
-                    iCommand.getLimit(),
-                    executor.getInvolvedClusters(),
-                    System.currentTimeMillis() - beginTime);
-          }
         }
 
         // CALL AFTER COMMAND

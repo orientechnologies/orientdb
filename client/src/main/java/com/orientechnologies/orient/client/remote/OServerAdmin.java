@@ -25,8 +25,6 @@ import com.orientechnologies.orient.core.db.OrientDBRemote;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxInternal;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.security.OCredentialInterceptor;
-import com.orientechnologies.orient.core.security.OSecurityManager;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
@@ -101,21 +99,9 @@ public class OServerAdmin {
   @Deprecated
   public synchronized OServerAdmin connect(final String iUserName, final String iUserPassword)
       throws IOException {
-    final String username;
-    final String password;
 
-    OCredentialInterceptor ci = OSecurityManager.instance().newCredentialInterceptor();
-
-    if (ci != null) {
-      ci.intercept(getURL(), iUserName, iUserPassword);
-      username = ci.getUsername();
-      password = ci.getPassword();
-    } else {
-      username = iUserName;
-      password = iUserPassword;
-    }
-    this.user = username;
-    this.password = password;
+    this.user = iUserName;
+    this.password = iUserPassword;
 
     return this;
   }

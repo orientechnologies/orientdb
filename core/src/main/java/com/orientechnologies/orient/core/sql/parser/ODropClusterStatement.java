@@ -5,7 +5,6 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
@@ -64,9 +63,6 @@ public class ODropClusterStatement extends ODDLStatement {
         throw new OCommandExecutionException("Cluster not found: " + clusterId);
       }
     }
-    ((OMetadataInternal) database.getMetadata())
-        .getCommandCache()
-        .invalidateResultsOfCluster(clusterName);
 
     database.dropCluster(clusterId);
 
