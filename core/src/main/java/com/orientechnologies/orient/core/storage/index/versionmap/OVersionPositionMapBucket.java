@@ -88,7 +88,7 @@ public final class OVersionPositionMapBucket extends ODurablePage {
     return size;
   }
 
-  public void truncateLastEntry() {
+  /*public void truncateLastEntry() {
     final int size = getIntValue(SIZE_OFFSET);
     int position = entryPosition(size - 1);
 
@@ -103,7 +103,7 @@ public final class OVersionPositionMapBucket extends ODurablePage {
 
     addPageOperation(
         new ClusterPositionMapBucketTruncateLastEntryPO(status, pageIndex, recordPosition));
-  }
+  }*/
 
   public int getVersion(int index) {
     final int entryPosition = entryPosition(index); // ENTRIES_OFFSET + ridBagId * ENTRY_SIZE;
