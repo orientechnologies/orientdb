@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.core.db;
 
-import com.orientechnologies.orient.core.cache.OCommandCacheSoftRefs;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.viewmanager.ViewManager;
 import com.orientechnologies.orient.core.index.OIndexException;
@@ -39,7 +38,6 @@ public class OSharedContextEmbedded extends OSharedContext {
     sequenceLibrary = new OSequenceLibraryImpl();
     liveQueryOps = new OLiveQueryHook.OLiveQueryOps();
     liveQueryOpsV2 = new OLiveQueryHookV2.OLiveQueryOps();
-    commandCache = new OCommandCacheSoftRefs(storage.getUnderlying());
     statementCache =
         new OStatementCache(
             storage
@@ -104,7 +102,6 @@ public class OSharedContextEmbedded extends OSharedContext {
     functionLibrary.close();
     scheduler.close();
     sequenceLibrary.close();
-    commandCache.shutdown();
     statementCache.clear();
     executionPlanCache.invalidate();
     liveQueryOps.close();
@@ -122,7 +119,6 @@ public class OSharedContextEmbedded extends OSharedContext {
     security.load(database);
     functionLibrary.load(database);
     sequenceLibrary.load(database);
-    commandCache.clear();
     scheduler.load(database);
   }
 

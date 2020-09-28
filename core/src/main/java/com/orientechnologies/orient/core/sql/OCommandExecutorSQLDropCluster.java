@@ -102,9 +102,6 @@ public class OCommandExecutorSQLDropCluster extends OCommandExecutorSQLAbstract
       }
     }
 
-    // REMOVE CACHE OF COMMAND RESULTS IF ACTIVE
-    database.getMetadata().getCommandCache().invalidateResultsOfCluster(clusterName);
-
     database.dropCluster(clusterId);
     return true;
   }

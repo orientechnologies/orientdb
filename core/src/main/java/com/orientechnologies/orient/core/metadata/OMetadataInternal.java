@@ -16,7 +16,6 @@
  */
 package com.orientechnologies.orient.core.metadata;
 
-import com.orientechnologies.orient.core.cache.OCommandCache;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
@@ -51,8 +50,6 @@ public interface OMetadataInternal extends OMetadata {
   void clearThreadLocalSchemaSnapshot();
 
   OImmutableSchema getImmutableSchemaSnapshot();
-
-  OCommandCache getCommandCache();
 
   OIndexManagerAbstract getIndexManagerInternal();
 }

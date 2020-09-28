@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.orient.core.cache.OCommandCache;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -148,11 +147,9 @@ public class OCommandExecutorSQLTruncateClass extends OCommandExecutorSQLAbstrac
 
     try {
       schemaClass.truncate();
-      invalidateCommandCache(schemaClass);
       if (deep) {
         for (OClass subclass : subclasses) {
           subclass.truncate();
-          invalidateCommandCache(subclass);
         }
       }
     } catch (IOException e) {
@@ -161,24 +158,6 @@ public class OCommandExecutorSQLTruncateClass extends OCommandExecutorSQLAbstrac
     }
 
     return recs;
-  }
-
-  private void invalidateCommandCache(OClass clazz) {
-    if (clazz == null) {
-      return;
-    }
-    OCommandCache commandCache = getDatabase().getMetadata().getCommandCache();
-    if (commandCache != null && commandCache.isEnabled()) {
-      int[] clusterIds = clazz.getClusterIds();
-      if (clusterIds != null) {
-        for (int i : clusterIds) {
-          String clusterName = getDatabase().getClusterNameById(i);
-          if (clusterName != null) {
-            commandCache.invalidateResultsOfCluster(clusterName);
-          }
-        }
-      }
-    }
   }
 
   @Override

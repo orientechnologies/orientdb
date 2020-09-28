@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.command.OCommandDistributedReplicateReq
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -163,17 +162,6 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
         clusterName = storage.getClusterNameById(clusterId);
       } else {
         this.clusterId = clusterId;
-      }
-
-      if (attribute == ATTRIBUTES.STATUS
-          && OStorageClusterConfiguration.STATUS.OFFLINE.toString().equalsIgnoreCase(value)) {
-        // REMOVE CACHE OF COMMAND RESULTS IF ACTIVE
-        database.getMetadata().getCommandCache().invalidateResultsOfCluster(clusterName);
-      }
-
-      if (attribute == ATTRIBUTES.NAME) {
-        // REMOVE CACHE OF COMMAND RESULTS IF ACTIVE
-        database.getMetadata().getCommandCache().invalidateResultsOfCluster(clusterName);
       }
 
       result = storage.setClusterAttribute(clusterId, attribute, value);

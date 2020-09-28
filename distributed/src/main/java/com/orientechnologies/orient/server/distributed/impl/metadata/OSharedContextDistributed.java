@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.server.distributed.impl.metadata;
 
-import com.orientechnologies.orient.core.cache.OCommandCacheSoftRefs;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
@@ -35,7 +34,6 @@ public class OSharedContextDistributed extends OSharedContextEmbedded {
     sequenceLibrary = new OSequenceLibraryImpl();
     liveQueryOps = new OLiveQueryHook.OLiveQueryOps();
     liveQueryOpsV2 = new OLiveQueryHookV2.OLiveQueryOps();
-    commandCache = new OCommandCacheSoftRefs(storage.getUnderlying());
     statementCache =
         new OStatementCache(
             storage
@@ -94,7 +92,6 @@ public class OSharedContextDistributed extends OSharedContextEmbedded {
     functionLibrary.close();
     scheduler.close();
     sequenceLibrary.close();
-    commandCache.shutdown();
     statementCache.clear();
     executionPlanCache.invalidate();
     liveQueryOps.close();
@@ -113,7 +110,6 @@ public class OSharedContextDistributed extends OSharedContextEmbedded {
           security.load(database);
           functionLibrary.load(database);
           sequenceLibrary.load(database);
-          commandCache.clear();
           scheduler.load(database);
           return null;
         });

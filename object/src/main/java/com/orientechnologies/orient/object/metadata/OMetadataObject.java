@@ -16,7 +16,6 @@
  */
 package com.orientechnologies.orient.object.metadata;
 
-import com.orientechnologies.orient.core.cache.OCommandCache;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
@@ -79,11 +78,6 @@ public class OMetadataObject implements OMetadataInternal {
   public OSchemaProxyObject getSchema() {
     if (schema == null) schema = new OSchemaProxyObject(underlying.getSchema());
     return schema;
-  }
-
-  @Override
-  public OCommandCache getCommandCache() {
-    return underlying.getCommandCache();
   }
 
   @Override
