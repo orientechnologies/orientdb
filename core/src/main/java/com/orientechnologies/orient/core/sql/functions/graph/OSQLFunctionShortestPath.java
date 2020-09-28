@@ -16,15 +16,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.OEdgeToVertexIterable;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionMathAbstract;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Shortest path algorithm to find the shortest path from one node to another node in a directed
@@ -127,9 +120,19 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
 
     ctx.edgeType = null;
     if (iParams.length > 3) {
-      ctx.edgeType = iParams[3] == null ? null : "" + iParams[3];
+
+      Object param = iParams[3];
+      if (param instanceof Collection
+          && ((Collection) param).stream().allMatch(x -> x instanceof String)) {
+        ctx.edgeType = ((Collection<String>) param).stream().collect(Collectors.joining(","));
+        ctx.edgeTypeParam = (String[]) ((Collection) param).toArray(new String[0]);
+      } else {
+        ctx.edgeType = param == null ? null : "" + param;
+        ctx.edgeTypeParam = new String[] {ctx.edgeType};
+      }
+    } else {
+      ctx.edgeTypeParam = new String[] {null};
     }
-    ctx.edgeTypeParam = new String[] {ctx.edgeType};
 
     if (iParams.length > 4) {
       bindAdditionalParams(iParams[4], ctx);
