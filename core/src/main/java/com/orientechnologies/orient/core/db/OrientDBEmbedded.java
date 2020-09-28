@@ -1158,4 +1158,8 @@ public class OrientDBEmbedded implements OrientDBInternal {
   public String getBasePath() {
     return basePath;
   }
+
+  public boolean isMemoryOnly() {
+    return basePath == null;
+  };
 }

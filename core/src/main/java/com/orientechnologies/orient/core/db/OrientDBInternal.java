@@ -286,6 +286,10 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
 
   boolean isEmbedded();
 
+  default boolean isMemoryOnly() {
+    return false;
+  }
+
   static OrientDBInternal extract(OrientDB orientDB) {
     return orientDB.internal;
   }
