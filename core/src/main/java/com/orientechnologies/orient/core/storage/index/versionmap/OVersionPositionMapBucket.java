@@ -32,58 +32,12 @@ public final class OVersionPositionMapBucket extends ODurablePage {
   private static final int SIZE_OFFSET = NEXT_PAGE_OFFSET + OLongSerializer.LONG_SIZE;
   private static final int POSITIONS_OFFSET = SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
 
-  // private static final int PAGE_SIZE =
-  //     OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
-  // private static final int ENTRIES_OFFSET = SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
-  // private static final int ENTRY_SIZE = Integer.SIZE / 8;
-  // public static final int MAX_BUCKET_SIZE = (PAGE_SIZE - ENTRIES_OFFSET) / ENTRY_SIZE;
-
-  // NEVER USED ON DISK
-  public static final byte NOT_EXISTENT = 0;
-  public static final byte REMOVED = 1;
-  // public static final byte FILLED = 2;
-  // public static final byte ALLOCATED = 4;
-
   // use int for version
   private static final int VERSION_ENTRY_SIZE = OIntegerSerializer.INT_SIZE;
-
-  // public static final int MAX_ENTRIES =
-  //     (MAX_PAGE_SIZE_BYTES - POSITIONS_OFFSET) / VERSION_ENTRY_SIZE;
 
   public OVersionPositionMapBucket(OCacheEntry cacheEntry) {
     super(cacheEntry);
   }
-
-  /*public void init() {
-    setIntValue(SIZE_OFFSET, 0);
-    addPageOperation(new ClusterPositionMapBucketInitPO());
-  }
-
-  public int add(long pageIndex, int recordPosition) {
-    return add((int) pageIndex, recordPosition, FILLED);
-  }
-
-  public int add(int pageIndex, int recordPosition, byte status) {
-    int size = getIntValue(SIZE_OFFSET);
-    int position = entryPosition(size);
-    position += setByteValue(position, status);
-    position += setLongValue(position, pageIndex);
-    setIntValue(position, recordPosition);
-    setIntValue(SIZE_OFFSET, size + 1);
-    addPageOperation(new ClusterPositionMapBucketAddPO(pageIndex, recordPosition, status));
-    return size;
-  }
-
-  public int allocate() {
-    int size = getIntValue(SIZE_OFFSET);
-    int position = entryPosition(size);
-    position += setByteValue(position, ALLOCATED);
-    position += setLongValue(position, -1);
-    setIntValue(position, -1);
-    setIntValue(SIZE_OFFSET, size + 1);
-    addPageOperation(new ClusterPositionMapBucketAllocatePO());
-    return size;
-  }*/
 
   public int getVersion(final int index) {
     final int entryPosition = entryPosition(index); // ENTRIES_OFFSET + ridBagId * ENTRY_SIZE;
@@ -122,71 +76,7 @@ public final class OVersionPositionMapBucket extends ODurablePage {
     assert value + 1 == newValue;
   }
 
-  /*public void updateEntry(
-      final int index, final int pageIndex, final int recordPosition, final byte status) {
-    final int position = entryPosition(index);
-
-    final byte oldStatus = getByteValue(position);
-    final int oldPageIndex = getIntValue(position + OByteSerializer.BYTE_SIZE);
-    final int oldRecordPosition =
-        getIntValue(position + OByteSerializer.BYTE_SIZE + OLongSerializer.LONG_SIZE);
-
-    setByteValue(position, status);
-    setLongValue(position + OByteSerializer.BYTE_SIZE, pageIndex);
-    setIntValue(position + OByteSerializer.BYTE_SIZE + OLongSerializer.LONG_SIZE, recordPosition);
-
-    addPageOperation(
-        new ClusterPositionMapBucketUpdateEntryPO(
-            index, oldStatus, oldPageIndex, oldRecordPosition, status, pageIndex, recordPosition));
-  }*/
-
   protected static int entryPosition(int index) {
     return index * VERSION_ENTRY_SIZE + POSITIONS_OFFSET;
   }
-
-  /*public boolean isFull() {
-    return getIntValue(SIZE_OFFSET) == MAX_ENTRIES;
-  }
-
-  public int getSize() {
-    return getIntValue(SIZE_OFFSET);
-  }
-
-  public void remove(int index) {
-    int size = getIntValue(SIZE_OFFSET);
-    if (index >= size) {
-      return;
-    }
-    int position = entryPosition(index);
-
-    if (getByteValue(position) != FILLED) {
-      return;
-    }
-    updateStatus(index, REMOVED);
-  }
-
-  public void updateStatus(int index, byte status) {
-    int position = entryPosition(index);
-    final byte oldStatus = getByteValue(position);
-    setByteValue(position, status);
-    addPageOperation(new ClusterPositionMapBucketUpdateStatusPO(index, oldStatus, status));
-  }
-
-  public boolean exists(final int index) {
-    int size = getIntValue(SIZE_OFFSET);
-    if (index >= size) {
-      return false;
-    }
-    final int position = entryPosition(index);
-    return getByteValue(position) == FILLED;
-  }
-
-  public byte getStatus(final int index) {
-    int size = getIntValue(SIZE_OFFSET);
-    if (index >= size) {
-      return NOT_EXISTENT;
-    }
-    final int position = entryPosition(index);
-    return getByteValue(position);
-  }*/
 }
