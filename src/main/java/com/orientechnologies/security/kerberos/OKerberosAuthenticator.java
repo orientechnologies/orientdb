@@ -17,12 +17,13 @@ package com.orientechnologies.security.kerberos;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecuritySystem;
+import com.orientechnologies.orient.core.security.authenticator.OSecurityAuthenticatorAbstract;
 import com.orientechnologies.orient.core.security.kerberos.OKrb5ClientLoginModuleConfig;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
-import com.orientechnologies.orient.server.security.OSecurityAuthenticatorAbstract;
 import com.orientechnologies.orient.server.security.OSecurityAuthenticatorException;
 import java.util.Base64;
 import java.util.Map;
@@ -89,7 +90,8 @@ public class OKerberosAuthenticator extends OSecurityAuthenticatorAbstract {
 
   // OSecurityAuthenticator
   // Kerberos magic happens here.
-  public String authenticate(final String username, final String password) {
+  public String authenticate(
+      ODatabaseSession session, final String username, final String password) {
     // username will contain either the principal or be null.
     // password will contain either a Kerberos 5 service ticket or a SPNEGO ticket.
     String principal = null;
