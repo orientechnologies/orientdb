@@ -20,6 +20,7 @@
 package com.orientechnologies.agent.security.authenticator;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.security.OSecurityManager;
@@ -44,7 +45,8 @@ public class OSystemSymmetricKeyAuth extends OSystemUserAuthenticator {
   // OSecurityAuthenticator
   // Returns the actual username if successful, null otherwise.
   // This will authenticate username using the system database.
-  public String authenticate(final String username, final String password) {
+  public String authenticate(
+      ODatabaseSession session, final String username, final String password) {
     String principal = null;
 
     try {

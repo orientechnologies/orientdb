@@ -68,7 +68,7 @@ public class StudioPermissionCommand extends OServerCommandAuthenticatedServerAb
           if (user != null) {
             Set<String> permissions =
                 Arrays.asList(EnterprisePermissions.values()).stream()
-                    .filter((c) -> server.isAllowed(user, c.toString()))
+                    .filter((c) -> server.getSecurity().isAuthorized(user, c.toString()))
                     .map((c) -> c.toString())
                     .collect(Collectors.toSet());
             m.put("permissions", permissions);
