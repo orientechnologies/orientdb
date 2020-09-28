@@ -20,44 +20,41 @@
 
 package com.orientechnologies.orient.core.storage.index.versionmap;
 
-import com.orientechnologies.common.serialization.types.OByteSerializer;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpositionmapbucket.*;
-import java.util.Objects;
 
 public final class OVersionPositionMapBucket extends ODurablePage {
   private static final int NEXT_PAGE_OFFSET = NEXT_FREE_POSITION;
   private static final int SIZE_OFFSET = NEXT_PAGE_OFFSET + OLongSerializer.LONG_SIZE;
   private static final int POSITIONS_OFFSET = SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
 
-  private static final int PAGE_SIZE =
-      OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
-  private static final int ENTRIES_OFFSET = SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
-  private static final int ENTRY_SIZE = Integer.SIZE / 8;
-  public static final int MAX_BUCKET_SIZE = (PAGE_SIZE - ENTRIES_OFFSET) / ENTRY_SIZE;
+  // private static final int PAGE_SIZE =
+  //     OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
+  // private static final int ENTRIES_OFFSET = SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
+  // private static final int ENTRY_SIZE = Integer.SIZE / 8;
+  // public static final int MAX_BUCKET_SIZE = (PAGE_SIZE - ENTRIES_OFFSET) / ENTRY_SIZE;
 
   // NEVER USED ON DISK
   public static final byte NOT_EXISTENT = 0;
   public static final byte REMOVED = 1;
-  public static final byte FILLED = 2;
-  public static final byte ALLOCATED = 4;
+  // public static final byte FILLED = 2;
+  // public static final byte ALLOCATED = 4;
 
   // use int for version
   private static final int VERSION_ENTRY_SIZE = OIntegerSerializer.INT_SIZE;
 
-  public static final int MAX_ENTRIES =
-      (MAX_PAGE_SIZE_BYTES - POSITIONS_OFFSET) / VERSION_ENTRY_SIZE;
+  // public static final int MAX_ENTRIES =
+  //     (MAX_PAGE_SIZE_BYTES - POSITIONS_OFFSET) / VERSION_ENTRY_SIZE;
 
   public OVersionPositionMapBucket(OCacheEntry cacheEntry) {
     super(cacheEntry);
   }
 
-  public void init() {
+  /*public void init() {
     setIntValue(SIZE_OFFSET, 0);
     addPageOperation(new ClusterPositionMapBucketInitPO());
   }
@@ -86,77 +83,46 @@ public final class OVersionPositionMapBucket extends ODurablePage {
     setIntValue(SIZE_OFFSET, size + 1);
     addPageOperation(new ClusterPositionMapBucketAllocatePO());
     return size;
-  }
-
-  /*public void truncateLastEntry() {
-    final int size = getIntValue(SIZE_OFFSET);
-    int position = entryPosition(size - 1);
-
-    final byte status = getByteValue(position);
-    position += OByteSerializer.BYTE_SIZE;
-
-    final int pageIndex = (int) getLongValue(position);
-    position += OLongSerializer.LONG_SIZE;
-
-    final int recordPosition = getIntValue(position);
-    setIntValue(SIZE_OFFSET, size - 1);
-
-    addPageOperation(
-        new ClusterPositionMapBucketTruncateLastEntryPO(status, pageIndex, recordPosition));
   }*/
 
-  public int getVersion(int index) {
+  public int getVersion(final int index) {
     final int entryPosition = entryPosition(index); // ENTRIES_OFFSET + ridBagId * ENTRY_SIZE;
     final int value = getIntValue(entryPosition);
     if (value < 0) {
       throw new OStorageException(
           "Entry with index " + index + " might be deleted and can not be used.");
     }
-    System.out.print("(get index " + index + " version=" + value + ")->");
+    OLogManager.instance()
+        .info(
+            this,
+            "VPM bucket get version: value = %d, entry position = %d, page index = %d",
+            value,
+            entryPosition,
+            index);
     return value;
   }
 
-  public void incrementVersion(int index) {
+  public void incrementVersion(final int index) {
     final int entryPosition = entryPosition(index);
     final int value = getIntValue(entryPosition);
     if (value < 0) {
       throw new OStorageException(
           "Entry with index " + index + " might be deleted and can not be used.");
     }
-    System.out.print("(inc index " + index + " from " + value + " to " + value + 1 + ")->");
     setIntValue(entryPosition, value + 1);
-    assert value + 1 == getVersion(index);
+    final int newValue = getVersion(index);
+    OLogManager.instance()
+        .info(
+            this,
+            "VPM bucket increment version: old value = %d, new value = %d, entry position = %d, page index = %d",
+            value,
+            newValue,
+            entryPosition,
+            index);
+    assert value + 1 == newValue;
   }
 
-  public PositionEntry get(int index) {
-    int size = getIntValue(SIZE_OFFSET);
-    if (index >= size) {
-      return null;
-    }
-    int position = entryPosition(index);
-    if (getByteValue(position) != FILLED) {
-      return null;
-    }
-    return readEntry(position);
-  }
-
-  public void set(final int index, final PositionEntry entry) {
-    final int size = getIntValue(SIZE_OFFSET);
-    if (index >= size) {
-      throw new OStorageException("Provided index " + index + " is out of range");
-    }
-    final int position = entryPosition(index);
-
-    byte flag = getByteValue(position);
-    if (flag == ALLOCATED) {
-      flag = FILLED;
-    } else if (flag != FILLED) {
-      throw new OStorageException("Provided index " + index + " points to removed entry");
-    }
-    updateEntry(index, (int) entry.pageIndex, entry.recordPosition, flag);
-  }
-
-  public void updateEntry(
+  /*public void updateEntry(
       final int index, final int pageIndex, final int recordPosition, final byte status) {
     final int position = entryPosition(index);
 
@@ -172,13 +138,13 @@ public final class OVersionPositionMapBucket extends ODurablePage {
     addPageOperation(
         new ClusterPositionMapBucketUpdateEntryPO(
             index, oldStatus, oldPageIndex, oldRecordPosition, status, pageIndex, recordPosition));
-  }
+  }*/
 
   protected static int entryPosition(int index) {
     return index * VERSION_ENTRY_SIZE + POSITIONS_OFFSET;
   }
 
-  public boolean isFull() {
+  /*public boolean isFull() {
     return getIntValue(SIZE_OFFSET) == MAX_ENTRIES;
   }
 
@@ -206,14 +172,6 @@ public final class OVersionPositionMapBucket extends ODurablePage {
     addPageOperation(new ClusterPositionMapBucketUpdateStatusPO(index, oldStatus, status));
   }
 
-  private PositionEntry readEntry(int position) {
-    position += OByteSerializer.BYTE_SIZE;
-    final long pageIndex = getLongValue(position);
-    position += OLongSerializer.LONG_SIZE;
-    final int pagePosition = getIntValue(position);
-    return new PositionEntry(pageIndex, pagePosition);
-  }
-
   public boolean exists(final int index) {
     int size = getIntValue(SIZE_OFFSET);
     if (index >= size) {
@@ -230,46 +188,5 @@ public final class OVersionPositionMapBucket extends ODurablePage {
     }
     final int position = entryPosition(index);
     return getByteValue(position);
-  }
-
-  public static final class PositionEntry {
-    private final long pageIndex;
-    private final int recordPosition;
-
-    public PositionEntry(final long pageIndex, final int recordPosition) {
-      this.pageIndex = pageIndex;
-      this.recordPosition = recordPosition;
-    }
-
-    public long getPageIndex() {
-      return pageIndex;
-    }
-
-    public int getRecordPosition() {
-      return recordPosition;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      PositionEntry that = (PositionEntry) o;
-      return pageIndex == that.pageIndex && recordPosition == that.recordPosition;
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(pageIndex, recordPosition);
-    }
-
-    @Override
-    public String toString() {
-      return "PositionEntry{"
-          + "pageIndex="
-          + pageIndex
-          + ", recordPosition="
-          + recordPosition
-          + '}';
-    }
-  }
+  }*/
 }
