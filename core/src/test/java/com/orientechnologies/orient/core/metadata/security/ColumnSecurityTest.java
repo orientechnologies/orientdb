@@ -56,7 +56,7 @@ public class ColumnSecurityTest {
     OClass person = db.createClass("Person");
     person.createProperty("name", OType.STRING);
 
-    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "testPolicy");
     policy.setActive(true);
     policy.setReadRule("name = 'foo'");
     security.saveSecurityPolicy(db, policy);
@@ -74,7 +74,7 @@ public class ColumnSecurityTest {
     person.createProperty("name", OType.STRING);
     person.createProperty("surname", OType.STRING);
 
-    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "testPolicy");
     policy.setActive(true);
     policy.setReadRule("name = 'foo'");
     security.saveSecurityPolicy(db, policy);
@@ -97,7 +97,7 @@ public class ColumnSecurityTest {
     OClass person = db.createClass("Person");
     person.createProperty("name", OType.STRING);
 
-    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "testPolicy");
     policy.setActive(true);
     policy.setCreateRule("name = 'foo'");
     policy.setBeforeUpdateRule("name = 'foo'");
@@ -118,7 +118,7 @@ public class ColumnSecurityTest {
     OClass person = db.createClass("Person");
     person.createProperty("name", OType.STRING);
 
-    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "testPolicy");
     policy.setActive(true);
     policy.setReadRule("name = 'foo'");
     security.saveSecurityPolicy(db, policy);
@@ -138,7 +138,7 @@ public class ColumnSecurityTest {
 
     db.command("create index Person.name_address on Person (name, address) NOTUNIQUE");
 
-    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "testPolicy");
     policy.setActive(true);
     policy.setReadRule("name = 'foo'");
     security.saveSecurityPolicy(db, policy);
@@ -156,7 +156,7 @@ public class ColumnSecurityTest {
 
     db.command("create index Person.name_surname on Person (name, surname) NOTUNIQUE");
 
-    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "testPolicy");
     policy.setActive(true);
     policy.setReadRule("name = 'foo'");
     security.saveSecurityPolicy(db, policy);
@@ -178,7 +178,7 @@ public class ColumnSecurityTest {
 
     db.command("create index Person.name on Person (name) NOTUNIQUE");
 
-    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "testPolicy");
     policy.setActive(true);
     policy.setReadRule("name = 'foo'");
     security.saveSecurityPolicy(db, policy);
@@ -192,7 +192,7 @@ public class ColumnSecurityTest {
 
     db.createClass("Person");
 
-    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "testPolicy");
     policy.setActive(true);
     policy.setReadRule("name = 'foo'");
     security.saveSecurityPolicy(db, policy);
@@ -239,7 +239,7 @@ public class ColumnSecurityTest {
 
     db.command("create index Person.name on Person (name) NOTUNIQUE");
 
-    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "testPolicy");
     policy.setActive(true);
     policy.setReadRule("name = 'foo'");
     security.saveSecurityPolicy(db, policy);
@@ -276,7 +276,7 @@ public class ColumnSecurityTest {
 
     db.createClass("Person");
 
-    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "testPolicy");
     policy.setActive(true);
     policy.setReadRule("name IN (select 'foo' as foo)");
     security.saveSecurityPolicy(db, policy);
@@ -341,7 +341,7 @@ public class ColumnSecurityTest {
 
     db.createClass("Person");
 
-    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "testPolicy");
     policy.setActive(true);
     policy.setReadRule("name = 'foo'");
     security.saveSecurityPolicy(db, policy);
@@ -375,7 +375,7 @@ public class ColumnSecurityTest {
 
     db.createClass("Person");
 
-    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "testPolicy");
     policy.setActive(true);
     policy.setCreateRule("name = 'foo'");
     security.saveSecurityPolicy(db, policy);
@@ -407,7 +407,7 @@ public class ColumnSecurityTest {
 
     db.createClass("Person");
 
-    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "testPolicy");
     policy.setActive(true);
     policy.setBeforeUpdateRule("name = 'foo'");
     security.saveSecurityPolicy(db, policy);
@@ -449,7 +449,7 @@ public class ColumnSecurityTest {
 
     db.createClass("Person");
 
-    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "testPolicy");
     policy.setActive(true);
     policy.setAfterUpdateRule("name <> 'invalid'");
     security.saveSecurityPolicy(db, policy);

@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.metadata.security.ORestrictedOperation;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
 import com.orientechnologies.orient.core.metadata.security.OSecurityPolicy;
+import com.orientechnologies.orient.core.metadata.security.OSecurityPolicyImpl;
 import com.orientechnologies.orient.core.metadata.security.OSecurityResourceProperty;
 import com.orientechnologies.orient.core.metadata.security.OSecurityRole;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
@@ -248,22 +249,22 @@ public class OSymmetricKeySecurity implements OSecurityInternal {
 
   @Override
   public void setSecurityPolicy(
-      ODatabaseSession session, OSecurityRole role, String resource, OSecurityPolicy policy) {
+      ODatabaseSession session, OSecurityRole role, String resource, OSecurityPolicyImpl policy) {
     delegate.setSecurityPolicy(session, role, resource, policy);
   }
 
   @Override
-  public OSecurityPolicy createSecurityPolicy(ODatabaseSession session, String name) {
+  public OSecurityPolicyImpl createSecurityPolicy(ODatabaseSession session, String name) {
     return delegate.createSecurityPolicy(session, name);
   }
 
   @Override
-  public OSecurityPolicy getSecurityPolicy(ODatabaseSession session, String name) {
+  public OSecurityPolicyImpl getSecurityPolicy(ODatabaseSession session, String name) {
     return delegate.getSecurityPolicy(session, name);
   }
 
   @Override
-  public void saveSecurityPolicy(ODatabaseSession session, OSecurityPolicy policy) {
+  public void saveSecurityPolicy(ODatabaseSession session, OSecurityPolicyImpl policy) {
     delegate.saveSecurityPolicy(session, policy);
   }
 

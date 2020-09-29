@@ -1,8 +1,8 @@
 package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.io.Serializable;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -63,5 +63,7 @@ public interface OSecurityRole extends Serializable {
 
   public OIdentifiable getIdentity();
 
-  public ODocument getDocument();
+  public Map<String, OSecurityPolicy> getPolicies();
+
+  public OSecurityPolicy getPolicy(String resource);
 }

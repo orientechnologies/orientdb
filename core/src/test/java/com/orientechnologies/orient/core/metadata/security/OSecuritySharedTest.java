@@ -58,7 +58,7 @@ public class OSecuritySharedTest {
   @Test
   public void testUpdateSecurityPolicy() {
     OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
-    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "testPolicy");
     policy.setActive(true);
     policy.setReadRule("name = 'foo'");
     security.saveSecurityPolicy(db, policy);
@@ -72,7 +72,7 @@ public class OSecuritySharedTest {
 
     db.createClass("Person");
 
-    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "testPolicy");
     policy.setActive(true);
     policy.setReadRule("name = 'foo'");
     security.saveSecurityPolicy(db, policy);
@@ -92,7 +92,7 @@ public class OSecuritySharedTest {
 
     db.createClass("Person");
 
-    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "testPolicy");
     policy.setActive(true);
     policy.setReadRule("name = 'foo'");
     security.saveSecurityPolicy(db, policy);

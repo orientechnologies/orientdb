@@ -104,7 +104,7 @@ public interface OSecurityInternal {
    * @param policy The security policy
    */
   void setSecurityPolicy(
-      ODatabaseSession session, OSecurityRole role, String resource, OSecurityPolicy policy);
+      ODatabaseSession session, OSecurityRole role, String resource, OSecurityPolicyImpl policy);
 
   /**
    * creates and saves an empty security policy
@@ -113,11 +113,11 @@ public interface OSecurityInternal {
    * @param name the policy name
    * @return
    */
-  OSecurityPolicy createSecurityPolicy(ODatabaseSession session, String name);
+  OSecurityPolicyImpl createSecurityPolicy(ODatabaseSession session, String name);
 
-  OSecurityPolicy getSecurityPolicy(ODatabaseSession session, String name);
+  OSecurityPolicyImpl getSecurityPolicy(ODatabaseSession session, String name);
 
-  void saveSecurityPolicy(ODatabaseSession session, OSecurityPolicy policy);
+  void saveSecurityPolicy(ODatabaseSession session, OSecurityPolicyImpl policy);
 
   void deleteSecurityPolicy(ODatabaseSession session, String name);
 

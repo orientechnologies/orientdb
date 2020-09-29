@@ -20,7 +20,9 @@ public class ODatabaseUserAuthenticator extends OSecurityAuthenticatorAbstract {
     OSecurityShared databaseSecurity =
         (OSecurityShared) ((ODatabaseDocumentInternal) session).getSharedContext().getSecurity();
     OUser user = databaseSecurity.getUserInternal(session, username);
-
+    if (user == null) {
+      return null;
+    }
     if (user.getAccountStatus() != OSecurityUser.STATUSES.ACTIVE)
       throw new OSecurityAccessException(dbName, "User '" + username + "' is not active");
 

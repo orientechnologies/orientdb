@@ -76,7 +76,7 @@ public class OSecurityPolicyTest {
   public void testValidPredicates() {
     OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
     Assert.assertNull(security.getSecurityPolicy(db, "test"));
-    OSecurityPolicy policy = security.createSecurityPolicy(db, "test");
+    OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "test");
     policy.setCreateRule("name = 'create'");
     policy.setReadRule("name = 'read'");
     policy.setBeforeUpdateRule("name = 'beforeUpdate'");
@@ -85,21 +85,21 @@ public class OSecurityPolicyTest {
     policy.setExecuteRule("name = 'execute'");
 
     security.saveSecurityPolicy(db, policy);
-    policy = security.getSecurityPolicy(db, "test");
+    OSecurityPolicy readPolicy = security.getSecurityPolicy(db, "test");
     Assert.assertNotNull(policy);
-    Assert.assertEquals("name = 'create'", policy.getCreateRule());
-    Assert.assertEquals("name = 'read'", policy.getReadRule());
-    Assert.assertEquals("name = 'beforeUpdate'", policy.getBeforeUpdateRule());
-    Assert.assertEquals("name = 'afterUpdate'", policy.getAfterUpdateRule());
-    Assert.assertEquals("name = 'delete'", policy.getDeleteRule());
-    Assert.assertEquals("name = 'execute'", policy.getExecuteRule());
+    Assert.assertEquals("name = 'create'", readPolicy.getCreateRule());
+    Assert.assertEquals("name = 'read'", readPolicy.getReadRule());
+    Assert.assertEquals("name = 'beforeUpdate'", readPolicy.getBeforeUpdateRule());
+    Assert.assertEquals("name = 'afterUpdate'", readPolicy.getAfterUpdateRule());
+    Assert.assertEquals("name = 'delete'", readPolicy.getDeleteRule());
+    Assert.assertEquals("name = 'execute'", readPolicy.getExecuteRule());
   }
 
   @Test
   public void testInvalidPredicates() {
     OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
     Assert.assertNull(security.getSecurityPolicy(db, "test"));
-    OSecurityPolicy policy = security.createSecurityPolicy(db, "test");
+    OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "test");
     try {
       policy.setCreateRule("foo bar");
       Assert.fail();
@@ -136,7 +136,7 @@ public class OSecurityPolicyTest {
   public void testAddPolicyToRole() {
     OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
     Assert.assertNull(security.getSecurityPolicy(db, "test"));
-    OSecurityPolicy policy = security.createSecurityPolicy(db, "test");
+    OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "test");
     policy.setCreateRule("1 = 1");
     policy.setBeforeUpdateRule("1 = 2");
     policy.setActive(true);
@@ -155,14 +155,14 @@ public class OSecurityPolicyTest {
 
     OSecurityPolicy policy2 = security.getSecurityPolicy(db, reader, resource);
     Assert.assertNotNull(policy2);
-    Assert.assertEquals(policy2.getElement().getIdentity(), policyRid);
+    Assert.assertEquals(policy2.getIdentity(), policyRid);
   }
 
   @Test
   public void testRemovePolicyToRole() {
     OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
     Assert.assertNull(security.getSecurityPolicy(db, "test"));
-    OSecurityPolicy policy = security.createSecurityPolicy(db, "test");
+    OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "test");
     policy.setCreateRule("1 = 1");
     policy.setBeforeUpdateRule("1 = 2");
     policy.setActive(true);

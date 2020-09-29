@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.authenticator.ODatabaseUserAuthenticator;
 import com.orientechnologies.orient.core.security.authenticator.OServerConfigAuthenticator;
+import com.orientechnologies.orient.core.security.authenticator.OSystemUserAuthenticator;
 import java.io.File;
 import java.io.FileInputStream;
 import java.security.SecureRandom;
@@ -110,8 +111,12 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
     ODatabaseUserAuthenticator databaseAuth = new ODatabaseUserAuthenticator();
     databaseAuth.config(null, this);
 
+    OSystemUserAuthenticator systemAuth = new OSystemUserAuthenticator();
+    systemAuth.config(null, this);
+
     List<OSecurityAuthenticator> authenticators = new ArrayList<OSecurityAuthenticator>();
     authenticators.add(serverAuth);
+    // authenticators.add(systemAuth);
     authenticators.add(databaseAuth);
     setAuthenticatorList(authenticators);
   }

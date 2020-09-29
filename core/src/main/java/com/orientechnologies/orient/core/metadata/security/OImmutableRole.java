@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -21,7 +20,7 @@ public class OImmutableRole implements OSecurityRole {
       new HashMap<ORule.ResourceGeneric, ORule>();
   private final String name;
   private final ORID rid;
-  private final ORole role;
+  private final Map<String, OSecurityPolicy> policies;
 
   public OImmutableRole(ORole role) {
     if (role.getParentRole() == null) this.parentRole = null;
@@ -30,9 +29,17 @@ public class OImmutableRole implements OSecurityRole {
     this.mode = role.getMode();
     this.name = role.getName();
     this.rid = role.getIdentity().getIdentity();
-    this.role = role;
 
     for (ORule rule : role.getRuleSet()) rules.put(rule.getResourceGeneric(), rule);
+    Map<String, OSecurityPolicy> result = new HashMap<String, OSecurityPolicy>();
+    Map<String, OIdentifiable> policies = role.getDocument().getProperty("policies");
+    if (policies != null) {
+      policies
+          .entrySet()
+          .forEach(
+              x -> result.put(x.getKey(), new OImmutableSecurityPolicy(x.getValue().getRecord())));
+    }
+    this.policies = result;
   }
 
   public boolean allow(
@@ -153,7 +160,12 @@ public class OImmutableRole implements OSecurityRole {
   }
 
   @Override
-  public ODocument getDocument() {
-    return role.getDocument();
+  public Map<String, OSecurityPolicy> getPolicies() {
+    return policies;
+  }
+
+  @Override
+  public OSecurityPolicy getPolicy(String resource) {
+    return policies.get(resource);
   }
 }
