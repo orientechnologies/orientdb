@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.*;
-import static com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl.DEFAULT_INDEX_KEY_VER;
 import static com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl.Status.*;
 
 import com.hazelcast.core.HazelcastException;
@@ -421,8 +420,26 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     }
   }
 
+  private int getVersionForIndexKey(
+      OTransactionInternal tx, String index, Object key, boolean isCoordinator) {
+    if (isCoordinator) {
+      return ((OAbstractPaginatedStorage) tx.getDatabase().getStorage())
+          .getVersionForKey(index, key);
+    }
+    return ((OTransactionOptimisticDistributed) tx).getVersionForKey(index, key);
+  }
+
+  /**
+   * @param tx
+   * @param txContext
+   * @param isCoordinator specifies whether this node is the tx coordinator
+   * @param force whether to use the force flag for acquiring the promises required for this tx.
+   */
   public void acquireLocksForTx(
-      OTransactionInternal tx, ODistributedTxContext txContext, boolean force) {
+      OTransactionInternal tx,
+      ODistributedTxContext txContext,
+      boolean isCoordinator,
+      boolean force) {
     Set<OTransactionId> txsWithBrokenPromises = new HashSet<>();
     Set<OPair<ORID, Integer>> rids = new TreeSet<>();
     for (ORecordOperation entry : tx.getRecordOperations()) {
@@ -448,10 +465,12 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         String name = index.getName();
         for (OTransactionIndexChangesPerKey changesPerKey :
             change.getValue().changesPerKey.values()) {
-          keys.add(new OPair<>(name + "#" + changesPerKey.key, DEFAULT_INDEX_KEY_VER));
+          int keyVersion = getVersionForIndexKey(tx, name, changesPerKey.key, isCoordinator);
+          keys.add(new OPair<>(name + "#" + changesPerKey.key, keyVersion));
         }
         if (!change.getValue().nullKeyChanges.entries.isEmpty()) {
-          keys.add(new OPair<>(name + "#null", DEFAULT_INDEX_KEY_VER));
+          int keyVersion = getVersionForIndexKey(tx, name, null, isCoordinator);
+          keys.add(new OPair<>(name + "#null", keyVersion));
         }
       }
     }
@@ -601,8 +620,11 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
             txContext.acquireIndexKeyPromise(p.getKey(), p.getVersion(), false);
           }
         } catch (ODistributedRecordLockedException | ODistributedKeyLockedException e) {
-          // Promise is no longer valid! Just return false so second phase is tried again
-          return false;
+          // This should not happen!
+          throw new ODistributedException(
+              String.format(
+                  "Locks for tx '%s' are no longer valid in the second phase despite successful first phase",
+                  transactionId));
         }
         try {
           if (manager != null) {
@@ -670,7 +692,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
                     "Error committing transaction %s ",
                     ex,
                     transactionId);
-            break;
+            return true;
           } catch (Exception ex) {
             OLogManager.instance()
                 .warn(
@@ -756,6 +778,11 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     internalBegin2pc(txContext, isCoordinator, false);
   }
 
+  /**
+   * @param txContext
+   * @param isCoordinator specifies whether this node is the tx coordinator
+   * @param force whether to use the force flag for acquiring the promises required for this tx.
+   */
   public void internalBegin2pc(
       ONewDistributedTxContextImpl txContext, boolean isCoordinator, boolean force) {
     final ODistributedDatabaseImpl localDb = (ODistributedDatabaseImpl) getDistributedShared();
@@ -777,7 +804,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       getDistributedShared().getManager().messageAfterOp("allocate", txContext.getReqId());
     }
 
-    acquireLocksForTx(transaction, txContext, force);
+    acquireLocksForTx(transaction, txContext, isCoordinator, force);
 
     firstPhaseDataChecks(isCoordinator, transaction, txContext);
   }

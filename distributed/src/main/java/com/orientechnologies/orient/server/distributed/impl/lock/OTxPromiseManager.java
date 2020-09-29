@@ -1,76 +1,59 @@
 package com.orientechnologies.orient.server.distributed.impl.lock;
 
-import com.orientechnologies.common.concur.lock.OInterruptedException;
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.server.distributed.exception.OTxPromiseException;
+
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * A promise manager keeps track of promises required for distributed transactions on a node.
+ */
 public class OTxPromiseManager<T> {
   private final Lock lock = new ReentrantLock();
   private final Map<T, OTxPromise<T>> map = new ConcurrentHashMap<>();
-  private final Map<T, Condition> conditions = new ConcurrentHashMap<>();
-  private final long timeout; // in milliseconds
 
-  public OTxPromiseManager(long timeout) {
-    this.timeout = timeout;
-  }
-
+  /**
+   * @param key
+   * @param version
+   * @param txId
+   * @param force allows a tx to acquire the promise even if it is held by another tx. It must be used only in the second phase.
+   * @return if using {@code force}, returns the ID of the tx that was previously holding the promise.
+   */
   public OTransactionId promise(T key, int version, OTransactionId txId, boolean force) {
     lock.lock();
     try {
       OTxPromise<T> p = map.get(key);
       if (p == null) {
         map.put(key, new OTxPromise<>(key, version, txId));
-        conditions.put(key, lock.newCondition());
         return null;
       }
       if (p.getTxId().equals(txId)) {
         return null;
       }
-      if (force) {
-        OTransactionId cancelledPromise = null;
-        if (p.getVersion() != version) {
-          throw new OTxPromiseException(
-              String.format("Cannot acquire promise for resource: '%s'", key),
-              version,
-              p.getVersion());
-        } else {
-          cancelledPromise = p.getTxId();
-          map.remove(key);
-          Condition c = conditions.remove(key);
-          if (c != null) {
-            c.signalAll();
-          }
-          map.put(key, new OTxPromise<>(key, version, txId));
-          conditions.put(key, lock.newCondition());
-        }
-        return cancelledPromise;
+      if (!force) {
+        throw new OTxPromiseException(
+            String.format("Cannot acquire promise for resource: '%s'", key),
+            version,
+            p.getVersion());
       }
-      // wait until promise is available or timeout
-      try {
-        while (p != null) {
-          Condition c = conditions.get(key);
-          if (c != null && !c.await(timeout, TimeUnit.MILLISECONDS)) {
-            throw new OTxPromiseException(
-                String.format("Timed out waiting to acquire promise for resource '%s'", key),
-                version,
-                p.getVersion());
-          }
-          p = map.get(key);
-        }
-        map.put(key, new OTxPromise<>(key, version, txId));
-        conditions.put(key, lock.newCondition());
-        return null;
-      } catch (InterruptedException e) {
-        throw OException.wrapException(
-            new OInterruptedException("Interrupted waiting for promise"), e);
+      // a phase2 force
+      OTransactionId cancelledPromise = null;
+      if (p.getVersion() != version) {
+        throw new OTxPromiseException(
+            String.format(
+                "Cannot acquire promise for resource: '%s' version %d (existing version: %d)",
+                key, version, p.getVersion()),
+            version,
+            p.getVersion());
       }
+
+      cancelledPromise = p.getTxId();
+      map.remove(key);
+      map.put(key, new OTxPromise<>(key, version, txId));
+      return cancelledPromise;
     } finally {
       lock.unlock();
     }
@@ -80,13 +63,8 @@ public class OTxPromiseManager<T> {
     lock.lock();
     try {
       OTxPromise<T> p = map.get(key);
-      // The promise could have been forcefully taken away!
       if (p != null && p.getTxId().equals(txId)) {
         map.remove(key);
-        Condition c = conditions.remove(key);
-        if (c != null) {
-          c.signalAll();
-        }
       }
     } finally {
       lock.unlock();
@@ -96,22 +74,10 @@ public class OTxPromiseManager<T> {
   public void reset() {
     lock.lock();
     try {
-      map.entrySet()
-          .removeIf(
-              entry -> {
-                Condition c = conditions.remove(entry.getKey());
-                if (c != null) {
-                  c.signalAll();
-                }
-                return true;
-              });
+      map.clear();
     } finally {
       lock.unlock();
     }
-  }
-
-  public long getTimeout() {
-    return timeout;
   }
 
   public long size() {

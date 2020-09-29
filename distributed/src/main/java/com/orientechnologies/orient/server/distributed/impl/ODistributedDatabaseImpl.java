@@ -199,8 +199,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
             .getServerInstance()
             .getContextConfiguration()
             .getValueAsInteger(DISTRIBUTED_TRANSACTION_SEQUENCE_SET_SIZE);
-    recordPromiseManager = new OTxPromiseManager<>(timeout);
-    indexKeyPromiseManager = new OTxPromiseManager<>(timeout);
+    recordPromiseManager = new OTxPromiseManager<>();
+    indexKeyPromiseManager = new OTxPromiseManager<>();
     sequenceManager = new ODistributedSynchronizedSequence(localNodeName, sequenceSize);
   }
 

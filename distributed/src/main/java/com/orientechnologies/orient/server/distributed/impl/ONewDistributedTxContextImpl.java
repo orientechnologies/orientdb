@@ -21,8 +21,6 @@ import java.util.Set;
 
 public class ONewDistributedTxContextImpl implements ODistributedTxContext {
 
-  // This will be replaced once we have versioned keys.
-  public static final int DEFAULT_INDEX_KEY_VER = 0;
   private final ODistributedDatabaseImpl shared;
   private final ODistributedRequestId id;
   private final OTransactionInternal tx;
@@ -55,9 +53,8 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
       if (ex.getRequestedVersion() < ex.getExistingVersion()) {
         throw new ODistributedTxPromiseRequestIsOldException(ex.getMessage());
       }
-      // If there is a promise for an older version, or timed out, must wait and retry later
-      throw new ODistributedKeyLockedException(
-          shared.getLocalNodeName(), key, promiseManager.getTimeout());
+      // If there is a promise for an older version, retry later
+      throw new ODistributedKeyLockedException(shared.getLocalNodeName(), key);
     }
     promisedKeys.add(new OTxPromise<>(key, version, transactionId));
     return cancelledPromise;
@@ -75,8 +72,7 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
         throw new ODistributedTxPromiseRequestIsOldException(ex.getMessage());
       }
       // If there is a promise for an older version, or timed out, must wait and retry later
-      throw new ODistributedRecordLockedException(
-          shared.getLocalNodeName(), rid, promiseManager.getTimeout());
+      throw new ODistributedRecordLockedException(shared.getLocalNodeName(), rid);
     }
     promisedRids.add(new OTxPromise<>(rid, version, transactionId));
     return cancelledPromise;
@@ -131,8 +127,8 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
       shared.getRecordPromiseManager().release(promise.getKey(), transactionId);
     }
     promisedRids.clear();
-    for (Object promisedKey : promisedKeys) {
-      shared.getIndexKeyPromiseManager().release(promisedKey, transactionId);
+    for (OTxPromise<Object> promisedKey : promisedKeys) {
+      shared.getIndexKeyPromiseManager().release(promisedKey.getKey(), transactionId);
     }
     promisedKeys.clear();
   }
