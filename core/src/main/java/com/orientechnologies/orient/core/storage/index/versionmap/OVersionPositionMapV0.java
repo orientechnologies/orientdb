@@ -23,6 +23,7 @@ package com.orientechnologies.orient.core.storage.index.versionmap;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
@@ -160,7 +161,7 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
       final int numberOfPages =
           (int)
                   Math.ceil(
-                      (MAX_NUMBER_OF_EXPECTED_THREADS * MAGIC_SAFETY_FACTOR * sizeOfIntInBytes)
+                      (OBaseIndexEngine.DEFAULT_VERSION_ARRAY_SIZE * sizeOfIntInBytes)
                           / OVersionPage.PAGE_SIZE)
               + 1;
       for (int i = 0; i < numberOfPages; i++) {

@@ -8,9 +8,6 @@ import java.io.IOException;
 public abstract class OVersionPositionMap extends ODurableComponent {
   public static final String DEF_EXTENSION = ".vpm";
 
-  public static final int MAX_NUMBER_OF_EXPECTED_THREADS = 1000;
-  public static final int MAGIC_SAFETY_FACTOR = 10;
-
   public OVersionPositionMap(
       OAbstractPaginatedStorage storage, String name, String extension, String lockName) {
     super(storage, name, extension, lockName);

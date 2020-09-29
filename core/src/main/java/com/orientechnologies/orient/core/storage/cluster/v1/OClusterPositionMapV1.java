@@ -31,6 +31,10 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import java.io.IOException;
 import java.util.Arrays;
 
+/**
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
+ * @since 10/7/13
+ */
 public final class OClusterPositionMapV1 extends OClusterPositionMap {
   private long fileId;
 

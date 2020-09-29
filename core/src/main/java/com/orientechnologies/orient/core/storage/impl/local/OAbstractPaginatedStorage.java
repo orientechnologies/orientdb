@@ -7465,7 +7465,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       return 0;
     }
     final OBaseIndexEngine indexEngine = indexEngineNameMap.get(indexName);
-    System.out.println("Get version (paginated storage) for " + key + " on index " + indexName);
     return indexEngine.getUniqueIndexVersion(key);
   }
 
