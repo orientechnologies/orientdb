@@ -22,11 +22,15 @@ package com.orientechnologies.orient.core.storage.index.versionmap;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
 public final class OVersionPositionMapBucket extends ODurablePage {
+  private static final int NEXT_PAGE_OFFSET = NEXT_FREE_POSITION;
+  private static final int SIZE_OFFSET = NEXT_PAGE_OFFSET + OLongSerializer.LONG_SIZE;
+  private static final int POSITIONS_OFFSET = SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
 
   // use int for version
   private static final int VERSION_ENTRY_SIZE = OIntegerSerializer.INT_SIZE;
@@ -73,6 +77,6 @@ public final class OVersionPositionMapBucket extends ODurablePage {
   }
 
   static int entryPosition(int index) {
-    return index * VERSION_ENTRY_SIZE; // + POSITIONS_OFFSET;
+    return index * VERSION_ENTRY_SIZE + POSITIONS_OFFSET;
   }
 }

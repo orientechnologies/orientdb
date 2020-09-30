@@ -170,12 +170,25 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     } else {
       final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, 0, false, false);
       releasePageFromWrite(atomicOperation, cacheEntry);
+      try {
+        releasePageFromWrite(atomicOperation, cacheEntry);
+        final MapEntryPoint mapEntryPoint = new MapEntryPoint(cacheEntry);
+        mapEntryPoint.setFileSize(0);
+      } finally {
+        releasePageFromWrite(atomicOperation, cacheEntry);
+      }
     }
   }
 
   private void addInitializedPage(final OAtomicOperation atomicOperation) throws IOException {
     final OCacheEntry cacheEntry = addPage(atomicOperation, fileId);
-    releasePageFromWrite(atomicOperation, cacheEntry);
+    try {
+      releasePageFromWrite(atomicOperation, cacheEntry);
+      final MapEntryPoint mapEntryPoint = new MapEntryPoint(cacheEntry);
+      mapEntryPoint.setFileSize(0);
+    } finally {
+      releasePageFromWrite(atomicOperation, cacheEntry);
+    }
   }
 
   private void deleteVPM(final OAtomicOperation atomicOperation) throws IOException {
