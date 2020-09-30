@@ -1,5 +1,8 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
@@ -18,15 +21,11 @@ import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPha
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionUniqueKey;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxRecordLockTimeout;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxSuccess;
+import java.io.IOException;
+import java.util.*;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.io.IOException;
-import java.util.*;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public class OTransactionPhase2TaskTest {
 

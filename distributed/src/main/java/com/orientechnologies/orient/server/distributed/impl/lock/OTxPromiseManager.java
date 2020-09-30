@@ -2,15 +2,12 @@ package com.orientechnologies.orient.server.distributed.impl.lock;
 
 import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.server.distributed.exception.OTxPromiseException;
-
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-/**
- * A promise manager keeps track of promises required for distributed transactions on a node.
- */
+/** A promise manager keeps track of promises required for distributed transactions on a node. */
 public class OTxPromiseManager<T> {
   private final Lock lock = new ReentrantLock();
   private final Map<T, OTxPromise<T>> map = new ConcurrentHashMap<>();
@@ -19,8 +16,10 @@ public class OTxPromiseManager<T> {
    * @param key
    * @param version
    * @param txId
-   * @param force allows a tx to acquire the promise even if it is held by another tx. It must be used only in the second phase.
-   * @return if using {@code force}, returns the ID of the tx that was previously holding the promise.
+   * @param force allows a tx to acquire the promise even if it is held by another tx. It must be
+   *     used only in the second phase.
+   * @return if using {@code force}, returns the ID of the tx that was previously holding the
+   *     promise.
    */
   public OTransactionId promise(T key, int version, OTransactionId txId, boolean force) {
     lock.lock();
