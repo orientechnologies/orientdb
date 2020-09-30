@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server.distributed.impl.lock;
 
 import com.orientechnologies.orient.core.tx.OTransactionId;
+import com.orientechnologies.orient.server.distributed.exception.ODistributedTxPromiseRequestIsOldException;
 import com.orientechnologies.orient.server.distributed.exception.OTxPromiseException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -34,16 +35,26 @@ public class OTxPromiseManager<T> {
       }
       if (!force) {
         throw new OTxPromiseException(
-            String.format("Cannot acquire promise for resource: '%s'", key),
+            String.format(
+                "Cannot acquire promise for resource: '%s' v%d (existing version: %d)",
+                key, version, p.getVersion()),
             version,
             p.getVersion());
       }
       // a phase2 force
       OTransactionId cancelledPromise = null;
-      if (p.getVersion() != version) {
+      if (version < p.getVersion()) {
+        // This promise will never happen since record versions never go back
+        throw new ODistributedTxPromiseRequestIsOldException(
+            String.format(
+                "Cannot force acquire promise for resource: '%s' v%d (existing version: %d)",
+                key, version, p.getVersion()));
+      }
+      if (version > p.getVersion()) {
+        // If there is a promise for an older version, tx could be retried later
         throw new OTxPromiseException(
             String.format(
-                "Cannot acquire promise for resource: '%s' version %d (existing version: %d)",
+                "Cannot force acquire promise for resource: '%s' v%d (existing version: %d)",
                 key, version, p.getVersion()),
             version,
             p.getVersion());

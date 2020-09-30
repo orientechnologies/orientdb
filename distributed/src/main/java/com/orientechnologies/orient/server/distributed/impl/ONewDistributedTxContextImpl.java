@@ -8,7 +8,6 @@ import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
 import com.orientechnologies.orient.server.distributed.*;
-import com.orientechnologies.orient.server.distributed.exception.ODistributedTxPromiseRequestIsOldException;
 import com.orientechnologies.orient.server.distributed.exception.OTxPromiseException;
 import com.orientechnologies.orient.server.distributed.impl.lock.OTxPromise;
 import com.orientechnologies.orient.server.distributed.impl.lock.OTxPromiseManager;
@@ -50,10 +49,6 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
       cancelledPromise = promiseManager.promise(key, version, transactionId, force);
     } catch (OTxPromiseException ex) {
       this.releasePromises();
-      if (ex.getRequestedVersion() < ex.getExistingVersion()) {
-        throw new ODistributedTxPromiseRequestIsOldException(ex.getMessage());
-      }
-      // If there is a promise for an older version, retry later
       throw new ODistributedKeyLockedException(shared.getLocalNodeName(), key);
     }
     promisedKeys.add(new OTxPromise<>(key, version, transactionId));
@@ -68,10 +63,6 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
       cancelledPromise = promiseManager.promise(rid, version, transactionId, force);
     } catch (OTxPromiseException ex) {
       this.releasePromises();
-      if (ex.getRequestedVersion() < ex.getExistingVersion()) {
-        throw new ODistributedTxPromiseRequestIsOldException(ex.getMessage());
-      }
-      // If there is a promise for an older version, or timed out, must wait and retry later
       throw new ODistributedRecordLockedException(shared.getLocalNodeName(), rid);
     }
     promisedRids.add(new OTxPromise<>(rid, version, transactionId));
