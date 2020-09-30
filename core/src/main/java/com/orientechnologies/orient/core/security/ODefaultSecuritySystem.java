@@ -318,7 +318,7 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
   public OUser getSystemUser(final String username, final String dbName) {
     // ** There are cases when we need to retrieve an OUser that is a system user.
     //  if (isEnabled() && !OSystemDatabase.SYSTEM_DB_NAME.equals(dbName)) {
-    if (isEnabled()) {
+    if (context.getSystemDatabase().exists()) {
       return (OUser)
           context
               .getSystemDatabase()

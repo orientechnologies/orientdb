@@ -23,6 +23,7 @@ package com.orientechnologies.orient.etl;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.block.OETLBlock;
@@ -50,14 +51,22 @@ public class OETLProcessorConfigurator {
     this.factory = factory;
   }
 
-  protected OCommandContext createDefaultContext() {
-    final OCommandContext context = new OETLContext();
+  protected OCommandContext createDefaultContext(OrientDB orientDB) {
+    final OETLContext context = new OETLContext();
+    if (orientDB != null) {
+      context.registerOrientDB(orientDB);
+    }
     context.setVariable("dumpEveryMs", 1000);
     return context;
   }
 
   public OETLProcessor parseConfigAndParameters(String[] args) {
-    final OCommandContext context = createDefaultContext();
+    return parseConfigAndParametersWithContext(null, args);
+  }
+
+  public OETLProcessor parseConfigAndParametersWithContext(OrientDB orientDB, String[] args) {
+
+    final OCommandContext context = createDefaultContext(orientDB);
 
     ODocument configuration = new ODocument().fromJSON("{}");
     for (final String arg : args) {

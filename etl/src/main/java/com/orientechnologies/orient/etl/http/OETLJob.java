@@ -53,7 +53,7 @@ public class OETLJob implements Runnable {
     status = Status.RUNNING;
     this.messageHandler = new OETLMessageHandler(this.stream, logLevel);
 
-    final OETLPlugin etlPlugin = new OETLPlugin();
+    final OETLPlugin etlPlugin = new OETLPlugin(this.currentServerInstance);
 
     String outDBConfigPath = null;
     try {

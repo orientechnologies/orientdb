@@ -21,10 +21,15 @@
 package com.orientechnologies.orient.etl.context;
 
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.output.OPluginMessageHandler;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * OETLContext extends OBasicCommandContext, in order to handle the following additional elements: -
@@ -36,6 +41,7 @@ import java.io.Writer;
 public class OETLContext extends OBasicCommandContext {
 
   private OPluginMessageHandler messageHandler;
+  private final Map<String, OrientDB> contexts = new HashMap<String, OrientDB>();
 
   /**
    * By default the OETLContext in initialized with a message handler with: - verbosity level: 0
@@ -115,5 +121,21 @@ public class OETLContext extends OBasicCommandContext {
     }
 
     return s;
+  }
+
+  public synchronized void registerOrientDB(OrientDB orientdb) {
+    OrientDBInternal orientDBInternal = OrientDBInternal.extract(orientdb);
+    this.contexts.put(
+        "embedded:" + orientDBInternal.getBasePath(), orientDBInternal.newOrientDBNoClose());
+  }
+
+  public synchronized OrientDB getOrientDB(String url, String user, String password) {
+    System.out.println("create context" + url);
+    OrientDB orientDB = contexts.get(url);
+    if (orientDB == null) {
+      orientDB = new OrientDB(url, user, password, OrientDBConfig.defaultConfig());
+      contexts.put(url, orientDB);
+    }
+    return orientDB;
   }
 }
