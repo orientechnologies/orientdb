@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.server.distributed.impl.metadata;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.schema.OClassEmbedded;
 import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
@@ -52,7 +53,11 @@ public class OClassDistributed extends OClassEmbedded {
 
   @Override
   public int getClusterForNewInstance(ODocument doc) {
-    return getClusterForNewInstance((ODatabaseDocumentDistributed) getDatabase(), doc);
+    if (getDatabase().getConfiguration().getValueAsBoolean(OGlobalConfiguration.DISTRIBUTED_AUTO_CREATE_CLUSTERS)) {
+      return getClusterForNewInstance((ODatabaseDocumentDistributed) getDatabase(), doc);
+    } else {
+      return super.getClusterForNewInstance(doc);
+    }
   }
 
   public int getClusterForNewInstance(ODatabaseDocumentDistributed db, ODocument doc) {
