@@ -208,11 +208,11 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask implements O
       OTransactionId id,
       ODatabaseDocumentDistributed database,
       OTransactionInternal tx,
-      boolean local,
+      boolean isCoordinator,
       int retryCount) {
     OTransactionResultPayload payload;
     try {
-      if (!local) {
+      if (!isCoordinator) {
         ODistributedDatabase localDistributedDatabase = database.getDistributedShared();
         ValidationResult result = localDistributedDatabase.validate(id);
         if (result == ValidationResult.ALREADY_PROMISED
@@ -234,7 +234,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask implements O
           return new OTxInvalidSequential();
         }
       }
-      if (database.beginDistributedTx(requestId, id, tx, local, retryCount)) {
+      if (database.beginDistributedTx(requestId, id, tx, isCoordinator, retryCount)) {
         payload = new OTxSuccess();
       } else {
         return null;
