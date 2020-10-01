@@ -124,7 +124,7 @@ public class OIndexFullText extends OIndexMultiValues {
     return this;
   }
 
-  private void doPutV0(OIdentifiable singleValue, String word) {
+  private void doPutV0(final OIdentifiable singleValue, final String word) {
     Set<OIdentifiable> refs;
     while (true) {
       try {
