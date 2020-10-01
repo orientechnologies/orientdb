@@ -20,7 +20,6 @@
 
 package com.orientechnologies.orient.core.storage.index.versionmap;
 
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.exception.OStorageException;
