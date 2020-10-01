@@ -116,7 +116,7 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
 
     List<OSecurityAuthenticator> authenticators = new ArrayList<OSecurityAuthenticator>();
     authenticators.add(serverAuth);
-    // authenticators.add(systemAuth);
+    authenticators.add(systemAuth);
     authenticators.add(databaseAuth);
     setAuthenticatorList(authenticators);
   }
