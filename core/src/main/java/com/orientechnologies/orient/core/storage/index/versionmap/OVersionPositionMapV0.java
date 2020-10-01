@@ -23,14 +23,17 @@ package com.orientechnologies.orient.core.storage.index.versionmap;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
-import com.orientechnologies.orient.core.storage.version.OVersionPage;
 import java.io.IOException;
 
+/**
+ * The version position map in version 0 stores a version of type int for all change operations on
+ * the `OAbstractPaginatedStorage` storage. It creates one file with extension `vpm` (i.e. w/o meta
+ * data) and expected number of elements OBaseIndexEngine.DEFAULT_VERSION_ARRAY_SIZE.
+ */
 public final class OVersionPositionMapV0 extends OVersionPositionMap {
   private long fileId;
 
@@ -90,8 +93,7 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
           acquireExclusiveLock();
           try {
             final int startPositionWithOffset = OVersionPositionMapBucket.entryPosition(hash);
-            final int pageIndex =
-                (int) Math.ceil(startPositionWithOffset / OVersionPage.PAGE_SIZE) + 1;
+            final int pageIndex = calculatePageIndex(startPositionWithOffset);
             OLogManager.instance()
                 .info(
                     this,
@@ -117,7 +119,7 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
   @Override
   public int getVersion(final int hash) {
     final int startPositionWithOffset = OVersionPositionMapBucket.entryPosition(hash);
-    final int pageIndex = (int) Math.ceil(startPositionWithOffset / OVersionPage.PAGE_SIZE) + 1;
+    final int pageIndex = calculatePageIndex(startPositionWithOffset);
     OLogManager.instance()
         .info(
             this,
@@ -126,6 +128,7 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
             hash,
             startPositionWithOffset,
             pageIndex);
+
     acquireSharedLock();
     try {
       final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
@@ -144,6 +147,10 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     }
   }
 
+  private int calculatePageIndex(final int startPositionWithOffset) {
+    return 0; // (int) Math.ceil(startPositionWithOffset / OVersionPage.PAGE_SIZE) + 1;
+  }
+
   private void openVPM(final OAtomicOperation atomicOperation) throws IOException {
     fileId = openFile(atomicOperation, getFullName());
     OLogManager.instance().info(this, "VPM open fileId:%s: fileName = %s", fileId, getFullName());
@@ -154,19 +161,19 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     OLogManager.instance().info(this, "VPM open fileId:%s: fileName = %s", fileId, getFullName());
     if (getFilledUpTo(atomicOperation, fileId) == 0) {
       // first one page is added for the meta data
-      addInitializedPage(atomicOperation);
+      // addInitializedPage(atomicOperation);
 
       // then let us add several empty data pages
       final int sizeOfIntInBytes = Integer.SIZE / 8;
-      final int numberOfPages =
+      /*final int numberOfPages =
           (int)
                   Math.ceil(
                       (OBaseIndexEngine.DEFAULT_VERSION_ARRAY_SIZE * sizeOfIntInBytes)
                           / OVersionPage.PAGE_SIZE)
               + 1;
-      for (int i = 0; i < numberOfPages; i++) {
-        addInitializedPage(atomicOperation);
-      }
+      for (int i = 0; i < numberOfPages; i++) {*/
+      addInitializedPage(atomicOperation);
+      // }
     } else {
       final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, 0, false, false);
       releasePageFromWrite(atomicOperation, cacheEntry);
