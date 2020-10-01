@@ -23,10 +23,13 @@ package com.orientechnologies.orient.core.storage.index.versionmap;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
+import com.orientechnologies.orient.core.storage.version.OVersionPage;
+
 import java.io.IOException;
 
 /**
@@ -158,14 +161,30 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
 
   private void createVPM(final OAtomicOperation atomicOperation) throws IOException {
     fileId = addFile(atomicOperation, getFullName());
-    OLogManager.instance().info(this, "VPM open fileId:%s: fileName = %s", fileId, getFullName());
-    if (getFilledUpTo(atomicOperation, fileId) == 0) {
+    final int sizeOfIntInBytes = Integer.SIZE / 8;
+    final int numberOfPages =
+        (int)
+                Math.ceil(
+                    (OBaseIndexEngine.DEFAULT_VERSION_ARRAY_SIZE * sizeOfIntInBytes)
+                        / OVersionPage.PAGE_SIZE)
+            + 1;
+    final long foundNumberOfPages = getFilledUpTo(atomicOperation, fileId);
+    OLogManager.instance()
+        .info(
+            this,
+            "VPM open fileId:%s: fileName = %s, expected #pages = %d, actual #pages = %d",
+            fileId,
+            getFullName(),
+            numberOfPages,
+            foundNumberOfPages);
+    if (foundNumberOfPages != numberOfPages) {
+      // if (getFilledUpTo(atomicOperation, fileId) == 0) {
       // first one page is added for the meta data
       // addInitializedPage(atomicOperation);
 
       // then let us add several empty data pages
-      final int sizeOfIntInBytes = Integer.SIZE / 8;
-      /*final int numberOfPages =
+      /*final int sizeOfIntInBytes = Integer.SIZE / 8;
+      final int numberOfPages =
           (int)
                   Math.ceil(
                       (OBaseIndexEngine.DEFAULT_VERSION_ARRAY_SIZE * sizeOfIntInBytes)
