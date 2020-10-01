@@ -429,11 +429,11 @@ public class ORole extends OIdentity implements OSecurityRole {
 
   @Override
   public Map<String, OSecurityPolicy> getPolicies() {
-    Map<String, OSecurityPolicy> result = new HashMap<String, OSecurityPolicy>();
     Map<String, OIdentifiable> policies = document.getProperty("policies");
     if (policies == null) {
-      return result;
+      return null;
     }
+    Map<String, OSecurityPolicy> result = new HashMap<String, OSecurityPolicy>();
     policies
         .entrySet()
         .forEach(x -> result.put(x.getKey(), new OSecurityPolicyImpl(x.getValue().getRecord())));

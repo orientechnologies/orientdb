@@ -244,30 +244,17 @@ public class OSecurityShared implements OSecurityInternal {
   }
 
   @Override
-  public OUser authenticate(
-      ODatabaseSession session, final String iUsername, final String iUserPassword) {
-    OUser user = null;
+  public OSecurityUser securityAuthenticate(
+      ODatabaseSession session, String userName, String password) {
+    OSecurityUser user = null;
     final String dbName = session.getName();
     assert !((ODatabaseDocumentInternal) session).isRemote();
-    // Uses the external authenticator.
-    // username is returned if authentication is successful, otherwise null.
-    String username = security.authenticate(session, iUsername, iUserPassword);
+    user = security.authenticate(session, userName, password);
 
-    if (username != null) {
-      user = getUser(session, username);
-
-      if (user == null)
-        throw new OSecurityAccessException(
-            dbName,
-            "User or password not valid for username: "
-                + username
-                + ", database: '"
-                + dbName
-                + "'");
-
-      if (user.getAccountStatus() != OSecurityUser.STATUSES.ACTIVE)
-        throw new OSecurityAccessException(dbName, "User '" + username + "' is not active");
-
+    if (user != null) {
+      if (user.getAccountStatus() != OSecurityUser.STATUSES.ACTIVE) {
+        throw new OSecurityAccessException(dbName, "User '" + user.getName() + "' is not active");
+      }
     } else {
       // WAIT A BIT TO AVOID BRUTE FORCE
       try {
@@ -278,9 +265,15 @@ public class OSecurityShared implements OSecurityInternal {
 
       throw new OSecurityAccessException(
           dbName,
-          "User or password not valid for username: " + iUsername + ", database: '" + dbName + "'");
+          "User or password not valid for username: " + userName + ", database: '" + dbName + "'");
     }
     return user;
+  }
+
+  @Override
+  public OUser authenticate(
+      ODatabaseSession session, final String iUsername, final String iUserPassword) {
+    return null;
   }
 
   // Token MUST be validated before being passed to this method.
@@ -1075,20 +1068,7 @@ public class OSecurityShared implements OSecurityInternal {
 
   @Override
   public OUser getUser(ODatabaseSession session, String username) {
-    // See if there's a system user first.
-    OUser user = security.getSystemUser(username, session.getName());
-
-    // If not found, try the local database.
-    if (user == null) user = getUserInternal(session, username);
-
-    if (user == null && username != null) {
-      OGlobalUser serverUser = security.getUser(username);
-      if (serverUser != null) {
-        user = new OSystemUser(username, "null", OSystemUser.SERVER_USER_TYPE);
-        user.addRole(createRole(session, serverUser));
-      }
-    }
-    return user;
+    return getUserInternal(session, username);
   }
 
   public static ORole createRole(ODatabaseSession session, OGlobalUser serverUser) {
@@ -1148,6 +1128,10 @@ public class OSecurityShared implements OSecurityInternal {
 
   public static void addSecurityPolicy(
       ODatabaseSession session, OSecurityRole role, String resource, OSecurityPolicyImpl policy) {
+    if (session == null) {
+      return;
+    }
+
     OElement roleDoc = session.load(role.getIdentity().getIdentity());
     if (roleDoc == null) {
       return;
@@ -1230,7 +1214,8 @@ public class OSecurityShared implements OSecurityInternal {
             if (policy != null) {
               for (OClass clazz : allClasses) {
                 if (isClassInvolved(clazz, res)
-                    && !isAllAllowed(session, new OImmutableSecurityPolicy(policy))) {
+                    && !isAllAllowed(
+                        session, new OImmutableSecurityPolicy(new OSecurityPolicyImpl(policy)))) {
                   Map<String, Boolean> roleMap = result.get(roleName);
                   if (roleMap == null) {
                     roleMap = new HashMap<>();

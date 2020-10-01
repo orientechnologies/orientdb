@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.security.authenticator;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.security.OGlobalUser;
 
 /**
@@ -37,7 +38,7 @@ public class OServerConfigAuthenticator extends OSecurityAuthenticatorAbstract {
 
   // OSecurityAuthenticator
   // Returns the actual username if successful, null otherwise.
-  public String authenticate(
+  public OSecurityUser authenticate(
       ODatabaseSession session, final String username, final String password) {
     return getSecurity().authenticateServerUser(username, password);
   }

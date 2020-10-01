@@ -75,6 +75,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
 import com.orientechnologies.orient.core.metadata.security.OSecurityPolicy;
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceAction;
@@ -220,10 +221,10 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
       if (user == null
           || user.getVersion() != security.getVersion(this)
           || !user.getName().equalsIgnoreCase(iUserName)) {
-        final OUser usr;
+        final OSecurityUser usr;
 
         if (checkPassword) {
-          usr = security.authenticate(this, iUserName, iUserPassword);
+          usr = security.securityAuthenticate(this, iUserName, iUserPassword);
         } else {
           usr = security.getUser(this, iUserName);
         }

@@ -21,6 +21,9 @@ package com.orientechnologies.orient.core.security.authenticator;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
+import com.orientechnologies.orient.core.metadata.security.OSystemUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OGlobalUser;
 import com.orientechnologies.orient.core.security.OSecurityManager;
@@ -99,23 +102,26 @@ public class ODefaultPasswordAuthenticator extends OSecurityAuthenticatorAbstrac
 
   // OSecurityAuthenticator
   // Returns the actual username if successful, null otherwise.
-  public String authenticate(
+  public OSecurityUser authenticate(
       ODatabaseSession session, final String username, final String password) {
-    String principal = null;
 
     try {
       OGlobalUser user = getUser(username);
 
       if (isPasswordValid(user)) {
         if (OSecurityManager.checkPassword(password, user.getPassword())) {
-          principal = user.getName();
+          if (user != null) {
+            OSystemUser systemUser =
+                new OSystemUser(username, "null", OSystemUser.SERVER_USER_TYPE);
+            systemUser.addRole(OSecurityShared.createRole(session, user));
+            return systemUser;
+          }
         }
       }
     } catch (Exception ex) {
       OLogManager.instance().error(this, "ODefaultPasswordAuthenticator.authenticate()", ex);
     }
-
-    return principal;
+    return null;
   }
 
   // OSecurityAuthenticator

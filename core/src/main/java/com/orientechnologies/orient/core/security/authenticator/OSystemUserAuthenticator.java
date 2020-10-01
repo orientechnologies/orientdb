@@ -23,8 +23,8 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
+import com.orientechnologies.orient.core.metadata.security.OSecurityRole;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
-import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.security.OGlobalUser;
 
 /**
@@ -47,24 +47,23 @@ public class OSystemUserAuthenticator extends OSecurityAuthenticatorAbstract {
   // OSecurityAuthenticator
   // Returns the actual username if successful, null otherwise.
   // This will authenticate username using the system database.
-  public String authenticate(
+  public OSecurityUser authenticate(
       ODatabaseSession session, final String username, final String password) {
-    String principal = null;
 
     try {
       if (getSecurity() != null) {
         // dbName parameter is null because we don't need to filter any roles for this.
-        OUser user = getSecurity().getSystemUser(username, null);
+        OSecurityUser user = getSecurity().getSystemUser(username, null);
 
         if (user != null && user.getAccountStatus() == OSecurityUser.STATUSES.ACTIVE) {
-          if (user.checkPassword(password)) principal = username;
+          if (user.checkPassword(password)) return user;
         }
       }
     } catch (Exception ex) {
       OLogManager.instance().error(this, "authenticate()", ex);
     }
 
-    return principal;
+    return null;
   }
 
   // OSecurityAuthenticator
@@ -75,10 +74,10 @@ public class OSystemUserAuthenticator extends OSecurityAuthenticatorAbstract {
 
     try {
       if (getSecurity() != null) {
-        OUser user = getSecurity().getSystemUser(username, null);
+        OSecurityUser user = getSecurity().getSystemUser(username, null);
 
         if (user != null && user.getAccountStatus() == OSecurityUser.STATUSES.ACTIVE) {
-          ORole role = null;
+          OSecurityRole role = null;
 
           ORule.ResourceGeneric rg = ORule.mapLegacyResourceToGenericResource(resource);
 
@@ -108,7 +107,7 @@ public class OSystemUserAuthenticator extends OSecurityAuthenticatorAbstract {
 
     try {
       if (getSecurity() != null) {
-        OUser user = getSecurity().getSystemUser(username, null);
+        OSecurityUser user = getSecurity().getSystemUser(username, null);
 
         if (user != null && user.getAccountStatus() == OSecurityUser.STATUSES.ACTIVE) {
           userCfg = new OSystemGlobalUser(user.getName(), "", "");

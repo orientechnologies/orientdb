@@ -59,6 +59,12 @@ public class OSymmetricKeySecurity implements OSecurityInternal {
     this.delegate = iDelegate;
   }
 
+  @Override
+  public OSecurityUser securityAuthenticate(
+      ODatabaseSession session, String userName, String password) {
+    return authenticate(session, userName, password);
+  }
+
   public OUser authenticate(
       ODatabaseSession session, final String username, final String password) {
     if (delegate == null)

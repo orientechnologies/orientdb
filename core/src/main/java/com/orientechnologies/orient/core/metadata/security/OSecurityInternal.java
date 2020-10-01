@@ -195,4 +195,6 @@ public interface OSecurityInternal {
    * @return
    */
   Set<OSecurityResourceProperty> getAllFilteredProperties(ODatabaseDocumentInternal database);
+
+  OSecurityUser securityAuthenticate(ODatabaseSession session, String userName, String password);
 }

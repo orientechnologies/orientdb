@@ -11,7 +11,7 @@ import com.orientechnologies.orient.core.security.OGlobalUser;
 public class ODatabaseUserAuthenticator extends OSecurityAuthenticatorAbstract {
 
   @Override
-  public String authenticate(ODatabaseSession session, String username, String password) {
+  public OSecurityUser authenticate(ODatabaseSession session, String username, String password) {
     if (session == null) {
       return null;
     }
@@ -38,7 +38,7 @@ public class ODatabaseUserAuthenticator extends OSecurityAuthenticatorAbstract {
           dbName, "User or password not valid for database: '" + dbName + "'");
     }
 
-    return user.getName();
+    return user;
   }
 
   @Override

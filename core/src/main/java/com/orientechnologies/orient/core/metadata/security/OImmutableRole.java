@@ -22,7 +22,7 @@ public class OImmutableRole implements OSecurityRole {
   private final ORID rid;
   private final Map<String, OSecurityPolicy> policies;
 
-  public OImmutableRole(ORole role) {
+  public OImmutableRole(OSecurityRole role) {
     if (role.getParentRole() == null) this.parentRole = null;
     else this.parentRole = new OImmutableRole(role.getParentRole());
 
@@ -31,15 +31,16 @@ public class OImmutableRole implements OSecurityRole {
     this.rid = role.getIdentity().getIdentity();
 
     for (ORule rule : role.getRuleSet()) rules.put(rule.getResourceGeneric(), rule);
-    Map<String, OSecurityPolicy> result = new HashMap<String, OSecurityPolicy>();
-    Map<String, OIdentifiable> policies = role.getDocument().getProperty("policies");
+    Map<String, OSecurityPolicy> policies = role.getPolicies();
     if (policies != null) {
+      Map<String, OSecurityPolicy> result = new HashMap<String, OSecurityPolicy>();
       policies
           .entrySet()
-          .forEach(
-              x -> result.put(x.getKey(), new OImmutableSecurityPolicy(x.getValue().getRecord())));
+          .forEach(x -> result.put(x.getKey(), new OImmutableSecurityPolicy(x.getValue())));
+      this.policies = result;
+    } else {
+      this.policies = null;
     }
-    this.policies = result;
   }
 
   public boolean allow(
@@ -166,6 +167,9 @@ public class OImmutableRole implements OSecurityRole {
 
   @Override
   public OSecurityPolicy getPolicy(String resource) {
+    if (policies == null) {
+      return null;
+    }
     return policies.get(resource);
   }
 }

@@ -23,7 +23,6 @@ import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
-import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.HashMap;
 import java.util.Map;
@@ -43,7 +42,8 @@ public interface OSecuritySystem {
   // Returns the actual username if successful, null otherwise.
   // Some token-based authentication (e.g., SPNEGO tokens have the user's name embedded in the
   // service ticket).
-  String authenticate(ODatabaseSession session, final String username, final String password);
+  OSecurityUser authenticate(
+      ODatabaseSession session, final String username, final String password);
 
   // Used for generating the appropriate HTTP authentication mechanism. The chain of authenticators
   // is used for this.
@@ -61,7 +61,7 @@ public interface OSecuritySystem {
    * Returns the "System User" associated with 'username' from the system database. If not found,
    * returns null. dbName is used to filter the assigned roles. It may be null.
    */
-  OUser getSystemUser(final String username, final String dbName);
+  OSecurityUser getSystemUser(final String username, final String dbName);
 
   // Walks through the list of Authenticators.
   boolean isAuthorized(final String username, final String resource);
@@ -132,7 +132,7 @@ public interface OSecuritySystem {
 
   OGlobalUser authenticateAndAuthorize(String iUserName, String iPassword, String iResourceToCheck);
 
-  String authenticateServerUser(String username, String password);
+  OSecurityUser authenticateServerUser(String username, String password);
 
   OGlobalUser getServerUser(String username);
 

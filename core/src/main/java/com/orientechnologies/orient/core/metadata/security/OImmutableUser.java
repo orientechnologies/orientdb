@@ -27,7 +27,7 @@ public class OImmutableUser implements OSecurityUser {
   private final ORID rid;
   private final String userType;
 
-  public OImmutableUser(long version, OUser user) {
+  public OImmutableUser(long version, OSecurityUser user) {
     this.version = version;
     this.name = user.getName();
     this.password = user.getPassword();
@@ -35,7 +35,7 @@ public class OImmutableUser implements OSecurityUser {
     this.rid = user.getIdentity().getIdentity();
     this.userType = user.getUserType();
 
-    for (ORole role : user.getRoles()) {
+    for (OSecurityRole role : user.getRoles()) {
       roles.add(new OImmutableRole(role));
     }
   }
