@@ -74,9 +74,7 @@ public class ODurablePage {
 
   public ODurablePage(final OCacheEntry cacheEntry) {
     assert cacheEntry != null;
-
     this.cacheEntry = cacheEntry;
-
     this.pointer = cacheEntry.getCachePointer();
     this.changes = cacheEntry.getChanges();
   }
