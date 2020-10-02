@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OImmutableUser;
+import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
@@ -183,13 +184,11 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
   }
 
   public OSecurityUser authenticateServerUser(final String username, final String password) {
-    OGlobalUser user = getServerUser(username);
+    OSecurityUser user = getServerUser(username);
 
     if (user != null && user.getPassword() != null) {
       if (OSecurityManager.checkPassword(password, user.getPassword())) {
-        OSystemUser systemUser = new OSystemUser(username, "null", OSystemUser.SERVER_USER_TYPE);
-        systemUser.addRole(OSecurityShared.createRole(null, user));
-        return systemUser;
+        return user;
       }
     }
     return null;
@@ -353,15 +352,21 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
   }
 
   public boolean isServerUserAuthorized(final String username, final String resource) {
-    final OGlobalUser user = getServerUser(username);
+    final OSecurityUser user = getServerUser(username);
 
     if (user != null) {
+      // TODO: to verify if this logic match previous logic
+      if (user.checkIfAllowed(resource, ORole.PERMISSION_ALL) != null) {
+        return true;
+      }
+      /*
       if (user.getResources().equals("*"))
         // ACCESS TO ALL
         return true;
 
       String[] resourceParts = user.getResources().split(",");
       for (String r : resourceParts) if (r.equalsIgnoreCase(resource)) return true;
+      */
     }
     return false;
   }
@@ -441,8 +446,8 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
   }
 
   // OServerSecurity
-  public OGlobalUser getUser(final String username) {
-    OGlobalUser userCfg = null;
+  public OSecurityUser getUser(final String username) {
+    OSecurityUser userCfg = null;
 
     // Walk through the list of OSecurityAuthenticators.
     for (OSecurityAuthenticator sa : getEnabledAuthenticators()) {
@@ -453,14 +458,22 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
     return userCfg;
   }
 
-  public OGlobalUser getServerUser(final String username) {
-    OGlobalUser userCfg = null;
+  public OSecurityUser getServerUser(final String username) {
+    OSystemUser systemUser = null;
     // This will throw an IllegalArgumentException if iUserName is null or empty.
     // However, a null or empty iUserName is possible with some security implementations.
     if (serverConfig != null && serverConfig.usersManagement()) {
-      if (username != null && !username.isEmpty()) userCfg = serverConfig.getUser(username);
+      if (username != null && !username.isEmpty()) {
+        OGlobalUser userCfg = serverConfig.getUser(username);
+        if (userCfg != null) {
+          systemUser =
+              new OSystemUser(username, userCfg.getPassword(), OSystemUser.SERVER_USER_TYPE);
+          systemUser.addRole(OSecurityShared.createRole(null, userCfg));
+        }
+      }
     }
-    return userCfg;
+
+    return systemUser;
   }
 
   @Override
@@ -997,7 +1010,7 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
   }
 
   @Override
-  public OGlobalUser authenticateAndAuthorize(
+  public OSecurityUser authenticateAndAuthorize(
       String iUserName, String iPassword, String iResourceToCheck) {
     // Returns the authenticated username, if successful, otherwise null.
     OSecurityUser user = authenticate(null, iUserName, iPassword);
@@ -1005,7 +1018,7 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
     // Authenticated, now see if the user is authorized.
     if (user != null) {
       if (isAuthorized(user.getName(), iResourceToCheck)) {
-        return getUser(user.getName());
+        return user;
       }
     }
     return null;

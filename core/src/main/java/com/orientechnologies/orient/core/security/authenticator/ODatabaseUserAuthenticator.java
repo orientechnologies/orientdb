@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
-import com.orientechnologies.orient.core.security.OGlobalUser;
 
 public class ODatabaseUserAuthenticator extends OSecurityAuthenticatorAbstract {
 
@@ -42,7 +41,7 @@ public class ODatabaseUserAuthenticator extends OSecurityAuthenticatorAbstract {
   }
 
   @Override
-  public OGlobalUser getUser(String username) {
+  public OSecurityUser getUser(String username) {
     return null;
   }
 

@@ -1099,18 +1099,9 @@ public class OSecurityShared implements OSecurityInternal {
   }
 
   private static void createRoot(ODatabaseSession session, ORole role) {
-    role.addRule(ORule.ResourceGeneric.BYPASS_RESTRICTED, null, ORole.PERMISSION_ALL);
-    role.addRule(ORule.ResourceGeneric.ALL, null, ORole.PERMISSION_ALL);
-    //      role.addRule(ORule.ResourceGeneric.ALL_CLASSES, null, ORole.PERMISSION_ALL).save();
-    role.addRule(ORule.ResourceGeneric.CLASS, null, ORole.PERMISSION_ALL);
-    //      role.addRule(ORule.ResourceGeneric.ALL_CLUSTERS, null, ORole.PERMISSION_ALL).save();
-    role.addRule(ORule.ResourceGeneric.CLUSTER, null, ORole.PERMISSION_ALL);
-    role.addRule(ORule.ResourceGeneric.SYSTEM_CLUSTERS, null, ORole.PERMISSION_ALL);
-    role.addRule(ORule.ResourceGeneric.DATABASE, null, ORole.PERMISSION_ALL);
-    role.addRule(ORule.ResourceGeneric.SCHEMA, null, ORole.PERMISSION_ALL);
-    role.addRule(ORule.ResourceGeneric.COMMAND, null, ORole.PERMISSION_ALL);
-    role.addRule(ORule.ResourceGeneric.COMMAND_GREMLIN, null, ORole.PERMISSION_ALL);
-    role.addRule(ORule.ResourceGeneric.FUNCTION, null, ORole.PERMISSION_ALL);
+    for (ORule.ResourceGeneric resource : ORule.ResourceGeneric.values()) {
+      role.addRule(resource, null, ORole.PERMISSION_ALL);
+    }
     createSecurityPolicyWithBitmask(session, role, "*", ORole.PERMISSION_ALL);
   }
 

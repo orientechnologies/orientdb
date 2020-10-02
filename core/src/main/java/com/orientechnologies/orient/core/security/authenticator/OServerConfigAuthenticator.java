@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.security.authenticator;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
-import com.orientechnologies.orient.core.security.OGlobalUser;
 
 /**
  * Provides an OSecurityAuthenticator for the users listed in orientdb-server-config.xml.
@@ -44,7 +43,7 @@ public class OServerConfigAuthenticator extends OSecurityAuthenticatorAbstract {
   }
 
   // OSecurityAuthenticator
-  public OGlobalUser getUser(final String username) {
+  public OSecurityUser getUser(final String username) {
     return getSecurity().getServerUser(username);
   }
 

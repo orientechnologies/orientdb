@@ -42,9 +42,9 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxInternal
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OSystemUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
-import com.orientechnologies.orient.core.security.OGlobalUser;
 import com.orientechnologies.orient.core.security.OSecuritySystem;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.config.OServerConfigurationManager;
@@ -743,7 +743,7 @@ public class OServer {
 
   // Returns null if the user cannot be authenticated. Otherwise returns the
   // OServerUserConfiguration user.
-  public OGlobalUser authenticateUser(
+  public OSecurityUser authenticateUser(
       final String iUserName, final String iPassword, final String iResourceToCheck) {
     return databases
         .getSecuritySystem()

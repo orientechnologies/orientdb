@@ -60,8 +60,8 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.schema.OView;
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.security.OGlobalUser;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.cluster.OClusterPositionMap;
 import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
@@ -500,7 +500,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     }
 
     // STORE THE TEMP USER/PASSWD USED FOR REPLICATION
-    final OGlobalUser user = serverInstance.getSecurity().getUser(REPLICATOR_USER);
+    final OSecurityUser user = serverInstance.getSecurity().getUser(REPLICATOR_USER);
     if (user != null)
       nodeCfg.field(
           "user_replicator", serverInstance.getSecurity().getUser(REPLICATOR_USER).getPassword());

@@ -48,7 +48,7 @@ public interface OSecurityAuthenticator extends OSecurityComponent {
   // Returns the name of this OSecurityAuthenticator.
   String getName();
 
-  OGlobalUser getUser(final String username);
+  OSecurityUser getUser(final String username);
 
   boolean isAuthorized(final String username, final String resource);
 

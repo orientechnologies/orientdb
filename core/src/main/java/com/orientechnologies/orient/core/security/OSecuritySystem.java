@@ -120,7 +120,7 @@ public interface OSecuritySystem {
    * Some authenticators support maintaining a list of users and associated resources (and sometimes
    * passwords).
    */
-  OGlobalUser getUser(final String username);
+  OSecurityUser getUser(final String username);
 
   void dropUser(String iUserName);
 
@@ -130,11 +130,12 @@ public interface OSecuritySystem {
     onAfterDynamicPlugins();
   }
 
-  OGlobalUser authenticateAndAuthorize(String iUserName, String iPassword, String iResourceToCheck);
+  OSecurityUser authenticateAndAuthorize(
+      String iUserName, String iPassword, String iResourceToCheck);
 
   OSecurityUser authenticateServerUser(String username, String password);
 
-  OGlobalUser getServerUser(String username);
+  OSecurityUser getServerUser(String username);
 
   boolean isServerUserAuthorized(String username, String resource);
 

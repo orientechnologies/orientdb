@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.security.OSecurityRole;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
-import com.orientechnologies.orient.core.security.OGlobalUser;
 
 /**
  * Provides a default password authenticator.
@@ -102,16 +101,12 @@ public class OSystemUserAuthenticator extends OSecurityAuthenticatorAbstract {
   }
 
   // OSecurityAuthenticator
-  public OGlobalUser getUser(final String username) {
-    OGlobalUser userCfg = null;
+  public OSecurityUser getUser(final String username) {
+    OSecurityUser userCfg = null;
 
     try {
       if (getSecurity() != null) {
-        OSecurityUser user = getSecurity().getSystemUser(username, null);
-
-        if (user != null && user.getAccountStatus() == OSecurityUser.STATUSES.ACTIVE) {
-          userCfg = new OSystemGlobalUser(user.getName(), "", "");
-        }
+        userCfg = getSecurity().getSystemUser(username, null);
       }
     } catch (Exception ex) {
       OLogManager.instance().error(this, "getUser()", ex);
