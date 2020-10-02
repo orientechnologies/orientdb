@@ -101,4 +101,17 @@ public class VersionPositionMapTestIT {
       Assert.assertEquals(version + 1, versionPositionMap.getVersion(randomNum));
     }
   }
+
+  @Test
+  public void testGetKeyHash() {
+    Assert.assertEquals(0, versionPositionMap.getKeyHash(null));
+    Assert.assertEquals(4659, versionPositionMap.getKeyHash("OrientDB"));
+    Assert.assertEquals(
+        3988,
+        versionPositionMap.getKeyHash("07d_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"));
+
+    Assert.assertEquals(
+        0, versionPositionMap.getKeyHash(OVersionPositionMap.DEFAULT_VERSION_ARRAY_SIZE));
+    Assert.assertEquals(0, versionPositionMap.getKeyHash(0));
+  }
 }
