@@ -23,7 +23,6 @@ package com.orientechnologies.orient.core.storage.index.versionmap;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
@@ -149,8 +148,13 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     }
   }
 
-  private int calculatePageIndex(final int startPositionWithOffset) {
-    return 0; // (int) Math.ceil(startPositionWithOffset / OVersionPage.PAGE_SIZE) + 1;
+  @Override
+  public int getKeyHash(final Object key) {
+    int keyHash = 0; // as for null values in hash map
+    if (key != null) {
+      keyHash = Math.abs(key.hashCode()) % DEFAULT_VERSION_ARRAY_SIZE;
+    }
+    return keyHash;
   }
 
   private void openVPM(final OAtomicOperation atomicOperation) throws IOException {
@@ -164,7 +168,7 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     final int numberOfPages =
         (int)
                 Math.ceil(
-                    (OBaseIndexEngine.DEFAULT_VERSION_ARRAY_SIZE * sizeOfIntInBytes)
+                    (DEFAULT_VERSION_ARRAY_SIZE * sizeOfIntInBytes)
                         / OVersionPage.PAGE_SIZE)
             + 1;
     final long foundNumberOfPages = getFilledUpTo(atomicOperation, fileId);
@@ -215,5 +219,9 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
 
   private void deleteVPM(final OAtomicOperation atomicOperation) throws IOException {
     deleteFile(atomicOperation, fileId);
+  }
+
+  private int calculatePageIndex(final int startPositionWithOffset) {
+    return 0; // (int) Math.ceil(startPositionWithOffset / OVersionPage.PAGE_SIZE) + 1;
   }
 }

@@ -36,6 +36,9 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.storage.index.sbtree.local.OSBTree;
 import com.orientechnologies.orient.core.storage.index.sbtree.local.v1.OSBTreeV1;
 import com.orientechnologies.orient.core.storage.index.sbtree.local.v2.OSBTreeV2;
+import com.orientechnologies.orient.core.storage.index.versionmap.OVersionPositionMap;
+import com.orientechnologies.orient.core.storage.index.versionmap.OVersionPositionMapV0;
+
 import java.io.IOException;
 import java.util.Map;
 import java.util.Spliterators;
@@ -53,6 +56,8 @@ public class OSBTreeIndexEngine implements OIndexEngine {
   public static final String NULL_BUCKET_FILE_EXTENSION = ".nbt";
 
   private final OSBTree<Object, Object> sbTree;
+  private final OVersionPositionMap versionPositionMap;
+
   private final String name;
   private final int id;
 
@@ -68,6 +73,9 @@ public class OSBTreeIndexEngine implements OIndexEngine {
     } else {
       throw new IllegalStateException("Invalid version of index, version = " + version);
     }
+    versionPositionMap =
+        new OVersionPositionMapV0(
+            storage, name, name + DATA_FILE_EXTENSION, OVersionPositionMap.DEF_EXTENSION);
   }
 
   @Override
@@ -112,6 +120,7 @@ public class OSBTreeIndexEngine implements OIndexEngine {
           keySize,
           nullPointerSupport,
           encryption);
+      versionPositionMap.create(atomicOperation);
     } catch (IOException e) {
       throw OException.wrapException(
           new OIndexException("Error during creation of index " + name), e);
@@ -124,6 +133,7 @@ public class OSBTreeIndexEngine implements OIndexEngine {
       doClearTree(atomicOperation);
 
       sbTree.delete(atomicOperation);
+      versionPositionMap.delete(atomicOperation);
     } catch (IOException e) {
       throw OException.wrapException(
           new OIndexException("Error during deletion of index " + name), e);
@@ -168,6 +178,12 @@ public class OSBTreeIndexEngine implements OIndexEngine {
         keySize,
         nullPointerSupport,
         encryption);
+    try {
+      versionPositionMap.open();
+    } catch (final IOException e) {
+      throw OException.wrapException(
+          new OIndexException("Error during VPM load of index " + indexName), e);
+    }
   }
 
   @Override
@@ -346,11 +362,13 @@ public class OSBTreeIndexEngine implements OIndexEngine {
 
   @Override
   public void updateUniqueIndexVersion(final Object key) {
-    // not implemented
+    final int keyHash = versionPositionMap.getKeyHash(key);
+    versionPositionMap.updateVersion(keyHash);
   }
 
   @Override
   public int getUniqueIndexVersion(final Object key) {
-    return 0; // not implemented
+    final int keyHash = versionPositionMap.getKeyHash(key);
+    return versionPositionMap.getVersion(keyHash);
   }
 }

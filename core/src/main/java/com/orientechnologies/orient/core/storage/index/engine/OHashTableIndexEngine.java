@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.storage.index.engine;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.common.util.ORawPair;
@@ -26,6 +27,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
 import com.orientechnologies.orient.core.index.OIndexUpdateAction;
 import com.orientechnologies.orient.core.index.engine.OIndexEngine;
@@ -40,6 +42,9 @@ import com.orientechnologies.orient.core.storage.index.hashindex.local.OMurmurHa
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OSHA256HashFunction;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.v2.LocalHashTableV2;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.v3.OLocalHashTableV3;
+import com.orientechnologies.orient.core.storage.index.versionmap.OVersionPositionMap;
+import com.orientechnologies.orient.core.storage.index.versionmap.OVersionPositionMapV0;
+
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Iterator;
@@ -69,6 +74,8 @@ public final class OHashTableIndexEngine implements OIndexEngine {
 
   private final int id;
 
+  private final OVersionPositionMap versionPositionMap;
+
   public OHashTableIndexEngine(
       String name, int id, OAbstractPaginatedStorage storage, int version) {
     this.id = id;
@@ -95,6 +102,9 @@ public final class OHashTableIndexEngine implements OIndexEngine {
     } else {
       throw new IllegalStateException("Invalid value of the index version , version = " + version);
     }
+    versionPositionMap =
+        new OVersionPositionMapV0(
+            storage, name, name + TREE_FILE_EXTENSION, OVersionPositionMap.DEF_EXTENSION);
     this.name = name;
   }
 
@@ -147,6 +157,7 @@ public final class OHashTableIndexEngine implements OIndexEngine {
         encryption,
         hashFunction,
         nullPointerSupport);
+    versionPositionMap.create(atomicOperation);
   }
 
   @Override
@@ -159,12 +170,14 @@ public final class OHashTableIndexEngine implements OIndexEngine {
 
   @Override
   public void updateUniqueIndexVersion(final Object key) {
-    // not implemented
+    final int keyHash = versionPositionMap.getKeyHash(key);
+    versionPositionMap.updateVersion(keyHash);
   }
 
   @Override
   public int getUniqueIndexVersion(final Object key) {
-    return 0; // not implemented
+    final int keyHash = versionPositionMap.getKeyHash(key);
+    return versionPositionMap.getVersion(keyHash);
   }
 
   @Override
@@ -172,6 +185,7 @@ public final class OHashTableIndexEngine implements OIndexEngine {
     doClearTable(atomicOperation);
 
     hashTable.delete(atomicOperation);
+    versionPositionMap.delete(atomicOperation);
   }
 
   private void doClearTable(OAtomicOperation atomicOperation) throws IOException {
@@ -223,6 +237,13 @@ public final class OHashTableIndexEngine implements OIndexEngine {
         hashFunction,
         keySerializer,
         valueSerializer);
+
+    try {
+      versionPositionMap.open();
+    } catch (final IOException e) {
+      throw OException.wrapException(
+          new OIndexException("Error during VPM load of index " + indexName), e);
+    }
   }
 
   @Override
