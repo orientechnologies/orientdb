@@ -38,7 +38,6 @@ import com.orientechnologies.orient.core.storage.index.sbtree.local.v1.OSBTreeV1
 import com.orientechnologies.orient.core.storage.index.sbtree.local.v2.OSBTreeV2;
 import com.orientechnologies.orient.core.storage.index.versionmap.OVersionPositionMap;
 import com.orientechnologies.orient.core.storage.index.versionmap.OVersionPositionMapV0;
-
 import java.io.IOException;
 import java.util.Map;
 import java.util.Spliterators;

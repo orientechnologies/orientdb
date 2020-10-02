@@ -44,7 +44,6 @@ import com.orientechnologies.orient.core.storage.index.hashindex.local.v2.LocalH
 import com.orientechnologies.orient.core.storage.index.hashindex.local.v3.OLocalHashTableV3;
 import com.orientechnologies.orient.core.storage.index.versionmap.OVersionPositionMap;
 import com.orientechnologies.orient.core.storage.index.versionmap.OVersionPositionMapV0;
-
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Iterator;
