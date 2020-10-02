@@ -8,9 +8,9 @@ import java.io.IOException;
 public abstract class OVersionPositionMap extends ODurableComponent {
   public static final String DEF_EXTENSION = ".vpm";
 
-  int MAX_CONCURRENT_DISTRIBUTED_TRANSACTIONS = 1000;
-  int MAGIC_SAFETY_FILL_FACTOR = 10;
-  int DEFAULT_VERSION_ARRAY_SIZE =
+  public static int MAX_CONCURRENT_DISTRIBUTED_TRANSACTIONS = 1000;
+  public static int MAGIC_SAFETY_FILL_FACTOR = 10;
+  public static int DEFAULT_VERSION_ARRAY_SIZE =
       MAX_CONCURRENT_DISTRIBUTED_TRANSACTIONS * MAGIC_SAFETY_FILL_FACTOR;
 
   public OVersionPositionMap(

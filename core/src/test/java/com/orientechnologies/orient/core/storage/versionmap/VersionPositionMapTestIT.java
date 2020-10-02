@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.storage.versionmap;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.db.*;
-import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
@@ -69,7 +68,7 @@ public class VersionPositionMapTestIT {
 
   @Test
   public void testIncrementVersion() throws Exception {
-    final int maxVPMSize = OBaseIndexEngine.DEFAULT_VERSION_ARRAY_SIZE;
+    final int maxVPMSize = OVersionPositionMap.DEFAULT_VERSION_ARRAY_SIZE;
     for (int hash = 0; hash <= maxVPMSize; hash++) {
       final int version = versionPositionMap.getVersion(hash);
       versionPositionMap.updateVersion(hash);
@@ -79,7 +78,7 @@ public class VersionPositionMapTestIT {
 
   @Test
   public void testMultiIncrementVersion() throws Exception {
-    final int maxVPMSize = OBaseIndexEngine.DEFAULT_VERSION_ARRAY_SIZE;
+    final int maxVPMSize = OVersionPositionMap.DEFAULT_VERSION_ARRAY_SIZE;
     final int maxVersionNumber = 100;
     for (int hash = 0; hash <= maxVPMSize; hash++) {
       for (int j = 0; j < maxVersionNumber; j++) {
@@ -91,7 +90,7 @@ public class VersionPositionMapTestIT {
 
   @Test
   public void testRandomIncrementVersion() throws Exception {
-    final int maxVPMSize = OBaseIndexEngine.DEFAULT_VERSION_ARRAY_SIZE;
+    final int maxVPMSize = OVersionPositionMap.DEFAULT_VERSION_ARRAY_SIZE;
     final long seed = System.nanoTime();
     System.out.printf("incrementVersion seed :%d%n", seed);
     final Random random = new Random(seed);
