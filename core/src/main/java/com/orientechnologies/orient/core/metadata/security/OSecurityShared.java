@@ -420,7 +420,8 @@ public class OSecurityShared implements OSecurityInternal {
   @Override
   public Map<String, OSecurityPolicy> getSecurityPolicies(
       ODatabaseSession session, OSecurityRole role) {
-    return role.getPolicies();
+    Map<String, OSecurityPolicy> result = role.getPolicies();
+    return result != null ? result : Collections.emptyMap();
   }
 
   @Override
@@ -1699,7 +1700,8 @@ public class OSecurityShared implements OSecurityInternal {
             OSecurityResource res = OSecurityResource.getInstance(policyEntry.getKey());
             if (res instanceof OSecurityResourceProperty) {
               OSecurityPolicy policy =
-                  new OImmutableSecurityPolicy(policyEntry.getValue().getRecord());
+                  new OImmutableSecurityPolicy(
+                      new OSecurityPolicyImpl(policyEntry.getValue().getRecord()));
               String readRule = policy.getReadRule();
               if (readRule != null && !readRule.trim().equalsIgnoreCase("true")) {
                 result.add((OSecurityResourceProperty) res);
