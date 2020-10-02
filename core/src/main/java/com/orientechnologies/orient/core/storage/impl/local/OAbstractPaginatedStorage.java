@@ -685,7 +685,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   @Override
   public void create(final OContextConfiguration contextConfiguration) {
     checkPageSizeAndRelatedParametersInGlobalConfiguration();
-
     try {
       stateLock.acquireWriteLock();
       try {
@@ -2434,7 +2433,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             }
             lockIndexes(indexOperations);
             checkReadOnlyConditions();
-
             commitIndexes(indexOperations);
           } catch (final IOException | RuntimeException e) {
             rollback = true;
@@ -2808,7 +2806,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                       cfgEncryption,
                       cfgEncryptionKey,
                       engineProperties);
-
               ((OClusterBasedStorageConfiguration) configuration)
                   .addIndexEngine(atomicOperation, engineName, engineData);
 
@@ -2821,7 +2818,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                         engineName, OIndexRIDContainerSBTree.INDEX_FILE_EXTENSION, this);
                 tree.createComponent(atomicOperation);
               }
-
               return generateIndexId(indexEngines.size() - 1, engine);
             });
       } catch (final IOException e) {
@@ -7464,7 +7460,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   private void applyUniqueIndexChange(final String indexName, final Object key) {
-    final OBaseIndexEngine indexEngine = indexEngineNameMap.get(indexName);
-    indexEngine.updateUniqueIndexVersion(key);
+    if (!isDistributedMode(lastMetadata)) {
+      final OBaseIndexEngine indexEngine = indexEngineNameMap.get(indexName);
+      indexEngine.updateUniqueIndexVersion(key);
+    }
   }
 }

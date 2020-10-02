@@ -180,4 +180,6 @@ public final class WALRecordTypes {
   public static final int LOCAL_HASH_TABLE_V2_DIRECTORY_FIRST_PAGE_SET_POINTER_PO = 193;
 
   public static final int TX_METADATA = 194;
+
+  public static final int PAGINATED_VERSION_STATE_V0_SET_FILE_SIZE_PO = 195;
 }

@@ -37,6 +37,7 @@ public interface ORID extends OIdentifiable, OSerializableStream {
   int CLUSTER_MAX = 32767;
   int CLUSTER_ID_INVALID = -1;
   long CLUSTER_POS_INVALID = -1;
+  long VERSION_POS_INVALID = -1;
 
   int getClusterId();
 

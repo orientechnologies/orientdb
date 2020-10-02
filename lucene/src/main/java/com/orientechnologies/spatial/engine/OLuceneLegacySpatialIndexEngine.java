@@ -239,12 +239,11 @@ public class OLuceneLegacySpatialIndexEngine extends OLuceneSpatialIndexEngineAb
 
   @Override
   public void updateUniqueIndexVersion(Object key) {
-    // TODO: [DR] implement
+    // not implemented
   }
 
   @Override
   public int getUniqueIndexVersion(Object key) {
-    // TODO: [DR] implement
-    return 0;
+    return 0; // not implemented
   }
 }

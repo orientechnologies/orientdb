@@ -95,7 +95,6 @@ public final class OHashTableIndexEngine implements OIndexEngine {
     } else {
       throw new IllegalStateException("Invalid value of the index version , version = " + version);
     }
-
     this.name = name;
   }
 
@@ -159,14 +158,13 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void updateUniqueIndexVersion(Object key) {
-    // TODO: [DR] implement
+  public void updateUniqueIndexVersion(final Object key) {
+    // not implemented
   }
 
   @Override
-  public int getUniqueIndexVersion(Object key) {
-    // TODO: [DR] implement
-    return 0;
+  public int getUniqueIndexVersion(final Object key) {
+    return 0; // not implemented
   }
 
   @Override

@@ -6,7 +6,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
 final class MapEntryPoint extends ODurablePage {
   private static final int FILE_SIZE_OFFSET = NEXT_FREE_POSITION;
 
-  MapEntryPoint(OCacheEntry cacheEntry) {
+  MapEntryPoint(final OCacheEntry cacheEntry) {
     super(cacheEntry);
   }
 

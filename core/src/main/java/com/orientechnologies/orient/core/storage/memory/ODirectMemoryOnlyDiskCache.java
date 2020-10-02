@@ -248,7 +248,6 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache
     synchronized (cacheEntry) {
       cacheEntry.incrementUsages();
     }
-
     cacheEntry.acquireExclusiveLock();
     return cacheEntry;
   }
@@ -297,7 +296,6 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache
   @Override
   public final long getFilledUpTo(final long fileId) {
     final int intId = extractFileId(fileId);
-
     final MemoryFile memoryFile = getFile(intId);
     return memoryFile.size();
   }

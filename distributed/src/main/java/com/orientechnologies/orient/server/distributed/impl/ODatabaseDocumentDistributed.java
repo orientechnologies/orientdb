@@ -871,8 +871,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
                 ((OTransactionOptimisticDistributed) transaction)
                     .getVersionForKey(indexName, changesPerKey.key);
             if (version != sourceVersion) {
-              // TODO: Uncomment this to enable retry for invalid version of keys
-              // throw new OInvalidSequentialException();
+              throw new OInvalidSequentialException();
             }
           }
           try (final Stream<ORID> rids = index.getInternal().getRids(changesPerKey.key)) {

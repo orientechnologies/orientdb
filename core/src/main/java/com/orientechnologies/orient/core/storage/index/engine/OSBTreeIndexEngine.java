@@ -345,13 +345,12 @@ public class OSBTreeIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void updateUniqueIndexVersion(Object key) {
-    // TODO: [DR] implement
+  public void updateUniqueIndexVersion(final Object key) {
+    // not implemented
   }
 
   @Override
-  public int getUniqueIndexVersion(Object key) {
-    // TODO: [DR] implement
-    return 0;
+  public int getUniqueIndexVersion(final Object key) {
+    return 0; // not implemented
   }
 }

@@ -45,8 +45,8 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
     this.database = database;
   }
 
-  public int getVersionForKey(String index, Object key) {
-    Map<Object, Integer> indexKeys = keyVersions.get(index);
+  public int getVersionForKey(final String index, final Object key) {
+    final Map<Object, Integer> indexKeys = keyVersions.get(index);
     assert indexKeys != null;
     return indexKeys.get(key);
   }
