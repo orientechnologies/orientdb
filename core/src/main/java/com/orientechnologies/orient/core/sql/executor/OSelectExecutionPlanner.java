@@ -632,6 +632,9 @@ public class OSelectExecutionPlanner {
     ODatabaseInternal db = (ODatabaseInternal) ctx.getDatabase();
     OSecurityInternal security = db.getSharedContext().getSecurity();
     OClass clazz = db.getClass(targetClass.getStringValue()); // normalize class name case
+    if (clazz == null) {
+      return false;
+    }
     return security.isReadRestrictedBySecurityPolicy(
         (ODatabaseSession) db, "database.class." + clazz.getName());
   }

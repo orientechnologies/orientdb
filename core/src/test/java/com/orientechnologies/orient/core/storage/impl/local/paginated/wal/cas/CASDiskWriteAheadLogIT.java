@@ -98,7 +98,6 @@ public class CASDiskWriteAheadLogIT {
                 1000,
                 false,
                 false,
-                false,
                 true,
                 10);
 
@@ -136,7 +135,6 @@ public class CASDiskWriteAheadLogIT {
                 -1,
                 -1,
                 1000,
-                false,
                 false,
                 false,
                 true,
@@ -208,7 +206,6 @@ public class CASDiskWriteAheadLogIT {
                 1000,
                 false,
                 false,
-                false,
                 true,
                 10);
 
@@ -246,7 +243,6 @@ public class CASDiskWriteAheadLogIT {
                 -1,
                 -1,
                 1000,
-                false,
                 false,
                 false,
                 true,
@@ -318,7 +314,6 @@ public class CASDiskWriteAheadLogIT {
                 1000,
                 false,
                 false,
-                false,
                 true,
                 10);
 
@@ -356,7 +351,6 @@ public class CASDiskWriteAheadLogIT {
                 -1,
                 -1,
                 1000,
-                false,
                 false,
                 false,
                 true,
@@ -426,7 +420,6 @@ public class CASDiskWriteAheadLogIT {
                 1000,
                 false,
                 false,
-                false,
                 true,
                 10);
 
@@ -467,7 +460,6 @@ public class CASDiskWriteAheadLogIT {
                 -1,
                 -1,
                 1000,
-                false,
                 false,
                 false,
                 true,
@@ -528,7 +520,6 @@ public class CASDiskWriteAheadLogIT {
                 1000,
                 false,
                 false,
-                false,
                 true,
                 10);
 
@@ -566,7 +557,6 @@ public class CASDiskWriteAheadLogIT {
                 -1,
                 -1,
                 1000,
-                false,
                 false,
                 false,
                 true,
@@ -638,7 +628,6 @@ public class CASDiskWriteAheadLogIT {
                 1000,
                 false,
                 false,
-                false,
                 true,
                 10);
 
@@ -676,7 +665,6 @@ public class CASDiskWriteAheadLogIT {
                 -1,
                 -1,
                 1000,
-                false,
                 false,
                 false,
                 true,
@@ -744,7 +732,6 @@ public class CASDiskWriteAheadLogIT {
                 1000,
                 false,
                 false,
-                false,
                 true,
                 10);
 
@@ -799,7 +786,6 @@ public class CASDiskWriteAheadLogIT {
                 -1,
                 -1,
                 1000,
-                false,
                 false,
                 false,
                 true,
@@ -877,7 +863,6 @@ public class CASDiskWriteAheadLogIT {
                 1000,
                 false,
                 false,
-                false,
                 true,
                 10);
 
@@ -932,7 +917,6 @@ public class CASDiskWriteAheadLogIT {
                 -1,
                 -1,
                 1000,
-                false,
                 false,
                 false,
                 true,
@@ -1007,7 +991,6 @@ public class CASDiskWriteAheadLogIT {
                 1000,
                 false,
                 false,
-                false,
                 true,
                 10);
 
@@ -1064,7 +1047,6 @@ public class CASDiskWriteAheadLogIT {
                 -1,
                 -1,
                 1000,
-                false,
                 false,
                 false,
                 true,
@@ -1149,7 +1131,6 @@ public class CASDiskWriteAheadLogIT {
                 1000,
                 false,
                 false,
-                false,
                 true,
                 10);
 
@@ -1206,7 +1187,6 @@ public class CASDiskWriteAheadLogIT {
                 -1,
                 -1,
                 1000,
-                false,
                 false,
                 false,
                 true,
@@ -1287,7 +1267,6 @@ public class CASDiskWriteAheadLogIT {
                 1000,
                 false,
                 false,
-                false,
                 true,
                 10);
 
@@ -1342,7 +1321,6 @@ public class CASDiskWriteAheadLogIT {
                 -1,
                 -1,
                 1000,
-                false,
                 false,
                 false,
                 true,
@@ -1420,7 +1398,6 @@ public class CASDiskWriteAheadLogIT {
                 1000,
                 false,
                 false,
-                false,
                 true,
                 10);
 
@@ -1475,7 +1452,6 @@ public class CASDiskWriteAheadLogIT {
                 -1,
                 -1,
                 1000,
-                false,
                 false,
                 false,
                 true,
@@ -1549,7 +1525,6 @@ public class CASDiskWriteAheadLogIT {
                 1000,
                 false,
                 false,
-                false,
                 true,
                 10);
 
@@ -1605,7 +1580,6 @@ public class CASDiskWriteAheadLogIT {
                 -1,
                 -1,
                 1000,
-                false,
                 false,
                 false,
                 true,
@@ -1690,7 +1664,6 @@ public class CASDiskWriteAheadLogIT {
                 1000,
                 false,
                 false,
-                false,
                 true,
                 10);
 
@@ -1746,7 +1719,6 @@ public class CASDiskWriteAheadLogIT {
                 -1,
                 -1,
                 1000,
-                false,
                 false,
                 false,
                 true,
@@ -1827,7 +1799,6 @@ public class CASDiskWriteAheadLogIT {
                 1000,
                 false,
                 false,
-                false,
                 true,
                 10);
 
@@ -1889,7 +1860,6 @@ public class CASDiskWriteAheadLogIT {
                 -1,
                 -1,
                 1000,
-                false,
                 false,
                 false,
                 true,
@@ -1965,7 +1935,6 @@ public class CASDiskWriteAheadLogIT {
                 1000,
                 false,
                 false,
-                false,
                 true,
                 10);
 
@@ -2027,7 +1996,6 @@ public class CASDiskWriteAheadLogIT {
                 -1,
                 -1,
                 1000,
-                false,
                 false,
                 false,
                 true,
@@ -2099,7 +2067,6 @@ public class CASDiskWriteAheadLogIT {
                 1000,
                 false,
                 false,
-                false,
                 true,
                 10);
 
@@ -2159,7 +2126,6 @@ public class CASDiskWriteAheadLogIT {
                 -1,
                 -1,
                 1000,
-                false,
                 false,
                 false,
                 true,
@@ -2237,7 +2203,6 @@ public class CASDiskWriteAheadLogIT {
                 1000,
                 false,
                 false,
-                false,
                 true,
                 10);
 
@@ -2297,7 +2262,6 @@ public class CASDiskWriteAheadLogIT {
                 -1,
                 -1,
                 1000,
-                false,
                 false,
                 false,
                 true,
@@ -2370,7 +2334,6 @@ public class CASDiskWriteAheadLogIT {
                 -1,
                 -1,
                 1000,
-                false,
                 false,
                 false,
                 true,
@@ -2456,7 +2419,6 @@ public class CASDiskWriteAheadLogIT {
                 -1,
                 -1,
                 1000,
-                false,
                 false,
                 false,
                 true,
@@ -2579,7 +2541,6 @@ public class CASDiskWriteAheadLogIT {
                 1000,
                 false,
                 false,
-                false,
                 true,
                 10);
 
@@ -2663,7 +2624,6 @@ public class CASDiskWriteAheadLogIT {
                 -1,
                 -1,
                 1000,
-                false,
                 false,
                 false,
                 true,
@@ -2782,7 +2742,6 @@ public class CASDiskWriteAheadLogIT {
                 1000,
                 false,
                 false,
-                false,
                 true,
                 10);
 
@@ -2839,7 +2798,6 @@ public class CASDiskWriteAheadLogIT {
                 -1,
                 -1,
                 1000,
-                false,
                 false,
                 false,
                 true,
@@ -2910,7 +2868,6 @@ public class CASDiskWriteAheadLogIT {
                 1000,
                 false,
                 false,
-                false,
                 true,
                 10);
 
@@ -2967,7 +2924,6 @@ public class CASDiskWriteAheadLogIT {
                 -1,
                 -1,
                 1000,
-                false,
                 false,
                 false,
                 true,
@@ -3034,7 +2990,6 @@ public class CASDiskWriteAheadLogIT {
                 1000,
                 false,
                 false,
-                false,
                 true,
                 10);
 
@@ -3094,7 +3049,6 @@ public class CASDiskWriteAheadLogIT {
                 -1,
                 -1,
                 1000,
-                false,
                 false,
                 false,
                 true,
@@ -3172,7 +3126,6 @@ public class CASDiskWriteAheadLogIT {
                 1000,
                 false,
                 false,
-                false,
                 true,
                 10);
 
@@ -3232,7 +3185,6 @@ public class CASDiskWriteAheadLogIT {
                 -1,
                 -1,
                 1000,
-                false,
                 false,
                 false,
                 true,
@@ -3305,7 +3257,6 @@ public class CASDiskWriteAheadLogIT {
                 1000,
                 false,
                 false,
-                false,
                 true,
                 10);
 
@@ -3362,7 +3313,6 @@ public class CASDiskWriteAheadLogIT {
                 -1,
                 -1,
                 1000,
-                false,
                 false,
                 false,
                 true,
@@ -3431,7 +3381,6 @@ public class CASDiskWriteAheadLogIT {
                 1000,
                 false,
                 false,
-                false,
                 true,
                 10);
 
@@ -3488,7 +3437,6 @@ public class CASDiskWriteAheadLogIT {
                 -1,
                 -1,
                 1000,
-                false,
                 false,
                 false,
                 true,
@@ -3553,7 +3501,6 @@ public class CASDiskWriteAheadLogIT {
                 1000,
                 false,
                 false,
-                false,
                 true,
                 10);
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -3612,7 +3559,6 @@ public class CASDiskWriteAheadLogIT {
                 -1,
                 -1,
                 1000,
-                false,
                 false,
                 false,
                 true,
@@ -3689,7 +3635,6 @@ public class CASDiskWriteAheadLogIT {
                 1000,
                 false,
                 false,
-                false,
                 true,
                 10);
 
@@ -3749,7 +3694,6 @@ public class CASDiskWriteAheadLogIT {
                 -1,
                 -1,
                 1000,
-                false,
                 false,
                 false,
                 true,
@@ -3823,7 +3767,6 @@ public class CASDiskWriteAheadLogIT {
                 1000,
                 false,
                 false,
-                false,
                 true,
                 10);
         for (int i = 0; i < recordsCount; i++) {
@@ -3883,7 +3826,6 @@ public class CASDiskWriteAheadLogIT {
               10 * 1024 * 1024 * 1024L,
               -1,
               1000,
-              false,
               false,
               false,
               true,
@@ -3969,7 +3911,6 @@ public class CASDiskWriteAheadLogIT {
               1000,
               false,
               false,
-              false,
               true,
               10);
 
@@ -4011,7 +3952,6 @@ public class CASDiskWriteAheadLogIT {
               10 * 1024 * 1024 * 1024L,
               -1,
               1000,
-              false,
               false,
               false,
               true,
@@ -4093,7 +4033,6 @@ public class CASDiskWriteAheadLogIT {
               3 * 1024 * 1024 * 1024L,
               -1,
               1000,
-              false,
               false,
               false,
               true,
@@ -4140,7 +4079,6 @@ public class CASDiskWriteAheadLogIT {
               1000,
               false,
               false,
-              false,
               true,
               10);
 
@@ -4219,7 +4157,6 @@ public class CASDiskWriteAheadLogIT {
               3 * 1024 * 1024 * 1024L,
               -1,
               1000,
-              false,
               false,
               false,
               true,
@@ -4266,7 +4203,6 @@ public class CASDiskWriteAheadLogIT {
               1000,
               false,
               false,
-              false,
               true,
               10);
 
@@ -4346,7 +4282,6 @@ public class CASDiskWriteAheadLogIT {
               3 * 1024 * 1024 * 1024L,
               -1,
               1000,
-              false,
               false,
               false,
               true,
@@ -4393,7 +4328,6 @@ public class CASDiskWriteAheadLogIT {
               1000,
               false,
               false,
-              false,
               true,
               10);
 
@@ -4473,7 +4407,6 @@ public class CASDiskWriteAheadLogIT {
               3 * 1024 * 1024 * 1024L,
               -1,
               1000,
-              false,
               false,
               false,
               true,
@@ -4520,7 +4453,6 @@ public class CASDiskWriteAheadLogIT {
               1000,
               false,
               false,
-              false,
               true,
               10);
 
@@ -4602,7 +4534,6 @@ public class CASDiskWriteAheadLogIT {
               1000,
               false,
               false,
-              false,
               true,
               10);
 
@@ -4645,7 +4576,6 @@ public class CASDiskWriteAheadLogIT {
               10 * 1024 * 1024 * 1024L,
               -1,
               1000,
-              false,
               false,
               false,
               true,
@@ -4729,7 +4659,6 @@ public class CASDiskWriteAheadLogIT {
               1000,
               false,
               false,
-              false,
               true,
               10);
 
@@ -4772,7 +4701,6 @@ public class CASDiskWriteAheadLogIT {
               10 * 1024 * 1024 * 1024L,
               -1,
               1000,
-              false,
               false,
               false,
               true,
@@ -4856,7 +4784,6 @@ public class CASDiskWriteAheadLogIT {
               1000,
               false,
               false,
-              false,
               true,
               10);
 
@@ -4899,7 +4826,6 @@ public class CASDiskWriteAheadLogIT {
               10 * 1024 * 1024 * 1024L,
               -1,
               1000,
-              false,
               false,
               false,
               true,
@@ -4948,7 +4874,6 @@ public class CASDiskWriteAheadLogIT {
               1000,
               false,
               false,
-              false,
               true,
               10);
 
@@ -4980,7 +4905,6 @@ public class CASDiskWriteAheadLogIT {
               10 * 1024 * 1024 * 1024L,
               -1,
               1000,
-              false,
               false,
               false,
               true,
@@ -5046,7 +4970,6 @@ public class CASDiskWriteAheadLogIT {
               1000,
               false,
               false,
-              false,
               true,
               10);
       Assert.assertEquals(masterRecords.last(), wal.lastCheckpoint());
@@ -5079,7 +5002,6 @@ public class CASDiskWriteAheadLogIT {
               10 * 1024 * 1024 * 1024L,
               -1,
               1000,
-              false,
               false,
               false,
               true,
@@ -5128,7 +5050,6 @@ public class CASDiskWriteAheadLogIT {
               1000,
               false,
               false,
-              false,
               true,
               10);
 
@@ -5170,7 +5091,6 @@ public class CASDiskWriteAheadLogIT {
               10 * 1024 * 1024L,
               -1,
               1000,
-              false,
               false,
               false,
               true,
@@ -5279,7 +5199,6 @@ public class CASDiskWriteAheadLogIT {
               1000,
               false,
               false,
-              false,
               true,
               10);
 
@@ -5348,7 +5267,6 @@ public class CASDiskWriteAheadLogIT {
             10 * 1024 * 1024L,
             -1,
             1000,
-            false,
             false,
             false,
             true,
@@ -5475,7 +5393,6 @@ public class CASDiskWriteAheadLogIT {
             1000,
             false,
             false,
-            false,
             true,
             10);
 
@@ -5581,7 +5498,6 @@ public class CASDiskWriteAheadLogIT {
                 1000,
                 false,
                 false,
-                false,
                 true,
                 10);
 
@@ -5645,7 +5561,6 @@ public class CASDiskWriteAheadLogIT {
                 -1,
                 -1,
                 1000,
-                false,
                 false,
                 false,
                 true,
@@ -5712,7 +5627,6 @@ public class CASDiskWriteAheadLogIT {
                 10 * 1024 * 1024 * 1024L,
                 -1,
                 1000,
-                false,
                 false,
                 false,
                 true,
@@ -5783,7 +5697,6 @@ public class CASDiskWriteAheadLogIT {
                 1000,
                 false,
                 false,
-                false,
                 true,
                 10);
 
@@ -5849,7 +5762,6 @@ public class CASDiskWriteAheadLogIT {
             1000,
             false,
             false,
-            false,
             true,
             10);
 
@@ -5910,7 +5822,6 @@ public class CASDiskWriteAheadLogIT {
                 walSizeLimit,
                 -1,
                 1000,
-                false,
                 false,
                 false,
                 true,
@@ -6039,7 +5950,6 @@ public class CASDiskWriteAheadLogIT {
                 1000,
                 false,
                 false,
-                false,
                 true,
                 10);
 
@@ -6164,7 +6074,6 @@ public class CASDiskWriteAheadLogIT {
                 walSizeLimit,
                 -1,
                 1000,
-                false,
                 false,
                 false,
                 true,
@@ -6294,7 +6203,6 @@ public class CASDiskWriteAheadLogIT {
                 1000,
                 false,
                 false,
-                false,
                 true,
                 10);
 
@@ -6420,7 +6328,6 @@ public class CASDiskWriteAheadLogIT {
                 walSizeLimit,
                 -1,
                 1000,
-                false,
                 false,
                 false,
                 true,
@@ -6554,7 +6461,6 @@ public class CASDiskWriteAheadLogIT {
                 1000,
                 false,
                 false,
-                false,
                 true,
                 10);
 
@@ -6684,7 +6590,6 @@ public class CASDiskWriteAheadLogIT {
                 walSizeLimit,
                 -1,
                 1000,
-                false,
                 false,
                 false,
                 true,
@@ -6820,7 +6725,6 @@ public class CASDiskWriteAheadLogIT {
                 walSizeLimit,
                 -1,
                 1000,
-                false,
                 false,
                 false,
                 true,
@@ -6959,7 +6863,6 @@ public class CASDiskWriteAheadLogIT {
                 1000,
                 false,
                 false,
-                false,
                 true,
                 10);
 
@@ -7040,7 +6943,6 @@ public class CASDiskWriteAheadLogIT {
                 1000,
                 false,
                 false,
-                false,
                 true,
                 10);
 
@@ -7114,7 +7016,6 @@ public class CASDiskWriteAheadLogIT {
             1000,
             false,
             false,
-            false,
             true,
             10);
 
@@ -7163,7 +7064,6 @@ public class CASDiskWriteAheadLogIT {
             1000,
             false,
             false,
-            false,
             true,
             10);
 
@@ -7191,7 +7091,6 @@ public class CASDiskWriteAheadLogIT {
             10 * 1024 * 1024 * 1024L,
             -1,
             1000,
-            false,
             false,
             false,
             true,
@@ -7245,7 +7144,6 @@ public class CASDiskWriteAheadLogIT {
             1000,
             false,
             false,
-            false,
             true,
             10);
 
@@ -7273,7 +7171,6 @@ public class CASDiskWriteAheadLogIT {
             10 * 1024 * 1024 * 1024L,
             -1,
             1000,
-            false,
             false,
             false,
             true,
@@ -7327,7 +7224,6 @@ public class CASDiskWriteAheadLogIT {
             1000,
             false,
             false,
-            false,
             true,
             10);
 
@@ -7355,7 +7251,6 @@ public class CASDiskWriteAheadLogIT {
             -1,
             -1,
             1000,
-            false,
             false,
             false,
             true,
@@ -7388,7 +7283,6 @@ public class CASDiskWriteAheadLogIT {
             1000,
             false,
             false,
-            false,
             true,
             10);
     wal.close();
@@ -7415,7 +7309,6 @@ public class CASDiskWriteAheadLogIT {
             -1,
             -1,
             1000,
-            false,
             false,
             false,
             true,
