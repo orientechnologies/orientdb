@@ -71,12 +71,22 @@ public class ORole extends OIdentity implements OSecurityRole {
   public ORole() {}
 
   public ORole(final String iName, final ORole iParent, final ALLOW_MODES iAllowMode) {
+    this(iName, iParent, iAllowMode, null);
+  }
+
+  public ORole(
+      final String iName,
+      final ORole iParent,
+      final ALLOW_MODES iAllowMode,
+      Map<String, OSecurityPolicy> policies) {
     super(CLASS_NAME);
     document.field("name", iName);
 
     parentRole = iParent;
     document.field("inheritedRole", iParent != null ? iParent.getIdentity() : null);
-    //    setMode(iAllowMode);
+    if (policies != null) {
+      document.setProperty("policies", policies);
+    }
 
     updateRolesDocumentContent();
   }

@@ -1074,12 +1074,19 @@ public class OSecurityShared implements OSecurityInternal {
 
   public static ORole createRole(ODatabaseSession session, OGlobalUser serverUser) {
 
-    final OSystemRole role =
-        new OSystemRole(serverUser.getName(), null, OSecurityRole.ALLOW_MODES.ALLOW_ALL_BUT);
-
+    final OSystemRole role;
     if (serverUser.getResources().equalsIgnoreCase("*")) {
+      Map<String, OSecurityPolicy> policies =
+          createSecurityPolicyWithBitmask("*", ORole.PERMISSION_ALL);
+      role =
+          new OSystemRole(
+              serverUser.getName(), null, OSecurityRole.ALLOW_MODES.ALLOW_ALL_BUT, policies);
+
       createRoot(session, role);
     } else {
+      role =
+          new OSystemRole(
+              serverUser.getName(), null, OSecurityRole.ALLOW_MODES.ALLOW_ALL_BUT, null);
       mapPermission(role, serverUser);
     }
 
@@ -1102,11 +1109,10 @@ public class OSecurityShared implements OSecurityInternal {
     for (ORule.ResourceGeneric resource : ORule.ResourceGeneric.values()) {
       role.addRule(resource, null, ORole.PERMISSION_ALL);
     }
-    createSecurityPolicyWithBitmask(session, role, "*", ORole.PERMISSION_ALL);
   }
 
-  public static void createSecurityPolicyWithBitmask(
-      ODatabaseSession session, OSecurityRole role, String resource, int legacyPolicy) {
+  public static Map<String, OSecurityPolicy> createSecurityPolicyWithBitmask(
+      String resource, int legacyPolicy) {
     String policyName = "default_" + legacyPolicy;
     OSecurityPolicyImpl policy = new OSecurityPolicyImpl(new ODocument().field("name", policyName));
     policy.setCreateRule((legacyPolicy & ORole.PERMISSION_CREATE) > 0 ? "true" : "false");
@@ -1115,25 +1121,9 @@ public class OSecurityShared implements OSecurityInternal {
     policy.setAfterUpdateRule((legacyPolicy & ORole.PERMISSION_UPDATE) > 0 ? "true" : "false");
     policy.setDeleteRule((legacyPolicy & ORole.PERMISSION_DELETE) > 0 ? "true" : "false");
     policy.setExecuteRule((legacyPolicy & ORole.PERMISSION_EXECUTE) > 0 ? "true" : "false");
-    addSecurityPolicy(session, role, resource, policy);
-  }
-
-  public static void addSecurityPolicy(
-      ODatabaseSession session, OSecurityRole role, String resource, OSecurityPolicyImpl policy) {
-    if (session == null) {
-      return;
-    }
-
-    OElement roleDoc = session.load(role.getIdentity().getIdentity());
-    if (roleDoc == null) {
-      return;
-    }
-    Map<String, OIdentifiable> policies = roleDoc.getProperty("policies");
-    if (policies == null) {
-      policies = new HashMap<>();
-      roleDoc.setProperty("policies", policies);
-    }
-    policies.put(resource, policy.getElement());
+    Map<String, OSecurityPolicy> policies = new HashMap<String, OSecurityPolicy>();
+    policies.put(resource, policy);
+    return policies;
   }
 
   public ORID getUserRID(final ODatabaseSession session, final String userName) {
