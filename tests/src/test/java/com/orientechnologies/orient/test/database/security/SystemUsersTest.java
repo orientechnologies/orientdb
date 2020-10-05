@@ -6,10 +6,11 @@ import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import java.io.File;
+import org.junit.Test;
 
 public class SystemUsersTest {
 
-  //  @Test
+  @Test
   public void test() {
     final String buildDirectory = System.getProperty("buildDirectory", ".");
     System.setProperty(
