@@ -1666,7 +1666,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     final File backupFullPath = new File(backupPath);
     try {
       if (backupFullPath.exists()) {
-        //delete directory and its content
+        // delete directory and its content
         Files.walkFileTree(
             backupFullPath.toPath(),
             new SimpleFileVisitor<Path>() {
