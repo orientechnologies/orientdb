@@ -5,24 +5,22 @@ import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
-import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
-import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.test.server.OServerTest;
-import org.junit.Test;
-
 import java.io.File;
 
 public class SystemUsersTest {
 
-//  @Test
+  //  @Test
   public void test() {
     final String buildDirectory = System.getProperty("buildDirectory", ".");
     System.setProperty(
-            "ORIENTDB_HOME", buildDirectory + File.separator + SystemUsersTest.class.getSimpleName());
+        "ORIENTDB_HOME", buildDirectory + File.separator + SystemUsersTest.class.getSimpleName());
 
     OLogManager.instance().info(this, "ORIENTDB_HOME: " + System.getProperty("ORIENTDB_HOME"));
 
-    OrientDB orient = new OrientDB("plocal:target/" + SystemUsersTest.class.getSimpleName(), OrientDBConfig.defaultConfig());
+    OrientDB orient =
+        new OrientDB(
+            "plocal:target/" + SystemUsersTest.class.getSimpleName(),
+            OrientDBConfig.defaultConfig());
 
     try {
       orient.create("test", ODatabaseType.MEMORY);
