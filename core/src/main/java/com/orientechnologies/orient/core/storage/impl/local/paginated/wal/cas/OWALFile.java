@@ -28,8 +28,7 @@ public interface OWALFile extends Closeable {
             path,
             StandardOpenOption.WRITE,
             StandardOpenOption.CREATE,
-            StandardOpenOption.TRUNCATE_EXISTING,
-            StandardOpenOption.APPEND),
+            StandardOpenOption.TRUNCATE_EXISTING),
         segmentId);
   }
 
