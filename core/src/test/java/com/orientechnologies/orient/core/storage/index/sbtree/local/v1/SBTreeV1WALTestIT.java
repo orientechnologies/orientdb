@@ -278,7 +278,6 @@ public class SBTreeV1WALTestIT extends SBTreeV1TestIT {
             -1,
             1_000,
             false,
-            false,
             true,
             false,
             0);
