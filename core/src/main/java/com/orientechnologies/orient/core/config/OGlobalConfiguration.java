@@ -530,6 +530,7 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       Boolean.class,
       false),
 
+  @Deprecated
   WAL_ALLOW_DIRECT_IO(
       "storage.wal.allowDirectIO",
       "Allows usage of direct IO API on Linux OS to avoid keeping of WAL data in OS buffer",
