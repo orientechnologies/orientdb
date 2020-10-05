@@ -1,14 +1,9 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas;
 
-import com.orientechnologies.common.jna.ONative;
-import com.orientechnologies.common.log.OLogManager;
-import com.sun.jna.LastErrorException;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
@@ -26,41 +21,19 @@ public interface OWALFile extends Closeable {
 
   long segmentId();
 
-  static OWALFile createWriteWALFile(Path path, boolean allowDirectIO, int blockSize,
-      long segmentId) throws IOException {
-    if (allowDirectIO) {
-      try {
-        final int fd = ONative.instance().open(path.toAbsolutePath().toString(),
-            ONative.O_WRONLY | ONative.O_CREAT | ONative.O_EXCL | ONative.O_APPEND | ONative.O_DIRECT);
-        return new OWALFdFile(fd, blockSize, path, segmentId);
-      } catch (LastErrorException e) {
-        OLogManager.instance()
-            .errorNoDb(OWALFile.class, "Can not open file using Linux API, Java FileChannel will be used instead", e);
-
-      }
-    }
-
-    Files.deleteIfExists(path);
-
+  static OWALFile createWriteWALFile(Path path, long segmentId) throws IOException {
     return new OWALChannelFile(
-        path, FileChannel.open(path, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW,
-        StandardOpenOption.APPEND),
+        path,
+        FileChannel.open(
+            path,
+            StandardOpenOption.WRITE,
+            StandardOpenOption.CREATE,
+            StandardOpenOption.TRUNCATE_EXISTING,
+            StandardOpenOption.APPEND),
         segmentId);
   }
 
-  static OWALFile createReadWALFile(Path path, boolean allowDirectIO, int blockSize, long segmentId) throws IOException {
-    if (allowDirectIO) {
-      try {
-        final int fd = ONative.instance().open(path.toAbsolutePath().toString(), ONative.O_RDONLY | ONative.O_DIRECT);
-        return new OWALFdFile(fd, blockSize, path, segmentId);
-      } catch (LastErrorException e) {
-        OLogManager.instance()
-            .errorNoDb(OWALFile.class, "Can not open file using Linux API, Java FileChannel will be used instead", e);
-      }
-    }
-
+  static OWALFile createReadWALFile(Path path, long segmentId) throws IOException {
     return new OWALChannelFile(path, FileChannel.open(path, StandardOpenOption.READ), segmentId);
   }
-
 }
-

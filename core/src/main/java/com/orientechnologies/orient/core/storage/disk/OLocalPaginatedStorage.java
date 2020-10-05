@@ -39,7 +39,6 @@ import com.orientechnologies.orient.core.index.engine.v1.OCellBTreeMultiValueInd
 import com.orientechnologies.orient.core.storage.OChecksumMode;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
-import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
 import com.orientechnologies.orient.core.storage.cluster.OClusterPositionMap;
 import com.orientechnologies.orient.core.storage.config.OClusterBasedStorageConfiguration;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
@@ -399,7 +398,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
         OGlobalConfiguration.WAL_MAX_SIZE.getValueAsLong() * 1024 * 1024,
         OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT.getValueAsLong() * 1024 * 1024,
         contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_COMMIT_TIMEOUT),
-        contextConfiguration.getValueAsBoolean(OGlobalConfiguration.WAL_ALLOW_DIRECT_IO),
         contextConfiguration.getValueAsBoolean(OGlobalConfiguration.WAL_KEEP_SINGLE_SEGMENT),
         contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_CALL_FSYNC),
         contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_PRINT_WAL_PERFORMANCE_STATISTICS),
@@ -567,7 +565,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
           true, Locale.getDefault(), contextConfiguration.getValueAsLong(OGlobalConfiguration.WAL_MAX_SIZE) * 1024 * 1024,
           contextConfiguration.getValueAsLong(OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT) * 1024 * 1024,
           contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_COMMIT_TIMEOUT),
-          contextConfiguration.getValueAsBoolean(OGlobalConfiguration.WAL_ALLOW_DIRECT_IO),
           contextConfiguration.getValueAsBoolean(OGlobalConfiguration.WAL_KEEP_SINGLE_SEGMENT),
           contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_CALL_FSYNC),
           contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_PRINT_WAL_PERFORMANCE_STATISTICS),

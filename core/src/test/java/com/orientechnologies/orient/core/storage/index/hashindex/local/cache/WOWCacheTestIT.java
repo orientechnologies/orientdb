@@ -121,9 +121,12 @@ public class WOWCacheTestIT {
   private void initBuffer() throws IOException, InterruptedException {
     Files.createDirectories(storagePath);
 
-    writeAheadLog = new OCASDiskWriteAheadLog(storageName, storagePath, storagePath, 12_000, 128, Integer.MAX_VALUE,
-        Integer.MAX_VALUE, 25, true, Locale.US, -1, 1024L * 1024 * 1024, 1000, true, false, false, true, 10);
-    wowCache = new OWOWCache(pageSize, bufferPool, writeAheadLog, 10, 10, 100, storagePath, storageName, OStringSerializer.INSTANCE,
+    writeAheadLog = new OCASDiskWriteAheadLog(storageName, storagePath, storagePath, 12_000, 128,
+        Integer.MAX_VALUE,
+        Integer.MAX_VALUE, 25, true, Locale.US, -1, 1024L * 1024 * 1024, 1000, false, false, true,
+        10);
+    wowCache = new OWOWCache(pageSize, bufferPool, writeAheadLog, 10, 10, 100, storagePath,
+        storageName, OStringSerializer.INSTANCE,
         files, 1, OChecksumMode.StoreAndVerify, false, true, 10);
 
     wowCache.loadRegisteredFiles();

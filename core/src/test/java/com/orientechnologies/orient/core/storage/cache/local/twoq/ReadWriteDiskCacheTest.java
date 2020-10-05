@@ -193,7 +193,7 @@ public class ReadWriteDiskCacheTest {
   private static void initBuffer() throws IOException, InterruptedException {
     writeAheadLog = new OCASDiskWriteAheadLog(storageName, storagePath, storagePath, 12_000, 128,
         Integer.MAX_VALUE,
-        Integer.MAX_VALUE, 25, true, Locale.US, -1, 1024L * 1024 * 1024, 1000, true, false, false,
+        Integer.MAX_VALUE, 25, true, Locale.US, -1, 1024L * 1024 * 1024, 1000, false, false,
         true, 10);
 
     writeBuffer = new OWOWCache(PAGE_SIZE, BUFFER_POOL, writeAheadLog, -1, 10, WRITE_CACHE_MAX_SIZE,

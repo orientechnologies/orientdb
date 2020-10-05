@@ -258,37 +258,50 @@ public enum OGlobalConfiguration {// ENVIRONMENT
       65536),
 
   WAL_BUFFER_SIZE("storage.wal.bufferSize",
-      "Size of the direct memory WAL buffer which is used inside of " + "the background write thread (in MB)", Integer.class, 64),
+      "Size of the direct memory WAL buffer which is used inside of "
+          + "the background write thread (in MB)", Integer.class, 64),
 
   WAL_SEGMENTS_INTERVAL("storage.wal.segmentsInterval",
-      "Maximum interval in time in min. after which new WAL segment will be added", Integer.class, 30),
+      "Maximum interval in time in min. after which new WAL segment will be added", Integer.class,
+      30),
 
   WAL_FILE_AUTOCLOSE_INTERVAL("storage.wal.fileAutoCloseInterval",
       "Interval in seconds after which WAL file will be closed if there is no "
-          + "any IO operations on this file (in seconds), default value is 10", Integer.class, 10, false),
+          + "any IO operations on this file (in seconds), default value is 10", Integer.class, 10,
+      false),
 
   WAL_SEGMENT_BUFFER_SIZE("storage.wal.segmentBufferSize",
-      "Size of the buffer which contains WAL records in serialized format " + "in megabytes", Integer.class, 32),
+      "Size of the buffer which contains WAL records in serialized format " + "in megabytes",
+      Integer.class, 32),
 
-  WAL_MAX_SEGMENT_SIZE("storage.wal.maxSegmentSize", "Maximum size of single WAL segment (in megabytes)", Integer.class, -1),
+  WAL_MAX_SEGMENT_SIZE("storage.wal.maxSegmentSize",
+      "Maximum size of single WAL segment (in megabytes)", Integer.class, -1),
 
   WAL_MAX_SEGMENT_SIZE_PERCENT("storage.wal.maxSegmentSizePercent",
       "Maximum size of single WAL segment in percent of initial free space", Integer.class, 5),
 
-  WAL_MIN_SEG_SIZE("storage.wal.minSegSize", "Minimal value of maximum WAL segment size in MB", Integer.class, 6 * 1024),
+  WAL_MIN_SEG_SIZE("storage.wal.minSegSize", "Minimal value of maximum WAL segment size in MB",
+      Integer.class, 6 * 1024),
 
-  WAL_MAX_SIZE("storage.wal.maxSize", "Maximum size of WAL on disk (in megabytes)", Integer.class, -1),
+  WAL_MAX_SIZE("storage.wal.maxSize", "Maximum size of WAL on disk (in megabytes)", Integer.class,
+      -1),
 
   WAL_KEEP_SINGLE_SEGMENT("storage.wal.keepSingleSegment",
-      "Database will provide the best efforts to keep only single WAL inside the storage", Boolean.class, false),
+      "Database will provide the best efforts to keep only single WAL inside the storage",
+      Boolean.class, false),
 
+  @Deprecated
   WAL_ALLOW_DIRECT_IO("storage.wal.allowDirectIO",
-      "Allows usage of direct IO API on Linux OS to avoid keeping of WAL data in " + "OS buffer", Boolean.class, true),
+      "Allows usage of direct IO API on Linux OS to avoid keeping of WAL data in OS buffer",
+      Boolean.class, true),
 
-  WAL_COMMIT_TIMEOUT("storage.wal.commitTimeout", "Maximum interval between WAL commits (in ms.)", Integer.class, 1000),
+  WAL_COMMIT_TIMEOUT("storage.wal.commitTimeout", "Maximum interval between WAL commits (in ms.)",
+      Integer.class, 1000),
 
-  WAL_SHUTDOWN_TIMEOUT("storage.wal.shutdownTimeout", "Maximum wait interval between events, when the background flush thread"
-      + "receives a shutdown command and when the background flush will be stopped (in ms.)", Integer.class, 10000),
+  WAL_SHUTDOWN_TIMEOUT("storage.wal.shutdownTimeout",
+      "Maximum wait interval between events, when the background flush thread"
+          + "receives a shutdown command and when the background flush will be stopped (in ms.)",
+      Integer.class, 10000),
 
   WAL_FUZZY_CHECKPOINT_INTERVAL("storage.wal.fuzzyCheckpointInterval",
       "Interval between fuzzy checkpoints (in seconds)",
