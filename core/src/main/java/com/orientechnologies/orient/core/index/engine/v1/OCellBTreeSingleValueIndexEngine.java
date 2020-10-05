@@ -260,21 +260,13 @@ public final class OCellBTreeSingleValueIndexEngine
 
   @Override
   public void updateUniqueIndexVersion(final Object key) {
-    final int keyHash = getKeyHash(key);
+    final int keyHash = versionPositionMap.getKeyHash(key);
     versionPositionMap.updateVersion(keyHash);
   }
 
   @Override
   public int getUniqueIndexVersion(final Object key) {
-    final int keyHash = getKeyHash(key);
+    final int keyHash = versionPositionMap.getKeyHash(key);
     return versionPositionMap.getVersion(keyHash);
-  }
-
-  private int getKeyHash(final Object key) {
-    int keyHash = 0; // as for null values in hash map
-    if (key != null) {
-      keyHash = Math.abs(key.hashCode()) % DEFAULT_VERSION_ARRAY_SIZE;
-    }
-    return keyHash;
   }
 }
