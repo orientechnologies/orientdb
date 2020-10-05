@@ -325,8 +325,9 @@ public class OAtomicOperationsManager {
     } catch (OLockException e) {
       return false;
     }
-    checkReadOnlyConditions(operation);
+
     operation.addLockedObject(lockName);
+    checkReadOnlyConditions(operation);
 
     componentOperationsFreezer.startOperation();
     return true;
@@ -391,14 +392,16 @@ public class OAtomicOperationsManager {
       } finally {
         final Iterator<String> lockedObjectIterator = operation.lockedObjects().iterator();
 
-        while (lockedObjectIterator.hasNext()) {
-          final String lockedObject = lockedObjectIterator.next();
-          lockedObjectIterator.remove();
+        try {
+          while (lockedObjectIterator.hasNext()) {
+            final String lockedObject = lockedObjectIterator.next();
+            lockedObjectIterator.remove();
 
-          lockManager.releaseLock(this, lockedObject, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
+            lockManager.releaseLock(this, lockedObject, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
+          }
+        } finally {
+          currentOperation.set(null);
         }
-
-        currentOperation.set(null);
       }
 
     } catch (Error e) {

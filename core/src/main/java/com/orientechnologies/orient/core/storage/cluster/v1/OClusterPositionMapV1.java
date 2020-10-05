@@ -266,11 +266,9 @@ public final class OClusterPositionMapV1 extends OClusterPositionMap {
     final int index = (int) (clusterPosition % OClusterPositionMapBucket.MAX_ENTRIES);
 
     final long lastPage = getLastPage(atomicOperation);
-
     if (pageIndex > lastPage) {
       return null;
     }
-
     pageCount = (int) Math.min(lastPage - pageIndex + 1, pageCount);
 
     final OCacheEntry cacheEntry =
@@ -292,7 +290,6 @@ public final class OClusterPositionMapV1 extends OClusterPositionMap {
         loadPageForWrite(atomicOperation, fileId, pageIndex, false, true);
     try {
       final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
-
       bucket.remove(index);
     } finally {
       releasePageFromWrite(atomicOperation, cacheEntry);

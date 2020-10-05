@@ -78,13 +78,6 @@ public class OAlterClusterStatement extends ODDLStatement {
 
     final OStorage storage = ((ODatabaseDocumentInternal) ctx.getDatabase()).getStorage();
     for (final int clusterId : clustersToUpdate) {
-      if (attributeName.getStringValue().equalsIgnoreCase("status")
-          || attributeName.getStringValue().equalsIgnoreCase("name"))
-        // REMOVE CACHE OF COMMAND RESULTS IF ACTIVE
-        getDatabase()
-            .getMetadata()
-            .getCommandCache()
-            .invalidateResultsOfCluster(storage.getPhysicalClusterNameById(clusterId));
       storage.setClusterAttribute(clusterId, attribute, finalValue);
 
       OResultInternal resultItem = new OResultInternal();

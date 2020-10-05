@@ -23,7 +23,7 @@ import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.OrientDBEmbedded;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
@@ -32,14 +32,19 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OSystemUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.security.authenticator.ODatabaseUserAuthenticator;
+import com.orientechnologies.orient.core.security.authenticator.OServerConfigAuthenticator;
+import com.orientechnologies.orient.core.security.authenticator.OSystemUserAuthenticator;
 import java.io.File;
 import java.io.FileInputStream;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * Provides an implementation of OServerSecurity.
@@ -81,18 +86,14 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
   private ODocument ldapImportDoc;
 
   // We use a list because the order indicates priority of method.
-  private final List<OSecurityAuthenticator> authenticatorsList =
-      new ArrayList<OSecurityAuthenticator>();
+  private volatile List<OSecurityAuthenticator> authenticatorsList;
+  private volatile List<OSecurityAuthenticator> enabledAuthenticators;
 
   private ConcurrentHashMap<String, Class<?>> securityClassMap =
       new ConcurrentHashMap<String, Class<?>>();
   private SecureRandom random = new SecureRandom();
 
   public ODefaultSecuritySystem() {}
-
-  public ODefaultSecuritySystem(OrientDBEmbedded orientDBEmbedded, OSecurityConfig securityConfig) {
-    activate(orientDBEmbedded, securityConfig);
-  }
 
   public void activate(final OrientDBInternal context, final OSecurityConfig serverCfg) {
     this.context = context;
@@ -101,6 +102,23 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
       this.load(serverConfig.getConfigurationFile());
     }
     onAfterDynamicPlugins();
+  }
+
+  private void initDefultAuthenticators() {
+    OServerConfigAuthenticator serverAuth = new OServerConfigAuthenticator();
+    serverAuth.config(null, this);
+
+    ODatabaseUserAuthenticator databaseAuth = new ODatabaseUserAuthenticator();
+    databaseAuth.config(null, this);
+
+    OSystemUserAuthenticator systemAuth = new OSystemUserAuthenticator();
+    systemAuth.config(null, this);
+
+    List<OSecurityAuthenticator> authenticators = new ArrayList<OSecurityAuthenticator>();
+    authenticators.add(serverAuth);
+    authenticators.add(systemAuth);
+    authenticators.add(databaseAuth);
+    setAuthenticatorList(authenticators);
   }
 
   public void shutdown() {
@@ -136,44 +154,32 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
   }
 
   // OSecuritySystem (via OServerSecurity)
-  public String authenticate(final String username, final String password) {
-    if (isEnabled()) {
-      try {
-        // It's possible for the username to be null or an empty string in the case of SPNEGO
-        // Kerberos
-        // tickets.
-        if (username != null && !username.isEmpty()) {
-          if (debug)
-            OLogManager.instance()
-                .info(
-                    this,
-                    "ODefaultServerSecurity.authenticate() ** Authenticating username: %s",
-                    username);
-        }
-
-        List<OSecurityAuthenticator> active = new ArrayList<>();
-        synchronized (authenticatorsList) {
-          // Walk through the list of OSecurityAuthenticators.
-          for (OSecurityAuthenticator sa : authenticatorsList) {
-            if (sa.isEnabled()) {
-              active.add(sa);
-            }
-          }
-        }
-        for (OSecurityAuthenticator sa : active) {
-          String principal = sa.authenticate(username, password);
-
-          if (principal != null) return principal;
-        }
-
-      } catch (Exception ex) {
-        OLogManager.instance().error(this, "ODefaultServerSecurity.authenticate()", ex);
+  public String authenticate(
+      ODatabaseSession session, final String username, final String password) {
+    try {
+      // It's possible for the username to be null or an empty string in the case of SPNEGO
+      // Kerberos
+      // tickets.
+      if (username != null && !username.isEmpty()) {
+        if (debug)
+          OLogManager.instance()
+              .info(
+                  this,
+                  "ODefaultServerSecurity.authenticate() ** Authenticating username: %s",
+                  username);
       }
 
-      return null; // Indicates authentication failed.
-    } else {
-      return authenticateServerUser(username, password);
+      for (OSecurityAuthenticator sa : getEnabledAuthenticators()) {
+        String principal = sa.authenticate(session, username, password);
+
+        if (principal != null) return principal;
+      }
+
+    } catch (Exception ex) {
+      OLogManager.instance().error(this, "ODefaultServerSecurity.authenticate()", ex);
     }
+
+    return null; // Indicates authentication failed.
   }
 
   public String authenticateServerUser(final String username, final String password) {
@@ -202,27 +208,23 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
     else header = "WWW-Authenticate: Basic realm=\"OrientDB Server\"";
 
     if (isEnabled()) {
-      synchronized (authenticatorsList) {
-        StringBuilder sb = new StringBuilder();
+      StringBuilder sb = new StringBuilder();
 
-        // Walk through the list of OSecurityAuthenticators.
-        for (OSecurityAuthenticator sa : authenticatorsList) {
-          if (sa.isEnabled()) {
-            String sah = sa.getAuthenticationHeader(databaseName);
+      // Walk through the list of OSecurityAuthenticators.
+      for (OSecurityAuthenticator sa : getEnabledAuthenticators()) {
+        String sah = sa.getAuthenticationHeader(databaseName);
 
-            if (sah != null && sah.trim().length() > 0) {
-              // If we're not the first authenticator, then append "\n".
-              if (sb.length() > 0) {
-                sb.append("\r\n");
-              }
-              sb.append(sah);
-            }
+        if (sah != null && sah.trim().length() > 0) {
+          // If we're not the first authenticator, then append "\n".
+          if (sb.length() > 0) {
+            sb.append("\r\n");
           }
+          sb.append(sah);
         }
+      }
 
-        if (sb.length() > 0) {
-          header = sb.toString();
-        }
+      if (sb.length() > 0) {
+        header = sb.toString();
       }
     }
 
@@ -239,16 +241,12 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
     else headers.put("WWW-Authenticate", "Basic realm=\"OrientDB Server\"");
 
     if (isEnabled()) {
-      synchronized (authenticatorsList) {
 
-        // Walk through the list of OSecurityAuthenticators.
-        for (OSecurityAuthenticator sa : authenticatorsList) {
-          if (sa.isEnabled()) {
-            Map<String, String> currentHeaders = sa.getAuthenticationHeaders(databaseName);
-            currentHeaders
-                .entrySet()
-                .forEach(entry -> headers.put(entry.getKey(), entry.getValue()));
-          }
+      // Walk through the list of OSecurityAuthenticators.
+      for (OSecurityAuthenticator sa : getEnabledAuthenticators()) {
+        if (sa.isEnabled()) {
+          Map<String, String> currentHeaders = sa.getAuthenticationHeaders(databaseName);
+          currentHeaders.entrySet().forEach(entry -> headers.put(entry.getKey(), entry.getValue()));
         }
       }
     }
@@ -320,7 +318,7 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
   public OUser getSystemUser(final String username, final String dbName) {
     // ** There are cases when we need to retrieve an OUser that is a system user.
     //  if (isEnabled() && !OSystemDatabase.SYSTEM_DB_NAME.equals(dbName)) {
-    if (isEnabled()) {
+    if (context.getSystemDatabase().exists()) {
       return (OUser)
           context
               .getSystemDatabase()
@@ -341,21 +339,13 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
   // This will first look for a user in the security.json "users" array and then check if a resource
   // matches.
   public boolean isAuthorized(final String username, final String resource) {
-    if (isEnabled()) {
-      if (username == null || resource == null) return false;
+    if (username == null || resource == null) return false;
 
-      synchronized (authenticatorsList) {
-        // Walk through the list of OSecurityAuthenticators.
-        for (OSecurityAuthenticator sa : authenticatorsList) {
-          if (sa.isEnabled()) {
-            if (sa.isAuthorized(username, resource)) return true;
-          }
-        }
-      }
-      return false;
-    } else {
-      return isServerUserAuthorized(username, resource);
+    // Walk through the list of OSecurityAuthenticators.
+    for (OSecurityAuthenticator sa : getEnabledAuthenticators()) {
+      if (sa.isAuthorized(username, resource)) return true;
     }
+    return false;
   }
 
   public boolean isServerUserAuthorized(final String username, final String resource) {
@@ -425,15 +415,11 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
 
   // OServerSecurity
   public OSecurityAuthenticator getAuthenticator(final String authMethod) {
-    if (isEnabled()) {
-      synchronized (authenticatorsList) {
-        for (OSecurityAuthenticator am : authenticatorsList) {
-          // If authMethod is null or an empty string, then return the first OSecurityAuthenticator.
-          if (authMethod == null || authMethod.isEmpty()) return am;
+    for (OSecurityAuthenticator am : getAuthenticatorsList()) {
+      // If authMethod is null or an empty string, then return the first OSecurityAuthenticator.
+      if (authMethod == null || authMethod.isEmpty()) return am;
 
-          if (am.getName() != null && am.getName().equalsIgnoreCase(authMethod)) return am;
-        }
-      }
+      if (am.getName() != null && am.getName().equalsIgnoreCase(authMethod)) return am;
     }
 
     return null;
@@ -443,9 +429,8 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
   // Returns the first OSecurityAuthenticator in the list.
   public OSecurityAuthenticator getPrimaryAuthenticator() {
     if (isEnabled()) {
-      synchronized (authenticatorsList) {
-        if (authenticatorsList.size() > 0) return authenticatorsList.get(0);
-      }
+      List<OSecurityAuthenticator> auth = getAuthenticatorsList();
+      if (auth.size() > 0) return auth.get(0);
     }
 
     return null;
@@ -455,19 +440,10 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
   public OGlobalUser getUser(final String username) {
     OGlobalUser userCfg = null;
 
-    if (isEnabled()) {
-
-      synchronized (authenticatorsList) {
-        // Walk through the list of OSecurityAuthenticators.
-        for (OSecurityAuthenticator sa : authenticatorsList) {
-          if (sa.isEnabled()) {
-            userCfg = sa.getUser(username);
-            if (userCfg != null) break;
-          }
-        }
-      }
-    } else {
-      userCfg = getServerUser(username);
+    // Walk through the list of OSecurityAuthenticators.
+    for (OSecurityAuthenticator sa : getEnabledAuthenticators()) {
+      userCfg = sa.getUser(username);
+      if (userCfg != null) break;
     }
 
     return userCfg;
@@ -611,67 +587,66 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
   }
 
   private void loadAuthenticators(final ODocument authDoc) {
-    synchronized (authenticatorsList) {
-      for (OSecurityAuthenticator sa : authenticatorsList) {
-        sa.dispose();
-      }
+    if (authDoc.containsField("authenticators")) {
+      List<OSecurityAuthenticator> autheticators = new ArrayList<OSecurityAuthenticator>();
+      List<ODocument> authMethodsList = authDoc.field("authenticators");
 
-      authenticatorsList.clear();
+      for (ODocument authMethodDoc : authMethodsList) {
+        try {
+          if (authMethodDoc.containsField("name")) {
+            final String name = authMethodDoc.field("name");
 
-      if (authDoc.containsField("authenticators")) {
-        List<ODocument> authMethodsList = authDoc.field("authenticators");
+            // defaults to enabled if "enabled" is missing
+            boolean enabled = true;
 
-        for (ODocument authMethodDoc : authMethodsList) {
-          try {
-            if (authMethodDoc.containsField("name")) {
-              final String name = authMethodDoc.field("name");
+            if (authMethodDoc.containsField("enabled")) enabled = authMethodDoc.field("enabled");
 
-              // defaults to enabled if "enabled" is missing
-              boolean enabled = true;
+            if (enabled) {
+              Class<?> authClass = getClass(authMethodDoc);
 
-              if (authMethodDoc.containsField("enabled")) enabled = authMethodDoc.field("enabled");
+              if (authClass != null) {
+                if (OSecurityAuthenticator.class.isAssignableFrom(authClass)) {
+                  OSecurityAuthenticator authPlugin =
+                      (OSecurityAuthenticator) authClass.newInstance();
 
-              if (enabled) {
-                Class<?> authClass = getClass(authMethodDoc);
+                  authPlugin.config(authMethodDoc, this);
+                  authPlugin.active();
 
-                if (authClass != null) {
-                  if (OSecurityAuthenticator.class.isAssignableFrom(authClass)) {
-                    OSecurityAuthenticator authPlugin =
-                        (OSecurityAuthenticator) authClass.newInstance();
-
-                    authPlugin.config(authMethodDoc, this);
-                    authPlugin.active();
-
-                    authenticatorsList.add(authPlugin);
-                  } else {
-                    OLogManager.instance()
-                        .error(
-                            this,
-                            "ODefaultServerSecurity.loadAuthenticators() class is not an OSecurityAuthenticator",
-                            null);
-                  }
+                  autheticators.add(authPlugin);
                 } else {
                   OLogManager.instance()
                       .error(
                           this,
-                          "ODefaultServerSecurity.loadAuthenticators() authentication class is null for %s",
-                          null,
-                          name);
+                          "ODefaultServerSecurity.loadAuthenticators() class is not an OSecurityAuthenticator",
+                          null);
                 }
+              } else {
+                OLogManager.instance()
+                    .error(
+                        this,
+                        "ODefaultServerSecurity.loadAuthenticators() authentication class is null for %s",
+                        null,
+                        name);
               }
-            } else {
-              OLogManager.instance()
-                  .error(
-                      this,
-                      "ODefaultServerSecurity.loadAuthenticators() authentication object is missing name",
-                      null);
             }
-          } catch (Exception ex) {
+          } else {
             OLogManager.instance()
-                .error(this, "ODefaultServerSecurity.loadAuthenticators() Exception: ", ex);
+                .error(
+                    this,
+                    "ODefaultServerSecurity.loadAuthenticators() authentication object is missing name",
+                    null);
           }
+        } catch (Exception ex) {
+          OLogManager.instance()
+              .error(this, "ODefaultServerSecurity.loadAuthenticators() Exception: ", ex);
         }
       }
+      if (isDefaultAllowed()) {
+        autheticators.add(new ODatabaseUserAuthenticator());
+      }
+      setAuthenticatorList(autheticators);
+    } else {
+      initDefultAuthenticators();
     }
   }
 
@@ -689,6 +664,7 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
         log(OAuditingOperation.SECURITY, null, user, "The security module is now loaded");
       }
     } else {
+      initDefultAuthenticators();
       OLogManager.instance().warn(this, "onAfterDynamicPlugins() Configuration document is empty");
     }
   }
@@ -1010,14 +986,7 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
         }
       }
 
-      synchronized (authenticatorsList) {
-        // Notify all the security components that the server is active.
-        for (OSecurityAuthenticator sa : authenticatorsList) {
-          sa.dispose();
-        }
-
-        authenticatorsList.clear();
-      }
+      setAuthenticatorList(Collections.emptyList());
 
       enabled = false;
     }
@@ -1027,7 +996,7 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
   public OGlobalUser authenticateAndAuthorize(
       String iUserName, String iPassword, String iResourceToCheck) {
     // Returns the authenticated username, if successful, otherwise null.
-    String authUsername = authenticate(iUserName, iPassword);
+    String authUsername = authenticate(null, iUserName, iPassword);
 
     // Authenticated, now see if the user is authorized.
     if (authUsername != null) {
@@ -1080,5 +1049,25 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
   @Override
   public OSecurityInternal newSecurity(String database) {
     return new OSecurityShared(this);
+  }
+
+  public synchronized void setAuthenticatorList(List<OSecurityAuthenticator> authenticators) {
+    if (authenticatorsList != null) {
+      for (OSecurityAuthenticator sa : authenticatorsList) {
+        sa.dispose();
+      }
+    }
+    this.authenticatorsList = Collections.unmodifiableList(authenticators);
+    this.enabledAuthenticators =
+        Collections.unmodifiableList(
+            authenticators.stream().filter((x) -> x.isEnabled()).collect(Collectors.toList()));
+  }
+
+  public synchronized List<OSecurityAuthenticator> getEnabledAuthenticators() {
+    return enabledAuthenticators;
+  }
+
+  public synchronized List<OSecurityAuthenticator> getAuthenticatorsList() {
+    return authenticatorsList;
   }
 }

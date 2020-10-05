@@ -375,9 +375,7 @@ public final class AsyncReadCache implements OReadCache {
     cacheEntry.acquireExclusiveLock();
     cacheEntry.markAllocated();
     cacheEntry.clearPageOperations();
-
     writeCache.updateDirtyPagesTable(cacheEntry.getCachePointer(), startLSN);
-
     return cacheEntry;
   }
 

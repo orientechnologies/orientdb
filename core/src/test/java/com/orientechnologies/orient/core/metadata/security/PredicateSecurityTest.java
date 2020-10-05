@@ -56,7 +56,7 @@ public class PredicateSecurityTest {
 
     db.createClass("Person");
 
-    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "testPolicy");
     policy.setActive(true);
     policy.setCreateRule("name = 'foo'");
     security.saveSecurityPolicy(db, policy);
@@ -83,7 +83,7 @@ public class PredicateSecurityTest {
 
     db.createClass("Person");
 
-    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "testPolicy");
     policy.setActive(true);
     policy.setCreateRule("name = 'foo'");
     security.saveSecurityPolicy(db, policy);
@@ -107,7 +107,7 @@ public class PredicateSecurityTest {
 
     db.createClass("Person");
 
-    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "testPolicy");
     policy.setActive(true);
     policy.setReadRule("name = 'foo'");
     security.saveSecurityPolicy(db, policy);
@@ -138,7 +138,7 @@ public class PredicateSecurityTest {
     person.createProperty("name", OType.STRING);
     db.command("create index Person.name on Person (name) NOTUNIQUE");
 
-    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "testPolicy");
     policy.setActive(true);
     policy.setReadRule("name = 'foo'");
     security.saveSecurityPolicy(db, policy);
@@ -167,7 +167,7 @@ public class PredicateSecurityTest {
     person.createProperty("name", OType.STRING);
     db.command("create index Person.name on Person (name) NOTUNIQUE");
 
-    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "testPolicy");
     policy.setActive(true);
     policy.setReadRule("surname = 'foo'");
     security.saveSecurityPolicy(db, policy);
@@ -199,7 +199,7 @@ public class PredicateSecurityTest {
 
     db.createClass("Person");
 
-    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "testPolicy");
     policy.setActive(true);
     policy.setBeforeUpdateRule("name = 'bar'");
     security.saveSecurityPolicy(db, policy);
@@ -229,7 +229,7 @@ public class PredicateSecurityTest {
 
     db.createClass("Person");
 
-    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "testPolicy");
     policy.setActive(true);
     policy.setBeforeUpdateRule("name = 'bar'");
     security.saveSecurityPolicy(db, policy);
@@ -269,7 +269,7 @@ public class PredicateSecurityTest {
 
     db.createClass("Person");
 
-    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "testPolicy");
     policy.setActive(true);
     policy.setAfterUpdateRule("name = 'foo'");
     security.saveSecurityPolicy(db, policy);
@@ -298,7 +298,7 @@ public class PredicateSecurityTest {
 
     db.createClass("Person");
 
-    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "testPolicy");
     policy.setActive(true);
     policy.setAfterUpdateRule("name = 'foo'");
     security.saveSecurityPolicy(db, policy);
@@ -326,7 +326,7 @@ public class PredicateSecurityTest {
 
     db.createClass("Person");
 
-    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "testPolicy");
     policy.setActive(true);
     policy.setDeleteRule("name = 'foo'");
     security.saveSecurityPolicy(db, policy);
@@ -356,7 +356,7 @@ public class PredicateSecurityTest {
 
     db.createClass("Person");
 
-    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "testPolicy");
     policy.setActive(true);
     policy.setDeleteRule("name = 'foo'");
     security.saveSecurityPolicy(db, policy);
@@ -394,7 +394,7 @@ public class PredicateSecurityTest {
     OClass person = db.createClass("Person");
     person.createProperty("name", OType.STRING);
 
-    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "testPolicy");
     policy.setActive(true);
     policy.setReadRule("name = 'foo'");
     security.saveSecurityPolicy(db, policy);
@@ -423,7 +423,7 @@ public class PredicateSecurityTest {
     person.createProperty("name", OType.STRING);
     db.command("create index Person.name on Person (name) NOTUNIQUE");
 
-    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "testPolicy");
     policy.setActive(true);
     policy.setReadRule("name = 'foo'");
     security.saveSecurityPolicy(db, policy);
@@ -456,7 +456,7 @@ public class PredicateSecurityTest {
     person.createProperty("name", OType.STRING);
     db.command("create index Person.name on Person (name) NOTUNIQUE");
 
-    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "testPolicy");
     policy.setActive(true);
     policy.setReadRule("name = 'foo'");
     security.saveSecurityPolicy(db, policy);

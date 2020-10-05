@@ -33,13 +33,11 @@ public class HARemoveNodeFromCfgIT extends AbstractServerClusterTxTest {
   public void test() throws Exception {
     OGlobalConfiguration.DISTRIBUTED_AUTO_REMOVE_OFFLINE_SERVERS.setValue(100);
     try {
-
       useTransactions = true;
       count = 10;
       init(SERVERS);
       prepare(false);
       execute();
-
     } finally {
       OGlobalConfiguration.DISTRIBUTED_AUTO_REMOVE_OFFLINE_SERVERS.setValue(100);
     }
@@ -53,7 +51,6 @@ public class HARemoveNodeFromCfgIT extends AbstractServerClusterTxTest {
             .getServerInstance()
             .getDistributedManager()
             .getLocalNodeName();
-
     Assert.assertTrue(
         serverInstance
             .get(0)
@@ -62,7 +59,6 @@ public class HARemoveNodeFromCfgIT extends AbstractServerClusterTxTest {
             .getDatabaseConfiguration(getDatabaseName())
             .getAllConfiguredServers()
             .contains(removedServer));
-
     Assert.assertTrue(
         serverInstance
             .get(0)
@@ -70,7 +66,6 @@ public class HARemoveNodeFromCfgIT extends AbstractServerClusterTxTest {
             .getDistributedManager()
             .getConfigurationMap()
             .containsKey("dbstatus." + removedServer + "." + getDatabaseName()));
-
     banner("SIMULATE SOFT SHUTDOWN OF SERVER " + (SERVERS - 1));
 
     //    ODatabaseDocument database = serverInstance.get(SERVERS -

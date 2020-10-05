@@ -19,42 +19,8 @@
  */
 package com.orientechnologies.orient.server.security.authenticator;
 
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.security.OGlobalUser;
-import com.orientechnologies.orient.server.security.OSecurityAuthenticatorAbstract;
-
 /**
- * Provides an OSecurityAuthenticator for the users listed in orientdb-server-config.xml.
- *
- * @author S. Colin Leister
+ * This exist only for backward compatibility for the package name configured in the security.json
  */
-public class OServerConfigAuthenticator extends OSecurityAuthenticatorAbstract {
-  // OSecurityComponent
-  // Called once the Server is running.
-  public void active() {
-    OLogManager.instance().info(this, "OServerConfigAuthenticator is active");
-  }
-
-  // OSecurityAuthenticator
-  // Returns the actual username if successful, null otherwise.
-  public String authenticate(final String username, final String password) {
-    return getSecurity().authenticateServerUser(username, password);
-  }
-
-  // OSecurityAuthenticator
-  public OGlobalUser getUser(final String username) {
-    return getSecurity().getServerUser(username);
-  }
-
-  // OSecurityAuthenticator
-  // If not supported by the authenticator, return false.
-  public boolean isAuthorized(final String username, final String resource) {
-    return getSecurity().isServerUserAuthorized(username, resource);
-  }
-
-  // Server configuration users are never case sensitive.
-  @Override
-  protected boolean isCaseSensitive() {
-    return false;
-  }
-}
+public class OServerConfigAuthenticator
+    extends com.orientechnologies.orient.core.security.authenticator.OServerConfigAuthenticator {}

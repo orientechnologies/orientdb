@@ -75,7 +75,7 @@ public class ORole extends OIdentity implements OSecurityRole {
     document.field("name", iName);
 
     parentRole = iParent;
-    document.field("inheritedRole", iParent != null ? iParent.getDocument() : null);
+    document.field("inheritedRole", iParent != null ? iParent.getIdentity() : null);
     //    setMode(iAllowMode);
 
     updateRolesDocumentContent();
@@ -360,7 +360,7 @@ public class ORole extends OIdentity implements OSecurityRole {
 
   public ORole setParentRole(final OSecurityRole iParent) {
     this.parentRole = (ORole) iParent;
-    document.field("inheritedRole", parentRole != null ? parentRole.getDocument() : null);
+    document.field("inheritedRole", parentRole != null ? parentRole.getIdentity() : null);
     return this;
   }
 
@@ -425,5 +425,31 @@ public class ORole extends OIdentity implements OSecurityRole {
 
   private ODocument updateRolesDocumentContent() {
     return document.field("rules", getRules());
+  }
+
+  @Override
+  public Map<String, OSecurityPolicy> getPolicies() {
+    Map<String, OSecurityPolicy> result = new HashMap<String, OSecurityPolicy>();
+    Map<String, OIdentifiable> policies = document.getProperty("policies");
+    if (policies == null) {
+      return result;
+    }
+    policies
+        .entrySet()
+        .forEach(x -> result.put(x.getKey(), new OSecurityPolicyImpl(x.getValue().getRecord())));
+    return result;
+  }
+
+  @Override
+  public OSecurityPolicy getPolicy(String resource) {
+    Map<String, OIdentifiable> policies = document.getProperty("policies");
+    if (policies == null) {
+      return null;
+    }
+    OIdentifiable entry = policies.get(resource);
+    if (entry == null) {
+      return null;
+    }
+    return new OSecurityPolicyImpl(entry.getRecord());
   }
 }

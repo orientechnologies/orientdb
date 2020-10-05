@@ -3,11 +3,9 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.orient.core.cache.OCommandCache;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
@@ -78,7 +76,6 @@ public class OTruncateClassStatement extends ODDLStatement {
       result.setProperty("operation", "truncate class");
       result.setProperty("className", className.getStringValue());
       rs.add(result);
-      invalidateCommandCache(clazz, db);
       if (polymorphic) {
         for (OClass subclass : subclasses) {
           subclass.truncate();
@@ -86,7 +83,6 @@ public class OTruncateClassStatement extends ODDLStatement {
           result.setProperty("operation", "truncate class");
           result.setProperty("className", className.getStringValue());
           rs.add(result);
-          invalidateCommandCache(subclass, db);
         }
       }
     } catch (IOException e) {
@@ -95,24 +91,6 @@ public class OTruncateClassStatement extends ODDLStatement {
     }
 
     return rs;
-  }
-
-  private void invalidateCommandCache(OClass clazz, ODatabase db) {
-    if (clazz == null) {
-      return;
-    }
-    OCommandCache commandCache = ((OMetadataInternal) db.getMetadata()).getCommandCache();
-    if (commandCache != null && commandCache.isEnabled()) {
-      int[] clusterIds = clazz.getClusterIds();
-      if (clusterIds != null) {
-        for (int i : clusterIds) {
-          String clusterName = getDatabase().getClusterNameById(i);
-          if (clusterName != null) {
-            commandCache.invalidateResultsOfCluster(clusterName);
-          }
-        }
-      }
-    }
   }
 
   @Override

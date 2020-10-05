@@ -37,16 +37,8 @@ public class ODistributedRecordLockedException extends ONeedRetryException {
     super(exception);
   }
 
-  public ODistributedRecordLockedException(
-      final String localNodeName, final ORID iRid, long timeout) {
-    super(
-        "Timeout ("
-            + timeout
-            + "ms) on acquiring lock on record "
-            + iRid
-            + " on server '"
-            + localNodeName
-            + "'. ");
+  public ODistributedRecordLockedException(final String localNodeName, final ORID iRid) {
+    super("Cannot acquire lock on record " + iRid + " on server '" + localNodeName + "'. ");
     this.rid = iRid;
     this.node = localNodeName;
   }

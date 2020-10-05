@@ -42,10 +42,12 @@ public class ODocumentSerializerDeltaDistributed extends ODocumentSerializerDelt
           }
       }
     }
-    if (isTree) {
-      toUpdate.makeTree();
-    } else {
-      toUpdate.makeEmbedded();
+    if (toUpdate != null) {
+      if (isTree) {
+        toUpdate.makeTree();
+      } else {
+        toUpdate.makeEmbedded();
+      }
     }
   }
 

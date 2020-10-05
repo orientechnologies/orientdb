@@ -242,22 +242,22 @@ public class OSecurityRemote implements OSecurityInternal {
 
   @Override
   public void setSecurityPolicy(
-      ODatabaseSession session, OSecurityRole role, String resource, OSecurityPolicy policy) {
+      ODatabaseSession session, OSecurityRole role, String resource, OSecurityPolicyImpl policy) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public OSecurityPolicy createSecurityPolicy(ODatabaseSession session, String name) {
+  public OSecurityPolicyImpl createSecurityPolicy(ODatabaseSession session, String name) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public OSecurityPolicy getSecurityPolicy(ODatabaseSession session, String name) {
+  public OSecurityPolicyImpl getSecurityPolicy(ODatabaseSession session, String name) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void saveSecurityPolicy(ODatabaseSession session, OSecurityPolicy policy) {
+  public void saveSecurityPolicy(ODatabaseSession session, OSecurityPolicyImpl policy) {
     throw new UnsupportedOperationException();
   }
 

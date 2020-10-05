@@ -7,7 +7,7 @@ import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
-import com.orientechnologies.orient.core.metadata.security.OSecurityPolicy;
+import com.orientechnologies.orient.core.metadata.security.OSecurityPolicyImpl;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -43,7 +43,7 @@ public class OAlterSecurityPolicyStatement extends OSimpleExecStatement {
   public OResultSet executeSimple(OCommandContext ctx) {
     ODatabaseSession db = (ODatabaseSession) ctx.getDatabase();
     OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
-    OSecurityPolicy policy = security.getSecurityPolicy(db, name.getStringValue());
+    OSecurityPolicyImpl policy = security.getSecurityPolicy(db, name.getStringValue());
     if (policy == null) {
       throw new OCommandExecutionException("Cannot find security policy " + name.toString());
     }

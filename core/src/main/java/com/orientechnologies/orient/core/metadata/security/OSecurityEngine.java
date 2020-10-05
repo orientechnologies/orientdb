@@ -308,7 +308,7 @@ public class OSecurityEngine {
     if (predicateString != null) {
       return parsePredicate(session, predicateString);
     }
-    return OBooleanExpression.FALSE;
+    return OBooleanExpression.TRUE;
   }
 
   private static OBooleanExpression getPredicateForClassHierarchy(

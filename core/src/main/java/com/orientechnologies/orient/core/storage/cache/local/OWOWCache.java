@@ -683,7 +683,6 @@ public final class OWOWCache extends OAbstractWriteCache
     filesLock.acquireWriteLock();
     try {
       final Integer fileId = nameIdMap.get(fileName);
-
       if (fileId != null) {
         if (fileId < 0) {
           return composeFileId(id, -fileId);
@@ -692,7 +691,6 @@ public final class OWOWCache extends OAbstractWriteCache
               "File " + fileName + " has already been added to the storage");
         }
       }
-
       while (true) {
         final int nextId = fileIdGen.nextInt(Integer.MAX_VALUE - 1) + 1;
         if (!idNameMap.containsKey(nextId) && !idNameMap.containsKey(-nextId)) {

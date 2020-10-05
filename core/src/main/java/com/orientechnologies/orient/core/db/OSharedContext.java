@@ -3,7 +3,6 @@ package com.orientechnologies.orient.core.db;
 import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.cache.OCommandCache;
 import com.orientechnologies.orient.core.db.viewmanager.ViewManager;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibraryImpl;
@@ -32,7 +31,6 @@ public abstract class OSharedContext extends OListenerManger<OMetadataUpdateList
   protected OSequenceLibraryImpl sequenceLibrary;
   protected OLiveQueryHook.OLiveQueryOps liveQueryOps;
   protected OLiveQueryHookV2.OLiveQueryOps liveQueryOpsV2;
-  protected OCommandCache commandCache;
   protected OStatementCache statementCache;
   protected OExecutionPlanCache executionPlanCache;
   protected OQueryStats queryStats;
@@ -72,10 +70,6 @@ public abstract class OSharedContext extends OListenerManger<OMetadataUpdateList
 
   public OLiveQueryHookV2.OLiveQueryOps getLiveQueryOpsV2() {
     return liveQueryOpsV2;
-  }
-
-  public OCommandCache getCommandCache() {
-    return commandCache;
   }
 
   public OStatementCache getStatementCache() {

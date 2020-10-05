@@ -82,6 +82,7 @@ public class OSystemDatabase {
    * called and restoring it after the database is closed.
    */
   public ODatabaseDocumentInternal openSystemDatabase() {
+    if (!exists()) init();
     return context.openNoAuthorization(getSystemDatabaseName());
   }
 
@@ -144,7 +145,11 @@ public class OSystemDatabase {
                 .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
                 .addConfig(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS, 1)
                 .build();
-        context.create(SYSTEM_DB_NAME, null, null, ODatabaseType.PLOCAL, config);
+        ODatabaseType type = ODatabaseType.PLOCAL;
+        if (context.isMemoryOnly()) {
+          type = ODatabaseType.MEMORY;
+        }
+        context.create(SYSTEM_DB_NAME, null, null, type, config);
       }
       checkServerId();
 

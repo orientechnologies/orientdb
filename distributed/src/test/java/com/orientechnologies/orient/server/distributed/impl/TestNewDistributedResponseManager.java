@@ -27,8 +27,8 @@ public class TestNewDistributedResponseManager {
     nodes.add("one");
     nodes.add("two");
     nodes.add("three");
-    ONewDistributedResponseManager responseManager =
-        new ONewDistributedResponseManager(transaction, nodes, nodes, 3, 3, 2);
+    ODistributedTxResponseManager responseManager =
+        new ODistributedTxResponseManager(transaction, nodes, nodes, 3, 3, 2);
     assertFalse(
         responseManager.collectResponse(new OTransactionPhase1TaskResult(new OTxSuccess()), "one"));
     assertFalse(
@@ -43,8 +43,8 @@ public class TestNewDistributedResponseManager {
     nodes.add("one");
     nodes.add("two");
     nodes.add("three");
-    ONewDistributedResponseManager responseManager =
-        new ONewDistributedResponseManager(transaction, nodes, nodes, 3, 3, 2);
+    ODistributedTxResponseManager responseManager =
+        new ODistributedTxResponseManager(transaction, nodes, nodes, 3, 3, 2);
     assertFalse(
         responseManager.collectResponse(new OTransactionPhase1TaskResult(new OTxSuccess()), "one"));
     assertFalse(
@@ -65,8 +65,8 @@ public class TestNewDistributedResponseManager {
     nodes.add("one");
     nodes.add("two");
     nodes.add("three");
-    ONewDistributedResponseManager responseManager =
-        new ONewDistributedResponseManager(transaction, nodes, nodes, 3, 3, 2);
+    ODistributedTxResponseManager responseManager =
+        new ODistributedTxResponseManager(transaction, nodes, nodes, 3, 3, 2);
     assertFalse(responseManager.setLocalResult("one", new OTxSuccess()));
     assertFalse(
         responseManager.collectResponse(
@@ -81,8 +81,8 @@ public class TestNewDistributedResponseManager {
     nodes.add("one");
     nodes.add("two");
     nodes.add("three");
-    ONewDistributedResponseManager responseManager =
-        new ONewDistributedResponseManager(transaction, nodes, nodes, 3, 3, 2);
+    ODistributedTxResponseManager responseManager =
+        new ODistributedTxResponseManager(transaction, nodes, nodes, 3, 3, 2);
     assertFalse(responseManager.setLocalResult("one", new OTxSuccess()));
     assertFalse(
         responseManager.collectResponse(new OTransactionPhase1TaskResult(new OTxSuccess()), "two"));
@@ -101,8 +101,8 @@ public class TestNewDistributedResponseManager {
     nodes.add("one");
     nodes.add("two");
     nodes.add("three");
-    ONewDistributedResponseManager responseManager =
-        new ONewDistributedResponseManager(transaction, nodes, nodes, 3, 3, 2);
+    ODistributedTxResponseManager responseManager =
+        new ODistributedTxResponseManager(transaction, nodes, nodes, 3, 3, 2);
     responseManager.setLocalResult("one", new OTxSuccess());
     CountDownLatch startedWaiting = new CountDownLatch(1);
     Future<Boolean> future =
@@ -127,8 +127,8 @@ public class TestNewDistributedResponseManager {
     nodes.add("one");
     nodes.add("two");
     nodes.add("three");
-    ONewDistributedResponseManager responseManager =
-        new ONewDistributedResponseManager(transaction, nodes, nodes, 3, 3, 2);
+    ODistributedTxResponseManager responseManager =
+        new ODistributedTxResponseManager(transaction, nodes, nodes, 3, 3, 2);
     responseManager.collectResponse(new OTransactionPhase1TaskResult(new OTxSuccess()), "one");
     assertFalse(
         responseManager.collectResponse(

@@ -108,13 +108,11 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
       final boolean verifyChecksum)
       throws IOException {
     assert pageCount > 0;
-
     fileId = checkFileIdCompatibility(fileId, storageId);
 
     if (deletedFiles.contains(fileId)) {
       throw new OStorageException("File with id " + fileId + " is deleted.");
     }
-
     final FileChanges changesContainer =
         fileChanges.computeIfAbsent(fileId, k -> new FileChanges());
 
@@ -126,7 +124,6 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
       }
     } else {
       OCacheEntryChanges pageChangesContainer = changesContainer.pageChangesMap.get(pageIndex);
-
       if (checkChangesFilledUpTo(changesContainer, pageIndex)) {
         if (pageChangesContainer == null) {
           final OCacheEntry delegate =
@@ -262,7 +259,6 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
             (int) filledUpTo,
             new OCachePointer(null, null, fileId, (int) filledUpTo),
             false);
-
     return pageChangesContainer;
   }
 
@@ -293,13 +289,10 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
   @Override
   public long filledUpTo(long fileId) {
     fileId = checkFileIdCompatibility(fileId, storageId);
-
     if (deletedFiles.contains(fileId)) {
       throw new OStorageException("File with id " + fileId + " is deleted.");
     }
-
     final FileChanges changesContainer = fileChanges.get(fileId);
-
     return internalFilledUpTo(fileId, changesContainer);
   }
 
@@ -338,20 +331,17 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
     if (newFileNamesId.containsKey(fileName)) {
       throw new OStorageException("File with name " + fileName + " already exists.");
     }
-
     final long fileId;
     final boolean isNew;
 
     if (deletedFileNameIdMap.containsKey(fileName)) {
       fileId = deletedFileNameIdMap.remove(fileName);
       deletedFiles.remove(fileId);
-
       isNew = false;
     } else {
       fileId = writeCache.bookFileId(fileName);
       isNew = true;
     }
-
     newFileNamesId.put(fileName, fileId);
 
     final FileChanges fileChanges = new FileChanges();
@@ -367,13 +357,10 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
   @Override
   public long loadFile(final String fileName) throws IOException {
     Long fileId = newFileNamesId.get(fileName);
-
     if (fileId == null) {
       fileId = writeCache.loadFile(fileName);
     }
-
     this.fileChanges.computeIfAbsent(fileId, k -> new FileChanges());
-
     return fileId;
   }
 
@@ -657,11 +644,9 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
     if (storageId == -1) {
       return fileId;
     }
-
     if (storageId(fileId) == 0) {
       return composeFileId(fileId, storageId);
     }
-
     return fileId;
   }
 

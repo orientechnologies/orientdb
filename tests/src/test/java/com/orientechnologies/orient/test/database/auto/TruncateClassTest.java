@@ -222,10 +222,6 @@ public class TruncateClassTest extends DocumentDBBaseTest {
     OSchema schema = database.getMetadata().getSchema();
     OClass testClass = getOrCreateClass(schema);
     boolean ccWasEnabled = false;
-    if (database.getMetadata().getCommandCache() != null) {
-      ccWasEnabled = database.getMetadata().getCommandCache().isEnabled();
-      database.getMetadata().getCommandCache().enable();
-    }
 
     database.command(new OCommandSQL("truncate class test_class")).execute();
 
@@ -242,8 +238,5 @@ public class TruncateClassTest extends DocumentDBBaseTest {
     Assert.assertEquals(result.size(), 0);
 
     schema.dropClass("test_class");
-    if (!ccWasEnabled && database.getMetadata().getCommandCache() != null) {
-      database.getMetadata().getCommandCache().disable();
-    }
   }
 }

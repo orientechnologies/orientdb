@@ -115,7 +115,7 @@ public class OServerStatement extends SimpleNode {
     return createExecutionPlan(ctx, profile);
   }
 
-  public OStatement copy() {
+  public OServerStatement copy() {
     throw new UnsupportedOperationException("IMPLEMENT copy() ON " + getClass().getSimpleName());
   }
 

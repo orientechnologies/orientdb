@@ -142,7 +142,7 @@ public class StorageStartupMetadata {
 
     try (final FileChannel backupChannel =
         FileChannel.open(
-            filePath,
+            backupPath,
             StandardOpenOption.READ,
             StandardOpenOption.CREATE_NEW,
             StandardOpenOption.WRITE,

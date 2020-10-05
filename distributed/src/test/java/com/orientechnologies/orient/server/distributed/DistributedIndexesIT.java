@@ -43,7 +43,6 @@ public class DistributedIndexesIT extends AbstractServerClusterTest {
 
   @Override
   protected void executeTest() throws Exception {
-
     ODatabaseDocument db =
         serverInstance
             .get(1)
@@ -51,10 +50,8 @@ public class DistributedIndexesIT extends AbstractServerClusterTest {
             .getContext()
             .open(getDatabaseName(), "admin", "admin");
     try {
-
       testIndexUsage(db);
       testIndexAcceptsNulls(db);
-
     } finally {
       db.close();
     }
@@ -84,7 +81,6 @@ public class DistributedIndexesIT extends AbstractServerClusterTest {
         .execute();
     db.command(new OCommandSQL("create property DistributedIndexTest.notunique_hash STRING"))
         .execute();
-
     try {
       db.command(
               new OCommandSQL(
@@ -154,7 +150,6 @@ public class DistributedIndexesIT extends AbstractServerClusterTest {
             db.command(new OCommandSQL("select count(*) from DistributedIndexTest")).execute();
         Assert.assertEquals(result.iterator().next().<Object>field("count"), 2l);
       }
-
     } catch (Exception e) {
       e.printStackTrace();
       Assert.fail(e.toString());

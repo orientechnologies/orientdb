@@ -39,7 +39,6 @@ import java.util.Set;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 
 public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleListener {
-
   public static final String LUCENE_ALGORITHM = "LUCENE";
 
   private static final Set<String> TYPES;
@@ -98,7 +97,7 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
 
     if (FULLTEXT.toString().equalsIgnoreCase(indexType)) {
       final int binaryFormatVersion = pagStorage.getConfiguration().getBinaryFormatVersion();
-      OLuceneFullTextIndex index =
+      final OLuceneFullTextIndex index =
           new OLuceneFullTextIndex(
               name,
               indexType,

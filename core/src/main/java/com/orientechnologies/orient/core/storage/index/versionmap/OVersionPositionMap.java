@@ -8,6 +8,11 @@ import java.io.IOException;
 public abstract class OVersionPositionMap extends ODurableComponent {
   public static final String DEF_EXTENSION = ".vpm";
 
+  public static int MAX_CONCURRENT_DISTRIBUTED_TRANSACTIONS = 1000;
+  public static int MAGIC_SAFETY_FILL_FACTOR = 10;
+  public static int DEFAULT_VERSION_ARRAY_SIZE =
+      MAX_CONCURRENT_DISTRIBUTED_TRANSACTIONS * MAGIC_SAFETY_FILL_FACTOR;
+
   public OVersionPositionMap(
       OAbstractPaginatedStorage storage, String name, String extension, String lockName) {
     super(storage, name, extension, lockName);
@@ -20,14 +25,10 @@ public abstract class OVersionPositionMap extends ODurableComponent {
 
   public abstract void delete(OAtomicOperation atomicOperation) throws IOException;
 
-  // VPM only stores an array of int for versions
-  public abstract void updateVersion(int hash, int version);
+  // VPM only stores an array of type integer for versions
+  public abstract void updateVersion(int versionHash);
 
-  public abstract int getVersion(int hash);
+  public abstract int getVersion(int versionHash);
 
-  // public abstract void close();
-
-  // public abstract void close(boolean flush) throws IOException;
-
-  // public abstract void synch();
+  public abstract int getKeyHash(Object key);
 }

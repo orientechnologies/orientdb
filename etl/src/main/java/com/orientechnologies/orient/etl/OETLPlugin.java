@@ -43,6 +43,10 @@ public class OETLPlugin extends OServerPluginAbstract {
 
   public OETLPlugin() {}
 
+  public OETLPlugin(OServer server) {
+    this.server = server;
+  }
+
   public void executeJob(
       String jsonConfig, String outDBConfigPath, OPluginMessageHandler messageHandler) {
     System.out.println("OrientDB etl v." + OConstants.getVersion() + " " + OConstants.ORIENT_URL);
@@ -51,7 +55,8 @@ public class OETLPlugin extends OServerPluginAbstract {
     } else {
       String[] args = {outDBConfigPath};
       final OETLProcessor processor =
-          new OETLProcessorConfigurator().parseConfigAndParameters(args);
+          new OETLProcessorConfigurator()
+              .parseConfigAndParametersWithContext(server.getContext(), args);
 
       try {
         // overriding default message handler if the chosen verbosity level is different from the

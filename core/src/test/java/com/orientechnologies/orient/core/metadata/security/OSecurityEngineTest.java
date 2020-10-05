@@ -49,7 +49,7 @@ public class OSecurityEngineTest {
 
     db.createClass("Person");
 
-    OSecurityPolicy policy = security.createSecurityPolicy(db, "policy1");
+    OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "policy1");
     policy.setActive(true);
     policy.setReadRule("name = 'admin'");
     security.saveSecurityPolicy(db, policy);
@@ -68,7 +68,7 @@ public class OSecurityEngineTest {
 
     db.createClass("Person");
 
-    OSecurityPolicy policy = security.createSecurityPolicy(db, "policy1");
+    OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "policy1");
     policy.setActive(true);
     policy.setReadRule("name = 'foo'");
     security.saveSecurityPolicy(db, policy);
@@ -88,7 +88,7 @@ public class OSecurityEngineTest {
     db.createClass("Person");
     db.createClass("Employee", "Person");
 
-    OSecurityPolicy policy = security.createSecurityPolicy(db, "policy1");
+    OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "policy1");
     policy.setActive(true);
     policy.setReadRule("name = 'foo'");
     security.saveSecurityPolicy(db, policy);
@@ -108,7 +108,7 @@ public class OSecurityEngineTest {
     db.createClass("Person");
     db.createClass("Employee", "Person");
 
-    OSecurityPolicy policy = security.createSecurityPolicy(db, "policy1");
+    OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "policy1");
     policy.setActive(true);
     policy.setReadRule("name = 'foo'");
     security.saveSecurityPolicy(db, policy);
@@ -135,7 +135,7 @@ public class OSecurityEngineTest {
     db.createClass("Person");
     db.createClass("Employee", "Person");
 
-    OSecurityPolicy policy = security.createSecurityPolicy(db, "policy1");
+    OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "policy1");
     policy.setActive(true);
     policy.setReadRule("name = 'admin'");
     security.saveSecurityPolicy(db, policy);
@@ -162,7 +162,7 @@ public class OSecurityEngineTest {
     db.createClass("Foo");
     db.createClass("Employee", "Person", "Foo");
 
-    OSecurityPolicy policy = security.createSecurityPolicy(db, "policy1");
+    OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "policy1");
     policy.setActive(true);
     policy.setReadRule("name = 'foo'");
     security.saveSecurityPolicy(db, policy);
@@ -195,7 +195,7 @@ public class OSecurityEngineTest {
 
     db.createClass("Person");
 
-    OSecurityPolicy policy = security.createSecurityPolicy(db, "policy1");
+    OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "policy1");
     policy.setActive(true);
     policy.setReadRule("name = 'foo'");
     security.saveSecurityPolicy(db, policy);
@@ -229,7 +229,7 @@ public class OSecurityEngineTest {
     record2.setProperty("name", "bar");
     record2.save();
 
-    OSecurityPolicy policy = security.createSecurityPolicy(db, "policy1");
+    OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "policy1");
     policy.setActive(true);
     policy.setReadRule("name = 'foo'");
     security.saveSecurityPolicy(db, policy);

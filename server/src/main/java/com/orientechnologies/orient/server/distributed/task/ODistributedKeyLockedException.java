@@ -11,15 +11,8 @@ public class ODistributedKeyLockedException extends ONeedRetryException {
     super(exception);
   }
 
-  public ODistributedKeyLockedException(String localNodeName, Object key, long timeout) {
-    super(
-        "Timeout ("
-            + timeout
-            + "ms) on acquiring lock on key '"
-            + key
-            + "' on server '"
-            + localNodeName
-            + "'.");
+  public ODistributedKeyLockedException(String localNodeName, Object key) {
+    super("Cannot acquire lock on key '" + key + "' on server '" + localNodeName + "'.");
     this.key = key.toString();
     this.node = localNodeName;
   }

@@ -47,11 +47,6 @@ public final class OCellBTreeSingleValueIndexEngine
     } else {
       throw new IllegalStateException("Invalid tree version " + version);
     }
-    // TODO: [DR] merge in[] into versionPositionMap
-    keyVersions = new int[DEFAULT_VERSION_ARRAY_SIZE];
-    for (int i = 0; i < DEFAULT_VERSION_ARRAY_SIZE; i++) {
-      keyVersions[i] = DEFAULT_VERSION;
-    }
     versionPositionMap =
         new OVersionPositionMapV0(
             storage, name, name + DATA_FILE_EXTENSION, OVersionPositionMap.DEF_EXTENSION);
@@ -92,16 +87,14 @@ public final class OCellBTreeSingleValueIndexEngine
     try {
       //noinspection unchecked
       sbTree.create(atomicOperation, keySerializer, keyTypes, keySize, encryption);
-      // TODO: [DR] create version position map OR better in constructor, lock on key level - lock
       versionPositionMap.create(atomicOperation);
-      // manager
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error of creation of index " + name), e);
     }
   }
 
   @Override
-  public void delete(OAtomicOperation atomicOperation) {
+  public void delete(final OAtomicOperation atomicOperation) {
     try {
       doClearTree(atomicOperation);
       sbTree.delete(atomicOperation);
@@ -135,7 +128,12 @@ public final class OCellBTreeSingleValueIndexEngine
       final OEncryption encryption) {
     //noinspection unchecked
     sbTree.load(indexName, keySize, keyTypes, keySerializer, encryption);
-    // TODO: [DR] VPM
+    try {
+      versionPositionMap.open();
+    } catch (final IOException e) {
+      throw OException.wrapException(
+          new OIndexException("Error during VPM load of index " + indexName), e);
+    }
   }
 
   @Override
@@ -262,33 +260,13 @@ public final class OCellBTreeSingleValueIndexEngine
 
   @Override
   public void updateUniqueIndexVersion(final Object key) {
-    this.applyUniqueIndexChange(key);
+    final int keyHash = versionPositionMap.getKeyHash(key);
+    versionPositionMap.updateVersion(keyHash);
   }
-
-  private final int[] keyVersions;
-  private static final int DEFAULT_VERSION = 0;
-  private static final int CONCURRENT_DISTRIBUTED_TRANSACTIONS = 1000;
-  private static final int SAFETY_FILL_FACTOR = 10;
-  private static final int DEFAULT_VERSION_ARRAY_SIZE =
-      CONCURRENT_DISTRIBUTED_TRANSACTIONS * SAFETY_FILL_FACTOR;
 
   @Override
   public int getUniqueIndexVersion(final Object key) {
-    final int keyHash = getKeyHash(key);
-    return keyVersions[keyHash];
-  }
-
-  private void applyUniqueIndexChange(final Object key) {
-    final int keyHash = getKeyHash(key);
-    final int version = ++keyVersions[keyHash];
-    keyVersions[keyHash] = version;
-  }
-
-  private int getKeyHash(final Object key) {
-    int keyHash = 0; // as for null values in hash map
-    if (key != null) {
-      keyHash = Math.abs(key.hashCode()) % DEFAULT_VERSION_ARRAY_SIZE;
-    }
-    return keyHash;
+    final int keyHash = versionPositionMap.getKeyHash(key);
+    return versionPositionMap.getVersion(keyHash);
   }
 }

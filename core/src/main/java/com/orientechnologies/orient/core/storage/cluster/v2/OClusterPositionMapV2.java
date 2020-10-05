@@ -268,7 +268,6 @@ public final class OClusterPositionMapV2 extends OClusterPositionMap {
     if (pageIndex > lastPage) {
       return null;
     }
-
     pageCount = (int) Math.min(lastPage - pageIndex + 1, pageCount);
 
     final OCacheEntry cacheEntry =

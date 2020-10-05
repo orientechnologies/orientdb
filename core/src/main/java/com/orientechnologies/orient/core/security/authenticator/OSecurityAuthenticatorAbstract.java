@@ -17,13 +17,12 @@
  *  * For more information: http://orientdb.com
  *
  */
-package com.orientechnologies.orient.server.security;
+package com.orientechnologies.orient.core.security.authenticator;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OGlobalUser;
 import com.orientechnologies.orient.core.security.OSecurityAuthenticator;
 import com.orientechnologies.orient.core.security.OSecuritySystem;
-import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import javax.security.auth.Subject;
 
 /**
@@ -56,21 +55,22 @@ public abstract class OSecurityAuthenticatorAbstract implements OSecurityAuthent
   // OSecurityComponent
   public void config(final ODocument jsonConfig, OSecuritySystem security) {
     this.security = security;
+    if (jsonConfig != null) {
+      if (jsonConfig.containsField("name")) {
+        name = jsonConfig.field("name");
+      }
 
-    if (jsonConfig.containsField("name")) {
-      name = jsonConfig.field("name");
-    }
+      if (jsonConfig.containsField("debug")) {
+        debug = jsonConfig.field("debug");
+      }
 
-    if (jsonConfig.containsField("debug")) {
-      debug = jsonConfig.field("debug");
-    }
+      if (jsonConfig.containsField("enabled")) {
+        enabled = jsonConfig.field("enabled");
+      }
 
-    if (jsonConfig.containsField("enabled")) {
-      enabled = jsonConfig.field("enabled");
-    }
-
-    if (jsonConfig.containsField("caseSensitive")) {
-      caseSensitive = jsonConfig.field("caseSensitive");
+      if (jsonConfig.containsField("caseSensitive")) {
+        caseSensitive = jsonConfig.field("caseSensitive");
+      }
     }
   }
 
@@ -116,7 +116,7 @@ public abstract class OSecurityAuthenticatorAbstract implements OSecurityAuthent
     return false;
   }
 
-  protected boolean isPasswordValid(final OServerUserConfiguration user) {
-    return user != null && user.password != null && !user.password.isEmpty();
+  protected boolean isPasswordValid(final OGlobalUser user) {
+    return user != null && user.getPassword() != null && !user.getPassword().isEmpty();
   }
 }

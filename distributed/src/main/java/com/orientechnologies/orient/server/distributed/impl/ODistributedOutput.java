@@ -692,7 +692,9 @@ public class ODistributedOutput {
           row.field("status", context.getStatus().toString());
           row.field(
               "records",
-              context.getLockedRids().stream().map(Object::toString).collect(Collectors.toList()));
+              context.getPromisedRids().stream()
+                  .map(r -> r.getKey().toString())
+                  .collect(Collectors.toList()));
 
           rows.add(row);
         }

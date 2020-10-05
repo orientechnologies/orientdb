@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT;
-
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -36,49 +34,25 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
+import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
-import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
 import com.orientechnologies.orient.server.distributed.impl.lock.OLockGuard;
 import com.orientechnologies.orient.server.distributed.impl.task.OLockKeySource;
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1Task;
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase2Task;
-import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionResultPayload;
-import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxConcurrentCreation;
-import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxConcurrentModification;
-import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxException;
-import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxInvalidSequential;
-import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxKeyLockTimeout;
-import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxRecordLockTimeout;
-import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxSuccess;
-import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxUniqueIndex;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.*;
 import com.orientechnologies.orient.server.distributed.task.ODistributedKeyLockedException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 
-/**
- * Distributed transaction manager.
- *
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- */
-public class ONewDistributedTransactionManager {
+public class ODistributedTxCoordinator {
   private final ODistributedServerManager dManager;
   private final OStorage storage;
   private final ODistributedDatabase localDistributedDatabase;
+  private ODistributedTxResponseManager responseManager;
 
-  private static final boolean SYNC_TX_COMPLETED = false;
-  private ONewDistributedResponseManager responseManager;
-
-  public ONewDistributedTransactionManager(
+  public ODistributedTxCoordinator(
       final OStorage storage,
       final ODistributedServerManager manager,
       final ODistributedDatabase iDDatabase) {
@@ -182,15 +156,13 @@ public class ONewDistributedTransactionManager {
 
     if (localResult.getResponseType() == OTxRecordLockTimeout.ID) {
       sharedDb.popTxContext(requestId).destroy();
-      int timeout = database.getConfiguration().getValueAsInteger(DISTRIBUTED_ATOMIC_LOCK_TIMEOUT);
       throw new ODistributedRecordLockedException(
-          dManager.getLocalNodeName(), ((OTxRecordLockTimeout) localResult).getLockedId(), timeout);
+          dManager.getLocalNodeName(), ((OTxRecordLockTimeout) localResult).getLockedId());
     }
     if (localResult.getResponseType() == OTxKeyLockTimeout.ID) {
       sharedDb.popTxContext(requestId).destroy();
-      int timeout = database.getConfiguration().getValueAsInteger(DISTRIBUTED_ATOMIC_LOCK_TIMEOUT);
       throw new ODistributedKeyLockedException(
-          dManager.getLocalNodeName(), ((OTxKeyLockTimeout) localResult).getKey(), timeout);
+          dManager.getLocalNodeName(), ((OTxKeyLockTimeout) localResult).getKey());
     }
 
     if (nodes.isEmpty()) {
@@ -233,19 +205,13 @@ public class ONewDistributedTransactionManager {
           }
         case OTxRecordLockTimeout.ID:
           {
-            int timeout =
-                database.getConfiguration().getValueAsInteger(DISTRIBUTED_ATOMIC_LOCK_TIMEOUT);
             throw new ODistributedRecordLockedException(
-                dManager.getLocalNodeName(),
-                ((OTxRecordLockTimeout) localResult).getLockedId(),
-                timeout);
+                dManager.getLocalNodeName(), ((OTxRecordLockTimeout) localResult).getLockedId());
           }
         case OTxKeyLockTimeout.ID:
           {
-            int timeout =
-                database.getConfiguration().getValueAsInteger(DISTRIBUTED_ATOMIC_LOCK_TIMEOUT);
             throw new ODistributedKeyLockedException(
-                dManager.getLocalNodeName(), ((OTxKeyLockTimeout) localResult).getKey(), timeout);
+                dManager.getLocalNodeName(), ((OTxKeyLockTimeout) localResult).getKey());
           }
         case OTxInvalidSequential.ID:
           // This never happen in local only, keep the management anyway
@@ -278,7 +244,7 @@ public class ONewDistributedTransactionManager {
                 groupByResponse,
                 waitLocalNode) -> {
               responseManager =
-                  new ONewDistributedResponseManager(
+                  new ODistributedTxResponseManager(
                       txTask,
                       iNodes,
                       nodesConcurToTheQuorum,
@@ -298,13 +264,12 @@ public class ONewDistributedTransactionManager {
   private void handleResponse(
       ODistributedRequestId requestId,
       OTransactionId transactionId,
-      ONewDistributedResponseManager responseManager,
+      ODistributedTxResponseManager responseManager,
       Set<String> involvedClusters,
       Set<String> nodes,
       ODatabaseDocumentDistributed database,
       OTransactionInternal iTx,
       OTransactionPhase1Task txTask) {
-    int timeout = database.getConfiguration().getValueAsInteger(DISTRIBUTED_ATOMIC_LOCK_TIMEOUT);
     int[] involvedClustersIds = new int[involvedClusters.size()];
     int i = 0;
     for (String involvedCluster : involvedClusters) {
@@ -371,15 +336,13 @@ public class ONewDistributedTransactionManager {
           localKo(requestId, database, txTask);
           throw new ODistributedRecordLockedException(
               ((OTxRecordLockTimeout) resultPayload).getNode(),
-              ((OTxRecordLockTimeout) resultPayload).getLockedId(),
-              timeout);
+              ((OTxRecordLockTimeout) resultPayload).getLockedId());
         case OTxKeyLockTimeout.ID:
           sendPhase2Task(involvedClusters, nodes, newSecondPhase(requestId, txTask, false));
           localKo(requestId, database, txTask);
           throw new ODistributedKeyLockedException(
               ((OTxKeyLockTimeout) resultPayload).getNode(),
-              ((OTxKeyLockTimeout) resultPayload).getKey(),
-              timeout);
+              ((OTxKeyLockTimeout) resultPayload).getKey());
         case OTxInvalidSequential.ID:
           sendPhase2Task(involvedClusters, nodes, newSecondPhase(requestId, txTask, false));
           localKo(requestId, database, txTask);
@@ -405,15 +368,12 @@ public class ONewDistributedTransactionManager {
             localKo(requestId, database, txTask);
             throw new ODistributedRecordLockedException(
                 ((OTxRecordLockTimeout) result).getNode(),
-                ((OTxRecordLockTimeout) result).getLockedId(),
-                timeout);
+                ((OTxRecordLockTimeout) result).getLockedId());
           case OTxKeyLockTimeout.ID:
             sendPhase2Task(involvedClusters, nodes, newSecondPhase(requestId, txTask, false));
             localKo(requestId, database, txTask);
             throw new ODistributedKeyLockedException(
-                ((OTxKeyLockTimeout) result).getNode(),
-                ((OTxKeyLockTimeout) result).getKey(),
-                timeout);
+                ((OTxKeyLockTimeout) result).getNode(), ((OTxKeyLockTimeout) result).getKey());
 
           case OTxConcurrentCreation.ID:
             sendPhase2Task(involvedClusters, nodes, newSecondPhase(requestId, txTask, false));

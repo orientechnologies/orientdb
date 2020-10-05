@@ -64,6 +64,12 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
     return new OrientDB(this);
   }
 
+  default OrientDB newOrientDBNoClose() {
+    return new OrientDB(this) {
+      @Override
+      public void close() {}
+    };
+  }
   /**
    * Create a new remote factory
    *
@@ -285,6 +291,10 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
   boolean isOpen();
 
   boolean isEmbedded();
+
+  default boolean isMemoryOnly() {
+    return false;
+  }
 
   static OrientDBInternal extract(OrientDB orientDB) {
     return orientDB.internal;

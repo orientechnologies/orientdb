@@ -750,24 +750,6 @@ public class OServer {
         .authenticateAndAuthorize(iUserName, iPassword, iResourceToCheck);
   }
 
-  /**
-   * Checks if a server user is allowed to operate with a resource.
-   *
-   * @param iUserName Username to authenticate
-   * @return true if authentication is ok, otherwise false
-   */
-  public boolean isAllowed(final String iUserName, final String iResourceToCheck) {
-    return databases.getSecuritySystem().isAuthorized(iUserName, iResourceToCheck);
-  }
-
-  public OGlobalUser getUser(final String iUserName) {
-    return databases.getSecuritySystem().getUser(iUserName);
-  }
-
-  public void dropUser(final String iUserName) throws IOException {
-    databases.getSecuritySystem().dropUser(iUserName);
-  }
-
   public boolean existsStoragePath(final String iURL) {
     return serverCfg.getConfiguration().getStoragePath(iURL) != null;
   }

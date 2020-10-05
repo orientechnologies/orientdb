@@ -401,6 +401,8 @@ TOKEN:
 	|
 	< DEFAULTCLUSTER: ( "D" | "d") ( "E" | "e") ( "F" | "f") ( "A" | "a") ( "U" | "u") ( "L" | "l") ( "T" | "t") ( "C" | "c" ) ( "L" | "l" ) ( "U" | "u" ) ( "S" | "s" ) ( "T" | "t" ) ( "E" | "e" ) ( "R" | "r" ) >
 	|
+	< SYSTEM: ( "s" | "S" ) ( "y" | "Y" ) ( "s" | "S" ) ( "t" | "T" ) ( "e" | "E" ) ( "m" | "M" ) >
+	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
 	< RECORD_ATTRIBUTE: <RID_ATTR> | <CLASS_ATTR> | <VERSION_ATTR> | <SIZE_ATTR> | <TYPE_ATTR> | <RAW_ATTR> | <RID_ID_ATTR> | <RID_POS_ATTR> | <FIELDS_ATTR> >
@@ -952,6 +954,8 @@ OIdentifier Identifier():
     |
     token = <POLICY>
     |
+    token = <SYSTEM>
+    |
     quotedToken = <QUOTED_IDENTIFIER>
 ) {
 
@@ -1021,9 +1025,13 @@ OServerStatement ServerStatement():
 }
 {
     (
+        LOOKAHEAD(2)
         result = CreateDatabaseStatement()
         |
         result = DropDatabaseStatement()
+        |
+        LOOKAHEAD(2)
+        result = CreateSystemUserStatement()
     )
 	{
 	    return result;
@@ -4792,6 +4800,49 @@ OCreateFunctionStatement CreateFunctionStatement():
     { return jjtThis; }
 }
 
+
+OCreateSystemUserStatement CreateSystemUserStatement():
+{
+    Token token;
+    OIdentifier lastIdentifier;
+}
+{
+    (
+        <CREATE> <SYSTEM> <USER>
+        jjtThis.name = Identifier()
+        <IDENTIFIED> <BY>
+        (
+            jjtThis.passwordIdentifier = Identifier()
+            |
+            jjtThis.passwordString = String()
+            |
+            jjtThis.passwordParam = InputParameter()
+        )
+        [
+          <ROLE>
+          (
+            (
+              lastIdentifier = Identifier()
+              {
+                 jjtThis.roles.add(lastIdentifier);
+              }
+            )
+            |
+            (
+               <LBRACKET>
+               [
+                 lastIdentifier = Identifier() { jjtThis.roles.add(lastIdentifier);}
+                 (
+                    <COMMA> lastIdentifier = Identifier() { jjtThis.roles.add(lastIdentifier);}
+                 )*
+               ]
+               <RBRACKET>
+            )
+          )
+        ]
+    )
+    { return jjtThis; }
+}
 
 OCreateUserStatement CreateUserStatement():
 {

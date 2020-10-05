@@ -111,7 +111,6 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     if (atomicOperation == null) {
       return writeCache.getFilledUpTo(fileId);
     }
-
     return atomicOperation.filledUpTo(fileId);
   }
 
@@ -144,7 +143,6 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     if (atomicOperation == null) {
       return readCache.loadForRead(fileId, pageIndex, checkPinnedPages, writeCache, true);
     }
-
     return atomicOperation.loadPageForRead(fileId, pageIndex, checkPinnedPages, pageCount);
   }
 
@@ -153,7 +151,6 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     if (atomicOperation == null) {
       return readCache.allocateNewPage(fileId, writeCache, null);
     }
-
     return atomicOperation.addPage(fileId);
   }
 
@@ -180,7 +177,6 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     if (atomicOperation == null) {
       return readCache.addFile(fileName, writeCache);
     }
-
     return atomicOperation.addFile(fileName);
   }
 
@@ -189,7 +185,6 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     if (atomicOperation == null) {
       return writeCache.loadFile(fileName);
     }
-
     return atomicOperation.loadFile(fileName);
   }
 

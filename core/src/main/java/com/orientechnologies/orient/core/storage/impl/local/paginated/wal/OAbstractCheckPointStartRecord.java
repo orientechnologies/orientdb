@@ -23,10 +23,6 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import java.nio.ByteBuffer;
 
-/**
- * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
- * @since 14.05.13
- */
 public abstract class OAbstractCheckPointStartRecord extends OAbstractWALRecord {
   private OLogSequenceNumber previousCheckpoint;
 

@@ -21,7 +21,6 @@ package com.orientechnologies.orient.core.metadata;
 
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.cache.OCommandCache;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.index.OIndexManager;
@@ -53,7 +52,6 @@ public class OMetadataDefault implements OMetadataInternal {
   protected OSchedulerProxy scheduler;
   protected OSequenceLibraryProxy sequenceLibrary;
 
-  protected OCommandCache commandCache;
   protected static final OProfiler PROFILER = Orient.instance().getProfiler();
 
   private OImmutableSchema immutableSchema = null;
@@ -74,11 +72,6 @@ public class OMetadataDefault implements OMetadataInternal {
 
   public OSchemaProxy getSchema() {
     return schema;
-  }
-
-  @Override
-  public OCommandCache getCommandCache() {
-    return commandCache;
   }
 
   @Override
@@ -131,7 +124,6 @@ public class OMetadataDefault implements OMetadataInternal {
     schema = new OSchemaProxy(shared.getSchema(), database);
     indexManager = new OIndexManagerProxy(shared.getIndexManager(), database);
     security = new OSecurityProxy(shared.getSecurity(), database);
-    commandCache = shared.getCommandCache();
     functionLibrary = new OFunctionLibraryProxy(shared.getFunctionLibrary(), database);
     sequenceLibrary = new OSequenceLibraryProxy(shared.getSequenceLibrary(), database);
     scheduler = new OSchedulerProxy(shared.getScheduler(), database);

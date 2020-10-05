@@ -8,7 +8,7 @@ import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
-import com.orientechnologies.orient.core.metadata.security.OSecurityPolicy;
+import com.orientechnologies.orient.core.metadata.security.OSecurityPolicyImpl;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -61,7 +61,7 @@ public class OAlterRoleStatement extends OSimpleExecStatement {
       result.setProperty("name", name.getStringValue());
       result.setProperty("resource", op.resource.toString());
       if (op.type == Op.TYPE_ADD) {
-        OSecurityPolicy policy = security.getSecurityPolicy(db, op.policyName.getStringValue());
+        OSecurityPolicyImpl policy = security.getSecurityPolicy(db, op.policyName.getStringValue());
         result.setProperty("operation", "ADD POLICY");
         result.setProperty("policyName", op.policyName.getStringValue());
         try {

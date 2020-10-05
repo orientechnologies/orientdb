@@ -184,7 +184,9 @@ public class OrientDBEmbedded implements OrientDBInternal {
       initAutoClose(delay);
     }
     systemDatabase = new OSystemDatabase(this);
-    securitySystem = new ODefaultSecuritySystem(this, this.configurations.getSecurityConfig());
+    securitySystem = new ODefaultSecuritySystem();
+    ((ODefaultSecuritySystem) securitySystem)
+        .activate(this, this.configurations.getSecurityConfig());
   }
 
   protected OCachedDatabasePoolFactory createCachedDatabasePoolFactory(OrientDBConfig config) {
@@ -1156,4 +1158,8 @@ public class OrientDBEmbedded implements OrientDBInternal {
   public String getBasePath() {
     return basePath;
   }
+
+  public boolean isMemoryOnly() {
+    return basePath == null;
+  };
 }

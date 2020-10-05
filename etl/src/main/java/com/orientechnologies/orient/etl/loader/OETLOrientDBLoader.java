@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.etl.OETLPipeline;
+import com.orientechnologies.orient.etl.context.OETLContext;
 import com.orientechnologies.orient.etl.context.OETLContextWrapper;
 import java.util.Arrays;
 import java.util.List;
@@ -426,10 +427,11 @@ public class OETLOrientDBLoader extends OETLAbstractLoader implements OETLLoader
 
     String kind = dbURL.substring(0, dbURL.indexOf(":"));
     String dbCtx = dbURL.substring(dbURL.indexOf(":") + 1);
+    OETLContext context = (OETLContext) this.context;
 
     if ("memory".equalsIgnoreCase(kind)) {
 
-      orient = new OrientDB("embedded:" + dbCtx, dbUser, dbPassword, null);
+      orient = context.getOrientDB("embedded:" + dbCtx, dbUser, dbPassword);
       if (orient.exists(dbCtx) && dbAutoDropIfExists) {
         orient.drop(dbCtx);
       }
@@ -446,7 +448,7 @@ public class OETLOrientDBLoader extends OETLAbstractLoader implements OETLLoader
               dbCtx.lastIndexOf("/") >= 0 ? dbCtx.lastIndexOf("/") + 1 : dbCtx.lastIndexOf("/"));
       dbCtx = dbCtx.substring(0, dbCtx.lastIndexOf("/"));
 
-      orient = new OrientDB("embedded:" + dbCtx, dbUser, dbPassword, null);
+      orient = context.getOrientDB("embedded:" + dbCtx, dbUser, dbPassword);
 
       if (orient.exists(dbName) && dbAutoDropIfExists) {
         orient.drop(dbName);
@@ -457,7 +459,7 @@ public class OETLOrientDBLoader extends OETLAbstractLoader implements OETLLoader
       }
       pool = new ODatabasePool(orient, dbName, dbUser, dbPassword);
     } else {
-      orient = new OrientDB("remote:" + dbCtx, serverUser, serverPassword, null);
+      orient = context.getOrientDB("remote:" + dbCtx, serverUser, serverPassword);
       String dbName = dbCtx.substring(dbCtx.lastIndexOf("/"));
 
       dbName = dbName.replace("/", "").trim();
@@ -591,6 +593,7 @@ public class OETLOrientDBLoader extends OETLAbstractLoader implements OETLLoader
 
   @Override
   public void close() {
+    pool.close();
     orient.close();
   }
 
