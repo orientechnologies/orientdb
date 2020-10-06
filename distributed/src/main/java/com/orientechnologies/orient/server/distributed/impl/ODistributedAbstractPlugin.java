@@ -2001,6 +2001,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
           if (backupFullPath.exists()) {
             deleteRecursively(backupFullPath);
           }
+          Files.createDirectories(backupFullPath.toPath());
+
           Files.move(oldDirectory.toPath(), backupFullPath.toPath());
         }
       }
