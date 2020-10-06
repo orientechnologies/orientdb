@@ -2039,9 +2039,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         });
   }
 
-  /**
-   * Installs a database from the network.
-   */
+  /** Installs a database from the network. */
   protected void installDatabaseFromNetwork(
       final String dbPath,
       final String databaseName,
