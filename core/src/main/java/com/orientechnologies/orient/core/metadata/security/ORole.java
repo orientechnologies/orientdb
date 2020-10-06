@@ -85,7 +85,9 @@ public class ORole extends OIdentity implements OSecurityRole {
     parentRole = iParent;
     document.field("inheritedRole", iParent != null ? iParent.getIdentity() : null);
     if (policies != null) {
-      document.setProperty("policies", policies);
+      Map<String, OIdentifiable> p = new HashMap<>();
+      policies.forEach((k, v) -> p.put(k, ((OSecurityPolicyImpl) v).getElement()));
+      document.setProperty("policies", p);
     }
 
     updateRolesDocumentContent();
