@@ -686,6 +686,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final int clusterId = cluster.getId();
 
       if (!sbTreeCollectionManager.isComponentPresent(operation, clusterId)) {
+        OLogManager.instance()
+            .info(this, "Cluster with id %d does not have associated rid bag, fixing ...");
         sbTreeCollectionManager.createComponent(operation, clusterId);
       }
     }
@@ -2610,7 +2612,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final String algorithm,
       final String indexType,
       final OIndexDefinition indexDefinition,
-      final OBinarySerializer valueSerializer,
+      final OBinarySerializer<?> valueSerializer,
       final boolean isAutomatic,
       final Boolean durableInNonTxMode,
       final int version,
@@ -2639,7 +2641,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         makeStorageDirty();
 
-        final OBinarySerializer keySerializer = determineKeySerializer(indexDefinition, metadata);
+        final OBinarySerializer<?> keySerializer = determineKeySerializer(indexDefinition,
+            metadata);
         if (keySerializer == null) {
           throw new OIndexException("Can not determine key serializer");
         }
@@ -2728,7 +2731,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final String algorithm,
       final String indexType,
       final OIndexDefinition indexDefinition,
-      final OBinarySerializer valueSerializer,
+      final OBinarySerializer<?> valueSerializer,
       final boolean isAutomatic,
       final Boolean durableInNonTxMode,
       final int version,
@@ -2776,7 +2779,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                 }
               }
 
-              final OBinarySerializer keySerializer =
+              final OBinarySerializer<?> keySerializer =
                   determineKeySerializer(indexDefinition, metadata);
               if (keySerializer == null) {
                 throw new OIndexException("Can not determine key serializer");
@@ -2880,14 +2883,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final String engineName,
       final String algorithm,
       final String indexType,
-      final OBinarySerializer valueSerializer,
+      final OBinarySerializer<?> valueSerializer,
       final boolean isAutomatic,
       final Boolean durableInNonTxMode,
       final int version,
       final int apiVersion,
       final boolean multivalue,
       final Map<String, String> engineProperties,
-      final OBinarySerializer keySerializer,
+      final OBinarySerializer<?> keySerializer,
       final int keySize,
       final OType[] keyTypes,
       final boolean nullValuesSupport)
@@ -2961,7 +2964,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private OBinarySerializer determineKeySerializer(
+  private OBinarySerializer<?> determineKeySerializer(
       final OIndexDefinition indexDefinition, final ODocument metadata) {
     if (indexDefinition == null) {
       throw new OStorageException("Index definition has to be provided");
@@ -2980,7 +2983,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               + " fields.");
     }
 
-    final OBinarySerializer keySerializer;
+    final OBinarySerializer<?> keySerializer;
     if (indexDefinition.getTypes().length > 1) {
       keySerializer = OCompositeKeySerializer.INSTANCE;
     } else {
@@ -4489,7 +4492,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           return executeCommand(iCommand, executor);
         } catch (final ORetryQueryException ignore) {
           if (iCommand instanceof OQueryAbstract) {
-            final OQueryAbstract query = (OQueryAbstract) iCommand;
+            final OQueryAbstract<?> query = (OQueryAbstract<?>) iCommand;
             query.reset();
           }
         }
@@ -4534,7 +4537,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             if (iCommand.getResultListener() != null) {
               // INVOKE THE LISTENER IF ANY
               if (result instanceof Collection) {
-                for (final Object o : (Collection) result) {
+                for (final Object o : (Collection<?>) result) {
                   iCommand.getResultListener().result(o);
                 }
               } else {
