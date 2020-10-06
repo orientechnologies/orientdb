@@ -680,8 +680,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final int clusterId = cluster.getId();
 
       if (!sbTreeCollectionManager.isComponentPresent(operation, clusterId)) {
-        OLogManager.instance()
-            .info(this, "Cluster with id %d does not have associated rid bag, fixing ...");
         sbTreeCollectionManager.createComponent(operation, clusterId);
       }
     }
