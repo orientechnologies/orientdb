@@ -110,6 +110,7 @@ import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -1970,27 +1971,10 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     final File backupFullPath = new File(backupPath);
     try {
       if (backupFullPath.exists()) {
-        // delete directory and its content
-        Files.walkFileTree(
-            backupFullPath.toPath(),
-            new SimpleFileVisitor<Path>() {
-              @Override
-              public FileVisitResult postVisitDirectory(Path dir, IOException exc)
-                  throws IOException {
-                Files.delete(dir);
-                return FileVisitResult.CONTINUE;
-              }
-
-              @Override
-              public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
-                  throws IOException {
-                Files.delete(file);
-                return FileVisitResult.CONTINUE;
-              }
-            });
-      } else {
-        Files.createDirectories(backupFullPath.toPath());
+        deleteRecursively(backupFullPath);
       }
+
+      Files.createDirectories(backupFullPath.toPath());
 
       // move the database on current node
       ODistributedServerLog.warn(
@@ -2005,11 +1989,20 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
       final File oldDirectory = new File(dbpath);
       if (oldDirectory.exists() && oldDirectory.isDirectory()) {
-        Files.move(
-            oldDirectory.toPath(),
-            backupFullPath.toPath(),
-            StandardCopyOption.REPLACE_EXISTING,
-            StandardCopyOption.ATOMIC_MOVE);
+        try {
+          Files.move(
+              oldDirectory.toPath(), backupFullPath.toPath(), StandardCopyOption.ATOMIC_MOVE);
+        } catch (AtomicMoveNotSupportedException e) {
+          OLogManager.instance()
+              .errorNoDb(
+                  this,
+                  "Atomic moves not supported during database backup, will try not atomic move",
+                  null);
+          if (backupFullPath.exists()) {
+            deleteRecursively(backupFullPath);
+          }
+          Files.move(oldDirectory.toPath(), backupFullPath.toPath());
+        }
       }
     } catch (IOException e) {
       ODistributedServerLog.warn(
@@ -2026,7 +2019,29 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     }
   }
 
-  /** Installs a database from the network. */
+  private void deleteRecursively(final File path) throws IOException {
+    // delete directory and its content
+    Files.walkFileTree(
+        path.toPath(),
+        new SimpleFileVisitor<Path>() {
+          @Override
+          public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+            Files.delete(dir);
+            return FileVisitResult.CONTINUE;
+          }
+
+          @Override
+          public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
+              throws IOException {
+            Files.delete(file);
+            return FileVisitResult.CONTINUE;
+          }
+        });
+  }
+
+  /**
+   * Installs a database from the network.
+   */
   protected void installDatabaseFromNetwork(
       final String dbPath,
       final String databaseName,
