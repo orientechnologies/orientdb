@@ -130,6 +130,10 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
     return tree.createComponent(atomicOperation);
   }
 
+  public boolean isComponentPresent(final OAtomicOperation atomicOperation, final int clusterId) {
+    return atomicOperation.isFileExists(FILE_NAME_PREFIX + clusterId + DEFAULT_EXTENSION);
+  }
+
   @Override
   protected OSBTreeBonsaiLocal<OIdentifiable, Integer> createEdgeTree(
       final OAtomicOperation atomicOperation, int clusterId) throws IOException {
