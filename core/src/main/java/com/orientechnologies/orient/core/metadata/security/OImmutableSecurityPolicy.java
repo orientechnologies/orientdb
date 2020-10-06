@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
 
 public class OImmutableSecurityPolicy implements OSecurityPolicy {
 
@@ -24,6 +25,26 @@ public class OImmutableSecurityPolicy implements OSecurityPolicy {
     this.afterUpdate = element.getAfterUpdateRule();
     this.delete = element.getDeleteRule();
     this.execute = element.getExecuteRule();
+  }
+
+  public OImmutableSecurityPolicy(
+      String name,
+      String create,
+      String read,
+      String beforeUpdate,
+      String afterUpdate,
+      String delete,
+      String execute) {
+    super();
+    this.identity = new ORecordId(-1, -1);
+    this.active = true;
+    this.name = name;
+    this.create = create;
+    this.read = read;
+    this.beforeUpdate = beforeUpdate;
+    this.afterUpdate = afterUpdate;
+    this.delete = delete;
+    this.execute = execute;
   }
 
   @Override

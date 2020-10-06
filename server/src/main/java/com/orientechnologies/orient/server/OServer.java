@@ -43,7 +43,6 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
-import com.orientechnologies.orient.core.metadata.security.OSystemUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.security.OSecuritySystem;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
@@ -862,7 +861,7 @@ public class OServer {
     final ODatabaseDocumentInternal database;
     boolean serverAuth = false;
     database = databases.open(iDbUrl, user, password);
-    if (OSystemUser.SERVER_USER_TYPE.equals(database.getUser().getUserType())) {
+    if (OSecurityUser.SERVER_USER_TYPE.equals(database.getUser().getUserType())) {
       serverAuth = true;
     }
     if (serverAuth && data != null) {

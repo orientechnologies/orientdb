@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.security.ORule.ResourceGeneric;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser.STATUSES;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
 import com.orientechnologies.orient.core.record.OElement;
@@ -1072,57 +1073,52 @@ public class OSecurityShared implements OSecurityInternal {
     return getUserInternal(session, username);
   }
 
-  public static ORole createRole(ODatabaseSession session, OGlobalUser serverUser) {
+  public static OSecurityRole createRole(ODatabaseSession session, OGlobalUser serverUser) {
 
-    final OSystemRole role;
+    final OSecurityRole role;
     if (serverUser.getResources().equalsIgnoreCase("*")) {
-      Map<String, OSecurityPolicy> policies =
-          createSecurityPolicyWithBitmask("*", ORole.PERMISSION_ALL);
-      role =
-          new OSystemRole(
-              serverUser.getName(), null, OSecurityRole.ALLOW_MODES.ALLOW_ALL_BUT, policies);
-
-      createRoot(session, role);
+      role = createRoot(serverUser);
     } else {
-      role =
-          new OSystemRole(
-              serverUser.getName(), null, OSecurityRole.ALLOW_MODES.ALLOW_ALL_BUT, null);
-      mapPermission(role, serverUser);
+      Map<ResourceGeneric, ORule> permissions = mapPermission(serverUser);
+      role = new OImmutableRole(null, serverUser.getName(), permissions, null);
     }
 
     return role;
   }
 
-  private static void mapPermission(ORole role, OGlobalUser user) {
+  private static OSecurityRole createRoot(OGlobalUser serverUser) {
+    Map<String, OImmutableSecurityPolicy> policies = createrRootSecurityPolicy("*");
+    Map<ORule.ResourceGeneric, ORule> rules = new HashMap<ORule.ResourceGeneric, ORule>();
+    for (ORule.ResourceGeneric resource : ORule.ResourceGeneric.values()) {
+      ORule rule = new ORule(resource, null, null);
+      rule.grantAccess(null, ORole.PERMISSION_ALL);
+      rules.put(resource, rule);
+    }
 
+    return new OImmutableRole(null, serverUser.getName(), rules, policies);
+  }
+
+  private static Map<ResourceGeneric, ORule> mapPermission(OGlobalUser user) {
+    Map<ORule.ResourceGeneric, ORule> rules = new HashMap<ORule.ResourceGeneric, ORule>();
     String[] strings = user.getResources().split(",");
 
     for (String string : strings) {
       ORule.ResourceGeneric generic = ORule.mapLegacyResourceToGenericResource(string);
       if (generic != null) {
-        role.addRule(generic, null, ORole.PERMISSION_ALL);
+        ORule rule = new ORule(generic, null, null);
+        rule.grantAccess(null, ORole.PERMISSION_ALL);
+        rules.put(generic, rule);
       }
     }
+    return rules;
   }
 
-  private static void createRoot(ODatabaseSession session, ORole role) {
-    for (ORule.ResourceGeneric resource : ORule.ResourceGeneric.values()) {
-      role.addRule(resource, null, ORole.PERMISSION_ALL);
-    }
-  }
-
-  public static Map<String, OSecurityPolicy> createSecurityPolicyWithBitmask(
-      String resource, int legacyPolicy) {
-    String policyName = "default_" + legacyPolicy;
-    OSecurityPolicyImpl policy = new OSecurityPolicyImpl(new ODocument().field("name", policyName));
-    policy.setCreateRule((legacyPolicy & ORole.PERMISSION_CREATE) > 0 ? "true" : "false");
-    policy.setReadRule((legacyPolicy & ORole.PERMISSION_READ) > 0 ? "true" : "false");
-    policy.setBeforeUpdateRule((legacyPolicy & ORole.PERMISSION_UPDATE) > 0 ? "true" : "false");
-    policy.setAfterUpdateRule((legacyPolicy & ORole.PERMISSION_UPDATE) > 0 ? "true" : "false");
-    policy.setDeleteRule((legacyPolicy & ORole.PERMISSION_DELETE) > 0 ? "true" : "false");
-    policy.setExecuteRule((legacyPolicy & ORole.PERMISSION_EXECUTE) > 0 ? "true" : "false");
-    Map<String, OSecurityPolicy> policies = new HashMap<String, OSecurityPolicy>();
-    policies.put(resource, policy);
+  public static Map<String, OImmutableSecurityPolicy> createrRootSecurityPolicy(String resource) {
+    Map<String, OImmutableSecurityPolicy> policies =
+        new HashMap<String, OImmutableSecurityPolicy>();
+    policies.put(
+        resource,
+        new OImmutableSecurityPolicy(resource, "true", "true", "true", "true", "true", "true"));
     return policies;
   }
 

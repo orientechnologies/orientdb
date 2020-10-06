@@ -21,9 +21,9 @@ package com.orientechnologies.orient.core.security.authenticator;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.metadata.security.OImmutableUser;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
-import com.orientechnologies.orient.core.metadata.security.OSystemUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.security.OSecuritySystem;
@@ -83,7 +83,7 @@ public class ODefaultPasswordAuthenticator extends OSecurityAuthenticatorAbstrac
       String password = userDoc.field("password");
 
       if (password == null) password = "";
-      userCfg = new OSystemUser(user, "null", OSystemUser.SERVER_USER_TYPE);
+      userCfg = new OImmutableUser(user, OSecurityUser.SERVER_USER_TYPE);
       // userCfg.addRole(OSecurityShared.createRole(null, user));
     }
 

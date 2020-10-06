@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OImmutableUser;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
+import com.orientechnologies.orient.core.metadata.security.OSecurityRole;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OSystemUser;
@@ -459,16 +460,17 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
   }
 
   public OSecurityUser getServerUser(final String username) {
-    OSystemUser systemUser = null;
+    OSecurityUser systemUser = null;
     // This will throw an IllegalArgumentException if iUserName is null or empty.
     // However, a null or empty iUserName is possible with some security implementations.
     if (serverConfig != null && serverConfig.usersManagement()) {
       if (username != null && !username.isEmpty()) {
         OGlobalUser userCfg = serverConfig.getUser(username);
         if (userCfg != null) {
+          OSecurityRole role = OSecurityShared.createRole(null, userCfg);
           systemUser =
-              new OSystemUser(username, userCfg.getPassword(), OSystemUser.SERVER_USER_TYPE);
-          systemUser.addRole(OSecurityShared.createRole(null, userCfg));
+              new OImmutableUser(
+                  username, userCfg.getPassword(), OSecurityUser.SERVER_USER_TYPE, role);
         }
       }
     }

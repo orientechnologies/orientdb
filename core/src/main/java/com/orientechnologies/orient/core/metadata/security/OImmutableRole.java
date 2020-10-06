@@ -2,6 +2,8 @@ package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.security.ORule.ResourceGeneric;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -41,6 +43,21 @@ public class OImmutableRole implements OSecurityRole {
     } else {
       this.policies = null;
     }
+  }
+
+  public OImmutableRole(
+      OImmutableRole parent,
+      String name,
+      Map<ResourceGeneric, ORule> rules,
+      Map<String, OImmutableSecurityPolicy> policies) {
+    this.parentRole = parent;
+
+    this.mode = ALLOW_MODES.DENY_ALL_BUT;
+    this.name = name;
+    this.rid = new ORecordId(-1, -1);
+    this.rules.putAll(rules);
+    ;
+    this.policies = (Map<String, OSecurityPolicy>) (Map) policies;
   }
 
   public boolean allow(
