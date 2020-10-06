@@ -64,7 +64,7 @@ public final class OVersionPage extends ODurablePage {
   private static final int ENTRY_KIND_UNKNOWN = 0;
   private static final int ENTRY_KIND_DATA = +1;
 
-  public OVersionPage(OCacheEntry cacheEntry) {
+  public OVersionPage(final OCacheEntry cacheEntry) {
     super(cacheEntry);
   }
 
