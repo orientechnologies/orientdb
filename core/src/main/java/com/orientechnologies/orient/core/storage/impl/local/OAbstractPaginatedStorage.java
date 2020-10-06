@@ -454,6 +454,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               openClusters();
               openIndexes();
 
+              // we need to check presence of ridbags for backward compatibility with previous
+              // versions
+              checkRidBagsPresence(atomicOperation);
+
               status = STATUS.OPEN;
 
               final String cs = configuration.getConflictStrategy();
@@ -536,14 +540,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   /**
-   * This method is called by distributed storage during initialization to indicate that database is
-   * used in distributed cluster configuration
+   * @inheritDoc
    */
-  /* public void underDistributedStorage() {
-    sbTreeCollectionManager.prohibitAccess();
-  } */
-
-  /** @inheritDoc */
   @Override
   public final String getCreatedAtVersion() {
     return configuration.getCreatedAtVersion();
@@ -673,6 +671,16 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         }
       } else {
         setCluster(i, null);
+      }
+    }
+  }
+
+  private void checkRidBagsPresence(final OAtomicOperation operation) {
+    for (final OCluster cluster : clusters) {
+      final int clusterId = cluster.getId();
+
+      if (!sbTreeCollectionManager.isComponentPresent(operation, clusterId)) {
+        sbTreeCollectionManager.createComponent(operation, clusterId);
       }
     }
   }
