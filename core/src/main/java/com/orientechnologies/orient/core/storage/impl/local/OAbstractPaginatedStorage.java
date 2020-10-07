@@ -539,9 +539,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  /**
-   * @inheritDoc
-   */
+  /** @inheritDoc */
   @Override
   public final String getCreatedAtVersion() {
     return configuration.getCreatedAtVersion();
@@ -2611,8 +2609,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         }
         makeStorageDirty();
 
-        final OBinarySerializer<?> keySerializer = determineKeySerializer(indexDefinition,
-            metadata);
+        final OBinarySerializer<?> keySerializer =
+            determineKeySerializer(indexDefinition, metadata);
         if (keySerializer == null) {
           throw new OIndexException("Can not determine key serializer");
         }
