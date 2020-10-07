@@ -22,7 +22,7 @@ package com.orientechnologies.agent.security.authenticator;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
-import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.security.symmetrickey.OSymmetricKey;
 import com.orientechnologies.orient.core.security.symmetrickey.OUserSymmetricKeyConfig;
@@ -45,23 +45,31 @@ public class OSystemSymmetricKeyAuth extends OSystemUserAuthenticator {
   // OSecurityAuthenticator
   // Returns the actual username if successful, null otherwise.
   // This will authenticate username using the system database.
-  public String authenticate(
+  public OSecurityUser authenticate(
       ODatabaseSession session, final String username, final String password) {
-    String principal = null;
+    OSecurityUser principal = null;
 
     try {
       // dbName parameter is null because we don't need to filter any roles for this.
-      OUser user = getSecurity().getSystemUser(username, null);
+      OSecurityUser user = getSecurity().getSystemUser(username, null);
 
       if (user != null && user.getAccountStatus() == OSecurityUser.STATUSES.ACTIVE) {
-        OUserSymmetricKeyConfig userConfig = new OUserSymmetricKeyConfig(user);
+        ODocument doc =
+            getSecurity()
+                .getContext()
+                .getSystemDatabase()
+                .executeWithDB(
+                    (db) -> {
+                      return db.load(user.getIdentity().getIdentity());
+                    });
+        OUserSymmetricKeyConfig userConfig = new OUserSymmetricKeyConfig(doc);
 
         OSymmetricKey sk = OSymmetricKey.fromConfig(userConfig);
 
         String decryptedUsername = sk.decryptAsString(password);
 
         if (OSecurityManager.instance().checkPassword(username, decryptedUsername)) {
-          principal = username;
+          principal = user;
         }
       }
     } catch (Exception ex) {
