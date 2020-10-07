@@ -254,7 +254,7 @@ public class ODefaultAuditing
   private File getConfigFile(String iDatabaseName) {
     return new File(
         security.getContext().getBasePath()
-            + "/"
+            + File.separator
             + iDatabaseName
             + File.separator
             + FILE_AUDITING_DB_CONFIG);
