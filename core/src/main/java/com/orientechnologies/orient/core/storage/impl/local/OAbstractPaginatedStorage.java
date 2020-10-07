@@ -2641,8 +2641,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         makeStorageDirty();
 
-        final OBinarySerializer<?> keySerializer = determineKeySerializer(indexDefinition,
-            metadata);
+        final OBinarySerializer<?> keySerializer =
+            determineKeySerializer(indexDefinition, metadata);
         if (keySerializer == null) {
           throw new OIndexException("Can not determine key serializer");
         }

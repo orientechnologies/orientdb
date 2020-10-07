@@ -1,8 +1,5 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas;
 
-import com.orientechnologies.common.jnr.LastErrorException;
-import com.orientechnologies.common.jnr.ONative;
-import com.orientechnologies.common.log.OLogManager;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -35,8 +32,7 @@ public interface OWALFile extends Closeable {
         segmentId);
   }
 
-  static OWALFile createReadWALFile(Path path, long segmentId)
-      throws IOException {
+  static OWALFile createReadWALFile(Path path, long segmentId) throws IOException {
     return new OWALChannelFile(FileChannel.open(path, StandardOpenOption.READ), segmentId);
   }
 }
