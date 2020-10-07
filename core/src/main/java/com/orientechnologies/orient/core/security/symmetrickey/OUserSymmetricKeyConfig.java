@@ -19,9 +19,7 @@
  */
 package com.orientechnologies.orient.core.security.symmetrickey;
 
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSecurityException;
-import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.Map;
 
@@ -88,18 +86,8 @@ public class OUserSymmetricKeyConfig implements OSymmetricKeyConfig {
         && keystoreKeyAlias != null
         && !keystoreKeyAlias.isEmpty();
   }
-  //////////
 
-  public OUserSymmetricKeyConfig(final OUser user) {
-    if (user == null) throw new OSecurityException("OUserSymmetricKeyConfig() OUser is null");
-
-    OIdentifiable id = user.getIdentity();
-
-    if (!(id instanceof ODocument))
-      throw new OSecurityException("OUserSymmetricKeyConfig() Identity is not an ODocument");
-
-    ODocument doc = (ODocument) id;
-
+  public OUserSymmetricKeyConfig(final ODocument doc) {
     ODocument props = doc.field("properties");
 
     if (props == null)

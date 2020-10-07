@@ -90,7 +90,7 @@ public class OSymmetricKeySecurity implements OSecurityInternal {
           dbName, "OSymmetricKeySecurity.authenticate() User '" + username + "' is not active");
 
     try {
-      OUserSymmetricKeyConfig userConfig = new OUserSymmetricKeyConfig(user);
+      OUserSymmetricKeyConfig userConfig = new OUserSymmetricKeyConfig(user.getDocument());
 
       OSymmetricKey sk = OSymmetricKey.fromConfig(userConfig);
 
