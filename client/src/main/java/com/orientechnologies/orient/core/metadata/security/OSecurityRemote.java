@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.security.auth.OAuthenticationInfo;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -365,6 +366,12 @@ public class OSecurityRemote implements OSecurityInternal {
   @Override
   public OSecurityUser securityAuthenticate(
       ODatabaseSession session, String userName, String password) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public OSecurityUser securityAuthenticate(
+      ODatabaseSession session, OAuthenticationInfo authenticationInfo) {
     throw new UnsupportedOperationException();
   }
 }

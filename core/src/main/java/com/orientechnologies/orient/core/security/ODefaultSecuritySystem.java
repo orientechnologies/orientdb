@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityRole;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OSystemUser;
+import com.orientechnologies.orient.core.metadata.security.auth.OAuthenticationInfo;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.authenticator.ODatabaseUserAuthenticator;
 import com.orientechnologies.orient.core.security.authenticator.OServerConfigAuthenticator;
@@ -153,6 +154,22 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
   public boolean isDefaultAllowed() {
     if (isEnabled()) return allowDefault;
     else return true; // If the security system is disabled return the original system default.
+  }
+
+  @Override
+  public OSecurityUser authenticate(
+      ODatabaseSession session, OAuthenticationInfo authenticationInfo) {
+    try {
+      for (OSecurityAuthenticator sa : getEnabledAuthenticators()) {
+        OSecurityUser principal = sa.authenticate(session, authenticationInfo);
+
+        if (principal != null) return principal;
+      }
+    } catch (Exception ex) {
+      OLogManager.instance().error(this, "ODefaultServerSecurity.authenticate()", ex);
+    }
+
+    return null; // Indicates authentication failed.
   }
 
   // OSecuritySystem (via OServerSecurity)

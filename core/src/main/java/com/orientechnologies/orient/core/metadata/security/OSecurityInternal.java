@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
+import com.orientechnologies.orient.core.metadata.security.auth.OAuthenticationInfo;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.List;
@@ -197,4 +198,7 @@ public interface OSecurityInternal {
   Set<OSecurityResourceProperty> getAllFilteredProperties(ODatabaseDocumentInternal database);
 
   OSecurityUser securityAuthenticate(ODatabaseSession session, String userName, String password);
+
+  OSecurityUser securityAuthenticate(
+      ODatabaseSession session, OAuthenticationInfo authenticationInfo);
 }

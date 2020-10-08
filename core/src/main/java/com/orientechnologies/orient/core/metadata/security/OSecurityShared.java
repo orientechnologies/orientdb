@@ -41,6 +41,7 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ORule.ResourceGeneric;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser.STATUSES;
+import com.orientechnologies.orient.core.metadata.security.auth.OAuthenticationInfo;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -242,6 +243,32 @@ public class OSecurityShared implements OSecurityInternal {
       }
     }
     return true;
+  }
+
+  @Override
+  public OSecurityUser securityAuthenticate(
+      ODatabaseSession session, OAuthenticationInfo authenticationInfo) {
+    OSecurityUser user = null;
+    final String dbName = session.getName();
+    assert !((ODatabaseDocumentInternal) session).isRemote();
+    user = security.authenticate(session, authenticationInfo);
+
+    if (user != null) {
+      if (user.getAccountStatus() != OSecurityUser.STATUSES.ACTIVE) {
+        throw new OSecurityAccessException(dbName, "User '" + user.getName() + "' is not active");
+      }
+    } else {
+      // WAIT A BIT TO AVOID BRUTE FORCE
+      try {
+        Thread.sleep(200);
+      } catch (InterruptedException ignore) {
+        Thread.currentThread().interrupt();
+      }
+
+      throw new OSecurityAccessException(
+          dbName, "Invalid authentication info for access to the database " + authenticationInfo);
+    }
+    return user;
   }
 
   @Override

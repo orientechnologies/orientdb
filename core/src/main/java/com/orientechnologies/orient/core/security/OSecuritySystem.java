@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
+import com.orientechnologies.orient.core.metadata.security.auth.OAuthenticationInfo;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.HashMap;
 import java.util.Map;
@@ -148,4 +149,6 @@ public interface OSecuritySystem {
   void addTemporaryUser(String user, String password, String resources);
 
   OSecurityInternal newSecurity(String database);
+
+  OSecurityUser authenticate(ODatabaseSession session, OAuthenticationInfo authenticationInfo);
 }

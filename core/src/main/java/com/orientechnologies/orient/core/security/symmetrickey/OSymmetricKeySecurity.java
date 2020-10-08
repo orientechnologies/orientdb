@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityRole;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.metadata.security.auth.OAuthenticationInfo;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityManager;
@@ -354,6 +355,12 @@ public class OSymmetricKeySecurity implements OSecurityInternal {
   public Set<OSecurityResourceProperty> getAllFilteredProperties(
       ODatabaseDocumentInternal database) {
     return delegate.getAllFilteredProperties(database);
+  }
+
+  @Override
+  public OSecurityUser securityAuthenticate(
+      ODatabaseSession session, OAuthenticationInfo authenticationInfo) {
+    return delegate.securityAuthenticate(session, authenticationInfo);
   }
 
   @Override

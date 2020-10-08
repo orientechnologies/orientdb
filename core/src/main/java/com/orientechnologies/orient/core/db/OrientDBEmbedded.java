@@ -37,6 +37,7 @@ import com.orientechnologies.orient.core.engine.OEngine;
 import com.orientechnologies.orient.core.engine.OMemoryAndLocalPaginatedEnginesInitializer;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.metadata.security.auth.OAuthenticationInfo;
 import com.orientechnologies.orient.core.security.ODefaultSecuritySystem;
 import com.orientechnologies.orient.core.security.OSecuritySystem;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
@@ -516,6 +517,44 @@ public class OrientDBEmbedded implements OrientDBInternal {
     } catch (Exception e) {
       throw OException.wrapException(
           new ODatabaseException("Cannot open database '" + name + "'"), e);
+    }
+  }
+
+  @Override
+  public ODatabaseDocumentInternal open(
+      OAuthenticationInfo authenticationInfo, OrientDBConfig config) {
+    try {
+      final ODatabaseDocumentEmbedded embedded;
+      synchronized (this) {
+        checkOpen();
+        config = solveConfig(config);
+        OAbstractPaginatedStorage storage = getOrInitStorage(authenticationInfo.getDatabase());
+        // THIS OPEN THE STORAGE ONLY THE FIRST TIME
+        try {
+          // THIS OPEN THE STORAGE ONLY THE FIRST TIME
+          storage.open(config.getConfigurations());
+        } catch (RuntimeException e) {
+          if (storage != null) {
+            storages.remove(storage.getName());
+          } else {
+            storages.remove(authenticationInfo.getDatabase());
+          }
+
+          throw e;
+        }
+
+        embedded = newSessionInstance(storage);
+        embedded.init(config, getOrCreateSharedContext(storage));
+        storage.incOnOpen();
+      }
+      embedded.rebuildIndexes();
+      embedded.internalOpen(authenticationInfo);
+      embedded.callOnOpenListeners();
+      return embedded;
+    } catch (Exception e) {
+      throw OException.wrapException(
+          new ODatabaseException("Cannot open database '" + authenticationInfo.getDatabase() + "'"),
+          e);
     }
   }
 

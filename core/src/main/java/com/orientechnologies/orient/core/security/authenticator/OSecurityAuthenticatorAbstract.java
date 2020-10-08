@@ -19,7 +19,9 @@
  */
 package com.orientechnologies.orient.core.security.authenticator;
 
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
+import com.orientechnologies.orient.core.metadata.security.auth.OAuthenticationInfo;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityAuthenticator;
 import com.orientechnologies.orient.core.security.OSecuritySystem;
@@ -110,6 +112,13 @@ public abstract class OSecurityAuthenticatorAbstract implements OSecurityAuthent
 
   public boolean isAuthorized(final String username, final String resource) {
     return false;
+  }
+
+  @Override
+  public OSecurityUser authenticate(
+      ODatabaseSession session, OAuthenticationInfo authenticationInfo) {
+    // Return null means no valid authentication
+    return null;
   }
 
   public boolean isSingleSignOnSupported() {

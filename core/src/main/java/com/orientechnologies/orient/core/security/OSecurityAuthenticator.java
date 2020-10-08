@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.security;
 
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
+import com.orientechnologies.orient.core.metadata.security.auth.OAuthenticationInfo;
 import java.util.HashMap;
 import java.util.Map;
 import javax.security.auth.Subject;
@@ -36,6 +37,8 @@ public interface OSecurityAuthenticator extends OSecurityComponent {
   // service ticket).
   OSecurityUser authenticate(
       ODatabaseSession session, final String username, final String password);
+
+  OSecurityUser authenticate(ODatabaseSession session, OAuthenticationInfo authenticationInfo);
 
   String getAuthenticationHeader(final String databaseName);
 
