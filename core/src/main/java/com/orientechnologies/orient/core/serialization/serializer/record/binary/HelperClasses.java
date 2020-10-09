@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
+import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBagDelegate;
 import com.orientechnologies.orient.core.db.record.ridbag.embedded.OEmbeddedRidBag;
@@ -264,14 +265,14 @@ public class HelperClasses {
     return pos;
   }
 
-  public static Collection<OIdentifiable> readLinkCollection(
-      final BytesContainer bytes, final Collection<OIdentifiable> found, boolean justRunThrough) {
+  public static <T extends OTrackedMultiValue<?, OIdentifiable>> T readLinkCollection(
+      final BytesContainer bytes, final T found, boolean justRunThrough) {
     final int items = OVarIntSerializer.readAsInteger(bytes);
     for (int i = 0; i < items; i++) {
       ORecordId id = readOptimizedLink(bytes, justRunThrough);
       if (!justRunThrough) {
-        if (id.equals(NULL_RECORD_ID)) found.add(null);
-        else found.add(id);
+        if (id.equals(NULL_RECORD_ID)) found.addInternal(null);
+        else found.addInternal(id);
       }
     }
     return found;

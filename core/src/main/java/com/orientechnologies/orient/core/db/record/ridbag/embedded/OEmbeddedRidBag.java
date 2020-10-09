@@ -495,9 +495,10 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
     return OIdentifiable.class;
   }
 
-  public void addInternal(final OIdentifiable identifiable) {
+  public boolean addInternal(final OIdentifiable identifiable) {
     addEntry(identifiable);
     if (this.owner != null) ORecordInternal.track(this.owner, identifiable);
+    return true;
   }
 
   public void addEntry(final OIdentifiable identifiable) {
