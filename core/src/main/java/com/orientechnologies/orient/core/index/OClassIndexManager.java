@@ -317,8 +317,10 @@ public class OClassIndexManager {
 
         for (final String field : indexFields) {
           if (!field.equals(multiValueField))
-            if (dirtyFields.contains(field)) origValues.add(iRecord.getOriginalValue(field));
-            else origValues.add(iRecord.field(field));
+            if (dirtyFields.contains(field)
+                && !(ODocumentInternal.rawEntry(iRecord, field)).isTxCreated()) {
+              origValues.add(iRecord.getOriginalValue(field));
+            } else origValues.add(iRecord.field(field));
         }
 
         if (multiValueField != null) {
