@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.security;
 
 import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import java.util.HashMap;
 import java.util.Map;
 import javax.security.auth.Subject;
@@ -33,7 +34,8 @@ public interface OSecurityAuthenticator extends OSecurityComponent {
   // Returns the actual username if successful, null otherwise.
   // Some token-based authentication (e.g., SPNEGO tokens have the user's name embedded in the
   // service ticket).
-  String authenticate(ODatabaseSession session, final String username, final String password);
+  OSecurityUser authenticate(
+      ODatabaseSession session, final String username, final String password);
 
   String getAuthenticationHeader(final String databaseName);
 
@@ -46,7 +48,7 @@ public interface OSecurityAuthenticator extends OSecurityComponent {
   // Returns the name of this OSecurityAuthenticator.
   String getName();
 
-  OGlobalUser getUser(final String username);
+  OSecurityUser getUser(final String username);
 
   boolean isAuthorized(final String username, final String resource);
 

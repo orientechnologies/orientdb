@@ -361,4 +361,10 @@ public class OSecurityRemote implements OSecurityInternal {
       ODatabaseDocumentInternal database) {
     return Collections.EMPTY_SET;
   }
+
+  @Override
+  public OSecurityUser securityAuthenticate(
+      ODatabaseSession session, String userName, String password) {
+    throw new UnsupportedOperationException();
+  }
 }

@@ -27,7 +27,6 @@ import java.util.List;
 public class OSystemUser extends OUser {
   private String databaseName;
   private String userType;
-  public static final String SERVER_USER_TYPE = "Server";
 
   protected String getDatabaseName() {
     return databaseName;

@@ -21,8 +21,10 @@ package com.orientechnologies.orient.core.security.authenticator;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.metadata.security.OImmutableUser;
+import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.security.OGlobalUser;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.security.OSecuritySystem;
 import java.util.List;
@@ -36,8 +38,8 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class ODefaultPasswordAuthenticator extends OSecurityAuthenticatorAbstract {
   // Holds a map of the users specified in the security.json file.
-  private ConcurrentHashMap<String, OGlobalUser> usersMap =
-      new ConcurrentHashMap<String, OGlobalUser>();
+  private ConcurrentHashMap<String, OSecurityUser> usersMap =
+      new ConcurrentHashMap<String, OSecurityUser>();
 
   // OSecurityComponent
   // Called once the Server is running.
@@ -55,7 +57,7 @@ public class ODefaultPasswordAuthenticator extends OSecurityAuthenticatorAbstrac
 
         for (ODocument userDoc : usersList) {
 
-          OGlobalUser userCfg = createServerUser(userDoc);
+          OSecurityUser userCfg = createServerUser(userDoc);
 
           if (userCfg != null) {
             String checkName = userCfg.getName();
@@ -72,8 +74,8 @@ public class ODefaultPasswordAuthenticator extends OSecurityAuthenticatorAbstrac
   }
 
   // Derived implementations can override this method to provide new server user implementations.
-  protected OGlobalUser createServerUser(final ODocument userDoc) {
-    OGlobalUser userCfg = null;
+  protected OSecurityUser createServerUser(final ODocument userDoc) {
+    OSecurityUser userCfg = null;
 
     if (userDoc.containsField("username") && userDoc.containsField("resources")) {
       final String user = userDoc.field("username");
@@ -81,8 +83,8 @@ public class ODefaultPasswordAuthenticator extends OSecurityAuthenticatorAbstrac
       String password = userDoc.field("password");
 
       if (password == null) password = "";
-
-      userCfg = new OSystemGlobalUser(user, password, resources);
+      userCfg = new OImmutableUser(user, OSecurityUser.SERVER_USER_TYPE);
+      // userCfg.addRole(OSecurityShared.createRole(null, user));
     }
 
     return userCfg;
@@ -99,23 +101,23 @@ public class ODefaultPasswordAuthenticator extends OSecurityAuthenticatorAbstrac
 
   // OSecurityAuthenticator
   // Returns the actual username if successful, null otherwise.
-  public String authenticate(
+  public OSecurityUser authenticate(
       ODatabaseSession session, final String username, final String password) {
-    String principal = null;
 
     try {
-      OGlobalUser user = getUser(username);
+      OSecurityUser user = getUser(username);
 
       if (isPasswordValid(user)) {
         if (OSecurityManager.checkPassword(password, user.getPassword())) {
-          principal = user.getName();
+          if (user != null) {
+            return user;
+          }
         }
       }
     } catch (Exception ex) {
       OLogManager.instance().error(this, "ODefaultPasswordAuthenticator.authenticate()", ex);
     }
-
-    return principal;
+    return null;
   }
 
   // OSecurityAuthenticator
@@ -123,10 +125,16 @@ public class ODefaultPasswordAuthenticator extends OSecurityAuthenticatorAbstrac
   public boolean isAuthorized(final String username, final String resource) {
     if (username == null || resource == null) return false;
 
-    OGlobalUser userCfg = getUser(username);
+    OSecurityUser userCfg = getUser(username);
 
     if (userCfg != null) {
+      // TODO: to verify if this logic match previous logic
+      if (userCfg.checkIfAllowed(resource, ORole.PERMISSION_ALL) != null) {
+        return true;
+      }
+
       // Total Access
+      /*
       if (userCfg.getResources().equals("*")) return true;
 
       String[] resourceParts = userCfg.getResources().split(",");
@@ -134,14 +142,15 @@ public class ODefaultPasswordAuthenticator extends OSecurityAuthenticatorAbstrac
       for (String r : resourceParts) {
         if (r.equalsIgnoreCase(resource)) return true;
       }
+      */
     }
 
     return false;
   }
 
   // OSecurityAuthenticator
-  public OGlobalUser getUser(final String username) {
-    OGlobalUser userCfg = null;
+  public OSecurityUser getUser(final String username) {
+    OSecurityUser userCfg = null;
 
     synchronized (usersMap) {
       if (username != null) {

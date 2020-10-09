@@ -4,6 +4,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import java.util.Collections;
 import java.util.HashSet;
@@ -27,7 +28,7 @@ public class OImmutableUser implements OSecurityUser {
   private final ORID rid;
   private final String userType;
 
-  public OImmutableUser(long version, OUser user) {
+  public OImmutableUser(long version, OSecurityUser user) {
     this.version = version;
     this.name = user.getName();
     this.password = user.getPassword();
@@ -35,8 +36,30 @@ public class OImmutableUser implements OSecurityUser {
     this.rid = user.getIdentity().getIdentity();
     this.userType = user.getUserType();
 
-    for (ORole role : user.getRoles()) {
+    for (OSecurityRole role : user.getRoles()) {
       roles.add(new OImmutableRole(role));
+    }
+  }
+
+  public OImmutableUser(String name, String userType) {
+    this(name, "", userType, null);
+  }
+
+  public OImmutableUser(String name, String password, String userType, OSecurityRole role) {
+    this.version = 0;
+    this.name = name;
+    this.password = password;
+    this.status = STATUSES.ACTIVE;
+    this.rid = new ORecordId(-1, -1);
+    this.userType = userType;
+    if (role != null) {
+      OImmutableRole immutableRole;
+      if (role instanceof OImmutableRole) {
+        immutableRole = (OImmutableRole) role;
+      } else {
+        immutableRole = new OImmutableRole(role);
+      }
+      roles.add(immutableRole);
     }
   }
 

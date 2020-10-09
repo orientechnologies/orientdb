@@ -59,6 +59,12 @@ public class OSymmetricKeySecurity implements OSecurityInternal {
     this.delegate = iDelegate;
   }
 
+  @Override
+  public OSecurityUser securityAuthenticate(
+      ODatabaseSession session, String userName, String password) {
+    return authenticate(session, userName, password);
+  }
+
   public OUser authenticate(
       ODatabaseSession session, final String username, final String password) {
     if (delegate == null)
@@ -84,7 +90,7 @@ public class OSymmetricKeySecurity implements OSecurityInternal {
           dbName, "OSymmetricKeySecurity.authenticate() User '" + username + "' is not active");
 
     try {
-      OUserSymmetricKeyConfig userConfig = new OUserSymmetricKeyConfig(user);
+      OUserSymmetricKeyConfig userConfig = new OUserSymmetricKeyConfig(user.getDocument());
 
       OSymmetricKey sk = OSymmetricKey.fromConfig(userConfig);
 

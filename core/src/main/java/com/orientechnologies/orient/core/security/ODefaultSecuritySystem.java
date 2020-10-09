@@ -26,11 +26,13 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.security.OImmutableUser;
+import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
+import com.orientechnologies.orient.core.metadata.security.OSecurityRole;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OSystemUser;
-import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.authenticator.ODatabaseUserAuthenticator;
 import com.orientechnologies.orient.core.security.authenticator.OServerConfigAuthenticator;
@@ -154,7 +156,7 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
   }
 
   // OSecuritySystem (via OServerSecurity)
-  public String authenticate(
+  public OSecurityUser authenticate(
       ODatabaseSession session, final String username, final String password) {
     try {
       // It's possible for the username to be null or an empty string in the case of SPNEGO
@@ -170,7 +172,7 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
       }
 
       for (OSecurityAuthenticator sa : getEnabledAuthenticators()) {
-        String principal = sa.authenticate(session, username, password);
+        OSecurityUser principal = sa.authenticate(session, username, password);
 
         if (principal != null) return principal;
       }
@@ -182,12 +184,12 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
     return null; // Indicates authentication failed.
   }
 
-  public String authenticateServerUser(final String username, final String password) {
-    OGlobalUser user = getServerUser(username);
+  public OSecurityUser authenticateServerUser(final String username, final String password) {
+    OSecurityUser user = getServerUser(username);
 
     if (user != null && user.getPassword() != null) {
       if (OSecurityManager.checkPassword(password, user.getPassword())) {
-        return user.getName();
+        return user;
       }
     }
     return null;
@@ -315,18 +317,20 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
    * Returns the "System User" associated with 'username' from the system database. If not found,
    * returns null. dbName is used to filter the assigned roles. It may be null.
    */
-  public OUser getSystemUser(final String username, final String dbName) {
+  public OSecurityUser getSystemUser(final String username, final String dbName) {
     // ** There are cases when we need to retrieve an OUser that is a system user.
     //  if (isEnabled() && !OSystemDatabase.SYSTEM_DB_NAME.equals(dbName)) {
     if (context.getSystemDatabase().exists()) {
-      return (OUser)
+      return (OImmutableUser)
           context
               .getSystemDatabase()
               .execute(
                   (resultset) -> {
                     if (resultset != null && resultset.hasNext())
-                      return new OSystemUser(
-                          (ODocument) resultset.next().getElement().get().getRecord(), dbName);
+                      return new OImmutableUser(
+                          0,
+                          new OSystemUser(
+                              (ODocument) resultset.next().getElement().get().getRecord(), dbName));
                     return null;
                   },
                   "select from OUser where name = ? limit 1 fetchplan roles:1",
@@ -349,15 +353,21 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
   }
 
   public boolean isServerUserAuthorized(final String username, final String resource) {
-    final OGlobalUser user = getServerUser(username);
+    final OSecurityUser user = getServerUser(username);
 
     if (user != null) {
+      // TODO: to verify if this logic match previous logic
+      if (user.checkIfAllowed(resource, ORole.PERMISSION_ALL) != null) {
+        return true;
+      }
+      /*
       if (user.getResources().equals("*"))
         // ACCESS TO ALL
         return true;
 
       String[] resourceParts = user.getResources().split(",");
       for (String r : resourceParts) if (r.equalsIgnoreCase(resource)) return true;
+      */
     }
     return false;
   }
@@ -437,8 +447,8 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
   }
 
   // OServerSecurity
-  public OGlobalUser getUser(final String username) {
-    OGlobalUser userCfg = null;
+  public OSecurityUser getUser(final String username) {
+    OSecurityUser userCfg = null;
 
     // Walk through the list of OSecurityAuthenticators.
     for (OSecurityAuthenticator sa : getEnabledAuthenticators()) {
@@ -449,14 +459,23 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
     return userCfg;
   }
 
-  public OGlobalUser getServerUser(final String username) {
-    OGlobalUser userCfg = null;
+  public OSecurityUser getServerUser(final String username) {
+    OSecurityUser systemUser = null;
     // This will throw an IllegalArgumentException if iUserName is null or empty.
     // However, a null or empty iUserName is possible with some security implementations.
     if (serverConfig != null && serverConfig.usersManagement()) {
-      if (username != null && !username.isEmpty()) userCfg = serverConfig.getUser(username);
+      if (username != null && !username.isEmpty()) {
+        OGlobalUser userCfg = serverConfig.getUser(username);
+        if (userCfg != null) {
+          OSecurityRole role = OSecurityShared.createRole(null, userCfg);
+          systemUser =
+              new OImmutableUser(
+                  username, userCfg.getPassword(), OSecurityUser.SERVER_USER_TYPE, role);
+        }
+      }
     }
-    return userCfg;
+
+    return systemUser;
   }
 
   @Override
@@ -993,15 +1012,15 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
   }
 
   @Override
-  public OGlobalUser authenticateAndAuthorize(
+  public OSecurityUser authenticateAndAuthorize(
       String iUserName, String iPassword, String iResourceToCheck) {
     // Returns the authenticated username, if successful, otherwise null.
-    String authUsername = authenticate(null, iUserName, iPassword);
+    OSecurityUser user = authenticate(null, iUserName, iPassword);
 
     // Authenticated, now see if the user is authorized.
-    if (authUsername != null) {
-      if (isAuthorized(authUsername, iResourceToCheck)) {
-        return getUser(authUsername);
+    if (user != null) {
+      if (isAuthorized(user.getName(), iResourceToCheck)) {
+        return user;
       }
     }
     return null;

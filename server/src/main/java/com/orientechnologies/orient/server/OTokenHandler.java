@@ -4,7 +4,6 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
-import com.orientechnologies.orient.core.security.OGlobalUser;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
 import java.io.IOException;
 import java.security.InvalidKeyException;
@@ -36,7 +35,7 @@ public interface OTokenHandler {
   // Return a byte array representing a signed token
   byte[] getSignedWebToken(ODatabaseDocument db, OSecurityUser user);
 
-  default byte[] getSignedWebTokenServerUser(OGlobalUser user) {
+  default byte[] getSignedWebTokenServerUser(OSecurityUser user) {
     throw new UnsupportedOperationException();
   }
 

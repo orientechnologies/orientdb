@@ -16,7 +16,6 @@ import com.orientechnologies.orient.core.metadata.security.jwt.OJwtHeader;
 import com.orientechnologies.orient.core.metadata.security.jwt.OJwtPayload;
 import com.orientechnologies.orient.core.metadata.security.jwt.OKeyProvider;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.security.OGlobalUser;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
@@ -205,7 +204,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
     return tokenByteOS.toByteArray();
   }
 
-  public byte[] getSignedWebTokenServerUser(final OGlobalUser user) {
+  public byte[] getSignedWebTokenServerUser(final OSecurityUser user) {
     final ByteArrayOutputStream tokenByteOS = new ByteArrayOutputStream(1024);
     final OrientJwtHeader header = new OrientJwtHeader();
     header.setAlgorithm("HS256");
@@ -462,7 +461,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
     return doc.toJSON().getBytes("UTF-8");
   }
 
-  protected OJwtPayload createPayloadServerUser(OGlobalUser serverUser) {
+  protected OJwtPayload createPayloadServerUser(OSecurityUser serverUser) {
     if (serverUser == null) throw new IllegalArgumentException("User is null");
 
     final OrientJwtPayload payload = new OrientJwtPayload();

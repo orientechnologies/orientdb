@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.security.ORule.ResourceGeneric;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser.STATUSES;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
 import com.orientechnologies.orient.core.record.OElement;
@@ -244,30 +245,17 @@ public class OSecurityShared implements OSecurityInternal {
   }
 
   @Override
-  public OUser authenticate(
-      ODatabaseSession session, final String iUsername, final String iUserPassword) {
-    OUser user = null;
+  public OSecurityUser securityAuthenticate(
+      ODatabaseSession session, String userName, String password) {
+    OSecurityUser user = null;
     final String dbName = session.getName();
     assert !((ODatabaseDocumentInternal) session).isRemote();
-    // Uses the external authenticator.
-    // username is returned if authentication is successful, otherwise null.
-    String username = security.authenticate(session, iUsername, iUserPassword);
+    user = security.authenticate(session, userName, password);
 
-    if (username != null) {
-      user = getUser(session, username);
-
-      if (user == null)
-        throw new OSecurityAccessException(
-            dbName,
-            "User or password not valid for username: "
-                + username
-                + ", database: '"
-                + dbName
-                + "'");
-
-      if (user.getAccountStatus() != OSecurityUser.STATUSES.ACTIVE)
-        throw new OSecurityAccessException(dbName, "User '" + username + "' is not active");
-
+    if (user != null) {
+      if (user.getAccountStatus() != OSecurityUser.STATUSES.ACTIVE) {
+        throw new OSecurityAccessException(dbName, "User '" + user.getName() + "' is not active");
+      }
     } else {
       // WAIT A BIT TO AVOID BRUTE FORCE
       try {
@@ -278,9 +266,15 @@ public class OSecurityShared implements OSecurityInternal {
 
       throw new OSecurityAccessException(
           dbName,
-          "User or password not valid for username: " + iUsername + ", database: '" + dbName + "'");
+          "User or password not valid for username: " + userName + ", database: '" + dbName + "'");
     }
     return user;
+  }
+
+  @Override
+  public OUser authenticate(
+      ODatabaseSession session, final String iUsername, final String iUserPassword) {
+    return null;
   }
 
   // Token MUST be validated before being passed to this method.
@@ -427,7 +421,8 @@ public class OSecurityShared implements OSecurityInternal {
   @Override
   public Map<String, OSecurityPolicy> getSecurityPolicies(
       ODatabaseSession session, OSecurityRole role) {
-    return role.getPolicies();
+    Map<String, OSecurityPolicy> result = role.getPolicies();
+    return result != null ? result : Collections.emptyMap();
   }
 
   @Override
@@ -1075,89 +1070,56 @@ public class OSecurityShared implements OSecurityInternal {
 
   @Override
   public OUser getUser(ODatabaseSession session, String username) {
-    // See if there's a system user first.
-    OUser user = security.getSystemUser(username, session.getName());
-
-    // If not found, try the local database.
-    if (user == null) user = getUserInternal(session, username);
-
-    if (user == null && username != null) {
-      OGlobalUser serverUser = security.getUser(username);
-      if (serverUser != null) {
-        user = new OSystemUser(username, "null", OSystemUser.SERVER_USER_TYPE);
-        user.addRole(createRole(session, serverUser));
-      }
-    }
-    return user;
+    return getUserInternal(session, username);
   }
 
-  public static ORole createRole(ODatabaseSession session, OGlobalUser serverUser) {
+  public static OSecurityRole createRole(ODatabaseSession session, OGlobalUser serverUser) {
 
-    final OSystemRole role =
-        new OSystemRole(serverUser.getName(), null, OSecurityRole.ALLOW_MODES.ALLOW_ALL_BUT);
-
+    final OSecurityRole role;
     if (serverUser.getResources().equalsIgnoreCase("*")) {
-      createRoot(session, role);
+      role = createRoot(serverUser);
     } else {
-      mapPermission(role, serverUser);
+      Map<ResourceGeneric, ORule> permissions = mapPermission(serverUser);
+      role = new OImmutableRole(null, serverUser.getName(), permissions, null);
     }
 
     return role;
   }
 
-  private static void mapPermission(ORole role, OGlobalUser user) {
+  private static OSecurityRole createRoot(OGlobalUser serverUser) {
+    Map<String, OImmutableSecurityPolicy> policies = createrRootSecurityPolicy("*");
+    Map<ORule.ResourceGeneric, ORule> rules = new HashMap<ORule.ResourceGeneric, ORule>();
+    for (ORule.ResourceGeneric resource : ORule.ResourceGeneric.values()) {
+      ORule rule = new ORule(resource, null, null);
+      rule.grantAccess(null, ORole.PERMISSION_ALL);
+      rules.put(resource, rule);
+    }
 
+    return new OImmutableRole(null, serverUser.getName(), rules, policies);
+  }
+
+  private static Map<ResourceGeneric, ORule> mapPermission(OGlobalUser user) {
+    Map<ORule.ResourceGeneric, ORule> rules = new HashMap<ORule.ResourceGeneric, ORule>();
     String[] strings = user.getResources().split(",");
 
     for (String string : strings) {
       ORule.ResourceGeneric generic = ORule.mapLegacyResourceToGenericResource(string);
       if (generic != null) {
-        role.addRule(generic, null, ORole.PERMISSION_ALL);
+        ORule rule = new ORule(generic, null, null);
+        rule.grantAccess(null, ORole.PERMISSION_ALL);
+        rules.put(generic, rule);
       }
     }
+    return rules;
   }
 
-  private static void createRoot(ODatabaseSession session, ORole role) {
-    role.addRule(ORule.ResourceGeneric.BYPASS_RESTRICTED, null, ORole.PERMISSION_ALL);
-    role.addRule(ORule.ResourceGeneric.ALL, null, ORole.PERMISSION_ALL);
-    //      role.addRule(ORule.ResourceGeneric.ALL_CLASSES, null, ORole.PERMISSION_ALL).save();
-    role.addRule(ORule.ResourceGeneric.CLASS, null, ORole.PERMISSION_ALL);
-    //      role.addRule(ORule.ResourceGeneric.ALL_CLUSTERS, null, ORole.PERMISSION_ALL).save();
-    role.addRule(ORule.ResourceGeneric.CLUSTER, null, ORole.PERMISSION_ALL);
-    role.addRule(ORule.ResourceGeneric.SYSTEM_CLUSTERS, null, ORole.PERMISSION_ALL);
-    role.addRule(ORule.ResourceGeneric.DATABASE, null, ORole.PERMISSION_ALL);
-    role.addRule(ORule.ResourceGeneric.SCHEMA, null, ORole.PERMISSION_ALL);
-    role.addRule(ORule.ResourceGeneric.COMMAND, null, ORole.PERMISSION_ALL);
-    role.addRule(ORule.ResourceGeneric.COMMAND_GREMLIN, null, ORole.PERMISSION_ALL);
-    role.addRule(ORule.ResourceGeneric.FUNCTION, null, ORole.PERMISSION_ALL);
-    createSecurityPolicyWithBitmask(session, role, "*", ORole.PERMISSION_ALL);
-  }
-
-  public static void createSecurityPolicyWithBitmask(
-      ODatabaseSession session, OSecurityRole role, String resource, int legacyPolicy) {
-    String policyName = "default_" + legacyPolicy;
-    OSecurityPolicyImpl policy = new OSecurityPolicyImpl(new ODocument().field("name", policyName));
-    policy.setCreateRule((legacyPolicy & ORole.PERMISSION_CREATE) > 0 ? "true" : "false");
-    policy.setReadRule((legacyPolicy & ORole.PERMISSION_READ) > 0 ? "true" : "false");
-    policy.setBeforeUpdateRule((legacyPolicy & ORole.PERMISSION_UPDATE) > 0 ? "true" : "false");
-    policy.setAfterUpdateRule((legacyPolicy & ORole.PERMISSION_UPDATE) > 0 ? "true" : "false");
-    policy.setDeleteRule((legacyPolicy & ORole.PERMISSION_DELETE) > 0 ? "true" : "false");
-    policy.setExecuteRule((legacyPolicy & ORole.PERMISSION_EXECUTE) > 0 ? "true" : "false");
-    addSecurityPolicy(session, role, resource, policy);
-  }
-
-  public static void addSecurityPolicy(
-      ODatabaseSession session, OSecurityRole role, String resource, OSecurityPolicyImpl policy) {
-    OElement roleDoc = session.load(role.getIdentity().getIdentity());
-    if (roleDoc == null) {
-      return;
-    }
-    Map<String, OIdentifiable> policies = roleDoc.getProperty("policies");
-    if (policies == null) {
-      policies = new HashMap<>();
-      roleDoc.setProperty("policies", policies);
-    }
-    policies.put(resource, policy.getElement());
+  public static Map<String, OImmutableSecurityPolicy> createrRootSecurityPolicy(String resource) {
+    Map<String, OImmutableSecurityPolicy> policies =
+        new HashMap<String, OImmutableSecurityPolicy>();
+    policies.put(
+        resource,
+        new OImmutableSecurityPolicy(resource, "true", "true", "true", "true", "true", "true"));
+    return policies;
   }
 
   public ORID getUserRID(final ODatabaseSession session, final String userName) {
@@ -1230,7 +1192,8 @@ public class OSecurityShared implements OSecurityInternal {
             if (policy != null) {
               for (OClass clazz : allClasses) {
                 if (isClassInvolved(clazz, res)
-                    && !isAllAllowed(session, new OImmutableSecurityPolicy(policy))) {
+                    && !isAllAllowed(
+                        session, new OImmutableSecurityPolicy(new OSecurityPolicyImpl(policy)))) {
                   Map<String, Boolean> roleMap = result.get(roleName);
                   if (roleMap == null) {
                     roleMap = new HashMap<>();
@@ -1714,7 +1677,8 @@ public class OSecurityShared implements OSecurityInternal {
             OSecurityResource res = OSecurityResource.getInstance(policyEntry.getKey());
             if (res instanceof OSecurityResourceProperty) {
               OSecurityPolicy policy =
-                  new OImmutableSecurityPolicy(policyEntry.getValue().getRecord());
+                  new OImmutableSecurityPolicy(
+                      new OSecurityPolicyImpl(policyEntry.getValue().getRecord()));
               String readRule = policy.getReadRule();
               if (readRule != null && !readRule.trim().equalsIgnoreCase("true")) {
                 result.add((OSecurityResourceProperty) res);

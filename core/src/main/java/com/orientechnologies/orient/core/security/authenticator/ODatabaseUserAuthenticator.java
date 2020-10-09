@@ -6,12 +6,11 @@ import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
-import com.orientechnologies.orient.core.security.OGlobalUser;
 
 public class ODatabaseUserAuthenticator extends OSecurityAuthenticatorAbstract {
 
   @Override
-  public String authenticate(ODatabaseSession session, String username, String password) {
+  public OSecurityUser authenticate(ODatabaseSession session, String username, String password) {
     if (session == null) {
       return null;
     }
@@ -38,11 +37,11 @@ public class ODatabaseUserAuthenticator extends OSecurityAuthenticatorAbstract {
           dbName, "User or password not valid for database: '" + dbName + "'");
     }
 
-    return user.getName();
+    return user;
   }
 
   @Override
-  public OGlobalUser getUser(String username) {
+  public OSecurityUser getUser(String username) {
     return null;
   }
 

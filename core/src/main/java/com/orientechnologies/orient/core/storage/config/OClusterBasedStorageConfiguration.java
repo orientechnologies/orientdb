@@ -1136,7 +1136,11 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   public Locale getLocaleInstance() {
     lock.acquireReadLock();
     try {
-      return (Locale) cache.get(LOCALE_PROPERTY_INSTANCE);
+      Locale locale = (Locale) cache.get(LOCALE_PROPERTY_INSTANCE);
+      if (locale == null) {
+        locale = Locale.getDefault();
+      }
+      return locale;
     } finally {
       lock.releaseReadLock();
     }

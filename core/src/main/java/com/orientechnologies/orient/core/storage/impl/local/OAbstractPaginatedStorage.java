@@ -539,9 +539,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  /**
-   * @inheritDoc
-   */
+  /** @inheritDoc */
   @Override
   public final String getCreatedAtVersion() {
     return configuration.getCreatedAtVersion();

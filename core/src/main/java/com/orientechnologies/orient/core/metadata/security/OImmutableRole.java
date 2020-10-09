@@ -2,6 +2,8 @@ package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.security.ORule.ResourceGeneric;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -22,7 +24,7 @@ public class OImmutableRole implements OSecurityRole {
   private final ORID rid;
   private final Map<String, OSecurityPolicy> policies;
 
-  public OImmutableRole(ORole role) {
+  public OImmutableRole(OSecurityRole role) {
     if (role.getParentRole() == null) this.parentRole = null;
     else this.parentRole = new OImmutableRole(role.getParentRole());
 
@@ -31,15 +33,31 @@ public class OImmutableRole implements OSecurityRole {
     this.rid = role.getIdentity().getIdentity();
 
     for (ORule rule : role.getRuleSet()) rules.put(rule.getResourceGeneric(), rule);
-    Map<String, OSecurityPolicy> result = new HashMap<String, OSecurityPolicy>();
-    Map<String, OIdentifiable> policies = role.getDocument().getProperty("policies");
+    Map<String, OSecurityPolicy> policies = role.getPolicies();
     if (policies != null) {
+      Map<String, OSecurityPolicy> result = new HashMap<String, OSecurityPolicy>();
       policies
           .entrySet()
-          .forEach(
-              x -> result.put(x.getKey(), new OImmutableSecurityPolicy(x.getValue().getRecord())));
+          .forEach(x -> result.put(x.getKey(), new OImmutableSecurityPolicy(x.getValue())));
+      this.policies = result;
+    } else {
+      this.policies = null;
     }
-    this.policies = result;
+  }
+
+  public OImmutableRole(
+      OImmutableRole parent,
+      String name,
+      Map<ResourceGeneric, ORule> rules,
+      Map<String, OImmutableSecurityPolicy> policies) {
+    this.parentRole = parent;
+
+    this.mode = ALLOW_MODES.DENY_ALL_BUT;
+    this.name = name;
+    this.rid = new ORecordId(-1, -1);
+    this.rules.putAll(rules);
+    ;
+    this.policies = (Map<String, OSecurityPolicy>) (Map) policies;
   }
 
   public boolean allow(
@@ -166,6 +184,9 @@ public class OImmutableRole implements OSecurityRole {
 
   @Override
   public OSecurityPolicy getPolicy(String resource) {
+    if (policies == null) {
+      return null;
+    }
     return policies.get(resource);
   }
 }

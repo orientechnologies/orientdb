@@ -44,7 +44,7 @@ public class OServerDatabaseOperationsTest {
     OServerUserConfiguration rootUser = new OServerUserConfiguration();
     rootUser.name = "root";
     rootUser.password = "root";
-    rootUser.resources = "list";
+    rootUser.resources = "server.listDatabases";
     conf.users = new OServerUserConfiguration[] {rootUser};
     server = new OServer(false);
     server.setServerRootDirectory(SERVER_DIRECTORY);
@@ -69,7 +69,7 @@ public class OServerDatabaseOperationsTest {
 
   @Test
   public void testServerLoginDatabase() {
-    assertNotNull(server.authenticateUser("root", "root", "list"));
+    assertNotNull(server.authenticateUser("root", "root", "server.listDatabases"));
   }
 
   @Test

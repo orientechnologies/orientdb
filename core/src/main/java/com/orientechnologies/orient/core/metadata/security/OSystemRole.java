@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.metadata.security;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.List;
+import java.util.Map;
 
 /** */
 public class OSystemRole extends ORole {
@@ -36,8 +37,12 @@ public class OSystemRole extends ORole {
   /** Constructor used in unmarshalling. */
   public OSystemRole() {}
 
-  public OSystemRole(final String iName, final ORole iParent, final ALLOW_MODES iAllowMode) {
-    super(iName, iParent, iAllowMode);
+  public OSystemRole(
+      final String iName,
+      final ORole iParent,
+      final ALLOW_MODES iAllowMode,
+      Map<String, OSecurityPolicy> policies) {
+    super(iName, iParent, iAllowMode, policies);
   }
 
   /** Create the role by reading the source document. */

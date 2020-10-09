@@ -23,8 +23,8 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
-import com.orientechnologies.orient.core.security.OGlobalUser;
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -54,7 +54,7 @@ public class OClientConnection {
       Collections.newSetFromMap(new WeakHashMap<ONetworkProtocol, Boolean>());
   private volatile ONetworkProtocol protocol;
   private volatile ODatabaseDocumentInternal database;
-  private volatile OGlobalUser serverUser;
+  private volatile OSecurityUser serverUser;
   private ONetworkProtocolData data = new ONetworkProtocolData();
   private OClientConnectionStats stats = new OClientConnectionStats();
   private Lock lock = new ReentrantLock();
@@ -287,11 +287,11 @@ public class OClientConnection {
     this.database = database;
   }
 
-  public OGlobalUser getServerUser() {
+  public OSecurityUser getServerUser() {
     return serverUser;
   }
 
-  public void setServerUser(OGlobalUser serverUser) {
+  public void setServerUser(OSecurityUser serverUser) {
     this.serverUser = serverUser;
   }
 

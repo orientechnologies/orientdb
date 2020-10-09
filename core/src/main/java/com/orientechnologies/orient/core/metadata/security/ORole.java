@@ -71,12 +71,24 @@ public class ORole extends OIdentity implements OSecurityRole {
   public ORole() {}
 
   public ORole(final String iName, final ORole iParent, final ALLOW_MODES iAllowMode) {
+    this(iName, iParent, iAllowMode, null);
+  }
+
+  public ORole(
+      final String iName,
+      final ORole iParent,
+      final ALLOW_MODES iAllowMode,
+      Map<String, OSecurityPolicy> policies) {
     super(CLASS_NAME);
     document.field("name", iName);
 
     parentRole = iParent;
     document.field("inheritedRole", iParent != null ? iParent.getIdentity() : null);
-    //    setMode(iAllowMode);
+    if (policies != null) {
+      Map<String, OIdentifiable> p = new HashMap<>();
+      policies.forEach((k, v) -> p.put(k, ((OSecurityPolicyImpl) v).getElement()));
+      document.setProperty("policies", p);
+    }
 
     updateRolesDocumentContent();
   }
@@ -429,11 +441,11 @@ public class ORole extends OIdentity implements OSecurityRole {
 
   @Override
   public Map<String, OSecurityPolicy> getPolicies() {
-    Map<String, OSecurityPolicy> result = new HashMap<String, OSecurityPolicy>();
     Map<String, OIdentifiable> policies = document.getProperty("policies");
     if (policies == null) {
-      return result;
+      return null;
     }
+    Map<String, OSecurityPolicy> result = new HashMap<String, OSecurityPolicy>();
     policies
         .entrySet()
         .forEach(x -> result.put(x.getKey(), new OSecurityPolicyImpl(x.getValue().getRecord())));

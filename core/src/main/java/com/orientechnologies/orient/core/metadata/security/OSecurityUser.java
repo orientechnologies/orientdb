@@ -9,6 +9,10 @@ import java.util.Set;
  * @since 03/11/14
  */
 public interface OSecurityUser extends Serializable {
+  public static final String SERVER_USER_TYPE = "Server";
+  public static final String DATABASE_USER_TYPE = "Database";
+  public static final String SECURITY_USER_TYPE = "Security";
+
   enum STATUSES {
     SUSPENDED,
     ACTIVE

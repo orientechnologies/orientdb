@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.id.ORecordId;
 
 public class OImmutableSecurityPolicy implements OSecurityPolicy {
 
@@ -15,16 +15,36 @@ public class OImmutableSecurityPolicy implements OSecurityPolicy {
   private final String delete;
   private final String execute;
 
-  public OImmutableSecurityPolicy(OElement element) {
+  public OImmutableSecurityPolicy(OSecurityPolicy element) {
     this.identity = element.getIdentity();
-    this.name = element.getProperty("name");
-    this.active = element.hasProperty("active") ? element.getProperty("active") : false;
-    this.create = element.getProperty("create");
-    this.read = element.getProperty("read");
-    this.beforeUpdate = element.getProperty("beforeUpdate");
-    this.afterUpdate = element.getProperty("afterUpdate");
-    this.delete = element.getProperty("delete");
-    this.execute = element.getProperty("execute");
+    this.name = element.getName();
+    this.active = element.isActive();
+    this.create = element.getCreateRule();
+    this.read = element.getReadRule();
+    this.beforeUpdate = element.getBeforeUpdateRule();
+    this.afterUpdate = element.getAfterUpdateRule();
+    this.delete = element.getDeleteRule();
+    this.execute = element.getExecuteRule();
+  }
+
+  public OImmutableSecurityPolicy(
+      String name,
+      String create,
+      String read,
+      String beforeUpdate,
+      String afterUpdate,
+      String delete,
+      String execute) {
+    super();
+    this.identity = new ORecordId(-1, -1);
+    this.active = true;
+    this.name = name;
+    this.create = create;
+    this.read = read;
+    this.beforeUpdate = beforeUpdate;
+    this.afterUpdate = afterUpdate;
+    this.delete = delete;
+    this.execute = execute;
   }
 
   @Override

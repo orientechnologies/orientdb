@@ -19,8 +19,8 @@
  */
 package com.orientechnologies.orient.core.security.authenticator;
 
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.security.OGlobalUser;
 import com.orientechnologies.orient.core.security.OSecurityAuthenticator;
 import com.orientechnologies.orient.core.security.OSecuritySystem;
 import javax.security.auth.Subject;
@@ -104,7 +104,7 @@ public abstract class OSecurityAuthenticatorAbstract implements OSecurityAuthent
     return name;
   }
 
-  public OGlobalUser getUser(final String username) {
+  public OSecurityUser getUser(final String username) {
     return null;
   }
 
@@ -116,7 +116,7 @@ public abstract class OSecurityAuthenticatorAbstract implements OSecurityAuthent
     return false;
   }
 
-  protected boolean isPasswordValid(final OGlobalUser user) {
+  protected boolean isPasswordValid(final OSecurityUser user) {
     return user != null && user.getPassword() != null && !user.getPassword().isEmpty();
   }
 }
