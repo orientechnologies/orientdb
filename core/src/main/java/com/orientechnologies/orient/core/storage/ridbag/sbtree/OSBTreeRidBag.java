@@ -558,6 +558,11 @@ public class OSBTreeRidBag implements ORidBagDelegate {
   }
 
   @Override
+  public boolean addInternal(OIdentifiable e) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public void add(final OIdentifiable identifiable) {
     if (identifiable == null) {
       throw new IllegalArgumentException("Impossible to add a null identifiable in a ridbag");
