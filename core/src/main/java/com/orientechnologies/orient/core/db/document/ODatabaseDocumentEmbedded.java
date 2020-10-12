@@ -78,6 +78,7 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityPolicy;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.metadata.security.auth.OAuthenticationInfo;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceAction;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryProxy;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
@@ -199,6 +200,30 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
       user = null;
 
       initialized = true;
+    } catch (OException e) {
+      ODatabaseRecordThreadLocal.instance().remove();
+      throw e;
+    } catch (Exception e) {
+      ODatabaseRecordThreadLocal.instance().remove();
+      throw OException.wrapException(
+          new ODatabaseException("Cannot open database url=" + getURL()), e);
+    }
+  }
+
+  public void internalOpen(final OAuthenticationInfo authenticationInfo) {
+    try {
+      OSecurityInternal security = sharedContext.getSecurity();
+
+      if (user == null || user.getVersion() != security.getVersion(this)) {
+        final OSecurityUser usr;
+
+        usr = security.securityAuthenticate(this, authenticationInfo);
+        if (usr != null) user = new OImmutableUser(security.getVersion(this), usr);
+        else user = null;
+
+        checkSecurity(ORule.ResourceGeneric.DATABASE, ORole.PERMISSION_READ);
+      }
+
     } catch (OException e) {
       ODatabaseRecordThreadLocal.instance().remove();
       throw e;

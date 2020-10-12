@@ -183,6 +183,11 @@ public class ORidBag
   }
 
   @Override
+  public boolean addInternal(OIdentifiable e) {
+    return delegate.addInternal(e);
+  }
+
+  @Override
   public void remove(OIdentifiable identifiable) {
     delegate.remove(identifiable);
   }

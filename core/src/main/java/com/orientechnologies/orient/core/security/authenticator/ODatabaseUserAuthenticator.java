@@ -5,9 +5,38 @@ import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
+import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.metadata.security.auth.OAuthenticationInfo;
+import com.orientechnologies.orient.core.metadata.security.auth.OTokenAuthInfo;
+import com.orientechnologies.orient.core.metadata.security.auth.OUserPasswordAuthInfo;
 
 public class ODatabaseUserAuthenticator extends OSecurityAuthenticatorAbstract {
+
+  @Override
+  public OSecurityUser authenticate(ODatabaseSession session, OAuthenticationInfo info) {
+    if (info instanceof OUserPasswordAuthInfo) {
+      return authenticate(
+          session,
+          ((OUserPasswordAuthInfo) info).getUser(),
+          ((OUserPasswordAuthInfo) info).getPassword());
+    } else if (info instanceof OTokenAuthInfo) {
+      OToken token = ((OTokenAuthInfo) info).getToken();
+      if (token.getIsValid() != true) {
+        throw new OSecurityAccessException(session.getName(), "Token not valid");
+      }
+
+      OUser user = token.getUser((ODatabaseDocumentInternal) session);
+      if (user == null && token.getUserName() != null) {
+        OSecurityShared databaseSecurity =
+            (OSecurityShared)
+                ((ODatabaseDocumentInternal) session).getSharedContext().getSecurity();
+        user = databaseSecurity.getUserInternal(session, token.getUserName());
+      }
+      return user;
+    }
+    return super.authenticate(session, info);
+  }
 
   @Override
   public OSecurityUser authenticate(ODatabaseSession session, String username, String password) {

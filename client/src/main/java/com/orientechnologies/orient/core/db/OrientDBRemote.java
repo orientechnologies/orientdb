@@ -63,6 +63,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentRemote;
 import com.orientechnologies.orient.core.db.document.OSharedContextRemote;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.metadata.security.auth.OAuthenticationInfo;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OCredentialInterceptor;
 import com.orientechnologies.orient.core.security.OSecurityManager;
@@ -149,6 +150,12 @@ public class OrientDBRemote implements OrientDBInternal {
       throw OException.wrapException(
           new ODatabaseException("Cannot open database '" + name + "'"), e);
     }
+  }
+
+  @Override
+  public ODatabaseDocumentInternal open(
+      OAuthenticationInfo authenticationInfo, OrientDBConfig config) {
+    throw new UnsupportedOperationException();
   }
 
   @Override

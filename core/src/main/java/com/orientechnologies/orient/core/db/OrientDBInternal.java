@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.metadata.security.auth.OAuthenticationInfo;
 import com.orientechnologies.orient.core.security.OSecuritySystem;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -176,6 +177,17 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
    * @return the opened database
    */
   ODatabaseDocumentInternal open(String name, String user, String password, OrientDBConfig config);
+
+  /**
+   * Open a database specified by name using the authentication info provided, with specific
+   * configuration
+   *
+   * @param authenticationInfo authentication informations provided for the authentication.
+   * @param config database specific configuration that override the factory global settings where
+   *     needed.
+   * @return the opened database
+   */
+  ODatabaseDocumentInternal open(OAuthenticationInfo authenticationInfo, OrientDBConfig config);
 
   /**
    * Create a new database
