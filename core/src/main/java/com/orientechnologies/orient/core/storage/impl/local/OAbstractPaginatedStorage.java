@@ -235,7 +235,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   private final OSimpleRWLockManager<ORID> lockManager;
-  protected final OSBTreeCollectionManagerShared sbTreeCollectionManager;
+  protected volatile OSBTreeCollectionManagerShared sbTreeCollectionManager;
 
   /** Lock is used to atomically update record versions. */
   private final OLockManager<ORID> recordVersionManager;
@@ -309,7 +309,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     recordVersionManager = new OPartitionedLockManager<>();
 
     registerProfilerHooks();
-    sbTreeCollectionManager = new OSBTreeCollectionManagerShared(this);
   }
 
   private static void checkPageSizeAndRelatedParametersInGlobalConfiguration() {
@@ -448,6 +447,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               checkPageSizeAndRelatedParameters();
 
               componentsFactory = new OCurrentStorageComponentsFactory(configuration);
+
+              sbTreeCollectionManager = new OSBTreeCollectionManagerShared(this);
 
               openClusters();
               openIndexes();
@@ -754,6 +755,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               componentsFactory = new OCurrentStorageComponentsFactory(configuration);
 
               status = STATUS.OPEN;
+
+              sbTreeCollectionManager = new OSBTreeCollectionManagerShared(this);
 
               // ADD THE METADATA CLUSTER TO STORE INTERNAL STUFF
               doAddCluster(atomicOperation, OMetadataDefault.CLUSTER_INTERNAL_NAME);
@@ -2604,8 +2607,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         }
         makeStorageDirty();
 
-        final OBinarySerializer<?> keySerializer =
-            determineKeySerializer(indexDefinition);
+        final OBinarySerializer<?> keySerializer = determineKeySerializer(indexDefinition);
         if (keySerializer == null) {
           throw new OIndexException("Can not determine key serializer");
         }
@@ -2737,8 +2739,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                 }
               }
 
-              final OBinarySerializer<?> keySerializer =
-                  determineKeySerializer(indexDefinition);
+              final OBinarySerializer<?> keySerializer = determineKeySerializer(indexDefinition);
               if (keySerializer == null) {
                 throw new OIndexException("Can not determine key serializer");
               }
@@ -2916,8 +2917,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private OBinarySerializer<?> determineKeySerializer(
-      final OIndexDefinition indexDefinition) {
+  private OBinarySerializer<?> determineKeySerializer(final OIndexDefinition indexDefinition) {
     if (indexDefinition == null) {
       throw new OStorageException("Index definition has to be provided");
     }
