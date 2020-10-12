@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.core.metadata.security.auth;
 
+import java.util.Optional;
+
 public class OUserPasswordAuthInfo implements OAuthenticationInfo {
 
   private String database;
@@ -7,8 +9,8 @@ public class OUserPasswordAuthInfo implements OAuthenticationInfo {
   private String password;
 
   @Override
-  public String getDatabase() {
-    return database;
+  public Optional<String> getDatabase() {
+    return Optional.ofNullable(database);
   }
 
   public String getUser() {

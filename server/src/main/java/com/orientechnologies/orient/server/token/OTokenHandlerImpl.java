@@ -18,7 +18,6 @@ import com.orientechnologies.orient.core.metadata.security.jwt.OKeyProvider;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.server.OClientConnection;
-import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OTokenHandler;
 import com.orientechnologies.orient.server.binary.impl.OBinaryToken;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
@@ -52,12 +51,11 @@ public class OTokenHandlerImpl implements OTokenHandler {
   private OKeyProvider keyProvider;
   private Random keyGenerator = new Random();
 
-  public OTokenHandlerImpl(OServer server) {
+  public OTokenHandlerImpl(OContextConfiguration config) {
     byte[] key = null;
     String algorithm;
     Long sessionTimeout;
 
-    OContextConfiguration config = server.getContextConfiguration();
     String configKey = config.getValueAsString(OGlobalConfiguration.NETWORK_TOKEN_SECRETKEY);
     if (configKey == null || configKey.length() == 0)
       configKey = config.getValueAsString(OGlobalConfiguration.OAUTH2_SECRETKEY);

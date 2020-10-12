@@ -448,7 +448,7 @@ public class OServer {
 
       final OServerConfiguration configuration = serverCfg.getConfiguration();
 
-      tokenHandler = new OTokenHandlerImpl(this);
+      tokenHandler = new OTokenHandlerImpl(this.getContextConfiguration());
       if (OGlobalConfiguration.SERVER_HEAP_USAGE_LIMIT.getValueAsInteger() > 0) {
         memoryManager =
             new MXBeanMemoryManager(
