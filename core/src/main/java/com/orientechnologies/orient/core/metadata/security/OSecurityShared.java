@@ -1703,12 +1703,15 @@ public class OSecurityShared implements OSecurityInternal {
           try {
             OSecurityResource res = OSecurityResource.getInstance(policyEntry.getKey());
             if (res instanceof OSecurityResourceProperty) {
-              OSecurityPolicy policy =
-                  new OImmutableSecurityPolicy(
-                      new OSecurityPolicyImpl(policyEntry.getValue().getRecord()));
-              String readRule = policy.getReadRule();
-              if (readRule != null && !readRule.trim().equalsIgnoreCase("true")) {
-                result.add((OSecurityResourceProperty) res);
+              final OElement element = policyEntry.getValue().getRecord();
+              if (element != null) {
+                final OSecurityPolicy policy =
+                    new OImmutableSecurityPolicy(
+                        new OSecurityPolicyImpl(element));
+                final String readRule = policy.getReadRule();
+                if (readRule != null && !readRule.trim().equalsIgnoreCase("true")) {
+                  result.add((OSecurityResourceProperty) res);
+                }
               }
             }
           } catch (Exception e) {
