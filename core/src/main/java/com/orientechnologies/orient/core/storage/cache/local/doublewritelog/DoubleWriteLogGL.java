@@ -153,7 +153,7 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
   }
 
   private FileChannel createLogFile() throws IOException {
-    final Path currentFilePath = storagePath.resolve(createSegmentName(currentSegment));
+    final Path currentFilePath = storagePath.resolve(generateSegmentsName(currentSegment));
     return FileChannel.open(
         currentFilePath,
         StandardOpenOption.WRITE,
@@ -161,7 +161,7 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
         StandardOpenOption.SYNC);
   }
 
-  private String createSegmentName(long id) {
+  private String generateSegmentsName(long id) {
     return storageName + "_" + id + EXTENSION;
   }
 
@@ -265,20 +265,20 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
 
       //noinspection resource
       tailSegments.stream()
-          .map(this::createSegmentName)
+          .map(this::generateSegmentsName)
           .forEach(
               (segment) -> {
                 try {
                   final Path segmentPath = storagePath.resolve(segment);
                   Files.delete(segmentPath);
-                } catch (IOException e) {
-                  throw OException.wrapException(
-                      new OStorageException(
-                          "Can not delete segment of double write log - "
-                              + segment
-                              + " in storage "
-                              + storageName),
-                      e);
+                } catch (final IOException e) {
+                  OLogManager.instance()
+                      .errorNoDb(
+                          this,
+                          "Can not delete segment of double write log - %d in storage %s",
+                          e,
+                          segment,
+                          storageName);
                 }
               });
 
@@ -323,7 +323,7 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
         return null;
       }
 
-      final String segmentName = createSegmentName(segmentPosition.first);
+      final String segmentName = generateSegmentsName(segmentPosition.first);
       final Path segmentPath = storagePath.resolve(segmentName);
 
       // bellow set of precautions to prevent errors during page restore
