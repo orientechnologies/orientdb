@@ -94,5 +94,7 @@ public interface OTrackedMultiValue<K, V> {
 
   void transactionClear();
 
+  boolean addInternal(final V e);
+
   OMultiValueChangeTimeLine<K, V> getTransactionTimeLine();
 }

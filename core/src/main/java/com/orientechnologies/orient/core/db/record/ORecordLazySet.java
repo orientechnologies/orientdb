@@ -250,13 +250,13 @@ public class ORecordLazySet extends AbstractCollection<OIdentifiable>
   public void disableTracking(ORecordElement document) {
     if (tracker.isEnabled()) {
       tracker.disable();
-      this.dirty = false;
       if (this instanceof ORecordLazyMultiValue) {
         OTrackedMultiValue.nestedDisable(((ORecordLazyMultiValue) this).rawIterator(), this);
       } else {
         OTrackedMultiValue.nestedDisable(this.iterator(), this);
       }
     }
+    this.dirty = false;
   }
 
   @Override

@@ -92,6 +92,10 @@ public class ODocumentInternal {
     return document.getRawEntries();
   }
 
+  public static ODocumentEntry rawEntry(final ODocument document, String propertyName) {
+    return document.fields.get(propertyName);
+  }
+
   public static List<Entry<String, ODocumentEntry>> filteredEntries(final ODocument document) {
     return document.getFilteredEntries();
   }

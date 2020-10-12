@@ -64,6 +64,11 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T>
     return sourceRecord;
   }
 
+  @Override
+  public boolean addInternal(T e) {
+    throw new UnsupportedOperationException();
+  }
+
   public T putInternal(final Object key, final T value) {
     if (key == null) throw new IllegalArgumentException("null key not supported by embedded map");
     boolean containsKey = containsKey(key);
