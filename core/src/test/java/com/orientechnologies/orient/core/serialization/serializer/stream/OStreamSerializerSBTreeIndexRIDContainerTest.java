@@ -67,8 +67,8 @@ public class OStreamSerializerSBTreeIndexRIDContainerTest {
     Assert.assertTrue(newRidContainer.isEmbedded());
     Assert.assertFalse(newRidContainer.isDurableNonTxMode());
 
-    final Set<OIdentifiable> storedRids = new HashSet<OIdentifiable>(newRidContainer);
-    final Set<OIdentifiable> newRids = new HashSet<OIdentifiable>(indexRIDContainer);
+    final Set<OIdentifiable> storedRids = new HashSet<>(newRidContainer);
+    final Set<OIdentifiable> newRids = new HashSet<>(indexRIDContainer);
 
     Assert.assertEquals(newRids, storedRids);
   }
@@ -109,50 +109,8 @@ public class OStreamSerializerSBTreeIndexRIDContainerTest {
     Assert.assertTrue(newRidContainer.isEmbedded());
     Assert.assertTrue(newRidContainer.isDurableNonTxMode());
 
-    final Set<OIdentifiable> storedRids = new HashSet<OIdentifiable>(newRidContainer);
-    final Set<OIdentifiable> newRids = new HashSet<OIdentifiable>(indexRIDContainer);
-
-    Assert.assertEquals(newRids, storedRids);
-  }
-
-  public void testSerializeInByteBufferNonEmbeddedNonDurable() {
-    final OIndexRIDContainer indexRIDContainer =
-        new OIndexRIDContainer("test", false, new AtomicLong(0));
-
-    indexRIDContainer.setTopThreshold(1);
-    for (int i = 0; i < 5; i++) {
-      indexRIDContainer.add(new ORecordId(1, i * 3));
-    }
-
-    Assert.assertFalse(indexRIDContainer.isEmbedded());
-
-    final int len = streamSerializerSBTreeIndexRIDContainer.getObjectSize(indexRIDContainer);
-    final int serializationOffset = 5;
-
-    final ByteBuffer buffer = ByteBuffer.allocate(len + serializationOffset);
-    buffer.position(serializationOffset);
-
-    streamSerializerSBTreeIndexRIDContainer.serializeInByteBufferObject(indexRIDContainer, buffer);
-
-    final int binarySize = buffer.position() - serializationOffset;
-    Assert.assertEquals(binarySize, len);
-
-    buffer.position(serializationOffset);
-    Assert.assertEquals(
-        streamSerializerSBTreeIndexRIDContainer.getObjectSizeInByteBuffer(buffer), len);
-
-    buffer.position(serializationOffset);
-    OIndexRIDContainer newRidContainer =
-        streamSerializerSBTreeIndexRIDContainer.deserializeFromByteBufferObject(buffer);
-
-    Assert.assertEquals(buffer.position() - serializationOffset, len);
-    Assert.assertNotSame(newRidContainer, indexRIDContainer);
-
-    Assert.assertFalse(newRidContainer.isEmbedded());
-    Assert.assertFalse(newRidContainer.isDurableNonTxMode());
-
-    final Set<OIdentifiable> storedRids = new HashSet<OIdentifiable>(newRidContainer);
-    final Set<OIdentifiable> newRids = new HashSet<OIdentifiable>(indexRIDContainer);
+    final Set<OIdentifiable> storedRids = new HashSet<>(newRidContainer);
+    final Set<OIdentifiable> newRids = new HashSet<>(indexRIDContainer);
 
     Assert.assertEquals(newRids, storedRids);
   }
@@ -193,8 +151,8 @@ public class OStreamSerializerSBTreeIndexRIDContainerTest {
     Assert.assertFalse(newRidContainer.isEmbedded());
     Assert.assertTrue(newRidContainer.isDurableNonTxMode());
 
-    final Set<OIdentifiable> storedRids = new HashSet<OIdentifiable>(newRidContainer);
-    final Set<OIdentifiable> newRids = new HashSet<OIdentifiable>(indexRIDContainer);
+    final Set<OIdentifiable> storedRids = new HashSet<>(newRidContainer);
+    final Set<OIdentifiable> newRids = new HashSet<>(indexRIDContainer);
 
     Assert.assertEquals(newRids, storedRids);
   }
@@ -234,8 +192,8 @@ public class OStreamSerializerSBTreeIndexRIDContainerTest {
     Assert.assertTrue(newRidContainer.isEmbedded());
     Assert.assertFalse(newRidContainer.isDurableNonTxMode());
 
-    final Set<OIdentifiable> storedRids = new HashSet<OIdentifiable>(newRidContainer);
-    final Set<OIdentifiable> newRids = new HashSet<OIdentifiable>(indexRIDContainer);
+    final Set<OIdentifiable> storedRids = new HashSet<>(newRidContainer);
+    final Set<OIdentifiable> newRids = new HashSet<>(indexRIDContainer);
 
     Assert.assertEquals(newRids, storedRids);
   }
@@ -275,8 +233,8 @@ public class OStreamSerializerSBTreeIndexRIDContainerTest {
     Assert.assertTrue(newRidContainer.isEmbedded());
     Assert.assertTrue(newRidContainer.isDurableNonTxMode());
 
-    final Set<OIdentifiable> storedRids = new HashSet<OIdentifiable>(newRidContainer);
-    final Set<OIdentifiable> newRids = new HashSet<OIdentifiable>(indexRIDContainer);
+    final Set<OIdentifiable> storedRids = new HashSet<>(newRidContainer);
+    final Set<OIdentifiable> newRids = new HashSet<>(indexRIDContainer);
 
     Assert.assertEquals(newRids, storedRids);
   }
@@ -316,8 +274,8 @@ public class OStreamSerializerSBTreeIndexRIDContainerTest {
     Assert.assertFalse(newRidContainer.isEmbedded());
     Assert.assertFalse(newRidContainer.isDurableNonTxMode());
 
-    final Set<OIdentifiable> storedRids = new HashSet<OIdentifiable>(newRidContainer);
-    final Set<OIdentifiable> newRids = new HashSet<OIdentifiable>(indexRIDContainer);
+    final Set<OIdentifiable> storedRids = new HashSet<>(newRidContainer);
+    final Set<OIdentifiable> newRids = new HashSet<>(indexRIDContainer);
 
     Assert.assertEquals(newRids, storedRids);
   }
@@ -357,8 +315,8 @@ public class OStreamSerializerSBTreeIndexRIDContainerTest {
     Assert.assertFalse(newRidContainer.isEmbedded());
     Assert.assertTrue(newRidContainer.isDurableNonTxMode());
 
-    final Set<OIdentifiable> storedRids = new HashSet<OIdentifiable>(newRidContainer);
-    final Set<OIdentifiable> newRids = new HashSet<OIdentifiable>(indexRIDContainer);
+    final Set<OIdentifiable> storedRids = new HashSet<>(newRidContainer);
+    final Set<OIdentifiable> newRids = new HashSet<>(indexRIDContainer);
 
     Assert.assertEquals(newRids, storedRids);
   }

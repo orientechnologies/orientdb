@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import java.util.Map;
 import java.util.Set;
 
@@ -39,7 +40,8 @@ public interface OIndexFactory {
   /**
    * Creates an index.
    *
-   * @param indexType index type
+   * @param indexType               index type
+   * @param atomicOperationsManager
    * @return OIndexInternal
    * @throws OConfigurationException if index creation failed
    */
@@ -50,7 +52,8 @@ public interface OIndexFactory {
       String algorithm,
       String valueContainerAlgorithm,
       ODocument metadata,
-      int version)
+      int version,
+      OAtomicOperationsManager atomicOperationsManager)
       throws OConfigurationException;
 
   OBaseIndexEngine createIndexEngine(

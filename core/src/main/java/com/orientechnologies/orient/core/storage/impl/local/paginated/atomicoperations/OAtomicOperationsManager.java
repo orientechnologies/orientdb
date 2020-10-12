@@ -48,26 +48,7 @@ import java.util.Objects;
  * @since 12/3/13
  */
 public class OAtomicOperationsManager {
-
-  private static volatile ThreadLocal<OAtomicOperation> currentOperation = new ThreadLocal<>();
-
-  static {
-    Orient.instance()
-        .registerListener(
-            new OOrientListenerAbstract() {
-              @Override
-              public void onStartup() {
-                if (currentOperation == null) {
-                  currentOperation = new ThreadLocal<>();
-                }
-              }
-
-              @Override
-              public void onShutdown() {
-                currentOperation = null;
-              }
-            });
-  }
+  private final ThreadLocal<OAtomicOperation> currentOperation = new ThreadLocal<>();
 
   private final OAbstractPaginatedStorage storage;
   private final OWriteAheadLog writeAheadLog;
@@ -333,7 +314,7 @@ public class OAtomicOperationsManager {
     return true;
   }
 
-  public static void alarmClearOfAtomicOperation() {
+  public void alarmClearOfAtomicOperation() {
     final OAtomicOperation current = currentOperation.get();
 
     if (current != null) {
@@ -349,7 +330,7 @@ public class OAtomicOperationsManager {
     atomicOperationsFreezer.releaseOperations(id);
   }
 
-  public static OAtomicOperation getCurrentOperation() {
+  public final OAtomicOperation getCurrentOperation() {
     return currentOperation.get();
   }
 

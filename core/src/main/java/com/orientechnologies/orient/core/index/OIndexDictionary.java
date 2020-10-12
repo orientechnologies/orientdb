@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdExceptio
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 
 /**
@@ -42,7 +43,8 @@ public class OIndexDictionary extends OIndexOneValue {
       OAbstractPaginatedStorage storage,
       String valueContainerAlgorithm,
       ODocument metadata,
-      int binaryFormatVersion) {
+      int binaryFormatVersion,
+      OAtomicOperationsManager atomicOperationsManager) {
     super(
         name,
         typeId,
@@ -51,7 +53,7 @@ public class OIndexDictionary extends OIndexOneValue {
         storage,
         valueContainerAlgorithm,
         metadata,
-        binaryFormatVersion);
+        binaryFormatVersion, atomicOperationsManager);
   }
 
   public OIndexOneValue put(Object key, final OIdentifiable value) {

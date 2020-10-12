@@ -19,6 +19,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.spatial.engine.OLuceneSpatialIndexContainer;
@@ -42,7 +43,8 @@ public class OLuceneSpatialIndex extends OLuceneIndexNotUnique {
       OAbstractPaginatedStorage storage,
       String valueContainerAlgorithm,
       ODocument metadata,
-      final int binaryFormatVersion) {
+      final int binaryFormatVersion,
+      OAtomicOperationsManager atomicOperationsManager) {
     super(
         name,
         typeId,
@@ -51,7 +53,7 @@ public class OLuceneSpatialIndex extends OLuceneIndexNotUnique {
         storage,
         valueContainerAlgorithm,
         metadata,
-        binaryFormatVersion);
+        binaryFormatVersion, atomicOperationsManager);
   }
 
   @Override

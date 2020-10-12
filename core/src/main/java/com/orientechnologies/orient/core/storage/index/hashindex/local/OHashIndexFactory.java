@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.index.engine.OHashTableIndexEngine;
 import com.orientechnologies.orient.core.storage.index.engine.ORemoteIndexEngine;
 import java.util.Collections;
@@ -87,7 +88,8 @@ public final class OHashIndexFactory implements OIndexFactory {
       final String algorithm,
       String valueContainerAlgorithm,
       final ODocument metadata,
-      int version)
+      int version,
+      OAtomicOperationsManager atomicOperationsManager)
       throws OConfigurationException {
 
     if (version < 0) {
@@ -99,7 +101,7 @@ public final class OHashIndexFactory implements OIndexFactory {
 
     final int binaryFormatVersion = storage.getConfiguration().getBinaryFormatVersion();
 
-    if (OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.toString().equals(indexType))
+    if (OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.toString().equals(indexType)) {
       return new OIndexUnique(
           name,
           indexType,
@@ -108,8 +110,8 @@ public final class OHashIndexFactory implements OIndexFactory {
           (OAbstractPaginatedStorage) storage.getUnderlying(),
           valueContainerAlgorithm,
           metadata,
-          binaryFormatVersion);
-    else if (OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString().equals(indexType))
+          binaryFormatVersion, atomicOperationsManager);
+    } else if (OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString().equals(indexType)) {
       return new OIndexNotUnique(
           name,
           indexType,
@@ -118,8 +120,8 @@ public final class OHashIndexFactory implements OIndexFactory {
           (OAbstractPaginatedStorage) storage.getUnderlying(),
           valueContainerAlgorithm,
           metadata,
-          binaryFormatVersion);
-    else if (OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString().equals(indexType))
+          binaryFormatVersion, atomicOperationsManager);
+    } else if (OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString().equals(indexType)) {
       return new OIndexDictionary(
           name,
           indexType,
@@ -128,7 +130,8 @@ public final class OHashIndexFactory implements OIndexFactory {
           (OAbstractPaginatedStorage) storage.getUnderlying(),
           valueContainerAlgorithm,
           metadata,
-          binaryFormatVersion);
+          binaryFormatVersion, atomicOperationsManager);
+    }
 
     throw new OConfigurationException("Unsupported type: " + indexType);
   }

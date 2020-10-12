@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.index.engine.ORemoteIndexEngine;
 import java.util.Collections;
 import java.util.HashSet;
@@ -53,28 +54,16 @@ public class OAutoShardingIndexFactory implements OIndexFactory {
   private static final Set<String> ALGORITHMS;
 
   static {
-    final Set<String> types = new HashSet<String>();
+    final Set<String> types = new HashSet<>();
     types.add(OClass.INDEX_TYPE.UNIQUE.toString());
     types.add(OClass.INDEX_TYPE.NOTUNIQUE.toString());
     TYPES = Collections.unmodifiableSet(types);
   }
 
   static {
-    final Set<String> algorithms = new HashSet<String>();
+    final Set<String> algorithms = new HashSet<>();
     algorithms.add(AUTOSHARDING_ALGORITHM);
     ALGORITHMS = Collections.unmodifiableSet(algorithms);
-  }
-
-  public static boolean isMultiValueIndex(final String indexType) {
-    switch (OClass.INDEX_TYPE.valueOf(indexType)) {
-      case UNIQUE:
-      case UNIQUE_HASH_INDEX:
-      case DICTIONARY:
-      case DICTIONARY_HASH_INDEX:
-        return false;
-    }
-
-    return true;
   }
 
   /**
@@ -100,7 +89,8 @@ public class OAutoShardingIndexFactory implements OIndexFactory {
       String algorithm,
       String valueContainerAlgorithm,
       ODocument metadata,
-      int version)
+      int version,
+      OAtomicOperationsManager atomicOperationsManager)
       throws OConfigurationException {
     if (valueContainerAlgorithm == null) valueContainerAlgorithm = NONE_VALUE_CONTAINER;
 
@@ -139,7 +129,8 @@ public class OAutoShardingIndexFactory implements OIndexFactory {
           storage,
           valueContainerAlgorithm,
           metadata,
-          binaryFormatVersion);
+          binaryFormatVersion,
+          storage.getAtomicOperationsManager());
     } else if (OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(indexType)) {
       return new OIndexNotUnique(
           name,
@@ -149,7 +140,8 @@ public class OAutoShardingIndexFactory implements OIndexFactory {
           storage,
           valueContainerAlgorithm,
           metadata,
-          binaryFormatVersion);
+          binaryFormatVersion,
+          storage.getAtomicOperationsManager());
     }
 
     throw new OConfigurationException("Unsupported type: " + indexType);
@@ -175,18 +167,26 @@ public class OAutoShardingIndexFactory implements OIndexFactory {
     final OIndexEngine indexEngine;
 
     final String storageType = storage.getType();
-    if (storageType.equals("memory") || storageType.equals("plocal"))
-      indexEngine =
-          new OAutoShardingIndexEngine(name, indexId, (OAbstractPaginatedStorage) storage, version);
-    else if (storageType.equals("distributed"))
-      // DISTRIBUTED CASE: HANDLE IT AS FOR LOCAL
-      indexEngine =
-          new OAutoShardingIndexEngine(
-              name, indexId, (OAbstractPaginatedStorage) storage.getUnderlying(), version);
-    else if (storageType.equals("remote"))
-      // MANAGE REMOTE SHARDED INDEX TO CALL THE INTERESTED SERVER
-      indexEngine = new ORemoteIndexEngine(indexId, name);
-    else throw new OIndexException("Unsupported storage type: " + storageType);
+    switch (storageType) {
+      case "memory":
+      case "plocal":
+        indexEngine =
+            new OAutoShardingIndexEngine(name, indexId, (OAbstractPaginatedStorage) storage,
+                version);
+        break;
+      case "distributed":
+        // DISTRIBUTED CASE: HANDLE IT AS FOR LOCAL
+        indexEngine =
+            new OAutoShardingIndexEngine(
+                name, indexId, (OAbstractPaginatedStorage) storage.getUnderlying(), version);
+        break;
+      case "remote":
+        // MANAGE REMOTE SHARDED INDEX TO CALL THE INTERESTED SERVER
+        indexEngine = new ORemoteIndexEngine(indexId, name);
+        break;
+      default:
+        throw new OIndexException("Unsupported storage type: " + storageType);
+    }
 
     return indexEngine;
   }

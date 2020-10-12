@@ -98,6 +98,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
   private volatile OIndexDefinition indexDefinition;
   private final Map<String, String> engineProperties = new HashMap<>();
   protected final int binaryFormatVersion;
+  protected final OAtomicOperationsManager atomicOperationsManager;
 
   public OIndexAbstract(
       String name,
@@ -107,8 +108,10 @@ public abstract class OIndexAbstract implements OIndexInternal {
       final ODocument metadata,
       final int version,
       final OStorage storage,
-      int binaryFormatVersion) {
+      int binaryFormatVersion,
+      OAtomicOperationsManager atomicOperationsManager) {
     this.binaryFormatVersion = binaryFormatVersion;
+    this.atomicOperationsManager = atomicOperationsManager;
     acquireExclusiveLock();
     try {
       databaseName = storage.getName();
@@ -313,8 +316,8 @@ public abstract class OIndexAbstract implements OIndexInternal {
                   version,
                   1,
                   this instanceof OIndexMultiValues,
-                  engineProperties,
-                  metadata);
+                  engineProperties
+              );
           apiVersion = OAbstractPaginatedStorage.extractEngineAPIVersion(indexId);
         }
 
@@ -1096,7 +1099,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
   private void removeValuesContainer() {
     if (valueContainerAlgorithm.equals(ODefaultIndexFactory.SBTREE_BONSAI_VALUE_CONTAINER)) {
 
-      final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+      final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
       final OReadCache readCache = storage.getReadCache();
       final OWriteCache writeCache = storage.getWriteCache();

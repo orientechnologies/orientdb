@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.index.engine.ORemoteIndexEngine;
 import com.orientechnologies.orient.core.storage.index.engine.OSBTreeIndexEngine;
 import java.util.Collections;
@@ -107,7 +108,8 @@ public class ODefaultIndexFactory implements OIndexFactory {
       String algorithm,
       String valueContainerAlgorithm,
       ODocument metadata,
-      int version)
+      int version,
+      OAtomicOperationsManager atomicOperationsManager)
       throws OConfigurationException {
     if (valueContainerAlgorithm == null) {
       valueContainerAlgorithm = NONE_VALUE_CONTAINER;
@@ -147,7 +149,7 @@ public class ODefaultIndexFactory implements OIndexFactory {
           storage,
           valueContainerAlgorithm,
           metadata,
-          binaryFormatVersion);
+          binaryFormatVersion, storage.getAtomicOperationsManager());
     } else if (OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(indexType)) {
       return new OIndexNotUnique(
           name,
@@ -157,7 +159,7 @@ public class ODefaultIndexFactory implements OIndexFactory {
           storage,
           valueContainerAlgorithm,
           metadata,
-          binaryFormatVersion);
+          binaryFormatVersion, storage.getAtomicOperationsManager());
     } else if (OClass.INDEX_TYPE.FULLTEXT.toString().equals(indexType)) {
       OLogManager.instance()
           .warnNoDb(
@@ -172,7 +174,7 @@ public class ODefaultIndexFactory implements OIndexFactory {
           storage,
           valueContainerAlgorithm,
           metadata,
-          binaryFormatVersion);
+          binaryFormatVersion, storage.getAtomicOperationsManager());
     } else if (OClass.INDEX_TYPE.DICTIONARY.toString().equals(indexType)) {
       return new OIndexDictionary(
           name,
@@ -182,7 +184,8 @@ public class ODefaultIndexFactory implements OIndexFactory {
           storage,
           valueContainerAlgorithm,
           metadata,
-          binaryFormatVersion);
+          binaryFormatVersion,
+          storage.getAtomicOperationsManager());
     }
 
     throw new OConfigurationException("Unsupported type: " + indexType);

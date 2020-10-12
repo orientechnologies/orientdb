@@ -15,7 +15,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashFunction;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashTable;
@@ -193,7 +192,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
     try {
       acquireSharedLock();
       try {
-        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
         if (key == null) {
           if (getFilledUpTo(atomicOperation, nullBucketFileId) == 0) {
@@ -212,7 +211,6 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
 
           return result;
         } else {
-          //noinspection RedundantCast
           key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
           final long hashCode = keyHashFunction.hashCode(key);
@@ -291,7 +289,6 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
             K key = k;
             int sizeDiff = 0;
             if (key != null) {
-              //noinspection RedundantCast
               key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
               final long hashCode = keyHashFunction.hashCode(key);
@@ -404,9 +401,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
     try {
       acquireSharedLock();
       try {
-        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
-
-        //noinspection RedundantCast
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
         key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
         final long hashCode = keyHashFunction.hashCode(key);
@@ -496,7 +491,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
         this.keyTypes = null;
       }
 
-      final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+      final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
       fileStateId = openFile(atomicOperation, name + metadataConfigurationFileExtension);
 
@@ -701,9 +696,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
     try {
       acquireSharedLock();
       try {
-        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
-
-        //noinspection RedundantCast
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
         key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
         final long hashCode = keyHashFunction.hashCode(key);
@@ -771,7 +764,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
     try {
       acquireSharedLock();
       try {
-        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
         BucketPath bucketPath = getBucket(HASH_CODE_MIN_VALUE, atomicOperation);
         final long bucketPointer =
@@ -824,7 +817,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
     try {
       acquireSharedLock();
       try {
-        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
         BucketPath bucketPath = getBucket(HASH_CODE_MAX_VALUE, atomicOperation);
         final long bucketPointer =
@@ -884,9 +877,8 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
     try {
       acquireSharedLock();
       try {
-        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
-        //noinspection RedundantCast
         key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
         final long hashCode = keyHashFunction.hashCode(key);
@@ -959,8 +951,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
     try {
       acquireSharedLock();
       try {
-        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
-        //noinspection RedundantCast
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
         key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
         final long hashCode = keyHashFunction.hashCode(key);
@@ -1172,7 +1163,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
     try {
       acquireSharedLock();
       try {
-        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
         final OCacheEntry hashStateEntry =
             loadPageForRead(atomicOperation, fileStateId, hashStateEntryIndex, true);
         try {
@@ -1305,7 +1296,6 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
           acquireExclusiveLock();
           try {
             if (key != null) {
-              @SuppressWarnings("RedundantCast")
               final int keySize = keySerializer.getObjectSize(key, (Object[]) keyTypes);
               if (keySize > MAX_KEY_SIZE) {
                 throw new OTooBigIndexKeyException(
@@ -1316,8 +1306,6 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
                     getName());
               }
             }
-
-            //noinspection RedundantCast
             key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
             return doPut(key, value, validator, atomicOperation);
@@ -1374,7 +1362,6 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
 
       changeSize(sizeDiff, atomicOperation);
 
-      return true;
     } else {
       final long hashCode = keyHashFunction.hashCode(key);
 
@@ -1534,8 +1521,8 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
 
       changeSize(sizeDiff, atomicOperation);
       doPut(key, value, null /* already validated */, atomicOperation);
-      return true;
     }
+    return true;
   }
 
   private void updateNodesAfterSplit(

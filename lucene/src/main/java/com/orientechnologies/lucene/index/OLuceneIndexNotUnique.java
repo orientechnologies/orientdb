@@ -60,7 +60,8 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
       OAbstractPaginatedStorage storage,
       String valueContainerAlgorithm,
       ODocument metadata,
-      final int binaryFormatVersion) {
+      final int binaryFormatVersion,
+      OAtomicOperationsManager atomicOperationsManager) {
     super(
         name,
         typeId,
@@ -69,7 +70,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
         metadata,
         version,
         storage,
-        binaryFormatVersion);
+        binaryFormatVersion, atomicOperationsManager);
   }
 
   @Override
@@ -175,7 +176,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
                   Object key = snapshotEntry.getKey();
                   OLuceneTxOperations operations = (OLuceneTxOperations) snapshotEntry.getValue();
 
-                  OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+                  OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
                   indexEngine.put(atomicOperation, decodeKey(key), operations.added);
                 }
                 OBasicTransaction transaction = getDatabase().getMicroOrRegularTransaction();

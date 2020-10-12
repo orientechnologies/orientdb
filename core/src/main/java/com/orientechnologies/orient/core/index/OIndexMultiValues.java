@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OMixedIndexRIDContainerSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerSBTreeIndexRIDContainer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainerSBTree;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OMixedIndexRIDContainer;
@@ -52,6 +53,7 @@ import java.util.stream.Stream;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public abstract class OIndexMultiValues extends OIndexAbstract {
+
   OIndexMultiValues(
       String name,
       final String type,
@@ -60,7 +62,8 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
       OAbstractPaginatedStorage storage,
       String valueContainerAlgorithm,
       final ODocument metadata,
-      final int binaryFormatVersion) {
+      final int binaryFormatVersion,
+      OAtomicOperationsManager atomicOperationsManager) {
     super(
         name,
         type,
@@ -69,7 +72,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
         metadata,
         version,
         storage,
-        binaryFormatVersion);
+        binaryFormatVersion, atomicOperationsManager);
   }
 
   @Deprecated
@@ -299,7 +302,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
             determineValueSerializer());
   }
 
-  protected OBinarySerializer determineValueSerializer() {
+  protected OBinarySerializer<?> determineValueSerializer() {
     if (binaryFormatVersion >= 13) {
       return storage
           .getComponentsFactory()

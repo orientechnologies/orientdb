@@ -63,7 +63,7 @@ public class VersionPositionMapTestIT {
   public void tearDown() throws Exception {
     final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
     versionPositionMap.delete(atomicOperation);
-    OAtomicOperationsManager.alarmClearOfAtomicOperation();
+    atomicOperationsManager.alarmClearOfAtomicOperation();
   }
 
   @Test
