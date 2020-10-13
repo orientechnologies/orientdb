@@ -3,6 +3,7 @@ package com.orientechnologies.tinkerpop.server.auth;
 import static org.apache.tinkerpop.gremlin.groovy.jsr223.dsl.credential.CredentialGraphTokens.PROPERTY_PASSWORD;
 import static org.apache.tinkerpop.gremlin.groovy.jsr223.dsl.credential.CredentialGraphTokens.PROPERTY_USERNAME;
 
+import com.orientechnologies.orient.core.metadata.security.ORule.ResourceGeneric;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import java.util.Map;
@@ -16,6 +17,11 @@ public class OGremlinServerAuthenticator extends SimpleAuthenticator {
   OServer server;
 
   private static final String PERMISSION = "gremlin.server";
+
+  public static final ResourceGeneric GREMLIN =
+      new ResourceGeneric("GREMLIN", PERMISSION) {
+        private static final long serialVersionUID = 1L;
+      };
 
   @Override
   public AuthenticatedUser authenticate(Map<String, String> credentials)
