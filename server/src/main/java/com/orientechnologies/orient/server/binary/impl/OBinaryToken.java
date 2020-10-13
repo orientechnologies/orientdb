@@ -5,7 +5,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.OUser;
-import com.orientechnologies.orient.core.metadata.security.jwt.OJwtHeader;
+import com.orientechnologies.orient.core.metadata.security.jwt.OTokenHeader;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class OBinaryToken implements OToken {
@@ -21,7 +21,7 @@ public class OBinaryToken implements OToken {
   private String serializer;
   private String driverName;
   private String driverVersion;
-  private OJwtHeader header;
+  private OTokenHeader header;
   private boolean serverUser;
 
   @Override
@@ -91,11 +91,11 @@ public class OBinaryToken implements OToken {
     this.rid = rid;
   }
 
-  public OJwtHeader getHeader() {
+  public OTokenHeader getHeader() {
     return header;
   }
 
-  public void setHeader(OJwtHeader header) {
+  public void setHeader(OTokenHeader header) {
     this.header = header;
   }
 

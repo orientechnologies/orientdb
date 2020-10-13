@@ -5,7 +5,7 @@ package com.orientechnologies.orient.core.metadata.security.jwt;
  *
  * @author Emrul Islam <emrul@emrul.com> Copyright 2014 Emrul Islam
  */
-public interface OJwtHeader {
+public interface OTokenHeader {
 
   String getAlgorithm();
 

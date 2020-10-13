@@ -9,7 +9,7 @@ import java.security.Key;
  */
 public interface OKeyProvider {
 
-  public Key getKey(OJwtHeader header);
+  public Key getKey(OTokenHeader header);
 
   public String[] getKeys();
 

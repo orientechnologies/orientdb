@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.server.token;
 
-import com.orientechnologies.orient.core.metadata.security.jwt.OJwtHeader;
 import com.orientechnologies.orient.core.metadata.security.jwt.OKeyProvider;
+import com.orientechnologies.orient.core.metadata.security.jwt.OTokenHeader;
 import java.security.Key;
 import javax.crypto.spec.SecretKeySpec;
 
@@ -19,7 +19,7 @@ public class DefaultKeyProvider implements OKeyProvider {
   }
 
   @Override
-  public Key getKey(OJwtHeader header) {
+  public Key getKey(OTokenHeader header) {
     return secretKey;
   }
 
