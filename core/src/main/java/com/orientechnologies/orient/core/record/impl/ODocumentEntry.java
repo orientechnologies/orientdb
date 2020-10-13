@@ -124,7 +124,7 @@ public class ODocumentEntry {
     if (value instanceof OTrackedMultiValue) {
       return ((OTrackedMultiValue) value).isModified();
     }
-    if (value instanceof ODocument) {
+    if (value instanceof ODocument && ((ODocument) value).isEmbedded()) {
       return ((ODocument) value).isDirty();
     }
     return false;
