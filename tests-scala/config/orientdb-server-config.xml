@@ -33,14 +33,6 @@
                 <parameter value="SQL" name="allowedLanguages"/>
             </parameters>
         </handler>
-        <handler class="com.orientechnologies.orient.server.token.OrientTokenHandler">
-            <parameters>
-                <parameter value="false" name="enabled"/>
-                <parameter value="" name="oAuth2Key"/>
-                <parameter value="60" name="sessionLength"/>
-                <parameter value="HmacSHA256" name="encryptionAlgorithm"/>
-            </parameters>
-        </handler>
         <handler class="com.orientechnologies.orient.server.plugin.livequery.OLiveQueryPlugin">
             <parameters>
                 <parameter value="false" name="enabled"/>
