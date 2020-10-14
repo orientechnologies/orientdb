@@ -11,4 +11,8 @@ public interface SetupConfig {
 
   // Used for deploying the config in a Kubernetes setup.
   K8sServerConfig getK8sConfigs(String serverId);
+
+  String getServerRootUsername(String serverId);
+
+  String getServerRootPassword(String serverId);
 }
