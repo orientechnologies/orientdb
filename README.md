@@ -35,3 +35,12 @@ Copy the `ID` of the correction request to the initial comment in your PR e.g. `
 > For patches do not check `Not Patch Relevant`! If you get a validity issue with the note, go into it, edit validity and save.
 
 > Put CWB CR to "patch request", only after the "stage, promote" was successful.
+
+Furthermore, the FA automation requires this sequence now:
+
+- Create adb request 1st!  ADB waits for a staged new build.
+- THEN stage your build
+- ADB should then promote & upload internally => Vali mail
+- After we set “vali OK” in adb request => RTC , delivery mail
+
+
