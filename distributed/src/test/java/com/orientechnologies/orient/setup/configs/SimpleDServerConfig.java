@@ -10,6 +10,10 @@ public class SimpleDServerConfig implements SetupConfig {
   public static final String SERVER1 = "server1";
   public static final String SERVER2 = "server2";
 
+  // following username, password must exist on both setups!
+  public static final String rootUsername = "root";
+  public static final String rootPassword = "test";
+
   // Server config files used for each instance when using a local setup.
   private static Map<String, String> localServerConfigFiles =
       new HashMap<String, String>() {
@@ -43,10 +47,20 @@ public class SimpleDServerConfig implements SetupConfig {
       config.setDistributedDBConfig("/kubernetes/default-distributed-db-config.json");
       config.setServerLogConfig("/kubernetes/orientdb-server-log.properties");
       config.setClientLogConfig("/kubernetes/orientdb-client-log.properties");
-      config.setServerUser("root");
-      config.setServerPass("test");
+      config.setServerUser(rootUsername);
+      config.setServerPass(rootPassword);
       serverK8sConfigs.put(serverId, config);
     }
     return config;
+  }
+
+  @Override
+  public String getServerRootUsername(String serverId) {
+    return rootUsername;
+  }
+
+  @Override
+  public String getServerRootPassword(String serverId) {
+    return rootPassword;
   }
 }
