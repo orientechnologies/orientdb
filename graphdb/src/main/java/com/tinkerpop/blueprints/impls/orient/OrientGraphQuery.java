@@ -153,7 +153,7 @@ public class OrientGraphQuery extends DefaultGraphQuery {
     if (limit == 0) return Collections.emptyList();
 
     OTransaction transaction = ((OrientBaseGraph) graph).getRawGraph().getTransaction();
-    if (transaction.isActive() && transaction.getEntryCount() > 0 || hasCustomPredicate()) {
+    if (hasCustomPredicate()) {
       // INSIDE TRANSACTION QUERY DOESN'T SEE IN MEMORY CHANGES, UNTIL
       // SUPPORTED USED THE BASIC IMPL
       String[] classes = allSubClassesLabels();

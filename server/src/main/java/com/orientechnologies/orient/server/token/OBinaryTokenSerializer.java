@@ -2,7 +2,7 @@ package com.orientechnologies.orient.server.token;
 
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.security.jwt.OJwtHeader;
+import com.orientechnologies.orient.core.metadata.security.jwt.OTokenHeader;
 import com.orientechnologies.orient.server.binary.impl.OBinaryToken;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -87,7 +87,7 @@ public class OBinaryTokenSerializer {
   public void serialize(OBinaryToken token, OutputStream stream) throws IOException {
 
     DataOutputStream output = new DataOutputStream(stream);
-    OJwtHeader header = token.getHeader();
+    OTokenHeader header = token.getHeader();
     output.writeByte(associetedTypes.get(header.getType())); // type
     output.writeByte(associetedKeys.get(header.getKeyId())); // keys
     output.writeByte(associetedAlgorithms.get(header.getAlgorithm())); // algorithm

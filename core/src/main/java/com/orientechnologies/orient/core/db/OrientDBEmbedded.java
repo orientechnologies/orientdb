@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.engine.OEngine;
 import com.orientechnologies.orient.core.engine.OMemoryAndLocalPaginatedEnginesInitializer;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.security.auth.OAuthenticationInfo;
 import com.orientechnologies.orient.core.security.ODefaultSecuritySystem;
@@ -528,7 +529,11 @@ public class OrientDBEmbedded implements OrientDBInternal {
       synchronized (this) {
         checkOpen();
         config = solveConfig(config);
-        OAbstractPaginatedStorage storage = getOrInitStorage(authenticationInfo.getDatabase());
+        if (authenticationInfo.getDatabase().isPresent()) {
+          throw new OSecurityException("Authentication info do not contain the database");
+        }
+        String database = authenticationInfo.getDatabase().get();
+        OAbstractPaginatedStorage storage = getOrInitStorage(database);
         // THIS OPEN THE STORAGE ONLY THE FIRST TIME
         try {
           // THIS OPEN THE STORAGE ONLY THE FIRST TIME

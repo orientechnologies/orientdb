@@ -1,6 +1,8 @@
 package com.orientechnologies.orient.core.metadata.security.auth;
 
+import java.util.Optional;
+
 public interface OAuthenticationInfo {
 
-  public String getDatabase();
+  public Optional<String> getDatabase();
 }

@@ -22,9 +22,13 @@ public interface OTokenHandler {
   OToken parseWebToken(byte[] tokenBytes)
       throws InvalidKeyException, NoSuchAlgorithmException, IOException;
 
+  OParsedToken parseOnlyWebToken(byte[] tokenBytes);
+
   OToken parseNotVerifyBinaryToken(byte[] tokenBytes);
 
   OToken parseBinaryToken(byte[] tokenBytes);
+
+  OParsedToken parseOnlyBinary(byte[] tokenBytes);
 
   boolean validateToken(OToken token, String command, String database);
 

@@ -13,6 +13,7 @@ import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -379,11 +380,10 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask implements O
         .getIndexOperations()
         .forEach(
             (index, changes) -> {
-              if (changes
-                  .resolveAssociatedIndex(
-                      index, database.getMetadata().getIndexManagerInternal(), database)
-                  .isUnique()) {
-
+              OIndexInternal resolvedIndex =
+                  changes.resolveAssociatedIndex(
+                      index, database.getMetadata().getIndexManagerInternal(), database);
+              if (resolvedIndex != null && resolvedIndex.isUnique()) {
                 quorumType = OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE_ALL_MASTERS;
                 for (final Object keyWithChange : changes.changesPerKey.keySet()) {
                   int version = storage.getVersionForKey(index, keyWithChange);

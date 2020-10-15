@@ -62,7 +62,7 @@ public class OLiveCommandResultListenerTest {
     protocol = new ONetworkProtocolBinary(server);
     protocol.initVariables(server, channelBinary);
     connection = manager.connect(protocol);
-    OTokenHandlerImpl tokenHandler = new OTokenHandlerImpl(server);
+    OTokenHandlerImpl tokenHandler = new OTokenHandlerImpl(new OContextConfiguration());
     byte[] token = tokenHandler.getSignedBinaryToken(db, db.getUser(), connection.getData());
     connection = manager.connect(protocol, connection, token, tokenHandler);
     connection.setDatabase(db);
