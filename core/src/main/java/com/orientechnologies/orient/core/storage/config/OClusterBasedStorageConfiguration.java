@@ -720,7 +720,6 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     lock.acquireReadLock();
     try {
       final String uuid = readStringProperty(UUID);
-      assert uuid != null;
 
       return uuid;
     } finally {
