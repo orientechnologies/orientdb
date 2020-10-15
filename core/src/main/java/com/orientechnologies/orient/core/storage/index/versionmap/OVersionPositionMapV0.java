@@ -121,14 +121,14 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
   public int getVersion(final int hash) {
     final int startPositionWithOffset = OVersionPositionMapBucket.entryPosition(hash);
     final int pageIndex = calculatePageIndex(startPositionWithOffset);
-    OLogManager.instance()
-        .info(
-            this,
-            "VPM getVersion on fileId:%s: hash = %d, entry position = %d, page index = %d",
-            fileId,
-            hash,
-            startPositionWithOffset,
-            pageIndex);
+    /*OLogManager.instance()
+    .info(
+        this,
+        "VPM getVersion on fileId:%s: hash = %d, entry position = %d, page index = %d",
+        fileId,
+        hash,
+        startPositionWithOffset,
+        pageIndex);*/
 
     acquireSharedLock();
     try {
