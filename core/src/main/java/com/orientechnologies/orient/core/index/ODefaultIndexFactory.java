@@ -149,7 +149,8 @@ public class ODefaultIndexFactory implements OIndexFactory {
           storage,
           valueContainerAlgorithm,
           metadata,
-          binaryFormatVersion, storage.getAtomicOperationsManager());
+          binaryFormatVersion,
+          storage.getAtomicOperationsManager());
     } else if (OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(indexType)) {
       return new OIndexNotUnique(
           name,
@@ -159,7 +160,8 @@ public class ODefaultIndexFactory implements OIndexFactory {
           storage,
           valueContainerAlgorithm,
           metadata,
-          binaryFormatVersion, storage.getAtomicOperationsManager());
+          binaryFormatVersion,
+          storage.getAtomicOperationsManager());
     } else if (OClass.INDEX_TYPE.FULLTEXT.toString().equals(indexType)) {
       OLogManager.instance()
           .warnNoDb(
@@ -174,7 +176,8 @@ public class ODefaultIndexFactory implements OIndexFactory {
           storage,
           valueContainerAlgorithm,
           metadata,
-          binaryFormatVersion, storage.getAtomicOperationsManager());
+          binaryFormatVersion,
+          storage.getAtomicOperationsManager());
     } else if (OClass.INDEX_TYPE.DICTIONARY.toString().equals(indexType)) {
       return new OIndexDictionary(
           name,

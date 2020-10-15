@@ -82,7 +82,8 @@ public class OIndexFullText extends OIndexMultiValues {
         storage,
         valueContainerAlgorithm,
         metadata,
-        binaryFormatVersion, atomicOperationsManager);
+        binaryFormatVersion,
+        atomicOperationsManager);
     acquireExclusiveLock();
     try {
       config();

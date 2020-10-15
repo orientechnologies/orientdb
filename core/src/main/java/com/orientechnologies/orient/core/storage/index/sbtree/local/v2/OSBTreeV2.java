@@ -1581,7 +1581,6 @@ public class OSBTreeV2<K, V> extends ODurableComponent implements OSBTree<K, V> 
               } else {
                 itemIndex = -bucketSearchResult.itemIndex - 1;
               }
-
             }
             readKeysFromBuckets(atomicOperation);
           }
@@ -1786,7 +1785,6 @@ public class OSBTreeV2<K, V> extends ODurableComponent implements OSBTree<K, V> 
               } else {
                 itemIndex = -bucketSearchResult.itemIndex - 2;
               }
-
             }
             readKeysFromBuckets(atomicOperation);
           }

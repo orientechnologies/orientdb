@@ -166,8 +166,8 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     final int sizeOfIntInBytes = Integer.SIZE / 8;
     final int numberOfPages =
         (int)
-            Math.ceil(
-                (DEFAULT_VERSION_ARRAY_SIZE * sizeOfIntInBytes * 1.0) / OVersionPage.PAGE_SIZE)
+                Math.ceil(
+                    (DEFAULT_VERSION_ARRAY_SIZE * sizeOfIntInBytes * 1.0) / OVersionPage.PAGE_SIZE)
             + 1;
     final long foundNumberOfPages = getFilledUpTo(atomicOperation, fileId);
     OLogManager.instance()

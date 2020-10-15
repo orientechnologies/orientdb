@@ -86,8 +86,8 @@ public class OLocalHashTableV3WALTestIT extends OLocalHashTableV3Base {
 
     expectedStorage =
         ((OLocalPaginatedStorage) ((ODatabaseInternal<?>) expectedDatabaseDocumentTx).getStorage());
-    actualStorage = (OLocalPaginatedStorage) ((ODatabaseInternal<?>) databaseDocumentTx)
-        .getStorage();
+    actualStorage =
+        (OLocalPaginatedStorage) ((ODatabaseInternal<?>) databaseDocumentTx).getStorage();
 
     atomicOperationsManager = actualStorage.getAtomicOperationsManager();
 
@@ -263,8 +263,8 @@ public class OLocalHashTableV3WALTestIT extends OLocalHashTableV3Base {
 
   private void restoreDataFromWAL() throws IOException {
     final OReadCache expectedReadCache =
-        ((OAbstractPaginatedStorage) ((ODatabaseInternal<?>) expectedDatabaseDocumentTx)
-            .getStorage())
+        ((OAbstractPaginatedStorage)
+                ((ODatabaseInternal<?>) expectedDatabaseDocumentTx).getStorage())
             .getReadCache();
 
     CASDiskWriteAheadLog log =

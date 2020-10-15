@@ -110,7 +110,8 @@ public final class OHashIndexFactory implements OIndexFactory {
           (OAbstractPaginatedStorage) storage.getUnderlying(),
           valueContainerAlgorithm,
           metadata,
-          binaryFormatVersion, atomicOperationsManager);
+          binaryFormatVersion,
+          atomicOperationsManager);
     } else if (OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString().equals(indexType)) {
       return new OIndexNotUnique(
           name,
@@ -120,7 +121,8 @@ public final class OHashIndexFactory implements OIndexFactory {
           (OAbstractPaginatedStorage) storage.getUnderlying(),
           valueContainerAlgorithm,
           metadata,
-          binaryFormatVersion, atomicOperationsManager);
+          binaryFormatVersion,
+          atomicOperationsManager);
     } else if (OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString().equals(indexType)) {
       return new OIndexDictionary(
           name,
@@ -130,7 +132,8 @@ public final class OHashIndexFactory implements OIndexFactory {
           (OAbstractPaginatedStorage) storage.getUnderlying(),
           valueContainerAlgorithm,
           metadata,
-          binaryFormatVersion, atomicOperationsManager);
+          binaryFormatVersion,
+          atomicOperationsManager);
     }
 
     throw new OConfigurationException("Unsupported type: " + indexType);

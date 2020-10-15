@@ -171,8 +171,8 @@ public class OAutoShardingIndexFactory implements OIndexFactory {
       case "memory":
       case "plocal":
         indexEngine =
-            new OAutoShardingIndexEngine(name, indexId, (OAbstractPaginatedStorage) storage,
-                version);
+            new OAutoShardingIndexEngine(
+                name, indexId, (OAbstractPaginatedStorage) storage, version);
         break;
       case "distributed":
         // DISTRIBUTED CASE: HANDLE IT AS FOR LOCAL

@@ -108,7 +108,8 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
               pagStorage,
               valueContainerAlgorithm,
               metadata,
-              binaryFormatVersion, atomicOperationsManager);
+              binaryFormatVersion,
+              atomicOperationsManager);
 
       return index;
     }

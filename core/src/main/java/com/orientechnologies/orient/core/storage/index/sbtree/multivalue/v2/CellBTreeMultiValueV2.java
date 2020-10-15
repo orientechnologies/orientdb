@@ -513,7 +513,6 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
               } finally {
                 releasePageFromWrite(atomicOperation, nullCacheEntry);
               }
-
             }
             updateSize(1, atomicOperation);
           } finally {
@@ -807,7 +806,6 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
               } finally {
                 releasePageFromWrite(atomicOperation, nullBucketCacheEntry);
               }
-
             }
             if (removed) {
               updateSize(-1, atomicOperation);
@@ -2122,7 +2120,6 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
                       lastKey = key;
 
                       fetchMapEntries(0, key, dataCache, siblingBucket);
-
                     }
                     leftSibling = -1;
                   }

@@ -53,7 +53,8 @@ public class OIndexDictionary extends OIndexOneValue {
         storage,
         valueContainerAlgorithm,
         metadata,
-        binaryFormatVersion, atomicOperationsManager);
+        binaryFormatVersion,
+        atomicOperationsManager);
   }
 
   public OIndexOneValue put(Object key, final OIdentifiable value) {

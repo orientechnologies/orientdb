@@ -45,7 +45,8 @@ public class OLuceneFullTextIndex extends OLuceneIndexNotUnique {
         storage,
         valueContainerAlgorithm,
         metadata,
-        binaryFormatVersion, atomicOperationsManager);
+        binaryFormatVersion,
+        atomicOperationsManager);
   }
 
   public Document buildDocument(final Object key) {

@@ -1601,7 +1601,6 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
               } else {
                 itemIndex = -bucketSearchResult.itemIndex - 1;
               }
-
             }
             lastLSN = null;
             readKeysFromBuckets(atomicOperation);

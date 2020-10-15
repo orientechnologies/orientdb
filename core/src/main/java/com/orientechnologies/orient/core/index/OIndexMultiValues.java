@@ -72,7 +72,8 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
         metadata,
         version,
         storage,
-        binaryFormatVersion, atomicOperationsManager);
+        binaryFormatVersion,
+        atomicOperationsManager);
   }
 
   @Deprecated

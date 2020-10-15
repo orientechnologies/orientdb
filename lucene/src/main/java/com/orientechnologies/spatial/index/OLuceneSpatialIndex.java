@@ -53,7 +53,8 @@ public class OLuceneSpatialIndex extends OLuceneIndexNotUnique {
         storage,
         valueContainerAlgorithm,
         metadata,
-        binaryFormatVersion, atomicOperationsManager);
+        binaryFormatVersion,
+        atomicOperationsManager);
   }
 
   @Override

@@ -64,7 +64,8 @@ public abstract class OIndexOneValue extends OIndexAbstract {
         metadata,
         version,
         storage,
-        binaryFormatVersion, atomicOperationsManager);
+        binaryFormatVersion,
+        atomicOperationsManager);
   }
 
   @Deprecated

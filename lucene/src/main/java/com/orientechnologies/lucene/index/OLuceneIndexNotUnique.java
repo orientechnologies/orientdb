@@ -70,7 +70,8 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
         metadata,
         version,
         storage,
-        binaryFormatVersion, atomicOperationsManager);
+        binaryFormatVersion,
+        atomicOperationsManager);
   }
 
   @Override

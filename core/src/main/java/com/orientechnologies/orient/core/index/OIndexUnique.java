@@ -81,7 +81,8 @@ public class OIndexUnique extends OIndexOneValue {
         storage,
         valueContainerAlgorithm,
         metadata,
-        binaryFormatVersion, atomicOperationsManager);
+        binaryFormatVersion,
+        atomicOperationsManager);
   }
 
   @Override

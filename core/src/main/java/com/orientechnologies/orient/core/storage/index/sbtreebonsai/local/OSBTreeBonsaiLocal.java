@@ -1507,7 +1507,6 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
           if (allocationResult != null) {
             return allocationResult;
           }
-
         }
         return allocateNewPage(atomicOperation, sysBucket);
       } finally {

@@ -50,7 +50,8 @@ public class OIndexNotUnique extends OIndexMultiValues {
         storage,
         valueContainerAlgorithm,
         metadata,
-        binaryFormatVersion, atomicOperationsManager);
+        binaryFormatVersion,
+        atomicOperationsManager);
   }
 
   public boolean canBeUsedInEqualityOperators() {

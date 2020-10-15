@@ -40,7 +40,7 @@ public interface OIndexFactory {
   /**
    * Creates an index.
    *
-   * @param indexType               index type
+   * @param indexType index type
    * @param atomicOperationsManager
    * @return OIndexInternal
    * @throws OConfigurationException if index creation failed

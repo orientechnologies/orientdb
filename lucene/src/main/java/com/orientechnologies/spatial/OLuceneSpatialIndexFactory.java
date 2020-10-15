@@ -127,7 +127,8 @@ public class OLuceneSpatialIndexFactory implements OIndexFactory, ODatabaseLifec
           pagStorage,
           valueContainerAlgorithm,
           metadata,
-          binaryFormatVersion, atomicOperationsManager);
+          binaryFormatVersion,
+          atomicOperationsManager);
     }
     throw new OConfigurationException("Unsupported type : " + algorithm);
   }
