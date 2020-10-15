@@ -178,8 +178,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     if (isShutdownFlag())
       return;
 
-    server.getMemoryManager().checkAndWaitMemoryThreshold();
-
     clientTxId = 0;
     okSent = false;
     try {

@@ -1,14 +1,12 @@
 package com.orientechnologies.orient.server.network;
 
 import com.orientechnologies.orient.client.remote.ORemotePushHandler;
-import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.client.remote.OStorageRemotePushThread;
 import com.orientechnologies.orient.client.remote.message.OBinaryPushRequest;
 import com.orientechnologies.orient.client.remote.message.OBinaryPushResponse;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
-import com.orientechnologies.orient.server.NoOpMemoryManager;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 import org.junit.Before;
@@ -121,7 +119,6 @@ public class PushMessageUnitTest {
     this.channelBinaryClient = new MockPipeChannel(inputClient, outputClient);
     this.channelBinaryServer = new MockPipeChannel(inputServer, outputServer);
     Mockito.when(server.getContextConfiguration()).thenReturn(new OContextConfiguration());
-    Mockito.when(server.getMemoryManager()).thenReturn(new NoOpMemoryManager());
 
     Mockito.when(remote.getNetwork(Mockito.anyString())).thenReturn(channelBinaryClient);
     Mockito.when(remote.createPush((byte) 100)).thenReturn(new MockPushRequest());

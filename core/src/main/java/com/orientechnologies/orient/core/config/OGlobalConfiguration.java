@@ -828,16 +828,6 @@ public enum OGlobalConfiguration {// ENVIRONMENT
   SERVER_BACKWARD_COMPATIBILITY("server.backwardCompatibility",
       "guarantee that the server use global context for search the database instance", Boolean.class, Boolean.TRUE, true, false),
 
-  SERVER_HEAP_USAGE_LIMIT("server.heapUsageLimit",
-      "Once server heap usage reaches provided limit (in percent), "
-          + "sever will stop to accept new requests from client "
-          + "till heap usage will drop bellow given limit", Integer.class, 85,
-      false, false),
-
-  SERVER_HEAP_USAGE_SLEEP_INTERVAL("server.heapUsageSleepInterval",
-      "Once heap usage reaches threshold server will wait given time in ms. before checking memory usage again",
-      Integer.class, 20, false, false),
-
   // DISTRIBUTED
   /**
    * @Since 2.2.18
