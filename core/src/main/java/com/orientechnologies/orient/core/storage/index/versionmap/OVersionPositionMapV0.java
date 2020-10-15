@@ -182,7 +182,7 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     if (foundNumberOfPages != numberOfPages) {
       // if (getFilledUpTo(atomicOperation, fileId) == 0) {
       // first one page is added for the meta data
-      addInitializedPage(atomicOperation);
+      // addInitializedPage(atomicOperation);
 
       // then let us add several empty data pages
       // final int sizeOfIntInBytes = Integer.SIZE / 8;
@@ -219,6 +219,6 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
   }
 
   private int calculatePageIndex(final int startPositionWithOffset) {
-    return (int) Math.ceil(startPositionWithOffset / OVersionPage.PAGE_SIZE) + 1;
+    return (int) Math.ceil(startPositionWithOffset / OVersionPage.PAGE_SIZE); // + 1;
   }
 }
