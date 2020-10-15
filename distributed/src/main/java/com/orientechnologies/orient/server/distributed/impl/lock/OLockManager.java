@@ -17,4 +17,6 @@ public interface OLockManager {
   void unlock(List<OLockGuard> guards);
 
   void lockResource(String name, OnLocksAcquired acquired);
+
+  void freeze(OnFreezeAcquired frozenLock);
 }

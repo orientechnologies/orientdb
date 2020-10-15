@@ -61,6 +61,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedSyncConfigura
 import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
+import com.orientechnologies.orient.server.distributed.impl.lock.OFreezeGuard;
 import com.orientechnologies.orient.server.distributed.impl.lock.OLockGuard;
 import com.orientechnologies.orient.server.distributed.impl.lock.OLockManager;
 import com.orientechnologies.orient.server.distributed.impl.lock.OLockManagerImpl;
@@ -126,6 +127,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private ThreadPoolExecutor requestExecutor;
   private OLockManager lockManager = new OLockManagerImpl();
   private Set<OTransactionId> inQueue = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private OFreezeGuard freezeGuard;
 
   public static boolean sendResponseBack(
       final Object current,
@@ -1309,10 +1311,27 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       recordLockManager.reset();
       indexKeyLockManager.reset();
     }
+    LinkedBlockingQueue<OFreezeGuard> latch = new LinkedBlockingQueue<OFreezeGuard>(1);
+    this.lockManager.freeze(
+        (guards) -> {
+          try {
+            latch.put(guards);
+          } catch (InterruptedException e) {
+            throw new OInterruptedException(e.getMessage());
+          }
+        });
+    try {
+      this.freezeGuard = latch.take();
+    } catch (InterruptedException e) {
+      throw new OInterruptedException(e.getMessage());
+    }
   }
 
   public void resume() {
     this.parsing.set(true);
+    if (this.freezeGuard != null) {
+      this.freezeGuard.release();
+    }
   }
 
   @Override

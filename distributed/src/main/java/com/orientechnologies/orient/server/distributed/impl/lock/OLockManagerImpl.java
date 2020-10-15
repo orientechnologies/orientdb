@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server.distributed.impl.lock;
 
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.storage.cluster.OOfflineClusterException;
 import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionUniqueKey;
 import java.util.*;
@@ -9,8 +10,26 @@ import java.util.concurrent.ConcurrentHashMap;
 public class OLockManagerImpl implements OLockManager {
 
   private Map<OLockKey, Queue<OWaitingTracker>> locks = new ConcurrentHashMap<>();
+  private boolean frozen;
+  private OnFreezeAcquired frozenLock;
+
+  public synchronized void freeze(OnFreezeAcquired frozenLock) {
+    this.frozen = true;
+    this.frozenLock = frozenLock;
+    if (locks.isEmpty()) {
+      this.frozenLock.acquired(() -> OLockManagerImpl.this.release());
+    }
+  }
+
+  private synchronized void release() {
+    this.frozen = false;
+    this.frozenLock = null;
+  }
 
   private void lock(OLockKey key, OWaitingTracker waitingTracker) {
+    if (frozen) {
+      throw new OOfflineClusterException("Node is offline");
+    }
     Queue<OWaitingTracker> queue = locks.get(key);
     if (queue == null) {
       locks.put(key, new LinkedList<>());
@@ -28,6 +47,11 @@ public class OLockManagerImpl implements OLockManager {
       waiting.unlockOne();
     } else {
       locks.remove(guard.getKey());
+    }
+    if (frozen) {
+      if (locks.isEmpty()) {
+        this.frozenLock.acquired(() -> OLockManagerImpl.this.release());
+      }
     }
   }
 
