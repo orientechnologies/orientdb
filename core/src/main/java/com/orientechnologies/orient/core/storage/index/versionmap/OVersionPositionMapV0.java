@@ -23,6 +23,7 @@ package com.orientechnologies.orient.core.storage.index.versionmap;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
@@ -95,14 +96,14 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
           try {
             final int startPositionWithOffset = OVersionPositionMapBucket.entryPosition(hash);
             final int pageIndex = calculatePageIndex(startPositionWithOffset);
-            OLogManager.instance()
-                .info(
-                    this,
-                    "VPM update on fileId:%s: hash = %d, entry position = %d, page index = %d",
-                    fileId,
-                    hash,
-                    startPositionWithOffset,
-                    pageIndex);
+            /*OLogManager.instance()
+            .info(
+                this,
+                "VPM update on fileId:%s: hash = %d, entry position = %d, page index = %d",
+                fileId,
+                hash,
+                startPositionWithOffset,
+                pageIndex);*/
             final OCacheEntry cacheEntry =
                 loadPageForWrite(atomicOperation, fileId, pageIndex, false, true);
             try {
@@ -180,19 +181,17 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     if (foundNumberOfPages != numberOfPages) {
       // if (getFilledUpTo(atomicOperation, fileId) == 0) {
       // first one page is added for the meta data
-      // addInitializedPage(atomicOperation);
+      addInitializedPage(atomicOperation);
 
       // then let us add several empty data pages
-      /*final int sizeOfIntInBytes = Integer.SIZE / 8;
-      final int numberOfPages =
-          (int)
-                  Math.ceil(
-                      (OBaseIndexEngine.DEFAULT_VERSION_ARRAY_SIZE * sizeOfIntInBytes)
-                          / OVersionPage.PAGE_SIZE)
-              + 1;
-      for (int i = 0; i < numberOfPages; i++) {*/
-      addInitializedPage(atomicOperation);
-      // }
+      // final int sizeOfIntInBytes = Integer.SIZE / 8;
+      // final int numberOfPages =
+      //    (int) Math.ceil((DEFAULT_VERSION_ARRAY_SIZE * sizeOfIntInBytes) /
+      // OVersionPage.PAGE_SIZE)
+      //        + 1;
+      for (int i = 0; i < numberOfPages; i++) {
+        addInitializedPage(atomicOperation);
+      }
     } else {
       final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, 0, false, false);
       try {
@@ -219,6 +218,6 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
   }
 
   private int calculatePageIndex(final int startPositionWithOffset) {
-    return 0; // (int) Math.ceil(startPositionWithOffset / OVersionPage.PAGE_SIZE) + 1;
+    return (int) Math.ceil(startPositionWithOffset / OVersionPage.PAGE_SIZE) + 1;
   }
 }
