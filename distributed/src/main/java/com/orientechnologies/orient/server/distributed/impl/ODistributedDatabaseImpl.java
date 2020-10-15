@@ -44,6 +44,7 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.DB_STATUS;
+import com.orientechnologies.orient.server.distributed.impl.lock.OFreezeGuard;
 import com.orientechnologies.orient.server.distributed.impl.lock.OLockGuard;
 import com.orientechnologies.orient.server.distributed.impl.lock.OLockManager;
 import com.orientechnologies.orient.server.distributed.impl.lock.OLockManagerImpl;
@@ -90,6 +91,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private Set<OTransactionId> inQueue = Collections.newSetFromMap(new ConcurrentHashMap<>());
   private OSyncSource lastValidBackup;
   private volatile DB_STATUS freezePrevStatus;
+  private OFreezeGuard freezeGuard;
 
   public ODistributedDatabaseImpl(
       final OHazelcastPlugin manager,
@@ -845,10 +847,27 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       recordPromiseManager.reset();
       indexKeyPromiseManager.reset();
     }
+    LinkedBlockingQueue<OFreezeGuard> latch = new LinkedBlockingQueue<OFreezeGuard>(1);
+    this.lockManager.freeze(
+        (guards) -> {
+          try {
+            latch.put(guards);
+          } catch (InterruptedException e) {
+            throw new OInterruptedException(e.getMessage());
+          }
+        });
+    try {
+      this.freezeGuard = latch.take();
+    } catch (InterruptedException e) {
+      throw new OInterruptedException(e.getMessage());
+    }
   }
 
   public void resume() {
     this.parsing.set(true);
+    if (this.freezeGuard != null) {
+      this.freezeGuard.release();
+    }
   }
 
   @Override
