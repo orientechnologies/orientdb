@@ -42,9 +42,9 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.Change;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.ChangeSerializationHelper;
@@ -401,7 +401,11 @@ public class HelperClasses {
       final int clusterId = getHighLevelDocClusterId(ridbag);
       assert clusterId > -1;
       try {
-        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+        final OAbstractPaginatedStorage storage =
+            (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.instance().get().getStorage();
+        final OAtomicOperation atomicOperation =
+            storage.getAtomicOperationsManager().getCurrentOperation();
+
         assert atomicOperation != null;
         pointer =
             ODatabaseRecordThreadLocal.instance()

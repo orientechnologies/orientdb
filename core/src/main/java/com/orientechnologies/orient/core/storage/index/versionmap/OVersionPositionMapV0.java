@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.version.OVersionPage;
 import java.io.IOException;
 
@@ -79,7 +78,7 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
   public void open() throws IOException {
     acquireExclusiveLock();
     try {
-      final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+      final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
       this.openVPM(atomicOperation);
     } finally {
       releaseExclusiveLock();
@@ -88,7 +87,7 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
 
   @Override
   public void updateVersion(final int hash) {
-    final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+    final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
     executeInsideComponentOperation(
         atomicOperation,
         operation -> {
@@ -133,7 +132,7 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
 
     acquireSharedLock();
     try {
-      final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+      final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
       final OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
       try {
         final OVersionPositionMapBucket bucket = new OVersionPositionMapBucket(cacheEntry);
@@ -167,7 +166,9 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     fileId = addFile(atomicOperation, getFullName());
     final int sizeOfIntInBytes = Integer.SIZE / 8;
     final int numberOfPages =
-        (int) Math.ceil((DEFAULT_VERSION_ARRAY_SIZE * sizeOfIntInBytes) / OVersionPage.PAGE_SIZE)
+        (int)
+                Math.ceil(
+                    (DEFAULT_VERSION_ARRAY_SIZE * sizeOfIntInBytes * 1.0) / OVersionPage.PAGE_SIZE)
             + 1;
     final long foundNumberOfPages = getFilledUpTo(atomicOperation, fileId);
     OLogManager.instance()

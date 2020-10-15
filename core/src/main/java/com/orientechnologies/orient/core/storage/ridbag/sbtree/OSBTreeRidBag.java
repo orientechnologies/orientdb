@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.OSimpleMultiValueTracker;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORidBagDeleteSerializationOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORidBagUpdateSerializationOperation;
@@ -750,7 +751,11 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     applyNewEntries();
 
     final ORecordSerializationContext context;
-    boolean remoteMode = ODatabaseRecordThreadLocal.instance().get().isRemote();
+
+    final ODatabaseDocumentInternal databaseDocumentInternal =
+        ODatabaseRecordThreadLocal.instance().get();
+
+    boolean remoteMode = databaseDocumentInternal.isRemote();
     if (remoteMode) {
       context = null;
     } else {
@@ -763,11 +768,13 @@ public class OSBTreeRidBag implements ORidBagDelegate {
         final int clusterId = getHighLevelDocClusterId();
         assert clusterId > -1;
         try {
-          final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+          final OAtomicOperationsManager atomicOperationsManager =
+              ((OAbstractPaginatedStorage) databaseDocumentInternal.getStorage())
+                  .getAtomicOperationsManager();
+          final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
           assert atomicOperation != null;
           collectionPointer =
-              ODatabaseRecordThreadLocal.instance()
-                  .get()
+              databaseDocumentInternal
                   .getSbTreeCollectionManager()
                   .createSBTree(clusterId, atomicOperation, ownerUuid);
         } catch (IOException e) {

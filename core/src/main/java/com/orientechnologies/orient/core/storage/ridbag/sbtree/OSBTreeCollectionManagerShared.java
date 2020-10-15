@@ -59,6 +59,7 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
           + Integer.MAX_VALUE;
 
   private final OAbstractPaginatedStorage storage;
+  private final OAtomicOperationsManager atomicOperationsManager;
 
   /**
    * If this flag is set to {@code true} then all access to the manager will be prohibited and
@@ -70,6 +71,7 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
     super(storage);
 
     this.storage = storage;
+    this.atomicOperationsManager = storage.getAtomicOperationsManager();
   }
 
   // for testing purposes
@@ -78,6 +80,7 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
     super(storage, evictionThreshold, cacheMaxSize);
 
     this.storage = storage;
+    this.atomicOperationsManager = storage.getAtomicOperationsManager();
   }
 
   /**
@@ -215,7 +218,7 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
   protected OSBTreeBonsai<OIdentifiable, Integer> loadTree(
       OBonsaiCollectionPointer collectionPointer) {
     String fileName;
-    OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+    OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
     if (atomicOperation == null) {
       fileName = storage.getWriteCache().fileNameById(collectionPointer.getFileId());
     } else {

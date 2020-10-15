@@ -43,7 +43,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.storage.index.sbtree.local.v2.OSBTreeV2;
 import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.OCellBTreeMultiValue;
@@ -214,9 +213,8 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
     try {
       acquireSharedLock();
       try {
-        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
         if (key != null) {
-          //noinspection RedundantCast
           key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
           final BucketSearchResult bucketSearchResult = findBucket(key, atomicOperation);
@@ -427,9 +425,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
 
             if (key != null) {
 
-              //noinspection RedundantCast
               key = keySerializer.preprocess(key, (Object[]) keyTypes);
-              @SuppressWarnings("RedundantCast")
               final byte[] serializedKey =
                   keySerializer.serializeNativeAsWhole(key, (Object[]) keyTypes);
 
@@ -492,7 +488,6 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
 
               releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
 
-              updateSize(1, atomicOperation);
             } else {
               final OCacheEntry nullCacheEntry =
                   loadPageForWrite(atomicOperation, nullBucketFileId, 0, false, true);
@@ -518,9 +513,8 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
               } finally {
                 releasePageFromWrite(atomicOperation, nullCacheEntry);
               }
-
-              updateSize(1, atomicOperation);
             }
+            updateSize(1, atomicOperation);
           } finally {
             releaseExclusiveLock();
           }
@@ -624,7 +618,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
       final OEncryption encryption) {
     acquireExclusiveLock();
     try {
-      final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+      final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
       fileId = openFile(atomicOperation, getFullName());
       nullBucketFileId = openFile(atomicOperation, name + nullFileExtension);
@@ -667,7 +661,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
     try {
       acquireSharedLock();
       try {
-        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
         final OCacheEntry entryPointCacheEntry =
             loadPageForRead(atomicOperation, fileId, ENTRY_POINT_INDEX, false);
@@ -700,7 +694,6 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
           acquireExclusiveLock();
           try {
             if (key != null) {
-              //noinspection RedundantCast
               key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
               final int serializeKeySize =
@@ -788,9 +781,6 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
                 }
               }
 
-              if (removed) {
-                updateSize(-1, atomicOperation);
-              }
             } else {
               final OCacheEntry nullBucketCacheEntry =
                   loadPageForWrite(atomicOperation, nullBucketFileId, 0, false, true);
@@ -816,10 +806,9 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
               } finally {
                 releasePageFromWrite(atomicOperation, nullBucketCacheEntry);
               }
-
-              if (removed) {
-                updateSize(-1, atomicOperation);
-              }
+            }
+            if (removed) {
+              updateSize(-1, atomicOperation);
             }
           } finally {
             releaseExclusiveLock();
@@ -901,7 +890,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
     try {
       acquireSharedLock();
       try {
-        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
         final BucketSearchResult searchResult = firstItem(atomicOperation);
         if (searchResult == null) {
@@ -935,7 +924,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
     try {
       acquireSharedLock();
       try {
-        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
         final BucketSearchResult searchResult = lastItem(atomicOperation);
         if (searchResult == null) {
@@ -969,7 +958,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
     try {
       acquireSharedLock();
       try {
-        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
         final BucketSearchResult searchResult = firstItem(atomicOperation);
         if (searchResult == null) {
           return StreamSupport.stream(Spliterators.emptySpliterator(), false);
@@ -1036,7 +1025,6 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
   }
 
   private Spliterator<ORawPair<K, ORID>> iterateEntriesMinorDesc(K key, final boolean inclusive) {
-    //noinspection RedundantCast
     key = keySerializer.preprocess(key, (Object[]) keyTypes);
     key = enhanceCompositeKeyMinorDesc(key, inclusive);
 
@@ -1044,7 +1032,6 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
   }
 
   private Spliterator<ORawPair<K, ORID>> iterateEntriesMinorAsc(K key, final boolean inclusive) {
-    //noinspection RedundantCast
     key = keySerializer.preprocess(key, (Object[]) keyTypes);
     key = enhanceCompositeKeyMinorAsc(key, inclusive);
 
@@ -1076,7 +1063,6 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
   }
 
   private Spliterator<ORawPair<K, ORID>> iterateEntriesMajorAsc(K key, final boolean inclusive) {
-    //noinspection RedundantCast
     key = keySerializer.preprocess(key, (Object[]) keyTypes);
     key = enhanceCompositeKeyMajorAsc(key, inclusive);
 
@@ -1086,7 +1072,6 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
   private Spliterator<ORawPair<K, ORID>> iterateEntriesMajorDesc(K key, final boolean inclusive) {
     acquireSharedLock();
     try {
-      //noinspection RedundantCast
       key = keySerializer.preprocess(key, (Object[]) keyTypes);
       key = enhanceCompositeKeyMajorDesc(key, inclusive);
 
@@ -1243,9 +1228,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
 
   private Spliterator<ORawPair<K, ORID>> iterateEntriesBetweenAscOrder(
       K keyFrom, final boolean fromInclusive, K keyTo, final boolean toInclusive) {
-    //noinspection RedundantCast
     keyFrom = keySerializer.preprocess(keyFrom, (Object[]) keyTypes);
-    //noinspection RedundantCast
     keyTo = keySerializer.preprocess(keyTo, (Object[]) keyTypes);
 
     keyFrom = enhanceFromCompositeKeyBetweenAsc(keyFrom, fromInclusive);
@@ -1256,9 +1239,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
 
   private Spliterator<ORawPair<K, ORID>> iterateEntriesBetweenDescOrder(
       K keyFrom, final boolean fromInclusive, K keyTo, final boolean toInclusive) {
-    //noinspection RedundantCast
     keyFrom = keySerializer.preprocess(keyFrom, (Object[]) keyTypes);
-    //noinspection RedundantCast
     keyTo = keySerializer.preprocess(keyTo, (Object[]) keyTypes);
 
     keyFrom = enhanceFromCompositeKeyBetweenDesc(keyFrom, fromInclusive);
@@ -1933,7 +1914,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
       try {
         acquireSharedLock();
         try {
-          final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+          final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
           while (keysCache.size() < prefetchSize) {
             if (pageIndex == -1) {
@@ -2068,7 +2049,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
       try {
         acquireSharedLock();
         try {
-          final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+          final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
           final BucketSearchResult bucketSearchResult;
 
@@ -2139,11 +2120,8 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
                       lastKey = key;
 
                       fetchMapEntries(0, key, dataCache, siblingBucket);
-
-                      leftSibling = -1;
-                    } else {
-                      leftSibling = -1;
                     }
+                    leftSibling = -1;
                   }
 
                   releasePageFromRead(atomicOperation, siblingCacheEntry);
@@ -2292,7 +2270,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
       try {
         acquireSharedLock();
         try {
-          final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+          final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
           final BucketSearchResult bucketSearchResult;
 

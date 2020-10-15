@@ -726,8 +726,6 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol
     connection.getData().commandInfo = "Listening";
     connection.getData().commandDetail = null;
 
-    server.getMemoryManager().checkAndWaitMemoryThreshold();
-
     try {
       channel.socket.setSoTimeout(socketTimeout);
       connection.getStats().lastCommandReceived = -1;

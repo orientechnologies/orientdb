@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashIndexFactory;
 import java.util.Collections;
 import java.util.HashSet;
@@ -163,7 +164,14 @@ public final class OIndexes {
 
     return findFactoryByAlgorithmAndType(algorithm, indexType)
         .createIndex(
-            name, storage, indexType, algorithm, valueContainerAlgorithm, metadata, version);
+            name,
+            storage,
+            indexType,
+            algorithm,
+            valueContainerAlgorithm,
+            metadata,
+            version,
+            ((OAbstractPaginatedStorage) storage.getUnderlying()).getAtomicOperationsManager());
   }
 
   private static OIndexFactory findFactoryByAlgorithmAndType(String algorithm, String indexType) {

@@ -59,11 +59,13 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
   }
 
   private final OSBTreeBonsaiLocal<OIdentifiable, Boolean> tree;
+  private final OAtomicOperationsManager atomicOperationsManager;
 
   OIndexRIDContainerSBTree(long fileId, OAbstractPaginatedStorage storage) {
     String fileName;
 
-    final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+    atomicOperationsManager = storage.getAtomicOperationsManager();
+    final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
     if (atomicOperation == null) {
       fileName = storage.getWriteCache().fileNameById(fileId);
     } else {
@@ -88,7 +90,8 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
       long fileId, OBonsaiBucketPointer rootPointer, OAbstractPaginatedStorage storage) {
     String fileName;
 
-    OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+    atomicOperationsManager = storage.getAtomicOperationsManager();
+    OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
     if (atomicOperation == null) {
       fileName = storage.getWriteCache().fileNameById(fileId);
     } else {
@@ -152,7 +155,7 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
 
   @Override
   public boolean add(OIdentifiable oIdentifiable) {
-    final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+    final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
     Objects.requireNonNull(atomicOperation);
 
     return this.tree.put(atomicOperation, oIdentifiable, Boolean.TRUE);
@@ -164,7 +167,7 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
   }
 
   public boolean remove(OIdentifiable o) {
-    final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+    final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
     Objects.requireNonNull(atomicOperation);
 
     return tree.remove(atomicOperation, o) != null;
@@ -216,13 +219,13 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
 
   @Override
   public void clear() {
-    final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+    final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
     Objects.requireNonNull(atomicOperation);
     tree.clear(atomicOperation);
   }
 
   public void delete() {
-    final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+    final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
     Objects.requireNonNull(atomicOperation);
 
     tree.delete(atomicOperation);

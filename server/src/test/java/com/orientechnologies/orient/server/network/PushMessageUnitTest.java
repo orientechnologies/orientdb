@@ -11,7 +11,6 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.memorymanager.NoOpMemoryManager;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 import java.io.IOException;
 import java.io.PipedInputStream;
@@ -109,7 +108,6 @@ public class PushMessageUnitTest {
     this.channelBinaryClient = new MockPipeChannel(inputClient, outputClient);
     this.channelBinaryServer = new MockPipeChannel(inputServer, outputServer);
     Mockito.when(server.getContextConfiguration()).thenReturn(new OContextConfiguration());
-    Mockito.when(server.getMemoryManager()).thenReturn(new NoOpMemoryManager());
     Mockito.when(remote.getNetwork(Mockito.anyString())).thenReturn(channelBinaryClient);
     Mockito.when(remote.createPush((byte) 100)).thenReturn(new MockPushRequest());
     Mockito.when(remote.createPush((byte) 101)).thenReturn(new MockPushRequestNoResponse());

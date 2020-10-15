@@ -33,7 +33,6 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.storage.index.sbtree.local.v1.OSBTreeV1;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.Change;
@@ -234,7 +233,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     try {
       final Lock lock = FILE_LOCK_MANAGER.acquireSharedLock(fileId);
       try {
-        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
         final BucketSearchResult bucketSearchResult = findBucket(key, atomicOperation);
         if (bucketSearchResult.itemIndex < 0) {
@@ -565,7 +564,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     try {
       this.rootBucketPointer = rootBucketPointer;
 
-      final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+      final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
       this.fileId = openFile(atomicOperation, getFullName());
 
@@ -634,11 +633,11 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     try {
       final Lock lock = FILE_LOCK_MANAGER.acquireSharedLock(fileId);
       try {
-        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
         final OCacheEntry rootCacheEntry =
             loadPageForRead(atomicOperation, fileId, rootBucketPointer.getPageIndex(), false);
         try {
-          final OSBTreeBonsaiBucket rootBucket =
+          final OSBTreeBonsaiBucket<?, ?> rootBucket =
               new OSBTreeBonsaiBucket<>(
                   rootCacheEntry,
                   rootBucketPointer.getPageOffset(),
@@ -727,7 +726,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     try {
       final Lock lock = FILE_LOCK_MANAGER.acquireSharedLock(fileId);
       try {
-        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
         final BucketSearchResult bucketSearchResult = findBucket(key, atomicOperation);
 
@@ -820,7 +819,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     try {
       final Lock lock = FILE_LOCK_MANAGER.acquireSharedLock(fileId);
       try {
-        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
         final BucketSearchResult bucketSearchResult = findBucket(key, atomicOperation);
         OBonsaiBucketPointer bucketPointer = bucketSearchResult.getLastPathItem();
@@ -902,7 +901,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
         OBonsaiBucketPointer bucketPointer = rootBucketPointer;
 
-        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
         OCacheEntry cacheEntry =
             loadPageForRead(atomicOperation, fileId, rootBucketPointer.getPageIndex(), false);
@@ -991,7 +990,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
         OBonsaiBucketPointer bucketPointer = rootBucketPointer;
 
-        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
         OCacheEntry cacheEntry =
             loadPageForRead(atomicOperation, fileId, bucketPointer.getPageIndex(), false);
         OSBTreeBonsaiBucket<K, V> bucket =
@@ -1082,7 +1081,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     try {
       final Lock lock = FILE_LOCK_MANAGER.acquireSharedLock(fileId);
       try {
-        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
         final BucketSearchResult bucketSearchResultFrom = findBucket(keyFrom, atomicOperation);
 
         final OBonsaiBucketPointer bucketPointerFrom = bucketSearchResultFrom.getLastPathItem();
@@ -1508,11 +1507,8 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
           if (allocationResult != null) {
             return allocationResult;
           }
-
-          return allocateNewPage(atomicOperation, sysBucket);
-        } else {
-          return allocateNewPage(atomicOperation, sysBucket);
         }
+        return allocateNewPage(atomicOperation, sysBucket);
       } finally {
         releasePageFromWrite(atomicOperation, sysCacheEntry);
       }

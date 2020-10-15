@@ -54,7 +54,6 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.OClusterBrowseEntry;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterBrowsePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -68,8 +67,6 @@ import java.util.Optional;
 public final class OPaginatedClusterV1 extends OPaginatedCluster {
   private static final int STATE_ENTRY_INDEX = 0;
   private static final int BINARY_VERSION = 1;
-  private final boolean addRidMetadata =
-      OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.getValueAsBoolean();
 
   private static final int DISK_PAGE_SIZE = DISK_CACHE_PAGE_SIZE.getValueAsInteger();
   private static final int LOWEST_FREELIST_BOUNDARY =
@@ -161,7 +158,7 @@ public final class OPaginatedClusterV1 extends OPaginatedCluster {
     try {
       acquireSharedLock();
       try {
-        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
         return isFileExists(atomicOperation, getFullName());
       } finally {
         releaseSharedLock();
@@ -249,7 +246,7 @@ public final class OPaginatedClusterV1 extends OPaginatedCluster {
   public void open() throws IOException {
     acquireExclusiveLock();
     try {
-      final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+      final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
       fileId = openFile(atomicOperation, getFullName());
       clusterPositionMap.open(atomicOperation);
     } finally {
@@ -335,9 +332,7 @@ public final class OPaginatedClusterV1 extends OPaginatedCluster {
         atomicOperation -> {
           acquireExclusiveLock();
           try {
-            final OPhysicalPosition pos =
-                createPhysicalPosition(recordType, clusterPositionMap.allocate(operation), -1);
-            return pos;
+            return createPhysicalPosition(recordType, clusterPositionMap.allocate(operation), -1);
           } finally {
             releaseExclusiveLock();
           }
@@ -543,7 +538,7 @@ public final class OPaginatedClusterV1 extends OPaginatedCluster {
     try {
       acquireSharedLock();
       try {
-        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
         final OClusterPositionMapBucket.PositionEntry positionEntry =
             clusterPositionMap.get(clusterPosition, pageCount, atomicOperation);
@@ -625,7 +620,7 @@ public final class OPaginatedClusterV1 extends OPaginatedCluster {
     try {
       acquireSharedLock();
       try {
-        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
         final OClusterPositionMapBucket.PositionEntry positionEntry =
             clusterPositionMap.get(clusterPosition, 1, atomicOperation);
 
@@ -1061,7 +1056,7 @@ public final class OPaginatedClusterV1 extends OPaginatedCluster {
     try {
       acquireSharedLock();
       try {
-        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
         final long clusterPosition = position.clusterPosition;
         final OClusterPositionMapBucket.PositionEntry positionEntry =
             clusterPositionMap.get(clusterPosition, 1, atomicOperation);
@@ -1111,7 +1106,7 @@ public final class OPaginatedClusterV1 extends OPaginatedCluster {
     try {
       acquireSharedLock();
       try {
-        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
         final long clusterPosition = position.clusterPosition;
         final OClusterPositionMapBucket.PositionEntry positionEntry =
             clusterPositionMap.get(clusterPosition, 1, atomicOperation);
@@ -1144,7 +1139,7 @@ public final class OPaginatedClusterV1 extends OPaginatedCluster {
     try {
       acquireSharedLock();
       try {
-        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
         final OCacheEntry pinnedStateEntry =
             loadPageForRead(atomicOperation, fileId, STATE_ENTRY_INDEX, true);
         try {
@@ -1171,7 +1166,7 @@ public final class OPaginatedClusterV1 extends OPaginatedCluster {
     try {
       acquireSharedLock();
       try {
-        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
         return clusterPositionMap.getFirstPosition(atomicOperation);
       } finally {
         releaseSharedLock();
@@ -1187,7 +1182,7 @@ public final class OPaginatedClusterV1 extends OPaginatedCluster {
     try {
       acquireSharedLock();
       try {
-        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
         return clusterPositionMap.getLastPosition(atomicOperation);
       } finally {
         releaseSharedLock();
@@ -1203,7 +1198,7 @@ public final class OPaginatedClusterV1 extends OPaginatedCluster {
     try {
       acquireSharedLock();
       try {
-        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
         return clusterPositionMap.getNextPosition(atomicOperation);
       } finally {
         releaseSharedLock();
@@ -1260,7 +1255,7 @@ public final class OPaginatedClusterV1 extends OPaginatedCluster {
     try {
       acquireSharedLock();
       try {
-        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
         final OCacheEntry pinnedStateEntry =
             loadPageForRead(atomicOperation, fileId, STATE_ENTRY_INDEX, true);
@@ -1283,7 +1278,7 @@ public final class OPaginatedClusterV1 extends OPaginatedCluster {
     try {
       acquireSharedLock();
       try {
-        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
         final long[] clusterPositions =
             clusterPositionMap.higherPositions(position.clusterPosition, atomicOperation);
         return convertToPhysicalPositions(clusterPositions);
@@ -1301,7 +1296,7 @@ public final class OPaginatedClusterV1 extends OPaginatedCluster {
     try {
       acquireSharedLock();
       try {
-        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
         final long[] clusterPositions =
             clusterPositionMap.ceilingPositions(position.clusterPosition, atomicOperation);
         return convertToPhysicalPositions(clusterPositions);
@@ -1319,7 +1314,7 @@ public final class OPaginatedClusterV1 extends OPaginatedCluster {
     try {
       acquireSharedLock();
       try {
-        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
         final long[] clusterPositions =
             clusterPositionMap.lowerPositions(position.clusterPosition, atomicOperation);
         return convertToPhysicalPositions(clusterPositions);
@@ -1337,7 +1332,7 @@ public final class OPaginatedClusterV1 extends OPaginatedCluster {
     try {
       acquireSharedLock();
       try {
-        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
         final long[] clusterPositions =
             clusterPositionMap.floorPositions(position.clusterPosition, atomicOperation);
         return convertToPhysicalPositions(clusterPositions);
@@ -1828,7 +1823,7 @@ public final class OPaginatedClusterV1 extends OPaginatedCluster {
     final OPaginatedClusterDebug debug = new OPaginatedClusterDebug();
     debug.clusterPosition = clusterPosition;
     debug.fileId = fileId;
-    final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+    final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
     final OClusterPositionMapBucket.PositionEntry positionEntry =
         clusterPositionMap.get(clusterPosition, 1, atomicOperation);
@@ -1894,7 +1889,7 @@ public final class OPaginatedClusterV1 extends OPaginatedCluster {
   }
 
   public RECORD_STATUS getRecordStatus(final long clusterPosition) throws IOException {
-    final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+    final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
     acquireSharedLock();
     try {
       final byte status = clusterPositionMap.getStatus(clusterPosition, atomicOperation);
@@ -1933,7 +1928,7 @@ public final class OPaginatedClusterV1 extends OPaginatedCluster {
     try {
       acquireSharedLock();
       try {
-        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
         final OClusterPositionMapV1.OClusterPositionEntry[] nextPositions =
             clusterPositionMap.higherPositionsEntries(lastPosition, atomicOperation);

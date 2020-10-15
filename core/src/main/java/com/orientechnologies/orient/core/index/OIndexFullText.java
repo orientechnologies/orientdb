@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdExceptio
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainerSBTree;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OMixedIndexRIDContainer;
@@ -71,7 +72,8 @@ public class OIndexFullText extends OIndexMultiValues {
       OAbstractPaginatedStorage storage,
       String valueContainerAlgorithm,
       ODocument metadata,
-      int binaryFormatVersion) {
+      int binaryFormatVersion,
+      OAtomicOperationsManager atomicOperationsManager) {
     super(
         name,
         typeId,
@@ -80,7 +82,8 @@ public class OIndexFullText extends OIndexMultiValues {
         storage,
         valueContainerAlgorithm,
         metadata,
-        binaryFormatVersion);
+        binaryFormatVersion,
+        atomicOperationsManager);
     acquireExclusiveLock();
     try {
       config();

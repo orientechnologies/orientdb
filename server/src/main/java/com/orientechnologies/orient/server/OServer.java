@@ -57,9 +57,6 @@ import com.orientechnologies.orient.server.config.OServerStorageConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.config.ODistributedConfig;
 import com.orientechnologies.orient.server.handler.OConfigurableHooksManager;
-import com.orientechnologies.orient.server.memorymanager.MXBeanMemoryManager;
-import com.orientechnologies.orient.server.memorymanager.MemoryManager;
-import com.orientechnologies.orient.server.memorymanager.NoOpMemoryManager;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.OServerSocketFactory;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
@@ -115,7 +112,6 @@ public class OServer {
   private OClientConnectionManager clientConnectionManager;
   private OHttpSessionManager httpSessionManager;
   private OPushManager pushManager;
-  private volatile MemoryManager memoryManager;
   private ClassLoader extensionClassLoader;
   private OTokenHandler tokenHandler;
   private OrientDB context;
@@ -449,16 +445,6 @@ public class OServer {
       final OServerConfiguration configuration = serverCfg.getConfiguration();
 
       tokenHandler = new OTokenHandlerImpl(this.getContextConfiguration());
-      if (OGlobalConfiguration.SERVER_HEAP_USAGE_LIMIT.getValueAsInteger() > 0) {
-        memoryManager =
-            new MXBeanMemoryManager(
-                OGlobalConfiguration.SERVER_HEAP_USAGE_LIMIT.getValueAsInteger(),
-                OGlobalConfiguration.SERVER_HEAP_USAGE_SLEEP_INTERVAL.getValueAsInteger());
-      } else {
-        memoryManager = new NoOpMemoryManager();
-      }
-
-      memoryManager.start();
 
       if (configuration.network != null) {
         // REGISTER/CREATE SOCKET FACTORIES
@@ -614,7 +600,6 @@ public class OServer {
         pushManager.shutdown();
         clientConnectionManager.shutdown();
         httpSessionManager.shutdown();
-        memoryManager.shutdown();
 
         if (pluginManager != null) pluginManager.shutdown();
 
@@ -1150,10 +1135,6 @@ public class OServer {
 
   public OrientDB getContext() {
     return context;
-  }
-
-  public MemoryManager getMemoryManager() {
-    return memoryManager;
   }
 
   public void dropDatabase(String databaseName) {

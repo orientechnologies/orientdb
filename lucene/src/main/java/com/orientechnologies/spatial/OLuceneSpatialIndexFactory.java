@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.spatial.engine.OLuceneSpatialIndexEngineDelegator;
 import com.orientechnologies.spatial.index.OLuceneSpatialIndex;
 import com.orientechnologies.spatial.shape.OShapeFactory;
@@ -94,7 +95,8 @@ public class OLuceneSpatialIndexFactory implements OIndexFactory, ODatabaseLifec
       String algorithm,
       String valueContainerAlgorithm,
       ODocument metadata,
-      int version)
+      int version,
+      OAtomicOperationsManager atomicOperationsManager)
       throws OConfigurationException {
 
     OAbstractPaginatedStorage pagStorage = (OAbstractPaginatedStorage) storage.getUnderlying();
@@ -125,7 +127,8 @@ public class OLuceneSpatialIndexFactory implements OIndexFactory, ODatabaseLifec
           pagStorage,
           valueContainerAlgorithm,
           metadata,
-          binaryFormatVersion);
+          binaryFormatVersion,
+          atomicOperationsManager);
     }
     throw new OConfigurationException("Unsupported type : " + algorithm);
   }

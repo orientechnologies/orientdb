@@ -50,7 +50,7 @@ public class OMixedIndexRIDContainer implements Set<OIdentifiable> {
         (OAbstractPaginatedStorage)
             ODatabaseRecordThreadLocal.instance().get().getStorage().getUnderlying();
     final OAtomicOperationsManager atomicOperationsManager = storage.getAtomicOperationsManager();
-    final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+    final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
     Objects.requireNonNull(atomicOperation);
 
     return atomicOperationsManager.calculateInsideComponentOperation(
