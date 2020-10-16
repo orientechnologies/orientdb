@@ -436,6 +436,7 @@ public class OServer {
   @SuppressWarnings("unchecked")
   public OServer activate()
       throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+    lock.lock();
     try {
       serverSecurity = new ODefaultServerSecurity(this, serverCfg);
       Orient.instance().setSecurity(serverSecurity);
@@ -521,10 +522,10 @@ public class OServer {
         | InstantiationException
         | IllegalAccessException
         | RuntimeException e) {
-      databases.close();
-      running = false;
+      deinit();
       throw e;
     } finally {
+      lock.unlock();
       startupLatch.countDown();
     }
 
@@ -556,8 +557,6 @@ public class OServer {
   }
 
   protected boolean deinit() {
-    if (!running) return false;
-
     try {
       running = false;
 
