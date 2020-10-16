@@ -36,6 +36,7 @@ import java.io.IOException;
  */
 public final class OVersionPositionMapV0 extends OVersionPositionMap {
   private long fileId;
+  private int numberOfPages;
 
   public OVersionPositionMapV0(
       final OAbstractPaginatedStorage storage,
@@ -164,11 +165,11 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
   private void createVPM(final OAtomicOperation atomicOperation) throws IOException {
     fileId = addFile(atomicOperation, getFullName());
     final int sizeOfIntInBytes = Integer.SIZE / 8;
-    final int numberOfPages =
+    numberOfPages =
         (int)
-                Math.ceil(
-                    (DEFAULT_VERSION_ARRAY_SIZE * sizeOfIntInBytes * 1.0) / OVersionPage.PAGE_SIZE)
-            + 1;
+            Math.ceil(
+                (DEFAULT_VERSION_ARRAY_SIZE * sizeOfIntInBytes * 1.0) / OVersionPage.PAGE_SIZE);
+    // + 1;
     final long foundNumberOfPages = getFilledUpTo(atomicOperation, fileId);
     OLogManager.instance()
         .info(
@@ -219,5 +220,9 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
 
   private int calculatePageIndex(final int startPositionWithOffset) {
     return (int) Math.ceil(startPositionWithOffset / OVersionPage.PAGE_SIZE); // + 1;
+  }
+
+  int getNumberOfPages() {
+    return numberOfPages;
   }
 }
