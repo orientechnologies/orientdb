@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -127,8 +126,7 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
 
     OLuceneFullTextIndex index = involvedIndex(iRecord, iCurrentResult, iCondition, iLeft, iRight);
     if (index == null) {
-      throw new OCommandExecutionException(
-          "Cannot evaluate lucene condition without index configuration.");
+      return false;
     }
 
     MemoryIndex memoryIndex = (MemoryIndex) iContext.getVariable(MEMORY_INDEX);
