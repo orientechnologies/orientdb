@@ -435,6 +435,7 @@ public class OServer {
   @SuppressWarnings("unchecked")
   public OServer activate()
       throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+    lock.lock();
     try {
       // Checks to see if the OrientDB System Database exists and creates it if not.
       // Make sure this happens after setSecurity() is called.
@@ -518,10 +519,10 @@ public class OServer {
         | InstantiationException
         | IllegalAccessException
         | RuntimeException e) {
-      databases.close();
-      running = false;
+      deinit();
       throw e;
     } finally {
+      lock.unlock();
       startupLatch.countDown();
     }
 
@@ -553,8 +554,6 @@ public class OServer {
   }
 
   protected boolean deinit() {
-    if (!running) return false;
-
     try {
       running = false;
 
