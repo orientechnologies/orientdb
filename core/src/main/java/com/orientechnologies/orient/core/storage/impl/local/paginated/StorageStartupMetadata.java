@@ -29,6 +29,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -183,11 +184,11 @@ public class StorageStartupMetadata {
       while (true) {
         if (!Files.exists(filePath)) {
           if (Files.exists(backupPath)) {
-            Files.move(
-                backupPath,
-                filePath,
-                StandardCopyOption.REPLACE_EXISTING,
-                StandardCopyOption.ATOMIC_MOVE);
+            try {
+              Files.move(backupPath, filePath, StandardCopyOption.ATOMIC_MOVE);
+            } catch (final AtomicMoveNotSupportedException e) {
+              Files.move(backupPath, filePath);
+            }
           } else {
             OLogManager.instance()
                 .infoNoDb(this, "File with startup metadata does not exist, creating new one");
