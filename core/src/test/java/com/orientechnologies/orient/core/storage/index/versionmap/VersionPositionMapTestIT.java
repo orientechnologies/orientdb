@@ -1,12 +1,10 @@
-package com.orientechnologies.orient.core.storage.versionmap;
+package com.orientechnologies.orient.core.storage.index.versionmap;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
-import com.orientechnologies.orient.core.storage.index.versionmap.OVersionPositionMap;
-import com.orientechnologies.orient.core.storage.index.versionmap.OVersionPositionMapV0;
 import java.io.File;
 import java.util.Random;
 import org.junit.*;
@@ -56,6 +54,7 @@ public class VersionPositionMapTestIT {
         new OVersionPositionMapV0(storage, name, name + ".cbt", OVersionPositionMap.DEF_EXTENSION);
     final OAtomicOperation atomicOperation = atomicOperationsManager.startAtomicOperation(null);
     versionPositionMap.create(atomicOperation);
+    Assert.assertEquals("Number of pages do not match", 1, versionPositionMap.getNumberOfPages());
     versionPositionMap.open();
   }
 
@@ -79,7 +78,7 @@ public class VersionPositionMapTestIT {
   @Test
   public void testMultiIncrementVersion() throws Exception {
     final int maxVPMSize = OVersionPositionMap.DEFAULT_VERSION_ARRAY_SIZE;
-    final int maxVersionNumber = 100;
+    final int maxVersionNumber = Integer.SIZE;
     for (int hash = 0; hash <= maxVPMSize; hash++) {
       for (int j = 0; j < maxVersionNumber; j++) {
         versionPositionMap.updateVersion(hash);
@@ -109,7 +108,6 @@ public class VersionPositionMapTestIT {
     Assert.assertEquals(
         3988,
         versionPositionMap.getKeyHash("07d_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"));
-
     Assert.assertEquals(
         0, versionPositionMap.getKeyHash(OVersionPositionMap.DEFAULT_VERSION_ARRAY_SIZE));
     Assert.assertEquals(0, versionPositionMap.getKeyHash(0));

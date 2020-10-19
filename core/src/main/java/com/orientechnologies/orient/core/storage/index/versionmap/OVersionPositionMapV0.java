@@ -36,6 +36,7 @@ import java.io.IOException;
  */
 public final class OVersionPositionMapV0 extends OVersionPositionMap {
   private long fileId;
+  private int numberOfPages;
 
   public OVersionPositionMapV0(
       final OAbstractPaginatedStorage storage,
@@ -94,14 +95,6 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
           try {
             final int startPositionWithOffset = OVersionPositionMapBucket.entryPosition(hash);
             final int pageIndex = calculatePageIndex(startPositionWithOffset);
-            OLogManager.instance()
-                .info(
-                    this,
-                    "VPM update on fileId:%s: hash = %d, entry position = %d, page index = %d",
-                    fileId,
-                    hash,
-                    startPositionWithOffset,
-                    pageIndex);
             final OCacheEntry cacheEntry =
                 loadPageForWrite(atomicOperation, fileId, pageIndex, false, true);
             try {
@@ -120,15 +113,6 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
   public int getVersion(final int hash) {
     final int startPositionWithOffset = OVersionPositionMapBucket.entryPosition(hash);
     final int pageIndex = calculatePageIndex(startPositionWithOffset);
-    OLogManager.instance()
-        .info(
-            this,
-            "VPM getVersion on fileId:%s: hash = %d, entry position = %d, page index = %d",
-            fileId,
-            hash,
-            startPositionWithOffset,
-            pageIndex);
-
     acquireSharedLock();
     try {
       final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
@@ -164,11 +148,10 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
   private void createVPM(final OAtomicOperation atomicOperation) throws IOException {
     fileId = addFile(atomicOperation, getFullName());
     final int sizeOfIntInBytes = Integer.SIZE / 8;
-    final int numberOfPages =
+    numberOfPages =
         (int)
-                Math.ceil(
-                    (DEFAULT_VERSION_ARRAY_SIZE * sizeOfIntInBytes * 1.0) / OVersionPage.PAGE_SIZE)
-            + 1;
+            Math.ceil(
+                (DEFAULT_VERSION_ARRAY_SIZE * sizeOfIntInBytes * 1.0) / OVersionPage.PAGE_SIZE);
     final long foundNumberOfPages = getFilledUpTo(atomicOperation, fileId);
     OLogManager.instance()
         .info(
@@ -179,7 +162,9 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
             numberOfPages,
             foundNumberOfPages);
     if (foundNumberOfPages != numberOfPages) {
-      addInitializedPage(atomicOperation);
+      for (int i = 0; i < numberOfPages; i++) {
+        addInitializedPage(atomicOperation);
+      }
     } else {
       final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, 0, false, false);
       try {
@@ -206,6 +191,10 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
   }
 
   private int calculatePageIndex(final int startPositionWithOffset) {
-    return 0; // (int) Math.ceil(startPositionWithOffset / OVersionPage.PAGE_SIZE) + 1;
+    return (int) Math.ceil(startPositionWithOffset / OVersionPage.PAGE_SIZE);
+  }
+
+  int getNumberOfPages() {
+    return numberOfPages;
   }
 }

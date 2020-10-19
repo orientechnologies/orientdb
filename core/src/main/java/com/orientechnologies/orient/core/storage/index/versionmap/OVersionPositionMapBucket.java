@@ -45,13 +45,6 @@ public final class OVersionPositionMapBucket extends ODurablePage {
       throw new OStorageException(
           "Entry with index " + index + " might be deleted and can not be used.");
     }
-    /*OLogManager.instance()
-    .info(
-        this,
-        "VPM bucket get version: value = %d, entry position = %d, page index = %d",
-        value,
-        entryPosition,
-        index);*/
     return value;
   }
 
@@ -64,14 +57,6 @@ public final class OVersionPositionMapBucket extends ODurablePage {
     }
     setIntValue(entryPosition, value + 1);
     final int newValue = getVersion(index);
-    /*OLogManager.instance()
-    .info(
-        this,
-        "VPM bucket increment version: old value = %d, new value = %d, entry position = %d, page index = %d",
-        value,
-        newValue,
-        entryPosition,
-        index);*/
     assert value + 1 == newValue;
   }
 
