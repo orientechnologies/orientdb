@@ -5,7 +5,6 @@ import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.core.tx.ValidationResult;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
@@ -15,12 +14,14 @@ public class OTransactionSequenceManager {
   private volatile long[] sequentials;
   private volatile OTransactionId[] promisedSequential;
   private final String node;
+  private final int sequenceSize;
 
   public OTransactionSequenceManager(String node, int size) {
     // TODO: make size configurable
     this.sequentials = new long[size];
     this.promisedSequential = new OTransactionId[size];
     this.node = node;
+    this.sequenceSize = size;
   }
 
   public synchronized void fill(OTransactionSequenceStatus data) {
@@ -32,8 +33,8 @@ public class OTransactionSequenceManager {
     int pos;
     int retry = 0;
     do {
-      pos = new Random().nextInt(1000);
-      if (retry > 1000) {
+      pos = new Random().nextInt(sequenceSize);
+      if (retry > sequenceSize) {
         return Optional.empty();
       }
       retry++;
@@ -42,7 +43,7 @@ public class OTransactionSequenceManager {
   }
 
   /**
-   * This is publuc only for testing purposes
+   * This is public only for testing purposes
    *
    * @param pos
    * @return
@@ -108,28 +109,19 @@ public class OTransactionSequenceManager {
   public synchronized List<OTransactionId> checkSelfStatus(
       OTransactionSequenceStatus sequenceStatus) {
     long[] status = sequenceStatus.getStatus();
-    List<OTransactionId> missing = null;
+    List<OTransactionId> missing = new ArrayList<>();
     for (int i = 0; i < status.length; i++) {
       if (this.sequentials[i] < status[i]) {
         if (this.promisedSequential[i] == null) {
-          if (missing == null) {
-            missing = new ArrayList<>();
-          }
           for (long x = this.sequentials[i] + 1; x <= status[i]; x++) {
             missing.add(new OTransactionId(Optional.empty(), i, x));
           }
         } else if (this.promisedSequential[i].getSequence() != status[i]) {
-          if (missing == null) {
-            missing = new ArrayList<>();
-          }
           for (long x = this.promisedSequential[i].getPosition() + 1; x <= status[i]; x++) {
             missing.add(new OTransactionId(Optional.empty(), i, x));
           }
         }
       }
-    }
-    if (missing == null) {
-      missing = Collections.emptyList();
     }
     return missing;
   }
@@ -137,19 +129,13 @@ public class OTransactionSequenceManager {
   public synchronized List<OTransactionId> checkOtherStatus(
       OTransactionSequenceStatus sequenceStatus) {
     long[] status = sequenceStatus.getStatus();
-    List<OTransactionId> missing = null;
+    List<OTransactionId> missing = new ArrayList<>();
     for (int i = 0; i < status.length; i++) {
       if (this.sequentials[i] > status[i]) {
-        if (missing == null) {
-          missing = new ArrayList<>();
-        }
         for (long x = status[i] + 1; x <= this.sequentials[i]; x++) {
           missing.add(new OTransactionId(Optional.empty(), i, x));
         }
       }
-    }
-    if (missing == null) {
-      missing = Collections.emptyList();
     }
     return missing;
   }
