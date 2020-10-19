@@ -81,7 +81,7 @@ public class ODistributedTxCoordinator {
         Optional<OTransactionId> genId = distributedDatabase.nextId();
         if (genId.isPresent()) {
           OTransactionId txId = genId.get();
-          retriedCommit(database, iTx, txId, requestId);
+          tryCommit(database, iTx, txId, requestId);
           return;
         } else {
           try {
@@ -101,10 +101,7 @@ public class ODistributedTxCoordinator {
 
         // Nothing just retry
         if (count > nretry) {
-          ODistributedTxContext context = localDistributedDatabase.getTxContext(requestId);
-          if (context != null) {
-            context.destroy();
-          }
+          destroyContext(requestId);
           throw ex;
         }
         try {
@@ -114,10 +111,7 @@ public class ODistributedTxCoordinator {
         }
 
       } catch (RuntimeException | Error ex) {
-        ODistributedTxContext context = localDistributedDatabase.getTxContext(requestId);
-        if (context != null) {
-          context.destroy();
-        }
+        destroyContext(requestId);
         throw ex;
       } finally {
         distributedDatabase.endOperation();
@@ -126,7 +120,14 @@ public class ODistributedTxCoordinator {
     } while (true);
   }
 
-  public void retriedCommit(
+  private void destroyContext(final ODistributedRequestId requestId) {
+    ODistributedTxContext context = localDistributedDatabase.getTxContext(requestId);
+    if (context != null) {
+      context.destroy();
+    }
+  }
+
+  public void tryCommit(
       final ODatabaseDocumentDistributed database,
       final OTransactionInternal iTx,
       OTransactionId txId,
