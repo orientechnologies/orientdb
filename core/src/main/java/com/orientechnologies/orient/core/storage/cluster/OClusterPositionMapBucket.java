@@ -208,12 +208,9 @@ public final class OClusterPositionMapBucket extends ODurablePage {
 
   private PositionEntry readEntry(int position) {
     position += OByteSerializer.BYTE_SIZE;
-
     final long pageIndex = getLongValue(position);
     position += OLongSerializer.LONG_SIZE;
-
     final int pagePosition = getIntValue(position);
-
     return new PositionEntry(pageIndex, pagePosition);
   }
 

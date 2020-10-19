@@ -95,14 +95,6 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
           try {
             final int startPositionWithOffset = OVersionPositionMapBucket.entryPosition(hash);
             final int pageIndex = calculatePageIndex(startPositionWithOffset);
-            /*OLogManager.instance()
-            .info(
-                this,
-                "VPM update on fileId:%s: hash = %d, entry position = %d, page index = %d",
-                fileId,
-                hash,
-                startPositionWithOffset,
-                pageIndex);*/
             final OCacheEntry cacheEntry =
                 loadPageForWrite(atomicOperation, fileId, pageIndex, false, true);
             try {
@@ -121,15 +113,6 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
   public int getVersion(final int hash) {
     final int startPositionWithOffset = OVersionPositionMapBucket.entryPosition(hash);
     final int pageIndex = calculatePageIndex(startPositionWithOffset);
-    /*OLogManager.instance()
-    .info(
-        this,
-        "VPM getVersion on fileId:%s: hash = %d, entry position = %d, page index = %d",
-        fileId,
-        hash,
-        startPositionWithOffset,
-        pageIndex);*/
-
     acquireSharedLock();
     try {
       final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
@@ -169,7 +152,6 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
         (int)
             Math.ceil(
                 (DEFAULT_VERSION_ARRAY_SIZE * sizeOfIntInBytes * 1.0) / OVersionPage.PAGE_SIZE);
-    // + 1;
     final long foundNumberOfPages = getFilledUpTo(atomicOperation, fileId);
     OLogManager.instance()
         .info(
@@ -180,16 +162,6 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
             numberOfPages,
             foundNumberOfPages);
     if (foundNumberOfPages != numberOfPages) {
-      // if (getFilledUpTo(atomicOperation, fileId) == 0) {
-      // first one page is added for the meta data
-      // addInitializedPage(atomicOperation);
-
-      // then let us add several empty data pages
-      // final int sizeOfIntInBytes = Integer.SIZE / 8;
-      // final int numberOfPages =
-      //    (int) Math.ceil((DEFAULT_VERSION_ARRAY_SIZE * sizeOfIntInBytes) /
-      // OVersionPage.PAGE_SIZE)
-      //        + 1;
       for (int i = 0; i < numberOfPages; i++) {
         addInitializedPage(atomicOperation);
       }
@@ -219,7 +191,7 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
   }
 
   private int calculatePageIndex(final int startPositionWithOffset) {
-    return (int) Math.ceil(startPositionWithOffset / OVersionPage.PAGE_SIZE); // + 1;
+    return (int) Math.ceil(startPositionWithOffset / OVersionPage.PAGE_SIZE);
   }
 
   int getNumberOfPages() {
