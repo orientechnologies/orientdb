@@ -18,7 +18,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import org.junit.Test;
 
-public class TestNewDistributedResponseManager {
+public class TestODistributedTxResponseManager {
 
   @Test
   public void testSimpleQuorum() {
