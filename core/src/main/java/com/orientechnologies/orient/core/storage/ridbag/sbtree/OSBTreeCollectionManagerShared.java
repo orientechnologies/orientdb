@@ -182,20 +182,29 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
     ODatabaseRecordThreadLocal.instance().get().getCollectionsChanges().clear();
   }
 
-  public boolean tryDelete(OAtomicOperation atomicOperation, OBonsaiCollectionPointer collectionPointer, long delay) {
+  public boolean tryDelete(
+      OAtomicOperation atomicOperation, OBonsaiCollectionPointer collectionPointer, long delay) {
     final CacheKey cacheKey = new CacheKey(storage, collectionPointer);
     final Object lock = treesSubsetLock(cacheKey);
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (lock) {
       SBTreeBonsaiContainer container = treeCache.getQuietly(cacheKey);
-      if (container != null && (container.usagesCounter != 0 || container.lastAccessTime > System.currentTimeMillis() - delay)) {
+      if (container != null
+          && (container.usagesCounter != 0
+          || container.lastAccessTime > System.currentTimeMillis() - delay)) {
         return false;
       }
 
       treeCache.remove(cacheKey);
-      final OSBTreeBonsaiLocal<OIdentifiable, Integer> treeBonsai = (OSBTreeBonsaiLocal<OIdentifiable, Integer>) this
-          .loadTree(collectionPointer);
-      return treeBonsai.tryDelete(atomicOperation);
+      final OSBTreeBonsaiLocal<OIdentifiable, Integer> treeBonsai =
+          (OSBTreeBonsaiLocal<OIdentifiable, Integer>) this.loadTree(collectionPointer);
+
+      if (treeBonsai != null) {
+        return treeBonsai.tryDelete(atomicOperation);
+      } else {
+        // already deleted
+        return true;
+      }
     }
   }
 }
