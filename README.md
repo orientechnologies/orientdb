@@ -38,9 +38,9 @@ Copy the `ID` of the correction request to the initial comment in your PR e.g. `
 
 Furthermore, the FA automation requires this sequence now:
 
-- Create adb request 1st!  ADB waits for a staged new build.
+- FIRST Create adb request! ADB waits for a staged new build.
 - THEN stage your build
-- ADB should then promote & upload internally => Vali mail
-- After we set “vali OK” in adb request => RTC , delivery mail
+- THEN ADB should promote and upload internally => Validation email
+- THEN after “validation OK” in adb request => RTC, delivery email
 
 
