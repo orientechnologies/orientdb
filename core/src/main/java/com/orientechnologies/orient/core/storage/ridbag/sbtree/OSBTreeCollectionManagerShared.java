@@ -278,13 +278,13 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
       SBTreeBonsaiContainer container = treeCache.getQuietly(cacheKey);
       if (container != null
           && (container.usagesCounter != 0
-          || container.lastAccessTime > System.currentTimeMillis() - delay)) {
+              || container.lastAccessTime > System.currentTimeMillis() - delay)) {
         return false;
       }
 
       treeCache.remove(cacheKey);
       OSBTreeBonsai<OIdentifiable, Integer> treeBonsai = this.loadTree(collectionPointer);
-      //already deleted
+      // already deleted
       if (treeBonsai == null) {
         return true;
       }
