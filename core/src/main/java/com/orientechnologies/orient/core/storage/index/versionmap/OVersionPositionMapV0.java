@@ -142,7 +142,7 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
 
   private void openVPM(final OAtomicOperation atomicOperation) throws IOException {
     fileId = openFile(atomicOperation, getFullName());
-    OLogManager.instance().info(this, "VPM open fileId:%s: fileName = %s", fileId, getFullName());
+    OLogManager.instance().debug(this, "VPM open fileId:%s: fileName = %s", fileId, getFullName());
   }
 
   private void createVPM(final OAtomicOperation atomicOperation) throws IOException {
@@ -154,7 +154,7 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
                 (DEFAULT_VERSION_ARRAY_SIZE * sizeOfIntInBytes * 1.0) / OVersionPage.PAGE_SIZE);
     final long foundNumberOfPages = getFilledUpTo(atomicOperation, fileId);
     OLogManager.instance()
-        .info(
+        .debug(
             this,
             "VPM open fileId:%s: fileName = %s, expected #pages = %d, actual #pages = %d",
             fileId,
