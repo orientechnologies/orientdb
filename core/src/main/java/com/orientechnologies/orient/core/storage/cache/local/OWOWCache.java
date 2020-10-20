@@ -71,9 +71,11 @@ import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -177,7 +179,17 @@ public final class OWOWCache extends OAbstractWriteCache
    */
   private static final String NAME_ID_MAP_V2_T = "name_id_map_v2_t" + NAME_ID_MAP_EXTENSION;
 
-  /** Marks pages which have a checksum stored. */
+  /**
+   * Name of the file which is used to compact file registry on close. All compacted data will be
+   * written first to this file and then file will be atomically moved on the place of existing
+   * registry.
+   */
+  private static final String NAME_ID_MAP_V2_BACKUP =
+      "name_id_map_v2_backup" + NAME_ID_MAP_EXTENSION;
+
+  /**
+   * Marks pages which have a checksum stored.
+   */
   public static final long MAGIC_NUMBER_WITH_CHECKSUM = 0xFACB03FEL;
 
   /** Marks pages which have a checksum stored and data encrypted */
@@ -1430,9 +1442,13 @@ public final class OWOWCache extends OAbstractWriteCache
         }
       }
 
+      final Path nameIdMapBackupPath = storagePath.resolve(NAME_ID_MAP_V2_BACKUP);
       try (final FileChannel nameIdMapHolder =
           FileChannel.open(
-              nameIdMapHolderPath, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
+              nameIdMapBackupPath,
+              StandardOpenOption.CREATE,
+              StandardOpenOption.READ,
+              StandardOpenOption.WRITE)) {
         nameIdMapHolder.truncate(0);
 
         for (final Map.Entry<String, Integer> entry : nameIdMap.entrySet()) {
@@ -1448,6 +1464,16 @@ public final class OWOWCache extends OAbstractWriteCache
         }
 
         nameIdMapHolder.force(true);
+      }
+
+      try {
+        Files.move(
+            nameIdMapBackupPath,
+            nameIdMapHolderPath,
+            StandardCopyOption.REPLACE_EXISTING,
+            StandardCopyOption.ATOMIC_MOVE);
+      } catch (AtomicMoveNotSupportedException e) {
+        Files.move(nameIdMapBackupPath, nameIdMapBackupPath, StandardCopyOption.REPLACE_EXISTING);
       }
 
       doubleWriteLog.close();
@@ -1765,17 +1791,15 @@ public final class OWOWCache extends OAbstractWriteCache
     if (!fileClassic.exists()) {
       fileClassic.create();
 
-      if (callFsync) {
-        fileClassic.synch();
-      }
     } else {
       if (!fileClassic.isOpen()) {
         fileClassic.open();
       }
       fileClassic.shrink(0);
-      if (callFsync) {
-        fileClassic.synch();
-      }
+    }
+
+    if (callFsync) {
+      fileClassic.synch();
     }
   }
 
@@ -2832,10 +2856,6 @@ public final class OWOWCache extends OAbstractWriteCache
     OLogSequenceNumber maxFullLogLSN = null;
     flushCycle:
     while (chunksSize < pagesFlushLimit) {
-      if (!chunk.isEmpty()) {
-        throw new IllegalStateException("Chunk is not empty !");
-      }
-
       final TreeSet<PageKey> segmentPages = localDirtyPagesBySegment.get(currentSegment);
 
       if (segmentPages == null) {
@@ -2885,7 +2905,6 @@ public final class OWOWCache extends OAbstractWriteCache
           // we marked page as dirty but did not put it in cache yet
           if (!chunk.isEmpty()) {
             chunks.add(chunk);
-            chunk = new ArrayList<>();
           }
 
           break flushCycle;
@@ -2958,10 +2977,6 @@ public final class OWOWCache extends OAbstractWriteCache
         chunksSize += chunk.size();
         chunk = new ArrayList<>();
       }
-    }
-
-    if (!chunk.isEmpty()) {
-      throw new IllegalStateException("Chunk is not empty !");
     }
 
     final int flushedPages = flushPages(chunks, maxFullLogLSN);
@@ -3220,9 +3235,7 @@ public final class OWOWCache extends OAbstractWriteCache
 
             copy.position(0);
 
-            if (chunk.isEmpty()) {
-              chunk.add(new OQuarto<>(version, copy, directPointer, pointer));
-            } else {
+            if (!chunk.isEmpty()) {
               if (lastFileId != pointer.getFileId()
                   || lastPageIndex != pointer.getPageIndex() - 1) {
                 chunks.add(chunk);
@@ -3240,12 +3253,10 @@ public final class OWOWCache extends OAbstractWriteCache
 
                   maxFullLogLSN = null;
                 }
-
-                chunk.add(new OQuarto<>(version, copy, directPointer, pointer));
-              } else {
-                chunk.add(new OQuarto<>(version, copy, directPointer, pointer));
               }
             }
+
+            chunk.add(new OQuarto<>(version, copy, directPointer, pointer));
 
             lastFileId = pointer.getFileId();
             lastPageIndex = pointer.getPageIndex();
