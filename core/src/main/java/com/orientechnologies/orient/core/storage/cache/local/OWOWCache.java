@@ -68,6 +68,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.ref.WeakReference;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
@@ -118,6 +119,8 @@ import javax.crypto.SecretKey;
 import javax.crypto.ShortBufferException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import net.jpountz.xxhash.XXHash64;
+import net.jpountz.xxhash.XXHashFactory;
 
 /**
  * Write part of disk cache which is used to collect pages which were changed on read cache and
@@ -150,13 +153,20 @@ import javax.crypto.spec.SecretKeySpec;
  */
 public final class OWOWCache extends OAbstractWriteCache
     implements OWriteCache, OCachePointer.WritersListener {
+
+  private static final XXHashFactory XX_HASH_FACTORY = XXHashFactory.fastestInstance();
+  private static final XXHash64 XX_HASH_64 = XX_HASH_FACTORY.hash64();
+  private static final long XX_HASH_SEED = 0xAEF5634;
+
   private static final String ALGORITHM_NAME = "AES";
   private static final String TRANSFORMATION = "AES/CTR/NoPadding";
 
   private static final ThreadLocal<Cipher> CIPHER =
       ThreadLocal.withInitial(OWOWCache::getCipherInstance);
 
-  /** Extension for the file which contains mapping between file name and file id */
+  /**
+   * Extension for the file which contains mapping between file name and file id
+   */
   private static final String NAME_ID_MAP_EXTENSION = ".cm";
 
   /** Name for file which contains first version of binary format */
@@ -170,14 +180,23 @@ public final class OWOWCache extends OAbstractWriteCache
   private static final String NAME_ID_MAP_V2 = "name_id_map_v2" + NAME_ID_MAP_EXTENSION;
 
   /**
-   * Name of file temporary which contains second version of binary format. Temporary name is used
-   * to prevent situation when DB is crashed because of migration from first to second version of
-   * binary format and data are lost.
-   *
-   * @see #NAME_ID_MAP_V2
-   * @see #convertNameIdMapFromV1ToV2()
+   * Name for file which contains third version of binary format. Third version of format contains
+   * not only file name which is used in write cache but also file name which is used in file system
+   * so those two names may be different which allows usage of case sensitive file names. All this
+   * information is wrapped by XX_HASH code which followed by content length, so any damaged records
+   * are filtered out during loading of storage.
    */
-  private static final String NAME_ID_MAP_V2_T = "name_id_map_v2_t" + NAME_ID_MAP_EXTENSION;
+  private static final String NAME_ID_MAP_V3 = "name_id_map_v3" + NAME_ID_MAP_EXTENSION;
+
+  /**
+   * Name of file temporary which contains third version of binary format. Temporary file is used to
+   * prevent situation when DB is crashed because of migration to third version of binary format and
+   * data are lost.
+   *
+   * @see #NAME_ID_MAP_V3
+   * @see #storedNameIdMapToV3()
+   */
+  private static final String NAME_ID_MAP_V3_T = "name_id_map_v3_t" + NAME_ID_MAP_EXTENSION;
 
   /**
    * Name of the file which is used to compact file registry on close. All compacted data will be
@@ -188,17 +207,30 @@ public final class OWOWCache extends OAbstractWriteCache
       "name_id_map_v2_backup" + NAME_ID_MAP_EXTENSION;
 
   /**
+   * Maximum length of the row in file registry
+   *
+   * @see #NAME_ID_MAP_V3
+   */
+  private static final int MAX_FILE_RECORD_LEN = 16 * 1024;
+
+  /**
    * Marks pages which have a checksum stored.
    */
   public static final long MAGIC_NUMBER_WITH_CHECKSUM = 0xFACB03FEL;
 
-  /** Marks pages which have a checksum stored and data encrypted */
+  /**
+   * Marks pages which have a checksum stored and data encrypted
+   */
   public static final long MAGIC_NUMBER_WITH_CHECKSUM_ENCRYPTED = 0x1L;
 
-  /** Marks pages which have no checksum stored. */
+  /**
+   * Marks pages which have no checksum stored.
+   */
   private static final long MAGIC_NUMBER_WITHOUT_CHECKSUM = 0xEF30BCAFL;
 
-  /** Marks pages which have no checksum stored but have data encrypted */
+  /**
+   * Marks pages which have no checksum stored but have data encrypted
+   */
   private static final long MAGIC_NUMBER_WITHOUT_CHECKSUM_ENCRYPTED = 0x2L;
 
   private static final int MAGIC_NUMBER_OFFSET = 0;
@@ -1819,43 +1851,45 @@ public final class OWOWCache extends OAbstractWriteCache
         Files.delete(nameIdMapHolderV2);
       }
 
-      nameIdMapHolderPath = nameIdMapHolderV1;
       try (final FileChannel nameIdMapHolder =
-          FileChannel.open(
-              nameIdMapHolderPath,
-              StandardOpenOption.WRITE,
-              StandardOpenOption.READ,
-              StandardOpenOption.CREATE)) {
+          FileChannel.open(nameIdMapHolderV1, StandardOpenOption.WRITE, StandardOpenOption.READ)) {
         readNameIdMapV1(nameIdMapHolder);
-        convertNameIdMapFromV1ToV2();
       }
-
-      nameIdMapHolderPath = storagePath.resolve(NAME_ID_MAP_V2);
 
       Files.delete(nameIdMapHolderV1);
-    } else {
+    } else if (Files.exists(nameIdMapHolderV2)) {
       nameIdMapHolderPath = storagePath.resolve(NAME_ID_MAP_V2);
+
       try (final FileChannel nameIdMapHolder =
-          FileChannel.open(
-              nameIdMapHolderPath,
-              StandardOpenOption.WRITE,
-              StandardOpenOption.READ,
-              StandardOpenOption.CREATE)) {
+          FileChannel.open(nameIdMapHolderV2, StandardOpenOption.WRITE, StandardOpenOption.READ)) {
         readNameIdMapV2(nameIdMapHolder);
       }
+
+      Files.delete(nameIdMapHolderV2);
+    }
+
+    nameIdMapHolderPath = storagePath.resolve(NAME_ID_MAP_V3);
+    if (Files.exists(nameIdMapHolderPath)) {
+      try (final FileChannel nameIdMapHolder =
+          FileChannel.open(
+              nameIdMapHolderPath, StandardOpenOption.WRITE, StandardOpenOption.READ)) {
+        readNameIdMapV3(nameIdMapHolder);
+      }
+    } else {
+      storedNameIdMapToV3();
     }
   }
 
-  private void convertNameIdMapFromV1ToV2() throws IOException {
-    final Path nameIdMapHolderFileV2T = storagePath.resolve(NAME_ID_MAP_V2_T);
+  private void storedNameIdMapToV3() throws IOException {
+    final Path nameIdMapHolderFileV3T = storagePath.resolve(NAME_ID_MAP_V3_T);
 
-    if (Files.exists(nameIdMapHolderFileV2T)) {
-      Files.delete(nameIdMapHolderFileV2T);
+    if (Files.exists(nameIdMapHolderFileV3T)) {
+      Files.delete(nameIdMapHolderFileV3T);
     }
 
-    final FileChannel v2NameIdMapHolder =
+    final FileChannel v3NameIdMapHolder =
         FileChannel.open(
-            nameIdMapHolderFileV2T,
+            nameIdMapHolderFileV3T,
             StandardOpenOption.CREATE,
             StandardOpenOption.WRITE,
             StandardOpenOption.READ);
@@ -1867,18 +1901,25 @@ public final class OWOWCache extends OAbstractWriteCache
 
         final NameFileIdEntry nameFileIdEntry =
             new NameFileIdEntry(nameIdEntry.getKey(), nameIdEntry.getValue(), fileSystemName);
-        writeNameIdEntry(v2NameIdMapHolder, nameFileIdEntry, false);
+        writeNameIdEntry(v3NameIdMapHolder, nameFileIdEntry, false);
       } else {
         final NameFileIdEntry nameFileIdEntry =
             new NameFileIdEntry(nameIdEntry.getKey(), nameIdEntry.getValue(), "");
-        writeNameIdEntry(v2NameIdMapHolder, nameFileIdEntry, false);
+        writeNameIdEntry(v3NameIdMapHolder, nameFileIdEntry, false);
       }
     }
 
-    v2NameIdMapHolder.force(true);
-    v2NameIdMapHolder.close();
+    v3NameIdMapHolder.force(true);
+    v3NameIdMapHolder.close();
 
-    Files.move(nameIdMapHolderFileV2T, storagePath.resolve(NAME_ID_MAP_V2));
+    try {
+      Files.move(
+          nameIdMapHolderFileV3T,
+          storagePath.resolve(NAME_ID_MAP_V3),
+          StandardCopyOption.ATOMIC_MOVE);
+    } catch (AtomicMoveNotSupportedException e) {
+      Files.move(nameIdMapHolderFileV3T, storagePath.resolve(NAME_ID_MAP_V3));
+    }
   }
 
   private OFile createFileInstance(final String fileName, final int fileId) {
@@ -1912,6 +1953,68 @@ public final class OWOWCache extends OAbstractWriteCache
     }
 
     return prefix;
+  }
+
+  /**
+   * Read information about files are registered inside of write cache/storage File consist of rows
+   * of variable length which contains following entries:
+   *
+   * <ol>
+   *   <li>XX_HASH code of the content of the row excluding first two entries.
+   *   <li>Length of the content of the row excluding of two entries above.
+   *   <li>Internal file id, may be positive or negative depends on whether file is removed or not
+   *   <li>Name of file inside of write cache, this name is case sensitive
+   *   <li>Name of file which is used inside file system it can be different from name of file used
+   *       inside write cache
+   * </ol>
+   */
+  private void readNameIdMapV3(FileChannel nameIdMapHolder)
+      throws IOException, InterruptedException {
+    nameIdMap.clear();
+
+    long localFileCounter = -1;
+
+    nameIdMapHolder.position(0);
+
+    NameFileIdEntry nameFileIdEntry;
+
+    final Map<Integer, String> idFileNameMap = new HashMap<>(1_000);
+
+    while ((nameFileIdEntry = readNextNameIdEntryV3(nameIdMapHolder)) != null) {
+      final long absFileId = Math.abs(nameFileIdEntry.fileId);
+
+      if (localFileCounter < absFileId) {
+        localFileCounter = absFileId;
+      }
+
+      nameIdMap.put(nameFileIdEntry.name, nameFileIdEntry.fileId);
+      idNameMap.put(nameFileIdEntry.fileId, nameFileIdEntry.name);
+
+      idFileNameMap.put(nameFileIdEntry.fileId, nameFileIdEntry.fileSystemName);
+    }
+
+    for (final Map.Entry<String, Integer> nameIdEntry : nameIdMap.entrySet()) {
+      final int fileId = nameIdEntry.getValue();
+
+      if (fileId >= 0) {
+        final long externalId = composeFileId(id, nameIdEntry.getValue());
+
+        if (files.get(externalId) == null) {
+          final Path path = storagePath.resolve(idFileNameMap.get((nameIdEntry.getValue())));
+          final AsyncFile file = new AsyncFile(path, pageSize, useNativeOsAPI);
+
+          if (file.exists()) {
+            file.open();
+            files.add(externalId, file);
+          } else {
+            idNameMap.remove(fileId);
+
+            nameIdMap.put(nameIdEntry.getKey(), -fileId);
+            idNameMap.put(-fileId, nameIdEntry.getKey());
+          }
+        }
+      }
+    }
   }
 
   /**
@@ -2144,6 +2247,54 @@ public final class OWOWCache extends OAbstractWriteCache
     }
   }
 
+  private NameFileIdEntry readNextNameIdEntryV3(FileChannel nameIdMapHolder) throws IOException {
+    try {
+      final int xxHashLen = 8;
+      final int recordSizeLen = 4;
+
+      ByteBuffer buffer = ByteBuffer.allocate(xxHashLen + recordSizeLen);
+      OIOUtils.readByteBuffer(buffer, nameIdMapHolder);
+      buffer.rewind();
+
+      final long storedXxHash = buffer.getLong();
+      final int recordLen = buffer.getInt();
+
+      if (recordLen > MAX_FILE_RECORD_LEN) {
+        OLogManager.instance()
+            .errorNoDb(
+                this,
+                "Maximum record length in file registry can not exceed %d bytes. "
+                    + "But actual record length %d.  Storage name : %s",
+                null,
+                MAX_FILE_RECORD_LEN,
+                storageName,
+                recordLen);
+        return null;
+      }
+
+      buffer = ByteBuffer.allocate(recordLen);
+      OIOUtils.readByteBuffer(buffer, nameIdMapHolder);
+      buffer.rewind();
+
+      final long xxHash = XX_HASH_64.hash(buffer, 0, recordLen, XX_HASH_SEED);
+      if (xxHash != storedXxHash) {
+        OLogManager.instance()
+            .errorNoDb(
+                this, "Hash of the file registry is broken. Storage name : %s", null, storageName);
+        return null;
+      }
+
+      final int fileId = buffer.getInt();
+      final String name = stringSerializer.deserializeFromByteBufferObject(buffer);
+      final String fileName = stringSerializer.deserializeFromByteBufferObject(buffer);
+
+      return new NameFileIdEntry(name, fileId, fileName);
+
+    } catch (final EOFException ignore) {
+      return null;
+    }
+  }
+
   private void writeNameIdEntry(final NameFileIdEntry nameFileIdEntry, final boolean sync)
       throws IOException {
     try (final FileChannel nameIdMapHolder =
@@ -2155,30 +2306,42 @@ public final class OWOWCache extends OAbstractWriteCache
   private void writeNameIdEntry(
       final FileChannel nameIdMapHolder, final NameFileIdEntry nameFileIdEntry, final boolean sync)
       throws IOException {
+    final int xxHashSize = 8;
+    final int recordLenSize = 4;
+
     final int nameSize = stringSerializer.getObjectSize(nameFileIdEntry.name);
     final int fileNameSize = stringSerializer.getObjectSize(nameFileIdEntry.fileSystemName);
 
-    // file id size + file name size + file name + file system name size + file system name
+    // file id size + file name + file system name + xx_hash size + record_size size
     final ByteBuffer serializedRecord =
-        ByteBuffer.allocate(3 * OIntegerSerializer.INT_SIZE + nameSize + fileNameSize);
+        ByteBuffer.allocate(
+            OIntegerSerializer.INT_SIZE + nameSize + fileNameSize + xxHashSize + recordLenSize);
+
+    serializedRecord.position(xxHashSize + recordLenSize);
 
     // serialize file id
     OIntegerSerializer.INSTANCE.serializeInByteBufferObject(
-        nameFileIdEntry.fileId, serializedRecord, 0);
+        nameFileIdEntry.fileId, serializedRecord);
 
     // serialize file name
-    OIntegerSerializer.INSTANCE.serializeInByteBufferObject(
-        nameSize, serializedRecord, OIntegerSerializer.INT_SIZE);
-    stringSerializer.serializeInByteBufferObject(
-        nameFileIdEntry.name, serializedRecord, 2 * OIntegerSerializer.INT_SIZE);
+    stringSerializer.serializeInByteBufferObject(nameFileIdEntry.name, serializedRecord);
 
     // serialize file system name
-    OIntegerSerializer.INSTANCE.serializeInByteBufferObject(
-        fileNameSize, serializedRecord, 2 * OIntegerSerializer.INT_SIZE + nameSize);
-    stringSerializer.serializeInByteBufferObject(
-        nameFileIdEntry.fileSystemName,
-        serializedRecord,
-        3 * OIntegerSerializer.INT_SIZE + nameSize);
+    stringSerializer.serializeInByteBufferObject(nameFileIdEntry.fileSystemName, serializedRecord);
+
+    final int recordLen = serializedRecord.position() - xxHashSize - recordLenSize;
+    if (recordLen > MAX_FILE_RECORD_LEN) {
+      throw new OStorageException(
+          "Maximum record length in file registry can not exceed "
+              + MAX_FILE_RECORD_LEN
+              + " bytes. But actual record length "
+              + recordLen);
+    }
+    serializedRecord.putInt(xxHashSize, recordLen);
+
+    final long xxHash =
+        XX_HASH_64.hash(serializedRecord, xxHashSize + recordLenSize, recordLen, XX_HASH_SEED);
+    serializedRecord.putLong(0, xxHash);
 
     serializedRecord.position(0);
 
