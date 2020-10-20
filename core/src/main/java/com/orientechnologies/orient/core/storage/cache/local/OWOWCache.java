@@ -1460,7 +1460,10 @@ public final class OWOWCache extends OAbstractWriteCache
             fileName = entry.getKey();
           }
 
-          writeNameIdEntry(new NameFileIdEntry(entry.getKey(), entry.getValue(), fileName), false);
+          writeNameIdEntry(
+              nameIdMapHolder,
+              new NameFileIdEntry(entry.getKey(), entry.getValue(), fileName),
+              false);
         }
 
         nameIdMapHolder.force(true);
