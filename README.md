@@ -36,11 +36,4 @@ Copy the `ID` of the correction request to the initial comment in your PR e.g. `
 
 > Put CWB CR to "patch request", only after the "stage, promote" was successful.
 
-Furthermore, the FA automation requires this sequence now:
-
-- FIRST Create adb request! ADB waits for a staged new build.
-- THEN stage your build
-- THEN ADB should promote and upload internally => Validation email
-- THEN after “validation OK” in adb request => RTC, delivery email
-
 
