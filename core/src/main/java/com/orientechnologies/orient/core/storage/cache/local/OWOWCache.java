@@ -68,7 +68,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.ref.WeakReference;
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
@@ -164,9 +163,7 @@ public final class OWOWCache extends OAbstractWriteCache
   private static final ThreadLocal<Cipher> CIPHER =
       ThreadLocal.withInitial(OWOWCache::getCipherInstance);
 
-  /**
-   * Extension for the file which contains mapping between file name and file id
-   */
+  /** Extension for the file which contains mapping between file name and file id */
   private static final String NAME_ID_MAP_EXTENSION = ".cm";
 
   /** Name for file which contains first version of binary format */
@@ -213,24 +210,16 @@ public final class OWOWCache extends OAbstractWriteCache
    */
   private static final int MAX_FILE_RECORD_LEN = 16 * 1024;
 
-  /**
-   * Marks pages which have a checksum stored.
-   */
+  /** Marks pages which have a checksum stored. */
   public static final long MAGIC_NUMBER_WITH_CHECKSUM = 0xFACB03FEL;
 
-  /**
-   * Marks pages which have a checksum stored and data encrypted
-   */
+  /** Marks pages which have a checksum stored and data encrypted */
   public static final long MAGIC_NUMBER_WITH_CHECKSUM_ENCRYPTED = 0x1L;
 
-  /**
-   * Marks pages which have no checksum stored.
-   */
+  /** Marks pages which have no checksum stored. */
   private static final long MAGIC_NUMBER_WITHOUT_CHECKSUM = 0xEF30BCAFL;
 
-  /**
-   * Marks pages which have no checksum stored but have data encrypted
-   */
+  /** Marks pages which have no checksum stored but have data encrypted */
   private static final long MAGIC_NUMBER_WITHOUT_CHECKSUM_ENCRYPTED = 0x2L;
 
   private static final int MAGIC_NUMBER_OFFSET = 0;
