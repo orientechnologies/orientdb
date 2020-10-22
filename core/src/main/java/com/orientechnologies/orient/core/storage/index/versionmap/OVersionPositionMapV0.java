@@ -28,6 +28,8 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.version.OVersionPage;
 import java.io.IOException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * The version position map in version 0 stores a version of type int for all change operations on
@@ -141,6 +143,9 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
   }
 
   private void openVPM(final OAtomicOperation atomicOperation) throws IOException {
+    if (!isFileExists(atomicOperation, getFullName())) {
+      createVPM(atomicOperation);
+    }
     fileId = openFile(atomicOperation, getFullName());
     OLogManager.instance().debug(this, "VPM open fileId:%s: fileName = %s", fileId, getFullName());
   }

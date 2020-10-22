@@ -201,7 +201,6 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     if (atomicOperation == null) {
       return writeCache.exists(fileName);
     }
-
     return atomicOperation.isFileExists(fileName);
   }
 
