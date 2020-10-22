@@ -141,6 +141,7 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
   }
 
   private void openVPM(final OAtomicOperation atomicOperation) throws IOException {
+    // in case an old storage does not have a VPM yet, it will be created
     if (!isFileExists(atomicOperation, getFullName())) {
       createVPM(atomicOperation);
     }
