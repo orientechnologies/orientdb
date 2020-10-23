@@ -118,7 +118,7 @@ public class OCreateSystemUserStatement extends OSimpleExecServerStatement {
 
   @Override
   public void toString(Map<Object, Object> params, StringBuilder builder) {
-    builder.append("CREATE USER ");
+    builder.append("CREATE SYSTEM USER ");
     name.toString(params, builder);
     builder.append(" IDENTIFIED BY ");
     if (passwordIdentifier != null) {
@@ -129,7 +129,7 @@ public class OCreateSystemUserStatement extends OSimpleExecServerStatement {
       passwordParam.toString(params, builder);
     }
     if (!roles.isEmpty()) {
-      builder.append("ROLE [");
+      builder.append(" ROLE [");
       boolean first = true;
       for (OIdentifier role : roles) {
         if (!first) {
