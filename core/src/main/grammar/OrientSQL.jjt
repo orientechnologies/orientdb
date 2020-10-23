@@ -1030,8 +1030,11 @@ OServerStatement ServerStatement():
         |
         result = DropDatabaseStatement()
         |
-        LOOKAHEAD(2)
+        LOOKAHEAD(3)
         result = CreateSystemUserStatement()
+        |
+        LOOKAHEAD(3)
+        result = AlterSystemRoleStatement()
     )
 	{
 	    return result;
@@ -4926,6 +4929,34 @@ OAlterRoleStatement AlterRoleStatement():
   ) { return jjtThis; }
 }
 
+OAlterSystemRoleStatement AlterSystemRoleStatement():
+{
+  OSecurityResourceSegment lastSecurityResource;
+  OIdentifier lastPolicy;
+}
+{
+  (
+    <ALTER> <SYSTEM> <ROLE>
+    jjtThis.name = Identifier()
+    (
+      ( <SET> <POLICY> lastPolicy = Identifier() <ON> lastSecurityResource = SecurityResourceSegment()
+
+        {
+        jjtThis.operations.add(new com.orientechnologies.orient.core.sql.parser.OAlterRoleStatement.Op(
+          com.orientechnologies.orient.core.sql.parser.OAlterRoleStatement.Op.TYPE_ADD,
+          lastSecurityResource, lastPolicy));
+        }
+      )
+      |
+      ( <REMOVE> <POLICY> <ON> lastSecurityResource = SecurityResourceSegment()  )
+        {
+          jjtThis.operations.add(new com.orientechnologies.orient.core.sql.parser.OAlterRoleStatement.Op(
+            com.orientechnologies.orient.core.sql.parser.OAlterRoleStatement.Op.TYPE_REMOVE,
+            lastSecurityResource, null));
+        }
+    )+
+  ) { return jjtThis; }
+}
 
 
 OLetStatement LetStatement():
