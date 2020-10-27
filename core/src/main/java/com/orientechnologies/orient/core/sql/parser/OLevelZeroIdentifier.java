@@ -78,7 +78,7 @@ public class OLevelZeroIdentifier extends SimpleNode {
   public boolean isFunctionAll() {
     if (functionCall != null) {
       return functionCall.getName().getStringValue().equalsIgnoreCase("all")
-              && functionCall.params.size() == 0;
+          && functionCall.params.size() == 0;
     }
     return false;
   }
