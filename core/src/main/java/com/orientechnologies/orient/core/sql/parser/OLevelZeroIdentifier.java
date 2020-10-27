@@ -75,6 +75,14 @@ public class OLevelZeroIdentifier extends SimpleNode {
     return false;
   }
 
+  public boolean isFunctionAll() {
+    if (functionCall != null) {
+      return functionCall.getName().getStringValue().equalsIgnoreCase("all")
+              && functionCall.params.size() == 0;
+    }
+    return false;
+  }
+
   public long estimateIndexedFunction(
       OFromClause target, OCommandContext context, OBinaryCompareOperator operator, Object right) {
     if (functionCall != null) {

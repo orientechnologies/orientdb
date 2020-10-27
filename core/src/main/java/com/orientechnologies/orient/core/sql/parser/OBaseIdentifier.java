@@ -74,6 +74,13 @@ public class OBaseIdentifier extends SimpleNode {
     return false;
   }
 
+  public boolean isFunctionAll() {
+    if (levelZero != null) {
+      return levelZero.isFunctionAll();
+    }
+    return false;
+  }
+
   public boolean isIndexedFunctionCall() {
     if (levelZero != null) {
       return levelZero.isIndexedFunctionCall();
