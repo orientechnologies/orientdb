@@ -29,7 +29,35 @@ public class OIsNullCondition extends OBooleanExpression {
 
   @Override
   public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+    if (expression.isFunctionAny()) {
+      return evaluateAny(currentRecord, ctx);
+    }
+
+    if (expression.isFunctionAll()) {
+      return evaluateAllFunction(currentRecord, ctx);
+    }
+
     return expression.execute(currentRecord, ctx) == null;
+  }
+
+  private boolean evaluateAny(OResult currentRecord, OCommandContext ctx) {
+    for (String s : currentRecord.getPropertyNames()) {
+      Object leftVal = currentRecord.getProperty(s);
+      if (leftVal == null) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private boolean evaluateAllFunction(OResult currentRecord, OCommandContext ctx) {
+    for (String s : currentRecord.getPropertyNames()) {
+      Object leftVal = currentRecord.getProperty(s);
+      if (!(leftVal == null)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   public OExpression getExpression() {
