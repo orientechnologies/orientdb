@@ -685,5 +685,12 @@ public class OExpression extends SimpleNode {
     }
     return false;
   }
+
+  public boolean isFunctionAll() {
+    if (mathExpression != null) {
+      return mathExpression.isFunctionAll();
+    }
+    return false;
+  }
 }
 /* JavaCC - OriginalChecksum=9c860224b121acdc89522ae97010be01 (do not edit this line) */

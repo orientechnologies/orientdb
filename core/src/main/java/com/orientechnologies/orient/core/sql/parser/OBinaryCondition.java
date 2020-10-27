@@ -41,6 +41,10 @@ public class OBinaryCondition extends OBooleanExpression {
     if (left.isFunctionAny()) {
       return evaluateAny(currentRecord, ctx);
     }
+
+    if (left.isFunctionAll()) {
+      return evaluateAllFunction(currentRecord, ctx);
+    }
     Object leftVal = left.execute(currentRecord, ctx);
     Object rightVal = right.execute(currentRecord, ctx);
     OCollate collate = left.getCollate(currentRecord, ctx);
@@ -66,6 +70,20 @@ public class OBinaryCondition extends OBooleanExpression {
       }
     }
     return false;
+  }
+
+  private boolean evaluateAllFunction(OResult currentRecord, OCommandContext ctx) {
+    for (String s : currentRecord.getPropertyNames()) {
+      Object leftVal = currentRecord.getProperty(s);
+      Object rightVal = right.execute(currentRecord, ctx);
+
+      // TODO collate
+
+      if (!operator.execute(leftVal, rightVal)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
