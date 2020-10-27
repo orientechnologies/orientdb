@@ -43,6 +43,10 @@ public class OContainsTextCondition extends OBooleanExpression {
       return evaluateAny(currentRecord, ctx);
     }
 
+    if (left.isFunctionAll()) {
+      return evaluateAllFunction(currentRecord, ctx);
+    }
+
     Object leftValue = left.execute(currentRecord, ctx);
     if (leftValue == null || !(leftValue instanceof String)) {
       return false;
@@ -72,6 +76,25 @@ public class OContainsTextCondition extends OBooleanExpression {
       }
     }
     return false;
+  }
+
+  private boolean evaluateAllFunction(OResult currentRecord, OCommandContext ctx) {
+    Object rightValue = right.execute(currentRecord, ctx);
+    if (rightValue == null || !(rightValue instanceof String)) {
+      return false;
+    }
+
+    for (String s : currentRecord.getPropertyNames()) {
+      Object leftValue = currentRecord.getProperty(s);
+      if (leftValue == null || !(leftValue instanceof String)) {
+        return false;
+      }
+
+      if (!(((String) leftValue).indexOf((String) rightValue) > -1)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
