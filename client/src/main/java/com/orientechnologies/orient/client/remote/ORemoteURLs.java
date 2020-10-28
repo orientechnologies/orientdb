@@ -306,10 +306,8 @@ public class ORemoteURLs {
       List<String> hosts, OContextConfiguration clientConfiguration) {
     if (!clientConfiguration.getValueAsBoolean(CLIENT_CONNECTION_FETCH_HOST_LIST)) {
       List<String> definedHosts = initialServerURLs;
-      for (String host : hosts) {
-        if (definedHosts.contains(host)) {
-          addHost(host, clientConfiguration);
-        }
+      for (String host : definedHosts) {
+        addHost(host, clientConfiguration);
       }
       return;
     }
