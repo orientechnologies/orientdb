@@ -1575,10 +1575,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     if (!clientConfiguration.getValueAsBoolean(CLIENT_CONNECTION_FETCH_HOST_LIST)) {
       List<String> definedHosts = parseAddressesFromUrl(url);
       synchronized (serverURLs) {
-        for (String host : hosts) {
-          if (definedHosts.contains(host)) {
-            addHost(host);
-          }
+        for (String host : definedHosts) {
+          addHost(host);
         }
       }
       return;
@@ -1595,10 +1593,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     synchronized (serverURLs) {
       serverURLs.remove(url);
       this.nextServerToConnect = 0;
-    }
-
-    for (OStorageRemoteSession session : sessions) {
-      session.removeServerSession(url + "/" + getName());
     }
   }
 
@@ -1921,10 +1915,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       // REMOVE INVALID URL
       serverURLs.remove(url);
       this.nextServerToConnect = 0;
-      for (OStorageRemoteSession activeSession : sessions) {
-        // Not thread Safe ...
-        activeSession.removeServerSession(url + "/" + getName());
-      }
 
       OLogManager.instance().debug(this, "Updated server list: %s...", serverURLs);
 
