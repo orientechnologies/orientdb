@@ -112,4 +112,12 @@ public class VersionPositionMapTestIT {
         0, versionPositionMap.getKeyHash(OVersionPositionMap.DEFAULT_VERSION_ARRAY_SIZE));
     Assert.assertEquals(0, versionPositionMap.getKeyHash(0));
   }
+
+  @Test
+  public void testGracefulOldStorageHandling() throws Exception {
+    final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
+    versionPositionMap.delete(atomicOperation);
+    versionPositionMap.open();
+    versionPositionMap.getVersion(0);
+  }
 }

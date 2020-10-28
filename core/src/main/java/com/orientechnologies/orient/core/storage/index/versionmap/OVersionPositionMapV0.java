@@ -141,6 +141,19 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
   }
 
   private void openVPM(final OAtomicOperation atomicOperation) throws IOException {
+    // In case an old storage does not have a VPM yet, it will be created.
+    // If the creation of a VPM is interrupted due to any error / exception, the file is either
+    // created corrupt, and thus subsequent access will (not hiding the issue), or the file will not
+    // be created properly and a new one will be created during the next access on openVPM.
+    if (!isFileExists(atomicOperation, getFullName())) {
+      OLogManager.instance()
+          .debug(
+              this,
+              "VPM missing with fileId:%s: fileName = %s. A new VPM will be created.",
+              fileId,
+              getFullName());
+      createVPM(atomicOperation);
+    }
     fileId = openFile(atomicOperation, getFullName());
     OLogManager.instance().debug(this, "VPM open fileId:%s: fileName = %s", fileId, getFullName());
   }
@@ -156,7 +169,7 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     OLogManager.instance()
         .debug(
             this,
-            "VPM open fileId:%s: fileName = %s, expected #pages = %d, actual #pages = %d",
+            "VPM created with fileId:%s: fileName = %s, expected #pages = %d, actual #pages = %d",
             fileId,
             getFullName(),
             numberOfPages,

@@ -1056,17 +1056,14 @@ public final class OWOWCache extends OAbstractWriteCache
     filesLock.acquireReadLock();
     try {
       final Integer intId = nameIdMap.get(fileName);
-
       if (intId != null && intId >= 0) {
         final OFile fileClassic = files.get(externalFileId(intId));
 
         if (fileClassic == null) {
           return false;
         }
-
         return fileClassic.exists();
       }
-
       return false;
     } finally {
       filesLock.releaseReadLock();
@@ -1081,11 +1078,9 @@ public final class OWOWCache extends OAbstractWriteCache
       fileId = composeFileId(id, intId);
 
       final OFile file = files.get(fileId);
-
       if (file == null) {
         return false;
       }
-
       return file.exists();
     } finally {
       filesLock.releaseReadLock();

@@ -49,7 +49,6 @@ public class OSchedulerTest {
 
   @Test
   public void scheduleWithDbClosed() throws Exception {
-
     OrientDB context = createContext();
     ODatabaseSession db = context.open("test", "admin", "admin");
     createLogEvent(db);
