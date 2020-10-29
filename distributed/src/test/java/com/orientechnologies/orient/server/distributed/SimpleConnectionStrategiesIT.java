@@ -65,10 +65,10 @@ public class SimpleConnectionStrategiesIT {
                 .build());
     Set<String> urls = new HashSet<>();
     ODatabaseSession session = remote1.open(databaseName, "admin", "admin");
-    urls.add(((ODatabaseDocumentRemote) session).getSessionMetadata().getServerUrl());
+    urls.add(((ODatabaseDocumentRemote) session).getSessionMetadata().getDebugLastHost());
 
     ODatabaseSession session1 = remote1.open(databaseName, "admin", "admin");
-    urls.add(((ODatabaseDocumentRemote) session1).getSessionMetadata().getServerUrl());
+    urls.add(((ODatabaseDocumentRemote) session1).getSessionMetadata().getDebugLastHost());
     session1.close();
 
     session.activateOnCurrentThread();
@@ -77,19 +77,45 @@ public class SimpleConnectionStrategiesIT {
     assertEquals(urls.stream().filter((x) -> x.contains("2425")).count(), 1);
 
     Set<String> poolUrls = new HashSet<>();
-    ODatabasePool pool = new ODatabasePool(remote1, databaseName, "admin", "admin");
 
-    ODatabaseSession sessionP = pool.acquire();
-    poolUrls.add(((ODatabaseDocumentRemote) sessionP).getSessionMetadata().getServerUrl());
+    try (ODatabasePool pool = new ODatabasePool(remote1, databaseName, "admin", "admin")) {
 
-    ODatabaseSession sessionP1 = pool.acquire();
-    poolUrls.add(((ODatabaseDocumentRemote) sessionP1).getSessionMetadata().getServerUrl());
-    sessionP1.close();
-    sessionP.activateOnCurrentThread();
-    sessionP.close();
+      ODatabaseSession sessionP = pool.acquire();
+      poolUrls.add(((ODatabaseDocumentRemote) sessionP).getSessionMetadata().getDebugLastHost());
 
+      ODatabaseSession sessionP1 = pool.acquire();
+      poolUrls.add(((ODatabaseDocumentRemote) sessionP1).getSessionMetadata().getDebugLastHost());
+      sessionP1.close();
+      sessionP.activateOnCurrentThread();
+      sessionP.close();
+    }
     assertEquals(poolUrls.stream().filter((x) -> x.contains("2424")).count(), 1);
     assertEquals(poolUrls.stream().filter((x) -> x.contains("2425")).count(), 1);
+    remote1.close();
+  }
+
+  @Test
+  public void testRoundRobinSession() {
+    OrientDB remote1 =
+        new OrientDB(
+            "remote:localhost;localhost:2425",
+            "root",
+            "test",
+            OrientDBConfig.builder()
+                .addConfig(CLIENT_CONNECTION_STRATEGY, "ROUND_ROBIN_REQUEST")
+                .build());
+    Set<String> urls = new HashSet<>();
+    ODatabaseSession session = remote1.open(databaseName, "admin", "admin");
+    session.query("select count(*) from ORole").close();
+    urls.add(((ODatabaseDocumentRemote) session).getSessionMetadata().getDebugLastHost());
+
+    session.query("select count(*) from ORole").close();
+    urls.add(((ODatabaseDocumentRemote) session).getSessionMetadata().getDebugLastHost());
+
+    session.close();
+    assertEquals(urls.stream().filter((x) -> x.contains("2424")).count(), 1);
+    assertEquals(urls.stream().filter((x) -> x.contains("2425")).count(), 1);
+    remote1.close();
   }
 
   @Test

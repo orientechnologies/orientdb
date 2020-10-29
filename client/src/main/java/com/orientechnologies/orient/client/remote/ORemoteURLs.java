@@ -220,7 +220,10 @@ public class ORemoteURLs {
       this.nextServerToConnect = 0;
 
     final String serverURL = serverURLs.get(this.nextServerToConnect) + "/" + name;
-    if (session != null) session.serverURLIndex = this.nextServerToConnect;
+    if (session != null) {
+      session.serverURLIndex = this.nextServerToConnect;
+      session.debugLastHost = serverURL;
+    }
 
     return serverURL;
   }
@@ -250,7 +253,10 @@ public class ORemoteURLs {
 
     final String serverURL = serverURLs.get(serverURLIndex) + "/" + name;
 
-    if (session != null) session.serverURLIndex = serverURLIndex;
+    if (session != null) {
+      session.serverURLIndex = serverURLIndex;
+      session.debugLastHost = serverURL;
+    }
 
     return serverURL;
   }
