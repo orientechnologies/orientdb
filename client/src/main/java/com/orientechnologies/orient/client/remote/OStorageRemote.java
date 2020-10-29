@@ -2138,7 +2138,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
         this.nextServerToConnect = 0;
 
       final String serverURL = serverURLs.get(this.nextServerToConnect) + "/" + getName();
-      if (session != null) session.serverURLIndex = this.nextServerToConnect;
+      if (session != null) {
+        session.serverURLIndex = this.nextServerToConnect;
+        session.debugLastHost = serverURL;
+      }
 
       return serverURL;
     }
@@ -2171,7 +2174,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
       final String serverURL = serverURLs.get(serverURLIndex) + "/" + getName();
 
-      if (session != null) session.serverURLIndex = serverURLIndex;
+      if (session != null) {
+        session.serverURLIndex = serverURLIndex;
+        session.debugLastHost = serverURL;
+      }
 
       return serverURL;
     }
