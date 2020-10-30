@@ -26,6 +26,14 @@ mkdir -p orientdb/outputs/orientdb
 ```
 and run workloads for single:
 ```
+./bin/ycsb load orientdb -s -P workloads/workloada -p recordcount=1000000
+./bin/ycsb run orientdb -s -P workloads/workloada -p operationcount=500000 -p batchsize=1000 > orientdb/outputs/orientdb/outputRun_workloada.txt
+```
+```
+./bin/ycsb load orientdb -s -P workloads/workloadb -p recordcount=1000000
+./bin/ycsb run orientdb -s -P workloads/workloadb -p operationcount=500000 -p batchsize=1000 > orientdb/outputs/orientdb/outputRun_workloadb.txt
+```
+```
 ./bin/ycsb load orientdb -s -P workloads/workloadc -p recordcount=1000000
 ./bin/ycsb run orientdb -s -P workloads/workloadc -p operationcount=500000 -p batchsize=1000 > orientdb/outputs/orientdb/outputRun_workloadc.txt
 ```
@@ -37,7 +45,19 @@ and run workloads for single:
 ./bin/ycsb load orientdb -s -P workloads/workloade -p recordcount=1000000
 ./bin/ycsb run orientdb -s -P workloads/workloade -p operationcount=500000 -p batchsize=1000 > orientdb/outputs/orientdb/outputRun_workloade.txt
 ```
+```
+./bin/ycsb load orientdb -s -P workloads/workloadf -p recordcount=1000000
+./bin/ycsb run orientdb -s -P workloads/workloadf -p operationcount=500000 -p batchsize=1000 > orientdb/outputs/orientdb/outputRun_workloadf.txt
+```
 OR distributed
+```
+./bin/ycsb load orientdb -s -P workloads/workloada -p recordcount=1000000
+./bin/ycsb run orientdb -s -P workloads/workloada -p operationcount=500000 -p batchsize=1000 > orientdb/outputs/orientdb-dist/outputRun_workloada.txt
+```
+```
+./bin/ycsb load orientdb -s -P workloads/workloadb -p recordcount=1000000
+./bin/ycsb run orientdb -s -P workloads/workloadb -p operationcount=500000 -p batchsize=1000 > orientdb/outputs/orientdb-dist/outputRun_workloadb.txt
+```
 ```
 ./bin/ycsb load orientdb -s -P workloads/workloadc -p recordcount=1000000
 ./bin/ycsb run orientdb -s -P workloads/workloadc -p operationcount=500000 -p batchsize=1000 > orientdb/outputs/orientdb-dist/outputRun_workloadc.txt
@@ -49,6 +69,10 @@ OR distributed
 ```
 ./bin/ycsb load orientdb -s -P workloads/workloade -p recordcount=1000000
 ./bin/ycsb run orientdb -s -P workloads/workloade -p operationcount=500000 -p batchsize=1000 > orientdb/outputs/orientdb-dist/outputRun_workloade.txt
+```
+```
+./bin/ycsb load orientdb -s -P workloads/workloadf -p recordcount=1000000
+./bin/ycsb run orientdb -s -P workloads/workloadf -p operationcount=500000 -p batchsize=1000 > orientdb/outputs/orientdb-dist/outputRun_workloadf.txt
 ```
 > the database might need cleaning between the runs.
 
