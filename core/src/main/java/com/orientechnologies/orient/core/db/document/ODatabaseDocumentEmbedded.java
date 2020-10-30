@@ -114,15 +114,8 @@ import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionData;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import java.text.SimpleDateFormat;
-import java.util.Collections;
-import java.util.Date;
-import java.util.IdentityHashMap;
-import java.util.Iterator;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TimeZone;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -132,6 +125,16 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
 
   private OrientDBConfig config;
   private OStorage storage;
+
+  boolean interruptingCommand = false;
+  InterruptTimerTask commandInterruptTimer = new InterruptTimerTask();
+
+  class InterruptTimerTask extends TimerTask {
+    @Override
+    public void run() {
+      ODatabaseDocumentEmbedded.this.interruptingCommand = true;
+    }
+  }
 
   public ODatabaseDocumentEmbedded(final OStorage storage) {
     activateOnCurrentThread();
@@ -1593,5 +1596,10 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
           this.commit();
           return null;
         });
+  }
+
+  @Override
+  public void interruptExecution(Thread thread) {
+    ((OAbstractPaginatedStorage) storage).interruptExecution(thread);
   }
 }
