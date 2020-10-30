@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
@@ -27,10 +28,9 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.util.Base64;
-import java.util.Random;
 import java.util.UUID;
-import javax.crypto.Mac;
 
 /**
  * Created by emrul on 27/10/2014.
@@ -41,54 +41,49 @@ public class OTokenHandlerImpl implements OTokenHandler {
   protected static final int JWT_DELIMITER = '.';
   private OBinaryTokenSerializer binarySerializer;
   private long sessionInMills = 1000 * 60 * 60; // 1 HOUR
-  private Random keyGenerator = new Random();
   private final OTokenSign sign;
 
   public OTokenHandlerImpl(OContextConfiguration config) {
-    byte[] key = null;
-    String algorithm;
-    Long sessionTimeout;
+    this(
+        readKeyFromConfig(config),
+        config.getValueAsLong(OGlobalConfiguration.NETWORK_TOKEN_EXPIRE_TIMEOUT),
+        config.getValueAsString(OGlobalConfiguration.NETWORK_TOKEN_ENCRYPTION_ALGORITHM));
+  }
 
+  public static byte[] readKeyFromConfig(OContextConfiguration config) {
+    byte[] key = null;
     String configKey = config.getValueAsString(OGlobalConfiguration.NETWORK_TOKEN_SECRETKEY);
     if (configKey == null || configKey.length() == 0)
       configKey = config.getValueAsString(OGlobalConfiguration.OAUTH2_SECRETKEY);
 
     if (configKey != null && configKey.length() > 0) key = Base64.getUrlDecoder().decode(configKey);
 
-    if (key == null) key = OSecurityManager.digestSHA256(String.valueOf(keyGenerator.nextLong()));
-
-    DefaultKeyProvider keyProvider = new DefaultKeyProvider(key);
-
-    sessionTimeout = config.getValueAsLong(OGlobalConfiguration.NETWORK_TOKEN_EXPIRE_TIMEOUT);
-    if (sessionTimeout != null) sessionInMills = sessionTimeout * 1000 * 60;
-
-    algorithm = config.getValueAsString(OGlobalConfiguration.NETWORK_TOKEN_ENCRYPTION_ALGORITHM);
-    this.sign = new OTokenSign(keyProvider, algorithm);
-    try {
-      Mac.getInstance(algorithm);
-    } catch (NoSuchAlgorithmException nsa) {
-      throw new IllegalArgumentException(
-          "Can't find encryption algorithm '" + algorithm + "'", nsa);
+    if (key == null) {
+      try {
+        key =
+            OSecurityManager.digestSHA256(
+                String.valueOf(SecureRandom.getInstanceStrong().nextLong()));
+      } catch (NoSuchAlgorithmException e) {
+        throw OException.wrapException(
+            new ODatabaseException("Error generating token sign key"), e);
+      }
     }
-
-    this.binarySerializer =
-        new OBinaryTokenSerializer(
-            new String[] {"plocal", "memory"},
-            keyProvider.getKeys(),
-            new String[] {this.sign.getAlgorithm()},
-            new String[] {"OrientDB", "node"});
+    return key;
   }
 
   protected OTokenHandlerImpl(byte[] key, long sessionLength, String algorithm) {
-    DefaultKeyProvider keyProvider = new DefaultKeyProvider(key);
-    this.sign = new OTokenSign(keyProvider, algorithm);
+    this(new OTokenSignImpl(key, algorithm), sessionLength);
+  }
+
+  protected OTokenHandlerImpl(OTokenSign sign, long sessionLength) {
+    this.sign = sign;
     sessionInMills = sessionLength * 1000 * 60;
     this.binarySerializer =
         new OBinaryTokenSerializer(
             new String[] {"plocal", "memory"},
-            keyProvider.getKeys(),
+            this.sign.getKeys(),
             new String[] {this.sign.getAlgorithm()},
-            new String[] {"OrientDB"});
+            new String[] {"OrientDB", "node"});
   }
 
   protected OTokenHandlerImpl() {
