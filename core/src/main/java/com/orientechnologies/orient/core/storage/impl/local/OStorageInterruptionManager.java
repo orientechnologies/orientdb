@@ -22,7 +22,7 @@ public class OStorageInterruptionManager {
     synchronized (this) {
       if (Thread.currentThread().isInterrupted() || (interrupted && depth == 0)) {
         final Thread thread = Thread.currentThread();
-        thread.interrupt();
+        //        thread.interrupt();
         OLogManager.instance().warnNoDb(this, "Execution  of thread '%s' is interrupted", thread);
         throw new OInterruptedException("Command interrupted");
       }
@@ -35,7 +35,7 @@ public class OStorageInterruptionManager {
       this.depth--;
       if (interrupted && depth == 0) {
         final Thread thread = Thread.currentThread();
-        thread.interrupt();
+        //        thread.interrupt();
         OLogManager.instance().warnNoDb(this, "Execution  of thread '%s' is interrupted", thread);
         throw new OInterruptedException("Command interrupted");
       }
