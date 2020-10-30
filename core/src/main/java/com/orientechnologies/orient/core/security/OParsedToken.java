@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.server;
+package com.orientechnologies.orient.core.security;
 
 import com.orientechnologies.orient.core.metadata.security.OToken;
 

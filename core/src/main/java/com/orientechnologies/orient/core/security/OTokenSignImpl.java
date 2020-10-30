@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.server.token;
+package com.orientechnologies.orient.core.security;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OSystemException;
@@ -6,7 +6,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.jwt.OKeyProvider;
 import com.orientechnologies.orient.core.metadata.security.jwt.OTokenHeader;
-import com.orientechnologies.orient.server.OParsedToken;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
