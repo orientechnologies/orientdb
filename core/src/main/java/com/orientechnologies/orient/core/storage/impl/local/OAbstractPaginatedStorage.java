@@ -228,6 +228,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   protected static final OScheduledThreadPoolExecutorWithLogging fuzzyCheckpointExecutor;
   // public static final int STORAGE_CONFIGURATION_INDEX_ID = -1;
 
+  private OStorageInterruptionManager interruptionManager = new OStorageInterruptionManager();
+
   static {
     fuzzyCheckpointExecutor =
         new OScheduledThreadPoolExecutorWithLogging(1, new FuzzyCheckpointThreadFactory());
@@ -7439,5 +7441,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final OBaseIndexEngine indexEngine = indexEngineNameMap.get(indexName);
       indexEngine.updateUniqueIndexVersion(key);
     }
+  }
+
+  public void interruptExecution(Thread thread) {
+    interruptionManager.interrupt(thread);
   }
 }
