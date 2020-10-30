@@ -81,9 +81,8 @@ public class OBackupService implements OEnterpriseService {
     return tasks.get(uuid);
   }
 
-  public void changeBackup(String uuid, ODocument doc) {
-
-    OBackupTask oBackupTask = tasks.get(uuid);
+  public void changeBackup(final String uuid, final ODocument doc) {
+    final OBackupTask oBackupTask = tasks.get(uuid);
     config.changeBackup(uuid, doc);
     oBackupTask.changeConfig(config, doc);
   }
@@ -98,17 +97,17 @@ public class OBackupService implements OEnterpriseService {
     task.stop();
   }
 
-  public ODocument logs(String uuid, int page, int pageSize, Map<String, String> params) {
-    ODocument history = new ODocument();
+  public ODocument logs(
+      final String uuid, final int page, final int pageSize, final Map<String, String> params) {
+    final ODocument history = new ODocument();
     try {
-
-      List<OBackupLog> byUUID = logger.findByUUID(uuid, page, pageSize, params);
-      List<ODocument> docs = new ArrayList<ODocument>();
-      for (OBackupLog oBackupLog : byUUID) {
+      final List<OBackupLog> byUUID = logger.findByUUID(uuid, page, pageSize, params);
+      final List<ODocument> docs = new ArrayList<ODocument>();
+      for (final OBackupLog oBackupLog : byUUID) {
         docs.add(oBackupLog.toDoc());
       }
       history.field("logs", docs);
-    } catch (IOException e) {
+    } catch (final IOException e) {
       OLogManager.instance().error(this, "Error " + e.getMessage(), e);
     }
     return history;

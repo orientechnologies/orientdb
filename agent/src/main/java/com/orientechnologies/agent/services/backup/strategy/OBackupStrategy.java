@@ -73,24 +73,22 @@ public abstract class OBackupStrategy {
   }
 
   // Backup
-  public void doBackup(OBackupListener listener) throws IOException {
-
-    OBackupStartedLog start = startBackup();
+  public void doBackup(final OBackupListener listener) throws IOException {
+    final OBackupStartedLog start = startBackup();
     logger.log(start);
     listener.onEvent(cfg, start);
 
-    OBackupFinishedLog end;
     try {
-      end = doBackup(start);
-      OBackupFinishedLog finishedLog = (OBackupFinishedLog) logger.log(end);
+      final OBackupFinishedLog end = doBackup(start);
+      final OBackupFinishedLog finishedLog = (OBackupFinishedLog) logger.log(end);
       listener.onEvent(cfg, finishedLog);
       doUpload(listener, finishedLog);
-    } catch (Exception e) {
-      OBackupErrorLog error =
+    } catch (final Exception e) {
+      final OBackupErrorLog error =
           new OBackupErrorLog(
               start.getUnitId(), start.getTxId(), getUUID(), getDbName(), getMode().toString());
-      StringWriter sw = new StringWriter();
-      PrintWriter pw = new PrintWriter(sw);
+      final StringWriter sw = new StringWriter();
+      // final PrintWriter pw = new PrintWriter(sw);
       error.setMessage(e.getMessage());
       error.setStackTrace(sw.toString());
       logger.log(error);

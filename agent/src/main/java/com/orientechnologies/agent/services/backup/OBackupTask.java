@@ -30,7 +30,6 @@ import java.util.TimerTask;
 
 /** Created by Enrico Risa on 25/03/16. */
 public class OBackupTask implements OBackupListener {
-
   private OBackupStrategy strategy;
   private TimerTask task;
   private OBackupListener listener;
@@ -41,10 +40,8 @@ public class OBackupTask implements OBackupListener {
   }
 
   private void schedule() {
-
     if (strategy.isEnabled()) {
-      Date nextExecution = strategy.scheduleNextExecution(this);
-
+      final Date nextExecution = strategy.scheduleNextExecution(this);
       task =
           Orient.instance()
               .scheduleTask(
@@ -72,7 +69,6 @@ public class OBackupTask implements OBackupListener {
                   + ". Next execution will be "
                   + nextExecution);
     }
-
     strategy.retainLogs();
   }
 
@@ -129,7 +125,7 @@ public class OBackupTask implements OBackupListener {
     }
   }
 
-  public void registerListener(OBackupListener listener) {
+  public void registerListener(final OBackupListener listener) {
     this.listener = listener;
   }
 
@@ -137,7 +133,7 @@ public class OBackupTask implements OBackupListener {
     strategy.doRestore(this, doc);
   }
 
-  public void deleteBackup(Long unitId, Long timestamp) {
+  public void deleteBackup(final long unitId, final long timestamp) {
     strategy.doDeleteBackup(this, unitId, timestamp);
   }
 }
