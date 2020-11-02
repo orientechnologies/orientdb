@@ -121,7 +121,7 @@ public class OClusterHealthChecker implements Runnable {
                     nodes,
                     new ORequestDatabaseConfigurationTask(databaseName),
                     manager.getNextMessageIdCounter(),
-                    ODistributedRequest.EXECUTION_MODE.RESPONSE,
+                    ODistributedRequest.EXECUTION_MODE.SYNCHRONOUS,
                     null);
 
             final Object payload = response != null ? response.getPayload() : null;
@@ -324,7 +324,7 @@ public class OClusterHealthChecker implements Runnable {
                 servers,
                 new OGossipTask(manager.getLockManagerServer()),
                 manager.getNextMessageIdCounter(),
-                ODistributedRequest.EXECUTION_MODE.RESPONSE,
+                ODistributedRequest.EXECUTION_MODE.SYNCHRONOUS,
                 null);
 
         final Object payload = response != null ? response.getPayload() : null;
@@ -410,7 +410,7 @@ public class OClusterHealthChecker implements Runnable {
                   servers,
                   task,
                   manager.getNextMessageIdCounter(),
-                  ODistributedRequest.EXECUTION_MODE.RESPONSE,
+                  ODistributedRequest.EXECUTION_MODE.SYNCHRONOUS,
                   null);
         }
       } catch (ODistributedException e) {

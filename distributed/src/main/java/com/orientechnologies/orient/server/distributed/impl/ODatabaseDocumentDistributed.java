@@ -276,7 +276,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         Collections.singletonList(nodeName),
         task,
         distributedManager.getNextMessageIdCounter(),
-        ODistributedRequest.EXECUTION_MODE.RESPONSE,
+        ODistributedRequest.EXECUTION_MODE.SYNCHRONOUS,
         null);
   }
 
@@ -597,7 +597,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   /**
    * @param transactionId
-   * @return null returned means that commit failed
+   * @return false returned means that commit failed
    */
   public boolean commit2pc(
       ODistributedRequestId transactionId, boolean isCoordinator, ODistributedRequestId requestId) {
@@ -993,7 +993,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
               nodes,
               task,
               dManager.getNextMessageIdCounter(),
-              ODistributedRequest.EXECUTION_MODE.RESPONSE,
+              ODistributedRequest.EXECUTION_MODE.SYNCHRONOUS,
               null);
 
     } catch (Exception e) {

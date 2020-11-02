@@ -924,7 +924,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
                   servers,
                   new OUpdateDatabaseConfigurationTask(databaseName, document),
                   getNextMessageIdCounter(),
-                  ODistributedRequest.EXECUTION_MODE.NO_RESPONSE,
+                  ODistributedRequest.EXECUTION_MODE.ASYNCHRONOUS,
                   null);
         }
 
@@ -1514,7 +1514,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           servers,
           new ODropDatabaseTask(),
           getNextMessageIdCounter(),
-          ODistributedRequest.EXECUTION_MODE.RESPONSE,
+          ODistributedRequest.EXECUTION_MODE.SYNCHRONOUS,
           null);
     }
   }

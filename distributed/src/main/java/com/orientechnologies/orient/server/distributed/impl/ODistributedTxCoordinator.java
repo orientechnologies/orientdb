@@ -222,7 +222,7 @@ public class ODistributedTxCoordinator {
     }
     final OTransactionPhase1Task txTask = createTxTask(txId, iTx, nodes);
 
-    final Set sentNodes = new HashSet(nodes);
+    final Set<String> sentNodes = new HashSet<>(nodes);
 
     iTx.setStatus(OTransaction.TXSTATUS.COMMITTING);
     // SYNCHRONOUS CALL: REPLICATE IT
@@ -233,7 +233,7 @@ public class ODistributedTxCoordinator {
             nodes,
             txTask,
             requestId.getMessageId(),
-            EXECUTION_MODE.RESPONSE,
+            EXECUTION_MODE.SYNCHRONOUS,
             localResult,
             ((iRequest,
                 iNodes,
@@ -259,7 +259,6 @@ public class ODistributedTxCoordinator {
         requestId, txId, responseManager, involvedClusters, sentNodes, database, iTx, txTask);
 
     // OK, DISTRIBUTED COMMIT SUCCEED
-    return;
   }
 
   private void handleResponse(
@@ -271,11 +270,6 @@ public class ODistributedTxCoordinator {
       ODatabaseDocumentDistributed database,
       OTransactionInternal iTx,
       OTransactionPhase1Task txTask) {
-    int[] involvedClustersIds = new int[involvedClusters.size()];
-    int i = 0;
-    for (String involvedCluster : involvedClusters) {
-      involvedClustersIds[i++] = database.getClusterIdByName(involvedCluster);
-    }
 
     if (responseManager.isQuorumReached()) {
       List<OTransactionResultPayload> results =
@@ -479,7 +473,7 @@ public class ODistributedTxCoordinator {
         nodes,
         task,
         dManager.getNextMessageIdCounter(),
-        EXECUTION_MODE.RESPONSE,
+        EXECUTION_MODE.SYNCHRONOUS,
         "OK");
   }
 

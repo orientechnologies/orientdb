@@ -824,7 +824,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         getMessageService().getDatabase(databaseName).incSentRequest();
       }
 
-      if (iExecutionMode == ODistributedRequest.EXECUTION_MODE.RESPONSE)
+      if (iExecutionMode == ODistributedRequest.EXECUTION_MODE.SYNCHRONOUS)
         return waitForResponse(iRequest, currentResponseMgr);
 
       return null;
@@ -1527,7 +1527,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                 targetNodes,
                 deployTask,
                 getNextMessageIdCounter(),
-                ODistributedRequest.EXECUTION_MODE.RESPONSE,
+                ODistributedRequest.EXECUTION_MODE.SYNCHRONOUS,
                 null);
 
         if (response == null)
@@ -1744,7 +1744,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                       singleNode,
                       deployTask,
                       getNextMessageIdCounter(),
-                      ODistributedRequest.EXECUTION_MODE.RESPONSE,
+                      ODistributedRequest.EXECUTION_MODE.SYNCHRONOUS,
                       null)
                   .getPayload();
 
@@ -2532,7 +2532,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                             targetNodes,
                             deployTask,
                             getNextMessageIdCounter(),
-                            ODistributedRequest.EXECUTION_MODE.RESPONSE,
+                            ODistributedRequest.EXECUTION_MODE.SYNCHRONOUS,
                             null);
                     if (response == null)
                       throw new ODistributedDatabaseDeltaSyncException(
