@@ -49,7 +49,7 @@ public class OSelectExecutionPlanner {
     this.statement = oSelectStatement;
   }
 
-  private void init() {
+  private void init(OCommandContext ctx) {
     // copying the content, so that it can be manipulated and optimized
     info = new QueryPlanningInfo();
     info.projection =
@@ -73,9 +73,14 @@ public class OSelectExecutionPlanner {
     info.limit = this.statement.getLimit();
     info.lockRecord = this.statement.getLockRecord();
     info.timeout = this.statement.getTimeout() == null ? null : this.statement.getTimeout().copy();
-    if (info.timeout == null && OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsLong() > 0) {
+    if (info.timeout == null
+        && ctx.getDatabase().getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT)
+            > 0) {
       info.timeout = new OTimeout(-1);
-      info.timeout.setVal(OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsLong());
+      info.timeout.setVal(
+          ctx.getDatabase()
+              .getConfiguration()
+              .getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT));
     }
   }
 
@@ -91,7 +96,7 @@ public class OSelectExecutionPlanner {
 
     long planningStart = System.currentTimeMillis();
 
-    init();
+    init(ctx);
     OSelectExecutionPlan result = new OSelectExecutionPlan(ctx);
 
     if (info.expand && info.distinct) {

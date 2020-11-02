@@ -132,11 +132,11 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
 
   InterruptTimerTask commandInterruptTimer;
 
-  class InterruptTimerTask extends TimerTask {
+  protected class InterruptTimerTask extends TimerTask {
 
-    Thread executionThread;
+    private Thread executionThread;
 
-    InterruptTimerTask(Thread executionThread) {
+    protected InterruptTimerTask(Thread executionThread) {
       this.executionThread = executionThread;
     }
 
@@ -663,12 +663,13 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
       checkSecurity(ORule.ResourceGeneric.COMMAND, ORole.PERMISSION_EXECUTE, language);
     }
 
-    if (OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsInteger() > 0) {
+    if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
       commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
       getSharedContext()
           .getOrientDB()
           .scheduleOnce(
-              commandInterruptTimer, OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsInteger());
+              commandInterruptTimer,
+              getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT));
     }
     try {
       OScriptExecutor executor =
@@ -706,12 +707,13 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
       checkSecurity(ORule.ResourceGeneric.COMMAND, ORole.PERMISSION_EXECUTE, language);
     }
 
-    if (OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsInteger() > 0) {
+    if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
       commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
       getSharedContext()
           .getOrientDB()
           .scheduleOnce(
-              commandInterruptTimer, OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsInteger());
+              commandInterruptTimer,
+              getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT));
     }
     try {
       OScriptExecutor executor =
