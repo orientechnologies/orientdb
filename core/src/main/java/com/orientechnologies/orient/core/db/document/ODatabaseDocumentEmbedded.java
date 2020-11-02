@@ -126,13 +126,19 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
   private OrientDBConfig config;
   private OStorage storage;
 
-  boolean interruptingCommand = false;
-  InterruptTimerTask commandInterruptTimer = new InterruptTimerTask();
+  InterruptTimerTask commandInterruptTimer;
 
   class InterruptTimerTask extends TimerTask {
+
+    Thread executionThread;
+
+    InterruptTimerTask(Thread executionThread) {
+      this.executionThread = executionThread;
+    }
+
     @Override
     public void run() {
-      ODatabaseDocumentEmbedded.this.interruptingCommand = true;
+      interruptExecution(executionThread);
     }
   }
 
@@ -634,26 +640,39 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
       checkSecurity(ORule.ResourceGeneric.COMMAND, ORole.PERMISSION_EXECUTE, language);
     }
 
-    OScriptExecutor executor =
-        getSharedContext()
-            .getOrientDB()
-            .getScriptManager()
-            .getCommandManager()
-            .getScriptExecutor(language);
-
-    ((OAbstractPaginatedStorage) this.storage.getUnderlying())
-        .pauseConfigurationUpdateNotifications();
-    OResultSet original;
-    try {
-      original = executor.execute(this, script, args);
-    } finally {
-      ((OAbstractPaginatedStorage) this.storage.getUnderlying())
-          .fireConfigurationUpdateNotifications();
+    if (OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsInteger() > 0) {
+      commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
+      getSharedContext()
+          .getOrientDB()
+          .scheduleOnce(
+              commandInterruptTimer, OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsInteger());
     }
-    OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
-    this.queryStarted(result.getQueryId(), result);
-    result.addLifecycleListener(this);
-    return result;
+    try {
+      OScriptExecutor executor =
+          getSharedContext()
+              .getOrientDB()
+              .getScriptManager()
+              .getCommandManager()
+              .getScriptExecutor(language);
+
+      ((OAbstractPaginatedStorage) this.storage.getUnderlying())
+          .pauseConfigurationUpdateNotifications();
+      OResultSet original;
+      try {
+        original = executor.execute(this, script, args);
+      } finally {
+        ((OAbstractPaginatedStorage) this.storage.getUnderlying())
+            .fireConfigurationUpdateNotifications();
+      }
+      OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
+      this.queryStarted(result.getQueryId(), result);
+      result.addLifecycleListener(this);
+      return result;
+    } finally {
+      if (commandInterruptTimer != null) {
+        commandInterruptTimer.cancel();
+      }
+    }
   }
 
   @Override
@@ -664,27 +683,40 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
       checkSecurity(ORule.ResourceGeneric.COMMAND, ORole.PERMISSION_EXECUTE, language);
     }
 
-    OScriptExecutor executor =
-        sharedContext
-            .getOrientDB()
-            .getScriptManager()
-            .getCommandManager()
-            .getScriptExecutor(language);
-    OResultSet original;
-
-    ((OAbstractPaginatedStorage) this.storage.getUnderlying())
-        .pauseConfigurationUpdateNotifications();
-    try {
-      original = executor.execute(this, script, args);
-    } finally {
-      ((OAbstractPaginatedStorage) this.storage.getUnderlying())
-          .fireConfigurationUpdateNotifications();
+    if (OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsInteger() > 0) {
+      commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
+      getSharedContext()
+          .getOrientDB()
+          .scheduleOnce(
+              commandInterruptTimer, OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsInteger());
     }
+    try {
+      OScriptExecutor executor =
+          sharedContext
+              .getOrientDB()
+              .getScriptManager()
+              .getCommandManager()
+              .getScriptExecutor(language);
+      OResultSet original;
 
-    OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
-    this.queryStarted(result.getQueryId(), result);
-    result.addLifecycleListener(this);
-    return result;
+      ((OAbstractPaginatedStorage) this.storage.getUnderlying())
+          .pauseConfigurationUpdateNotifications();
+      try {
+        original = executor.execute(this, script, args);
+      } finally {
+        ((OAbstractPaginatedStorage) this.storage.getUnderlying())
+            .fireConfigurationUpdateNotifications();
+      }
+
+      OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
+      this.queryStarted(result.getQueryId(), result);
+      result.addLifecycleListener(this);
+      return result;
+    } finally {
+      if (commandInterruptTimer != null) {
+        commandInterruptTimer.cancel();
+      }
+    }
   }
 
   public OLocalResultSetLifecycleDecorator query(OExecutionPlan plan, Map<Object, Object> params) {
