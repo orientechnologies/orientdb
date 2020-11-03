@@ -160,7 +160,7 @@ public class OCommandExecutorSQLHASyncCluster extends OCommandExecutorSQLAbstrac
             nodesWhereClusterIsCfg,
             task,
             dManager.getNextMessageIdCounter(),
-            ODistributedRequest.EXECUTION_MODE.SYNCHRONOUS,
+            ODistributedRequest.EXECUTION_MODE.RESPONSE,
             null);
 
     final Map<String, Object> results = (Map<String, Object>) response.getPayload();
@@ -214,7 +214,7 @@ public class OCommandExecutorSQLHASyncCluster extends OCommandExecutorSQLAbstrac
                     new OCopyDatabaseChunkTask(
                         chunk.filePath, chunkNum, chunk.offset + chunk.buffer.length, false),
                     dManager.getNextMessageIdCounter(),
-                    ODistributedRequest.EXECUTION_MODE.SYNCHRONOUS,
+                    ODistributedRequest.EXECUTION_MODE.RESPONSE,
                     null);
 
             if (result instanceof Boolean) {

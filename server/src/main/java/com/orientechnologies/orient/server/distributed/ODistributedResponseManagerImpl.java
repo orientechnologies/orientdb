@@ -900,7 +900,7 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
                   servers,
                   undoTask,
                   dManager.getNextMessageIdCounter(),
-                  ODistributedRequest.EXECUTION_MODE.SYNCHRONOUS,
+                  ODistributedRequest.EXECUTION_MODE.RESPONSE,
                   null);
 
           ODistributedServerLog.debug(

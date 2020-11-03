@@ -80,7 +80,7 @@ public class OSyncReceiver implements Runnable {
                   new OCopyDatabaseChunkTask(
                       chunk.filePath, chunkNum, chunk.offset + chunk.buffer.length, false),
                   distributed.getNextMessageIdCounter(),
-                  ODistributedRequest.EXECUTION_MODE.SYNCHRONOUS,
+                  ODistributedRequest.EXECUTION_MODE.RESPONSE,
                   null);
 
           if (response == null) {
