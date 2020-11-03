@@ -44,6 +44,7 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
+import com.orientechnologies.orient.core.metadata.security.auth.OTokenAuthInfo;
 import com.orientechnologies.orient.core.security.OSecuritySystem;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.config.OServerConfigurationManager;
@@ -830,9 +831,7 @@ public class OServer {
   }
 
   public ODatabaseDocumentInternal openDatabase(final String iDbUrl, final OToken iToken) {
-    ODatabaseDocumentInternal database = databases.openNoAuthenticate(iDbUrl, null);
-    database.setUser(iToken.getUser(database));
-    return database;
+    return databases.open(new OTokenAuthInfo(iToken), OrientDBConfig.defaultConfig());
   }
 
   public ODatabaseDocumentInternal openDatabase(

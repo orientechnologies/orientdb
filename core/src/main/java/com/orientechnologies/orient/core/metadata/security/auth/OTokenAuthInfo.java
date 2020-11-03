@@ -7,6 +7,10 @@ public class OTokenAuthInfo implements OAuthenticationInfo {
 
   private OToken token;
 
+  public OTokenAuthInfo(OToken iToken) {
+    this.token = iToken;
+  }
+
   @Override
   public Optional<String> getDatabase() {
     return Optional.ofNullable(token.getDatabase());

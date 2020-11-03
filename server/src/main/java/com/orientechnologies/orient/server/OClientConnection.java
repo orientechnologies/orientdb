@@ -242,7 +242,9 @@ public class OClientConnection {
       if (db != null && type != null) {
         if (data.serverUser) {
           setDatabase(server.getDatabases().openNoAuthenticate(db, token.getUserName()));
-        } else setDatabase(server.openDatabase(db, token));
+        } else {
+          setDatabase(server.openDatabase(db, token));
+        }
       }
     }
   }

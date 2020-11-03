@@ -529,7 +529,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
       synchronized (this) {
         checkOpen();
         config = solveConfig(config);
-        if (authenticationInfo.getDatabase().isPresent()) {
+        if (!authenticationInfo.getDatabase().isPresent()) {
           throw new OSecurityException("Authentication info do not contain the database");
         }
         String database = authenticationInfo.getDatabase().get();

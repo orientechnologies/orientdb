@@ -31,6 +31,7 @@ public class OClientConnectionManagerTest {
   public void before() throws NoSuchAlgorithmException, InvalidKeyException, IOException {
     MockitoAnnotations.initMocks(this);
     Mockito.when(handler.parseBinaryToken(Mockito.any(byte[].class))).thenReturn(token);
+    Mockito.when(handler.validateBinaryToken(Mockito.any(OToken.class))).thenReturn(true);
     Mockito.when(protocol.getServer()).thenReturn(server);
   }
 

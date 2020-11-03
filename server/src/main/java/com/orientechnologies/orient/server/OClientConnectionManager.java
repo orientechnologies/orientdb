@@ -128,9 +128,7 @@ public class OClientConnectionManager {
             }
             iterator.remove();
           } else if (Boolean.TRUE.equals(entry.getValue().getTokenBased())) {
-            if (entry.getValue().getToken() != null
-                && !entry.getValue().getToken().isNowValid()
-                && !entry.getValue().getToken().getIsValid()) {
+            if (entry.getValue().getToken() != null && !entry.getValue().getToken().isNowValid()) {
               // Close the current session but not the network because can be used by another
               // session.
               removeConnectionFromSession(entry.getValue());
@@ -181,6 +179,9 @@ public class OClientConnectionManager {
       token = handler.parseBinaryToken(tokenBytes);
     } catch (Exception e) {
       throw OException.wrapException(new OTokenSecurityException("Error on token parsing"), e);
+    }
+    if (!handler.validateBinaryToken(token)) {
+      throw new OTokenSecurityException("The token provided is expired");
     }
     OClientSessions session;
     synchronized (sessions) {
