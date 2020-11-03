@@ -557,16 +557,32 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     checkOpenness();
     checkIfActive();
 
-    OStatement statement = OSQLEngine.parse(query, this);
-    if (!statement.isIdempotent()) {
-      throw new OCommandExecutionException(
-          "Cannot execute query on non idempotent statement: " + query);
+    if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
+      commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
+      getSharedContext()
+          .getOrientDB()
+          .scheduleOnce(
+              commandInterruptTimer,
+              getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT));
     }
-    OResultSet original = statement.execute(this, args, true);
-    OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
-    this.queryStarted(result.getQueryId(), result);
-    result.addLifecycleListener(this);
-    return result;
+    try {
+
+      OStatement statement = OSQLEngine.parse(query, this);
+      if (!statement.isIdempotent()) {
+        throw new OCommandExecutionException(
+            "Cannot execute query on non idempotent statement: " + query);
+      }
+      OResultSet original = statement.execute(this, args, true);
+      OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
+      this.queryStarted(result.getQueryId(), result);
+      result.addLifecycleListener(this);
+      return result;
+    } finally {
+      if (commandInterruptTimer != null) {
+        commandInterruptTimer.cancel();
+        commandInterruptTimer = null;
+      }
+    }
   }
 
   @Override
@@ -574,16 +590,32 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     checkOpenness();
     checkIfActive();
 
-    OStatement statement = OSQLEngine.parse(query, this);
-    if (!statement.isIdempotent()) {
-      throw new OCommandExecutionException(
-          "Cannot execute query on non idempotent statement: " + query);
+    if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
+      commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
+      getSharedContext()
+          .getOrientDB()
+          .scheduleOnce(
+              commandInterruptTimer,
+              getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT));
     }
-    OResultSet original = statement.execute(this, args, true);
-    OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
-    this.queryStarted(result.getQueryId(), result);
-    result.addLifecycleListener(this);
-    return result;
+    try {
+
+      OStatement statement = OSQLEngine.parse(query, this);
+      if (!statement.isIdempotent()) {
+        throw new OCommandExecutionException(
+            "Cannot execute query on non idempotent statement: " + query);
+      }
+      OResultSet original = statement.execute(this, args, true);
+      OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
+      this.queryStarted(result.getQueryId(), result);
+      result.addLifecycleListener(this);
+      return result;
+    } finally {
+      if (commandInterruptTimer != null) {
+        commandInterruptTimer.cancel();
+      }
+      commandInterruptTimer = null;
+    }
   }
 
   @Override
@@ -591,22 +623,38 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     checkOpenness();
     checkIfActive();
 
-    OStatement statement = OSQLEngine.parse(query, this);
-    OResultSet original = statement.execute(this, args, true);
-    OLocalResultSetLifecycleDecorator result;
-    if (!statement.isIdempotent()) {
-      // fetch all, close and detach
-      OInternalResultSet prefetched = new OInternalResultSet();
-      original.forEachRemaining(x -> prefetched.add(x));
-      original.close();
-      result = new OLocalResultSetLifecycleDecorator(prefetched);
-    } else {
-      // stream, keep open and attach to the current DB
-      result = new OLocalResultSetLifecycleDecorator(original);
-      this.queryStarted(result.getQueryId(), result);
-      result.addLifecycleListener(this);
+    if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
+      commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
+      getSharedContext()
+          .getOrientDB()
+          .scheduleOnce(
+              commandInterruptTimer,
+              getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT));
     }
-    return result;
+    try {
+
+      OStatement statement = OSQLEngine.parse(query, this);
+      OResultSet original = statement.execute(this, args, true);
+      OLocalResultSetLifecycleDecorator result;
+      if (!statement.isIdempotent()) {
+        // fetch all, close and detach
+        OInternalResultSet prefetched = new OInternalResultSet();
+        original.forEachRemaining(x -> prefetched.add(x));
+        original.close();
+        result = new OLocalResultSetLifecycleDecorator(prefetched);
+      } else {
+        // stream, keep open and attach to the current DB
+        result = new OLocalResultSetLifecycleDecorator(original);
+        this.queryStarted(result.getQueryId(), result);
+        result.addLifecycleListener(this);
+      }
+      return result;
+    } finally {
+      if (commandInterruptTimer != null) {
+        commandInterruptTimer.cancel();
+        commandInterruptTimer = null;
+      }
+    }
   }
 
   @Override
@@ -614,22 +662,38 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     checkOpenness();
     checkIfActive();
 
-    OStatement statement = OSQLEngine.parse(query, this);
-    OResultSet original = statement.execute(this, args, true);
-    OLocalResultSetLifecycleDecorator result;
-    if (!statement.isIdempotent()) {
-      // fetch all, close and detach
-      OInternalResultSet prefetched = new OInternalResultSet();
-      original.forEachRemaining(x -> prefetched.add(x));
-      original.close();
-      result = new OLocalResultSetLifecycleDecorator(prefetched);
-    } else {
-      // stream, keep open and attach to the current DB
-      result = new OLocalResultSetLifecycleDecorator(original);
-      this.queryStarted(result.getQueryId(), result);
-      result.addLifecycleListener(this);
+    if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
+      commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
+      getSharedContext()
+          .getOrientDB()
+          .scheduleOnce(
+              commandInterruptTimer,
+              getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT));
     }
-    return result;
+    try {
+
+      OStatement statement = OSQLEngine.parse(query, this);
+      OResultSet original = statement.execute(this, args, true);
+      OLocalResultSetLifecycleDecorator result;
+      if (!statement.isIdempotent()) {
+        // fetch all, close and detach
+        OInternalResultSet prefetched = new OInternalResultSet();
+        original.forEachRemaining(x -> prefetched.add(x));
+        original.close();
+        result = new OLocalResultSetLifecycleDecorator(prefetched);
+      } else {
+        // stream, keep open and attach to the current DB
+        result = new OLocalResultSetLifecycleDecorator(original);
+        this.queryStarted(result.getQueryId(), result);
+        result.addLifecycleListener(this);
+      }
+      return result;
+    } finally {
+      if (commandInterruptTimer != null) {
+        commandInterruptTimer.cancel();
+        commandInterruptTimer = null;
+      }
+    }
   }
 
   @Override
@@ -672,6 +736,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     } finally {
       if (commandInterruptTimer != null) {
         commandInterruptTimer.cancel();
+        commandInterruptTimer = null;
       }
     }
   }
