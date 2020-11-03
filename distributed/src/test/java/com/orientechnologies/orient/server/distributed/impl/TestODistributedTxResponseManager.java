@@ -4,6 +4,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.server.distributed.ODistributedTxResponseManager;
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1Task;
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1TaskResult;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxConcurrentModification;
@@ -27,8 +28,8 @@ public class TestODistributedTxResponseManager {
     nodes.add("one");
     nodes.add("two");
     nodes.add("three");
-    ODistributedTxResponseManager responseManager =
-        new ODistributedTxResponseManager(transaction, nodes, nodes, 3, 3, 2);
+    ODistributedTxResponseManagerImpl responseManager =
+        new ODistributedTxResponseManagerImpl(transaction, nodes, nodes, 3, 3, 2);
     assertFalse(
         responseManager.collectResponse(new OTransactionPhase1TaskResult(new OTxSuccess()), "one"));
     assertFalse(
@@ -44,7 +45,7 @@ public class TestODistributedTxResponseManager {
     nodes.add("two");
     nodes.add("three");
     ODistributedTxResponseManager responseManager =
-        new ODistributedTxResponseManager(transaction, nodes, nodes, 3, 3, 2);
+        new ODistributedTxResponseManagerImpl(transaction, nodes, nodes, 3, 3, 2);
     assertFalse(
         responseManager.collectResponse(new OTransactionPhase1TaskResult(new OTxSuccess()), "one"));
     assertFalse(
@@ -66,7 +67,7 @@ public class TestODistributedTxResponseManager {
     nodes.add("two");
     nodes.add("three");
     ODistributedTxResponseManager responseManager =
-        new ODistributedTxResponseManager(transaction, nodes, nodes, 3, 3, 2);
+        new ODistributedTxResponseManagerImpl(transaction, nodes, nodes, 3, 3, 2);
     assertFalse(responseManager.setLocalResult("one", new OTxSuccess()));
     assertFalse(
         responseManager.collectResponse(
@@ -82,7 +83,7 @@ public class TestODistributedTxResponseManager {
     nodes.add("two");
     nodes.add("three");
     ODistributedTxResponseManager responseManager =
-        new ODistributedTxResponseManager(transaction, nodes, nodes, 3, 3, 2);
+        new ODistributedTxResponseManagerImpl(transaction, nodes, nodes, 3, 3, 2);
     assertFalse(responseManager.setLocalResult("one", new OTxSuccess()));
     assertFalse(
         responseManager.collectResponse(new OTransactionPhase1TaskResult(new OTxSuccess()), "two"));
@@ -102,7 +103,7 @@ public class TestODistributedTxResponseManager {
     nodes.add("two");
     nodes.add("three");
     ODistributedTxResponseManager responseManager =
-        new ODistributedTxResponseManager(transaction, nodes, nodes, 3, 3, 2);
+        new ODistributedTxResponseManagerImpl(transaction, nodes, nodes, 3, 3, 2);
     responseManager.setLocalResult("one", new OTxSuccess());
     CountDownLatch startedWaiting = new CountDownLatch(1);
     Future<Boolean> future =
@@ -128,7 +129,7 @@ public class TestODistributedTxResponseManager {
     nodes.add("two");
     nodes.add("three");
     ODistributedTxResponseManager responseManager =
-        new ODistributedTxResponseManager(transaction, nodes, nodes, 3, 3, 2);
+        new ODistributedTxResponseManagerImpl(transaction, nodes, nodes, 3, 3, 2);
     responseManager.collectResponse(new OTransactionPhase1TaskResult(new OTxSuccess()), "one");
     assertFalse(
         responseManager.collectResponse(

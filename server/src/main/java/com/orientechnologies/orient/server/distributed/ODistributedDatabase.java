@@ -95,8 +95,12 @@ public interface ODistributedDatabase {
 
   void checkReverseSync(OTransactionSequenceStatus lastState);
 
-  public ODistributedConfiguration getDistributedConfiguration();
+  ODistributedConfiguration getDistributedConfiguration();
 
-  public void setDistributedConfiguration(
+  void setDistributedConfiguration(
       final OModifiableDistributedConfiguration distributedConfiguration);
+
+  void startOperation();
+
+  void endOperation();
 }

@@ -65,7 +65,7 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
-public class ODistributedDatabaseImpl implements ODistributedDatabase {
+public class ODistributedDatabaseImpl implements OTxDistributedDatabase {
   public static final String DISTRIBUTED_SYNC_JSON_FILENAME = "distributed-sync.json";
   private static final HashSet<Integer> ALL_QUEUES = new HashSet<Integer>();
   protected final ODistributedAbstractPlugin manager;
@@ -258,11 +258,13 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     return indexKeyPromiseManager;
   }
 
+  @Override
   public void startOperation() {
     waitDistributedIsReady();
     operationsRunnig.incrementAndGet();
   }
 
+  @Override
   public void endOperation() {
     operationsRunnig.decrementAndGet();
   }
@@ -921,6 +923,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     }
   }
 
+  @Override
   public List<OLockGuard> localLock(OLockKeySource keySource) {
     SortedSet<ORID> rids = keySource.getRids();
     SortedSet<OTransactionUniqueKey> uniqueKeys = keySource.getUniqueKeys();
@@ -944,6 +947,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     }
   }
 
+  @Override
   public void localUnlock(List<OLockGuard> guards) {
     this.lockManager.unlock(guards);
   }

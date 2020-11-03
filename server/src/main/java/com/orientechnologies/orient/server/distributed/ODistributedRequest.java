@@ -28,7 +28,8 @@ import java.io.IOException;
 /** @author Luca Garulli (l.garulli--(at)--orientdb.com) */
 public class ODistributedRequest {
   public enum EXECUTION_MODE {
-    SYNCHRONOUS, ASYNCHRONOUS
+    SYNCHRONOUS,
+    ASYNCHRONOUS
   }
 
   private final ODistributedServerManager manager;
