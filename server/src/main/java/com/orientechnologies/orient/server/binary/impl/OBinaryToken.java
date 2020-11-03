@@ -12,17 +12,8 @@ public class OBinaryToken implements OToken {
 
   private boolean valid;
   private boolean verified;
-  private String userName;
-  private String database;
-  private long expiry;
-  private ORID rid;
-  private String databaseType;
-  private short protocolVersion;
-  private String serializer;
-  private String driverName;
-  private String driverVersion;
   private OTokenHeader header;
-  private boolean serverUser;
+  private OBinaryTokenPayload payload;
 
   @Override
   public boolean getIsVerified() {
@@ -46,17 +37,13 @@ public class OBinaryToken implements OToken {
 
   @Override
   public String getUserName() {
-    return userName;
-  }
-
-  public void setUserName(String userName) {
-    this.userName = userName;
+    return payload.getUserName();
   }
 
   @Override
   public OUser getUser(ODatabaseDocumentInternal db) {
-    if (this.rid != null) {
-      ODocument result = db.load(new ORecordId(this.rid), "roles:1");
+    if (this.payload.getUserRid() != null) {
+      ODocument result = db.load(new ORecordId(this.payload.getUserRid()), "roles:1");
       if (result != null && result.getClassName().equals(OUser.CLASS_NAME)) {
         return new OUser(result);
       }
@@ -66,29 +53,17 @@ public class OBinaryToken implements OToken {
 
   @Override
   public String getDatabase() {
-    return database;
-  }
-
-  public void setDatabase(String database) {
-    this.database = database;
+    return this.payload.getDatabase();
   }
 
   @Override
   public String getDatabaseType() {
-    return databaseType;
-  }
-
-  public void setDatabaseType(String databaseType) {
-    this.databaseType = databaseType;
+    return this.getPayload().getDatabaseType();
   }
 
   @Override
   public ORID getUserId() {
-    return rid;
-  }
-
-  public void setUserRid(ORID rid) {
-    this.rid = rid;
+    return this.getPayload().getUserRid();
   }
 
   public OTokenHeader getHeader() {
@@ -100,57 +75,46 @@ public class OBinaryToken implements OToken {
   }
 
   @Override
-  public long getExpiry() {
-    return expiry;
+  public void setExpiry(long expiry) {
+    getPayload().setExpiry(expiry);
   }
 
-  public void setExpiry(long expiry) {
-    this.expiry = expiry;
+  @Override
+  public long getExpiry() {
+    return payload.getExpiry();
   }
 
   public short getProtocolVersion() {
-    return protocolVersion;
-  }
-
-  public void setProtocolVersion(short protocolVersion) {
-    this.protocolVersion = protocolVersion;
+    return payload.getProtocolVersion();
   }
 
   public String getSerializer() {
-    return serializer;
-  }
-
-  public void setSerializer(String serializer) {
-    this.serializer = serializer;
+    return payload.getSerializer();
   }
 
   public String getDriverName() {
-    return driverName;
-  }
-
-  public void setDriverName(String driverName) {
-    this.driverName = driverName;
+    return payload.getDriverName();
   }
 
   public String getDriverVersion() {
-    return driverVersion;
-  }
-
-  public void setDriverVersion(String driverVersion) {
-    this.driverVersion = driverVersion;
-  }
-
-  public void setServerUser(boolean b) {
-    this.serverUser = b;
+    return payload.getDriverVersion();
   }
 
   public boolean isServerUser() {
-    return serverUser;
+    return getPayload().isServerUser();
   }
 
   @Override
   public boolean isNowValid() {
     long now = System.currentTimeMillis();
     return getExpiry() > now;
+  }
+
+  public OBinaryTokenPayload getPayload() {
+    return payload;
+  }
+
+  public void setPayload(OBinaryTokenPayload payload) {
+    this.payload = payload;
   }
 }

@@ -22,6 +22,7 @@ import com.orientechnologies.orient.core.security.OTokenSignImpl;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OTokenHandler;
 import com.orientechnologies.orient.server.binary.impl.OBinaryToken;
+import com.orientechnologies.orient.server.binary.impl.OBinaryTokenPayload;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -256,13 +257,15 @@ public class OTokenHandlerImpl implements OTokenHandler {
       header.setKeyId(this.sign.getDefaultKey());
       header.setType("node");
       token.setHeader(header);
-      token.setServerUser(true);
-      token.setUserName(data.serverUsername);
-      token.setExpiry(0);
-      token.setProtocolVersion(data.protocolVersion);
-      token.setSerializer(data.getSerializationImpl());
-      token.setDriverName(data.driverName);
-      token.setDriverVersion(data.driverVersion);
+      OBinaryTokenPayload payload = new OBinaryTokenPayload();
+      payload.setServerUser(true);
+      payload.setUserName(data.serverUsername);
+      payload.setExpiry(0);
+      payload.setProtocolVersion(data.protocolVersion);
+      payload.setSerializer(data.getSerializationImpl());
+      payload.setDriverName(data.driverName);
+      payload.setDriverVersion(data.driverVersion);
+      token.setPayload(payload);
 
       return serializeSignedToken(token);
     } catch (RuntimeException e) {
@@ -287,20 +290,22 @@ public class OTokenHandlerImpl implements OTokenHandler {
       header.setKeyId(this.sign.getDefaultKey());
       header.setType("OrientDB");
       token.setHeader(header);
+      OBinaryTokenPayload payload = new OBinaryTokenPayload();
       if (db != null) {
-        token.setDatabase(db.getName());
-        token.setDatabaseType(db.getStorage().getUnderlying().getType());
+        payload.setDatabase(db.getName());
+        payload.setDatabaseType(db.getStorage().getUnderlying().getType());
       }
       if (data.serverUser) {
-        token.setServerUser(true);
-        token.setUserName(data.serverUsername);
+        payload.setServerUser(true);
+        payload.setUserName(data.serverUsername);
       }
-      if (user != null) token.setUserRid(user.getIdentity().getIdentity());
-      token.setExpiry(curTime + sessionInMills);
-      token.setProtocolVersion(data.protocolVersion);
-      token.setSerializer(data.getSerializationImpl());
-      token.setDriverName(data.driverName);
-      token.setDriverVersion(data.driverVersion);
+      if (user != null) payload.setUserRid(user.getIdentity().getIdentity());
+      payload.setExpiry(curTime + sessionInMills);
+      payload.setProtocolVersion(data.protocolVersion);
+      payload.setSerializer(data.getSerializationImpl());
+      payload.setDriverName(data.driverName);
+      payload.setDriverVersion(data.driverVersion);
+      token.setPayload(payload);
 
       return serializeSignedToken(token);
     } catch (RuntimeException e) {

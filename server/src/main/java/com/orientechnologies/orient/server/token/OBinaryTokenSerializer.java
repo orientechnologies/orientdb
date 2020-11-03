@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.jwt.OTokenHeader;
 import com.orientechnologies.orient.server.binary.impl.OBinaryToken;
+import com.orientechnologies.orient.server.binary.impl.OBinaryTokenPayload;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -51,25 +52,30 @@ public class OBinaryTokenSerializer {
     header.setAlgorithm(algorithms[input.readByte()]);
 
     OBinaryToken token = new OBinaryToken();
+    OBinaryTokenPayload payload = new OBinaryTokenPayload();
     token.setHeader(header);
 
-    token.setDatabase(readString(input));
+    payload.setDatabase(readString(input));
     byte pos = input.readByte();
-    if (pos >= 0) token.setDatabaseType(dbTypes[pos]);
+    if (pos >= 0) {
+      payload.setDatabaseType(dbTypes[pos]);
+    }
 
     short cluster = input.readShort();
     long position = input.readLong();
-    if (cluster != -1 && position != -1) token.setUserRid(new ORecordId(cluster, position));
-    token.setExpiry(input.readLong());
-    token.setServerUser(input.readBoolean());
-    if (token.isServerUser()) {
-      token.setUserName(readString(input));
+    if (cluster != -1 && position != -1) {
+      payload.setUserRid(new ORecordId(cluster, position));
     }
-
-    token.setProtocolVersion(input.readShort());
-    token.setSerializer(readString(input));
-    token.setDriverName(readString(input));
-    token.setDriverVersion(readString(input));
+    payload.setExpiry(input.readLong());
+    payload.setServerUser(input.readBoolean());
+    if (payload.isServerUser()) {
+      payload.setUserName(readString(input));
+    }
+    payload.setProtocolVersion(input.readShort());
+    payload.setSerializer(readString(input));
+    payload.setDriverName(readString(input));
+    payload.setDriverVersion(readString(input));
+    token.setPayload(payload);
 
     return token;
   }
@@ -92,11 +98,11 @@ public class OBinaryTokenSerializer {
     output.writeByte(associetedKeys.get(header.getKeyId())); // keys
     output.writeByte(associetedAlgorithms.get(header.getAlgorithm())); // algorithm
 
-    String toWrite = token.getDatabase();
+    String toWrite = token.getPayload().getDatabase();
     writeString(output, toWrite);
-    if (token.getDatabaseType() == null) output.writeByte(-1);
+    if (token.getPayload().getDatabaseType() == null) output.writeByte(-1);
     else output.writeByte(associetedDdTypes.get(token.getDatabaseType()));
-    ORID id = token.getUserId();
+    ORID id = token.getPayload().getUserRid();
     if (id == null) {
       output.writeShort(-1);
       output.writeLong(-1);
@@ -104,15 +110,15 @@ public class OBinaryTokenSerializer {
       output.writeShort(id.getClusterId());
       output.writeLong(id.getClusterPosition());
     }
-    output.writeLong(token.getExpiry());
-    output.writeBoolean(token.isServerUser());
+    output.writeLong(token.getPayload().getExpiry());
+    output.writeBoolean(token.getPayload().isServerUser());
     if (token.isServerUser()) {
-      writeString(output, token.getUserName());
+      writeString(output, token.getPayload().getUserName());
     }
-    output.writeShort(token.getProtocolVersion());
-    writeString(output, token.getSerializer());
-    writeString(output, token.getDriverName());
-    writeString(output, token.getDriverVersion());
+    output.writeShort(token.getPayload().getProtocolVersion());
+    writeString(output, token.getPayload().getSerializer());
+    writeString(output, token.getPayload().getDriverName());
+    writeString(output, token.getPayload().getDriverVersion());
   }
 
   private void writeString(DataOutputStream output, String toWrite)
