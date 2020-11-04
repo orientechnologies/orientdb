@@ -5,8 +5,8 @@ import com.orientechnologies.common.log.OLogManager;
 
 public class OStorageInterruptionManager {
 
-  int depth = 0;
-  boolean interrupted = false;
+  private int depth = 0;
+  private boolean interrupted = false;
 
   protected void interrupt(Thread thread) {
     synchronized (this) {
