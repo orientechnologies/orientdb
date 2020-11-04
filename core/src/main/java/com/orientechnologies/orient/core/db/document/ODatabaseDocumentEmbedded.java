@@ -126,7 +126,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
   private OrientDBConfig config;
   private OStorage storage;
 
-  InterruptTimerTask commandInterruptTimer;
+  private InterruptTimerTask commandInterruptTimer;
 
   protected class InterruptTimerTask extends TimerTask {
 
