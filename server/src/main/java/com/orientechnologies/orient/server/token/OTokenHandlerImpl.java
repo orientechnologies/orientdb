@@ -257,7 +257,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
       header.setKeyId(this.sign.getDefaultKey());
       header.setType("node");
       token.setHeader(header);
-      OBinaryTokenPayload payload = new OBinaryTokenPayload();
+      ODistributedBinaryTokenPayload payload = new ODistributedBinaryTokenPayload();
       payload.setServerUser(true);
       payload.setUserName(data.serverUsername);
       payload.setExpiry(0);

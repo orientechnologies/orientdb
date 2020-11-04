@@ -13,7 +13,7 @@ public class OBinaryToken implements OToken {
   private boolean valid;
   private boolean verified;
   private OTokenHeader header;
-  private OBinaryTokenPayload payload;
+  private OTokenPayload payload;
 
   @Override
   public boolean getIsVerified() {
@@ -110,11 +110,11 @@ public class OBinaryToken implements OToken {
     return getExpiry() > now;
   }
 
-  public OBinaryTokenPayload getPayload() {
+  public OTokenPayload getPayload() {
     return payload;
   }
 
-  public void setPayload(OBinaryTokenPayload payload) {
+  public void setPayload(OTokenPayload payload) {
     this.payload = payload;
   }
 }

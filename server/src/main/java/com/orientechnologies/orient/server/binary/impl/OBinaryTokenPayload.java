@@ -1,8 +1,12 @@
 package com.orientechnologies.orient.server.binary.impl;
 
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.server.token.OBinaryTokenSerializer;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 
-public class OBinaryTokenPayload {
+public class OBinaryTokenPayload implements OTokenPayload {
   private String userName;
   private String database;
   private long expiry;
@@ -14,6 +18,7 @@ public class OBinaryTokenPayload {
   private String driverVersion;
   private boolean serverUser;
 
+  @Override
   public String getDatabase() {
     return database;
   }
@@ -22,6 +27,7 @@ public class OBinaryTokenPayload {
     this.database = database;
   }
 
+  @Override
   public long getExpiry() {
     return expiry;
   }
@@ -30,6 +36,7 @@ public class OBinaryTokenPayload {
     this.expiry = expiry;
   }
 
+  @Override
   public ORID getUserRid() {
     return userRid;
   }
@@ -38,6 +45,7 @@ public class OBinaryTokenPayload {
     this.userRid = rid;
   }
 
+  @Override
   public String getDatabaseType() {
     return databaseType;
   }
@@ -46,6 +54,7 @@ public class OBinaryTokenPayload {
     this.databaseType = databaseType;
   }
 
+  @Override
   public short getProtocolVersion() {
     return protocolVersion;
   }
@@ -54,6 +63,7 @@ public class OBinaryTokenPayload {
     this.protocolVersion = protocolVersion;
   }
 
+  @Override
   public String getSerializer() {
     return serializer;
   }
@@ -62,6 +72,7 @@ public class OBinaryTokenPayload {
     this.serializer = serializer;
   }
 
+  @Override
   public String getDriverName() {
     return driverName;
   }
@@ -70,6 +81,7 @@ public class OBinaryTokenPayload {
     this.driverName = driverName;
   }
 
+  @Override
   public String getDriverVersion() {
     return driverVersion;
   }
@@ -78,6 +90,7 @@ public class OBinaryTokenPayload {
     this.driverVersion = driverVersion;
   }
 
+  @Override
   public boolean isServerUser() {
     return serverUser;
   }
@@ -86,11 +99,43 @@ public class OBinaryTokenPayload {
     this.serverUser = serverUser;
   }
 
+  @Override
   public String getUserName() {
     return userName;
   }
 
   public void setUserName(String userName) {
     this.userName = userName;
+  }
+
+  @Override
+  public void serialize(DataOutputStream output, OBinaryTokenSerializer serializer)
+      throws UnsupportedEncodingException, IOException {
+    String toWrite = this.getDatabase();
+    OBinaryTokenSerializer.writeString(output, toWrite);
+    if (this.getDatabaseType() == null) output.writeByte(-1);
+    else output.writeByte(serializer.getDbTypeID(this.getDatabaseType()));
+    ORID id = this.getUserRid();
+    if (id == null) {
+      output.writeShort(-1);
+      output.writeLong(-1);
+    } else {
+      output.writeShort(id.getClusterId());
+      output.writeLong(id.getClusterPosition());
+    }
+    output.writeLong(this.getExpiry());
+    output.writeBoolean(this.isServerUser());
+    if (this.isServerUser()) {
+      OBinaryTokenSerializer.writeString(output, this.getUserName());
+    }
+    output.writeShort(this.getProtocolVersion());
+    OBinaryTokenSerializer.writeString(output, this.getSerializer());
+    OBinaryTokenSerializer.writeString(output, this.getDriverName());
+    OBinaryTokenSerializer.writeString(output, this.getDriverVersion());
+  }
+
+  @Override
+  public String getPayloadType() {
+    return "OrientDB";
   }
 }
