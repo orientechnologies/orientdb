@@ -22,7 +22,7 @@ import com.orientechnologies.orient.core.security.OTokenSignImpl;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OTokenHandler;
 import com.orientechnologies.orient.server.binary.impl.OBinaryToken;
-import com.orientechnologies.orient.server.binary.impl.OBinaryTokenPayload;
+import com.orientechnologies.orient.server.binary.impl.OBinaryTokenPayloadImpl;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -290,7 +290,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
       header.setKeyId(this.sign.getDefaultKey());
       header.setType("OrientDB");
       token.setHeader(header);
-      OBinaryTokenPayload payload = new OBinaryTokenPayload();
+      OBinaryTokenPayloadImpl payload = new OBinaryTokenPayloadImpl();
       if (db != null) {
         payload.setDatabase(db.getName());
         payload.setDatabaseType(db.getStorage().getUnderlying().getType());

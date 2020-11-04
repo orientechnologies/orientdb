@@ -1,9 +1,12 @@
 package com.orientechnologies.orient.server.token;
 
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.metadata.security.jwt.OBinaryTokenPayload;
 import com.orientechnologies.orient.core.metadata.security.jwt.OTokenHeader;
+import com.orientechnologies.orient.core.metadata.security.jwt.OTokenMetaInfo;
+import com.orientechnologies.orient.core.metadata.security.jwt.OTokenPayload;
+import com.orientechnologies.orient.core.metadata.security.jwt.OTokenPayloadDeserializer;
 import com.orientechnologies.orient.server.binary.impl.OBinaryToken;
-import com.orientechnologies.orient.server.binary.impl.OTokenPayload;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -13,7 +16,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class OBinaryTokenSerializer {
+public class OBinaryTokenSerializer implements OTokenMetaInfo {
 
   private final String[] types;
   private final String[] keys;
@@ -39,6 +42,7 @@ public class OBinaryTokenSerializer {
   private OTokenPayloadDeserializer getForType(String type) {
     switch (type) {
       case "node":
+        return new ODistributedBinaryTokenPayloadDeserializer();
       case "OrientDB":
         return new OBinaryTokenPayloadDeserializer();
     }
@@ -62,7 +66,7 @@ public class OBinaryTokenSerializer {
     OBinaryToken token = new OBinaryToken();
     token.setHeader(header);
 
-    OTokenPayload payload = getForType(header.getType()).deserialize(input, this);
+    OBinaryTokenPayload payload = getForType(header.getType()).deserialize(input, this);
     token.setPayload(payload);
 
     return token;
@@ -100,10 +104,12 @@ public class OBinaryTokenSerializer {
     }
   }
 
+  @Override
   public String getDbType(int pos) {
     return dbTypes[pos];
   }
 
+  @Override
   public int getDbTypeID(String databaseType) {
     return associetedDdTypes.get(databaseType);
   }

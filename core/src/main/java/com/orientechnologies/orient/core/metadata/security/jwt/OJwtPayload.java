@@ -5,15 +5,11 @@ package com.orientechnologies.orient.core.metadata.security.jwt;
  *
  * @author Emrul Islam <emrul@emrul.com> Copyright 2014 Emrul Islam
  */
-public interface OJwtPayload {
+public interface OJwtPayload extends OTokenPayload {
 
   public String getIssuer();
 
   public void setIssuer(String iss);
-
-  public long getExpiry();
-
-  public void setExpiry(long exp);
 
   public long getIssuedAt();
 
@@ -22,8 +18,6 @@ public interface OJwtPayload {
   public long getNotBefore();
 
   public void setNotBefore(long nbf);
-
-  public String getUserName();
 
   public void setUserName(String sub);
 
@@ -37,9 +31,5 @@ public interface OJwtPayload {
 
   public void setDatabase(String database);
 
-  public String getDatabase();
-
   public void setDatabaseType(String databaseType);
-
-  public String getDatabaseType();
 }

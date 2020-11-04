@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.metadata.security.jwt.OBinaryTokenPayload;
 import com.orientechnologies.orient.core.metadata.security.jwt.OTokenHeader;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -13,7 +14,7 @@ public class OBinaryToken implements OToken {
   private boolean valid;
   private boolean verified;
   private OTokenHeader header;
-  private OTokenPayload payload;
+  private OBinaryTokenPayload payload;
 
   @Override
   public boolean getIsVerified() {
@@ -110,11 +111,11 @@ public class OBinaryToken implements OToken {
     return getExpiry() > now;
   }
 
-  public OTokenPayload getPayload() {
+  public OBinaryTokenPayload getPayload() {
     return payload;
   }
 
-  public void setPayload(OTokenPayload payload) {
+  public void setPayload(OBinaryTokenPayload payload) {
     this.payload = payload;
   }
 }

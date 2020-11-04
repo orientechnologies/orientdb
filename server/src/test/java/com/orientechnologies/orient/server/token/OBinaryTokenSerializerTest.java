@@ -7,7 +7,7 @@ import static org.junit.Assert.assertNull;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.server.binary.impl.OBinaryToken;
-import com.orientechnologies.orient.server.binary.impl.OBinaryTokenPayload;
+import com.orientechnologies.orient.server.binary.impl.OBinaryTokenPayloadImpl;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -25,7 +25,7 @@ public class OBinaryTokenSerializerTest {
   @Test
   public void testSerializerDeserializeToken() throws IOException {
     OBinaryToken token = new OBinaryToken();
-    OBinaryTokenPayload payload = new OBinaryTokenPayload();
+    OBinaryTokenPayloadImpl payload = new OBinaryTokenPayloadImpl();
     payload.setDatabase("test");
     payload.setDatabaseType("plocal");
     payload.setUserRid(new ORecordId(43, 234));
@@ -64,7 +64,7 @@ public class OBinaryTokenSerializerTest {
   @Test
   public void testSerializerDeserializeServerUserToken() throws IOException {
     OBinaryToken token = new OBinaryToken();
-    OBinaryTokenPayload payload = new OBinaryTokenPayload();
+    OBinaryTokenPayloadImpl payload = new OBinaryTokenPayloadImpl();
     payload.setDatabase("test");
     payload.setDatabaseType("plocal");
     payload.setUserRid(new ORecordId(43, 234));
@@ -107,7 +107,7 @@ public class OBinaryTokenSerializerTest {
   @Test
   public void testSerializerDeserializeNullInfoUserToken() throws IOException {
     OBinaryToken token = new OBinaryToken();
-    OBinaryTokenPayload payload = new OBinaryTokenPayload();
+    OBinaryTokenPayloadImpl payload = new OBinaryTokenPayloadImpl();
     payload.setDatabase(null);
     payload.setDatabaseType(null);
     payload.setUserRid(null);

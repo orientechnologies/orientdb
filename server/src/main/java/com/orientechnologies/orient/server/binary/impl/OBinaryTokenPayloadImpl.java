@@ -1,12 +1,14 @@
 package com.orientechnologies.orient.server.binary.impl;
 
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.security.jwt.OBinaryTokenPayload;
+import com.orientechnologies.orient.core.metadata.security.jwt.OTokenMetaInfo;
 import com.orientechnologies.orient.server.token.OBinaryTokenSerializer;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
-public class OBinaryTokenPayload implements OTokenPayload {
+public class OBinaryTokenPayloadImpl implements OBinaryTokenPayload {
   private String userName;
   private String database;
   private long expiry;
@@ -109,7 +111,7 @@ public class OBinaryTokenPayload implements OTokenPayload {
   }
 
   @Override
-  public void serialize(DataOutputStream output, OBinaryTokenSerializer serializer)
+  public void serialize(DataOutputStream output, OTokenMetaInfo serializer)
       throws UnsupportedEncodingException, IOException {
     String toWrite = this.getDatabase();
     OBinaryTokenSerializer.writeString(output, toWrite);
