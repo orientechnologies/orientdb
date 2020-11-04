@@ -34,6 +34,12 @@ public class OIsDefinedCondition extends OBooleanExpression implements OSimpleBo
 
   @Override
   public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+    if (expression.isFunctionAny()) {
+      return currentRecord.getPropertyNames().size() > 0;
+    }
+    if (expression.isFunctionAll()) {
+      return true;
+    }
     return expression.isDefinedFor(currentRecord);
   }
 
