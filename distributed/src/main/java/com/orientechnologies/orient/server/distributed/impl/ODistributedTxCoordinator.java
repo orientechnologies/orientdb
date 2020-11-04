@@ -79,8 +79,8 @@ public class ODistributedTxCoordinator {
   }
 
   public void commit(final ODatabaseDocumentDistributed database, final OTransactionInternal iTx) {
-    OTxDistributedDatabase distributedDatabase =
-        (OTxDistributedDatabase) messageService.getDatabase(database.getName());
+    ODistributedDatabaseImpl distributedDatabase =
+        (ODistributedDatabaseImpl) messageService.getDatabase(database.getName());
     int count = 0;
     do {
       final ODistributedRequestId requestId =
@@ -149,8 +149,8 @@ public class ODistributedTxCoordinator {
 
     final Set<String> involvedClusters = getInvolvedClusters(iTx.getRecordOperations());
     Set<String> nodes = getAvailableNodesButLocal(dbCfg, involvedClusters, localNodeName);
-    OTxDistributedDatabase sharedDb =
-        (OTxDistributedDatabase) messageService.getDatabase(database.getName());
+    ODistributedDatabaseImpl sharedDb =
+        (ODistributedDatabaseImpl) messageService.getDatabase(database.getName());
 
     OLocalKeySource keySource = new OLocalKeySource(txId, iTx, database);
     List<OLockGuard> guards = sharedDb.localLock(keySource);
@@ -445,8 +445,8 @@ public class ODistributedTxCoordinator {
       ODistributedRequestId requestId,
       ODatabaseDocumentDistributed database,
       OLockKeySource source) {
-    OTxDistributedDatabase dd =
-        (OTxDistributedDatabase) messageService.getDatabase(database.getName());
+    ODistributedDatabaseImpl dd =
+        (ODistributedDatabaseImpl) messageService.getDatabase(database.getName());
     List<OLockGuard> guards = dd.localLock(source);
     try {
       database.rollback2pc(requestId);
@@ -459,8 +459,8 @@ public class ODistributedTxCoordinator {
       ODistributedRequestId requestId,
       ODatabaseDocumentDistributed database,
       OLockKeySource source) {
-    OTxDistributedDatabase dd =
-        (OTxDistributedDatabase) messageService.getDatabase(database.getName());
+    ODistributedDatabaseImpl dd =
+        (ODistributedDatabaseImpl) messageService.getDatabase(database.getName());
     List<OLockGuard> guards = dd.localLock(source);
     try {
       database.commit2pcLocal(requestId);
