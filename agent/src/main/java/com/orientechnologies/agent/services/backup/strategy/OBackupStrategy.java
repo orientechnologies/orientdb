@@ -369,7 +369,7 @@ public abstract class OBackupStrategy {
 
   public void retainLogs() {
 
-    Integer retentionDays = getRetentionDays();
+    final Integer retentionDays = getRetentionDays();
     if (retentionDays != null && retentionDays > 0) {
       retainLogs(retentionDays);
     }

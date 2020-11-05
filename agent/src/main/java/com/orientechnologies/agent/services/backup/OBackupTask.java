@@ -76,27 +76,23 @@ public class OBackupTask implements OBackupListener {
     return strategy;
   }
 
-  public void changeConfig(OBackupConfig config, ODocument doc) {
+  public void changeConfig(final OBackupConfig config, final ODocument doc) {
     if (task != null) {
       task.cancel();
     }
     strategy.deleteLastScheduled();
-
-    OBackupStrategy strategy = config.strategy(doc, this.strategy.getLogger());
+    final OBackupStrategy strategy = config.strategy(doc, this.strategy.getLogger());
 
     if (!this.strategy.equals(strategy)) {
       strategy.markLastBackup();
     }
-
     this.strategy = strategy;
-
     schedule();
   }
 
   @Override
-  public Boolean onEvent(ODocument cfg, OBackupLog log) {
-
-    Boolean canContinue = invokeListener(cfg, log);
+  public Boolean onEvent(final ODocument cfg, final OBackupLog log) {
+    final boolean canContinue = invokeListener(cfg, log);
     if (OBackupLogType.BACKUP_FINISHED.equals(log.getType())) {
       if (canContinue) {
         schedule();

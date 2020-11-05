@@ -32,8 +32,7 @@ import java.util.Date;
 
 /** Created by Enrico Risa on 25/03/16. */
 public class OBackupStrategyFullBackup extends OBackupStrategy {
-
-  public OBackupStrategyFullBackup(ODocument cfg, OBackupLogger logger) {
+  public OBackupStrategyFullBackup(final ODocument cfg, final OBackupLogger logger) {
     super(cfg, logger);
   }
 
@@ -44,42 +43,35 @@ public class OBackupStrategyFullBackup extends OBackupStrategy {
 
   protected String calculatePath() {
     final long begin = System.currentTimeMillis();
-
-    String basePath = cfg.field(OBackupConfig.DIRECTORY);
-
-    String dbName = cfg.field(OBackupConfig.DBNAME);
+    final String basePath = cfg.field(OBackupConfig.DIRECTORY);
+    final String dbName = cfg.field(OBackupConfig.DBNAME);
     return basePath + File.separator + dbName + "-" + begin;
   }
 
   @Override
-  public Date scheduleNextExecution(OBackupListener listener) {
-
-    OBackupScheduledLog last = lastUnfiredSchedule();
+  public Date scheduleNextExecution(final OBackupListener listener) {
+    final OBackupScheduledLog last = lastUnfiredSchedule();
 
     if (last == null) {
-      ODocument full =
+      final ODocument full =
           (ODocument) cfg.eval(OBackupConfig.MODES + "." + OAutomaticBackup.MODE.FULL_BACKUP);
-      String when = full.field(OBackupConfig.WHEN);
+      final String when = full.field(OBackupConfig.WHEN);
       try {
-        OCronExpression expression = new OCronExpression(when);
-        Date nextExecution = expression.getNextValidTimeAfter(new Date());
-        OBackupScheduledLog log =
+        final OCronExpression expression = new OCronExpression(when);
+        final Date nextExecution = expression.getNextValidTimeAfter(new Date());
+        final OBackupScheduledLog log =
             new OBackupScheduledLog(
                 logger.nextOpId(), logger.nextOpId(), getUUID(), getDbName(), getMode().toString());
         log.nextExecution = nextExecution.getTime();
         getLogger().log(log);
-
         listener.onEvent(cfg, log);
-
         return nextExecution;
       } catch (ParseException e) {
         OLogManager.instance().warn(this, "Parse exception: " + e.getMessage(), e);
       }
-
     } else {
       return new Date(last.nextExecution);
     }
-
     return null;
   }
 }

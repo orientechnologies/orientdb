@@ -52,7 +52,6 @@ import org.junit.Test;
 
 /** Created by Enrico Risa on 22/03/16. */
 public class OBackupServiceTest {
-
   private OServer server;
 
   private final String DB_NAME = "backupDBTest";
@@ -97,7 +96,6 @@ public class OBackupServiceTest {
               iArgument.command("delete from OBackupLog");
               return null;
             });
-
     OEnterpriseAgent agent = server.getPluginByClass(OEnterpriseAgent.class);
 
     manager = agent.getServiceByClass(OBackupService.class).get();
@@ -145,15 +143,9 @@ public class OBackupServiceTest {
   @Test
   public void backupFullTest() throws InterruptedException {
     final ODocument fullBackModes = getBackupMode("FULL_BACKUP", "0/5 * * * * ?");
+    final ODocument backup = configureBackup(fullBackModes);
 
-    final ODocument backup = new ODocument();
-    backup.field("dbName", DB_NAME);
-    backup.field("directory", BACKUP_PATH);
-    backup.field("modes", fullBackModes);
-    backup.field("enabled", true);
-    backup.field("retentionDays", 30);
-
-    final ODocument cfg = manager.addBackup(backup);
+    final ODocument cfg = manager.addBackupAndSchedule(backup);
     final String uuid = cfg.field("uuid");
     try {
       final OBackupTask task = manager.getTask(uuid);
@@ -164,7 +156,7 @@ public class OBackupServiceTest {
             return latch.getCount() > 0;
           });
       latch.await();
-      task.stop();
+      // task.stop();
 
       final ODocument logs = manager.logs(uuid, 1, 50, new HashMap<>());
       assertNotNull(logs);
@@ -190,19 +182,10 @@ public class OBackupServiceTest {
   @Test
   public void backupFullIncrementalMixTest() throws InterruptedException {
     final ODocument modes = getBackupMode("FULL_BACKUP", "0/5 * * * * ?");
+    addBackupMode(modes, "INCREMENTAL_BACKUP", "0/2 * * * * ?");
+    final ODocument backup = configureBackup(modes);
 
-    final ODocument incrementalMode = new ODocument();
-    modes.field("INCREMENTAL_BACKUP", incrementalMode);
-    incrementalMode.field("when", "0/2 * * * * ?");
-
-    final ODocument backup = new ODocument();
-    backup.field("dbName", DB_NAME);
-    backup.field("directory", BACKUP_PATH);
-    backup.field("modes", modes);
-    backup.field("enabled", true);
-    backup.field("retentionDays", 30);
-
-    final ODocument cfg = manager.addBackup(backup);
+    final ODocument cfg = manager.addBackupAndSchedule(backup);
     final String uuid = cfg.field("uuid");
     try {
       final OBackupTask task = manager.getTask(uuid);
@@ -213,7 +196,7 @@ public class OBackupServiceTest {
             return latch.getCount() > 0;
           });
       latch.await();
-      task.stop();
+      // task.stop();
 
       final ODocument logs = manager.logs(uuid, 1, 50, new HashMap<>());
       assertNotNull(logs);
@@ -223,19 +206,32 @@ public class OBackupServiceTest {
       assertEquals(18, list.size());
 
       checkNoOp(list, OBackupLogType.BACKUP_ERROR.toString());
-
       deleteAndCheck(uuid, list, 17, 18 - calculateToDelete(list, 17));
     } finally {
       manager.removeBackup(uuid);
     }
   }
 
+  private void addBackupMode(final ODocument modes, final String backupMode, final String schedule) {
+    final ODocument incrementalMode = new ODocument();
+    modes.field(backupMode, incrementalMode);
+    incrementalMode.field("when", schedule);
+  }
+
   private ODocument getBackupMode(final String backupMode, final String schedule) {
     final ODocument modes = new ODocument();
-    final ODocument mode = new ODocument();
-    modes.field(backupMode, mode);
-    mode.field("when", schedule);
+    addBackupMode(modes, backupMode, schedule);
     return modes;
+  }
+
+  private ODocument configureBackup(final ODocument fullBackModes) {
+    final ODocument backup = new ODocument();
+    backup.field("dbName", DB_NAME);
+    backup.field("directory", BACKUP_PATH);
+    backup.field("modes", fullBackModes);
+    backup.field("enabled", true);
+    backup.field("retentionDays", 30);
+    return backup;
   }
 
   private void checkEmptyPaths(List<ODocument> list) {
@@ -266,18 +262,11 @@ public class OBackupServiceTest {
     checkExpected(0, null);
     ODocument modes = new ODocument();
 
-    ODocument mode = new ODocument();
-    modes.field("INCREMENTAL_BACKUP", mode);
-    mode.field("when", "0/5 * * * * ?");
+    addBackupMode(modes, "INCREMENTAL_BACKUP", "0/5 * * * * ?");
 
-    ODocument backup = new ODocument();
-    backup.field("dbName", DB_NAME);
-    backup.field("directory", BACKUP_PATH);
-    backup.field("modes", modes);
-    backup.field("enabled", true);
-    backup.field("retentionDays", 30);
+    ODocument backup = configureBackup(modes);
 
-    ODocument cfg = manager.addBackup(backup);
+    ODocument cfg = manager.addBackupAndSchedule(backup);
 
     String uuid = cfg.field("uuid");
 
@@ -317,18 +306,11 @@ public class OBackupServiceTest {
     checkExpected(0, null);
     ODocument modes = new ODocument();
 
-    ODocument mode = new ODocument();
-    modes.field("INCREMENTAL_BACKUP", mode);
-    mode.field("when", "0/5 * * * * ?");
+    addBackupMode(modes, "INCREMENTAL_BACKUP", "0/5 * * * * ?");
 
-    ODocument backup = new ODocument();
-    backup.field("dbName", DB_NAME);
-    backup.field("directory", BACKUP_PATH);
-    backup.field("modes", modes);
-    backup.field("enabled", true);
-    backup.field("retentionDays", 30);
+    final ODocument backup = configureBackup(modes);
 
-    ODocument cfg = manager.addBackup(backup);
+    ODocument cfg = manager.addBackupAndSchedule(backup);
 
     String uuid = cfg.field("uuid");
 

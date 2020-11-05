@@ -33,17 +33,16 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /** Created by Enrico Risa on 22/03/16. */
 public class OBackupService implements OEnterpriseService {
-
   private OEnterpriseServer server;
   private OBackupConfig config;
   private OBackupLogger logger;
   protected Map<String, OBackupTask> tasks = new ConcurrentHashMap<String, OBackupTask>();
 
   private void initTasks() {
-    Collection<ODocument> backups = config.backups();
-    for (ODocument backup : backups) {
-      OBackupStrategy strategy = config.strategy(backup, logger);
-      tasks.put((String) backup.field(OBackupConfig.ID), new OBackupTask(strategy));
+    final Collection<ODocument> backups = config.backups();
+    for (final ODocument backup : backups) {
+      final OBackupStrategy strategy = config.strategy(backup, logger);
+      tasks.put(backup.field(OBackupConfig.ID), new OBackupTask(strategy));
     }
   }
 
@@ -51,7 +50,6 @@ public class OBackupService implements OEnterpriseService {
     if (server.getSystemDatabase().exists()) {
       logger = new OBackupDBLogger(server);
     } else {
-
       throw new UnsupportedOperationException(
           "Cannot use Enterprise incremental backup without a system database");
     }
@@ -63,21 +61,19 @@ public class OBackupService implements OEnterpriseService {
     return config.getConfig();
   }
 
-  public ODocument addBackup(ODocument doc) {
-    ODocument backup = config.addBackup(doc);
-    OBackupStrategy strategy = config.strategy(backup, logger);
-    tasks.put((String) doc.field(OBackupConfig.ID), new OBackupTask(strategy));
+  public ODocument addBackupAndSchedule(final ODocument backupConfigDoc) {
+    final ODocument backup = config.addBackup(backupConfigDoc);
+    final OBackupStrategy strategy = config.strategy(backup, logger);
+    tasks.put(backupConfigDoc.field(OBackupConfig.ID), new OBackupTask(strategy));
     return backup;
   }
 
-  public void restoreBackup(String uuid, ODocument doc) {
-
-    OBackupTask oBackupTask = tasks.get(uuid);
-
+  public void restoreBackup(final String uuid, final ODocument doc) {
+    final OBackupTask oBackupTask = tasks.get(uuid);
     oBackupTask.restore(doc);
   }
 
-  public OBackupTask getTask(String uuid) {
+  public OBackupTask getTask(final String uuid) {
     return tasks.get(uuid);
   }
 
@@ -87,11 +83,11 @@ public class OBackupService implements OEnterpriseService {
     oBackupTask.changeConfig(config, doc);
   }
 
-  public void removeBackup(String uuid) {
+  public void removeBackup(final String uuid) {
     config.removeBackup(uuid);
   }
 
-  public void removeAndStopBackup(String uuid) {
+  public void removeAndStopBackup(final String uuid) {
     removeBackup(uuid);
     OBackupTask task = tasks.get(uuid);
     task.stop();

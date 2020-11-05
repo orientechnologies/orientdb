@@ -132,11 +132,11 @@ public class OBackupConfig {
     writeConfiguration();
   }
 
-  protected void validateSingleMode(ODocument doc) {
+  protected void validateSingleMode(final ODocument doc) {
     if (!doc.containsField(WHEN)) {
       throw new OConfigurationException("Field when is required");
     } else {
-      String when = doc.field(WHEN);
+      final String when = doc.field(WHEN);
       try {
         new OCronExpression(when);
       } catch (ParseException e) {
@@ -145,16 +145,14 @@ public class OBackupConfig {
     }
   }
 
-  protected void validateModes(ODocument modes) {
-
-    ODocument incremental = modes.field(OAutomaticBackup.MODE.INCREMENTAL_BACKUP.toString());
-    ODocument full = modes.field(OAutomaticBackup.MODE.FULL_BACKUP.toString());
+  protected void validateModes(final ODocument modes) {
+    final ODocument incremental = modes.field(OAutomaticBackup.MODE.INCREMENTAL_BACKUP.toString());
+    final ODocument full = modes.field(OAutomaticBackup.MODE.FULL_BACKUP.toString());
 
     if (incremental == null && full == null) {
       throw new OConfigurationException(
           "Field mode is invalid: supported mode are FULL_BACKUP,INCREMENTAL_BACKUP");
     }
-
     if (incremental != null) {
       validateSingleMode(incremental);
     }
@@ -163,8 +161,7 @@ public class OBackupConfig {
     }
   }
 
-  protected void validateBackup(ODocument doc) {
-
+  protected void validateBackup(final ODocument doc) {
     if (!doc.containsField(DBNAME)) {
       throw new OConfigurationException("Field dbName is required");
     }
@@ -174,7 +171,7 @@ public class OBackupConfig {
     if (!doc.containsField(MODES)) {
       throw new OConfigurationException("Field modes is required");
     } else {
-      ODocument modes = doc.field(MODES);
+      final ODocument modes = doc.field(MODES);
       validateModes(modes);
     }
   }
@@ -186,9 +183,9 @@ public class OBackupConfig {
     return doc;
   }
 
-  public ODocument removeBackup(String uuid) {
+  public ODocument removeBackup(final String uuid) {
     synchronized (this) {
-      Collection<ODocument> backups = configuration.field(BACKUPS);
+      final Collection<ODocument> backups = configuration.field(BACKUPS);
       ODocument toRemove = null;
       for (ODocument backup : backups) {
         if (backup.field(ID).equals(uuid)) {
@@ -199,19 +196,15 @@ public class OBackupConfig {
         backups.remove(toRemove);
       }
       writeConfiguration();
-
       return toRemove;
     }
   }
 
-  public OBackupStrategy strategy(ODocument cfg, OBackupLogger logger) {
-
-    ODocument full =
+  public OBackupStrategy strategy(final ODocument cfg, final OBackupLogger logger) {
+    final ODocument full =
         (ODocument) cfg.eval(OBackupConfig.MODES + "." + OAutomaticBackup.MODE.FULL_BACKUP);
-
-    ODocument incremental =
+    final ODocument incremental =
         (ODocument) cfg.eval(OBackupConfig.MODES + "." + OAutomaticBackup.MODE.INCREMENTAL_BACKUP);
-
     OBackupStrategy strategy;
     if (full != null && incremental != null) {
       strategy = new OBackupStrategyMixBackup(cfg, logger);

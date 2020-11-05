@@ -76,27 +76,25 @@ public class OBackupStrategyMixBackup extends OBackupStrategy {
   }
 
   @Override
-  public Date scheduleNextExecution(OBackupListener listener) {
-
-    OBackupScheduledLog last = lastUnfiredSchedule();
-
+  public Date scheduleNextExecution(final OBackupListener listener) {
+    final OBackupScheduledLog last = lastUnfiredSchedule();
     if (last == null) {
-      ODocument full =
+      final ODocument full =
           (ODocument) cfg.eval(OBackupConfig.MODES + "." + OAutomaticBackup.MODE.FULL_BACKUP);
-      String whenFull = full.field(OBackupConfig.WHEN);
-      ODocument incremental =
+      final String whenFull = full.field(OBackupConfig.WHEN);
+      final ODocument incremental =
           (ODocument)
               cfg.eval(OBackupConfig.MODES + "." + OAutomaticBackup.MODE.INCREMENTAL_BACKUP);
-      String whenIncremental = incremental.field(OBackupConfig.WHEN);
+      final String whenIncremental = incremental.field(OBackupConfig.WHEN);
       try {
-        OCronExpression eFull = new OCronExpression(whenFull);
-        OCronExpression eIncremental = new OCronExpression(whenIncremental);
-        Date now = new Date();
+        final OCronExpression eFull = new OCronExpression(whenFull);
+        final OCronExpression eIncremental = new OCronExpression(whenIncremental);
+        final Date now = new Date();
 
-        Date nextFull = eFull.getNextValidTimeAfter(now);
-        Date nextIncremental = eIncremental.getNextValidTimeAfter(now);
+        final Date nextFull = eFull.getNextValidTimeAfter(now);
+        final Date nextIncremental = eIncremental.getNextValidTimeAfter(now);
         OBackupFinishedLog lastCompleted = null;
-        Long unitId = logger.nextOpId();
+        long unitId = logger.nextOpId();
         try {
           lastCompleted =
               (OBackupFinishedLog) logger.findLast(OBackupLogType.BACKUP_FINISHED, getUUID());
