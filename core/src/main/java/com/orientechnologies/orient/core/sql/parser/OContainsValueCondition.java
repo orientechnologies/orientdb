@@ -47,6 +47,14 @@ public class OContainsValueCondition extends OBooleanExpression {
 
   @Override
   public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+    if (left.isFunctionAny()) {
+      return evaluateAny(currentRecord, ctx);
+    }
+
+    if (left.isFunctionAll()) {
+      return evaluateAllFunction(currentRecord, ctx);
+    }
+
     Object leftValue = left.execute(currentRecord, ctx);
     if (leftValue instanceof Map) {
       Map map = (Map) leftValue;
@@ -60,6 +68,57 @@ public class OContainsValueCondition extends OBooleanExpression {
       } else {
         Object rightValue = expression.execute(currentRecord, ctx);
         return map.values().contains(rightValue); // TODO type conversions...?
+      }
+    }
+    return false;
+  }
+
+  private boolean evaluateAllFunction(OResult currentRecord, OCommandContext ctx) {
+    for (String propertyName : currentRecord.getPropertyNames()) {
+      Object leftValue = currentRecord.getProperty(propertyName);
+      if (leftValue instanceof Map) {
+        Map map = (Map) leftValue;
+        if (condition != null) {
+          boolean found = false;
+          for (Object o : map.values()) {
+            if (condition.evaluate(o, ctx)) {
+              found = true;
+              break;
+            }
+          }
+          if (!found) {
+            return false;
+          }
+        } else {
+          Object rightValue = expression.execute(currentRecord, ctx);
+          if (!map.values().contains(rightValue)) {
+            return false;
+          }
+        }
+      } else {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private boolean evaluateAny(OResult currentRecord, OCommandContext ctx) {
+    for (String propertyName : currentRecord.getPropertyNames()) {
+      Object leftValue = currentRecord.getProperty(propertyName);
+      if (leftValue instanceof Map) {
+        Map map = (Map) leftValue;
+        if (condition != null) {
+          for (Object o : map.values()) {
+            if (condition.evaluate(o, ctx)) {
+              return true;
+            }
+          }
+        } else {
+          Object rightValue = expression.execute(currentRecord, ctx);
+          if (map.values().contains(rightValue)) {
+            return true;
+          }
+        }
       }
     }
     return false;
