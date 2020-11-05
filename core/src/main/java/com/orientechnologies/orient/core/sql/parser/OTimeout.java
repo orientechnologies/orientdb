@@ -77,5 +77,9 @@ public class OTimeout extends SimpleNode {
     val = fromResult.getProperty("val");
     failureStrategy = fromResult.getProperty("failureStrategy");
   }
+
+  public void setVal(Number val) {
+    this.val = val;
+  }
 }
 /* JavaCC - OriginalChecksum=fef7f5d488f7fca1b6ad0b70c6841931 (do not edit this line) */
