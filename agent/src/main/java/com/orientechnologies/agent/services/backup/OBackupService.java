@@ -62,7 +62,7 @@ public class OBackupService implements OEnterpriseService {
   }
 
   public ODocument addBackupAndSchedule(final ODocument backupConfigDoc) {
-    final ODocument backup = config.addBackup(backupConfigDoc);
+    final ODocument backup = config.addAndPushBackup(backupConfigDoc);
     final OBackupStrategy strategy = config.strategy(backup, logger);
     tasks.put(backupConfigDoc.field(OBackupConfig.ID), new OBackupTask(strategy));
     return backup;

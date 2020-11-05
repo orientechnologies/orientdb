@@ -74,13 +74,12 @@ public class OBackupDBLogger implements OBackupLogger {
 
   @Override
   public OBackupLog log(final OBackupLog log) {
-
     return getDatabase()
         .executeWithDB(
             session -> {
-              ODocument document = log.toDoc();
+              final ODocument document = log.toDoc();
               document.setClassName(CLASS_NAME);
-              ODocument saved = session.save(document);
+              final ODocument saved = session.save(document);
               return factory.fromDoc(saved);
             });
   }
@@ -92,20 +91,18 @@ public class OBackupDBLogger implements OBackupLogger {
 
   @Override
   public OBackupLog findLast(final OBackupLogType op, final String uuid) throws IOException {
-
-    String query =
+    final String query =
         String.format(
             "select from %s where op = :op and uuid = :uuid order by timestamp desc limit 1",
             CLASS_NAME);
-    Map<String, Object> params =
+    final Map<String, Object> params =
         new HashMap<String, Object>() {
           {
             put("op", op.toString());
             put("uuid", uuid);
           }
         };
-
-    Optional<OBackupLog> backupLog =
+    final Optional<OBackupLog> backupLog =
         getLogs(
             query,
             params,
@@ -113,11 +110,9 @@ public class OBackupDBLogger implements OBackupLogger {
                 results.stream()
                     .map((r) -> factory.fromDoc((ODocument) r.toElement()))
                     .findFirst());
-
     if (backupLog.isPresent()) {
       return backupLog.get();
     }
-
     return null;
   }
 

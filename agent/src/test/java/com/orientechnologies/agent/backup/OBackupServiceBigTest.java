@@ -18,11 +18,6 @@
 
 package com.orientechnologies.agent.backup;
 
-import static junit.framework.Assert.assertNotNull;
-import static junit.framework.Assert.fail;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.*;
-
 import com.orientechnologies.agent.OEnterpriseAgent;
 import com.orientechnologies.agent.services.backup.OBackupService;
 import com.orientechnologies.agent.services.backup.OBackupTask;
@@ -30,32 +25,39 @@ import com.orientechnologies.agent.services.backup.log.OBackupLogType;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.ODatabasePool;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
-import java.io.File;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.stream.Collectors;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-/** Created by Enrico Risa on 22/03/16. */
-public class OBackupServiceTest {
+import java.io.File;
+import java.io.InputStream;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.stream.Collectors;
+
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.fail;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.*;
+
+public class OBackupServiceBigTest {
   private OServer server;
 
-  private final String DB_NAME = "backupDBTest";
-  private final String DB_NAME_RESTORED = "backupDBTestRestored";
+  private final String DB_NAME = "backupBigDBTest";
+  private final String DB_NAME_RESTORED = "backupBigDBTestRestored";
   private final String BACKUP_PATH =
       System.getProperty("buildDirectory", "target")
           + File.separator
@@ -68,7 +70,8 @@ public class OBackupServiceTest {
   private final String BACKUP_CONF = BACKUP_CONF_DIR + "backups.json";
 
   private OBackupService manager;
-  private OrientDB orientDB;
+  private OrientDB orient;
+  private ODatabasePool pool;
 
   @Before
   public void bootOrientDB() throws Exception {
@@ -84,8 +87,8 @@ public class OBackupServiceTest {
     server = OServerMain.create(false);
     server.startup(stream);
 
-    orientDB = server.getContext();
-    orientDB.create(DB_NAME, ODatabaseType.PLOCAL);
+    orient = server.getContext();
+    orient.create(DB_NAME, ODatabaseType.PLOCAL);
     server.activate();
     server
         .getSystemDatabase()
@@ -99,14 +102,69 @@ public class OBackupServiceTest {
     manager = agent.getServiceByClass(OBackupService.class).get();
     final ODocument configuration = manager.getConfiguration();
     configuration.field("backups", new ArrayList<>());
+
+    orient.open(DB_NAME, "admin", "admin");
+    if (pool == null) {
+      pool = new ODatabasePool(orient, DB_NAME, "admin", "admin");
+    }
+    final int numberDocuments = 300000;
+    insertDocuments(numberDocuments, 10);
+    verifyInsert(numberDocuments);
+  }
+
+  private void insertDocuments(final int numberDocuments, final int numberValues) {
+    System.out.println(
+        "Start inserting documents for backup (docs="
+            + numberDocuments
+            + ", values="
+            + numberValues
+            + ").");
+    try (final ODatabaseSession session = pool.acquire()) {
+      session.createClassIfNotExist("backups");
+
+      final Map<String, Integer> values = new HashMap<>();
+      for (int i = 0; i < numberValues; i++) {
+        values.put("field" + i, i);
+      }
+
+      for (int i = 0; i < numberDocuments; i++) {
+        // create outside of tx
+        final OElement element = session.newInstance("myTable");
+
+        session.begin();
+        values.entrySet().stream().forEach(e -> element.setProperty(e.getKey(), e.getValue()));
+        element.save();
+        // slower, but
+        // if (i % 1000 == 0) {
+        session.commit();
+        // }
+      }
+      // does not work outside: session.commit();
+    } catch (final Exception e) {
+      System.err.println("Unable to insert data: " + e.getMessage());
+    }
+    System.out.println("Documents inserted for backup.");
+  }
+
+  private void verifyInsert(final int expectedNumberDocuments) {
+    try (final ODatabaseSession session = pool.acquire();
+        final OResultSet rs = session.query("select * from myTable")) {
+      Assert.assertEquals(
+          "Document insert verification failed", expectedNumberDocuments, rs.stream().count());
+    } catch (final Exception e) {
+      System.err.println("Unable to read data: " + e.getMessage());
+    }
+    System.out.println("Verified documents properly inserted.");
   }
 
   @After
   public void tearDownOrientDB() {
-    OrientDB orientDB = server.getContext();
+    final OrientDB orientDB = server.getContext();
     if (orientDB.exists(DB_NAME)) orientDB.drop(DB_NAME);
 
     if (orientDB.exists(DB_NAME_RESTORED)) orientDB.drop(DB_NAME_RESTORED);
+
+    pool.close();
 
     if (server != null) server.shutdown();
 
@@ -117,8 +175,7 @@ public class OBackupServiceTest {
   }
 
   private int calculateToDelete(
-      List<ODocument> list, @SuppressWarnings("SameParameterValue") int start) {
-
+      final List<ODocument> list, @SuppressWarnings("SameParameterValue") int start) {
     int counter = 0;
     Long last = null;
     do {
@@ -137,62 +194,26 @@ public class OBackupServiceTest {
   }
 
   @Test
-  public void backupFullTest() throws InterruptedException {
-    final ODocument fullBackModes = getBackupMode("FULL_BACKUP", "0/5 * * * * ?");
-    final ODocument backup = configureBackup(fullBackModes);
-
-    final ODocument cfg = manager.addBackupAndSchedule(backup);
-    final String uuid = cfg.field("uuid");
-    try {
-      final OBackupTask task = manager.getTask(uuid);
-      final CountDownLatch latch = new CountDownLatch(5);
-      task.registerListener(
-          (cfg1, log) -> {
-            latch.countDown();
-            return latch.getCount() > 0;
-          });
-      latch.await();
-      // task.stop();
-
-      final ODocument logs = manager.logs(uuid, 1, 50, new HashMap<>());
-      assertNotNull(logs);
-      assertNotNull(logs.field("logs"));
-
-      List<ODocument> list = logs.field("logs");
-      assertEquals(6, list.size());
-
-      checkNoOp(list, OBackupLogType.BACKUP_ERROR.toString());
-      deleteAndCheck(uuid, list, 5, 3);
-
-      task.getStrategy().retainLogs(-1);
-      list = getLogs(uuid);
-      assertEquals(0, list.size());
-
-      list = logs.field("logs");
-      checkEmptyPaths(list);
-    } finally {
-      manager.removeBackup(uuid);
-    }
-  }
-
-  @Test
-  public void backupFullIncrementalMixTest() throws InterruptedException {
-    final ODocument modes = getBackupMode("FULL_BACKUP", "0/5 * * * * ?");
-    addBackupMode(modes, "INCREMENTAL_BACKUP", "0/2 * * * * ?");
+  public void ensureFullBackupAfterCancelledFullBackup() throws InterruptedException {
+    final ODocument modes = getBackupMode("INCREMENTAL_BACKUP", "0/1 * * * * ?");
+    addBackupMode(modes, "FULL_BACKUP", "0/4 * * * * ?");
     final ODocument backup = configureBackup(modes);
 
     final ODocument cfg = manager.addBackupAndSchedule(backup);
     final String uuid = cfg.field("uuid");
     try {
       final OBackupTask task = manager.getTask(uuid);
+      startAsyncDatabaseInserter();
       final CountDownLatch latch = new CountDownLatch(17);
       task.registerListener(
           (cfg1, log) -> {
+            // insertDocuments(100000, 10);
             latch.countDown();
             return latch.getCount() > 0;
           });
       latch.await();
       // task.stop();
+      checkStoppingAsyncDatabaseInserter();
 
       final ODocument logs = manager.logs(uuid, 1, 50, new HashMap<>());
       assertNotNull(logs);
@@ -208,13 +229,56 @@ public class OBackupServiceTest {
     }
   }
 
+  private static int NUMBER_THREADS = 4;
+  private static final ExecutorService executor = Executors.newFixedThreadPool(NUMBER_THREADS);
+  final Map<String, Future<?>> futures = new HashMap<>();
+
+  private void startAsyncDatabaseInserter() {
+    for (int i = 0; i < NUMBER_THREADS; i++) {
+      futures.put(
+          "writer" + i,
+          executor.submit(
+              new Runnable() {
+                @Override
+                public void run() {
+                  insertDocuments(500000, 10);
+                }
+              }));
+    }
+  }
+
+  private static int TIMEOUT_IN_SEC = 86400;
+  private void checkStoppingAsyncDatabaseInserter() {
+    int count = 0;
+    for (final Map.Entry<String, Future<?>> future : futures.entrySet()) {
+      try {
+        future.getValue().get(TIMEOUT_IN_SEC, TimeUnit.SECONDS);
+        count++;
+        System.out.println("progress: " + count + " of " + futures.size());
+      } catch (final InterruptedException | ExecutionException | TimeoutException e) {
+        System.out.println(
+            "Failed task "
+                + count
+                + " of "
+                + futures.size()
+                + " in "
+                + future.getKey()
+                + e.getMessage());
+        future.getValue().cancel(true);
+      }
+    }
+    System.out.println("Futures completed " + count + " of " + futures.size());
+    executor.shutdown();
+  }
+
   private ODocument getBackupMode(final String backupMode, final String schedule) {
     final ODocument modes = new ODocument();
     addBackupMode(modes, backupMode, schedule);
     return modes;
   }
 
-  private void addBackupMode(final ODocument modes, final String backupMode, final String schedule) {
+  private void addBackupMode(
+      final ODocument modes, final String backupMode, final String schedule) {
     final ODocument incrementalMode = new ODocument();
     modes.field(backupMode, incrementalMode);
     incrementalMode.field("when", schedule);
@@ -228,140 +292,6 @@ public class OBackupServiceTest {
     backup.field("enabled", true);
     backup.field("retentionDays", 30);
     return backup;
-  }
-
-  private void checkEmptyPaths(List<ODocument> list) {
-
-    for (ODocument log : list) {
-      if (log.field("op").equals(OBackupLogType.BACKUP_FINISHED.toString())) {
-
-        String path = log.field("path");
-
-        File f = new File(path);
-
-        assertFalse(f.exists());
-      }
-    }
-  }
-
-  private List<ODocument> getLogs(String uuid) {
-    ODocument logs = manager.logs(uuid, 1, 50, new HashMap<>());
-    assertNotNull(logs);
-    assertNotNull(logs.field("logs"));
-
-    return logs.field("logs");
-  }
-
-  @Test
-  public void backupIncrementalTest() throws InterruptedException {
-
-    checkExpected(0, null);
-    ODocument modes = new ODocument();
-
-    addBackupMode(modes, "INCREMENTAL_BACKUP", "0/5 * * * * ?");
-
-    ODocument backup = configureBackup(modes);
-
-    ODocument cfg = manager.addBackupAndSchedule(backup);
-
-    String uuid = cfg.field("uuid");
-
-    try {
-      OBackupTask task = manager.getTask(uuid);
-
-      final CountDownLatch latch = new CountDownLatch(5);
-      task.registerListener(
-          (cfg1, log) -> {
-            latch.countDown();
-            return latch.getCount() > 0;
-          });
-      latch.await();
-
-      ODocument logs = manager.logs(uuid, 1, 50, new HashMap<>());
-      assertNotNull(logs);
-      assertNotNull(logs.field("logs"));
-
-      List<ODocument> list = logs.field("logs");
-      assertEquals(6, list.size());
-
-      checkNoOp(list, OBackupLogType.BACKUP_ERROR.toString());
-
-      checkSameUnitUids(list);
-
-      deleteAndCheck(uuid, list, 5, 0);
-
-      checkEmptyPaths(list);
-    } finally {
-      manager.removeBackup(uuid);
-    }
-  }
-
-  @Test
-  public void backupRestoreIncrementalTest() throws InterruptedException {
-
-    checkExpected(0, null);
-    ODocument modes = new ODocument();
-
-    addBackupMode(modes, "INCREMENTAL_BACKUP", "0/5 * * * * ?");
-
-    final ODocument backup = configureBackup(modes);
-
-    ODocument cfg = manager.addBackupAndSchedule(backup);
-
-    String uuid = cfg.field("uuid");
-
-    try {
-      OBackupTask task = manager.getTask(uuid);
-
-      final CountDownLatch latch = new CountDownLatch(5);
-      task.registerListener(
-          (cfg1, log) -> {
-            latch.countDown();
-            return latch.getCount() > 0;
-          });
-      latch.await();
-      task.stop();
-
-      ODocument logs = manager.logs(uuid, 1, 50, new HashMap<>());
-      assertNotNull(logs);
-      assertNotNull(logs.field("logs"));
-
-      List<ODocument> list = logs.field("logs");
-      assertEquals(6, list.size());
-
-      checkNoOp(list, OBackupLogType.BACKUP_ERROR.toString());
-
-      checkSameUnitUids(list);
-
-      CountDownLatch restoreLatch = new CountDownLatch(2);
-
-      task.registerListener(
-          (cfg1, log) -> {
-            restoreLatch.countDown();
-            return true;
-          });
-
-      long unitId = list.get(0).field("unitId");
-
-      ODocument restoreCfg =
-          new ODocument().field("target", DB_NAME_RESTORED).field("unitId", unitId);
-
-      task.restore(restoreCfg);
-
-      restoreLatch.await();
-
-      deleteAndCheck(uuid, list, 5, 0);
-
-      checkEmptyPaths(list);
-
-      try (ODatabaseSession open = orientDB.open(DB_NAME_RESTORED, "admin", "admin")) {
-        long oUser = open.countClass("OUser");
-        Assert.assertEquals(3, oUser);
-      }
-
-    } finally {
-      manager.removeBackup(uuid);
-    }
   }
 
   private void deleteAndCheck(String uuid, List<ODocument> list, int index, long expected) {
@@ -386,22 +316,6 @@ public class OBackupServiceTest {
                 .getSystemDatabase()
                 .execute(iArgument -> iArgument.stream().collect(Collectors.toList()), query, uuid);
     assertThat(execute.get(0).<Long>getProperty("count")).isEqualTo(expected);
-  }
-
-  private void checkSameUnitUids(Collection<ODocument> list) {
-
-    if (list.size() > 0) {
-      Long unitId = null;
-      for (ODocument d : list) {
-        if (unitId == null) {
-          unitId = d.field("unitId");
-        } else {
-          assertEquals(unitId, d.field("unitId"));
-        }
-      }
-    } else {
-      fail();
-    }
   }
 
   private void checkNoOp(Collection<ODocument> list, String op) {

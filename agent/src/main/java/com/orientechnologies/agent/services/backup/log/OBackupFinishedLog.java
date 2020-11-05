@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /** Created by Enrico Risa on 25/03/16. */
 public class OBackupFinishedLog extends OBackupLog {
-
   OBackupLogFactory factory = new OBackupLogFactory();
   private String fileName;
   private String path;
@@ -53,7 +52,6 @@ public class OBackupFinishedLog extends OBackupLog {
 
   @Override
   public void fromDoc(ODocument doc) {
-
     super.fromDoc(doc);
     path = doc.field("path");
     fileName = doc.field("fileName");
@@ -117,7 +115,7 @@ public class OBackupFinishedLog extends OBackupLog {
     return prevChange;
   }
 
-  public void setPrevChange(Boolean prevChange) {
+  public void setPrevChange(final Boolean prevChange) {
     this.prevChange = prevChange;
   }
 }

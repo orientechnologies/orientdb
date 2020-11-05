@@ -60,7 +60,6 @@ public class OBackupStrategyMixBackup extends OBackupStrategy {
   }
 
   protected String defaultPath() {
-
     long begin = System.currentTimeMillis();
     try {
       OBackupLog last = logger.findLast(OBackupLogType.BACKUP_SCHEDULED, getUUID());
@@ -75,10 +74,12 @@ public class OBackupStrategyMixBackup extends OBackupStrategy {
     return basePath + File.separator + dbName + "-" + begin;
   }
 
+  Date skippedFull = null;
+
   @Override
   public Date scheduleNextExecution(final OBackupListener listener) {
-    final OBackupScheduledLog last = lastUnfiredSchedule();
-    if (last == null) {
+    final OBackupScheduledLog lastBackupSchedule = lastUnfiredSchedule();
+    if (lastBackupSchedule == null) {
       final ODocument full =
           (ODocument) cfg.eval(OBackupConfig.MODES + "." + OAutomaticBackup.MODE.FULL_BACKUP);
       final String whenFull = full.field(OBackupConfig.WHEN);
@@ -93,38 +94,60 @@ public class OBackupStrategyMixBackup extends OBackupStrategy {
 
         final Date nextFull = eFull.getNextValidTimeAfter(now);
         final Date nextIncremental = eIncremental.getNextValidTimeAfter(now);
-        OBackupFinishedLog lastCompleted = null;
+
         long unitId = logger.nextOpId();
         try {
-          lastCompleted =
+          final OBackupFinishedLog lastCompleted =
               (OBackupFinishedLog) logger.findLast(OBackupLogType.BACKUP_FINISHED, getUUID());
           if (lastCompleted != null
               && nextIncremental.before(nextFull)
               && !Boolean.TRUE.equals(lastCompleted.getPrevChange())) {
             unitId = lastCompleted.getUnitId();
-            isIncremental = true;
+
+            if (skippedFull != null && skippedFull.before(nextIncremental)) {
+              OLogManager.instance().info(this, "[DR] skipped full before incremental");
+              isIncremental = false;
+              skippedFull = null;
+            } else {
+              OLogManager.instance().info(this, "[DR] incremental before full");
+              isIncremental = true;
+              skippedFull = nextFull;
+            }
           } else {
+            OLogManager.instance().info(this, "[DR] incremental not before full");
             isIncremental = false;
+            skippedFull = null;
           }
-        } catch (IOException e) {
+        } catch (final IOException e) {
           OLogManager.instance().error(this, "Error " + e.getMessage(), e);
         }
-        Date nextExecution = nextIncremental.before(nextFull) ? nextIncremental : nextFull;
-        OBackupScheduledLog log =
+        final Date nextExecution = nextIncremental.before(nextFull) ? nextIncremental : nextFull;
+        final OBackupScheduledLog log =
             new OBackupScheduledLog(
                 unitId, logger.nextOpId(), getUUID(), getDbName(), getMode().toString());
         log.nextExecution = nextExecution.getTime();
         getLogger().log(log);
         listener.onEvent(cfg, log);
         return nextExecution;
-      } catch (ParseException e) {
+      } catch (final ParseException e) {
         OLogManager.instance().error(this, "Parse exception: " + e.getMessage(), e);
+        return null;
       }
-      return null;
     } else {
       isIncremental =
-          OAutomaticBackup.MODE.INCREMENTAL_BACKUP.toString().equalsIgnoreCase(last.getMode());
-      return new Date(last.nextExecution);
+          OAutomaticBackup.MODE
+              .INCREMENTAL_BACKUP
+              .toString()
+              .equalsIgnoreCase(lastBackupSchedule.getMode());
+      OLogManager.instance()
+          .info(
+              this,
+              "[DR] last schedule null with isInc="
+                  + isIncremental
+                  + " and next execution "
+                  + lastBackupSchedule.nextExecution);
+      skippedFull = null;
+      return new Date(lastBackupSchedule.nextExecution);
     }
   }
 }

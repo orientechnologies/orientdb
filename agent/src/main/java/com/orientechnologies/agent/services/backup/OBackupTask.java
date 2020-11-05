@@ -50,15 +50,16 @@ public class OBackupTask implements OBackupListener {
                         .submit(
                             () -> {
                               try {
+                                final long start = tickStart();
                                 strategy.doBackup(OBackupTask.this);
-                              } catch (IOException e) {
+                                tickEnd(start);
+                              } catch (final IOException e) {
                                 OLogManager.instance().error(this, "Error " + e.getMessage(), e);
                               }
                             });
                   },
                   nextExecution,
                   0);
-
       OLogManager.instance()
           .info(
               this,
@@ -70,6 +71,22 @@ public class OBackupTask implements OBackupListener {
                   + nextExecution);
     }
     strategy.retainLogs();
+  }
+
+  private long tickStart() {
+    OLogManager.instance()
+        .info(this, "Backup started " + strategy.getMode());
+    return System.currentTimeMillis();
+  }
+
+  private void tickEnd(long start) {
+    OLogManager.instance()
+        .info(
+            this,
+            "Backup "
+                + strategy.getMode()
+                + " in (ms):"
+                + (System.currentTimeMillis() - start));
   }
 
   public OBackupStrategy getStrategy() {

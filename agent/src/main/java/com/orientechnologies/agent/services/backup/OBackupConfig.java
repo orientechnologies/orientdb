@@ -114,21 +114,19 @@ public class OBackupConfig {
     }
   }
 
-  public ODocument addBackup(ODocument doc) {
-
+  public ODocument addAndPushBackup(final ODocument backupConfigDoc) {
     synchronized (this) {
-      String uuid = UUID.randomUUID().toString();
-      doc.field(ID, uuid);
-      validateBackup(doc);
-      pushBackup(doc);
-      return doc;
+      final String uuid = UUID.randomUUID().toString();
+      backupConfigDoc.field(ID, uuid);
+      validateBackup(backupConfigDoc);
+      pushBackup(backupConfigDoc);
+      return backupConfigDoc;
     }
   }
 
-  private void pushBackup(ODocument doc) {
-    Collection<ODocument> backups = configuration.field(BACKUPS);
-
-    backups.add(doc);
+  private void pushBackup(final ODocument backupConfigDoc) {
+    final Collection<ODocument> backups = configuration.field(BACKUPS);
+    backups.add(backupConfigDoc);
     writeConfiguration();
   }
 
@@ -220,7 +218,8 @@ public class OBackupConfig {
     try {
       final File f = new File(filePath);
       OIOUtils.writeFile(f, configuration.toJSON("prettyPrint"));
-    } catch (IOException e) {
+      OLogManager.instance().info(this, "Write backup config to " + filePath);
+    } catch (final IOException e) {
       throw OException.wrapException(
           new OConfigurationException(
               "Cannot save Backup configuration file '" + configFile + "'. "),
