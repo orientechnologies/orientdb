@@ -406,7 +406,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
               nretry,
               delay);
       int quorum = 0;
-      for (String clusterName : txManager.getInvolvedClusters(iTx.getRecordOperations())) {
+      Set<String> clusters = getInvolvedClusters(iTx.getRecordOperations());
+      for (String clusterName : clusters) {
         final List<String> clusterServers = dbCfg.getServers(clusterName, null);
         final int writeQuorum =
             dbCfg.getWriteQuorum(clusterName, clusterServers.size(), localNodeName);
@@ -420,7 +421,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
             "No enough nodes online to execute the operation, available nodes: " + online);
       }
 
-      txManager.commit(this, iTx);
+      txManager.commit(this, iTx, clusters);
       return;
     } catch (OValidationException e) {
       throw e;
@@ -1162,5 +1163,14 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   @Override
   public String getStorageId() {
     return getDistributedManager().getLocalNodeName() + "." + getName();
+  }
+
+  protected Set<String> getInvolvedClusters(final Iterable<ORecordOperation> uResult) {
+    final Set<String> involvedClusters = new HashSet<>();
+    for (ORecordOperation op : uResult) {
+      final ORecord record = op.getRecord();
+      involvedClusters.add(getStorage().getClusterNameById(record.getIdentity().getClusterId()));
+    }
+    return involvedClusters;
   }
 }

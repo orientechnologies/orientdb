@@ -372,12 +372,21 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask implements O
     return FACTORYID;
   }
 
-  public void init(final OTransactionId transactionId, final OTransactionInternal operations) {
+  public void init(final OTransactionId transactionId, final OTransactionInternal tx) {
     this.transactionId = transactionId;
-    final ODatabaseDocumentInternal database = operations.getDatabase();
+    extractUniqueIndexOps(tx);
+    this.ops = new ArrayList<>(tx.getRecordOperations());
+    genOps(this.ops);
+  }
+
+  private void extractUniqueIndexOps(final OTransactionInternal tx) {
+    if (tx.getIndexOperations().isEmpty()) {
+      return;
+    }
+
+    final ODatabaseDocumentInternal database = tx.getDatabase();
     final OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) database.getStorage();
-    operations
-        .getIndexOperations()
+    tx.getIndexOperations()
         .forEach(
             (index, changes) -> {
               OIndexInternal resolvedIndex =
@@ -395,8 +404,6 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask implements O
                 }
               }
             });
-    this.ops = new ArrayList<>(operations.getRecordOperations());
-    genOps(this.ops);
   }
 
   @Override

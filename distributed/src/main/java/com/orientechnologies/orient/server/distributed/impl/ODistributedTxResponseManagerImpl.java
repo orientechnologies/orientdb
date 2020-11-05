@@ -6,13 +6,7 @@ import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPha
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionResultPayload;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxException;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxStillRunning;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class ODistributedTxResponseManagerImpl implements ODistributedTxResponseManager {
 
@@ -62,8 +56,12 @@ public class ODistributedTxResponseManagerImpl implements ODistributedTxResponse
   }
 
   @Override
-  public Object getGenericFinalResponse() {
-    return finalResult;
+  public Optional<OTransactionResultPayload> getDistributedTxFinalResponse() {
+    List<OTransactionResultPayload> results = (List<OTransactionResultPayload>) finalResult;
+    if (results.isEmpty()) {
+      return Optional.empty();
+    }
+    return Optional.of(results.get(0));
   }
 
   @Override

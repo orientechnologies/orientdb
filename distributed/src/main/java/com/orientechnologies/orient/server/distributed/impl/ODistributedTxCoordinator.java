@@ -22,12 +22,10 @@ package com.orientechnologies.orient.server.distributed.impl;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
@@ -78,7 +76,10 @@ public class ODistributedTxCoordinator {
     this.retryDelay = retryDelay;
   }
 
-  public void commit(final ODatabaseDocumentDistributed database, final OTransactionInternal iTx) {
+  public void commit(
+      final ODatabaseDocumentDistributed database,
+      final OTransactionInternal iTx,
+      Set<String> clusters) {
     ODistributedDatabaseImpl distributedDatabase =
         (ODistributedDatabaseImpl) messageService.getDatabase(database.getName());
     int count = 0;
@@ -90,7 +91,7 @@ public class ODistributedTxCoordinator {
         Optional<OTransactionId> genId = distributedDatabase.nextId();
         if (genId.isPresent()) {
           OTransactionId txId = genId.get();
-          tryCommit(database, iTx, txId, requestId);
+          tryCommit(database, iTx, txId, requestId, clusters);
           return;
         } else {
           try {
@@ -140,23 +141,19 @@ public class ODistributedTxCoordinator {
       final ODatabaseDocumentDistributed database,
       final OTransactionInternal iTx,
       OTransactionId txId,
-      final ODistributedRequestId requestId) {
-    final String localNodeName = nodeName;
+      final ODistributedRequestId requestId,
+      Set<String> clusters) {
 
     iTx.setStatus(OTransaction.TXSTATUS.BEGUN);
 
-    final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(storage.getName());
-
-    final Set<String> involvedClusters = getInvolvedClusters(iTx.getRecordOperations());
-    Set<String> nodes = getAvailableNodesButLocal(dbCfg, involvedClusters, localNodeName);
     ODistributedDatabaseImpl sharedDb =
         (ODistributedDatabaseImpl) messageService.getDatabase(database.getName());
 
     OLocalKeySource keySource = new OLocalKeySource(txId, iTx, database);
     List<OLockGuard> guards = sharedDb.localLock(keySource);
     OTransactionResultPayload localResult;
-    try {
 
+    try {
       // This retry happen only the first time i try to lock on local server
       localResult =
           OTransactionPhase1Task.executeTransaction(requestId, txId, database, iTx, true, -1);
@@ -175,6 +172,7 @@ public class ODistributedTxCoordinator {
           nodeName, ((OTxKeyLockTimeout) localResult).getKey());
     }
 
+    Set<String> nodes = sharedDb.getAvailableNodesButLocal(clusters);
     if (nodes.isEmpty()) {
       switch (localResult.getResponseType()) {
         case OTxSuccess.ID:
@@ -202,7 +200,7 @@ public class ODistributedTxCoordinator {
           }
         case OTxConcurrentModification.ID:
           {
-            // Concurrent modification exception quorum send ko and throw cuncurrent modification
+            // Concurrent modification exception quorum send ko and throw concurrent modification
             // exception
             localKo(requestId, database, keySource);
             ORID id = ((OTxConcurrentModification) localResult).getRecordId();
@@ -231,13 +229,13 @@ public class ODistributedTxCoordinator {
     }
     final OTransactionPhase1Task txTask = createTxPhase1Task(txId, iTx);
 
-    final Set sentNodes = new HashSet(nodes);
+    final Set<String> sentNodes = new HashSet<>(nodes);
 
     iTx.setStatus(OTransaction.TXSTATUS.COMMITTING);
     // SYNCHRONOUS CALL: REPLICATE IT
     dManager.sendRequest(
         storage.getName(),
-        involvedClusters,
+        clusters,
         nodes,
         txTask,
         requestId.getMessageId(),
@@ -263,10 +261,7 @@ public class ODistributedTxCoordinator {
           return responseManager;
         }));
 
-    handleResponse(requestId, responseManager, involvedClusters, sentNodes, database, iTx, txTask);
-
-    // OK, DISTRIBUTED COMMIT SUCCEED
-    return;
+    handleResponse(requestId, responseManager, clusters, sentNodes, database, iTx, txTask);
   }
 
   private void handleResponse(
@@ -284,10 +279,9 @@ public class ODistributedTxCoordinator {
     }
 
     if (responseManager.isQuorumReached()) {
-      List<OTransactionResultPayload> results =
-          (List<OTransactionResultPayload>) responseManager.getGenericFinalResponse();
-      assert results.size() > 0;
-      OTransactionResultPayload resultPayload = results.get(0);
+      Optional<OTransactionResultPayload> result = responseManager.getDistributedTxFinalResponse();
+      assert result.isPresent();
+      OTransactionResultPayload resultPayload = result.get();
       switch (resultPayload.getResponseType()) {
         case OTxSuccess.ID:
           // Success send ok
@@ -356,10 +350,10 @@ public class ODistributedTxCoordinator {
           throw new OInvalidSequentialException();
       }
 
-      for (OTransactionResultPayload result : responseManager.getAllResponses()) {
-        if (result.getResponseType() == OTxException.ID) {
+      for (OTransactionResultPayload txResult : responseManager.getAllResponses()) {
+        if (txResult.getResponseType() == OTxException.ID) {
           OLogManager.instance()
-              .warn(this, "One node on error", ((OTxException) result).getException());
+              .warn(this, "One node on error", ((OTxException) txResult).getException());
         }
       }
     } else {
@@ -481,24 +475,6 @@ public class ODistributedTxCoordinator {
         LOCAL_RESULT_SUCCESS);
   }
 
-  protected Set<String> getAvailableNodesButLocal(
-      ODistributedConfiguration dbCfg, Set<String> involvedClusters, String localNodeName) {
-    final Set<String> nodes = dbCfg.getServers(involvedClusters);
-
-    // REMOVE CURRENT NODE BECAUSE IT HAS BEEN ALREADY EXECUTED LOCALLY
-    nodes.remove(localNodeName);
-    return nodes;
-  }
-
-  protected Set<String> getInvolvedClusters(final Iterable<ORecordOperation> uResult) {
-    final Set<String> involvedClusters = new HashSet<String>();
-    for (ORecordOperation op : uResult) {
-      final ORecord record = op.getRecord();
-      involvedClusters.add(storage.getClusterNameById(record.getIdentity().getClusterId()));
-    }
-    return involvedClusters;
-  }
-
   protected OTransactionPhase1Task createTxPhase1Task(
       OTransactionId id, final OTransactionInternal transaction) {
     final OTransactionPhase1Task txTask = new OTransactionPhase1Task();
@@ -510,5 +486,10 @@ public class ODistributedTxCoordinator {
       ODistributedRequestId requestId, OTransactionPhase1Task txTask, boolean success) {
     return new OTransactionPhase2Task(
         requestId, success, txTask.getRids(), txTask.getUniqueKeys(), txTask.getTransactionId());
+  }
+
+  /** This is to be used only for testing! */
+  void setResponseManager(ODistributedTxResponseManager responseManager) {
+    this.responseManager = responseManager;
   }
 }
