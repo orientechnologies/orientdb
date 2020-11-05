@@ -121,7 +121,39 @@ public class OContainsAllCondition extends OBooleanExpression {
 
   @Override
   public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+    if (left.isFunctionAny()) {
+      return evaluateAny(currentRecord, ctx);
+    }
+
+    if (left.isFunctionAll()) {
+      return evaluateAllFunction(currentRecord, ctx);
+    }
+
     Object leftValue = left.execute(currentRecord, ctx);
+    return evaluateSingle(leftValue, currentRecord, ctx);
+  }
+
+  private boolean evaluateAllFunction(OResult currentRecord, OCommandContext ctx) {
+    for (String propertyName : currentRecord.getPropertyNames()) {
+      Object leftValue = currentRecord.getProperty(propertyName);
+      if (!evaluateSingle(leftValue, currentRecord, ctx)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private boolean evaluateAny(OResult currentRecord, OCommandContext ctx) {
+    for (String propertyName : currentRecord.getPropertyNames()) {
+      Object leftValue = currentRecord.getProperty(propertyName);
+      if (evaluateSingle(leftValue, currentRecord, ctx)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private boolean evaluateSingle(Object leftValue, OResult currentRecord, OCommandContext ctx) {
     if (right != null) {
       Object rightValue = right.execute(currentRecord, ctx);
       return execute(leftValue, rightValue);
