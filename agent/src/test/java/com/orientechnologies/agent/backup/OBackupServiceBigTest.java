@@ -210,7 +210,9 @@ public class OBackupServiceBigTest {
   @Test
   public void ensureFullBackupAfterCancelledFullBackup() throws InterruptedException {
     // Tight incremental schedule with occasional full backups.
+    // Every 1 seconds starting at :00 second after the minute
     final ODocument modes = getBackupMode("INCREMENTAL_BACKUP", "0/1 * * * * ?");
+    // Every 4 seconds starting at :00 second after the minute
     addBackupMode(modes, "FULL_BACKUP", "0/4 * * * * ?");
     final ODocument backup = configureBackup(modes);
 
