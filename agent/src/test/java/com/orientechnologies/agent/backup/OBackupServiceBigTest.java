@@ -29,8 +29,6 @@ import com.orientechnologies.orient.core.db.ODatabasePool;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
@@ -53,6 +51,21 @@ import static junit.framework.Assert.fail;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 
+/*
+ * The full backup displacment problem happens, when an incremental backup takes so long to overlap
+ * with a schedule of a full backup and the next backup schedule is an incremental one again. In
+ * that case, the full backup could be displaced for several hours or days, until an incremental
+ * backup is short enough to allow the execution of a full backup. This kind of problems is
+ * difficult to reproduce, hence the following measures have been taken: (1) more frequent
+ * INCREMENTAL_BACKUP, than FULL_BACKUP, (2) base fill of database with documents for slowing down
+ * the backups and (3) async inserting of data by simulating several concurrent users.
+ *
+ * <p>When the problem occurs, the log shows one FULL_BACKUP followed by several INCREMENTAL_BACKUP
+ * until the latches are counted down. The solution shows a FULL_BACKUP, followed by
+ * INCREMENTAL_BACKUP and FULL_BACKUP, letting the latter close to its schedule (cf. changes,
+ * comments in @see
+ * com.orientechnologies.agent.services.backup.strategy.OBackupStrategyMixBackup#scheduleNextExecution()).
+ */
 public class OBackupServiceBigTest {
   private OServer server;
 
@@ -107,6 +120,7 @@ public class OBackupServiceBigTest {
     if (pool == null) {
       pool = new ODatabasePool(orient, DB_NAME, "admin", "admin");
     }
+    // fill database for reproducing the full backup displacment problem.
     final int numberDocuments = 300000;
     insertDocuments(numberDocuments, 10);
     verifyInsert(numberDocuments);
@@ -134,12 +148,9 @@ public class OBackupServiceBigTest {
         session.begin();
         values.entrySet().stream().forEach(e -> element.setProperty(e.getKey(), e.getValue()));
         element.save();
-        // slower, but
-        // if (i % 1000 == 0) {
+        // slower with continuous changes for reproducing the full backup displacment problem.
         session.commit();
-        // }
       }
-      // does not work outside: session.commit();
     } catch (final Exception e) {
       System.err.println("Unable to insert data: " + e.getMessage());
     }
@@ -160,17 +171,20 @@ public class OBackupServiceBigTest {
   @After
   public void tearDownOrientDB() {
     final OrientDB orientDB = server.getContext();
-    if (orientDB.exists(DB_NAME)) orientDB.drop(DB_NAME);
-
-    if (orientDB.exists(DB_NAME_RESTORED)) orientDB.drop(DB_NAME_RESTORED);
-
-    pool.close();
-
-    if (server != null) server.shutdown();
-
+    if (orientDB.exists(DB_NAME)) {
+      orientDB.drop(DB_NAME);
+    }
+    if (orientDB.exists(DB_NAME_RESTORED)) {
+      orientDB.drop(DB_NAME_RESTORED);
+    }
+    if (pool != null) {
+      pool.close();
+    }
+    if (server != null) {
+      server.shutdown();
+    }
     Orient.instance().shutdown();
     Orient.instance().startup();
-
     OFileUtils.deleteRecursively(new File(BACKUP_PATH));
   }
 
@@ -195,6 +209,7 @@ public class OBackupServiceBigTest {
 
   @Test
   public void ensureFullBackupAfterCancelledFullBackup() throws InterruptedException {
+    // Tight incremental schedule with occasional full backups.
     final ODocument modes = getBackupMode("INCREMENTAL_BACKUP", "0/1 * * * * ?");
     addBackupMode(modes, "FULL_BACKUP", "0/4 * * * * ?");
     final ODocument backup = configureBackup(modes);
@@ -203,11 +218,12 @@ public class OBackupServiceBigTest {
     final String uuid = cfg.field("uuid");
     try {
       final OBackupTask task = manager.getTask(uuid);
-      startAsyncDatabaseInserter();
+      // have continuous writing of data for reproducing the full backup displacment problem.
+      startAsyncDocumentInsertions();
+
       final CountDownLatch latch = new CountDownLatch(17);
       task.registerListener(
           (cfg1, log) -> {
-            // insertDocuments(100000, 10);
             latch.countDown();
             return latch.getCount() > 0;
           });
@@ -233,7 +249,7 @@ public class OBackupServiceBigTest {
   private static final ExecutorService executor = Executors.newFixedThreadPool(NUMBER_THREADS);
   final Map<String, Future<?>> futures = new HashMap<>();
 
-  private void startAsyncDatabaseInserter() {
+  private void startAsyncDocumentInsertions() {
     for (int i = 0; i < NUMBER_THREADS; i++) {
       futures.put(
           "writer" + i,
@@ -248,6 +264,7 @@ public class OBackupServiceBigTest {
   }
 
   private static int TIMEOUT_IN_SEC = 86400;
+
   private void checkStoppingAsyncDatabaseInserter() {
     int count = 0;
     for (final Map.Entry<String, Future<?>> future : futures.entrySet()) {

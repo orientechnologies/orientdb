@@ -74,7 +74,9 @@ public class OBackupStrategyMixBackup extends OBackupStrategy {
     return basePath + File.separator + dbName + "-" + begin;
   }
 
-  Date skippedFull = null;
+  // Make sure not to displace / skip a full backup (e.g. in case an incremental backup took
+  // longer). Hence (1) store last (and potentially skipped) full backup.
+  private Date skippedFull = null;
 
   @Override
   public Date scheduleNextExecution(final OBackupListener listener) {
@@ -104,17 +106,23 @@ public class OBackupStrategyMixBackup extends OBackupStrategy {
               && !Boolean.TRUE.equals(lastCompleted.getPrevChange())) {
             unitId = lastCompleted.getUnitId();
 
+            // (2) when deciding on incremental check for skipped full backup that actually came
+            // before the next incremental.
             if (skippedFull != null && skippedFull.before(nextIncremental)) {
-              OLogManager.instance().info(this, "[DR] skipped full before incremental");
+              OLogManager.instance()
+                  .debug(this, "Found skipped full backup (i.e. before incremental)");
               isIncremental = false;
               skippedFull = null;
             } else {
-              OLogManager.instance().info(this, "[DR] incremental before full");
+              // (3) else take incremental, but remember skipped full backup.
+              OLogManager.instance()
+                  .debug(this, "Found incremental backup before full (i.e. remember skipped full)");
               isIncremental = true;
               skippedFull = nextFull;
             }
           } else {
-            OLogManager.instance().info(this, "[DR] incremental not before full");
+            // (4) if full exercised, forget skipped full backup.
+            OLogManager.instance().debug(this, "Found full backup before incremental");
             isIncremental = false;
             skippedFull = null;
           }
@@ -139,15 +147,13 @@ public class OBackupStrategyMixBackup extends OBackupStrategy {
               .INCREMENTAL_BACKUP
               .toString()
               .equalsIgnoreCase(lastBackupSchedule.getMode());
-      OLogManager.instance()
-          .info(
-              this,
-              "[DR] last schedule null with isInc="
-                  + isIncremental
-                  + " and next execution "
-                  + lastBackupSchedule.nextExecution);
-      skippedFull = null;
-      return new Date(lastBackupSchedule.nextExecution);
+      // (5) if last schedule not null and next backup is incremental, preserve skipped full
+      // backup, else forget.
+      final Date nextExecution = new Date(lastBackupSchedule.nextExecution);
+      if (skippedFull != null && isIncremental == false) {
+        skippedFull = null;
+      }
+      return nextExecution;
     }
   }
 }
