@@ -255,7 +255,10 @@ public class OBackupServiceBigTest {
       }
       Assert.assertEquals("", backupOperationsStarted, backupOperationsFinished);
       System.out.println("Full backups finished:" + fullBackupFinished);
-      Assert.assertTrue("Full backups not sufficient", fullBackupFinished > 2);
+      // first backup is always full. Subsequent ones are incremental. But at least one more should
+      // be full until the end of the latches. Note that this is an approximation due to the task
+      // scheduling.
+      Assert.assertTrue("Full backups not sufficient", fullBackupFinished >= 2);
 
       checkNoOp(list, OBackupLogType.BACKUP_ERROR.toString());
       deleteAndCheck(uuid, list, 17, 18 - calculateToDelete(list, 17));
