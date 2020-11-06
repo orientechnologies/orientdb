@@ -29,17 +29,7 @@ import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OScriptExecutor;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
-import com.orientechnologies.orient.core.db.ODatabaseListener;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.OHookReplacedRecordThreadLocal;
-import com.orientechnologies.orient.core.db.OLiveQueryMonitor;
-import com.orientechnologies.orient.core.db.OLiveQueryResultListener;
-import com.orientechnologies.orient.core.db.OSharedContext;
-import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -88,13 +78,8 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
 
 import java.text.SimpleDateFormat;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.TimeZone;
 import java.util.concurrent.Callable;
 
 /**
@@ -103,7 +88,24 @@ import java.util.concurrent.Callable;
 public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract implements OQueryLifecycleListener {
 
   private OrientDBConfig config;
-  private OStorage       storage;
+  private OStorage storage;
+
+  InterruptTimerTask commandInterruptTimer;
+
+  protected class InterruptTimerTask extends TimerTask {
+
+    private Thread executionThread;
+
+    protected InterruptTimerTask(Thread executionThread) {
+      this.executionThread = executionThread;
+    }
+
+    @Override
+    public void run() {
+      interruptExecution(executionThread);
+    }
+  }
+
 
   public ODatabaseDocumentEmbedded(final OStorage storage) {
     activateOnCurrentThread();
@@ -222,7 +224,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
    * Opens a database using an authentication token received as an argument.
    *
    * @param iToken Authentication token
-   *
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
   @Deprecated
@@ -531,15 +532,29 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     checkOpenness();
     checkIfActive();
 
-    OStatement statement = OSQLEngine.parse(query, this);
-    if (!statement.isIdempotent()) {
-      throw new OCommandExecutionException("Cannot execute query on non idempotent statement: " + query);
+    if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
+      commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
+      Orient.instance()
+              .scheduleTask(
+                      commandInterruptTimer,
+                      getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT), 0);
     }
-    OResultSet original = statement.execute(this, args, true);
-    OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
-    this.queryStarted(result.getQueryId(), result);
-    result.addLifecycleListener(this);
-    return result;
+    try {
+      OStatement statement = OSQLEngine.parse(query, this);
+      if (!statement.isIdempotent()) {
+        throw new OCommandExecutionException("Cannot execute query on non idempotent statement: " + query);
+      }
+      OResultSet original = statement.execute(this, args, true);
+      OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
+      this.queryStarted(result.getQueryId(), result);
+      result.addLifecycleListener(this);
+      return result;
+    } finally {
+      if (commandInterruptTimer != null) {
+        commandInterruptTimer.cancel();
+        commandInterruptTimer = null;
+      }
+    }
   }
 
   @Override
@@ -547,15 +562,30 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     checkOpenness();
     checkIfActive();
 
-    OStatement statement = OSQLEngine.parse(query, this);
-    if (!statement.isIdempotent()) {
-      throw new OCommandExecutionException("Cannot execute query on non idempotent statement: " + query);
+    if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
+      commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
+      Orient.instance()
+              .scheduleTask(
+                      commandInterruptTimer,
+                      getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT), 0);
     }
-    OResultSet original = statement.execute(this, args, true);
-    OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
-    this.queryStarted(result.getQueryId(), result);
-    result.addLifecycleListener(this);
-    return result;
+    try {
+
+      OStatement statement = OSQLEngine.parse(query, this);
+      if (!statement.isIdempotent()) {
+        throw new OCommandExecutionException("Cannot execute query on non idempotent statement: " + query);
+      }
+      OResultSet original = statement.execute(this, args, true);
+      OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
+      this.queryStarted(result.getQueryId(), result);
+      result.addLifecycleListener(this);
+      return result;
+    } finally {
+      if (commandInterruptTimer != null) {
+        commandInterruptTimer.cancel();
+        commandInterruptTimer = null;
+      }
+    }
   }
 
   @Override
@@ -563,22 +593,36 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     checkOpenness();
     checkIfActive();
 
-    OStatement statement = OSQLEngine.parse(query, this);
-    OResultSet original = statement.execute(this, args, true);
-    OLocalResultSetLifecycleDecorator result;
-    if (!statement.isIdempotent()) {
-      //fetch all, close and detach
-      OInternalResultSet prefetched = new OInternalResultSet();
-      original.forEachRemaining(x -> prefetched.add(x));
-      original.close();
-      result = new OLocalResultSetLifecycleDecorator(prefetched);
-    } else {
-      //stream, keep open and attach to the current DB
-      result = new OLocalResultSetLifecycleDecorator(original);
-      this.queryStarted(result.getQueryId(), result);
-      result.addLifecycleListener(this);
+    if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
+      commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
+      Orient.instance()
+              .scheduleTask(
+                      commandInterruptTimer,
+                      getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT), 0);
     }
-    return result;
+    try {
+      OStatement statement = OSQLEngine.parse(query, this);
+      OResultSet original = statement.execute(this, args, true);
+      OLocalResultSetLifecycleDecorator result;
+      if (!statement.isIdempotent()) {
+        //fetch all, close and detach
+        OInternalResultSet prefetched = new OInternalResultSet();
+        original.forEachRemaining(x -> prefetched.add(x));
+        original.close();
+        result = new OLocalResultSetLifecycleDecorator(prefetched);
+      } else {
+        //stream, keep open and attach to the current DB
+        result = new OLocalResultSetLifecycleDecorator(original);
+        this.queryStarted(result.getQueryId(), result);
+        result.addLifecycleListener(this);
+      }
+      return result;
+    } finally {
+      if (commandInterruptTimer != null) {
+        commandInterruptTimer.cancel();
+        commandInterruptTimer = null;
+      }
+    }
 
   }
 
@@ -587,22 +631,36 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     checkOpenness();
     checkIfActive();
 
-    OStatement statement = OSQLEngine.parse(query, this);
-    OResultSet original = statement.execute(this, args, true);
-    OLocalResultSetLifecycleDecorator result;
-    if (!statement.isIdempotent()) {
-      //fetch all, close and detach
-      OInternalResultSet prefetched = new OInternalResultSet();
-      original.forEachRemaining(x -> prefetched.add(x));
-      original.close();
-      result = new OLocalResultSetLifecycleDecorator(prefetched);
-    } else {
-      //stream, keep open and attach to the current DB
-      result = new OLocalResultSetLifecycleDecorator(original);
-      this.queryStarted(result.getQueryId(), result);
-      result.addLifecycleListener(this);
+    if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
+      commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
+      Orient.instance()
+              .scheduleTask(
+                      commandInterruptTimer,
+                      getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT), 0);
     }
-    return result;
+    try {
+      OStatement statement = OSQLEngine.parse(query, this);
+      OResultSet original = statement.execute(this, args, true);
+      OLocalResultSetLifecycleDecorator result;
+      if (!statement.isIdempotent()) {
+        //fetch all, close and detach
+        OInternalResultSet prefetched = new OInternalResultSet();
+        original.forEachRemaining(x -> prefetched.add(x));
+        original.close();
+        result = new OLocalResultSetLifecycleDecorator(prefetched);
+      } else {
+        //stream, keep open and attach to the current DB
+        result = new OLocalResultSetLifecycleDecorator(original);
+        this.queryStarted(result.getQueryId(), result);
+        result.addLifecycleListener(this);
+      }
+      return result;
+    } finally {
+      if (commandInterruptTimer != null) {
+        commandInterruptTimer.cancel();
+        commandInterruptTimer = null;
+      }
+    }
   }
 
   @Override
@@ -610,19 +668,33 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     checkOpenness();
     checkIfActive();
 
-    OScriptExecutor executor = OCommandManager.instance().getScriptExecutor(language);
-
-    ((OAbstractPaginatedStorage) this.storage.getUnderlying()).pauseConfigurationUpdateNotifications();
-    OResultSet original;
-    try {
-      original = executor.execute(this, script, args);
-    } finally {
-      ((OAbstractPaginatedStorage) this.storage.getUnderlying()).fireConfigurationUpdateNotifications();
+    if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
+      commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
+      Orient.instance()
+              .scheduleTask(
+                      commandInterruptTimer,
+                      getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT), 0);
     }
-    OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
-    this.queryStarted(result.getQueryId(), result);
-    result.addLifecycleListener(this);
-    return result;
+    try {
+      OScriptExecutor executor = OCommandManager.instance().getScriptExecutor(language);
+
+      ((OAbstractPaginatedStorage) this.storage.getUnderlying()).pauseConfigurationUpdateNotifications();
+      OResultSet original;
+      try {
+        original = executor.execute(this, script, args);
+      } finally {
+        ((OAbstractPaginatedStorage) this.storage.getUnderlying()).fireConfigurationUpdateNotifications();
+      }
+      OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
+      this.queryStarted(result.getQueryId(), result);
+      result.addLifecycleListener(this);
+      return result;
+    } finally {
+      if (commandInterruptTimer != null) {
+        commandInterruptTimer.cancel();
+        commandInterruptTimer = null;
+      }
+    }
   }
 
   @Override
@@ -630,20 +702,34 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     checkOpenness();
     checkIfActive();
 
-    OScriptExecutor executor = OCommandManager.instance().getScriptExecutor(language);
-    OResultSet original;
-
-    ((OAbstractPaginatedStorage) this.storage.getUnderlying()).pauseConfigurationUpdateNotifications();
-    try {
-      original = executor.execute(this, script, args);
-    } finally {
-      ((OAbstractPaginatedStorage) this.storage.getUnderlying()).fireConfigurationUpdateNotifications();
+    if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
+      commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
+      Orient.instance()
+              .scheduleTask(
+                      commandInterruptTimer,
+                      getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT), 0);
     }
+    try {
+      OScriptExecutor executor = OCommandManager.instance().getScriptExecutor(language);
+      OResultSet original;
 
-    OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
-    this.queryStarted(result.getQueryId(), result);
-    result.addLifecycleListener(this);
-    return result;
+      ((OAbstractPaginatedStorage) this.storage.getUnderlying()).pauseConfigurationUpdateNotifications();
+      try {
+        original = executor.execute(this, script, args);
+      } finally {
+        ((OAbstractPaginatedStorage) this.storage.getUnderlying()).fireConfigurationUpdateNotifications();
+      }
+
+      OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
+      this.queryStarted(result.getQueryId(), result);
+      result.addLifecycleListener(this);
+      return result;
+    } finally {
+      if (commandInterruptTimer != null) {
+        commandInterruptTimer.cancel();
+        commandInterruptTimer = null;
+      }
+    }
   }
 
   public OLocalResultSetLifecycleDecorator query(OExecutionPlan plan, Map<Object, Object> params) {
@@ -730,7 +816,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
    * @Internal
    */
   public void executeDeleteRecord(OIdentifiable record, final int iVersion, final boolean iRequired, final OPERATION_MODE iMode,
-      boolean prohibitTombstones) {
+                                  boolean prohibitTombstones) {
     checkOpenness();
     checkIfActive();
 
@@ -738,7 +824,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
     if (rid == null)
       throw new ODatabaseException(
-          "Cannot delete record because it has no identity. Probably was created from scratch or contains projections of fields rather than a full record");
+              "Cannot delete record because it has no identity. Probably was created from scratch or contains projections of fields rather than a full record");
 
     if (!rid.isValid())
       return;
@@ -764,8 +850,8 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
    * @Internal
    */
   public <RET extends ORecord> RET executeSaveRecord(final ORecord record, String clusterName, final int ver,
-      final OPERATION_MODE mode, boolean forceCreate, final ORecordCallback<? extends Number> recordCreatedCallback,
-      ORecordCallback<Integer> recordUpdatedCallback) {
+                                                     final OPERATION_MODE mode, boolean forceCreate, final ORecordCallback<? extends Number> recordCreatedCallback,
+                                                     ORecordCallback<Integer> recordUpdatedCallback) {
 
     checkOpenness();
     checkIfActive();
@@ -776,7 +862,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
     if (rid == null)
       throw new ODatabaseException(
-          "Cannot create record because it has no identity. Probably is not a regular record or contains projections of fields rather than a full record");
+              "Cannot create record because it has no identity. Probably is not a regular record or contains projections of fields rather than a full record");
 
     final OMicroTransaction microTx = beginMicroTransaction();
     try {
@@ -826,9 +912,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
    * OConcurrentModificationException} exception is thrown.
    *
    * @param record record to delete
-   *
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
-   *
    * @see #setMVCC(boolean), {@link #isMVCC()}
    */
   public ODatabaseDocumentAbstract delete(final ORecord record) {
@@ -859,7 +943,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     } catch (Exception e) {
       if (record instanceof ODocument)
         throw OException.wrapException(new ODatabaseException(
-            "Error on deleting record " + record.getIdentity() + " of class '" + ((ODocument) record).getClassName() + "'"), e);
+                "Error on deleting record " + record.getIdentity() + " of class '" + ((ODocument) record).getClassName() + "'"), e);
       else
         throw OException.wrapException(new ODatabaseException("Error on deleting record " + record.getIdentity()), e);
     }
@@ -1112,5 +1196,10 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     super.afterRollbackOperations();
     OLiveQueryHook.removePendingDatabaseOps(this);
     OLiveQueryHookV2.removePendingDatabaseOps(this);
+  }
+
+  @Override
+  public void interruptExecution(Thread thread) {
+    ((OAbstractPaginatedStorage) storage).interruptExecution(thread);
   }
 }
