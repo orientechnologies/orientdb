@@ -1,24 +1,14 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
-import com.orientechnologies.orient.server.distributed.ODistributedException;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest;
-import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedResponse;
-import com.orientechnologies.orient.server.distributed.ODistributedResponseManager;
+import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1Task;
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1TaskResult;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionResultPayload;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxException;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxStillRunning;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-public class ODistributedTxResponseManager implements ODistributedResponseManager {
+public class ODistributedTxResponseManagerImpl implements ODistributedTxResponseManager {
 
   private final OTransactionPhase1Task iRequest;
   private final Collection<String> iNodes;
@@ -38,7 +28,7 @@ public class ODistributedTxResponseManager implements ODistributedResponseManage
   private volatile int stillRunning = 0;
   private volatile int stillRunningWaited = 0;
 
-  public ODistributedTxResponseManager(
+  public ODistributedTxResponseManagerImpl(
       OTransactionPhase1Task iRequest,
       Collection<String> iNodes,
       Set<String> nodesConcurToTheQuorum,
@@ -66,8 +56,12 @@ public class ODistributedTxResponseManager implements ODistributedResponseManage
   }
 
   @Override
-  public Object getGenericFinalResponse() {
-    return finalResult;
+  public Optional<OTransactionResultPayload> getDistributedTxFinalResponse() {
+    List<OTransactionResultPayload> results = (List<OTransactionResultPayload>) finalResult;
+    if (results.isEmpty()) {
+      return Optional.empty();
+    }
+    return Optional.of(results.get(0));
   }
 
   @Override
@@ -77,7 +71,7 @@ public class ODistributedTxResponseManager implements ODistributedResponseManage
   }
 
   @Override
-  public synchronized boolean waitForSynchronousResponses() throws InterruptedException {
+  public synchronized boolean waitForSynchronousResponses() {
     boolean interrupted = false;
     while (!interrupted) {
       try {
@@ -137,6 +131,7 @@ public class ODistributedTxResponseManager implements ODistributedResponseManage
     return null;
   }
 
+  @Override
   public String getNodeNameFromPayload(OTransactionResultPayload payload) {
     return this.payloadToNode.get(payload);
   }
@@ -146,6 +141,7 @@ public class ODistributedTxResponseManager implements ODistributedResponseManage
     return quorum;
   }
 
+  @Override
   public synchronized boolean collectResponse(
       OTransactionPhase1TaskResult response, String senderNodeName) {
     if (response.getResultPayload() instanceof OTxStillRunning) {
@@ -197,6 +193,7 @@ public class ODistributedTxResponseManager implements ODistributedResponseManage
     }
   }
 
+  @Override
   public synchronized List<OTransactionResultPayload> getAllResponses() {
     List<OTransactionResultPayload> allResults = new ArrayList<>();
     for (List<OTransactionResultPayload> res : resultsByType.values()) {
@@ -224,10 +221,12 @@ public class ODistributedTxResponseManager implements ODistributedResponseManage
     }
   }
 
+  @Override
   public synchronized boolean isQuorumReached() {
     return quorumReached;
   }
 
+  @Override
   public synchronized boolean isFinished() {
     return finished;
   }

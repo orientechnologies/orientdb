@@ -1,7 +1,5 @@
-package com.orientechnologies.orient.server.distributed.impl;
+package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.orient.server.distributed.ODistributedRequest;
-import com.orientechnologies.orient.server.distributed.ODistributedResponseManager;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import java.util.Collection;
 import java.util.Set;

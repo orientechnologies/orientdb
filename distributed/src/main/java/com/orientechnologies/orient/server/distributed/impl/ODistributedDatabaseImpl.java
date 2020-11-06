@@ -1000,4 +1000,12 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   public void incSentRequest() {
     this.totalSentRequests.incrementAndGet();
   }
+
+  public Set<String> getAvailableNodesButLocal(Set<String> involvedClusters) {
+    final Set<String> nodes = getDistributedConfiguration().getServers(involvedClusters);
+
+    // REMOVE CURRENT NODE BECAUSE IT HAS BEEN ALREADY EXECUTED LOCALLY
+    nodes.remove(localNodeName);
+    return nodes;
+  }
 }

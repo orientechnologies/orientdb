@@ -219,6 +219,16 @@ public interface ODistributedServerManager {
       EXECUTION_MODE iExecutionMode,
       Object localResult);
 
+  ODistributedResponse sendRequest(
+      String iDatabaseName,
+      Collection<String> iClusterNames,
+      Collection<String> iTargetNodeNames,
+      ORemoteTask iTask,
+      long messageId,
+      EXECUTION_MODE iExecutionMode,
+      Object localResult,
+      ODistributedResponseManagerFactory responseManagerFactory);
+
   ODocument getStats();
 
   Throwable convertException(Throwable original);
