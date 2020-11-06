@@ -234,9 +234,28 @@ public class OBackupServiceBigTest {
       final ODocument logs = manager.logs(uuid, 1, 50, new HashMap<>());
       assertNotNull(logs);
       assertNotNull(logs.field("logs"));
-
       final List<ODocument> list = logs.field("logs");
-      assertEquals(18, list.size());
+
+      int backupOperationsStarted = 0;
+      int backupOperationsFinished = 0;
+      int fullBackupFinished = 0;
+
+      for (final ODocument log : list) {
+        final String operation = log.field("op");
+        final String mode = log.field("mode");
+        if (operation.equals("BACKUP_STARTED")) {
+          backupOperationsStarted++;
+        }
+        if (operation.equals("BACKUP_FINISHED")) {
+          backupOperationsFinished++;
+          if (mode.equals("FULL_BACKUP")) {
+            fullBackupFinished++;
+          }
+        }
+      }
+      Assert.assertEquals("", backupOperationsStarted, backupOperationsFinished);
+      System.out.println("Full backups finished:" + fullBackupFinished);
+      Assert.assertTrue("Full backups not sufficient", fullBackupFinished > 2);
 
       checkNoOp(list, OBackupLogType.BACKUP_ERROR.toString());
       deleteAndCheck(uuid, list, 17, 18 - calculateToDelete(list, 17));

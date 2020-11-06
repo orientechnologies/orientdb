@@ -110,7 +110,7 @@ public class OBackupStrategyMixBackup extends OBackupStrategy {
             // before the next incremental.
             if (skippedFull != null && skippedFull.before(nextIncremental)) {
               OLogManager.instance()
-                  .debug(this, "Found skipped full backup (i.e. before incremental)");
+                  .info(this, "Found skipped full backup (i.e. before incremental)");
               isIncremental = false;
               skippedFull = null;
             } else {
