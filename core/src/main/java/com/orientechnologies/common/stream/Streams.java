@@ -1,4 +1,4 @@
-package com.orientechnologies.common.spliterators;
+package com.orientechnologies.common.stream;
 
 import java.util.Comparator;
 import java.util.Spliterator;
