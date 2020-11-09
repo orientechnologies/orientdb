@@ -95,6 +95,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   protected class InterruptTimerTask extends TimerTask {
 
     private Thread executionThread;
+    private boolean canceled = false;
 
     protected InterruptTimerTask(Thread executionThread) {
       this.executionThread = executionThread;
@@ -102,7 +103,15 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
     @Override
     public void run() {
-      interruptExecution(executionThread);
+      if(!canceled) {
+        interruptExecution(executionThread);
+      }
+    }
+
+    @Override
+    public boolean cancel() {
+      this.canceled = true;
+      return super.cancel();
     }
   }
 
