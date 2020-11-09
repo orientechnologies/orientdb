@@ -26,8 +26,8 @@ import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.security.OParsedToken;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
@@ -171,52 +171,54 @@ public class OClientConnectionManager {
   public OClientConnection connect(
       final ONetworkProtocol iProtocol,
       final OClientConnection connection,
-      final byte[] tokenBytes,
-      final OTokenHandler handler) {
+      final byte[] tokenBytes) {
 
-    final OToken token;
+    OParsedToken parsedToken;
     try {
-      token = handler.parseBinaryToken(tokenBytes);
+      parsedToken = server.getTokenHandler().parseOnlyBinary(tokenBytes);
     } catch (Exception e) {
       throw OException.wrapException(new OTokenSecurityException("Error on token parsing"), e);
     }
-    if (!handler.validateBinaryToken(token)) {
+    if (!server.getTokenHandler().validateBinaryToken(parsedToken)) {
       throw new OTokenSecurityException("The token provided is expired");
     }
     OClientSessions session;
     synchronized (sessions) {
-      session = new OClientSessions(tokenBytes, token);
+      session = new OClientSessions(tokenBytes);
       sessions.put(new OHashToken(tokenBytes), session);
     }
-    connection.setTokenBytes(tokenBytes);
-    connection.setTokenBased(true);
-    connection.setToken(token);
+    connection.setToken(parsedToken, tokenBytes);
     session.addConnection(connection);
     OLogManager.instance().config(this, "Remote client connected from: " + connection);
     OServerPluginHelper.invokeHandlerCallbackOnClientConnection(iProtocol.getServer(), connection);
     return connection;
   }
 
-  public OClientConnection reConnect(
-      final ONetworkProtocol iProtocol, final byte[] tokenBytes, final OToken token) {
-
+  public OClientConnection reConnect(final ONetworkProtocol iProtocol, final byte[] tokenBytes) {
     final OClientConnection connection;
     connection = new OClientConnection(connectionSerial.incrementAndGet(), iProtocol);
-
     connections.put(connection.getId(), connection);
+    OParsedToken parsedToken;
+    try {
+      parsedToken = server.getTokenHandler().parseOnlyBinary(tokenBytes);
+    } catch (Exception e) {
+      throw OException.wrapException(new OTokenSecurityException("Error on token parsing"), e);
+    }
+    if (!server.getTokenHandler().validateBinaryToken(parsedToken)) {
+      throw new OTokenSecurityException("The token provided is expired");
+    }
+
     OHashToken key = new OHashToken(tokenBytes);
     OClientSessions sess;
     synchronized (sessions) {
       sess = sessions.get(key);
       if (sess == null) {
         // RECONNECT
-        sess = new OClientSessions(tokenBytes, token);
+        sess = new OClientSessions(tokenBytes);
         sessions.put(new OHashToken(tokenBytes), sess);
       }
     }
-    connection.setTokenBytes(tokenBytes);
-    connection.setTokenBased(true);
-    connection.setToken(token);
+    connection.setToken(parsedToken, tokenBytes);
     sess.addConnection(connection);
     OServerPluginHelper.invokeHandlerCallbackOnClientConnection(iProtocol.getServer(), connection);
     return connection;

@@ -35,6 +35,8 @@ public interface OTokenHandler {
 
   boolean validateBinaryToken(OToken token);
 
+  boolean validateBinaryToken(OParsedToken token);
+
   ONetworkProtocolData getProtocolDataFromToken(OClientConnection oClientConnection, OToken token);
 
   // Return a byte array representing a signed token

@@ -137,10 +137,18 @@ public class OTokenHandlerImpl implements OTokenHandler {
   }
 
   @Override
+  public boolean validateBinaryToken(OParsedToken token) {
+    if (!token.getToken().getIsVerified()) {
+      boolean value = this.sign.verifyTokenSign(token);
+      token.getToken().setIsVerified(value);
+    }
+    return token.getToken().getIsVerified() && validateBinaryToken(token.getToken());
+  }
+
+  @Override
   public boolean validateBinaryToken(final OToken token) {
     boolean valid = false;
-    if (token instanceof OBinaryToken
-        && "node".equals(((OBinaryToken) token).getHeader().getType())) {
+    if ("node".equals(token.getHeader().getType())) {
       valid = true;
     } else {
       final long curTime = System.currentTimeMillis();

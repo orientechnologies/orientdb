@@ -1138,9 +1138,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
                   connection.getDatabase().getUser(),
                   connection.getData());
       // TODO: do not use the parse split getSignedBinaryToken in two methods.
-      server
-          .getClientConnectionManager()
-          .connect(connection.getProtocol(), connection, token, server.getTokenHandler());
+      server.getClientConnectionManager().connect(connection.getProtocol(), connection, token);
     }
 
     final OStorage storage = connection.getDatabase().getStorage();
@@ -1222,9 +1220,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
             .getSignedBinaryToken(
                 connection.getDatabase(), connection.getDatabase().getUser(), connection.getData());
     // TODO: do not use the parse split getSignedBinaryToken in two methods.
-    server
-        .getClientConnectionManager()
-        .connect(connection.getProtocol(), connection, token, server.getTokenHandler());
+    server.getClientConnectionManager().connect(connection.getProtocol(), connection, token);
 
     return new OOpen37Response(connection.getId(), token);
   }

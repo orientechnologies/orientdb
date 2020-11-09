@@ -460,9 +460,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         connection.validateSession(tokenBytes, server.getTokenHandler(), this);
         server.getClientConnectionManager().disconnect(clientTxId);
         connection =
-            server
-                .getClientConnectionManager()
-                .reConnect(this, connection.getTokenBytes(), connection.getToken());
+            server.getClientConnectionManager().reConnect(this, connection.getTokenBytes());
         connection.acquire();
         waitDistribuedIsOnline(connection);
         connection.init(server);

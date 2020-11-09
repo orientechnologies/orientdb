@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.server;
 
-import com.orientechnologies.orient.core.metadata.security.OToken;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -8,14 +7,12 @@ import java.util.List;
 
 public class OClientSessions {
 
-  private OToken token;
   private List<OClientConnection> connections =
       Collections.synchronizedList(new ArrayList<OClientConnection>());
   private byte[] binaryToken;
 
-  public OClientSessions(byte[] binaryToken, OToken token) {
+  public OClientSessions(byte[] binaryToken) {
     this.binaryToken = binaryToken;
-    this.token = token;
   }
 
   public void addConnection(OClientConnection conn) {
