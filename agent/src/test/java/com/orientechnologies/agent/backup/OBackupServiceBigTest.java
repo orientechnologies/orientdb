@@ -18,6 +18,10 @@
 
 package com.orientechnologies.agent.backup;
 
+import static junit.framework.Assert.assertNotNull;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.*;
+
 import com.orientechnologies.agent.OEnterpriseAgent;
 import com.orientechnologies.agent.services.backup.OBackupService;
 import com.orientechnologies.agent.services.backup.OBackupTask;
@@ -35,21 +39,15 @@ import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.io.File;
 import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
-
-import static junit.framework.Assert.assertNotNull;
-import static junit.framework.Assert.fail;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 /*
  * The full backup displacment problem happens, when an incremental backup takes so long to overlap

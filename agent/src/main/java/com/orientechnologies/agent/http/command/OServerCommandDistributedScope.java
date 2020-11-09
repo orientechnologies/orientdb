@@ -75,7 +75,8 @@ public abstract class OServerCommandDistributedScope
   }
 
   @Override
-  public boolean execute(final OHttpRequest iRequest, final OHttpResponse iResponse) throws Exception {
+  public boolean execute(final OHttpRequest iRequest, final OHttpResponse iResponse)
+      throws Exception {
     try {
       if (isLocalNode(iRequest)) {
         if ("GET".equalsIgnoreCase(iRequest.getHttpMethod())) {

@@ -79,7 +79,8 @@ public class OServerCommandBackupManager extends OServerCommandDistributedScope 
   }
 
   @Override
-  protected void doPut(final OHttpRequest iRequest, final OHttpResponse iResponse) throws IOException {
+  protected void doPut(final OHttpRequest iRequest, final OHttpResponse iResponse)
+      throws IOException {
     if (super.authenticate(
         iRequest, iResponse, true, EnterprisePermissions.SERVER_BACKUP_EDIT.toString())) {
       final String[] parts = checkSyntax(iRequest.getUrl(), 2, "Syntax error: backupManager");

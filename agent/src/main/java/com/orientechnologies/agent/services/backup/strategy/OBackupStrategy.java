@@ -32,7 +32,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.handler.OAutomaticBackup;
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Calendar;
 import java.util.Date;

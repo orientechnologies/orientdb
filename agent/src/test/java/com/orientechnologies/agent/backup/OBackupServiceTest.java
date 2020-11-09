@@ -214,7 +214,8 @@ public class OBackupServiceTest {
     return modes;
   }
 
-  private void addBackupMode(final ODocument modes, final String backupMode, final String schedule) {
+  private void addBackupMode(
+      final ODocument modes, final String backupMode, final String schedule) {
     final ODocument incrementalMode = new ODocument();
     modes.field(backupMode, incrementalMode);
     incrementalMode.field("when", schedule);

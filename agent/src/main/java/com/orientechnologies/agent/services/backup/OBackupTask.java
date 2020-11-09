@@ -74,8 +74,7 @@ public class OBackupTask implements OBackupListener {
   }
 
   private long tickStart() {
-    OLogManager.instance()
-        .info(this, "Backup started " + strategy.getMode());
+    OLogManager.instance().info(this, "Backup started " + strategy.getMode());
     return System.currentTimeMillis();
   }
 
@@ -83,10 +82,7 @@ public class OBackupTask implements OBackupListener {
     OLogManager.instance()
         .info(
             this,
-            "Backup "
-                + strategy.getMode()
-                + " in (ms):"
-                + (System.currentTimeMillis() - start));
+            "Backup " + strategy.getMode() + " in (ms):" + (System.currentTimeMillis() - start));
   }
 
   public OBackupStrategy getStrategy() {
