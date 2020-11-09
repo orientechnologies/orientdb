@@ -7,7 +7,6 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
@@ -16,7 +15,6 @@ import com.orientechnologies.orient.core.metadata.security.jwt.OJwtPayload;
 import com.orientechnologies.orient.core.metadata.security.jwt.OTokenHeader;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OParsedToken;
-import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.security.OTokenSign;
 import com.orientechnologies.orient.core.security.OTokenSignImpl;
 import com.orientechnologies.orient.server.OClientConnection;
@@ -30,8 +28,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.UUID;
 
@@ -48,34 +44,16 @@ public class OTokenHandlerImpl implements OTokenHandler {
 
   public OTokenHandlerImpl(OContextConfiguration config) {
     this(
-        readKeyFromConfig(config),
-        config.getValueAsLong(OGlobalConfiguration.NETWORK_TOKEN_EXPIRE_TIMEOUT),
-        config.getValueAsString(OGlobalConfiguration.NETWORK_TOKEN_ENCRYPTION_ALGORITHM));
-  }
-
-  public static byte[] readKeyFromConfig(OContextConfiguration config) {
-    byte[] key = null;
-    String configKey = config.getValueAsString(OGlobalConfiguration.NETWORK_TOKEN_SECRETKEY);
-    if (configKey == null || configKey.length() == 0)
-      configKey = config.getValueAsString(OGlobalConfiguration.OAUTH2_SECRETKEY);
-
-    if (configKey != null && configKey.length() > 0) key = Base64.getUrlDecoder().decode(configKey);
-
-    if (key == null) {
-      try {
-        key =
-            OSecurityManager.digestSHA256(
-                String.valueOf(SecureRandom.getInstanceStrong().nextLong()));
-      } catch (NoSuchAlgorithmException e) {
-        throw OException.wrapException(
-            new ODatabaseException("Error generating token sign key"), e);
-      }
-    }
-    return key;
+        new OTokenSignImpl(config),
+        config.getValueAsLong(OGlobalConfiguration.NETWORK_TOKEN_EXPIRE_TIMEOUT));
   }
 
   protected OTokenHandlerImpl(byte[] key, long sessionLength, String algorithm) {
     this(new OTokenSignImpl(key, algorithm), sessionLength);
+  }
+
+  public OTokenHandlerImpl(OTokenSign sign, OContextConfiguration config) {
+    this(sign, config.getValueAsLong(OGlobalConfiguration.NETWORK_TOKEN_EXPIRE_TIMEOUT));
   }
 
   protected OTokenHandlerImpl(OTokenSign sign, long sessionLength) {

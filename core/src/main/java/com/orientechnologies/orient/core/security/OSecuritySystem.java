@@ -151,4 +151,6 @@ public interface OSecuritySystem {
   OSecurityInternal newSecurity(String database);
 
   OSecurityUser authenticate(ODatabaseSession session, OAuthenticationInfo authenticationInfo);
+
+  public OTokenSign getTokenSign();
 }

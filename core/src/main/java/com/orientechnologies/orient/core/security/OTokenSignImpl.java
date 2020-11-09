@@ -3,11 +3,15 @@ package com.orientechnologies.orient.core.security;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.jwt.OKeyProvider;
 import com.orientechnologies.orient.core.metadata.security.jwt.OTokenHeader;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,6 +32,12 @@ public class OTokenSignImpl implements OTokenSign {
     protected Map<String, Mac> initialValue() {
       return new HashMap<String, Mac>();
     }
+  }
+
+  public OTokenSignImpl(OContextConfiguration config) {
+    this(
+        OTokenSignImpl.readKeyFromConfig(config),
+        config.getValueAsString(OGlobalConfiguration.NETWORK_TOKEN_ENCRYPTION_ALGORITHM));
   }
 
   public OTokenSignImpl(byte[] key, String algorithm) {
@@ -114,5 +124,26 @@ public class OTokenSignImpl implements OTokenSign {
   @Override
   public String[] getKeys() {
     return this.keyProvider.getKeys();
+  }
+
+  public static byte[] readKeyFromConfig(OContextConfiguration config) {
+    byte[] key = null;
+    String configKey = config.getValueAsString(OGlobalConfiguration.NETWORK_TOKEN_SECRETKEY);
+    if (configKey == null || configKey.length() == 0)
+      configKey = config.getValueAsString(OGlobalConfiguration.OAUTH2_SECRETKEY);
+
+    if (configKey != null && configKey.length() > 0) key = Base64.getUrlDecoder().decode(configKey);
+
+    if (key == null) {
+      try {
+        key =
+            OSecurityManager.digestSHA256(
+                String.valueOf(SecureRandom.getInstanceStrong().nextLong()));
+      } catch (NoSuchAlgorithmException e) {
+        throw OException.wrapException(
+            new ODatabaseException("Error generating token sign key"), e);
+      }
+    }
+    return key;
   }
 }

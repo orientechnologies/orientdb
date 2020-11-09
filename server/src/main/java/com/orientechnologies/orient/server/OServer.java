@@ -446,7 +446,9 @@ public class OServer {
 
       final OServerConfiguration configuration = serverCfg.getConfiguration();
 
-      tokenHandler = new OTokenHandlerImpl(this.getContextConfiguration());
+      tokenHandler =
+          new OTokenHandlerImpl(
+              this.databases.getSecuritySystem().getTokenSign(), this.getContextConfiguration());
 
       if (configuration.network != null) {
         // REGISTER/CREATE SOCKET FACTORIES

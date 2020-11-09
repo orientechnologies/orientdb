@@ -95,6 +95,7 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
   private ConcurrentHashMap<String, Class<?>> securityClassMap =
       new ConcurrentHashMap<String, Class<?>>();
   private SecureRandom random = new SecureRandom();
+  private OTokenSign tokenSign;
 
   public ODefaultSecuritySystem() {}
 
@@ -105,6 +106,7 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
       this.load(serverConfig.getConfigurationFile());
     }
     onAfterDynamicPlugins();
+    tokenSign = new OTokenSignImpl(context.getConfigurations().getConfigurations());
   }
 
   private void initDefultAuthenticators() {
@@ -1105,5 +1107,9 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
 
   public synchronized List<OSecurityAuthenticator> getAuthenticatorsList() {
     return authenticatorsList;
+  }
+
+  public OTokenSign getTokenSign() {
+    return tokenSign;
   }
 }
