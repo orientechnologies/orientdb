@@ -18,7 +18,7 @@ public class OStorageInterruptionManager {
     }
   }
 
-  protected void enterCriticalPath() {
+  public void enterCriticalPath() {
     synchronized (this) {
       if (Thread.currentThread().isInterrupted() || (interrupted && depth == 0)) {
         final Thread thread = Thread.currentThread();
@@ -30,7 +30,7 @@ public class OStorageInterruptionManager {
     }
   }
 
-  protected void exitCriticalPath() {
+  public void exitCriticalPath() {
     synchronized (this) {
       this.depth--;
       if (interrupted && depth == 0) {
