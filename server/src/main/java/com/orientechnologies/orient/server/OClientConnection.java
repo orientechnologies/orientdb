@@ -243,7 +243,7 @@ public class OClientConnection {
       final String db = token.getToken().getDatabase();
       final String type = token.getToken().getDatabaseType();
       if (db != null && type != null) {
-        setDatabase(server.openDatabase(db, token.getToken()));
+        setDatabase(server.openDatabase(db, token));
       }
     }
   }

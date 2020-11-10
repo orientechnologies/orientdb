@@ -5,11 +5,12 @@ import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
-import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.metadata.security.auth.OAuthenticationInfo;
 import com.orientechnologies.orient.core.metadata.security.auth.OTokenAuthInfo;
 import com.orientechnologies.orient.core.metadata.security.auth.OUserPasswordAuthInfo;
+import com.orientechnologies.orient.core.security.OParsedToken;
+import com.orientechnologies.orient.enterprise.channel.binary.OTokenSecurityException;
 
 public class ODatabaseUserAuthenticator extends OSecurityAuthenticatorAbstract {
 
@@ -21,17 +22,20 @@ public class ODatabaseUserAuthenticator extends OSecurityAuthenticatorAbstract {
           ((OUserPasswordAuthInfo) info).getUser(),
           ((OUserPasswordAuthInfo) info).getPassword());
     } else if (info instanceof OTokenAuthInfo) {
-      OToken token = ((OTokenAuthInfo) info).getToken();
-      if (token.getIsValid() != true) {
+      OParsedToken token = ((OTokenAuthInfo) info).getToken();
+      if (!getSecurity().getTokenSign().verifyTokenSign(token)) {
+        throw new OTokenSecurityException("The token provided is expired");
+      }
+      if (token.getToken().getIsValid() != true) {
         throw new OSecurityAccessException(session.getName(), "Token not valid");
       }
 
-      OUser user = token.getUser((ODatabaseDocumentInternal) session);
-      if (user == null && token.getUserName() != null) {
+      OUser user = token.getToken().getUser((ODatabaseDocumentInternal) session);
+      if (user == null && token.getToken().getUserName() != null) {
         OSecurityShared databaseSecurity =
             (OSecurityShared)
                 ((ODatabaseDocumentInternal) session).getSharedContext().getSecurity();
-        user = databaseSecurity.getUserInternal(session, token.getUserName());
+        user = databaseSecurity.getUserInternal(session, token.getToken().getUserName());
       }
       return user;
     }

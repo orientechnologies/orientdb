@@ -20,7 +20,7 @@
 package com.orientechnologies.orient.server.network.protocol.http;
 
 import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.metadata.security.OToken;
+import com.orientechnologies.orient.core.security.OParsedToken;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
 import com.orientechnologies.orient.server.network.protocol.http.multipart.OHttpMultipartBaseInputStream;
 import java.io.InputStream;
@@ -221,7 +221,7 @@ public abstract class OHttpRequest {
 
   public abstract void setBearerTokenRaw(String bearerTokenRaw);
 
-  public abstract OToken getBearerToken();
+  public abstract OParsedToken getBearerToken();
 
-  public abstract void setBearerToken(OToken bearerToken);
+  public abstract void setBearerToken(OParsedToken bearerToken);
 }

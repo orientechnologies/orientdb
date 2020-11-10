@@ -78,13 +78,14 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
       // Bearer authentication
       try {
         iRequest.setBearerToken(
-            tokenHandler.parseWebToken(iRequest.getBearerTokenRaw().getBytes()));
+            tokenHandler.parseOnlyWebToken(iRequest.getBearerTokenRaw().getBytes()));
       } catch (Exception e) {
         // TODO: Catch all expected exceptions correctly!
         OLogManager.instance().warn(this, "Bearer token parsing failed", e);
       }
 
-      if (iRequest.getBearerToken() == null || iRequest.getBearerToken().getIsVerified() == false) {
+      if (iRequest.getBearerToken() == null
+          || iRequest.getBearerToken().getToken().getIsVerified() == false) {
         // Token parsing or verification failed - for now fail silently.
         sendAuthorizationRequest(iRequest, iResponse, iRequest.getDatabaseName());
         return false;
@@ -92,7 +93,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
 
       // CHECK THE REQUEST VALIDITY
       tokenHandler.validateToken(iRequest.getBearerToken(), urlParts[0], urlParts[1]);
-      if (iRequest.getBearerToken().getIsValid() == false) {
+      if (iRequest.getBearerToken().getToken().getIsValid() == false) {
 
         // SECURITY PROBLEM: CROSS DATABASE REQUEST!
         OLogManager.instance()
@@ -105,7 +106,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
         return false;
       }
 
-      return iRequest.getBearerToken().getIsValid();
+      return iRequest.getBearerToken().getToken().getIsValid();
     } else {
       // HTTP basic authentication
       final List<String> authenticationParts =
@@ -276,7 +277,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
     if (localDatabase == null) {
       localDatabase = server.openDatabase(iRequest.getDatabaseName(), iRequest.getBearerToken());
     } else {
-      ORID currentUserId = iRequest.getBearerToken().getUserId();
+      ORID currentUserId = iRequest.getBearerToken().getToken().getUserId();
       if (currentUserId != null && localDatabase != null && localDatabase.getUser() != null) {
         if (!currentUserId.equals(localDatabase.getUser().getIdentity().getIdentity())) {
           ODocument userDoc = localDatabase.load(currentUserId);

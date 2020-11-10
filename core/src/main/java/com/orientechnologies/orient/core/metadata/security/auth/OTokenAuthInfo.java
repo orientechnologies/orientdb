@@ -1,22 +1,22 @@
 package com.orientechnologies.orient.core.metadata.security.auth;
 
-import com.orientechnologies.orient.core.metadata.security.OToken;
+import com.orientechnologies.orient.core.security.OParsedToken;
 import java.util.Optional;
 
 public class OTokenAuthInfo implements OAuthenticationInfo {
 
-  private OToken token;
+  private OParsedToken token;
 
-  public OTokenAuthInfo(OToken iToken) {
+  public OTokenAuthInfo(OParsedToken iToken) {
     this.token = iToken;
   }
 
   @Override
   public Optional<String> getDatabase() {
-    return Optional.ofNullable(token.getDatabase());
+    return Optional.ofNullable(token.getToken().getDatabase());
   }
 
-  public OToken getToken() {
+  public OParsedToken getToken() {
     return token;
   }
 }

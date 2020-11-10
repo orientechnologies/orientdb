@@ -33,6 +33,8 @@ public interface OTokenHandler {
 
   boolean validateToken(OToken token, String command, String database);
 
+  boolean validateToken(OParsedToken token, String command, String database);
+
   boolean validateBinaryToken(OToken token);
 
   boolean validateBinaryToken(OParsedToken token);

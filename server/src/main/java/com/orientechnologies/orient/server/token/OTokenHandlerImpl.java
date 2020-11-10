@@ -121,6 +121,15 @@ public class OTokenHandlerImpl implements OTokenHandler {
   }
 
   @Override
+  public boolean validateToken(OParsedToken token, String command, String database) {
+    if (!token.getToken().getIsVerified()) {
+      boolean value = this.sign.verifyTokenSign(token);
+      token.getToken().setIsVerified(value);
+    }
+    return token.getToken().getIsVerified() && validateToken(token.getToken(), command, database);
+  }
+
+  @Override
   public boolean validateToken(final OToken token, final String command, final String database) {
     boolean valid = false;
     if (!(token instanceof JsonWebToken)) {

@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.server.network.protocol.http;
 
 import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.metadata.security.OToken;
+import com.orientechnologies.orient.core.security.OParsedToken;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
 import com.orientechnologies.orient.server.network.protocol.http.multipart.OHttpMultipartBaseInputStream;
 import java.io.InputStream;
@@ -22,7 +22,7 @@ public class OHttpRequestImpl extends OHttpRequest {
   private boolean keepAlive = true;
   private Map<String, String> headers;
   private String bearerTokenRaw;
-  private OToken bearerToken;
+  private OParsedToken bearerToken;
 
   public OHttpRequestImpl(
       ONetworkProtocolHttpAbstract iExecutor,
@@ -153,12 +153,12 @@ public class OHttpRequestImpl extends OHttpRequest {
   }
 
   @Override
-  public OToken getBearerToken() {
+  public OParsedToken getBearerToken() {
     return bearerToken;
   }
 
   @Override
-  public void setBearerToken(OToken bearerToken) {
+  public void setBearerToken(OParsedToken bearerToken) {
     this.bearerToken = bearerToken;
   }
 
