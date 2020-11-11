@@ -180,4 +180,7 @@ public final class WALRecordTypes {
   public static final int LOCAL_HASH_TABLE_V2_DIRECTORY_FIRST_PAGE_SET_POINTER_PO = 193;
 
   public static final int TX_METADATA = 194;
+
+  public static final int FREE_SPACE_MAP_INIT = 195;
+  public static final int FREE_SPACE_MAP_UPDATE = 196;
 }

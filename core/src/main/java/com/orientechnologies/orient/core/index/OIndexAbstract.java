@@ -313,8 +313,8 @@ public abstract class OIndexAbstract implements OIndexInternal {
                   version,
                   1,
                   this instanceof OIndexMultiValues,
-                  engineProperties,
-                  metadata);
+                  engineProperties
+              );
           apiVersion = OAbstractPaginatedStorage.extractEngineAPIVersion(indexId);
         }
 
