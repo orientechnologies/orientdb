@@ -32,6 +32,9 @@ import java.util.Date;
 
 /** Created by Enrico Risa on 25/03/16. */
 public class OBackupStrategyMixBackup extends OBackupStrategy {
+  // Make sure not to displace / skip a full backup (e.g. in case an incremental backup took
+  // longer). Hence (1) store last (and potentially skipped) full backup.
+  private Date skippedFull = null;
 
   protected boolean isIncremental = false;
 
@@ -73,10 +76,6 @@ public class OBackupStrategyMixBackup extends OBackupStrategy {
     String dbName = cfg.field(OBackupConfig.DBNAME);
     return basePath + File.separator + dbName + "-" + begin;
   }
-
-  // Make sure not to displace / skip a full backup (e.g. in case an incremental backup took
-  // longer). Hence (1) store last (and potentially skipped) full backup.
-  private Date skippedFull = null;
 
   @Override
   public Date scheduleNextExecution(final OBackupListener listener) {

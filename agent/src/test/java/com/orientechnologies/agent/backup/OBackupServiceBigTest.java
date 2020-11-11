@@ -84,6 +84,12 @@ public class OBackupServiceBigTest {
   private OrientDB orient;
   private ODatabasePool pool;
 
+  // for concurrent inserts
+  private static int NUMBER_THREADS = 4;
+  private static final ExecutorService executor = Executors.newFixedThreadPool(NUMBER_THREADS);
+  final Map<String, Future<?>> futures = new HashMap<>();
+  private static int TIMEOUT_IN_SEC = 86400;
+
   @Before
   public void bootOrientDB() throws Exception {
     OFileUtils.deleteRecursively(new File(BACKUP_PATH));
@@ -267,10 +273,6 @@ public class OBackupServiceBigTest {
     }
   }
 
-  private static int NUMBER_THREADS = 4;
-  private static final ExecutorService executor = Executors.newFixedThreadPool(NUMBER_THREADS);
-  final Map<String, Future<?>> futures = new HashMap<>();
-
   private void startAsyncDocumentInsertions() {
     for (int i = 0; i < NUMBER_THREADS; i++) {
       futures.put(
@@ -284,8 +286,6 @@ public class OBackupServiceBigTest {
               }));
     }
   }
-
-  private static int TIMEOUT_IN_SEC = 86400;
 
   private void checkStoppingAsyncDatabaseInserter() {
     int count = 0;
