@@ -656,6 +656,7 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       Long.class,
       8 * WAL_MAX_SEGMENT_SIZE.getValueAsLong()),
 
+  @Deprecated
   PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY(
       "storage.lowestFreeListBound",
       "The least amount of free space (in kb) in a page, which is tracked in paginated storage",

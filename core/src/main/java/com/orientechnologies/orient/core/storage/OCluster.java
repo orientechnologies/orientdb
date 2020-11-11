@@ -42,7 +42,8 @@ public interface OCluster {
 
   void create(OAtomicOperation atomicOperation) throws IOException;
 
-  void open() throws IOException;
+  void open(
+      OAtomicOperation atomicOperation) throws IOException;
 
   void close() throws IOException;
 

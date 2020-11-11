@@ -56,7 +56,7 @@
 //
 //  @Before
 //  @Override
-//  public void beforeMethod() throws IOException {
+//  public void before() throws IOException {
 //    buildDirectory = System.getProperty("buildDirectory", ".");
 //    buildDirectory += "/localPaginatedClusterWithWALTest";
 //

@@ -32,8 +32,6 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
  * @since 10/8/13
  */
 public final class OPaginatedClusterFactory {
-  public static final OPaginatedClusterFactory INSTANCE = new OPaginatedClusterFactory();
-
   public static OPaginatedCluster createCluster(
       final String name,
       final int configurationVersion,
@@ -62,7 +60,8 @@ public final class OPaginatedClusterFactory {
       final int binaryVersion,
       final OAbstractPaginatedStorage storage,
       final String dataExtension,
-      final String cpmExtension) {
+      final String cpmExtension,
+      final String fsmExtension) {
     switch (binaryVersion) {
       case 0:
         throw new IllegalStateException(
@@ -70,7 +69,7 @@ public final class OPaginatedClusterFactory {
       case 1:
         return new OPaginatedClusterV1(name, dataExtension, cpmExtension, storage);
       case 2:
-        return new OPaginatedClusterV2(name, dataExtension, cpmExtension, storage);
+        return new OPaginatedClusterV2(name, dataExtension, cpmExtension, fsmExtension, storage);
       default:
         throw new IllegalStateException("Invalid binary version of cluster " + binaryVersion);
     }

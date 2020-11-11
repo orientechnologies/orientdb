@@ -66,7 +66,9 @@ public class OOfflineCluster implements OCluster {
   public void create(OAtomicOperation atomicOperation) throws IOException {}
 
   @Override
-  public void open() throws IOException {}
+  public void open(
+      OAtomicOperation atomicOperation) throws IOException {
+  }
 
   @Override
   public void close() throws IOException {}

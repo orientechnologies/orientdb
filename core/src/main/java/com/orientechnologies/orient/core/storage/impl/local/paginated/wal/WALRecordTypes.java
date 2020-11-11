@@ -182,4 +182,7 @@ public final class WALRecordTypes {
   public static final int TX_METADATA = 194;
 
   public static final int PAGINATED_VERSION_STATE_V0_SET_FILE_SIZE_PO = 195;
+
+  public static final int FREE_SPACE_MAP_INIT = 196;
+  public static final int FREE_SPACE_MAP_UPDATE = 197;
 }
