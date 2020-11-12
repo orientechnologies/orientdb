@@ -24,6 +24,8 @@ Put JAR file into folder: \\\\mediaserver.wdf.sap.corp\UPLINBOX\ORIENTDB_30_EE a
 
 ### CWB process
 
+> FA automation still WIP.
+
 When creating a pull request in https://github.wdf.sap.corp/final-assembly/orientdb-enterprise (e.g. 3.2.x -> fa/rel-3.2), a `CR-Id: unique technical ID` is required. This can be created following the `New CR` link in the PR.
 Note that when fixing the build, select `No Bug Report` as `Type` and check `Not Patch Relevant`!
 In `Application Component` set our BCP component `BC-DB-ODB`.
