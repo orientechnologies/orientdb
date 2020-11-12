@@ -129,8 +129,7 @@ public class OClientConnectionManager {
             iterator.remove();
           } else if (Boolean.TRUE.equals(entry.getValue().getTokenBased())) {
             if (entry.getValue().getToken() != null
-                && !entry.getValue().getToken().isNowValid()
-                && !entry.getValue().getToken().getIsValid()) {
+                && !server.getTokenHandler().validateBinaryToken(entry.getValue().getToken())) {
               // Close the current session but not the network because can be used by another
               // session.
               removeConnectionFromSession(entry.getValue());
