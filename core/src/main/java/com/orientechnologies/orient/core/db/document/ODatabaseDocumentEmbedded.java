@@ -90,20 +90,23 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   private OrientDBConfig config;
   private OStorage storage;
 
-  InterruptTimerTask commandInterruptTimer;
+  // these structures are needed to interrupt the process taking care of storage consistency
+  // (avoid to kill it in a storage critical path)
+  int commandInterruptionDepth = 0;
+  boolean commandInterrupted = false;
 
   protected class InterruptTimerTask extends TimerTask {
 
     private Thread executionThread;
     private boolean canceled = false;
 
-    protected InterruptTimerTask(Thread executionThread) {
-      this.executionThread = executionThread;
+    public InterruptTimerTask(Thread currentThread) {
+      this.executionThread = currentThread;
     }
 
     @Override
     public void run() {
-      if(!canceled) {
+      if (!canceled) {
         interruptExecution(executionThread);
       }
     }
@@ -541,11 +544,13 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     checkOpenness();
     checkIfActive();
 
+    TimerTask commandInterruptTimer = null;
+    InterruptTimerTask commandInterruptRunnable = null;
     if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
-      commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
-      Orient.instance()
+      commandInterruptRunnable = new InterruptTimerTask(Thread.currentThread());
+      commandInterruptTimer = Orient.instance()
               .scheduleTask(
-                      commandInterruptTimer,
+                      commandInterruptRunnable,
                       getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT), 0);
     }
     try {
@@ -561,7 +566,9 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     } finally {
       if (commandInterruptTimer != null) {
         commandInterruptTimer.cancel();
-        commandInterruptTimer = null;
+      }
+      if (commandInterruptRunnable != null) {
+        commandInterruptRunnable.cancel();
       }
     }
   }
@@ -571,11 +578,13 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     checkOpenness();
     checkIfActive();
 
+    TimerTask commandInterruptTimer = null;
+    InterruptTimerTask commandInterruptRunnable = null;
     if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
-      commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
-      Orient.instance()
+      commandInterruptRunnable = new InterruptTimerTask(Thread.currentThread());
+      commandInterruptTimer = Orient.instance()
               .scheduleTask(
-                      commandInterruptTimer,
+                      commandInterruptRunnable,
                       getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT), 0);
     }
     try {
@@ -592,7 +601,9 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     } finally {
       if (commandInterruptTimer != null) {
         commandInterruptTimer.cancel();
-        commandInterruptTimer = null;
+      }
+      if (commandInterruptRunnable != null) {
+        commandInterruptRunnable.cancel();
       }
     }
   }
@@ -601,12 +612,13 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   public OResultSet command(String query, Object[] args) {
     checkOpenness();
     checkIfActive();
-
+    TimerTask commandInterruptTimer = null;
+    InterruptTimerTask commandInterruptRunnable = null;
     if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
-      commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
-      Orient.instance()
+      commandInterruptRunnable = new InterruptTimerTask(Thread.currentThread());
+      commandInterruptTimer = Orient.instance()
               .scheduleTask(
-                      commandInterruptTimer,
+                      commandInterruptRunnable,
                       getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT), 0);
     }
     try {
@@ -629,7 +641,9 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     } finally {
       if (commandInterruptTimer != null) {
         commandInterruptTimer.cancel();
-        commandInterruptTimer = null;
+      }
+      if (commandInterruptRunnable != null) {
+        commandInterruptRunnable.cancel();
       }
     }
 
@@ -640,11 +654,13 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     checkOpenness();
     checkIfActive();
 
+    TimerTask commandInterruptTimer = null;
+    InterruptTimerTask commandInterruptRunnable = null;
     if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
-      commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
-      Orient.instance()
+      commandInterruptRunnable = new InterruptTimerTask(Thread.currentThread());
+      commandInterruptTimer = Orient.instance()
               .scheduleTask(
-                      commandInterruptTimer,
+                      commandInterruptRunnable,
                       getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT), 0);
     }
     try {
@@ -667,7 +683,9 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     } finally {
       if (commandInterruptTimer != null) {
         commandInterruptTimer.cancel();
-        commandInterruptTimer = null;
+      }
+      if (commandInterruptRunnable != null) {
+        commandInterruptRunnable.cancel();
       }
     }
   }
@@ -677,11 +695,13 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     checkOpenness();
     checkIfActive();
 
+    TimerTask commandInterruptTimer = null;
+    InterruptTimerTask commandInterruptRunnable = null;
     if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
-      commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
-      Orient.instance()
+      commandInterruptRunnable = new InterruptTimerTask(Thread.currentThread());
+      commandInterruptTimer = Orient.instance()
               .scheduleTask(
-                      commandInterruptTimer,
+                      commandInterruptRunnable,
                       getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT), 0);
     }
     try {
@@ -701,7 +721,9 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     } finally {
       if (commandInterruptTimer != null) {
         commandInterruptTimer.cancel();
-        commandInterruptTimer = null;
+      }
+      if (commandInterruptRunnable != null) {
+        commandInterruptRunnable.cancel();
       }
     }
   }
@@ -711,11 +733,13 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     checkOpenness();
     checkIfActive();
 
+    TimerTask commandInterruptTimer = null;
+    InterruptTimerTask commandInterruptRunnable = null;
     if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
-      commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
-      Orient.instance()
+      commandInterruptRunnable = new InterruptTimerTask(Thread.currentThread());
+      commandInterruptTimer = Orient.instance()
               .scheduleTask(
-                      commandInterruptTimer,
+                      commandInterruptRunnable,
                       getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT), 0);
     }
     try {
@@ -736,7 +760,9 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     } finally {
       if (commandInterruptTimer != null) {
         commandInterruptTimer.cancel();
-        commandInterruptTimer = null;
+      }
+      if (commandInterruptRunnable != null) {
+        commandInterruptRunnable.cancel();
       }
     }
   }
@@ -1210,5 +1236,22 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   @Override
   public void interruptExecution(Thread thread) {
     ((OAbstractPaginatedStorage) storage).interruptExecution(thread);
+  }
+
+
+  public boolean isCommandInterrupted() {
+    return commandInterrupted;
+  }
+
+  public void setCommandInterrupted(boolean commandInterrupted) {
+    this.commandInterrupted = commandInterrupted;
+  }
+
+  public int getCommandInterruptionDepth() {
+    return commandInterruptionDepth;
+  }
+
+  public void setCommandInterruptionDepth(int commandInterruptionDepth) {
+    this.commandInterruptionDepth = commandInterruptionDepth;
   }
 }

@@ -241,4 +241,21 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
   }
 
   Map<UUID, OBonsaiCollectionPointer> getCollectionsChanges();
+
+
+  default boolean isCommandInterrupted() {
+    return false;
+  }
+
+  default void setCommandInterrupted(boolean commandInterrupted) {
+
+  }
+
+  default int getCommandInterruptionDepth() {
+    return 0;
+  }
+
+  default void setCommandInterruptionDepth(int commandInterruptionDepth) {
+
+  }
 }
