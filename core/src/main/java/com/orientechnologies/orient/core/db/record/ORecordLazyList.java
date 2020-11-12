@@ -155,12 +155,14 @@ public class ORecordLazyList extends OTrackedList<OIdentifiable> implements ORec
   @Override
   public boolean add(OIdentifiable e) {
     preAdd(e);
+    lazyLoad(true);
     return super.add(e);
   }
 
   @Override
   public void add(int index, OIdentifiable e) {
     preAdd(e);
+    lazyLoad(true);
     super.add(index, e);
   }
   
@@ -180,7 +182,6 @@ public class ORecordLazyList extends OTrackedList<OIdentifiable> implements ORec
         e = e.getIdentity();
       else contentType = ORecordMultiValueHelper.updateContentType(contentType, e);
     }
-    lazyLoad(true);
   }
 
   @Override
