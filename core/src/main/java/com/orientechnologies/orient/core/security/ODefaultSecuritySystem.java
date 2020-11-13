@@ -41,9 +41,9 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.authenticator.ODatabaseUserAuthenticator;
 import com.orientechnologies.orient.core.security.authenticator.OServerConfigAuthenticator;
 import com.orientechnologies.orient.core.security.authenticator.OSystemUserAuthenticator;
+import com.orientechnologies.orient.core.security.authenticator.OTemporaryGlobalUser;
 import java.io.File;
 import java.io.FileInputStream;
-import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -97,8 +97,9 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
 
   private ConcurrentHashMap<String, Class<?>> securityClassMap =
       new ConcurrentHashMap<String, Class<?>>();
-  private SecureRandom random = new SecureRandom();
   private OTokenSign tokenSign;
+  private final Map<String, OTemporaryGlobalUser> ephemeralUsers =
+      new ConcurrentHashMap<String, OTemporaryGlobalUser>();
 
   public ODefaultSecuritySystem() {}
 
@@ -502,9 +503,17 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
     OSecurityUser systemUser = null;
     // This will throw an IllegalArgumentException if iUserName is null or empty.
     // However, a null or empty iUserName is possible with some security implementations.
-    if (serverConfig != null && serverConfig.usersManagement()) {
+    if (serverConfig != null) {
       if (username != null && !username.isEmpty()) {
         OGlobalUser userCfg = serverConfig.getUser(username);
+        if (userCfg == null) {
+          for (OTemporaryGlobalUser user : ephemeralUsers.values()) {
+            if (username.equalsIgnoreCase(user.getName())) {
+              // FOUND
+              userCfg = user;
+            }
+          }
+        }
         if (userCfg != null) {
           OSecurityRole role = OSecurityShared.createRole(null, userCfg);
           systemUser =
@@ -1066,42 +1075,16 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
   }
 
   public boolean existsUser(String user) {
-    if (serverConfig != null && serverConfig.usersManagement()) {
+    if (serverConfig != null) {
       return serverConfig.existsUser(user);
     } else {
       return false;
     }
   }
 
-  public void addUser(String user, String password, String permissions) {
-    if (password == null) {
-      // AUTO GENERATE PASSWORD
-      final byte[] buffer = new byte[32];
-      random.nextBytes(buffer);
-      password = OSecurityManager.createSHA256(OSecurityManager.byteArrayToHexStr(buffer));
-    }
-
-    // HASH THE PASSWORD
-    password =
-        OSecurityManager.createHash(
-            password,
-            context
-                .getConfigurations()
-                .getConfigurations()
-                .getValueAsString(OGlobalConfiguration.SECURITY_USER_PASSWORD_DEFAULT_ALGORITHM),
-            true);
-
-    serverConfig.setUser(user, password, permissions);
-    serverConfig.saveConfiguration();
-  }
-
-  public void dropUser(String iUserName) {
-    serverConfig.dropUser(iUserName);
-    serverConfig.saveConfiguration();
-  }
-
   public void addTemporaryUser(String iName, String iPassword, String iPermissions) {
-    serverConfig.setEphemeralUser(iName, iPassword, iPermissions);
+    OTemporaryGlobalUser userCfg = new OTemporaryGlobalUser(iName, iPassword, iPermissions);
+    ephemeralUsers.put(iName, userCfg);
   }
 
   @Override

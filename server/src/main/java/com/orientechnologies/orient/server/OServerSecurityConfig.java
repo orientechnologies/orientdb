@@ -1,7 +1,5 @@
 package com.orientechnologies.orient.server;
 
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.security.OSecurityConfig;
@@ -9,7 +7,6 @@ import com.orientechnologies.orient.core.security.OSyslog;
 import com.orientechnologies.orient.server.config.OServerConfigurationManager;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
-import java.io.IOException;
 
 public class OServerSecurityConfig implements OSecurityConfig {
 
@@ -29,37 +26,8 @@ public class OServerSecurityConfig implements OSecurityConfig {
   }
 
   @Override
-  public void setUser(String user, String password, String permissions) {
-    serverCfg.setUser(user, password, permissions);
-  }
-
-  @Override
-  public void dropUser(String iUserName) {
-    serverCfg.dropUser(iUserName);
-  }
-
-  @Override
-  public void saveConfiguration() {
-    try {
-      serverCfg.saveConfiguration();
-    } catch (IOException e) {
-      throw OException.wrapException(new OIOException("Error saving the server configuration"), e);
-    }
-  }
-
-  @Override
-  public void setEphemeralUser(String iName, String iPassword, String iPermissions) {
-    serverCfg.setEphemeralUser(iName, iPassword, iPermissions);
-  }
-
-  @Override
   public OServerUserConfiguration getUser(String username) {
     return serverCfg.getUser(username);
-  }
-
-  @Override
-  public boolean usersManagement() {
-    return true;
   }
 
   @Override

@@ -2,13 +2,13 @@ package com.orientechnologies.orient.core.security.authenticator;
 
 import com.orientechnologies.orient.core.security.OGlobalUser;
 
-public class OSystemGlobalUser implements OGlobalUser {
+public class OTemporaryGlobalUser implements OGlobalUser {
 
   private String name;
   private String password;
   private String resources;
 
-  public OSystemGlobalUser(String user, String password, String resources) {
+  public OTemporaryGlobalUser(String user, String password, String resources) {
     super();
     this.name = user;
     this.password = password;

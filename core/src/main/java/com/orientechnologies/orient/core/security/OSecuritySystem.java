@@ -124,8 +124,6 @@ public interface OSecuritySystem {
    */
   OSecurityUser getUser(final String username);
 
-  void dropUser(String iUserName);
-
   void onAfterDynamicPlugins();
 
   default void onAfterDynamicPlugins(OSecurityUser user) {
@@ -144,8 +142,6 @@ public interface OSecuritySystem {
   OrientDBInternal getContext();
 
   boolean existsUser(String defaultRootUser);
-
-  void addUser(String user, String password, String resources);
 
   void addTemporaryUser(String user, String password, String resources);
 

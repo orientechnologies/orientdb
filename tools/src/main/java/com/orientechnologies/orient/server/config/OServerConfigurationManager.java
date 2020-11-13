@@ -26,9 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Server configuration manager. It manages the orientdb-server-config.xml file.
@@ -38,8 +36,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public class OServerConfigurationManager {
   private final OServerConfigurationLoaderXml configurationLoader;
   private OServerConfiguration configuration;
-  private Map<String, OServerUserConfiguration> ephemeralUsers =
-      new ConcurrentHashMap<String, OServerUserConfiguration>();
 
   public OServerConfigurationManager(final InputStream iInputStream) throws IOException {
     configurationLoader =
@@ -109,13 +105,6 @@ public class OServerConfigurationManager {
     configurationLoader.save(configuration);
   }
 
-  public OServerUserConfiguration setEphemeralUser(
-      final String username, final String password, final String resources) {
-    OServerUserConfiguration userCfg = new OServerUserConfiguration(username, password, resources);
-    ephemeralUsers.put(username, userCfg);
-    return userCfg;
-  }
-
   public OServerUserConfiguration getUser(final String iServerUserName) {
     if (iServerUserName == null || iServerUserName.length() == 0) {
       throw new IllegalArgumentException("User name is null or empty");
@@ -129,14 +118,6 @@ public class OServerConfigurationManager {
           // FOUND
           return user;
         }
-      }
-    }
-
-    // Check the ephemeral users too.
-    for (OServerUserConfiguration user : ephemeralUsers.values()) {
-      if (iServerUserName.equalsIgnoreCase(user.name)) {
-        // FOUND
-        return user;
       }
     }
 
@@ -183,10 +164,6 @@ public class OServerConfigurationManager {
 
     for (int i = 0; i < configuration.users.length; ++i) {
       if (configuration.users[i] != null) result.add(configuration.users[i]);
-    }
-
-    for (OServerUserConfiguration user : ephemeralUsers.values()) {
-      result.add(user);
     }
 
     return result;
