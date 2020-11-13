@@ -34,6 +34,7 @@ import java.util.Map;
  * @author S. Colin Leister
  */
 public interface OSecuritySystem {
+
   void shutdown();
 
   // Some external security implementations may permit falling back to a

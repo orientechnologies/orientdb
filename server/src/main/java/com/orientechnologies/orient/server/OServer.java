@@ -1034,11 +1034,21 @@ public class OServer {
               rootPassword);
 
     if (!databases.getSecuritySystem().existsUser(OServerConfiguration.DEFAULT_ROOT_USER)) {
+      context.execute(
+          "CREATE SYSTEM USER "
+              + OServerConfiguration.DEFAULT_ROOT_USER
+              + " IDENTIFIED BY ? ROLE root",
+          rootPassword);
+
       databases
           .getSecuritySystem()
           .addUser(OServerConfiguration.DEFAULT_ROOT_USER, rootPassword, "*");
     }
     if (!databases.getSecuritySystem().existsUser(OServerConfiguration.GUEST_USER)) {
+      context.execute(
+          "CREATE SYSTEM USER " + OServerConfiguration.GUEST_USER + " IDENTIFIED BY ? ROLE guest",
+          rootPassword);
+
       databases
           .getSecuritySystem()
           .addUser(

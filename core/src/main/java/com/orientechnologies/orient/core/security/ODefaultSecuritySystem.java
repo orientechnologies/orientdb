@@ -28,6 +28,9 @@ import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OImmutableUser;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.ORule;
+import com.orientechnologies.orient.core.metadata.security.ORule.ResourceGeneric;
+import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
 import com.orientechnologies.orient.core.metadata.security.OSecurityRole;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
@@ -107,6 +110,34 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
     }
     onAfterDynamicPlugins();
     tokenSign = new OTokenSignImpl(context.getConfigurations().getConfigurations());
+    initSystemRoles();
+  }
+
+  private void initSystemRoles() {
+    context
+        .getSystemDatabase()
+        .executeWithDB(
+            (session) -> {
+              OSecurity security = session.getMetadata().getSecurity();
+              if (security.getRole("root") == null) {
+                ORole root = security.createRole("root", ORole.ALLOW_MODES.DENY_ALL_BUT);
+                for (ORule.ResourceGeneric resource : ORule.ResourceGeneric.values()) {
+                  root.addRule(resource, null, ORole.PERMISSION_ALL);
+                }
+                root.save();
+              }
+              if (security.getRole("guest") == null) {
+                ORole guest = security.createRole("guest", ORole.ALLOW_MODES.DENY_ALL_BUT);
+
+                for (String rule : "server.listDatabases,server.dblist".split(",")) {
+                  ResourceGeneric resource = ORule.mapLegacyResourceToGenericResource(rule);
+                  guest.addRule(resource, null, ORole.PERMISSION_ALL);
+                }
+                guest.save();
+              }
+
+              return null;
+            });
   }
 
   private void initDefultAuthenticators() {
