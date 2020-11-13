@@ -123,11 +123,8 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
     }
     if (security.getRole("guest") == null) {
       ORole guest = security.createRole("guest", ORole.ALLOW_MODES.DENY_ALL_BUT);
-
-      for (String rule : "server.listDatabases,server.dblist".split(",")) {
-        ResourceGeneric resource = ORule.mapLegacyResourceToGenericResource(rule);
-        guest.addRule(resource, null, ORole.PERMISSION_ALL);
-      }
+      ResourceGeneric resource = ORule.mapLegacyResourceToGenericResource("server.listDatabases");
+      guest.addRule(resource, null, ORole.PERMISSION_ALL);
       guest.save();
     }
   }
