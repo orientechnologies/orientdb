@@ -130,11 +130,15 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
   private OrientDBConfig config;
   private OStorage storage;
 
-  private InterruptTimerTask commandInterruptTimer;
+  // these structures are needed to interrupt the process taking care of storage consistency
+  // (avoid to kill it in a storage critical path)
+  int commandInterruptionDepth = 0;
+  boolean commandInterrupted = false;
 
   protected class InterruptTimerTask extends TimerTask {
 
     private Thread executionThread;
+    boolean canceled = false;
 
     protected InterruptTimerTask(Thread executionThread) {
       this.executionThread = executionThread;
@@ -142,7 +146,16 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
 
     @Override
     public void run() {
-      interruptExecution(executionThread);
+      if (!canceled) {
+        System.out.println("**** Interrupting command!!!");
+        interruptExecution(executionThread);
+      }
+    }
+
+    @Override
+    public boolean cancel() {
+      canceled = true;
+      return super.cancel();
     }
   }
 
@@ -580,6 +593,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     checkOpenness();
     checkIfActive();
 
+    InterruptTimerTask commandInterruptTimer = null;
     if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
       commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
       getSharedContext()
@@ -603,7 +617,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     } finally {
       if (commandInterruptTimer != null) {
         commandInterruptTimer.cancel();
-        commandInterruptTimer = null;
       }
     }
   }
@@ -613,6 +626,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     checkOpenness();
     checkIfActive();
 
+    InterruptTimerTask commandInterruptTimer = null;
     if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
       commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
       getSharedContext()
@@ -637,7 +651,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
       if (commandInterruptTimer != null) {
         commandInterruptTimer.cancel();
       }
-      commandInterruptTimer = null;
     }
   }
 
@@ -646,6 +659,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     checkOpenness();
     checkIfActive();
 
+    InterruptTimerTask commandInterruptTimer = null;
     if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
       commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
       getSharedContext()
@@ -675,7 +689,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     } finally {
       if (commandInterruptTimer != null) {
         commandInterruptTimer.cancel();
-        commandInterruptTimer = null;
       }
     }
   }
@@ -685,6 +698,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     checkOpenness();
     checkIfActive();
 
+    InterruptTimerTask commandInterruptTimer = null;
     if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
       commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
       getSharedContext()
@@ -714,7 +728,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     } finally {
       if (commandInterruptTimer != null) {
         commandInterruptTimer.cancel();
-        commandInterruptTimer = null;
       }
     }
   }
@@ -727,6 +740,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
       checkSecurity(ORule.ResourceGeneric.COMMAND, ORole.PERMISSION_EXECUTE, language);
     }
 
+    InterruptTimerTask commandInterruptTimer = null;
     if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
       commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
       getSharedContext()
@@ -759,7 +773,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     } finally {
       if (commandInterruptTimer != null) {
         commandInterruptTimer.cancel();
-        commandInterruptTimer = null;
       }
     }
   }
@@ -772,6 +785,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
       checkSecurity(ORule.ResourceGeneric.COMMAND, ORole.PERMISSION_EXECUTE, language);
     }
 
+    InterruptTimerTask commandInterruptTimer = null;
     if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
       commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
       getSharedContext()
@@ -1874,5 +1888,21 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
   @Override
   public void interruptExecution(Thread thread) {
     ((OAbstractPaginatedStorage) storage).interruptExecution(thread);
+  }
+
+  public boolean isCommandInterrupted() {
+    return commandInterrupted;
+  }
+
+  public void setCommandInterrupted(boolean commandInterrupted) {
+    this.commandInterrupted = commandInterrupted;
+  }
+
+  public int getCommandInterruptionDepth() {
+    return commandInterruptionDepth;
+  }
+
+  public void setCommandInterruptionDepth(int commandInterruptionDepth) {
+    this.commandInterruptionDepth = commandInterruptionDepth;
   }
 }
