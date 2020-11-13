@@ -268,4 +268,16 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
   default void syncCommit(OTransactionData data) {
     throw new UnsupportedOperationException();
   }
+
+  default boolean isCommandInterrupted() {
+    return false;
+  }
+
+  default void setCommandInterrupted(boolean commandInterrupted) {}
+
+  default int getCommandInterruptionDepth() {
+    return 0;
+  }
+
+  default void setCommandInterruptionDepth(int commandInterruptionDepth) {}
 }
