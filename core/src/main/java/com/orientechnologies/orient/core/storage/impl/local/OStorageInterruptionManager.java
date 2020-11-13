@@ -7,7 +7,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 
 public class OStorageInterruptionManager {
 
-  protected void interrupt(Thread thread) {
+  public void interrupt(Thread thread) {
     synchronized (this) {
       if (getDepth() <= 0) {
         setInterrupted(true);
@@ -17,7 +17,7 @@ public class OStorageInterruptionManager {
     }
   }
 
-  protected void enterCriticalPath() {
+  public void enterCriticalPath() {
     synchronized (this) {
       if (Thread.currentThread().isInterrupted() || (isInterrupted() && getDepth() == 0)) {
         final Thread thread = Thread.currentThread();
@@ -29,7 +29,7 @@ public class OStorageInterruptionManager {
     }
   }
 
-  protected void exitCriticalPath() {
+  public void exitCriticalPath() {
     synchronized (this) {
       decrementDepth();
       if (isInterrupted() && getDepth() == 0) {
