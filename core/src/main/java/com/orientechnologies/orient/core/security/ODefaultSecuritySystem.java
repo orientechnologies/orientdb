@@ -110,34 +110,26 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
     }
     onAfterDynamicPlugins();
     tokenSign = new OTokenSignImpl(context.getConfigurations().getConfigurations());
-    initSystemRoles();
   }
 
-  private void initSystemRoles() {
-    context
-        .getSystemDatabase()
-        .executeWithDB(
-            (session) -> {
-              OSecurity security = session.getMetadata().getSecurity();
-              if (security.getRole("root") == null) {
-                ORole root = security.createRole("root", ORole.ALLOW_MODES.DENY_ALL_BUT);
-                for (ORule.ResourceGeneric resource : ORule.ResourceGeneric.values()) {
-                  root.addRule(resource, null, ORole.PERMISSION_ALL);
-                }
-                root.save();
-              }
-              if (security.getRole("guest") == null) {
-                ORole guest = security.createRole("guest", ORole.ALLOW_MODES.DENY_ALL_BUT);
+  public void createSystemRoles(ODatabaseSession session) {
+    OSecurity security = session.getMetadata().getSecurity();
+    if (security.getRole("root") == null) {
+      ORole root = security.createRole("root", ORole.ALLOW_MODES.DENY_ALL_BUT);
+      for (ORule.ResourceGeneric resource : ORule.ResourceGeneric.values()) {
+        root.addRule(resource, null, ORole.PERMISSION_ALL);
+      }
+      root.save();
+    }
+    if (security.getRole("guest") == null) {
+      ORole guest = security.createRole("guest", ORole.ALLOW_MODES.DENY_ALL_BUT);
 
-                for (String rule : "server.listDatabases,server.dblist".split(",")) {
-                  ResourceGeneric resource = ORule.mapLegacyResourceToGenericResource(rule);
-                  guest.addRule(resource, null, ORole.PERMISSION_ALL);
-                }
-                guest.save();
-              }
-
-              return null;
-            });
+      for (String rule : "server.listDatabases,server.dblist".split(",")) {
+        ResourceGeneric resource = ORule.mapLegacyResourceToGenericResource(rule);
+        guest.addRule(resource, null, ORole.PERMISSION_ALL);
+      }
+      guest.save();
+    }
   }
 
   private void initDefultAuthenticators() {

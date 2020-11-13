@@ -40,7 +40,6 @@ import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.security.auth.OAuthenticationInfo;
 import com.orientechnologies.orient.core.security.ODefaultSecuritySystem;
-import com.orientechnologies.orient.core.security.OSecuritySystem;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
@@ -107,7 +106,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   private TimerTask autoCloseTimer = null;
   private final OScriptManager scriptManager = new OScriptManager();
   private final OSystemDatabase systemDatabase;
-  private final OSecuritySystem securitySystem;
+  private final ODefaultSecuritySystem securitySystem;
 
   protected final long maxWALSegmentSize;
   protected final long doubleWriteLogMaxSegSize;
@@ -1194,7 +1193,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     return systemDatabase;
   }
 
-  public OSecuritySystem getSecuritySystem() {
+  public ODefaultSecuritySystem getSecuritySystem() {
     return securitySystem;
   }
 

@@ -17,6 +17,10 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
+import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -39,9 +43,13 @@ public class OConnetionExecutorTest {
   private ODatabaseDocumentInternal database;
 
   @Before
-  public void before() {
+  public void before() throws IOException {
     MockitoAnnotations.initMocks(this);
-    orientDb = new OrientDB("embedded:./", OrientDBConfig.defaultConfig());
+    Path path =
+        FileSystems.getDefault()
+            .getPath("./target/" + OConnetionExecutorTest.class.getSimpleName());
+    Files.createDirectories(path);
+    orientDb = new OrientDB("embedded:" + path.toString(), OrientDBConfig.defaultConfig());
     orientDb.create(OConnetionExecutorTest.class.getSimpleName(), ODatabaseType.MEMORY);
     database =
         (ODatabaseDocumentInternal)
