@@ -59,6 +59,10 @@ public class OETLProcessorConfigurator {
     context.setVariable("dumpEveryMs", 1000);
     return context;
   }
+  
+  protected OCommandContext createDefaultContext() {
+	  return createDefaultContext(null);
+  }
 
   public OETLProcessor parseConfigAndParameters(String[] args) {
     return parseConfigAndParametersWithContext(null, args);
