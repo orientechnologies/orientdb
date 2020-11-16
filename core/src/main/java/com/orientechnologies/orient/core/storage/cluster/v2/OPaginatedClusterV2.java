@@ -299,6 +299,7 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
             }
             deleteFile(atomicOperation, fileId);
             clusterPositionMap.delete(atomicOperation);
+            freeSpaceMap.delete(atomicOperation);
           } finally {
             releaseExclusiveLock();
           }
@@ -1378,6 +1379,7 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
     try {
       writeCache.renameFile(fileId, newName + getExtension());
       clusterPositionMap.rename(newName);
+      freeSpaceMap.rename(newName);
 
       setName(newName);
     } catch (IOException e) {
