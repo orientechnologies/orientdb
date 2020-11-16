@@ -3,11 +3,11 @@ package com.orientechnologies.orient.core.command.script.js;
 import com.orientechnologies.orient.core.command.script.OSecuredScriptFactory;
 import jdk.nashorn.api.scripting.ClassFilter;
 
-public class ONashornClassFilter implements ClassFilter {
+public class OSecuredClassFilter implements ClassFilter {
 
   private OSecuredScriptFactory factory;
 
-  public ONashornClassFilter(OSecuredScriptFactory factory) {
+  public OSecuredClassFilter(final OSecuredScriptFactory factory) {
     this.factory = factory;
   }
 
