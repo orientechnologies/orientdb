@@ -176,33 +176,34 @@ public interface OrientSqlTreeConstants {
   public int JJTREVOKESTATEMENT = 171;
   public int JJTCREATEFUNCTIONSTATEMENT = 172;
   public int JJTCREATESYSTEMUSERSTATEMENT = 173;
-  public int JJTCREATEUSERSTATEMENT = 174;
-  public int JJTDROPUSERSTATEMENT = 175;
-  public int JJTALTERROLESTATEMENT = 176;
-  public int JJTALTERSYSTEMROLESTATEMENT = 177;
-  public int JJTLETSTATEMENT = 178;
-  public int JJTBEGINSTATEMENT = 179;
-  public int JJTCOMMITSTATEMENT = 180;
-  public int JJTROLLBACKSTATEMENT = 181;
-  public int JJTRETURNSTATEMENT = 182;
-  public int JJTIFSTATEMENT = 183;
-  public int JJTSLEEPSTATEMENT = 184;
-  public int JJTCONSOLESTATEMENT = 185;
-  public int JJTCREATESEQUENCESTATEMENT = 186;
-  public int JJTALTERSEQUENCESTATEMENT = 187;
-  public int JJTDROPSEQUENCESTATEMENT = 188;
-  public int JJTHASTATUSSTATEMENT = 189;
-  public int JJTHAREMOVESERVERSTATEMENT = 190;
-  public int JJTHASYNCDATABASESTATEMENT = 191;
-  public int JJTHASYNCCLUSTERSTATEMENT = 192;
-  public int JJTHASETSTATEMENT = 193;
-  public int JJTFOREACHBLOCK = 194;
-  public int JJTWHILEBLOCK = 195;
-  public int JJTSECURITYRESOURCESEGMENT = 196;
-  public int JJTCREATESECURITYPOLICYSTATEMENT = 197;
-  public int JJTALTERSECURITYPOLICYSTATEMENT = 198;
-  public int JJTCREATEDATABASESTATEMENT = 199;
-  public int JJTDROPDATABASESTATEMENT = 200;
+  public int JJTEXISTSSYSTEMUSERSTATEMENT = 174;
+  public int JJTCREATEUSERSTATEMENT = 175;
+  public int JJTDROPUSERSTATEMENT = 176;
+  public int JJTALTERROLESTATEMENT = 177;
+  public int JJTALTERSYSTEMROLESTATEMENT = 178;
+  public int JJTLETSTATEMENT = 179;
+  public int JJTBEGINSTATEMENT = 180;
+  public int JJTCOMMITSTATEMENT = 181;
+  public int JJTROLLBACKSTATEMENT = 182;
+  public int JJTRETURNSTATEMENT = 183;
+  public int JJTIFSTATEMENT = 184;
+  public int JJTSLEEPSTATEMENT = 185;
+  public int JJTCONSOLESTATEMENT = 186;
+  public int JJTCREATESEQUENCESTATEMENT = 187;
+  public int JJTALTERSEQUENCESTATEMENT = 188;
+  public int JJTDROPSEQUENCESTATEMENT = 189;
+  public int JJTHASTATUSSTATEMENT = 190;
+  public int JJTHAREMOVESERVERSTATEMENT = 191;
+  public int JJTHASYNCDATABASESTATEMENT = 192;
+  public int JJTHASYNCCLUSTERSTATEMENT = 193;
+  public int JJTHASETSTATEMENT = 194;
+  public int JJTFOREACHBLOCK = 195;
+  public int JJTWHILEBLOCK = 196;
+  public int JJTSECURITYRESOURCESEGMENT = 197;
+  public int JJTCREATESECURITYPOLICYSTATEMENT = 198;
+  public int JJTALTERSECURITYPOLICYSTATEMENT = 199;
+  public int JJTCREATEDATABASESTATEMENT = 200;
+  public int JJTDROPDATABASESTATEMENT = 201;
 
   public String[] jjtNodeName = {
     "Rid",
@@ -379,6 +380,7 @@ public interface OrientSqlTreeConstants {
     "RevokeStatement",
     "CreateFunctionStatement",
     "CreateSystemUserStatement",
+    "ExistsSystemUserStatement",
     "CreateUserStatement",
     "DropUserStatement",
     "AlterRoleStatement",
@@ -408,4 +410,4 @@ public interface OrientSqlTreeConstants {
     "DropDatabaseStatement",
   };
 }
-/* JavaCC - OriginalChecksum=f7a63a3ae27bef18b9e40080b87a1ea4 (do not edit this line) */
+/* JavaCC - OriginalChecksum=3c0c07a0a39a3c8535d22d10dc4657e2 (do not edit this line) */
