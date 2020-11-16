@@ -116,4 +116,13 @@ public final class FreeSpaceMap extends ODurableComponent {
       releasePageFromWrite(atomicOperation, firstLevelCacheEntry);
     }
   }
+
+  public void delete(OAtomicOperation atomicOperation) throws IOException {
+    deleteFile(atomicOperation, fileId);
+  }
+
+  void rename(final String newName) throws IOException {
+    writeCache.renameFile(fileId, newName + getExtension());
+    setName(newName);
+  }
 }
