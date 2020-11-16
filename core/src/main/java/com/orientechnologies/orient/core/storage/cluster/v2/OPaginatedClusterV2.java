@@ -850,11 +850,14 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
                 }
               }
               final boolean isNew;
+              final boolean newFreePage;
               if (nextPageIndex < 0) {
                 nextPageIndex = freeSpaceMap.findFreePage(entrySize);
-                isNew = newPageIndex < 0;
+                isNew = nextPageIndex < 0;
+                newFreePage = true;
               } else {
                 isNew = false;
+                newFreePage = false;
               }
 
               final OCacheEntry cacheEntry;
@@ -891,7 +894,7 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
                 if (isNew) {
                   localPage.init();
                 } else {
-                  assert localPage.getMaxRecordSize() >= entrySize;
+                  assert !newFreePage || localPage.getMaxRecordSize() >= entrySize;
                 }
                 final int pageFreeSpace = localPage.getFreeSpace();
 

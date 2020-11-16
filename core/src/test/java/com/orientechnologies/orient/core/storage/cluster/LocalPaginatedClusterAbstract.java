@@ -1105,7 +1105,10 @@ public abstract class LocalPaginatedClusterAbstract {
   @Test
   public void testUpdateOneBigRecord() throws IOException {
     final byte[] bigRecord = new byte[2 * 65536 + 100];
-    Random mersenneTwisterFast = new Random();
+    final long seed = System.nanoTime();
+    System.out.println("testUpdateOneBigRecord seed " + seed);
+    Random mersenneTwisterFast = new Random(seed);
+
     mersenneTwisterFast.nextBytes(bigRecord);
 
     final int recordVersion = 2;
@@ -1256,8 +1259,8 @@ public abstract class LocalPaginatedClusterAbstract {
   public void testUpdateManyBigRecords() throws IOException {
     final int records = 5000;
 
-    long seed = System.currentTimeMillis();
-    Random mersenneTwisterFast = new Random(seed);
+    long seed = 1605083213475L;//System.currentTimeMillis();
+    Random mersenneTwisterFast =  new Random(seed);
     System.out.println("testUpdateManyBigRecords seed : " + seed);
 
     Map<Long, byte[]> positionRecordMap = new HashMap<>();
@@ -1757,12 +1760,10 @@ final class RollbackException extends OException implements OHighLevelException 
     super("");
   }
 
-  @SuppressWarnings("unused")
   public RollbackException(String message) {
     super(message);
   }
 
-  @SuppressWarnings("unused")
   public RollbackException(RollbackException exception) {
     super(exception);
   }
