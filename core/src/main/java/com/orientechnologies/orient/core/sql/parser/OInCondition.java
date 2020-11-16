@@ -62,12 +62,41 @@ public class OInCondition extends OBooleanExpression {
 
   @Override
   public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
-    Object leftVal = evaluateLeft(currentRecord, ctx);
     Object rightVal = evaluateRight(currentRecord, ctx);
     if (rightVal == null) {
       return false;
     }
+
+    if (left.isFunctionAny()) {
+      return evaluateAny(currentRecord, rightVal, ctx);
+    }
+
+    if (left.isFunctionAll()) {
+      return evaluateAllFunction(currentRecord, rightVal, ctx);
+    }
+
+    Object leftVal = evaluateLeft(currentRecord, ctx);
     return evaluateExpression(leftVal, rightVal);
+  }
+
+  private boolean evaluateAny(OResult currentRecord, Object rightVal, OCommandContext ctx) {
+    for (String s : currentRecord.getPropertyNames()) {
+      Object leftVal = currentRecord.getProperty(s);
+      if (evaluateExpression(leftVal, rightVal)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private boolean evaluateAllFunction(OResult currentRecord, Object rightVal, OCommandContext ctx) {
+    for (String s : currentRecord.getPropertyNames()) {
+      Object leftVal = currentRecord.getProperty(s);
+      if (!evaluateExpression(leftVal, rightVal)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   public Object evaluateRight(OResult currentRecord, OCommandContext ctx) {

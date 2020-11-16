@@ -34,6 +34,9 @@ public class OIsNotDefinedCondition extends OBooleanExpression {
 
   @Override
   public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+    if (expression.isFunctionAny() || expression.isFunctionAll()) {
+      return false;
+    }
     return !expression.isDefinedFor(currentRecord);
   }
 

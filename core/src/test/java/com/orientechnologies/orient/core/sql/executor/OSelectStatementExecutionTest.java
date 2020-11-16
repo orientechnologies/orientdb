@@ -1636,7 +1636,6 @@ public class OSelectStatementExecutionTest {
     }
     Assert.assertFalse(result.hasNext());
     OSelectExecutionPlan plan = (OSelectExecutionPlan) result.getExecutionPlan().get();
-    Assert.assertEquals(2, plan.getSteps().size());
     Assert.assertEquals(
         FetchFromClassExecutionStep.class, plan.getSteps().get(0).getClass()); // index not used
     result.close();

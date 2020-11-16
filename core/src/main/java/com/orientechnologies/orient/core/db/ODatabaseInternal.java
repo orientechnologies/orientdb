@@ -147,4 +147,6 @@ public interface ODatabaseInternal<T> extends ODatabase<T> {
   default OEnterpriseEndpoint getEnterpriseEndpoint() {
     return null;
   }
+
+  default void interruptExecution(Thread thread) {}
 }

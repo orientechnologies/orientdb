@@ -153,6 +153,14 @@ public class OContainsCondition extends OBooleanExpression {
 
   @Override
   public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+    if (left.isFunctionAny()) {
+      return evaluateAny(currentRecord, ctx);
+    }
+
+    if (left.isFunctionAll()) {
+      return evaluateAllFunction(currentRecord, ctx);
+    }
+
     Object leftValue = left.execute(currentRecord, ctx);
     if (right != null) {
       Object rightValue = right.execute(currentRecord, ctx);
@@ -179,6 +187,91 @@ public class OContainsCondition extends OBooleanExpression {
         }
       }
       return false;
+    }
+  }
+
+  private boolean evaluateAny(OResult currentRecord, OCommandContext ctx) {
+    if (right != null) {
+      for (String s : currentRecord.getPropertyNames()) {
+        Object leftVal = currentRecord.getProperty(s);
+        Object rightValue = right.execute(currentRecord, ctx);
+        if (execute(leftVal, rightValue)) {
+          return true;
+        }
+      }
+      return false;
+    } else {
+      for (String s : currentRecord.getPropertyNames()) {
+        Object leftValue = currentRecord.getProperty(s);
+
+        if (!OMultiValue.isMultiValue(leftValue)) {
+          continue;
+        }
+        Iterator<Object> iter = OMultiValue.getMultiValueIterator(leftValue);
+        while (iter.hasNext()) {
+          Object item = iter.next();
+          if (item instanceof OIdentifiable && condition.evaluate((OIdentifiable) item, ctx)) {
+            return true;
+          } else if (item instanceof OResult && condition.evaluate((OResult) item, ctx)) {
+            return true;
+          } else if (item instanceof Map) {
+            OResultInternal res = new OResultInternal();
+            ((Map<String, Object>) item)
+                .entrySet()
+                .forEach(x -> res.setProperty(x.getKey(), x.getValue()));
+            if (condition.evaluate(res, ctx)) {
+              return true;
+            }
+          }
+        }
+      }
+      return false;
+    }
+  }
+
+  private boolean evaluateAllFunction(OResult currentRecord, OCommandContext ctx) {
+    if (right != null) {
+      for (String s : currentRecord.getPropertyNames()) {
+        Object leftVal = currentRecord.getProperty(s);
+        Object rightValue = right.execute(currentRecord, ctx);
+        if (!execute(leftVal, rightValue)) {
+          return false;
+        }
+      }
+      return true;
+    } else {
+      for (String s : currentRecord.getPropertyNames()) {
+        Object leftValue = currentRecord.getProperty(s);
+
+        if (!OMultiValue.isMultiValue(leftValue)) {
+          return false;
+        }
+        Iterator<Object> iter = OMultiValue.getMultiValueIterator(leftValue);
+        boolean found = false;
+        while (iter.hasNext()) {
+          Object item = iter.next();
+          if (item instanceof OIdentifiable && condition.evaluate((OIdentifiable) item, ctx)) {
+            found = true;
+            break;
+          } else if (item instanceof OResult && condition.evaluate((OResult) item, ctx)) {
+            found = true;
+            break;
+          } else if (item instanceof Map) {
+            OResultInternal res = new OResultInternal();
+            ((Map<String, Object>) item)
+                .entrySet()
+                .forEach(x -> res.setProperty(x.getKey(), x.getValue()));
+            if (condition.evaluate(res, ctx)) {
+              found = true;
+              break;
+            }
+          }
+        }
+        if (!found) {
+          return false;
+        }
+      }
+      return true;
     }
   }
 

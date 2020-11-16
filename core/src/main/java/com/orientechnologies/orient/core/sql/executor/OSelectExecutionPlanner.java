@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
@@ -22,48 +23,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
-import com.orientechnologies.orient.core.sql.parser.AggregateProjectionSplit;
-import com.orientechnologies.orient.core.sql.parser.OAndBlock;
-import com.orientechnologies.orient.core.sql.parser.OBaseExpression;
-import com.orientechnologies.orient.core.sql.parser.OBinaryCompareOperator;
-import com.orientechnologies.orient.core.sql.parser.OBinaryCondition;
-import com.orientechnologies.orient.core.sql.parser.OBooleanExpression;
-import com.orientechnologies.orient.core.sql.parser.OCluster;
-import com.orientechnologies.orient.core.sql.parser.OContainsAnyCondition;
-import com.orientechnologies.orient.core.sql.parser.OContainsKeyOperator;
-import com.orientechnologies.orient.core.sql.parser.OContainsTextCondition;
-import com.orientechnologies.orient.core.sql.parser.OContainsValueCondition;
-import com.orientechnologies.orient.core.sql.parser.OContainsValueOperator;
-import com.orientechnologies.orient.core.sql.parser.OEqualsCompareOperator;
-import com.orientechnologies.orient.core.sql.parser.OExecutionPlanCache;
-import com.orientechnologies.orient.core.sql.parser.OExpression;
-import com.orientechnologies.orient.core.sql.parser.OFromClause;
-import com.orientechnologies.orient.core.sql.parser.OFromItem;
-import com.orientechnologies.orient.core.sql.parser.OFunctionCall;
-import com.orientechnologies.orient.core.sql.parser.OGeOperator;
-import com.orientechnologies.orient.core.sql.parser.OGroupBy;
-import com.orientechnologies.orient.core.sql.parser.OGtOperator;
-import com.orientechnologies.orient.core.sql.parser.OIdentifier;
-import com.orientechnologies.orient.core.sql.parser.OInCondition;
-import com.orientechnologies.orient.core.sql.parser.OIndexIdentifier;
-import com.orientechnologies.orient.core.sql.parser.OInputParameter;
-import com.orientechnologies.orient.core.sql.parser.OInteger;
-import com.orientechnologies.orient.core.sql.parser.OLeOperator;
-import com.orientechnologies.orient.core.sql.parser.OLetClause;
-import com.orientechnologies.orient.core.sql.parser.OLetItem;
-import com.orientechnologies.orient.core.sql.parser.OLtOperator;
-import com.orientechnologies.orient.core.sql.parser.OMetadataIdentifier;
-import com.orientechnologies.orient.core.sql.parser.OOrBlock;
-import com.orientechnologies.orient.core.sql.parser.OOrderBy;
-import com.orientechnologies.orient.core.sql.parser.OOrderByItem;
-import com.orientechnologies.orient.core.sql.parser.OProjection;
-import com.orientechnologies.orient.core.sql.parser.OProjectionItem;
-import com.orientechnologies.orient.core.sql.parser.ORecordAttribute;
-import com.orientechnologies.orient.core.sql.parser.ORid;
-import com.orientechnologies.orient.core.sql.parser.OSelectStatement;
-import com.orientechnologies.orient.core.sql.parser.OStatement;
-import com.orientechnologies.orient.core.sql.parser.OWhereClause;
-import com.orientechnologies.orient.core.sql.parser.SubQueryCollector;
+import com.orientechnologies.orient.core.sql.parser.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -89,7 +49,7 @@ public class OSelectExecutionPlanner {
     this.statement = oSelectStatement;
   }
 
-  private void init() {
+  private void init(OCommandContext ctx) {
     // copying the content, so that it can be manipulated and optimized
     info = new QueryPlanningInfo();
     info.projection =
@@ -113,6 +73,15 @@ public class OSelectExecutionPlanner {
     info.limit = this.statement.getLimit();
     info.lockRecord = this.statement.getLockRecord();
     info.timeout = this.statement.getTimeout() == null ? null : this.statement.getTimeout().copy();
+    if (info.timeout == null
+        && ctx.getDatabase().getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT)
+            > 0) {
+      info.timeout = new OTimeout(-1);
+      info.timeout.setVal(
+          ctx.getDatabase()
+              .getConfiguration()
+              .getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT));
+    }
   }
 
   public OInternalExecutionPlan createExecutionPlan(
@@ -127,7 +96,7 @@ public class OSelectExecutionPlanner {
 
     long planningStart = System.currentTimeMillis();
 
-    init();
+    init(ctx);
     OSelectExecutionPlan result = new OSelectExecutionPlan(ctx);
 
     if (info.expand && info.distinct) {
