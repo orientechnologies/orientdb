@@ -1048,7 +1048,9 @@ public class OServer {
     }
     if (!databases.getSecuritySystem().existsUser(OServerConfiguration.GUEST_USER)) {
       context.execute(
-          "CREATE SYSTEM USER " + OServerConfiguration.GUEST_USER + " IDENTIFIED BY 'guest' ROLE guest");
+          "CREATE SYSTEM USER "
+              + OServerConfiguration.GUEST_USER
+              + " IDENTIFIED BY 'guest' ROLE guest");
     }
   }
 
