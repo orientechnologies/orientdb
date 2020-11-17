@@ -1259,8 +1259,8 @@ public abstract class LocalPaginatedClusterAbstract {
   public void testUpdateManyBigRecords() throws IOException {
     final int records = 5000;
 
-    long seed = 1605083213475L;//System.currentTimeMillis();
-    Random mersenneTwisterFast =  new Random(seed);
+    long seed = 1605083213475L; // System.currentTimeMillis();
+    Random mersenneTwisterFast = new Random(seed);
     System.out.println("testUpdateManyBigRecords seed : " + seed);
 
     Map<Long, byte[]> positionRecordMap = new HashMap<>();

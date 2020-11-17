@@ -121,11 +121,11 @@ public class FreeSpaceMapTestIT {
     final int checks = 1_000;
 
     final HashMap<Integer, Integer> pageSpaceMap = new HashMap<>();
-    final long seed = 1107466507161549L;//System.nanoTime();
+    final long seed = 1107466507161549L; // System.nanoTime();
     System.out.println("randomPages seed - " + seed);
     final Random random = new Random(seed);
 
-    int[] maxFreeSpaceIndex = new int[]{-1};
+    int[] maxFreeSpaceIndex = new int[] {-1};
     for (int i = 0; i < pages; i++) {
       final int pageIndex = i;
 

@@ -74,9 +74,7 @@ public class OClusterRemote implements OCluster {
    *
    * @see com.orientechnologies.orient.core.storage.OCluster#open()
    */
-  public void open(
-      OAtomicOperation atomicOperation) throws IOException {
-  }
+  public void open(OAtomicOperation atomicOperation) throws IOException {}
 
   public void close() throws IOException {}
 
