@@ -25,9 +25,13 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
 import com.orientechnologies.orient.core.db.config.ONodeConfiguration;
 import com.orientechnologies.orient.core.db.config.ONodeConfigurationBuilder;
+import com.orientechnologies.orient.core.security.OGlobalUser;
+import com.orientechnologies.orient.core.security.OGlobalUserImpl;
 import com.orientechnologies.orient.core.security.OSecurityConfig;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -39,6 +43,7 @@ public class OrientDBConfigBuilder {
   private ClassLoader classLoader;
   private ONodeConfigurationBuilder nodeConfigurationBuilder = ONodeConfiguration.builder();
   private OSecurityConfig securityConfig;
+  private List<OGlobalUser> users = new ArrayList<OGlobalUser>();
 
   public OrientDBConfigBuilder fromGlobalMap(Map<OGlobalConfiguration, Object> values) {
     for (Map.Entry<OGlobalConfiguration, Object> entry : values.entrySet()) {
@@ -88,11 +93,17 @@ public class OrientDBConfigBuilder {
         listeners,
         classLoader,
         nodeConfigurationBuilder.build(),
-        securityConfig);
+        securityConfig,
+        users);
   }
 
   public OrientDBConfigBuilder fromContext(OContextConfiguration contextConfiguration) {
     configurations = contextConfiguration;
+    return this;
+  }
+
+  public OrientDBConfigBuilder addGlobalUser(String user, String password, String resource) {
+    users.add(new OGlobalUserImpl(user, password, resource));
     return this;
   }
 }

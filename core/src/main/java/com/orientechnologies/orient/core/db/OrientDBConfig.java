@@ -23,10 +23,13 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
 import com.orientechnologies.orient.core.db.config.ONodeConfiguration;
 import com.orientechnologies.orient.core.security.ODefaultSecurityConfig;
+import com.orientechnologies.orient.core.security.OGlobalUser;
 import com.orientechnologies.orient.core.security.OSecurityConfig;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -43,6 +46,7 @@ public class OrientDBConfig {
   private ClassLoader classLoader;
   private ONodeConfiguration nodeConfiguration;
   private OSecurityConfig securityConfig;
+  private List<OGlobalUser> users;
 
   protected OrientDBConfig() {
     configurations = new OContextConfiguration();
@@ -51,6 +55,7 @@ public class OrientDBConfig {
     listeners = new HashSet<>();
     classLoader = this.getClass().getClassLoader();
     this.securityConfig = new ODefaultSecurityConfig();
+    this.users = new ArrayList<OGlobalUser>();
   }
 
   protected OrientDBConfig(
@@ -59,7 +64,8 @@ public class OrientDBConfig {
       Set<ODatabaseListener> listeners,
       ClassLoader classLoader,
       ONodeConfiguration nodeConfiguration,
-      OSecurityConfig securityConfig) {
+      OSecurityConfig securityConfig,
+      List<OGlobalUser> users) {
     this.configurations = configurations;
     this.attributes = attributes;
     parent = null;
@@ -70,6 +76,7 @@ public class OrientDBConfig {
     } else this.classLoader = this.getClass().getClassLoader();
     this.nodeConfiguration = nodeConfiguration;
     this.securityConfig = securityConfig;
+    this.users = users;
   }
 
   public static OrientDBConfig defaultConfig() {
@@ -102,6 +109,10 @@ public class OrientDBConfig {
 
   public OSecurityConfig getSecurityConfig() {
     return securityConfig;
+  }
+
+  public List<OGlobalUser> getUsers() {
+    return users;
   }
 
   protected void setParent(OrientDBConfig parent) {

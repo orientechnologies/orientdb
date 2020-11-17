@@ -101,6 +101,8 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
   private final Map<String, OTemporaryGlobalUser> ephemeralUsers =
       new ConcurrentHashMap<String, OTemporaryGlobalUser>();
 
+  private final Map<String, OGlobalUser> configUsers = new HashMap<String, OGlobalUser>();
+
   public ODefaultSecuritySystem() {}
 
   public void activate(final OrientDBInternal context, final OSecurityConfig serverCfg) {
@@ -111,6 +113,9 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
     }
     onAfterDynamicPlugins();
     tokenSign = new OTokenSignImpl(context.getConfigurations().getConfigurations());
+    for (OGlobalUser user : context.getConfigurations().getUsers()) {
+      configUsers.put(user.getName(), user);
+    }
   }
 
   public void createSystemRoles(ODatabaseSession session) {
@@ -503,23 +508,21 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
     OSecurityUser systemUser = null;
     // This will throw an IllegalArgumentException if iUserName is null or empty.
     // However, a null or empty iUserName is possible with some security implementations.
-    if (serverConfig != null) {
-      if (username != null && !username.isEmpty()) {
-        OGlobalUser userCfg = serverConfig.getUser(username);
-        if (userCfg == null) {
-          for (OTemporaryGlobalUser user : ephemeralUsers.values()) {
-            if (username.equalsIgnoreCase(user.getName())) {
-              // FOUND
-              userCfg = user;
-            }
+    if (username != null && !username.isEmpty()) {
+      OGlobalUser userCfg = configUsers.get(username);
+      if (userCfg == null) {
+        for (OTemporaryGlobalUser user : ephemeralUsers.values()) {
+          if (username.equalsIgnoreCase(user.getName())) {
+            // FOUND
+            userCfg = user;
           }
         }
-        if (userCfg != null) {
-          OSecurityRole role = OSecurityShared.createRole(null, userCfg);
-          systemUser =
-              new OImmutableUser(
-                  username, userCfg.getPassword(), OSecurityUser.SERVER_USER_TYPE, role);
-        }
+      }
+      if (userCfg != null) {
+        OSecurityRole role = OSecurityShared.createRole(null, userCfg);
+        systemUser =
+            new OImmutableUser(
+                username, userCfg.getPassword(), OSecurityUser.SERVER_USER_TYPE, role);
       }
     }
 
@@ -1075,11 +1078,7 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
   }
 
   public boolean existsUser(String user) {
-    if (serverConfig != null) {
-      return serverConfig.existsUser(user);
-    } else {
-      return false;
-    }
+    return configUsers.containsKey(user);
   }
 
   public void addTemporaryUser(String iName, String iPassword, String iPermissions) {

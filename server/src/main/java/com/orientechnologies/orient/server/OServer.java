@@ -37,6 +37,7 @@ import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OSystemDatabase;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.OrientDBConfigBuilder;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxInternal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -55,6 +56,7 @@ import com.orientechnologies.orient.server.config.OServerNetworkProtocolConfigur
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.config.OServerSocketFactoryConfiguration;
 import com.orientechnologies.orient.server.config.OServerStorageConfiguration;
+import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.config.ODistributedConfig;
 import com.orientechnologies.orient.server.handler.OConfigurableHooksManager;
@@ -371,8 +373,12 @@ public class OServer {
 
     if (!databaseDirectory.endsWith("/")) databaseDirectory += "/";
 
+    OrientDBConfigBuilder builder = OrientDBConfig.builder();
+    for (OServerUserConfiguration user : serverCfg.getUsers()) {
+      builder.addGlobalUser(user.getName(), user.getPassword(), user.getResources());
+    }
     OrientDBConfig config =
-        OrientDBConfig.builder()
+        builder
             .fromContext(contextConfiguration)
             .setSecurityConfig(new OServerSecurityConfig(this, this.serverCfg))
             .build();

@@ -5,7 +5,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.security.OSecurityConfig;
 import com.orientechnologies.orient.core.security.OSyslog;
 import com.orientechnologies.orient.server.config.OServerConfigurationManager;
-import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 
 public class OServerSecurityConfig implements OSecurityConfig {
@@ -18,16 +17,6 @@ public class OServerSecurityConfig implements OSecurityConfig {
     super();
     this.server = server;
     this.serverCfg = serverCfg;
-  }
-
-  @Override
-  public boolean existsUser(String user) {
-    return serverCfg.existsUser(user);
-  }
-
-  @Override
-  public OServerUserConfiguration getUser(String username) {
-    return serverCfg.getUser(username);
   }
 
   @Override
