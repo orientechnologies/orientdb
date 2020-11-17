@@ -15,16 +15,16 @@ import java.util.List;
  * Created by luigidellaquila on 19/09/16.
  */
 public class ForEachStep extends AbstractExecutionStep {
-  private final OIdentifier      loopVariable;
-  private final OExpression      source;
-  public        List<OStatement> body;
+  private final OIdentifier loopVariable;
+  private final OExpression source;
+  public List<OStatement> body;
 
   Iterator iterator;
   private OExecutionStepInternal finalResult = null;
-  private boolean                inited      = false;
+  private boolean inited = false;
 
   public ForEachStep(OIdentifier loopVariable, OExpression oExpression, List<OStatement> statements, OCommandContext ctx,
-      boolean enableProfiling) {
+                     boolean enableProfiling) {
     super(ctx, enableProfiling);
     this.loopVariable = loopVariable;
     this.source = oExpression;
@@ -38,7 +38,7 @@ public class ForEachStep extends AbstractExecutionStep {
       return finalResult.syncPull(ctx, nRecords);
     }
     init(ctx);
-    while (iterator.hasNext()) {
+    while (iterator != null && iterator.hasNext()) {
       if (OExecutionThreadLocal.isInterruptCurrentOperation()) {
         throw new OCommandInterruptedException("The command has been interrupted");
       }
