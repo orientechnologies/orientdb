@@ -601,9 +601,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   }
 
   public static void deleteFilesFromDisc(
-      String name, int maxRetries, int waitTime, String databaseDirectory) {
-    java.io.File dbDir; // GET REAL DIRECTORY
-    dbDir = new java.io.File(databaseDirectory);
+      final String name, final int maxRetries, final int waitTime, final String databaseDirectory) {
+    File dbDir = new java.io.File(databaseDirectory);
     if (!dbDir.exists() || !dbDir.isDirectory()) dbDir = dbDir.getParentFile();
 
     // RETRIES
@@ -611,11 +610,11 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
       if (dbDir != null && dbDir.exists() && dbDir.isDirectory()) {
         int notDeletedFiles = 0;
 
-        final java.io.File[] storageFiles = dbDir.listFiles();
+        final File[] storageFiles = dbDir.listFiles();
         if (storageFiles == null) continue;
 
         // TRY TO DELETE ALL THE FILES
-        for (final java.io.File f : storageFiles) {
+        for (final File f : storageFiles) {
           // DELETE ONLY THE SUPPORTED FILES
           for (final String ext : ALL_FILE_EXTENSIONS)
             if (f.getPath().endsWith(ext)) {
@@ -640,7 +639,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
           return;
         }
       } else return;
-
       OLogManager.instance()
           .debug(
               OLocalPaginatedStorage.class,
