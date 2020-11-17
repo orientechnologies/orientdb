@@ -1758,7 +1758,8 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       connection.setServerUser(serverUser);
       connection.getData().serverUsername = serverUser.getName();
       connection.getData().serverUser = true;
-      byte[] token = server.getTokenHandler().getDistributedToken(connection.getData());
+      byte[] token =
+          server.getTokenHandler().getSignedBinaryToken(null, null, connection.getData());
 
       return new ODistributedConnectResponse(connection.getId(), token, chosenProtocolVersion);
     }

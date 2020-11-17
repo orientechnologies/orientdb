@@ -157,6 +157,8 @@ public class OTokenHandlerImpl implements OTokenHandler {
   @Override
   public boolean validateBinaryToken(final OToken token) {
     boolean valid = false;
+    // The "node" token is for backward compatibility for old ditributed binary, may be removed if
+    // we do not support runtime compatiblity with 3.1 or less
     if ("node".equals(token.getHeader().getType())) {
       valid = true;
     } else {
@@ -242,34 +244,6 @@ public class OTokenHandlerImpl implements OTokenHandler {
     return valid;
   }
 
-  @Override
-  public byte[] getDistributedToken(ONetworkProtocolData data) {
-    try {
-
-      final OBinaryToken token = new OBinaryToken();
-      final OrientJwtHeader header = new OrientJwtHeader();
-      header.setAlgorithm(this.sign.getAlgorithm());
-      header.setKeyId(this.sign.getDefaultKey());
-      header.setType("node");
-      token.setHeader(header);
-      ODistributedBinaryTokenPayload payload = new ODistributedBinaryTokenPayload();
-      payload.setServerUser(true);
-      payload.setUserName(data.serverUsername);
-      payload.setExpiry(0);
-      payload.setProtocolVersion(data.protocolVersion);
-      payload.setSerializer(data.getSerializationImpl());
-      payload.setDriverName(data.driverName);
-      payload.setDriverVersion(data.driverVersion);
-      token.setPayload(payload);
-
-      return serializeSignedToken(token);
-    } catch (RuntimeException e) {
-      throw e;
-    } catch (Exception e) {
-      throw OException.wrapException(new OSystemException("Error on token parsing"), e);
-    }
-  }
-
   public byte[] getSignedBinaryToken(
       final ODatabaseDocumentInternal db,
       final OSecurityUser user,
@@ -294,7 +268,9 @@ public class OTokenHandlerImpl implements OTokenHandler {
         payload.setServerUser(true);
         payload.setUserName(data.serverUsername);
       }
-      if (user != null) payload.setUserRid(user.getIdentity().getIdentity());
+      if (user != null) {
+        payload.setUserRid(user.getIdentity().getIdentity());
+      }
       payload.setExpiry(curTime + sessionInMills);
       payload.setProtocolVersion(data.protocolVersion);
       payload.setSerializer(data.getSerializationImpl());
