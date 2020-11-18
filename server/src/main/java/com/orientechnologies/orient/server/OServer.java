@@ -957,9 +957,9 @@ public class OServer {
       rootPassword = rootPassword.trim();
       if (rootPassword.isEmpty()) rootPassword = null;
     }
+    boolean existsRoot = existsSystemUser(OServerConfiguration.DEFAULT_ROOT_USER);
 
-    if (rootPassword == null
-        && !databases.getSecuritySystem().existsUser(OServerConfiguration.DEFAULT_ROOT_USER)) {
+    if (rootPassword == null && !existsRoot) {
       try {
         // WAIT ANY LOG IS PRINTED
         Thread.sleep(1000);
@@ -1039,19 +1039,25 @@ public class OServer {
               "Found ORIENTDB_ROOT_PASSWORD variable, using this value as root's password",
               rootPassword);
 
-    if (!databases.getSecuritySystem().existsUser(OServerConfiguration.DEFAULT_ROOT_USER)) {
+    if (!existsRoot) {
       context.execute(
           "CREATE SYSTEM USER "
               + OServerConfiguration.DEFAULT_ROOT_USER
               + " IDENTIFIED BY ? ROLE root",
           rootPassword);
     }
-    if (!databases.getSecuritySystem().existsUser(OServerConfiguration.GUEST_USER)) {
+
+    if (!existsSystemUser(OServerConfiguration.GUEST_USER)) {
       context.execute(
           "CREATE SYSTEM USER "
               + OServerConfiguration.GUEST_USER
               + " IDENTIFIED BY 'guest' ROLE guest");
     }
+  }
+
+  private boolean existsSystemUser(String user) {
+    return Boolean.TRUE.equals(
+        context.execute("EXISTS SYSTEM USER ?", user).next().getProperty("exists"));
   }
 
   public OServerPluginManager getPluginManager() {
