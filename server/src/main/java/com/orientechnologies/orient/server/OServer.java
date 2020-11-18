@@ -957,7 +957,9 @@ public class OServer {
       rootPassword = rootPassword.trim();
       if (rootPassword.isEmpty()) rootPassword = null;
     }
-    boolean existsRoot = existsSystemUser(OServerConfiguration.DEFAULT_ROOT_USER);
+    boolean existsRoot =
+        existsSystemUser(OServerConfiguration.DEFAULT_ROOT_USER)
+            || serverCfg.existsUser(OServerConfiguration.DEFAULT_ROOT_USER);
 
     if (rootPassword == null && !existsRoot) {
       try {
