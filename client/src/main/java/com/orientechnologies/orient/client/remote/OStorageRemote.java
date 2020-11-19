@@ -126,6 +126,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
+import com.orientechnologies.orient.core.db.OConnectionNext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OLiveQueryMonitor;
@@ -246,9 +247,24 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       OrientDBRemote context,
       final String iMode,
       ORemoteConnectionManager connectionManager,
-      OrientDBConfig config)
+      OrientDBConfig config,
+      OConnectionNext connectionNext)
       throws IOException {
     this(iURL, context, iMode, connectionManager, null, config);
+    String strategy = null;
+    if (config != null) {
+      strategy =
+          config
+              .getConfigurations()
+              .getValueAsString(OGlobalConfiguration.CLIENT_CONNECTION_STRATEGY);
+    }
+    if (strategy != null) {
+      connectionStrategy = CONNECTION_STRATEGY.valueOf(strategy.toUpperCase(Locale.ENGLISH));
+      if (CONNECTION_STRATEGY.ROUND_ROBIN_CONNECT == connectionStrategy
+          || CONNECTION_STRATEGY.ROUND_ROBIN_REQUEST == connectionStrategy) {
+        this.nextServerToConnect = connectionNext.next();
+      }
+    }
   }
 
   public OStorageRemote(

@@ -62,6 +62,7 @@ public class OrientDBRemote implements OrientDBInternal {
   protected volatile ORemoteConnectionManager connectionManager;
   private volatile boolean open = true;
   private Timer timer;
+  private OConnectionNext connectionNext;
 
   public OrientDBRemote(String[] hosts, OrientDBConfig configurations, Orient orient) {
     super();
@@ -74,6 +75,7 @@ public class OrientDBRemote implements OrientDBInternal {
         new ORemoteConnectionManager(this.configurations.getConfigurations(), timer);
     orient.addOrientDB(this);
     cachedPoolFactory = createCachedDatabasePoolFactory(this.configurations);
+    this.connectionNext = new OConnectionNext(hosts.length);
   }
 
   protected OCachedDatabasePoolFactory createCachedDatabasePoolFactory(OrientDBConfig config) {
@@ -103,7 +105,9 @@ public class OrientDBRemote implements OrientDBInternal {
       OStorageRemote storage;
       storage = storages.get(name);
       if (storage == null) {
-        storage = new OStorageRemote(buildUrl(name), this, "rw", connectionManager, resolvedConfig);
+        storage =
+            new OStorageRemote(
+                buildUrl(name), this, "rw", connectionManager, resolvedConfig, connectionNext);
         storages.put(name, storage);
       }
       ODatabaseDocumentRemote db = new ODatabaseDocumentRemote(storage);
@@ -150,7 +154,12 @@ public class OrientDBRemote implements OrientDBInternal {
       try {
         storage =
             new OStorageRemote(
-                buildUrl(name), this, "rw", connectionManager, solveConfig(pool.getConfig()));
+                buildUrl(name),
+                this,
+                "rw",
+                connectionManager,
+                solveConfig(pool.getConfig()),
+                connectionNext);
         storages.put(name, storage);
       } catch (Exception e) {
         throw OException.wrapException(

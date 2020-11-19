@@ -39,6 +39,33 @@ public class SimpleConnectionStrategiesIT {
   }
 
   @Test
+  public void testRoundRobinOpenClose() {
+    OrientDB remote1 =
+        new OrientDB(
+            "remote:localhost;localhost:2425",
+            "root",
+            "test",
+            OrientDBConfig.builder()
+                .addConfig(CLIENT_CONNECTION_STRATEGY, "ROUND_ROBIN_CONNECT")
+                .build());
+    Set<String> urls = new HashSet<>();
+    ODatabaseSession session =
+        remote1.open(SimpleConnectionStrategiesIT.class.getSimpleName(), "admin", "admin");
+    urls.add(((ODatabaseDocumentRemote) session).getSessionMetadata().getDebugLastHost());
+    session.close();
+
+    ODatabaseSession session1 =
+        remote1.open(SimpleConnectionStrategiesIT.class.getSimpleName(), "admin", "admin");
+    urls.add(((ODatabaseDocumentRemote) session1).getSessionMetadata().getDebugLastHost());
+    session1.close();
+
+    assertEquals(urls.stream().filter((x) -> x.contains("2424")).count(), 1);
+    assertEquals(urls.stream().filter((x) -> x.contains("2425")).count(), 1);
+
+    remote1.close();
+  }
+
+  @Test
   public void testRoundRobin() {
     OrientDB remote1 =
         new OrientDB(
