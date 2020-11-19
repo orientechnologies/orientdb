@@ -165,13 +165,13 @@ public class ORecordLazyList extends OTrackedList<OIdentifiable> implements ORec
     lazyLoad(true);
     super.add(index, e);
   }
-  
+
   @Override
   public boolean addInternal(OIdentifiable e) {
-	preAdd(e);
+    preAdd(e);
     return super.addInternal(e);
   }
-  
+
   private void preAdd(OIdentifiable e) {
     if (e != null) {
       ORecordInternal.track(sourceRecord, e);
