@@ -127,6 +127,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
+import com.orientechnologies.orient.core.db.OConnectionNext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OLiveQueryMonitor;
@@ -241,9 +242,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       OrientDBRemote context,
       final String iMode,
       ORemoteConnectionManager connectionManager,
-      OrientDBConfig config)
+      OrientDBConfig config,
+      OConnectionNext connectionNext)
       throws IOException {
-    this(hosts, name, context, iMode, connectionManager, null, config);
+    this(hosts, name, context, iMode, connectionManager, null, config, connectionNext);
   }
 
   public OStorageRemote(
@@ -253,7 +255,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       final String iMode,
       ORemoteConnectionManager connectionManager,
       final STATUS status,
-      OrientDBConfig config)
+      OrientDBConfig config,
+      OConnectionNext connectionNext)
       throws IOException {
     super(name, buildUrl(hosts, name), iMode); // NO TIMEOUT @SINCE 1.5
     if (status != null) this.status = status;
@@ -269,7 +272,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
         clientConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_RETRY);
     connectionRetryDelay =
         clientConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_RETRY_DELAY);
-    serverURLs = new ORemoteURLs(hosts, clientConfiguration);
+    serverURLs = new ORemoteURLs(hosts, clientConfiguration, connectionNext);
 
     asynchExecutor = new OScheduledThreadPoolExecutorWithLogging(1);
 

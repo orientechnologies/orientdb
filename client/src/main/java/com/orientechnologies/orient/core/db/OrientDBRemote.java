@@ -26,8 +26,16 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.NETW
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
-import com.orientechnologies.orient.client.remote.*;
+import com.orientechnologies.orient.client.remote.OBinaryRequest;
+import com.orientechnologies.orient.client.remote.OBinaryResponse;
+import com.orientechnologies.orient.client.remote.ORemoteConnectionManager;
+import com.orientechnologies.orient.client.remote.ORemoteQueryResult;
+import com.orientechnologies.orient.client.remote.ORemoteURLs;
+import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.client.remote.OStorageRemote.CONNECTION_STRATEGY;
+import com.orientechnologies.orient.client.remote.OStorageRemoteNodeSession;
+import com.orientechnologies.orient.client.remote.OStorageRemoteOperation;
+import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.client.remote.message.OConnect37Request;
 import com.orientechnologies.orient.client.remote.message.OConnectResponse;
 import com.orientechnologies.orient.client.remote.message.OCreateDatabaseRequest;
@@ -98,6 +106,7 @@ public class OrientDBRemote implements OrientDBInternal {
   private volatile boolean open = true;
   private Timer timer;
   private final ORemoteURLs urls;
+  private OConnectionNext connectionNext;
 
   public OrientDBRemote(String[] hosts, OrientDBConfig configurations, Orient orient) {
     super();
@@ -110,7 +119,8 @@ public class OrientDBRemote implements OrientDBInternal {
         new ORemoteConnectionManager(this.configurations.getConfigurations(), timer);
     orient.addOrientDB(this);
     cachedPoolFactory = createCachedDatabasePoolFactory(this.configurations);
-    urls = new ORemoteURLs(hosts, this.configurations.getConfigurations());
+    this.connectionNext = new OConnectionNext(hosts.length);
+    urls = new ORemoteURLs(hosts, this.configurations.getConfigurations(), this.connectionNext);
   }
 
   protected OCachedDatabasePoolFactory createCachedDatabasePoolFactory(OrientDBConfig config) {
@@ -140,7 +150,9 @@ public class OrientDBRemote implements OrientDBInternal {
       OStorageRemote storage;
       storage = storages.get(name);
       if (storage == null) {
-        storage = new OStorageRemote(hosts, name, this, "rw", connectionManager, resolvedConfig);
+        storage =
+            new OStorageRemote(
+                hosts, name, this, "rw", connectionManager, resolvedConfig, connectionNext);
         storages.put(name, storage);
       }
       ODatabaseDocumentRemote db = new ODatabaseDocumentRemote(storage);
@@ -201,7 +213,13 @@ public class OrientDBRemote implements OrientDBInternal {
       try {
         storage =
             new OStorageRemote(
-                hosts, name, this, "rw", connectionManager, solveConfig(pool.getConfig()));
+                hosts,
+                name,
+                this,
+                "rw",
+                connectionManager,
+                solveConfig(pool.getConfig()),
+                connectionNext);
         storages.put(name, storage);
       } catch (Exception e) {
         throw OException.wrapException(
