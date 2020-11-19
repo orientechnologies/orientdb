@@ -128,7 +128,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   // THIS MAP IS BACKED BY HAZELCAST EVENTS. IN THIS WAY WE AVOID TO USE HZ MAP DIRECTLY
   protected OHazelcastDistributedMap configurationMap;
   private OSignalHandler.OSignalListener signalListener;
-  private volatile boolean running = false;
   private ODistributedLockManager distributedLockManager;
 
   public OHazelcastPlugin() {}
@@ -159,8 +158,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   @Override
   public void startup() {
     if (!enabled) return;
-
-    running = true;
     if (serverInstance.getDatabases() instanceof OrientDBDistributed)
       ((OrientDBDistributed) serverInstance.getDatabases()).setPlugin(this);
 
@@ -629,7 +626,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   @Override
   public void shutdown() {
     if (!enabled) return;
-    running = false;
     OSignalHandler signalHandler = Orient.instance().getSignalHandler();
     if (signalHandler != null) signalHandler.unregisterListener(signalListener);
 
@@ -1965,9 +1961,5 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       }
       dumpServersStatus();
     }
-  }
-
-  public boolean isRunning() {
-    return enabled && running;
   }
 }
