@@ -39,7 +39,11 @@ public class OImmutableRole implements OSecurityRole {
       final ORule.ResourceGeneric resourceGeneric,
       final String resourceSpecific,
       final int iCRUDOperation) {
-    final ORule rule = rules.get(resourceGeneric);
+    ORule rule = rules.get(resourceGeneric);
+    if (rule == null) {
+      rule = rules.get(ORule.ResourceGeneric.ALL);
+    }
+
     if (rule != null) {
       final Boolean allowed = rule.isAllowed(resourceSpecific, iCRUDOperation);
       if (allowed != null) return allowed;
