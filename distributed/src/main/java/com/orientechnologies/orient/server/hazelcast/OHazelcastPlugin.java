@@ -116,7 +116,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
   public static final String CONFIG_NODE_PREFIX = "node.";
   public static final String CONFIG_DBSTATUS_PREFIX = "dbstatus.";
-  public static final String CONFIG_LOCKMANAGER = "coordinator";
   public static final String CONFIG_REGISTEREDNODES = "registeredNodes";
 
   protected String hazelcastConfigFile = "hazelcast.xml";
@@ -131,16 +130,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   private ODistributedLockManager distributedLockManager;
 
   public OHazelcastPlugin() {}
-
-  // Must be set before startup() is called.
-  public void setHazelcastConfig(final Config config) {
-    hazelcastConfig = config;
-  }
-
-  // Must be set before config() is called.
-  public void setNodeName(String nodeName) {
-    this.nodeName = nodeName;
-  }
 
   @Override
   public void config(final OServer iServer, final OServerParameterConfiguration[] iParams) {
