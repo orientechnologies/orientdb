@@ -5,14 +5,13 @@ import com.orientechnologies.orient.core.command.script.transformer.OScriptTrans
 import com.orientechnologies.orient.core.command.traverse.OAbstractScriptExecutor;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.HostAccess;
 import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Value;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
 
 /** Created by Luca Garulli */
 public class OPolyglotScriptExecutor extends OAbstractScriptExecutor {

@@ -1,9 +1,8 @@
 package com.orientechnologies.orient.core.command.script;
 
-import org.graalvm.polyglot.Value;
-
-import javax.script.Bindings;
 import java.util.*;
+import javax.script.Bindings;
+import org.graalvm.polyglot.Value;
 
 /**
  * Wraps a GraalVM value as a JSR223 Bindings for compatibility.

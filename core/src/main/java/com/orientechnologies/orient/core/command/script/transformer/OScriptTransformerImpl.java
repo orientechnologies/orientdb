@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.command.script.transformer;
 
+import com.oracle.truffle.polyglot.*;
 import com.orientechnologies.orient.core.command.script.OScriptResultSet;
 import com.orientechnologies.orient.core.command.script.OScriptResultSets;
 import com.orientechnologies.orient.core.command.script.transformer.result.MapTransformer;
@@ -8,10 +9,8 @@ import com.orientechnologies.orient.core.command.script.transformer.resultset.OR
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.oracle.truffle.polyglot.*;
-import org.graalvm.polyglot.Value;
-
 import java.util.*;
+import org.graalvm.polyglot.Value;
 
 /** Created by Enrico Risa on 27/01/17. */
 public class OScriptTransformerImpl implements OScriptTransformer {

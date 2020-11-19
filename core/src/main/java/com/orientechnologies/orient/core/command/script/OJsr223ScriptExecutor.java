@@ -7,10 +7,9 @@ import com.orientechnologies.orient.core.command.traverse.OAbstractScriptExecuto
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
-import javax.script.*;
 import java.util.HashMap;
 import java.util.Map;
+import javax.script.*;
 
 /** Created by tglman on 25/01/17. */
 public class OJsr223ScriptExecutor extends OAbstractScriptExecutor {

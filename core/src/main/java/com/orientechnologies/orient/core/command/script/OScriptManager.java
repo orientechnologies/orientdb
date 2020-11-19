@@ -44,8 +44,6 @@ import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.function.OFunctionUtilWrapper;
 import com.orientechnologies.orient.core.sql.OSQLScriptEngine;
 import com.orientechnologies.orient.core.sql.OSQLScriptEngineFactory;
-import org.graalvm.polyglot.Value;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;

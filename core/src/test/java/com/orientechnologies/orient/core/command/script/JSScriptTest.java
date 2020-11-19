@@ -8,7 +8,6 @@ import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
@@ -16,8 +15,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
-import javax.script.ScriptException;
-
 import org.graalvm.polyglot.PolyglotException;
 import org.junit.Assert;
 import org.junit.Rule;
