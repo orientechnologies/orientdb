@@ -57,7 +57,6 @@ import com.orientechnologies.orient.server.distributed.impl.task.ORunQueryExecut
 import com.orientechnologies.orient.server.distributed.task.ODistributedKeyLockedException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
-import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -69,11 +68,12 @@ import java.util.stream.Stream;
 /** Created by tglman on 30/03/17. */
 public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
-  private final OHazelcastPlugin distributedManager;
+  private final ODistributedAbstractPlugin distributedManager;
 
-  public ODatabaseDocumentDistributed(OStorage storage, OHazelcastPlugin hazelcastPlugin) {
+  public ODatabaseDocumentDistributed(
+      OStorage storage, ODistributedAbstractPlugin distributedPlugin) {
     super(storage);
-    this.distributedManager = hazelcastPlugin;
+    this.distributedManager = distributedPlugin;
   }
 
   /**

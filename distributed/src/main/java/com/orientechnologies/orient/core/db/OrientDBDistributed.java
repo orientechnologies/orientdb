@@ -15,9 +15,9 @@ import com.orientechnologies.orient.server.OServerAware;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributedPooled;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
-import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,7 +28,7 @@ import java.util.Iterator;
 public class OrientDBDistributed extends OrientDBEmbedded implements OServerAware {
 
   private OServer server;
-  private volatile OHazelcastPlugin plugin;
+  private volatile ODistributedAbstractPlugin plugin;
 
   public OrientDBDistributed(String directoryPath, OrientDBConfig config, Orient instance) {
     super(directoryPath, config, instance);
@@ -41,7 +41,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     this.server = server;
   }
 
-  public synchronized OHazelcastPlugin getPlugin() {
+  public synchronized ODistributedAbstractPlugin getPlugin() {
     if (plugin == null) {
       if (server != null && server.isActive()) plugin = server.getPlugin("cluster");
     }
@@ -78,7 +78,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     return new ODatabaseDocumentDistributedPooled(pool, storage, plugin);
   }
 
-  public void setPlugin(OHazelcastPlugin plugin) {
+  public void setPlugin(ODistributedAbstractPlugin plugin) {
     this.plugin = plugin;
   }
 

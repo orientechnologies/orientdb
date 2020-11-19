@@ -23,6 +23,7 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DIST
 import static com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION.OUT;
 
 import com.hazelcast.core.HazelcastException;
+import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.Member;
 import com.orientechnologies.common.concur.OOfflineNodeException;
@@ -2766,4 +2767,11 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       listener.onMessageProcessEnd(iRequest, responsePayload);
     }
   }
+
+  public abstract boolean removeNodeFromConfiguration(
+      String serverName, String databaseName, boolean b, boolean b1);
+
+  public abstract void reloadRegisteredNodes(String registeredNodesFromClusterAsJson);
+
+  public abstract HazelcastInstance getHazelcastInstance();
 }

@@ -34,7 +34,7 @@ import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
-import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedAbstractPlugin;
 import java.util.LinkedList;
 import java.util.List;
 import org.junit.Ignore;
@@ -65,8 +65,9 @@ public class BasicShardingNoReplicaScenarioIT extends AbstractShardingScenarioTe
   @Override
   public void executeTest() throws Exception {
 
-    OHazelcastPlugin manager1 =
-        (OHazelcastPlugin) serverInstance.get(0).getServerInstance().getDistributedManager();
+    ODistributedAbstractPlugin manager1 =
+        (ODistributedAbstractPlugin)
+            serverInstance.get(0).getServerInstance().getDistributedManager();
 
     final OModifiableDistributedConfiguration databaseConfiguration =
         manager1.getDatabaseConfiguration(this.getDatabaseName()).modify();

@@ -21,7 +21,7 @@ import static org.junit.Assert.assertEquals;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
-import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedAbstractPlugin;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -123,8 +123,9 @@ public class TwoClientsRecordUpdateTxOnTwoServersWithQuorum2ScenarioIT
   }
 
   private void setWriteQuorum(int quorum) throws InterruptedException {
-    OHazelcastPlugin manager =
-        (OHazelcastPlugin) serverInstance.get(0).getServerInstance().getDistributedManager();
+    ODistributedAbstractPlugin manager =
+        (ODistributedAbstractPlugin)
+            serverInstance.get(0).getServerInstance().getDistributedManager();
     OModifiableDistributedConfiguration databaseConfiguration =
         manager.getDatabaseConfiguration(getDatabaseName()).modify();
     ODocument cfg = databaseConfiguration.getDocument();

@@ -26,7 +26,7 @@ import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
-import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 import java.io.File;
@@ -86,7 +86,7 @@ public class ServerRun {
   public void crashServer() {
     if (server != null) {
       server.getClientConnectionManager().killAllChannels();
-      ((OHazelcastPlugin) server.getDistributedManager())
+      ((ODistributedAbstractPlugin) server.getDistributedManager())
           .getHazelcastInstance()
           .getLifecycleService()
           .terminate();
@@ -97,16 +97,17 @@ public class ServerRun {
   public void disconnectFrom(final ServerRun... serverIds) {
     final Node currentNode =
         getHazelcastNode(
-            ((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance());
+            ((ODistributedAbstractPlugin) server.getDistributedManager()).getHazelcastInstance());
     for (ServerRun s : serverIds) {
-      ((OHazelcastPlugin) server.getDistributedManager())
+      ((ODistributedAbstractPlugin) server.getDistributedManager())
           .closeRemoteServer(s.server.getDistributedManager().getLocalNodeName());
-      ((OHazelcastPlugin) s.server.getDistributedManager())
+      ((ODistributedAbstractPlugin) s.server.getDistributedManager())
           .closeRemoteServer(server.getDistributedManager().getLocalNodeName());
 
       final Node otherNode =
           getHazelcastNode(
-              ((OHazelcastPlugin) s.server.getDistributedManager()).getHazelcastInstance());
+              ((ODistributedAbstractPlugin) s.server.getDistributedManager())
+                  .getHazelcastInstance());
 
       currentNode.clusterService.suspectMember(
           currentNode.clusterService.getMember(otherNode.address), "test", true);
@@ -118,11 +119,12 @@ public class ServerRun {
   public void rejoin(final ServerRun... serverIds) {
     final Node currentNode =
         getHazelcastNode(
-            ((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance());
+            ((ODistributedAbstractPlugin) server.getDistributedManager()).getHazelcastInstance());
     for (ServerRun s : serverIds) {
       final Node otherNode =
           getHazelcastNode(
-              ((OHazelcastPlugin) s.server.getDistributedManager()).getHazelcastInstance());
+              ((ODistributedAbstractPlugin) s.server.getDistributedManager())
+                  .getHazelcastInstance());
 
       final ClusterServiceImpl clusterService = currentNode.getClusterService();
       clusterService.merge(otherNode.address);
@@ -180,7 +182,9 @@ public class ServerRun {
   public void shutdownServer() {
     if (server != null) {
       try {
-        ((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance().shutdown();
+        ((ODistributedAbstractPlugin) server.getDistributedManager())
+            .getHazelcastInstance()
+            .shutdown();
       } catch (Exception e) {
         // IGNORE IT
       }
@@ -199,7 +203,8 @@ public class ServerRun {
   public void terminateServer() {
     if (server != null) {
       try {
-        final OHazelcastPlugin dm = (OHazelcastPlugin) server.getDistributedManager();
+        final ODistributedAbstractPlugin dm =
+            (ODistributedAbstractPlugin) server.getDistributedManager();
         if (dm != null) {
           HazelcastInstance hz = dm.getHazelcastInstance();
           final Node node = getHazelcastNode(hz);

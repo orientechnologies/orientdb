@@ -23,7 +23,7 @@ import static org.junit.Assert.fail;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
-import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.setup.ServerRun;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -108,8 +108,8 @@ public class WWConflictAndNodeInDeadlockScenarioIT extends AbstractScenarioTest 
 
       ODocument cfg = null;
       ServerRun server = serverInstance.get(2);
-      OHazelcastPlugin manager =
-          (OHazelcastPlugin) server.getServerInstance().getDistributedManager();
+      ODistributedAbstractPlugin manager =
+          (ODistributedAbstractPlugin) server.getServerInstance().getDistributedManager();
       OModifiableDistributedConfiguration databaseConfiguration =
           manager.getDatabaseConfiguration(getDatabaseName()).modify();
       cfg = databaseConfiguration.getDocument();

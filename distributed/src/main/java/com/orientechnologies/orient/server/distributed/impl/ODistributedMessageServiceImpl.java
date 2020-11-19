@@ -32,7 +32,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedResponseManag
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -52,7 +51,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class ODistributedMessageServiceImpl implements ODistributedMessageService {
 
-  private final OHazelcastPlugin manager;
+  private final ODistributedAbstractPlugin manager;
   private final ConcurrentHashMap<Long, ODistributedResponseManager> responsesByRequestIds;
   private final TimerTask asynchMessageManager;
   protected final ConcurrentHashMap<String, ODistributedDatabaseImpl> databases =
@@ -63,7 +62,7 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
   private final Map<String, OProfilerEntry> latencies = new HashMap<String, OProfilerEntry>();
   private final Map<String, AtomicLong> messagesStats = new HashMap<String, AtomicLong>();
 
-  public ODistributedMessageServiceImpl(final OHazelcastPlugin manager) {
+  public ODistributedMessageServiceImpl(final ODistributedAbstractPlugin manager) {
     this.manager = manager;
     this.responsesByRequestIds = new ConcurrentHashMap<Long, ODistributedResponseManager>();
 

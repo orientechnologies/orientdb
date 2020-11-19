@@ -51,7 +51,6 @@ import com.orientechnologies.orient.server.distributed.impl.ODistributedAbstract
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseChunk;
 import com.orientechnologies.orient.server.distributed.impl.task.OCopyDatabaseChunkTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OSyncClusterTask;
-import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -94,8 +93,9 @@ public class OCommandExecutorSQLHASyncCluster extends OCommandExecutorSQLAbstrac
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
     }
 
-    final OHazelcastPlugin dManager =
-        (OHazelcastPlugin) ((ODatabaseDocumentDistributed) database).getDistributedManager();
+    final ODistributedAbstractPlugin dManager =
+        (ODistributedAbstractPlugin)
+            ((ODatabaseDocumentDistributed) database).getDistributedManager();
     if (dManager == null || !dManager.isEnabled())
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
 
@@ -123,7 +123,7 @@ public class OCommandExecutorSQLHASyncCluster extends OCommandExecutorSQLAbstrac
   }
 
   public static Object replaceCluster(
-      final OHazelcastPlugin dManager,
+      final ODistributedAbstractPlugin dManager,
       final ODatabaseDocumentInternal database,
       final OServer serverInstance,
       final String databaseName,
