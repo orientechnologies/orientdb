@@ -114,7 +114,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.TimerTask;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
@@ -143,9 +142,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected List<ODistributedLifecycleListener> listeners =
       new ArrayList<ODistributedLifecycleListener>();
   protected ORemoteServerManager remoteServerManager;
-  protected TimerTask publishLocalNodeConfigurationTask = null;
-  protected TimerTask haStatsTask = null;
-  protected TimerTask healthCheckerTask = null;
 
   // LOCAL MSG COUNTER
   protected AtomicLong localMessageIdCounter = new AtomicLong();
@@ -268,12 +264,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     // CLOSE ALL CONNECTIONS TO THE SERVERS
     remoteServerManager.closeAll();
 
-    if (publishLocalNodeConfigurationTask != null) publishLocalNodeConfigurationTask.cancel();
-
-    if (healthCheckerTask != null) healthCheckerTask.cancel();
-
-    if (haStatsTask != null) haStatsTask.cancel();
-
     if (messageService != null) messageService.shutdown();
 
     setNodeStatus(NODE_STATUS.OFFLINE);
@@ -390,20 +380,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         currVersion);
 
     return modified;
-  }
-
-  public ODistributedConfiguration getDatabaseConfiguration(final String iDatabaseName) {
-    return getDatabaseConfiguration(iDatabaseName, true);
-  }
-
-  public ODistributedConfiguration getDatabaseConfiguration(
-      final String iDatabaseName, final boolean createIfNotPresent) {
-    ODistributedDatabaseImpl local = getMessageService().getDatabase(iDatabaseName);
-    if (local == null) {
-      return null;
-    }
-
-    return local.getDistributedConfiguration();
   }
 
   public OServer getServerInstance() {
@@ -1038,9 +1014,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         });
   }
 
-  public Set<String> getManagedDatabases() {
-    return messageService != null ? messageService.getDatabases() : Collections.EMPTY_SET;
-  }
+  public abstract Set<String> getManagedDatabases();
 
   public String getLocalNodeName() {
     return nodeName;
@@ -1129,12 +1103,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   }
 
   @Override
-  public boolean isNodeAvailable(final String iNodeName, final String iDatabaseName) {
-    final DB_STATUS s = getDatabaseStatus(iNodeName, iDatabaseName);
-    return s != DB_STATUS.OFFLINE && s != DB_STATUS.NOT_AVAILABLE;
-  }
-
-  @Override
   public boolean isNodeStatusEqualsTo(
       final String iNodeName, final String iDatabaseName, final DB_STATUS... statuses) {
     final DB_STATUS s = getDatabaseStatus(iNodeName, iDatabaseName);
@@ -1151,20 +1119,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   public boolean isOffline() {
     return status != NODE_STATUS.ONLINE;
-  }
-
-  /**
-   * Returns the available nodes (not offline) and clears the node list by removing the offline
-   * nodes.
-   */
-  @Override
-  public int getAvailableNodes(final Collection<String> iNodes, final String databaseName) {
-    for (Iterator<String> it = iNodes.iterator(); it.hasNext(); ) {
-      final String node = it.next();
-
-      if (!isNodeAvailable(node, databaseName)) it.remove();
-    }
-    return iNodes.size();
   }
 
   /** Returns the nodes with the requested status. */
@@ -2111,73 +2065,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   public void setDistributedStrategy(final ODistributedStrategy streatgy) {
     this.responseManagerFactory = streatgy;
-  }
-
-  /**
-   * Executes an operation protected by a distributed lock (one per database).
-   *
-   * @param <T> Return type
-   * @param databaseName Database name
-   * @param iCallback Operation @return The operation's result of type T
-   */
-  public <T> T executeInDistributedDatabaseLock(
-      final String databaseName,
-      final long timeoutLocking,
-      OModifiableDistributedConfiguration lastCfg,
-      final OCallable<T, OModifiableDistributedConfiguration> iCallback) {
-
-    boolean updated;
-    T result;
-    getLockManagerExecutor().acquireExclusiveLock(databaseName, nodeName, timeoutLocking);
-    try {
-
-      if (lastCfg == null)
-        // ACQUIRE CFG INSIDE THE LOCK
-        lastCfg = getDatabaseConfiguration(databaseName).modify();
-
-      if (ODistributedServerLog.isDebugEnabled())
-        ODistributedServerLog.debug(
-            this,
-            nodeName,
-            null,
-            DIRECTION.NONE,
-            "Current distributed configuration for database '%s': %s",
-            databaseName,
-            lastCfg.getDocument().toJSON());
-
-      try {
-
-        result = iCallback.call(lastCfg);
-
-      } finally {
-        if (ODistributedServerLog.isDebugEnabled())
-          ODistributedServerLog.debug(
-              this,
-              nodeName,
-              null,
-              DIRECTION.NONE,
-              "New distributed configuration for database '%s': %s",
-              databaseName,
-              lastCfg.getDocument().toJSON());
-
-        // CONFIGURATION CHANGED, UPDATE IT ON THE CLUSTER AND DISK
-        updated = updateCachedDatabaseConfiguration(databaseName, lastCfg, true);
-      }
-
-    } catch (RuntimeException e) {
-      throw e;
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-
-    } finally {
-      getLockManagerRequester().releaseExclusiveLock(databaseName, nodeName);
-    }
-    if (updated) {
-      // SEND NEW CFG TO ALL THE CONNECTED CLIENTS
-      notifyClients(databaseName);
-      serverInstance.getClientConnectionManager().pushDistribCfg2Clients(getClusterConfiguration());
-    }
-    return result;
   }
 
   public abstract void notifyClients(String databaseName);

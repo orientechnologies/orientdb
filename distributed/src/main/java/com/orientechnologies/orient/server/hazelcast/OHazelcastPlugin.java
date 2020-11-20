@@ -89,15 +89,7 @@ import com.orientechnologies.orient.server.network.protocol.OBeforeDatabaseOpenN
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -137,6 +129,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   protected final List<String> registeredNodeById = new CopyOnWriteArrayList<>();
   protected final ConcurrentMap<String, Integer> registeredNodeByName = new ConcurrentHashMap<>();
   protected ConcurrentMap<String, Long> autoRemovalOfServers = new ConcurrentHashMap<>();
+
+  protected TimerTask publishLocalNodeConfigurationTask = null;
+  protected TimerTask haStatsTask = null;
+  protected TimerTask healthCheckerTask = null;
 
   public OHazelcastPlugin() {}
 
@@ -519,6 +515,12 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   }
 
   @Override
+  public boolean isNodeAvailable(final String iNodeName, final String iDatabaseName) {
+    final DB_STATUS s = getDatabaseStatus(iNodeName, iDatabaseName);
+    return s != DB_STATUS.OFFLINE && s != DB_STATUS.NOT_AVAILABLE;
+  }
+
+  @Override
   public String getLockManagerServer() {
     return "";
   }
@@ -650,6 +652,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     } catch (HazelcastInstanceNotActiveException e) {
       // HZ IS ALREADY DOWN, IGNORE IT
     }
+
+    if (publishLocalNodeConfigurationTask != null) publishLocalNodeConfigurationTask.cancel();
+    if (healthCheckerTask != null) healthCheckerTask.cancel();
+    if (haStatsTask != null) haStatsTask.cancel();
 
     try {
       super.shutdown();
@@ -2046,5 +2052,104 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       if (isNodeAvailable(entry.getKey(), iDatabaseName)) nodes.add(entry.getKey());
     }
     return nodes;
+  }
+
+  /**
+   * Returns the available nodes (not offline) and clears the node list by removing the offline
+   * nodes.
+   */
+  @Override
+  public int getAvailableNodes(final Collection<String> iNodes, final String databaseName) {
+    for (Iterator<String> it = iNodes.iterator(); it.hasNext(); ) {
+      final String node = it.next();
+
+      if (!isNodeAvailable(node, databaseName)) it.remove();
+    }
+    return iNodes.size();
+  }
+
+  /**
+   * Executes an operation protected by a distributed lock (one per database).
+   *
+   * @param <T> Return type
+   * @param databaseName Database name
+   * @param iCallback Operation @return The operation's result of type T
+   */
+  public <T> T executeInDistributedDatabaseLock(
+      final String databaseName,
+      final long timeoutLocking,
+      OModifiableDistributedConfiguration lastCfg,
+      final OCallable<T, OModifiableDistributedConfiguration> iCallback) {
+
+    boolean updated;
+    T result;
+    getLockManagerExecutor().acquireExclusiveLock(databaseName, nodeName, timeoutLocking);
+    try {
+
+      if (lastCfg == null)
+        // ACQUIRE CFG INSIDE THE LOCK
+        lastCfg = getDatabaseConfiguration(databaseName).modify();
+
+      if (ODistributedServerLog.isDebugEnabled())
+        ODistributedServerLog.debug(
+            this,
+            nodeName,
+            null,
+            DIRECTION.NONE,
+            "Current distributed configuration for database '%s': %s",
+            databaseName,
+            lastCfg.getDocument().toJSON());
+
+      try {
+
+        result = iCallback.call(lastCfg);
+
+      } finally {
+        if (ODistributedServerLog.isDebugEnabled())
+          ODistributedServerLog.debug(
+              this,
+              nodeName,
+              null,
+              DIRECTION.NONE,
+              "New distributed configuration for database '%s': %s",
+              databaseName,
+              lastCfg.getDocument().toJSON());
+
+        // CONFIGURATION CHANGED, UPDATE IT ON THE CLUSTER AND DISK
+        updated = updateCachedDatabaseConfiguration(databaseName, lastCfg, true);
+      }
+
+    } catch (RuntimeException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+
+    } finally {
+      getLockManagerRequester().releaseExclusiveLock(databaseName, nodeName);
+    }
+    if (updated) {
+      // SEND NEW CFG TO ALL THE CONNECTED CLIENTS
+      notifyClients(databaseName);
+      serverInstance.getClientConnectionManager().pushDistribCfg2Clients(getClusterConfiguration());
+    }
+    return result;
+  }
+
+  public ODistributedConfiguration getDatabaseConfiguration(final String iDatabaseName) {
+    return getDatabaseConfiguration(iDatabaseName, true);
+  }
+
+  public ODistributedConfiguration getDatabaseConfiguration(
+      final String iDatabaseName, final boolean createIfNotPresent) {
+    ODistributedDatabaseImpl local = getMessageService().getDatabase(iDatabaseName);
+    if (local == null) {
+      return null;
+    }
+
+    return local.getDistributedConfiguration();
+  }
+
+  public Set<String> getManagedDatabases() {
+    return messageService != null ? messageService.getDatabases() : Collections.EMPTY_SET;
   }
 }
