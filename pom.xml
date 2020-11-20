@@ -670,9 +670,6 @@
             <id>java8</id>
             <activation>
                 <jdk>1.8</jdk>
-                <file>
-                    <missing>${java.home}/lib/truffle/truffle-api.jar</missing>
-                </file>
             </activation>
             <dependencies>
                 <dependency>
@@ -736,9 +733,6 @@
             <id>java11</id>
             <activation>
                 <jdk>[11,</jdk>
-                <file>
-                    <missing>${java.home}/lib/truffle/truffle-api.jar</missing>
-                </file>
             </activation>
             <dependencies>
                 <dependency>
