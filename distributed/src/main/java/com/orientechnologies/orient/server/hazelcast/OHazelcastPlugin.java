@@ -98,6 +98,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import sun.misc.Signal;
 
 /**
@@ -128,13 +131,18 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   private OSignalHandler.OSignalListener signalListener;
   private ODistributedLockManager distributedLockManager;
 
+  protected ConcurrentMap<String, Member> activeNodes = new ConcurrentHashMap<>();
+  protected ConcurrentMap<String, String> activeNodesNamesByUuid = new ConcurrentHashMap<>();
+  protected ConcurrentMap<String, String> activeNodesUuidByName = new ConcurrentHashMap<>();
+  protected final List<String> registeredNodeById = new CopyOnWriteArrayList<>();
+  protected final ConcurrentMap<String, Integer> registeredNodeByName = new ConcurrentHashMap<>();
+  protected ConcurrentMap<String, Long> autoRemovalOfServers = new ConcurrentHashMap<>();
+
   public OHazelcastPlugin() {}
 
   @Override
   public void config(final OServer iServer, final OServerParameterConfiguration[] iParams) {
     super.config(iServer, iParams);
-    if (nodeName == null) assignNodeName();
-
     for (OServerParameterConfiguration param : iParams) {
       if (param.name.equalsIgnoreCase("configuration.hazelcast")) {
         hazelcastConfigFile = OSystemVariableResolver.resolveSystemVariables(param.value);
@@ -485,20 +493,20 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
   @Override
   public int getNodeIdByName(final String name) {
-    int id = super.getNodeIdByName(name);
+    int id = tryGetNodeIdByName(name);
     if (name == null) {
       repairActiveServers();
-      id = super.getNodeIdByName(name);
+      id = tryGetNodeIdByName(name);
     }
     return id;
   }
 
   @Override
   public String getNodeNameById(final int id) {
-    String name = super.getNodeNameById(id);
+    String name = tryGetNodeNameById(id);
     if (name == null) {
       repairActiveServers();
-      name = super.getNodeNameById(id);
+      name = tryGetNodeNameById(id);
     }
     return name;
   }
@@ -648,6 +656,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     } catch (HazelcastInstanceNotActiveException e) {
       // HZ IS ALREADY DOWN, IGNORE IT
     }
+    activeNodes.clear();
+    activeNodesNamesByUuid.clear();
+    activeNodesUuidByName.clear();
 
     if (membershipListenerRegistration != null) {
       try {
@@ -1949,5 +1960,91 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       }
       dumpServersStatus();
     }
+  }
+
+  @Override
+  public String getNodeName(final Member iMember, final boolean useCache) {
+    if (iMember == null || iMember.getUuid() == null) return "?";
+
+    if (nodeUuid.equals(iMember.getUuid()))
+      // LOCAL NODE (NOT YET NAMED)
+      return nodeName;
+
+    final String name = activeNodesNamesByUuid.get(iMember.getUuid());
+    if (name != null) return name;
+
+    final ODocument cfg = getNodeConfigurationByUuid(iMember.getUuid(), useCache);
+    if (cfg != null) return cfg.field("name");
+
+    return "ext:" + iMember.getUuid();
+  }
+
+  @Override
+  public ODocument getClusterConfiguration() {
+    if (!enabled) return null;
+
+    final ODocument cluster = new ODocument();
+
+    cluster.field("localName", getName());
+    cluster.field("localId", nodeUuid);
+
+    // INSERT MEMBERS
+    final List<ODocument> members = new ArrayList<ODocument>();
+    cluster.field("members", members, OType.EMBEDDEDLIST);
+    for (Member member : activeNodes.values()) {
+      members.add(getNodeConfigurationByUuid(member.getUuid(), true));
+    }
+
+    return cluster;
+  }
+
+  public String tryGetNodeNameById(final int id) {
+    if (id < 0) throw new IllegalArgumentException("Node id " + id + " is invalid");
+
+    synchronized (registeredNodeById) {
+      if (id < registeredNodeById.size()) return registeredNodeById.get(id);
+    }
+    return null;
+  }
+
+  public int tryGetNodeIdByName(final String name) {
+    final Integer val = registeredNodeByName.get(name);
+    if (val == null) return -1;
+    return val.intValue();
+  }
+
+  @Override
+  public String getNodeUuidByName(final String name) {
+    if (name == null || name.isEmpty())
+      throw new IllegalArgumentException("Node name " + name + " is invalid");
+
+    return activeNodesUuidByName.get(name);
+  }
+
+  @Override
+  public int getAvailableNodes(final String iDatabaseName) {
+    int availableNodes = 0;
+    for (Map.Entry<String, Member> entry : activeNodes.entrySet()) {
+      if (isNodeAvailable(entry.getKey(), iDatabaseName)) availableNodes++;
+    }
+    return availableNodes;
+  }
+
+  @Override
+  public List<String> getOnlineNodes(final String iDatabaseName) {
+    final List<String> onlineNodes = new ArrayList<String>(activeNodes.size());
+    for (Map.Entry<String, Member> entry : activeNodes.entrySet()) {
+      if (isNodeOnline(entry.getKey(), iDatabaseName)) onlineNodes.add(entry.getKey());
+    }
+    return onlineNodes;
+  }
+
+  public Set<String> getAvailableNodeNames(final String iDatabaseName) {
+    final Set<String> nodes = new HashSet<String>();
+
+    for (Map.Entry<String, Member> entry : activeNodes.entrySet()) {
+      if (isNodeAvailable(entry.getKey(), iDatabaseName)) nodes.add(entry.getKey());
+    }
+    return nodes;
   }
 }

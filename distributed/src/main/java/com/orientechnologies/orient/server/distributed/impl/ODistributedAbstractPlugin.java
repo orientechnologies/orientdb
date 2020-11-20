@@ -117,8 +117,6 @@ import java.util.Set;
 import java.util.TimerTask;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
@@ -155,16 +153,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       new ODefaultClusterOwnershipAssignmentStrategy(this);
 
   protected static final int DEPLOY_DB_MAX_RETRIES = 10;
-  protected ConcurrentMap<String, Member> activeNodes = new ConcurrentHashMap<String, Member>();
-  protected ConcurrentMap<String, String> activeNodesNamesByUuid =
-      new ConcurrentHashMap<String, String>();
-  protected ConcurrentMap<String, String> activeNodesUuidByName =
-      new ConcurrentHashMap<String, String>();
-  protected final List<String> registeredNodeById = new CopyOnWriteArrayList<String>();
-  protected final ConcurrentMap<String, Integer> registeredNodeByName =
-      new ConcurrentHashMap<String, Integer>();
-  protected ConcurrentMap<String, Long> autoRemovalOfServers =
-      new ConcurrentHashMap<String, Long>();
   protected Set<String> installingDatabases =
       Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
   protected volatile ODistributedMessageServiceImpl messageService;
@@ -232,6 +220,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                 ODistributedAbstractPlugin.this.removeServer(node, true);
               }
             });
+    if (nodeName == null) assignNodeName();
   }
 
   @Override
@@ -286,10 +275,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     if (haStatsTask != null) haStatsTask.cancel();
 
     if (messageService != null) messageService.shutdown();
-
-    activeNodes.clear();
-    activeNodesNamesByUuid.clear();
-    activeNodesUuidByName.clear();
 
     setNodeStatus(NODE_STATUS.OFFLINE);
 
@@ -364,21 +349,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     return getNodeName(iMember, true);
   }
 
-  public String getNodeName(final Member iMember, final boolean useCache) {
-    if (iMember == null || iMember.getUuid() == null) return "?";
-
-    if (nodeUuid.equals(iMember.getUuid()))
-      // LOCAL NODE (NOT YET NAMED)
-      return nodeName;
-
-    final String name = activeNodesNamesByUuid.get(iMember.getUuid());
-    if (name != null) return name;
-
-    final ODocument cfg = getNodeConfigurationByUuid(iMember.getUuid(), useCache);
-    if (cfg != null) return cfg.field("name");
-
-    return "ext:" + iMember.getUuid();
-  }
+  public abstract String getNodeName(final Member iMember, final boolean useCache);
 
   public boolean updateCachedDatabaseConfiguration(
       final String iDatabaseName, final OModifiableDistributedConfiguration cfg) {
@@ -437,25 +408,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   public OServer getServerInstance() {
     return serverInstance;
-  }
-
-  @Override
-  public ODocument getClusterConfiguration() {
-    if (!enabled) return null;
-
-    final ODocument cluster = new ODocument();
-
-    cluster.field("localName", getName());
-    cluster.field("localId", nodeUuid);
-
-    // INSERT MEMBERS
-    final List<ODocument> members = new ArrayList<ODocument>();
-    cluster.field("members", members, OType.EMBEDDEDLIST);
-    for (Member member : activeNodes.values()) {
-      members.add(getNodeConfigurationByUuid(member.getUuid(), true));
-    }
-
-    return cluster;
   }
 
   public abstract String getPublicAddress();
@@ -1151,31 +1103,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   }
 
   @Override
-  public String getNodeNameById(final int id) {
-    if (id < 0) throw new IllegalArgumentException("Node id " + id + " is invalid");
-
-    synchronized (registeredNodeById) {
-      if (id < registeredNodeById.size()) return registeredNodeById.get(id);
-    }
-    return null;
-  }
-
-  @Override
-  public int getNodeIdByName(final String name) {
-    final Integer val = registeredNodeByName.get(name);
-    if (val == null) return -1;
-    return val.intValue();
-  }
-
-  @Override
-  public String getNodeUuidByName(final String name) {
-    if (name == null || name.isEmpty())
-      throw new IllegalArgumentException("Node name " + name + " is invalid");
-
-    return activeNodesUuidByName.get(name);
-  }
-
-  @Override
   public void updateLastClusterChange() {
     lastClusterChangeOn = System.currentTimeMillis();
   }
@@ -1215,12 +1142,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       if (s == st) return true;
     }
     return false;
-  }
-
-  @Override
-  public boolean isNodeAvailable(final String iNodeName) {
-    if (iNodeName == null) return false;
-    return activeNodes.containsKey(iNodeName);
   }
 
   @Override
@@ -1286,24 +1207,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     final ODistributedConfiguration cfg = getDatabaseConfiguration(iDatabaseName);
     if (cfg != null) return cfg.getAllConfiguredServers().size();
     return 0;
-  }
-
-  @Override
-  public int getAvailableNodes(final String iDatabaseName) {
-    int availableNodes = 0;
-    for (Map.Entry<String, Member> entry : activeNodes.entrySet()) {
-      if (isNodeAvailable(entry.getKey(), iDatabaseName)) availableNodes++;
-    }
-    return availableNodes;
-  }
-
-  @Override
-  public List<String> getOnlineNodes(final String iDatabaseName) {
-    final List<String> onlineNodes = new ArrayList<String>(activeNodes.size());
-    for (Map.Entry<String, Member> entry : activeNodes.entrySet()) {
-      if (isNodeOnline(entry.getKey(), iDatabaseName)) onlineNodes.add(entry.getKey());
-    }
-    return onlineNodes;
   }
 
   @Override
@@ -2622,15 +2525,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                 .createTask(ORestartServerTask.FACTORYID));
 
     getRemoteServer(iNode).sendRequest(request);
-  }
-
-  public Set<String> getAvailableNodeNames(final String iDatabaseName) {
-    final Set<String> nodes = new HashSet<String>();
-
-    for (Map.Entry<String, Member> entry : activeNodes.entrySet()) {
-      if (isNodeAvailable(entry.getKey(), iDatabaseName)) nodes.add(entry.getKey());
-    }
-    return nodes;
   }
 
   public long getNextMessageIdCounter() {
