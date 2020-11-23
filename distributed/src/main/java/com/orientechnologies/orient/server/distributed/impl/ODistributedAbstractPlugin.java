@@ -137,9 +137,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected String nodeName = null;
   protected int nodeId = -1;
   protected File defaultDatabaseConfigFile;
-  protected long lastClusterChangeOn;
-  protected List<ODistributedLifecycleListener> listeners =
-      new ArrayList<ODistributedLifecycleListener>();
+  protected List<ODistributedLifecycleListener> listeners = new ArrayList<>();
   protected ORemoteServerManager remoteServerManager;
 
   // LOCAL MSG COUNTER
@@ -1011,11 +1009,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   }
 
   @Override
-  public void updateLastClusterChange() {
-    lastClusterChangeOn = System.currentTimeMillis();
-  }
-
-  @Override
   public void reassignClustersOwnership(
       final String iNode,
       final String databaseName,
@@ -1079,10 +1072,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
             new OOfflineNodeException("Message Service is not available"), e);
       }
     return messageService;
-  }
-
-  public long getLastClusterChangeOn() {
-    return lastClusterChangeOn;
   }
 
   @Override

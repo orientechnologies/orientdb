@@ -136,6 +136,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
   protected volatile NODE_STATUS status = NODE_STATUS.OFFLINE;
 
+  protected long lastClusterChangeOn;
+
   public OHazelcastPlugin() {}
 
   @Override
@@ -2155,5 +2157,14 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   @Override
   public boolean isNodeOnline(final String iNodeName, final String iDatabaseName) {
     return getDatabaseStatus(iNodeName, iDatabaseName) == DB_STATUS.ONLINE;
+  }
+
+  @Override
+  public void updateLastClusterChange() {
+    lastClusterChangeOn = System.currentTimeMillis();
+  }
+
+  public long getLastClusterChangeOn() {
+    return lastClusterChangeOn;
   }
 }
