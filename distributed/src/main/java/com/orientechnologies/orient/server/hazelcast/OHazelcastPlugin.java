@@ -837,53 +837,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     return hazelcastConfig.getNetworkConfig().getPublicAddress();
   }
 
-  /** Initializes all the available server's databases as distributed. */
-  protected void loadLocalDatabases() {
-    final List<String> dbs =
-        new ArrayList<String>(serverInstance.getAvailableStorageNames().keySet());
-    Collections.sort(dbs);
-
-    for (final String databaseName : dbs) {
-      if (messageService.getDatabase(databaseName) == null) {
-        ODistributedServerLog.info(
-            this, nodeName, null, DIRECTION.NONE, "Opening database '%s'...", databaseName);
-
-        // INIT THE STORAGE
-        final ODistributedDatabaseImpl ddb = messageService.registerDatabase(databaseName);
-
-        executeInDistributedDatabaseLock(
-            databaseName,
-            60000,
-            null,
-            new OCallable<Object, OModifiableDistributedConfiguration>() {
-              @Override
-              public Object call(OModifiableDistributedConfiguration cfg) {
-                ODistributedServerLog.info(
-                    this,
-                    nodeName,
-                    null,
-                    DIRECTION.NONE,
-                    "Current node started as %s for database '%s'",
-                    cfg.getServerRole(nodeName),
-                    databaseName);
-
-                ddb.resume();
-
-                // 1ST NODE TO HAVE THE DATABASE
-                cfg.addNewNodeInServerList(nodeName);
-
-                // COLLECT ALL THE CLUSTERS WITH REMOVED NODE AS OWNER
-                reassignClustersOwnership(nodeName, databaseName, cfg, true);
-
-                ddb.setOnline();
-
-                return null;
-              }
-            });
-      }
-    }
-  }
-
   @Override
   public OHazelcastDistributedMap getConfigurationMap() {
     return configurationMap;
@@ -899,7 +852,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     // VALIDATE THE CONFIGURATION FIRST
     getDistributedStrategy().validateConfiguration(cfg);
 
-    boolean updated = super.updateCachedDatabaseConfiguration(databaseName, cfg);
+    boolean updated = tryUpdatingDatabaseConfigurationLocally(databaseName, cfg);
 
     if (!updated && !getConfigurationMap().containsKey(CONFIG_DATABASE_PREFIX + databaseName))
       // FIRST TIME, FORCE PUBLISHING
@@ -942,6 +895,47 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     }
 
     return updated;
+  }
+
+  public boolean tryUpdatingDatabaseConfigurationLocally(
+      final String iDatabaseName, final OModifiableDistributedConfiguration cfg) {
+    ODistributedDatabaseImpl local = getMessageService().getDatabase(iDatabaseName);
+    if (local == null) return false;
+
+    final ODistributedConfiguration dCfg = local.getDistributedConfiguration();
+
+    ODocument oldCfg = dCfg != null ? dCfg.getDocument() : null;
+    Integer oldVersion = oldCfg != null ? (Integer) oldCfg.field("version") : null;
+    if (oldVersion == null) oldVersion = 0;
+
+    int currVersion = cfg.getVersion();
+
+    final boolean modified = currVersion > oldVersion;
+
+    if (oldCfg != null && !modified) {
+      // NO CHANGE, SKIP IT
+      OLogManager.instance()
+          .debug(
+              this,
+              "Skip saving of distributed configuration file for database '%s' because is unchanged (version %d)",
+              iDatabaseName,
+              currVersion);
+      return false;
+    }
+
+    // SAVE IN NODE'S LOCAL RAM
+    local.setDistributedConfiguration(cfg);
+
+    ODistributedServerLog.info(
+        this,
+        getLocalNodeName(),
+        null,
+        DIRECTION.NONE,
+        "Broadcasting new distributed configuration for database: %s (version=%d)\n",
+        iDatabaseName,
+        currVersion);
+
+    return modified;
   }
 
   public void notifyClients(String databaseName) {
