@@ -134,6 +134,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   protected TimerTask haStatsTask = null;
   protected TimerTask healthCheckerTask = null;
 
+  protected volatile NODE_STATUS status = NODE_STATUS.OFFLINE;
+
   public OHazelcastPlugin() {}
 
   @Override
@@ -2151,5 +2153,25 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
   public Set<String> getManagedDatabases() {
     return messageService != null ? messageService.getDatabases() : Collections.EMPTY_SET;
+  }
+
+  @Override
+  public void setNodeStatus(final NODE_STATUS iStatus) {
+    if (status.equals(iStatus))
+      // NO CHANGE
+      return;
+
+    status = iStatus;
+
+    ODistributedServerLog.info(
+        this, nodeName, null, DIRECTION.NONE, "Updated node status to '%s'", status);
+  }
+
+  public NODE_STATUS getNodeStatus() {
+    return status;
+  }
+
+  public boolean checkNodeStatus(final NODE_STATUS iStatus2Check) {
+    return status.equals(iStatus2Check);
   }
 }

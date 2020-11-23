@@ -137,7 +137,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected String nodeName = null;
   protected int nodeId = -1;
   protected File defaultDatabaseConfigFile;
-  protected volatile NODE_STATUS status = NODE_STATUS.OFFLINE;
   protected long lastClusterChangeOn;
   protected List<ODistributedLifecycleListener> listeners =
       new ArrayList<ODistributedLifecycleListener>();
@@ -276,7 +275,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   public void onOpen(final ODatabaseInternal iDatabase) {
     if (!isRelatedToLocalServer(iDatabase)) return;
 
-    if (isOffline() && status != NODE_STATUS.STARTING) return;
+    if (isOffline() && getNodeStatus() != NODE_STATUS.STARTING) return;
 
     final ODatabaseDocumentInternal currDb = ODatabaseRecordThreadLocal.instance().getIfDefined();
     try {
@@ -444,26 +443,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   public boolean isEnabled() {
     return enabled;
-  }
-
-  public NODE_STATUS getNodeStatus() {
-    return status;
-  }
-
-  @Override
-  public void setNodeStatus(final NODE_STATUS iStatus) {
-    if (status.equals(iStatus))
-      // NO CHANGE
-      return;
-
-    status = iStatus;
-
-    ODistributedServerLog.info(
-        this, nodeName, null, DIRECTION.NONE, "Updated node status to '%s'", status);
-  }
-
-  public boolean checkNodeStatus(final NODE_STATUS iStatus2Check) {
-    return status.equals(iStatus2Check);
   }
 
   @Override
@@ -1032,7 +1011,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   public void onCreateClass(final ODatabaseInternal iDatabase, final OClass iClass) {
     if (((ODatabaseDocumentInternal) iDatabase).isLocalEnv()) return;
 
-    if (isOffline() && status != NODE_STATUS.STARTING) return;
+    if (isOffline() && getNodeStatus() != NODE_STATUS.STARTING) return;
 
     // RUN ONLY IN NON-DISTRIBUTED MODE
     if (!isRelatedToLocalServer(iDatabase)) return;
@@ -1118,7 +1097,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   }
 
   public boolean isOffline() {
-    return status != NODE_STATUS.ONLINE;
+    return getNodeStatus() != NODE_STATUS.ONLINE;
   }
 
   /** Returns the nodes with the requested status. */
