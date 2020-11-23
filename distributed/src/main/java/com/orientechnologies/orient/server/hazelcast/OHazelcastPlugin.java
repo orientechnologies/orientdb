@@ -947,7 +947,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         // IGNORE IT
         return;
 
-      final String eventNodeName = getNodeName(iEvent.getMember());
+      final String eventNodeName = getNodeName(iEvent.getMember(), true);
       if ("?".equals(eventNodeName))
         // MOM ALWAYS SAYS: DON'T ACCEPT CHANGES FROM STRANGERS NODES
         return;
@@ -1023,7 +1023,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     try {
       final String key = iEvent.getKey();
 
-      final String eventNodeName = getNodeName(iEvent.getMember());
+      final String eventNodeName = getNodeName(iEvent.getMember(), true);
       if ("?".equals(eventNodeName))
         // MOM ALWAYS SAYS: DON'T ACCEPT CHANGES FROM STRANGERS NODES
         return;
@@ -1099,7 +1099,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     try {
       final String key = iEvent.getKey();
 
-      final String eventNodeName = getNodeName(iEvent.getMember());
+      final String eventNodeName = getNodeName(iEvent.getMember(), true);
       if ("?".equals(eventNodeName))
         // MOM ALWAYS SAYS: DON'T ACCEPT CHANGES FROM STRANGERS NODES
         return;
@@ -1132,7 +1132,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         ODistributedServerLog.debug(
             this,
             nodeName,
-            getNodeName(iEvent.getMember()),
+            getNodeName(iEvent.getMember(), true),
             DIRECTION.IN,
             "Received removed status %s=%s",
             key.substring(CONFIG_DBSTATUS_PREFIX.length()),
@@ -1169,7 +1169,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
                 if (iEvent.getMember() == null) return;
 
-                final String nodeLeftName = getNodeName(iEvent.getMember());
+                final String nodeLeftName = getNodeName(iEvent.getMember(), true);
                 if (nodeLeftName == null) return;
 
                 removeServer(nodeLeftName, true);
@@ -1182,7 +1182,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
                         this,
                         "Error on removing the server '%s'",
                         e,
-                        getNodeName(iEvent.getMember()));
+                        getNodeName(iEvent.getMember(), true));
               }
             })
         .start();
@@ -1197,7 +1197,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
               try {
                 updateLastClusterChange();
-                final String addedNodeName = getNodeName(iEvent.getMember());
+                final String addedNodeName = getNodeName(iEvent.getMember(), true);
                 ODistributedServerLog.info(
                     this,
                     nodeName,
@@ -1896,11 +1896,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           ODistributedServerLog.info(
               this,
               nodeName,
-              getNodeName(member),
+              getNodeName(member, true),
               DIRECTION.IN,
               "Denied node to join the cluster id=%s name=%s",
               member,
-              getNodeName(member));
+              getNodeName(member, true));
 
           activeNodes.remove(joinedNodeName);
           return;
@@ -1926,11 +1926,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       ODistributedServerLog.info(
           this,
           nodeName,
-          getNodeName(member),
+          getNodeName(member, true),
           DIRECTION.IN,
           "Added node configuration id=%s name=%s, now %d nodes are configured",
           member,
-          getNodeName(member),
+          getNodeName(member, true),
           activeNodes.size());
 
       // NOTIFY NODE WAS ADDED SUCCESSFULLY

@@ -334,10 +334,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     shutdown();
   }
 
-  public String getNodeName(final Member iMember) {
-    return getNodeName(iMember, true);
-  }
-
   public abstract String getNodeName(final Member iMember, final boolean useCache);
 
   public OServer getServerInstance() {
