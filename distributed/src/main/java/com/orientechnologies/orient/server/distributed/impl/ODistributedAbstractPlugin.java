@@ -2000,7 +2000,29 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     this.responseManagerFactory = streatgy;
   }
 
-  public abstract void notifyClients(String databaseName);
+  protected abstract ODocument getNodeConfigurationByName(final String nodeName, final boolean useCache);
+
+  public void notifyClients(String databaseName) {
+    List<String> hosts = new ArrayList<>();
+    for (String name : getActiveServers()) {
+      ODocument memberConfig = getNodeConfigurationByName(name, true);
+      if (memberConfig != null) {
+        final String nodeStatus = memberConfig.field("status");
+
+        if (memberConfig != null && !"OFFLINE".equals(nodeStatus)) {
+          final Collection<Map<String, Object>> listeners = memberConfig.field("listeners");
+          if (listeners != null)
+            for (Map<String, Object> listener : listeners) {
+              if (listener.get("protocol").equals("ONetworkProtocolBinary")) {
+                String url = (String) listener.get("listen");
+                hosts.add(url);
+              }
+            }
+        }
+      }
+    }
+    serverInstance.getPushManager().pushDistributedConfig(databaseName, hosts);
+  }
 
   protected void onDatabaseEvent(
       final String nodeName, final String databaseName, final DB_STATUS status) {

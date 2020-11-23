@@ -938,28 +938,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     return modified;
   }
 
-  public void notifyClients(String databaseName) {
-    List<String> hosts = new ArrayList<>();
-    for (Member member : activeNodes.values()) {
-      ODocument memberConfig = getNodeConfigurationByUuid(member.getUuid(), true);
-      if (memberConfig != null) {
-        final String nodeStatus = memberConfig.field("status");
-
-        if (memberConfig != null && !"OFFLINE".equals(nodeStatus)) {
-          final Collection<Map<String, Object>> listeners = memberConfig.field("listeners");
-          if (listeners != null)
-            for (Map<String, Object> listener : listeners) {
-              if (listener.get("protocol").equals("ONetworkProtocolBinary")) {
-                String url = (String) listener.get("listen");
-                hosts.add(url);
-              }
-            }
-        }
-      }
-    }
-    serverInstance.getPushManager().pushDistributedConfig(databaseName, hosts);
-  }
-
   @Override
   public void entryAdded(final EntryEvent<String, Object> iEvent) {
     if (hazelcastInstance == null || !hazelcastInstance.getLifecycleService().isRunning()) return;
@@ -1533,6 +1511,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           this, nodeName, null, DIRECTION.OUT, "Cannot find node with id '%s'", iNodeId);
 
     return doc;
+  }
+
+  protected ODocument getNodeConfigurationByName(final String nodeName, final boolean useCache) {
+    String uuid = getNodeUuidByName(nodeName);
+    return getNodeConfigurationByUuid(uuid, useCache);
   }
 
   @Override
