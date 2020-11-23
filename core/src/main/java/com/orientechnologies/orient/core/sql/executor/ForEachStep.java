@@ -44,7 +44,7 @@ public class ForEachStep extends AbstractExecutionStep {
       return finalResult.syncPull(ctx, nRecords);
     }
     init(ctx);
-    while (iterator.hasNext()) {
+    while (iterator != null && iterator.hasNext()) {
       if (OExecutionThreadLocal.isInterruptCurrentOperation()) {
         throw new OCommandInterruptedException("The command has been interrupted");
       }

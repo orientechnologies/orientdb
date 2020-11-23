@@ -6,6 +6,7 @@ import static org.junit.Assert.fail;
 
 import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
+import com.orientechnologies.orient.core.db.OConnectionNext;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
@@ -40,7 +41,7 @@ public class OStorageRemoteAsyncOperationTest {
     MockitoAnnotations.initMocks(this);
     Mockito.when(session.getServerSession(Mockito.anyString())).thenReturn(nodeSession);
     storage =
-        new OStorageRemote("mock", null, "mock", null, null) {
+        new OStorageRemote("mock", null, "mock", null, null, new OConnectionNext(1)) {
           @Override
           public <T> T baseNetworkOperation(
               OStorageRemoteOperation<T> operation, String errorMessage, int retry) {

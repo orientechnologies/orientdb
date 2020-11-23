@@ -127,18 +127,18 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     OHashTableIndexEngine.TREE_FILE_EXTENSION,
     OHashTableIndexEngine.NULL_BUCKET_FILE_EXTENSION,
     OClusterPositionMap.DEF_EXTENSION,
-      OSBTreeIndexEngine.DATA_FILE_EXTENSION,
-      OIndexRIDContainer.INDEX_FILE_EXTENSION,
-      OSBTreeCollectionManagerShared.DEFAULT_EXTENSION,
-      OSBTreeIndexEngine.NULL_BUCKET_FILE_EXTENSION,
-      OClusterBasedStorageConfiguration.MAP_FILE_EXTENSION,
-      OClusterBasedStorageConfiguration.DATA_FILE_EXTENSION,
-      OClusterBasedStorageConfiguration.TREE_DATA_FILE_EXTENSION,
-      OClusterBasedStorageConfiguration.TREE_NULL_FILE_EXTENSION,
-      OCellBTreeMultiValueIndexEngine.DATA_FILE_EXTENSION,
-      OCellBTreeMultiValueIndexEngine.M_CONTAINER_EXTENSION,
-      DoubleWriteLogGL.EXTENSION,
-      FreeSpaceMap.DEF_EXTENSION
+    OSBTreeIndexEngine.DATA_FILE_EXTENSION,
+    OIndexRIDContainer.INDEX_FILE_EXTENSION,
+    OSBTreeCollectionManagerShared.DEFAULT_EXTENSION,
+    OSBTreeIndexEngine.NULL_BUCKET_FILE_EXTENSION,
+    OClusterBasedStorageConfiguration.MAP_FILE_EXTENSION,
+    OClusterBasedStorageConfiguration.DATA_FILE_EXTENSION,
+    OClusterBasedStorageConfiguration.TREE_DATA_FILE_EXTENSION,
+    OClusterBasedStorageConfiguration.TREE_NULL_FILE_EXTENSION,
+    OCellBTreeMultiValueIndexEngine.DATA_FILE_EXTENSION,
+    OCellBTreeMultiValueIndexEngine.M_CONTAINER_EXTENSION,
+    DoubleWriteLogGL.EXTENSION,
+    FreeSpaceMap.DEF_EXTENSION
   };
 
   private static final int ONE_KB = 1024;
@@ -554,8 +554,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
     if (configuration == null) {
       configuration = new OClusterBasedStorageConfiguration(this);
-      ((OClusterBasedStorageConfiguration) configuration).load(contextConfiguration,
-          atomicOperation);
+      ((OClusterBasedStorageConfiguration) configuration)
+          .load(contextConfiguration, atomicOperation);
     }
   }
 
