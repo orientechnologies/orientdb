@@ -1996,7 +1996,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     this.responseManagerFactory = streatgy;
   }
 
-  protected abstract ODocument getNodeConfigurationByName(final String nodeName, final boolean useCache);
+  protected abstract ODocument getNodeConfigurationByName(
+      final String nodeName, final boolean useCache);
 
   public void notifyClients(String databaseName) {
     List<String> hosts = new ArrayList<>();
