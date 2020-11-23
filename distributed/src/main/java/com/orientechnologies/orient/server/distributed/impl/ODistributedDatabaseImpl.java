@@ -53,7 +53,6 @@ import com.orientechnologies.orient.server.distributed.impl.task.OLockKeySource;
 import com.orientechnologies.orient.server.distributed.impl.task.OUnreachableServerLocalTask;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionUniqueKey;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
-import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -94,7 +93,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private OFreezeGuard freezeGuard;
 
   public ODistributedDatabaseImpl(
-      final OHazelcastPlugin manager,
+      final ODistributedAbstractPlugin manager,
       final ODistributedMessageServiceImpl msgService,
       final String iDatabaseName,
       OServer server) {

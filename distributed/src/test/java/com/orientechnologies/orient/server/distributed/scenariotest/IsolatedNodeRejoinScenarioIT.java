@@ -24,7 +24,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
-import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.setup.ServerRun;
 import java.util.ArrayList;
 import java.util.List;
@@ -71,8 +71,8 @@ public class IsolatedNodeRejoinScenarioIT extends AbstractScenarioTest {
 
     ODocument cfg = null;
     ServerRun server = serverInstance.get(2);
-    OHazelcastPlugin manager =
-        (OHazelcastPlugin) server.getServerInstance().getDistributedManager();
+    ODistributedAbstractPlugin manager =
+        (ODistributedAbstractPlugin) server.getServerInstance().getDistributedManager();
     OModifiableDistributedConfiguration databaseConfiguration =
         manager.getDatabaseConfiguration(getDatabaseName()).modify();
     cfg = databaseConfiguration.getDocument();
