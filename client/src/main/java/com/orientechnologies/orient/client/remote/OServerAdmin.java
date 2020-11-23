@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.client.remote;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.OConnectionNext;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDBRemote;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxInternal;
@@ -55,7 +56,8 @@ public class OServerAdmin {
     if (!url.contains("/")) url += "/";
 
     remote = (OrientDBRemote) ODatabaseDocumentTxInternal.getOrCreateRemoteFactory(url);
-    urls = new ORemoteURLs(new String[] {}, remote.getContextConfiguration());
+    urls =
+        new ORemoteURLs(new String[] {}, remote.getContextConfiguration(), new OConnectionNext(1));
     String name = urls.parseServerUrls(url, remote.getContextConfiguration());
     if (name != null && name.length() != 0) {
       this.database = Optional.of(name);
@@ -66,7 +68,8 @@ public class OServerAdmin {
 
   public OServerAdmin(OrientDBRemote remote, String url) throws IOException {
     this.remote = remote;
-    urls = new ORemoteURLs(new String[] {}, remote.getContextConfiguration());
+    urls =
+        new ORemoteURLs(new String[] {}, remote.getContextConfiguration(), new OConnectionNext(1));
     String name = urls.parseServerUrls(url, remote.getContextConfiguration());
     if (name != null && name.length() != 0) {
       this.database = Optional.of(name);
@@ -83,7 +86,8 @@ public class OServerAdmin {
   @Deprecated
   public OServerAdmin(final OStorageRemote iStorage) {
     this.remote = iStorage.context;
-    urls = new ORemoteURLs(new String[] {}, remote.getContextConfiguration());
+    urls =
+        new ORemoteURLs(new String[] {}, remote.getContextConfiguration(), new OConnectionNext(1));
     urls.parseServerUrls(iStorage.getURL(), remote.getContextConfiguration());
     this.database = Optional.ofNullable(iStorage.getName());
   }
