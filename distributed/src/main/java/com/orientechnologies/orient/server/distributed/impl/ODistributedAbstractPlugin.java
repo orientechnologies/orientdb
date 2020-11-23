@@ -1091,11 +1091,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     return false;
   }
 
-  @Override
-  public boolean isNodeOnline(final String iNodeName, final String iDatabaseName) {
-    return getDatabaseStatus(iNodeName, iDatabaseName) == DB_STATUS.ONLINE;
-  }
-
   public boolean isOffline() {
     return getNodeStatus() != NODE_STATUS.ONLINE;
   }

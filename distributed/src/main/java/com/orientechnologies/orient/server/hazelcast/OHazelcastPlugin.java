@@ -2174,4 +2174,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   public boolean checkNodeStatus(final NODE_STATUS iStatus2Check) {
     return status.equals(iStatus2Check);
   }
+
+  @Override
+  public boolean isNodeOnline(final String iNodeName, final String iDatabaseName) {
+    return getDatabaseStatus(iNodeName, iDatabaseName) == DB_STATUS.ONLINE;
+  }
 }
