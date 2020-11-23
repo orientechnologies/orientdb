@@ -669,7 +669,7 @@
         <profile>
             <id>java8</id>
             <activation>
-                <jdk>1.8</jdk>
+                <jdk>[1.8,)</jdk>
             </activation>
             <dependencies>
                 <dependency>
@@ -732,7 +732,7 @@
         <profile>
             <id>java11</id>
             <activation>
-                <jdk>[11,</jdk>
+                <jdk>[11,)</jdk>
             </activation>
             <dependencies>
                 <dependency>
