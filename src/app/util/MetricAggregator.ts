@@ -30,6 +30,9 @@ export class MetersAggregator {
     return metrics;
   }
   countOps(regex, meters) {
+    if(!meters){
+      return 0;
+    }
     return Object.keys(meters)
       .filter(k => {
         return k.match(regex) != null;
