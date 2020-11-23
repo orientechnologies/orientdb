@@ -21,6 +21,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
 
+import javax.script.ScriptException;
+
 /** Created by Enrico Risa on 27/01/17. */
 public class JSScriptTest {
 
@@ -139,7 +141,7 @@ public class JSScriptTest {
 
       Assert.fail("It should receive a class not found exception");
     } catch (RuntimeException e) {
-      Assert.assertEquals(PolyglotException.class, e.getCause().getClass());
+      Assert.assertEquals(ScriptException.class, e.getCause().getClass());
     } finally {
       orientDB.drop(name.getMethodName());
     }
@@ -230,7 +232,7 @@ public class JSScriptTest {
         db.execute("javascript", "new java.math.BigDecimal(1.0);");
         Assert.fail("It should receive a class not found exception");
       } catch (RuntimeException e) {
-        Assert.assertEquals(PolyglotException.class, e.getCause().getClass());
+        Assert.assertEquals(ScriptException.class, e.getCause().getClass());
       }
 
       scriptManager.addAllowedPackages(new HashSet<>(Arrays.asList("java.math.*")));
@@ -258,7 +260,7 @@ public class JSScriptTest {
           db.execute("javascript", "Orient.instance().getScriptManager().addAllowedPackages([])")) {
         Assert.assertEquals(1, resultSet.stream().count());
       } catch (Exception e) {
-        Assert.assertEquals(PolyglotException.class, e.getCause().getClass());
+        Assert.assertEquals(ScriptException.class, e.getCause().getClass());
       }
 
       try (OResultSet resultSet =
@@ -267,7 +269,7 @@ public class JSScriptTest {
               "com.orientechnologies.orient.core.Orient.instance().getScriptManager().addAllowedPackages([])")) {
         Assert.assertEquals(1, resultSet.stream().count());
       } catch (Exception e) {
-        Assert.assertEquals(PolyglotException.class, e.getCause().getClass());
+        Assert.assertEquals(ScriptException.class, e.getCause().getClass());
       }
 
       try (OResultSet resultSet =
@@ -276,7 +278,7 @@ public class JSScriptTest {
               "Java.type('com.orientechnologies.orient.core.Orient').instance().getScriptManager().addAllowedPackages([])")) {
         Assert.assertEquals(1, resultSet.stream().count());
       } catch (Exception e) {
-        Assert.assertEquals(PolyglotException.class, e.getCause().getClass());
+        Assert.assertEquals(ScriptException.class, e.getCause().getClass());
       }
 
     } finally {

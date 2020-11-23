@@ -13,6 +13,8 @@ import org.graalvm.polyglot.HostAccess;
 import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Value;
 
+import javax.script.ScriptException;
+
 /** Created by Luca Garulli */
 public class OPolyglotScriptExecutor extends OAbstractScriptExecutor {
   private final OScriptTransformer transformer;
@@ -24,7 +26,6 @@ public class OPolyglotScriptExecutor extends OAbstractScriptExecutor {
 
   @Override
   public OResultSet execute(ODatabaseDocumentInternal database, String script, Object... params) {
-
     preExecute(database, script, params);
 
     Map<Integer, Object> par = new HashMap<>();
@@ -74,7 +75,8 @@ public class OPolyglotScriptExecutor extends OAbstractScriptExecutor {
     } catch (PolyglotException e) {
       final int col = e.getSourceLocation() != null ? e.getSourceLocation().getStartColumn() : 0;
       throw OException.wrapException(
-          new OCommandScriptException("Error on execution of the script", script, col), e);
+          new OCommandScriptException("Error on execution of the script", script, col),
+          new ScriptException(e));
     }
   }
 }
