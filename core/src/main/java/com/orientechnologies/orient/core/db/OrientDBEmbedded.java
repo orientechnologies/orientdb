@@ -424,9 +424,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
       OrientDBConfig config = solveConfig(null);
       synchronized (this) {
         checkOpen();
-        OAbstractPaginatedStorage storage = getOrInitStorage(name);
-        // THIS OPEN THE STORAGE ONLY THE FIRST TIME
-        storage.open(config.getConfigurations());
+        OAbstractPaginatedStorage storage = getAndOpenStorage(name, config);
         storage.incOnOpen();
         embedded = newSessionInstance(storage);
         embedded.init(config, getOrCreateSharedContext(storage));
@@ -451,9 +449,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
       OrientDBConfig config = solveConfig(null);
       synchronized (this) {
         checkOpen();
-        OAbstractPaginatedStorage storage = getOrInitStorage(name);
-        // THIS OPEN THE STORAGE ONLY THE FIRST TIME
-        storage.open(config.getConfigurations());
+        OAbstractPaginatedStorage storage = getAndOpenStorage(name, config);
         storage.incOnOpen();
         embedded = newSessionInstance(storage);
         embedded.init(config, getOrCreateSharedContext(storage));
@@ -476,20 +472,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
       synchronized (this) {
         checkOpen();
         config = solveConfig(config);
-        OAbstractPaginatedStorage storage = getOrInitStorage(name);
-        // THIS OPEN THE STORAGE ONLY THE FIRST TIME
-        try {
-          // THIS OPEN THE STORAGE ONLY THE FIRST TIME
-          storage.open(config.getConfigurations());
-        } catch (RuntimeException e) {
-          if (storage != null) {
-            storages.remove(storage.getName());
-          } else {
-            storages.remove(name);
-          }
-
-          throw e;
-        }
+        OAbstractPaginatedStorage storage = getAndOpenStorage(name, config);
 
         embedded = newSessionInstance(storage);
         embedded.init(config, getOrCreateSharedContext(storage));
@@ -503,6 +486,24 @@ public class OrientDBEmbedded implements OrientDBInternal {
       throw OException.wrapException(
           new ODatabaseException("Cannot open database '" + name + "'"), e);
     }
+  }
+
+  private OAbstractPaginatedStorage getAndOpenStorage(String name, OrientDBConfig config) {
+    OAbstractPaginatedStorage storage = getOrInitStorage(name);
+    // THIS OPEN THE STORAGE ONLY THE FIRST TIME
+    try {
+      // THIS OPEN THE STORAGE ONLY THE FIRST TIME
+      storage.open(config.getConfigurations());
+    } catch (RuntimeException e) {
+      if (storage != null) {
+        storages.remove(storage.getName());
+      } else {
+        storages.remove(name);
+      }
+
+      throw e;
+    }
+    return storage;
   }
 
   private void checkDefaultPassword(String database, String user, String password) {
@@ -535,8 +536,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     final ODatabaseDocumentEmbedded embedded;
     synchronized (this) {
       checkOpen();
-      OAbstractPaginatedStorage storage = getOrInitStorage(name);
-      storage.open(pool.getConfig().getConfigurations());
+      OAbstractPaginatedStorage storage = getAndOpenStorage(name, pool.getConfig());
       embedded = newPooledSessionInstance(pool, storage);
       embedded.init(pool.getConfig(), getOrCreateSharedContext(storage));
       storage.incOnOpen();
@@ -727,6 +727,9 @@ public class OrientDBEmbedded implements OrientDBInternal {
       }
       storage.restore(in, options, callable, iListener);
     } catch (Exception e) {
+      synchronized (this) {
+        storages.remove(name);
+      }
       OContextConfiguration configs = getConfigurations().getConfigurations();
       OLocalPaginatedStorage.deleteFilesFromDisc(
           name,
