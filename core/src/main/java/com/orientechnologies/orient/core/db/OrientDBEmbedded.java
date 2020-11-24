@@ -81,6 +81,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import org.apache.commons.lang.NullArgumentException;
 
 /** Created by tglman on 08/04/16. */
 public class OrientDBEmbedded implements OrientDBInternal {
@@ -434,6 +435,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   public ODatabaseDocumentEmbedded openNoAuthenticate(String name, String user) {
+    checkDatabaseName(name);
     try {
       final ODatabaseDocumentEmbedded embedded;
       OrientDBConfig config = solveConfig(null);
@@ -459,6 +461,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   public ODatabaseDocumentEmbedded openNoAuthorization(String name) {
+    checkDatabaseName(name);
     try {
       final ODatabaseDocumentEmbedded embedded;
       OrientDBConfig config = solveConfig(null);
@@ -481,6 +484,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   @Override
   public ODatabaseDocumentInternal open(
       String name, String user, String password, OrientDBConfig config) {
+    checkDatabaseName(name);
     checkDefaultPassword(name, user, password);
     try {
       final ODatabaseDocumentEmbedded embedded;
@@ -649,6 +653,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   @Override
   public void create(
       String name, String user, String password, ODatabaseType type, OrientDBConfig config) {
+    checkDatabaseName(name);
     final ODatabaseDocumentEmbedded embedded;
     synchronized (this) {
       if (!exists(name, user, password)) {
@@ -690,6 +695,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
 
   @Override
   public void networkRestore(String name, InputStream in, Callable<Object> callable) {
+    checkDatabaseName(name);
     try {
       OAbstractPaginatedStorage storage;
       OSharedContext context;
@@ -723,6 +729,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
       ODatabaseType type,
       String path,
       OrientDBConfig config) {
+    checkDatabaseName(name);
     config = solveConfig(config);
     final ODatabaseDocumentEmbedded embedded;
     OAbstractPaginatedStorage storage;
@@ -758,6 +765,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
       Map<String, Object> options,
       Callable<Object> callable,
       OCommandOutputListener iListener) {
+    checkDatabaseName(name);
     try {
       OAbstractPaginatedStorage storage;
       synchronized (this) {
@@ -834,6 +842,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     synchronized (this) {
       checkOpen();
     }
+    checkDatabaseName(name);
     ODatabaseDocumentInternal current = ODatabaseRecordThreadLocal.instance().getIfDefined();
     try {
       ODatabaseDocumentInternal db = openNoAuthenticate(name, user);
@@ -900,6 +909,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   @Override
   public ODatabasePoolInternal openPool(
       String name, String user, String password, OrientDBConfig config) {
+    checkDatabaseName(name);
     checkOpen();
     ODatabasePoolImpl pool = new ODatabasePoolImpl(this, name, user, password, solveConfig(config));
     pools.add(pool);
@@ -914,6 +924,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   @Override
   public ODatabasePoolInternal cachedPool(
       String database, String user, String password, OrientDBConfig config) {
+    checkDatabaseName(database);
     checkOpen();
     ODatabasePoolInternal pool =
         cachedPoolFactory.get(database, user, password, solveConfig(config));
@@ -1193,5 +1204,14 @@ public class OrientDBEmbedded implements OrientDBInternal {
 
   public boolean isMemoryOnly() {
     return basePath == null;
-  };
+  }
+
+  private void checkDatabaseName(String name) {
+    if (name == null) {
+      throw new NullArgumentException("database");
+    }
+    if (name.contains("/") || name.contains(":")) {
+      throw new ODatabaseException(String.format("Invalid database name:'%s'", name));
+    }
+  }
 }
