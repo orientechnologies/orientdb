@@ -28,7 +28,6 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterBrowsePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
-import java.io.IOException;
 
 /**
  * Remote cluster implementation
@@ -73,9 +72,7 @@ public class OClusterRemote implements OCluster {
    *
    * @see com.orientechnologies.orient.core.storage.OCluster#open()
    */
-  public void open(
-      OAtomicOperation atomicOperation) {
-  }
+  public void open(OAtomicOperation atomicOperation) {}
 
   public void close() {}
 

@@ -14,8 +14,7 @@ public final class InitFreeSpaceMapPO extends PageOperationRecord {
   }
 
   @Override
-  public void undo(OCacheEntry cacheEntry) {
-  }
+  public void undo(OCacheEntry cacheEntry) {}
 
   @Override
   public int getId() {

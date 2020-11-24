@@ -42,8 +42,7 @@ public interface OCluster {
 
   void create(OAtomicOperation atomicOperation) throws IOException;
 
-  void open(
-      OAtomicOperation atomicOperation) throws IOException;
+  void open(OAtomicOperation atomicOperation) throws IOException;
 
   void close() throws IOException;
 
@@ -67,7 +66,7 @@ public interface OCluster {
    * @param recordType the type of record of which allocate the position.
    * @return the allocated position.
    */
-  OPhysicalPosition allocatePosition(final byte recordType,final OAtomicOperation atomicOperation)
+  OPhysicalPosition allocatePosition(final byte recordType, final OAtomicOperation atomicOperation)
       throws IOException;
 
   /**
