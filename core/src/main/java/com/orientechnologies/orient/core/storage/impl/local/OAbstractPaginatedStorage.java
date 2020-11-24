@@ -2045,10 +2045,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  /* public OStorageTransaction getStorageTransaction() {
-    return transaction.get();
-  } */
-
   public final OAtomicOperationsManager getAtomicOperationsManager() {
     return atomicOperationsManager;
   }
@@ -3129,7 +3125,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public void clearIndex(final int indexId) throws OInvalidIndexEngineIdException {
-    // final int internalIndexId = extractInternalId(indexId);
     try {
       if (transaction.get() != null) {
         final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
@@ -3139,6 +3134,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       checkOpenness();
 
+      final int internalIndexId = extractInternalId(indexId);
       stateLock.acquireReadLock();
       try {
         interruptionManager.enterCriticalPath();

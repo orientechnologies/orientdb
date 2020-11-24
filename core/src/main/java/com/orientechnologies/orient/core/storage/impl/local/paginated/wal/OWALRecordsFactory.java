@@ -322,7 +322,7 @@ import net.jpountz.lz4.LZ4FastDecompressor;
  */
 public final class OWALRecordsFactory {
 
-  private final Map<Integer, Class> idToTypeMap = new HashMap<>();
+  private final Map<Integer, Class<?>> idToTypeMap = new HashMap<>();
 
   public static final OWALRecordsFactory INSTANCE = new OWALRecordsFactory();
 

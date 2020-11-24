@@ -56,8 +56,7 @@ public class OClusterRemote implements OCluster {
    * @see com.orientechnologies.orient.core.storage.OCluster#configure(com.orientechnologies.orient.core.storage.OStorage,
    * com.orientechnologies.orient.core.config.OStorageClusterConfiguration)
    */
-  public void configure(OStorage iStorage, OStorageClusterConfiguration iConfig)
-      throws IOException {
+  public void configure(OStorage iStorage, OStorageClusterConfiguration iConfig) {
     id = iConfig.getId();
     name = iConfig.getName();
   }
@@ -67,7 +66,7 @@ public class OClusterRemote implements OCluster {
    *
    * @see com.orientechnologies.orient.core.storage.OCluster#create(int)
    */
-  public void create(OAtomicOperation atomicOperation) throws IOException {}
+  public void create(OAtomicOperation atomicOperation) {}
 
   /*
    * (non-Javadoc)
@@ -78,14 +77,13 @@ public class OClusterRemote implements OCluster {
       OAtomicOperation atomicOperation) {
   }
 
-  public void close() throws IOException {}
+  public void close() {}
 
   @Override
-  public void close(boolean flush) throws IOException {}
+  public void close(boolean flush) {}
 
   @Override
-  public OPhysicalPosition allocatePosition(byte recordType, OAtomicOperation atomicOperation)
-      throws IOException {
+  public OPhysicalPosition allocatePosition(byte recordType, OAtomicOperation atomicOperation) {
     throw new UnsupportedOperationException("allocatePosition");
   }
 
@@ -115,13 +113,13 @@ public class OClusterRemote implements OCluster {
   }
 
   @Override
-  public ORawBuffer readRecord(long clusterPosition, boolean prefetchRecords) throws IOException {
+  public ORawBuffer readRecord(long clusterPosition, boolean prefetchRecords) {
     throw new UnsupportedOperationException("readRecord");
   }
 
   @Override
   public ORawBuffer readRecordIfVersionIsNotLatest(long clusterPosition, int recordVersion)
-      throws IOException, ORecordNotFoundException {
+      throws ORecordNotFoundException {
     throw new UnsupportedOperationException("readRecordIfVersionIsNotLatest");
   }
 
@@ -145,9 +143,9 @@ public class OClusterRemote implements OCluster {
     throw new UnsupportedOperationException("exists");
   }
 
-  public void delete(OAtomicOperation atomicOperation) throws IOException {}
+  public void delete(OAtomicOperation atomicOperation) {}
 
-  public Object set(ATTRIBUTES iAttribute, Object iValue) throws IOException {
+  public Object set(ATTRIBUTES iAttribute, Object iValue) {
     return null;
   }
 
@@ -156,7 +154,7 @@ public class OClusterRemote implements OCluster {
     throw new UnsupportedOperationException("encryption");
   }
 
-  public OPhysicalPosition getPhysicalPosition(OPhysicalPosition iPPosition) throws IOException {
+  public OPhysicalPosition getPhysicalPosition(OPhysicalPosition iPPosition) {
     return null;
   }
 
@@ -180,7 +178,7 @@ public class OClusterRemote implements OCluster {
   }
 
   @Override
-  public long getNextPosition() throws IOException {
+  public long getNextPosition() {
     return 0;
   }
 
@@ -193,7 +191,7 @@ public class OClusterRemote implements OCluster {
     return id;
   }
 
-  public void synch() throws IOException {}
+  public void synch() {}
 
   public String getName() {
     return name;
@@ -219,17 +217,17 @@ public class OClusterRemote implements OCluster {
   }
 
   @Override
-  public OPhysicalPosition[] ceilingPositions(OPhysicalPosition position) throws IOException {
+  public OPhysicalPosition[] ceilingPositions(OPhysicalPosition position) {
     throw new UnsupportedOperationException("ceilingPositions()");
   }
 
   @Override
-  public OPhysicalPosition[] floorPositions(OPhysicalPosition position) throws IOException {
+  public OPhysicalPosition[] floorPositions(OPhysicalPosition position) {
     throw new UnsupportedOperationException("floorPositions()");
   }
 
   @Override
-  public boolean isDeleted(OPhysicalPosition iPPosition) throws IOException {
+  public boolean isDeleted(OPhysicalPosition iPPosition) {
     throw new UnsupportedOperationException("isDeleted()");
   }
 
