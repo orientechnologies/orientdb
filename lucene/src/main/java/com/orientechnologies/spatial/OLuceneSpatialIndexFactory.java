@@ -99,7 +99,7 @@ public class OLuceneSpatialIndexFactory implements OIndexFactory, ODatabaseLifec
       OAtomicOperationsManager atomicOperationsManager)
       throws OConfigurationException {
 
-    OAbstractPaginatedStorage pagStorage = (OAbstractPaginatedStorage) storage.getUnderlying();
+    OAbstractPaginatedStorage pagStorage = (OAbstractPaginatedStorage) storage;
 
     OBinarySerializer<?> objectSerializer =
         storage

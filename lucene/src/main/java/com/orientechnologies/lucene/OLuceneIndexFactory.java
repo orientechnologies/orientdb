@@ -92,7 +92,7 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
       OAtomicOperationsManager atomicOperationsManager)
       throws OConfigurationException {
 
-    OAbstractPaginatedStorage pagStorage = (OAbstractPaginatedStorage) storage.getUnderlying();
+    OAbstractPaginatedStorage pagStorage = (OAbstractPaginatedStorage) storage;
 
     if (metadata == null)
       metadata = new ODocument().field("analyzer", StandardAnalyzer.class.getName());

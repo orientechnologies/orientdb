@@ -107,7 +107,7 @@ public final class OHashIndexFactory implements OIndexFactory {
           indexType,
           algorithm,
           version,
-          (OAbstractPaginatedStorage) storage.getUnderlying(),
+          (OAbstractPaginatedStorage) storage,
           valueContainerAlgorithm,
           metadata,
           binaryFormatVersion,
@@ -118,7 +118,7 @@ public final class OHashIndexFactory implements OIndexFactory {
           indexType,
           algorithm,
           version,
-          (OAbstractPaginatedStorage) storage.getUnderlying(),
+          (OAbstractPaginatedStorage) storage,
           valueContainerAlgorithm,
           metadata,
           binaryFormatVersion,
@@ -129,7 +129,7 @@ public final class OHashIndexFactory implements OIndexFactory {
           indexType,
           algorithm,
           version,
-          (OAbstractPaginatedStorage) storage.getUnderlying(),
+          (OAbstractPaginatedStorage) storage,
           valueContainerAlgorithm,
           metadata,
           binaryFormatVersion,
@@ -167,8 +167,7 @@ public final class OHashIndexFactory implements OIndexFactory {
       case "distributed":
         // DISTRIBUTED CASE: HANDLE IT AS FOR LOCAL
         indexEngine =
-            new OHashTableIndexEngine(
-                name, indexId, (OAbstractPaginatedStorage) storage.getUnderlying(), version);
+            new OHashTableIndexEngine(name, indexId, (OAbstractPaginatedStorage) storage, version);
         break;
       case "remote":
         indexEngine = new ORemoteIndexEngine(indexId, name);

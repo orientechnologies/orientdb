@@ -95,8 +95,7 @@ public class OBackgroundBackup implements Runnable, OSyncSource {
         inputStream = new PipedInputStream(pipedOutputStream, OSyncDatabaseTask.CHUNK_MAX_SIZE);
         OutputStream dest = new TeeOutputStream(fileOutputStream, pipedOutputStream);
         if (database.getStorage().supportIncremental()) {
-          OWriteAheadLog wal =
-              ((OAbstractPaginatedStorage) database.getStorage().getUnderlying()).getWALInstance();
+          OWriteAheadLog wal = ((OAbstractPaginatedStorage) database.getStorage()).getWALInstance();
           OLogSequenceNumber lsn = wal.end();
           if (lsn == null) {
             lsn = new OLogSequenceNumber(-1, -1);

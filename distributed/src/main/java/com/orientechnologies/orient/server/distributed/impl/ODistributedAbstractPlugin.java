@@ -1348,8 +1348,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       }
       OTxMetadataHolder metadata;
       try (ODatabaseDocumentInternal inst = distrDatabase.getDatabaseInstance()) {
-        Optional<byte[]> read =
-            ((OAbstractPaginatedStorage) inst.getStorage().getUnderlying()).getLastMetadata();
+        Optional<byte[]> read = ((OAbstractPaginatedStorage) inst.getStorage()).getLastMetadata();
         if (read.isPresent()) {
           metadata = OTxMetadataHolderImpl.read(read.get());
         } else {
@@ -2292,8 +2291,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
                 try (ODatabaseDocumentInternal inst = distrDatabase.getDatabaseInstance()) {
                   Optional<byte[]> read =
-                      ((OAbstractPaginatedStorage) inst.getStorage().getUnderlying())
-                          .getLastMetadata();
+                      ((OAbstractPaginatedStorage) inst.getStorage()).getLastMetadata();
                   if (read.isPresent()) {
                     OTxMetadataHolder metadata = OTxMetadataHolderImpl.read(read.get());
                     final OSyncDatabaseNewDeltaTask deployTask =
@@ -2431,7 +2429,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
     if (dbUrl.startsWith("plocal:")) {
       final OLocalPaginatedStorage paginatedStorage =
-          (OLocalPaginatedStorage) iDatabase.getStorage().getUnderlying();
+          (OLocalPaginatedStorage) iDatabase.getStorage();
 
       // CHECK SPECIAL CASE WITH MULTIPLE SERVER INSTANCES ON THE SAME JVM
       final Path storagePath = paginatedStorage.getStoragePath();

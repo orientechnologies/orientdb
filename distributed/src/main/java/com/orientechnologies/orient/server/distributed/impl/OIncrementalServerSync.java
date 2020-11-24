@@ -120,7 +120,7 @@ public class OIncrementalServerSync {
                     totalRecords++;
 
                     final OPaginatedCluster.RECORD_STATUS recordStatus =
-                        db.getStorage().getUnderlying().getRecordStatus(rid);
+                        db.getStorage().getRecordStatus(rid);
 
                     ORecord newRecord = null;
 

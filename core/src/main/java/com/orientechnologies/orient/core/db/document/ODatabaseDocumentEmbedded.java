@@ -757,14 +757,12 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
               .getCommandManager()
               .getScriptExecutor(language);
 
-      ((OAbstractPaginatedStorage) this.storage.getUnderlying())
-          .pauseConfigurationUpdateNotifications();
+      ((OAbstractPaginatedStorage) this.storage).pauseConfigurationUpdateNotifications();
       OResultSet original;
       try {
         original = executor.execute(this, script, args);
       } finally {
-        ((OAbstractPaginatedStorage) this.storage.getUnderlying())
-            .fireConfigurationUpdateNotifications();
+        ((OAbstractPaginatedStorage) this.storage).fireConfigurationUpdateNotifications();
       }
       OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
       this.queryStarted(result.getQueryId(), result);
@@ -803,13 +801,11 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
               .getScriptExecutor(language);
       OResultSet original;
 
-      ((OAbstractPaginatedStorage) this.storage.getUnderlying())
-          .pauseConfigurationUpdateNotifications();
+      ((OAbstractPaginatedStorage) this.storage).pauseConfigurationUpdateNotifications();
       try {
         original = executor.execute(this, script, args);
       } finally {
-        ((OAbstractPaginatedStorage) this.storage.getUnderlying())
-            .fireConfigurationUpdateNotifications();
+        ((OAbstractPaginatedStorage) this.storage).fireConfigurationUpdateNotifications();
       }
 
       OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
@@ -876,7 +872,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
 
   protected OMicroTransaction beginMicroTransaction() {
     final OAbstractPaginatedStorage abstractPaginatedStorage =
-        (OAbstractPaginatedStorage) getStorage().getUnderlying();
+        (OAbstractPaginatedStorage) getStorage();
 
     if (microTransaction == null)
       microTransaction = new OMicroTransaction(abstractPaginatedStorage, this);
@@ -1575,9 +1571,9 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     OTransactionAbstract transaction = (OTransactionAbstract) getTransaction();
     if (!transaction.isLockedRecord(iRecord)) {
       if (lockingStrategy == OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK)
-        ((OAbstractPaginatedStorage) getStorage().getUnderlying()).acquireWriteLock(rid, timeout);
+        ((OAbstractPaginatedStorage) getStorage()).acquireWriteLock(rid, timeout);
       else if (lockingStrategy == OStorage.LOCKING_STRATEGY.SHARED_LOCK)
-        ((OAbstractPaginatedStorage) getStorage().getUnderlying()).acquireReadLock(rid, timeout);
+        ((OAbstractPaginatedStorage) getStorage()).acquireReadLock(rid, timeout);
       else throw new IllegalStateException("Unsupported locking strategy " + lockingStrategy);
     }
     transaction.trackLockedRecord(iRecord.getIdentity(), lockingStrategy);
@@ -1590,9 +1586,9 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     OStorage.LOCKING_STRATEGY strategy = transaction.trackUnlockRecord(rid);
 
     if (strategy == OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK)
-      ((OAbstractPaginatedStorage) getStorage().getUnderlying()).releaseWriteLock(rid);
+      ((OAbstractPaginatedStorage) getStorage()).releaseWriteLock(rid);
     else if (strategy == OStorage.LOCKING_STRATEGY.SHARED_LOCK)
-      ((OAbstractPaginatedStorage) getStorage().getUnderlying()).releaseReadLock(rid);
+      ((OAbstractPaginatedStorage) getStorage()).releaseReadLock(rid);
   }
 
   @Override

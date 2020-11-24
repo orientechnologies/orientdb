@@ -119,7 +119,7 @@ public class OMixedIndexRIDContainerSerializer
           new OIndexRIDContainerSBTree(
               fileId,
               new OBonsaiBucketPointer(pageIndex, offset),
-              (OAbstractPaginatedStorage) db.getStorage().getUnderlying());
+              (OAbstractPaginatedStorage) db.getStorage());
     }
 
     return new OMixedIndexRIDContainer(fileId, hashSet, tree);
@@ -218,7 +218,7 @@ public class OMixedIndexRIDContainerSerializer
           new OIndexRIDContainerSBTree(
               fileId,
               new OBonsaiBucketPointer(pageIndex, offset),
-              (OAbstractPaginatedStorage) db.getStorage().getUnderlying());
+              (OAbstractPaginatedStorage) db.getStorage());
     }
 
     return new OMixedIndexRIDContainer(fileId, hashSet, tree);
@@ -293,7 +293,7 @@ public class OMixedIndexRIDContainerSerializer
           new OIndexRIDContainerSBTree(
               fileId,
               new OBonsaiBucketPointer(pageIndex, offset),
-              (OAbstractPaginatedStorage) db.getStorage().getUnderlying());
+              (OAbstractPaginatedStorage) db.getStorage());
     }
 
     return new OMixedIndexRIDContainer(fileId, hashSet, tree);
@@ -340,7 +340,7 @@ public class OMixedIndexRIDContainerSerializer
           new OIndexRIDContainerSBTree(
               fileId,
               new OBonsaiBucketPointer(pageIndex, pageOffset),
-              (OAbstractPaginatedStorage) db.getStorage().getUnderlying());
+              (OAbstractPaginatedStorage) db.getStorage());
     }
 
     return new OMixedIndexRIDContainer(fileId, hashSet, tree);

@@ -79,8 +79,7 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
 
   private static long resolveFileIdByName(String fileName) {
     final OAbstractPaginatedStorage storage =
-        (OAbstractPaginatedStorage)
-            ODatabaseRecordThreadLocal.instance().get().getStorage().getUnderlying();
+        (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.instance().get().getStorage();
     final OAtomicOperationsManager atomicOperationsManager = storage.getAtomicOperationsManager();
     final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
     Objects.requireNonNull(atomicOperation);
@@ -221,8 +220,7 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
   private void convertToSbTree() {
     final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
     final OIndexRIDContainerSBTree tree =
-        new OIndexRIDContainerSBTree(
-            fileId, (OAbstractPaginatedStorage) db.getStorage().getUnderlying());
+        new OIndexRIDContainerSBTree(fileId, (OAbstractPaginatedStorage) db.getStorage());
 
     tree.addAll(underlying);
 
