@@ -1762,6 +1762,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         cfg,
         firstChunk.incremental,
         receiver);
+    receiver.close();
 
     // OVERWRITE THE MOMENTUM FROM THE ORIGINAL SERVER AND ADD LAST LOCAL LSN
     distrDatabase.setOnline();
