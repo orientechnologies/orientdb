@@ -1908,6 +1908,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         cfg,
         firstChunk.incremental,
         receiver);
+    receiver.close();
 
     distrDatabase.setOnline();
 
