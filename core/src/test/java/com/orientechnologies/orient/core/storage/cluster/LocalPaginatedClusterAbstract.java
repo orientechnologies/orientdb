@@ -1198,24 +1198,28 @@ public abstract class LocalPaginatedClusterAbstract {
     newRecordVersion = recordVersion + 1;
 
     {
-      try {
-        atomicOperationsManager.executeInsideAtomicOperation(
-            null,
-            atomicOperation -> {
-              for (long clusterPosition : positionRecordMap.keySet()) {
+      for (long clusterPosition : positionRecordMap.keySet()) {
+        try {
+          atomicOperationsManager.executeInsideAtomicOperation(
+              null,
+              atomicOperation -> {
                 if (mersenneTwisterFast.nextBoolean()) {
                   int recordSize =
                       mersenneTwisterFast.nextInt(OClusterPage.MAX_RECORD_SIZE - 1) + 1;
                   byte[] smallRecord = new byte[recordSize];
                   mersenneTwisterFast.nextBytes(smallRecord);
 
+                  if (clusterPosition == 100) {
+                    System.out.println();
+                  }
+
                   paginatedCluster.updateRecord(
                       clusterPosition, smallRecord, newRecordVersion, (byte) 3, atomicOperation);
                 }
-              }
-              throw new RollbackException();
-            });
-      } catch (RollbackException ignore) {
+                throw new RollbackException();
+              });
+        } catch (RollbackException ignore) {
+        }
       }
     }
 
@@ -1256,8 +1260,8 @@ public abstract class LocalPaginatedClusterAbstract {
   public void testUpdateManyBigRecords() throws IOException {
     final int records = 5000;
 
-    long seed = 1605083213475L;//System.currentTimeMillis();
-    Random mersenneTwisterFast =  new Random(seed);
+    long seed = 1605083213475L; // System.currentTimeMillis();
+    Random mersenneTwisterFast = new Random(seed);
     System.out.println("testUpdateManyBigRecords seed : " + seed);
 
     Map<Long, byte[]> positionRecordMap = new HashMap<>();
