@@ -414,8 +414,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             (atomicOperation) -> {
               if (OClusterBasedStorageConfiguration.exists(writeCache)) {
                 configuration = new OClusterBasedStorageConfiguration(this);
-                ((OClusterBasedStorageConfiguration) configuration).load(contextConfiguration,
-                    atomicOperation);
+                ((OClusterBasedStorageConfiguration) configuration)
+                    .load(contextConfiguration, atomicOperation);
 
                 // otherwise delayed to disk based storage to convert old format to new format.
               }
@@ -660,12 +660,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final int clusterId = cluster.getId();
 
       if (!sbTreeCollectionManager.isComponentPresent(operation, clusterId)) {
+        OLogManager.instance()
+            .info(
+                this, "Cluster with id %d does not have associated rid bag, fixing ...", clusterId);
         sbTreeCollectionManager.createComponent(operation, clusterId);
       }
     }
   }
 
-  @SuppressWarnings("unused")
   public void open(final OToken iToken, final OContextConfiguration configuration) {
     open(iToken.getUserName(), "", configuration);
   }
@@ -2626,8 +2628,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         }
         makeStorageDirty();
 
-        final OBinarySerializer<?> keySerializer =
-            determineKeySerializer(indexDefinition);
+        final OBinarySerializer<?> keySerializer = determineKeySerializer(indexDefinition);
         if (keySerializer == null) {
           throw new OIndexException("Can not determine key serializer");
         }
@@ -2761,8 +2762,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                 }
               }
 
-              final OBinarySerializer<?> keySerializer =
-                  determineKeySerializer(indexDefinition);
+              final OBinarySerializer<?> keySerializer = determineKeySerializer(indexDefinition);
               if (keySerializer == null) {
                 throw new OIndexException("Can not determine key serializer");
               }
@@ -2941,8 +2941,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private OBinarySerializer<?> determineKeySerializer(
-      final OIndexDefinition indexDefinition) {
+  private OBinarySerializer<?> determineKeySerializer(final OIndexDefinition indexDefinition) {
     if (indexDefinition == null) {
       throw new OStorageException("Index definition has to be provided");
     }

@@ -944,7 +944,7 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
 
                 final int updatedPageFreeSpace = localPage.getFreeSpace();
                 maxRecordSize = localPage.getMaxRecordSize();
-                sizeDiff += pageFreeSpace - updatedEntryPosition;
+                sizeDiff += pageFreeSpace - updatedPageFreeSpace;
 
               } finally {
                 releasePageFromWrite(atomicOperation, cacheEntry);
