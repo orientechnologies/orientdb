@@ -6,6 +6,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.remote.OStorageRemote.CONNECTION_STRATEGY;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.OConnectionNext;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import java.util.ArrayList;
@@ -30,11 +31,12 @@ public class ORemoteURLs {
   private List<String> initialServerURLs;
   private int nextServerToConnect;
 
-  public ORemoteURLs(String[] hosts, OContextConfiguration config) {
+  public ORemoteURLs(String[] hosts, OContextConfiguration config, OConnectionNext connectionNext) {
     for (String host : hosts) {
       addHost(host, config);
     }
     this.initialServerURLs = new ArrayList<String>(serverURLs);
+    this.nextServerToConnect = connectionNext.next();
   }
 
   public synchronized void remove(String serverUrl) {

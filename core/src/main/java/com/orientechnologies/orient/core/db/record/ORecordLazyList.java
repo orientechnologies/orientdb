@@ -154,20 +154,25 @@ public class ORecordLazyList extends OTrackedList<OIdentifiable> implements ORec
 
   @Override
   public boolean add(OIdentifiable e) {
-    if (e != null) {
-      if ((ridOnly || contentType == MULTIVALUE_CONTENT_TYPE.ALL_RIDS)
-          && e.getIdentity().isPersistent()
-          && (e instanceof ODocument && !((ODocument) e).isDirty()))
-        // IT'S BETTER TO LEAVE ALL RIDS AND EXTRACT ONLY THIS ONE
-        e = e.getIdentity();
-      else contentType = ORecordMultiValueHelper.updateContentType(contentType, e);
-    }
+    preAdd(e);
     lazyLoad(true);
     return super.add(e);
   }
 
   @Override
   public void add(int index, OIdentifiable e) {
+    preAdd(e);
+    lazyLoad(true);
+    super.add(index, e);
+  }
+
+  @Override
+  public boolean addInternal(OIdentifiable e) {
+    preAdd(e);
+    return super.addInternal(e);
+  }
+
+  private void preAdd(OIdentifiable e) {
     if (e != null) {
       ORecordInternal.track(sourceRecord, e);
       if ((ridOnly || contentType == MULTIVALUE_CONTENT_TYPE.ALL_RIDS)
@@ -177,9 +182,6 @@ public class ORecordLazyList extends OTrackedList<OIdentifiable> implements ORec
         e = e.getIdentity();
       else contentType = ORecordMultiValueHelper.updateContentType(contentType, e);
     }
-    lazyLoad(true);
-
-    super.add(index, e);
   }
 
   @Override

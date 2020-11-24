@@ -161,9 +161,10 @@ public class OServerConfigurationManager {
     checkForAutoReloading();
 
     final HashSet<OServerUserConfiguration> result = new HashSet<OServerUserConfiguration>();
-
-    for (int i = 0; i < configuration.users.length; ++i) {
-      if (configuration.users[i] != null) result.add(configuration.users[i]);
+    if (configuration.users != null) {
+      for (int i = 0; i < configuration.users.length; ++i) {
+        if (configuration.users[i] != null) result.add(configuration.users[i]);
+      }
     }
 
     return result;

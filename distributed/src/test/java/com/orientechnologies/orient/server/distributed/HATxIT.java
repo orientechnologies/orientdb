@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.orientechnologies.orient.setup.ServerRun;
 import org.junit.Test;
 
@@ -50,12 +49,11 @@ public class HATxIT extends AbstractHARemoveNode {
     serverInstance
         .get(SERVERS - 1)
         .startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
-    if (serverInstance.get(SERVERS - 1).getServerInstance().getPluginByClass(OHazelcastPlugin.class)
-        != null)
+    if (serverInstance.get(SERVERS - 1).getServerInstance().getDistributedManager() != null)
       serverInstance
           .get(SERVERS - 1)
           .getServerInstance()
-          .getPluginByClass(OHazelcastPlugin.class)
+          .getDistributedManager()
           .waitUntilNodeOnline();
 
     lastNodeIsUp.set(true);

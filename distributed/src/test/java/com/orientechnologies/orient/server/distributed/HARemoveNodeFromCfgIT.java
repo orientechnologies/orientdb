@@ -18,7 +18,6 @@ package com.orientechnologies.orient.server.distributed;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.orientechnologies.orient.setup.ServerRun;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.Assert;
@@ -106,12 +105,11 @@ public class HARemoveNodeFromCfgIT extends AbstractServerClusterTxTest {
     serverInstance
         .get(SERVERS - 1)
         .startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
-    if (serverInstance.get(SERVERS - 1).getServerInstance().getPluginByClass(OHazelcastPlugin.class)
-        != null)
+    if (serverInstance.get(SERVERS - 1).getServerInstance().getDistributedManager() != null)
       serverInstance
           .get(SERVERS - 1)
           .getServerInstance()
-          .getPluginByClass(OHazelcastPlugin.class)
+          .getDistributedManager()
           .waitUntilNodeOnline();
 
     lastNodeIsUp.set(true);

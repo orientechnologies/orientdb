@@ -38,7 +38,6 @@ import com.orientechnologies.orient.server.distributed.impl.task.ORequestDatabas
 import com.orientechnologies.orient.server.distributed.impl.task.OUpdateDatabaseSequenceStatusTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
-import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -171,7 +170,7 @@ public class OClusterHealthChecker implements Runnable {
             "Server '%s' was not found in the list of registered servers. Reloading configuration from cluster...",
             server);
 
-        ((OHazelcastPlugin) manager).reloadRegisteredNodes(null);
+        ((ODistributedAbstractPlugin) manager).reloadRegisteredNodes(null);
         id = manager.getNodeIdByName(server);
         if (id == -1) {
           if (server.equals(manager.getLocalNodeName())) {
@@ -195,7 +194,7 @@ public class OClusterHealthChecker implements Runnable {
                 server);
 
             try {
-              ((OHazelcastPlugin) manager).restartNode(server);
+              ((ODistributedAbstractPlugin) manager).restartNode(server);
             } catch (IOException e) {
               ODistributedServerLog.warn(
                   this,

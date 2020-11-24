@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
-import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.setup.ServerRun;
 import java.util.LinkedList;
 import java.util.List;
@@ -133,8 +133,9 @@ public class IncrementalRestartScenarioIT extends AbstractScenarioTest {
         banner("Test with quorum = 2");
 
         // checking distributed configuration
-        OHazelcastPlugin manager =
-            (OHazelcastPlugin) serverInstance.get(0).getServerInstance().getDistributedManager();
+        ODistributedAbstractPlugin manager =
+            (ODistributedAbstractPlugin)
+                serverInstance.get(0).getServerInstance().getDistributedManager();
         OModifiableDistributedConfiguration databaseConfiguration =
             manager.getDatabaseConfiguration(getDatabaseName()).modify();
         ODocument cfg = databaseConfiguration.getDocument();
@@ -260,8 +261,9 @@ public class IncrementalRestartScenarioIT extends AbstractScenarioTest {
         banner("Test with quorum = 1");
 
         // checking distributed configuration
-        OHazelcastPlugin manager =
-            (OHazelcastPlugin) serverInstance.get(0).getServerInstance().getDistributedManager();
+        ODistributedAbstractPlugin manager =
+            (ODistributedAbstractPlugin)
+                serverInstance.get(0).getServerInstance().getDistributedManager();
         OModifiableDistributedConfiguration databaseConfiguration =
             manager.getDatabaseConfiguration(getDatabaseName()).modify();
         ODocument cfg = databaseConfiguration.getDocument();

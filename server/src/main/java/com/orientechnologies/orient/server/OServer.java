@@ -37,6 +37,7 @@ import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OSystemDatabase;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.OrientDBConfigBuilder;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxInternal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -55,6 +56,7 @@ import com.orientechnologies.orient.server.config.OServerNetworkProtocolConfigur
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.config.OServerSocketFactoryConfiguration;
 import com.orientechnologies.orient.server.config.OServerStorageConfiguration;
+import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.config.ODistributedConfig;
 import com.orientechnologies.orient.server.handler.OConfigurableHooksManager;
@@ -371,8 +373,12 @@ public class OServer {
 
     if (!databaseDirectory.endsWith("/")) databaseDirectory += "/";
 
+    OrientDBConfigBuilder builder = OrientDBConfig.builder();
+    for (OServerUserConfiguration user : serverCfg.getUsers()) {
+      builder.addGlobalUser(user.getName(), user.getPassword(), user.getResources());
+    }
     OrientDBConfig config =
-        OrientDBConfig.builder()
+        builder
             .fromContext(contextConfiguration)
             .setSecurityConfig(new OServerSecurityConfig(this, this.serverCfg))
             .build();
@@ -951,9 +957,11 @@ public class OServer {
       rootPassword = rootPassword.trim();
       if (rootPassword.isEmpty()) rootPassword = null;
     }
+    boolean existsRoot =
+        existsSystemUser(OServerConfiguration.DEFAULT_ROOT_USER)
+            || serverCfg.existsUser(OServerConfiguration.DEFAULT_ROOT_USER);
 
-    if (rootPassword == null
-        && !databases.getSecuritySystem().existsUser(OServerConfiguration.DEFAULT_ROOT_USER)) {
+    if (rootPassword == null && !existsRoot) {
       try {
         // WAIT ANY LOG IS PRINTED
         Thread.sleep(1000);
@@ -1033,18 +1041,25 @@ public class OServer {
               "Found ORIENTDB_ROOT_PASSWORD variable, using this value as root's password",
               rootPassword);
 
-    if (!databases.getSecuritySystem().existsUser(OServerConfiguration.DEFAULT_ROOT_USER)) {
+    if (!existsRoot) {
       context.execute(
           "CREATE SYSTEM USER "
               + OServerConfiguration.DEFAULT_ROOT_USER
               + " IDENTIFIED BY ? ROLE root",
           rootPassword);
     }
-    if (!databases.getSecuritySystem().existsUser(OServerConfiguration.GUEST_USER)) {
+
+    if (!existsSystemUser(OServerConfiguration.GUEST_USER)) {
       context.execute(
-          "CREATE SYSTEM USER " + OServerConfiguration.GUEST_USER + " IDENTIFIED BY ? ROLE guest",
-          rootPassword);
+          "CREATE SYSTEM USER "
+              + OServerConfiguration.GUEST_USER
+              + " IDENTIFIED BY 'guest' ROLE guest");
     }
+  }
+
+  private boolean existsSystemUser(String user) {
+    return Boolean.TRUE.equals(
+        context.execute("EXISTS SYSTEM USER ?", user).next().getProperty("exists"));
   }
 
   public OServerPluginManager getPluginManager() {

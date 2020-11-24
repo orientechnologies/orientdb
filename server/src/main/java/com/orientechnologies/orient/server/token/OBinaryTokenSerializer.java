@@ -41,6 +41,8 @@ public class OBinaryTokenSerializer implements OTokenMetaInfo {
 
   private OTokenPayloadDeserializer getForType(String type) {
     switch (type) {
+        // The "node" token is for backward compatibility for old distributed binary, may be removed
+        // if we do not support runtime compatibility with 3.1 or less
       case "node":
         return new ODistributedBinaryTokenPayloadDeserializer();
       case "OrientDB":

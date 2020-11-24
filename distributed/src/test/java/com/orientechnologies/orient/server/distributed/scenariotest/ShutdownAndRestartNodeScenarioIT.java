@@ -30,7 +30,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
-import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.setup.ServerRun;
 import java.util.LinkedList;
 import java.util.List;
@@ -233,8 +233,8 @@ public class ShutdownAndRestartNodeScenarioIT extends AbstractScenarioTest {
 
         ODocument cfg = null;
         ServerRun server = serverInstance.get(0);
-        OHazelcastPlugin manager =
-            (OHazelcastPlugin) server.getServerInstance().getDistributedManager();
+        ODistributedAbstractPlugin manager =
+            (ODistributedAbstractPlugin) server.getServerInstance().getDistributedManager();
         OModifiableDistributedConfiguration databaseConfiguration =
             manager.getDatabaseConfiguration(getDatabaseName()).modify();
         cfg = databaseConfiguration.getDocument();

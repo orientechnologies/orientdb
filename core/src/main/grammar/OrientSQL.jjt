@@ -1035,6 +1035,10 @@ OServerStatement ServerStatement():
         |
         LOOKAHEAD(3)
         result = AlterSystemRoleStatement()
+        |
+        LOOKAHEAD(3)
+        result = ExistsSystemUserStatement()
+
     )
 	{
 	    return result;
@@ -4843,6 +4847,21 @@ OCreateSystemUserStatement CreateSystemUserStatement():
             )
           )
         ]
+    )
+    { return jjtThis; }
+}
+
+OExistsSystemUserStatement ExistsSystemUserStatement():
+{}
+{
+    (
+        <EXISTS> <SYSTEM> <USER>
+        (
+            jjtThis.name = Identifier()
+            |
+            jjtThis.nameParam = InputParameter()
+
+        )
     )
     { return jjtThis; }
 }
