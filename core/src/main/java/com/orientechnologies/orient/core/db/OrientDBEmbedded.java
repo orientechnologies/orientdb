@@ -884,7 +884,10 @@ public class OrientDBEmbedded implements OrientDBInternal {
       scanDatabaseDirectory(new File(basePath), databases::add);
     }
     databases.addAll(this.storages.keySet());
-    // TODO remove OSystemDatabase.SYSTEM_DB_NAME from the list
+    // TODO: Verify validity this generic permission on guest
+    if (!securitySystem.isAuthorized("guest", "server.listDatabases.system")) {
+      databases.remove(OSystemDatabase.SYSTEM_DB_NAME);
+    }
     return databases;
   }
 
