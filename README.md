@@ -38,11 +38,4 @@ Copy the `ID` of the correction request to the initial comment in your PR e.g. `
 
 > Put CWB CR to "patch request", only after the "stage, promote" was successful.
 
-**Tryout (if automation is enabled, not ADB request)**
-
-1. Merge PR
-1. Request Delivery in CWB
-1. Wait for ADB object to be created (check CWB action log status: "In Assembly")
-1. Stage build (triggers promote to nexus and upload to smp + validation e-mail)
-
 
