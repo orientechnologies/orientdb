@@ -19,6 +19,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OClusterDoesNotExistException;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
@@ -127,7 +128,6 @@ public class SchemaTest extends DocumentDBBaseTest {
       if (!cls.isAbstract()) assert database.getClusterNameById(cls.getDefaultClusterId()) != null;
     }
   }
-
 
   @Test(dependsOnMethods = "createSchema")
   public void checkTotalRecords() {
@@ -377,7 +377,7 @@ public class SchemaTest extends DocumentDBBaseTest {
       database.command(new OCommandSQL("create class Antani cluster 212121")).execute();
       Assert.fail();
     } catch (Exception e) {
-      Assert.assertTrue(e instanceof OCommandSQLParsingException);
+      Assert.assertTrue(e instanceof OClusterDoesNotExistException);
     }
   }
 
@@ -578,8 +578,8 @@ public class SchemaTest extends DocumentDBBaseTest {
     try {
       record.reload(null, true);
       Assert.assertTrue(false);
-    } catch (ORecordNotFoundException e) {
-      Assert.assertTrue(e.getCause() instanceof OOfflineClusterException);
+    } catch (OOfflineClusterException e) {
+      Assert.assertTrue(true);
     }
 
     // RESTORE IT ONLINE

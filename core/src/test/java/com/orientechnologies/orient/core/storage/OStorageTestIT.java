@@ -9,7 +9,7 @@ import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
-import com.orientechnologies.orient.core.exception.OPageIsBrokenException;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -103,7 +103,7 @@ public class OStorageTestIT {
     try {
       document.save();
       Assert.fail();
-    } catch (OPageIsBrokenException e) {
+    } catch (OStorageException e) {
       Assert.assertTrue(true);
     }
 
@@ -169,7 +169,7 @@ public class OStorageTestIT {
     try {
       document.save();
       Assert.fail();
-    } catch (OPageIsBrokenException e) {
+    } catch (OStorageException e) {
       Assert.assertTrue(true);
     }
 

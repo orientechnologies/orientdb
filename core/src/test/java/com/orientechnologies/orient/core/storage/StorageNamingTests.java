@@ -181,9 +181,6 @@ public class StorageNamingTests {
     }
 
     @Override
-    public void rollback(OTransactionInternal iTx) {}
-
-    @Override
     public int getClusters() {
       return 0;
     }
