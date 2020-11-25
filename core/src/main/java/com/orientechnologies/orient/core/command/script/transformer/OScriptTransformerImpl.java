@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.command.script.transformer;
 
+import com.oracle.truffle.polyglot.*;
 import com.orientechnologies.orient.core.command.script.OScriptResultSet;
 import com.orientechnologies.orient.core.command.script.OScriptResultSets;
 import com.orientechnologies.orient.core.command.script.transformer.result.MapTransformer;
@@ -8,11 +9,8 @@ import com.orientechnologies.orient.core.command.script.transformer.resultset.OR
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
+import org.graalvm.polyglot.Value;
 
 /** Created by Enrico Risa on 27/01/17. */
 public class OScriptTransformerImpl implements OScriptTransformer {
@@ -22,12 +20,24 @@ public class OScriptTransformerImpl implements OScriptTransformer {
 
   public OScriptTransformerImpl() {
 
-    registerResultTransformer(HashMap.class, new MapTransformer(this));
-    registerResultTransformer(LinkedHashMap.class, new MapTransformer(this));
+    registerResultTransformer(Map.class, new MapTransformer(this));
   }
 
   @Override
   public OResultSet toResultSet(Object value) {
+    if (value instanceof Value) {
+      final Value v = (Value) value;
+      if (v.isNull()) return null;
+      else if (v.hasArrayElements()) {
+        final List<Object> array = new ArrayList<>((int) v.getArraySize());
+        for (int i = 0; i < v.getArraySize(); ++i)
+          array.add(new OResultInternal(v.getArrayElement(i).asHostObject()));
+        value = array;
+      } else if (v.isHostObject()) value = v.asHostObject();
+      else if (v.isString()) value = v.asString();
+      else if (v.isNumber()) value = v.asDouble();
+      else value = v;
+    }
 
     if (value == null) {
       return OScriptResultSets.empty();
@@ -52,7 +62,7 @@ public class OScriptTransformerImpl implements OScriptTransformer {
   @Override
   public OResult toResult(Object value) {
 
-    OResultTransformer transformer = transformers.get(value.getClass());
+    OResultTransformer transformer = getTransformer(value.getClass());
 
     if (transformer == null) {
       return defaultTransformer(value);
@@ -60,9 +70,17 @@ public class OScriptTransformerImpl implements OScriptTransformer {
     return transformer.transform(value);
   }
 
+  public OResultTransformer getTransformer(final Class clazz) {
+    if (clazz != null)
+      for (Map.Entry<Class, OResultTransformer> entry : transformers.entrySet()) {
+        if (entry.getKey().isAssignableFrom(clazz)) return entry.getValue();
+      }
+    return null;
+  }
+
   @Override
   public boolean doesHandleResult(Object value) {
-    return transformers.get(value.getClass()) != null;
+    return getTransformer(value.getClass()) != null;
   }
 
   private OResult defaultTransformer(Object value) {

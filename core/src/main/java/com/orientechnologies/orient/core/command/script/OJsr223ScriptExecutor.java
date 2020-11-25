@@ -9,17 +9,11 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.util.HashMap;
 import java.util.Map;
-import javax.script.Bindings;
-import javax.script.Compilable;
-import javax.script.CompiledScript;
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-import javax.script.ScriptException;
+import javax.script.*;
 
 /** Created by tglman on 25/01/17. */
 public class OJsr223ScriptExecutor extends OAbstractScriptExecutor {
   private final OScriptTransformer transformer;
-  private String language;
 
   public OJsr223ScriptExecutor(String language, OScriptTransformer scriptTransformer) {
     super(language);

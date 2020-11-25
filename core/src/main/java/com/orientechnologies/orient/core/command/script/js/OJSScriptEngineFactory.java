@@ -10,12 +10,14 @@ public class OJSScriptEngineFactory {
   private static final List<String> WRAPPED_LANGUAGES = Arrays.asList("javascript", "ecmascript");
 
   public static ScriptEngineFactory maybeWrap(ScriptEngineFactory engineFactory) {
+    final String factoryClassName = engineFactory.getClass().getName();
+
     if (WRAPPED_LANGUAGES.contains(engineFactory.getLanguageName().toLowerCase(Locale.ENGLISH))
-        && engineFactory
-            .getClass()
-            .getName()
-            .equalsIgnoreCase("jdk.nashorn.api.scripting.NashornScriptEngineFactory")) {
-      return new ONashornScriptEngineFactory(engineFactory);
+        && (factoryClassName.equalsIgnoreCase(
+                "jdk.nashorn.api.scripting.NashornScriptEngineFactory")
+            || factoryClassName.equalsIgnoreCase(
+                "com.oracle.truffle.js.scriptengine.GraalJSEngineFactory"))) {
+      return new OSecuredScriptEngineFactory(engineFactory);
     }
     return engineFactory;
   }

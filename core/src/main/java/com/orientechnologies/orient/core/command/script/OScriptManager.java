@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.command.script.formatter.OSQLScriptForm
 import com.orientechnologies.orient.core.command.script.formatter.OScriptFormatter;
 import com.orientechnologies.orient.core.command.script.js.OJSScriptEngineFactory;
 import com.orientechnologies.orient.core.command.script.transformer.OScriptTransformerImpl;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -87,10 +88,20 @@ public class OScriptManager {
   public OScriptManager() {
     scriptEngineManager = new ScriptEngineManager();
 
+    final boolean useGraal = OGlobalConfiguration.SCRIPT_POLYGLOT_USE_GRAAL.getValueAsBoolean();
+
     executorsFactories.put(
-        "javascript", (lang) -> new OJavascriptScriptExecutor(lang, new OScriptTransformerImpl()));
+        "javascript",
+        (lang) ->
+            useGraal
+                ? new OPolyglotScriptExecutor(lang, new OScriptTransformerImpl())
+                : new OJsr223ScriptExecutor(lang, new OScriptTransformerImpl()));
     executorsFactories.put(
-        "ecmascript", (lang) -> new OJavascriptScriptExecutor(lang, new OScriptTransformerImpl()));
+        "ecmascript",
+        (lang) ->
+            useGraal
+                ? new OPolyglotScriptExecutor(lang, new OScriptTransformerImpl())
+                : new OJsr223ScriptExecutor(lang, new OScriptTransformerImpl()));
 
     for (ScriptEngineFactory f : scriptEngineManager.getEngineFactories()) {
       registerEngine(f.getLanguageName().toLowerCase(Locale.ENGLISH), f);
@@ -434,6 +445,19 @@ public class OScriptManager {
 
   public void registerInjection(final OScriptInjection iInj) {
     if (!injections.contains(iInj)) injections.add(iInj);
+  }
+
+  public Set<String> getAllowedPackages() {
+    final Set<String> result = new HashSet<>();
+    this.engines
+        .entrySet()
+        .forEach(
+            e -> {
+              if (e.getValue() instanceof OSecuredScriptFactory) {
+                result.addAll(((OSecuredScriptFactory) e.getValue()).getPackages());
+              }
+            });
+    return result;
   }
 
   public void addAllowedPackages(Set<String> packages) {
