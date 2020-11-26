@@ -15,13 +15,11 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.graalvm.polyglot.PolyglotException;
+import javax.script.ScriptException;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
-
-import javax.script.ScriptException;
 
 /** Created by Enrico Risa on 27/01/17. */
 public class JSScriptTest {
