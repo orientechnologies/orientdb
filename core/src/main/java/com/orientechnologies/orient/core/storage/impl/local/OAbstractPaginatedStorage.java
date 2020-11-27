@@ -315,25 +315,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   private static void checkPageSizeAndRelatedParametersInGlobalConfiguration() {
     final int pageSize = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
-    final int freeListBoundary =
-        OGlobalConfiguration.PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY.getValueAsInteger() * 1024;
     final int maxKeySize = OGlobalConfiguration.SBTREE_MAX_KEY_SIZE.getValueAsInteger();
-
-    if (freeListBoundary > pageSize / 2) {
-      throw new OStorageException(
-          "Value of parameter "
-              + OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getKey()
-              + " should be at least 2 times bigger than value of parameter "
-              + OGlobalConfiguration.PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY.getKey()
-              + " but real values are :"
-              + OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getKey()
-              + " = "
-              + pageSize
-              + " , "
-              + OGlobalConfiguration.PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY.getKey()
-              + " = "
-              + freeListBoundary);
-    }
 
     if (maxKeySize > pageSize / 4) {
       throw new OStorageException(
@@ -432,7 +414,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             (atomicOperation) -> {
               if (OClusterBasedStorageConfiguration.exists(writeCache)) {
                 configuration = new OClusterBasedStorageConfiguration(this);
-                ((OClusterBasedStorageConfiguration) configuration).load(contextConfiguration);
+                ((OClusterBasedStorageConfiguration) configuration)
+                    .load(contextConfiguration, atomicOperation);
 
                 // otherwise delayed to disk based storage to convert old format to new format.
               }
@@ -452,7 +435,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
               sbTreeCollectionManager = new OSBTreeCollectionManagerShared(this);
 
-              openClusters();
+              openClusters(atomicOperation);
               openIndexes();
 
               // we need to check presence of ridbags for backward compatibility with previous
@@ -623,7 +606,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  protected final void openClusters() throws IOException {
+  protected final void openClusters(final OAtomicOperation atomicOperation) throws IOException {
     // OPEN BASIC SEGMENTS
     int pos;
 
@@ -637,13 +620,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         try {
           if (pos == -1) {
-            clusters.get(i).open();
+            clusters.get(i).open(atomicOperation);
           } else {
             if (clusterConfig.getName().equals(CLUSTER_DEFAULT_NAME)) {
               defaultClusterId = pos;
             }
 
-            clusters.get(pos).open();
+            clusters.get(pos).open(atomicOperation);
           }
         } catch (final FileNotFoundException e) {
           OLogManager.instance()
@@ -677,12 +660,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final int clusterId = cluster.getId();
 
       if (!sbTreeCollectionManager.isComponentPresent(operation, clusterId)) {
+        OLogManager.instance()
+            .info(
+                this, "Cluster with id %d does not have associated rid bag, fixing ...", clusterId);
         sbTreeCollectionManager.createComponent(operation, clusterId);
       }
     }
   }
 
-  @SuppressWarnings("unused")
   public void open(final OToken iToken, final OContextConfiguration configuration) {
     open(iToken.getUserName(), "", configuration);
   }
@@ -770,12 +755,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                       atomicOperation,
                       OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024);
               ((OClusterBasedStorageConfiguration) configuration)
-                  .setFreeListBoundary(
-                      atomicOperation,
-                      OGlobalConfiguration.PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY
-                              .getValueAsInteger()
-                          * 1024);
-              ((OClusterBasedStorageConfiguration) configuration)
                   .setMaxKeySize(
                       atomicOperation,
                       OGlobalConfiguration.SBTREE_MAX_KEY_SIZE.getValueAsInteger());
@@ -843,8 +822,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   private void checkPageSizeAndRelatedParameters() {
     final int pageSize = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
-    final int freeListBoundary =
-        OGlobalConfiguration.PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY.getValueAsInteger() * 1024;
     final int maxKeySize = OGlobalConfiguration.SBTREE_MAX_KEY_SIZE.getValueAsInteger();
 
     if (configuration.getPageSize() != -1 && configuration.getPageSize() != pageSize) {
@@ -855,17 +832,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               + configuration.getPageSize()
               + " but current value is "
               + pageSize);
-    }
-
-    if (configuration.getFreeListBoundary() != -1
-        && configuration.getFreeListBoundary() != freeListBoundary) {
-      throw new OStorageException(
-          "Storage is created with value of "
-              + OGlobalConfiguration.PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY.getKey()
-              + " parameter equal to "
-              + configuration.getFreeListBoundary()
-              + " but current value is "
-              + freeListBoundary);
     }
 
     if (configuration.getMaxKeySize() != -1 && configuration.getMaxKeySize() != maxKeySize) {
@@ -1464,7 +1430,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           OPaginatedClusterFactory.createCluster(
               cluster.getName(), configuration.getVersion(), cluster.getBinaryVersion(), this);
       newCluster.configure(clusterId, cluster.getName());
-      newCluster.open();
+      newCluster.open(atomicOperation);
     }
 
     clusterMap.put(cluster.getName().toLowerCase(configuration.getLocaleInstance()), newCluster);
@@ -2080,10 +2046,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throw logAndPrepareForRethrow(t);
     }
   }
-
-  /* public OStorageTransaction getStorageTransaction() {
-    return transaction.get();
-  } */
 
   public final OAtomicOperationsManager getAtomicOperationsManager() {
     return atomicOperationsManager;
@@ -3162,7 +3124,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public void clearIndex(final int indexId) throws OInvalidIndexEngineIdException {
-    // final int internalIndexId = extractInternalId(indexId);
     try {
       if (transaction.get() != null) {
         final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
@@ -3172,6 +3133,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       checkOpenness();
 
+      final int internalIndexId = extractInternalId(indexId);
       stateLock.acquireReadLock();
       try {
         interruptionManager.enterCriticalPath();
@@ -3181,7 +3143,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
         atomicOperationsManager.executeInsideAtomicOperation(
-            null, atomicOperation -> doClearIndex(atomicOperation, indexId));
+            null, atomicOperation -> doClearIndex(atomicOperation, internalIndexId));
       } finally {
         stateLock.releaseReadLock();
         interruptionManager.exitCriticalPath();

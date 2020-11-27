@@ -160,7 +160,7 @@ public class OStreamSerializerSBTreeIndexRIDContainer
       final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
       final OIndexRIDContainerSBTree underlying =
           new OIndexRIDContainerSBTree(
-              fileId, rootPointer, (OAbstractPaginatedStorage) db.getStorage().getUnderlying());
+              fileId, rootPointer, (OAbstractPaginatedStorage) db.getStorage());
       return new OIndexRIDContainer(fileId, underlying, durable);
     }
   }
@@ -234,7 +234,7 @@ public class OStreamSerializerSBTreeIndexRIDContainer
       final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
       final OIndexRIDContainerSBTree underlying =
           new OIndexRIDContainerSBTree(
-              fileId, rootPointer, (OAbstractPaginatedStorage) db.getStorage().getUnderlying());
+              fileId, rootPointer, (OAbstractPaginatedStorage) db.getStorage());
       return new OIndexRIDContainer(fileId, underlying, durable);
     }
   }
@@ -277,7 +277,7 @@ public class OStreamSerializerSBTreeIndexRIDContainer
       final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
       final OIndexRIDContainerSBTree underlying =
           new OIndexRIDContainerSBTree(
-              fileId, rootPointer, (OAbstractPaginatedStorage) db.getStorage().getUnderlying());
+              fileId, rootPointer, (OAbstractPaginatedStorage) db.getStorage());
       return new OIndexRIDContainer(fileId, underlying, durable);
     }
   }

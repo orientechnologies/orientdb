@@ -780,7 +780,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     try {
       OTransactionInternal tx = txContext.getTransaction();
       tx.setDatabase(this);
-      ((OAbstractPaginatedStorage) this.getStorage().getUnderlying()).commitPreAllocated(tx);
+      ((OAbstractPaginatedStorage) this.getStorage()).commitPreAllocated(tx);
     } catch (OLowDiskSpaceException ex) {
       distributedManager.setDatabaseStatus(
           getLocalNodeName(), getName(), ODistributedServerManager.DB_STATUS.OFFLINE);
@@ -816,7 +816,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       // make sure the create record operations have a valid id assigned that is used also on the
       // followers.
       getDistributedShared().getManager().messageBeforeOp("allocate", txContext.getReqId());
-      ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(transaction);
+      ((OAbstractPaginatedStorage) getStorage()).preallocateRids(transaction);
       getDistributedShared().getManager().messageAfterOp("allocate", txContext.getReqId());
     }
 
@@ -833,7 +833,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
     if (!isCoordinator) {
       getDistributedShared().getManager().messageBeforeOp("allocate", txContext.getReqId());
-      ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(transaction);
+      ((OAbstractPaginatedStorage) getStorage()).preallocateRids(transaction);
       getDistributedShared().getManager().messageAfterOp("allocate", txContext.getReqId());
     }
 
@@ -881,7 +881,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
             // Version check need to be done only from the nodes that are not coordinating the
             // transaction.
             final long version =
-                ((OAbstractPaginatedStorage) getStorage().getUnderlying())
+                ((OAbstractPaginatedStorage) getStorage())
                     .getVersionForKey(indexName, changesPerKey.key);
             int sourceVersion =
                 ((OTransactionOptimisticDistributed) transaction)
@@ -928,8 +928,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         int changeVersion = entry.getRecord().getVersion();
         ORecordMetadata metadata = getStorage().getRecordMetadata(entry.getRID());
         if (metadata == null) {
-          if (((OAbstractPaginatedStorage) getStorage().getUnderlying())
-              .isDeleted(entry.getRID())) {
+          if (((OAbstractPaginatedStorage) getStorage()).isDeleted(entry.getRID())) {
             throw new OConcurrentModificationException(
                 entry.getRID(), changeVersion, changeVersion, entry.getType());
           } else {

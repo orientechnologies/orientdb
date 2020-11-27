@@ -42,7 +42,7 @@ public interface OCluster {
 
   void create(OAtomicOperation atomicOperation) throws IOException;
 
-  void open() throws IOException;
+  void open(OAtomicOperation atomicOperation) throws IOException;
 
   void close() throws IOException;
 
@@ -64,10 +64,9 @@ public interface OCluster {
    * Allocates a physical position pointer on the storage for generate an id without a content.
    *
    * @param recordType the type of record of which allocate the position.
-   * @param atomicOperation
    * @return the allocated position.
    */
-  OPhysicalPosition allocatePosition(byte recordType, OAtomicOperation atomicOperation)
+  OPhysicalPosition allocatePosition(final byte recordType, final OAtomicOperation atomicOperation)
       throws IOException;
 
   /**
@@ -78,7 +77,6 @@ public interface OCluster {
    * @param recordType the type of the record
    * @param allocatedPosition the eventual allocated position or null if there is no allocated
    *     position.
-   * @param atomicOperation
    * @return the position where the record si created.
    */
   OPhysicalPosition createRecord(

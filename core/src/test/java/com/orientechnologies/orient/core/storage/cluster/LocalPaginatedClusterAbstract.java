@@ -1102,7 +1102,10 @@ public abstract class LocalPaginatedClusterAbstract {
   @Test
   public void testUpdateOneBigRecord() throws IOException {
     final byte[] bigRecord = new byte[2 * 65536 + 100];
-    Random mersenneTwisterFast = new Random();
+    final long seed = System.nanoTime();
+    System.out.println("testUpdateOneBigRecord seed " + seed);
+    Random mersenneTwisterFast = new Random(seed);
+
     mersenneTwisterFast.nextBytes(bigRecord);
 
     final int recordVersion = 2;
@@ -1195,24 +1198,28 @@ public abstract class LocalPaginatedClusterAbstract {
     newRecordVersion = recordVersion + 1;
 
     {
-      try {
-        atomicOperationsManager.executeInsideAtomicOperation(
-            null,
-            atomicOperation -> {
-              for (long clusterPosition : positionRecordMap.keySet()) {
+      for (long clusterPosition : positionRecordMap.keySet()) {
+        try {
+          atomicOperationsManager.executeInsideAtomicOperation(
+              null,
+              atomicOperation -> {
                 if (mersenneTwisterFast.nextBoolean()) {
                   int recordSize =
                       mersenneTwisterFast.nextInt(OClusterPage.MAX_RECORD_SIZE - 1) + 1;
                   byte[] smallRecord = new byte[recordSize];
                   mersenneTwisterFast.nextBytes(smallRecord);
 
+                  if (clusterPosition == 100) {
+                    System.out.println();
+                  }
+
                   paginatedCluster.updateRecord(
                       clusterPosition, smallRecord, newRecordVersion, (byte) 3, atomicOperation);
                 }
-              }
-              throw new RollbackException();
-            });
-      } catch (RollbackException ignore) {
+                throw new RollbackException();
+              });
+        } catch (RollbackException ignore) {
+        }
       }
     }
 
@@ -1253,7 +1260,7 @@ public abstract class LocalPaginatedClusterAbstract {
   public void testUpdateManyBigRecords() throws IOException {
     final int records = 5000;
 
-    long seed = System.currentTimeMillis();
+    long seed = 1605083213475L; // System.currentTimeMillis();
     Random mersenneTwisterFast = new Random(seed);
     System.out.println("testUpdateManyBigRecords seed : " + seed);
 
@@ -1754,12 +1761,10 @@ final class RollbackException extends OException implements OHighLevelException 
     super("");
   }
 
-  @SuppressWarnings("unused")
   public RollbackException(String message) {
     super(message);
   }
 
-  @SuppressWarnings("unused")
   public RollbackException(RollbackException exception) {
     super(exception);
   }

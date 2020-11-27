@@ -129,12 +129,6 @@ public class SchemaTest extends DocumentDBBaseTest {
   }
 
   @Test(dependsOnMethods = "createSchema")
-  public void checkDatabaseSize() {
-
-    Assert.assertTrue(database.getSize() > 0);
-  }
-
-  @Test(dependsOnMethods = "createSchema")
   public void checkTotalRecords() {
 
     Assert.assertTrue(database.getStorage().countRecords() > 0);

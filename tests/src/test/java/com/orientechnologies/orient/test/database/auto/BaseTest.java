@@ -254,7 +254,7 @@ public abstract class BaseTest<T extends ODatabase> {
   }
 
   protected boolean skipTestIfRemote() {
-    final OStorage stg = ((ODatabaseDocumentTx) database).getStorage().getUnderlying();
+    final OStorage stg = ((ODatabaseDocumentTx) database).getStorage();
 
     // ONLY PLOCAL AND MEMORY STORAGES SUPPORTED
     return !(stg instanceof OAbstractPaginatedStorage);

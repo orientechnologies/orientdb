@@ -727,7 +727,7 @@ public abstract class OPropertyImpl implements OProperty {
   }
 
   public void checkEmbedded() {
-    if (!(getDatabase().getStorage().getUnderlying() instanceof OAbstractPaginatedStorage))
+    if (!(getDatabase().getStorage() instanceof OAbstractPaginatedStorage))
       throw new OSchemaException(
           "'Internal' schema modification methods can be used only inside of embedded database");
   }

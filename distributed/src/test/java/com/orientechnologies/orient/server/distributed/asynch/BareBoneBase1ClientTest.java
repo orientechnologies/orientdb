@@ -44,7 +44,7 @@ public abstract class BareBoneBase1ClientTest extends TestCase {
         new Thread() {
           @Override
           public void run() {
-            servers[0] = dbServer(DB1_DIR, getLocalURL(), "asynch-dserver-config-0.xml");
+            servers[0] = dbServer(DB1_DIR, getDatabaseName(), "asynch-dserver-config-0.xml");
           }
         };
     dbServer1.start();

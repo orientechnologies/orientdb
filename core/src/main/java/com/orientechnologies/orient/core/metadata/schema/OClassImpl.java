@@ -1597,8 +1597,7 @@ public abstract class OClassImpl implements OClass {
 
   private void addClusterIdToIndexes(int iId) {
     ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.instance().getIfDefined();
-    if (database != null
-        && database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage) {
+    if (database != null && database.getStorage() instanceof OAbstractPaginatedStorage) {
       final String clusterName = getDatabase().getClusterNameById(iId);
       final List<String> indexesToAdd = new ArrayList<String>();
 
@@ -1710,7 +1709,7 @@ public abstract class OClassImpl implements OClass {
   }
 
   private void removeClusterFromIndexes(final int iId) {
-    if (getDatabase().getStorage().getUnderlying() instanceof OAbstractPaginatedStorage) {
+    if (getDatabase().getStorage() instanceof OAbstractPaginatedStorage) {
       final String clusterName = getDatabase().getClusterNameById(iId);
       final List<String> indexesToRemove = new ArrayList<String>();
 

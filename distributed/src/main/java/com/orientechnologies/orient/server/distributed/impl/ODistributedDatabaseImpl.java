@@ -419,8 +419,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     OAbstractPaginatedStorage storage =
         (OAbstractPaginatedStorage)
             ((OrientDBDistributed) manager.getServerInstance().getDatabases())
-                .getStorage(databaseName)
-                .getUnderlying();
+                .getStorage(databaseName);
 
     if (storage != null) {
       sequenceManager.fill(storage.getLastMetadata());

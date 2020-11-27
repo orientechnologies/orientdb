@@ -97,6 +97,8 @@ import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.EMPTY_WAL_RECORD;
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.FILE_CREATED_WAL_RECORD;
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.FILE_DELETED_WAL_RECORD;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.FREE_SPACE_MAP_INIT;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.FREE_SPACE_MAP_UPDATE;
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.FULL_CHECKPOINT_START_RECORD;
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.FUZZY_CHECKPOINT_END_RECORD;
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.FUZZY_CHECKPOINT_START_RECORD;
@@ -249,6 +251,8 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.clu
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v1.paginatedclusterstate.PaginatedClusterStateV1SetFreeListPagePO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v1.paginatedclusterstate.PaginatedClusterStateV1SetRecordsSizePO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v1.paginatedclusterstate.PaginatedClusterStateV1SetSizePO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v2.freespacemap.InitFreeSpaceMapPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v2.freespacemap.UpdateMaxFreeSpacePO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v2.paginatedclusterstate.PaginatedClusterStateV2SetFileSizePO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v2.paginatedclusterstate.PaginatedClusterStateV2SetFreeListPagePO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v2.paginatedclusterstate.PaginatedClusterStateV2SetRecordsSizePO;
@@ -318,7 +322,7 @@ import net.jpountz.lz4.LZ4FastDecompressor;
  */
 public final class OWALRecordsFactory {
 
-  private final Map<Integer, Class> idToTypeMap = new HashMap<>();
+  private final Map<Integer, Class<?>> idToTypeMap = new HashMap<>();
 
   public static final OWALRecordsFactory INSTANCE = new OWALRecordsFactory();
 
@@ -831,6 +835,12 @@ public final class OWALRecordsFactory {
         break;
       case TX_METADATA:
         walRecord = new MetaDataRecord();
+        break;
+      case FREE_SPACE_MAP_INIT:
+        walRecord = new InitFreeSpaceMapPO();
+        break;
+      case FREE_SPACE_MAP_UPDATE:
+        walRecord = new UpdateMaxFreeSpacePO();
         break;
       default:
         if (idToTypeMap.containsKey(recordId))

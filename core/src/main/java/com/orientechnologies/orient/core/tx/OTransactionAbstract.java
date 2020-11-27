@@ -114,11 +114,9 @@ public abstract class OTransactionAbstract implements OTransaction {
         final LockedRecordMetadata lockedRecordMetadata = lock.getValue();
 
         if (lockedRecordMetadata.strategy.equals(OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK)) {
-          ((OAbstractPaginatedStorage) getDatabase().getStorage().getUnderlying())
-              .releaseWriteLock(lock.getKey());
+          ((OAbstractPaginatedStorage) getDatabase().getStorage()).releaseWriteLock(lock.getKey());
         } else if (lockedRecordMetadata.strategy.equals(OStorage.LOCKING_STRATEGY.SHARED_LOCK)) {
-          ((OAbstractPaginatedStorage) getDatabase().getStorage().getUnderlying())
-              .releaseReadLock(lock.getKey());
+          ((OAbstractPaginatedStorage) getDatabase().getStorage()).releaseReadLock(lock.getKey());
         }
       } catch (Exception e) {
         OLogManager.instance()

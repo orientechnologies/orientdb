@@ -171,7 +171,7 @@ public class OSyncClusterTask extends OAbstractReplicatedTask {
                             final Map<String, String> fileNames = new LinkedHashMap<>();
 
                             final OAbstractPaginatedStorage paginatedStorage =
-                                (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
+                                (OAbstractPaginatedStorage) database.getStorage();
                             final OWriteCache writeCache = paginatedStorage.getWriteCache();
 
                             final OutputStream outputStream =

@@ -227,10 +227,9 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
   }
 
   @Override
-  public void open() throws IOException {
+  public void open(OAtomicOperation atomicOperation) throws IOException {
     acquireExclusiveLock();
     try {
-      final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
       fileId = openFile(atomicOperation, getFullName());
 
       final OCacheEntry pinnedStateEntry = loadPageForRead(atomicOperation, fileId, 0, false);

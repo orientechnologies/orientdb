@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.core.storage.cluster.v1;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISK_CACHE_PAGE_SIZE;
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
@@ -69,8 +68,11 @@ public final class OPaginatedClusterV1 extends OPaginatedCluster {
   private static final int BINARY_VERSION = 1;
 
   private static final int DISK_PAGE_SIZE = DISK_CACHE_PAGE_SIZE.getValueAsInteger();
+
+  @SuppressWarnings("deprecation")
   private static final int LOWEST_FREELIST_BOUNDARY =
-      PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY.getValueAsInteger();
+      OGlobalConfiguration.PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY.getValueAsInteger();
+
   private static final int FREE_LIST_SIZE = DISK_PAGE_SIZE - LOWEST_FREELIST_BOUNDARY;
   private static final int PAGE_INDEX_OFFSET = 16;
   private static final int RECORD_POSITION_MASK = 0xFFFF;
@@ -243,10 +245,9 @@ public final class OPaginatedClusterV1 extends OPaginatedCluster {
   }
 
   @Override
-  public void open() throws IOException {
+  public void open(OAtomicOperation atomicOperation) throws IOException {
     acquireExclusiveLock();
     try {
-      final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
       fileId = openFile(atomicOperation, getFullName());
       clusterPositionMap.open(atomicOperation);
     } finally {
@@ -1621,7 +1622,9 @@ public final class OPaginatedClusterV1 extends OPaginatedCluster {
   private FindFreePageResult findFreePage(
       final int contentSize, final OAtomicOperation atomicOperation) throws IOException {
     int freePageIndex = contentSize / ONE_KB;
-    freePageIndex -= PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY.getValueAsInteger();
+    //noinspection deprecation
+    freePageIndex -=
+        OGlobalConfiguration.PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY.getValueAsInteger();
     if (freePageIndex < 0) {
       freePageIndex = 0;
     }

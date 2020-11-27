@@ -1119,7 +1119,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph
     try {
       if (!isClosed()) {
         if (commitTx) {
-          final OStorage storage = getDatabase().getStorage().getUnderlying();
+          final OStorage storage = getDatabase().getStorage();
           if (storage instanceof OAbstractPaginatedStorage) {
             if (((OAbstractPaginatedStorage) storage).getWALInstance() != null)
               getDatabase().commit();
@@ -1985,16 +1985,14 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph
         if (getDatabase().isClosed()) getDatabase().open(username, password);
       } else getDatabase().create();
 
-      if (getDatabase().getStorage().getUnderlying() instanceof OAbstractPaginatedStorage)
-        ((OAbstractPaginatedStorage) getDatabase().getStorage().getUnderlying())
-            .registerRecoverListener(this);
+      if (getDatabase().getStorage() instanceof OAbstractPaginatedStorage)
+        ((OAbstractPaginatedStorage) getDatabase().getStorage()).registerRecoverListener(this);
 
     } else {
       database = pool.acquire();
 
-      if (getDatabase().getStorage().getUnderlying() instanceof OAbstractPaginatedStorage)
-        ((OAbstractPaginatedStorage) getDatabase().getStorage().getUnderlying())
-            .registerRecoverListener(this);
+      if (getDatabase().getStorage() instanceof OAbstractPaginatedStorage)
+        ((OAbstractPaginatedStorage) getDatabase().getStorage()).registerRecoverListener(this);
     }
 
     makeActive();

@@ -47,6 +47,7 @@ import java.util.stream.Stream;
 
 public final class OClusterBasedStorageConfiguration implements OStorageConfiguration {
   public static final String MAP_FILE_EXTENSION = ".ccm";
+  public static final String FREE_MAP_FILE_EXTENSION = ".fcm";
   public static final String DATA_FILE_EXTENSION = ".cd";
 
   public static final String TREE_DATA_FILE_EXTENSION = ".bd";
@@ -145,7 +146,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
             OPaginatedCluster.getLatestBinaryVersion(),
             storage,
             DATA_FILE_EXTENSION,
-            MAP_FILE_EXTENSION);
+            MAP_FILE_EXTENSION,
+            FREE_MAP_FILE_EXTENSION);
     btree =
         new CellBTreeSingleValueV1<>(
             COMPONENT_NAME, TREE_DATA_FILE_EXTENSION, TREE_NULL_FILE_EXTENSION, storage);
@@ -237,13 +239,14 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
   }
 
-  public void load(final OContextConfiguration configuration)
+  public void load(
+      final OContextConfiguration configuration, final OAtomicOperation atomicOperation)
       throws OSerializationException, IOException {
     lock.acquireWriteLock();
     try {
       this.configuration = configuration;
 
-      cluster.open();
+      cluster.open(atomicOperation);
       btree.load(COMPONENT_NAME, 1, null, OStringSerializer.INSTANCE, null);
 
       readConfiguration();
@@ -545,10 +548,6 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     updateIntProperty(atomicOperation, VERSION_PROPERTY, CURRENT_VERSION);
   }
 
-  private void updateVersion(final OAtomicOperation atomicOperation, final int version) {
-    updateIntProperty(atomicOperation, VERSION_PROPERTY, version);
-  }
-
   @Override
   public int getVersion() {
     lock.acquireReadLock();
@@ -719,9 +718,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   public String getUuid() {
     lock.acquireReadLock();
     try {
-      final String uuid = readStringProperty(UUID);
-
-      return uuid;
+      return readStringProperty(UUID);
     } finally {
       lock.releaseReadLock();
     }
@@ -809,11 +806,6 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   private void updateBinaryFormatVersion(final OAtomicOperation atomicOperation) {
     updateIntProperty(
         atomicOperation, BINARY_FORMAT_VERSION_PROPERTY, CURRENT_BINARY_FORMAT_VERSION);
-  }
-
-  private void updateBinaryFormatVersion(
-      final OAtomicOperation atomicOperation, final int version) {
-    updateIntProperty(atomicOperation, BINARY_FORMAT_VERSION_PROPERTY, version);
   }
 
   @Override
@@ -1970,10 +1962,9 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   private void autoInitClusters() {
     if (getContextConfiguration().getValueAsInteger(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS)
         == 0) {
-      @SuppressWarnings("SpellCheckingInspection")
       final int cpus = Runtime.getRuntime().availableProcessors();
       getContextConfiguration()
-          .setValue(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS, cpus > 64 ? 64 : cpus);
+          .setValue(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS, Math.min(cpus, 64));
     }
   }
 
