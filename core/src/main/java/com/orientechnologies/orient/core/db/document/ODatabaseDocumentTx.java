@@ -1431,6 +1431,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     for (Map.Entry<ATTRIBUTES, Object> attr : preopenAttributes.entrySet()) {
       builder.addAttribute(attr.getKey(), attr.getValue());
     }
+    builder.addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, true);
 
     for (ODatabaseListener oDatabaseListener : preopenListener) {
       builder.addListener(oDatabaseListener);
