@@ -2542,4 +2542,49 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       }
     }
   }
+
+  public abstract Set<String> getDatabases();
+
+  protected void installNewDatabasesFromCluster() {
+    if (getActiveServers().size() <= 1) {
+      // NO OTHER NODES WHERE ALIGN
+      return;
+    }
+
+    final List<String> dbs = new ArrayList<String>(getDatabases());
+    Collections.sort(dbs);
+
+    for (String databaseName : dbs) {
+      final Set<String> availableServers = getAvailableNodeNames(databaseName);
+      if (availableServers.isEmpty())
+        // NO NODE HAS THIS DATABASE AVAILABLE
+        continue;
+
+      final DB_STATUS currStatus = getDatabaseStatus(nodeName, databaseName);
+      if (currStatus == DB_STATUS.SYNCHRONIZING
+          || currStatus == DB_STATUS.ONLINE
+          || currStatus == DB_STATUS.BACKUP)
+        // FIX PREVIOUS STATUS OF DATABASE
+        setDatabaseStatus(nodeName, databaseName, DB_STATUS.NOT_AVAILABLE);
+
+      try {
+        if (!installDatabase(
+            true,
+            databaseName,
+            false,
+            OGlobalConfiguration.DISTRIBUTED_BACKUP_TRY_INCREMENTAL_FIRST.getValueAsBoolean())) {
+          setDatabaseStatus(getLocalNodeName(), databaseName, DB_STATUS.NOT_AVAILABLE);
+        }
+      } catch (Exception e) {
+        ODistributedServerLog.error(
+            this,
+            getLocalNodeName(),
+            null,
+            DIRECTION.IN,
+            "Error on installing database '%s' on local node (error=%s)",
+            databaseName,
+            e.toString());
+      }
+    }
+  }
 }

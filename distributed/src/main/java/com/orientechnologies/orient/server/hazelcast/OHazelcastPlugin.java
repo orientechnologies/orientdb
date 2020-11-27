@@ -1581,51 +1581,16 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     }
   }
 
-  protected void installNewDatabasesFromCluster() {
-    if (activeNodes.size() <= 1) {
-      // NO OTHER NODES WHERE ALIGN
-      return;
-    }
-
-    final List<String> dbs = new ArrayList<String>(configurationMap.keySet());
-    Collections.sort(dbs);
-
-    for (String key : dbs) {
+  // Returns name of distributed databases in the cluster.
+  public Set<String> getDatabases() {
+    final Set<String> dbs = new HashSet<>();
+    for (String key : configurationMap.keySet()) {
       if (key.startsWith(CONFIG_DATABASE_PREFIX)) {
         final String databaseName = key.substring(CONFIG_DATABASE_PREFIX.length());
-
-        final Set<String> availableServers = getAvailableNodeNames(databaseName);
-        if (availableServers.isEmpty())
-          // NO NODE HAS THIS DATABASE AVAILABLE
-          continue;
-
-        final DB_STATUS currStatus = getDatabaseStatus(nodeName, databaseName);
-        if (currStatus == DB_STATUS.SYNCHRONIZING
-            || currStatus == DB_STATUS.ONLINE
-            || currStatus == DB_STATUS.BACKUP)
-          // FIX PREVIOUS STATUS OF DATABASE
-          setDatabaseStatus(nodeName, databaseName, DB_STATUS.NOT_AVAILABLE);
-
-        try {
-          if (!installDatabase(
-              true,
-              databaseName,
-              false,
-              OGlobalConfiguration.DISTRIBUTED_BACKUP_TRY_INCREMENTAL_FIRST.getValueAsBoolean())) {
-            setDatabaseStatus(getLocalNodeName(), databaseName, DB_STATUS.NOT_AVAILABLE);
-          }
-        } catch (Exception e) {
-          ODistributedServerLog.error(
-              this,
-              getLocalNodeName(),
-              null,
-              DIRECTION.IN,
-              "Error on installing database '%s' on local node (error=%s)",
-              databaseName,
-              e.toString());
-        }
+        dbs.add(databaseName);
       }
     }
+    return dbs;
   }
 
   public void reloadRegisteredNodes(String registeredNodesFromClusterAsJson) {
