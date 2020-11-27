@@ -20,8 +20,8 @@ import java.util.Map;
  */
 public class OStatementCache {
 
-  Map<String, OStatement> map;
-  int mapSize;
+  private Map<String, OStatement> map;
+  private int mapSize;
 
   /** @param size the size of the cache */
   public OStatementCache(int size) {
@@ -175,45 +175,8 @@ public class OStatementCache {
   protected static OServerStatement parseServerStatement(String statement)
       throws OCommandSQLParsingException {
     try {
-      ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
-      InputStream is;
-
-      if (db == null) {
-        is = new ByteArrayInputStream(statement.getBytes());
-      } else {
-        try {
-          is =
-              new ByteArrayInputStream(
-                  statement.getBytes(db.getStorage().getConfiguration().getCharset()));
-        } catch (UnsupportedEncodingException e2) {
-          OLogManager.instance()
-              .warn(
-                  null,
-                  "Unsupported charset for database "
-                      + db
-                      + " "
-                      + db.getStorage().getConfiguration().getCharset());
-          is = new ByteArrayInputStream(statement.getBytes());
-        }
-      }
-
-      OrientSql osql = null;
-      if (db == null) {
-        osql = new OrientSql(is);
-      } else {
-        try {
-          osql = new OrientSql(is, db.getStorage().getConfiguration().getCharset());
-        } catch (UnsupportedEncodingException e2) {
-          OLogManager.instance()
-              .warn(
-                  null,
-                  "Unsupported charset for database "
-                      + db
-                      + " "
-                      + db.getStorage().getConfiguration().getCharset());
-          osql = new OrientSql(is);
-        }
-      }
+      InputStream is = new ByteArrayInputStream(statement.getBytes());
+      OrientSql osql = new OrientSql(is);
       OServerStatement result = osql.parseServerStatement();
       //      result.originalStatement = statement;
 
