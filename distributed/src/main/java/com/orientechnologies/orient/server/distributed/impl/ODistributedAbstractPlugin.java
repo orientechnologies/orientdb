@@ -137,10 +137,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected String nodeName = null;
   protected int nodeId = -1;
   protected File defaultDatabaseConfigFile;
-  protected volatile NODE_STATUS status = NODE_STATUS.OFFLINE;
-  protected long lastClusterChangeOn;
-  protected List<ODistributedLifecycleListener> listeners =
-      new ArrayList<ODistributedLifecycleListener>();
+  protected List<ODistributedLifecycleListener> listeners = new ArrayList<>();
   protected ORemoteServerManager remoteServerManager;
 
   // LOCAL MSG COUNTER
@@ -276,7 +273,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   public void onOpen(final ODatabaseInternal iDatabase) {
     if (!isRelatedToLocalServer(iDatabase)) return;
 
-    if (isOffline() && status != NODE_STATUS.STARTING) return;
+    if (isOffline() && getNodeStatus() != NODE_STATUS.STARTING) return;
 
     final ODatabaseDocumentInternal currDb = ODatabaseRecordThreadLocal.instance().getIfDefined();
     try {
@@ -335,52 +332,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     shutdown();
   }
 
-  public String getNodeName(final Member iMember) {
-    return getNodeName(iMember, true);
-  }
-
   public abstract String getNodeName(final Member iMember, final boolean useCache);
-
-  public boolean updateCachedDatabaseConfiguration(
-      final String iDatabaseName, final OModifiableDistributedConfiguration cfg) {
-    ODistributedDatabaseImpl local = getMessageService().getDatabase(iDatabaseName);
-    if (local == null) return false;
-
-    final ODistributedConfiguration dCfg = local.getDistributedConfiguration();
-
-    ODocument oldCfg = dCfg != null ? dCfg.getDocument() : null;
-    Integer oldVersion = oldCfg != null ? (Integer) oldCfg.field("version") : null;
-    if (oldVersion == null) oldVersion = 0;
-
-    int currVersion = cfg.getVersion();
-
-    final boolean modified = currVersion > oldVersion;
-
-    if (oldCfg != null && !modified) {
-      // NO CHANGE, SKIP IT
-      OLogManager.instance()
-          .debug(
-              this,
-              "Skip saving of distributed configuration file for database '%s' because is unchanged (version %d)",
-              iDatabaseName,
-              currVersion);
-      return false;
-    }
-
-    // SAVE IN NODE'S LOCAL RAM
-    local.setDistributedConfiguration(cfg);
-
-    ODistributedServerLog.info(
-        this,
-        getLocalNodeName(),
-        null,
-        DIRECTION.NONE,
-        "Broadcasting new distributed configuration for database: %s (version=%d)\n",
-        iDatabaseName,
-        currVersion);
-
-    return modified;
-  }
 
   public OServer getServerInstance() {
     return serverInstance;
@@ -444,26 +396,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   public boolean isEnabled() {
     return enabled;
-  }
-
-  public NODE_STATUS getNodeStatus() {
-    return status;
-  }
-
-  @Override
-  public void setNodeStatus(final NODE_STATUS iStatus) {
-    if (status.equals(iStatus))
-      // NO CHANGE
-      return;
-
-    status = iStatus;
-
-    ODistributedServerLog.info(
-        this, nodeName, null, DIRECTION.NONE, "Updated node status to '%s'", status);
-  }
-
-  public boolean checkNodeStatus(final NODE_STATUS iStatus2Check) {
-    return status.equals(iStatus2Check);
   }
 
   @Override
@@ -1032,7 +964,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   public void onCreateClass(final ODatabaseInternal iDatabase, final OClass iClass) {
     if (((ODatabaseDocumentInternal) iDatabase).isLocalEnv()) return;
 
-    if (isOffline() && status != NODE_STATUS.STARTING) return;
+    if (isOffline() && getNodeStatus() != NODE_STATUS.STARTING) return;
 
     // RUN ONLY IN NON-DISTRIBUTED MODE
     if (!isRelatedToLocalServer(iDatabase)) return;
@@ -1077,11 +1009,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   }
 
   @Override
-  public void updateLastClusterChange() {
-    lastClusterChangeOn = System.currentTimeMillis();
-  }
-
-  @Override
   public void reassignClustersOwnership(
       final String iNode,
       final String databaseName,
@@ -1112,13 +1039,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     return false;
   }
 
-  @Override
-  public boolean isNodeOnline(final String iNodeName, final String iDatabaseName) {
-    return getDatabaseStatus(iNodeName, iDatabaseName) == DB_STATUS.ONLINE;
-  }
-
   public boolean isOffline() {
-    return status != NODE_STATUS.ONLINE;
+    return getNodeStatus() != NODE_STATUS.ONLINE;
   }
 
   /** Returns the nodes with the requested status. */
@@ -1150,10 +1072,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
             new OOfflineNodeException("Message Service is not available"), e);
       }
     return messageService;
-  }
-
-  public long getLastClusterChangeOn() {
-    return lastClusterChangeOn;
   }
 
   @Override
@@ -2067,7 +1985,30 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     this.responseManagerFactory = streatgy;
   }
 
-  public abstract void notifyClients(String databaseName);
+  protected abstract ODocument getNodeConfigurationByName(
+      final String nodeName, final boolean useCache);
+
+  public void notifyClients(String databaseName) {
+    List<String> hosts = new ArrayList<>();
+    for (String name : getActiveServers()) {
+      ODocument memberConfig = getNodeConfigurationByName(name, true);
+      if (memberConfig != null) {
+        final String nodeStatus = memberConfig.field("status");
+
+        if (memberConfig != null && !"OFFLINE".equals(nodeStatus)) {
+          final Collection<Map<String, Object>> listeners = memberConfig.field("listeners");
+          if (listeners != null)
+            for (Map<String, Object> listener : listeners) {
+              if (listener.get("protocol").equals("ONetworkProtocolBinary")) {
+                String url = (String) listener.get("listen");
+                hosts.add(url);
+              }
+            }
+        }
+      }
+    }
+    serverInstance.getPushManager().pushDistributedConfig(databaseName, hosts);
+  }
 
   protected void onDatabaseEvent(
       final String nodeName, final String databaseName, final DB_STATUS status) {
@@ -2554,4 +2495,96 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   public abstract void reloadRegisteredNodes(String registeredNodesFromClusterAsJson);
 
   public abstract HazelcastInstance getHazelcastInstance();
+
+  /** Initializes all the available server's databases as distributed. */
+  protected void loadLocalDatabases() {
+    final List<String> dbs =
+        new ArrayList<String>(serverInstance.getAvailableStorageNames().keySet());
+    Collections.sort(dbs);
+
+    for (final String databaseName : dbs) {
+      if (messageService.getDatabase(databaseName) == null) {
+        ODistributedServerLog.info(
+            this, nodeName, null, DIRECTION.NONE, "Opening database '%s'...", databaseName);
+
+        // INIT THE STORAGE
+        final ODistributedDatabaseImpl ddb = messageService.registerDatabase(databaseName);
+
+        executeInDistributedDatabaseLock(
+            databaseName,
+            60000,
+            null,
+            new OCallable<Object, OModifiableDistributedConfiguration>() {
+              @Override
+              public Object call(OModifiableDistributedConfiguration cfg) {
+                ODistributedServerLog.info(
+                    this,
+                    nodeName,
+                    null,
+                    DIRECTION.NONE,
+                    "Current node started as %s for database '%s'",
+                    cfg.getServerRole(nodeName),
+                    databaseName);
+
+                ddb.resume();
+
+                // 1ST NODE TO HAVE THE DATABASE
+                cfg.addNewNodeInServerList(nodeName);
+
+                // COLLECT ALL THE CLUSTERS WITH REMOVED NODE AS OWNER
+                reassignClustersOwnership(nodeName, databaseName, cfg, true);
+
+                ddb.setOnline();
+
+                return null;
+              }
+            });
+      }
+    }
+  }
+
+  public abstract Set<String> getDatabases();
+
+  protected void installNewDatabasesFromCluster() {
+    if (getActiveServers().size() <= 1) {
+      // NO OTHER NODES WHERE ALIGN
+      return;
+    }
+
+    final List<String> dbs = new ArrayList<String>(getDatabases());
+    Collections.sort(dbs);
+
+    for (String databaseName : dbs) {
+      final Set<String> availableServers = getAvailableNodeNames(databaseName);
+      if (availableServers.isEmpty())
+        // NO NODE HAS THIS DATABASE AVAILABLE
+        continue;
+
+      final DB_STATUS currStatus = getDatabaseStatus(nodeName, databaseName);
+      if (currStatus == DB_STATUS.SYNCHRONIZING
+          || currStatus == DB_STATUS.ONLINE
+          || currStatus == DB_STATUS.BACKUP)
+        // FIX PREVIOUS STATUS OF DATABASE
+        setDatabaseStatus(nodeName, databaseName, DB_STATUS.NOT_AVAILABLE);
+
+      try {
+        if (!installDatabase(
+            true,
+            databaseName,
+            false,
+            OGlobalConfiguration.DISTRIBUTED_BACKUP_TRY_INCREMENTAL_FIRST.getValueAsBoolean())) {
+          setDatabaseStatus(getLocalNodeName(), databaseName, DB_STATUS.NOT_AVAILABLE);
+        }
+      } catch (Exception e) {
+        ODistributedServerLog.error(
+            this,
+            getLocalNodeName(),
+            null,
+            DIRECTION.IN,
+            "Error on installing database '%s' on local node (error=%s)",
+            databaseName,
+            e.toString());
+      }
+    }
+  }
 }

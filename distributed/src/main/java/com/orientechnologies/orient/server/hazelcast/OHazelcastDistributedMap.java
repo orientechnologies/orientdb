@@ -148,7 +148,7 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object>
               + "="
               + event.getValue()
               + " from server "
-              + dManager.getNodeName(event.getMember()));
+              + dManager.getNodeName(event.getMember(), true));
     super.put(event.getKey(), event.getValue());
   }
 
@@ -165,7 +165,7 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object>
               + "="
               + event.getValue()
               + " from server "
-              + dManager.getNodeName(event.getMember()));
+              + dManager.getNodeName(event.getMember(), true));
 
     super.put(event.getKey(), event.getValue());
   }
@@ -183,7 +183,7 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object>
               + "="
               + event.getValue()
               + " from "
-              + dManager.getNodeName(event.getMember()));
+              + dManager.getNodeName(event.getMember(), true));
     super.remove(event.getKey());
   }
 
@@ -195,7 +195,7 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object>
           dManager.getLocalNodeName(),
           null,
           ODistributedServerLog.DIRECTION.NONE,
-          "Map cleared from server " + dManager.getNodeName(event.getMember()));
+          "Map cleared from server " + dManager.getNodeName(event.getMember(), true));
     super.clear();
   }
 
