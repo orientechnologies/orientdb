@@ -22,6 +22,7 @@ package com.orientechnologies.orient.client.remote;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OConnectionNext;
 import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBRemote;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxInternal;
 import com.orientechnologies.orient.core.exception.OStorageException;
@@ -192,11 +193,12 @@ public class OServerAdmin {
     ODatabaseType storageMode;
     if (iStorageMode == null) storageMode = ODatabaseType.PLOCAL;
     else storageMode = ODatabaseType.valueOf(iStorageMode.toUpperCase());
-
+    OrientDBConfig config =
+        OrientDBConfig.builder().addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, true).build();
     if (backupPath != null) {
       remote.restore(iDatabaseName, user, password, storageMode, backupPath, null);
     } else {
-      remote.create(iDatabaseName, user, password, storageMode);
+      remote.create(iDatabaseName, user, password, storageMode, config);
     }
 
     return this;
