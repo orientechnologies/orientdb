@@ -18,7 +18,7 @@ package com.orientechnologies.orient.server.distributed;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
+import com.orientechnologies.orient.server.hazelcast.OHazelcastClusterMetadataManager;
 import com.orientechnologies.orient.setup.ServerRun;
 import org.junit.Assert;
 import org.junit.Test;
@@ -58,8 +58,7 @@ public class DistributedDbDropAndReCreateIT extends AbstractServerClusterTxTest 
               .getDistributedManager()
               .getConfigurationMap()
               .containsKey(
-                  OHazelcastPlugin.OHazelcastClusterMetadataManager.CONFIG_DATABASE_PREFIX
-                      + getDatabaseName()));
+                  OHazelcastClusterMetadataManager.CONFIG_DATABASE_PREFIX + getDatabaseName()));
 
       server = serverInstance.get(s);
 
@@ -71,8 +70,7 @@ public class DistributedDbDropAndReCreateIT extends AbstractServerClusterTxTest 
               .getDistributedManager()
               .getConfigurationMap()
               .containsKey(
-                  OHazelcastPlugin.OHazelcastClusterMetadataManager.CONFIG_DATABASE_PREFIX
-                      + getDatabaseName()));
+                  OHazelcastClusterMetadataManager.CONFIG_DATABASE_PREFIX + getDatabaseName()));
 
       for (int retry = 0; retry < 10; retry++) {
         try {

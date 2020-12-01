@@ -42,14 +42,14 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object>
         EntryRemovedListener<String, Object>,
         MapClearedListener,
         EntryUpdatedListener<String, Object> {
-  private final OHazelcastPlugin.OHazelcastClusterMetadataManager dManager;
+  private final OHazelcastClusterMetadataManager dManager;
   private final IMap<String, Object> hzMap;
   private final String membershipListenerRegistration;
 
   public static final String ORIENTDB_MAP = "orientdb";
 
   public OHazelcastDistributedMap(
-      final OHazelcastPlugin.OHazelcastClusterMetadataManager manager, final HazelcastInstance hz) {
+      final OHazelcastClusterMetadataManager manager, final HazelcastInstance hz) {
     dManager = manager;
     hzMap = hz.getMap(ORIENTDB_MAP);
     membershipListenerRegistration = hzMap.addEntryListener(this, true);

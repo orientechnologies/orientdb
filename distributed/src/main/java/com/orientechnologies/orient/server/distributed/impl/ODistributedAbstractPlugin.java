@@ -83,7 +83,7 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedT
 import com.orientechnologies.orient.server.distributed.task.ODatabaseIsOldException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedDatabaseDeltaSyncException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
-import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
+import com.orientechnologies.orient.server.hazelcast.OHazelcastClusterMetadataManager;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 import java.io.File;
@@ -151,7 +151,7 @@ public class ODistributedAbstractPlugin extends OServerPluginAbstract
   private ODistributedConflictResolverFactory conflictResolverFactory =
       new ODistributedConflictResolverFactory();
 
-  private OHazelcastPlugin.OHazelcastClusterMetadataManager clusterMetadataManager;
+  private OHazelcastClusterMetadataManager clusterMetadataManager;
 
   protected ODistributedAbstractPlugin() {}
 
@@ -210,8 +210,7 @@ public class ODistributedAbstractPlugin extends OServerPluginAbstract
             });
     if (nodeName == null) assignNodeName();
 
-    clusterMetadataManager =
-        new OHazelcastPlugin.OHazelcastClusterMetadataManager(this, serverInstance, nodeName);
+    clusterMetadataManager = new OHazelcastClusterMetadataManager(this, serverInstance, nodeName);
     clusterMetadataManager.config(iParams);
   }
 

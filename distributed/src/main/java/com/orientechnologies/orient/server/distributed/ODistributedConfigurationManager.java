@@ -3,7 +3,7 @@ package com.orientechnologies.orient.server.distributed;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedOutput;
-import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
+import com.orientechnologies.orient.server.hazelcast.OHazelcastClusterMetadataManager;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -29,9 +29,7 @@ public class ODistributedConfigurationManager {
 
       ODocument doc =
           (ODocument)
-              map.get(
-                  OHazelcastPlugin.OHazelcastClusterMetadataManager.CONFIG_DATABASE_PREFIX
-                      + databaseName);
+              map.get(OHazelcastClusterMetadataManager.CONFIG_DATABASE_PREFIX + databaseName);
       if (doc != null) {
         // DISTRIBUTED CFG AVAILABLE: COPY IT TO THE LOCAL DIRECTORY
         ODistributedServerLog.info(
