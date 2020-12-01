@@ -72,6 +72,10 @@ public class OTimeout extends SimpleNode {
     return val;
   }
 
+  public void setVal(Number val) {
+    this.val = val;
+  }
+
   public String getFailureStrategy() {
     return failureStrategy;
   }
