@@ -130,6 +130,7 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
     responsesByRequestIds.put(id, currentResponseMgr);
   }
 
+  @Override
   public void handleUnreachableNode(final String nodeName) {
     // WAKE UP ALL THE WAITING RESPONSES
     for (ODistributedResponseManager r : responsesByRequestIds.values())

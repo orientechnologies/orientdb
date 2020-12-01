@@ -44,14 +44,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
-import com.orientechnologies.orient.core.db.OSystemDatabase;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
-import com.orientechnologies.orient.core.db.OrientDBEmbedded;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -90,6 +83,7 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedT
 import com.orientechnologies.orient.server.distributed.task.ODatabaseIsOldException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedDatabaseDeltaSyncException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
+import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 import java.io.File;
@@ -103,6 +97,7 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -125,7 +120,7 @@ import java.util.stream.Collectors;
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
-public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
+public class ODistributedAbstractPlugin extends OServerPluginAbstract
     implements ODistributedServerManager, ODatabaseLifecycleListener, OCommandOutputListener {
   public static final String REPLICATOR_USER = "_CrossServerTempUser";
 
@@ -133,9 +128,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected static final String NODE_NAME_ENV = "ORIENTDB_NODE_NAME";
 
   protected OServer serverInstance;
-  protected String nodeUuid;
   protected String nodeName = null;
-  protected int nodeId = -1;
   protected File defaultDatabaseConfigFile;
   protected List<ODistributedLifecycleListener> listeners = new ArrayList<>();
   protected ORemoteServerManager remoteServerManager;
@@ -150,13 +143,15 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
   protected volatile ODistributedMessageServiceImpl messageService;
   protected Date startedOn = new Date();
-  protected ODistributedStrategy responseManagerFactory = new ODefaultDistributedStrategy();
+  protected ODistributedStrategy distributedStrategy = new ODefaultDistributedStrategy();
   protected ORemoteTaskFactoryManager taskFactoryManager = new ORemoteTaskFactoryManagerImpl(this);
 
   private volatile String lastServerDump = "";
   protected CountDownLatch serverStarted = new CountDownLatch(1);
   private ODistributedConflictResolverFactory conflictResolverFactory =
       new ODistributedConflictResolverFactory();
+
+  private OHazelcastPlugin.OHazelcastClusterMetadataManager clusterMetadataManager;
 
   protected ODistributedAbstractPlugin() {}
 
@@ -214,6 +209,10 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
               }
             });
     if (nodeName == null) assignNodeName();
+
+    clusterMetadataManager =
+        new OHazelcastPlugin.OHazelcastClusterMetadataManager(this, serverInstance, nodeName);
+    clusterMetadataManager.config(iParams);
   }
 
   @Override
@@ -236,8 +235,21 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   @Override
   public void startup() {
     if (!enabled) return;
+    if (serverInstance.getDatabases() instanceof OrientDBDistributed)
+      ((OrientDBDistributed) serverInstance.getDatabases()).setPlugin(this);
 
+    Orient.instance().setRunningDistributed(true);
+
+    OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.setValue(true);
+
+    // REGISTER TEMPORARY USER FOR REPLICATION PURPOSE
+    serverInstance.addTemporaryUser(REPLICATOR_USER, "" + new SecureRandom().nextLong(), "*");
     Orient.instance().addDbLifecycleListener(this);
+    // CLOSE ALL CONNECTIONS TO THE SERVERS
+    remoteServerManager.closeAll();
+    messageService = new ODistributedMessageServiceImpl(this);
+    clusterMetadataManager.startup(messageService, serverStarted);
+    dumpServersStatus();
   }
 
   @Override
@@ -257,15 +269,29 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   @Override
   public void shutdown() {
     if (!enabled) return;
-
+    clusterMetadataManager.shutdown();
     // CLOSE ALL CONNECTIONS TO THE SERVERS
     remoteServerManager.closeAll();
-
     if (messageService != null) messageService.shutdown();
-
-    setNodeStatus(NODE_STATUS.OFFLINE);
-
     Orient.instance().removeDbLifecycleListener(this);
+  }
+
+  @Override
+  public void onCreate(ODatabaseInternal iDatabase) {
+    if (!isRelatedToLocalServer(iDatabase)) return;
+
+    if (clusterMetadataManager.getNodeStatus() != ODistributedServerManager.NODE_STATUS.ONLINE)
+      return;
+
+    final ODatabaseDocumentInternal currDb = ODatabaseRecordThreadLocal.instance().getIfDefined();
+    try {
+      clusterMetadataManager.onCreateDatabase(iDatabase);
+      onOpen(iDatabase);
+
+    } finally {
+      // RESTORE ORIGINAL DATABASE INSTANCE IN TL
+      ODatabaseRecordThreadLocal.instance().set(currDb);
+    }
   }
 
   /** Auto register myself as hook. */
@@ -313,10 +339,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   @Override
   public void onDrop(final ODatabaseInternal iDatabase) {
-    final ODistributedMessageService msgService = getMessageService();
-    if (msgService != null) {
-      msgService.unregisterDatabase(iDatabase.getName());
-    }
+    if (!isRelatedToLocalServer(iDatabase)) return;
+    clusterMetadataManager.onDrop(iDatabase);
   }
 
   @Override
@@ -332,21 +356,25 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     shutdown();
   }
 
-  public abstract String getNodeName(final Member iMember, final boolean useCache);
+  public String getNodeName(final Member iMember, final boolean useCache) {
+    return clusterMetadataManager.getNodeName(iMember, useCache);
+  }
 
   public OServer getServerInstance() {
     return serverInstance;
   }
 
-  public abstract String getPublicAddress();
+  public String getPublicAddress() {
+    return clusterMetadataManager.getPublicAddress();
+  }
 
   @Override
   public ODocument getLocalNodeConfiguration() {
     final ODocument nodeCfg = new ODocument();
     nodeCfg.setTrackingChanges(false);
 
-    nodeCfg.field("id", nodeId);
-    nodeCfg.field("uuid", nodeUuid);
+    nodeCfg.field("id", getLocalNodeId());
+    nodeCfg.field("uuid", getLocalNodeUuid());
     nodeCfg.field("name", nodeName);
     nodeCfg.field("version", OConstants.getRawVersion());
     nodeCfg.field("publicAddress", getPublicAddress());
@@ -429,7 +457,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       ODistributedResponseManagerFactory responseManagerFactory) {
 
     final ODistributedRequest req =
-        new ODistributedRequest(this, nodeId, reqId, iDatabaseName, iTask);
+        new ODistributedRequest(this, getLocalNodeId(), reqId, iDatabaseName, iTask);
 
     final ODatabaseDocument currentDatabase = ODatabaseRecordThreadLocal.instance().getIfDefined();
     if (currentDatabase != null
@@ -946,7 +974,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         });
   }
 
-  public abstract Set<String> getManagedDatabases();
+  public Set<String> getManagedDatabases() {
+    return clusterMetadataManager.getManagedDatabases();
+  }
 
   public String getLocalNodeName() {
     return nodeName;
@@ -954,7 +984,11 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   @Override
   public int getLocalNodeId() {
-    return nodeId;
+    return clusterMetadataManager.getLocalNodeId();
+  }
+
+  public String getLocalNodeUuid() {
+    return clusterMetadataManager.getLocalNodeUuid();
   }
 
   @Override
@@ -1978,15 +2012,16 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   }
 
   public ODistributedStrategy getDistributedStrategy() {
-    return responseManagerFactory;
+    return distributedStrategy;
   }
 
   public void setDistributedStrategy(final ODistributedStrategy streatgy) {
-    this.responseManagerFactory = streatgy;
+    this.distributedStrategy = streatgy;
   }
 
-  protected abstract ODocument getNodeConfigurationByName(
-      final String nodeName, final boolean useCache);
+  protected ODocument getNodeConfigurationByName(final String nodeName, final boolean useCache) {
+    return clusterMetadataManager.getNodeConfigurationByName(nodeName, useCache);
+  }
 
   public void notifyClients(String databaseName) {
     List<String> hosts = new ArrayList<>();
@@ -2010,7 +2045,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     serverInstance.getPushManager().pushDistributedConfig(databaseName, hosts);
   }
 
-  protected void onDatabaseEvent(
+  public void onDatabaseEvent(
       final String nodeName, final String databaseName, final DB_STATUS status) {
     updateLastClusterChange();
     dumpServersStatus();
@@ -2327,7 +2362,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     final ODistributedRequest request =
         new ODistributedRequest(
             this,
-            nodeId,
+            getLocalNodeId(),
             getNextMessageIdCounter(),
             null,
             getTaskFactoryManager()
@@ -2344,7 +2379,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     final ODistributedRequest request =
         new ODistributedRequest(
             this,
-            nodeId,
+            getLocalNodeId(),
             getNextMessageIdCounter(),
             null,
             getTaskFactoryManager()
@@ -2382,7 +2417,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   }
 
   /** Avoids to dump the same configuration twice if it's unchanged since the last time. */
-  protected void dumpServersStatus() {
+  public void dumpServersStatus() {
     final ODocument cfg = getClusterConfiguration();
 
     final String compactStatus = ODistributedOutput.getCompactServerStatus(this, cfg);
@@ -2489,15 +2524,25 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     }
   }
 
-  public abstract boolean removeNodeFromConfiguration(
-      String serverName, String databaseName, boolean b, boolean b1);
+  public boolean removeNodeFromConfiguration(
+      String serverName,
+      String databaseName,
+      final boolean removeOnlyDynamicServers,
+      final boolean statusOffline) {
+    return clusterMetadataManager.removeNodeFromConfiguration(
+        serverName, databaseName, removeOnlyDynamicServers, statusOffline);
+  }
 
-  public abstract void reloadRegisteredNodes(String registeredNodesFromClusterAsJson);
+  public void reloadRegisteredNodes(String registeredNodesFromClusterAsJson) {
+    clusterMetadataManager.reloadRegisteredNodes(registeredNodesFromClusterAsJson);
+  }
 
-  public abstract HazelcastInstance getHazelcastInstance();
+  public HazelcastInstance getHazelcastInstance() {
+    return clusterMetadataManager.getHazelcastInstance();
+  }
 
   /** Initializes all the available server's databases as distributed. */
-  protected void loadLocalDatabases() {
+  public void loadLocalDatabases() {
     final List<String> dbs =
         new ArrayList<String>(serverInstance.getAvailableStorageNames().keySet());
     Collections.sort(dbs);
@@ -2543,9 +2588,11 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     }
   }
 
-  public abstract Set<String> getDatabases();
+  public Set<String> getDatabases() {
+    return clusterMetadataManager.getDatabases();
+  }
 
-  protected void installNewDatabasesFromCluster() {
+  public void installNewDatabasesFromCluster() {
     if (getActiveServers().size() <= 1) {
       // NO OTHER NODES WHERE ALIGN
       return;
@@ -2586,5 +2633,266 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
             e.toString());
       }
     }
+  }
+
+  @Override
+  public boolean isWriteQuorumPresent(final String databaseName) {
+    final ODistributedConfiguration cfg = getDatabaseConfiguration(databaseName);
+    if (cfg != null) {
+      final int availableServers = getAvailableNodes(databaseName);
+      if (availableServers == 0) return false;
+
+      final int quorum =
+          cfg.getWriteQuorum(null, cfg.getMasterServers().size(), getLocalNodeName());
+      return availableServers >= quorum;
+    }
+    return false;
+  }
+
+  @Override
+  public Throwable convertException(final Throwable original) {
+    if (!Orient.instance().isActive() || isOffline())
+      return new OOfflineNodeException("Server " + nodeName + " is offline");
+
+    if (original instanceof HazelcastException
+        || original instanceof HazelcastInstanceNotActiveException)
+      return new IOException(
+          "Hazelcast wrapped exception: " + original.getMessage(), original.getCause());
+
+    if (original instanceof IllegalMonitorStateException)
+      // THIS IS RAISED WHEN INTERNAL LOCKING IS BROKEN BECAUSE HARD SHUTDOWN
+      return new IOException(
+          "Illegal monitor state: " + original.getMessage(), original.getCause());
+
+    return original;
+  }
+
+  @Override
+  public ORemoteServerController getRemoteServer(final String rNodeName) throws IOException {
+    if (rNodeName == null) throw new IllegalArgumentException("Server name is NULL");
+
+    // TODO: check if it's possible to bypass remote call
+    //    if (rNodeName.equalsIgnoreCase(getLocalNodeName()))
+    //      throw new IllegalArgumentException("Cannot send remote message to the local server");
+
+    ORemoteServerController remoteServer = remoteServerManager.getRemoteServer(rNodeName);
+    if (remoteServer == null) {
+      Member member = clusterMetadataManager.getClusterMemberByName(rNodeName);
+
+      for (int retry = 0; retry < 20; ++retry) {
+        ODocument cfg = getNodeConfigurationByUuid(member.getUuid(), false);
+        if (cfg == null || cfg.field("listeners") == null) {
+          try {
+            Thread.sleep(100);
+            member = clusterMetadataManager.getClusterMemberByName(rNodeName);
+            continue;
+
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw OException.wrapException(
+                new ODistributedException("Cannot find node '" + rNodeName + "'"), e);
+          }
+        }
+
+        final String url = ODistributedAbstractPlugin.getListeningBinaryAddress(cfg);
+
+        if (url == null) {
+          closeRemoteServer(rNodeName);
+          throw new ODatabaseException(
+              "Cannot connect to a remote node because the url was not found");
+        }
+
+        final String userPassword = cfg.field("user_replicator");
+
+        if (userPassword != null) {
+          remoteServer =
+              remoteServerManager.connectRemoteServer(
+                  rNodeName, url, REPLICATOR_USER, userPassword);
+          break;
+        }
+
+        // RETRY TO GET USR+PASSWORD IN A WHILE
+        try {
+          Thread.sleep(100);
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+          throw OException.wrapException(
+              new OInterruptedException("Cannot connect to remote server " + rNodeName), e);
+        }
+      }
+    }
+
+    if (remoteServer == null)
+      throw new ODistributedException("Cannot find node '" + rNodeName + "'");
+
+    return remoteServer;
+  }
+
+  @Override
+  public Map<String, Object> getConfigurationMap() {
+    return clusterMetadataManager.getConfigurationMap();
+  }
+
+  @Override
+  public boolean isNodeAvailable(String iNodeName) {
+    return clusterMetadataManager.isNodeAvailable(iNodeName);
+  }
+
+  @Override
+  public Set<String> getAvailableNodeNames(String databaseName) {
+    return clusterMetadataManager.getAvailableNodeNames(databaseName);
+  }
+
+  @Override
+  public String getLockManagerServer() {
+    return clusterMetadataManager.getLockManagerServer();
+  }
+
+  @Override
+  public long getLastClusterChangeOn() {
+    return clusterMetadataManager.getLastClusterChangeOn();
+  }
+
+  @Override
+  public NODE_STATUS getNodeStatus() {
+    return clusterMetadataManager.getNodeStatus();
+  }
+
+  @Override
+  public void setNodeStatus(NODE_STATUS iStatus) {
+    clusterMetadataManager.setNodeStatus(iStatus);
+  }
+
+  @Override
+  public boolean checkNodeStatus(NODE_STATUS status) {
+    return clusterMetadataManager.checkNodeStatus(status);
+  }
+
+  @Override
+  public void removeServer(String nodeLeftName, boolean removeOnlyDynamicServers) {
+    clusterMetadataManager.removeServer(nodeLeftName, removeOnlyDynamicServers);
+  }
+
+  @Override
+  public DB_STATUS getDatabaseStatus(String iNode, String iDatabaseName) {
+    return clusterMetadataManager.getDatabaseStatus(iNode, iDatabaseName);
+  }
+
+  @Override
+  public void setDatabaseStatus(String iNode, String iDatabaseName, DB_STATUS iStatus) {
+    clusterMetadataManager.setDatabaseStatus(iNode, iDatabaseName, iStatus);
+  }
+
+  public List<ODistributedLifecycleListener> getDistributedLifecycleListeners() {
+    return listeners;
+  }
+
+  @Override
+  public boolean updateCachedDatabaseConfiguration(
+      String databaseName, OModifiableDistributedConfiguration cfg, boolean deployToCluster) {
+    boolean updated =
+        clusterMetadataManager.updateCachedDatabaseConfiguration(
+            databaseName, cfg, deployToCluster);
+    if (updated) {
+      dumpServersStatus();
+    }
+    return updated;
+  }
+
+  @Override
+  public String getNodeUuidByName(String name) {
+    return clusterMetadataManager.getNodeUuidByName(name);
+  }
+
+  @Override
+  public boolean isNodeAvailable(String nodeName, String databaseName) {
+    return clusterMetadataManager.isNodeAvailable(nodeName, databaseName);
+  }
+
+  @Override
+  public boolean isNodeOnline(String nodeName, String databaseName) {
+    return clusterMetadataManager.isNodeOnline(nodeName, databaseName);
+  }
+
+  @Override
+  public void updateLastClusterChange() {
+    clusterMetadataManager.updateLastClusterChange();
+  }
+
+  @Override
+  public int getAvailableNodes(String iDatabaseName) {
+    return clusterMetadataManager.getAvailableNodes(iDatabaseName);
+  }
+
+  @Override
+  public int getAvailableNodes(Collection<String> nodes, String databaseName) {
+    return clusterMetadataManager.getAvailableNodes(nodes, databaseName);
+  }
+
+  @Override
+  public ODocument getClusterConfiguration() {
+    if (!enabled) return null;
+    return clusterMetadataManager.getClusterConfiguration();
+  }
+
+  @Override
+  public String getNodeNameById(int id) {
+    return null;
+  }
+
+  @Override
+  public int getNodeIdByName(String node) {
+    return clusterMetadataManager.getNodeIdByName(node);
+  }
+
+  @Override
+  public ODocument getNodeConfigurationByUuid(String node, boolean useCache) {
+    return clusterMetadataManager.getNodeConfigurationByUuid(node, useCache);
+  }
+
+  @Override
+  public ODistributedConfiguration getDatabaseConfiguration(String databaseName) {
+    return clusterMetadataManager.getDatabaseConfiguration(databaseName);
+  }
+
+  @Override
+  public ODistributedConfiguration getDatabaseConfiguration(
+      String databaseName, boolean createIfNotPresent) {
+    return clusterMetadataManager.getDatabaseConfiguration(databaseName, createIfNotPresent);
+  }
+
+  @Override
+  public List<String> getOnlineNodes(String databaseName) {
+    return clusterMetadataManager.getOnlineNodes(databaseName);
+  }
+
+  @Override
+  public Set<String> getActiveServers() {
+    return clusterMetadataManager.getActiveServers();
+  }
+
+  @Override
+  public long getClusterTime() {
+    return clusterMetadataManager.getClusterTime();
+  }
+
+  @Override
+  public ODistributedLockManager getLockManagerRequester() {
+    return clusterMetadataManager.getLockManagerRequester();
+  }
+
+  @Override
+  public ODistributedLockManager getLockManagerExecutor() {
+    return clusterMetadataManager.getLockManagerExecutor();
+  }
+
+  @Override
+  public <T> T executeInDistributedDatabaseLock(
+      String databaseName,
+      long timeoutLocking,
+      OModifiableDistributedConfiguration lastCfg,
+      OCallable<T, OModifiableDistributedConfiguration> callback) {
+    return clusterMetadataManager.executeInDistributedDatabaseLock(
+        databaseName, timeoutLocking, lastCfg, callback);
   }
 }

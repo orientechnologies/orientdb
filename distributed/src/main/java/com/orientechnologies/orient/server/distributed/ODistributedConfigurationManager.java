@@ -27,7 +27,11 @@ public class ODistributedConfigurationManager {
       final Map<String, Object> map = distributedManager.getConfigurationMap();
       if (map == null) return null;
 
-      ODocument doc = (ODocument) map.get(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + databaseName);
+      ODocument doc =
+          (ODocument)
+              map.get(
+                  OHazelcastPlugin.OHazelcastClusterMetadataManager.CONFIG_DATABASE_PREFIX
+                      + databaseName);
       if (doc != null) {
         // DISTRIBUTED CFG AVAILABLE: COPY IT TO THE LOCAL DIRECTORY
         ODistributedServerLog.info(

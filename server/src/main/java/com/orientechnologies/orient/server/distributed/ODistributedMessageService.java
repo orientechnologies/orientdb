@@ -51,4 +51,6 @@ public interface ODistributedMessageService {
   ODistributedResponseManager getResponseManager(ODistributedRequestId reqId);
 
   void registerRequest(final long id, final ODistributedResponseManager currentResponseMgr);
+
+  void handleUnreachableNode(String nodeName);
 }

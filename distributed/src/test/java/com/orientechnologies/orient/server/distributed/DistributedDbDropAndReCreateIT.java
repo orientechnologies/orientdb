@@ -57,7 +57,9 @@ public class DistributedDbDropAndReCreateIT extends AbstractServerClusterTxTest 
               .getServerInstance()
               .getDistributedManager()
               .getConfigurationMap()
-              .containsKey(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + getDatabaseName()));
+              .containsKey(
+                  OHazelcastPlugin.OHazelcastClusterMetadataManager.CONFIG_DATABASE_PREFIX
+                      + getDatabaseName()));
 
       server = serverInstance.get(s);
 
@@ -68,7 +70,9 @@ public class DistributedDbDropAndReCreateIT extends AbstractServerClusterTxTest 
               .getServerInstance()
               .getDistributedManager()
               .getConfigurationMap()
-              .containsKey(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + getDatabaseName()));
+              .containsKey(
+                  OHazelcastPlugin.OHazelcastClusterMetadataManager.CONFIG_DATABASE_PREFIX
+                      + getDatabaseName()));
 
       for (int retry = 0; retry < 10; retry++) {
         try {
