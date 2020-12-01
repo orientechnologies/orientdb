@@ -22,7 +22,7 @@ package com.orientechnologies.orient.server.hazelcast;
 import com.hazelcast.core.*;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.server.distributed.*;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedAbstractPlugin;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
 import java.util.*;
 
 /**
@@ -30,4 +30,4 @@ import java.util.*;
  *
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
-public class OHazelcastPlugin extends ODistributedAbstractPlugin {}
+public class OHazelcastPlugin extends ODistributedPlugin {}

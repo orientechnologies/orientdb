@@ -51,7 +51,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class ODistributedMessageServiceImpl implements ODistributedMessageService {
 
-  private final ODistributedAbstractPlugin manager;
+  private final ODistributedPlugin manager;
   private final ConcurrentHashMap<Long, ODistributedResponseManager> responsesByRequestIds;
   private final TimerTask asynchMessageManager;
   protected final ConcurrentHashMap<String, ODistributedDatabaseImpl> databases =
@@ -62,7 +62,7 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
   private final Map<String, OProfilerEntry> latencies = new HashMap<String, OProfilerEntry>();
   private final Map<String, AtomicLong> messagesStats = new HashMap<String, AtomicLong>();
 
-  public ODistributedMessageServiceImpl(final ODistributedAbstractPlugin manager) {
+  public ODistributedMessageServiceImpl(final ODistributedPlugin manager) {
     this.manager = manager;
     this.responsesByRequestIds = new ConcurrentHashMap<Long, ODistributedResponseManager>();
 

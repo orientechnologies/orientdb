@@ -120,7 +120,7 @@ import java.util.stream.Collectors;
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
-public class ODistributedAbstractPlugin extends OServerPluginAbstract
+public class ODistributedPlugin extends OServerPluginAbstract
     implements ODistributedServerManager, ODatabaseLifecycleListener, OCommandOutputListener {
   public static final String REPLICATOR_USER = "_CrossServerTempUser";
 
@@ -153,7 +153,7 @@ public class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   private OHazelcastClusterMetadataManager clusterMetadataManager;
 
-  protected ODistributedAbstractPlugin() {}
+  protected ODistributedPlugin() {}
 
   public void waitUntilNodeOnline() throws InterruptedException {
     serverStarted.await();
@@ -200,12 +200,12 @@ public class ODistributedAbstractPlugin extends OServerPluginAbstract
             new ORemoteServerAvailabilityCheck() {
               @Override
               public boolean isNodeAvailable(String node) {
-                return ODistributedAbstractPlugin.this.isNodeAvailable(node);
+                return ODistributedPlugin.this.isNodeAvailable(node);
               }
 
               @Override
               public void nodeDisconnected(String node) {
-                ODistributedAbstractPlugin.this.removeServer(node, true);
+                ODistributedPlugin.this.removeServer(node, true);
               }
             });
     if (nodeName == null) assignNodeName();
@@ -252,14 +252,14 @@ public class ODistributedAbstractPlugin extends OServerPluginAbstract
   }
 
   @Override
-  public ODistributedAbstractPlugin registerLifecycleListener(
+  public ODistributedPlugin registerLifecycleListener(
       final ODistributedLifecycleListener iListener) {
     listeners.add(iListener);
     return this;
   }
 
   @Override
-  public ODistributedAbstractPlugin unregisterLifecycleListener(
+  public ODistributedPlugin unregisterLifecycleListener(
       final ODistributedLifecycleListener iListener) {
     listeners.remove(iListener);
     return this;
@@ -919,7 +919,7 @@ public class ODistributedAbstractPlugin extends OServerPluginAbstract
       final ORemoteTask task,
       final ODatabaseDocumentInternal database) {
 
-    final ODistributedAbstractPlugin manager = this;
+    final ODistributedPlugin manager = this;
 
     return OScenarioThreadLocal.executeAsDistributed(
         new Callable<Object>() {
@@ -2224,7 +2224,7 @@ public class ODistributedAbstractPlugin extends OServerPluginAbstract
           new OInterruptedException("Interrupted waiting receive of sync"), e);
     }
 
-    final ODistributedAbstractPlugin me = this;
+    final ODistributedPlugin me = this;
     executeInDistributedDatabaseLock(
         databaseName,
         20000,
@@ -2693,7 +2693,7 @@ public class ODistributedAbstractPlugin extends OServerPluginAbstract
           }
         }
 
-        final String url = ODistributedAbstractPlugin.getListeningBinaryAddress(cfg);
+        final String url = ODistributedPlugin.getListeningBinaryAddress(cfg);
 
         if (url == null) {
           closeRemoteServer(rNodeName);

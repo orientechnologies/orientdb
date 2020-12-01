@@ -23,7 +23,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedAbstractPlugin;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
 import com.orientechnologies.orient.setup.ServerRun;
 import java.util.ArrayList;
 import java.util.List;
@@ -68,8 +68,8 @@ public class Quorum1ScenarioIT extends AbstractScenarioTest {
 
     ODocument cfg = null;
     ServerRun server = serverInstance.get(0);
-    ODistributedAbstractPlugin manager =
-        (ODistributedAbstractPlugin) server.getServerInstance().getDistributedManager();
+    ODistributedPlugin manager =
+        (ODistributedPlugin) server.getServerInstance().getDistributedManager();
     OModifiableDistributedConfiguration databaseConfiguration =
         manager.getDatabaseConfiguration(getDatabaseName()).modify();
     cfg = databaseConfiguration.getDocument();

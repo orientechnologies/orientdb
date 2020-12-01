@@ -34,8 +34,8 @@ import com.orientechnologies.orient.core.sql.parser.OHaStatusStatement;
 import com.orientechnologies.orient.core.sql.parser.OStatementCache;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedOutput;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
 import java.util.Map;
 
 /**
@@ -74,9 +74,8 @@ public class OCommandExecutorSQLHAStatus extends OCommandExecutorSQLAbstract
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
     }
 
-    final ODistributedAbstractPlugin dManager =
-        (ODistributedAbstractPlugin)
-            ((ODatabaseDocumentDistributed) database).getDistributedManager();
+    final ODistributedPlugin dManager =
+        (ODistributedPlugin) ((ODatabaseDocumentDistributed) database).getDistributedManager();
     if (dManager == null || !dManager.isEnabled())
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
 

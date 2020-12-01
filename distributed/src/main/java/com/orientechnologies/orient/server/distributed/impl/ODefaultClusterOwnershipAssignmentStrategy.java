@@ -47,9 +47,9 @@ import java.util.Set;
  */
 public class ODefaultClusterOwnershipAssignmentStrategy
     implements OClusterOwnershipAssignmentStrategy {
-  private final ODistributedAbstractPlugin manager;
+  private final ODistributedPlugin manager;
 
-  public ODefaultClusterOwnershipAssignmentStrategy(final ODistributedAbstractPlugin manager) {
+  public ODefaultClusterOwnershipAssignmentStrategy(final ODistributedPlugin manager) {
     this.manager = manager;
   }
 

@@ -26,9 +26,9 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.impl.OClusterHealthChecker;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedOutput;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
 import com.orientechnologies.orient.server.distributed.impl.task.OAbstractSyncDatabaseTask;
 import com.orientechnologies.orient.server.distributed.impl.task.ODropDatabaseTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OUpdateDatabaseConfigurationTask;
@@ -85,12 +85,12 @@ public class OHazelcastClusterMetadataManager
 
   private OServer serverInstance;
   private String nodeName;
-  private ODistributedAbstractPlugin distributedPlugin;
+  private ODistributedPlugin distributedPlugin;
   private ODistributedMessageService messageService;
   private List<ODistributedLifecycleListener> listeners;
 
   public OHazelcastClusterMetadataManager(
-      ODistributedAbstractPlugin distributedPlugin, final OServer server, final String nodeName) {
+      ODistributedPlugin distributedPlugin, final OServer server, final String nodeName) {
     this.serverInstance = server;
     this.nodeName = nodeName;
     this.distributedPlugin = distributedPlugin;
