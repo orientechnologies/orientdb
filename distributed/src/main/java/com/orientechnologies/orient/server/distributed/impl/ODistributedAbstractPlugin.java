@@ -132,8 +132,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected static final String PAR_DEF_DISTRIB_DB_CONFIG = "configuration.db.default";
   protected static final String NODE_NAME_ENV = "ORIENTDB_NODE_NAME";
 
-  protected OServer serverInstance;
-  protected String nodeName = null;
+  private OServer serverInstance;
+  private String nodeName = null;
   protected File defaultDatabaseConfigFile;
   protected List<ODistributedLifecycleListener> listeners = new ArrayList<>();
   protected ORemoteServerManager remoteServerManager;
@@ -212,7 +212,11 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
               }
             });
     if (nodeName == null) assignNodeName();
+    configHazelcastPlugin(oServer, iParams, nodeName);
   }
+
+  public abstract void configHazelcastPlugin(
+      OServer server, OServerParameterConfiguration[] params, String nodeName);
 
   @Override
   @Deprecated
@@ -2581,5 +2585,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
             e.toString());
       }
     }
+  }
+
+  public String getNodeName() {
+    return nodeName;
   }
 }

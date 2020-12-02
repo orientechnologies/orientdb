@@ -140,12 +140,16 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   private String nodeUuid;
   private int nodeId = -1;
 
+  private String nodeName;
+  private OServer serverInstance;
+
   public OHazelcastPlugin() {}
 
-  @Override
-  public void config(final OServer iServer, final OServerParameterConfiguration[] iParams) {
-    super.config(iServer, iParams);
-    for (OServerParameterConfiguration param : iParams) {
+  public void configHazelcastPlugin(
+      OServer server, OServerParameterConfiguration[] params, String nodeName) {
+    this.nodeName = nodeName;
+    this.serverInstance = server;
+    for (OServerParameterConfiguration param : params) {
       if (param.name.equalsIgnoreCase("configuration.hazelcast")) {
         hazelcastConfigFile = OSystemVariableResolver.resolveSystemVariables(param.value);
         hazelcastConfigFile = OFileUtils.getPath(hazelcastConfigFile);
