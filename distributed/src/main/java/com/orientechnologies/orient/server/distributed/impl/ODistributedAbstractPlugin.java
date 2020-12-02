@@ -133,9 +133,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected static final String NODE_NAME_ENV = "ORIENTDB_NODE_NAME";
 
   protected OServer serverInstance;
-  protected String nodeUuid;
   protected String nodeName = null;
-  protected int nodeId = -1;
   protected File defaultDatabaseConfigFile;
   protected List<ODistributedLifecycleListener> listeners = new ArrayList<>();
   protected ORemoteServerManager remoteServerManager;
@@ -345,8 +343,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     final ODocument nodeCfg = new ODocument();
     nodeCfg.setTrackingChanges(false);
 
-    nodeCfg.field("id", nodeId);
-    nodeCfg.field("uuid", nodeUuid);
+    nodeCfg.field("id", getLocalNodeId());
+    nodeCfg.field("uuid", getLocalNodeUuid());
     nodeCfg.field("name", nodeName);
     nodeCfg.field("version", OConstants.getRawVersion());
     nodeCfg.field("publicAddress", getPublicAddress());
@@ -429,7 +427,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       ODistributedResponseManagerFactory responseManagerFactory) {
 
     final ODistributedRequest req =
-        new ODistributedRequest(this, nodeId, reqId, iDatabaseName, iTask);
+        new ODistributedRequest(this, getLocalNodeId(), reqId, iDatabaseName, iTask);
 
     final ODatabaseDocument currentDatabase = ODatabaseRecordThreadLocal.instance().getIfDefined();
     if (currentDatabase != null
@@ -952,10 +950,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     return nodeName;
   }
 
-  @Override
-  public int getLocalNodeId() {
-    return nodeId;
-  }
+  public abstract String getLocalNodeUuid();
 
   @Override
   public void onLocalNodeConfigurationRequest(final ODocument iConfiguration) {}
@@ -2327,7 +2322,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     final ODistributedRequest request =
         new ODistributedRequest(
             this,
-            nodeId,
+            getLocalNodeId(),
             getNextMessageIdCounter(),
             null,
             getTaskFactoryManager()
@@ -2344,7 +2339,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     final ODistributedRequest request =
         new ODistributedRequest(
             this,
-            nodeId,
+            getLocalNodeId(),
             getNextMessageIdCounter(),
             null,
             getTaskFactoryManager()

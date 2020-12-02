@@ -137,6 +137,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   protected volatile NODE_STATUS status = NODE_STATUS.OFFLINE;
 
   protected long lastClusterChangeOn;
+  private String nodeUuid;
+  private int nodeId = -1;
 
   public OHazelcastPlugin() {}
 
@@ -2131,5 +2133,13 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
   public long getLastClusterChangeOn() {
     return lastClusterChangeOn;
+  }
+
+  public int getLocalNodeId() {
+    return nodeId;
+  }
+
+  public String getLocalNodeUuid() {
+    return nodeUuid;
   }
 }
