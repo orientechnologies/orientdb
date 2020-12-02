@@ -44,14 +44,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
-import com.orientechnologies.orient.core.db.OSystemDatabase;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
-import com.orientechnologies.orient.core.db.OrientDBEmbedded;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -103,6 +96,7 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -238,9 +232,29 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   @Override
   public void startup() {
     if (!enabled) return;
+    if (serverInstance.getDatabases() instanceof OrientDBDistributed)
+      ((OrientDBDistributed) serverInstance.getDatabases()).setPlugin(this);
+
+    Orient.instance().setRunningDistributed(true);
+
+    OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.setValue(true);
+
+    // REGISTER TEMPORARY USER FOR REPLICATION PURPOSE
+    serverInstance.addTemporaryUser(REPLICATOR_USER, "" + new SecureRandom().nextLong(), "*");
 
     Orient.instance().addDbLifecycleListener(this);
+
+    // CLOSE ALL CONNECTIONS TO THE SERVERS
+    remoteServerManager.closeAll();
+
+    messageService = new ODistributedMessageServiceImpl(this);
+
+    startupHazelcastPlugin();
+
+    dumpServersStatus();
   }
+
+  public abstract void startupHazelcastPlugin();
 
   @Override
   public ODistributedAbstractPlugin registerLifecycleListener(

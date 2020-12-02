@@ -79,7 +79,6 @@ import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 import com.orientechnologies.orient.server.distributed.impl.OClusterHealthChecker;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedMessageServiceImpl;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedOutput;
 import com.orientechnologies.orient.server.distributed.impl.task.OAbstractSyncDatabaseTask;
 import com.orientechnologies.orient.server.distributed.impl.task.ODropDatabaseTask;
@@ -88,7 +87,6 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.OBeforeDatabaseOpenNetworkEventListener;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.security.SecureRandom;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -157,21 +155,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     }
   }
 
-  @Override
-  public void startup() {
-    if (!enabled) return;
-    if (serverInstance.getDatabases() instanceof OrientDBDistributed)
-      ((OrientDBDistributed) serverInstance.getDatabases()).setPlugin(this);
-
-    Orient.instance().setRunningDistributed(true);
-
-    OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.setValue(true);
-
-    // REGISTER TEMPORARY USER FOR REPLICATION PURPOSE
-    serverInstance.addTemporaryUser(REPLICATOR_USER, "" + new SecureRandom().nextLong(), "*");
-
-    super.startup();
-
+  public void startupHazelcastPlugin() {
     status = NODE_STATUS.STARTING;
 
     final String localNodeName = nodeName;
@@ -179,9 +163,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     activeNodes.clear();
     activeNodesNamesByUuid.clear();
     activeNodesUuidByName.clear();
-
-    // CLOSE ALL CONNECTIONS TO THE SERVERS
-    remoteServerManager.closeAll();
 
     registeredNodeById.clear();
     registeredNodeByName.clear();
@@ -278,8 +259,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         }
       }
 
-      messageService = new ODistributedMessageServiceImpl(this);
-
       ODistributedServerLog.info(
           this,
           localNodeName,
@@ -361,8 +340,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       throw OException.wrapException(
           new ODistributedStartupException("Error on starting distributed plugin"), e);
     }
-
-    dumpServersStatus();
   }
 
   private void initRegisteredNodeIds() {
