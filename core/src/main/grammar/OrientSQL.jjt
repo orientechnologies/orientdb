@@ -393,6 +393,8 @@ TOKEN:
 	|
 	< USER: ( "u" | "U" ) ( "s" | "S" ) ( "e" | "E" ) ( "r" | "R" ) >
 	|
+	< USERS: ( "u" | "U" ) ( "s" | "S" ) ( "e" | "E" ) ( "r" | "R" ) ( "s" | "S" ) >
+	|
 	< RID: ( "r" | "R" ) ( "i" | "I" ) ( "d" | "D" ) >
 	|
 	< SECURITY: ( "s" | "S" ) ( "e" | "E" ) ( "c" | "C" ) ( "u" | "U" ) ( "r" | "R" ) ( "i" | "I" ) ( "t" | "T" ) ( "y" | "Y" ) >
@@ -945,6 +947,8 @@ OIdentifier Identifier():
     token = <ROLE>
     |
     token = <USER>
+    |
+    token = <USERS>
     |
     token = <RID>
     |
@@ -5519,14 +5523,71 @@ OAlterSecurityPolicyStatement AlterSecurityPolicyStatement():
 }
 
 
+ODatabaseUserData DatabaseUserData():
+{
+  OIdentifier lastIdentifier;
+}
+{
+(
+    (
+      jjtThis.name = Identifier()
+      |
+      jjtThis.nameParam = InputParameter()
+    )
+    <IDENTIFIED> <BY>
+    (
+        jjtThis.passwordIdentifier = Identifier()
+        |
+        jjtThis.passwordString = String()
+        |
+        jjtThis.passwordParam = InputParameter()
+    )
+    [
+      <ROLE>
+      (
+        (
+          lastIdentifier = Identifier()
+          {
+             jjtThis.roles.add(lastIdentifier);
+          }
+        )
+        |
+        (
+           <LBRACKET>
+           [
+             lastIdentifier = Identifier() { jjtThis.roles.add(lastIdentifier);}
+             (
+                <COMMA> lastIdentifier = Identifier() { jjtThis.roles.add(lastIdentifier);}
+             )*
+           ]
+           <RBRACKET>
+        )
+      )
+    ]
+)
+    {return jjtThis; }
+}
+
 OCreateDatabaseStatement CreateDatabaseStatement():
-{}
+{
+  ODatabaseUserData lastUserData;
+}
 {
   (
     <CREATE> <DATABASE>
     jjtThis.name = Identifier()
     jjtThis.type = Identifier()
     [ <IF> <NOT> <EXISTS> { jjtThis.ifNotExists = true; } ]
+    [
+       <USERS> <LPAREN>
+       (
+          lastUserData = DatabaseUserData() { jjtThis.users.add(lastUserData); }
+          (
+            <COMMA> lastUserData = DatabaseUserData() { jjtThis.users.add(lastUserData); }
+          )*
+       )
+       <RPAREN>
+    ]
     [ jjtThis.config = Json() ]
   ) {return jjtThis; }
 }
