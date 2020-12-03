@@ -592,16 +592,15 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   private void waitDistribuedIsOnline(OClientConnection connection) {
     if (requests == 0) {
       final ODistributedServerManager manager = server.getDistributedManager();
-      if (manager != null && connection.getDatabase() != null)
+      if (manager != null && connection.hasDatabase())
         try {
           if (manager.getMessageService() != null) {
+            String databaseName = connection.getDatabaseName();
             final ODistributedDatabase dDatabase =
-                manager.getMessageService().getDatabase(connection.getDatabase().getName());
+                manager.getMessageService().getDatabase(databaseName);
             if (dDatabase != null) {
               dDatabase.waitForOnline();
-            } else
-              manager.waitUntilNodeOnline(
-                  manager.getLocalNodeName(), connection.getToken().getDatabase());
+            } else manager.waitUntilNodeOnline(manager.getLocalNodeName(), databaseName);
           }
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();

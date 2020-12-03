@@ -23,6 +23,7 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DIST
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_TRANSACTION_SEQUENCE_SET_SIZE;
 import static com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION.OUT;
 
+import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
@@ -53,9 +54,20 @@ import com.orientechnologies.orient.server.distributed.impl.task.OLockKeySource;
 import com.orientechnologies.orient.server.distributed.impl.task.OUnreachableServerLocalTask;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionUniqueKey;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -66,7 +78,6 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class ODistributedDatabaseImpl implements ODistributedDatabase {
   public static final String DISTRIBUTED_SYNC_JSON_FILENAME = "distributed-sync.json";
-  private static final HashSet<Integer> ALL_QUEUES = new HashSet<Integer>();
   protected final ODistributedAbstractPlugin manager;
   protected final ODistributedMessageServiceImpl msgService;
   protected final String databaseName;
@@ -80,9 +91,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private AtomicLong totalSentRequests = new AtomicLong();
   private AtomicLong totalReceivedRequests = new AtomicLong();
   private TimerTask txTimeoutTask = null;
-  private CountDownLatch waitForOnline = new CountDownLatch(1);
   private volatile boolean running = true;
-  private AtomicBoolean parsing = new AtomicBoolean(true);
+  private volatile boolean parsing = true;
   private AtomicLong operationsRunnig = new AtomicLong(0);
   private ODistributedSynchronizedSequence sequenceManager;
   private ThreadPoolExecutor requestExecutor;
@@ -269,7 +279,14 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   @Override
   public void waitForOnline() {
     try {
-      if (!databaseName.equalsIgnoreCase(OSystemDatabase.SYSTEM_DB_NAME)) waitForOnline.await();
+      synchronized (this) {
+        if (!this.parsing) {
+          this.wait(OGlobalConfiguration.DISTRIBUTED_MAX_STARTUP_DELAY.getValueAsLong());
+          if (!this.parsing) {
+            throw new OOfflineNodeException("Node is offline");
+          }
+        }
+      }
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       // IGNORE IT
@@ -402,13 +419,15 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   public void waitDistributedIsReady() {
-    if (!parsing.get()) {
-      // WAIT FOR PARSING REQUESTS
-      while (!parsing.get() && running) {
-        try {
-          Thread.sleep(300);
-        } catch (InterruptedException e) {
-          break;
+    synchronized (this) {
+      if (!parsing) {
+        // WAIT FOR PARSING REQUESTS
+        while (!parsing && running) {
+          try {
+            this.wait(1000);
+          } catch (InterruptedException e) {
+            break;
+          }
         }
       }
     }
@@ -436,7 +455,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     // SET THE NODE.DB AS ONLINE
     manager.setDatabaseStatus(
         localNodeName, databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
-    waitForOnline.countDown();
+    resume();
   }
 
   @Override
@@ -830,8 +849,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   public void suspend() {
-    boolean parsing = this.parsing.get();
-    this.parsing.set(false);
+    boolean parsing;
+    synchronized (this) {
+      parsing = this.parsing;
+      this.parsing = false;
+    }
     if (parsing) {
       while (operationsRunnig.get() != 0) {
         try {
@@ -862,7 +884,10 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   public void resume() {
-    this.parsing.set(true);
+    synchronized (this) {
+      this.parsing = true;
+      this.notifyAll();
+    }
     if (this.freezeGuard != null) {
       this.freezeGuard.release();
     }
