@@ -65,6 +65,7 @@ import com.orientechnologies.orient.server.distributed.impl.lock.OFreezeGuard;
 import com.orientechnologies.orient.server.distributed.impl.lock.OLockGuard;
 import com.orientechnologies.orient.server.distributed.impl.lock.OLockManager;
 import com.orientechnologies.orient.server.distributed.impl.lock.OLockManagerImpl;
+import com.orientechnologies.orient.server.distributed.impl.lock.OnLocksAcquired;
 import com.orientechnologies.orient.server.distributed.impl.task.OLockKeySource;
 import com.orientechnologies.orient.server.distributed.impl.task.OUnreachableServerLocalTask;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionUniqueKey;
@@ -372,26 +373,31 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         SortedSet<ORID> rids = ((OLockKeySource) task).getRids();
         SortedSet<OTransactionUniqueKey> uniqueKeys = ((OLockKeySource) task).getUniqueKeys();
         OTransactionId txId = ((OLockKeySource) task).getTransactionId();
-        this.lockManager.lock(
-            rids,
-            uniqueKeys,
-            txId,
+
+        OnLocksAcquired acquired =
             (guards) -> {
+              Runnable executeTask =
+                  () -> {
+                    try {
+                      execute(request);
+                    } finally {
+                      this.lockManager.unlock(guards);
+                    }
+                  };
               try {
-                this.requestExecutor.submit(
-                    () -> {
-                      try {
-                        execute(request);
-                      } finally {
-                        this.lockManager.unlock(guards);
-                      }
-                    });
+                this.requestExecutor.submit(executeTask);
               } catch (RejectedExecutionException e) {
                 task.finished(this);
                 this.lockManager.unlock(guards);
                 throw e;
               }
-            });
+            };
+        try {
+          this.lockManager.lock(rids, uniqueKeys, txId, acquired);
+        } catch (OOfflineNodeException e) {
+          task.finished(this);
+          throw e;
+        }
       } else {
         try {
           this.requestExecutor.submit(
