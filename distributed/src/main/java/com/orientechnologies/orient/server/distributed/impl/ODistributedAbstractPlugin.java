@@ -2600,8 +2600,4 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       }
     }
   }
-
-  public String getNodeName() {
-    return nodeName;
-  }
 }
