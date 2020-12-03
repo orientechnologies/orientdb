@@ -53,6 +53,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.CASDiskWriteAheadLog;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
+
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
@@ -97,7 +98,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
 
   private static final String ENCRYPTION_IV = "encryption.iv";
 
-  private List<OEnterpriseStorageOperationListener> listeners = new CopyOnWriteArrayList<>();
+  private final List<OEnterpriseStorageOperationListener> listeners = new CopyOnWriteArrayList<>();
 
   public OEnterpriseLocalPaginatedStorage(
       String name,
@@ -147,7 +148,8 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
     final Path fileLockPath = backupDirectory.toPath().resolve(INCREMENTAL_BACKUP_LOCK);
     try (FileChannel lockChannel =
         FileChannel.open(fileLockPath, StandardOpenOption.CREATE, StandardOpenOption.WRITE)) {
-      try (FileLock fileLock = lockChannel.lock()) {
+      try (@SuppressWarnings("unused")
+          FileLock fileLock = lockChannel.lock()) {
         RandomAccessFile rndIBUFile = null;
         try {
           final String[] files = fetchIBUFiles(backupDirectory);
@@ -936,7 +938,11 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
 
       if (OClusterBasedStorageConfiguration.exists(writeCache)) {
         configuration = new OClusterBasedStorageConfiguration(this);
-        ((OClusterBasedStorageConfiguration) configuration).load(contextConfiguration);
+        atomicOperationsManager.executeInsideAtomicOperation(
+            null,
+            atomicOperation ->
+                ((OClusterBasedStorageConfiguration) configuration)
+                    .load(contextConfiguration, atomicOperation));
       } else {
         if (Files.exists(getStoragePath().resolve("database.ocf"))) {
           final OStorageConfigurationSegment oldConfig = new OStorageConfigurationSegment(this);
@@ -956,11 +962,15 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
 
         if (configuration == null) {
           configuration = new OClusterBasedStorageConfiguration(this);
-          ((OClusterBasedStorageConfiguration) configuration).load(contextConfiguration);
+          atomicOperationsManager.executeInsideAtomicOperation(
+              null,
+              atomicOperation ->
+                  ((OClusterBasedStorageConfiguration) configuration)
+                      .load(contextConfiguration, atomicOperation));
         }
       }
 
-      openClusters();
+      atomicOperationsManager.executeInsideAtomicOperation(null, this::openClusters);
       openIndexes();
 
       makeFullCheckpoint();
