@@ -179,6 +179,10 @@ public class ServerRun {
     return server;
   }
 
+  public void shutdown() {
+    server.shutdown();
+  }
+  
   public void shutdownServer() {
     if (server != null) {
       try {
