@@ -34,12 +34,14 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.io.OIOUtils;
+import com.orientechnologies.common.io.OUtils;
 import com.orientechnologies.common.log.OAnsiCode;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.core.OSignalHandler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -84,6 +86,7 @@ import com.orientechnologies.orient.server.distributed.task.ODatabaseIsOldExcept
 import com.orientechnologies.orient.server.distributed.task.ODistributedDatabaseDeltaSyncException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
+import com.orientechnologies.orient.server.network.protocol.OBeforeDatabaseOpenNetworkEventListener;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 import java.io.File;
 import java.io.IOException;
@@ -97,22 +100,13 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
+import sun.misc.Signal;
 
 /**
  * Abstract plugin to manage the distributed environment.
@@ -120,7 +114,10 @@ import java.util.stream.Collectors;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
-    implements ODistributedServerManager, ODatabaseLifecycleListener, OCommandOutputListener {
+    implements ODistributedServerManager,
+        ODatabaseLifecycleListener,
+        OCommandOutputListener,
+        OBeforeDatabaseOpenNetworkEventListener {
   public static final String REPLICATOR_USER = "_CrossServerTempUser";
 
   protected static final String PAR_DEF_DISTRIB_DB_CONFIG = "configuration.db.default";
@@ -149,6 +146,10 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected CountDownLatch serverStarted = new CountDownLatch(1);
   private ODistributedConflictResolverFactory conflictResolverFactory =
       new ODistributedConflictResolverFactory();
+
+  private TimerTask haStatsTask = null;
+  private TimerTask healthCheckerTask = null;
+  protected OSignalHandler.OSignalListener signalListener;
 
   protected ODistributedAbstractPlugin() {}
 
@@ -249,12 +250,71 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
     messageService = new ODistributedMessageServiceImpl(this);
 
-    startupHazelcastPlugin();
+    try {
+      startupHazelcastPlugin();
+
+      final long statsDelay = OGlobalConfiguration.DISTRIBUTED_DUMP_STATS_EVERY.getValueAsLong();
+      if (statsDelay > 0) {
+        haStatsTask = Orient.instance().scheduleTask(this::dumpStats, statsDelay, statsDelay);
+      }
+
+      final long healthChecker =
+          OGlobalConfiguration.DISTRIBUTED_CHECK_HEALTH_EVERY.getValueAsLong();
+      if (healthChecker > 0) {
+        healthCheckerTask =
+            Orient.instance()
+                .scheduleTask(
+                    new OClusterHealthChecker(this, healthChecker), healthChecker, healthChecker);
+      }
+
+      for (OServerNetworkListener nl : serverInstance.getNetworkListeners())
+        nl.registerBeforeConnectNetworkEventListener(this);
+
+      // WAIT ALL THE MESSAGES IN QUEUE ARE PROCESSED OR MAX 10 SECONDS
+      waitStartupIsCompleted();
+
+      signalListener =
+          new OSignalHandler.OSignalListener() {
+            @Override
+            public void onSignal(final Signal signal) {
+              if (signal.toString().trim().equalsIgnoreCase("SIGTRAP")) dumpStats();
+            }
+          };
+      Orient.instance().getSignalHandler().registerListener(signalListener);
+    } catch (Exception e) {
+      ODistributedServerLog.error(
+          this, nodeName, null, DIRECTION.NONE, "Error on starting distributed plugin", e);
+      throw OException.wrapException(
+          new ODistributedStartupException("Error on starting distributed plugin"), e);
+    }
 
     dumpServersStatus();
   }
 
-  public abstract void startupHazelcastPlugin();
+  public abstract void startupHazelcastPlugin() throws IOException, InterruptedException;
+
+  protected void waitStartupIsCompleted() throws InterruptedException {
+    long totalReceivedRequests = getMessageService().getReceivedRequests();
+    long totalProcessedRequests = getMessageService().getProcessedRequests();
+
+    final long start = System.currentTimeMillis();
+    while (totalProcessedRequests < totalReceivedRequests - 2
+        && (System.currentTimeMillis() - start
+            < OGlobalConfiguration.DISTRIBUTED_MAX_STARTUP_DELAY.getValueAsInteger())) {
+      Thread.sleep(300);
+      totalProcessedRequests = getMessageService().getProcessedRequests();
+      totalReceivedRequests = getMessageService().getReceivedRequests();
+    }
+
+    serverStarted.countDown();
+  }
+
+  @Override
+  public void onBeforeDatabaseOpen(final String url) {
+    final ODistributedDatabaseImpl dDatabase =
+        getMessageService().getDatabase(OUtils.getDatabaseNameFromURL(url));
+    if (dDatabase != null) dDatabase.waitForOnline();
+  }
 
   @Override
   public ODistributedAbstractPlugin registerLifecycleListener(
@@ -273,6 +333,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   @Override
   public void shutdown() {
     if (!enabled) return;
+
+    if (healthCheckerTask != null) healthCheckerTask.cancel();
+    if (haStatsTask != null) haStatsTask.cancel();
 
     // CLOSE ALL CONNECTIONS TO THE SERVERS
     remoteServerManager.closeAll();
@@ -2598,6 +2661,31 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
             databaseName,
             e.toString());
       }
+    }
+  }
+
+  protected void dumpStats() {
+    try {
+      final ODocument clusterCfg = getClusterConfiguration();
+
+      final Set<String> dbs = getManagedDatabases();
+
+      final StringBuilder buffer = new StringBuilder(8192);
+
+      buffer.append(ODistributedOutput.formatLatency(this, clusterCfg));
+      buffer.append(ODistributedOutput.formatMessages(this, clusterCfg));
+
+      OLogManager.instance().flush();
+      for (String db : dbs) {
+        buffer.append(messageService.getDatabase(db).dump());
+      }
+
+      // DUMP HA STATS
+      System.out.println(buffer);
+
+    } catch (Exception e) {
+      ODistributedServerLog.error(
+          this, nodeName, null, DIRECTION.NONE, "Error on printing HA stats", e);
     }
   }
 }
