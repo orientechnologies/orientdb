@@ -131,6 +131,9 @@ public class OrderByStep extends AbstractExecutionStep {
             cachedResult = new ArrayList<>(cachedResult.subList(0, maxResults));
             sorted = true;
           }
+          if(Thread.currentThread().isInterrupted()){
+            throw new OCommandExecutionException("Operation interrupted");
+          }
         } finally {
           if (profilingEnabled) {
             cost += (System.nanoTime() - begin);
@@ -147,6 +150,9 @@ public class OrderByStep extends AbstractExecutionStep {
           cachedResult.sort((a, b) -> orderBy.compare(a, b, ctx));
           cachedResult = new ArrayList<>(cachedResult.subList(0, maxResults));
           sorted = true;
+        }
+        if(Thread.currentThread().isInterrupted()){
+          throw new OCommandExecutionException("Operation interrupted");
         }
       } finally {
         if (profilingEnabled) {
