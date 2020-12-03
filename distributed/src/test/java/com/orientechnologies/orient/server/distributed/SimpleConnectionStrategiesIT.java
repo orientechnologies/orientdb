@@ -16,6 +16,7 @@ import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentRemote;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 import org.junit.After;
@@ -201,6 +202,59 @@ public class SimpleConnectionStrategiesIT {
     session1.close();
     pool1.close();
     remote1.close();
+  }
+
+  @Test
+  public void testRoundRobinShutdown()
+      throws InterruptedException, ClassNotFoundException, InstantiationException,
+          IllegalAccessException, IOException {
+    OrientDB remote1 =
+        new OrientDB(
+            "remote:localhost;localhost:2425",
+            "root",
+            "test",
+            OrientDBConfig.builder()
+                .addConfig(CLIENT_CONNECTION_STRATEGY, "ROUND_ROBIN_CONNECT")
+                .build());
+    Set<String> urls = new HashSet<>();
+    ODatabaseSession session =
+        remote1.open(SimpleConnectionStrategiesIT.class.getSimpleName(), "admin", "admin");
+    urls.add(((ODatabaseDocumentRemote) session).getSessionMetadata().getDebugLastHost());
+    session.close();
+
+    ODatabaseSession session1 =
+        remote1.open(SimpleConnectionStrategiesIT.class.getSimpleName(), "admin", "admin");
+    urls.add(((ODatabaseDocumentRemote) session1).getSessionMetadata().getDebugLastHost());
+    session1.close();
+
+    assertEquals(urls.stream().filter((x) -> x.contains("2424")).count(), 1);
+    assertEquals(urls.stream().filter((x) -> x.contains("2425")).count(), 1);
+
+    server1.shutdown();
+    server1.waitForShutdown();
+    urls.clear();
+
+    for (int i = 0; i < 10; i++) {
+      ODatabaseSession session2 =
+          remote1.open(SimpleConnectionStrategiesIT.class.getSimpleName(), "admin", "admin");
+      urls.add(((ODatabaseDocumentRemote) session2).getSessionMetadata().getDebugLastHost());
+      session2.close();
+    }
+
+    assertEquals(urls.stream().filter((x) -> x.contains("2424")).count(), 1);
+
+    remote1.close();
+    server1.startup(
+        Thread.currentThread()
+            .getContextClassLoader()
+            .getResourceAsStream("orientdb-simple-dserver-config-1.xml"));
+    server1.activate();
+    server1.getDistributedManager().waitUntilNodeOnline();
+    server1
+        .getDistributedManager()
+        .waitUntilNodeOnline(
+            server1.getDistributedManager().getLocalNodeName(),
+            SimpleConnectionStrategiesIT.class.getSimpleName());
   }
 
   @After
