@@ -9,7 +9,7 @@ public class OStorageInterruptionManager {
 
   public void interrupt(Thread thread) {
     synchronized (this) {
-      if (getDepth() <= 0) {
+      if (getDepth() > 0) {
         setInterrupted(true);
       } else if (thread != null) {
         thread.interrupt();
