@@ -283,6 +283,26 @@ public class OClientConnection {
     return database;
   }
 
+  public boolean hasDatabase() {
+    if (database != null) {
+      return true;
+    } else if (token != null) {
+      return token.getDatabase() != null;
+    } else {
+      return false;
+    }
+  }
+
+  public String getDatabaseName() {
+    if (database != null) {
+      return database.getName();
+    } else if (token != null) {
+      return token.getDatabase();
+    } else {
+      return null;
+    }
+  }
+
   public void setDatabase(ODatabaseDocumentInternal database) {
     this.database = database;
   }

@@ -1,10 +1,16 @@
 package com.orientechnologies.orient.server.distributed.impl.lock;
 
+import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.storage.cluster.OOfflineClusterException;
 import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionUniqueKey;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.SortedSet;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class OLockManagerImpl implements OLockManager {
@@ -28,7 +34,7 @@ public class OLockManagerImpl implements OLockManager {
 
   private void lock(OLockKey key, OWaitingTracker waitingTracker) {
     if (frozen) {
-      throw new OOfflineClusterException("Node is offline");
+      throw new OOfflineNodeException("Node is offline");
     }
     Queue<OWaitingTracker> queue = locks.get(key);
     if (queue == null) {
