@@ -27,6 +27,7 @@ import java.nio.file.Paths;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class OStorageTestIT {
@@ -93,26 +94,18 @@ public class OStorageTestIT {
     file.close();
 
     session = orientDB.open(OStorageTestIT.class.getSimpleName(), "admin", "admin");
-    session.query("select from PageBreak").close();
-
-    Thread.sleep(100); // lets wait till event will be propagated
-
-    ODocument document = new ODocument("PageBreak");
-    document.field("value", "value");
-
     try {
-      document.save();
+      session.query("select from PageBreak").close();
       Assert.fail();
     } catch (OStorageException e) {
-      Assert.assertTrue(true);
+      orientDB.close();
+      orientDB = new OrientDB("embedded:" + buildPath.toFile().getAbsolutePath(), config);
+      orientDB.open(OStorageTestIT.class.getSimpleName(), "admin", "admin");
     }
-
-    session.close();
   }
 
   @Test
   public void testCheckMagicNumberReadOnly() throws Exception {
-
     OrientDBConfig config =
         OrientDBConfig.builder()
             .addConfig(
@@ -159,21 +152,14 @@ public class OStorageTestIT {
     file.close();
 
     session = orientDB.open(OStorageTestIT.class.getSimpleName(), "admin", "admin");
-    session.query("select from PageBreak").close();
-
-    Thread.sleep(100); // lets wait till event will be propagated
-
-    ODocument document = new ODocument("PageBreak");
-    document.field("value", "value");
-
     try {
-      document.save();
+      session.query("select from PageBreak").close();
       Assert.fail();
     } catch (OStorageException e) {
-      Assert.assertTrue(true);
+      orientDB.close();
+      orientDB = new OrientDB("embedded:" + buildPath.toFile().getAbsolutePath(), config);
+      orientDB.open(OStorageTestIT.class.getSimpleName(), "admin", "admin");
     }
-
-    session.close();
   }
 
   @Test
