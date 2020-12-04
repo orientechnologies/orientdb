@@ -19,6 +19,8 @@
  */
 package com.orientechnologies.orient.core.storage;
 
+import com.orientechnologies.orient.core.tx.OTransactionInternal;
+
 /**
  * Tagged interface for proxy storage implementation
  *
@@ -32,4 +34,6 @@ public interface OStorageProxy extends OStorage {
   int addUser();
 
   int removeUser();
+
+  void rollback(OTransactionInternal iTx);
 }

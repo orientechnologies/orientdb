@@ -159,7 +159,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
     final OStorage storage = database.getStorage();
     if (storage instanceof OStorageProxy) {
-      storage.rollback(OTransactionOptimistic.this);
+      ((OStorageProxy) storage).rollback(OTransactionOptimistic.this);
     }
 
     internalRollback();

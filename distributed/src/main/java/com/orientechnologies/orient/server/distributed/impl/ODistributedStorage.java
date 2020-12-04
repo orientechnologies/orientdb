@@ -341,11 +341,6 @@ public class ODistributedStorage
   }
 
   @Override
-  public void rollback(final OTransactionInternal iTx) {
-    wrapped.rollback(iTx);
-  }
-
-  @Override
   public OStorageConfiguration getConfiguration() {
     return wrapped.getConfiguration();
   }

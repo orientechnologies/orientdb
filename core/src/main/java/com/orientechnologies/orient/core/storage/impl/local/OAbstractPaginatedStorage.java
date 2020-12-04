@@ -42,7 +42,6 @@ import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.types.OModifiableLong;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OCommonConst;
-import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.OConstants;
@@ -68,6 +67,7 @@ import com.orientechnologies.orient.core.db.record.ridbag.ORidBagDeleter;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.encryption.OEncryptionFactory;
 import com.orientechnologies.orient.core.encryption.impl.ONothingEncryption;
+import com.orientechnologies.orient.core.exception.OClusterDoesNotExistException;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -76,11 +76,10 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OInvalidDatabaseNameException;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
-import com.orientechnologies.orient.core.exception.OJVMErrorException;
 import com.orientechnologies.orient.core.exception.OLowDiskSpaceException;
-import com.orientechnologies.orient.core.exception.OPageIsBrokenException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.ORetryQueryException;
+import com.orientechnologies.orient.core.exception.OStorageDoesNotExistException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OStorageExistsException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -203,12 +202,10 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.UUID;
 import java.util.WeakHashMap;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -256,9 +253,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private final AtomicBoolean checkpointInProgress = new AtomicBoolean();
   private final AtomicBoolean walVacuumInProgress = new AtomicBoolean();
 
-  /** Error which happened inside of storage or during data processing related to this storage. */
-  private final AtomicReference<Error> jvmError = new AtomicReference<>();
-
   protected volatile OWriteAheadLog writeAheadLog;
   private OStorageRecoverListener recoverListener;
 
@@ -274,11 +268,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private volatile OLowDiskSpaceInformation lowDiskSpace;
   private volatile boolean modificationLock;
   private volatile boolean readLock;
-  /** Set of pages which were detected as broken and need to be repaired. */
-  private final Set<OPair<String, Long>> brokenPages =
-      Collections.newSetFromMap(new ConcurrentHashMap<>(0));
-
-  private volatile Throwable dataFlushException;
 
   private final int id;
 
@@ -361,7 +350,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       stateLock.acquireReadLock();
       try {
-        if (status == STATUS.OPEN)
+        if (status == STATUS.OPEN || status == STATUS.INTERNAL_ERROR)
         // ALREADY OPENED: THIS IS THE CASE WHEN A STORAGE INSTANCE IS
         // REUSED
         {
@@ -374,15 +363,20 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireWriteLock();
       try {
 
-        if (status == STATUS.OPEN)
+        if (status == STATUS.OPEN || status == STATUS.INTERNAL_ERROR)
         // ALREADY OPENED: THIS IS THE CASE WHEN A STORAGE INSTANCE IS
         // REUSED
         {
           return;
         }
 
-        if (!exists()) {
+        if (status != STATUS.CLOSED) {
           throw new OStorageException(
+              "Storage " + name + " is in wrong state " + status + " and can not be opened.");
+        }
+
+        if (!exists()) {
+          throw new OStorageDoesNotExistException(
               "Cannot open the storage '" + name + "' because it does not exist in path: " + url);
         }
 
@@ -517,17 +511,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } else if (OrientDBConfig.LOCK_TYPE_READWRITE.equals(lockKind)) {
       modificationLock = true;
       readLock = true;
-    }
-  }
-
-  /**
-   * That is internal method which is called once we encounter any error inside of JVM. In such case
-   * we need to restart JVM to avoid any data corruption. Till JVM is not restarted storage will be
-   * put in read-only state.
-   */
-  public final void handleJVMError(final Error e) {
-    if (jvmError.compareAndSet(null, e)) {
-      OLogManager.instance().errorNoDb(this, "JVM error was thrown", e);
     }
   }
 
@@ -784,9 +767,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               // ADD THE DEFAULT CLUSTER
               defaultClusterId = doAddCluster(atomicOperation, CLUSTER_DEFAULT_NAME);
 
-              if (jvmError.get() == null) {
-                clearStorageDirty();
-              }
+              clearStorageDirty();
 
               postCreateSteps();
 
@@ -962,7 +943,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public final int addCluster(final String clusterName, final Object... parameters) {
     try {
       checkOpenness();
-      checkLowDiskSpaceRequestsAndReadOnlyConditions();
+      checkLowDiskSpaceRequests();
 
       stateLock.acquireWriteLock();
       try {
@@ -994,7 +975,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public final int addCluster(final String clusterName, final int requestedId) {
     try {
       checkOpenness();
-      checkLowDiskSpaceRequestsAndReadOnlyConditions();
+      checkLowDiskSpaceRequests();
       stateLock.acquireWriteLock();
       try {
         interruptionManager.enterCriticalPath();
@@ -1037,7 +1018,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public final boolean dropCluster(final int clusterId) {
     try {
       checkOpenness();
-      checkLowDiskSpaceRequestsAndReadOnlyConditions();
+      checkLowDiskSpaceRequests();
 
       stateLock.acquireWriteLock();
       try {
@@ -1088,7 +1069,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   private void checkClusterId(int clusterId) {
     if (clusterId < 0 || clusterId >= clusters.size()) {
-      throw new OStorageException(
+      throw new OClusterDoesNotExistException(
           "Cluster id '"
               + clusterId
               + "' is outside the of range of configured clusters (0-"
@@ -1103,7 +1084,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public String getClusterNameById(int clusterId) {
     try {
       checkOpenness();
-      checkLowDiskSpaceRequestsAndReadOnlyConditions();
+      checkLowDiskSpaceRequests();
 
       stateLock.acquireReadLock();
       try {
@@ -1136,7 +1117,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public long getClusterRecordsSizeById(int clusterId) {
     try {
       checkOpenness();
-      checkLowDiskSpaceRequestsAndReadOnlyConditions();
+      checkLowDiskSpaceRequests();
 
       stateLock.acquireReadLock();
       try {
@@ -1170,7 +1151,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     try {
       checkOpenness();
-      checkLowDiskSpaceRequestsAndReadOnlyConditions();
+      checkLowDiskSpaceRequests();
 
       stateLock.acquireReadLock();
       try {
@@ -1202,7 +1183,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public String getClusterRecordConflictStrategy(int clusterId) {
     try {
       checkOpenness();
-      checkLowDiskSpaceRequestsAndReadOnlyConditions();
+      checkLowDiskSpaceRequests();
 
       stateLock.acquireReadLock();
       try {
@@ -1236,7 +1217,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public String getClusterEncryption(int clusterId) {
     try {
       checkOpenness();
-      checkLowDiskSpaceRequestsAndReadOnlyConditions();
+      checkLowDiskSpaceRequests();
 
       stateLock.acquireReadLock();
       try {
@@ -1298,7 +1279,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public long getLastClusterPosition(int clusterId) {
     try {
       checkOpenness();
-      checkLowDiskSpaceRequestsAndReadOnlyConditions();
+      checkLowDiskSpaceRequests();
 
       stateLock.acquireReadLock();
       try {
@@ -1330,7 +1311,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public long getClusterNextPosition(int clusterId) {
     try {
       checkOpenness();
-      checkLowDiskSpaceRequestsAndReadOnlyConditions();
+      checkLowDiskSpaceRequests();
 
       stateLock.acquireReadLock();
       try {
@@ -1362,7 +1343,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public OPaginatedCluster.RECORD_STATUS getRecordStatus(ORID rid) {
     try {
       checkOpenness();
-      checkLowDiskSpaceRequestsAndReadOnlyConditions();
+      checkLowDiskSpaceRequests();
 
       stateLock.acquireReadLock();
       try {
@@ -1392,12 +1373,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   private void throwClusterDoesNotExist(int clusterId) {
-    throw new OStorageException(
+    throw new OClusterDoesNotExistException(
         "Cluster with id " + clusterId + " does not exist inside of storage " + name);
   }
 
   private void throwClusterDoesNotExist(String clusterName) {
-    throw new OStorageException(
+    throw new OClusterDoesNotExistException(
         "Cluster with name `" + clusterName + "` does not exist inside of storage " + name);
   }
 
@@ -1570,7 +1551,21 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   @Override
   public final void onException(final Throwable e) {
-    dataFlushException = e;
+    status = STATUS.INTERNAL_ERROR;
+
+    try {
+      makeStorageDirty();
+    } catch (IOException ioException) {
+      // ignore
+    }
+
+    OLogManager.instance()
+        .errorStorage(
+            this,
+            "Error in data flush background thread, for storage %s ,"
+                + "please restart database and send full stack trace inside of bug report",
+            e,
+            name);
   }
 
   public Optional<OBackgroundNewDelta> extractTransactionsFromWal(
@@ -1769,7 +1764,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       checkOpenness();
       checkIfThreadIsBlocked();
 
-      checkLowDiskSpaceRequestsAndReadOnlyConditions();
+      checkLowDiskSpaceRequests();
 
       final OCluster cluster = doGetAndCheckCluster(rid.getClusterId());
       if (transaction.get() != null) {
@@ -2031,7 +2026,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           checkOpenness();
           checkIfThreadIsBlocked();
 
-          checkLowDiskSpaceRequestsAndReadOnlyConditions();
+          checkLowDiskSpaceRequests();
 
           final OCluster cluster = doGetAndCheckCluster(rid.getClusterId());
           return atomicOperationsManager.calculateInsideAtomicOperation(
@@ -2094,7 +2089,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         checkOpenness();
         checkIfThreadIsBlocked();
 
-        checkLowDiskSpaceRequestsAndReadOnlyConditions();
+        checkLowDiskSpaceRequests();
 
         final OCluster cluster = doGetAndCheckCluster(rid.getClusterId());
 
@@ -2187,7 +2182,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public void preallocateRids(final OTransactionInternal clientTx) {
     try {
       checkOpenness();
-      checkLowDiskSpaceRequestsAndReadOnlyConditions();
+      checkLowDiskSpaceRequests();
 
       final Iterable<ORecordOperation> entries = clientTx.getRecordOperations();
       final TreeMap<Integer, OCluster> clustersToLock = new TreeMap<>();
@@ -2400,20 +2395,18 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         }
         try {
           checkOpenness();
-          checkLowDiskSpaceRequestsAndReadOnlyConditions();
+          checkLowDiskSpaceRequests();
 
           checkIfThreadIsBlocked();
 
           makeStorageDirty();
 
-          boolean rollback = false;
+          Throwable error = null;
           startStorageTx(transaction);
           try {
             final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
 
             lockClusters(clustersToLock);
-
-            checkReadOnlyConditions();
 
             final Map<ORecordOperation, OPhysicalPosition> positions = new IdentityHashMap<>(8);
             for (final ORecordOperation recordOperation : newRecords) {
@@ -2469,8 +2462,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
             lockRidBags(clustersToLock, indexOperations, indexManager, database);
 
-            checkReadOnlyConditions();
-
             for (final ORecordOperation recordOperation : recordOperations) {
               commitEntry(
                   atomicOperation,
@@ -2482,11 +2473,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
             lockIndexes(indexOperations);
 
-            checkReadOnlyConditions();
-
             commitIndexes(indexOperations);
           } catch (final IOException | RuntimeException e) {
-            rollback = true;
+            error = e;
             if (e instanceof RuntimeException) {
               throw ((RuntimeException) e);
             } else {
@@ -2494,8 +2483,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                   new OStorageException("Error during transaction commit"), e);
             }
           } finally {
-            if (rollback) {
-              rollback(transaction);
+            if (error != null) {
+              rollback(transaction, error);
             } else {
               endStorageTx(transaction, recordOperations);
             }
@@ -2547,7 +2536,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } catch (final RuntimeException ee) {
       throw logAndPrepareForRethrow(ee);
     } catch (final Error ee) {
-      handleJVMError(ee);
       OAtomicOperationsManager.alarmClearOfAtomicOperation();
       throw logAndPrepareForRethrow(ee);
     } catch (final Throwable t) {
@@ -2654,7 +2642,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         checkOpenness();
         checkIfThreadIsBlocked();
 
-        checkLowDiskSpaceRequestsAndReadOnlyConditions();
+        checkLowDiskSpaceRequests();
 
         // this method introduced for binary compatibility only
         if (configuration.getBinaryFormatVersion() > 15) {
@@ -2783,7 +2771,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         checkOpenness();
         checkIfThreadIsBlocked();
 
-        checkLowDiskSpaceRequestsAndReadOnlyConditions();
+        checkLowDiskSpaceRequests();
 
         makeStorageDirty();
         return atomicOperationsManager.calculateInsideAtomicOperation(
@@ -3044,7 +3032,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         checkOpenness();
         checkIfThreadIsBlocked();
 
-        checkLowDiskSpaceRequestsAndReadOnlyConditions();
+        checkLowDiskSpaceRequests();
 
         checkIndexId(internalIndexId);
 
@@ -3130,7 +3118,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         checkOpenness();
         checkIfThreadIsBlocked();
 
-        checkLowDiskSpaceRequestsAndReadOnlyConditions();
+        checkLowDiskSpaceRequests();
 
         return atomicOperationsManager.calculateInsideAtomicOperation(
             null,
@@ -3194,7 +3182,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         checkOpenness();
         checkIfThreadIsBlocked();
 
-        checkLowDiskSpaceRequestsAndReadOnlyConditions();
+        checkLowDiskSpaceRequests();
 
         atomicOperationsManager.executeInsideAtomicOperation(
             null, atomicOperation -> doClearIndex(atomicOperation, internalIndexId));
@@ -3382,7 +3370,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         checkOpenness();
         checkIfThreadIsBlocked();
 
-        checkLowDiskSpaceRequestsAndReadOnlyConditions();
+        checkLowDiskSpaceRequests();
         atomicOperationsManager.executeInsideAtomicOperation(
             null,
             atomicOperation ->
@@ -3488,7 +3476,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         checkOpenness();
         checkIfThreadIsBlocked();
 
-        checkLowDiskSpaceRequestsAndReadOnlyConditions();
+        checkLowDiskSpaceRequests();
 
         atomicOperationsManager.executeInsideAtomicOperation(
             null,
@@ -3554,7 +3542,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         checkOpenness();
         checkIfThreadIsBlocked();
 
-        checkLowDiskSpaceRequestsAndReadOnlyConditions();
+        checkLowDiskSpaceRequests();
 
         return atomicOperationsManager.calculateInsideAtomicOperation(
             null,
@@ -3621,7 +3609,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         checkOpenness();
         checkIfThreadIsBlocked();
 
-        checkLowDiskSpaceRequestsAndReadOnlyConditions();
+        checkLowDiskSpaceRequests();
 
         atomicOperationsManager.executeInsideAtomicOperation(
             null,
@@ -3696,7 +3684,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         checkOpenness();
         checkIfThreadIsBlocked();
 
-        checkLowDiskSpaceRequestsAndReadOnlyConditions();
+        checkLowDiskSpaceRequests();
 
         return atomicOperationsManager.calculateInsideAtomicOperation(
             null,
@@ -4134,49 +4122,24 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return engine.hasRangeQuerySupport();
   }
 
-  @Override
-  public void rollback(final OTransactionInternal clientTx) {
-    try {
-      checkOpenness();
-      stateLock.acquireReadLock();
-      try {
-        interruptionManager.enterCriticalPath();
-        try {
-          checkOpenness();
+  private void rollback(final OTransactionInternal clientTx, final Throwable error)
+      throws IOException {
+    makeStorageDirty();
+    assert transaction.get() != null;
+    atomicOperationsManager.endAtomicOperation(error);
 
-          if (transaction.get() == null) {
-            return;
-          }
+    assert OAtomicOperationsManager.getCurrentOperation() == null;
 
-          if (transaction.get().getClientTx().getId() != clientTx.getId()) {
-            throw new OStorageException(
-                "Passed in and active transaction are different transactions. Passed in transaction cannot be rolled back.");
-          }
+    OTransactionAbstract.updateCacheFromEntries(
+        clientTx.getDatabase(), clientTx.getRecordOperations(), false);
 
-          makeStorageDirty();
-          rollbackStorageTx();
+    txRollback.increment();
+  }
 
-          OTransactionAbstract.updateCacheFromEntries(
-              clientTx.getDatabase(), clientTx.getRecordOperations(), false);
-
-          txRollback.increment();
-
-        } catch (final IOException e) {
-          throw OException.wrapException(
-              new OStorageException("Error during transaction rollback"), e);
-        } finally {
-          transaction.set(null);
-        }
-      } finally {
-        stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
-      }
-    } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+  public void moveToErrorStateIfNeeded(final Throwable error) {
+    if (error != null
+        && !((error instanceof OHighLevelException) || (error instanceof ONeedRetryException))) {
+      status = STATUS.INTERNAL_ERROR;
     }
   }
 
@@ -4207,7 +4170,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           checkOpenness();
           checkIfThreadIsBlocked();
 
-          if (jvmError.get() == null) {
+          if (status != STATUS.INTERNAL_ERROR) {
             for (final OBaseIndexEngine indexEngine : indexEngines) {
               try {
                 if (indexEngine != null) {
@@ -4227,7 +4190,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
           } else {
             OLogManager.instance()
-                .errorNoDb(this, "Sync can not be performed because of JVM error on storage", null);
+                .errorNoDb(
+                    this,
+                    "Sync can not be performed because of internal error in storage %s",
+                    null,
+                    this.name);
           }
 
         } finally {
@@ -4525,7 +4492,22 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   /** @inheritDoc */
   @Override
   public final void pageIsBroken(final String fileName, final long pageIndex) {
-    brokenPages.add(new OPair<>(fileName, pageIndex));
+    status = STATUS.INTERNAL_ERROR;
+
+    try {
+      makeStorageDirty();
+    } catch (final IOException e) {
+      // ignore
+    }
+
+    OLogManager.instance()
+        .errorStorage(
+            this,
+            "In storage %s file with name '%s' has broken page under the index %d",
+            null,
+            name,
+            fileName,
+            pageIndex);
   }
 
   @Override
@@ -4569,11 +4551,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         }
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
       throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -4680,11 +4662,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         }
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
       throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -5024,15 +5006,26 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   /** Checks if the storage is open. If it's closed an exception is raised. */
   protected final void checkOpenness() {
+    checkErrorState();
+
     if (status != STATUS.OPEN) {
       throw new OStorageException("Storage " + name + " is not opened.");
+    }
+  }
+
+  public void checkErrorState() {
+    if (status == STATUS.INTERNAL_ERROR) {
+      throw new OStorageException(
+          "Internal error happened in storage "
+              + name
+              + " please restart the server or re-open the storage to undergo the restore process and fix the error.");
     }
   }
 
   public void rollbackOperationsFromThread(final Thread thread) {
     try {
       checkOpenness();
-      checkLowDiskSpaceRequestsAndReadOnlyConditions();
+      checkLowDiskSpaceRequests();
       stateLock.acquireWriteLock();
       try {
         checkOpenness();
@@ -5141,7 +5134,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public void tryToDeleteTreeRidBag(final OSBTreeRidBag ridBag) {
     try {
       checkOpenness();
-      checkLowDiskSpaceRequestsAndReadOnlyConditions();
+      checkLowDiskSpaceRequests();
 
       if (transaction.get() == null) {
         stateLock.acquireWriteLock();
@@ -5180,7 +5173,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           @Override
           public void run() {
             checkOpenness();
-            checkLowDiskSpaceRequestsAndReadOnlyConditions();
+            checkLowDiskSpaceRequests();
 
             stateLock.acquireWriteLock();
             try {
@@ -5241,9 +5234,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       writeAheadLog.cutTill(lastLSN);
 
-      if (jvmError.get() == null) {
-        clearStorageDirty();
-      }
+      clearStorageDirty();
 
     } catch (final IOException ioe) {
       throw OException.wrapException(
@@ -5274,7 +5265,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throws IOException, InterruptedException;
 
   protected abstract void postCloseSteps(
-      @SuppressWarnings("unused") boolean onDelete, boolean jvmError, long lastTxId)
+      @SuppressWarnings("unused") boolean onDelete, boolean internalError, long lastTxId)
       throws IOException;
 
   @SuppressWarnings("EmptyMethod")
@@ -5411,7 +5402,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private void endStorageTx(
       final OTransactionInternal txi, final Collection<ORecordOperation> recordOperations)
       throws IOException {
-    atomicOperationsManager.endAtomicOperation(false);
+    atomicOperationsManager.endAtomicOperation(null);
     assert OAtomicOperationsManager.getCurrentOperation() == null;
 
     OTransactionAbstract.updateCacheFromEntries(txi.getDatabase(), recordOperations, true);
@@ -5440,13 +5431,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       transaction.set(null);
       throw e;
     }
-  }
-
-  private void rollbackStorageTx() throws IOException {
-    assert transaction.get() != null;
-    atomicOperationsManager.endAtomicOperation(true);
-
-    assert OAtomicOperationsManager.getCurrentOperation() == null;
   }
 
   private void recoverIfNeeded() throws Exception {
@@ -5870,7 +5854,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       checkOpenness();
       checkIfThreadIsBlocked();
 
-      checkLowDiskSpaceRequestsAndReadOnlyConditions();
+      checkLowDiskSpaceRequests();
 
       stateLock.acquireWriteLock();
       try {
@@ -5987,10 +5971,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         return;
       }
 
+      if (status != STATUS.OPEN && status != STATUS.INTERNAL_ERROR) {
+        throw new OStorageException("Storage " + name + " was not opened, so can not be closed");
+      }
+
       status = STATUS.CLOSING;
 
-      if (jvmError.get() == null) {
-        if (!onDelete && jvmError.get() == null) {
+      if (status != STATUS.INTERNAL_ERROR) {
+        if (!onDelete) {
           makeFullCheckpoint();
         }
 
@@ -6062,7 +6050,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           writeAheadLog.close();
         }
 
-        postCloseSteps(onDelete, jvmError.get() != null, idGen.getLastId());
+        postCloseSteps(onDelete, status == STATUS.INTERNAL_ERROR, idGen.getLastId());
         transaction = null;
         lastMetadata = null;
       } else {
@@ -6761,20 +6749,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  /**
-   * Method which is called before any data modification operation to check alarm conditions such
-   * as:
-   *
-   * <ol>
-   *   <li>Low disk space
-   *   <li>Exception during data flush in background threads
-   *   <li>Broken files
-   * </ol>
-   *
-   * If one of those conditions are satisfied data modification operation is aborted and storage is
-   * switched in "read only" mode.
-   */
-  private void checkLowDiskSpaceRequestsAndReadOnlyConditions() {
+  private void checkLowDiskSpaceRequests() {
     if (transaction.get() != null) {
       return;
     }
@@ -6783,7 +6758,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       if (checkpointInProgress.compareAndSet(false, true)) {
         try {
           if (writeCache.checkLowDiskSpace()) {
-
             OLogManager.instance()
                 .error(this, "Not enough disk space, force sync will be called", null);
             synch();
@@ -6819,67 +6793,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           checkpointInProgress.set(false);
         }
       }
-    }
-
-    checkReadOnlyConditions();
-  }
-
-  public final void checkReadOnlyConditions() {
-    if (dataFlushException != null) {
-      throw OException.wrapException(
-          new OStorageException(
-              "Error in data flush background thread, please restart database and send full stack trace inside of bug report"),
-          dataFlushException);
-    }
-
-    if (!brokenPages.isEmpty()) {
-      // order pages by file and index
-      final Map<String, SortedSet<Long>> pagesByFile = new HashMap<>(0);
-
-      for (final OPair<String, Long> brokenPage : brokenPages) {
-        final SortedSet<Long> sortedPages =
-            pagesByFile.computeIfAbsent(brokenPage.key, (fileName) -> new TreeSet<>());
-        sortedPages.add(brokenPage.value);
-      }
-
-      final StringBuilder brokenPagesList = new StringBuilder();
-      brokenPagesList.append("[");
-
-      for (final Map.Entry<String, SortedSet<Long>> stringSortedSetEntry : pagesByFile.entrySet()) {
-        brokenPagesList.append('\'').append(stringSortedSetEntry.getKey()).append("' :");
-
-        final SortedSet<Long> pageIndexes = stringSortedSetEntry.getValue();
-        final long lastPage = pageIndexes.last();
-
-        for (final Long pageIndex : stringSortedSetEntry.getValue()) {
-          brokenPagesList.append(pageIndex);
-          if (pageIndex != lastPage) {
-            brokenPagesList.append(", ");
-          }
-        }
-
-        brokenPagesList.append(";");
-      }
-      brokenPagesList.append("]");
-
-      throw new OPageIsBrokenException(
-          "Following files and pages are detected to be broken "
-              + brokenPagesList
-              + ", storage is "
-              + "switched to 'read only' mode. Any modification operations are prohibited. "
-              + "To restore database and make it fully operational you may export and import database "
-              + "to and from JSON.");
-    }
-
-    if (jvmError.get() != null) {
-      throw new OJVMErrorException(
-          "JVM error '"
-              + jvmError.get().getClass().getSimpleName()
-              + " : "
-              + jvmError.get().getMessage()
-              + "' occurred during data processing, storage is switched to 'read-only' mode. "
-              + "To prevent this exception please restart the JVM and check data consistency by calling of 'check database' "
-              + "command from database console.");
     }
   }
 
@@ -7092,8 +7005,17 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   protected final RuntimeException logAndPrepareForRethrow(
       final RuntimeException runtimeException) {
+    return logAndPrepareForRethrow(runtimeException, true);
+  }
+
+  private RuntimeException logAndPrepareForRethrow(
+      final RuntimeException runtimeException, final boolean putInReadOnlyMode) {
     if (!(runtimeException instanceof OHighLevelException
         || runtimeException instanceof ONeedRetryException)) {
+      if (putInReadOnlyMode) {
+        status = STATUS.INTERNAL_ERROR;
+      }
+
       OLogManager.instance()
           .errorStorage(
               this,
@@ -7103,6 +7025,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               getURL(),
               OConstants.getVersion());
     }
+
     return runtimeException;
   }
 
@@ -7112,6 +7035,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   private Error logAndPrepareForRethrow(final Error error, final boolean putInReadOnlyMode) {
     if (!(error instanceof OHighLevelException)) {
+      if (putInReadOnlyMode) {
+        status = STATUS.INTERNAL_ERROR;
+      }
+
       OLogManager.instance()
           .errorStorage(
               this,
@@ -7122,15 +7049,19 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               OConstants.getVersion());
     }
 
-    if (putInReadOnlyMode) {
-      handleJVMError(error);
-    }
-
     return error;
   }
 
   protected final RuntimeException logAndPrepareForRethrow(final Throwable throwable) {
+    return logAndPrepareForRethrow(throwable, true);
+  }
+
+  private RuntimeException logAndPrepareForRethrow(
+      final Throwable throwable, final boolean putInReadOnlyMode) {
     if (!(throwable instanceof OHighLevelException || throwable instanceof ONeedRetryException)) {
+      if (putInReadOnlyMode) {
+        status = STATUS.INTERNAL_ERROR;
+      }
       OLogManager.instance()
           .errorStorage(
               this,
@@ -7623,8 +7554,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         writeCache.makeFuzzyCheckpoint(minDirtySegment, lastMetadata);
 
       } catch (final Exception e) {
-        dataFlushException = e;
-        OLogManager.instance().error(this, "Error during flushing of data for fuzzy checkpoint", e);
+        OLogManager.instance()
+            .error(
+                this, "Error during flushing of data for fuzzy checkpoint, in storage %s", e, name);
       } finally {
         stateLock.releaseReadLock();
         walVacuumInProgress.set(false);

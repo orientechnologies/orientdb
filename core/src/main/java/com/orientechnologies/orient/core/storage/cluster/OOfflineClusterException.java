@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.storage.cluster;
 
+import com.orientechnologies.common.exception.OHighLevelException;
 import com.orientechnologies.orient.core.exception.OCoreException;
 
 /**
@@ -23,7 +24,7 @@ import com.orientechnologies.orient.core.exception.OCoreException;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  * @since 2.0
  */
-public class OOfflineClusterException extends OCoreException {
+public class OOfflineClusterException extends OCoreException implements OHighLevelException {
 
   public OOfflineClusterException(OOfflineClusterException exception) {
     super(exception);

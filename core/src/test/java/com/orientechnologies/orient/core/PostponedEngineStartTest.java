@@ -343,9 +343,6 @@ public class PostponedEngineStartTest {
         }
 
         @Override
-        public void rollback(OTransactionInternal iTx) {}
-
-        @Override
         public OClusterBasedStorageConfiguration getConfiguration() {
           return null;
         }
