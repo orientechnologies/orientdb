@@ -18,7 +18,7 @@
         <groupId>com.orientechnologies</groupId>
         <artifactId>orientdb-parent</artifactId>
         <version>3.1.6-SNAPSHOT</version>
-        <relativePath>../</relativePath>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>orientdb-community-tp2</artifactId>
@@ -138,7 +138,6 @@
                         </goals>
                         <configuration>
                             <outputDirectory>${project.build.directory}</outputDirectory>
-                            <stripVersion>true</stripVersion>
                             <artifactItems>
                                 <artifactItem>
                                     <groupId>com.orientechnologies</groupId>
