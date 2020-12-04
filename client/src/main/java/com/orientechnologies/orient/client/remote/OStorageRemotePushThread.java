@@ -112,7 +112,6 @@ public class OStorageRemotePushThread extends Thread {
   public <T extends OBinaryResponse> T subscribe(
       OBinaryRequest<T> request, OStorageRemoteSession session) {
     try {
-      long timeout;
       synchronized (this) {
         this.currentRequest = new OSubscribeRequest(request);
         ((OChannelBinaryAsynchClient) network)

@@ -1935,9 +1935,16 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
       OLogManager.instance().debug(this, "Updated server list: %s...", serverURLs);
 
-      if (!serverURLs.isEmpty()) return serverURLs.get(0) + postFix;
+      if (!serverURLs.isEmpty()) {
+        String newUrl = serverURLs.get(0) + postFix;
+        OStorageRemoteSession session = getCurrentSession();
+        if (session != null) {
+          session.currentUrl = newUrl;
+          session.serverURLIndex = this.nextServerToConnect;
+        }
+        return newUrl;
+      }
     }
-
     return null;
   }
 
@@ -2157,7 +2164,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       final String serverURL = serverURLs.get(this.nextServerToConnect) + "/" + getName();
       if (session != null) {
         session.serverURLIndex = this.nextServerToConnect;
-        session.debugLastHost = serverURL;
+        session.currentUrl = serverURL;
       }
 
       return serverURL;
@@ -2170,6 +2177,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   protected String getServerURFromList(
       final boolean iNextAvailable, OStorageRemoteSession session) {
+    String serverURL = session.getCurrentUrl();
+    if (serverURL != null) {
+      return serverURL;
+    }
+
     synchronized (serverURLs) {
       if (serverURLs.isEmpty()) {
         parseServerURLs();
@@ -2189,11 +2201,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
         // RESET INDEX
         serverURLIndex = 0;
 
-      final String serverURL = serverURLs.get(serverURLIndex) + "/" + getName();
+      serverURL = serverURLs.get(serverURLIndex) + "/" + getName();
 
       if (session != null) {
         session.serverURLIndex = serverURLIndex;
-        session.debugLastHost = serverURL;
+        session.currentUrl = serverURL;
       }
 
       return serverURL;
