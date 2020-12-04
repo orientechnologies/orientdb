@@ -212,18 +212,18 @@ public class TransactionAtomicTest extends DocumentDBBaseTest {
 
   @Test
   public void testTransactionalSQL() {
-    long prev = database.countClusterElements("Account");
+    long prev = database.countClass("Account");
 
     database
         .command(new OCommandSQL("transactional insert into Account set name = 'txTest1'"))
         .execute();
 
-    Assert.assertEquals(database.countClusterElements("Account"), prev + 1);
+    Assert.assertEquals(database.countClass("Account"), prev + 1);
   }
 
   @Test
   public void testTransactionalSQLJoinTx() {
-    long prev = database.countClusterElements("Account");
+    long prev = database.countClass("Account");
 
     database.begin();
 
@@ -233,12 +233,11 @@ public class TransactionAtomicTest extends DocumentDBBaseTest {
 
     Assert.assertTrue(database.getTransaction().isActive());
 
-    if (!url.startsWith("remote"))
-      Assert.assertEquals(database.countClusterElements("Account"), prev);
+    if (!url.startsWith("remote")) Assert.assertEquals(database.countClass("Account"), prev + 1);
 
     database.commit();
 
     Assert.assertFalse(database.getTransaction().isActive());
-    Assert.assertEquals(database.countClusterElements("Account"), prev + 1);
+    Assert.assertEquals(database.countClass("Account"), prev + 1);
   }
 }

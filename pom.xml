@@ -170,6 +170,7 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <maven.build.timestamp.format>yyyy-MM-dd HH:mm:ssZ</maven.build.timestamp.format>
+        <!--suppress UnresolvedMavenProperty -->
         <implementation.build>${scmBranch}@r${buildNumber}</implementation.build>
         <blueprints.version>2.6.0</blueprints.version>
         <!-- | Configuration properties for the OSGi maven-bundle-plugin -->
@@ -578,7 +579,9 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <!--suppress MavenModelInspection -->
                 <artifactId>maven-surefire-report-plugin</artifactId>
+                <!--suppress MavenModelInspection -->
                 <version>${surefire.version}</version>
             </plugin>
             <plugin>
@@ -597,10 +600,8 @@
                         <version>5.6.6</version>
                     </docletArtifact>
                     <doclint>none</doclint>
-                    <additionalparam>-views -all</additionalparam>
                     <useStandardDocletOptions>true</useStandardDocletOptions>
 
-                    <aggregate>true</aggregate>
                     <!-- | Apple's JVM sometimes requires more memory -->
                     <additionalJOption>-J-Xmx1024m</additionalJOption>
                 </configuration>

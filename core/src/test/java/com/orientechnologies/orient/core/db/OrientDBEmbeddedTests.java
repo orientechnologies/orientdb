@@ -11,6 +11,7 @@ import static org.junit.Assert.assertTrue;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OStorageDoesNotExistException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -379,7 +380,7 @@ public class OrientDBEmbeddedTests {
     orientDB.close();
   }
 
-  @Test(expected = ODatabaseException.class)
+  @Test(expected = OStorageDoesNotExistException.class)
   public void testOpenNotExistDatabase() {
     try (OrientDB orientDB = new OrientDB("embedded:./target/", OrientDBConfig.defaultConfig())) {
       orientDB.open("testOpenNotExistDatabase", "two", "three");

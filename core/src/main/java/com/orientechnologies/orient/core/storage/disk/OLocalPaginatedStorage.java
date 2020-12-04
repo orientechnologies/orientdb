@@ -235,7 +235,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   @Override
   public final boolean exists() {
     try {
-      if (status == STATUS.OPEN) return true;
+      if (status == STATUS.OPEN || status == STATUS.INTERNAL_ERROR) return true;
 
       return exists(storagePath);
     } catch (final RuntimeException e) {
@@ -581,12 +581,12 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
-  protected void postCloseSteps(final boolean onDelete, final boolean jvmError, final long lastTxId)
-      throws IOException {
+  protected void postCloseSteps(
+      final boolean onDelete, final boolean internalError, final long lastTxId) throws IOException {
     if (onDelete) {
       startupMetadata.delete();
     } else {
-      if (!jvmError) {
+      if (!internalError) {
         startupMetadata.setLastTxId(lastTxId);
         startupMetadata.setTxMetadata(getLastMetadata().orElse(null));
 
@@ -668,7 +668,9 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
   @Override
   protected void clearStorageDirty() throws IOException {
-    startupMetadata.clearDirty();
+    if (status != STATUS.INTERNAL_ERROR) {
+      startupMetadata.clearDirty();
+    }
   }
 
   @Override

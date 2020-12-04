@@ -120,61 +120,42 @@ public class OAtomicOperationsManager {
 
     currentOperation.set(operation);
 
-    checkReadOnlyConditions(operation);
-
     return operation;
-  }
-
-  private void checkReadOnlyConditions(OAtomicOperation operation) {
-    try {
-      storage.checkReadOnlyConditions();
-    } catch (RuntimeException | Error e) {
-      final Iterator<String> lockedObjectIterator = operation.lockedObjects().iterator();
-
-      while (lockedObjectIterator.hasNext()) {
-        final String lockedObject = lockedObjectIterator.next();
-        lockedObjectIterator.remove();
-
-        lockManager.releaseLock(this, lockedObject, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
-      }
-
-      throw e;
-    }
   }
 
   public <T> T calculateInsideAtomicOperation(final byte[] metadata, final TxFunction<T> function)
       throws IOException {
-    boolean rollback = false;
+    Throwable error = null;
     final OAtomicOperation atomicOperation = startAtomicOperation(metadata);
     try {
       return function.accept(atomicOperation);
     } catch (Exception e) {
-      rollback = true;
+      error = e;
       throw OException.wrapException(
           new OStorageException(
               "Exception during execution of atomic operation inside of storage "
                   + storage.getName()),
           e);
     } finally {
-      endAtomicOperation(rollback);
+      endAtomicOperation(error);
     }
   }
 
   public void executeInsideAtomicOperation(final byte[] metadata, final TxConsumer consumer)
       throws IOException {
-    boolean rollback = false;
+    Throwable error = null;
     final OAtomicOperation atomicOperation = startAtomicOperation(metadata);
     try {
       consumer.accept(atomicOperation);
     } catch (Exception e) {
-      rollback = true;
+      error = e;
       throw OException.wrapException(
           new OStorageException(
               "Exception during execution of atomic operation inside of storage "
                   + storage.getName()),
           e);
     } finally {
-      endAtomicOperation(rollback);
+      endAtomicOperation(error);
     }
   }
 
@@ -261,7 +242,6 @@ public class OAtomicOperationsManager {
   private void startComponentOperation(
       final OAtomicOperation atomicOperation, final String lockName) {
     acquireExclusiveLockTillOperationComplete(atomicOperation, lockName);
-    checkReadOnlyConditions(atomicOperation);
     atomicOperation.incrementComponentOperations();
 
     componentOperationsFreezer.startOperation();
@@ -288,7 +268,6 @@ public class OAtomicOperationsManager {
       return false;
     }
 
-    checkReadOnlyConditions(atomicOperation);
     atomicOperation.incrementComponentOperations();
     return true;
   }
@@ -304,9 +283,7 @@ public class OAtomicOperationsManager {
     } catch (OLockException e) {
       return false;
     }
-
     operation.addLockedObject(lockName);
-    checkReadOnlyConditions(operation);
 
     componentOperationsFreezer.startOperation();
     return true;
@@ -332,12 +309,8 @@ public class OAtomicOperationsManager {
     return currentOperation.get();
   }
 
-  /**
-   * Ends the current atomic operation on this manager.
-   *
-   * @param rollback {@code true} to indicate a rollback, {@code false} for successful commit.
-   */
-  public void endAtomicOperation(boolean rollback) throws IOException {
+  /** Ends the current atomic operation on this manager. */
+  public void endAtomicOperation(final Throwable error) throws IOException {
     final OAtomicOperation operation = currentOperation.get();
 
     if (operation == null) {
@@ -346,7 +319,9 @@ public class OAtomicOperationsManager {
     }
 
     try {
-      if (rollback) {
+      storage.moveToErrorStateIfNeeded(error);
+
+      if (error != null) {
         operation.rollbackInProgress();
       }
 
@@ -361,7 +336,7 @@ public class OAtomicOperationsManager {
         }
 
         final long operationId = operation.getOperationUnitId();
-        if (rollback) {
+        if (error != null) {
           atomicOperationsTable.rollbackOperation(operationId);
         } else {
           atomicOperationsTable.commitOperation(operationId);
@@ -383,13 +358,6 @@ public class OAtomicOperationsManager {
         }
       }
 
-    } catch (Error e) {
-      final OAbstractPaginatedStorage st = storage;
-      if (st != null) {
-        st.handleJVMError(e);
-      }
-
-      throw e;
     } finally {
       atomicOperationsFreezer.endOperation();
     }
@@ -417,6 +385,8 @@ public class OAtomicOperationsManager {
    */
   public void acquireExclusiveLockTillOperationComplete(
       OAtomicOperation operation, String lockName) {
+    storage.checkErrorState();
+
     if (operation.containsInLockedObjects(lockName)) {
       return;
     }
@@ -438,6 +408,7 @@ public class OAtomicOperationsManager {
   public void acquireReadLock(ODurableComponent durableComponent) {
     assert durableComponent.getLockName() != null;
 
+    storage.checkErrorState();
     lockManager.acquireLock(durableComponent.getLockName(), OOneEntryPerKeyLockManager.LOCK.SHARED);
   }
 

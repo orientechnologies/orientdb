@@ -56,7 +56,8 @@ public interface OStorage extends OBackupable, OSharedContainer, OStorageInfo {
     OPEN,
     CLOSING,
     @Deprecated
-    OPENING
+    OPENING,
+    INTERNAL_ERROR
   }
 
   enum LOCKING_STRATEGY {
@@ -113,9 +114,6 @@ public interface OStorage extends OBackupable, OSharedContainer, OStorageInfo {
 
   // TX OPERATIONS
   List<ORecordOperation> commit(OTransactionInternal iTx);
-
-  // TX OPERATIONS
-  void rollback(OTransactionInternal iTx);
 
   Set<String> getClusterNames();
 

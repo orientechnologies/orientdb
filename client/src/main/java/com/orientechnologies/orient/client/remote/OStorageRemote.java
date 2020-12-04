@@ -1374,6 +1374,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     return null;
   }
 
+  @Override
   public void rollback(OTransactionInternal iTx) {
     try {
       if (((OTransactionOptimistic) iTx).isAlreadyCleared()
