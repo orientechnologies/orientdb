@@ -56,7 +56,7 @@ public class OStorageRemoteSession {
    */
   private int stickToSession = 0;
 
-  protected String debugLastHost;
+  protected String currentUrl;
 
   public OStorageRemoteSession(final int sessionId) {
     this.uniqueClientSessionId = sessionId;
@@ -157,6 +157,10 @@ public class OStorageRemoteSession {
   }
 
   public String getDebugLastHost() {
-    return debugLastHost;
+    return currentUrl;
+  }
+
+  public String getCurrentUrl() {
+    return currentUrl;
   }
 }

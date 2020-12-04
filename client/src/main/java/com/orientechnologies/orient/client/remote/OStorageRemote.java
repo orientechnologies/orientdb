@@ -1921,7 +1921,13 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       pos = -1;
 
     final String url = pos > -1 ? iUrl.substring(0, pos) : iUrl;
-    return serverURLs.removeAndGet(url);
+    String newUrl = serverURLs.removeAndGet(url);
+    OStorageRemoteSession session = getCurrentSession();
+    if (session != null) {
+      session.currentUrl = newUrl;
+      session.serverURLIndex = 0;
+    }
+    return newUrl;
   }
 
   /** Parse the URLs. Multiple URLs must be separated by semicolon (;) */

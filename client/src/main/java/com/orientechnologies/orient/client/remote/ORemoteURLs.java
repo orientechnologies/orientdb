@@ -224,7 +224,7 @@ public class ORemoteURLs {
     final String serverURL = serverURLs.get(this.nextServerToConnect) + "/" + name;
     if (session != null) {
       session.serverURLIndex = this.nextServerToConnect;
-      session.debugLastHost = serverURL;
+      session.currentUrl = serverURL;
     }
 
     return serverURL;
@@ -235,6 +235,9 @@ public class ORemoteURLs {
       OStorageRemoteSession session,
       OContextConfiguration contextConfiguration,
       String name) {
+    if (session != null && session.getCurrentUrl() != null) {
+      return session.getCurrentUrl();
+    }
     if (serverURLs.isEmpty()) {
       reloadOriginalURLs();
       if (serverURLs.isEmpty())
@@ -257,7 +260,7 @@ public class ORemoteURLs {
 
     if (session != null) {
       session.serverURLIndex = serverURLIndex;
-      session.debugLastHost = serverURL;
+      session.currentUrl = serverURL;
     }
 
     return serverURL;
