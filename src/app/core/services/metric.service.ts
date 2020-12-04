@@ -89,6 +89,23 @@ class MetricService {
   }
 
   calculateGauges(stats) {
+
+    if (!stats["gauges"]) {
+      return {
+            "cpuValue":0,
+            "cpuPercent":0,
+            "maxDiskCache":0,
+            "totalDiskCache":0,
+            "diskCachePercent":0,
+            "maxMemory":0,
+            "usedMemoy":0,
+            "ramPercent":"0",
+            "totalDisk":0,
+            "usableDisk":0,
+            "diskPercent":0
+          };
+    }
+
     // CPU
 
     let cpuValue = parseFloat(stats["gauges"]["server.runtime.cpu"].value);
