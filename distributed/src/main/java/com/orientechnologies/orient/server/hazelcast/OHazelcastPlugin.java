@@ -78,7 +78,6 @@ import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl;
 import com.orientechnologies.orient.server.distributed.impl.task.OAbstractSyncDatabaseTask;
-import com.orientechnologies.orient.server.distributed.impl.task.ODropDatabaseTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OUpdateDatabaseConfigurationTask;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import java.io.FileNotFoundException;
@@ -1296,27 +1295,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     }
   }
 
-  @Override
-  public void onDrop(final ODatabaseInternal iDatabase) {
-    if (!isRelatedToLocalServer(iDatabase)) return;
-
+  public void removeDbFromClusterMetadata(final ODatabaseInternal iDatabase) {
     final String dbName = iDatabase.getName();
-
-    ODistributedServerLog.info(
-        this, getLocalNodeName(), null, DIRECTION.NONE, "Dropping database %s...", dbName);
-
-    if (!((ODatabaseDocumentInternal) iDatabase).isLocalEnv()) {
-      executeInDistributedDatabaseLock(
-          dbName,
-          20000,
-          null,
-          (cfg) -> {
-            distributeDrop(dbName);
-            return null;
-          });
-    }
-
-    super.onDrop(iDatabase);
 
     if (configurationMap != null) {
       configurationMap.remove(OHazelcastPlugin.CONFIG_DBSTATUS_PREFIX + nodeName + "." + dbName);
@@ -1336,8 +1316,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     }
   }
 
-  private void distributeDrop(final String dbName) {
-    // DROP THE DATABASE ON ALL THE SERVERS
+  // Remove the given distributed db from the current server's configuration and
+  // return the name of all other servers that also have the db.
+  public Set<String> dropDbFromConfiguration(final String dbName) {
     final ODistributedConfiguration dCfg = getDatabaseConfiguration(dbName);
 
     final Set<String> servers = dCfg.getAllConfiguredServers();
@@ -1364,17 +1345,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         }
       }
     }
-
-    if (!servers.isEmpty() && messageService.getDatabase(dbName) != null) {
-      sendRequest(
-          dbName,
-          null,
-          servers,
-          new ODropDatabaseTask(),
-          getNextMessageIdCounter(),
-          ODistributedRequest.EXECUTION_MODE.RESPONSE,
-          null);
-    }
+    return servers;
   }
 
   public ODocument getNodeConfigurationByUuid(final String iNodeId, final boolean useCache) {

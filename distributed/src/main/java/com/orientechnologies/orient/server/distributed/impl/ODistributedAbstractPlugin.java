@@ -73,12 +73,7 @@ import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.conflict.ODistributedConflictResolverFactory;
-import com.orientechnologies.orient.server.distributed.impl.task.ONewDeltaTaskResponse;
-import com.orientechnologies.orient.server.distributed.impl.task.ORemoteTaskFactoryManagerImpl;
-import com.orientechnologies.orient.server.distributed.impl.task.ORestartServerTask;
-import com.orientechnologies.orient.server.distributed.impl.task.OStopServerTask;
-import com.orientechnologies.orient.server.distributed.impl.task.OSyncDatabaseNewDeltaTask;
-import com.orientechnologies.orient.server.distributed.impl.task.OSyncDatabaseTask;
+import com.orientechnologies.orient.server.distributed.impl.task.*;
 import com.orientechnologies.orient.server.distributed.sql.OCommandExecutorSQLHASyncCluster;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
@@ -392,9 +387,47 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   @Override
   public void onDrop(final ODatabaseInternal iDatabase) {
+    if (!isRelatedToLocalServer(iDatabase)) return;
+
+    final String dbName = iDatabase.getName();
+
+    ODistributedServerLog.info(
+        this, getLocalNodeName(), null, DIRECTION.NONE, "Dropping database %s...", dbName);
+
+    if (!((ODatabaseDocumentInternal) iDatabase).isLocalEnv()) {
+      executeInDistributedDatabaseLock(
+          dbName,
+          20000,
+          null,
+          (cfg) -> {
+            dropOnAllServers(dbName);
+            return null;
+          });
+    }
+
     final ODistributedMessageService msgService = getMessageService();
     if (msgService != null) {
       msgService.unregisterDatabase(iDatabase.getName());
+    }
+
+    removeDbFromClusterMetadata(iDatabase);
+  }
+
+  public abstract void removeDbFromClusterMetadata(final ODatabaseInternal iDatabase);
+
+  public abstract Set<String> dropDbFromConfiguration(final String dbName);
+
+  private void dropOnAllServers(final String dbName) {
+    Set<String> servers = dropDbFromConfiguration(dbName);
+    if (!servers.isEmpty() && messageService.getDatabase(dbName) != null) {
+      sendRequest(
+          dbName,
+          null,
+          servers,
+          new ODropDatabaseTask(),
+          getNextMessageIdCounter(),
+          ODistributedRequest.EXECUTION_MODE.RESPONSE,
+          null);
     }
   }
 
