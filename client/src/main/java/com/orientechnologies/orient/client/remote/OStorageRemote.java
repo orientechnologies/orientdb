@@ -2178,7 +2178,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   protected String getServerURFromList(
       final boolean iNextAvailable, OStorageRemoteSession session) {
     String serverURL = null;
-    if (session != null )  {
+    if (session != null) {
       serverURL = session.getCurrentUrl();
     }
     if (serverURL != null) {
