@@ -9,6 +9,8 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -18,6 +20,8 @@ public class OCreateDatabaseStatement extends OSimpleExecServerStatement {
   protected OIdentifier type;
   protected boolean ifNotExists = false;
   protected OJson config;
+
+  List<ODatabaseUserData> users = new ArrayList<>();
 
   public OCreateDatabaseStatement(int id) {
     super(id);
@@ -57,6 +61,14 @@ public class OCreateDatabaseStatement extends OSimpleExecServerStatement {
             "Could not create database " + type.getStringValue() + ":" + e.getMessage());
       }
     }
+    // TODO create users!
+    if (!users.isEmpty()) {
+      try (ODatabaseDocumentInternal db = server.openNoAuthorization(name.getStringValue())) {
+        for (ODatabaseUserData user : users) {
+          user.executeCreate(db, ctx);
+        }
+      }
+    }
 
     OInternalResultSet rs = new OInternalResultSet();
     rs.add(result);
@@ -85,6 +97,19 @@ public class OCreateDatabaseStatement extends OSimpleExecServerStatement {
     type.toString(params, builder);
     if (ifNotExists) {
       builder.append(" IF NOT EXISTS");
+    }
+
+    if (!users.isEmpty()) {
+      builder.append(" USERS (");
+      boolean first = true;
+      for (ODatabaseUserData user : users) {
+        if (!first) {
+          builder.append(", ");
+        }
+        user.toString(params, builder);
+        first = false;
+      }
+      builder.append(")");
     }
     if (config != null) {
       builder.append(" ");

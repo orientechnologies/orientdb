@@ -370,8 +370,7 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
         doClose(true);
       }
 
-      final OAbstractPaginatedStorage storageLocalAbstract =
-          (OAbstractPaginatedStorage) storage.getUnderlying();
+      final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) storage;
       if (storageLocalAbstract instanceof OLocalPaginatedStorage) {
         OLocalPaginatedStorage localStorage = (OLocalPaginatedStorage) storageLocalAbstract;
         File storagePath = localStorage.getStoragePath().toFile();
@@ -541,8 +540,7 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
       close();
     }
 
-    final OAbstractPaginatedStorage storageLocalAbstract =
-        (OAbstractPaginatedStorage) storage.getUnderlying();
+    final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) storage;
     if (storageLocalAbstract instanceof OLocalPaginatedStorage) {
       OLocalPaginatedStorage localPaginatedStorage = (OLocalPaginatedStorage) storageLocalAbstract;
       deleteIndexFolder(localPaginatedStorage.getStoragePath().toFile());

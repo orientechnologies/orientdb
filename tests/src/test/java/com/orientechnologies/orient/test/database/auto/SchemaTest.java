@@ -128,7 +128,6 @@ public class SchemaTest extends DocumentDBBaseTest {
     }
   }
 
-
   @Test(dependsOnMethods = "createSchema")
   public void checkTotalRecords() {
 

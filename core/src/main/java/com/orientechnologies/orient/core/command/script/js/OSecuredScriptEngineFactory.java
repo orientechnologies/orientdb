@@ -6,12 +6,12 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
 import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
 
-public class ONashornScriptEngineFactory extends OSecuredScriptFactory {
+public class OSecuredScriptEngineFactory extends OSecuredScriptFactory {
 
-  private NashornScriptEngineFactory engineFactory;
+  private ScriptEngineFactory engineFactory;
 
-  public ONashornScriptEngineFactory(ScriptEngineFactory engineFactory) {
-    this.engineFactory = (NashornScriptEngineFactory) engineFactory;
+  public OSecuredScriptEngineFactory(ScriptEngineFactory engineFactory) {
+    this.engineFactory = engineFactory;
   }
 
   @Override
@@ -71,6 +71,9 @@ public class ONashornScriptEngineFactory extends OSecuredScriptFactory {
 
   @Override
   public ScriptEngine getScriptEngine() {
-    return engineFactory.getScriptEngine(new ONashornClassFilter(this));
+    if (engineFactory instanceof NashornScriptEngineFactory)
+      return ((NashornScriptEngineFactory) engineFactory)
+          .getScriptEngine(new OSecuredClassFilter(this));
+    else return engineFactory.getScriptEngine();
   }
 }

@@ -171,7 +171,7 @@ public final class OIndexes {
             valueContainerAlgorithm,
             metadata,
             version,
-            ((OAbstractPaginatedStorage) storage.getUnderlying()).getAtomicOperationsManager());
+            ((OAbstractPaginatedStorage) storage).getAtomicOperationsManager());
   }
 
   private static OIndexFactory findFactoryByAlgorithmAndType(String algorithm, String indexType) {

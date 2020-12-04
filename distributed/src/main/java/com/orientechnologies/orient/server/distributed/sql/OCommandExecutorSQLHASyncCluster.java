@@ -258,8 +258,7 @@ public class OCommandExecutorSQLHASyncCluster extends OCommandExecutorSQLAbstrac
 
       try {
 
-        final OAbstractPaginatedStorage stg =
-            (OAbstractPaginatedStorage) db.getStorage().getUnderlying();
+        final OAbstractPaginatedStorage stg = (OAbstractPaginatedStorage) db.getStorage();
         db.getLocalCache().invalidate();
         int clusterId = db.getClusterIdByName(clusterName);
         OClass klass = db.getMetadata().getSchema().getClassByClusterId(clusterId);

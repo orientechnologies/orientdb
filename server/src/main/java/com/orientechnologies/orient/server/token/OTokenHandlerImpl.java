@@ -262,7 +262,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
       OBinaryTokenPayloadImpl payload = new OBinaryTokenPayloadImpl();
       if (db != null) {
         payload.setDatabase(db.getName());
-        payload.setDatabaseType(db.getStorage().getUnderlying().getType());
+        payload.setDatabaseType(db.getStorage().getType());
       }
       if (data.serverUser) {
         payload.setServerUser(true);

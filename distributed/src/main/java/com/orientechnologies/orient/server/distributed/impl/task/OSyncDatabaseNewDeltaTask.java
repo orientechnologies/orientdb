@@ -53,8 +53,7 @@ public class OSyncDatabaseNewDeltaTask extends OAbstractReplicatedTask {
     List<OTransactionId> missing = db.missingTransactions(lastState);
     if (!missing.isEmpty()) {
       Optional<OBackgroundNewDelta> delta =
-          ((OAbstractPaginatedStorage) database.getStorage().getUnderlying())
-              .extractTransactionsFromWal(missing);
+          ((OAbstractPaginatedStorage) database.getStorage()).extractTransactionsFromWal(missing);
       if (delta.isPresent()) {
         return new ONewDeltaTaskResponse(
             new ODistributedDatabaseChunk(delta.get(), CHUNK_MAX_SIZE));

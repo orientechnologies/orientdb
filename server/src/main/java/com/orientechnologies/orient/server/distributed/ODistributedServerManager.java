@@ -150,6 +150,7 @@ public interface ODistributedServerManager {
 
   void setDistributedStrategy(ODistributedStrategy streatgy);
 
+  // This is always used with deployToCluster=true!
   boolean updateCachedDatabaseConfiguration(
       String iDatabaseName, OModifiableDistributedConfiguration cfg, boolean iDeployToCluster);
 

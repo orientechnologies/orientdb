@@ -99,6 +99,7 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
   }
 
   @Override
+  @Deprecated
   public OStorage getUnderlying() {
     return this;
   }

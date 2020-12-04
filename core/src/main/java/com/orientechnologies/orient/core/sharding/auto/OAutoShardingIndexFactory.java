@@ -104,7 +104,7 @@ public class OAutoShardingIndexFactory implements OIndexFactory {
           indexType,
           valueContainerAlgorithm,
           metadata,
-          (OAbstractPaginatedStorage) storage.getUnderlying(),
+          (OAbstractPaginatedStorage) storage,
           version);
 
     throw new OConfigurationException("Unsupported type: " + indexType);
@@ -178,7 +178,7 @@ public class OAutoShardingIndexFactory implements OIndexFactory {
         // DISTRIBUTED CASE: HANDLE IT AS FOR LOCAL
         indexEngine =
             new OAutoShardingIndexEngine(
-                name, indexId, (OAbstractPaginatedStorage) storage.getUnderlying(), version);
+                name, indexId, (OAbstractPaginatedStorage) storage, version);
         break;
       case "remote":
         // MANAGE REMOTE SHARDED INDEX TO CALL THE INTERESTED SERVER

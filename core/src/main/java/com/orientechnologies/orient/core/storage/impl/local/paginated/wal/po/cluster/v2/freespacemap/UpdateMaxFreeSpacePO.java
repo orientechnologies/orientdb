@@ -14,8 +14,7 @@ public final class UpdateMaxFreeSpacePO extends PageOperationRecord {
   private int newPageFreeSpace;
   private int pageIndex;
 
-  public UpdateMaxFreeSpacePO() {
-  }
+  public UpdateMaxFreeSpacePO() {}
 
   public UpdateMaxFreeSpacePO(int pageIndex, int oldPageFreeSpace, int newPageFreeSpace) {
     this.oldPageFreeSpace = oldPageFreeSpace;

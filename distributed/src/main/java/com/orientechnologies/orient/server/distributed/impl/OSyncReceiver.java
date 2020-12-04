@@ -25,6 +25,7 @@ public class OSyncReceiver implements Runnable {
   private final CountDownLatch started = new CountDownLatch(1);
   private PipedOutputStream output;
   private PipedInputStream inputStream;
+  private volatile boolean finished = false;
 
   public OSyncReceiver(
       ODistributedAbstractPlugin distributed,
@@ -71,7 +72,7 @@ public class OSyncReceiver implements Runnable {
       try {
 
         long fileSize = writeDatabaseChunk(1, chunk, output);
-        for (int chunkNum = 2; !chunk.last; chunkNum++) {
+        for (int chunkNum = 2; !chunk.last && !finished; chunkNum++) {
           final ODistributedResponse response =
               distributed.sendRequest(
                   databaseName,
@@ -181,5 +182,14 @@ public class OSyncReceiver implements Runnable {
 
   public CountDownLatch getDone() {
     return done;
+  }
+
+  public void close() {
+    try {
+      finished = true;
+      inputStream.close();
+    } catch (IOException e) {
+      // Ignore
+    }
   }
 }

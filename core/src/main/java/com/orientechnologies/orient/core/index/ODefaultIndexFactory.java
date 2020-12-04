@@ -124,7 +124,7 @@ public class ODefaultIndexFactory implements OIndexFactory {
         indexType,
         valueContainerAlgorithm,
         metadata,
-        (OAbstractPaginatedStorage) storage.getUnderlying(),
+        (OAbstractPaginatedStorage) storage,
         version,
         algorithm);
   }
@@ -225,7 +225,6 @@ public class ODefaultIndexFactory implements OIndexFactory {
     String storageType = storage.getType();
 
     if (storageType.equals("distributed")) {
-      storage = storage.getUnderlying();
       storageType = storage.getType();
     }
 

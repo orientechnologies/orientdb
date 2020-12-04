@@ -85,7 +85,7 @@ public class OCustomSQLFunctionPlugin extends OServerPluginAbstract {
 
   @Override
   public void startup() {
-    if (configuration.field("enabled")) {
+    if (Boolean.TRUE.equals(configuration.field("enabled"))) {
       List<Map<String, String>> functions = configuration.field("functions");
       for (Map<String, String> function : functions) {
         final String prefix = function.get("prefix");

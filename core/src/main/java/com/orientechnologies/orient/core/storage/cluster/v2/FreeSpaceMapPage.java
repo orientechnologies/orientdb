@@ -86,15 +86,13 @@ public final class FreeSpaceMapPage extends ODurablePage {
     for (int level = LEVELS; level > 0; level--) {
       final int prevValue = 0xFF & getByteValue(nodeOffset);
       if (prevValue == nodeValue) {
-        addPageOperation(
-            new UpdateMaxFreeSpacePO(pageIndex, oldFreeSpace, freeSpace));
+        addPageOperation(new UpdateMaxFreeSpacePO(pageIndex, oldFreeSpace, freeSpace));
         return 0xFF & getByteValue(nodeOffset(1, 0));
       }
 
       setByteValue(nodeOffset, (byte) nodeValue);
       if (level == 1) {
-        addPageOperation(
-            new UpdateMaxFreeSpacePO(pageIndex, oldFreeSpace, freeSpace));
+        addPageOperation(new UpdateMaxFreeSpacePO(pageIndex, oldFreeSpace, freeSpace));
         return nodeValue;
       }
 
@@ -120,7 +118,7 @@ public final class FreeSpaceMapPage extends ODurablePage {
       nodeOffset = nodeOffset(level - 1, nodeIndex);
     }
 
-    //unreachable
+    // unreachable
     assert false;
     return 0;
   }

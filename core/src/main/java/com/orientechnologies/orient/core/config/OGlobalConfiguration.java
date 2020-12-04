@@ -82,6 +82,9 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       Integer.class,
       20),
 
+  SCRIPT_POLYGLOT_USE_GRAAL(
+      "script.polyglot.useGraal", "Use GraalVM as polyglot engine", Boolean.class, true),
+
   // MEMORY
   MEMORY_USE_UNSAFE(
       "memory.useUnsafe",

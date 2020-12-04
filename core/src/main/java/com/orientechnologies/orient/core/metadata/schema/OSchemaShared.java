@@ -445,7 +445,7 @@ public abstract class OSchemaShared implements OCloseable {
         // by sql commands and we need to reload local replica
 
         if (iSave) {
-          if (database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage) {
+          if (database.getStorage() instanceof OAbstractPaginatedStorage) {
             saveInternal(database);
           } else {
             reload(database);
@@ -659,8 +659,7 @@ public abstract class OSchemaShared implements OCloseable {
 
       if (!hasGlobalProperties) {
         ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.instance().get();
-        if (database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage)
-          saveInternal(database);
+        if (database.getStorage() instanceof OAbstractPaginatedStorage) saveInternal(database);
       }
 
     } finally {

@@ -122,7 +122,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
       this.algorithm = algorithm;
       this.metadata = metadata;
       this.valueContainerAlgorithm = valueContainerAlgorithm;
-      this.storage = (OAbstractPaginatedStorage) storage.getUnderlying();
+      this.storage = (OAbstractPaginatedStorage) storage;
     } finally {
       releaseExclusiveLock();
     }

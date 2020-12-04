@@ -43,7 +43,7 @@ public class SBTreeV2CompositeKeyTest extends DatabaseAbstractTest {
             "localSBTreeCompositeKeyTest",
             ".sbt",
             ".nbt",
-            (OAbstractPaginatedStorage) database.getStorage().getUnderlying());
+            (OAbstractPaginatedStorage) database.getStorage());
     atomicOperationsManager.executeInsideAtomicOperation(
         null,
         atomicOperation ->

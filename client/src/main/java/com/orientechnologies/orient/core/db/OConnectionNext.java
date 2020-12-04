@@ -9,9 +9,8 @@ public class OConnectionNext {
   }
 
   public synchronized int next() {
-    if (next < limit) {
-      next++;
-    } else {
+    next++;
+    if (next >= limit) {
       next = 0;
     }
     return next;

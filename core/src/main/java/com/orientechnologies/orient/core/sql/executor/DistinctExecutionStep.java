@@ -2,6 +2,9 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
 import java.util.HashSet;
 import java.util.Map;
@@ -17,10 +20,19 @@ public class DistinctExecutionStep extends AbstractExecutionStep {
   private OResultSet lastResult = null;
   private OResult nextValue;
 
+  long maxElementsAllowed;
+
   private long cost = 0;
 
   public DistinctExecutionStep(OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
+    ODatabase db = ctx == null ? null : ctx.getDatabase();
+
+    maxElementsAllowed =
+        db == null
+            ? OGlobalConfiguration.QUERY_MAX_HEAP_ELEMENTS_ALLOWED_PER_OP.getValueAsLong()
+            : db.getConfiguration()
+                .getValueAsLong(OGlobalConfiguration.QUERY_MAX_HEAP_ELEMENTS_ALLOWED_PER_OP);
   }
 
   @Override
@@ -114,6 +126,15 @@ public class DistinctExecutionStep extends AbstractExecutionStep {
       }
     }
     pastItems.add(nextValue);
+    if (maxElementsAllowed > 0 && maxElementsAllowed < pastItems.size()) {
+      this.pastItems.clear();
+      throw new OCommandExecutionException(
+          "Limit of allowed elements for in-heap DISTINCT in a single query exceeded ("
+              + maxElementsAllowed
+              + ") . You can set "
+              + OGlobalConfiguration.QUERY_MAX_HEAP_ELEMENTS_ALLOWED_PER_OP.getKey()
+              + " to increase this limit");
+    }
   }
 
   private boolean alreadyVisited(OResult nextValue) {

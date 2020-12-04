@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
+import com.orientechnologies.orient.core.db.OSystemDatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -602,10 +603,11 @@ public class OSecurityShared implements OSecurityInternal {
       createOrUpdateOUserClass(session, identityClass, roleClass);
       createOrUpdateORestrictedClass(session);
 
-      // CREATE ROLES AND USERS
-      createDefaultRoles(session);
-
-      adminUser = createDefaultUsers(session);
+      if (!OSystemDatabase.SYSTEM_DB_NAME.equals(session.getName())) {
+        // CREATE ROLES AND USERS
+        createDefaultRoles(session);
+        adminUser = createDefaultUsers(session);
+      }
 
     } finally {
       skipRoleHasPredicateSecurityForClassUpdate = false;
