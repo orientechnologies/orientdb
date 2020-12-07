@@ -1526,21 +1526,30 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   @Override
   public final void onException(final Throwable e) {
-    status = STATUS.INTERNAL_ERROR;
-
+    stateLock.acquireWriteLock();
     try {
-      makeStorageDirty();
-    } catch (IOException ioException) {
-      // ignore
-    }
+      OLogManager.instance()
+          .errorStorage(
+              this,
+              "Error in data flush background thread, for storage %s ,"
+                  + "please restart database and send full stack trace inside of bug report",
+              e,
+              name);
 
-    OLogManager.instance()
-        .errorStorage(
-            this,
-            "Error in data flush background thread, for storage %s ,"
-                + "please restart database and send full stack trace inside of bug report",
-            e,
-            name);
+      if (status == STATUS.CLOSED) {
+        return;
+      }
+
+      status = STATUS.INTERNAL_ERROR;
+
+      try {
+        makeStorageDirty();
+      } catch (IOException ioException) {
+        // ignore
+      }
+    } finally {
+      stateLock.releaseWriteLock();
+    }
   }
 
   public Optional<OBackgroundNewDelta> extractTransactionsFromWal(
@@ -3319,7 +3328,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         checkOpenness();
         checkIfThreadIsBlocked();
 
-        if(readOperation) {
+        if (readOperation) {
           makeStorageDirty();
         }
 
@@ -3339,8 +3348,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private <T> T doCallIndexEngine(
-      final int indexId, final OIndexEngineCallback<T> callback)
+  private <T> T doCallIndexEngine(final int indexId, final OIndexEngineCallback<T> callback)
       throws OInvalidIndexEngineIdException {
     checkIndexId(indexId);
 
@@ -4359,22 +4367,31 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   /** @inheritDoc */
   @Override
   public final void pageIsBroken(final String fileName, final long pageIndex) {
-    status = STATUS.INTERNAL_ERROR;
-
+    stateLock.acquireWriteLock();
     try {
-      makeStorageDirty();
-    } catch (final IOException e) {
-      // ignore
-    }
+      OLogManager.instance()
+          .errorStorage(
+              this,
+              "In storage %s file with name '%s' has broken page under the index %d",
+              null,
+              name,
+              fileName,
+              pageIndex);
 
-    OLogManager.instance()
-        .errorStorage(
-            this,
-            "In storage %s file with name '%s' has broken page under the index %d",
-            null,
-            name,
-            fileName,
-            pageIndex);
+      if (status == STATUS.CLOSED) {
+        return;
+      }
+
+      status = STATUS.INTERNAL_ERROR;
+
+      try {
+        makeStorageDirty();
+      } catch (final IOException e) {
+        // ignore
+      }
+    } finally {
+      stateLock.releaseWriteLock();
+    }
   }
 
   @Override
@@ -5301,8 +5318,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     if (OLogManager.instance().isDebugEnabled()) {
       OLogManager.instance()
-          .debug(
-              this, "Created record %s v.%s size=%d bytes", rid, recordVersion, content.length);
+          .debug(this, "Created record %s v.%s size=%d bytes", rid, recordVersion, content.length);
     }
 
     recordCreated.increment();
