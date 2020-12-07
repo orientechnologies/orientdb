@@ -328,19 +328,37 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   @Override
   public void shutdown() {
     if (!enabled) return;
+    OSignalHandler signalHandler = Orient.instance().getSignalHandler();
+    if (signalHandler != null) signalHandler.unregisterListener(signalListener);
 
-    if (healthCheckerTask != null) healthCheckerTask.cancel();
-    if (haStatsTask != null) haStatsTask.cancel();
+    for (OServerNetworkListener nl : serverInstance.getNetworkListeners())
+      nl.unregisterBeforeConnectNetworkEventListener(this);
 
-    // CLOSE ALL CONNECTIONS TO THE SERVERS
-    remoteServerManager.closeAll();
+    OLogManager.instance().warn(this, "Shutting down node '%s'...", nodeName);
+    setNodeStatus(NODE_STATUS.SHUTTINGDOWN);
 
-    if (messageService != null) messageService.shutdown();
+    prepareHazelcastPluginShutdown();
+    try {
+      if (healthCheckerTask != null) healthCheckerTask.cancel();
+      if (haStatsTask != null) haStatsTask.cancel();
 
-    setNodeStatus(NODE_STATUS.OFFLINE);
+      // CLOSE ALL CONNECTIONS TO THE SERVERS
+      remoteServerManager.closeAll();
 
-    Orient.instance().removeDbLifecycleListener(this);
+      if (messageService != null) messageService.shutdown();
+
+      setNodeStatus(NODE_STATUS.OFFLINE);
+
+      Orient.instance().removeDbLifecycleListener(this);
+    } catch (HazelcastInstanceNotActiveException e) {
+      // HZ IS ALREADY DOWN, IGNORE IT
+    }
+    hazelcastPluginShutdown();
   }
+
+  protected abstract void hazelcastPluginShutdown();
+
+  protected abstract void prepareHazelcastPluginShutdown();
 
   /** Auto register myself as hook. */
   @Override

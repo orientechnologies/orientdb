@@ -46,7 +46,6 @@ import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OCallableNoParamNoReturn;
 import com.orientechnologies.common.util.OCallableUtils;
 import com.orientechnologies.common.util.OUncaughtExceptionHandler;
-import com.orientechnologies.orient.core.OSignalHandler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -75,7 +74,6 @@ import com.orientechnologies.orient.server.distributed.impl.ODistributedAbstract
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl;
 import com.orientechnologies.orient.server.distributed.impl.task.OAbstractSyncDatabaseTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OUpdateDatabaseConfigurationTask;
-import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
@@ -503,18 +501,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     return distributedLockManager;
   }
 
-  @Override
-  public void shutdown() {
-    if (!enabled) return;
-    OSignalHandler signalHandler = Orient.instance().getSignalHandler();
-    if (signalHandler != null) signalHandler.unregisterListener(signalListener);
-
-    for (OServerNetworkListener nl : serverInstance.getNetworkListeners())
-      nl.unregisterBeforeConnectNetworkEventListener(this);
-
-    OLogManager.instance().warn(this, "Shutting down node '%s'...", nodeName);
-    setNodeStatus(NODE_STATUS.SHUTTINGDOWN);
-
+  protected void prepareHazelcastPluginShutdown() {
     try {
       final Set<String> databases = new HashSet<String>();
 
@@ -536,12 +523,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     }
 
     if (publishLocalNodeConfigurationTask != null) publishLocalNodeConfigurationTask.cancel();
+  }
 
-    try {
-      super.shutdown();
-    } catch (HazelcastInstanceNotActiveException e) {
-      // HZ IS ALREADY DOWN, IGNORE IT
-    }
+  public void hazelcastPluginShutdown() {
     activeNodes.clear();
     activeNodesNamesByUuid.clear();
     activeNodesUuidByName.clear();
