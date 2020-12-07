@@ -142,18 +142,20 @@ public class OrientDBRemote implements OrientDBInternal {
   }
 
   @Override
-  public synchronized ODatabaseDocumentInternal open(
+  public ODatabaseDocumentInternal open(
       String name, String user, String password, OrientDBConfig config) {
     checkOpen();
     OrientDBConfig resolvedConfig = solveConfig(config);
     try {
       OStorageRemote storage;
-      storage = storages.get(name);
-      if (storage == null) {
-        storage =
-            new OStorageRemote(
-                hosts, name, this, "rw", connectionManager, resolvedConfig, connectionNext);
-        storages.put(name, storage);
+      synchronized (this) {
+        storage = storages.get(name);
+        if (storage == null) {
+          storage =
+              new OStorageRemote(
+                  hosts, name, this, "rw", connectionManager, resolvedConfig, connectionNext);
+          storages.put(name, storage);
+        }
       }
       ODatabaseDocumentRemote db = new ODatabaseDocumentRemote(storage);
       db.internalOpen(user, password, resolvedConfig, getOrCreateSharedContext(storage));
@@ -206,24 +208,27 @@ public class OrientDBRemote implements OrientDBInternal {
     executeServerStatement(create, user, password, parameters);
   }
 
-  public synchronized ODatabaseDocumentRemotePooled poolOpen(
+  public ODatabaseDocumentRemotePooled poolOpen(
       String name, String user, String password, ODatabasePoolInternal pool) {
-    OStorageRemote storage = storages.get(name);
-    if (storage == null) {
-      try {
-        storage =
-            new OStorageRemote(
-                hosts,
-                name,
-                this,
-                "rw",
-                connectionManager,
-                solveConfig(pool.getConfig()),
-                connectionNext);
-        storages.put(name, storage);
-      } catch (Exception e) {
-        throw OException.wrapException(
-            new ODatabaseException("Cannot open database '" + name + "'"), e);
+    OStorageRemote storage;
+    synchronized (this) {
+      storage = storages.get(name);
+      if (storage == null) {
+        try {
+          storage =
+              new OStorageRemote(
+                  hosts,
+                  name,
+                  this,
+                  "rw",
+                  connectionManager,
+                  solveConfig(pool.getConfig()),
+                  connectionNext);
+          storages.put(name, storage);
+        } catch (Exception e) {
+          throw OException.wrapException(
+              new ODatabaseException("Cannot open database '" + name + "'"), e);
+        }
       }
     }
     ODatabaseDocumentRemotePooled db = new ODatabaseDocumentRemotePooled(pool, storage);
