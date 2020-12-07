@@ -235,7 +235,7 @@ public class ORemoteURLs {
       OStorageRemoteSession session,
       OContextConfiguration contextConfiguration,
       String name) {
-    if (session != null && session.getCurrentUrl() != null) {
+    if (session != null && session.getCurrentUrl() != null && !iNextAvailable) {
       return session.getCurrentUrl();
     }
     if (serverURLs.isEmpty()) {
