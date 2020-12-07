@@ -69,7 +69,7 @@ public class OMemory {
                   + maxCacheSize
                   + " bytes) is larger than the available physical memory size "
                   + "("
-                  + physicalMemory
+                  + physicalMemory.memoryLimit
                   + " bytes). That may cause out of memory errors, please tune the configuration up. Use the "
                   + "-Xmx JVM option to lower the JVM maximum heap memory size or storage.diskCache.bufferSize OrientDB option to "
                   + "lower memory requirements of the cache.");
