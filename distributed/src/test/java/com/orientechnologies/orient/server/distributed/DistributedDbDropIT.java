@@ -15,7 +15,7 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OStorageDoesNotExistException;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -43,8 +43,8 @@ public class DistributedDbDropIT extends AbstractServerClusterTxTest {
       try {
         serverInstance.get(i).getServerInstance().openDatabase(getDatabaseName());
         Assert.fail("The database was not deleted on server " + i);
-      } catch (ODatabaseException e) {
-        Assert.assertTrue(e.getCause().getMessage().contains("it does not exist"));
+      } catch (OStorageDoesNotExistException e) {
+        // ignore
       }
     }
   }
