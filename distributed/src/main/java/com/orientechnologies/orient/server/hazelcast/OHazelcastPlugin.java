@@ -38,7 +38,6 @@ import com.hazelcast.core.MembershipEvent;
 import com.hazelcast.core.MembershipListener;
 import com.hazelcast.spi.exception.RetryableHazelcastException;
 import com.orientechnologies.common.concur.OOfflineNodeException;
-import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -55,10 +54,8 @@ import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OSystemDatabase;
-import com.orientechnologies.orient.core.db.OrientDBDistributed;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentAbstract;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -74,7 +71,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedStartupException;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl;
 import com.orientechnologies.orient.server.distributed.impl.task.OAbstractSyncDatabaseTask;
@@ -258,7 +254,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     }
 
     // CONNECTS TO ALL THE AVAILABLE NODES
-    for (String m : activeNodes.keySet()) if (!m.equals(nodeName)) getRemoteServer(m);
+    connectToAllNodes(activeNodes.keySet());
 
     publishLocalNodeConfiguration();
 
@@ -589,67 +585,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     OServer.unregisterServerInstance(getLocalNodeName());
   }
 
-  public ORemoteServerController getRemoteServer(final String rNodeName) throws IOException {
-    if (rNodeName == null) throw new IllegalArgumentException("Server name is NULL");
-
-    // TODO: check if it's possible to bypass remote call
-    //    if (rNodeName.equalsIgnoreCase(getLocalNodeName()))
-    //      throw new IllegalArgumentException("Cannot send remote message to the local server");
-
-    ORemoteServerController remoteServer = remoteServerManager.getRemoteServer(rNodeName);
-    if (remoteServer == null) {
-      Member member = getClusterMemberByName(rNodeName);
-
-      for (int retry = 0; retry < 20; ++retry) {
-        ODocument cfg = getNodeConfigurationByUuid(member.getUuid(), false);
-        if (cfg == null || cfg.field("listeners") == null) {
-          try {
-            Thread.sleep(100);
-            member = getClusterMemberByName(rNodeName);
-            continue;
-
-          } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw OException.wrapException(
-                new ODistributedException("Cannot find node '" + rNodeName + "'"), e);
-          }
-        }
-
-        final String url = ODistributedAbstractPlugin.getListeningBinaryAddress(cfg);
-
-        if (url == null) {
-          closeRemoteServer(rNodeName);
-          throw new ODatabaseException(
-              "Cannot connect to a remote node because the url was not found");
-        }
-
-        final String userPassword = cfg.field("user_replicator");
-
-        if (userPassword != null) {
-          remoteServer =
-              remoteServerManager.connectRemoteServer(
-                  rNodeName, url, REPLICATOR_USER, userPassword);
-          break;
-        }
-
-        // RETRY TO GET USR+PASSWORD IN A WHILE
-        try {
-          Thread.sleep(100);
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-          throw OException.wrapException(
-              new OInterruptedException("Cannot connect to remote server " + rNodeName), e);
-        }
-      }
-    }
-
-    if (remoteServer == null)
-      throw new ODistributedException("Cannot find node '" + rNodeName + "'");
-
-    return remoteServer;
-  }
-
-  private Member getClusterMemberByName(final String rNodeName) {
+  protected Member getClusterMemberByName(final String rNodeName) {
     Member member = activeNodes.get(rNodeName);
     if (member == null) {
       // SYNC PROBLEMS? TRY TO RETRIEVE THE SERVER INFORMATION FROM THE CLUSTER MAP
@@ -1721,41 +1657,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
       activeNodesNamesByUuid.put(member.getUuid(), joinedNodeName);
       activeNodesUuidByName.put(joinedNodeName, member.getUuid());
-      ORemoteServerController network = null;
-      try {
-        network = getRemoteServer(joinedNodeName);
-      } catch (IOException e) {
-        ODistributedServerLog.error(
-            this,
-            nodeName,
-            joinedNodeName,
-            DIRECTION.OUT,
-            "Error on connecting to node %s",
-            joinedNodeName);
-      }
-      OrientDBDistributed distributed = (OrientDBDistributed) serverInstance.getDatabases();
 
-      ODistributedServerLog.info(
-          this,
-          nodeName,
-          getNodeName(member, true),
-          DIRECTION.IN,
-          "Added node configuration id=%s name=%s, now %d nodes are configured",
-          member,
-          getNodeName(member, true),
-          activeNodes.size());
-
-      // NOTIFY NODE WAS ADDED SUCCESSFULLY
-      for (ODistributedLifecycleListener l : listeners) l.onNodeJoined(joinedNodeName);
-
-      // FORCE THE ALIGNMENT FOR ALL THE ONLINE DATABASES AFTER THE JOIN ONLY IF AUTO-DEPLOY IS SET
-      for (String db : messageService.getDatabases()) {
-        if (getDatabaseConfiguration(db).isAutoDeploy()
-            && getDatabaseStatus(joinedNodeName, db) == DB_STATUS.ONLINE) {
-          setDatabaseStatus(joinedNodeName, db, DB_STATUS.NOT_AVAILABLE);
-        }
-      }
-      dumpServersStatus();
+      onNodeJoined(joinedNodeName, member);
     }
   }
 

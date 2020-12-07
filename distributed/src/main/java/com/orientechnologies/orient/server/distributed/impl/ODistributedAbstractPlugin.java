@@ -2721,4 +2721,107 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
           this, nodeName, null, DIRECTION.NONE, "Error on printing HA stats", e);
     }
   }
+
+  public ORemoteServerController getRemoteServer(final String rNodeName) throws IOException {
+    if (rNodeName == null) throw new IllegalArgumentException("Server name is NULL");
+
+    // TODO: check if it's possible to bypass remote call
+    //    if (rNodeName.equalsIgnoreCase(getLocalNodeName()))
+    //      throw new IllegalArgumentException("Cannot send remote message to the local server");
+
+    ORemoteServerController remoteServer = remoteServerManager.getRemoteServer(rNodeName);
+    if (remoteServer == null) {
+      Member member = getClusterMemberByName(rNodeName);
+
+      for (int retry = 0; retry < 20; ++retry) {
+        ODocument cfg = getNodeConfigurationByUuid(member.getUuid(), false);
+        if (cfg == null || cfg.field("listeners") == null) {
+          try {
+            Thread.sleep(100);
+            member = getClusterMemberByName(rNodeName);
+            continue;
+
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw OException.wrapException(
+                new ODistributedException("Cannot find node '" + rNodeName + "'"), e);
+          }
+        }
+
+        final String url = ODistributedAbstractPlugin.getListeningBinaryAddress(cfg);
+
+        if (url == null) {
+          closeRemoteServer(rNodeName);
+          throw new ODatabaseException(
+              "Cannot connect to a remote node because the url was not found");
+        }
+
+        final String userPassword = cfg.field("user_replicator");
+
+        if (userPassword != null) {
+          remoteServer =
+              remoteServerManager.connectRemoteServer(
+                  rNodeName, url, REPLICATOR_USER, userPassword);
+          break;
+        }
+
+        // RETRY TO GET USR+PASSWORD IN A WHILE
+        try {
+          Thread.sleep(100);
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+          throw OException.wrapException(
+              new OInterruptedException("Cannot connect to remote server " + rNodeName), e);
+        }
+      }
+    }
+
+    if (remoteServer == null)
+      throw new ODistributedException("Cannot find node '" + rNodeName + "'");
+
+    return remoteServer;
+  }
+
+  protected abstract Member getClusterMemberByName(String rNodeName);
+
+  protected void onNodeJoined(String joinedNodeName, Member member) {
+    try {
+      getRemoteServer(joinedNodeName);
+    } catch (IOException e) {
+      ODistributedServerLog.error(
+          this,
+          nodeName,
+          joinedNodeName,
+          DIRECTION.OUT,
+          "Error on connecting to node %s",
+          joinedNodeName);
+    }
+
+    ODistributedServerLog.info(
+        this,
+        nodeName,
+        getNodeName(member, true),
+        DIRECTION.IN,
+        "Added node configuration id=%s name=%s, now %d nodes are configured",
+        member,
+        getNodeName(member, true),
+        getActiveServers().size());
+
+    // NOTIFY NODE WAS ADDED SUCCESSFULLY
+    for (ODistributedLifecycleListener l : listeners) l.onNodeJoined(joinedNodeName);
+
+    // FORCE THE ALIGNMENT FOR ALL THE ONLINE DATABASES AFTER THE JOIN ONLY IF AUTO-DEPLOY IS SET
+    for (String db : messageService.getDatabases()) {
+      if (getDatabaseConfiguration(db).isAutoDeploy()
+          && getDatabaseStatus(joinedNodeName, db) == DB_STATUS.ONLINE) {
+        setDatabaseStatus(joinedNodeName, db, DB_STATUS.NOT_AVAILABLE);
+      }
+    }
+    dumpServersStatus();
+  }
+
+  // This is used only during startup and gets called by the cluster metadata manager
+  protected void connectToAllNodes(Set<String> clusterNodes) throws IOException {
+    for (String m : clusterNodes) if (!m.equals(nodeName)) getRemoteServer(m);
+  }
 }
