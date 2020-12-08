@@ -1076,7 +1076,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         });
   }
 
-  public abstract Set<String> getManagedDatabases();
+  public Set<String> getManagedDatabases() {
+    return messageService != null ? messageService.getDatabases() : Collections.EMPTY_SET;
+  }
 
   public String getLocalNodeName() {
     return nodeName;

@@ -1673,10 +1673,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     return local.getDistributedConfiguration();
   }
 
-  public Set<String> getManagedDatabases() {
-    return messageService != null ? messageService.getDatabases() : Collections.EMPTY_SET;
-  }
-
   @Override
   public void setNodeStatus(final NODE_STATUS iStatus) {
     if (status.equals(iStatus))
