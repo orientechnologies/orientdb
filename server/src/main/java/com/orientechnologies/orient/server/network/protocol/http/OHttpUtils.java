@@ -52,7 +52,8 @@ public class OHttpUtils {
   public static final String HEADER_IF_MATCH = "If-Match: ";
   public static final String HEADER_X_FORWARDED_FOR = "X-Forwarded-For: ";
   public static final String HEADER_AUTHENTICATION = "OAuthentication: ";
-  public static final String HEADER_CONTENT_ENCODING = "Accept-Encoding: ";
+  public static final String HEADER_ACCEPT_ENCODING = "Accept-Encoding: ";
+  public static final String HEADER_CONTENT_ENCODING = "Content-Encoding: ";
   public static final String HEADER_ETAG = "ETag: ";
   public static final String HEADER_AUTHENTICATE_NEGOTIATE = "WWW-Authenticate: Negotiate";
 

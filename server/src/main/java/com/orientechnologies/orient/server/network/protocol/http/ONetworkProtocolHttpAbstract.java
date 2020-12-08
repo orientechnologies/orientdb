@@ -199,13 +199,13 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol
             server.getContextConfiguration());
     response.setJsonErrorResponse(jsonResponseError);
     response.setSameSiteCookie(sameSiteCookie);
-    if (request.getContentEncoding() != null
-        && request.getContentEncoding().equals(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED)) {
+    if (request.getAcceptEncoding() != null
+        && request.getAcceptEncoding().equals(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED)) {
       response.setContentEncoding(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED);
     }
     // only for static resources
-    if (request.getContentEncoding() != null
-        && request.getContentEncoding().contains(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED)) {
+    if (request.getAcceptEncoding() != null
+        && request.getAcceptEncoding().contains(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED)) {
       response.setStaticEncoding(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED);
     }
 

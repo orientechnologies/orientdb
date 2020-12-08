@@ -14,6 +14,7 @@ public class OHttpRequestImpl extends OHttpRequest {
   private String httpVersion;
   private String contentType;
   private String contentEncoding;
+  private String acceptEncoding;
   private OHttpMultipartBaseInputStream multipartStream;
   private String boundary;
   private boolean isMultipart;
@@ -75,6 +76,16 @@ public class OHttpRequestImpl extends OHttpRequest {
   @Override
   public void setContentEncoding(String contentEncoding) {
     this.contentEncoding = contentEncoding;
+  }
+  
+  @Override
+  public String getAcceptEncoding() {
+    return acceptEncoding;
+  }
+
+  @Override
+  public void setAcceptEncoding(String acceptEncoding) {
+    this.acceptEncoding = acceptEncoding;
   }
 
   @Override
