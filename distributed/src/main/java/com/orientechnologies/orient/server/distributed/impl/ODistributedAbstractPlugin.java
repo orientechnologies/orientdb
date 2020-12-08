@@ -2917,4 +2917,81 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   protected abstract void removeServerFromCluster(
       final Member member, final String nodeLeftName, final boolean removeOnlyDynamicServers);
+
+  @Override
+  public void onCreate(final ODatabaseInternal iDatabase) {
+    if (!isRelatedToLocalServer(iDatabase)) return;
+
+    if (getNodeStatus() != NODE_STATUS.ONLINE) return;
+
+    final ODatabaseDocumentInternal currDb = ODatabaseRecordThreadLocal.instance().getIfDefined();
+    try {
+
+      final String dbName = iDatabase.getName();
+
+      //      final ODocument dCfg = (ODocument)
+      // configurationMap.get(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + dbName);
+      //      if (dCfg != null && getAvailableNodes(dbName) > 0) {
+      //        throw new ODistributedException(
+      //            "Cannot create the new database '" + dbName + "' because it is already present
+      // in distributed configuration");
+      //      }
+
+      final ODistributedConfiguration cfg = getDatabaseConfiguration(dbName);
+
+      // TODO: TEMPORARY PATCH TO WAIT FOR DB PROPAGATION IN CFG TO ALL THE OTHER SERVERS
+      try {
+        Thread.sleep(1000);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw OException.wrapException(
+            new ODistributedException(
+                "Error on creating database '" + dbName + "' on distributed nodes"),
+            e);
+      }
+
+      // WAIT UNTIL THE DATABASE HAS BEEN PROPAGATED TO ALL THE SERVERS
+      final Set<String> servers = cfg.getAllConfiguredServers();
+      if (servers.size() > 1) {
+        int retry = 0;
+        for (; retry < 100; ++retry) {
+          boolean allServersAreOnline = true;
+          for (String server : servers) {
+            if (!isNodeOnline(server, dbName)) {
+              allServersAreOnline = false;
+              break;
+            }
+          }
+
+          if (allServersAreOnline) break;
+
+          // WAIT FOR ANOTHER RETRY
+          try {
+            Thread.sleep(200);
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw OException.wrapException(
+                new ODistributedException(
+                    "Error on creating database '" + dbName + "' on distributed nodes"),
+                e);
+          }
+        }
+
+        if (retry >= 100)
+          ODistributedServerLog.warn(
+              this,
+              getLocalNodeName(),
+              null,
+              DIRECTION.NONE,
+              "Timeout waiting for all nodes to be up for database %s",
+              dbName);
+      }
+
+      onOpen(iDatabase);
+
+    } finally {
+      // RESTORE ORIGINAL DATABASE INSTANCE IN TL
+      ODatabaseRecordThreadLocal.instance().set(currDb);
+    }
+  }
 }
