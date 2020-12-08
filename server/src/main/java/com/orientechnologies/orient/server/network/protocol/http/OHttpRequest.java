@@ -182,7 +182,7 @@ public abstract class OHttpRequest {
   public abstract String getContentEncoding();
 
   public abstract void setContentEncoding(String contentEncoding);
-  
+
   public abstract String getAcceptEncoding();
 
   public abstract void setAcceptEncoding(String acceptEncoding);

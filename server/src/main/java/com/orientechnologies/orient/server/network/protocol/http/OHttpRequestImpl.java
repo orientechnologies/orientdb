@@ -77,7 +77,7 @@ public class OHttpRequestImpl extends OHttpRequest {
   public void setContentEncoding(String contentEncoding) {
     this.contentEncoding = contentEncoding;
   }
-  
+
   @Override
   public String getAcceptEncoding() {
     return acceptEncoding;
