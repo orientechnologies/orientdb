@@ -1261,18 +1261,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     }
   }
 
-  private void invokeOnDatabaseStatusChange(
-      final String iNode, final String iDatabaseName, final DB_STATUS iStatus) {
-    // NOTIFY DB/NODE IS CHANGING STATUS
-    for (ODistributedLifecycleListener l : listeners) {
-      try {
-        l.onDatabaseChangeStatus(iNode, iDatabaseName, iStatus);
-      } catch (Exception e) {
-        // IGNORE IT
-      }
-    }
-  }
-
   // Returns name of distributed databases in the cluster.
   public Set<String> getDatabases() {
     final Set<String> dbs = new HashSet<>();

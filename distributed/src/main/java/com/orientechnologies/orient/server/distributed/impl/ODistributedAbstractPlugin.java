@@ -2143,6 +2143,18 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     dumpServersStatus();
   }
 
+  protected void invokeOnDatabaseStatusChange(
+      final String iNode, final String iDatabaseName, final DB_STATUS iStatus) {
+    // NOTIFY DB/NODE IS CHANGING STATUS
+    for (ODistributedLifecycleListener l : listeners) {
+      try {
+        l.onDatabaseChangeStatus(iNode, iDatabaseName, iStatus);
+      } catch (Exception e) {
+        // IGNORE IT
+      }
+    }
+  }
+
   protected void rebalanceClusterOwnership(
       final String iNode,
       String databaseName,
