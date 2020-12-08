@@ -1479,130 +1479,68 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     return found;
   }
 
-  @Override
-  public void removeServer(final String nodeLeftName, final boolean removeOnlyDynamicServers) {
-    if (nodeLeftName == null) return;
-
+  protected Member removeFromLocalActiveServerList(String nodeLeftName) {
     final Member member = activeNodes.remove(nodeLeftName);
-    if (member == null) return;
+    if (member == null) return null;
+    if (member.getUuid() != null) activeNodesNamesByUuid.remove(member.getUuid());
+    activeNodesUuidByName.remove(nodeLeftName);
+    return member;
+  }
 
-    ODistributedServerLog.debug(
-        this,
-        nodeName,
-        nodeLeftName,
-        DIRECTION.NONE,
-        "Distributed server '%s' is unreachable",
-        nodeLeftName);
+  protected void removeServerFromCluster(
+      final Member member, final String nodeLeftName, final boolean removeOnlyDynamicServers) {
+    if (hazelcastInstance == null || !hazelcastInstance.getLifecycleService().isRunning()) return;
 
-    try {
-      // REMOVE INTRA SERVER CONNECTION
-      closeRemoteServer(nodeLeftName);
+    final long autoRemoveOffLineServer =
+        OGlobalConfiguration.DISTRIBUTED_AUTO_REMOVE_OFFLINE_SERVERS.getValueAsLong();
+    if (autoRemoveOffLineServer == 0)
+      // REMOVE THE NODE RIGHT NOW
+      removeNodeFromConfiguration(nodeLeftName, removeOnlyDynamicServers);
+    else if (autoRemoveOffLineServer > 0) {
+      // SCHEDULE AUTO REMOVAL IN A WHILE
+      autoRemovalOfServers.put(nodeLeftName, System.currentTimeMillis());
+      Orient.instance()
+          .scheduleTask(
+              () -> {
+                try {
+                  final Long lastTimeNodeLeft = autoRemovalOfServers.get(nodeLeftName);
+                  if (lastTimeNodeLeft == null)
+                    // NODE WAS BACK ONLINE
+                    return;
 
-      // NOTIFY ABOUT THE NODE HAS LEFT
-      for (ODistributedLifecycleListener l : listeners)
-        try {
-          l.onNodeLeft(nodeLeftName);
-        } catch (Exception e) {
-          // IGNORE IT
-          ODistributedServerLog.debug(
-              this,
-              nodeName,
-              nodeLeftName,
-              DIRECTION.NONE,
-              "Error on calling onNodeLeft event on '%s'",
-              e,
-              l);
-        }
-
-      // UNLOCK ANY PENDING LOCKS
-      if (messageService != null) {
-        for (String dbName : messageService.getDatabases())
-          messageService.getDatabase(dbName).handleUnreachableNode(nodeLeftName);
-      }
-
-      if (member.getUuid() != null) activeNodesNamesByUuid.remove(member.getUuid());
-      activeNodesUuidByName.remove(nodeLeftName);
-
-      if (hazelcastInstance == null || !hazelcastInstance.getLifecycleService().isRunning()) return;
-
-      final long autoRemoveOffLineServer =
-          OGlobalConfiguration.DISTRIBUTED_AUTO_REMOVE_OFFLINE_SERVERS.getValueAsLong();
-      if (autoRemoveOffLineServer == 0)
-        // REMOVE THE NODE RIGHT NOW
-        removeNodeFromConfiguration(nodeLeftName, removeOnlyDynamicServers);
-      else if (autoRemoveOffLineServer > 0) {
-        // SCHEDULE AUTO REMOVAL IN A WHILE
-        autoRemovalOfServers.put(nodeLeftName, System.currentTimeMillis());
-        Orient.instance()
-            .scheduleTask(
-                () -> {
-                  try {
-                    final Long lastTimeNodeLeft = autoRemovalOfServers.get(nodeLeftName);
-                    if (lastTimeNodeLeft == null)
-                      // NODE WAS BACK ONLINE
-                      return;
-
-                    if (System.currentTimeMillis() - lastTimeNodeLeft >= autoRemoveOffLineServer) {
-                      removeNodeFromConfiguration(nodeLeftName, removeOnlyDynamicServers);
-                    }
-                  } catch (Exception e) {
-                    // IGNORE IT
+                  if (System.currentTimeMillis() - lastTimeNodeLeft >= autoRemoveOffLineServer) {
+                    removeNodeFromConfiguration(nodeLeftName, removeOnlyDynamicServers);
                   }
-                },
-                autoRemoveOffLineServer,
-                0);
-      }
+                } catch (Exception e) {
+                  // IGNORE IT
+                }
+              },
+              autoRemoveOffLineServer,
+              0);
+    }
 
-      for (String databaseName : getManagedDatabases()) {
-        final DB_STATUS nodeLeftStatus = getDatabaseStatus(nodeLeftName, databaseName);
-        if (nodeLeftStatus != DB_STATUS.OFFLINE && nodeLeftStatus != DB_STATUS.NOT_AVAILABLE)
-          configurationMap.put(
-              CONFIG_DBSTATUS_PREFIX + nodeLeftName + "." + databaseName, DB_STATUS.NOT_AVAILABLE);
-      }
+    for (String databaseName : getManagedDatabases()) {
+      final DB_STATUS nodeLeftStatus = getDatabaseStatus(nodeLeftName, databaseName);
+      if (nodeLeftStatus != DB_STATUS.OFFLINE && nodeLeftStatus != DB_STATUS.NOT_AVAILABLE)
+        configurationMap.put(
+            CONFIG_DBSTATUS_PREFIX + nodeLeftName + "." + databaseName, DB_STATUS.NOT_AVAILABLE);
+    }
 
-      ODistributedServerLog.warn(
-          this, nodeName, null, DIRECTION.NONE, "Node removed id=%s name=%s", member, nodeLeftName);
+    ODistributedServerLog.warn(
+        this, nodeName, null, DIRECTION.NONE, "Node removed id=%s name=%s", member, nodeLeftName);
 
-      if (nodeLeftName.startsWith("ext:")) {
-        final List<String> registeredNodes = getRegisteredNodes();
+    if (nodeLeftName.startsWith("ext:")) {
+      final List<String> registeredNodes = getRegisteredNodes();
 
-        ODistributedServerLog.error(
-            this,
-            nodeName,
-            null,
-            DIRECTION.NONE,
-            "Removed node id=%s name=%s has not being recognized. Remove the node manually (registeredNodes=%s)",
-            member,
-            nodeLeftName,
-            registeredNodes);
-      }
-
-      for (String databaseName : getManagedDatabases()) {
-        try {
-          if (getDatabaseConfiguration(databaseName).getServerRole(nodeName)
-              == ODistributedConfiguration.ROLES.MASTER) {
-            reassignClustersOwnership(nodeName, databaseName, null, false);
-          }
-        } catch (Exception e) {
-          // IGNORE IT
-          ODistributedServerLog.error(
-              this,
-              nodeName,
-              null,
-              DIRECTION.NONE,
-              "Cannot re-balance the cluster for database '%s' because the Lock Manager is not available (err=%s)",
-              databaseName,
-              e.getMessage());
-        }
-      }
-
-      if (nodeLeftName.equalsIgnoreCase(nodeName))
-        // CURRENT NODE: EXIT
-        System.exit(1);
-
-    } finally {
-      // REMOVE NODE IN DB CFG
-      if (messageService != null) messageService.handleUnreachableNode(nodeLeftName);
+      ODistributedServerLog.error(
+          this,
+          nodeName,
+          null,
+          DIRECTION.NONE,
+          "Removed node id=%s name=%s has not being recognized. Remove the node manually (registeredNodes=%s)",
+          member,
+          nodeLeftName,
+          registeredNodes);
     }
   }
 

@@ -2842,4 +2842,79 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected void connectToAllNodes(Set<String> clusterNodes) throws IOException {
     for (String m : clusterNodes) if (!m.equals(nodeName)) getRemoteServer(m);
   }
+
+  @Override
+  public void removeServer(final String nodeLeftName, final boolean removeOnlyDynamicServers) {
+    if (nodeLeftName == null) return;
+    Member member = removeFromLocalActiveServerList(nodeLeftName);
+    if (member == null) return;
+
+    ODistributedServerLog.debug(
+        this,
+        nodeName,
+        nodeLeftName,
+        DIRECTION.NONE,
+        "Distributed server '%s' is unreachable",
+        nodeLeftName);
+
+    try {
+      // REMOVE INTRA SERVER CONNECTION
+      closeRemoteServer(nodeLeftName);
+
+      // NOTIFY ABOUT THE NODE HAS LEFT
+      for (ODistributedLifecycleListener l : listeners)
+        try {
+          l.onNodeLeft(nodeLeftName);
+        } catch (Exception e) {
+          // IGNORE IT
+          ODistributedServerLog.debug(
+              this,
+              nodeName,
+              nodeLeftName,
+              DIRECTION.NONE,
+              "Error on calling onNodeLeft event on '%s'",
+              e,
+              l);
+        }
+
+      // UNLOCK ANY PENDING LOCKS
+      if (messageService != null) {
+        for (String dbName : messageService.getDatabases())
+          messageService.getDatabase(dbName).handleUnreachableNode(nodeLeftName);
+      }
+
+      removeServerFromCluster(member, nodeLeftName, removeOnlyDynamicServers);
+
+      for (String databaseName : getManagedDatabases()) {
+        try {
+          if (getDatabaseConfiguration(databaseName).getServerRole(nodeName)
+              == ODistributedConfiguration.ROLES.MASTER) {
+            reassignClustersOwnership(nodeName, databaseName, null, false);
+          }
+        } catch (Exception e) {
+          // IGNORE IT
+          ODistributedServerLog.error(
+              this,
+              nodeName,
+              null,
+              DIRECTION.NONE,
+              "Cannot re-balance the cluster for database '%s' because the Lock Manager is not available (err=%s)",
+              databaseName,
+              e.getMessage());
+        }
+      }
+
+      if (nodeLeftName.equalsIgnoreCase(nodeName))
+        // CURRENT NODE: EXIT
+        System.exit(1);
+    } finally {
+      // REMOVE NODE IN DB CFG
+      if (messageService != null) messageService.handleUnreachableNode(nodeLeftName);
+    }
+  }
+
+  protected abstract Member removeFromLocalActiveServerList(String nodeLeftName);
+
+  protected abstract void removeServerFromCluster(
+      final Member member, final String nodeLeftName, final boolean removeOnlyDynamicServers);
 }
