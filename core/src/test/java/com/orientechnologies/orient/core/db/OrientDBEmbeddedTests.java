@@ -506,4 +506,14 @@ public class OrientDBEmbeddedTests {
     orientDb.drop(dbName);
     orientDb.close();
   }
+
+  @Test
+  public void testCreateDatabaseViaSQLWithUsers() {
+    OrientDB orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
+    orientDB.execute(
+        "create database test memory users(admin identified by 'adminpwd' role admin)");
+    try (ODatabaseSession session = orientDB.open("test", "admin", "adminpwd")) {}
+
+    orientDB.close();
+  }
 }
