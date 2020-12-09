@@ -21,8 +21,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitEndRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFileCreatedWALRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFuzzyCheckpointEndRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFuzzyCheckpointStartRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ONonTxOperationPerformedWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitBodyRecord;
@@ -281,7 +279,6 @@ public class OLocalHashTableV3WALTestIT extends OLocalHashTableV3Base {
             false,
             Locale.ENGLISH,
             -1,
-            -1,
             1_000,
             false,
             true,
@@ -364,9 +361,7 @@ public class OLocalHashTableV3WALTestIT extends OLocalHashTableV3Base {
               "WAL record type is " + walRecord.getClass().getName(),
               walRecord instanceof OUpdatePageRecord
                   || walRecord instanceof ONonTxOperationPerformedWALRecord
-                  || walRecord instanceof OFileCreatedWALRecord
-                  || walRecord instanceof OFuzzyCheckpointStartRecord
-                  || walRecord instanceof OFuzzyCheckpointEndRecord);
+                  || walRecord instanceof OFileCreatedWALRecord);
         }
       }
 

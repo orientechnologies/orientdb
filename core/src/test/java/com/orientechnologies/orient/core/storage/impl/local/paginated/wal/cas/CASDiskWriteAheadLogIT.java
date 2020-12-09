@@ -1,11 +1,9 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas;
 
 import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.OCheckpointRequestListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAbstractWALRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFullCheckpointStartRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecordsFactory;
@@ -94,7 +92,6 @@ public class CASDiskWriteAheadLogIT {
                 true,
                 Locale.US,
                 -1,
-                -1,
                 1000,
                 false,
                 false,
@@ -132,7 +129,6 @@ public class CASDiskWriteAheadLogIT {
                 20,
                 true,
                 Locale.US,
-                -1,
                 -1,
                 1000,
                 false,
@@ -202,7 +198,6 @@ public class CASDiskWriteAheadLogIT {
                 true,
                 Locale.US,
                 -1,
-                -1,
                 1000,
                 false,
                 false,
@@ -240,7 +235,6 @@ public class CASDiskWriteAheadLogIT {
                 20,
                 true,
                 Locale.US,
-                -1,
                 -1,
                 1000,
                 false,
@@ -310,7 +304,6 @@ public class CASDiskWriteAheadLogIT {
                 true,
                 Locale.US,
                 -1,
-                -1,
                 1000,
                 false,
                 false,
@@ -348,7 +341,6 @@ public class CASDiskWriteAheadLogIT {
                 20,
                 true,
                 Locale.US,
-                -1,
                 -1,
                 1000,
                 false,
@@ -416,7 +408,6 @@ public class CASDiskWriteAheadLogIT {
                 true,
                 Locale.US,
                 -1,
-                -1,
                 1000,
                 false,
                 false,
@@ -457,7 +448,6 @@ public class CASDiskWriteAheadLogIT {
                 20,
                 true,
                 Locale.US,
-                -1,
                 -1,
                 1000,
                 false,
@@ -516,7 +506,6 @@ public class CASDiskWriteAheadLogIT {
                 true,
                 Locale.US,
                 -1,
-                -1,
                 1000,
                 false,
                 false,
@@ -554,7 +543,6 @@ public class CASDiskWriteAheadLogIT {
                 20,
                 true,
                 Locale.US,
-                -1,
                 -1,
                 1000,
                 false,
@@ -624,7 +612,6 @@ public class CASDiskWriteAheadLogIT {
                 true,
                 Locale.US,
                 -1,
-                -1,
                 1000,
                 false,
                 false,
@@ -662,7 +649,6 @@ public class CASDiskWriteAheadLogIT {
                 20,
                 true,
                 Locale.US,
-                -1,
                 -1,
                 1000,
                 false,
@@ -728,7 +714,6 @@ public class CASDiskWriteAheadLogIT {
                 true,
                 Locale.US,
                 -1,
-                -1,
                 1000,
                 false,
                 false,
@@ -783,7 +768,6 @@ public class CASDiskWriteAheadLogIT {
                 20,
                 true,
                 Locale.US,
-                -1,
                 -1,
                 1000,
                 false,
@@ -859,7 +843,6 @@ public class CASDiskWriteAheadLogIT {
                 true,
                 Locale.US,
                 -1,
-                -1,
                 1000,
                 false,
                 false,
@@ -914,7 +897,6 @@ public class CASDiskWriteAheadLogIT {
                 20,
                 true,
                 Locale.US,
-                -1,
                 -1,
                 1000,
                 false,
@@ -987,7 +969,6 @@ public class CASDiskWriteAheadLogIT {
                 true,
                 Locale.US,
                 -1,
-                -1,
                 1000,
                 false,
                 false,
@@ -1044,7 +1025,6 @@ public class CASDiskWriteAheadLogIT {
                 20,
                 true,
                 Locale.US,
-                -1,
                 -1,
                 1000,
                 false,
@@ -1127,7 +1107,6 @@ public class CASDiskWriteAheadLogIT {
                 true,
                 Locale.US,
                 -1,
-                -1,
                 1000,
                 false,
                 false,
@@ -1184,7 +1163,6 @@ public class CASDiskWriteAheadLogIT {
                 20,
                 true,
                 Locale.US,
-                -1,
                 -1,
                 1000,
                 false,
@@ -1263,7 +1241,6 @@ public class CASDiskWriteAheadLogIT {
                 true,
                 Locale.US,
                 -1,
-                -1,
                 1000,
                 false,
                 false,
@@ -1318,7 +1295,6 @@ public class CASDiskWriteAheadLogIT {
                 20,
                 true,
                 Locale.US,
-                -1,
                 -1,
                 1000,
                 false,
@@ -1394,7 +1370,6 @@ public class CASDiskWriteAheadLogIT {
                 true,
                 Locale.US,
                 -1,
-                -1,
                 1000,
                 false,
                 false,
@@ -1449,7 +1424,6 @@ public class CASDiskWriteAheadLogIT {
                 20,
                 true,
                 Locale.US,
-                -1,
                 -1,
                 1000,
                 false,
@@ -1521,7 +1495,6 @@ public class CASDiskWriteAheadLogIT {
                 true,
                 Locale.US,
                 -1,
-                -1,
                 1000,
                 false,
                 false,
@@ -1577,7 +1550,6 @@ public class CASDiskWriteAheadLogIT {
                 20,
                 true,
                 Locale.US,
-                -1,
                 -1,
                 1000,
                 false,
@@ -1660,7 +1632,6 @@ public class CASDiskWriteAheadLogIT {
                 true,
                 Locale.US,
                 -1,
-                -1,
                 1000,
                 false,
                 false,
@@ -1716,7 +1687,6 @@ public class CASDiskWriteAheadLogIT {
                 20,
                 true,
                 Locale.US,
-                -1,
                 -1,
                 1000,
                 false,
@@ -1795,7 +1765,6 @@ public class CASDiskWriteAheadLogIT {
                 true,
                 Locale.US,
                 -1,
-                -1,
                 1000,
                 false,
                 false,
@@ -1857,7 +1826,6 @@ public class CASDiskWriteAheadLogIT {
                 20,
                 true,
                 Locale.US,
-                -1,
                 -1,
                 1000,
                 false,
@@ -1931,7 +1899,6 @@ public class CASDiskWriteAheadLogIT {
                 true,
                 Locale.US,
                 -1,
-                -1,
                 1000,
                 false,
                 false,
@@ -1993,7 +1960,6 @@ public class CASDiskWriteAheadLogIT {
                 20,
                 true,
                 Locale.US,
-                -1,
                 -1,
                 1000,
                 false,
@@ -2063,7 +2029,6 @@ public class CASDiskWriteAheadLogIT {
                 true,
                 Locale.US,
                 -1,
-                -1,
                 1000,
                 false,
                 false,
@@ -2123,7 +2088,6 @@ public class CASDiskWriteAheadLogIT {
                 20,
                 true,
                 Locale.US,
-                -1,
                 -1,
                 1000,
                 false,
@@ -2199,7 +2163,6 @@ public class CASDiskWriteAheadLogIT {
                 true,
                 Locale.US,
                 -1,
-                -1,
                 1000,
                 false,
                 false,
@@ -2259,7 +2222,6 @@ public class CASDiskWriteAheadLogIT {
                 20,
                 true,
                 Locale.US,
-                -1,
                 -1,
                 1000,
                 false,
@@ -2331,7 +2293,6 @@ public class CASDiskWriteAheadLogIT {
                 20,
                 true,
                 Locale.US,
-                -1,
                 -1,
                 1000,
                 false,
@@ -2416,7 +2377,6 @@ public class CASDiskWriteAheadLogIT {
                 20,
                 true,
                 Locale.US,
-                -1,
                 -1,
                 1000,
                 false,
@@ -2537,7 +2497,6 @@ public class CASDiskWriteAheadLogIT {
                 true,
                 Locale.US,
                 -1,
-                -1,
                 1000,
                 false,
                 false,
@@ -2621,7 +2580,6 @@ public class CASDiskWriteAheadLogIT {
                 20,
                 true,
                 Locale.US,
-                -1,
                 -1,
                 1000,
                 false,
@@ -2738,7 +2696,6 @@ public class CASDiskWriteAheadLogIT {
                 true,
                 Locale.US,
                 -1,
-                -1,
                 1000,
                 false,
                 false,
@@ -2795,7 +2752,6 @@ public class CASDiskWriteAheadLogIT {
                 20,
                 true,
                 Locale.US,
-                -1,
                 -1,
                 1000,
                 false,
@@ -2864,7 +2820,6 @@ public class CASDiskWriteAheadLogIT {
                 true,
                 Locale.US,
                 -1,
-                -1,
                 1000,
                 false,
                 false,
@@ -2921,7 +2876,6 @@ public class CASDiskWriteAheadLogIT {
                 20,
                 true,
                 Locale.US,
-                -1,
                 -1,
                 1000,
                 false,
@@ -2986,7 +2940,6 @@ public class CASDiskWriteAheadLogIT {
                 true,
                 Locale.US,
                 -1,
-                -1,
                 1000,
                 false,
                 false,
@@ -3046,7 +2999,6 @@ public class CASDiskWriteAheadLogIT {
                 20,
                 true,
                 Locale.US,
-                -1,
                 -1,
                 1000,
                 false,
@@ -3122,7 +3074,6 @@ public class CASDiskWriteAheadLogIT {
                 true,
                 Locale.US,
                 -1,
-                -1,
                 1000,
                 false,
                 false,
@@ -3182,7 +3133,6 @@ public class CASDiskWriteAheadLogIT {
                 20,
                 true,
                 Locale.US,
-                -1,
                 -1,
                 1000,
                 false,
@@ -3253,7 +3203,6 @@ public class CASDiskWriteAheadLogIT {
                 true,
                 Locale.US,
                 -1,
-                -1,
                 1000,
                 false,
                 false,
@@ -3310,7 +3259,6 @@ public class CASDiskWriteAheadLogIT {
                 20,
                 true,
                 Locale.US,
-                -1,
                 -1,
                 1000,
                 false,
@@ -3377,7 +3325,6 @@ public class CASDiskWriteAheadLogIT {
                 true,
                 Locale.US,
                 -1,
-                -1,
                 1000,
                 false,
                 false,
@@ -3434,7 +3381,6 @@ public class CASDiskWriteAheadLogIT {
                 20,
                 true,
                 Locale.US,
-                -1,
                 -1,
                 1000,
                 false,
@@ -3497,7 +3443,6 @@ public class CASDiskWriteAheadLogIT {
                 true,
                 Locale.US,
                 -1,
-                -1,
                 1000,
                 false,
                 false,
@@ -3556,7 +3501,6 @@ public class CASDiskWriteAheadLogIT {
                 20,
                 true,
                 Locale.US,
-                -1,
                 -1,
                 1000,
                 false,
@@ -3631,7 +3575,6 @@ public class CASDiskWriteAheadLogIT {
                 true,
                 Locale.US,
                 -1,
-                -1,
                 1000,
                 false,
                 false,
@@ -3691,7 +3634,6 @@ public class CASDiskWriteAheadLogIT {
                 20,
                 true,
                 Locale.US,
-                -1,
                 -1,
                 1000,
                 false,
@@ -3763,7 +3705,6 @@ public class CASDiskWriteAheadLogIT {
                 true,
                 Locale.US,
                 -1,
-                -1,
                 1000,
                 false,
                 false,
@@ -3824,7 +3765,6 @@ public class CASDiskWriteAheadLogIT {
               true,
               Locale.US,
               10 * 1024 * 1024 * 1024L,
-              -1,
               1000,
               false,
               false,
@@ -3837,7 +3777,7 @@ public class CASDiskWriteAheadLogIT {
       AtomicBoolean walIsFull = new AtomicBoolean();
 
       final OCheckpointRequestListener checkpointRequestListener = () -> walIsFull.set(true);
-      wal.addFullCheckpointListener(checkpointRequestListener);
+      wal.addCheckpointListener(checkpointRequestListener);
       ExecutorService executorService = Executors.newCachedThreadPool();
 
       AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
@@ -3907,7 +3847,6 @@ public class CASDiskWriteAheadLogIT {
               true,
               Locale.US,
               3 * 1024 * 1024 * 1024L,
-              -1,
               1000,
               false,
               false,
@@ -3950,7 +3889,6 @@ public class CASDiskWriteAheadLogIT {
               true,
               Locale.US,
               10 * 1024 * 1024 * 1024L,
-              -1,
               1000,
               false,
               false,
@@ -3963,7 +3901,7 @@ public class CASDiskWriteAheadLogIT {
       AtomicBoolean walIsFull = new AtomicBoolean();
 
       final OCheckpointRequestListener checkpointRequestListener = () -> walIsFull.set(true);
-      wal.addFullCheckpointListener(checkpointRequestListener);
+      wal.addCheckpointListener(checkpointRequestListener);
       ExecutorService executorService = Executors.newCachedThreadPool();
 
       AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
@@ -4031,7 +3969,6 @@ public class CASDiskWriteAheadLogIT {
               true,
               Locale.US,
               3 * 1024 * 1024 * 1024L,
-              -1,
               1000,
               false,
               false,
@@ -4075,7 +4012,6 @@ public class CASDiskWriteAheadLogIT {
               true,
               Locale.US,
               10 * 1024 * 1024 * 1024L,
-              -1,
               1000,
               false,
               false,
@@ -4088,7 +4024,7 @@ public class CASDiskWriteAheadLogIT {
       AtomicBoolean walIsFull = new AtomicBoolean();
 
       final OCheckpointRequestListener checkpointRequestListener = () -> walIsFull.set(true);
-      wal.addFullCheckpointListener(checkpointRequestListener);
+      wal.addCheckpointListener(checkpointRequestListener);
       ExecutorService executorService = Executors.newCachedThreadPool();
 
       AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
@@ -4155,7 +4091,6 @@ public class CASDiskWriteAheadLogIT {
               true,
               Locale.US,
               3 * 1024 * 1024 * 1024L,
-              -1,
               1000,
               false,
               false,
@@ -4199,7 +4134,6 @@ public class CASDiskWriteAheadLogIT {
               true,
               Locale.US,
               10 * 1024 * 1024 * 1024L,
-              -1,
               1000,
               false,
               false,
@@ -4212,7 +4146,7 @@ public class CASDiskWriteAheadLogIT {
       AtomicBoolean walIsFull = new AtomicBoolean();
 
       final OCheckpointRequestListener checkpointRequestListener = () -> walIsFull.set(true);
-      wal.addFullCheckpointListener(checkpointRequestListener);
+      wal.addCheckpointListener(checkpointRequestListener);
       ExecutorService executorService = Executors.newCachedThreadPool();
 
       AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
@@ -4280,7 +4214,6 @@ public class CASDiskWriteAheadLogIT {
               true,
               Locale.US,
               3 * 1024 * 1024 * 1024L,
-              -1,
               1000,
               false,
               false,
@@ -4324,7 +4257,6 @@ public class CASDiskWriteAheadLogIT {
               true,
               Locale.US,
               10 * 1024 * 1024 * 1024L,
-              -1,
               1000,
               false,
               false,
@@ -4337,7 +4269,7 @@ public class CASDiskWriteAheadLogIT {
       AtomicBoolean walIsFull = new AtomicBoolean();
 
       final OCheckpointRequestListener checkpointRequestListener = () -> walIsFull.set(true);
-      wal.addFullCheckpointListener(checkpointRequestListener);
+      wal.addCheckpointListener(checkpointRequestListener);
       ExecutorService executorService = Executors.newCachedThreadPool();
 
       AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
@@ -4405,7 +4337,6 @@ public class CASDiskWriteAheadLogIT {
               true,
               Locale.US,
               3 * 1024 * 1024 * 1024L,
-              -1,
               1000,
               false,
               false,
@@ -4449,7 +4380,6 @@ public class CASDiskWriteAheadLogIT {
               true,
               Locale.US,
               10 * 1024 * 1024 * 1024L,
-              -1,
               1000,
               false,
               false,
@@ -4462,7 +4392,7 @@ public class CASDiskWriteAheadLogIT {
       AtomicBoolean walIsFull = new AtomicBoolean();
 
       final OCheckpointRequestListener checkpointRequestListener = () -> walIsFull.set(true);
-      wal.addFullCheckpointListener(checkpointRequestListener);
+      wal.addCheckpointListener(checkpointRequestListener);
       ExecutorService executorService = Executors.newCachedThreadPool();
 
       AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
@@ -4530,7 +4460,6 @@ public class CASDiskWriteAheadLogIT {
               true,
               Locale.US,
               3 * 1024 * 1024 * 1024L,
-              -1,
               1000,
               false,
               false,
@@ -4574,7 +4503,6 @@ public class CASDiskWriteAheadLogIT {
               true,
               Locale.US,
               10 * 1024 * 1024 * 1024L,
-              -1,
               1000,
               false,
               false,
@@ -4587,7 +4515,7 @@ public class CASDiskWriteAheadLogIT {
       AtomicBoolean walIsFull = new AtomicBoolean();
 
       final OCheckpointRequestListener checkpointRequestListener = () -> walIsFull.set(true);
-      wal.addFullCheckpointListener(checkpointRequestListener);
+      wal.addCheckpointListener(checkpointRequestListener);
       ExecutorService executorService = Executors.newCachedThreadPool();
 
       AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
@@ -4655,7 +4583,6 @@ public class CASDiskWriteAheadLogIT {
               true,
               Locale.US,
               3 * 1024 * 1024 * 1024L,
-              -1,
               1000,
               false,
               false,
@@ -4699,7 +4626,6 @@ public class CASDiskWriteAheadLogIT {
               true,
               Locale.US,
               10 * 1024 * 1024 * 1024L,
-              -1,
               1000,
               false,
               false,
@@ -4712,7 +4638,7 @@ public class CASDiskWriteAheadLogIT {
       AtomicBoolean walIsFull = new AtomicBoolean();
 
       final OCheckpointRequestListener checkpointRequestListener = () -> walIsFull.set(true);
-      wal.addFullCheckpointListener(checkpointRequestListener);
+      wal.addCheckpointListener(checkpointRequestListener);
       ExecutorService executorService = Executors.newCachedThreadPool();
 
       AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
@@ -4780,7 +4706,6 @@ public class CASDiskWriteAheadLogIT {
               true,
               Locale.US,
               3 * 1024 * 1024 * 1024L,
-              -1,
               1000,
               false,
               false,
@@ -4799,182 +4724,6 @@ public class CASDiskWriteAheadLogIT {
       loadedWAL.close();
 
       System.out.printf("%d iteration out of %d is passed\n", n, iterations);
-    }
-  }
-
-  @Test
-  public void testMasterRecordOne() throws Exception {
-    final int iterations = 1;
-
-    for (int n = 0; n < iterations; n++) {
-      OFileUtils.deleteRecursively(testDirectory.toFile());
-
-      CASDiskWriteAheadLog wal =
-          new CASDiskWriteAheadLog(
-              "walTest",
-              testDirectory,
-              testDirectory,
-              48_000,
-              64,
-              null,
-              null,
-              Integer.MAX_VALUE,
-              256 * 1024 * 1024,
-              20,
-              true,
-              Locale.US,
-              10 * 1024 * 1024 * 1024L,
-              -1,
-              1000,
-              false,
-              false,
-              true,
-              10);
-
-      ThreadLocalRandom random = ThreadLocalRandom.current();
-
-      int recordsCount = 1000;
-      for (int i = 0; i < recordsCount; i++) {
-        final TestRecord walRecord = new TestRecord(random, 2 * wal.pageSize(), 1);
-
-        OLogSequenceNumber lsn = wal.log(walRecord);
-        Assert.assertEquals(walRecord.getLsn(), lsn);
-
-        Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
-        Assert.assertEquals(wal.end(), lsn);
-      }
-
-      OLogSequenceNumber masterLSN = wal.log(new OFullCheckpointStartRecord());
-      OLogSequenceNumber checkpointLSN = wal.lastCheckpoint();
-
-      while (checkpointLSN == null) {
-        checkpointLSN = wal.lastCheckpoint();
-      }
-
-      Assert.assertEquals(masterLSN, checkpointLSN);
-
-      wal.close();
-
-      CASDiskWriteAheadLog loadedWAL =
-          new CASDiskWriteAheadLog(
-              "walTest",
-              testDirectory,
-              testDirectory,
-              48_000,
-              64,
-              null,
-              null,
-              Integer.MAX_VALUE,
-              256 * 1024 * 1024,
-              20,
-              true,
-              Locale.US,
-              10 * 1024 * 1024 * 1024L,
-              -1,
-              1000,
-              false,
-              false,
-              true,
-              10);
-
-      Assert.assertEquals(masterLSN, loadedWAL.lastCheckpoint());
-
-      loadedWAL.close();
-    }
-  }
-
-  @Test
-  public void testMasterSeveralMasterRecords() throws Exception {
-    for (int n = 0; n < 1; n++) {
-      OFileUtils.deleteRecursively(testDirectory.toFile());
-
-      CASDiskWriteAheadLog wal =
-          new CASDiskWriteAheadLog(
-              "walTest",
-              testDirectory,
-              testDirectory,
-              48_000,
-              64,
-              null,
-              null,
-              Integer.MAX_VALUE,
-              256 * 1024 * 1024,
-              20,
-              true,
-              Locale.US,
-              10 * 1024 * 1024 * 1024L,
-              -1,
-              1000,
-              false,
-              false,
-              true,
-              10);
-
-      long seed = System.nanoTime();
-      Random random = new Random(seed);
-
-      TreeSet<OLogSequenceNumber> masterRecords = new TreeSet<>();
-
-      OLogSequenceNumber lastCheckpoint = null;
-
-      for (int k = 0; k < 1000; k++) {
-        int recordsCount = 20;
-        for (int i = 0; i < recordsCount; i++) {
-          final TestRecord walRecord = new TestRecord(random, 2 * wal.pageSize(), 1);
-
-          OLogSequenceNumber lsn = wal.log(walRecord);
-          Assert.assertEquals(walRecord.getLsn(), lsn);
-
-          Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
-          Assert.assertEquals(wal.end(), lsn);
-        }
-
-        final OLogSequenceNumber masterLSN = wal.log(new OFullCheckpointStartRecord());
-        masterRecords.add(masterLSN);
-
-        OLogSequenceNumber checkpoint = wal.lastCheckpoint();
-        if (lastCheckpoint != null) {
-          Assert.assertTrue(checkpoint.compareTo(lastCheckpoint) >= 0);
-        }
-        lastCheckpoint = checkpoint;
-
-        if (checkpoint != null) {
-          Assert.assertTrue(masterRecords.contains(checkpoint));
-        }
-      }
-
-      //noinspection StatementWithEmptyBody
-      while (wal.getFlushedLsn() == null || wal.end().compareTo(wal.getFlushedLsn()) > 0) ;
-
-      Assert.assertEquals(wal.end(), wal.getFlushedLsn());
-      Assert.assertEquals(masterRecords.last(), wal.lastCheckpoint());
-
-      wal.close();
-
-      CASDiskWriteAheadLog loadedWAL =
-          new CASDiskWriteAheadLog(
-              "walTest",
-              testDirectory,
-              testDirectory,
-              48_000,
-              64,
-              null,
-              null,
-              Integer.MAX_VALUE,
-              256 * 1024 * 1024,
-              20,
-              true,
-              Locale.US,
-              10 * 1024 * 1024 * 1024L,
-              -1,
-              1000,
-              false,
-              false,
-              true,
-              10);
-      Assert.assertEquals(masterRecords.last(), wal.lastCheckpoint());
-
-      loadedWAL.close();
     }
   }
 
@@ -5000,7 +4749,6 @@ public class CASDiskWriteAheadLogIT {
               true,
               Locale.US,
               10 * 1024 * 1024 * 1024L,
-              -1,
               1000,
               false,
               false,
@@ -5046,7 +4794,6 @@ public class CASDiskWriteAheadLogIT {
               true,
               Locale.US,
               10 * 1024 * 1024 * 1024L,
-              -1,
               1000,
               false,
               false,
@@ -5089,7 +4836,6 @@ public class CASDiskWriteAheadLogIT {
               true,
               Locale.US,
               10 * 1024 * 1024L,
-              -1,
               1000,
               false,
               false,
@@ -5195,7 +4941,6 @@ public class CASDiskWriteAheadLogIT {
               true,
               Locale.US,
               10 * 1024 * 1024L,
-              -1,
               1000,
               false,
               false,
@@ -5265,7 +5010,6 @@ public class CASDiskWriteAheadLogIT {
             true,
             Locale.US,
             10 * 1024 * 1024L,
-            -1,
             1000,
             false,
             false,
@@ -5389,7 +5133,6 @@ public class CASDiskWriteAheadLogIT {
             true,
             Locale.US,
             10 * 1024 * 1024 * 1024L,
-            -1,
             1000,
             false,
             false,
@@ -5424,7 +5167,7 @@ public class CASDiskWriteAheadLogIT {
     AtomicBoolean walIsFull = new AtomicBoolean();
 
     final OCheckpointRequestListener checkpointRequestListener = () -> walIsFull.set(true);
-    wal.addFullCheckpointListener(checkpointRequestListener);
+    wal.addCheckpointListener(checkpointRequestListener);
 
     final List<Future<TreeMap<OLogSequenceNumber, WriteableWALRecord>>> futures = new ArrayList<>();
     final AtomicBoolean[] sendReport = new AtomicBoolean[8];
@@ -5494,7 +5237,6 @@ public class CASDiskWriteAheadLogIT {
                 true,
                 Locale.US,
                 10 * 1024 * 1024 * 1024L,
-                -1,
                 1000,
                 false,
                 false,
@@ -5558,7 +5300,6 @@ public class CASDiskWriteAheadLogIT {
                 20,
                 true,
                 Locale.US,
-                -1,
                 -1,
                 1000,
                 false,
@@ -5625,7 +5366,6 @@ public class CASDiskWriteAheadLogIT {
                 true,
                 Locale.US,
                 10 * 1024 * 1024 * 1024L,
-                -1,
                 1000,
                 false,
                 false,
@@ -5693,7 +5433,6 @@ public class CASDiskWriteAheadLogIT {
                 true,
                 Locale.US,
                 -1,
-                -1,
                 1000,
                 false,
                 false,
@@ -5758,7 +5497,6 @@ public class CASDiskWriteAheadLogIT {
             true,
             Locale.US,
             10 * 1024 * 1024 * 1024L,
-            -1,
             1000,
             false,
             false,
@@ -5820,7 +5558,6 @@ public class CASDiskWriteAheadLogIT {
                 true,
                 Locale.US,
                 walSizeLimit,
-                -1,
                 1000,
                 false,
                 false,
@@ -5830,7 +5567,7 @@ public class CASDiskWriteAheadLogIT {
         AtomicBoolean walIsFull = new AtomicBoolean();
 
         final OCheckpointRequestListener checkpointRequestListener = () -> walIsFull.set(true);
-        wal.addFullCheckpointListener(checkpointRequestListener);
+        wal.addCheckpointListener(checkpointRequestListener);
         ExecutorService executorService = Executors.newCachedThreadPool();
 
         AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
@@ -5946,7 +5683,6 @@ public class CASDiskWriteAheadLogIT {
                 true,
                 Locale.US,
                 walSizeLimit,
-                -1,
                 1000,
                 false,
                 false,
@@ -5956,7 +5692,7 @@ public class CASDiskWriteAheadLogIT {
         AtomicBoolean walIsFull = new AtomicBoolean();
 
         final OCheckpointRequestListener checkpointRequestListener = () -> walIsFull.set(true);
-        wal.addFullCheckpointListener(checkpointRequestListener);
+        wal.addCheckpointListener(checkpointRequestListener);
         ExecutorService executorService = Executors.newCachedThreadPool();
 
         AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
@@ -6072,7 +5808,6 @@ public class CASDiskWriteAheadLogIT {
                 true,
                 Locale.US,
                 walSizeLimit,
-                -1,
                 1000,
                 false,
                 false,
@@ -6082,7 +5817,7 @@ public class CASDiskWriteAheadLogIT {
         AtomicBoolean walIsFull = new AtomicBoolean();
 
         final OCheckpointRequestListener checkpointRequestListener = () -> walIsFull.set(true);
-        wal.addFullCheckpointListener(checkpointRequestListener);
+        wal.addCheckpointListener(checkpointRequestListener);
         ExecutorService executorService = Executors.newCachedThreadPool();
 
         AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
@@ -6199,7 +5934,6 @@ public class CASDiskWriteAheadLogIT {
                 true,
                 Locale.US,
                 walSizeLimit,
-                -1,
                 1000,
                 false,
                 false,
@@ -6209,7 +5943,7 @@ public class CASDiskWriteAheadLogIT {
         AtomicBoolean walIsFull = new AtomicBoolean();
 
         final OCheckpointRequestListener checkpointRequestListener = () -> walIsFull.set(true);
-        wal.addFullCheckpointListener(checkpointRequestListener);
+        wal.addCheckpointListener(checkpointRequestListener);
         ExecutorService executorService = Executors.newCachedThreadPool();
 
         AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
@@ -6326,7 +6060,6 @@ public class CASDiskWriteAheadLogIT {
                 true,
                 Locale.US,
                 walSizeLimit,
-                -1,
                 1000,
                 false,
                 false,
@@ -6336,7 +6069,7 @@ public class CASDiskWriteAheadLogIT {
         AtomicBoolean walIsFull = new AtomicBoolean();
 
         final OCheckpointRequestListener checkpointRequestListener = () -> walIsFull.set(true);
-        wal.addFullCheckpointListener(checkpointRequestListener);
+        wal.addCheckpointListener(checkpointRequestListener);
         ExecutorService executorService = Executors.newCachedThreadPool();
 
         AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
@@ -6457,7 +6190,6 @@ public class CASDiskWriteAheadLogIT {
                 true,
                 Locale.US,
                 walSizeLimit,
-                -1,
                 1000,
                 false,
                 false,
@@ -6467,7 +6199,7 @@ public class CASDiskWriteAheadLogIT {
         AtomicBoolean walIsFull = new AtomicBoolean();
 
         final OCheckpointRequestListener checkpointRequestListener = () -> walIsFull.set(true);
-        wal.addFullCheckpointListener(checkpointRequestListener);
+        wal.addCheckpointListener(checkpointRequestListener);
         ExecutorService executorService = Executors.newCachedThreadPool();
 
         AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
@@ -6588,7 +6320,6 @@ public class CASDiskWriteAheadLogIT {
                 true,
                 Locale.US,
                 walSizeLimit,
-                -1,
                 1000,
                 false,
                 false,
@@ -6598,7 +6329,7 @@ public class CASDiskWriteAheadLogIT {
         AtomicBoolean walIsFull = new AtomicBoolean();
 
         final OCheckpointRequestListener checkpointRequestListener = () -> walIsFull.set(true);
-        wal.addFullCheckpointListener(checkpointRequestListener);
+        wal.addCheckpointListener(checkpointRequestListener);
         ExecutorService executorService = Executors.newCachedThreadPool();
 
         AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
@@ -6723,7 +6454,6 @@ public class CASDiskWriteAheadLogIT {
                 true,
                 Locale.US,
                 walSizeLimit,
-                -1,
                 1000,
                 false,
                 false,
@@ -6733,7 +6463,7 @@ public class CASDiskWriteAheadLogIT {
         AtomicBoolean walIsFull = new AtomicBoolean();
 
         final OCheckpointRequestListener checkpointRequestListener = () -> walIsFull.set(true);
-        wal.addFullCheckpointListener(checkpointRequestListener);
+        wal.addCheckpointListener(checkpointRequestListener);
         ExecutorService executorService = Executors.newCachedThreadPool();
 
         AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
@@ -6859,7 +6589,6 @@ public class CASDiskWriteAheadLogIT {
                 true,
                 Locale.US,
                 10 * 1024 * 1024 * 1024L,
-                -1,
                 1000,
                 false,
                 false,
@@ -6939,7 +6668,6 @@ public class CASDiskWriteAheadLogIT {
                 true,
                 Locale.US,
                 10 * 1024 * 1024 * 1024L,
-                -1,
                 1000,
                 false,
                 false,
@@ -6995,242 +6723,6 @@ public class CASDiskWriteAheadLogIT {
     }
   }
 
-  @Test
-  public void testMasterRecordCrashTwoRecords() throws Exception {
-    CASDiskWriteAheadLog wal =
-        new CASDiskWriteAheadLog(
-            "walTest",
-            testDirectory,
-            testDirectory,
-            48_000,
-            64,
-            null,
-            null,
-            Integer.MAX_VALUE,
-            10 * 1024 * 1024,
-            20,
-            true,
-            Locale.US,
-            10 * 1024 * 1024 * 1024L,
-            -1,
-            1000,
-            false,
-            false,
-            true,
-            10);
-
-    OLogSequenceNumber masterLSNOne = wal.log(new OFullCheckpointStartRecord());
-    wal.flush();
-
-    OLogSequenceNumber masterLSNTwo = wal.log(new OFullCheckpointStartRecord());
-    wal.flush();
-
-    Assert.assertEquals(masterLSNTwo, wal.lastCheckpoint());
-
-    wal.close();
-
-    try (FileChannel wmrChannel =
-        FileChannel.open(
-            testDirectory.resolve("walTest.wmr"),
-            StandardOpenOption.READ,
-            StandardOpenOption.WRITE)) {
-      final ByteBuffer buffer = ByteBuffer.allocate(20);
-
-      wmrChannel.position(20);
-      OIOUtils.readByteBuffer(buffer, wmrChannel);
-
-      buffer.put(10, (byte) (buffer.get(10) + 1));
-
-      buffer.position(0);
-      OIOUtils.writeByteBuffer(buffer, wmrChannel, 20);
-    }
-
-    wal =
-        new CASDiskWriteAheadLog(
-            "walTest",
-            testDirectory,
-            testDirectory,
-            48_000,
-            64,
-            null,
-            null,
-            Integer.MAX_VALUE,
-            10 * 1024 * 1024,
-            20,
-            true,
-            Locale.US,
-            10 * 1024 * 1024 * 1024L,
-            -1,
-            1000,
-            false,
-            false,
-            true,
-            10);
-
-    Assert.assertEquals(masterLSNOne, wal.lastCheckpoint());
-
-    wal.close();
-  }
-
-  @Test
-  public void testMasterRecordCrashThreeRecordsFirstDamage() throws Exception {
-    CASDiskWriteAheadLog wal =
-        new CASDiskWriteAheadLog(
-            "walTest",
-            testDirectory,
-            testDirectory,
-            48_000,
-            64,
-            null,
-            null,
-            Integer.MAX_VALUE,
-            10 * 1024 * 1024,
-            20,
-            true,
-            Locale.US,
-            10 * 1024 * 1024 * 1024L,
-            -1,
-            1000,
-            false,
-            false,
-            true,
-            10);
-
-    wal.log(new OFullCheckpointStartRecord());
-    wal.flush();
-
-    OLogSequenceNumber masterLSNOne = wal.log(new OFullCheckpointStartRecord());
-    wal.flush();
-
-    OLogSequenceNumber masterLSNTwo = wal.log(new OFullCheckpointStartRecord());
-    wal.flush();
-
-    Assert.assertEquals(masterLSNTwo, wal.lastCheckpoint());
-
-    wal.close();
-
-    try (FileChannel wmrChannel =
-        FileChannel.open(
-            testDirectory.resolve("walTest.wmr"),
-            StandardOpenOption.READ,
-            StandardOpenOption.WRITE)) {
-      final ByteBuffer buffer = ByteBuffer.allocate(20);
-
-      wmrChannel.position(0);
-      OIOUtils.readByteBuffer(buffer, wmrChannel);
-
-      buffer.put(10, (byte) (buffer.get(10) + 1));
-
-      buffer.position(0);
-      OIOUtils.writeByteBuffer(buffer, wmrChannel, 0);
-    }
-
-    wal =
-        new CASDiskWriteAheadLog(
-            "walTest",
-            testDirectory,
-            testDirectory,
-            48_000,
-            64,
-            null,
-            null,
-            Integer.MAX_VALUE,
-            10 * 1024 * 1024,
-            20,
-            true,
-            Locale.US,
-            10 * 1024 * 1024 * 1024L,
-            -1,
-            1000,
-            false,
-            false,
-            true,
-            10);
-
-    Assert.assertEquals(masterLSNOne, wal.lastCheckpoint());
-
-    wal.close();
-  }
-
-  @Test
-  public void testMasterRecordCrashThreeRecordsSecondDamage() throws Exception {
-    CASDiskWriteAheadLog wal =
-        new CASDiskWriteAheadLog(
-            "walTest",
-            testDirectory,
-            testDirectory,
-            48_000,
-            64,
-            null,
-            null,
-            Integer.MAX_VALUE,
-            10 * 1024 * 1024,
-            20,
-            true,
-            Locale.US,
-            10 * 1024 * 1024 * 1024L,
-            -1,
-            1000,
-            false,
-            false,
-            true,
-            10);
-
-    wal.log(new OFullCheckpointStartRecord());
-    wal.flush();
-
-    wal.log(new OFullCheckpointStartRecord());
-    wal.flush();
-
-    OLogSequenceNumber masterLSNTwo = wal.log(new OFullCheckpointStartRecord());
-    wal.flush();
-
-    Assert.assertEquals(masterLSNTwo, wal.lastCheckpoint());
-
-    wal.close();
-
-    try (FileChannel wmrChannel =
-        FileChannel.open(
-            testDirectory.resolve("walTest.wmr"),
-            StandardOpenOption.READ,
-            StandardOpenOption.WRITE)) {
-      final ByteBuffer buffer = ByteBuffer.allocate(20);
-
-      wmrChannel.position(20);
-      OIOUtils.readByteBuffer(buffer, wmrChannel);
-
-      buffer.put(10, (byte) (buffer.get(10) + 1));
-
-      buffer.position(0);
-      OIOUtils.writeByteBuffer(buffer, wmrChannel, 20);
-    }
-
-    wal =
-        new CASDiskWriteAheadLog(
-            "walTest",
-            testDirectory,
-            testDirectory,
-            48_000,
-            64,
-            null,
-            null,
-            Integer.MAX_VALUE,
-            10 * 1024 * 1024,
-            20,
-            true,
-            Locale.US,
-            10 * 1024 * 1024 * 1024L,
-            -1,
-            1000,
-            false,
-            false,
-            true,
-            10);
-
-    Assert.assertEquals(masterLSNTwo, wal.lastCheckpoint());
-
-    wal.close();
-  }
 
   @Test
   public void testIntegerOverflowNoException() throws Exception {
@@ -7248,7 +6740,6 @@ public class CASDiskWriteAheadLogIT {
             20,
             true,
             Locale.US,
-            -1,
             -1,
             1000,
             false,
@@ -7279,7 +6770,6 @@ public class CASDiskWriteAheadLogIT {
             true,
             Locale.US,
             -1,
-            -1,
             1000,
             false,
             false,
@@ -7306,7 +6796,6 @@ public class CASDiskWriteAheadLogIT {
             20,
             true,
             Locale.US,
-            -1,
             -1,
             1000,
             false,

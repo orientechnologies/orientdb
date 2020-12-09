@@ -80,7 +80,6 @@ import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.CELL_BTREE_NULL_BUCKET_SINGLE_VALUE_V3_INIT_PO;
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.CELL_BTREE_NULL_BUCKET_SINGLE_VALUE_V3_REMOVE_VALUE_PO;
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.CELL_BTREE_NULL_BUCKET_SINGLE_VALUE_V3_SET_VALUE_PO;
-import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.CHECKPOINT_END_RECORD;
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.CLUSTER_PAGE_APPEND_RECORD_PO;
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.CLUSTER_PAGE_DELETE_RECORD_PO;
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.CLUSTER_PAGE_INIT_PO;
@@ -99,9 +98,6 @@ import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.FILE_DELETED_WAL_RECORD;
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.FREE_SPACE_MAP_INIT;
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.FREE_SPACE_MAP_UPDATE;
-import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.FULL_CHECKPOINT_START_RECORD;
-import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.FUZZY_CHECKPOINT_END_RECORD;
-import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.FUZZY_CHECKPOINT_START_RECORD;
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.HIGH_LEVEL_TRANSACTION_CHANGE_RECORD;
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.LOCAL_HASH_TABLE_V2_BUCKET_ADD_ENTRY_PO;
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.LOCAL_HASH_TABLE_V2_BUCKET_DELETE_ENTRY_PO;
@@ -322,7 +318,7 @@ import net.jpountz.lz4.LZ4FastDecompressor;
  */
 public final class OWALRecordsFactory {
 
-  private final Map<Integer, Class> idToTypeMap = new HashMap<>();
+  private final Map<Integer, Class<?>> idToTypeMap = new HashMap<>();
 
   public static final OWALRecordsFactory INSTANCE = new OWALRecordsFactory();
 
@@ -398,20 +394,8 @@ public final class OWALRecordsFactory {
       case UPDATE_PAGE_RECORD:
         walRecord = new OUpdatePageRecord();
         break;
-      case FUZZY_CHECKPOINT_START_RECORD:
-        walRecord = new OFuzzyCheckpointStartRecord();
-        break;
-      case FUZZY_CHECKPOINT_END_RECORD:
-        walRecord = new OFuzzyCheckpointEndRecord();
-        break;
-      case FULL_CHECKPOINT_START_RECORD:
-        walRecord = new OFullCheckpointStartRecord();
-        break;
       case HIGH_LEVEL_TRANSACTION_CHANGE_RECORD:
         walRecord = new OHighLevelTransactionChangeRecord();
-        break;
-      case CHECKPOINT_END_RECORD:
-        walRecord = new OCheckpointEndRecord();
         break;
       case ATOMIC_UNIT_START_RECORD:
         walRecord = new OAtomicUnitStartRecord();

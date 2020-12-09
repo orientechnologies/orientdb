@@ -2,10 +2,6 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 public final class WALRecordTypes {
   public static final int UPDATE_PAGE_RECORD = 0;
-  public static final int FUZZY_CHECKPOINT_START_RECORD = 1;
-  public static final int FUZZY_CHECKPOINT_END_RECORD = 2;
-  public static final int FULL_CHECKPOINT_START_RECORD = 4;
-  public static final int CHECKPOINT_END_RECORD = 5;
   public static final int ATOMIC_UNIT_START_RECORD = 8;
   public static final int ATOMIC_UNIT_END_RECORD = 9;
   public static final int FILE_CREATED_WAL_RECORD = 10;

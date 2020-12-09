@@ -23,7 +23,6 @@ package com.orientechnologies.orient.core.storage.cache;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.storage.cache.local.OBackgroundExceptionListener;
-import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.OPageIsBrokenListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import java.io.IOException;
@@ -37,10 +36,6 @@ public interface OWriteCache {
   /** Removes listener which is called by cache if corruption of file page is detected. */
   @SuppressWarnings("unused")
   void removePageIsBrokenListener(OPageIsBrokenListener listener);
-
-  void addLowDiskSpaceListener(OLowDiskSpaceListener listener);
-
-  void removeLowDiskSpaceListener(OLowDiskSpaceListener listener);
 
   long bookFileId(String fileName);
 
@@ -77,7 +72,7 @@ public interface OWriteCache {
 
   boolean checkLowDiskSpace() throws IOException;
 
-  void makeFuzzyCheckpoint(long segmentId, byte[] lastMetadata) throws IOException;
+  void syncDataFiles(long segmentId, byte[] lastMetadata) throws IOException;
 
   void flushTillSegment(long segmentId);
 
@@ -145,14 +140,6 @@ public interface OWriteCache {
    * @return Size of page inside of cache.
    */
   int pageSize();
-
-  /**
-   * DO NOT DELETE THIS METHOD IT IS USED IN ENTERPRISE STORAGE
-   *
-   * <p>Takes two ids and checks whether they are equal from point of view of write cache. In other
-   * words methods checks whether two ids in reality contain the same internal ids.
-   */
-  boolean fileIdsAreEqual(long firsId, long secondId);
 
   /**
    * Finds if there was file in write cache with given id which is deleted right now. If such file

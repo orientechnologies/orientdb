@@ -34,7 +34,6 @@ import com.orientechnologies.orient.core.storage.cache.OPageDataVerificationErro
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.cache.local.OBackgroundExceptionListener;
-import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.OPageIsBrokenListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import java.nio.file.Path;
@@ -591,12 +590,6 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache
   public final void removePageIsBrokenListener(final OPageIsBrokenListener listener) {}
 
   @Override
-  public final void addLowDiskSpaceListener(final OLowDiskSpaceListener listener) {}
-
-  @Override
-  public final void removeLowDiskSpaceListener(final OLowDiskSpaceListener listener) {}
-
-  @Override
   public final long loadFile(final String fileName) {
     metadataLock.lock();
     try {
@@ -629,7 +622,7 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache
   }
 
   @Override
-  public final void makeFuzzyCheckpoint(final long segmentId, byte[] lastMetadata) {}
+  public final void syncDataFiles(final long segmentId, byte[] lastMetadata) {}
 
   @Override
   public final void flushTillSegment(final long segmentId) {}
@@ -695,15 +688,6 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache
   @Override
   public final int pageSize() {
     return pageSize;
-  }
-
-  /** @inheritDoc */
-  @Override
-  public final boolean fileIdsAreEqual(final long firsId, final long secondId) {
-    final int firstIntId = extractFileId(firsId);
-    final int secondIntId = extractFileId(secondId);
-
-    return firstIntId == secondIntId;
   }
 
   @Override
