@@ -2,13 +2,12 @@ package com.orientechnologies.orient.core.db.tool;
 
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.*;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class ODatabaseImportSimpleCompatibilityTest {
   private final String databaseName = "testBench";
