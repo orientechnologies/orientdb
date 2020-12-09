@@ -122,10 +122,10 @@ public class OUpdateDatabaseStatusTask extends OAbstractRemoteTask {
     out.writeUTF(status);
     if (lsn == null) {
       out.writeLong(-1);
-      out.writeLong(-1);
+      out.writeInt(-1);
     } else {
       out.writeLong(lsn.getSegment());
-      out.writeLong(lsn.getPosition());
+      out.writeInt(lsn.getPosition());
     }
   }
 
@@ -134,7 +134,7 @@ public class OUpdateDatabaseStatusTask extends OAbstractRemoteTask {
     databaseName = in.readUTF();
     status = in.readUTF();
     long seg = in.readLong();
-    long pos = in.readLong();
+    int pos = in.readInt();
     if (seg == -1 && pos == -1) {
       lsn = null;
     } else {

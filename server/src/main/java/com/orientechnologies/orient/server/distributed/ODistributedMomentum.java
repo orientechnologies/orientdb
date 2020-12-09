@@ -56,14 +56,14 @@ public class ODistributedMomentum implements OStreamable {
       if (embedded == null) return null;
 
       return new OLogSequenceNumber(
-          (Long) embedded.field("segment"), (Long) embedded.field("position"));
+          (Long) embedded.field("segment"), (Integer) embedded.field("position"));
     }
   }
 
   public void setLSN(final String iNode, final OLogSequenceNumber iLSN) {
     final ODocument embedded = new ODocument();
     embedded.field("segment", iLSN.getSegment(), OType.LONG);
-    embedded.field("position", iLSN.getPosition(), OType.LONG);
+    embedded.field("position", iLSN.getPosition(), OType.INTEGER);
 
     synchronized (configuration) {
       configuration.field(iNode, embedded, OType.EMBEDDED);

@@ -579,7 +579,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
 
         int bytesRead = 0;
 
-        long lsnPos = -1;
+        int lsnPos = -1;
 
         segment = segmentsIterator.next();
 
@@ -628,7 +628,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
               while (buffer.remaining() > 0) {
                 if (recordLen == -1) {
                   if (recordLenBytes == null) {
-                    lsnPos = pageIndex * pageSize + buffer.position();
+                    lsnPos = (int) (pageIndex * pageSize + buffer.position());
 
                     if (buffer.remaining() >= OIntegerSerializer.INT_SIZE) {
                       recordLen = buffer.getInt();
@@ -1468,7 +1468,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
         final OLogSequenceNumber lsn = record.getLsn();
 
         if (lsn.getPosition() < 0) {
-          final long position = calculatePosition(record, prevRecord, pageSize, maxRecordSize);
+          final int position = calculatePosition(record, prevRecord, pageSize, maxRecordSize);
           final OLogSequenceNumber newLSN = new OLogSequenceNumber(lsn.getSegment(), position);
 
           if (record.getLsn().getPosition() < 0) {
@@ -1496,7 +1496,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
     return end.get();
   }
 
-  private static long calculatePosition(
+  private static int calculatePosition(
       final OWALRecord record, final OWALRecord prevRecord, int pageSize, int maxRecordSize) {
     assert prevRecord.getLsn().getSegment() <= record.getLsn().getSegment()
         : "prev segment "
@@ -1593,7 +1593,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
 
         record.setDistance(0);
 
-        return newPosition;
+        return (int) newPosition;
       } else {
         final long prevPosition = prevRecord.getLsn().getPosition();
         final long end = prevPosition + prevRecord.getDistance();
@@ -1654,7 +1654,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
       record.setDiskSize(diskSize);
     }
 
-    return start;
+    return (int)start;
   }
 
   private void fireEventsFor(final OLogSequenceNumber lsn) {

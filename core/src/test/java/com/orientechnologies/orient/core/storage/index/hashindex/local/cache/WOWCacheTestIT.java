@@ -916,12 +916,12 @@ public class WOWCacheTestIT {
     long magicNumber = OLongSerializer.INSTANCE.deserializeNative(content, 0);
     Assert.assertEquals(magicNumber, OWOWCache.MAGIC_NUMBER_WITH_CHECKSUM);
 
-    int segment =
-        OIntegerSerializer.INSTANCE.deserializeNative(
-            content, OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE);
-    long position =
+    long segment =
         OLongSerializer.INSTANCE.deserializeNative(
-            content, OLongSerializer.LONG_SIZE + 2 * OIntegerSerializer.INT_SIZE);
+            content, ODurablePage.WAL_SEGMENT_OFFSET);
+    int position =
+        OIntegerSerializer.INSTANCE.deserializeNative(
+            content, ODurablePage.WAL_POSITION_OFFSET);
 
     OLogSequenceNumber readLsn = new OLogSequenceNumber(segment, position);
 
