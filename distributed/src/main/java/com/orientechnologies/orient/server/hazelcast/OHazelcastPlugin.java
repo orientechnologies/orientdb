@@ -916,7 +916,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           activeNodes.remove(eventNodeName);
           activeNodesNamesByUuid.remove(iEvent.getMember().getUuid());
           activeNodesUuidByName.remove(eventNodeName);
-          closeRemoteServer(eventNodeName);
+          onServerRemoved(eventNodeName);
         }
 
         updateLastClusterChange();

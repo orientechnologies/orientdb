@@ -3008,4 +3008,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       ODatabaseRecordThreadLocal.instance().set(currDb);
     }
   }
+
+  // Called to notify this server, that a node has been removed from the cluster
+  protected void onServerRemoved(String nodeName) {
+    closeRemoteServer(nodeName);
+  }
 }
