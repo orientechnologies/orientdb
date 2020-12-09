@@ -6723,7 +6723,6 @@ public class CASDiskWriteAheadLogIT {
     }
   }
 
-
   @Test
   public void testIntegerOverflowNoException() throws Exception {
     final CASDiskWriteAheadLog wal =

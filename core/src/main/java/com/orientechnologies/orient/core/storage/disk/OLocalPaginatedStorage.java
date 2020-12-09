@@ -846,8 +846,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
                 OGlobalConfiguration.STORAGE_CHECKSUM_MODE, OChecksumMode.class),
             iv,
             aesKey,
-            contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_CALL_FSYNC)
-        );
+            contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_CALL_FSYNC));
 
     wowCache.loadRegisteredFiles();
     wowCache.addBackgroundExceptionListener(this);
