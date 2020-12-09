@@ -3013,4 +3013,38 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected void onServerRemoved(String nodeName) {
     closeRemoteServer(nodeName);
   }
+
+  // Called when the status of a distributed database changes to online
+  protected void onDbStatusOnline(String databaseName) {
+    final DB_STATUS s = getDatabaseStatus(getLocalNodeName(), databaseName);
+    if (s == DB_STATUS.NOT_AVAILABLE) {
+      // INSTALL THE DATABASE
+      installDatabase(
+          false,
+          databaseName,
+          false,
+          OGlobalConfiguration.DISTRIBUTED_BACKUP_TRY_INCREMENTAL_FIRST.getValueAsBoolean());
+    }
+  }
+
+  // Called when the db config has changed
+  protected void onDbConfigUpdated(
+      String databaseName, ODocument config, boolean updated, boolean deployToCluster) {
+    // SEND A DISTRIBUTED MSG TO ALL THE SERVERS
+    final Set<String> servers = new HashSet<String>(getActiveServers());
+    servers.remove(nodeName);
+
+    if (!servers.isEmpty() && messageService.getDatabase(databaseName) != null) {
+
+      final ODistributedResponse dResponse =
+          sendRequest(
+              databaseName,
+              null,
+              servers,
+              new OUpdateDatabaseConfigurationTask(databaseName, config),
+              getNextMessageIdCounter(),
+              ODistributedRequest.EXECUTION_MODE.NO_RESPONSE,
+              null);
+    }
+  }
 }

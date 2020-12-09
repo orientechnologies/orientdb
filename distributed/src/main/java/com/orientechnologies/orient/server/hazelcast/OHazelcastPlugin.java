@@ -61,8 +61,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedConfiguration
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedLifecycleListener;
 import com.orientechnologies.orient.server.distributed.ODistributedLockManager;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest;
-import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedStartupException;
@@ -70,7 +68,6 @@ import com.orientechnologies.orient.server.distributed.OModifiableDistributedCon
 import com.orientechnologies.orient.server.distributed.impl.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl;
 import com.orientechnologies.orient.server.distributed.impl.task.OAbstractSyncDatabaseTask;
-import com.orientechnologies.orient.server.distributed.impl.task.OUpdateDatabaseConfigurationTask;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
@@ -665,24 +662,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         ORecordInternal.setRecordSerializer(
             document, ODatabaseDocumentAbstract.getDefaultSerializer());
         configurationMap.put(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + databaseName, document);
-
-        // SEND A DISTRIBUTED MSG TO ALL THE SERVERS
-        final Set<String> servers = new HashSet<String>(getActiveServers());
-        servers.remove(nodeName);
-
-        if (!servers.isEmpty() && messageService.getDatabase(databaseName) != null) {
-
-          final ODistributedResponse dResponse =
-              sendRequest(
-                  databaseName,
-                  null,
-                  servers,
-                  new OUpdateDatabaseConfigurationTask(databaseName, document),
-                  getNextMessageIdCounter(),
-                  ODistributedRequest.EXECUTION_MODE.NO_RESPONSE,
-                  null);
-        }
-
+        onDbConfigUpdated(databaseName, document, updated, iDeployToCluster);
       } else
         configurationMap.putInLocalCache(
             OHazelcastPlugin.CONFIG_DATABASE_PREFIX + databaseName, document);
@@ -799,15 +779,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
         if (!iEvent.getMember().equals(hazelcastInstance.getCluster().getLocalMember())
             && DB_STATUS.ONLINE.equals(iEvent.getValue())) {
-          final DB_STATUS s = getDatabaseStatus(getLocalNodeName(), databaseName);
-          if (s == DB_STATUS.NOT_AVAILABLE) {
-            // INSTALL THE DATABASE
-            installDatabase(
-                false,
-                databaseName,
-                false,
-                OGlobalConfiguration.DISTRIBUTED_BACKUP_TRY_INCREMENTAL_FIRST.getValueAsBoolean());
-          }
+          onDbStatusOnline(databaseName);
         }
       }
     } catch (HazelcastInstanceNotActiveException | RetryableHazelcastException e) {
@@ -869,15 +841,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
         if (!iEvent.getMember().equals(hazelcastInstance.getCluster().getLocalMember())
             && DB_STATUS.ONLINE.equals(iEvent.getValue())) {
-          final DB_STATUS s = getDatabaseStatus(getLocalNodeName(), databaseName);
-          if (s == DB_STATUS.NOT_AVAILABLE) {
-            // INSTALL THE DATABASE
-            installDatabase(
-                false,
-                databaseName,
-                false,
-                OGlobalConfiguration.DISTRIBUTED_BACKUP_TRY_INCREMENTAL_FIRST.getValueAsBoolean());
-          }
+          onDbStatusOnline(databaseName);
         }
 
       } else if (key.startsWith(CONFIG_REGISTEREDNODES)) {
