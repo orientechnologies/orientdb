@@ -27,7 +27,7 @@ public final class AsyncFile implements OFile {
   private final AtomicLong dirtyCounter = new AtomicLong();
   private final Object flushSemaphore = new Object();
 
-  private final AtomicLong size = new AtomicLong();
+  private final AtomicLong size = new AtomicLong(-1);
   private AsynchronousFileChannel fileChannel;
 
   private final int pageSize;
@@ -90,7 +90,17 @@ public final class AsyncFile implements OFile {
               currentSize);
     }
 
-    size.set(currentSize);
+    if (size.get() < 0) {
+      size.set(currentSize);
+    } else {
+      if (fileChannel.size() - HEADER_SIZE > size.get()) {
+        throw new IllegalStateException(
+            "Physical size of the file "
+                + (fileChannel.size() - HEADER_SIZE)
+                + " but logical size is "
+                + size.get());
+      }
+    }
   }
 
   @Override
