@@ -620,6 +620,8 @@ database.factory("DatabaseApi", [
       stype,
       username,
       password,
+      createAdmin,
+      adminPassword,
       callback,
       error
     ) {
@@ -629,8 +631,16 @@ database.factory("DatabaseApi", [
         headers["Authorization"] =
           "Basic " + Base64.Base64.encode(username + ":" + password);
       }
+
+      console.log("CREATE DATABASE - createAdmin = "+ createAdmin);
+
+      var payload = null;
+      if(createAdmin){
+       payload = {"adminPassword": adminPassword}
+      }
+
       $http
-        .post(API + "database/" + name + "/" + stype + "/" + type, null, {
+        .post(API + "database/" + name + "/" + stype + "/" + type, payload, {
           headers: headers
         })
         .success(function(data) {

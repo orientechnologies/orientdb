@@ -66,10 +66,11 @@ LoginModule.controller("LoginController", ['$scope', '$rootScope', '$routeParams
     modalScope.sso = $scope.sso;
     modalScope.types = ['document', 'graph']
     modalScope.stypes = ['plocal', 'memory']
+
     var modalPromise = $modal({templateUrl: 'views/database/newDatabase.html', scope: modalScope, show: false});
-    modalScope.createNew = function (name, type, stype, username, password, lightweight) {
+    modalScope.createNew = function (name, type, stype, username, password, createAdmin, adminPassword, lightweight) {
       modalScope.creating = true;
-      DatabaseApi.createDatabase(name, type, stype, username, password, function (data) {
+      DatabaseApi.createDatabase(name, type, stype, username, password, createAdmin, adminPassword, function (data) {
 
         $scope.databases.push(name);
         $scope.database = name;

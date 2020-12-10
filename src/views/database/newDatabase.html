@@ -41,6 +41,28 @@
               <div class="col-sm-offset-2 col-sm-10">
                 <div class="checkbox">
                   <label>
+                    <input type="checkbox" ng-model="createAdmin"> Create Admin user
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group" ng-show="createAdmin">
+              <label class="control-label col-md-2">Admin Password</label>
+
+              <div class="col-md-10">
+                <input id="adminPassword" type="password" class="form-control"
+                       ng-model="adminPassword"
+                       value=""/>
+              </div>
+            </div>
+
+
+
+            <div class="form-group">
+              <div class="col-sm-offset-2 col-sm-10">
+                <div class="checkbox">
+                  <label>
                     <input type="checkbox" ng-model="advanced"> Advanced Options
                   </label>
                 </div>
@@ -89,7 +111,7 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-default" ng-click="$hide()">Close</button>
         <button id="new-database-create-button" class="btn btn-primary" ng-disabled="!sso && newDB.$invalid"
-                ng-click="createNew(name, type, stype, username, password, lightweight)">Create database
+                ng-click="createNew(name, type, stype, username, password, createAdmin, adminPassword, lightweight)">Create database
         </button>
       </div>
     </div>
