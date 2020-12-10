@@ -16,7 +16,7 @@ import java.io.PipedOutputStream;
 import java.util.concurrent.CountDownLatch;
 
 public class OSyncReceiver implements Runnable {
-  private ODistributedAbstractPlugin distributed;
+  private ODistributedPlugin distributed;
   private final String databaseName;
   private final ODistributedDatabaseChunk firstChunk;
   private final String iNode;
@@ -28,7 +28,7 @@ public class OSyncReceiver implements Runnable {
   private volatile boolean finished = false;
 
   public OSyncReceiver(
-      ODistributedAbstractPlugin distributed,
+      ODistributedPlugin distributed,
       String databaseName,
       ODistributedDatabaseChunk firstChunk,
       String iNode,

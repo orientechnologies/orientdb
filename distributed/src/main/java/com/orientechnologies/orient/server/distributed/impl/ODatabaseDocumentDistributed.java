@@ -68,10 +68,9 @@ import java.util.stream.Stream;
 /** Created by tglman on 30/03/17. */
 public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
-  private final ODistributedAbstractPlugin distributedManager;
+  private final ODistributedPlugin distributedManager;
 
-  public ODatabaseDocumentDistributed(
-      OStorage storage, ODistributedAbstractPlugin distributedPlugin) {
+  public ODatabaseDocumentDistributed(OStorage storage, ODistributedPlugin distributedPlugin) {
     super(storage);
     this.distributedManager = distributedPlugin;
   }

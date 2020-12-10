@@ -19,13 +19,7 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
-import com.orientechnologies.orient.server.distributed.*;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedAbstractPlugin;
-import java.util.*;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
 
-/**
- * Hazelcast implementation for clustering.
- *
- * @author Luca Garulli (l.garulli--at--orientdb.com)
- */
-public class OHazelcastPlugin extends ODistributedAbstractPlugin {}
+/** We keep this since it is the easiest way not to break configuration files! */
+public class OHazelcastPlugin extends ODistributedPlugin {}

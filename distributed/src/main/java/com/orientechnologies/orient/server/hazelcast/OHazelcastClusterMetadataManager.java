@@ -24,8 +24,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.*;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
 import com.orientechnologies.orient.server.distributed.impl.task.OAbstractSyncDatabaseTask;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -71,9 +71,9 @@ public class OHazelcastClusterMetadataManager
   private String nodeName = null;
   private OServer serverInstance;
 
-  private ODistributedAbstractPlugin distributedPlugin;
+  private ODistributedPlugin distributedPlugin;
 
-  public OHazelcastClusterMetadataManager(ODistributedAbstractPlugin distributedPlugin) {
+  public OHazelcastClusterMetadataManager(ODistributedPlugin distributedPlugin) {
     this.distributedPlugin = distributedPlugin;
   }
 
