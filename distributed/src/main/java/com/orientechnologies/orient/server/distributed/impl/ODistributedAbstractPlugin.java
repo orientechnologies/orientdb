@@ -80,7 +80,7 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedT
 import com.orientechnologies.orient.server.distributed.task.ODatabaseIsOldException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedDatabaseDeltaSyncException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
-import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
+import com.orientechnologies.orient.server.hazelcast.OHazelcastClusterMetadataManager;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.OBeforeDatabaseOpenNetworkEventListener;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
@@ -147,10 +147,10 @@ public class ODistributedAbstractPlugin extends OServerPluginAbstract
   private TimerTask healthCheckerTask = null;
   protected OSignalHandler.OSignalListener signalListener;
 
-  private OHazelcastPlugin.OHazelcastClusterMetadataManager clusterManager;
+  private OHazelcastClusterMetadataManager clusterManager;
 
   protected ODistributedAbstractPlugin() {
-    clusterManager = new OHazelcastPlugin.OHazelcastClusterMetadataManager(this);
+    clusterManager = new OHazelcastClusterMetadataManager(this);
   }
 
   public void waitUntilNodeOnline() throws InterruptedException {
