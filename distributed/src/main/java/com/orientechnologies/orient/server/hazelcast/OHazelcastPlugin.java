@@ -24,7 +24,6 @@ import com.hazelcast.config.FileSystemXmlConfig;
 import com.hazelcast.core.EntryEvent;
 import com.hazelcast.core.EntryListener;
 import com.hazelcast.core.Hazelcast;
-import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.ILock;
@@ -37,7 +36,6 @@ import com.hazelcast.core.MemberAttributeEvent;
 import com.hazelcast.core.MembershipEvent;
 import com.hazelcast.core.MembershipListener;
 import com.hazelcast.spi.exception.RetryableHazelcastException;
-import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
@@ -57,14 +55,8 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedException;
-import com.orientechnologies.orient.server.distributed.ODistributedLifecycleListener;
-import com.orientechnologies.orient.server.distributed.ODistributedLockManager;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.ODistributedStartupException;
-import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl;
 import com.orientechnologies.orient.server.distributed.impl.task.OAbstractSyncDatabaseTask;
@@ -80,14 +72,15 @@ import java.util.concurrent.CopyOnWriteArrayList;
  *
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
-public class OHazelcastPlugin extends ODistributedAbstractPlugin
-    implements MembershipListener, EntryListener<String, Object>, LifecycleListener {
-
+public class OHazelcastPlugin extends ODistributedAbstractPlugin {
   public static final String CONFIG_DATABASE_PREFIX = "database.";
 
   public static final String CONFIG_NODE_PREFIX = "node.";
   public static final String CONFIG_DBSTATUS_PREFIX = "dbstatus.";
   public static final String CONFIG_REGISTEREDNODES = "registeredNodes";
+
+public static class OHazelcastClusterMetadataManager
+    implements MembershipListener, EntryListener<String, Object>, LifecycleListener {
 
   protected String hazelcastConfigFile = "hazelcast.xml";
   protected Config hazelcastConfig;
@@ -117,7 +110,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   private String nodeName = null;
   private OServer serverInstance;
 
-  public OHazelcastPlugin() {}
+  private ODistributedAbstractPlugin distributedPlugin;
+
+  public OHazelcastClusterMetadataManager(ODistributedAbstractPlugin distributedPlugin) {
+    this.distributedPlugin = distributedPlugin;
+  }
 
   public void configHazelcastPlugin(
       OServer server, OServerParameterConfiguration[] params, String nodeName) {
@@ -197,7 +194,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     nodeCfg.field("id", nodeId);
     nodeCfg.field("uuid", nodeUuid);
     nodeCfg.field("name", nodeName);
-    ORecordInternal.setRecordSerializer(nodeCfg, ODatabaseDocumentAbstract.getDefaultSerializer());
+    ORecordInternal.setRecordSerializer(
+        nodeCfg, ODatabaseDocumentAbstract.getDefaultSerializer());
     configurationMap.put(CONFIG_NODE_PREFIX + nodeUuid, nodeCfg);
 
     // REGISTER CURRENT NODES
@@ -234,25 +232,34 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     }
 
     ODistributedServerLog.info(
-        this, localNodeName, null, DIRECTION.NONE, "Servers in cluster: %s", activeNodes.keySet());
+        this,
+        localNodeName,
+        null,
+        DIRECTION.NONE,
+        "Servers in cluster: %s",
+        activeNodes.keySet());
 
     publishLocalNodeConfiguration();
 
     if (!configurationMap.containsKey(CONFIG_NODE_PREFIX + nodeUuid)) {
       // NODE NOT REGISTERED, FORCING SHUTTING DOWN
       ODistributedServerLog.error(
-          this, localNodeName, null, DIRECTION.NONE, "Error on registering local node on cluster");
+          this,
+          localNodeName,
+          null,
+          DIRECTION.NONE,
+          "Error on registering local node on cluster");
       throw new ODistributedStartupException("Error on registering local node on cluster");
     }
 
     // CONNECTS TO ALL THE AVAILABLE NODES
-    connectToAllNodes(activeNodes.keySet());
+    distributedPlugin.connectToAllNodes(activeNodes.keySet());
 
     publishLocalNodeConfiguration();
 
-    installNewDatabasesFromCluster();
+    distributedPlugin.installNewDatabasesFromCluster();
 
-    loadLocalDatabases();
+    distributedPlugin.loadLocalDatabases();
 
     membershipListenerMapRegistration =
         configurationMap.getHazelcastMap().addEntryListener(this, true);
@@ -263,7 +270,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
     publishLocalNodeConfiguration();
 
-    final long delay = OGlobalConfiguration.DISTRIBUTED_PUBLISH_NODE_STATUS_EVERY.getValueAsLong();
+    final long delay =
+        OGlobalConfiguration.DISTRIBUTED_PUBLISH_NODE_STATUS_EVERY.getValueAsLong();
     if (delay > 0) {
       publishLocalNodeConfigurationTask =
           Orient.instance().scheduleTask(this::publishLocalNodeConfiguration, delay, delay);
@@ -383,7 +391,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         members.size());
   }
 
-  @Override
   public boolean isWriteQuorumPresent(final String databaseName) {
     final ODistributedConfiguration cfg = getDatabaseConfiguration(databaseName);
     if (cfg != null) {
@@ -396,7 +403,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     return false;
   }
 
-  @Override
   public int getNodeIdByName(final String name) {
     int id = tryGetNodeIdByName(name);
     if (name == null) {
@@ -406,7 +412,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     return id;
   }
 
-  @Override
   public String getNodeNameById(final int id) {
     String name = tryGetNodeNameById(id);
     if (name == null) {
@@ -416,27 +421,24 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     return name;
   }
 
-  @Override
   public boolean isNodeAvailable(final String iNodeName) {
     if (iNodeName == null) return false;
     Member member = activeNodes.get(iNodeName);
     return member != null && hazelcastInstance.getCluster().getMembers().contains(member);
   }
 
-  @Override
   public boolean isNodeAvailable(final String iNodeName, final String iDatabaseName) {
     final DB_STATUS s = getDatabaseStatus(iNodeName, iDatabaseName);
     return s != DB_STATUS.OFFLINE && s != DB_STATUS.NOT_AVAILABLE;
   }
 
-  @Override
   public String getLockManagerServer() {
     return "";
   }
 
   protected void publishLocalNodeConfiguration() {
     try {
-      final ODocument cfg = getLocalNodeConfiguration();
+      final ODocument cfg = distributedPlugin.getLocalNodeConfiguration();
       ORecordInternal.setRecordSerializer(cfg, ODatabaseDocumentAbstract.getDefaultSerializer());
       configurationMap.put(CONFIG_NODE_PREFIX + nodeUuid, cfg);
     } catch (Exception e) {
@@ -450,25 +452,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     }
   }
 
-  @Override
-  public Throwable convertException(final Throwable original) {
-    if (!Orient.instance().isActive() || isOffline())
-      return new OOfflineNodeException("Server " + nodeName + " is offline");
-
-    if (original instanceof HazelcastException
-        || original instanceof HazelcastInstanceNotActiveException)
-      return new IOException(
-          "Hazelcast wrapped exception: " + original.getMessage(), original.getCause());
-
-    if (original instanceof IllegalMonitorStateException)
-      // THIS IS RAISED WHEN INTERNAL LOCKING IS BROKEN BECAUSE HARD SHUTDOWN
-      return new IOException(
-          "Illegal monitor state: " + original.getMessage(), original.getCause());
-
-    return original;
-  }
-
-  @Override
   public long getClusterTime() {
     if (hazelcastInstance == null) throw new HazelcastInstanceNotActiveException();
 
@@ -479,17 +462,15 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     }
   }
 
-  @Override
   public ODistributedLockManager getLockManagerRequester() {
     return distributedLockManager;
   }
 
-  @Override
   public ODistributedLockManager getLockManagerExecutor() {
     return distributedLockManager;
   }
 
-  protected void prepareHazelcastPluginShutdown() {
+  public void prepareHazelcastPluginShutdown() {
     try {
       final Set<String> databases = new HashSet<String>();
 
@@ -557,7 +538,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     OServer.unregisterServerInstance(nodeName);
   }
 
-  protected Member getClusterMemberByName(final String rNodeName) {
+  public Member getClusterMemberByName(final String rNodeName) {
     Member member = activeNodes.get(rNodeName);
     if (member == null) {
       // SYNC PROBLEMS? TRY TO RETRIEVE THE SERVER INFORMATION FROM THE CLUSTER MAP
@@ -622,12 +603,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     return Hazelcast.newHazelcastInstance(hazelcastConfig);
   }
 
-  @Override
   public String getPublicAddress() {
     return hazelcastConfig.getNetworkConfig().getPublicAddress();
   }
 
-  @Override
   public OHazelcastDistributedMap getConfigurationMap() {
     return configurationMap;
   }
@@ -640,7 +619,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       final OModifiableDistributedConfiguration cfg,
       final boolean iDeployToCluster) {
     // VALIDATE THE CONFIGURATION FIRST
-    getDistributedStrategy().validateConfiguration(cfg);
+    distributedPlugin.getDistributedStrategy().validateConfiguration(cfg);
 
     boolean updated = tryUpdatingDatabaseConfigurationLocally(databaseName, cfg);
 
@@ -655,16 +634,16 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         // WRITE TO THE MAP TO BE READ BY NEW SERVERS ON JOIN
         ORecordInternal.setRecordSerializer(
             document, ODatabaseDocumentAbstract.getDefaultSerializer());
-        configurationMap.put(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + databaseName, document);
-        onDbConfigUpdated(databaseName, document, updated, iDeployToCluster);
-      } else
-        configurationMap.putInLocalCache(
-            OHazelcastPlugin.CONFIG_DATABASE_PREFIX + databaseName, document);
+        configurationMap.put(CONFIG_DATABASE_PREFIX + databaseName, document);
+        distributedPlugin.onDbConfigUpdated(databaseName, document, updated, iDeployToCluster);
+      } else configurationMap.putInLocalCache(CONFIG_DATABASE_PREFIX + databaseName, document);
 
       // SEND NEW CFG TO ALL THE CONNECTED CLIENTS
-      serverInstance.getClientConnectionManager().pushDistribCfg2Clients(getClusterConfiguration());
+      serverInstance
+          .getClientConnectionManager()
+          .pushDistribCfg2Clients(getClusterConfiguration());
 
-      dumpServersStatus();
+      distributedPlugin.dumpServersStatus();
     }
 
     return updated;
@@ -672,7 +651,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
   public boolean tryUpdatingDatabaseConfigurationLocally(
       final String iDatabaseName, final OModifiableDistributedConfiguration cfg) {
-    ODistributedDatabaseImpl local = getMessageService().getDatabase(iDatabaseName);
+    ODistributedDatabaseImpl local =
+        distributedPlugin.getMessageService().getDatabase(iDatabaseName);
     if (local == null) return false;
 
     final ODistributedConfiguration dCfg = local.getDistributedConfiguration();
@@ -768,12 +748,13 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         final String nodeName = dbNode.substring(0, dbNode.indexOf("."));
         final String databaseName = dbNode.substring(dbNode.indexOf(".") + 1);
 
-        onDatabaseEvent(nodeName, databaseName, (DB_STATUS) iEvent.getValue());
-        invokeOnDatabaseStatusChange(nodeName, databaseName, (DB_STATUS) iEvent.getValue());
+        distributedPlugin.onDatabaseEvent(nodeName, databaseName, (DB_STATUS) iEvent.getValue());
+        distributedPlugin.invokeOnDatabaseStatusChange(
+            nodeName, databaseName, (DB_STATUS) iEvent.getValue());
 
         if (!iEvent.getMember().equals(hazelcastInstance.getCluster().getLocalMember())
             && DB_STATUS.ONLINE.equals(iEvent.getValue())) {
-          onDbStatusOnline(databaseName);
+          distributedPlugin.onDbStatusOnline(databaseName);
         }
       }
     } catch (HazelcastInstanceNotActiveException | RetryableHazelcastException e) {
@@ -813,7 +794,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           activeNodesNamesByUuid.put(iEvent.getMember().getUuid(), name);
           activeNodesUuidByName.put(name, iEvent.getMember().getUuid());
         }
-        dumpServersStatus();
+        distributedPlugin.dumpServersStatus();
 
       } else if (key.startsWith(CONFIG_DBSTATUS_PREFIX)) {
         ODistributedServerLog.info(
@@ -830,17 +811,22 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         final String nodeName = dbNode.substring(0, dbNode.indexOf("."));
         final String databaseName = dbNode.substring(dbNode.indexOf(".") + 1);
 
-        onDatabaseEvent(nodeName, databaseName, (DB_STATUS) iEvent.getValue());
-        invokeOnDatabaseStatusChange(nodeName, databaseName, (DB_STATUS) iEvent.getValue());
+        distributedPlugin.onDatabaseEvent(nodeName, databaseName, (DB_STATUS) iEvent.getValue());
+        distributedPlugin.invokeOnDatabaseStatusChange(
+            nodeName, databaseName, (DB_STATUS) iEvent.getValue());
 
         if (!iEvent.getMember().equals(hazelcastInstance.getCluster().getLocalMember())
             && DB_STATUS.ONLINE.equals(iEvent.getValue())) {
-          onDbStatusOnline(databaseName);
+          distributedPlugin.onDbStatusOnline(databaseName);
         }
 
       } else if (key.startsWith(CONFIG_REGISTEREDNODES)) {
         ODistributedServerLog.info(
-            this, nodeName, eventNodeName, DIRECTION.IN, "Received updated about registered nodes");
+            this,
+            nodeName,
+            eventNodeName,
+            DIRECTION.IN,
+            "Received updated about registered nodes");
         reloadRegisteredNodes((String) iEvent.getValue());
       }
 
@@ -874,12 +860,12 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           activeNodes.remove(eventNodeName);
           activeNodesNamesByUuid.remove(iEvent.getMember().getUuid());
           activeNodesUuidByName.remove(eventNodeName);
-          onServerRemoved(eventNodeName);
+          distributedPlugin.onServerRemoved(eventNodeName);
         }
 
         updateLastClusterChange();
 
-        dumpServersStatus();
+        distributedPlugin.dumpServersStatus();
 
       } else if (key.startsWith(CONFIG_DATABASE_PREFIX)) {
         final String dbName = key.substring(CONFIG_DATABASE_PREFIX.length());
@@ -900,7 +886,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         final String nodeName = dbNode.substring(0, dbNode.indexOf("."));
         final String databaseName = dbNode.substring(dbNode.indexOf(".") + 1);
 
-        onDatabaseEvent(nodeName, databaseName, (DB_STATUS) iEvent.getValue());
+        distributedPlugin.onDatabaseEvent(nodeName, databaseName, (DB_STATUS) iEvent.getValue());
       }
     } catch (HazelcastInstanceNotActiveException | RetryableHazelcastException e) {
       OLogManager.instance().error(this, "Hazelcast is not running", e);
@@ -929,7 +915,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
                 final String nodeLeftName = getNodeName(iEvent.getMember(), true);
                 if (nodeLeftName == null) return;
 
-                removeServer(nodeLeftName, true);
+                distributedPlugin.removeServer(nodeLeftName, true);
 
               } catch (HazelcastInstanceNotActiveException | RetryableHazelcastException e) {
                 OLogManager.instance().error(this, "Hazelcast is not running", e);
@@ -949,8 +935,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   public void memberAdded(final MembershipEvent iEvent) {
     new Thread(
             () -> {
-              if (hazelcastInstance == null || !hazelcastInstance.getLifecycleService().isRunning())
-                return;
+              if (hazelcastInstance == null
+                  || !hazelcastInstance.getLifecycleService().isRunning()) return;
 
               try {
                 updateLastClusterChange();
@@ -1014,7 +1000,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       publishLocalNodeConfiguration();
       setNodeStatus(NODE_STATUS.ONLINE);
 
-      // TEMPORARY PATCH TO FIX HAZELCAST'S BEHAVIOUR THAT ENQUEUES THE MERGING ITEM EVENT WITH THIS
+      // TEMPORARY PATCH TO FIX HAZELCAST'S BEHAVIOUR THAT ENQUEUES THE MERGING ITEM EVENT WITH
+      // THIS
       // AND ACTIVE NODES MAP COULD BE STILL NOT FILLED
       Thread t =
           new Thread(
@@ -1052,7 +1039,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
                         cs,
                         getActiveServers().contains(getLockManagerServer()));
 
-                    for (final String databaseName : getMessageService().getDatabases()) {
+                    for (final String databaseName :
+                        distributedPlugin.getMessageService().getDatabases()) {
                       executeInDistributedDatabaseLock(
                           databaseName,
                           20000,
@@ -1071,7 +1059,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
                               cfg.override(
                                   (ODocument)
                                       configurationMap.get(
-                                          OHazelcastPlugin.CONFIG_DATABASE_PREFIX + databaseName));
+                                          CONFIG_DATABASE_PREFIX + databaseName));
                               return null;
                             }
                           });
@@ -1097,11 +1085,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     final String dbName = iDatabase.getName();
 
     if (configurationMap != null) {
-      configurationMap.remove(OHazelcastPlugin.CONFIG_DBSTATUS_PREFIX + nodeName + "." + dbName);
+      configurationMap.remove(CONFIG_DBSTATUS_PREFIX + nodeName + "." + dbName);
 
       if (!OScenarioThreadLocal.INSTANCE.isRunModeDistributed()) {
         // LAST NODE HOLDING THE DATABASE, DELETE DISTRIBUTED CFG TOO
-        configurationMap.remove(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + dbName);
+        configurationMap.remove(CONFIG_DATABASE_PREFIX + dbName);
         configurationMap.remove(OAbstractSyncDatabaseTask.DEPLOYDB + dbName);
         ODistributedServerLog.info(
             this,
@@ -1165,12 +1153,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     return doc;
   }
 
-  protected ODocument getNodeConfigurationByName(final String nodeName, final boolean useCache) {
+  public ODocument getNodeConfigurationByName(final String nodeName, final boolean useCache) {
     String uuid = getNodeUuidByName(nodeName);
     return getNodeConfigurationByUuid(uuid, useCache);
   }
 
-  @Override
   public DB_STATUS getDatabaseStatus(final String iNode, final String iDatabaseName) {
     if (OSystemDatabase.SYSTEM_DB_NAME.equals(iDatabaseName)) {
       // CHECK THE SERVER STATUS
@@ -1184,7 +1171,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     final DB_STATUS status =
         (DB_STATUS)
             configurationMap.getLocalCachedValue(
-                OHazelcastPlugin.CONFIG_DBSTATUS_PREFIX + iNode + "." + iDatabaseName);
+                CONFIG_DBSTATUS_PREFIX + iNode + "." + iDatabaseName);
     return status != null ? status : DB_STATUS.NOT_AVAILABLE;
   }
 
@@ -1199,23 +1186,22 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       }
     }
 
-    final String key = OHazelcastPlugin.CONFIG_DBSTATUS_PREFIX + iNode + "." + iDatabaseName;
+    final String key = CONFIG_DBSTATUS_PREFIX + iNode + "." + iDatabaseName;
     final DB_STATUS status =
         (DB_STATUS)
             (useCache ? configurationMap.getLocalCachedValue(key) : configurationMap.get(key));
     return status != null ? status : DB_STATUS.NOT_AVAILABLE;
   }
 
-  @Override
   public void setDatabaseStatus(
       final String iNode, final String iDatabaseName, final DB_STATUS iStatus) {
-    final String key = OHazelcastPlugin.CONFIG_DBSTATUS_PREFIX + iNode + "." + iDatabaseName;
+    final String key = CONFIG_DBSTATUS_PREFIX + iNode + "." + iDatabaseName;
 
     final DB_STATUS currStatus = (DB_STATUS) configurationMap.get(key);
 
     if (currStatus == null || currStatus != iStatus) {
       configurationMap.put(key, iStatus);
-      invokeOnDatabaseStatusChange(iNode, iDatabaseName, iStatus);
+      distributedPlugin.invokeOnDatabaseStatusChange(iNode, iDatabaseName, iStatus);
     }
   }
 
@@ -1271,7 +1257,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         nodeLeftName,
         removeOnlyDynamicServers);
 
-    for (String dbName : getManagedDatabases()) {
+    for (String dbName : distributedPlugin.getManagedDatabases()) {
       removeNodeFromConfiguration(nodeLeftName, dbName, removeOnlyDynamicServers, false);
     }
   }
@@ -1291,7 +1277,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         databaseName,
         removeOnlyDynamicServers);
 
-    final OModifiableDistributedConfiguration cfg = getDatabaseConfiguration(databaseName).modify();
+    final OModifiableDistributedConfiguration cfg =
+        getDatabaseConfiguration(databaseName).modify();
 
     if (removeOnlyDynamicServers) {
       // CHECK THE SERVER IS NOT REGISTERED STATICALLY
@@ -1345,7 +1332,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     return found;
   }
 
-  protected Member removeFromLocalActiveServerList(String nodeLeftName) {
+  public Member removeFromLocalActiveServerList(String nodeLeftName) {
     final Member member = activeNodes.remove(nodeLeftName);
     if (member == null) return null;
     if (member.getUuid() != null) activeNodesNamesByUuid.remove(member.getUuid());
@@ -1353,7 +1340,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     return member;
   }
 
-  protected void removeServerFromCluster(
+  public void removeServerFromCluster(
       final Member member, final String nodeLeftName, final boolean removeOnlyDynamicServers) {
     if (hazelcastInstance == null || !hazelcastInstance.getLifecycleService().isRunning()) return;
 
@@ -1385,7 +1372,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
               0);
     }
 
-    for (String databaseName : getManagedDatabases()) {
+    for (String databaseName : distributedPlugin.getManagedDatabases()) {
       final DB_STATUS nodeLeftStatus = getDatabaseStatus(nodeLeftName, databaseName);
       if (nodeLeftStatus != DB_STATUS.OFFLINE && nodeLeftStatus != DB_STATUS.NOT_AVAILABLE)
         configurationMap.put(
@@ -1410,7 +1397,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     }
   }
 
-  @Override
   public Set<String> getActiveServers() {
     return activeNodes.keySet();
   }
@@ -1425,32 +1411,28 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       return;
 
     if (activeNodes.putIfAbsent(joinedNodeName, member) == null) {
-      // NOTIFY NODE IS GOING TO BE ADDED. IS EVERYBODY OK?
-      for (ODistributedLifecycleListener l : listeners) {
-        if (!l.onNodeJoining(joinedNodeName)) {
-          // DENY JOIN
-          ODistributedServerLog.info(
-              this,
-              nodeName,
-              getNodeName(member, true),
-              DIRECTION.IN,
-              "Denied node to join the cluster id=%s name=%s",
-              member,
-              getNodeName(member, true));
+      if (!distributedPlugin.onNodeJoining(joinedNodeName)) {
+        // DENY JOIN
+        ODistributedServerLog.info(
+            this,
+            nodeName,
+            getNodeName(member, true),
+            DIRECTION.IN,
+            "Denied node to join the cluster id=%s name=%s",
+            member,
+            getNodeName(member, true));
 
-          activeNodes.remove(joinedNodeName);
-          return;
-        }
+        activeNodes.remove(joinedNodeName);
+        return;
       }
 
       activeNodesNamesByUuid.put(member.getUuid(), joinedNodeName);
       activeNodesUuidByName.put(joinedNodeName, member.getUuid());
 
-      onNodeJoined(joinedNodeName, member);
+      distributedPlugin.onNodeJoined(joinedNodeName, member);
     }
   }
 
-  @Override
   public String getNodeName(final Member iMember, final boolean useCache) {
     if (iMember == null || iMember.getUuid() == null) return "?";
 
@@ -1467,13 +1449,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     return "ext:" + iMember.getUuid();
   }
 
-  @Override
   public ODocument getClusterConfiguration() {
-    if (!enabled) return null;
 
     final ODocument cluster = new ODocument();
 
-    cluster.field("localName", getName());
+    cluster.field("localName", distributedPlugin.getName());
     cluster.field("localId", nodeUuid);
 
     // INSERT MEMBERS
@@ -1501,7 +1481,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     return val.intValue();
   }
 
-  @Override
   public String getNodeUuidByName(final String name) {
     if (name == null || name.isEmpty())
       throw new IllegalArgumentException("Node name " + name + " is invalid");
@@ -1509,7 +1488,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     return activeNodesUuidByName.get(name);
   }
 
-  @Override
   public int getAvailableNodes(final String iDatabaseName) {
     int availableNodes = 0;
     for (Map.Entry<String, Member> entry : activeNodes.entrySet()) {
@@ -1518,7 +1496,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     return availableNodes;
   }
 
-  @Override
   public List<String> getOnlineNodes(final String iDatabaseName) {
     final List<String> onlineNodes = new ArrayList<String>(activeNodes.size());
     for (Map.Entry<String, Member> entry : activeNodes.entrySet()) {
@@ -1540,7 +1517,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
    * Returns the available nodes (not offline) and clears the node list by removing the offline
    * nodes.
    */
-  @Override
   public int getAvailableNodes(final Collection<String> iNodes, final String databaseName) {
     for (Iterator<String> it = iNodes.iterator(); it.hasNext(); ) {
       final String node = it.next();
@@ -1611,8 +1587,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     }
     if (updated) {
       // SEND NEW CFG TO ALL THE CONNECTED CLIENTS
-      notifyClients(databaseName);
-      serverInstance.getClientConnectionManager().pushDistribCfg2Clients(getClusterConfiguration());
+      distributedPlugin.notifyClients(databaseName);
+      serverInstance
+          .getClientConnectionManager()
+          .pushDistribCfg2Clients(getClusterConfiguration());
     }
     return result;
   }
@@ -1623,7 +1601,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
   public ODistributedConfiguration getDatabaseConfiguration(
       final String iDatabaseName, final boolean createIfNotPresent) {
-    ODistributedDatabaseImpl local = getMessageService().getDatabase(iDatabaseName);
+    ODistributedDatabaseImpl local =
+        distributedPlugin.getMessageService().getDatabase(iDatabaseName);
     if (local == null) {
       return null;
     }
@@ -1631,7 +1610,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     return local.getDistributedConfiguration();
   }
 
-  @Override
   public void setNodeStatus(final NODE_STATUS iStatus) {
     if (status.equals(iStatus))
       // NO CHANGE
@@ -1651,12 +1629,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     return status.equals(iStatus2Check);
   }
 
-  @Override
   public boolean isNodeOnline(final String iNodeName, final String iDatabaseName) {
     return getDatabaseStatus(iNodeName, iDatabaseName) == DB_STATUS.ONLINE;
   }
 
-  @Override
   public void updateLastClusterChange() {
     lastClusterChangeOn = System.currentTimeMillis();
   }
@@ -1672,4 +1648,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   public String getLocalNodeUuid() {
     return nodeUuid;
   }
+
+  public String getLocalNodeName() {
+    return nodeName;
+  }
+}
 }

@@ -134,7 +134,7 @@ public interface ODistributedServerManager {
 
   void setNodeStatus(NODE_STATUS iStatus);
 
-  boolean checkNodeStatus(NODE_STATUS string);
+  boolean checkNodeStatus(NODE_STATUS status);
 
   void removeServer(String nodeLeftName, boolean removeOnlyDynamicServers);
 
