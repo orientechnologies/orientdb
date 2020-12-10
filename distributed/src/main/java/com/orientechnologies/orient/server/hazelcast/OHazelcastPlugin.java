@@ -114,7 +114,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   private String nodeUuid;
   private int nodeId = -1;
 
-  private String nodeName;
+  private String nodeName = null;
   private OServer serverInstance;
 
   public OHazelcastPlugin() {}
@@ -308,12 +308,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       }
 
       ODistributedServerLog.info(
-          this,
-          getLocalNodeName(),
-          null,
-          DIRECTION.NONE,
-          "Registered local server with nodeId=%d",
-          nodeId);
+          this, nodeName, null, DIRECTION.NONE, "Registered local server with nodeId=%d", nodeId);
 
       registeredNodesFromCluster.field("ids", registeredNodeById, OType.EMBEDDEDLIST);
       registeredNodesFromCluster.field("names", registeredNodeByName, OType.EMBEDDEDMAP);
@@ -395,8 +390,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       final int availableServers = getAvailableNodes(databaseName);
       if (availableServers == 0) return false;
 
-      final int quorum =
-          cfg.getWriteQuorum(null, cfg.getMasterServers().size(), getLocalNodeName());
+      final int quorum = cfg.getWriteQuorum(null, cfg.getMasterServers().size(), nodeName);
       return availableServers >= quorum;
     }
     return false;
@@ -560,7 +554,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         });
 
     setNodeStatus(NODE_STATUS.OFFLINE);
-    OServer.unregisterServerInstance(getLocalNodeName());
+    OServer.unregisterServerInstance(nodeName);
   }
 
   protected Member getClusterMemberByName(final String rNodeName) {
@@ -707,7 +701,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
     ODistributedServerLog.info(
         this,
-        getLocalNodeName(),
+        nodeName,
         null,
         DIRECTION.NONE,
         "Broadcasting new distributed configuration for database: %s (version=%d)\n",
@@ -1031,7 +1025,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
                     // WAIT (MAX 10 SECS) THE LOCK MANAGER IS ONLINE
                     ODistributedServerLog.info(
                         this,
-                        getLocalNodeName(),
+                        nodeName,
                         null,
                         DIRECTION.NONE,
                         "Merging networks, waiting for the lock %s to be reachable...",
@@ -1051,7 +1045,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
                     ODistributedServerLog.info(
                         this,
-                        getLocalNodeName(),
+                        nodeName,
                         null,
                         DIRECTION.NONE,
                         "Merging networks, lock=%s (active=%s)...",
@@ -1068,7 +1062,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
                             public Object call(final OModifiableDistributedConfiguration cfg) {
                               ODistributedServerLog.debug(
                                   this,
-                                  getLocalNodeName(),
+                                  nodeName,
                                   null,
                                   DIRECTION.NONE,
                                   "Replacing local database '%s' configuration with the most recent from the joined cluster...",
@@ -1085,7 +1079,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
                   } finally {
                     ODistributedServerLog.warn(
                         this,
-                        getLocalNodeName(),
+                        nodeName,
                         null,
                         DIRECTION.NONE,
                         "Network merged, lock=%s...",
@@ -1111,7 +1105,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         configurationMap.remove(OAbstractSyncDatabaseTask.DEPLOYDB + dbName);
         ODistributedServerLog.info(
             this,
-            getLocalNodeName(),
+            nodeName,
             null,
             DIRECTION.NONE,
             "Dropped last copy of database '%s', removing it from the cluster",
@@ -1270,7 +1264,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       final String nodeLeftName, final boolean removeOnlyDynamicServers) {
     ODistributedServerLog.info(
         this,
-        getLocalNodeName(),
+        nodeName,
         null,
         DIRECTION.NONE,
         "Removing server '%s' from all the databases (removeOnlyDynamicServers=%s)...",
@@ -1289,7 +1283,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       final boolean statusOffline) {
     ODistributedServerLog.debug(
         this,
-        getLocalNodeName(),
+        nodeName,
         null,
         DIRECTION.NONE,
         "Removing server '%s' from database configuration '%s' (removeOnlyDynamicServers=%s)...",
@@ -1305,7 +1299,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       if (dc != null) {
         ODistributedServerLog.info(
             this,
-            getLocalNodeName(),
+            nodeName,
             null,
             DIRECTION.NONE,
             "Cannot remove server '%s' because it is enlisted in data center '%s' configuration for database '%s'",
@@ -1320,7 +1314,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       if (registeredServers.contains(nodeLeftName)) {
         ODistributedServerLog.info(
             this,
-            getLocalNodeName(),
+            nodeName,
             null,
             DIRECTION.NONE,
             "Cannot remove server '%s' because it is enlisted in 'servers' of the distributed configuration for database '%s'",
