@@ -10,6 +10,7 @@ import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class OCreateUserStatement extends OSimpleExecStatement {
 
@@ -34,6 +35,7 @@ public class OCreateUserStatement extends OSimpleExecStatement {
   protected OIdentifier name;
   protected OIdentifier passwordIdentifier;
   protected String passwordString;
+  protected OInputParameter passwordParam;
 
   protected List<OIdentifier> roles = new ArrayList<>();
 
@@ -55,9 +57,12 @@ public class OCreateUserStatement extends OSimpleExecStatement {
     sb.append("=");
     if (passwordString != null) {
       sb.append(passwordString);
-    } else {
+    } else if (passwordIdentifier != null) {
       sb.append("?");
       params.add(passwordIdentifier.getStringValue());
+    } else {
+      sb.append("?");
+      params.add(passwordParam.getValue(ctx.getInputParameters()));
     }
 
     // status=ACTIVE
@@ -112,8 +117,10 @@ public class OCreateUserStatement extends OSimpleExecStatement {
     builder.append(" IDENTIFIED BY ");
     if (passwordIdentifier != null) {
       passwordIdentifier.toString(params, builder);
-    } else {
+    } else if (passwordString != null) {
       builder.append(passwordString);
+    } else {
+      passwordParam.toString(params, builder);
     }
     if (!roles.isEmpty()) {
       builder.append("ROLE [");
@@ -135,6 +142,7 @@ public class OCreateUserStatement extends OSimpleExecStatement {
     result.name = name == null ? null : name.copy();
     result.passwordIdentifier = passwordIdentifier == null ? null : passwordIdentifier.copy();
     result.passwordString = passwordString;
+    result.passwordParam = passwordParam == null ? null : passwordParam.copy();
     roles.forEach(x -> result.roles.add(x.copy()));
     return result;
   }
@@ -143,26 +151,17 @@ public class OCreateUserStatement extends OSimpleExecStatement {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-
     OCreateUserStatement that = (OCreateUserStatement) o;
-
-    if (name != null ? !name.equals(that.name) : that.name != null) return false;
-    if (passwordIdentifier != null
-        ? !passwordIdentifier.equals(that.passwordIdentifier)
-        : that.passwordIdentifier != null) return false;
-    if (passwordString != null
-        ? !passwordString.equals(that.passwordString)
-        : that.passwordString != null) return false;
-    return roles != null ? roles.equals(that.roles) : that.roles == null;
+    return Objects.equals(name, that.name)
+        && Objects.equals(passwordIdentifier, that.passwordIdentifier)
+        && Objects.equals(passwordString, that.passwordString)
+        && Objects.equals(passwordParam, that.passwordParam)
+        && Objects.equals(roles, that.roles);
   }
 
   @Override
   public int hashCode() {
-    int result = name != null ? name.hashCode() : 0;
-    result = 31 * result + (passwordIdentifier != null ? passwordIdentifier.hashCode() : 0);
-    result = 31 * result + (passwordString != null ? passwordString.hashCode() : 0);
-    result = 31 * result + (roles != null ? roles.hashCode() : 0);
-    return result;
+    return Objects.hash(name, passwordIdentifier, passwordString, passwordParam, roles);
   }
 }
 /* JavaCC - OriginalChecksum=d1f22e2468eaf740d8ccc90ebbe2c185 (do not edit this line) */

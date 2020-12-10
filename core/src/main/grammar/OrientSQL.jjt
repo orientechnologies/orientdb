@@ -4884,6 +4884,8 @@ OCreateUserStatement CreateUserStatement():
             jjtThis.passwordIdentifier = Identifier()
             |
             jjtThis.passwordString = String()
+            |
+            jjtThis.passwordParam = InputParameter()
         )
         [
           <ROLE>
