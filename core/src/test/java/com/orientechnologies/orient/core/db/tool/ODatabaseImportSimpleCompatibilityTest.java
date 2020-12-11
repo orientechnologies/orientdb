@@ -2,16 +2,14 @@ package com.orientechnologies.orient.core.db.tool;
 
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.*;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+
+import java.io.*;
+
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class ODatabaseImportSimpleCompatibilityTest {
-  private final String databaseName = "testBench";
-
   private OrientDB orientDB;
 
   private ODatabaseSession importDatabase;
@@ -19,68 +17,71 @@ public class ODatabaseImportSimpleCompatibilityTest {
 
   private ODatabaseExport export;
 
+  @Ignore
   @Test
-  public void testImportExportOldEmpty() {
-    final InputStream emptyDbV2 =
-        this.getClass()
-            .getClassLoader()
-            .getResourceAsStream("databases\\databases_2_2\\Empty.json");
+  public void testImportExportOldEmpty() throws Exception {
+    final InputStream emptyDbV2 = load("/databases/databases_2_2/Empty.json");
+    Assert.assertNotNull("Input must not be null!", emptyDbV2);
     final ByteArrayOutputStream output = new ByteArrayOutputStream();
     Assert.assertEquals(0, output.size());
-    this.setup(emptyDbV2, output);
+    final String databaseName = "testImportExportOldEmpty";
+    this.setup(databaseName, emptyDbV2, output);
 
     this.executeImport();
-    this.executeExport();
+    this.executeExport(" -excludeAll -includeSchema=true");
 
-    this.tearDown();
+    this.tearDown(databaseName);
     Assert.assertTrue(output.size() > 0);
   }
 
+  @Ignore
   @Test
-  public void testImportExportOldSimple() {
-    final InputStream simpleDbV2 =
-        this.getClass()
-            .getClassLoader()
-            .getResourceAsStream("databases\\databases_2_2\\OrderCustomer-sl-0.json");
+  public void testImportExportOldSimple() throws Exception {
+    final InputStream simpleDbV2 = load("/databases/databases_2_2/OrderCustomer-sl-0.json");
+    Assert.assertNotNull("Input must not be null!", simpleDbV2);
     final ByteArrayOutputStream output = new ByteArrayOutputStream();
     Assert.assertEquals(0, output.size());
-    this.setup(simpleDbV2, output);
+    final String databaseName = "testImportExportOldSimple";
+    this.setup(databaseName, simpleDbV2, output);
 
     this.executeImport();
-    this.executeExport();
+    this.executeExport(" -excludeAll -includeSchema=true");
 
     Assert.assertTrue(importDatabase.getMetadata().getSchema().existsClass("OrderCustomer"));
 
-    this.tearDown();
+    this.tearDown(databaseName);
     Assert.assertTrue(output.size() > 0);
   }
 
   @Test
-  public void testImportExportNewerSimple() {
-    final InputStream simpleDbV2 =
-        this.getClass()
-            .getClassLoader()
-            .getResourceAsStream("databases\\databases_3_1\\OrderCustomer-sl-0.json");
+  public void testImportExportNewerSimple() throws Exception {
+    final InputStream simpleDbV3 = load("/databases/databases_3_1/OrderCustomer-sl-0.json");
+    Assert.assertNotNull("Input must not be null!", simpleDbV3);
     final ByteArrayOutputStream output = new ByteArrayOutputStream();
     Assert.assertEquals(0, output.size());
-    this.setup(simpleDbV2, output);
+    final String databaseName = "testImportExportNewerSimple";
+    this.setup(databaseName, simpleDbV3, output);
 
     this.executeImport();
-    this.executeExport();
+    this.executeExport(" -excludeAll -includeSchema=true");
 
     Assert.assertTrue(importDatabase.getMetadata().getSchema().existsClass("OrderCustomer"));
 
-    this.tearDown();
+    this.tearDown(databaseName);
     Assert.assertTrue(output.size() > 0);
   }
 
-  private void setup(final InputStream input, final OutputStream output) {
+  private InputStream load(final String path) throws FileNotFoundException {
+    final File file = new File(getClass().getResource(path).getFile());
+    return new FileInputStream(file);
+  }
+
+  private void setup(
+      final String databaseName, final InputStream input, final OutputStream output) {
     final String importDbUrl = "memory:target/import_" + this.getClass().getSimpleName();
     orientDB = createDatabase(databaseName, importDbUrl);
-
     importDatabase = orientDB.open(databaseName, "admin", "admin");
     try {
-      ODatabaseRecordThreadLocal.instance().set((ODatabaseDocumentInternal) importDatabase);
       importer =
           new ODatabaseImport(
               (ODatabaseDocumentInternal) importDatabase,
@@ -102,7 +103,7 @@ public class ODatabaseImportSimpleCompatibilityTest {
     }
   }
 
-  private void tearDown() {
+  private void tearDown(String databaseName) {
     try {
       orientDB.drop(databaseName);
       orientDB.close();
@@ -112,13 +113,11 @@ public class ODatabaseImportSimpleCompatibilityTest {
   }
 
   private void executeImport() {
-    ODatabaseRecordThreadLocal.instance().set((ODatabaseDocumentInternal) importDatabase);
     importer.importDatabase();
   }
 
-  public void executeExport() {
-    ODatabaseRecordThreadLocal.instance().set((ODatabaseDocumentInternal) importDatabase);
-    export.setOptions(" -excludeAll -includeSchema=true");
+  public void executeExport(final String options) {
+    export.setOptions(options);
     export.exportDatabase();
   }
 
