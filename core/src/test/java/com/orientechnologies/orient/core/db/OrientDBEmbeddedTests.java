@@ -509,9 +509,33 @@ public class OrientDBEmbeddedTests {
 
   @Test
   public void testCreateDatabaseViaSQLWithUsers() {
-    OrientDB orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
+    OrientDB orientDB =
+        new OrientDB(
+            "embedded:",
+            OrientDBConfig.builder()
+                .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
+                .build());
     orientDB.execute(
         "create database test memory users(admin identified by 'adminpwd' role admin)");
+    try (ODatabaseSession session = orientDB.open("test", "admin", "adminpwd")) {}
+
+    orientDB.close();
+  }
+
+  @Test
+  public void testCreateDatabaseViaSQLIfNotExistsWithUsers() {
+    OrientDB orientDB =
+        new OrientDB(
+            "embedded:",
+            OrientDBConfig.builder()
+                .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
+                .build());
+    orientDB.execute(
+        "create database test memory if not exists users(admin identified by 'adminpwd' role admin)");
+
+    orientDB.execute(
+        "create database test memory if not exists users(admin identified by 'adminpwd' role admin)");
+
     try (ODatabaseSession session = orientDB.open("test", "admin", "adminpwd")) {}
 
     orientDB.close();
