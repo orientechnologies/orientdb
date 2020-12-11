@@ -505,7 +505,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     try {
       final Set<String> databases = new HashSet<String>();
 
-      if (hazelcastInstance.getLifecycleService().isRunning())
+      if (hazelcastInstance != null && hazelcastInstance.getLifecycleService().isRunning())
         for (Map.Entry<String, Object> entry : configurationMap.entrySet()) {
           if (entry.getKey().startsWith(CONFIG_DBSTATUS_PREFIX)) {
 
