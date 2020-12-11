@@ -25310,7 +25310,130 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
     try {
       jj_consume_token(CREATE);
       jj_consume_token(DATABASE);
-      jjtn000.name = Identifier();
+      switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
+        case TO:
+        case VALUE:
+        case VALUES:
+        case SET:
+        case ADD:
+        case PUT:
+        case MERGE:
+        case CONTENT:
+        case REMOVE:
+        case ORDER:
+        case GROUP:
+        case OFFSET:
+        case RECORD:
+        case CACHE:
+        case CYCLE:
+        case NOLIMIT:
+        case NOCYCLE:
+        case LUCENE:
+        case NEAR:
+        case WITHIN:
+        case MINDEPTH:
+        case CLASS:
+        case SUPERCLASS:
+        case CLASSES:
+        case SUPERCLASSES:
+        case VIEW:
+        case UPDATABLE:
+        case EXCEPTION:
+        case PROFILE:
+        case STORAGE:
+        case ON:
+        case OFF:
+        case TRUNCATE:
+        case FIND:
+        case REFERENCES:
+        case EXTENDS:
+        case CLUSTERS:
+        case ABSTRACT:
+        case ALTER:
+        case NAME:
+        case SHORTNAME:
+        case OVERSIZE:
+        case STRICTMODE:
+        case ADDCLUSTER:
+        case REMOVECLUSTER:
+        case CUSTOM:
+        case CLUSTERSELECTION:
+        case DESCRIPTION:
+        case ENCRYPTION:
+        case DROP:
+        case PROPERTY:
+        case FORCE:
+        case METADATA:
+        case INDEX:
+        case COLLATE:
+        case ENGINE:
+        case REBUILD:
+        case ID:
+        case DATABASE:
+        case OPTIMIZE:
+        case LINK:
+        case TYPE:
+        case INVERSE:
+        case EXPLAIN:
+        case GRANT:
+        case REVOKE:
+        case READ:
+        case EXECUTE:
+        case ALL:
+        case NONE:
+        case FUNCTION:
+        case PARAMETERS:
+        case IDEMPOTENT:
+        case LANGUAGE:
+        case BEGIN:
+        case COMMIT:
+        case ROLLBACK:
+        case IF:
+        case ELSE:
+        case CONTINUE:
+        case FAIL:
+        case ISOLATION:
+        case SLEEP:
+        case CONSOLE:
+        case BLOB:
+        case SHARED:
+        case DEFAULT_:
+        case SEQUENCE:
+        case START:
+        case OPTIONAL:
+        case COUNT:
+        case HA:
+        case STATUS:
+        case SERVER:
+        case SYNC:
+        case EXISTS:
+        case MOVE:
+        case DEPTH_ALIAS:
+        case PATH_ALIAS:
+        case IDENTIFIED:
+        case ROLE:
+        case USER:
+        case USERS:
+        case RID:
+        case SECURITY:
+        case POLICY:
+        case DEFAULTCLUSTER:
+        case SYSTEM:
+        case IN:
+        case KEY:
+        case IDENTIFIER:
+        case QUOTED_IDENTIFIER:
+          jjtn000.name = Identifier();
+          break;
+        case HOOK:
+        case COLON:
+          jjtn000.nameParam = InputParameter();
+          break;
+        default:
+          jj_la1[449] = jj_gen;
+          jj_consume_token(-1);
+          throw new ParseException();
+      }
       jjtn000.type = Identifier();
       switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
         case IF:
@@ -25320,7 +25443,7 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           jjtn000.ifNotExists = true;
           break;
         default:
-          jj_la1[449] = jj_gen;
+          jj_la1[450] = jj_gen;
           ;
       }
       switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
@@ -25335,7 +25458,7 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
               case COMMA:;
                 break;
               default:
-                jj_la1[450] = jj_gen;
+                jj_la1[451] = jj_gen;
                 break label_71;
             }
             jj_consume_token(COMMA);
@@ -25345,7 +25468,7 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           jj_consume_token(RPAREN);
           break;
         default:
-          jj_la1[451] = jj_gen;
+          jj_la1[452] = jj_gen;
           ;
       }
       switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
@@ -25353,7 +25476,7 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           jjtn000.config = Json();
           break;
         default:
-          jj_la1[452] = jj_gen;
+          jj_la1[453] = jj_gen;
           ;
       }
       jjtree.closeNodeScope(jjtn000, true);
@@ -25520,7 +25643,7 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           jjtn000.nameParam = InputParameter();
           break;
         default:
-          jj_la1[453] = jj_gen;
+          jj_la1[454] = jj_gen;
           jj_consume_token(-1);
           throw new ParseException();
       }
@@ -25531,7 +25654,7 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           jjtn000.ifExists = true;
           break;
         default:
-          jj_la1[454] = jj_gen;
+          jj_la1[455] = jj_gen;
           ;
       }
       jjtree.closeNodeScope(jjtn000, true);
@@ -37353,7 +37476,7 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
   private Token jj_scanpos, jj_lastpos;
   private int jj_la;
   private int jj_gen;
-  private final int[] jj_la1 = new int[455];
+  private final int[] jj_la1 = new int[456];
   private static int[] jj_la1_0;
   private static int[] jj_la1_1;
   private static int[] jj_la1_2;
@@ -37828,6 +37951,7 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           0xfc400000,
           0xfc400000,
           0x0,
+          0xfc400000,
           0x0,
           0x0,
           0x0,
@@ -38289,6 +38413,7 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           0xd8802183,
           0xd8802183,
           0x0,
+          0xd8802183,
           0x0,
           0x0,
           0x0,
@@ -38750,6 +38875,7 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           0xff7ffce0,
           0xff7ffce0,
           0x0,
+          0xff7ffce0,
           0x0,
           0x0,
           0x0,
@@ -39211,6 +39337,7 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           0xffffffff,
           0xffffffff,
           0x0,
+          0xffffffff,
           0x0,
           0x0,
           0x0,
@@ -39672,6 +39799,7 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           0xfefbffff,
           0xfefbffff,
           0x20000000,
+          0xfefbffff,
           0x10,
           0x0,
           0x80000000,
@@ -40133,6 +40261,7 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           0x1f,
           0x1f,
           0x0,
+          0x1f,
           0x0,
           0x0,
           0x0,
@@ -40594,6 +40723,7 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           0x0,
           0x10,
           0x0,
+          0xc0000,
           0x0,
           0x80,
           0x0,
@@ -41055,6 +41185,7 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           0x400000,
           0x400000,
           0x0,
+          0x400000,
           0x0,
           0x0,
           0x0,
@@ -41516,6 +41647,7 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           0x32,
           0x32,
           0x0,
+          0x32,
           0x0,
           0x0,
           0x0,
@@ -41535,7 +41667,7 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 455; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 456; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -41546,7 +41678,7 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
     jj_ntk = -1;
     jjtree.reset();
     jj_gen = 0;
-    for (int i = 0; i < 455; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 456; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -41556,7 +41688,7 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 455; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 456; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -41567,7 +41699,7 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
     jj_ntk = -1;
     jjtree.reset();
     jj_gen = 0;
-    for (int i = 0; i < 455; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 456; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -41689,7 +41821,7 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
       la1tokens[jj_kind] = true;
       jj_kind = -1;
     }
-    for (int i = 0; i < 455; i++) {
+    for (int i = 0; i < 456; i++) {
       if (jj_la1[i] == jj_gen) {
         for (int j = 0; j < 32; j++) {
           if ((jj_la1_0[i] & (1 << j)) != 0) {

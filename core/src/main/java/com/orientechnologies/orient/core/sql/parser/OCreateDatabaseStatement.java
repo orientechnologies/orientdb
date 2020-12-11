@@ -17,6 +17,7 @@ import java.util.Map;
 public class OCreateDatabaseStatement extends OSimpleExecServerStatement {
 
   protected OIdentifier name;
+  protected OInputParameter nameParam;
   protected OIdentifier type;
   protected boolean ifNotExists = false;
   protected OJson config;
@@ -36,7 +37,11 @@ public class OCreateDatabaseStatement extends OSimpleExecServerStatement {
     OrientDBInternal server = ctx.getServer();
     OResultInternal result = new OResultInternal();
     result.setProperty("operation", "create database");
-    result.setProperty("name", name.getStringValue());
+    String dbName =
+        name != null
+            ? name.getStringValue()
+            : String.valueOf(nameParam.getValue(ctx.getInputParameters()));
+    result.setProperty("name", dbName);
 
     ODatabaseType dbType;
     try {
@@ -45,15 +50,15 @@ public class OCreateDatabaseStatement extends OSimpleExecServerStatement {
     } catch (IllegalArgumentException ex) {
       throw new OCommandExecutionException("Invalid db type: " + type.getStringValue());
     }
-    if (ifNotExists && server.exists(name.getStringValue(), null, null)) {
+    if (ifNotExists && server.exists(dbName, null, null)) {
       result.setProperty("created", false);
       result.setProperty("existing", true);
     } else {
       try {
         if (config == null) {
-          server.create(name.getStringValue(), null, null, dbType);
+          server.create(dbName, null, null, dbType);
         } else {
-          server.create(name.getStringValue(), null, null, dbType, toOrientDBConfig(config, ctx));
+          server.create(dbName, null, null, dbType, toOrientDBConfig(config, ctx));
         }
         result.setProperty("created", true);
       } catch (Exception e) {
@@ -63,7 +68,7 @@ public class OCreateDatabaseStatement extends OSimpleExecServerStatement {
     }
 
     if (!users.isEmpty()) {
-      try (ODatabaseDocumentInternal db = server.openNoAuthorization(name.getStringValue())) {
+      try (ODatabaseDocumentInternal db = server.openNoAuthorization(dbName)) {
         for (ODatabaseUserData user : users) {
           user.executeCreate(db, ctx);
         }
@@ -92,7 +97,11 @@ public class OCreateDatabaseStatement extends OSimpleExecServerStatement {
   @Override
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("CREATE DATABASE ");
-    name.toString(params, builder);
+    if (name != null) {
+      name.toString(params, builder);
+    } else {
+      nameParam.toString(params, builder);
+    }
     builder.append(" ");
     type.toString(params, builder);
     if (ifNotExists) {

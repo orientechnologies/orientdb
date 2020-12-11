@@ -7,6 +7,7 @@ public class OCreateDatabaseStatementTest extends OParserTestAbstract {
   @Test
   public void testPlain() {
     checkRightSyntaxServer("CREATE DATABASE foo plocal");
+    checkRightSyntaxServer("CREATE DATABASE ? plocal");
     checkRightSyntaxServer(
         "CREATE DATABASE foo plocal {\"config\":{\"security.createDefaultUsers\": true}}");
 
