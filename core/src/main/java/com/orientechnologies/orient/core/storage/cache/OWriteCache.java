@@ -194,12 +194,11 @@ public interface OWriteCache {
 
   /**
    * DO NOT DELETE THIS METHOD IT IS USED IN ENTERPRISE STORAGE
-   * <p>
-   * Takes two ids and checks whether they are equal from point of view of write cache. In other words
-   * methods checks whether two ids in reality contain the same internal ids.
+   *
+   * <p>Takes two ids and checks whether they are equal from point of view of write cache. In other
+   * words methods checks whether two ids in reality contain the same internal ids.
    */
   boolean fileIdsAreEqual(long firsId, long secondId);
-
 
   Long getMinimalNotFlushedSegment();
 

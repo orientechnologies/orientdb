@@ -699,7 +699,6 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache
     return firstIntId == secondIntId;
   }
 
-
   @Override
   public final String restoreFileById(final long fileId) {
     return null;
