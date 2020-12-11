@@ -65,12 +65,12 @@ public class OCreateDatabaseStatement extends OSimpleExecServerStatement {
         throw new OCommandExecutionException(
             "Could not create database " + type.getStringValue() + ":" + e.getMessage());
       }
-    }
 
-    if (!users.isEmpty()) {
-      try (ODatabaseDocumentInternal db = server.openNoAuthorization(dbName)) {
-        for (ODatabaseUserData user : users) {
-          user.executeCreate(db, ctx);
+      if (!users.isEmpty()) {
+        try (ODatabaseDocumentInternal db = server.openNoAuthorization(dbName)) {
+          for (ODatabaseUserData user : users) {
+            user.executeCreate(db, ctx);
+          }
         }
       }
     }
