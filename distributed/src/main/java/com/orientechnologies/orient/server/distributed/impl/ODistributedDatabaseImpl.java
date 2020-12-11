@@ -79,7 +79,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class ODistributedDatabaseImpl implements ODistributedDatabase {
   public static final String DISTRIBUTED_SYNC_JSON_FILENAME = "distributed-sync.json";
-  protected final ODistributedAbstractPlugin manager;
+  protected final ODistributedPlugin manager;
   protected final ODistributedMessageServiceImpl msgService;
   protected final String databaseName;
   private final String localNodeName;
@@ -104,7 +104,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private OFreezeGuard freezeGuard;
 
   public ODistributedDatabaseImpl(
-      final ODistributedAbstractPlugin manager,
+      final ODistributedPlugin manager,
       final ODistributedMessageServiceImpl msgService,
       final String iDatabaseName,
       OServer server) {

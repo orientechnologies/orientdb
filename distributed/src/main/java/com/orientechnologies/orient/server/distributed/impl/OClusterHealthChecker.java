@@ -170,7 +170,7 @@ public class OClusterHealthChecker implements Runnable {
             "Server '%s' was not found in the list of registered servers. Reloading configuration from cluster...",
             server);
 
-        ((ODistributedAbstractPlugin) manager).reloadRegisteredNodes(null);
+        ((ODistributedPlugin) manager).reloadRegisteredNodes(null);
         id = manager.getNodeIdByName(server);
         if (id == -1) {
           if (server.equals(manager.getLocalNodeName())) {
@@ -194,7 +194,7 @@ public class OClusterHealthChecker implements Runnable {
                 server);
 
             try {
-              ((ODistributedAbstractPlugin) manager).restartNode(server);
+              ((ODistributedPlugin) manager).restartNode(server);
             } catch (IOException e) {
               ODistributedServerLog.warn(
                   this,

@@ -11,7 +11,7 @@ public class ODatabaseDocumentDistributedPooled extends ODatabaseDocumentDistrib
   private ODatabasePoolInternal pool;
 
   public ODatabaseDocumentDistributedPooled(
-      ODatabasePoolInternal pool, OStorage storage, ODistributedAbstractPlugin distributedPlugin) {
+      ODatabasePoolInternal pool, OStorage storage, ODistributedPlugin distributedPlugin) {
     super(storage, distributedPlugin);
     this.pool = pool;
   }
