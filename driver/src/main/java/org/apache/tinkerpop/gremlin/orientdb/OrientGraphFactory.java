@@ -1,5 +1,6 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
@@ -41,7 +42,11 @@ public final class OrientGraphFactory implements AutoCloseable, OrientGraphBaseF
 
   public OrientGraphFactory() {
     this(
-        new OrientDB("embedded:.", OrientDBConfig.defaultConfig()),
+        new OrientDB(
+            "embedded:.",
+            OrientDBConfig.builder()
+                .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
+                .build()),
         "memory_" + System.currentTimeMillis(),
         ODatabaseType.MEMORY,
         ADMIN,
@@ -58,7 +63,12 @@ public final class OrientGraphFactory implements AutoCloseable, OrientGraphBaseF
     this.password = password;
     this.labelAsClassName = true;
     initConnectionParameters(url);
-    factory = new OrientDB(connectionURI, OrientDBConfig.defaultConfig());
+    factory =
+        new OrientDB(
+            connectionURI,
+            OrientDBConfig.builder()
+                .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
+                .build());
     shouldCloseOrientDB = true;
   }
 
@@ -154,7 +164,15 @@ public final class OrientGraphFactory implements AutoCloseable, OrientGraphBaseF
   public ODatabaseDocument getDatabase(boolean create, boolean open) {
 
     if (create && type.isPresent()) {
-      this.factory.createIfNotExists(dbName, type.get());
+      this.factory
+          .execute(
+              "create database ? "
+                  + type.get()
+                  + " if not exists users( ? identified by ? role admin)",
+              dbName,
+              user,
+              password)
+          .close();
     }
     return this.factory.open(dbName, user, password);
   }
@@ -166,7 +184,15 @@ public final class OrientGraphFactory implements AutoCloseable, OrientGraphBaseF
   protected ODatabaseDocument acquireFromPool(boolean create, boolean open) {
 
     if (create && type.isPresent()) {
-      this.factory.createIfNotExists(dbName, type.get());
+      this.factory
+          .execute(
+              "create database  ? "
+                  + type.get()
+                  + " if not exists users( ? identified by ? role admin)",
+              dbName,
+              user,
+              password)
+          .close();
     }
 
     final ODatabaseDocument databaseDocument = this.pool.acquire();

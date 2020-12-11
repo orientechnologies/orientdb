@@ -8,6 +8,7 @@ import static org.apache.tinkerpop.gremlin.structure.VertexProperty.Cardinality.
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
@@ -398,7 +399,12 @@ public class OrientGraphTest {
   @Test
   public void checkMemoryDrop() {
 
-    OrientDB orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
+    OrientDB orientDB =
+        new OrientDB(
+            "embedded:",
+            OrientDBConfig.builder()
+                .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
+                .build());
     OrientGraphFactory factory =
         new OrientGraphFactory(orientDB, "_dropDB", ODatabaseType.MEMORY, "admin", "admin");
 

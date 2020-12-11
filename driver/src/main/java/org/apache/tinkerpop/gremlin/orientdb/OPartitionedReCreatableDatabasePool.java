@@ -46,7 +46,15 @@ public class OPartitionedReCreatableDatabasePool {
 
     try {
       if (this.type.isPresent() && !this.orientdb.exists(dbName)) {
-        this.orientdb.create(dbName, type.get());
+        this.orientdb
+            .execute(
+                "create database  ? "
+                    + type.get()
+                    + " if not exists users( ? identified by ? role admin)",
+                dbName,
+                userName,
+                password)
+            .close();
       }
     } catch (Exception e) {
 
