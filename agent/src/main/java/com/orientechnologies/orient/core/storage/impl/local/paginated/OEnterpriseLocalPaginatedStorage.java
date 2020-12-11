@@ -1019,12 +1019,6 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
     return operations;
   }
 
-  @Override
-  public void rollback(OTransactionInternal clientTx) {
-    super.rollback(clientTx);
-    listeners.forEach(OEnterpriseStorageOperationListener::onRollback);
-  }
-
   private void replaceConfiguration(ZipInputStream zipInputStream) throws IOException {
     byte[] buffer = new byte[1024];
 
