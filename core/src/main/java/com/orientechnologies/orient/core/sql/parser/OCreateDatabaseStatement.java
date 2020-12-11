@@ -61,7 +61,7 @@ public class OCreateDatabaseStatement extends OSimpleExecServerStatement {
             "Could not create database " + type.getStringValue() + ":" + e.getMessage());
       }
     }
-    // TODO create users!
+
     if (!users.isEmpty()) {
       try (ODatabaseDocumentInternal db = server.openNoAuthorization(name.getStringValue())) {
         for (ODatabaseUserData user : users) {
