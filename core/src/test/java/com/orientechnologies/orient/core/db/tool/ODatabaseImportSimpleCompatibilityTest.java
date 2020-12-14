@@ -2,9 +2,7 @@ package com.orientechnologies.orient.core.db.tool;
 
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.*;
-
 import java.io.*;
-
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -17,6 +15,8 @@ public class ODatabaseImportSimpleCompatibilityTest {
 
   private ODatabaseExport export;
 
+  // Known compatibility issue: the deprecation of manual indexes is checked by maven, which makes
+  // this test fail: `"manualIndexes":[{"name":"dictionary","content":[]}]`
   @Ignore
   @Test
   public void testImportExportOldEmpty() throws Exception {
@@ -28,12 +28,13 @@ public class ODatabaseImportSimpleCompatibilityTest {
     this.setup(databaseName, emptyDbV2, output);
 
     this.executeImport();
-    this.executeExport(" -excludeAll -includeSchema=true");
+    this.executeExport(" -excludeAll -includeSchema=true -includeManualIndexes=false");
 
     this.tearDown(databaseName);
     Assert.assertTrue(output.size() > 0);
   }
 
+  // The deprecation of manual indexes is checked by maven, which makes this test fail.
   @Ignore
   @Test
   public void testImportExportOldSimple() throws Exception {
@@ -45,7 +46,7 @@ public class ODatabaseImportSimpleCompatibilityTest {
     this.setup(databaseName, simpleDbV2, output);
 
     this.executeImport();
-    this.executeExport(" -excludeAll -includeSchema=true");
+    this.executeExport(" -excludeAll -includeSchema=true -includeManualIndexes=false");
 
     Assert.assertTrue(importDatabase.getMetadata().getSchema().existsClass("OrderCustomer"));
 
@@ -113,6 +114,7 @@ public class ODatabaseImportSimpleCompatibilityTest {
   }
 
   private void executeImport() {
+    importer.setOptions(" -includeManualIndexes=false");
     importer.importDatabase();
   }
 
