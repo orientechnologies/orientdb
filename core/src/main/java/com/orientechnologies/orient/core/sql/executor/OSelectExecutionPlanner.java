@@ -665,22 +665,14 @@ public class OSelectExecutionPlanner {
       List<String> fields = classIndex.getDefinition().getFields();
       if (fields.size() == 1
           && fields.get(0).equals(binaryCondition.getLeft().getDefaultAlias().getStringValue())) {
-        OBinaryCondition indexCond = new OBinaryCondition(-1);
-        indexCond.setLeft(new OExpression(new OIdentifier("key")));
-        indexCond.setOperator(new OEqualsCompareOperator(-1));
-        indexCond.setRight(((OBinaryCondition) condition).getRight().copy());
-        result.chain(new FetchFromIndexStep(classIndex, indexCond, null, ctx, profilingEnabled));
+        OExpression expr = ((OBinaryCondition) condition).getRight();
         result.chain(
-            new AggregateProjectionCalculationStep(
-                info.aggregateProjection,
-                info.groupBy,
+            new CountFromIndexWithKeyStep(
+                new OIndexIdentifier(classIndex.getName(), OIndexIdentifier.Type.INDEX),
+                expr,
+                info.projection.getAllAliases().iterator().next(),
                 ctx,
-                info.timeout != null ? info.timeout.getVal().longValue() : -1,
                 profilingEnabled));
-        result.chain(
-            new GuaranteeEmptyCountStep(
-                info.aggregateProjection.getItems().get(0), ctx, profilingEnabled));
-        result.chain(new ProjectionCalculationStep(info.projection, ctx, profilingEnabled));
         return true;
       }
     }

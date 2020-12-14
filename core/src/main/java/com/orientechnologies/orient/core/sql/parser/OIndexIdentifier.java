@@ -27,6 +27,11 @@ public class OIndexIdentifier extends SimpleNode {
     super(p, id);
   }
 
+  public OIndexIdentifier(String indexName, Type type) {
+    this.indexNameString = indexName;
+    this.type = type;
+  }
+
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     switch (type) {
       case INDEX:
