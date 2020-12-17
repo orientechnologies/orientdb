@@ -18,9 +18,9 @@ public class ODatabaseSuperNodeTest {
   public static void main(String[] args) {
     final ODatabaseSuperNodeTest tester = new ODatabaseSuperNodeTest();
 
-    final List<Integer> numberEdges =
-        Arrays.asList(1); // 100000, 500000, 1000000, 5000000, 10000000
-    final List<Long> results = new ArrayList<>(numberEdges.size());
+    final List<Integer> numberEdges = Arrays.asList(100000, 500000, 1000000, 5000000, 10000000);
+    final List<Long> exportStats = new ArrayList<>(numberEdges.size());
+    final List<Long> importStats = new ArrayList<>(numberEdges.size());
 
     for (int numberEdge : numberEdges) {
       final String databaseName = "superNode_export";
@@ -30,10 +30,10 @@ public class ODatabaseSuperNodeTest {
 
       final ByteArrayOutputStream output = new ByteArrayOutputStream();
       try {
-        testExportDatabase(numberEdge, results, databaseName, orientDB, output);
-        for (int i = 0; i < results.size(); i++) {
-          System.out.println("Export-" + numberEdge + "(ms)=" + results.get(i));
-        }
+        testExportDatabase(numberEdge, exportStats, databaseName, orientDB, output);
+        Thread.sleep(2000);
+      } catch (final InterruptedException e) {
+        e.printStackTrace();
       } finally {
         orientDB.drop(databaseName);
         orientDB.close();
@@ -42,34 +42,23 @@ public class ODatabaseSuperNodeTest {
       final String importDbUrl =
           "memory:target/import_" + ODatabaseSuperNodeTest.class.getSimpleName();
       orientDB = tester.createDatabase(databaseName + "_reImport", importDbUrl);
-
-      try (final ODatabaseSession db =
-          orientDB.open(databaseName + "_reImport", "admin", "admin")) {
-        final ODatabaseImport importer =
-            new ODatabaseImport(
-                (ODatabaseDocumentInternal) db,
-                new ByteArrayInputStream(output.toByteArray()),
-                new OCommandOutputListener() {
-                  @Override
-                  public void onMessage(String iText) {}
-                });
-        final long start = System.nanoTime();
-        importer.importDatabase();
-        final long time = (System.nanoTime() - start) / 1000000;
-        System.out.println("Import-" + "(ms)=" + time); // + numberEdge +
-        Assert.assertTrue(db.getMetadata().getSchema().existsClass("SuperNodeClass"));
-      } catch (final IOException e) {
-        e.printStackTrace();
+      try {
+        testImportDatabase(numberEdge, databaseName, orientDB, output, importStats);
       } finally {
         orientDB.drop(databaseName + "_reImport");
         orientDB.close();
       }
     }
+
+    for (int i = 0; i < exportStats.size(); i++) {
+      System.out.println("Export-" + numberEdges.get(i) + "(ms)=" + exportStats.get(i));
+      System.out.println("Import-" + numberEdges.get(i) + "(ms)=" + importStats.get(i));
+    }
   }
 
   private static void testExportDatabase(
       final int edgeNumber,
-      final List<Long> results,
+      final List<Long> stats,
       final String databaseName,
       final OrientDB orientDB,
       final OutputStream output) {
@@ -104,13 +93,35 @@ public class ODatabaseSuperNodeTest {
       final long start = System.nanoTime();
       export.exportDatabase();
       final long time = (System.nanoTime() - start) / 1000000;
-      results.add(time);
+      stats.add(time);
       System.out.println("Export-" + edgeNumber + "(ms)=" + time);
-
-      Thread.sleep(2000);
     } catch (final IOException e) {
       e.printStackTrace();
-    } catch (InterruptedException e) {
+    }
+  }
+
+  private static void testImportDatabase(
+      int numberEdge,
+      final String databaseName,
+      final OrientDB orientDB,
+      final ByteArrayOutputStream output,
+      List<Long> stats) {
+    try (final ODatabaseSession db = orientDB.open(databaseName + "_reImport", "admin", "admin")) {
+      final ODatabaseImport importer =
+          new ODatabaseImport(
+              (ODatabaseDocumentInternal) db,
+              new ByteArrayInputStream(output.toByteArray()),
+              new OCommandOutputListener() {
+                @Override
+                public void onMessage(String iText) {}
+              });
+      final long start = System.nanoTime();
+      importer.importDatabase();
+      final long time = (System.nanoTime() - start) / 1000000;
+      stats.add(time);
+      System.out.println("Import-" + numberEdge + "(ms)=" + time);
+      Assert.assertTrue(db.getMetadata().getSchema().existsClass("SuperNodeClass"));
+    } catch (final IOException e) {
       e.printStackTrace();
     }
   }
