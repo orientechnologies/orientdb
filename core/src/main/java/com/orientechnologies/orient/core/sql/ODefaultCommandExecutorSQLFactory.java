@@ -45,6 +45,7 @@ public class ODefaultCommandExecutorSQLFactory implements OCommandExecutorSQLFac
             + OCommandExecutorSQLAlterDatabase.KEYWORD_DATABASE,
         OCommandExecutorSQLAlterDatabase.class);
     commands.put(OCommandExecutorSQLSelect.KEYWORD_SELECT, OCommandExecutorSQLSelect.class);
+    commands.put(OCommandExecutorSQLSelect.KEYWORD_FOREACH, OCommandExecutorSQLSelect.class);
     commands.put(OCommandExecutorSQLTraverse.KEYWORD_TRAVERSE, OCommandExecutorSQLTraverse.class);
     commands.put(OCommandExecutorSQLInsert.KEYWORD_INSERT, OCommandExecutorSQLInsert.class);
     commands.put(OCommandExecutorSQLUpdate.KEYWORD_UPDATE, OCommandExecutorSQLUpdate.class);
