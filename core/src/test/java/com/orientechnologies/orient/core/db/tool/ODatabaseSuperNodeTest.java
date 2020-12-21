@@ -18,7 +18,7 @@ public class ODatabaseSuperNodeTest {
   public static void main(String[] args) {
     final ODatabaseSuperNodeTest tester = new ODatabaseSuperNodeTest();
 
-    final List<Integer> numberEdges = Arrays.asList(100000, 500000, 1000000, 5000000, 10000000);
+    final List<Integer> numberEdges = Arrays.asList(100000, 500000, 1000000, 5000000);
     final List<Long> exportStats = new ArrayList<>(numberEdges.size());
     final List<Long> importStats = new ArrayList<>(numberEdges.size());
 

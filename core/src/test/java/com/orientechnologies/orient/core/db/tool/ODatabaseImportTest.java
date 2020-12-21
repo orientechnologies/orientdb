@@ -18,7 +18,7 @@ public class ODatabaseImportTest {
     final OrientDB orientDB = createDatabase(databaseName, exportDbUrl);
 
     final ByteArrayOutputStream output = new ByteArrayOutputStream();
-    try (final ODatabaseSession db = orientDB.open(databaseName, "admin", "admin")) {
+    try (final ODatabaseSession db = orientDB.open(databaseName, "admin", "adminpwd")) {
       db.createClass("SimpleClass");
 
       final ODatabaseExport export =
@@ -97,7 +97,11 @@ public class ODatabaseImportTest {
 
   private OrientDB createDatabase(String database, String url) {
     final OrientDB orientDB = new OrientDB(url, OrientDBConfig.defaultConfig());
-    orientDB.create(database, ODatabaseType.PLOCAL);
+    // orientDB.create(database, ODatabaseType.PLOCAL);
+    orientDB.execute(
+        "create database "
+            + database
+            + " plocal users ( admin identified by 'adminpwd' role admin)");
     return orientDB;
   }
 }
