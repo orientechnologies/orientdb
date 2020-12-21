@@ -835,7 +835,7 @@ public class OConsoleDatabaseApp extends OrientConsole
   public void optimizeDatabase(
       @ConsoleParameter(name = "command-text", description = "The command text to execute")
           String iCommandText) {
-    sqlCommand("optimize", iCommandText, "\nDatabase optimized in %f sec(s).\n", true);
+    sqlCommand("optimize", iCommandText, "\nDatabase optimized '%s' in %f sec(s).\n", true);
   }
 
   @ConsoleCommand(description = "Force calling of JVM Garbage Collection")
