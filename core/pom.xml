@@ -64,8 +64,8 @@
             -Dstorage.diskCache.checksumMode=storeAndThrow
             -Dindex.allowManualIndexes=false
             -Dsecurity.warningDefaultUsers=false
-            <!-- new security feature -->
-            -Dsecurity.createDefaultUsers=false
+            <!-- new security feature 
+            -Dsecurity.createDefaultUsers=false -->
         </argLine>
         <project.rootdir>${project.basedir}/../</project.rootdir>
     </properties>

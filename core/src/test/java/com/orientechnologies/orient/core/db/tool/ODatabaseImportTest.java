@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.db.tool;
 
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.*;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -36,7 +37,7 @@ public class ODatabaseImportTest {
     final String importDbUrl = "memory:target/import_" + ODatabaseImportTest.class.getSimpleName();
     createDatabase(databaseName, importDbUrl);
 
-    try (final ODatabaseSession db = orientDB.open(databaseName, "admin", "admin")) {
+    try (final ODatabaseSession db = orientDB.open(databaseName, "admin", "adminpwd")) {
       final ODatabaseImport importer =
           new ODatabaseImport(
               (ODatabaseDocumentInternal) db,
@@ -60,7 +61,7 @@ public class ODatabaseImportTest {
     final OrientDB orientDB = createDatabase(databaseName, exportDbUrl);
 
     final ByteArrayOutputStream output = new ByteArrayOutputStream();
-    try (final ODatabaseSession db = orientDB.open(databaseName, "admin", "admin")) {
+    try (final ODatabaseSession db = orientDB.open(databaseName, "admin", "adminpwd")) {
       db.createClass("SimpleClass");
 
       final ODatabaseExport export =
@@ -79,7 +80,7 @@ public class ODatabaseImportTest {
         "memory:target/import_" + ODatabaseImportTest.class.getSimpleName() + "_excludeclusters";
     createDatabase(databaseName, importDbUrl);
 
-    try (final ODatabaseSession db = orientDB.open(databaseName, "admin", "admin")) {
+    try (final ODatabaseSession db = orientDB.open(databaseName, "admin", "adminpwd")) {
       final ODatabaseImport importer =
           new ODatabaseImport(
               (ODatabaseDocumentInternal) db,
@@ -96,7 +97,12 @@ public class ODatabaseImportTest {
   }
 
   private OrientDB createDatabase(String database, String url) {
-    final OrientDB orientDB = new OrientDB(url, OrientDBConfig.defaultConfig());
+    final OrientDB orientDB =
+        new OrientDB(
+            url,
+            OrientDBConfig.builder()
+                .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
+                .build());
     // orientDB.create(database, ODatabaseType.PLOCAL);
     orientDB.execute(
         "create database "
