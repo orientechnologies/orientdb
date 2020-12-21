@@ -11,6 +11,7 @@ import org.junit.Test;
 
 /** Created by tglman on 23/05/16. */
 public class ODatabaseImportTest {
+  static final String NEW_ADMIN_PASSWORD = "adminpwd";
 
   @Test
   public void exportImportOnlySchemaTest() throws IOException {
@@ -19,7 +20,7 @@ public class ODatabaseImportTest {
     final OrientDB orientDB = createDatabase(databaseName, exportDbUrl);
 
     final ByteArrayOutputStream output = new ByteArrayOutputStream();
-    try (final ODatabaseSession db = orientDB.open(databaseName, "admin", "adminpwd")) {
+    try (final ODatabaseSession db = orientDB.open(databaseName, "admin", NEW_ADMIN_PASSWORD)) {
       db.createClass("SimpleClass");
 
       final ODatabaseExport export =
@@ -37,7 +38,7 @@ public class ODatabaseImportTest {
     final String importDbUrl = "memory:target/import_" + ODatabaseImportTest.class.getSimpleName();
     createDatabase(databaseName, importDbUrl);
 
-    try (final ODatabaseSession db = orientDB.open(databaseName, "admin", "adminpwd")) {
+    try (final ODatabaseSession db = orientDB.open(databaseName, "admin", NEW_ADMIN_PASSWORD)) {
       final ODatabaseImport importer =
           new ODatabaseImport(
               (ODatabaseDocumentInternal) db,
@@ -61,7 +62,7 @@ public class ODatabaseImportTest {
     final OrientDB orientDB = createDatabase(databaseName, exportDbUrl);
 
     final ByteArrayOutputStream output = new ByteArrayOutputStream();
-    try (final ODatabaseSession db = orientDB.open(databaseName, "admin", "adminpwd")) {
+    try (final ODatabaseSession db = orientDB.open(databaseName, "admin", NEW_ADMIN_PASSWORD)) {
       db.createClass("SimpleClass");
 
       final ODatabaseExport export =
@@ -80,7 +81,7 @@ public class ODatabaseImportTest {
         "memory:target/import_" + ODatabaseImportTest.class.getSimpleName() + "_excludeclusters";
     createDatabase(databaseName, importDbUrl);
 
-    try (final ODatabaseSession db = orientDB.open(databaseName, "admin", "adminpwd")) {
+    try (final ODatabaseSession db = orientDB.open(databaseName, "admin", NEW_ADMIN_PASSWORD)) {
       final ODatabaseImport importer =
           new ODatabaseImport(
               (ODatabaseDocumentInternal) db,
@@ -96,7 +97,7 @@ public class ODatabaseImportTest {
     orientDB.close();
   }
 
-  private OrientDB createDatabase(String database, String url) {
+  OrientDB createDatabase(String database, String url) {
     final OrientDB orientDB =
         new OrientDB(
             url,
@@ -107,7 +108,9 @@ public class ODatabaseImportTest {
     orientDB.execute(
         "create database "
             + database
-            + " plocal users ( admin identified by 'adminpwd' role admin)");
+            + " plocal users ( admin identified by '"
+            + NEW_ADMIN_PASSWORD
+            + "' role admin)");
     return orientDB;
   }
 }

@@ -80,8 +80,8 @@ public class ODatabaseImportSimpleCompatibilityTest {
   private void setup(
       final String databaseName, final InputStream input, final OutputStream output) {
     final String importDbUrl = "memory:target/import_" + this.getClass().getSimpleName();
-    orientDB = createDatabase(databaseName, importDbUrl);
-    importDatabase = orientDB.open(databaseName, "admin", "admin");
+    orientDB = new ODatabaseImportTest().createDatabase(databaseName, importDbUrl);
+    importDatabase = orientDB.open(databaseName, "admin", ODatabaseImportTest.NEW_ADMIN_PASSWORD);
     try {
       importer =
           new ODatabaseImport(
@@ -121,11 +121,5 @@ public class ODatabaseImportSimpleCompatibilityTest {
   public void executeExport(final String options) {
     export.setOptions(options);
     export.exportDatabase();
-  }
-
-  private OrientDB createDatabase(final String database, final String url) {
-    final OrientDB orientDB = new OrientDB(url, OrientDBConfig.defaultConfig());
-    orientDB.createIfNotExists(database, ODatabaseType.PLOCAL);
-    return orientDB;
   }
 }

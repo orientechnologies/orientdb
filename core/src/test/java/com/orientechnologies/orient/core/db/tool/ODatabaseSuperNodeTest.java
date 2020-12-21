@@ -26,7 +26,7 @@ public class ODatabaseSuperNodeTest {
       final String databaseName = "superNode_export";
       final String exportDbUrl =
           "memory:target/export_" + ODatabaseSuperNodeTest.class.getSimpleName();
-      OrientDB orientDB = tester.createDatabase(databaseName, exportDbUrl);
+      OrientDB orientDB = new ODatabaseImportTest().createDatabase(databaseName, exportDbUrl);
 
       final ByteArrayOutputStream output = new ByteArrayOutputStream();
       try {
@@ -41,7 +41,7 @@ public class ODatabaseSuperNodeTest {
 
       final String importDbUrl =
           "memory:target/import_" + ODatabaseSuperNodeTest.class.getSimpleName();
-      orientDB = tester.createDatabase(databaseName + "_reImport", importDbUrl);
+      orientDB = new ODatabaseImportTest().createDatabase(databaseName + "_reImport", importDbUrl);
       try {
         testImportDatabase(numberEdge, databaseName, orientDB, output, importStats);
       } finally {
@@ -63,7 +63,8 @@ public class ODatabaseSuperNodeTest {
       final OrientDB orientDB,
       final OutputStream output) {
 
-    try (final ODatabaseSession session = orientDB.open(databaseName, "admin", "admin")) {
+    try (final ODatabaseSession session =
+        orientDB.open(databaseName, "admin", ODatabaseImportTest.NEW_ADMIN_PASSWORD)) {
       session.createClassIfNotExist("SuperNodeClass", "V");
       session.createClassIfNotExist("NonSuperEdgeClass", "E");
 
@@ -106,7 +107,9 @@ public class ODatabaseSuperNodeTest {
       final OrientDB orientDB,
       final ByteArrayOutputStream output,
       List<Long> stats) {
-    try (final ODatabaseSession db = orientDB.open(databaseName + "_reImport", "admin", "admin")) {
+    try (final ODatabaseSession db =
+        orientDB.open(
+            databaseName + "_reImport", "admin", ODatabaseImportTest.NEW_ADMIN_PASSWORD)) {
       final ODatabaseImport importer =
           new ODatabaseImport(
               (ODatabaseDocumentInternal) db,
@@ -124,11 +127,5 @@ public class ODatabaseSuperNodeTest {
     } catch (final IOException e) {
       e.printStackTrace();
     }
-  }
-
-  private OrientDB createDatabase(final String database, final String url) {
-    final OrientDB orientDB = new OrientDB(url, OrientDBConfig.defaultConfig());
-    orientDB.create(database, ODatabaseType.PLOCAL);
-    return orientDB;
   }
 }
