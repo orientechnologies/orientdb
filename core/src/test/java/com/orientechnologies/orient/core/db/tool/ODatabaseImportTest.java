@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.db.tool;
 
+import com.orientechnologies.orient.core.OCreateDatabaseUtil;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.*;
 import java.io.ByteArrayInputStream;

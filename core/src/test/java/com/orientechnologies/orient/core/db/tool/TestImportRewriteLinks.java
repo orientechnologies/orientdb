@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.db.tool;
 import static com.orientechnologies.orient.core.db.tool.ODatabaseImport.EXPORT_IMPORT_CLASS_NAME;
 import static com.orientechnologies.orient.core.db.tool.ODatabaseImport.EXPORT_IMPORT_INDEX_NAME;
 
+import com.orientechnologies.orient.core.OCreateDatabaseUtil;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
