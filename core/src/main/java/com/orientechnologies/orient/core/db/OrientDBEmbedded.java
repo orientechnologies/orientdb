@@ -653,6 +653,17 @@ public class OrientDBEmbedded implements OrientDBInternal {
   @Override
   public void create(
       String name, String user, String password, ODatabaseType type, OrientDBConfig config) {
+    create(name, user, password, type, config, null);
+  }
+
+  @Override
+  public void create(
+      String name,
+      String user,
+      String password,
+      ODatabaseType type,
+      OrientDBConfig config,
+      ODatabaseTask<Void> createOps) {
     checkDatabaseName(name);
     final ODatabaseDocumentEmbedded embedded;
     synchronized (this) {
@@ -681,6 +692,9 @@ public class OrientDBEmbedded implements OrientDBInternal {
           }
           storages.put(name, storage);
           embedded = internalCreate(config, storage);
+          if (createOps != null) {
+            createOps.call(embedded);
+          }
         } catch (Exception e) {
           throw OException.wrapException(
               new ODatabaseException("Cannot create database '" + name + "'"), e);

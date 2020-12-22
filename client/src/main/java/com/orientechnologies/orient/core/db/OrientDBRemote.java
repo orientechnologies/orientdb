@@ -743,4 +743,15 @@ public class OrientDBRemote implements OrientDBInternal {
   public OSecuritySystem getSecuritySystem() {
     throw new UnsupportedOperationException();
   }
+
+  @Override
+  public void create(
+      String name,
+      String user,
+      String password,
+      ODatabaseType type,
+      OrientDBConfig config,
+      ODatabaseTask<Void> createOps) {
+    throw new UnsupportedOperationException();
+  }
 }

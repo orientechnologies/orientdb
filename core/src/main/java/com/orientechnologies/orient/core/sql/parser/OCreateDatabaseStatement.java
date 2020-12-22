@@ -55,23 +55,34 @@ public class OCreateDatabaseStatement extends OSimpleExecServerStatement {
       result.setProperty("existing", true);
     } else {
       try {
-        if (config == null) {
-          server.create(dbName, null, null, dbType);
-        } else {
-          server.create(dbName, null, null, dbType, toOrientDBConfig(config, ctx));
+        OrientDBConfigBuilder configBuilder = OrientDBConfig.builder();
+
+        if (config != null) {
+          configBuilder = mapOrientDBConfig(this.config, ctx, configBuilder);
         }
+
+        if (!users.isEmpty()) {
+          configBuilder = configBuilder.addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false);
+        }
+
+        server.create(
+            dbName,
+            null,
+            null,
+            dbType,
+            configBuilder.build(),
+            (session) -> {
+              if (!users.isEmpty()) {
+                for (ODatabaseUserData user : users) {
+                  user.executeCreate((ODatabaseDocumentInternal) session, ctx);
+                }
+              }
+              return null;
+            });
         result.setProperty("created", true);
       } catch (Exception e) {
         throw new OCommandExecutionException(
             "Could not create database " + type.getStringValue() + ":" + e.getMessage());
-      }
-
-      if (!users.isEmpty()) {
-        try (ODatabaseDocumentInternal db = server.openNoAuthorization(dbName)) {
-          for (ODatabaseUserData user : users) {
-            user.executeCreate(db, ctx);
-          }
-        }
       }
     }
 
@@ -80,8 +91,8 @@ public class OCreateDatabaseStatement extends OSimpleExecServerStatement {
     return rs;
   }
 
-  private OrientDBConfig toOrientDBConfig(OJson config, OServerCommandContext ctx) {
-    OrientDBConfigBuilder builder = new OrientDBConfigBuilder();
+  private OrientDBConfigBuilder mapOrientDBConfig(
+      OJson config, OServerCommandContext ctx, OrientDBConfigBuilder builder) {
     Map<String, Object> configMap = config.toMap(new OResultInternal(), ctx);
     Object globalConfig = configMap.get("config");
     if (globalConfig != null && globalConfig instanceof Map) {
@@ -91,7 +102,7 @@ public class OCreateDatabaseStatement extends OSimpleExecServerStatement {
               .forEach(
                   x -> builder.addConfig(OGlobalConfiguration.findByKey(x.getKey()), x.getValue()));
     }
-    return builder.build();
+    return builder;
   }
 
   @Override
