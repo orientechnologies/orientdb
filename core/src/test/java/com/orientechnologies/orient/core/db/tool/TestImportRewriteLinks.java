@@ -34,7 +34,7 @@ public class TestImportRewriteLinks {
                 .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
                 .build())) {
       orientDb.execute(
-          "create database testDB plocal users ( admin identified by 'adminpwd' role admin)");
+          "create database testDB memory users ( admin identified by 'adminpwd' role admin)");
       try (final ODatabaseSession session = orientDb.open("testDB", "admin", "adminpwd")) {
         final OSchema schema = session.getMetadata().getSchema();
 
