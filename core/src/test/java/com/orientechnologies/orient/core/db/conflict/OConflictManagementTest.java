@@ -33,12 +33,11 @@ public class OConflictManagementTest extends DatabaseAbstractTest {
 
   @Test
   public void testDefaultStrategy() {
-    ODocument rootDoc =
+    final ODocument rootDoc =
         new ODocument()
             .field("name", "Jay")
             .save(database.getClusterNameById(database.getDefaultClusterId()));
-
-    ODocument copy = rootDoc.copy();
+    final ODocument copy = rootDoc.copy();
 
     rootDoc.field("name", "Jay1");
     rootDoc.save(database.getClusterNameById(database.getDefaultClusterId()));
