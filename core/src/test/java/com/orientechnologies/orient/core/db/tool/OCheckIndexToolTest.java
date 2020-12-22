@@ -1,11 +1,9 @@
 package com.orientechnologies.orient.core.db.tool;
 
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -68,15 +66,7 @@ public class OCheckIndexToolTest {
   @Test
   public void testBugOnCollectionIndex() {
     final OrientDB context =
-        new OrientDB(
-            "embedded:",
-            OrientDBConfig.builder()
-                .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
-                .build());
-    // context.create("test", ODatabaseType.MEMORY);
-    context.execute(
-        "create database test memory users ( admin identified by 'adminpwd' role admin)");
-
+        OCreateDatabaseUtil.createDatabase("test", "embedded:", OCreateDatabaseUtil.TYPE_MEMORY);
     try (ODatabaseSession db = context.open("test", "admin", "adminpwd")) {
       db.command("create class testclass");
       db.command("create property testclass.name string");

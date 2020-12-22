@@ -7,7 +7,10 @@ import com.orientechnologies.orient.core.db.OrientDBConfig;
 public class OCreateDatabaseUtil {
   static final String NEW_ADMIN_PASSWORD = "adminpwd";
 
-  static OrientDB createDatabase(String database, String url) {
+  static final String TYPE_PLOCAL = "plocal";
+  static final String TYPE_MEMORY = "memory";
+
+  static OrientDB createDatabase(final String database, final String url, final String type) {
     final OrientDB orientDB =
         new OrientDB(
             url,
@@ -18,7 +21,9 @@ public class OCreateDatabaseUtil {
     orientDB.execute(
         "create database "
             + database
-            + " plocal users ( admin identified by '"
+            + " "
+            + type
+            + " users ( admin identified by '"
             + NEW_ADMIN_PASSWORD
             + "' role admin)");
     return orientDB;

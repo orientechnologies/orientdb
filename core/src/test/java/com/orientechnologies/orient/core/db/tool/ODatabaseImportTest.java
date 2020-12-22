@@ -14,7 +14,9 @@ public class ODatabaseImportTest {
   public void exportImportOnlySchemaTest() throws IOException {
     final String databaseName = "test";
     final String exportDbUrl = "memory:target/export_" + ODatabaseImportTest.class.getSimpleName();
-    final OrientDB orientDB = OCreateDatabaseUtil.createDatabase(databaseName, exportDbUrl);
+    final OrientDB orientDB =
+        OCreateDatabaseUtil.createDatabase(
+            databaseName, exportDbUrl, OCreateDatabaseUtil.TYPE_PLOCAL);
 
     final ByteArrayOutputStream output = new ByteArrayOutputStream();
     try (final ODatabaseSession db =
@@ -34,7 +36,7 @@ public class ODatabaseImportTest {
     }
 
     final String importDbUrl = "memory:target/import_" + ODatabaseImportTest.class.getSimpleName();
-    OCreateDatabaseUtil.createDatabase(databaseName, importDbUrl);
+    OCreateDatabaseUtil.createDatabase(databaseName, importDbUrl, OCreateDatabaseUtil.TYPE_PLOCAL);
 
     try (final ODatabaseSession db =
         orientDB.open(databaseName, "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD)) {
@@ -58,7 +60,9 @@ public class ODatabaseImportTest {
     final String databaseName = "test";
     final String exportDbUrl =
         "memory:target/export_" + ODatabaseImportTest.class.getSimpleName() + "_excludeclusters";
-    final OrientDB orientDB = OCreateDatabaseUtil.createDatabase(databaseName, exportDbUrl);
+    final OrientDB orientDB =
+        OCreateDatabaseUtil.createDatabase(
+            databaseName, exportDbUrl, OCreateDatabaseUtil.TYPE_PLOCAL);
 
     final ByteArrayOutputStream output = new ByteArrayOutputStream();
     try (final ODatabaseSession db =
@@ -79,7 +83,7 @@ public class ODatabaseImportTest {
 
     final String importDbUrl =
         "memory:target/import_" + ODatabaseImportTest.class.getSimpleName() + "_excludeclusters";
-    OCreateDatabaseUtil.createDatabase(databaseName, importDbUrl);
+    OCreateDatabaseUtil.createDatabase(databaseName, importDbUrl, OCreateDatabaseUtil.TYPE_PLOCAL);
 
     try (final ODatabaseSession db =
         orientDB.open(databaseName, "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD)) {
