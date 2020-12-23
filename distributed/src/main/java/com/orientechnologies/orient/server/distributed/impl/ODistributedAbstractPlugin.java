@@ -285,6 +285,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   @Override
   public ODistributedAbstractPlugin registerLifecycleListener(
       final ODistributedLifecycleListener iListener) {
+    if (iListener == null) {
+      throw new NullPointerException();
+    }
     listeners.add(iListener);
     return this;
   }

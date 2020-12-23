@@ -63,7 +63,7 @@ public class ConnectionStrategiesIT {
         remote1.open(ConnectionStrategiesIT.class.getSimpleName(), "admin", "admin");
     urls.add(((ODatabaseDocumentRemote) session3).getSessionMetadata().getDebugLastHost());
     session3.close();
-    
+
     assertEquals(urls.stream().filter((x) -> x.contains("2424")).count(), 1);
     assertEquals(urls.stream().filter((x) -> x.contains("2425")).count(), 1);
     assertEquals(urls.stream().filter((x) -> x.contains("2426")).count(), 1);
@@ -101,7 +101,7 @@ public class ConnectionStrategiesIT {
       ODatabaseSession session2 =
           remote1.open(ConnectionStrategiesIT.class.getSimpleName(), "admin", "admin");
       try (OResultSet res = session2.query("select count(*) as count from V")) {
-        assertEquals((long)res.next().getProperty("count"), 1000l);
+        assertEquals((long) res.next().getProperty("count"), 1000l);
       }
       urls.add(((ODatabaseDocumentRemote) session2).getSessionMetadata().getDebugLastHost());
       session2.close();
@@ -130,7 +130,7 @@ public class ConnectionStrategiesIT {
         remote1.open(ConnectionStrategiesIT.class.getSimpleName(), "admin", "admin");
     urls.add(((ODatabaseDocumentRemote) session).getSessionMetadata().getDebugLastHost());
     session.close();
-    
+
     for (int i = 0; i < 10; i++) {
       ODatabaseSession session2 =
           remote1.open(ConnectionStrategiesIT.class.getSimpleName(), "admin", "admin");
@@ -176,7 +176,7 @@ public class ConnectionStrategiesIT {
       ODatabaseSession session2 =
           remote1.open(ConnectionStrategiesIT.class.getSimpleName(), "admin", "admin");
       try (OResultSet res = session2.query("select count(*) as count from V")) {
-        assertEquals((long)res.next().getProperty("count"), 2000l);
+        assertEquals((long) res.next().getProperty("count"), 2000l);
       }
       urls.add(((ODatabaseDocumentRemote) session2).getSessionMetadata().getDebugLastHost());
       session2.close();

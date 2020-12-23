@@ -684,7 +684,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       // HZ IS ALREADY DOWN, IGNORE IT
     }
 
-
     if (hazelcastInstance != null) {
       if (membershipListenerRegistration != null) {
         try {
