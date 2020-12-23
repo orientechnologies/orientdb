@@ -670,7 +670,11 @@ public class OSelectExecutionPlanner {
         result.chain(new ProjectionCalculationStep(info.preAggregateProjection, ctx, profilingEnabled));
       }
       if (info.aggregateProjection != null) {
-        result.chain(new AggregateProjectionCalculationStep(info.aggregateProjection, info.groupBy, ctx, info.timeout != null ? info.timeout.getVal().longValue() : -1, profilingEnabled));
+        long aggregationLimit = -1;
+        if (info.orderBy == null && info.limit != null) {
+          aggregationLimit = info.limit.getValue(ctx);
+        }
+        result.chain(new AggregateProjectionCalculationStep(info.aggregateProjection, info.groupBy, aggregationLimit, ctx, info.timeout != null ? info.timeout.getVal().longValue() : -1, profilingEnabled));
         if (isCountOnly(info) && info.groupBy == null) {
           result.chain(new GuaranteeEmptyCountStep(info.aggregateProjection.getItems().get(0), ctx, profilingEnabled));
         }
