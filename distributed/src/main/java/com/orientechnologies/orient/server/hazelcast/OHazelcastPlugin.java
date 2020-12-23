@@ -684,15 +684,16 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       // HZ IS ALREADY DOWN, IGNORE IT
     }
 
-    if (membershipListenerRegistration != null) {
-      try {
-        hazelcastInstance.getCluster().removeMembershipListener(membershipListenerRegistration);
-      } catch (HazelcastInstanceNotActiveException e) {
-        // HZ IS ALREADY DOWN, IGNORE IT
-      }
-    }
 
-    if (hazelcastInstance != null)
+    if (hazelcastInstance != null) {
+      if (membershipListenerRegistration != null) {
+        try {
+          hazelcastInstance.getCluster().removeMembershipListener(membershipListenerRegistration);
+        } catch (HazelcastInstanceNotActiveException e) {
+          // HZ IS ALREADY DOWN, IGNORE IT
+        }
+      }
+
       try {
         hazelcastInstance.shutdown();
       } catch (Exception e) {
@@ -700,6 +701,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       } finally {
         hazelcastInstance = null;
       }
+    }
 
     OCallableUtils.executeIgnoringAnyExceptions(
         new OCallableNoParamNoReturn() {

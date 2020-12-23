@@ -10,6 +10,7 @@ import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentRemote;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.OServer;
 import java.io.IOException;
 import java.util.HashSet;
@@ -42,7 +43,7 @@ public class ConnectionStrategiesIT {
           IllegalAccessException, IOException {
     OrientDB remote1 =
         new OrientDB(
-            "remote:localhost;localhost:2425",
+            "remote:localhost;localhost:2425;localhost:2426",
             "root",
             "test",
             OrientDBConfig.builder()
@@ -58,9 +59,14 @@ public class ConnectionStrategiesIT {
         remote1.open(ConnectionStrategiesIT.class.getSimpleName(), "admin", "admin");
     urls.add(((ODatabaseDocumentRemote) session1).getSessionMetadata().getDebugLastHost());
     session1.close();
-
+    ODatabaseSession session3 =
+        remote1.open(ConnectionStrategiesIT.class.getSimpleName(), "admin", "admin");
+    urls.add(((ODatabaseDocumentRemote) session3).getSessionMetadata().getDebugLastHost());
+    session3.close();
+    
     assertEquals(urls.stream().filter((x) -> x.contains("2424")).count(), 1);
     assertEquals(urls.stream().filter((x) -> x.contains("2425")).count(), 1);
+    assertEquals(urls.stream().filter((x) -> x.contains("2426")).count(), 1);
 
     server1.shutdown();
     server1.waitForShutdown();
@@ -70,13 +76,14 @@ public class ConnectionStrategiesIT {
       ODatabaseSession session2 =
           remote1.open(ConnectionStrategiesIT.class.getSimpleName(), "admin", "admin");
       urls.add(((ODatabaseDocumentRemote) session2).getSessionMetadata().getDebugLastHost());
-      for (int ji = 0; ji < 10; ji++) {
+      for (int ji = 0; ji < 100; ji++) {
         session2.save(session2.newVertex());
       }
       session2.close();
     }
 
     assertEquals(urls.stream().filter((x) -> x.contains("2424")).count(), 1);
+    assertEquals(urls.stream().filter((x) -> x.contains("2426")).count(), 1);
 
     server1.startup(
         Thread.currentThread()
@@ -93,12 +100,91 @@ public class ConnectionStrategiesIT {
     for (int i = 0; i < 10; i++) {
       ODatabaseSession session2 =
           remote1.open(ConnectionStrategiesIT.class.getSimpleName(), "admin", "admin");
+      try (OResultSet res = session2.query("select count(*) as count from V")) {
+        assertEquals((long)res.next().getProperty("count"), 1000l);
+      }
       urls.add(((ODatabaseDocumentRemote) session2).getSessionMetadata().getDebugLastHost());
       session2.close();
     }
 
     assertEquals(urls.stream().filter((x) -> x.contains("2424")).count(), 1);
     assertEquals(urls.stream().filter((x) -> x.contains("2425")).count(), 1);
+    assertEquals(urls.stream().filter((x) -> x.contains("2426")).count(), 1);
+    remote1.close();
+  }
+
+  @Test
+  public void testRoundRobinShutdownWriteRestartWithoutWait()
+      throws InterruptedException, ClassNotFoundException, InstantiationException,
+          IllegalAccessException, IOException {
+    OrientDB remote1 =
+        new OrientDB(
+            "remote:localhost;localhost:2425;localhost:2426",
+            "root",
+            "test",
+            OrientDBConfig.builder()
+                .addConfig(CLIENT_CONNECTION_STRATEGY, "ROUND_ROBIN_CONNECT")
+                .build());
+    Set<String> urls = new HashSet<>();
+    ODatabaseSession session =
+        remote1.open(ConnectionStrategiesIT.class.getSimpleName(), "admin", "admin");
+    urls.add(((ODatabaseDocumentRemote) session).getSessionMetadata().getDebugLastHost());
+    session.close();
+    
+    for (int i = 0; i < 10; i++) {
+      ODatabaseSession session2 =
+          remote1.open(ConnectionStrategiesIT.class.getSimpleName(), "admin", "admin");
+      urls.add(((ODatabaseDocumentRemote) session2).getSessionMetadata().getDebugLastHost());
+      for (int ji = 0; ji < 100; ji++) {
+        session2.save(session2.newVertex());
+      }
+      session2.close();
+    }
+
+    ODatabaseSession session1 =
+        remote1.open(ConnectionStrategiesIT.class.getSimpleName(), "admin", "admin");
+    urls.add(((ODatabaseDocumentRemote) session1).getSessionMetadata().getDebugLastHost());
+    session1.close();
+
+    assertEquals(urls.stream().filter((x) -> x.contains("2424")).count(), 1);
+    assertEquals(urls.stream().filter((x) -> x.contains("2425")).count(), 1);
+    assertEquals(urls.stream().filter((x) -> x.contains("2426")).count(), 1);
+
+    server1.shutdown();
+    server1.waitForShutdown();
+    urls.clear();
+
+    for (int i = 0; i < 10; i++) {
+      ODatabaseSession session2 =
+          remote1.open(ConnectionStrategiesIT.class.getSimpleName(), "admin", "admin");
+      urls.add(((ODatabaseDocumentRemote) session2).getSessionMetadata().getDebugLastHost());
+      for (int ji = 0; ji < 100; ji++) {
+        session2.save(session2.newVertex());
+      }
+      session2.close();
+    }
+
+    assertEquals(urls.stream().filter((x) -> x.contains("2424")).count(), 1);
+
+    server1.startup(
+        Thread.currentThread()
+            .getContextClassLoader()
+            .getResourceAsStream("orientdb-simple-dserver-config-1.xml"));
+    server1.activate();
+
+    for (int i = 0; i < 1000; i++) {
+      ODatabaseSession session2 =
+          remote1.open(ConnectionStrategiesIT.class.getSimpleName(), "admin", "admin");
+      try (OResultSet res = session2.query("select count(*) as count from V")) {
+        assertEquals((long)res.next().getProperty("count"), 2000l);
+      }
+      urls.add(((ODatabaseDocumentRemote) session2).getSessionMetadata().getDebugLastHost());
+      session2.close();
+    }
+
+    assertEquals(urls.stream().filter((x) -> x.contains("2424")).count(), 1);
+    assertEquals(urls.stream().filter((x) -> x.contains("2425")).count(), 1);
+    assertEquals(urls.stream().filter((x) -> x.contains("2426")).count(), 1);
     remote1.close();
   }
 
