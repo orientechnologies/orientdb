@@ -462,7 +462,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         }
 
         try {
-          postCloseSteps(false, false, idGen.getLastId());
+          postCloseSteps(false, true, idGen.getLastId());
         } catch (final Exception ee) {
           // ignore
         }
