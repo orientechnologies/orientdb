@@ -4150,7 +4150,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
     try (OResultSet result =
-        db.query("select " + funcitonName + "(), * from " + className + " timeout 10")) {
+        db.query("select " + funcitonName + "(), * from " + className + " timeout 1")) {
       while (result.hasNext()) {
         result.next();
       }
