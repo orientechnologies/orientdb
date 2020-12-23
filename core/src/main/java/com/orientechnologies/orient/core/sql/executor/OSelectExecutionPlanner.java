@@ -673,6 +673,9 @@ public class OSelectExecutionPlanner {
         long aggregationLimit = -1;
         if (info.orderBy == null && info.limit != null) {
           aggregationLimit = info.limit.getValue(ctx);
+          if (info.skip != null && info.skip.getValue(ctx) > 0) {
+            aggregationLimit += info.skip.getValue(ctx);
+          }
         }
         result.chain(new AggregateProjectionCalculationStep(info.aggregateProjection, info.groupBy, aggregationLimit, ctx, info.timeout != null ? info.timeout.getVal().longValue() : -1, profilingEnabled));
         if (isCountOnly(info) && info.groupBy == null) {
