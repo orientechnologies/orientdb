@@ -18,6 +18,7 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
 
   private final OGroupBy groupBy;
   private final long timeoutMillis;
+  private final long limit;
 
   // the key is the GROUP BY key, the value is the (partially) aggregated value
   private Map<List, OResultInternal> aggregateResults = new LinkedHashMap<>();
@@ -29,12 +30,14 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
   public AggregateProjectionCalculationStep(
       OProjection projection,
       OGroupBy groupBy,
+      long limit,
       OCommandContext ctx,
       long timeoutMillis,
       boolean profilingEnabled) {
     super(projection, ctx, profilingEnabled);
     this.groupBy = groupBy;
     this.timeoutMillis = timeoutMillis;
+    this.limit = limit;
   }
 
   @Override
@@ -125,7 +128,17 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
       }
       OResultInternal preAggr = aggregateResults.get(key);
       if (preAggr == null) {
+        if (limit > 0 && aggregateResults.size() > limit) {
+          return;
+        }
         preAggr = new OResultInternal();
+
+        for (OProjectionItem proj : this.projection.getItems()) {
+          String alias = proj.getProjectionAlias().getStringValue();
+          if (!proj.isAggregate()) {
+            preAggr.setProperty(alias, proj.execute(next, ctx));
+          }
+        }
         aggregateResults.put(key, preAggr);
       }
 
@@ -138,8 +151,6 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
             preAggr.setTemporaryProperty(alias, aggrCtx);
           }
           aggrCtx.apply(next, ctx);
-        } else {
-          preAggr.setProperty(alias, proj.execute(next, ctx));
         }
       }
     } finally {
@@ -171,6 +182,7 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
     return new AggregateProjectionCalculationStep(
         projection.copy(),
         groupBy == null ? null : groupBy.copy(),
+        limit,
         ctx,
         timeoutMillis,
         profilingEnabled);
