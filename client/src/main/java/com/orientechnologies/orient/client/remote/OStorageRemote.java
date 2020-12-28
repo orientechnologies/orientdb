@@ -1952,12 +1952,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     OContextConfiguration config = null;
     if (configuration != null) config = configuration.getContextConfiguration();
     return serverURLs.getNextAvailableServerURL(
-        iIsConnectOperation, session, config, name, connectionStrategy);
+        iIsConnectOperation, session, config, connectionStrategy);
   }
 
   protected String getCurrentServerURL() {
     return serverURLs.getServerURFromList(
-        false, getCurrentSession(), configuration.getContextConfiguration(), name);
+        false, getCurrentSession(), configuration.getContextConfiguration());
   }
 
   public OChannelBinaryAsynchClient getNetwork(final String iCurrentURL) {

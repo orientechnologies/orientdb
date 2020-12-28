@@ -85,10 +85,6 @@ public class ORemoteConnectionManager {
 
   public OChannelBinaryAsynchClient acquire(
       String iServerURL, final OContextConfiguration clientConfiguration) {
-    if (iServerURL.startsWith(OEngineRemote.PREFIX))
-      iServerURL = iServerURL.substring(OEngineRemote.PREFIX.length());
-
-    if (iServerURL.endsWith("/")) iServerURL = iServerURL.substring(0, iServerURL.length() - 1);
 
     long localTimeout = timeout;
 

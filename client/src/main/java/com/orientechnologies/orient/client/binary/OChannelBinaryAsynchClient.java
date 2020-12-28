@@ -62,7 +62,6 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
   public OChannelBinaryAsynchClient(
       final String remoteHost,
       final int remotePort,
-      final String iDatabaseName,
       final OContextConfiguration iConfig,
       final int iProtocolVersion)
       throws IOException {
@@ -70,7 +69,6 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     try {
 
       serverURL = remoteHost + ":" + remotePort;
-      if (iDatabaseName != null) serverURL += "/" + iDatabaseName;
       socketTimeout = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT);
 
       try {

@@ -192,8 +192,8 @@ public class ORemoteURLs {
     return toAdd;
   }
 
-  public synchronized String getNextConnectUrl(
-      OStorageRemoteSession session, OContextConfiguration contextConfiguration, String name) {
+  private synchronized String getNextConnectUrl(
+      OStorageRemoteSession session, OContextConfiguration contextConfiguration) {
     if (serverURLs.isEmpty()) {
       reloadOriginalURLs();
       if (serverURLs.isEmpty())
@@ -218,8 +218,7 @@ public class ORemoteURLs {
   public synchronized String getServerURFromList(
       boolean iNextAvailable,
       OStorageRemoteSession session,
-      OContextConfiguration contextConfiguration,
-      String name) {
+      OContextConfiguration contextConfiguration) {
     if (session != null && session.getCurrentUrl() != null && !iNextAvailable) {
       return session.getCurrentUrl();
     }
@@ -255,7 +254,6 @@ public class ORemoteURLs {
       boolean iIsConnectOperation,
       OStorageRemoteSession session,
       OContextConfiguration contextConfiguration,
-      String name,
       CONNECTION_STRATEGY strategy) {
     String url = null;
     if (session.isStickToSession()) {
@@ -264,12 +262,12 @@ public class ORemoteURLs {
     switch (strategy) {
       case STICKY:
         url = session.getServerUrl();
-        if (url == null) url = getServerURFromList(false, session, contextConfiguration, name);
+        if (url == null) url = getServerURFromList(false, session, contextConfiguration);
         break;
 
       case ROUND_ROBIN_CONNECT:
         if (iIsConnectOperation || session.getServerUrl() == null) {
-          url = getNextConnectUrl(session, contextConfiguration, name);
+          url = getNextConnectUrl(session, contextConfiguration);
         } else {
           url = session.getServerUrl();
         }
@@ -282,7 +280,7 @@ public class ORemoteURLs {
         break;
 
       case ROUND_ROBIN_REQUEST:
-        url = getServerURFromList(true, session, contextConfiguration, name);
+        url = getServerURFromList(true, session, contextConfiguration);
         OLogManager.instance()
             .debug(
                 this,

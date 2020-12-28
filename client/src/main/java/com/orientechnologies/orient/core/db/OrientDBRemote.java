@@ -638,7 +638,7 @@ public class OrientDBRemote implements OrientDBInternal {
     OContextConfiguration config = getContextConfiguration();
     try {
       String serverUrl =
-          urls.getNextAvailableServerURL(false, session, config, null, CONNECTION_STRATEGY.STICKY);
+          urls.getNextAvailableServerURL(false, session, config, CONNECTION_STRATEGY.STICKY);
       do {
         try {
           network = OStorageRemote.getNetwork(serverUrl, connectionManager, config);

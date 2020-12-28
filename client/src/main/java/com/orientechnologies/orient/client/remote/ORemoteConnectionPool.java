@@ -20,30 +20,14 @@ public class ORemoteConnectionPool
   }
 
   protected OChannelBinaryAsynchClient createNetworkConnection(
-      String iServerURL, final OContextConfiguration clientConfiguration) throws OIOException {
-    if (iServerURL == null) throw new IllegalArgumentException("server url is null");
+      String serverURL, final OContextConfiguration clientConfiguration) throws OIOException {
+    if (serverURL == null) throw new IllegalArgumentException("server url is null");
 
     // TRY WITH CURRENT URL IF ANY
     try {
-      OLogManager.instance().debug(this, "Trying to connect to the remote host %s...", iServerURL);
+      OLogManager.instance().debug(this, "Trying to connect to the remote host %s...", serverURL);
 
-      final String serverURL;
-      final String databaseName;
-
-      if (iServerURL.startsWith(OEngineRemote.PREFIX))
-        iServerURL = iServerURL.substring(OEngineRemote.PREFIX.length());
-
-      int sepPos = iServerURL.indexOf("/");
-      if (sepPos > -1) {
-        // REMOVE DATABASE NAME IF ANY
-        serverURL = iServerURL.substring(0, sepPos);
-        databaseName = iServerURL.substring(sepPos + 1);
-      } else {
-        serverURL = iServerURL;
-        databaseName = null;
-      }
-
-      sepPos = serverURL.indexOf(":");
+      int sepPos = serverURL.indexOf(":");
       final String remoteHost = serverURL.substring(0, sepPos);
       final int remotePort = Integer.parseInt(serverURL.substring(sepPos + 1));
 
@@ -51,7 +35,6 @@ public class ORemoteConnectionPool
           new OChannelBinaryAsynchClient(
               remoteHost,
               remotePort,
-              databaseName,
               clientConfiguration,
               OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION);
 
@@ -61,8 +44,8 @@ public class ORemoteConnectionPool
       // RE-THROW IT
       throw e;
     } catch (Exception e) {
-      OLogManager.instance().debug(this, "Error on connecting to %s", e, iServerURL);
-      throw OException.wrapException(new OIOException("Error on connecting to " + iServerURL), e);
+      OLogManager.instance().debug(this, "Error on connecting to %s", e, serverURL);
+      throw OException.wrapException(new OIOException("Error on connecting to " + serverURL), e);
     }
   }
 

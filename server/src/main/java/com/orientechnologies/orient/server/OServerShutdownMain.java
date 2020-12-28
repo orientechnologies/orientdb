@@ -66,7 +66,6 @@ public class OServerShutdownMain {
             new OChannelBinaryAsynchClient(
                 networkAddress,
                 port,
-                null,
                 contextConfig,
                 OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION);
         break;
