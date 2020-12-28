@@ -6,7 +6,7 @@ import static org.junit.Assert.assertFalse;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.client.remote.message.OLiveQueryPushRequest;
 import com.orientechnologies.orient.client.remote.message.live.OLiveQueryResult;
-import com.orientechnologies.orient.core.db.OConnectionNext;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.db.OLiveQueryResultListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
@@ -64,7 +64,12 @@ public class ORemoteLiveQueryPushTest {
     MockitoAnnotations.initMocks(this);
     storage =
         new OStorageRemote(
-            new String[] {}, "none", null, "", connectionManager, null, new OConnectionNext(1));
+            new ORemoteURLs(new String[] {}, new OContextConfiguration()),
+            "none",
+            null,
+            "",
+            connectionManager,
+            null);
   }
 
   @Test

@@ -6,7 +6,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.remote.OStorageRemote.CONNECTION_STRATEGY;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.OConnectionNext;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import java.util.ArrayList;
@@ -31,12 +30,12 @@ public class ORemoteURLs {
   private List<String> initialServerURLs;
   private int nextServerToConnect;
 
-  public ORemoteURLs(String[] hosts, OContextConfiguration config, OConnectionNext connectionNext) {
+  public ORemoteURLs(String[] hosts, OContextConfiguration config) {
     for (String host : hosts) {
       addHost(host, config);
     }
     this.initialServerURLs = new ArrayList<String>(serverURLs);
-    this.nextServerToConnect = connectionNext.next();
+    this.nextServerToConnect = 0;
   }
 
   public synchronized void remove(String serverUrl) {
@@ -85,23 +84,9 @@ public class ORemoteURLs {
       }
     }
 
-    // DISABLED BECAUSE THIS DID NOT ALLOW TO CONNECT TO LOCAL HOST ANYMORE IF THE SERVER IS BOUND
-    // TO 127.0.0.1
-    // CONVERT 127.0.0.1 TO THE PUBLIC IP IF POSSIBLE
-    // if (host.startsWith(LOCAL_IP)) {
-    // try {
-    // final String publicIP = InetAddress.getLocalHost().getHostAddress();
-    // host = publicIP + host.substring(LOCAL_IP.length());
-    // } catch (UnknownHostException e) {
-    // // IGNORE IT
-    // }
-    // }
-
-    synchronized (serverURLs) {
-      if (!serverURLs.contains(host)) {
-        serverURLs.add(host);
-        OLogManager.instance().debug(this, "Registered the new available server '%s'", host);
-      }
+    if (!serverURLs.contains(host)) {
+      serverURLs.add(host);
+      OLogManager.instance().debug(this, "Registered the new available server '%s'", host);
     }
 
     return host;
