@@ -206,7 +206,7 @@ public class ORemoteURLs {
       // RESET INDEX
       this.nextServerToConnect = 0;
 
-    final String serverURL = serverURLs.get(this.nextServerToConnect) + "/" + name;
+    final String serverURL = serverURLs.get(this.nextServerToConnect);
     if (session != null) {
       session.serverURLIndex = this.nextServerToConnect;
       session.currentUrl = serverURL;
@@ -241,7 +241,7 @@ public class ORemoteURLs {
       // RESET INDEX
       serverURLIndex = 0;
 
-    final String serverURL = serverURLs.get(serverURLIndex) + "/" + name;
+    final String serverURL = serverURLs.get(serverURLIndex);
 
     if (session != null) {
       session.serverURLIndex = serverURLIndex;

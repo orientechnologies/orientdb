@@ -671,9 +671,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     stateLock.acquireWriteLock();
     try {
       // CLOSE ALL THE SOCKET POOLS
-      for (String url : serverURLs.getUrls()) {
-        connectionManager.closePool(url);
-      }
       sbTreeCollectionManager.close();
 
       status = STATUS.CLOSED;
