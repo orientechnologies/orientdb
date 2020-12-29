@@ -134,7 +134,6 @@ public class Orient extends OListenerManger<OOrientListener> {
   private volatile boolean active = false;
   private ThreadPoolExecutor workers;
   private OSignalHandler signalHandler;
-  private boolean runningDistributed = false;
 
   /** Indicates that engine is initialized inside of web application container. */
   private volatile boolean insideWebContainer;
@@ -949,14 +948,6 @@ public class Orient extends OListenerManger<OOrientListener> {
     public String toString() {
       return getClass().getSimpleName();
     }
-  }
-
-  public boolean isRunningDistributed() {
-    return runningDistributed;
-  }
-
-  public void setRunningDistributed(final boolean runningDistributed) {
-    this.runningDistributed = runningDistributed;
   }
 
   public void onEmbeddedFactoryInit(OrientDBEmbedded embeddedFactory) {

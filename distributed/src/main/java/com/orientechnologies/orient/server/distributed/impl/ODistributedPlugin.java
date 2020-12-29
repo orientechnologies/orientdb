@@ -263,8 +263,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
     if (serverInstance.getDatabases() instanceof OrientDBDistributed)
       ((OrientDBDistributed) serverInstance.getDatabases()).setPlugin(this);
 
-    Orient.instance().setRunningDistributed(true);
-
     OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.setValue(true);
 
     // REGISTER TEMPORARY USER FOR REPLICATION PURPOSE
