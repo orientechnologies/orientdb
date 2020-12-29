@@ -136,9 +136,7 @@ public class OSchedulerImpl {
     if (database.getMetadata().getSchema().existsClass(OScheduledEvent.CLASS_NAME)) {
       final Iterable<ODocument> result = database.browseClass(OScheduledEvent.CLASS_NAME);
       for (ODocument d : result) {
-        final OScheduledEvent event = new OScheduledEvent(d);
-
-        if (events.putIfAbsent(event.getName(), event) == null) this.scheduleEvent(event);
+        scheduleEvent(new OScheduledEvent(d));
       }
     }
   }
