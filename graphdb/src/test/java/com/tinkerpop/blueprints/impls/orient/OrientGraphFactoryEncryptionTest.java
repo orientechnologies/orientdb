@@ -6,7 +6,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -102,7 +101,8 @@ public class OrientGraphFactoryEncryptionTest {
       if (orientDB.exists(dbName)) {
         orientDB.drop(dbName);
       }
-      orientDB.create(dbName, ODatabaseType.PLOCAL);
+      orientDB.execute(
+          "create database ? plocal users(admin identified by 'admin' role admin )", dbName);
 
       try (ODatabaseSession db = orientDB.open(dbName, "admin", "admin")) {
         //noinspection deprecation

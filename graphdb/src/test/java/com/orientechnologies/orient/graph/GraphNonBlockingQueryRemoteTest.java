@@ -3,9 +3,10 @@ package com.orientechnologies.orient.graph;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLNonBlockingQuery;
@@ -59,10 +60,12 @@ public class GraphNonBlockingQueryRemoteTest {
         OrientGraphRemoteTest.class.getResourceAsStream("/embedded-server-config-single-run.xml"));
 
     server.activate();
-    OServerAdmin admin = new OServerAdmin("remote:localhost:3064");
-    admin.connect("root", "root");
-    admin.createDatabase(GraphNonBlockingQueryRemoteTest.class.getSimpleName(), "graph", "memory");
-    admin.close();
+    try (OrientDB orientDB =
+        new OrientDB("remote:localhost:3064", "root", "root", OrientDBConfig.defaultConfig())) {
+      orientDB.execute(
+          "create database ? memory users(admin identified by 'admin' role admin)",
+          GraphNonBlockingQueryRemoteTest.class.getSimpleName());
+    }
   }
 
   @After
