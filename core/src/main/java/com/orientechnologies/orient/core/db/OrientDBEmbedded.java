@@ -693,7 +693,11 @@ public class OrientDBEmbedded implements OrientDBInternal {
           storages.put(name, storage);
           embedded = internalCreate(config, storage);
           if (createOps != null) {
-            createOps.call(embedded);
+            OScenarioThreadLocal.executeAsDistributed(
+                () -> {
+                  createOps.call(embedded);
+                  return null;
+                });
           }
         } catch (Exception e) {
           throw OException.wrapException(
