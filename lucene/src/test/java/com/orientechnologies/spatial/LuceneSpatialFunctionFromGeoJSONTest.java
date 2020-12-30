@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.spatial;
 
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -36,7 +35,7 @@ public class LuceneSpatialFunctionFromGeoJSONTest extends BaseSpatialLuceneTest 
   @Before
   public void before() {
     orientDB = new OrientDB("embedded:.", OrientDBConfig.defaultConfig());
-    orientDB.create("test", ODatabaseType.MEMORY);
+    orientDB.execute("create database test memory users(admin identified by 'admin' role admin)");
     db = orientDB.open("test", "admin", "admin");
   }
 

@@ -60,7 +60,9 @@ public abstract class BaseLuceneTest {
     if (context.exists(name.getMethodName())) {
       context.drop(name.getMethodName());
     }
-    context.create(name.getMethodName(), type);
+    context.execute(
+        "create database ? " + type.toString() + " users(admin identified by 'admin' role admin) ",
+        name.getMethodName());
 
     db = (ODatabaseDocumentInternal) context.open(name.getMethodName(), "admin", "admin");
     db.set(ODatabase.ATTRIBUTES.MINIMUMCLUSTERS, 8);
@@ -71,7 +73,9 @@ public abstract class BaseLuceneTest {
   }
 
   public void createDatabase() {
-    context.create(name.getMethodName(), type);
+    context.execute(
+        "create database ? " + type + " users(admin identified by 'admin' role admin) ",
+        name.getMethodName());
   }
 
   @After

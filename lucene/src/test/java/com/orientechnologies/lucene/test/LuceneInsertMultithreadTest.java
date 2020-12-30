@@ -78,8 +78,9 @@ public class LuceneInsertMultithreadTest {
     if (orientDB.exists(dbName)) {
       orientDB.drop(dbName);
     }
-
-    orientDB.create(dbName, databaseType);
+    orientDB.execute(
+        "create database ? " + databaseType + " users(admin identified by 'admin' role admin)",
+        dbName);
     OSchema schema;
     try (ODatabaseDocument databaseDocumentTx = orientDB.open(dbName, "admin", "admin")) {
       schema = databaseDocumentTx.getMetadata().getSchema();

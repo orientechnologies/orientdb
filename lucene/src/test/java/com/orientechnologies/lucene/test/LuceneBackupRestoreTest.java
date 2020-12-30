@@ -21,7 +21,6 @@ package com.orientechnologies.lucene.test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -72,7 +71,8 @@ public class LuceneBackupRestoreTest {
 
     final String dbName = getClass().getSimpleName();
 
-    orientDB.create(dbName, ODatabaseType.PLOCAL);
+    orientDB.execute(
+        "create database ? plocal users(admin identified by 'admin' role admin)", dbName);
     databaseDocumentTx = (ODatabaseDocumentInternal) orientDB.open(dbName, "admin", "admin");
 
     databaseDocumentTx.command("create class City ");
@@ -109,7 +109,9 @@ public class LuceneBackupRestoreTest {
     databaseDocumentTx.backup(new FileOutputStream(backupFile), null, null, null, 9, 1048576);
 
     orientDB.drop(getClass().getSimpleName());
-    orientDB.create(getClass().getSimpleName(), ODatabaseType.PLOCAL);
+    orientDB.execute(
+        "create database ? plocal users(admin identified by 'admin' role admin)",
+        getClass().getSimpleName());
     databaseDocumentTx =
         (ODatabaseDocumentInternal) orientDB.open(getClass().getSimpleName(), "admin", "admin");
 

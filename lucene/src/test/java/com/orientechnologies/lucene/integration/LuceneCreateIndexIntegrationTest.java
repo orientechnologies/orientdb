@@ -1,7 +1,6 @@
 package com.orientechnologies.lucene.integration;
 
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -23,7 +22,9 @@ public class LuceneCreateIndexIntegrationTest {
         OServer.startFromClasspathConfig(
             "com/orientechnologies/lucene/integration/orientdb-simple-server-config.xml");
     remote = new OrientDB("remote:localhost", "root", "test", OrientDBConfig.defaultConfig());
-    remote.create("LuceneCreateIndexIntegrationTest", ODatabaseType.PLOCAL);
+
+    remote.execute(
+        "create database LuceneCreateIndexIntegrationTest plocal users(admin identified by 'admin' role admin) ");
     final ODatabaseSession session =
         remote.open("LuceneCreateIndexIntegrationTest", "admin", "admin");
 
