@@ -10,7 +10,6 @@ import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -45,7 +44,7 @@ public class ORemotePushMessagesTest {
   public void testSchema() throws IOException {
 
     OrientDB orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
-    orientDB.create("test", ODatabaseType.MEMORY);
+    orientDB.execute("create database test memory users (admin identified by 'admin' role admin)");
     ODatabaseSession session = orientDB.open("test", "admin", "admin");
     ODocument schema =
         ((ODatabaseDocumentInternal) session).getSharedContext().getSchema().toStream();
@@ -66,7 +65,7 @@ public class ORemotePushMessagesTest {
   public void testIndexManager() throws IOException {
 
     OrientDB orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
-    orientDB.create("test", ODatabaseType.MEMORY);
+    orientDB.execute("create database test memory users (admin identified by 'admin' role admin)");
     ODatabaseSession session = orientDB.open("test", "admin", "admin");
     ODocument schema =
         ((ODatabaseDocumentInternal) session).getSharedContext().getIndexManager().toStream();
@@ -86,7 +85,7 @@ public class ORemotePushMessagesTest {
   @Test
   public void testStorageConfiguration() throws IOException {
     OrientDB orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
-    orientDB.create("test", ODatabaseType.MEMORY);
+    orientDB.execute("create database test memory users (admin identified by 'admin' role admin)");
     ODatabaseSession session = orientDB.open("test", "admin", "admin");
     OStorageConfiguration configuration =
         ((ODatabaseDocumentInternal) session).getStorage().getConfiguration();

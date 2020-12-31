@@ -6,7 +6,6 @@ import com.orientechnologies.orient.client.remote.message.push.OStorageConfigura
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
@@ -23,7 +22,7 @@ public class OReloadMessageTest {
   @Before
   public void before() {
     orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
-    orientDB.create("test", ODatabaseType.MEMORY);
+    orientDB.execute("create database test memory users (admin identified by 'admin' role admin)");
     session = orientDB.open("test", "admin", "admin");
   }
 
