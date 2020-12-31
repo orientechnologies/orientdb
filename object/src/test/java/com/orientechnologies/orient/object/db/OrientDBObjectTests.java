@@ -17,7 +17,9 @@ public class OrientDBObjectTests {
   public void createAndUseEmbeddedDatabase() {
     OrientDBObject factory = new OrientDBObject("embedded:.", null);
 
-    if (!factory.exists("test")) factory.create("test", ODatabaseType.MEMORY);
+    if (!factory.exists("test")) {
+      factory.execute("create database test memory users(admin identified by 'admin' role admin)");
+    }
 
     ODatabaseObject db = factory.open("test", "admin", "admin");
     db.close();
@@ -52,7 +54,9 @@ public class OrientDBObjectTests {
   public void testPool() {
     OrientDBObject factory = new OrientDBObject("embedded:.", null);
 
-    if (!factory.exists("test")) factory.create("test", ODatabaseType.MEMORY);
+    if (!factory.exists("test")) {
+      factory.execute("create database test memory users(admin identified by 'admin' role admin)");
+    }
 
     ODatabaseObjectPool pool = new ODatabaseObjectPool(factory, "test", "admin", "admin");
     ODatabaseObject db = pool.acquire();

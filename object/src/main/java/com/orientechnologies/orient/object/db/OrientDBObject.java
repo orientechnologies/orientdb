@@ -5,7 +5,9 @@ import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.util.List;
+import java.util.Map;
 
 /**
  * OrientDB Object management environment, it allow to connect to an environment and manipulate
@@ -212,6 +214,14 @@ public class OrientDBObject implements AutoCloseable {
    */
   public void create(String name, ODatabaseType type, OrientDBConfig config) {
     orientDB.create(name, type, config);
+  }
+
+  public OResultSet execute(String script, Map<String, Object> params) {
+    return orientDB.execute(script, params);
+  }
+
+  public OResultSet execute(String script, Object... params) {
+    return orientDB.execute(script, params);
   }
 
   /**
