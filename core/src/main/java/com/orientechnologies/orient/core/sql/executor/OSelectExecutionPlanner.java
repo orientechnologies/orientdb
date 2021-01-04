@@ -576,14 +576,8 @@ public class OSelectExecutionPlanner {
     for (OIndex<?> classIndex : clazz.getClassIndexes()) {
       List<String> fields = classIndex.getDefinition().getFields();
       if (fields.size() == 1 && fields.get(0).equals(binaryCondition.getLeft().getDefaultAlias().getStringValue())) {
-        OBinaryCondition indexCond = new OBinaryCondition(-1);
-        indexCond.setLeft(new OExpression(new OIdentifier("key")));
-        indexCond.setOperator(new OEqualsCompareOperator(-1));
-        indexCond.setRight(((OBinaryCondition) condition).getRight().copy());
-        result.chain(new FetchFromIndexStep(classIndex, indexCond, null, ctx, profilingEnabled));
-        result.chain(new AggregateProjectionCalculationStep(info.aggregateProjection, info.groupBy, ctx, info.timeout != null ? this.info.timeout.getVal().longValue() : -1, profilingEnabled));
-        result.chain(new GuaranteeEmptyCountStep(info.aggregateProjection.getItems().get(0), ctx, profilingEnabled));
-        result.chain(new ProjectionCalculationStep(info.projection, ctx, profilingEnabled));
+        OExpression expr = ((OBinaryCondition) condition).getRight();
+        result.chain(new CountFromIndexWithKeyStep(new OIndexIdentifier(classIndex.getName(), OIndexIdentifier.Type.INDEX), expr, info.projection.getAllAliases().iterator().next(), ctx, profilingEnabled));
         return true;
       }
     }
@@ -676,7 +670,14 @@ public class OSelectExecutionPlanner {
         result.chain(new ProjectionCalculationStep(info.preAggregateProjection, ctx, profilingEnabled));
       }
       if (info.aggregateProjection != null) {
-        result.chain(new AggregateProjectionCalculationStep(info.aggregateProjection, info.groupBy, ctx, info.timeout != null ? info.timeout.getVal().longValue() : -1, profilingEnabled));
+        long aggregationLimit = -1;
+        if (info.orderBy == null && info.limit != null) {
+          aggregationLimit = info.limit.getValue(ctx);
+          if (info.skip != null && info.skip.getValue(ctx) > 0) {
+            aggregationLimit += info.skip.getValue(ctx);
+          }
+        }
+        result.chain(new AggregateProjectionCalculationStep(info.aggregateProjection, info.groupBy, aggregationLimit, ctx, info.timeout != null ? info.timeout.getVal().longValue() : -1, profilingEnabled));
         if (isCountOnly(info) && info.groupBy == null) {
           result.chain(new GuaranteeEmptyCountStep(info.aggregateProjection.getItems().get(0), ctx, profilingEnabled));
         }
