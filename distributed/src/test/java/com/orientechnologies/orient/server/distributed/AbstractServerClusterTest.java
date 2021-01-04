@@ -23,7 +23,6 @@ import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -206,7 +205,10 @@ public abstract class AbstractServerClusterTest {
       serverInstance
           .get(serverNum)
           .getServerInstance()
-          .createDatabase(getDatabaseName(), ODatabaseType.PLOCAL, OrientDBConfig.defaultConfig());
+          .getContext()
+          .execute(
+              "create database ? plocal users(admin identified by 'admin' role admin)",
+              getDatabaseName());
   }
 
   protected boolean databaseExists(final int serverNum) {
@@ -271,7 +273,9 @@ public abstract class AbstractServerClusterTest {
       OrientDB orientDB =
           new OrientDB(
               "embedded:" + master.getServerHome() + "/databases/", OrientDBConfig.defaultConfig());
-      orientDB.create(getDatabaseName(), ODatabaseType.PLOCAL);
+      orientDB.execute(
+          "create database ? plocal users(admin identified by 'admin' role admin)",
+          getDatabaseName());
       final ODatabaseDocument graph = orientDB.open(getDatabaseName(), "admin", "admin");
       try {
         onAfterDatabaseCreation(graph);

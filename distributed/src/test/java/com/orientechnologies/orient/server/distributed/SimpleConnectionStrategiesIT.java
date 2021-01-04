@@ -39,7 +39,8 @@ public class SimpleConnectionStrategiesIT {
     setup = new LocalTestSetup(config);
     setup.setup();
     OrientDB remote = setup.createRemote(server0, "root", "test", OrientDBConfig.defaultConfig());
-    remote.create(databaseName, ODatabaseType.PLOCAL);
+    remote.execute(
+        "create database ? plocal users(admin identified by 'admin' role admin)", databaseName);
     remote.close();
   }
 

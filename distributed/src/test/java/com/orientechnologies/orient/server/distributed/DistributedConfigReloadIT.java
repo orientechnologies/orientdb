@@ -17,7 +17,6 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.db.ODatabasePool;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -395,7 +394,8 @@ public final class DistributedConfigReloadIT {
       OrientDB orientDB = getOrientDB();
       if (!orientDB.exists(dbName)) {
         log("Database does not exists. New database is created");
-        orientDB.create(dbName, ODatabaseType.PLOCAL);
+        orientDB.execute(
+            "create database ? plocal users(admin identified by 'admin' role admin)", dbName);
 
         ODatabaseDocument orientGraph = orientDB.open(dbName, "admin", "admin");
         orientGraph.command(new OCommandSQL("ALTER DATABASE custom strictSQL=false")).execute();

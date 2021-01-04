@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastClusterMetadataManager;
@@ -74,7 +73,9 @@ public class DistributedDbDropAndReCreateIT extends AbstractServerClusterTxTest 
 
       for (int retry = 0; retry < 10; retry++) {
         try {
-          orientDB.create(getDatabaseName(), ODatabaseType.PLOCAL);
+          orientDB.execute(
+              "create database ? plocal users(admin identified by 'admin' role admin)",
+              getDatabaseName());
           break;
         } catch (ODatabaseException e) {
           System.out.println("DB STILL IN THE CLUSTER, WAIT AND RETRY (retry " + retry + ")...");

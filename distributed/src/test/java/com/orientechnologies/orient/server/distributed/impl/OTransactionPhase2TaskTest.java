@@ -5,7 +5,6 @@ import static org.junit.Assert.assertTrue;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -39,7 +38,9 @@ public class OTransactionPhase2TaskTest {
     server.startup(getClass().getClassLoader().getResourceAsStream("orientdb-server-config.xml"));
     server.activate();
     OrientDB orientDB = server.getContext();
-    orientDB.create(OTransactionPhase2TaskTest.class.getSimpleName(), ODatabaseType.PLOCAL);
+    orientDB.execute(
+        "create database ? plocal users(admin identified by 'admin' role admin)",
+        OTransactionPhase2TaskTest.class.getSimpleName());
     session = orientDB.open(OTransactionPhase2TaskTest.class.getSimpleName(), "admin", "admin");
     session.createClass("TestClass");
   }

@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -40,7 +39,9 @@ public class ConcurrentDistributedUpdateIT extends AbstractScenarioTest {
     OrientDB orientDB = serverInstance.get(0).getServerInstance().getContext();
 
     if (!orientDB.exists(getDatabaseName())) {
-      orientDB.create(getDatabaseName(), ODatabaseType.PLOCAL);
+      orientDB.execute(
+          "create database ? plocal users(admin identified by 'admin' role admin)",
+          getDatabaseName());
     }
     ODatabaseDocument orientGraph = orientDB.open(getDatabaseName(), "admin", "admin");
     OClass clazz = orientGraph.getClass("Test");
@@ -52,7 +53,9 @@ public class ConcurrentDistributedUpdateIT extends AbstractScenarioTest {
     orientGraph.close();
 
     if (!orientDB.exists(getDatabaseName())) {
-      orientDB.create(getDatabaseName(), ODatabaseType.PLOCAL);
+      orientDB.execute(
+          "create database ? plocal users(admin identified by 'admin' role admin)",
+          getDatabaseName());
     }
     ODatabaseDocument graph = orientDB.open(getDatabaseName(), "admin", "admin");
     for (int i = 0; i < 2; i++) {
@@ -80,7 +83,12 @@ public class ConcurrentDistributedUpdateIT extends AbstractScenarioTest {
         boolean isRunning = true;
 
         if (!server.getServerInstance().existsDatabase(getDatabaseName())) {
-          server.getServerInstance().createDatabase(getDatabaseName(), ODatabaseType.PLOCAL, null);
+          server
+              .getServerInstance()
+              .getContext()
+              .execute(
+                  "create database ? plocal users(admin identified by 'admin' role admin)",
+                  getDatabaseName());
         }
         ODatabaseDocument graph =
             server.getServerInstance().openDatabase(getDatabaseName(), "admin", "admin");

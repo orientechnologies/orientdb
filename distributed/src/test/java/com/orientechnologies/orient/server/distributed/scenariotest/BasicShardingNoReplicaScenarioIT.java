@@ -23,7 +23,6 @@ import static org.junit.Assert.fail;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -76,7 +75,9 @@ public class BasicShardingNoReplicaScenarioIT extends AbstractShardingScenarioTe
     try {
       OrientDB orientDB = serverInstance.get(0).getServerInstance().getContext();
       if (!orientDB.exists(getDatabaseName())) {
-        orientDB.create(getDatabaseName(), ODatabaseType.PLOCAL);
+        orientDB.execute(
+            "create database ? plocal users(admin identified by 'admin' role admin)",
+            getDatabaseName());
       }
       graphNoTx = (ODatabaseDocumentInternal) orientDB.open(getDatabaseName(), "admin", "admin");
 
@@ -175,7 +176,9 @@ public class BasicShardingNoReplicaScenarioIT extends AbstractShardingScenarioTe
 
         OrientDB orientDB1 = serverInstance.get(2).getServerInstance().getContext();
         if (!orientDB1.exists(getDatabaseName())) {
-          orientDB1.create(getDatabaseName(), ODatabaseType.PLOCAL);
+          orientDB1.execute(
+              "create database ? plocal users(admin identified by 'admin' role admin)",
+              getDatabaseName());
         }
         graphNoTx = (ODatabaseDocumentInternal) orientDB1.open(getDatabaseName(), "admin", "admin");
         graphNoTx.activateOnCurrentThread();

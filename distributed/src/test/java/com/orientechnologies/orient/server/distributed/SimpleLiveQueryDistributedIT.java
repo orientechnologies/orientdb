@@ -36,7 +36,8 @@ public class SimpleLiveQueryDistributedIT {
     setup.setup();
 
     OrientDB remote = setup.createRemote(server0, "root", "test", OrientDBConfig.defaultConfig());
-    remote.create(databaseName, ODatabaseType.PLOCAL);
+    remote.execute(
+        "create database ? plocal users(admin identified by 'admin' role admin)", databaseName);
     ODatabaseSession session = remote.open(databaseName, "admin", "admin");
     session.createClass("test");
     session.close();

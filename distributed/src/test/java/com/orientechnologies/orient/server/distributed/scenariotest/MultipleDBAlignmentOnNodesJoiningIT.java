@@ -22,7 +22,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -110,8 +109,10 @@ public class MultipleDBAlignmentOnNodesJoiningIT extends AbstractScenarioTest {
             "embedded:" + master.getServerHome() + "/databases/", OrientDBConfig.defaultConfig());
 
     if (iCreateDatabase) {
-      orientDB.create(dbA, ODatabaseType.PLOCAL);
-      orientDB.create(dbB, ODatabaseType.PLOCAL);
+      orientDB.execute(
+          "create database ? plocal users(admin identified by 'admin' role admin)", dbA);
+      orientDB.execute(
+          "create database ? plocal users(admin identified by 'admin' role admin)", dbB);
       final ODatabaseDocument graph1 = orientDB.open(dbA, "admin", "admin");
       final ODatabaseDocument graph2 = orientDB.open(dbB, "admin", "admin");
       try {
@@ -139,7 +140,8 @@ public class MultipleDBAlignmentOnNodesJoiningIT extends AbstractScenarioTest {
         new OrientDB(
             "embedded:" + master.getServerHome() + "/databases/", OrientDBConfig.defaultConfig());
     if (iCreateDatabase) {
-      orientDB1.create(dbC, ODatabaseType.PLOCAL);
+      orientDB1.execute(
+          "create database ? plocal users(admin identified by 'admin' role admin)", dbC);
       final ODatabaseDocument graph1 = orientDB1.open(dbC, "admin", "admin");
       try {
         onAfterDatabaseCreation(graph1);
