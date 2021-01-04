@@ -13,6 +13,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -146,8 +147,10 @@ public class CSVAggregateReporter {
 
   public void report() {
 
+    Pattern p = Pattern.compile("(?s)db.*.query.*");
+
     SortedMap<String, Histogram> histograms =
-        registry.getHistograms((name, metric) -> name.matches("(?s)db.*.query.*"));
+        registry.getHistograms((name, metric) -> p.matcher(name).matches());
 
     final long timestamp = TimeUnit.MILLISECONDS.toSeconds(clock.getTime());
 
