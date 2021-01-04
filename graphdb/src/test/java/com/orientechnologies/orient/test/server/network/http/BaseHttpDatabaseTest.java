@@ -3,6 +3,8 @@ package com.orientechnologies.orient.test.server.network.http;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.test.server.network.http.BaseHttpTest.CONTENT;
 import java.io.File;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -39,11 +41,13 @@ public abstract class BaseHttpDatabaseTest extends BaseHttpTest {
   @Before
   public void createDatabase() throws Exception {
     ODatabaseRecordThreadLocal.instance().remove();
-
+    ODocument pass = new ODocument();
+    pass.setProperty("adminPassword", "admin");
     Assert.assertEquals(
         post("database/" + getDatabaseName() + "/memory")
             .setUserName("root")
             .setUserPassword("root")
+            .payload(pass.toJSON(), CONTENT.JSON)
             .getResponse()
             .getStatusLine()
             .getStatusCode(),
