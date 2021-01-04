@@ -5,7 +5,6 @@ import static org.junit.Assert.assertTrue;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -30,7 +29,9 @@ public class RemoteSimpleSchemaTest {
     server.activate();
 
     orientDB = new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
-    orientDB.create(RemoteSimpleSchemaTest.class.getSimpleName(), ODatabaseType.MEMORY);
+    orientDB.execute(
+        "create database ? memory users (admin identified by 'admin' role admin)",
+        RemoteSimpleSchemaTest.class.getSimpleName());
     database = orientDB.open(RemoteSimpleSchemaTest.class.getSimpleName(), "admin", "admin");
   }
 

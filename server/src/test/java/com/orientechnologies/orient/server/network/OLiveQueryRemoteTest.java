@@ -4,7 +4,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OLiveQueryMonitor;
 import com.orientechnologies.orient.core.db.OLiveQueryResultListener;
 import com.orientechnologies.orient.core.db.OrientDB;
@@ -53,7 +52,9 @@ public class OLiveQueryRemoteTest {
                 "com/orientechnologies/orient/server/network/orientdb-server-config.xml"));
     server.activate();
     orientDB = new OrientDB("remote:localhost:", "root", "root", OrientDBConfig.defaultConfig());
-    orientDB.create(OLiveQueryRemoteTest.class.getSimpleName(), ODatabaseType.MEMORY);
+    orientDB.execute(
+        "create database ? memory users (admin identified by 'admin' role admin)",
+        OLiveQueryRemoteTest.class.getSimpleName());
     database = orientDB.open(OLiveQueryRemoteTest.class.getSimpleName(), "admin", "admin");
   }
 

@@ -904,8 +904,7 @@ public class OServer {
 
       configuration.isAfterFirstTime = true;
 
-      if (getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.CREATE_DEFAULT_USERS))
-        createDefaultServerUsers();
+      createDefaultServerUsers();
 
     } finally {
       // REMOVE THE ENV VARIABLE FOR SECURITY REASONS

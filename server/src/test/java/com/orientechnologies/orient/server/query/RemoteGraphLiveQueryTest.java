@@ -3,7 +3,6 @@ package com.orientechnologies.orient.server.query;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OLiveQueryResultListener;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
@@ -35,7 +34,9 @@ public class RemoteGraphLiveQueryTest {
     server.activate();
 
     orientDB = new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
-    orientDB.create(RemoteGraphLiveQueryTest.class.getSimpleName(), ODatabaseType.MEMORY);
+    orientDB.execute(
+        "create database ? memory users (admin identified by 'admin' role admin)",
+        RemoteGraphLiveQueryTest.class.getSimpleName());
     session = orientDB.open(RemoteGraphLiveQueryTest.class.getSimpleName(), "admin", "admin");
     session.createClassIfNotExist("FirstV", "V");
     session.createClassIfNotExist("SecondV", "V");
