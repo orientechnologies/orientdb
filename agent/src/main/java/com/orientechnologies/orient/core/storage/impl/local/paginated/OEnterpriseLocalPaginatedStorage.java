@@ -739,7 +739,6 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
           });
 
       sbTreeCollectionManager.clear();
-      sharedContainer.clearResources();
       configuration = null;
 
       final BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
