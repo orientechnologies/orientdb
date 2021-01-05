@@ -20,17 +20,14 @@
 package com.orientechnologies.orient.core.storage;
 
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
-import com.orientechnologies.common.concur.resource.OSharedContainer;
-import com.orientechnologies.common.concur.resource.OSharedContainerImpl;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicLong;
 
-public abstract class OStorageAbstract implements OStorage, OSharedContainer {
+public abstract class OStorageAbstract implements OStorage {
   public static final ThreadGroup storageThreadGroup;
 
   static {
@@ -62,10 +59,6 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
   protected String name;
   private final AtomicLong version = new AtomicLong();
   protected volatile STATUS status = STATUS.CLOSED;
-
-  /** This field is used in EE version, do not make it private */
-  @SuppressWarnings("WeakerAccess")
-  protected final OSharedContainerImpl sharedContainer = new OSharedContainerImpl();
 
   public OStorageAbstract(final String name, final String iURL, final String mode) {
     this.name = normalizeName(name);
@@ -135,24 +128,7 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
   }
 
   @Override
-  public void close(final boolean iForce, boolean onDelete) {
-    sharedContainer.clearResources();
-  }
-
-  @Override
-  public boolean existsResource(String iName) {
-    return sharedContainer.existsResource(iName);
-  }
-
-  @Override
-  public <T> T removeResource(String iName) {
-    return sharedContainer.removeResource(iName);
-  }
-
-  @Override
-  public <T> T getResource(String iName, Callable<T> iCallback) {
-    return sharedContainer.getResource(iName, iCallback);
-  }
+  public void close(final boolean iForce, boolean onDelete) {}
 
   /** Returns current storage's version as serial. */
   @Override

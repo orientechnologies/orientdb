@@ -260,21 +260,6 @@ public class PostponedEngineStartTest {
         }
 
         @Override
-        public boolean existsResource(String iName) {
-          return false;
-        }
-
-        @Override
-        public <T> T removeResource(String iName) {
-          return null;
-        }
-
-        @Override
-        public <T> T getResource(String iName, Callable<T> iCallback) {
-          return null;
-        }
-
-        @Override
         public void open(
             String iUserName, String iUserPassword, OContextConfiguration contextConfiguration) {}
 
