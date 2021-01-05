@@ -53,7 +53,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.CASDiskWriteAheadLog;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
-
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;

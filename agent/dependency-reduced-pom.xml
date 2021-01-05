@@ -124,10 +124,6 @@
           <groupId>org.lz4</groupId>
         </exclusion>
         <exclusion>
-          <artifactId>icu4j</artifactId>
-          <groupId>com.ibm.icu</groupId>
-        </exclusion>
-        <exclusion>
           <artifactId>commons-lang</artifactId>
           <groupId>commons-lang</groupId>
         </exclusion>
@@ -297,10 +293,6 @@
         <exclusion>
           <artifactId>lz4-java</artifactId>
           <groupId>org.lz4</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>icu4j</artifactId>
-          <groupId>com.ibm.icu</groupId>
         </exclusion>
         <exclusion>
           <artifactId>commons-lang</artifactId>
