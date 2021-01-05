@@ -34,11 +34,6 @@ public class OHighLevelTransactionChangeRecord extends OOperationUnitRecord {
   }
 
   @Override
-  public boolean isUpdateMasterRecord() {
-    return false;
-  }
-
-  @Override
   public int getId() {
     return HIGH_LEVEL_TRANSACTION_CHANGE_RECORD;
   }

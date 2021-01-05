@@ -68,11 +68,6 @@ public class OFileCreatedWALRecord extends OOperationUnitBodyRecord {
   }
 
   @Override
-  public boolean isUpdateMasterRecord() {
-    return false;
-  }
-
-  @Override
   public int getId() {
     return WALRecordTypes.FILE_CREATED_WAL_RECORD;
   }

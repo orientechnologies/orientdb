@@ -5,6 +5,17 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRe
 
 public final class StartWALRecord implements OWALRecord {
   private volatile OLogSequenceNumber lsn;
+  private volatile int operationId = -1;
+
+  @Override
+  public int getOperationId() {
+    return operationId;
+  }
+
+  @Override
+  public void setOperationId(int operationId) {
+    this.operationId = operationId;
+  }
 
   @Override
   public OLogSequenceNumber getLsn() {
@@ -30,5 +41,10 @@ public final class StartWALRecord implements OWALRecord {
   @Override
   public int getDiskSize() {
     return CASWALPage.RECORDS_OFFSET;
+  }
+
+  @Override
+  public boolean trackOperationId() {
+    return false;
   }
 }

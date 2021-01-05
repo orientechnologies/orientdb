@@ -52,11 +52,6 @@ public final class MetaDataRecord extends OAbstractWALRecord {
   }
 
   @Override
-  public boolean isUpdateMasterRecord() {
-    return false;
-  }
-
-  @Override
   public int getId() {
     return WALRecordTypes.TX_METADATA;
   }

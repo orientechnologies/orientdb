@@ -72,8 +72,8 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
   }
 
   @Override
-  public boolean isUpdateMasterRecord() {
-    return false;
+  public boolean trackOperationId() {
+    return true;
   }
 
   @Override

@@ -27,11 +27,6 @@ public class ONonTxOperationPerformedWALRecord extends OAbstractWALRecord {
   }
 
   @Override
-  public boolean isUpdateMasterRecord() {
-    return false;
-  }
-
-  @Override
   public int getId() {
     return WALRecordTypes.NON_TX_OPERATION_PERFORMED_WAL_RECORD;
   }

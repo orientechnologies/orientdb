@@ -6122,7 +6122,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   private OLogSequenceNumber restoreFromWAL() throws IOException {
-    if (writeAheadLog.begin() == null) {
+    final OLogSequenceNumber begin = writeAheadLog.begin();
+    if (begin == null) {
       OLogManager.instance()
           .error(this, "Restore is not possible because write ahead log is empty.", null);
       return null;
@@ -6130,17 +6131,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     OLogManager.instance().info(this, "Looking for last checkpoint...");
 
-    final OLogSequenceNumber end = writeAheadLog.end();
-    if (end == null) {
-      OLogManager.instance().errorNoDb(this, "WAL is empty, there is nothing not restore", null);
-      return null;
-    }
-
-    writeAheadLog.addCutTillLimit(end);
+    writeAheadLog.addCutTillLimit(begin);
     try {
       return restoreFromBeginning();
     } finally {
-      writeAheadLog.removeCutTillLimit(end);
+      writeAheadLog.removeCutTillLimit(begin);
     }
   }
 

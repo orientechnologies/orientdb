@@ -146,11 +146,6 @@ public class OAtomicUnitEndRecord extends OOperationUnitBodyRecord {
   }
 
   @Override
-  public boolean isUpdateMasterRecord() {
-    return false;
-  }
-
-  @Override
   public String toString() {
     return toString("rollback=" + rollback);
   }

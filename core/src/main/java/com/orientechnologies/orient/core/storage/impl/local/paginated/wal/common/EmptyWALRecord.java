@@ -26,11 +26,6 @@ public final class EmptyWALRecord extends OAbstractWALRecord {
   }
 
   @Override
-  public boolean isUpdateMasterRecord() {
-    return false;
-  }
-
-  @Override
   public int getId() {
     return WALRecordTypes.EMPTY_WAL_RECORD;
   }
