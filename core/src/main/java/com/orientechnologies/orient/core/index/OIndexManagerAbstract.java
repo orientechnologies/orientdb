@@ -41,8 +41,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sharding.auto.OAutoShardingIndexFactory;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.type.ODocumentWrapper;
-import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -64,8 +62,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-@SuppressWarnings({"unchecked"})
-public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass implements OCloseable {
+public abstract class OIndexManagerAbstract implements OCloseable {
   public static final String CONFIG_INDEXES = "indexes";
   public static final String DICTIONARY_NAME = "dictionary";
 
@@ -77,17 +74,22 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
   protected String manualClusterName = OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME;
   private AtomicInteger writeLockNesting = new AtomicInteger();
   private ReadWriteLock lock = new ReentrantReadWriteLock();
+  protected ODocument document;
 
-  @SuppressWarnings("WeakerAccess")
   public OIndexManagerAbstract() {
-    super(new ODocument().setTrackingChanges(false));
+    this.document = new ODocument().setTrackingChanges(false);
   }
 
   public abstract void recreateIndexes(ODatabaseDocumentInternal database);
 
-  @Override
-  public void load() {
-    throw new UnsupportedOperationException();
+  protected abstract void fromStream();
+
+  public ODocument getDocument() {
+    return document;
+  }
+
+  public ODocument toStream() {
+    return document;
   }
 
   public OIndexManagerAbstract load(ODatabaseDocumentInternal database) {
@@ -101,7 +103,8 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
         // RELOAD IT
         ((ORecordId) document.getIdentity())
             .fromString(database.getStorage().getConfiguration().getIndexMgrRecordId());
-        super.reload("*:-1 index:0");
+        database.reload(document, "*:-1 index:0", true);
+        fromStream();
       } finally {
         releaseExclusiveLock();
       }
@@ -109,20 +112,20 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     return this;
   }
 
-  @Override
   public OIndexManagerAbstract reload() {
     acquireExclusiveLock();
     try {
       ((ORecordId) document.getIdentity())
           .fromString(getStorage().getConfiguration().getIndexMgrRecordId());
-      return super.reload();
+      document.reload();
+      fromStream();
+      return this;
     } finally {
       releaseExclusiveLock();
     }
   }
 
-  @Override
-  public <RET extends ODocumentWrapper> RET save() {
+  public OIndexManagerAbstract save() {
 
     OScenarioThreadLocal.executeAsDistributed(
         new Callable<Object>() {
@@ -146,7 +149,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
                           this,
                           "concurrent modification while saving index manager configuration",
                           e);
-                  reload(null, true);
+                  document.reload(null, true);
                 }
 
               if (!saved)
@@ -164,7 +167,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
           }
         });
 
-    return (RET) this;
+    return this;
   }
 
   public void create() {
@@ -177,7 +180,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     acquireExclusiveLock();
     try {
       try {
-        save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
+        database.save(document, OMetadataDefault.CLUSTER_INTERNAL_NAME);
       } catch (Exception e) {
         OLogManager.instance()
             .error(
@@ -189,7 +192,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
         // RESET RID TO ALLOCATE A NEW ONE
         if (ORecordId.isPersistent(document.getIdentity().getClusterPosition())) {
           document.getIdentity().reset();
-          save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
+          database.save(document, OMetadataDefault.CLUSTER_INTERNAL_NAME);
         }
       }
       database.getStorage().setIndexMgrRecordId(document.getIdentity().toString());
@@ -438,13 +441,15 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 
   protected void releaseExclusiveLock() {
     int val = writeLockNesting.decrementAndGet();
-    getDatabase()
-        .getSharedContext()
-        .getSchema()
-        .forceSnapshot(ODatabaseRecordThreadLocal.instance().get());
+    ODatabaseDocumentInternal database = getDatabaseIfDefined();
+    if (database != null) {
+      database
+          .getSharedContext()
+          .getSchema()
+          .forceSnapshot(ODatabaseRecordThreadLocal.instance().get());
+    }
     internalReleaseExclusiveLock();
-    if (val == 0) {
-      ODatabaseDocumentInternal database = getDatabase();
+    if (val == 0 && database != null) {
       for (OMetadataUpdateListener listener : database.getSharedContext().browseListeners()) {
         listener.onIndexManagerUpdate(database.getName(), this);
       }

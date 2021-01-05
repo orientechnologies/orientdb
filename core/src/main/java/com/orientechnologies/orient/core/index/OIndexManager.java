@@ -24,7 +24,6 @@ import com.orientechnologies.common.util.OApi;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import java.util.Collection;
 import java.util.Set;
 
@@ -337,7 +336,7 @@ public interface OIndexManager {
    * <p>IMPORTANT! Only for internal usage.
    */
   @Deprecated
-  <RET extends ODocumentWrapper> RET save();
+  OIndexManager save();
 
   /**
    * Removes index from class-property map.
