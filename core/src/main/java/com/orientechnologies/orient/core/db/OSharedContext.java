@@ -1,9 +1,11 @@
 package com.orientechnologies.orient.core.db;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.viewmanager.ViewManager;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibraryImpl;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
@@ -16,6 +18,9 @@ import com.orientechnologies.orient.core.sql.executor.OQueryStats;
 import com.orientechnologies.orient.core.sql.parser.OExecutionPlanCache;
 import com.orientechnologies.orient.core.sql.parser.OStatementCache;
 import com.orientechnologies.orient.core.storage.OStorage;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.Callable;
 
 /** Created by tglman on 15/06/16. */
 public abstract class OSharedContext extends OListenerManger<OMetadataUpdateListener> {
@@ -35,6 +40,7 @@ public abstract class OSharedContext extends OListenerManger<OMetadataUpdateList
   protected OExecutionPlanCache executionPlanCache;
   protected OQueryStats queryStats;
   protected volatile boolean loaded = false;
+  protected Map<String, Object> resources;
 
   public OSharedContext() {
     super(true);
@@ -104,5 +110,23 @@ public abstract class OSharedContext extends OListenerManger<OMetadataUpdateList
 
   public ViewManager getViewManager() {
     throw new UnsupportedOperationException();
+  }
+
+  public synchronized <T> T getResource(final String name, final Callable<T> factory) {
+    if (resources == null) {
+      resources = new HashMap<String, Object>();
+    }
+    @SuppressWarnings("unchecked")
+    T resource = (T) resources.get(name);
+    if (resource == null) {
+      try {
+        resource = factory.call();
+      } catch (Exception e) {
+        OException.wrapException(
+            new ODatabaseException(String.format("instance creation for '%s' failed", name)), e);
+      }
+      resources.put(name, resource);
+    }
+    return resource;
   }
 }

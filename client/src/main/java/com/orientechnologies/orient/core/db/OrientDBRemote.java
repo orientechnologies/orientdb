@@ -153,8 +153,9 @@ public class OrientDBRemote implements OrientDBInternal {
           storages.put(name, storage);
         }
       }
-      ODatabaseDocumentRemote db = new ODatabaseDocumentRemote(storage);
-      db.internalOpen(user, password, resolvedConfig, getOrCreateSharedContext(storage));
+      ODatabaseDocumentRemote db =
+          new ODatabaseDocumentRemote(storage, getOrCreateSharedContext(storage));
+      db.internalOpen(user, password, resolvedConfig);
       return db;
     } catch (Exception e) {
       throw OException.wrapException(
@@ -221,8 +222,9 @@ public class OrientDBRemote implements OrientDBInternal {
         }
       }
     }
-    ODatabaseDocumentRemotePooled db = new ODatabaseDocumentRemotePooled(pool, storage);
-    db.internalOpen(user, password, pool.getConfig(), getOrCreateSharedContext(storage));
+    ODatabaseDocumentRemotePooled db =
+        new ODatabaseDocumentRemotePooled(pool, storage, getOrCreateSharedContext(storage));
+    db.internalOpen(user, password, pool.getConfig());
     return db;
   }
 
@@ -232,7 +234,6 @@ public class OrientDBRemote implements OrientDBInternal {
       ctx.close();
       sharedContexts.remove(remote.getName());
     }
-    ODatabaseDocumentRemote.deInit(remote);
     storages.remove(remote.getName());
     remote.shutdown();
   }
@@ -400,7 +401,6 @@ public class OrientDBRemote implements OrientDBInternal {
 
     for (OStorageRemote stg : storagesCopy) {
       try {
-        ODatabaseDocumentRemote.deInit(stg);
         OLogManager.instance().info(this, "- shutdown storage: " + stg.getName() + "...");
         stg.shutdown();
       } catch (Exception e) {
@@ -502,9 +502,7 @@ public class OrientDBRemote implements OrientDBInternal {
   }
 
   private OSharedContext createSharedContext(OStorage storage) {
-    OSharedContextRemote result = new OSharedContextRemote(storage, this);
-    storage.getResource(OSharedContext.class.getName(), () -> result);
-    return result;
+    return new OSharedContextRemote(storage, this);
   }
 
   public void schedule(TimerTask task, long delay, long period) {
@@ -743,5 +741,9 @@ public class OrientDBRemote implements OrientDBInternal {
       OrientDBConfig config,
       ODatabaseTask<Void> createOps) {
     throw new UnsupportedOperationException();
+  }
+
+  public synchronized OSharedContext getSharedContext(String name) {
+    return sharedContexts.get(name);
   }
 }

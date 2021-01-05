@@ -215,7 +215,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
 
       localCache.startup();
 
-      loadMetadata(this.sharedContext);
+      loadMetadata();
 
       installHooksEmbedded();
 
@@ -348,14 +348,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
 
   @Override
   protected void loadMetadata() {
-    loadMetadata(this.sharedContext);
-  }
-
-  @Override
-  protected void loadMetadata(OSharedContext shared) {
     metadata = new OMetadataDefault(this);
-    sharedContext = shared;
-
     metadata.init(sharedContext);
     sharedContext.load(this);
   }

@@ -192,8 +192,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
   protected abstract void loadMetadata();
 
-  protected abstract void loadMetadata(OSharedContext ctx);
-
   public void callOnCloseListeners() {
     wakeupOnCloseDbLifecycleListeners();
     wakeupOnCloseListeners();

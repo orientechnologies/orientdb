@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.metadata.schema.OView;
@@ -124,19 +123,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       result.addAll(more);
     }
     return result;
-  }
-
-  @Override
-  protected void loadMetadata() {
-    loadMetadata(this.getSharedContext());
-  }
-
-  @Override
-  protected void loadMetadata(OSharedContext ctx) {
-    metadata = new OMetadataDefault(this);
-    sharedContext = ctx;
-    metadata.init(sharedContext);
-    sharedContext.load(this);
   }
 
   /**

@@ -130,6 +130,7 @@ import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OLiveQueryMonitor;
+import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBRemote;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentRemote;
@@ -2475,5 +2476,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   public List<String> getServerURLs() {
     return serverURLs.getUrls();
+  }
+
+  public OSharedContext getSharedContext() {
+    return this.context.getSharedContext(this.name);
   }
 }
