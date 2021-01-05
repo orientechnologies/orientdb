@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.kenai.jffi.MemoryIO;
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.WriteableWALRecord;
 import java.nio.ByteBuffer;
 import java.util.Objects;
@@ -33,6 +34,7 @@ import java.util.Objects;
  */
 public abstract class OAbstractWALRecord implements WriteableWALRecord {
   protected volatile OLogSequenceNumber lsn;
+  protected volatile int operationId = -1;
 
   private int distance = 0;
   private int diskSize = 0;
@@ -52,6 +54,16 @@ public abstract class OAbstractWALRecord implements WriteableWALRecord {
   @Override
   public OLogSequenceNumber getLsn() {
     return lsn;
+  }
+
+  @Override
+  public int getOperationId() {
+    return operationId;
+  }
+
+  @Override
+  public void setOperationId(int operationId) {
+    this.operationId = operationId;
   }
 
   @Override
@@ -122,6 +134,11 @@ public abstract class OAbstractWALRecord implements WriteableWALRecord {
   @Override
   public boolean isWritten() {
     return written;
+  }
+
+  @Override
+  public boolean trackOperationId() {
+    return false;
   }
 
   @Override

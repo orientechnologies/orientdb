@@ -27,6 +27,10 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 public interface OWALRecord {
   OLogSequenceNumber getLsn();
 
+  int getOperationId();
+
+  void  setOperationId(int operationId);
+
   void setLsn(OLogSequenceNumber lsn);
 
   void setDistance(int distance);
@@ -36,4 +40,6 @@ public interface OWALRecord {
   int getDistance();
 
   int getDiskSize();
+
+  boolean trackOperationId();
 }

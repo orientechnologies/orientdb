@@ -8,6 +8,7 @@ public final class MilestoneWALRecord implements OWALRecord {
   private int diskSize = -1;
 
   private volatile OLogSequenceNumber lsn;
+  private volatile int operationId = -1;
 
   @Override
   public OLogSequenceNumber getLsn() {
@@ -17,6 +18,16 @@ public final class MilestoneWALRecord implements OWALRecord {
   @Override
   public void setLsn(OLogSequenceNumber lsn) {
     this.lsn = lsn;
+  }
+
+  @Override
+  public int getOperationId() {
+    return operationId;
+  }
+
+  @Override
+  public void setOperationId(int operationId) {
+    this.operationId = operationId;
   }
 
   @Override
@@ -45,6 +56,11 @@ public final class MilestoneWALRecord implements OWALRecord {
     }
 
     return diskSize;
+  }
+
+  @Override
+  public boolean trackOperationId() {
+    return false;
   }
 
   @Override

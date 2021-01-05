@@ -14,10 +14,13 @@ public final class CASWALPage {
    */
   public static final int MAGIC_NUMBER_OFFSET = 0;
 
-  /** Offset of position which stores CRC32 value of content stored on this page. */
+  /** Offset of position which stores XX_HASH value of content stored on this page. */
   public static final int XX_OFFSET = MAGIC_NUMBER_OFFSET + OLongSerializer.LONG_SIZE;
 
-  public static final int PAGE_SIZE_OFFSET = XX_OFFSET + OLongSerializer.LONG_SIZE;
+  /**Offset of position which stores operation id of the last record in the page*/
+  public static final int LAST_OPERATION_ID_OFFSET = XX_OFFSET + OLongSerializer.LONG_SIZE;
+
+  public static final int PAGE_SIZE_OFFSET = LAST_OPERATION_ID_OFFSET + OIntegerSerializer.INT_SIZE;
 
   public static final int DEFAULT_PAGE_SIZE = 4 * 1024;
 

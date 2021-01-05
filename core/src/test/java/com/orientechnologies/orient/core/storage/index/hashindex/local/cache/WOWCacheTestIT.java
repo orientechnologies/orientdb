@@ -1041,11 +1041,6 @@ public class WOWCacheTestIT {
     }
 
     @Override
-    public boolean isUpdateMasterRecord() {
-      return false;
-    }
-
-    @Override
     public int getId() {
       return (byte) 128;
     }
