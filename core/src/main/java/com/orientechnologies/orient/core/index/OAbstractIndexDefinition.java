@@ -23,20 +23,19 @@ import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.collate.ODefaultCollate;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
-import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
 /**
  * Abstract index definiton implementation.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public abstract class OAbstractIndexDefinition extends ODocumentWrapperNoClass
-    implements OIndexDefinition {
+public abstract class OAbstractIndexDefinition implements OIndexDefinition {
   protected OCollate collate = new ODefaultCollate();
   private boolean nullValuesIgnored = true;
+  protected ODocument document;
 
   protected OAbstractIndexDefinition() {
-    super(new ODocument().setTrackingChanges(false));
+    document = new ODocument().setTrackingChanges(false);
   }
 
   public OCollate getCollate() {

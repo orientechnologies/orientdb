@@ -128,8 +128,8 @@ public class OPropertyIndexDefinition extends OAbstractIndexDefinition {
     return new OType[] {keyType};
   }
 
-  @Override
-  protected final void fromStream() {
+  public void fromStream(ODocument document) {
+    this.document = document;
     serializeFromStream();
   }
 
