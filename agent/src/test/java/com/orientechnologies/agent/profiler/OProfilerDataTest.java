@@ -24,7 +24,16 @@ public class OProfilerDataTest {
     data.updateStat("foo", 123456);
     data.updateCounter("bar", 1);
     String result = data.dump();
-    result.contains("foo");
-    result.contains("123456");
+    Assert.assertTrue(result.contains("foo"));
+    Assert.assertTrue(result.contains("123456"));
+  }
+
+  @Test
+  public void testGetStatsAsString(){
+    OProfilerData data = new OProfilerData();
+    data.updateStat("foo", 123456);
+    String[] result = data.getStatsAsString();
+    result[0].contains("foo");
+    result[0].contains("123456");
   }
 }

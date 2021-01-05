@@ -128,4 +128,10 @@ public class OrientDBEnterpriseProfilerTest {
 
     assertThat(TimeUnit.NANOSECONDS.toMillis(finalTime)).isGreaterThanOrEqualTo(1000);
   }
+
+  @Test
+  public void testEnterpriseProfiler(){
+    OEnterpriseProfiler profiler = new OEnterpriseProfiler();
+    profiler.dump();
+  }
 }
