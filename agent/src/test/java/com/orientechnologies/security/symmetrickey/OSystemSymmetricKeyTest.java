@@ -80,7 +80,7 @@ public class OSystemSymmetricKeyTest extends AbstractSecurityTest {
             null,
             "insert into OUser set name=?, password='password', status='ACTIVE', roles=(SELECT FROM ORole WHERE name = ?)",
             sysuser,
-            "admin");
+            "root");
     server
         .getSystemDatabase()
         .execute(
@@ -108,7 +108,7 @@ public class OSystemSymmetricKeyTest extends AbstractSecurityTest {
             null,
             "insert into OUser set name=?, password='password', status='ACTIVE', roles=(SELECT FROM ORole WHERE name = ?)",
             sysuser,
-            "admin");
+            "root");
     server
         .getSystemDatabase()
         .execute(
@@ -137,7 +137,7 @@ public class OSystemSymmetricKeyTest extends AbstractSecurityTest {
             null,
             "insert into OUser set name=?, password='password', status='ACTIVE', roles=(SELECT FROM ORole WHERE name = ?)",
             sysuser,
-            "admin");
+            "root");
     server
         .getSystemDatabase()
         .execute(

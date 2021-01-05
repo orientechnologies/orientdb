@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.security.OInvalidPasswordException;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -50,10 +51,12 @@ public class PasswordValidatorTest extends AbstractSecurityTest {
     server.startup(new File(SERVER_DIRECTORY + "/config/orientdb-server-config.xml"));
     server.activate();
 
-    OServerAdmin serverAd = new OServerAdmin("remote:localhost");
-    serverAd.connect("root", "D2AFD02F20640EC8B7A5140F34FCA49D2289DB1F0D0598BB9DE8AAA75A0792F3");
-    serverAd.createDatabase(TESTDB, "graph", "plocal");
-    serverAd.close();
+    server.getDatabases().create(TESTDB, "root", "D2AFD02F20640EC8B7A5140F34FCA49D2289DB1F0D0598BB9DE8AAA75A0792F3", ODatabaseType.PLOCAL);
+
+//    OServerAdmin serverAd = new OServerAdmin("remote:localhost");
+//    serverAd.connect("root", "D2AFD02F20640EC8B7A5140F34FCA49D2289DB1F0D0598BB9DE8AAA75A0792F3");
+//    serverAd.createDatabase(TESTDB, "graph", "plocal");
+//    serverAd.close();
   }
 
   @AfterClass
