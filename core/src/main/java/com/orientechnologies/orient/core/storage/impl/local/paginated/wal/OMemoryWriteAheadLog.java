@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.orient.core.storage.impl.local.OCheckpointRequestListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationMetadata;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.OperationIdLSN;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.WriteableWALRecord;
 import java.io.File;
 import java.io.IOException;
@@ -36,6 +37,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   private final AtomicInteger nextPosition = new AtomicInteger();
+  private final AtomicInteger nextOperationId = new AtomicInteger();
 
   @Override
   public OLogSequenceNumber begin() {
@@ -74,7 +76,18 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
 
   @Override
   public OLogSequenceNumber log(WriteableWALRecord record) {
-    return new OLogSequenceNumber(0, nextPosition.incrementAndGet());
+    final OLogSequenceNumber lsn = new OLogSequenceNumber(0, nextPosition.incrementAndGet());
+    final int operationId;
+
+    if (record.trackOperationId()) {
+      operationId = nextOperationId.getAndIncrement();
+    } else {
+      operationId = nextOperationId.get();
+    }
+
+    record.setOperationIdLsn(lsn, operationId);
+
+    return lsn;
   }
 
   @Override

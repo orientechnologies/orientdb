@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.OperationIdLSN;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -353,14 +354,17 @@ public class ODurablePage {
     changes.applyChanges(buffer);
   }
 
-  public final void setLsn(final OLogSequenceNumber lsn) {
-    final ByteBuffer buffer = pointer.getBufferDuplicate();
+  public final void setOperationIdLSN(final OperationIdLSN operationIdLSN) {
+    final ByteBuffer buffer = pointer.getBuffer();
     assert buffer != null;
 
     assert buffer.order() == ByteOrder.nativeOrder();
 
+    final OLogSequenceNumber lsn = operationIdLSN.lsn;
     buffer.putLong(WAL_SEGMENT_OFFSET, lsn.getSegment());
     buffer.putInt(WAL_POSITION_OFFSET, lsn.getPosition());
+
+    buffer.putInt(WAL_OPERATION_ID_OFFSET, operationIdLSN.operationId);
   }
 
   public OLogSequenceNumber getLsn() {

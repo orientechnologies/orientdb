@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOpera
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.CASDiskWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.OperationIdLSN;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.WriteableWALRecord;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OMurmurHash3HashFunction;
 import java.io.IOException;
@@ -84,8 +85,7 @@ public class OLocalHashTableV3WALTestIT extends OLocalHashTableV3Base {
 
     expectedStorage =
         ((OLocalPaginatedStorage) ((ODatabaseInternal<?>) expectedDatabaseDocumentTx).getStorage());
-    actualStorage =
-        (OLocalPaginatedStorage) ((ODatabaseInternal<?>) databaseDocumentTx).getStorage();
+    actualStorage = (OLocalPaginatedStorage) ((ODatabaseInternal<?>) databaseDocumentTx).getStorage();
 
     atomicOperationsManager = actualStorage.getAtomicOperationsManager();
 
@@ -261,8 +261,7 @@ public class OLocalHashTableV3WALTestIT extends OLocalHashTableV3Base {
 
   private void restoreDataFromWAL() throws IOException {
     final OReadCache expectedReadCache =
-        ((OAbstractPaginatedStorage)
-                ((ODatabaseInternal<?>) expectedDatabaseDocumentTx).getStorage())
+        ((OAbstractPaginatedStorage) ((ODatabaseInternal<?>) expectedDatabaseDocumentTx).getStorage())
             .getReadCache();
 
     CASDiskWriteAheadLog log =
@@ -350,7 +349,7 @@ public class OLocalHashTableV3WALTestIT extends OLocalHashTableV3Base {
               try {
                 ODurablePage durablePage = new ODurablePage(cacheEntry);
                 durablePage.restoreChanges(updatePageRecord.getChanges());
-                durablePage.setLsn(new OLogSequenceNumber(0, 0));
+                durablePage.setOperationIdLSN(new OperationIdLSN(0, new OLogSequenceNumber(0, 0)));
               } finally {
                 expectedReadCache.releaseFromWrite(cacheEntry, expectedWriteCache, true);
               }

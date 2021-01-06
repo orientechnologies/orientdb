@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOpera
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.CASDiskWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.OperationIdLSN;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.WriteableWALRecord;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -341,7 +342,8 @@ public class SBTreeV1WALTestIT extends SBTreeV1TestIT {
               try {
                 ODurablePage durablePage = new ODurablePage(cacheEntry);
                 durablePage.restoreChanges(updatePageRecord.getChanges());
-                durablePage.setLsn(new OLogSequenceNumber(0, 0));
+                durablePage.setOperationIdLSN(
+                    new OperationIdLSN(0, new OLogSequenceNumber(0, 0)));
               } finally {
                 expectedReadCache.releaseFromWrite(cacheEntry, expectedWriteCache, true);
               }
