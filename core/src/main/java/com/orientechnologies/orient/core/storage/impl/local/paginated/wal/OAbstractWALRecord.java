@@ -21,7 +21,7 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.kenai.jffi.MemoryIO;
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.OperationIdLSN;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.WriteableWALRecord;
 import java.nio.ByteBuffer;
 import java.util.Objects;
@@ -33,8 +33,7 @@ import java.util.Objects;
  * @since 12.12.13
  */
 public abstract class OAbstractWALRecord implements WriteableWALRecord {
-  protected volatile OLogSequenceNumber lsn;
-  protected volatile int operationId = -1;
+  protected volatile OperationIdLSN operationIdLSN;
 
   private int distance = 0;
   private int diskSize = 0;
@@ -47,28 +46,19 @@ public abstract class OAbstractWALRecord implements WriteableWALRecord {
 
   protected OAbstractWALRecord() {}
 
-  protected OAbstractWALRecord(final OLogSequenceNumber previousCheckpoint) {
-    this.lsn = previousCheckpoint;
-  }
-
   @Override
   public OLogSequenceNumber getLsn() {
-    return lsn;
+    return operationIdLSN.lsn;
   }
 
   @Override
-  public int getOperationId() {
-    return operationId;
+  public OperationIdLSN getOperationIdLSN() {
+    return operationIdLSN;
   }
 
   @Override
-  public void setOperationId(int operationId) {
-    this.operationId = operationId;
-  }
-
-  @Override
-  public void setLsn(final OLogSequenceNumber lsn) {
-    this.lsn = lsn;
+  public void setOperationIdLsn(final OLogSequenceNumber lsn, int operationId) {
+    this.operationIdLSN = new OperationIdLSN(operationId, lsn);
   }
 
   @Override
@@ -147,13 +137,16 @@ public abstract class OAbstractWALRecord implements WriteableWALRecord {
     if (o == null || getClass() != o.getClass()) return false;
 
     final OAbstractWALRecord that = (OAbstractWALRecord) o;
+    if (operationIdLSN == null) {
+      return that.operationIdLSN == null;
+    }
 
-    return Objects.equals(lsn, that.lsn);
+    return Objects.equals(operationIdLSN.lsn, that.operationIdLSN.lsn);
   }
 
   @Override
   public int hashCode() {
-    return lsn != null ? lsn.hashCode() : 0;
+    return operationIdLSN != null && operationIdLSN.lsn != null ? operationIdLSN.lsn.hashCode() : 0;
   }
 
   @Override
@@ -163,11 +156,15 @@ public abstract class OAbstractWALRecord implements WriteableWALRecord {
 
   protected String toString(final String iToAppend) {
     final StringBuilder buffer = new StringBuilder(getClass().getName());
-    buffer.append("{lsn=").append(lsn);
+    buffer
+        .append("{lsn_operation_id=")
+        .append(operationIdLSN);
+
     if (iToAppend != null) {
       buffer.append(", ");
       buffer.append(iToAppend);
     }
+
     buffer.append('}');
     return buffer.toString();
   }

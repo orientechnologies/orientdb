@@ -415,7 +415,7 @@
 //            try {
 //              ODurablePage durablePage = new ODurablePage(cacheEntry);
 //              durablePage.restoreChanges(updatePageRecord.getChanges());
-//              durablePage.setLsn(new OLogSequenceNumber(0, 0));
+//              durablePage.setOperationIdLsn(new OLogSequenceNumber(0, 0));
 //
 //            } finally {
 //              expectedReadCache.releaseFromWrite(cacheEntry, expectedWriteCache);

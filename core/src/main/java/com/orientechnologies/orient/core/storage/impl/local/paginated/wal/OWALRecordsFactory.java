@@ -403,7 +403,7 @@ public final class OWALRecordsFactory {
     final WriteableWALRecord walRecord = walRecordById(recordId);
 
     walRecord.fromStream(content, METADATA_SIZE);
-    walRecord.setOperationId(operationId);
+    walRecord.setOperationIdLsn(null, operationId);
 
     if (walRecord.getId() != recordId) {
       throw new IllegalStateException(

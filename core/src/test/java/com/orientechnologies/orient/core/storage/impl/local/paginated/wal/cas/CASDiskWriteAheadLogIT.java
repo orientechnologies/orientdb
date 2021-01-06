@@ -31,7 +31,10 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Stream;
 import org.junit.Assert;
 import org.junit.Before;
@@ -94,7 +97,7 @@ public class CASDiskWriteAheadLogIT {
 
         TestRecord walRecord = new TestRecord(random, wal.pageSize(), 1);
         final OLogSequenceNumber lsn = wal.log(walRecord);
-        Assert.assertEquals(0, walRecord.getOperationId());
+        Assert.assertEquals(0, walRecord.getOperationIdLSN().operationId);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), lsn);
@@ -102,7 +105,7 @@ public class CASDiskWriteAheadLogIT {
         List<WriteableWALRecord> records = wal.read(lsn, 10);
         Assert.assertEquals(1, records.size());
         TestRecord readRecord = (TestRecord) records.get(0);
-        Assert.assertEquals(0, readRecord.getOperationId());
+        Assert.assertEquals(0, readRecord.getOperationIdLSN().operationId);
 
         Assert.assertArrayEquals(walRecord.data, readRecord.data);
         Assert.assertEquals(lsn, readRecord.getLsn());
@@ -146,8 +149,8 @@ public class CASDiskWriteAheadLogIT {
 
         Assert.assertTrue(records.get(1) instanceof EmptyWALRecord);
 
-        Assert.assertEquals(0, records.get(0).getOperationId());
-        Assert.assertEquals(0, records.get(1).getOperationId());
+        Assert.assertEquals(0, records.get(0).getOperationIdLSN().operationId);
+        Assert.assertEquals(0, records.get(1).getOperationIdLSN().operationId);
 
         wal.close();
 
@@ -206,7 +209,7 @@ public class CASDiskWriteAheadLogIT {
         TestRecord walRecord = new TestRecord(random, wal.pageSize(), 1);
         final OLogSequenceNumber lsn = wal.log(walRecord);
 
-        Assert.assertEquals(0, walRecord.getOperationId());
+        Assert.assertEquals(0, walRecord.getOperationIdLSN().operationId);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), lsn);
@@ -217,7 +220,7 @@ public class CASDiskWriteAheadLogIT {
 
         Assert.assertArrayEquals(walRecord.data, readRecord.data);
         Assert.assertEquals(lsn, readRecord.getLsn());
-        Assert.assertEquals(0, readRecord.getOperationId());
+        Assert.assertEquals(0, readRecord.getOperationIdLSN().operationId);
 
         wal.close();
 
@@ -259,8 +262,8 @@ public class CASDiskWriteAheadLogIT {
 
         Assert.assertTrue(records.get(1) instanceof EmptyWALRecord);
 
-        Assert.assertEquals(0, records.get(0).getOperationId());
-        Assert.assertEquals(0, records.get(1).getOperationId());
+        Assert.assertEquals(0, records.get(0).getOperationIdLSN().operationId);
+        Assert.assertEquals(0, records.get(1).getOperationIdLSN().operationId);
 
         wal.close();
 
@@ -521,7 +524,7 @@ public class CASDiskWriteAheadLogIT {
         TestRecord walRecord = new TestRecord(random, 2 * wal.pageSize(), wal.pageSize());
         final OLogSequenceNumber lsn = wal.log(walRecord);
 
-        Assert.assertEquals(0, walRecord.getOperationId());
+        Assert.assertEquals(0, walRecord.getOperationIdLSN().operationId);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), lsn);
@@ -530,7 +533,7 @@ public class CASDiskWriteAheadLogIT {
         Assert.assertEquals(1, records.size());
         TestRecord readRecord = (TestRecord) records.get(0);
 
-        Assert.assertEquals(0, readRecord.getOperationId());
+        Assert.assertEquals(0, readRecord.getOperationIdLSN().operationId);
 
         Assert.assertArrayEquals(walRecord.data, readRecord.data);
         Assert.assertEquals(lsn, readRecord.getLsn());
@@ -575,8 +578,8 @@ public class CASDiskWriteAheadLogIT {
 
         Assert.assertTrue(records.get(1) instanceof EmptyWALRecord);
 
-        Assert.assertEquals(0, records.get(0).getOperationId());
-        Assert.assertEquals(0, records.get(1).getOperationId());
+        Assert.assertEquals(0, records.get(0).getOperationIdLSN().operationId);
+        Assert.assertEquals(0, records.get(1).getOperationIdLSN().operationId);
         wal.close();
 
         Thread.sleep(1);
@@ -633,7 +636,7 @@ public class CASDiskWriteAheadLogIT {
         TestRecord walRecord = new TestRecord(random, 2 * wal.pageSize(), wal.pageSize());
         final OLogSequenceNumber lsn = wal.log(walRecord);
 
-        Assert.assertEquals(0, walRecord.getOperationId());
+        Assert.assertEquals(0, walRecord.getOperationIdLSN().operationId);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), lsn);
@@ -641,7 +644,7 @@ public class CASDiskWriteAheadLogIT {
         List<WriteableWALRecord> records = wal.read(lsn, 10);
         Assert.assertEquals(1, records.size());
         TestRecord readRecord = (TestRecord) records.get(0);
-        Assert.assertEquals(0, readRecord.getOperationId());
+        Assert.assertEquals(0, readRecord.getOperationIdLSN().operationId);
 
         Assert.assertArrayEquals(walRecord.data, readRecord.data);
         Assert.assertEquals(lsn, walRecord.getLsn());
@@ -686,8 +689,8 @@ public class CASDiskWriteAheadLogIT {
 
         Assert.assertTrue(records.get(1) instanceof EmptyWALRecord);
 
-        Assert.assertEquals(0, records.get(0).getOperationId());
-        Assert.assertEquals(0, records.get(1).getOperationId());
+        Assert.assertEquals(0, records.get(0).getOperationIdLSN().operationId);
+        Assert.assertEquals(0, records.get(1).getOperationIdLSN().operationId);
 
         wal.close();
 
@@ -747,7 +750,7 @@ public class CASDiskWriteAheadLogIT {
           OLogSequenceNumber lsn = wal.log(walRecord);
           Assert.assertEquals(walRecord.getLsn(), lsn);
 
-          Assert.assertEquals(i, walRecord.getOperationId());
+          Assert.assertEquals(i, walRecord.getOperationIdLSN().operationId);
 
           Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
           Assert.assertEquals(wal.end(), lsn);
@@ -767,7 +770,9 @@ public class CASDiskWriteAheadLogIT {
             Assert.assertEquals(record.data, resultRecord.data);
             Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
 
-            Assert.assertEquals(record.getOperationId(), resultRecord.getOperationId());
+            Assert.assertEquals(
+                record.getOperationIdLSN().operationId,
+                resultRecord.getOperationIdLSN().operationId);
           }
         }
 
@@ -816,7 +821,9 @@ public class CASDiskWriteAheadLogIT {
             Assert.assertArrayEquals(record.data, testResultRecord.data);
             Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
 
-            Assert.assertEquals(record.getOperationId(), resultRecord.getOperationId());
+            Assert.assertEquals(
+                record.getOperationIdLSN().operationId,
+                resultRecord.getOperationIdLSN().operationId);
           }
         }
 
@@ -880,7 +887,7 @@ public class CASDiskWriteAheadLogIT {
           records.add(walRecord);
 
           OLogSequenceNumber lsn = wal.log(walRecord);
-          Assert.assertEquals(i, walRecord.getOperationId());
+          Assert.assertEquals(i, walRecord.getOperationIdLSN().operationId);
           Assert.assertEquals(walRecord.getLsn(), lsn);
 
           Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -900,7 +907,9 @@ public class CASDiskWriteAheadLogIT {
 
             Assert.assertEquals(record.data, resultRecord.data);
             Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
-            Assert.assertEquals(record.getOperationId(), resultRecord.getOperationId());
+            Assert.assertEquals(
+                record.getOperationIdLSN().operationId,
+                resultRecord.getOperationIdLSN().operationId);
           }
         }
 
@@ -948,7 +957,9 @@ public class CASDiskWriteAheadLogIT {
 
             Assert.assertArrayEquals(record.data, testResultRecord.data);
             Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
-            Assert.assertEquals(record.getOperationId(), resultRecord.getOperationId());
+            Assert.assertEquals(
+                record.getOperationIdLSN().operationId,
+                resultRecord.getOperationIdLSN().operationId);
           }
         }
 
@@ -1013,7 +1024,7 @@ public class CASDiskWriteAheadLogIT {
           Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
           Assert.assertEquals(wal.end(), lsn);
           Assert.assertEquals(walRecord.getLsn(), lsn);
-          Assert.assertEquals(i, walRecord.getOperationId());
+          Assert.assertEquals(i, walRecord.getOperationIdLSN().operationId);
         }
 
         for (int i = 0; i < 4; i++) {
@@ -1029,7 +1040,9 @@ public class CASDiskWriteAheadLogIT {
 
             Assert.assertArrayEquals(record.data, resultRecord.data);
             Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
-            Assert.assertEquals(record.getOperationId(), resultRecord.getOperationId());
+            Assert.assertEquals(
+                record.getOperationIdLSN().operationId,
+                resultRecord.getOperationIdLSN().operationId);
           }
         }
 
@@ -1079,7 +1092,9 @@ public class CASDiskWriteAheadLogIT {
 
             Assert.assertArrayEquals(record.data, testResultRecord.data);
             Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
-            Assert.assertEquals(record.getOperationId(), resultRecord.getOperationId());
+            Assert.assertEquals(
+                record.getOperationIdLSN().operationId,
+                resultRecord.getOperationIdLSN().operationId);
           }
         }
 
@@ -1154,7 +1169,7 @@ public class CASDiskWriteAheadLogIT {
           Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
           Assert.assertEquals(wal.end(), lsn);
           Assert.assertEquals(walRecord.getLsn(), lsn);
-          Assert.assertEquals(i, walRecord.getOperationId());
+          Assert.assertEquals(i, walRecord.getOperationIdLSN().operationId);
         }
 
         for (int i = 0; i < 4; i++) {
@@ -1170,7 +1185,9 @@ public class CASDiskWriteAheadLogIT {
 
             Assert.assertArrayEquals(record.data, resultRecord.data);
             Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
-            Assert.assertEquals(record.getOperationId(), resultRecord.getOperationId());
+            Assert.assertEquals(
+                record.getOperationIdLSN().operationId,
+                resultRecord.getOperationIdLSN().operationId);
           }
         }
 
@@ -1220,7 +1237,9 @@ public class CASDiskWriteAheadLogIT {
 
             Assert.assertArrayEquals(record.data, testResultRecord.data);
             Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
-            Assert.assertEquals(record.getOperationId(), resultRecord.getOperationId());
+            Assert.assertEquals(
+                record.getOperationIdLSN().operationId,
+                resultRecord.getOperationIdLSN().operationId);
           }
         }
 
@@ -1291,7 +1310,7 @@ public class CASDiskWriteAheadLogIT {
 
           Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
           Assert.assertEquals(wal.end(), lsn);
-          Assert.assertEquals(i, walRecord.getOperationId());
+          Assert.assertEquals(i, walRecord.getOperationIdLSN().operationId);
         }
 
         for (int i = 0; i < 5; i++) {
@@ -1307,7 +1326,9 @@ public class CASDiskWriteAheadLogIT {
 
             Assert.assertArrayEquals(record.data, resultRecord.data);
             Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
-            Assert.assertEquals(record.getOperationId(), resultRecord.getOperationId());
+            Assert.assertEquals(
+                record.getOperationIdLSN().operationId,
+                resultRecord.getOperationIdLSN().operationId);
           }
         }
 
@@ -1354,7 +1375,9 @@ public class CASDiskWriteAheadLogIT {
             final TestRecord testResultRecord = (TestRecord) resultRecord;
             Assert.assertArrayEquals(record.data, testResultRecord.data);
             Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
-            Assert.assertEquals(record.getOperationId(), resultRecord.getOperationId());
+            Assert.assertEquals(
+                record.getOperationIdLSN().operationId,
+                resultRecord.getOperationIdLSN().operationId);
           }
         }
 
@@ -1423,7 +1446,7 @@ public class CASDiskWriteAheadLogIT {
 
           Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
           Assert.assertEquals(wal.end(), lsn);
-          Assert.assertEquals(i, walRecord.getOperationId());
+          Assert.assertEquals(i, walRecord.getOperationIdLSN().operationId);
         }
 
         for (int i = 0; i < 5; i++) {
@@ -1439,7 +1462,9 @@ public class CASDiskWriteAheadLogIT {
 
             Assert.assertArrayEquals(record.data, resultRecord.data);
             Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
-            Assert.assertEquals(record.getOperationId(), resultRecord.getOperationId());
+            Assert.assertEquals(
+                record.getOperationIdLSN().operationId,
+                resultRecord.getOperationIdLSN().operationId);
           }
         }
 
@@ -1486,7 +1511,9 @@ public class CASDiskWriteAheadLogIT {
             final TestRecord testResultRecord = (TestRecord) resultRecord;
             Assert.assertArrayEquals(record.data, testResultRecord.data);
             Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
-            Assert.assertEquals(record.getOperationId(), resultRecord.getOperationId());
+            Assert.assertEquals(
+                record.getOperationIdLSN().operationId,
+                resultRecord.getOperationIdLSN().operationId);
           }
         }
 
@@ -1551,7 +1578,7 @@ public class CASDiskWriteAheadLogIT {
 
           Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
           Assert.assertEquals(wal.end(), lsn);
-          Assert.assertEquals(i, walRecord.getOperationId());
+          Assert.assertEquals(i, walRecord.getOperationIdLSN().operationId);
         }
 
         for (int i = 0; i < 4; i++) {
@@ -1567,7 +1594,9 @@ public class CASDiskWriteAheadLogIT {
 
             Assert.assertArrayEquals(record.data, resultRecord.data);
             Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
-            Assert.assertEquals(record.getOperationId(), resultRecord.getOperationId());
+            Assert.assertEquals(
+                record.getOperationIdLSN().operationId,
+                resultRecord.getOperationIdLSN().operationId);
           }
         }
 
@@ -1617,7 +1646,9 @@ public class CASDiskWriteAheadLogIT {
             Assert.assertArrayEquals(record.data, testResultRecord.data);
             Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
 
-            Assert.assertEquals(record.getOperationId(), resultRecord.getOperationId());
+            Assert.assertEquals(
+                record.getOperationIdLSN().operationId,
+                resultRecord.getOperationIdLSN().operationId);
           }
         }
 
@@ -1692,7 +1723,7 @@ public class CASDiskWriteAheadLogIT {
 
           Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
           Assert.assertEquals(wal.end(), lsn);
-          Assert.assertEquals(i, walRecord.getOperationId());
+          Assert.assertEquals(i, walRecord.getOperationIdLSN().operationId);
         }
 
         for (int i = 0; i < 4; i++) {
@@ -1708,7 +1739,9 @@ public class CASDiskWriteAheadLogIT {
 
             Assert.assertArrayEquals(record.data, resultRecord.data);
             Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
-            Assert.assertEquals(record.getOperationId(), resultRecord.getOperationId());
+            Assert.assertEquals(
+                record.getOperationIdLSN().operationId,
+                resultRecord.getOperationIdLSN().operationId);
           }
         }
 
@@ -1757,7 +1790,9 @@ public class CASDiskWriteAheadLogIT {
 
             Assert.assertArrayEquals(record.data, testResultRecord.data);
             Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
-            Assert.assertEquals(record.getOperationId(), resultRecord.getOperationId());
+            Assert.assertEquals(
+                record.getOperationIdLSN().operationId,
+                resultRecord.getOperationIdLSN().operationId);
           }
         }
 
@@ -1830,7 +1865,7 @@ public class CASDiskWriteAheadLogIT {
 
           Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
           Assert.assertEquals(wal.end(), lsn);
-          Assert.assertEquals(i, walRecord.getOperationId());
+          Assert.assertEquals(i, walRecord.getOperationIdLSN().operationId);
         }
 
         for (int i = 0; i < recordsCount; i++) {
@@ -1851,7 +1886,9 @@ public class CASDiskWriteAheadLogIT {
 
             Assert.assertArrayEquals(record.data, testResultRecord.data);
             Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
-            Assert.assertEquals(record.getOperationId(), resultRecord.getOperationId());
+            Assert.assertEquals(
+                record.getOperationIdLSN().operationId,
+                resultRecord.getOperationIdLSN().operationId);
           }
         }
 
@@ -1899,7 +1936,9 @@ public class CASDiskWriteAheadLogIT {
 
             Assert.assertArrayEquals(record.data, testResultRecord.data);
             Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
-            Assert.assertEquals(record.getOperationId(), resultRecord.getOperationId());
+            Assert.assertEquals(
+                record.getOperationIdLSN().operationId,
+                resultRecord.getOperationIdLSN().operationId);
           }
         }
 
@@ -1967,7 +2006,7 @@ public class CASDiskWriteAheadLogIT {
 
           Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
           Assert.assertEquals(wal.end(), lsn);
-          Assert.assertEquals(i, walRecord.getOperationId());
+          Assert.assertEquals(i, walRecord.getOperationIdLSN().operationId);
         }
 
         for (int i = 0; i < recordsCount; i++) {
@@ -1988,7 +2027,9 @@ public class CASDiskWriteAheadLogIT {
 
             Assert.assertArrayEquals(record.data, testResultRecord.data);
             Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
-            Assert.assertEquals(record.getOperationId(), resultRecord.getOperationId());
+            Assert.assertEquals(
+                record.getOperationIdLSN().operationId,
+                resultRecord.getOperationIdLSN().operationId);
           }
         }
 
@@ -2036,7 +2077,9 @@ public class CASDiskWriteAheadLogIT {
 
             Assert.assertArrayEquals(record.data, testResultRecord.data);
             Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
-            Assert.assertEquals(record.getOperationId(), resultRecord.getOperationId());
+            Assert.assertEquals(
+                record.getOperationIdLSN().operationId,
+                resultRecord.getOperationIdLSN().operationId);
           }
         }
 
@@ -2100,7 +2143,7 @@ public class CASDiskWriteAheadLogIT {
 
           Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
           Assert.assertEquals(wal.end(), lsn);
-          Assert.assertEquals(i, walRecord.getOperationId());
+          Assert.assertEquals(i, walRecord.getOperationIdLSN().operationId);
         }
 
         for (int i = 0; i < recordsCount - 1; i++) {
@@ -2117,7 +2160,9 @@ public class CASDiskWriteAheadLogIT {
 
             Assert.assertArrayEquals(record.data, resultRecord.data);
             Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
-            Assert.assertEquals(record.getOperationId(), resultRecord.getOperationId());
+            Assert.assertEquals(
+                record.getOperationIdLSN().operationId,
+                resultRecord.getOperationIdLSN().operationId);
           }
         }
 
@@ -2163,7 +2208,9 @@ public class CASDiskWriteAheadLogIT {
 
             Assert.assertArrayEquals(record.data, resultRecord.data);
             Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
-            Assert.assertEquals(record.getOperationId(), resultRecord.getOperationId());
+            Assert.assertEquals(
+                record.getOperationIdLSN().operationId,
+                resultRecord.getOperationIdLSN().operationId);
           }
         }
 
@@ -2237,7 +2284,7 @@ public class CASDiskWriteAheadLogIT {
 
           Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
           Assert.assertEquals(wal.end(), lsn);
-          Assert.assertEquals(i, walRecord.getOperationId());
+          Assert.assertEquals(i, walRecord.getOperationIdLSN().operationId);
         }
 
         for (int i = 0; i < recordsCount - 1; i++) {
@@ -2254,7 +2301,9 @@ public class CASDiskWriteAheadLogIT {
 
             Assert.assertArrayEquals(record.data, resultRecord.data);
             Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
-            Assert.assertEquals(record.getOperationId(), resultRecord.getOperationId());
+            Assert.assertEquals(
+                record.getOperationIdLSN().operationId,
+                resultRecord.getOperationIdLSN().operationId);
           }
         }
 
@@ -2300,7 +2349,9 @@ public class CASDiskWriteAheadLogIT {
 
             Assert.assertArrayEquals(record.data, resultRecord.data);
             Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
-            Assert.assertEquals(record.getOperationId(), resultRecord.getOperationId());
+            Assert.assertEquals(
+                record.getOperationIdLSN().operationId,
+                resultRecord.getOperationIdLSN().operationId);
           }
         }
 
@@ -2376,7 +2427,7 @@ public class CASDiskWriteAheadLogIT {
 
             Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
             Assert.assertEquals(wal.end(), lastLsn);
-            Assert.assertEquals(records.size() - 1, walRecord.getOperationId());
+            Assert.assertEquals(records.size() - 1, walRecord.getOperationIdLSN().operationId);
           }
         }
 
@@ -2410,7 +2461,9 @@ public class CASDiskWriteAheadLogIT {
 
             Assert.assertArrayEquals(record.data, resultRecord.data);
             Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
-            Assert.assertEquals(record.getOperationId(), resultRecord.getOperationId());
+            Assert.assertEquals(
+                record.getOperationIdLSN().operationId,
+                resultRecord.getOperationIdLSN().operationId);
           }
         }
 
@@ -2477,7 +2530,9 @@ public class CASDiskWriteAheadLogIT {
 
             Assert.assertArrayEquals(record.data, resultRecord.data);
             Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
-            Assert.assertEquals(record.getOperationId(), resultRecord.getOperationId());
+            Assert.assertEquals(
+                record.getOperationIdLSN().operationId,
+                resultRecord.getOperationIdLSN().operationId);
           }
         }
 
@@ -2490,7 +2545,7 @@ public class CASDiskWriteAheadLogIT {
 
           Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
           Assert.assertEquals(wal.end(), walRecord.getLsn());
-          Assert.assertEquals(records.size() - 1, walRecord.getOperationId());
+          Assert.assertEquals(records.size() - 1, walRecord.getOperationIdLSN().operationId);
         }
 
         for (int i = 0; i < records.size(); i++) {
@@ -2513,7 +2568,9 @@ public class CASDiskWriteAheadLogIT {
 
             Assert.assertArrayEquals(record.data, resultRecord.data);
             Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
-            Assert.assertEquals(record.getOperationId(), resultRecord.getOperationId());
+            Assert.assertEquals(
+                record.getOperationIdLSN().operationId,
+                resultRecord.getOperationIdLSN().operationId);
           }
         }
 
@@ -2598,7 +2655,7 @@ public class CASDiskWriteAheadLogIT {
 
             Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
             Assert.assertEquals(wal.end(), lastLsn);
-            Assert.assertEquals(records.size() - 1, walRecord.getOperationId());
+            Assert.assertEquals(records.size() - 1, walRecord.getOperationIdLSN().operationId);
           }
         }
 
@@ -2625,7 +2682,9 @@ public class CASDiskWriteAheadLogIT {
 
             Assert.assertArrayEquals(record.data, resultRecord.data);
             Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
-            Assert.assertEquals(record.getOperationId(), resultRecord.getOperationId());
+            Assert.assertEquals(
+                record.getOperationIdLSN().operationId,
+                resultRecord.getOperationIdLSN().operationId);
           }
         }
 
@@ -2692,7 +2751,9 @@ public class CASDiskWriteAheadLogIT {
 
             Assert.assertArrayEquals(record.data, resultRecord.data);
             Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
-            Assert.assertEquals(record.getOperationId(), resultRecord.getOperationId());
+            Assert.assertEquals(
+                record.getOperationIdLSN().operationId,
+                resultRecord.getOperationIdLSN().operationId);
           }
         }
 
@@ -2705,7 +2766,7 @@ public class CASDiskWriteAheadLogIT {
 
           Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
           Assert.assertEquals(wal.end(), walRecord.getLsn());
-          Assert.assertEquals(records.size() - 1, walRecord.getOperationId());
+          Assert.assertEquals(records.size() - 1, walRecord.getOperationIdLSN().operationId);
         }
 
         for (int i = 0; i < records.size(); i++) {
@@ -2728,7 +2789,9 @@ public class CASDiskWriteAheadLogIT {
 
             Assert.assertArrayEquals(record.data, resultRecord.data);
             Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
-            Assert.assertEquals(record.getOperationId(), resultRecord.getOperationId());
+            Assert.assertEquals(
+                record.getOperationIdLSN().operationId,
+                resultRecord.getOperationIdLSN().operationId);
           }
         }
 
@@ -2804,7 +2867,7 @@ public class CASDiskWriteAheadLogIT {
 
           Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
           Assert.assertEquals(wal.end(), lsn);
-          Assert.assertEquals(records.size() - 1, walRecord.getOperationId());
+          Assert.assertEquals(records.size() - 1, walRecord.getOperationIdLSN().operationId);
         }
 
         for (int i = 0; i < recordsCount; i++) {
@@ -2940,7 +3003,7 @@ public class CASDiskWriteAheadLogIT {
 
           Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
           Assert.assertEquals(wal.end(), lsn);
-          Assert.assertEquals(records.size() - 1, walRecord.getOperationId());
+          Assert.assertEquals(records.size() - 1, walRecord.getOperationIdLSN().operationId);
         }
 
         for (int i = 0; i < recordsCount; i++) {
@@ -3072,7 +3135,7 @@ public class CASDiskWriteAheadLogIT {
 
           Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
           Assert.assertEquals(wal.end(), lsn);
-          Assert.assertEquals(records.size() - 1, walRecord.getOperationId());
+          Assert.assertEquals(records.size() - 1, walRecord.getOperationIdLSN().operationId);
         }
 
         for (int i = 0; i < recordsCount - 1; i++) {
@@ -3094,7 +3157,9 @@ public class CASDiskWriteAheadLogIT {
 
             Assert.assertArrayEquals(record.data, resultRecord.data);
             Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
-            Assert.assertEquals(record.getOperationId(), resultRecord.getOperationId());
+            Assert.assertEquals(
+                record.getOperationIdLSN().operationId,
+                resultRecord.getOperationIdLSN().operationId);
           }
         }
 
@@ -3217,7 +3282,7 @@ public class CASDiskWriteAheadLogIT {
 
           Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
           Assert.assertEquals(wal.end(), lsn);
-          Assert.assertEquals(records.size() - 1, walRecord.getOperationId());
+          Assert.assertEquals(records.size() - 1, walRecord.getOperationIdLSN().operationId);
         }
 
         for (int i = 0; i < recordsCount - 1; i++) {
@@ -3239,7 +3304,9 @@ public class CASDiskWriteAheadLogIT {
 
             Assert.assertArrayEquals(record.data, resultRecord.data);
             Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
-            Assert.assertEquals(record.getOperationId(), resultRecord.getOperationId());
+            Assert.assertEquals(
+                record.getOperationIdLSN().operationId,
+                resultRecord.getOperationIdLSN().operationId);
           }
         }
 
@@ -3290,7 +3357,9 @@ public class CASDiskWriteAheadLogIT {
 
             Assert.assertArrayEquals(record.data, resultRecord.data);
             Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
-            Assert.assertEquals(record.getOperationId(), resultRecord.getOperationId());
+            Assert.assertEquals(
+                record.getOperationIdLSN().operationId,
+                resultRecord.getOperationIdLSN().operationId);
           }
         }
 
@@ -3359,7 +3428,7 @@ public class CASDiskWriteAheadLogIT {
 
           Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
           Assert.assertEquals(wal.end(), lsn);
-          Assert.assertEquals(records.size() - 1, walRecord.getOperationId());
+          Assert.assertEquals(records.size() - 1, walRecord.getOperationIdLSN().operationId);
         }
 
         for (int i = 0; i < recordsCount; i++) {
@@ -3380,7 +3449,9 @@ public class CASDiskWriteAheadLogIT {
 
             Assert.assertArrayEquals(record.data, resultRecord.data);
             Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
-            Assert.assertEquals(record.getOperationId(), resultRecord.getOperationId());
+            Assert.assertEquals(
+                record.getOperationIdLSN().operationId,
+                resultRecord.getOperationIdLSN().operationId);
           }
         }
 
@@ -3428,7 +3499,9 @@ public class CASDiskWriteAheadLogIT {
 
             Assert.assertArrayEquals(record.data, resultRecord.data);
             Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
-            Assert.assertEquals(record.getOperationId(), resultRecord.getOperationId());
+            Assert.assertEquals(
+                record.getOperationIdLSN().operationId,
+                resultRecord.getOperationIdLSN().operationId);
           }
         }
 
@@ -3494,7 +3567,7 @@ public class CASDiskWriteAheadLogIT {
 
           Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
           Assert.assertEquals(wal.end(), lsn);
-          Assert.assertEquals(records.size() - 1, walRecord.getOperationId());
+          Assert.assertEquals(records.size() - 1, walRecord.getOperationIdLSN().operationId);
         }
 
         for (int i = 0; i < recordsCount; i++) {
@@ -3515,7 +3588,9 @@ public class CASDiskWriteAheadLogIT {
 
             Assert.assertArrayEquals(record.data, resultRecord.data);
             Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
-            Assert.assertEquals(record.getOperationId(), resultRecord.getOperationId());
+            Assert.assertEquals(
+                record.getOperationIdLSN().operationId,
+                resultRecord.getOperationIdLSN().operationId);
           }
         }
 
@@ -3563,7 +3638,9 @@ public class CASDiskWriteAheadLogIT {
 
             Assert.assertArrayEquals(record.data, resultRecord.data);
             Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
-            Assert.assertEquals(record.getOperationId(), resultRecord.getOperationId());
+            Assert.assertEquals(
+                record.getOperationIdLSN().operationId,
+                resultRecord.getOperationIdLSN().operationId);
           }
         }
 
@@ -3624,7 +3701,7 @@ public class CASDiskWriteAheadLogIT {
 
           Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
           Assert.assertEquals(wal.end(), lsn);
-          Assert.assertEquals(records.size() - 1, walRecord.getOperationId());
+          Assert.assertEquals(records.size() - 1, walRecord.getOperationIdLSN().operationId);
         }
 
         for (int i = 0; i < recordsCount - 1; i++) {
@@ -3646,7 +3723,9 @@ public class CASDiskWriteAheadLogIT {
 
             Assert.assertArrayEquals(record.data, resultRecord.data);
             Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
-            Assert.assertEquals(record.getOperationId(), resultRecord.getOperationId());
+            Assert.assertEquals(
+                record.getOperationIdLSN().operationId,
+                resultRecord.getOperationIdLSN().operationId);
           }
         }
 
@@ -3697,7 +3776,9 @@ public class CASDiskWriteAheadLogIT {
 
             Assert.assertArrayEquals(record.data, resultRecord.data);
             Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
-            Assert.assertEquals(record.getOperationId(), resultRecord.getOperationId());
+            Assert.assertEquals(
+                record.getOperationIdLSN().operationId,
+                resultRecord.getOperationIdLSN().operationId);
           }
         }
 
@@ -3770,7 +3851,7 @@ public class CASDiskWriteAheadLogIT {
 
           Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
           Assert.assertEquals(wal.end(), lsn);
-          Assert.assertEquals(records.size() - 1, walRecord.getOperationId());
+          Assert.assertEquals(records.size() - 1, walRecord.getOperationIdLSN().operationId);
         }
 
         for (int i = 0; i < recordsCount - 1; i++) {
@@ -3792,7 +3873,9 @@ public class CASDiskWriteAheadLogIT {
 
             Assert.assertArrayEquals(record.data, resultRecord.data);
             Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
-            Assert.assertEquals(record.getOperationId(), resultRecord.getOperationId());
+            Assert.assertEquals(
+                record.getOperationIdLSN().operationId,
+                resultRecord.getOperationIdLSN().operationId);
           }
         }
 
@@ -3843,7 +3926,9 @@ public class CASDiskWriteAheadLogIT {
 
             Assert.assertArrayEquals(record.data, resultRecord.data);
             Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
-            Assert.assertEquals(record.getOperationId(), resultRecord.getOperationId());
+            Assert.assertEquals(
+                record.getOperationIdLSN().operationId,
+                resultRecord.getOperationIdLSN().operationId);
           }
         }
 
@@ -4361,7 +4446,7 @@ public class CASDiskWriteAheadLogIT {
 
           Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
           Assert.assertEquals(wal.end(), lsn);
-          Assert.assertEquals(records.size() - 1, walRecord.getOperationId());
+          Assert.assertEquals(records.size() - 1, walRecord.getOperationIdLSN().operationId);
 
           if (random.nextDouble() < 0.05) {
             final int segments = random.nextInt(5) + 1;
@@ -4391,7 +4476,9 @@ public class CASDiskWriteAheadLogIT {
 
             Assert.assertArrayEquals(record.data, resultRecord.data);
             Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
-            Assert.assertEquals(record.getOperationId(), resultRecord.getOperationId());
+            Assert.assertEquals(
+                record.getOperationIdLSN().operationId,
+                resultRecord.getOperationIdLSN().operationId);
           }
         }
 
@@ -4444,7 +4531,9 @@ public class CASDiskWriteAheadLogIT {
 
             Assert.assertArrayEquals(record.data, resultRecord.data);
             Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
-            Assert.assertEquals(record.getOperationId(), resultRecord.getOperationId());
+            Assert.assertEquals(
+                record.getOperationIdLSN().operationId,
+                resultRecord.getOperationIdLSN().operationId);
           }
         }
 
@@ -4504,7 +4593,7 @@ public class CASDiskWriteAheadLogIT {
           Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
           Assert.assertEquals(wal.end(), lsn);
 
-          Assert.assertEquals(records.size() - 1, walRecord.getOperationId());
+          Assert.assertEquals(records.size() - 1, walRecord.getOperationIdLSN().operationId);
 
           if (random.nextDouble() < 0.05) {
             final int segments = random.nextInt(5) + 1;
@@ -4535,7 +4624,9 @@ public class CASDiskWriteAheadLogIT {
 
             Assert.assertArrayEquals(record.data, resultRecord.data);
             Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
-            Assert.assertEquals(record.getOperationId(), resultRecord.getOperationId());
+            Assert.assertEquals(
+                record.getOperationIdLSN().operationId,
+                resultRecord.getOperationIdLSN().operationId);
           }
         }
 
@@ -4590,7 +4681,9 @@ public class CASDiskWriteAheadLogIT {
 
             Assert.assertArrayEquals(record.data, resultRecord.data);
             Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
-            Assert.assertEquals(record.getOperationId(), resultRecord.getOperationId());
+            Assert.assertEquals(
+                record.getOperationIdLSN().operationId,
+                resultRecord.getOperationIdLSN().operationId);
           }
         }
 
@@ -4909,6 +5002,105 @@ public class CASDiskWriteAheadLogIT {
         wal.maxCacheSize());
   }
 
+  @Test
+  public void testOperationIdMT() throws Exception {
+    final int maxSegSize = 10 * 1024 * 1024;
+
+    final CASDiskWriteAheadLog wal =
+        new CASDiskWriteAheadLog(
+            "walTest",
+            testDirectory,
+            testDirectory,
+            48_000,
+            64,
+            null,
+            null,
+            Integer.MAX_VALUE,
+            maxSegSize,
+            20,
+            true,
+            Locale.US,
+            10 * 1024 * 1024 * 1024L,
+            1000,
+            false,
+            false,
+            true,
+            10);
+
+    final Lock lock = new ReentrantLock();
+
+    wal.addSegmentOverflowListener(
+        segment -> {
+          lock.lock();
+          try {
+            final long segSize = wal.segSize();
+            if (segSize >= maxSegSize) {
+              wal.appendNewSegment();
+            }
+          } finally {
+            lock.unlock();
+          }
+        });
+
+    final ExecutorService executorService = Executors.newCachedThreadPool();
+    final List<Future<?>> futures = new ArrayList<>();
+    for (int i = 0; i < 8; i++) {
+      futures.add(executorService.submit(new SmallRecordsWriter(wal, 100_000)));
+    }
+
+    for (final Future<?> future : futures) {
+      future.get();
+    }
+
+    final OLogSequenceNumber lsn = wal.begin();
+    int operationId = 0;
+
+    List<WriteableWALRecord> records = wal.read(lsn, 100);
+    for (WriteableWALRecord record : records) {
+      if (record.trackOperationId()) {
+        Assert.assertEquals(operationId, record.getOperationIdLSN().operationId);
+        operationId++;
+      }
+    }
+
+    Assert.assertTrue(operationId > 0);
+    wal.close();
+
+    CASDiskWriteAheadLog reopenedWal =
+        new CASDiskWriteAheadLog(
+            "walTest",
+            testDirectory,
+            testDirectory,
+            48_000,
+            64,
+            null,
+            null,
+            Integer.MAX_VALUE,
+            maxSegSize,
+            20,
+            true,
+            Locale.US,
+            10 * 1024 * 1024 * 1024L,
+            1000,
+            false,
+            false,
+            true,
+            10);
+
+    operationId = 0;
+
+    records = reopenedWal.read(lsn, 100);
+    for (WriteableWALRecord record : records) {
+      if (record.trackOperationId()) {
+        Assert.assertEquals(operationId, record.getOperationIdLSN().operationId);
+        operationId++;
+      }
+    }
+
+    Assert.assertTrue(operationId > 0);
+    reopenedWal.close();
+  }
+
   private void checkThatSegmentsBellowAreRemoved(CASDiskWriteAheadLog wal) {
     final OLogSequenceNumber begin = wal.begin();
 
@@ -5063,5 +5255,26 @@ public class CASDiskWriteAheadLogIT {
     public int getId() {
       return 1024;
     }
- }
+  }
+
+  private static final class SmallRecordsWriter implements Callable<Void> {
+    private final CASDiskWriteAheadLog writeAheadLog;
+    private final int recordsCount;
+
+    private SmallRecordsWriter(final CASDiskWriteAheadLog writeAheadLog, int recordsCount) {
+      this.writeAheadLog = writeAheadLog;
+      this.recordsCount = recordsCount;
+    }
+
+    @Override
+    public Void call() {
+      final ThreadLocalRandom random = ThreadLocalRandom.current();
+      for (int i = 0; i < recordsCount; i++) {
+        final TestRecord testRecord = new TestRecord(random, 128, 16);
+        writeAheadLog.log(testRecord);
+      }
+
+      return null;
+    }
+  }
 }

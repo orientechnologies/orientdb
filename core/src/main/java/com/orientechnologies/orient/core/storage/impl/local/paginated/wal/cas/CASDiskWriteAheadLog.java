@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWrite
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.CASWALPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.EmptyWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.MilestoneWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.OperationIdLSN;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.SegmentOverflowListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.StartWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.WriteableWALRecord;
@@ -200,7 +201,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
 
   private ByteBuffer writeBuffer = null;
   private final ArrayList<Integer> lastPagerOperationIds = new ArrayList<>();
-  private int lastWrittenOperationId = -1;
+  private int lastWrittenOperationId = -2;
 
   private OPointer writeBufferPointer = null;
   private int writeBufferPageIndex = -1;
@@ -317,10 +318,10 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
     // we log empty record on open so end of WAL will always contain valid value
     final StartWALRecord startRecord = new StartWALRecord();
 
-    startRecord.setLsn(new OLogSequenceNumber(currentSegment, CASWALPage.RECORDS_OFFSET));
+    startRecord.setOperationIdLsn(
+        new OLogSequenceNumber(currentSegment, CASWALPage.RECORDS_OFFSET), lastOperationId);
     startRecord.setDistance(0);
     startRecord.setDiskSize(CASWALPage.RECORDS_OFFSET);
-    startRecord.setOperationId(lastOperationId);
 
     records.offer(startRecord);
 
@@ -704,7 +705,10 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
                 if (bytesRead == recordLen) {
                   final WriteableWALRecord walRecord =
                       OWALRecordsFactory.INSTANCE.fromStream(recordContent);
-                  walRecord.setLsn(new OLogSequenceNumber(segment, lsnPos));
+
+                  walRecord.setOperationIdLsn(
+                      new OLogSequenceNumber(segment, lsnPos),
+                      walRecord.getOperationIdLSN().operationId);
 
                   recordContent = null;
                   bytesRead = 0;
@@ -1286,13 +1290,14 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
       serializedRecord = writeableRecord.getBinaryContent();
     }
 
-    writeableRecord.setLsn(new OLogSequenceNumber(currentSegment, -1));
+    writeableRecord.setOperationIdLsn(new OLogSequenceNumber(currentSegment, -1), -1);
 
     records.offer(writeableRecord);
 
     calculateRecordsLSNs();
 
-    OWALRecordsFactory.serializeRecordId(serializedRecord, writeableRecord.getOperationId());
+    OWALRecordsFactory.serializeRecordId(
+        serializedRecord, writeableRecord.getOperationIdLSN().operationId);
 
     final OLogSequenceNumber recordLSN = writeableRecord.getLsn();
 
@@ -1514,20 +1519,20 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
 
       while (unassignedRecordsIterator.hasPrevious()) {
         final OWALRecord record = unassignedRecordsIterator.previous();
-        final OLogSequenceNumber lsn = record.getLsn();
+        final OperationIdLSN prevOperationIdLSN = prevRecord.getOperationIdLSN();
+        OperationIdLSN recordOperationIdLSN = record.getOperationIdLSN();
 
-        if (lsn.getPosition() < 0) {
+        if (recordOperationIdLSN.lsn.getPosition() < 0) {
           final int position = calculatePosition(record, prevRecord, pageSize, maxRecordSize);
-          final int prevOperationId = prevRecord.getOperationId();
+          final OLogSequenceNumber newLSN = new OLogSequenceNumber(recordOperationIdLSN.lsn.getSegment(),
+              position);
 
-          final OLogSequenceNumber newLSN = new OLogSequenceNumber(lsn.getSegment(), position);
-
-          if (record.getLsn().getPosition() < 0) {
-            record.setLsn(newLSN);
+          recordOperationIdLSN = record.getOperationIdLSN();
+          if (recordOperationIdLSN.lsn.getPosition() < 0) {
             if (record.trackOperationId()) {
-              record.setOperationId(prevOperationId + 1);
+              record.setOperationIdLsn(newLSN, prevOperationIdLSN.operationId + 1);
             } else {
-              record.setOperationId(prevOperationId);
+              record.setOperationIdLsn(newLSN, prevOperationIdLSN.operationId);
             }
           }
         }
@@ -1539,7 +1544,8 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
 
   private MilestoneWALRecord logMilestoneRecord() {
     final MilestoneWALRecord milestoneRecord = new MilestoneWALRecord();
-    milestoneRecord.setLsn(new OLogSequenceNumber(currentSegment, -1));
+    milestoneRecord.setOperationIdLsn(new OLogSequenceNumber(currentSegment, -1),
+        -1);
 
     records.offer(milestoneRecord);
 
@@ -1786,7 +1792,8 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
                 if (lastRecord instanceof WriteableWALRecord) {
                   final ByteBuffer recordContent =
                       ((WriteableWALRecord) lastRecord).getBinaryContent();
-                  OWALRecordsFactory.serializeRecordId(recordContent, lastRecord.getOperationId());
+                  OWALRecordsFactory.serializeRecordId(
+                      recordContent, lastRecord.getOperationIdLSN().operationId);
                 }
               }
 
@@ -1959,7 +1966,10 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
                   writeableRecord.freeBinaryContent();
 
                   if (writeableRecord.trackOperationId()) {
-                    lastWrittenOperationId = writeableRecord.getOperationId();
+                    final int operationId = writeableRecord.getOperationIdLSN().operationId;
+                    assert lastWrittenOperationId == -2 || operationId == lastWrittenOperationId + 1;
+
+                    lastWrittenOperationId = operationId;
                   }
                 }
               }
