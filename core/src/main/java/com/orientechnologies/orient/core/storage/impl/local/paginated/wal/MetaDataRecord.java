@@ -12,10 +12,6 @@ public final class MetaDataRecord extends OAbstractWALRecord {
     this.metadata = metadata;
   }
 
-  public MetaDataRecord(OLogSequenceNumber previousCheckpoint) {
-    super(previousCheckpoint);
-  }
-
   public byte[] getMetadata() {
     return metadata;
   }

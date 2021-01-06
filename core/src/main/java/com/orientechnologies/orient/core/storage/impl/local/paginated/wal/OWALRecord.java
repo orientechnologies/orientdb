@@ -20,6 +20,8 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.OperationIdLSN;
+
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 25.04.13
@@ -27,11 +29,9 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 public interface OWALRecord {
   OLogSequenceNumber getLsn();
 
-  int getOperationId();
+  OperationIdLSN getOperationIdLSN();
 
-  void  setOperationId(int operationId);
-
-  void setLsn(OLogSequenceNumber lsn);
+  void setOperationIdLsn(OLogSequenceNumber lsn, int operationId);
 
   void setDistance(int distance);
 
