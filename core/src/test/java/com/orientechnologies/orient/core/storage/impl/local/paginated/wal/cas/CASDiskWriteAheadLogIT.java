@@ -5056,14 +5056,18 @@ public class CASDiskWriteAheadLogIT {
     int operationId = 0;
 
     List<WriteableWALRecord> records = wal.read(lsn, 100);
-    for (WriteableWALRecord record : records) {
-      if (record.trackOperationId()) {
-        Assert.assertEquals(operationId, record.getOperationIdLSN().operationId);
-        operationId++;
+    while (!records.isEmpty()) {
+      for (WriteableWALRecord record : records) {
+        if (record.trackOperationId()) {
+          Assert.assertEquals(operationId, record.getOperationIdLSN().operationId);
+          operationId++;
+        }
       }
+
+      records = wal.next(records.get(records.size() - 1).getLsn(), 100);
     }
 
-    Assert.assertTrue(operationId > 0);
+    Assert.assertEquals(800_000, operationId);
     wal.close();
 
     CASDiskWriteAheadLog reopenedWal =
@@ -5090,14 +5094,17 @@ public class CASDiskWriteAheadLogIT {
     operationId = 0;
 
     records = reopenedWal.read(lsn, 100);
-    for (WriteableWALRecord record : records) {
-      if (record.trackOperationId()) {
-        Assert.assertEquals(operationId, record.getOperationIdLSN().operationId);
-        operationId++;
+    while (!records.isEmpty()) {
+      for (WriteableWALRecord record : records) {
+        if (record.trackOperationId()) {
+          Assert.assertEquals(operationId, record.getOperationIdLSN().operationId);
+          operationId++;
+        }
       }
-    }
 
-    Assert.assertTrue(operationId > 0);
+      records = reopenedWal.next(records.get(records.size() - 1).getLsn(), 100);
+    }
+    Assert.assertEquals(800_000, operationId);
     reopenedWal.close();
   }
 
