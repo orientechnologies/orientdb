@@ -229,6 +229,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       new ConcurrentHashMap<>();
   private volatile OStorageRemotePushThread pushThread;
   protected final OrientDBRemote context;
+  protected OSharedContext sharedContext = null;
 
   public static final String ADDRESS_SEPARATOR = ";";
 
@@ -279,6 +280,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
     this.connectionManager = connectionManager;
     this.context = context;
+  }
+
+  public void setSharedContext(OSharedContext sharedContext) {
+    this.sharedContext = sharedContext;
   }
 
   public <T extends OBinaryResponse> T asyncNetworkOperationNoRetry(
@@ -2479,6 +2484,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   public OSharedContext getSharedContext() {
-    return this.context.getSharedContext(this.name);
+    return sharedContext;
   }
 }

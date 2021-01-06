@@ -491,7 +491,7 @@ public class OrientDBRemote implements OrientDBInternal {
         "impossible skip authentication and authorization in remote");
   }
 
-  protected synchronized OSharedContext getOrCreateSharedContext(OStorage storage) {
+  protected synchronized OSharedContext getOrCreateSharedContext(OStorageRemote storage) {
 
     OSharedContext result = sharedContexts.get(storage.getName());
     if (result == null) {
@@ -501,8 +501,10 @@ public class OrientDBRemote implements OrientDBInternal {
     return result;
   }
 
-  private OSharedContext createSharedContext(OStorage storage) {
-    return new OSharedContextRemote(storage, this);
+  private OSharedContext createSharedContext(OStorageRemote storage) {
+    OSharedContextRemote context = new OSharedContextRemote(storage, this);
+    storage.setSharedContext(context);
+    return context;
   }
 
   public void schedule(TimerTask task, long delay, long period) {
@@ -741,9 +743,5 @@ public class OrientDBRemote implements OrientDBInternal {
       OrientDBConfig config,
       ODatabaseTask<Void> createOps) {
     throw new UnsupportedOperationException();
-  }
-
-  public synchronized OSharedContext getSharedContext(String name) {
-    return sharedContexts.get(name);
   }
 }
