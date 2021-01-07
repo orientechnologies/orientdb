@@ -7,7 +7,6 @@ import com.orientechnologies.orient.client.remote.ORemoteConnectionManager;
 import com.orientechnologies.orient.client.remote.ORemoteConnectionPool;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
@@ -45,7 +44,7 @@ public class SocketIdleCleanupIT {
             .addConfig(OGlobalConfiguration.CLIENT_CHANNEL_IDLE_TIMEOUT, 1)
             .build();
     OrientDB orientdb = new OrientDB("remote:localhost", "root", "root", config);
-    orientdb.create("test", ODatabaseType.MEMORY);
+    orientdb.execute("create database test memory users (admin identified by 'admin' role admin)");
     ODatabaseSession session = orientdb.open("test", "admin", "admin");
     session.save(session.newVertex("V"));
     Thread.sleep(2000);

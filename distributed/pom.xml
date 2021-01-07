@@ -62,7 +62,8 @@
             -Djava.util.logging.manager=com.orientechnologies.common.log.ShutdownLogManager
             -Dstorage.diskCache.checksumMode=storeAndThrow
             -Dindex.allowManualIndexes=false
-                -Dsecurity.warningDefaultUsers=false
+            -Dsecurity.warningDefaultUsers=false
+            -Dsecurity.createDefaultUsers=false
         </argLine>
         <exclude.test.distributed>NONE</exclude.test.distributed>
         <project.rootdir>${project.basedir}/../</project.rootdir>

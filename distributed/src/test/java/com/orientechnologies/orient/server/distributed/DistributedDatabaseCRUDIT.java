@@ -4,7 +4,6 @@ import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.db.ODatabasePool;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -54,7 +53,8 @@ public final class DistributedDatabaseCRUDIT {
     int mainNodeDataCount = 50;
     OrientDB orientDb = getOrientDB();
     if (!orientDB.exists(dbName)) {
-      orientDb.create(dbName, ODatabaseType.PLOCAL);
+      orientDb.execute(
+          "create database ? plocal users(admin identified by 'admin' role admin)", dbName);
     }
     ODatabaseSession orientGraph = orientDb.open(dbName, "admin", "admin");
     createVertexTypeWithUniqueIndex(orientGraph, "Test", "property1", "property2");

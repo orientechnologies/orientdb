@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.record.OElement;
@@ -40,7 +39,8 @@ public class ReinstallDatabaseTestIT {
     setup.setup();
 
     OrientDB remote = setup.createRemote(server0, "root", "test", OrientDBConfig.defaultConfig());
-    remote.create(DATABASE_NAME, ODatabaseType.PLOCAL);
+    remote.execute(
+        "create database ? plocal users(admin identified by 'admin' role admin)", DATABASE_NAME);
     ODatabaseSession session = remote.open(DATABASE_NAME, "admin", "admin");
     session.createClass("Person");
     session.createClass("Person1");

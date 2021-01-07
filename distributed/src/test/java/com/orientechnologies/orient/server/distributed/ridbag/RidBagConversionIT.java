@@ -2,7 +2,6 @@ package com.orientechnologies.orient.server.distributed.ridbag;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.record.OEdge;
@@ -39,7 +38,8 @@ public class RidBagConversionIT {
     String server0Path = setup.getServer(server0).getServerHome();
     OrientDB orientDB =
         new OrientDB("embedded:" + server0Path + "/databases/", OrientDBConfig.defaultConfig());
-    orientDB.create("test", ODatabaseType.PLOCAL);
+    orientDB.execute(
+        "create database ? plocal users(admin identified by 'admin' role admin)", "test");
     ODatabaseSession database = orientDB.open("test", "admin", "admin");
     database.begin();
     OVertex ver = database.newVertex("V");

@@ -8,7 +8,6 @@ import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.message.OBatchOperationsRequest;
 import com.orientechnologies.orient.client.remote.message.OBatchOperationsResponse;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -50,7 +49,9 @@ public class OConnetionExecutorTest {
             .getPath("./target/" + OConnetionExecutorTest.class.getSimpleName());
     Files.createDirectories(path);
     orientDb = new OrientDB("embedded:" + path.toString(), OrientDBConfig.defaultConfig());
-    orientDb.create(OConnetionExecutorTest.class.getSimpleName(), ODatabaseType.MEMORY);
+    orientDb.execute(
+        "create database ? memory users (admin identified by 'admin' role admin)",
+        OConnetionExecutorTest.class.getSimpleName());
     database =
         (ODatabaseDocumentInternal)
             orientDb.open(OConnetionExecutorTest.class.getSimpleName(), "admin", "admin");

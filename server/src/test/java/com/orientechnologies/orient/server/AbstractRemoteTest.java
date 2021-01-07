@@ -2,8 +2,6 @@ package com.orientechnologies.orient.server;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.ODatabaseType;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
 import java.io.File;
 import java.io.InputStream;
 import org.junit.After;
@@ -35,7 +33,10 @@ public class AbstractRemoteTest {
 
     final String dbName = name.getMethodName();
     if (dbName != null) {
-      server.createDatabase(dbName, ODatabaseType.MEMORY, OrientDBConfig.defaultConfig());
+      server
+          .getContext()
+          .execute(
+              "create database ? memory users (admin identified by 'admin' role admin)", dbName);
     }
   }
 

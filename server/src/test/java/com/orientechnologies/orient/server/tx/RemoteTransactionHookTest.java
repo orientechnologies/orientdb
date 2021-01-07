@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -38,7 +37,9 @@ public class RemoteTransactionHookTest {
     server.activate();
 
     orientDB = new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
-    orientDB.create(RemoteTransactionHookTest.class.getSimpleName(), ODatabaseType.MEMORY);
+    orientDB.execute(
+        "create database ? memory users (admin identified by 'admin' role admin)",
+        RemoteTransactionHookTest.class.getSimpleName());
     database = orientDB.open(RemoteTransactionHookTest.class.getSimpleName(), "admin", "admin");
     database.createClass("SomeTx");
   }
@@ -82,7 +83,7 @@ public class RemoteTransactionHookTest {
   @Test
   public void testCalledInClientTx() {
     OrientDB orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
-    orientDB.create("test", ODatabaseType.MEMORY);
+    orientDB.execute("create database test memory users (admin identified by 'admin' role admin)");
     ODatabaseDocument database = orientDB.open("test", "admin", "admin");
     CountCallHook calls = new CountCallHook(database);
     database.registerHook(calls);

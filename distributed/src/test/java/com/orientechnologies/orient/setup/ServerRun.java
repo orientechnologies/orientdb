@@ -21,8 +21,6 @@ import com.hazelcast.instance.HazelcastInstanceProxy;
 import com.hazelcast.instance.Node;
 import com.hazelcast.internal.cluster.impl.ClusterServiceImpl;
 import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.orient.core.db.ODatabaseType;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
@@ -145,7 +143,9 @@ public class ServerRun {
   }
 
   public ODatabaseDocument createDatabase(final String iName) {
-    server.createDatabase(iName, ODatabaseType.PLOCAL, OrientDBConfig.defaultConfig());
+    server
+        .getContext()
+        .execute("create database ? plocal users(admin identified by 'admin' role admin)", iName);
     return server.openDatabase(iName, "admin", "admin");
   }
 
