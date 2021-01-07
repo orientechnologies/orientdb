@@ -4,7 +4,6 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
@@ -99,7 +98,9 @@ public class AutomaticBackupTest {
     if (f.exists()) f.delete();
     server.startup();
     if (server.existsDatabase(DBNAME)) server.dropDatabase(DBNAME);
-    server.createDatabase(DBNAME, ODatabaseType.PLOCAL, null);
+    server
+        .getContext()
+        .execute("create database ? plocal users (admin identified by 'admin' role admin)", DBNAME);
     database = server.getDatabases().openNoAuthorization(DBNAME);
 
     new ODocument("TestBackup").field("name", DBNAME).save();
@@ -148,7 +149,10 @@ public class AutomaticBackupTest {
     aBackup.sendShutdown();
 
     if (server.existsDatabase(DBNAME2)) server.dropDatabase(DBNAME2);
-    server.createDatabase(DBNAME2, ODatabaseType.PLOCAL, null);
+    server
+        .getContext()
+        .execute(
+            "create database ? plocal users (admin identified by 'admin' role admin)", DBNAME2);
     ODatabaseDocument database2 = server.getDatabases().openNoAuthorization(DBNAME2);
 
     database2.restore(new FileInputStream(BACKUPDIR + "/testautobackup.zip"), null, null, null);
@@ -327,7 +331,10 @@ public class AutomaticBackupTest {
     aBackup.sendShutdown();
 
     if (server.existsDatabase(DBNAME3)) server.dropDatabase(DBNAME3);
-    server.createDatabase(DBNAME3, ODatabaseType.PLOCAL, null);
+    server
+        .getContext()
+        .execute(
+            "create database ? plocal users (admin identified by 'admin' role admin)", DBNAME3);
 
     ODatabaseDocumentInternal database2 = server.getDatabases().openNoAuthorization(DBNAME3);
 
