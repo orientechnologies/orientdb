@@ -8,10 +8,13 @@ import org.junit.Test;
 public class OBackupUploadStartedLogTest {
 
   @Test
-  public void testFromToDoc(){
-    OBackupUploadStartedLog log = new OBackupUploadStartedLog(1, 2, "abcd", "adsf", OAutomaticBackup.MODE.FULL_BACKUP.name());
+  public void testFromToDoc() {
+    OBackupUploadStartedLog log =
+        new OBackupUploadStartedLog(1, 2, "abcd", "adsf", OAutomaticBackup.MODE.FULL_BACKUP.name());
     ODocument doc = log.toDoc();
-    OBackupUploadStartedLog log2 = new OBackupUploadStartedLog(2, 3, "aaabcd", "adccsf", OAutomaticBackup.MODE.FULL_BACKUP.name());
+    OBackupUploadStartedLog log2 =
+        new OBackupUploadStartedLog(
+            2, 3, "aaabcd", "adccsf", OAutomaticBackup.MODE.FULL_BACKUP.name());
 
     log2.fromDoc(doc);
 

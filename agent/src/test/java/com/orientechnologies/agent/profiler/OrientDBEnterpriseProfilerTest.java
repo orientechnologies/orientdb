@@ -130,7 +130,7 @@ public class OrientDBEnterpriseProfilerTest {
   }
 
   @Test
-  public void testEnterpriseProfiler(){
+  public void testEnterpriseProfiler() {
     OEnterpriseProfiler profiler = new OEnterpriseProfiler();
     profiler.dump();
   }

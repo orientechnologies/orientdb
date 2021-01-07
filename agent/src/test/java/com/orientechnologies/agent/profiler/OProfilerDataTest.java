@@ -6,7 +6,7 @@ import org.junit.Test;
 public class OProfilerDataTest {
 
   @Test
-  public void testClear(){
+  public void testClear() {
     OProfilerData data = new OProfilerData();
     data.updateCounter("foo", 1);
     data.updateStat("foo", 1);
@@ -19,7 +19,7 @@ public class OProfilerDataTest {
   }
 
   @Test
-  public void testDump(){
+  public void testDump() {
     OProfilerData data = new OProfilerData();
     data.updateStat("foo", 123456);
     data.updateCounter("bar", 1);
@@ -29,7 +29,7 @@ public class OProfilerDataTest {
   }
 
   @Test
-  public void testGetStatsAsString(){
+  public void testGetStatsAsString() {
     OProfilerData data = new OProfilerData();
     data.updateStat("foo", 123456);
     String[] result = data.getStatsAsString();

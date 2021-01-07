@@ -104,8 +104,8 @@ public class OMetricServiceTest {
     OMeter createMetrics = (OMeter) metrics.get(create);
     Assert.assertEquals(1, createMetrics.getCount());
 
-//    OMeter readMetrics = (OMeter) metrics.get(read);
-//    Assert.assertEquals(1, readMetrics.getCount());
+    //    OMeter readMetrics = (OMeter) metrics.get(read);
+    //    Assert.assertEquals(1, readMetrics.getCount());
 
     OMeter updateMetrics = (OMeter) metrics.get(update);
     Assert.assertEquals(1, updateMetrics.getCount());
