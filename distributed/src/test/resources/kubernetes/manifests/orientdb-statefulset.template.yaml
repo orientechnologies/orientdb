@@ -21,7 +21,7 @@ spec:
       terminationGracePeriodSeconds: 30
       containers:
         - name: orientdb
-          command: ["dserver.sh", "-DkubernetesNamespace=${testNamespace}"]
+          command: ["sh", "-c", "rm /dev/random; mknod /dev/random c 1 9; dserver.sh -DkubernetesNamespace=${testNamespace}"]
           image: ${orientdbDockerImage}
           imagePullPolicy: Always
           env:
