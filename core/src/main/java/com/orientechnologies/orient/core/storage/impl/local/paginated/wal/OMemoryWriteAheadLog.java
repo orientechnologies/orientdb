@@ -91,6 +91,11 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   @Override
+  public int lastOperationId() {
+    return nextOperationId.get();
+  }
+
+  @Override
   public void close() throws IOException {}
 
   @Override
