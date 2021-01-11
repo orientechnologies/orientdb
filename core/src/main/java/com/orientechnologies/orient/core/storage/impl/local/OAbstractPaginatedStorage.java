@@ -6071,7 +6071,25 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     final OLogSequenceNumber lsn = writeAheadLog.begin();
 
     writeCache.restoreModeOn();
-    final int nextOperationId = fetchNextOperationId();
+    final int nextOperationId;
+
+    if (OGlobalConfiguration.STORAGE_CHECK_LATEST_OPERATION_ID.getValueAsBoolean()) {
+      OLogManager.instance()
+          .infoNoDb(
+              this,
+              "Storage %s , scan all pages to "
+                  + "find the latest operation stored into the files,"
+                  + " if you wish to skip this step to speed up data restore but"
+                  + " decrease durability guarantees please set flag %s to the false",
+              name,
+              OGlobalConfiguration.STORAGE_CHECK_LATEST_OPERATION_ID.getKey());
+
+      nextOperationId = fetchNextOperationId();
+      assert nextOperationId >= 0;
+    } else {
+      nextOperationId = Integer.MIN_VALUE;
+    }
+
     try {
       OLogSequenceNumber logSequenceNumber = null;
       final OModifiableBoolean atLeastOnePageUpdate = new OModifiableBoolean();
@@ -6086,27 +6104,30 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       long lastReportTime = 0;
 
       final String errorMessage =
-          "WAL does not contain enough data to correctly restore database after crash. "
+          "In storage %s WAL does not contain enough data to correctly restore database after crash. "
               + "Required operation id %d operation id contained into the WAL %d."
               + " Please create issue in bug tracker";
 
       try {
         List<WriteableWALRecord> records = writeAheadLog.read(lsn, 1_000);
-        if (records.isEmpty()) {
-          final int lastOperationId = writeAheadLog.lastOperationId();
-          if (nextOperationId - 1 != lastOperationId) {
-            OLogManager.instance()
-                .errorNoDb(this, errorMessage, null, nextOperationId - 1, lastOperationId);
-          }
 
-          return null;
-        } else {
-          final WriteableWALRecord writeableWALRecord = records.get(0);
-          final int firstOperationId = writeableWALRecord.getOperationIdLSN().operationId;
+        if (nextOperationId >= 0) {
+          if (records.isEmpty()) {
+            final int lastOperationId = writeAheadLog.lastOperationId();
+            if (nextOperationId - 1 != lastOperationId) {
+              OLogManager.instance()
+                  .errorNoDb(this, errorMessage, null, name, nextOperationId - 1, lastOperationId);
+            }
 
-          if (firstOperationId > nextOperationId) {
-            OLogManager.instance()
-                .errorNoDb(this, errorMessage, null, nextOperationId, firstOperationId);
+            return null;
+          } else {
+            final WriteableWALRecord writeableWALRecord = records.get(0);
+            final int firstOperationId = writeableWALRecord.getOperationIdLSN().operationId;
+
+            if (firstOperationId > nextOperationId) {
+              OLogManager.instance()
+                  .errorNoDb(this, errorMessage, null, name, nextOperationId, firstOperationId);
+            }
           }
         }
 
@@ -6221,8 +6242,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   protected final void restoreAtomicUnit(
-      final List<OWALRecord> atomicUnit,
-      final OModifiableBoolean atLeastOnePageUpdate)
+      final List<OWALRecord> atomicUnit, final OModifiableBoolean atLeastOnePageUpdate)
       throws IOException {
     assert atomicUnit.get(atomicUnit.size() - 1) instanceof OAtomicUnitEndRecord;
 
@@ -6312,12 +6332,19 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   private int fetchNextOperationId() throws IOException {
-    int lastOperationId = -1;
+    int lastOperationId = 0;
 
     final Map<String, Long> files = writeCache.files();
-    for (final long fileId : files.values()) {
+    int scannedFiles = 0;
+    for (final Map.Entry<String, Long> fileEntry : files.entrySet()) {
+      OLogManager.instance().infoNoDb(this,
+          "Scanning of file %s in storage % (%d out of %d files are scanned)",
+          fileEntry.getKey(), name, scannedFiles, files.size());
+
+      final long fileId = fileEntry.getValue();
       final long filledUpTo = writeCache.getFilledUpTo(fileId);
 
+      int prevScannedPercent = 0;
       for (int pageIndex = 0; pageIndex < filledUpTo; pageIndex++) {
         final OCacheEntry cacheEntry =
             readCache.loadForRead(fileId, pageIndex, false, writeCache, true);
@@ -6330,10 +6357,20 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           } else if (lastOperationId == operationId) {
             throw new IllegalStateException("Id of WAL operation can not be duplicated");
           }
+
+          final int scannedPercent = (int)(100 * (pageIndex + 1) / filledUpTo);
+          if (scannedPercent >= prevScannedPercent + 10) {
+            prevScannedPercent = scannedPercent;
+            OLogManager.instance().infoNoDb(this,
+                "%d % of file %s in storage %s  is scanned.", scannedPercent, fileEntry.getKey(),
+                name);
+          }
         } finally {
           readCache.releaseFromRead(cacheEntry, writeCache);
         }
       }
+
+      scannedFiles++;
     }
 
     return lastOperationId;
