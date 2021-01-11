@@ -206,6 +206,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import java.util.zip.ZipOutputStream;
+import org.roaringbitmap.RoaringBitmap;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -6175,20 +6176,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   private OLogSequenceNumber restoreFromBeginning() throws IOException {
     OLogManager.instance().info(this, "Data restore procedure is started.");
+
     final OLogSequenceNumber lsn = writeAheadLog.begin();
 
-    return restoreFrom(lsn, writeAheadLog, true);
-  }
-
-  @SuppressWarnings("WeakerAccess")
-  protected final OLogSequenceNumber restoreFrom(
-      final OLogSequenceNumber lsn,
-      final OWriteAheadLog writeAheadLog,
-      @SuppressWarnings("SameParameterValue") final boolean wcRestoreMode)
-      throws IOException {
-    if (wcRestoreMode) {
-      writeCache.restoreModeOn();
-    }
+    writeCache.restoreModeOn();
+    final int nextOperationId = findNextOperationId();
     try {
       OLogSequenceNumber logSequenceNumber = null;
       final OModifiableBoolean atLeastOnePageUpdate = new OModifiableBoolean();
@@ -6202,8 +6194,31 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       long lastReportTime = 0;
 
+      final String errorMessage =
+          "WAL does not contain enough data to correctly restore database after crash. "
+              + "Required operation id %d operation id contained into the WAL %d."
+              + " Please create issue in bug tracker";
+
       try {
         List<WriteableWALRecord> records = writeAheadLog.read(lsn, 1_000);
+        if (records.isEmpty()) {
+          final int lastOperationId = writeAheadLog.lastOperationId();
+          if (nextOperationId - 1 != lastOperationId) {
+            OLogManager.instance()
+                .errorNoDb(this, errorMessage, null, nextOperationId - 1, lastOperationId);
+          }
+
+          return null;
+        } else {
+          final WriteableWALRecord writeableWALRecord = records.get(0);
+          final int firstOperationId = writeableWALRecord.getOperationIdLSN().operationId;
+
+          if (firstOperationId > nextOperationId) {
+            OLogManager.instance()
+                .errorNoDb(this, errorMessage, null, nextOperationId, firstOperationId);
+          }
+        }
+
         while (!records.isEmpty()) {
           for (final WriteableWALRecord walRecord : records) {
             logSequenceNumber = walRecord.getLsn();
@@ -6217,7 +6232,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               // flushed to the disk
               if (atomicUnit != null) {
                 atomicUnit.add(walRecord);
-                restoreAtomicUnit(atomicUnit, atLeastOnePageUpdate);
+                restoreAtomicUnit(atomicUnit, atLeastOnePageUpdate, nextOperationId);
               }
               byte[] metadata = operationMetadata.remove(atomicUnitEndRecord.getOperationUnitId());
               if (metadata != null) {
@@ -6315,9 +6330,24 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   protected final void restoreAtomicUnit(
-      final List<OWALRecord> atomicUnit, final OModifiableBoolean atLeastOnePageUpdate)
+      final List<OWALRecord> atomicUnit,
+      final OModifiableBoolean atLeastOnePageUpdate,
+      final int nextOperationId)
       throws IOException {
     assert atomicUnit.get(atomicUnit.size() - 1) instanceof OAtomicUnitEndRecord;
+
+    boolean skipAllOperations = true;
+
+    for (final OWALRecord walRecord : atomicUnit) {
+      skipAllOperations = walRecord.getOperationIdLSN().operationId < nextOperationId;
+      if (!skipAllOperations) {
+        break;
+      }
+    }
+
+    if (skipAllOperations) {
+      return;
+    }
 
     for (final OWALRecord walRecord : atomicUnit) {
       if (walRecord instanceof OFileDeletedWALRecord) {
@@ -6373,7 +6403,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         try {
           final ODurablePage durablePage = new ODurablePage(cacheEntry);
-          if (durablePage.getLsn().compareTo(walRecord.getLsn()) < 0) {
+          if (durablePage.getLSN().compareTo(walRecord.getLsn()) < 0) {
             durablePage.restoreChanges(updatePageRecord.getChanges());
             durablePage.setOperationIdLSN(updatePageRecord.getOperationIdLSN());
           }
@@ -6402,6 +6432,34 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         assert false : "Invalid WAL record type was passed " + walRecord.getClass().getName();
       }
     }
+  }
+
+  private int findNextOperationId() throws IOException {
+    final RoaringBitmap roaringBitmap = new RoaringBitmap();
+
+    final Map<String, Long> files = writeCache.files();
+    for (final long fileId : files.values()) {
+      final long filledUpTo = writeCache.getFilledUpTo(fileId);
+
+      for (int pageIndex = 0; pageIndex < filledUpTo; pageIndex++) {
+        final OCacheEntry cacheEntry =
+            readCache.loadForRead(fileId, pageIndex, false, writeCache, true);
+        final ODurablePage durablePage = new ODurablePage(cacheEntry);
+
+        final int operationId = durablePage.getOperationId();
+        roaringBitmap.select(operationId);
+      }
+    }
+
+    final int firstOperationId;
+    try {
+      firstOperationId = roaringBitmap.first();
+    } catch (final NoSuchElementException e) {
+      return 0;
+    }
+
+    final long nextOperationId = roaringBitmap.nextAbsentValue(firstOperationId);
+    return (int) nextOperationId;
   }
 
   @SuppressWarnings("unused")

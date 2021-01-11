@@ -344,6 +344,35 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
     flush();
   }
 
+  @Override
+  public int lastOperationId() {
+    final Cursor<OWALRecord> cursor = records.peekLast();
+    assert cursor != null;
+
+    final OWALRecord record = cursor.getItem();
+
+    final int operationId;
+    if (record.getLsn().getPosition() == -1) {
+      calculateRecordsLSNs();
+
+      if (record instanceof WriteableWALRecord) {
+        final WriteableWALRecord writeableWALRecord = (WriteableWALRecord) record;
+        final ByteBuffer binaryContent = writeableWALRecord.getBinaryContent();
+
+        operationId = writeableWALRecord.getOperationIdLSN().operationId;
+        if (binaryContent != null) {
+          OWALRecordsFactory.serializeRecordId(binaryContent, operationId);
+        }
+      } else {
+        operationId = record.getOperationIdLSN().operationId;
+      }
+    } else {
+      operationId = record.getOperationIdLSN().operationId;
+    }
+
+    return operationId;
+  }
+
   public int pageSize() {
     return pageSize;
   }
@@ -1524,8 +1553,8 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
 
         if (recordOperationIdLSN.lsn.getPosition() < 0) {
           final int position = calculatePosition(record, prevRecord, pageSize, maxRecordSize);
-          final OLogSequenceNumber newLSN = new OLogSequenceNumber(recordOperationIdLSN.lsn.getSegment(),
-              position);
+          final OLogSequenceNumber newLSN =
+              new OLogSequenceNumber(recordOperationIdLSN.lsn.getSegment(), position);
 
           recordOperationIdLSN = record.getOperationIdLSN();
           if (recordOperationIdLSN.lsn.getPosition() < 0) {
@@ -1544,8 +1573,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
 
   private MilestoneWALRecord logMilestoneRecord() {
     final MilestoneWALRecord milestoneRecord = new MilestoneWALRecord();
-    milestoneRecord.setOperationIdLsn(new OLogSequenceNumber(currentSegment, -1),
-        -1);
+    milestoneRecord.setOperationIdLsn(new OLogSequenceNumber(currentSegment, -1), -1);
 
     records.offer(milestoneRecord);
 
@@ -1967,7 +1995,8 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
 
                   if (writeableRecord.trackOperationId()) {
                     final int operationId = writeableRecord.getOperationIdLSN().operationId;
-                    assert lastWrittenOperationId == -2 || operationId == lastWrittenOperationId + 1;
+                    assert lastWrittenOperationId == -2
+                        || operationId == lastWrittenOperationId + 1;
 
                     lastWrittenOperationId = operationId;
                   }

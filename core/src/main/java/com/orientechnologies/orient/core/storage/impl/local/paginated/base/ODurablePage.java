@@ -103,6 +103,10 @@ public class ODurablePage {
     return new OLogSequenceNumber(segment, position);
   }
 
+  public final int getOperationId() {
+    return getIntValue(WAL_OPERATION_ID_OFFSET);
+  }
+
   public static OLogSequenceNumber getLogSequenceNumberFromPage(final ByteBuffer buffer) {
     final long segment = buffer.getLong(WAL_SEGMENT_OFFSET);
     final int position = buffer.getInt(WAL_POSITION_OFFSET);
@@ -373,16 +377,6 @@ public class ODurablePage {
     buffer.putInt(WAL_OPERATION_ID_OFFSET, operationIdLSN.operationId);
   }
 
-  public OLogSequenceNumber getLsn() {
-    final ByteBuffer buffer = pointer.getBuffer();
-    assert buffer != null;
-    buffer.position(WAL_SEGMENT_OFFSET);
-
-    final long segment = buffer.getLong();
-    final int position = buffer.getInt();
-
-    return new OLogSequenceNumber(segment, position);
-  }
 
   public static void setPageLSN(final OLogSequenceNumber lsn, final OCacheEntry cacheEntry) {
     final ByteBuffer buffer = cacheEntry.getCachePointer().getBufferDuplicate();
