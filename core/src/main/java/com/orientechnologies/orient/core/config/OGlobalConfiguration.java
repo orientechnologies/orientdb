@@ -287,6 +287,13 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       OChecksumMode.StoreAndSwitchReadOnlyMode,
       false),
 
+  STORAGE_CHECK_LATEST_OPERATION_ID(
+      "storage.checkLatestOperationId",
+      "Indicates wether storage should be checked for latest operation id, "
+          + "to ensure that all the records are needed to restore database are stored into the WAL (true by default)",
+      Boolean.class,
+      true),
+
   STORAGE_EXCLUSIVE_FILE_ACCESS(
       "storage.exclusiveFileAccess",
       "Limit access to the datafiles to the single API user, set to "
