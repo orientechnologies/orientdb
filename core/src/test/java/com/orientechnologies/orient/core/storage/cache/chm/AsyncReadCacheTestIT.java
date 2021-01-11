@@ -522,6 +522,11 @@ public class AsyncReadCacheTestIT {
     }
 
     @Override
+    public boolean fileIdsAreEqual(long firsId, long secondId) {
+      return false;
+    }
+
+    @Override
     public Long getMinimalNotFlushedSegment() {
       return null;
     }

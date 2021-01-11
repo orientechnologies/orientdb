@@ -1229,6 +1229,14 @@ public final class OWOWCache extends OAbstractWriteCache
   }
 
   @Override
+  public boolean fileIdsAreEqual(final long firsId, final long secondId) {
+    final int firstIntId = extractFileId(firsId);
+    final int secondIntId = extractFileId(secondId);
+
+    return firstIntId == secondIntId;
+  }
+
+  @Override
   public void renameFile(long fileId, final String newFileName) throws IOException {
     final int intId = extractFileId(fileId);
     fileId = composeFileId(id, intId);
