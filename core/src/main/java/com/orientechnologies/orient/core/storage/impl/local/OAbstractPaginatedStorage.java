@@ -200,7 +200,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import java.util.zip.ZipOutputStream;
-import org.roaringbitmap.RoaringBitmap;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -6124,7 +6123,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               // flushed to the disk
               if (atomicUnit != null) {
                 atomicUnit.add(walRecord);
-                restoreAtomicUnit(atomicUnit, atLeastOnePageUpdate, nextOperationId);
+                restoreAtomicUnit(atomicUnit, atLeastOnePageUpdate);
               }
               byte[] metadata = operationMetadata.remove(atomicUnitEndRecord.getOperationUnitId());
               if (metadata != null) {
@@ -6223,23 +6222,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   protected final void restoreAtomicUnit(
       final List<OWALRecord> atomicUnit,
-      final OModifiableBoolean atLeastOnePageUpdate,
-      final int nextOperationId)
+      final OModifiableBoolean atLeastOnePageUpdate)
       throws IOException {
     assert atomicUnit.get(atomicUnit.size() - 1) instanceof OAtomicUnitEndRecord;
-
-    boolean skipAllOperations = true;
-
-    for (final OWALRecord walRecord : atomicUnit) {
-      skipAllOperations = walRecord.getOperationIdLSN().operationId < nextOperationId;
-      if (!skipAllOperations) {
-        break;
-      }
-    }
-
-    if (skipAllOperations) {
-      return;
-    }
 
     for (final OWALRecord walRecord : atomicUnit) {
       if (walRecord instanceof OFileDeletedWALRecord) {
@@ -6327,7 +6312,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   private int fetchNextOperationId() throws IOException {
-    final RoaringBitmap roaringBitmap = new RoaringBitmap();
+    int lastOperationId = -1;
 
     final Map<String, Long> files = writeCache.files();
     for (final long fileId : files.values()) {
@@ -6336,22 +6321,22 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       for (int pageIndex = 0; pageIndex < filledUpTo; pageIndex++) {
         final OCacheEntry cacheEntry =
             readCache.loadForRead(fileId, pageIndex, false, writeCache, true);
-        final ODurablePage durablePage = new ODurablePage(cacheEntry);
+        try {
+          final ODurablePage durablePage = new ODurablePage(cacheEntry);
 
-        final int operationId = durablePage.getOperationId();
-        roaringBitmap.add(operationId);
+          final int operationId = durablePage.getOperationId();
+          if (operationId > lastOperationId) {
+            lastOperationId = operationId;
+          } else if (lastOperationId == operationId) {
+            throw new IllegalStateException("Id of WAL operation can not be duplicated");
+          }
+        } finally {
+          readCache.releaseFromRead(cacheEntry, writeCache);
+        }
       }
     }
 
-    final int firstOperationId;
-    try {
-      firstOperationId = roaringBitmap.first();
-    } catch (final NoSuchElementException e) {
-      return 0;
-    }
-
-    final long nextOperationId = roaringBitmap.nextAbsentValue(firstOperationId);
-    return (int) nextOperationId;
+    return lastOperationId;
   }
 
   @SuppressWarnings("unused")
