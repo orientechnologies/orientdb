@@ -53,14 +53,14 @@ public class OClassDistributed extends OClassEmbedded {
 
   @Override
   public int getClusterForNewInstance(ODocument doc) {
-    if (getDatabase().getConfiguration().getValueAsBoolean(OGlobalConfiguration.DISTRIBUTED_AUTO_CREATE_CLUSTERS)) {
       return getClusterForNewInstance((ODatabaseDocumentDistributed) getDatabase(), doc);
-    } else {
-      return super.getClusterForNewInstance(doc);
-    }
   }
 
   public int getClusterForNewInstance(ODatabaseDocumentDistributed db, ODocument doc) {
+    if (getDatabase().getConfiguration().getValueAsBoolean(OGlobalConfiguration.DISTRIBUTED_AUTO_CREATE_CLUSTERS)) {
+      return getClusterForNewInstance(db, doc);
+    } 
+    
     final OStorage storage = db.getStorage();
     if (!(storage instanceof ODistributedStorage))
       throw new IllegalStateException("Storage is not distributed");
