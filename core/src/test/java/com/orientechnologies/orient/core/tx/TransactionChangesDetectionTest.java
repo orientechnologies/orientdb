@@ -2,9 +2,8 @@ package com.orientechnologies.orient.core.tx;
 
 import static org.junit.Assert.*;
 
-import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.OCreateDatabaseUtil;
 import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.junit.After;
@@ -18,10 +17,16 @@ public class TransactionChangesDetectionTest {
 
   @Before
   public void before() {
-    factory = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
-    factory.create(TransactionChangesDetectionTest.class.getSimpleName(), ODatabaseType.MEMORY);
+    factory =
+        OCreateDatabaseUtil.createDatabase(
+            TransactionChangesDetectionTest.class.getSimpleName(),
+            "embedded:",
+            OCreateDatabaseUtil.TYPE_MEMORY);
     database =
-        factory.open(TransactionChangesDetectionTest.class.getSimpleName(), "admin", "admin");
+        factory.open(
+            TransactionChangesDetectionTest.class.getSimpleName(),
+            "admin",
+            OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
     database.createClass("test");
   }
 

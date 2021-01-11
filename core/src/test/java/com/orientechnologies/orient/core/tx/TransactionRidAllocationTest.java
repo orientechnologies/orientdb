@@ -4,10 +4,10 @@ import static junit.framework.TestCase.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import com.orientechnologies.orient.core.OCreateDatabaseUtil;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
@@ -30,9 +30,11 @@ public class TransactionRidAllocationTest {
 
   @Before
   public void before() {
-    orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
-    orientDB.create("test", ODatabaseType.MEMORY);
-    db = (ODatabaseDocumentInternal) orientDB.open("test", "admin", "admin");
+    final OrientDB orientDB =
+        OCreateDatabaseUtil.createDatabase("test", "embedded:", OCreateDatabaseUtil.TYPE_MEMORY);
+    db =
+        (ODatabaseDocumentInternal)
+            orientDB.open("test", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
   }
 
   @Test
@@ -46,7 +48,9 @@ public class TransactionRidAllocationTest {
     ORID generated = v.getIdentity();
     assertTrue(generated.isValid());
 
-    ODatabaseDocument db1 = orientDB.open("test", "admin", "admin");
+    final ODatabaseDocument db1 =
+        orientDB.open("test", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
+
     assertNull(db1.load(generated));
     db1.close();
   }
@@ -63,7 +67,9 @@ public class TransactionRidAllocationTest {
     ((OAbstractPaginatedStorage) db.getStorage())
         .commitPreAllocated((OTransactionInternal) db.getTransaction());
 
-    ODatabaseDocument db1 = orientDB.open("test", "admin", "admin");
+    final ODatabaseDocument db1 =
+        orientDB.open("test", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
+
     assertNotNull(db1.load(generated));
     db1.close();
   }

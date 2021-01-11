@@ -63,7 +63,6 @@ public class OTransactionDataTest {
 
   @Test
   public void testTransactionDataChangesFromTransaction() throws IOException {
-
     try (OrientDB orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig())) {
       orientDB.create("test", ODatabaseType.MEMORY);
       try (ODatabaseSession db = orientDB.open("test", "admin", "admin")) {
