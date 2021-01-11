@@ -6180,7 +6180,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     final OLogSequenceNumber lsn = writeAheadLog.begin();
 
     writeCache.restoreModeOn();
-    final int nextOperationId = findNextOperationId();
+    final int nextOperationId = fetchNextOperationId();
     try {
       OLogSequenceNumber logSequenceNumber = null;
       final OModifiableBoolean atLeastOnePageUpdate = new OModifiableBoolean();
@@ -6434,7 +6434,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private int findNextOperationId() throws IOException {
+  private int fetchNextOperationId() throws IOException {
     final RoaringBitmap roaringBitmap = new RoaringBitmap();
 
     final Map<String, Long> files = writeCache.files();
@@ -6447,7 +6447,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         final ODurablePage durablePage = new ODurablePage(cacheEntry);
 
         final int operationId = durablePage.getOperationId();
-        roaringBitmap.select(operationId);
+        roaringBitmap.add(operationId);
       }
     }
 
