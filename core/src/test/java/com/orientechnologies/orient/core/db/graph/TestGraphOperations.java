@@ -1,9 +1,7 @@
 package com.orientechnologies.orient.core.db.graph;
 
 import com.orientechnologies.orient.core.OCreateDatabaseUtil;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -24,8 +22,11 @@ public class TestGraphOperations {
 
   @Before
   public void before() {
-    orientDB = OCreateDatabaseUtil.createDatabase("TestGraphOperations", "embedded:", OCreateDatabaseUtil.TYPE_MEMORY);
-    database = orientDB.open("TestGraphOperations", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
+    orientDB =
+        OCreateDatabaseUtil.createDatabase(
+            "TestGraphOperations", "embedded:", OCreateDatabaseUtil.TYPE_MEMORY);
+    database =
+        orientDB.open("TestGraphOperations", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
   }
 
   @After

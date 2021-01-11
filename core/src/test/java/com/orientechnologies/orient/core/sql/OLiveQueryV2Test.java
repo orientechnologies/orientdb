@@ -20,12 +20,11 @@
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.core.OCreateDatabaseUtil;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OLiveQueryMonitor;
 import com.orientechnologies.orient.core.db.OLiveQueryResultListener;
 import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -50,9 +49,7 @@ import org.junit.Test;
 
 /** @author Luigi Dell'Aquila (l.dellaquila - at - orientdb.com) */
 public class OLiveQueryV2Test {
-
   class MyLiveQueryListener implements OLiveQueryResultListener {
-
     public CountDownLatch latch;
 
     public MyLiveQueryListener(CountDownLatch latch) {
@@ -88,7 +85,6 @@ public class OLiveQueryV2Test {
 
   @Test
   public void testLiveInsert() throws InterruptedException {
-
     ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OLiveQueryV2Test");
     db.activateOnCurrentThread();
     db.create();
@@ -126,12 +122,13 @@ public class OLiveQueryV2Test {
 
   @Test
   public void testLiveInsertOnCluster() {
-
-    OrientDB context = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
-
-    context.create("testLiveInsertOnCluster", ODatabaseType.MEMORY);
+    final OrientDB context =
+        OCreateDatabaseUtil.createDatabase(
+            "testLiveInsertOnCluster", "embedded:", OCreateDatabaseUtil.TYPE_MEMORY);
     try (ODatabaseDocumentInternal db =
-        (ODatabaseDocumentInternal) context.open("testLiveInsertOnCluster", "admin", "admin")) {
+        (ODatabaseDocumentInternal)
+            context.open(
+                "testLiveInsertOnCluster", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD)) {
 
       OClass clazz = db.getMetadata().getSchema().createClass("test");
 
@@ -162,12 +159,13 @@ public class OLiveQueryV2Test {
 
   @Test
   public void testLiveWithWhereCondition() {
-
-    OrientDB context = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
-
-    context.create("testLiveWithWhereCondition", ODatabaseType.MEMORY);
+    final OrientDB context =
+        OCreateDatabaseUtil.createDatabase(
+            "testLiveWithWhereCondition", "embedded:", OCreateDatabaseUtil.TYPE_MEMORY);
     try (ODatabaseDocumentInternal db =
-        (ODatabaseDocumentInternal) context.open("testLiveWithWhereCondition", "admin", "admin")) {
+        (ODatabaseDocumentInternal)
+            context.open(
+                "testLiveWithWhereCondition", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD)) {
 
       OClass clazz = db.getMetadata().getSchema().createClass("test");
 
