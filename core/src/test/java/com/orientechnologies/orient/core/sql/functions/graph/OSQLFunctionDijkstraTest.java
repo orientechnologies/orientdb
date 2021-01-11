@@ -2,10 +2,9 @@ package com.orientechnologies.orient.core.sql.functions.graph;
 
 import static org.junit.Assert.assertEquals;
 
+import com.orientechnologies.orient.core.OCreateDatabaseUtil;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OVertex;
@@ -39,9 +38,11 @@ public class OSQLFunctionDijkstraTest {
   }
 
   private void setUpDatabase() {
-    orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
-    orientDB.createIfNotExists("OSQLFunctionDijkstraTest", ODatabaseType.MEMORY);
-    graph = orientDB.open("OSQLFunctionDijkstraTest", "admin", "admin");
+    orientDB =
+        OCreateDatabaseUtil.createDatabase(
+            "OSQLFunctionDijkstraTest", "embedded:", OCreateDatabaseUtil.TYPE_MEMORY);
+    graph =
+        orientDB.open("OSQLFunctionDijkstraTest", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
 
     graph.createEdgeClass("weight");
 

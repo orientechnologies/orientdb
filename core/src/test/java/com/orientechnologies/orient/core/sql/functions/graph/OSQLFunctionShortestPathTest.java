@@ -2,10 +2,9 @@ package com.orientechnologies.orient.core.sql.functions.graph;
 
 import static java.util.Arrays.asList;
 
+import com.orientechnologies.orient.core.OCreateDatabaseUtil;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.OVertex;
@@ -39,10 +38,11 @@ public class OSQLFunctionShortestPathTest {
   }
 
   private void setUpDatabase() {
-
-    orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
-    orientDB.createIfNotExists("OSQLFunctionShortestPath", ODatabaseType.MEMORY);
-    graph = orientDB.open("OSQLFunctionShortestPath", "admin", "admin");
+    orientDB =
+        OCreateDatabaseUtil.createDatabase(
+            "OSQLFunctionShortestPath", "embedded:", OCreateDatabaseUtil.TYPE_MEMORY);
+    graph =
+        orientDB.open("OSQLFunctionShortestPath", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
 
     graph.createEdgeClass("Edge1");
     graph.createEdgeClass("Edge2");
