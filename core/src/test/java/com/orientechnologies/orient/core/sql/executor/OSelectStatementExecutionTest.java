@@ -45,7 +45,6 @@ public class OSelectStatementExecutionTest {
 
   @BeforeClass
   public static void beforeClass() {
-
     db = new ODatabaseDocumentTx("memory:OSelectStatementExecutionTest");
     db.create();
   }

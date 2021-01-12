@@ -7,10 +7,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import com.orientechnologies.orient.core.OCreateDatabaseUtil;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -174,9 +173,8 @@ public class ODocumentTest {
     ODatabaseSession db = null;
     OrientDB odb = null;
     try {
-      odb = new OrientDB("memory:", OrientDBConfig.defaultConfig());
-      odb.createIfNotExists(dbName, ODatabaseType.MEMORY);
-      db = odb.open(dbName, defaultDbAdminCredentials, defaultDbAdminCredentials);
+      odb = OCreateDatabaseUtil.createDatabase(dbName, "memory:", OCreateDatabaseUtil.TYPE_MEMORY);
+      db = odb.open(dbName, defaultDbAdminCredentials, OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
 
       OClass clazz = db.getMetadata().getSchema().createClass("Test");
       clazz.createProperty("integer", OType.INTEGER);
@@ -229,9 +227,8 @@ public class ODocumentTest {
     ODatabaseSession db = null;
     OrientDB odb = null;
     try {
-      odb = new OrientDB("memory:", OrientDBConfig.defaultConfig());
-      odb.createIfNotExists(dbName, ODatabaseType.MEMORY);
-      db = odb.open(dbName, defaultDbAdminCredentials, defaultDbAdminCredentials);
+      odb = OCreateDatabaseUtil.createDatabase(dbName, "memory:", OCreateDatabaseUtil.TYPE_MEMORY);
+      db = odb.open(dbName, defaultDbAdminCredentials, OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
 
       OSchema schema = db.getMetadata().getSchema();
       OClass classA = schema.createClass("TestRemovingField2");
@@ -297,9 +294,8 @@ public class ODocumentTest {
     ODatabaseSession db = null;
     OrientDB odb = null;
     try {
-      odb = new OrientDB("memory:", OrientDBConfig.defaultConfig());
-      odb.createIfNotExists(dbName, ODatabaseType.MEMORY);
-      db = odb.open(dbName, defaultDbAdminCredentials, defaultDbAdminCredentials);
+      odb = OCreateDatabaseUtil.createDatabase(dbName, "memory:", OCreateDatabaseUtil.TYPE_MEMORY);
+      db = odb.open(dbName, defaultDbAdminCredentials, OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
 
       OSchema schema = db.getMetadata().getSchema();
       OClass classA = schema.createClass("TestUndo");

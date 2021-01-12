@@ -3,12 +3,10 @@ package com.orientechnologies.orient.core.storage.impl.local;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertNotNull;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.OCreateDatabaseUtil;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.record.OVertex;
 import java.util.Iterator;
 import org.junit.After;
@@ -16,20 +14,14 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class OBrowseClusterTest {
-
   private ODatabaseSession db;
   private OrientDB orientDb;
 
   @Before
   public void before() {
     orientDb =
-        new OrientDB(
-            "embedded:",
-            OrientDBConfig.builder()
-                .addConfig(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS, 1)
-                .build());
-    orientDb.create("test", ODatabaseType.MEMORY);
-    db = orientDb.open("test", "admin", "admin");
+        OCreateDatabaseUtil.createDatabase("test", "embedded:", OCreateDatabaseUtil.TYPE_MEMORY);
+    db = orientDb.open("test", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
     db.createVertexClass("One");
   }
 
