@@ -6,11 +6,11 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import com.orientechnologies.orient.core.OCreateDatabaseUtil;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
@@ -31,7 +31,6 @@ public class OTransactionDataTest {
 
   @Test
   public void testReadWriteTransactionData() throws IOException {
-
     OTransactionData data = new OTransactionData(new OTransactionId(Optional.of("one"), 1, 2));
     byte[] recordData = new byte[] {1, 2, 3};
     ORecordId recordId = new ORecordId(10, 10);
@@ -63,9 +62,10 @@ public class OTransactionDataTest {
 
   @Test
   public void testTransactionDataChangesFromTransaction() throws IOException {
-    try (OrientDB orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig())) {
-      orientDB.create("test", ODatabaseType.MEMORY);
-      try (ODatabaseSession db = orientDB.open("test", "admin", "admin")) {
+    try (final OrientDB orientDB =
+        OCreateDatabaseUtil.createDatabase("test", "embedded:", OCreateDatabaseUtil.TYPE_MEMORY)) {
+      try (final ODatabaseSession db =
+          orientDB.open("test", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD)) {
         db.createClass("test");
         db.begin();
         ODocument doc = new ODocument("test");
@@ -92,11 +92,11 @@ public class OTransactionDataTest {
 
   @Test
   public void testReApplyFromTransactionData() throws IOException {
-
-    try (OrientDB orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig())) {
-      orientDB.create("test", ODatabaseType.MEMORY);
+    try (final OrientDB orientDB =
+        OCreateDatabaseUtil.createDatabase("test", "embedded:", OCreateDatabaseUtil.TYPE_MEMORY)) {
       ByteArrayOutputStream backup = new ByteArrayOutputStream();
-      try (ODatabaseSession db = orientDB.open("test", "admin", "admin")) {
+      try (final ODatabaseSession db =
+          orientDB.open("test", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD)) {
         db.createClass("test");
         db.begin();
         ODocument doc = new ODocument("test");
@@ -111,9 +111,17 @@ public class OTransactionDataTest {
         export.exportDatabase();
         export.close();
       }
-      orientDB.create("test1", ODatabaseType.MEMORY);
-      try (ODatabaseSession db = orientDB.open("test1", "admin", "admin")) {
-        ODatabaseImport imp =
+      orientDB.execute(
+          "create database "
+              + "test1"
+              + " "
+              + ODatabaseType.MEMORY
+              + " users ( admin identified by '"
+              + OCreateDatabaseUtil.NEW_ADMIN_PASSWORD
+              + "' role admin)");
+      try (ODatabaseSession db =
+          orientDB.open("test1", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD)) {
+        final ODatabaseImport imp =
             new ODatabaseImport(
                 (ODatabaseDocumentInternal) db,
                 new ByteArrayInputStream(backup.toByteArray()),
@@ -123,7 +131,8 @@ public class OTransactionDataTest {
       }
 
       OTransactionData data = new OTransactionData(new OTransactionId(Optional.empty(), 1, 2));
-      try (ODatabaseSession db = orientDB.open("test", "admin", "admin")) {
+      try (final ODatabaseSession db =
+          orientDB.open("test", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD)) {
         db.begin();
         ODocument doc = new ODocument("test");
         doc.setProperty("field", "value2");
@@ -139,7 +148,8 @@ public class OTransactionDataTest {
         }
         db.commit();
       }
-      try (ODatabaseSession db = orientDB.open("test1", "admin", "admin")) {
+      try (final ODatabaseSession db =
+          orientDB.open("test1", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD)) {
         ((ODatabaseDocumentInternal) db).syncCommit(data);
 
         assertEquals(2, db.countClass("test"));

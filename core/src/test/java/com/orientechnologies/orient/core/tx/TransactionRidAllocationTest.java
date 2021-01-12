@@ -6,7 +6,6 @@ import static org.junit.Assert.assertTrue;
 
 import com.orientechnologies.orient.core.OCreateDatabaseUtil;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -30,7 +29,7 @@ public class TransactionRidAllocationTest {
 
   @Before
   public void before() {
-    final OrientDB orientDB =
+    orientDB =
         OCreateDatabaseUtil.createDatabase("test", "embedded:", OCreateDatabaseUtil.TYPE_MEMORY);
     db =
         (ODatabaseDocumentInternal)
@@ -77,8 +76,17 @@ public class TransactionRidAllocationTest {
   @Test
   public void testMultipleDbAllocationAndCommit() {
     ODatabaseDocumentInternal second;
-    orientDB.create("secondTest", ODatabaseType.MEMORY);
-    second = (ODatabaseDocumentInternal) orientDB.open("secondTest", "admin", "admin");
+    orientDB.execute(
+        "create database "
+            + "secondTest"
+            + " "
+            + "memory"
+            + " users ( admin identified by '"
+            + OCreateDatabaseUtil.NEW_ADMIN_PASSWORD
+            + "' role admin)");
+    second =
+        (ODatabaseDocumentInternal)
+            orientDB.open("secondTest", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
 
     db.activateOnCurrentThread();
     db.begin();
@@ -100,7 +108,7 @@ public class TransactionRidAllocationTest {
     ((OAbstractPaginatedStorage) db.getStorage())
         .commitPreAllocated((OTransactionInternal) db.getTransaction());
 
-    ODatabaseDocument db1 = orientDB.open("test", "admin", "admin");
+    ODatabaseDocument db1 = orientDB.open("test", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
     assertNotNull(db1.load(generated));
 
     db1.close();
@@ -108,7 +116,8 @@ public class TransactionRidAllocationTest {
     ((OAbstractPaginatedStorage) second.getStorage())
         .commitPreAllocated((OTransactionInternal) second.getTransaction());
     second.close();
-    ODatabaseDocument db2 = orientDB.open("secondTest", "admin", "admin");
+    final ODatabaseDocument db2 =
+        orientDB.open("secondTest", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
     assertNotNull(db2.load(generated));
     db2.close();
   }
@@ -116,8 +125,17 @@ public class TransactionRidAllocationTest {
   @Test(expected = OConcurrentCreateException.class)
   public void testMultipleDbAllocationNotAlignedFailure() {
     ODatabaseDocumentInternal second;
-    orientDB.create("secondTest", ODatabaseType.MEMORY);
-    second = (ODatabaseDocumentInternal) orientDB.open("secondTest", "admin", "admin");
+    orientDB.execute(
+        "create database "
+            + "secondTest"
+            + " "
+            + "memory"
+            + " users ( admin identified by '"
+            + OCreateDatabaseUtil.NEW_ADMIN_PASSWORD
+            + "' role admin)");
+    second =
+        (ODatabaseDocumentInternal)
+            orientDB.open("secondTest", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
     // THIS OFFSET FIRST DB FROM THE SECOND
     for (int i = 0; i < 20; i++) {
       second.save(second.newVertex("V"));
@@ -163,8 +181,9 @@ public class TransactionRidAllocationTest {
     ((OAbstractPaginatedStorage) db.getStorage())
         .commitPreAllocated((OTransactionInternal) db.getTransaction());
 
-    ODatabaseDocument db1 = orientDB.open("test", "admin", "admin");
-    for (ORID id : allocated) {
+    final ODatabaseDocument db1 =
+        orientDB.open("test", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
+    for (final ORID id : allocated) {
       assertNotNull(db1.load(id));
     }
     db1.close();
