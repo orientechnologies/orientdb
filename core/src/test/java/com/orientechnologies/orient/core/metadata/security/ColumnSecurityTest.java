@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.core.metadata.security;
 
+import com.orientechnologies.orient.core.OCreateDatabaseUtil;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
@@ -23,14 +25,18 @@ import org.junit.Test;
 
 @Ignore
 public class ColumnSecurityTest {
-
   static String DB_NAME = "test";
   static OrientDB orient;
   private ODatabaseSession db;
 
   @BeforeClass
   public static void beforeClass() {
-    orient = new OrientDB("plocal:.", OrientDBConfig.defaultConfig());
+    orient =
+        new OrientDB(
+            "plocal:.",
+            OrientDBConfig.builder()
+                .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
+                .build());
   }
 
   @AfterClass
@@ -40,8 +46,15 @@ public class ColumnSecurityTest {
 
   @Before
   public void before() {
-    orient.create("test", ODatabaseType.MEMORY);
-    this.db = orient.open(DB_NAME, "admin", "admin");
+    orient.execute(
+        "create database "
+            + DB_NAME
+            + " "
+            + "memory"
+            + " users ( admin identified by '"
+            + OCreateDatabaseUtil.NEW_ADMIN_PASSWORD
+            + "' role admin)");
+    this.db = orient.open(DB_NAME, "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
   }
 
   @After
