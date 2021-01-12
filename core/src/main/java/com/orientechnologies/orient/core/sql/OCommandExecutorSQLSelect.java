@@ -140,6 +140,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   public static final String KEYWORD_UNWIND = "UNWIND";
   public static final String KEYWORD_FETCHPLAN = "FETCHPLAN";
   public static final String KEYWORD_NOCACHE = "NOCACHE";
+  public static final String KEYWORD_FOREACH = "FOREACH";
   private static final String KEYWORD_AS = "AS";
   private static final String KEYWORD_PARALLEL = "PARALLEL";
   private static final int PARTIAL_SORT_BUFFER_THRESHOLD = 10000;

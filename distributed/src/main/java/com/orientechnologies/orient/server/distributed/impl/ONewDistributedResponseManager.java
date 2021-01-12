@@ -71,10 +71,7 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
   }
 
   @Override
-  public synchronized void removeServerBecauseUnreachable(String node) {
-    responseCount += 1;
-    checkFinished(new ArrayList<>());
-  }
+  public void removeServerBecauseUnreachable(String node) {}
 
   @Override
   public synchronized boolean waitForSynchronousResponses() throws InterruptedException {

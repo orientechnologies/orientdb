@@ -28,8 +28,8 @@ public class AccumulatingTimeoutStep extends AbstractExecutionStep {
 
       @Override
       public boolean hasNext() {
-        if (totalTime.get() / 1_000_000 > timeoutMillis) {
-          fail();
+        if (timedOut) {
+          return false;
         }
         long begin = System.nanoTime();
 
@@ -44,6 +44,9 @@ public class AccumulatingTimeoutStep extends AbstractExecutionStep {
       public OResult next() {
         if (totalTime.get() / 1_000_000 > timeoutMillis) {
           fail();
+          if (timedOut) {
+            return new OResultInternal();
+          }
         }
         long begin = System.nanoTime();
         try {
@@ -70,12 +73,12 @@ public class AccumulatingTimeoutStep extends AbstractExecutionStep {
     };
   }
 
-  private OResultSet fail() {
+  private void fail() {
     this.timedOut = true;
-    sendTimeout();
     if (OTimeout.RETURN.equals(this.timeout.getFailureStrategy())) {
-      return new OInternalResultSet();
+      // do nothing
     } else {
+      sendTimeout();
       throw new OTimeoutException("Timeout expired");
     }
   }
