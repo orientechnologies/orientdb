@@ -23,7 +23,6 @@ public class TestLinkedDocumentInMap {
 
   @Test
   public void testLinkedValue() {
-
     db.getMetadata().getSchema().createClass("PersonTest");
     db.command(new OCommandSQL("delete from PersonTest")).execute();
     ODocument jaimeDoc = new ODocument("PersonTest");

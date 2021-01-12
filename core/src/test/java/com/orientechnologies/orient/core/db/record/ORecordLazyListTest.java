@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.db.record;
 
 import static org.junit.Assert.assertTrue;
 
+import com.orientechnologies.orient.core.OCreateDatabaseUtil;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
@@ -20,15 +21,21 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class ORecordLazyListTest {
-
   private OrientDB orientDb;
   private ODatabaseSession dbSession;
 
   @Before
   public void init() throws Exception {
-    orientDb = new OrientDB("memory:localhost", null);
-    orientDb.create(ORecordLazyListTest.class.getSimpleName(), ODatabaseType.MEMORY);
-    dbSession = orientDb.open(ORecordLazyListTest.class.getSimpleName(), "admin", "admin");
+    orientDb =
+        OCreateDatabaseUtil.createDatabase(
+            ORecordLazyListTest.class.getSimpleName(),
+            "memory:localhost",
+            OCreateDatabaseUtil.TYPE_MEMORY);
+    dbSession =
+        orientDb.open(
+            ORecordLazyListTest.class.getSimpleName(),
+            "admin",
+            OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
   }
 
   @Test
