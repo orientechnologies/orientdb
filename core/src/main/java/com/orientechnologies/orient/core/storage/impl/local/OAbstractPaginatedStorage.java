@@ -6198,6 +6198,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       nextOperationId = Integer.MIN_VALUE;
     }
 
+    return restoreFrom(lsn, nextOperationId);
+  }
+
+  protected OLogSequenceNumber restoreFrom(OLogSequenceNumber lsn, int nextOperationId)
+      throws IOException {
     try {
       OLogSequenceNumber logSequenceNumber = null;
       final OModifiableBoolean atLeastOnePageUpdate = new OModifiableBoolean();
