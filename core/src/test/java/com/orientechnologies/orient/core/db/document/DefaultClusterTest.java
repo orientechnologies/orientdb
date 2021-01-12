@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.db.document;
 
+import com.orientechnologies.orient.core.OCreateDatabaseUtil;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
@@ -12,12 +13,10 @@ import org.junit.Test;
 public class DefaultClusterTest {
   @Test
   public void defaultClusterTest() {
-    OrientDB context = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
-
-    context.create("test", ODatabaseType.MEMORY);
-
-    try (ODatabaseSession db = context.open("test", "admin", "admin")) {
-
+    final OrientDB context =
+        OCreateDatabaseUtil.createDatabase("test", "embedded:", OCreateDatabaseUtil.TYPE_MEMORY);
+    try (final ODatabaseSession db =
+        context.open("test", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD)) {
       OVertex v = db.newVertex("V");
 
       v.setProperty("embedded", new ODocument());

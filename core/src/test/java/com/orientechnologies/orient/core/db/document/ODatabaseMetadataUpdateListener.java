@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.db.document;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import com.orientechnologies.orient.core.OCreateDatabaseUtil;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -31,9 +32,9 @@ public class ODatabaseMetadataUpdateListener {
 
   @Before
   public void before() {
-    orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
-    orientDB.create("test", ODatabaseType.MEMORY);
-    session = orientDB.open("test", "admin", "admin");
+    orientDB = OCreateDatabaseUtil.createDatabase(
+        "test", "embedded:", OCreateDatabaseUtil.TYPE_MEMORY);
+    session = orientDB.open("test", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
     count = 0;
     OMetadataUpdateListener listener =
         new OMetadataUpdateListener() {

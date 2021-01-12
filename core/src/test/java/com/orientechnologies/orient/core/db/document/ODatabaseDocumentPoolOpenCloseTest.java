@@ -17,7 +17,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class ODatabaseDocumentPoolOpenCloseTest {
-
   private ODatabaseDocument dbo;
 
   @Before
@@ -46,7 +45,6 @@ public class ODatabaseDocumentPoolOpenCloseTest {
 
   @Test(expected = ODatabaseException.class)
   public void failureOpenPoolDatabase() {
-
     OPartitionedDatabasePool pool = new OPartitionedDatabasePool(dbo.getURL(), "admin", "admin");
     try {
       ODatabaseDocument db = pool.acquire();
