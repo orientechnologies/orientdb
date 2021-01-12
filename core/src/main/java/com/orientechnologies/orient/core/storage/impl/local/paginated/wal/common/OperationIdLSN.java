@@ -8,14 +8,10 @@ public final class OperationIdLSN {
 
   @Override
   public String toString() {
-    return "OperationIdLSN{" +
-        "operationId=" + operationId +
-        ", lsn=" + lsn +
-        '}';
+    return "OperationIdLSN{" + "operationId=" + operationId + ", lsn=" + lsn + '}';
   }
 
-  public OperationIdLSN(int operationId,
-      OLogSequenceNumber lsn) {
+  public OperationIdLSN(int operationId, OLogSequenceNumber lsn) {
     this.operationId = operationId;
     this.lsn = lsn;
   }

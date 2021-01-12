@@ -310,7 +310,8 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
     }
 
     currentSegment = nextSegmentId;
-    this.maxSegmentSize = maxSegmentSize;
+    this.maxSegmentSize =
+        maxSegmentSize < Integer.MAX_VALUE / 4 ? maxSegmentSize : Integer.MAX_VALUE / 4;
     this.segmentAdditionTs = System.nanoTime();
 
     final int lastOperationId = extractLastOperationId();
@@ -898,7 +899,11 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
 
     if (localFlushedLsn != null && lsn.compareTo(localFlushedLsn) <= 0) event.run();
     else {
-      events.put(lsn, wrapper);
+      final EventWrapper eventWrapper = events.put(lsn, wrapper);
+      if (eventWrapper != null) {
+        throw new IllegalStateException(
+            "It is impossible to have several wrappers bound to the same LSN - lsn = " + lsn);
+      }
 
       final OLogSequenceNumber potentiallyUpdatedLocalFlushedLsn = flushedLSN;
       if (potentiallyUpdatedLocalFlushedLsn != null
@@ -1544,7 +1549,10 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
       OWALRecord prevRecord = unassignedRecordsIterator.previous();
       final OLogSequenceNumber prevLSN = prevRecord.getLsn();
 
-      assert prevLSN.getPosition() >= 0;
+      if (prevLSN.getPosition() < 0) {
+        throw new IllegalStateException(
+            "There should be at least one record in the queue which has valid position");
+      }
 
       while (unassignedRecordsIterator.hasPrevious()) {
         final OWALRecord record = unassignedRecordsIterator.previous();

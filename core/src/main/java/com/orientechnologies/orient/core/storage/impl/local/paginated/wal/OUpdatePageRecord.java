@@ -96,15 +96,17 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
       return false;
     }
 
-
     return Objects.equals(operationIdLSN.lsn, that.operationIdLSN.lsn);
   }
 
   @Override
   public int hashCode() {
     int result = super.hashCode();
-    result = 31 * result +
-        (operationIdLSN != null && operationIdLSN.lsn != null ? operationIdLSN.lsn.hashCode() : 0);
+    result =
+        31 * result
+            + (operationIdLSN != null && operationIdLSN.lsn != null
+                ? operationIdLSN.lsn.hashCode()
+                : 0);
     return result;
   }
 
