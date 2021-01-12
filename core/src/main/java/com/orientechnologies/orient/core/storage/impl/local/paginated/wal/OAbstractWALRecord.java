@@ -156,9 +156,7 @@ public abstract class OAbstractWALRecord implements WriteableWALRecord {
 
   protected String toString(final String iToAppend) {
     final StringBuilder buffer = new StringBuilder(getClass().getName());
-    buffer
-        .append("{lsn_operation_id=")
-        .append(operationIdLSN);
+    buffer.append("{lsn_operation_id=").append(operationIdLSN);
 
     if (iToAppend != null) {
       buffer.append(", ");

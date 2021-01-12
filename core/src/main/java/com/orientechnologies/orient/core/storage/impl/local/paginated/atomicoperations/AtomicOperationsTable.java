@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class AtomicOperationsTable {
   private static final OperationInformation ATOMIC_OPERATION_STATUS_PLACE_HOLDER =
-      new OperationInformation(AtomicOperationStatus.NOT_STARTED, -1);
+      new OperationInformation(AtomicOperationStatus.NOT_STARTED, -1, -1);
 
   private long[] idOffsets;
   private CASObjectArray<OperationInformation>[] tables;
@@ -120,11 +120,18 @@ public class AtomicOperationsTable {
           if (newStatus == AtomicOperationStatus.IN_PROGRESS) {
             table.set(
                 itemIndex,
-                new OperationInformation(AtomicOperationStatus.IN_PROGRESS, segment),
+                new OperationInformation(AtomicOperationStatus.IN_PROGRESS, segment, operationId),
                 ATOMIC_OPERATION_STATUS_PLACE_HOLDER);
             operationsStarted.incrementAndGet();
           } else {
             final OperationInformation currentInformation = table.get(itemIndex);
+            if (currentInformation.operationId != operationId) {
+              throw new IllegalStateException(
+                  "Invalid operation id, expected "
+                      + currentInformation.operationId
+                      + " but found "
+                      + operationId);
+            }
             if (currentInformation.status != expectedStatus) {
               throw new IllegalStateException(
                   "Invalid state of table of atomic operations, incorrect expected state "
@@ -139,7 +146,7 @@ public class AtomicOperationsTable {
             if (!table.compareAndSet(
                 itemIndex,
                 currentInformation,
-                new OperationInformation(newStatus, currentInformation.segment))) {
+                new OperationInformation(newStatus, currentInformation.segment, operationId))) {
               throw new IllegalStateException("Invalid state of table of atomic operations");
             }
           }
@@ -254,10 +261,12 @@ public class AtomicOperationsTable {
   private static final class OperationInformation {
     private final AtomicOperationStatus status;
     private final long segment;
+    private final long operationId;
 
-    private OperationInformation(AtomicOperationStatus status, long segment) {
+    private OperationInformation(AtomicOperationStatus status, long segment, long operationId) {
       this.status = status;
       this.segment = segment;
+      this.operationId = operationId;
     }
   }
 }

@@ -371,7 +371,6 @@ public class ODurablePage {
     buffer.putInt(WAL_OPERATION_ID_OFFSET, operationIdLSN.operationId);
   }
 
-
   public static void setPageLSN(final OLogSequenceNumber lsn, final OCacheEntry cacheEntry) {
     final ByteBuffer buffer = cacheEntry.getCachePointer().getBufferDuplicate();
     assert buffer != null;

@@ -6337,9 +6337,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     final Map<String, Long> files = writeCache.files();
     int scannedFiles = 0;
     for (final Map.Entry<String, Long> fileEntry : files.entrySet()) {
-      OLogManager.instance().infoNoDb(this,
-          "Scanning of file %s in storage %s (%d out of %d files are scanned)",
-          fileEntry.getKey(), name, scannedFiles, files.size());
+      OLogManager.instance()
+          .infoNoDb(
+              this,
+              "Scanning of file %s in storage %s (%d out of %d files are scanned)",
+              fileEntry.getKey(),
+              name,
+              scannedFiles,
+              files.size());
 
       final long fileId = fileEntry.getValue();
       final long filledUpTo = writeCache.getFilledUpTo(fileId);
@@ -6358,12 +6363,16 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             throw new IllegalStateException("Id of WAL operation can not be duplicated");
           }
 
-          final int scannedPercent = (int)((100 * (pageIndex + 1)) / filledUpTo);
+          final int scannedPercent = (int) ((100 * (pageIndex + 1)) / filledUpTo);
           if (scannedPercent >= prevScannedPercent + 10) {
             prevScannedPercent = scannedPercent;
-            OLogManager.instance().infoNoDb(this,
-                "%d %% of file %s in storage %s  is scanned.", scannedPercent, fileEntry.getKey(),
-                name);
+            OLogManager.instance()
+                .infoNoDb(
+                    this,
+                    "%d %% of file %s in storage %s  is scanned.",
+                    scannedPercent,
+                    fileEntry.getKey(),
+                    name);
           }
         } finally {
           readCache.releaseFromRead(cacheEntry, writeCache);

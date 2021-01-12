@@ -356,7 +356,8 @@ public final class OWALRecordsFactory {
     final int maxCompressedLength = compressor.maxCompressedLength(contentSize - 1);
 
     final ByteBuffer compressedContent =
-        ByteBuffer.allocate(maxCompressedLength + COMPRESSED_METADATA_SIZE).order(ByteOrder.nativeOrder());
+        ByteBuffer.allocate(maxCompressedLength + COMPRESSED_METADATA_SIZE)
+            .order(ByteOrder.nativeOrder());
 
     content.position(OPERATION_ID_OFFSET + OPERATION_ID_SIZE);
     compressedContent.position(COMPRESSED_METADATA_SIZE);
@@ -394,7 +395,11 @@ public final class OWALRecordsFactory {
       final byte[] restored = new byte[originalLen];
 
       final LZ4FastDecompressor decompressor = factory.fastDecompressor();
-      decompressor.decompress(content, COMPRESSED_METADATA_SIZE, restored, METADATA_SIZE,
+      decompressor.decompress(
+          content,
+          COMPRESSED_METADATA_SIZE,
+          restored,
+          METADATA_SIZE,
           restored.length - METADATA_SIZE);
       recordId = -recordId - 1;
       content = restored;
