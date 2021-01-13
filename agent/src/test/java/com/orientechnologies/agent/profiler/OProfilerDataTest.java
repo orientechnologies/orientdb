@@ -19,7 +19,7 @@ public class OProfilerDataTest {
 
     Assert.assertNotNull(data.getCountersAsString());
     Assert.assertNotNull(data.getChronosAsString());
-    Assert.assertNotNull(data.getCounters() );
+    Assert.assertNotNull(data.getCounters());
     Assert.assertNotNull(data.getHooks());
     Assert.assertNotNull(data.getChronos());
     Assert.assertNotNull(data.getStats());
@@ -28,17 +28,13 @@ public class OProfilerDataTest {
     Assert.assertNull(data.getStat("foobar"));
     data.updateStat("foobar", 10L);
     Assert.assertEquals(10L, data.getStat("foobar").last);
-
   }
-
-
 
   @Test
   public void testClear() {
     OProfilerData data = new OProfilerData();
     data.updateCounter("foo", 1);
     data.updateStat("foo", 1);
-
 
     Assert.assertEquals(-1, data.getCounter("asdf"));
     Assert.assertEquals(1, data.getCounter("foo"));
