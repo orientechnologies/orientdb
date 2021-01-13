@@ -16,7 +16,7 @@ public class TransactionTest {
 
   @Before
   public void before() {
-    final OrientDB orientDB =
+    orientDB =
         OCreateDatabaseUtil.createDatabase("test", "embedded:", OCreateDatabaseUtil.TYPE_MEMORY);
     db = orientDB.open("test", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
   }

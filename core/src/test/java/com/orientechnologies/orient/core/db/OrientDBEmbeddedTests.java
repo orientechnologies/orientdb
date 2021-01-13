@@ -8,6 +8,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import com.orientechnologies.orient.core.OCreateDatabaseUtil;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -17,9 +18,7 @@ import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import java.util.List;
-import java.util.TimerTask;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -32,7 +31,6 @@ import org.junit.Test;
 
 /** Created by tglman on 08/04/16. */
 public class OrientDBEmbeddedTests {
-
   @Test
   public void testCompatibleUrl() {
     try (OrientDB orientDb = new OrientDB("plocal:", OrientDBConfig.defaultConfig())) {}
@@ -46,12 +44,12 @@ public class OrientDBEmbeddedTests {
 
   @Test
   public void createAndUseEmbeddedDatabase() {
-    try (OrientDB orientDb = new OrientDB("embedded:", OrientDBConfig.defaultConfig())) {
-
-      if (!orientDb.exists("createAndUseEmbeddedDatabase"))
-        orientDb.create("createAndUseEmbeddedDatabase", ODatabaseType.MEMORY);
-
-      ODatabaseSession db = orientDb.open("createAndUseEmbeddedDatabase", "admin", "admin");
+    try (final OrientDB orientDb =
+        OCreateDatabaseUtil.createDatabase(
+            "createAndUseEmbeddedDatabase", "embedded:", OCreateDatabaseUtil.TYPE_MEMORY)) {
+      final ODatabaseSession db =
+          orientDb.open(
+              "createAndUseEmbeddedDatabase", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
       db.save(new ODocument(), db.getClusterNameById(db.getDefaultClusterId()));
       db.close();
     }
@@ -83,34 +81,28 @@ public class OrientDBEmbeddedTests {
 
   @Test
   public void testMultiThread() {
-
-    try (OrientDB orientDb = new OrientDB("embedded:", OrientDBConfig.defaultConfig())) {
-
-      if (!orientDb.exists("testMultiThread"))
-        orientDb.create("testMultiThread", ODatabaseType.MEMORY);
-
-      ODatabasePool pool = new ODatabasePool(orientDb, "testMultiThread", "admin", "admin");
+    try (final OrientDB orientDb =
+        OCreateDatabaseUtil.createDatabase(
+            "testMultiThread", "embedded:", OCreateDatabaseUtil.TYPE_MEMORY)) {
+      final ODatabasePool pool =
+          new ODatabasePool(
+              orientDb, "testMultiThread", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
 
       // do a query and assert on other thread
       Runnable acquirer =
           () -> {
             ODatabaseSession db = pool.acquire();
-
             try {
               assertThat(db.isActiveOnCurrentThread()).isTrue();
-
-              List<ODocument> res = db.query(new OSQLSynchQuery<>("SELECT * FROM OUser"));
-
-              assertThat(res).hasSize(3);
-
+              final List<ODocument> res = db.query(new OSQLSynchQuery<>("SELECT * FROM OUser"));
+              assertThat(res).hasSize(1); // Only 'admin' created in this test
             } finally {
-
               db.close();
             }
           };
 
       // spawn 20 threads
-      List<CompletableFuture<Void>> futures =
+      final List<CompletableFuture<Void>> futures =
           IntStream.range(0, 19)
               .boxed()
               .map(i -> CompletableFuture.runAsync(acquirer))
@@ -136,16 +128,24 @@ public class OrientDBEmbeddedTests {
 
   @Test
   public void testRegisterDatabase() {
-    OrientDBEmbedded orientDb =
-        (OrientDBEmbedded) new OrientDB("embedded:", OrientDBConfig.defaultConfig()).getInternal();
+    final OrientDBEmbedded orientDb =
+        (OrientDBEmbedded)
+            new OrientDB(
+                    "embedded:",
+                    OrientDBConfig.builder()
+                        .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
+                        .build())
+                .getInternal();
     assertEquals(orientDb.listDatabases("", "").size(), 0);
     orientDb.initCustomStorage("database1", "./target/databases/database1", "", "");
-    try (ODatabaseSession db = orientDb.open("database1", "admin", "admin")) {
+    try (final ODatabaseSession db =
+        orientDb.open("database1", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD)) {
       assertEquals("database1", db.getName());
     }
     orientDb.initCustomStorage("database2", "./target/databases/database2", "", "");
 
-    try (ODatabaseSession db = orientDb.open("database2", "admin", "admin")) {
+    try (final ODatabaseSession db =
+        orientDb.open("database2", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD)) {
       assertEquals("database2", db.getName());
     }
     orientDb.drop("database1", null, null);
@@ -155,12 +155,14 @@ public class OrientDBEmbeddedTests {
 
   @Test
   public void testCopyOpenedDatabase() {
-    try (OrientDB orientDb = new OrientDB("embedded:", OrientDBConfig.defaultConfig())) {
-
-      orientDb.create("testCopyOpenedDatabase", ODatabaseType.MEMORY);
+    try (final OrientDB orientDb =
+        OCreateDatabaseUtil.createDatabase(
+            "testCopyOpenedDatabase", "embedded:", OCreateDatabaseUtil.TYPE_MEMORY)) {
       ODatabaseSession db1;
       try (ODatabaseDocumentInternal db =
-          (ODatabaseDocumentInternal) orientDb.open("testCopyOpenedDatabase", "admin", "admin")) {
+          (ODatabaseDocumentInternal)
+              orientDb.open(
+                  "testCopyOpenedDatabase", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD)) {
         db1 = db.copy();
       }
       db1.activateOnCurrentThread();
@@ -213,22 +215,47 @@ public class OrientDBEmbeddedTests {
 
   @Test
   public void testPoolByUrl() {
-
-    OrientDB orientDb = new OrientDB("embedded:./target", OrientDBConfig.defaultConfig());
-    orientDb.createIfNotExists("some", ODatabaseType.PLOCAL);
-
+    final OrientDB orientDb =
+        OCreateDatabaseUtil.createDatabase(
+            "some", "embedded:./target", OCreateDatabaseUtil.TYPE_PLOCAL);
     orientDb.close();
 
-    ODatabasePool pool = new ODatabasePool("embedded:./target/some", "admin", "admin");
+    final ODatabasePool pool =
+        new ODatabasePool(
+            "embedded:./target/some", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
     pool.close();
   }
 
   @Test
   public void testDropTL() {
-    OrientDB orientDb = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
-    orientDb.createIfNotExists("some", ODatabaseType.MEMORY);
-    orientDb.createIfNotExists("some1", ODatabaseType.MEMORY);
-    ODatabaseDocument db = orientDb.open("some", "admin", "admin");
+    final OrientDB orientDb =
+        new OrientDB(
+            "embedded:",
+            OrientDBConfig.builder()
+                .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
+                .build());
+    if (!orientDb.exists("some")) {
+      orientDb.execute(
+          "create database "
+              + "some"
+              + " "
+              + "memory"
+              + " users ( admin identified by '"
+              + OCreateDatabaseUtil.NEW_ADMIN_PASSWORD
+              + "' role admin)");
+    }
+    if (!orientDb.exists("some1")) {
+      orientDb.execute(
+          "create database "
+              + "some1"
+              + " "
+              + "memory"
+              + " users ( admin identified by '"
+              + OCreateDatabaseUtil.NEW_ADMIN_PASSWORD
+              + "' role admin)");
+    }
+    final ODatabaseDocument db =
+        orientDb.open("some", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
     orientDb.drop("some1");
     db.close();
     orientDb.close();
@@ -236,7 +263,14 @@ public class OrientDBEmbeddedTests {
 
   @Test
   public void testClosePool() {
-    ODatabasePool pool = new ODatabasePool("embedded:./target/some", "admin", "admin");
+    final ODatabasePool pool =
+        new ODatabasePool(
+            "embedded:./target/some",
+            "admin",
+            OCreateDatabaseUtil.NEW_ADMIN_PASSWORD,
+            OrientDBConfig.builder()
+                .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
+                .build());
     assertFalse(pool.isClosed());
     pool.close();
     assertTrue(pool.isClosed());
@@ -245,24 +279,64 @@ public class OrientDBEmbeddedTests {
   @Test
   public void testPoolFactory() {
     OrientDBConfig config =
-        OrientDBConfig.builder().addConfig(OGlobalConfiguration.DB_CACHED_POOL_CAPACITY, 2).build();
+        OrientDBConfig.builder()
+            .addConfig(OGlobalConfiguration.DB_CACHED_POOL_CAPACITY, 2)
+            .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
+            .build();
     OrientDB orientDB = new OrientDB("embedded:testdb", config);
-    orientDB.createIfNotExists("testdb", ODatabaseType.MEMORY);
-
-    ODatabasePool poolAdmin1 = orientDB.cachedPool("testdb", "admin", "admin");
-    ODatabasePool poolAdmin2 = orientDB.cachedPool("testdb", "admin", "admin");
-    ODatabasePool poolReader1 = orientDB.cachedPool("testdb", "reader", "reader");
-    ODatabasePool poolReader2 = orientDB.cachedPool("testdb", "reader", "reader");
+    if (!orientDB.exists("testdb")) {
+      orientDB.execute(
+          "create database "
+              + "testdb"
+              + " "
+              + "memory"
+              + " users ( admin identified by '"
+              + OCreateDatabaseUtil.NEW_ADMIN_PASSWORD
+              + "' role admin, reader identified by '"
+              + OCreateDatabaseUtil.NEW_ADMIN_PASSWORD
+              + "' role reader, writer identified by '"
+              + OCreateDatabaseUtil.NEW_ADMIN_PASSWORD
+              + "' role writer)");
+    }
+    ODatabasePool poolAdmin1 =
+        orientDB.cachedPool(
+            "testdb",
+            "admin",
+            OCreateDatabaseUtil.NEW_ADMIN_PASSWORD,
+            OrientDBConfig.builder()
+                .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
+                .build());
+    ODatabasePool poolAdmin2 =
+        orientDB.cachedPool(
+            "testdb",
+            "admin",
+            OCreateDatabaseUtil.NEW_ADMIN_PASSWORD,
+            OrientDBConfig.builder()
+                .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
+                .build());
+    ODatabasePool poolReader1 =
+        orientDB.cachedPool("testdb", "reader", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
+    ODatabasePool poolReader2 =
+        orientDB.cachedPool("testdb", "reader", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
 
     assertEquals(poolAdmin1, poolAdmin2);
     assertEquals(poolReader1, poolReader2);
     assertNotEquals(poolAdmin1, poolReader1);
 
-    ODatabasePool poolWriter1 = orientDB.cachedPool("testdb", "writer", "writer");
-    ODatabasePool poolWriter2 = orientDB.cachedPool("testdb", "writer", "writer");
+    ODatabasePool poolWriter1 =
+        orientDB.cachedPool("testdb", "writer", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
+    ODatabasePool poolWriter2 =
+        orientDB.cachedPool("testdb", "writer", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
     assertEquals(poolWriter1, poolWriter2);
 
-    ODatabasePool poolAdmin3 = orientDB.cachedPool("testdb", "admin", "admin");
+    ODatabasePool poolAdmin3 =
+        orientDB.cachedPool(
+            "testdb",
+            "admin",
+            OCreateDatabaseUtil.NEW_ADMIN_PASSWORD,
+            OrientDBConfig.builder()
+                .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
+                .build());
     assertNotEquals(poolAdmin1, poolAdmin3);
 
     orientDB.close();
@@ -274,15 +348,54 @@ public class OrientDBEmbeddedTests {
         OrientDBConfig.builder()
             .addConfig(OGlobalConfiguration.DB_CACHED_POOL_CAPACITY, 2)
             .addConfig(OGlobalConfiguration.DB_CACHED_POOL_CLEAN_UP_TIMEOUT, 1_000)
+            .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
             .build();
     OrientDB orientDB = new OrientDB("embedded:testdb", config);
-    orientDB.createIfNotExists("testdb", ODatabaseType.MEMORY);
-    orientDB.createIfNotExists("testdb1", ODatabaseType.MEMORY);
+    if (!orientDB.exists("testdb")) {
+      orientDB.execute(
+          "create database "
+              + "testdb"
+              + " "
+              + "memory"
+              + " users ( admin identified by '"
+              + OCreateDatabaseUtil.NEW_ADMIN_PASSWORD
+              + "' role admin)");
+    }
+    if (!orientDB.exists("testdb1")) {
+      orientDB.execute(
+          "create database "
+              + "testdb1"
+              + " "
+              + "memory"
+              + " users ( admin identified by '"
+              + OCreateDatabaseUtil.NEW_ADMIN_PASSWORD
+              + "' role admin)");
+    }
 
-    ODatabasePool poolNotUsed = orientDB.cachedPool("testdb1", "admin", "admin");
-    ODatabasePool poolAdmin1 = orientDB.cachedPool("testdb", "admin", "admin");
-    ODatabasePool poolAdmin2 = orientDB.cachedPool("testdb", "admin", "admin");
-
+    ODatabasePool poolNotUsed =
+        orientDB.cachedPool(
+            "testdb1",
+            "admin",
+            OCreateDatabaseUtil.NEW_ADMIN_PASSWORD,
+            OrientDBConfig.builder()
+                .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
+                .build());
+    ODatabasePool poolAdmin1 =
+        orientDB.cachedPool(
+            "testdb",
+            "admin",
+            OCreateDatabaseUtil.NEW_ADMIN_PASSWORD,
+            OrientDBConfig.builder()
+                .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
+                .build());
+    ODatabasePool poolAdmin2 =
+        orientDB.cachedPool(
+            "testdb",
+            "admin",
+            OCreateDatabaseUtil.NEW_ADMIN_PASSWORD,
+            OrientDBConfig.builder()
+                .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
+                .build());
     assertFalse(poolAdmin1.isClosed());
     assertEquals(poolAdmin1, poolAdmin2);
 
@@ -292,11 +405,25 @@ public class OrientDBEmbeddedTests {
 
     Thread.sleep(3_000);
 
-    ODatabasePool poolAdmin3 = orientDB.cachedPool("testdb", "admin", "admin");
+    ODatabasePool poolAdmin3 =
+        orientDB.cachedPool(
+            "testdb",
+            "admin",
+            OCreateDatabaseUtil.NEW_ADMIN_PASSWORD,
+            OrientDBConfig.builder()
+                .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
+                .build());
     assertNotEquals(poolAdmin1, poolAdmin3);
     assertFalse(poolAdmin3.isClosed());
 
-    ODatabasePool poolOther = orientDB.cachedPool("testdb", "admin", "admin");
+    ODatabasePool poolOther =
+        orientDB.cachedPool(
+            "testdb",
+            "admin",
+            OCreateDatabaseUtil.NEW_ADMIN_PASSWORD,
+            OrientDBConfig.builder()
+                .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
+                .build());
     assertNotEquals(poolNotUsed, poolOther);
     assertTrue(poolNotUsed.isClosed());
 
@@ -305,27 +432,44 @@ public class OrientDBEmbeddedTests {
 
   @Test
   public void testInvalidatePoolCache() {
-    OrientDBConfig config =
-        OrientDBConfig.builder().addConfig(OGlobalConfiguration.DB_CACHED_POOL_CAPACITY, 2).build();
-    OrientDB orientDB = new OrientDB("embedded:testdb", config);
-    orientDB.createIfNotExists("testdb", ODatabaseType.MEMORY);
+    final OrientDBConfig config =
+        OrientDBConfig.builder()
+            .addConfig(OGlobalConfiguration.DB_CACHED_POOL_CAPACITY, 2)
+            .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
+            .build();
+    final OrientDB orientDB = new OrientDB("embedded:testdb", config);
+    orientDB.execute(
+        "create database "
+            + "testdb"
+            + " "
+            + "memory"
+            + " users ( admin identified by '"
+            + OCreateDatabaseUtil.NEW_ADMIN_PASSWORD
+            + "' role admin)");
 
-    ODatabasePool poolAdmin1 = orientDB.cachedPool("testdb", "admin", "admin");
-    ODatabasePool poolAdmin2 = orientDB.cachedPool("testdb", "admin", "admin");
+    ODatabasePool poolAdmin1 =
+        orientDB.cachedPool("testdb", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
+    ODatabasePool poolAdmin2 =
+        orientDB.cachedPool("testdb", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
 
     assertEquals(poolAdmin1, poolAdmin2);
 
     orientDB.invalidateCachedPools();
 
-    poolAdmin1 = orientDB.cachedPool("testdb", "admin", "admin");
+    poolAdmin1 = orientDB.cachedPool("testdb", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
     assertNotEquals(poolAdmin2, poolAdmin1);
   }
 
   @Test
   public void testOpenKeepClean() {
-    OrientDB orientDb = new OrientDB("embedded:./", OrientDBConfig.defaultConfig());
+    OrientDB orientDb =
+        new OrientDB(
+            "embedded:./",
+            OrientDBConfig.builder()
+                .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
+                .build());
     try {
-      orientDb.open("test", "admin", "admin");
+      orientDb.open("test", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
     } catch (Exception e) {
       // ignore
     }
@@ -336,10 +480,10 @@ public class OrientDBEmbeddedTests {
 
   @Test
   public void testOrientDBDatabaseOnlyMemory() {
-    OrientDB orientDb = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
-
-    orientDb.create("test", ODatabaseType.MEMORY);
-    ODatabaseSession db = orientDb.open("test", "admin", "admin");
+    final OrientDB orientDb =
+        OCreateDatabaseUtil.createDatabase("test", "embedded:", OCreateDatabaseUtil.TYPE_MEMORY);
+    final ODatabaseSession db =
+        orientDb.open("test", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
     db.save(new ODocument(), db.getClusterNameById(db.getDefaultClusterId()));
     db.close();
     orientDb.close();
@@ -347,17 +491,25 @@ public class OrientDBEmbeddedTests {
 
   @Test(expected = ODatabaseException.class)
   public void testOrientDBDatabaseOnlyMemoryFailPlocal() {
-    try (OrientDB orientDb = new OrientDB("embedded:", OrientDBConfig.defaultConfig())) {
+    try (OrientDB orientDb =
+        new OrientDB(
+            "embedded:",
+            OrientDBConfig.builder()
+                .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
+                .build())) {
       orientDb.create("test", ODatabaseType.PLOCAL);
     }
   }
 
   @Test
   public void createForceCloseOpen() throws InterruptedException {
-    try (OrientDB orientDB = new OrientDB("embedded:./target/", OrientDBConfig.defaultConfig())) {
-      orientDB.create("testCreateForceCloseOpen", ODatabaseType.PLOCAL);
+    try (final OrientDB orientDB =
+        OCreateDatabaseUtil.createDatabase(
+            "testCreateForceCloseOpen", "embedded:./target/", OCreateDatabaseUtil.TYPE_PLOCAL)) {
       ((OrientDBEmbedded) orientDB.getInternal()).forceDatabaseClose("test");
-      ODatabaseSession db1 = orientDB.open("testCreateForceCloseOpen", "admin", "admin");
+      ODatabaseSession db1 =
+          orientDB.open(
+              "testCreateForceCloseOpen", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
       assertFalse(db1.isClosed());
       db1.close();
       orientDB.drop("testCreateForceCloseOpen");
@@ -366,11 +518,23 @@ public class OrientDBEmbeddedTests {
 
   @Test
   public void autoClose() throws InterruptedException {
-    OrientDB orientDB = new OrientDB("embedded:./target/", OrientDBConfig.defaultConfig());
+    OrientDB orientDB =
+        new OrientDB(
+            "embedded:./target/",
+            OrientDBConfig.builder()
+                .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
+                .build());
     OrientDBEmbedded embedded = ((OrientDBEmbedded) OrientDBInternal.extract(orientDB));
     embedded.initAutoClose(3000);
-    orientDB.create("test", ODatabaseType.PLOCAL);
-    ODatabaseSession db1 = orientDB.open("test", "admin", "admin");
+    orientDB.execute(
+        "create database "
+            + "test"
+            + " "
+            + "plocal"
+            + " users ( admin identified by '"
+            + OCreateDatabaseUtil.NEW_ADMIN_PASSWORD
+            + "' role admin)");
+    ODatabaseSession db1 = orientDB.open("test", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
     assertFalse(db1.isClosed());
     db1.close();
     assertNotNull(embedded.getStorage("test"));
@@ -382,16 +546,19 @@ public class OrientDBEmbeddedTests {
 
   @Test(expected = OStorageDoesNotExistException.class)
   public void testOpenNotExistDatabase() {
-    try (OrientDB orientDB = new OrientDB("embedded:./target/", OrientDBConfig.defaultConfig())) {
+    try (OrientDB orientDB =
+        new OrientDB(
+            "embedded:./target/",
+            OrientDBConfig.builder()
+                .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
+                .build())) {
       orientDB.open("testOpenNotExistDatabase", "two", "three");
     }
   }
 
   @Test
   public void testExecutor() throws ExecutionException, InterruptedException {
-
     try (OrientDB orientDb = new OrientDB("embedded:", OrientDBConfig.defaultConfig())) {
-
       orientDb.create("testExecutor", ODatabaseType.MEMORY);
       OrientDBInternal internal = OrientDBInternal.extract(orientDb);
       Future<Boolean> result =
@@ -431,7 +598,12 @@ public class OrientDBEmbeddedTests {
 
   @Test
   public void testScheduler() throws InterruptedException {
-    OrientDB orientDb = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
+    OrientDB orientDb =
+        new OrientDB(
+            "embedded:",
+            OrientDBConfig.builder()
+                .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
+                .build());
     OrientDBInternal internal = OrientDBInternal.extract(orientDb);
     CountDownLatch latch = new CountDownLatch(2);
     internal.schedule(
@@ -461,9 +633,11 @@ public class OrientDBEmbeddedTests {
 
   @Test
   public void testUUID() {
-    try (OrientDB orientDb = new OrientDB("embedded:", OrientDBConfig.defaultConfig())) {
-      orientDb.create("testUUID", ODatabaseType.MEMORY);
-      ODatabaseSession session = orientDb.open("testUUID", "admin", "admin");
+    try (final OrientDB orientDb =
+        OCreateDatabaseUtil.createDatabase(
+            "testUUID", "embedded:", OCreateDatabaseUtil.TYPE_MEMORY)) {
+      final ODatabaseSession session =
+          orientDb.open("testUUID", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
       assertNotNull(
           ((OAbstractPaginatedStorage) ((ODatabaseDocumentInternal) session).getStorage())
               .getUuid());
@@ -473,16 +647,25 @@ public class OrientDBEmbeddedTests {
 
   @Test
   public void testPersistentUUID() {
-    OrientDB orientDb = new OrientDB("embedded:./target/", OrientDBConfig.defaultConfig());
-    orientDb.create("testPersistentUUID", ODatabaseType.PLOCAL);
-    ODatabaseSession session = orientDb.open("testPersistentUUID", "admin", "admin");
+    final OrientDB orientDb =
+        OCreateDatabaseUtil.createDatabase(
+            "testPersistentUUID", "embedded:./target/", OCreateDatabaseUtil.TYPE_PLOCAL);
+    final ODatabaseSession session =
+        orientDb.open("testPersistentUUID", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
     UUID uuid =
         ((OAbstractPaginatedStorage) ((ODatabaseDocumentInternal) session).getStorage()).getUuid();
     assertNotNull(uuid);
     session.close();
     orientDb.close();
-    OrientDB orientDb1 = new OrientDB("embedded:./target/", OrientDBConfig.defaultConfig());
-    ODatabaseSession session1 = orientDb1.open("testPersistentUUID", "admin", "admin");
+
+    OrientDB orientDb1 =
+        new OrientDB(
+            "embedded:./target/",
+            OrientDBConfig.builder()
+                .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
+                .build());
+    ODatabaseSession session1 =
+        orientDb1.open("testPersistentUUID", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
     assertEquals(
         uuid,
         ((OAbstractPaginatedStorage) ((ODatabaseDocumentInternal) session1).getStorage())
@@ -524,7 +707,7 @@ public class OrientDBEmbeddedTests {
 
   @Test
   public void testCreateDatabaseViaSQLIfNotExistsWithUsers() {
-    OrientDB orientDB =
+    final OrientDB orientDB =
         new OrientDB(
             "embedded:",
             OrientDBConfig.builder()
