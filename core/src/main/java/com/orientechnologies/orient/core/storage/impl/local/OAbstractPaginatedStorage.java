@@ -6090,10 +6090,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       nextOperationId = Integer.MIN_VALUE;
     }
 
-    return restoreFrom(lsn, nextOperationId);
+    return restoreFrom(writeAheadLog, lsn, nextOperationId);
   }
 
-  protected OLogSequenceNumber restoreFrom(OLogSequenceNumber lsn, int nextOperationId)
+  protected OLogSequenceNumber restoreFrom(
+      OWriteAheadLog writeAheadLog,
+      OLogSequenceNumber lsn, int nextOperationId)
       throws IOException {
     try {
       OLogSequenceNumber logSequenceNumber = null;
@@ -6114,11 +6116,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               + " Please create issue in bug tracker";
 
       try {
-        List<WriteableWALRecord> records = writeAheadLog.read(lsn, 1_000);
+        List<WriteableWALRecord> records = this.writeAheadLog.read(lsn, 1_000);
 
         if (nextOperationId >= 0) {
           if (records.isEmpty()) {
-            final int lastOperationId = writeAheadLog.lastOperationId();
+            final int lastOperationId = this.writeAheadLog.lastOperationId();
             if (nextOperationId - 1 != lastOperationId) {
               OLogManager.instance()
                   .errorNoDb(this, errorMessage, null, name, nextOperationId - 1, lastOperationId);
@@ -6215,12 +6217,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                       "%d operations were processed, current LSN is %s last LSN is %s",
                       recordsProcessed,
                       lsn,
-                      writeAheadLog.end());
+                      this.writeAheadLog.end());
               lastReportTime = currentTime;
             }
           }
 
-          records = writeAheadLog.next(records.get(records.size() - 1).getLsn(), 1_000);
+          records = this.writeAheadLog.next(records.get(records.size() - 1).getLsn(), 1_000);
         }
       } catch (final OWALPageBrokenException e) {
         OLogManager.instance()
