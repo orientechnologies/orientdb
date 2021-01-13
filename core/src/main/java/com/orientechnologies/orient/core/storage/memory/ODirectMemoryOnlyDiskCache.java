@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.core.storage.memory;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
+import com.orientechnologies.common.directmemory.ODirectMemoryAllocator.Intention;
 import com.orientechnologies.common.directmemory.OPointer;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.OCommonConst;
@@ -496,7 +497,8 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache
           }
 
           final OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-          final OPointer pointer = bufferPool.acquireDirect(true);
+          final OPointer pointer =
+              bufferPool.acquireDirect(true, Intention.ADD_NEW_PAGE_IN_MEMORY_STORAGE);
 
           final OCachePointer cachePointer =
               new OCachePointer(pointer, bufferPool, id, (int) index);

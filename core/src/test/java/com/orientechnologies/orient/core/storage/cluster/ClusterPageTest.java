@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.storage.cluster;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
+import com.orientechnologies.common.directmemory.ODirectMemoryAllocator.Intention;
 import com.orientechnologies.common.directmemory.OPointer;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
@@ -31,7 +32,7 @@ public class ClusterPageTest {
   @Test
   public void testAddOneRecord() {
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-    OPointer pointer = bufferPool.acquireDirect(true);
+    OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -78,7 +79,7 @@ public class ClusterPageTest {
   @Test
   public void testAddThreeRecords() {
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-    OPointer pointer = bufferPool.acquireDirect(true);
+    OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -154,7 +155,7 @@ public class ClusterPageTest {
   @Test
   public void testAddFullPage() {
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-    OPointer pointer = bufferPool.acquireDirect(true);
+    OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -212,7 +213,7 @@ public class ClusterPageTest {
   @Test
   public void testAddDeleteAddBookedPositionsOne() {
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-    OPointer pointer = bufferPool.acquireDirect(true);
+    OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -277,7 +278,7 @@ public class ClusterPageTest {
   @Test
   public void testAddDeleteAddBookedPositionsTwo() {
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-    OPointer pointer = bufferPool.acquireDirect(true);
+    OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -342,7 +343,7 @@ public class ClusterPageTest {
   @Test
   public void testAddDeleteAddBookedPositionsThree() {
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-    OPointer pointer = bufferPool.acquireDirect(true);
+    OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -407,7 +408,7 @@ public class ClusterPageTest {
   @Test
   public void testDeleteAddLowerVersion() {
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-    OPointer pointer = bufferPool.acquireDirect(true);
+    OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -460,7 +461,7 @@ public class ClusterPageTest {
   @Test
   public void testDeleteAddLowerVersionNFL() {
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-    OPointer pointer = bufferPool.acquireDirect(true);
+    OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -513,7 +514,7 @@ public class ClusterPageTest {
   @Test
   public void testDeleteAddBiggerVersion() {
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-    OPointer pointer = bufferPool.acquireDirect(true);
+    OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -567,7 +568,7 @@ public class ClusterPageTest {
   @Test
   public void testDeleteAddBiggerVersionNFL() {
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-    OPointer pointer = bufferPool.acquireDirect(true);
+    OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -621,7 +622,7 @@ public class ClusterPageTest {
   @Test
   public void testDeleteAddEqualVersion() {
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-    OPointer pointer = bufferPool.acquireDirect(true);
+    OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -669,7 +670,7 @@ public class ClusterPageTest {
   @Test
   public void testDeleteAddEqualVersionNFL() {
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-    OPointer pointer = bufferPool.acquireDirect(true);
+    OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -717,7 +718,7 @@ public class ClusterPageTest {
   @Test
   public void testDeleteAddEqualVersionKeepTombstoneVersion() {
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-    OPointer pointer = bufferPool.acquireDirect(true);
+    OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -765,7 +766,7 @@ public class ClusterPageTest {
   @Test
   public void testDeleteTwoOutOfFour() {
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-    OPointer pointer = bufferPool.acquireDirect(true);
+    OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -850,7 +851,7 @@ public class ClusterPageTest {
   @Test
   public void testAddFullPageDeleteAndAddAgain() {
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-    OPointer pointer = bufferPool.acquireDirect(true);
+    OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -932,7 +933,7 @@ public class ClusterPageTest {
   @Test
   public void testAddFullPageDeleteAndAddAgainNFL() {
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-    OPointer pointer = bufferPool.acquireDirect(true);
+    OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -1010,7 +1011,7 @@ public class ClusterPageTest {
   @Test
   public void testAddBigRecordDeleteAndAddSmallRecords() {
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-    OPointer pointer = bufferPool.acquireDirect(true);
+    OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -1084,7 +1085,7 @@ public class ClusterPageTest {
   @Test
   public void testFindFirstRecord() {
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-    OPointer pointer = bufferPool.acquireDirect(true);
+    OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -1165,7 +1166,7 @@ public class ClusterPageTest {
   @Test
   public void testFindLastRecord() {
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-    OPointer pointer = bufferPool.acquireDirect(true);
+    OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -1242,7 +1243,7 @@ public class ClusterPageTest {
   @Test
   public void testSetGetNextPage() {
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-    OPointer pointer = bufferPool.acquireDirect(true);
+    OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -1269,7 +1270,7 @@ public class ClusterPageTest {
   @Test
   public void testSetGetPrevPage() {
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-    OPointer pointer = bufferPool.acquireDirect(true);
+    OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -1296,7 +1297,7 @@ public class ClusterPageTest {
   @Test
   public void testReplaceOneRecordWithEqualSize() {
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-    OPointer pointer = bufferPool.acquireDirect(true);
+    OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -1345,7 +1346,7 @@ public class ClusterPageTest {
   @Test
   public void testReplaceOneRecordNoVersionUpdate() {
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-    OPointer pointer = bufferPool.acquireDirect(true);
+    OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -1390,7 +1391,7 @@ public class ClusterPageTest {
   @Test
   public void testReplaceOneRecordLowerVersion() {
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-    OPointer pointer = bufferPool.acquireDirect(true);
+    OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -1437,7 +1438,7 @@ public class ClusterPageTest {
 
   private void assertChangesTracking(OClusterPage localPage, OByteBufferPool bufferPool) {
     final OCacheEntry cacheEntry = localPage.getCacheEntry();
-    OPointer restoredPointer = bufferPool.acquireDirect(true);
+    OPointer restoredPointer = bufferPool.acquireDirect(true, Intention.TEST);
 
     OCachePointer restoredCachePointer = new OCachePointer(restoredPointer, bufferPool, 0, 0);
     restoredCachePointer.incrementReferrer();

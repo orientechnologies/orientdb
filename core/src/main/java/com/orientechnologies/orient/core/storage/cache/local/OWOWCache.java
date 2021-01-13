@@ -27,6 +27,7 @@ import com.orientechnologies.common.concur.lock.OPartitionedLockManager;
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.directmemory.ODirectMemoryAllocator;
+import com.orientechnologies.common.directmemory.ODirectMemoryAllocator.Intention;
 import com.orientechnologies.common.directmemory.OPointer;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
@@ -1489,7 +1490,7 @@ public final class OWOWCache extends OAbstractWriteCache
 
         final byte[] data = new byte[pageSize];
 
-        final OPointer pointer = bufferPool.acquireDirect(true);
+        final OPointer pointer = bufferPool.acquireDirect(true, Intention.CHECK_FILE_STORAGE);
         try {
           final ByteBuffer byteBuffer = pointer.getNativeByteBuffer();
           fileClassic.read(pos, byteBuffer, true);
@@ -2111,7 +2112,7 @@ public final class OWOWCache extends OAbstractWriteCache
 
         // if page is not stored in the file may be page is stored in double write log
         if (fileClassic.getFileSize() >= pageEndPosition) {
-          OPointer pointer = bufferPool.acquireDirect(true);
+          OPointer pointer = bufferPool.acquireDirect(true, Intention.LOAD_PAGE_FROM_DISK);
           ByteBuffer buffer = pointer.getNativeByteBuffer();
 
           assert buffer.position() == 0;
@@ -2807,7 +2808,8 @@ public final class OWOWCache extends OAbstractWriteCache
           final long version;
           final OLogSequenceNumber fullLogLSN;
 
-          final OPointer directPointer = bufferPool.acquireDirect(false);
+          final OPointer directPointer =
+              bufferPool.acquireDirect(false, Intention.COPY_PAGE_DURING_FLUSH);
           final ByteBuffer copy = directPointer.getNativeByteBuffer();
           assert copy.position() == 0;
           try {
@@ -2914,7 +2916,12 @@ public final class OWOWCache extends OAbstractWriteCache
         flushedPages += chunk.size();
 
         final OPointer containerPointer =
-            ODirectMemoryAllocator.instance().allocate(chunk.size() * pageSize, -1, false);
+            ODirectMemoryAllocator.instance()
+                .allocate(
+                    chunk.size() * pageSize,
+                    -1,
+                    false,
+                    Intention.ALLOCATE_CHUNK_TO_WRITE_DATA_IN_BATCH);
         final ByteBuffer containerBuffer = containerPointer.getNativeByteBuffer();
         assert containerBuffer.position() == 0;
 
@@ -3099,7 +3106,8 @@ public final class OWOWCache extends OAbstractWriteCache
           if (pointer.tryAcquireSharedLock()) {
             final OLogSequenceNumber fullLSN;
 
-            final OPointer directPointer = bufferPool.acquireDirect(false);
+            final OPointer directPointer =
+                bufferPool.acquireDirect(false, Intention.COPY_PAGE_DURING_EXCLUSIVE_PAGE_FLUSH);
             final ByteBuffer copy = directPointer.getNativeByteBuffer();
             assert copy.position() == 0;
             try {
@@ -3247,7 +3255,7 @@ public final class OWOWCache extends OAbstractWriteCache
             try {
               final ByteBuffer buffer = pagePointer.getBufferDuplicate();
 
-              final OPointer directPointer = bufferPool.acquireDirect(false);
+              final OPointer directPointer = bufferPool.acquireDirect(false, Intention.FILE_FLUSH);
               final ByteBuffer copy = directPointer.getNativeByteBuffer();
               assert copy.position() == 0;
 
