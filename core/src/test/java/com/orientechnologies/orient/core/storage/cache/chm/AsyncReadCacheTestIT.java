@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.storage.cache.chm;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.directmemory.ODirectMemoryAllocator;
+import com.orientechnologies.common.directmemory.ODirectMemoryAllocator.Intention;
 import com.orientechnologies.common.directmemory.OPointer;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -418,7 +419,7 @@ public class AsyncReadCacheTestIT {
         final long startPageIndex,
         final OModifiableBoolean cacheHit,
         final boolean verifyChecksums) {
-      final OPointer pointer = byteBufferPool.acquireDirect(true);
+      final OPointer pointer = byteBufferPool.acquireDirect(true, Intention.TEST);
       final OCachePointer cachePointer =
           new OCachePointer(pointer, byteBufferPool, fileId, (int) startPageIndex);
       cachePointer.incrementReadersReferrer();

@@ -1,5 +1,6 @@
 package com.orientechnologies.common.directmemory;
 
+import com.orientechnologies.common.directmemory.ODirectMemoryAllocator.Intention;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import java.nio.ByteBuffer;
 import org.junit.AfterClass;
@@ -21,7 +22,7 @@ public class ODirectMemoryAllocatorTest {
   @Test
   public void testAllocateDeallocate() {
     final ODirectMemoryAllocator directMemoryAllocator = new ODirectMemoryAllocator();
-    final OPointer pointer = directMemoryAllocator.allocate(42, -1, false);
+    final OPointer pointer = directMemoryAllocator.allocate(42, -1, false, Intention.TEST);
     Assert.assertNotNull(pointer);
 
     Assert.assertEquals(42, directMemoryAllocator.getMemoryConsumption());
@@ -37,14 +38,14 @@ public class ODirectMemoryAllocatorTest {
   public void testNegativeOrZeroIsPassedToAllocate() {
     final ODirectMemoryAllocator directMemoryAllocator = new ODirectMemoryAllocator();
     try {
-      directMemoryAllocator.allocate(0, -1, false);
+      directMemoryAllocator.allocate(0, -1, false, Intention.TEST);
       Assert.fail();
     } catch (IllegalArgumentException e) {
       Assert.assertTrue(true);
     }
 
     try {
-      directMemoryAllocator.allocate(-1, -1, false);
+      directMemoryAllocator.allocate(-1, -1, false, Intention.TEST);
       Assert.fail();
     } catch (IllegalArgumentException e) {
       Assert.assertTrue(true);

@@ -25,13 +25,19 @@ import com.kenai.jffi.Platform;
 import com.orientechnologies.common.exception.ODirectMemoryAllocationFailedException;
 import com.orientechnologies.common.jnr.ONative;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.types.OModifiableLong;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
+import java.util.Collections;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 import jnr.ffi.NativeLong;
@@ -44,6 +50,13 @@ import jnr.ffi.byref.PointerByReference;
  * @see OGlobalConfiguration#DIRECT_MEMORY_POOL_LIMIT
  */
 public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
+  private static final boolean PROFILE_MEMORY =
+      OGlobalConfiguration.MEMORY_PROFILING.getValueAsBoolean();
+
+  private static final int MEMORY_STATISTICS_PRINTING_INTERVAL =
+      OGlobalConfiguration.MEMORY_PROFILING_REPORT_INTERVAL.getValueAsInteger();
+
+  private static final AtomicLong EVICTION_INDICATOR_ID_GEN = new AtomicLong();
 
   /** Whether we should track memory leaks during application execution */
   private static final boolean TRACK =
@@ -81,6 +94,14 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
   /** Amount of direct memory consumed by using this allocator. */
   private final LongAdder memoryConsumption = new LongAdder();
 
+  private final ThreadLocal<EnumMap<Intention, OModifiableLong>> memoryConsumptionByIntention =
+      ThreadLocal.withInitial(() -> new EnumMap<>(Intention.class));
+
+  private final Set<ConsumptionMapEvictionIndicator> consumptionMaps =
+      Collections.newSetFromMap(new ConcurrentHashMap<>());
+
+  private final ReferenceQueue<Thread> consumptionMapEvictionQueue = new ReferenceQueue<>();
+
   private final boolean isLinux = Platform.getPlatform().getOS() == Platform.OS.LINUX;
 
   /** @return singleton instance. */
@@ -102,6 +123,12 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
     trackedPointersQueue = new ReferenceQueue<>();
     trackedReferences = new HashSet<>();
     trackedBuffers = new HashMap<>();
+
+    if (PROFILE_MEMORY) {
+      final long printInterval = MEMORY_STATISTICS_PRINTING_INTERVAL * 60 * 1_000;
+      Orient.instance()
+          .scheduleTask(new MemoryStatPrinter(consumptionMaps), printInterval, printInterval);
+    }
   }
 
   /**
@@ -109,11 +136,12 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
    *
    * @param size Amount of memory to allocate
    * @param clear clears memory if needed
+   * @param intention Why this memory is allocated. This parameter is used for memory profiling.
    * @return Pointer to allocated memory
    * @throws ODirectMemoryAllocationFailedException if it is impossible to allocate amount of direct
    *     memory of given size
    */
-  public OPointer allocate(int size, int align, boolean clear) {
+  public OPointer allocate(int size, int align, boolean clear, Intention intention) {
     if (size <= 0) {
       throw new IllegalArgumentException("Size of allocated memory can not be less or equal to 0");
     }
@@ -126,7 +154,7 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
             "Can not allocate direct memory chunk of size " + size);
       }
 
-      ptr = new OPointer(pointer, size);
+      ptr = new OPointer(pointer, size, intention);
     } else {
       if (!isLinux) {
         throw new ODirectMemoryAllocationFailedException(
@@ -136,11 +164,49 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
       final PointerByReference pointerByReference = new PointerByReference();
       ONative.instance()
           .posix_memalign(pointerByReference, new NativeLong(align), new NativeLong(size));
-      ptr = new OPointer(pointerByReference.getValue().address(), size);
+      ptr = new OPointer(pointerByReference.getValue().address(), size, intention);
     }
 
     memoryConsumption.add(size);
+    if (PROFILE_MEMORY) {
+      final EnumMap<Intention, OModifiableLong> consumptionMap = memoryConsumptionByIntention.get();
+
+      if (consumptionMap.isEmpty()) {
+        consumptionMaps.add(
+            new ConsumptionMapEvictionIndicator(
+                Thread.currentThread(),
+                consumptionMapEvictionQueue,
+                consumptionMap,
+                EVICTION_INDICATOR_ID_GEN.getAndIncrement()));
+      }
+
+      accumulateEvictedConsumptionMaps(consumptionMap);
+
+      consumptionMap.compute(
+          intention,
+          (k, v) -> {
+            if (v == null) {
+              return new OModifiableLong(size);
+            }
+
+            v.value += size;
+            return v;
+          });
+    }
+
     return track(ptr);
+  }
+
+  private void accumulateEvictedConsumptionMaps(
+      EnumMap<Intention, OModifiableLong> consumptionMap) {
+    ConsumptionMapEvictionIndicator evictionIndicator =
+        (ConsumptionMapEvictionIndicator) consumptionMapEvictionQueue.poll();
+    while (evictionIndicator != null) {
+      consumptionMaps.remove(evictionIndicator);
+      accumulateConsumptionStatistics(consumptionMap, evictionIndicator);
+
+      evictionIndicator = (ConsumptionMapEvictionIndicator) consumptionMapEvictionQueue.poll();
+    }
   }
 
   /** Returns allocated direct memory back to OS */
@@ -153,8 +219,84 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
     if (ptr > 0) {
       MemoryIO.getInstance().freeMemory(ptr);
       memoryConsumption.add(-pointer.getSize());
+
+      if (PROFILE_MEMORY) {
+        final EnumMap<Intention, OModifiableLong> consumptionMap =
+            memoryConsumptionByIntention.get();
+
+        final boolean wasEmpty = consumptionMap.isEmpty();
+
+        accumulateEvictedConsumptionMaps(consumptionMap);
+
+        consumptionMap.compute(
+            pointer.getIntention(),
+            (k, v) -> {
+              if (v == null) {
+                return new OModifiableLong(-pointer.getSize());
+              }
+
+              v.value -= pointer.getSize();
+              return v;
+            });
+
+        if (!consumptionMap.isEmpty() && wasEmpty) {
+          consumptionMaps.add(
+              new ConsumptionMapEvictionIndicator(
+                  Thread.currentThread(),
+                  consumptionMapEvictionQueue,
+                  consumptionMap,
+                  EVICTION_INDICATOR_ID_GEN.getAndIncrement()));
+        }
+      }
+
       untrack(pointer);
     }
+  }
+
+  private static String printMemoryStatistics(
+      final EnumMap<Intention, OModifiableLong> memoryConsumptionByIntention) {
+    long total = 0;
+    final StringBuilder stringBuilder = new StringBuilder();
+    stringBuilder.append(
+        "\r\n-----------------------------------------------------------------------------\r\n");
+    stringBuilder.append("Memory profiling results for OrientDB direct memory allocation\r\n");
+    stringBuilder.append("Amount of memory consumed by category in bytes/Kb/Mb/Gb\r\n");
+    stringBuilder.append("\r\n");
+
+    for (final Intention intention : Intention.values()) {
+      final OModifiableLong consumedMemory = memoryConsumptionByIntention.get(intention);
+      stringBuilder.append(intention.name()).append(" : ");
+      if (consumedMemory != null) {
+        total += consumedMemory.value;
+
+        stringBuilder
+            .append(consumedMemory.value)
+            .append("/")
+            .append(consumedMemory.value / 1024)
+            .append("/")
+            .append(consumedMemory.value / (1024 * 1024))
+            .append("/")
+            .append(consumedMemory.value / (1024 * 1024 * 1024));
+      } else {
+        stringBuilder.append("0/0/0/0");
+      }
+      stringBuilder.append("\r\n");
+    }
+
+    stringBuilder.append("\r\n");
+
+    stringBuilder
+        .append("Total : ")
+        .append(total)
+        .append("/")
+        .append(total / 1024)
+        .append("/")
+        .append(total / (1024 * 1024))
+        .append("/")
+        .append(total / (1024 * 1024 * 1024));
+    stringBuilder.append(
+        "\r\n-----------------------------------------------------------------------------\r\n");
+    return stringBuilder.toString();
   }
 
   /** @inheritDoc */
@@ -263,6 +405,24 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
     }
   }
 
+  public enum Intention {
+    TEST,
+    PAGE_PRE_ALLOCATION,
+    ADD_NEW_PAGE_IN_DISK_CACHE,
+    CHECK_FILE_STORAGE,
+    LOAD_PAGE_FROM_DISK,
+    COPY_PAGE_DURING_FLUSH,
+    COPY_PAGE_DURING_EXCLUSIVE_PAGE_FLUSH,
+    FILE_FLUSH,
+    LOAD_WAL_PAGE,
+    ADD_NEW_PAGE_IN_MEMORY_STORAGE,
+    ALLOCATE_CHUNK_TO_WRITE_DATA_IN_BATCH,
+    DWL_ALLOCATE_CHUNK,
+    DWL_ALLOCATE_COMPRESSED_CHUNK,
+    ALLOCATE_FIRST_WAL_BUFFER,
+    ALLOCATE_SECOND_WAL_BUFFER,
+  }
+
   /**
    * WeakReference to the direct memory pointer which tracks stack trace of allocation of direct
    * memory associated with this pointer.
@@ -307,5 +467,78 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
 
   private static int id(Object object) {
     return System.identityHashCode(object);
+  }
+
+  private static final class ConsumptionMapEvictionIndicator extends WeakReference<Thread> {
+    private final EnumMap<Intention, OModifiableLong> consumptionMap;
+    private final long id;
+
+    public ConsumptionMapEvictionIndicator(
+        Thread referent,
+        ReferenceQueue<? super Thread> q,
+        EnumMap<Intention, OModifiableLong> consumptionMap,
+        long id) {
+      super(referent, q);
+
+      this.consumptionMap = consumptionMap;
+      this.id = id;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      ConsumptionMapEvictionIndicator that = (ConsumptionMapEvictionIndicator) o;
+
+      return id == that.id;
+    }
+
+    @Override
+    public int hashCode() {
+      return (int) (id ^ (id >>> 32));
+    }
+  }
+
+  private static final class MemoryStatPrinter implements Runnable {
+    private final Set<ConsumptionMapEvictionIndicator> consumptionMaps;
+
+    private MemoryStatPrinter(Set<ConsumptionMapEvictionIndicator> consumptionMaps) {
+      this.consumptionMaps = consumptionMaps;
+    }
+
+    @Override
+    public void run() {
+      final EnumMap<Intention, OModifiableLong> accumulator = new EnumMap<>(Intention.class);
+
+      for (final ConsumptionMapEvictionIndicator consumptionMap : consumptionMaps) {
+        accumulateConsumptionStatistics(accumulator, consumptionMap);
+      }
+
+      final String memoryStat = printMemoryStatistics(accumulator);
+      OLogManager.instance().infoNoDb(this, memoryStat);
+    }
+  }
+
+  private static void accumulateConsumptionStatistics(
+      EnumMap<Intention, OModifiableLong> accumulator,
+      ConsumptionMapEvictionIndicator consumptionMap) {
+    for (final Map.Entry<Intention, OModifiableLong> entry :
+        consumptionMap.consumptionMap.entrySet()) {
+      accumulator.compute(
+          entry.getKey(),
+          (k, v) -> {
+            if (v == null) {
+              v = new OModifiableLong();
+            }
+
+            v.value += entry.getValue().value;
+            return v;
+          });
+    }
   }
 }

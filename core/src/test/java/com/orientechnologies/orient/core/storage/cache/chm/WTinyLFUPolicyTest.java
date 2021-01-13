@@ -5,6 +5,7 @@ import static org.mockito.Mockito.when;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.directmemory.ODirectMemoryAllocator;
+import com.orientechnologies.common.directmemory.ODirectMemoryAllocator.Intention;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
@@ -676,7 +677,8 @@ public class WTinyLFUPolicyTest {
   private static void generateEntries(
       OCacheEntry[] cacheEntries, OCachePointer[] cachePointers, OByteBufferPool pool) {
     for (int i = 0; i < cacheEntries.length; i++) {
-      final OCachePointer cachePointer = new OCachePointer(pool.acquireDirect(true), pool, 1, i);
+      final OCachePointer cachePointer =
+          new OCachePointer(pool.acquireDirect(true, Intention.TEST), pool, 1, i);
       final OCacheEntry cacheEntry = new OCacheEntryImpl(1, i, cachePointer, false);
 
       cachePointer.incrementReadersReferrer();

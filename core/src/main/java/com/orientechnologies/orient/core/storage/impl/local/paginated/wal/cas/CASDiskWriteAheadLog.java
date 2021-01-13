@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas;
 
 import com.orientechnologies.common.concur.lock.ScalableRWLock;
 import com.orientechnologies.common.directmemory.ODirectMemoryAllocator;
+import com.orientechnologies.common.directmemory.ODirectMemoryAllocator.Intention;
 import com.orientechnologies.common.directmemory.OPointer;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
@@ -328,11 +329,13 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
 
     writtenUpTo.set(new WrittenUpTo(new OLogSequenceNumber(currentSegment, 0), 0));
 
-    writeBufferPointerOne = allocator.allocate(bufferSize1, -1, false);
+    writeBufferPointerOne =
+        allocator.allocate(bufferSize1, -1, false, Intention.ALLOCATE_FIRST_WAL_BUFFER);
     writeBufferOne = writeBufferPointerOne.getNativeByteBuffer().order(ByteOrder.nativeOrder());
     assert writeBufferOne.position() == 0;
 
-    writeBufferPointerTwo = allocator.allocate(bufferSize1, -1, false);
+    writeBufferPointerTwo =
+        allocator.allocate(bufferSize1, -1, false, Intention.ALLOCATE_SECOND_WAL_BUFFER);
     writeBufferTwo = writeBufferPointerTwo.getNativeByteBuffer().order(ByteOrder.nativeOrder());
     assert writeBufferTwo.position() == 0;
 

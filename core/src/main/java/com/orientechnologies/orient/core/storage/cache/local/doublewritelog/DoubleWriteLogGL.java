@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.storage.cache.local.doublewritelog;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.directmemory.ODirectMemoryAllocator;
+import com.orientechnologies.common.directmemory.ODirectMemoryAllocator.Intention;
 import com.orientechnologies.common.directmemory.OPointer;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
@@ -35,19 +36,10 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
   private static final ODirectMemoryAllocator ALLOCATOR = ODirectMemoryAllocator.instance();
   static final int DEFAULT_BLOCK_SIZE = 4 * 1024;
 
-  private static final int XX_HASH_OFFSET = 0;
   private static final int XX_HASH_LEN = 8;
-
-  private static final int FILE_ID_OFFSET = XX_HASH_OFFSET + XX_HASH_LEN;
   private static final int FILE_ID_LEN = 4;
-
-  private static final int START_PAGE_INDEX_OFFSET = FILE_ID_OFFSET + FILE_ID_LEN;
   private static final int START_PAGE_INDEX_LEN = 4;
-
-  private static final int CHUNK_SIZE_OFFSET = START_PAGE_INDEX_OFFSET + START_PAGE_INDEX_LEN;
   private static final int CHUNK_SIZE_LEN = 4;
-
-  private static final int COMPRESSED_SIZE_OFFSET = CHUNK_SIZE_OFFSET + CHUNK_SIZE_LEN;
   private static final int COMPRESSED_SIZE_LEN = 4;
 
   private static final int METADATA_SIZE =
@@ -185,7 +177,8 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
       }
 
       sizeToAllocate += buffers.length * METADATA_SIZE;
-      final OPointer pageContainer = ALLOCATOR.allocate(sizeToAllocate, -1, false);
+      final OPointer pageContainer =
+          ALLOCATOR.allocate(sizeToAllocate, -1, false, Intention.DWL_ALLOCATE_CHUNK);
 
       try {
         final ByteBuffer containerBuffer;
@@ -199,7 +192,9 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
 
           final int maxCompressedLength = LZ_4_COMPRESSOR.maxCompressedLength(buffer.limit());
           final OPointer compressedPointer =
-              ODirectMemoryAllocator.instance().allocate(maxCompressedLength, -1, false);
+              ODirectMemoryAllocator.instance()
+                  .allocate(
+                      maxCompressedLength, -1, false, Intention.DWL_ALLOCATE_COMPRESSED_CHUNK);
           try {
             final ByteBuffer compressedBuffer = compressedPointer.getNativeByteBuffer();
             LZ_4_COMPRESSOR.compress(buffer, compressedBuffer);
@@ -370,7 +365,7 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
                 pagesBuffer.position(pagePosition);
                 pagesBuffer.limit(pagePosition + pageSize);
 
-                final OPointer pointer = bufferPool.acquireDirect(false);
+                final OPointer pointer = bufferPool.acquireDirect(false, Intention.LOAD_WAL_PAGE);
                 final ByteBuffer pageBuffer = pointer.getNativeByteBuffer();
                 assert pageBuffer.position() == 0;
                 pageBuffer.put(pagesBuffer);

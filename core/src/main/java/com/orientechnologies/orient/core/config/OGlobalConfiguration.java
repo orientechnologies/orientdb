@@ -92,6 +92,18 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       Boolean.class,
       true),
 
+  MEMORY_PROFILING(
+      "memory.profiling",
+      "Switches on profiling of allocations of direct memory inside of OrientDB.",
+      Boolean.class,
+      false),
+
+  MEMORY_PROFILING_REPORT_INTERVAL(
+      "memory.profiling.reportInterval",
+      "Interval of printing of memory profiling results in minutes",
+      Integer.class,
+      15),
+
   @Deprecated
   MEMORY_CHUNK_SIZE(
       "memory.chunk.size",

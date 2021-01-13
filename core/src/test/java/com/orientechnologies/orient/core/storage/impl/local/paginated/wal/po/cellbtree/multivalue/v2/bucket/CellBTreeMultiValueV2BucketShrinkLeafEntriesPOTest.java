@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v2.bucket;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
+import com.orientechnologies.common.directmemory.ODirectMemoryAllocator.Intention;
 import com.orientechnologies.common.directmemory.OPointer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -22,7 +23,7 @@ public class CellBTreeMultiValueV2BucketShrinkLeafEntriesPOTest {
     final int pageSize = 64 * 1024;
     final OByteBufferPool byteBufferPool = new OByteBufferPool(pageSize);
     try {
-      final OPointer pointer = byteBufferPool.acquireDirect(false);
+      final OPointer pointer = byteBufferPool.acquireDirect(false, Intention.TEST);
       final OCachePointer cachePointer = new OCachePointer(pointer, byteBufferPool, 0, 0);
       final OCacheEntry entry = new OCacheEntryImpl(0, 0, cachePointer, false);
 
@@ -51,7 +52,7 @@ public class CellBTreeMultiValueV2BucketShrinkLeafEntriesPOTest {
 
       entry.clearPageOperations();
 
-      final OPointer restoredPointer = byteBufferPool.acquireDirect(false);
+      final OPointer restoredPointer = byteBufferPool.acquireDirect(false, Intention.TEST);
       final OCachePointer restoredCachePointer =
           new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
       final OCacheEntry restoredCacheEntry = new OCacheEntryImpl(0, 0, restoredCachePointer, false);
@@ -139,7 +140,7 @@ public class CellBTreeMultiValueV2BucketShrinkLeafEntriesPOTest {
 
     final OByteBufferPool byteBufferPool = new OByteBufferPool(pageSize);
     try {
-      final OPointer pointer = byteBufferPool.acquireDirect(false);
+      final OPointer pointer = byteBufferPool.acquireDirect(false, Intention.TEST);
       final OCachePointer cachePointer = new OCachePointer(pointer, byteBufferPool, 0, 0);
       final OCacheEntry entry = new OCacheEntryImpl(0, 0, cachePointer, false);
 
