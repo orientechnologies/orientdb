@@ -6,6 +6,7 @@ import static org.junit.Assert.assertFalse;
 import com.orientechnologies.orient.core.OCreateDatabaseUtil;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.record.OElement;
@@ -30,8 +31,15 @@ public class ODatabasePessimisticLockTest {
                 OrientDBConfig.LOCK_TYPE_READWRITE)
             .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
             .build();
-    orientDB =
-        OCreateDatabaseUtil.createDatabase("test", "embedded:", OCreateDatabaseUtil.TYPE_MEMORY);
+    orientDB = new OrientDB("embedded:", config);
+    orientDB.execute(
+        "create database "
+            + "test"
+            + " "
+            + "memory"
+            + " users ( admin identified by '"
+            + OCreateDatabaseUtil.NEW_ADMIN_PASSWORD
+            + "' role admin)");
     final ODatabaseSession session =
         orientDB.open("test", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
     session.createClass("test");
