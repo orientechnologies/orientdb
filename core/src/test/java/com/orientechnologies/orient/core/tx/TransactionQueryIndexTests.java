@@ -22,7 +22,7 @@ public class TransactionQueryIndexTests {
 
   @Before
   public void before() {
-    final OrientDB orientDB =
+    orientDB =
         OCreateDatabaseUtil.createDatabase("test", "embedded:", OCreateDatabaseUtil.TYPE_MEMORY);
     database = orientDB.open("test", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
   }
