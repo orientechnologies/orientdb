@@ -37,7 +37,6 @@ public interface ODatabaseInternal<T> extends ODatabase<T> {
    * Returns the underlying storage implementation.
    *
    * @return The underlying storage implementation
-   *
    * @see OStorage
    */
   OStorage getStorage();
@@ -84,7 +83,6 @@ public interface ODatabaseInternal<T> extends ODatabase<T> {
    * Opens a database using an authentication token received as an argument.
    *
    * @param iToken Authentication token
-   *
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
   @Deprecated
@@ -145,13 +143,19 @@ public interface ODatabaseInternal<T> extends ODatabase<T> {
   }
 
   /**
-   *
    * @return an endpoint for Enterprise features. Null in Community Edition
    */
   default OEnterpriseEndpoint getEnterpriseEndpoint() {
     return null;
   }
 
-  default void interruptExecution(Thread thread) {}
+  default void interruptExecution(Thread thread) {
+  }
 
+  default long getLoadedRecordsCount() {
+    return -1;
+  }
+
+  default void resetLoadedRecordsCount() {
+  }
 }

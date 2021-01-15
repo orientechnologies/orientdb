@@ -5,6 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
@@ -34,6 +35,7 @@ public class OProfileStatement extends OStatement {
 
   @Override
   public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
+    ((ODatabaseInternal)db).resetLoadedRecordsCount();
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -63,15 +65,18 @@ public class OProfileStatement extends OStatement {
       rs.next();
     }
 
+    long totalRecordsLoaded = ((ODatabaseInternal) db).getLoadedRecordsCount();
     OExplainResultSet result = new OExplainResultSet(
-        rs.getExecutionPlan().orElseThrow(() -> new OCommandExecutionException("Cannot profile command: " + statement)));
+        rs.getExecutionPlan().orElseThrow(() -> new OCommandExecutionException("Cannot profile command: " + statement)), totalRecordsLoaded);
     rs.close();
+
     return result;
 
   }
 
   @Override
   public OResultSet execute(ODatabase db, Map args, OCommandContext parentCtx, boolean usePlanCache) {
+    ((ODatabaseInternal)db).resetLoadedRecordsCount();
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -91,9 +96,9 @@ public class OProfileStatement extends OStatement {
     while (rs.hasNext()) {
       rs.next();
     }
-
+    long totalRecordsLoaded = ((ODatabaseInternal) db).getLoadedRecordsCount();
     OExplainResultSet result = new OExplainResultSet(
-        rs.getExecutionPlan().orElseThrow(() -> new OCommandExecutionException("Cannot profile command: " + statement)));
+        rs.getExecutionPlan().orElseThrow(() -> new OCommandExecutionException("Cannot profile command: " + statement)), totalRecordsLoaded);
     rs.close();
     return result;
   }

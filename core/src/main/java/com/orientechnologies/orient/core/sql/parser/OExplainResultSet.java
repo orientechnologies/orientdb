@@ -16,7 +16,7 @@ public class OExplainResultSet implements OResultSet {
   private final OExecutionPlan executionPlan;
   boolean hasNext = true;
 
-  public OExplainResultSet(OExecutionPlan executionPlan) {
+  public OExplainResultSet(OExecutionPlan executionPlan, long totalRecordsLoaded) {
     this.executionPlan = executionPlan;
   }
 
