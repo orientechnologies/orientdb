@@ -37,7 +37,7 @@ public class TestSchemaImportExport {
               db1, new ByteArrayInputStream(output.toByteArray()), new MockOutputListener());
       imp.importDatabase();
       db1.close();
-      db1.open("admin", "adminpwd");
+      db1.open("admin", "admin");
       OClass clas1 = db1.getMetadata().getSchema().getClass("Test");
       Assert.assertNotNull(clas1);
       Assert.assertEquals(clas1.getCustom("testcustom"), "test");
@@ -70,7 +70,7 @@ public class TestSchemaImportExport {
               db1, new ByteArrayInputStream(output.toByteArray()), new MockOutputListener());
       imp.importDatabase();
       db1.close();
-      db1.open("admin", "adminpwd");
+      db1.open("admin", "admin");
       OClass clas1 = db1.getMetadata().getSchema().getClass("Test");
       Assert.assertNotNull(clas1);
       OProperty prop1 = clas1.getProperty("bla");
@@ -109,7 +109,7 @@ public class TestSchemaImportExport {
               db1, new ByteArrayInputStream(output.toByteArray()), new MockOutputListener());
       imp.importDatabase();
       db1.close();
-      db1.open("admin", "adminpwd");
+      db1.open("admin", "admin");
       OClass clas1 = db1.getMetadata().getSchema().getClass("Test");
       Assert.assertTrue(clas1.isSubClassOf("OIdentity"));
       Assert.assertTrue(clas1.isSubClassOf("ORestricted"));
