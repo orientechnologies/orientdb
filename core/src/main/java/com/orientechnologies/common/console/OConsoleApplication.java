@@ -175,18 +175,18 @@ public class OConsoleApplication {
   }
 
   public int getVerboseLevel() {
-    final String v = properties.get("verbose");
+    final String v = properties.get(OConsoleProperties.VERBOSE);
     final int verboseLevel = v != null ? Integer.parseInt(v) : 2;
     return verboseLevel;
   }
 
   protected int getConsoleWidth() {
-    final String width = properties.get("width");
+    final String width = properties.get(OConsoleProperties.WIDTH);
     return width == null ? reader.getConsoleWidth() : Integer.parseInt(width);
   }
 
   public boolean isEchoEnabled() {
-    return isPropertyEnabled("echo");
+    return isPropertyEnabled(OConsoleProperties.ECHO);
   }
 
   protected boolean isPropertyEnabled(final String iPropertyName) {
@@ -284,7 +284,7 @@ public class OConsoleApplication {
           commandLine = null;
 
           if (status == RESULT.EXIT
-              || (status == RESULT.ERROR && !Boolean.parseBoolean(properties.get("ignoreErrors")))
+              || (status == RESULT.ERROR && !Boolean.parseBoolean(properties.get(OConsoleProperties.IGNORE_ERRORS)))
                   && iBatchMode) return false;
         }
       }
@@ -299,7 +299,7 @@ public class OConsoleApplication {
 
         final RESULT status = execute(commandBuffer.toString());
         if (status == RESULT.EXIT
-            || (status == RESULT.ERROR && !Boolean.parseBoolean(properties.get("ignoreErrors")))
+            || (status == RESULT.ERROR && !Boolean.parseBoolean(properties.get(OConsoleProperties.IGNORE_ERRORS)))
                 && iBatchMode) return false;
       }
     } finally {

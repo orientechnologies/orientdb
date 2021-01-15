@@ -22,6 +22,7 @@ package com.orientechnologies.orient.console;
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.WARNING_DEFAULT_USERS;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.console.OConsoleProperties;
 import com.orientechnologies.common.console.TTYConsoleReader;
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
 import com.orientechnologies.common.console.annotation.ConsoleParameter;
@@ -747,7 +748,7 @@ public class OConsoleDatabaseApp extends OrientConsole
 
     setResultset((List<OIdentifiable>) result);
 
-    int displayLimit = Integer.parseInt(properties.get("limit"));
+    int displayLimit = Integer.parseInt(properties.get(OConsoleProperties.LIMIT));
 
     dumpResultSet(displayLimit);
 
@@ -1102,7 +1103,7 @@ public class OConsoleDatabaseApp extends OrientConsole
       // RESET CONSOLE FLAG
       limit = -1;
     } else {
-      limit = Integer.parseInt(properties.get("limit"));
+      limit = Integer.parseInt(properties.get(OConsoleProperties.LIMIT));
     }
 
     long start = System.currentTimeMillis();
@@ -1146,7 +1147,7 @@ public class OConsoleDatabaseApp extends OrientConsole
       displayLimit = -1;
     } else {
       // USE LIMIT + 1 TO DISCOVER IF MORE ITEMS ARE PRESENT
-      displayLimit = Integer.parseInt(properties.get("limit"));
+      displayLimit = Integer.parseInt(properties.get(OConsoleProperties.LIMIT));
       if (displayLimit > 0) {
         queryLimit = displayLimit + 1;
       } else {
@@ -1204,7 +1205,7 @@ public class OConsoleDatabaseApp extends OrientConsole
       displayLimit = -1;
     } else {
       // USE LIMIT + 1 TO DISCOVER IF MORE ITEMS ARE PRESENT
-      displayLimit = Integer.parseInt(properties.get("limit"));
+      displayLimit = Integer.parseInt(properties.get(OConsoleProperties.LIMIT));
       queryLimit = displayLimit + 1;
     }
 
@@ -2570,8 +2571,8 @@ public class OConsoleDatabaseApp extends OrientConsole
       }
     }
 
-    int bufferSize = Integer.parseInt(properties.get("backupBufferSize"));
-    int compressionLevel = Integer.parseInt(properties.get("backupCompressionLevel"));
+    int bufferSize = Integer.parseInt(properties.get(OConsoleProperties.BACKUP_BUFFER_SIZE));
+    int compressionLevel = Integer.parseInt(properties.get(OConsoleProperties.BACKUP_COMPRESSION_LEVEL));
     boolean incremental = false;
 
     for (int i = 2; i < items.size(); ++i) {
@@ -3159,14 +3160,14 @@ public class OConsoleDatabaseApp extends OrientConsole
     setResultset(new ArrayList<OIdentifiable>());
 
     // DISABLE THE NETWORK AND STORAGE TIMEOUTS
-    properties.put("limit", "20");
-    properties.put("debug", "false");
-    properties.put("collectionMaxItems", "10");
-    properties.put("maxBinaryDisplay", "150");
-    properties.put("verbose", "2");
-    properties.put("ignoreErrors", "false");
-    properties.put("backupCompressionLevel", "9"); // 9 = MAX
-    properties.put("backupBufferSize", "1048576"); // 1MB
+    properties.put(OConsoleProperties.LIMIT, "20");
+    properties.put(OConsoleProperties.DEBUG, "false");
+    properties.put(OConsoleProperties.COLLECTION_MAX_ITEMS, "10");
+    properties.put(OConsoleProperties.MAX_BINARY_DISPLAY, "150");
+    properties.put(OConsoleProperties.VERBOSE, "2");
+    properties.put(OConsoleProperties.IGNORE_ERRORS, "false");
+    properties.put(OConsoleProperties.BACKUP_COMPRESSION_LEVEL, "9"); // 9 = MAX
+    properties.put(OConsoleProperties.BACKUP_BUFFER_SIZE, "1048576"); // 1MB
   }
 
   protected OIdentifiable setCurrentRecord(final int iIndex) {
@@ -3193,7 +3194,7 @@ public class OConsoleDatabaseApp extends OrientConsole
   }
 
   protected void printError(final Exception e) {
-    if (properties.get("debug") != null && Boolean.parseBoolean(properties.get("debug"))) {
+    if (properties.get(OConsoleProperties.DEBUG) != null && Boolean.parseBoolean(properties.get(OConsoleProperties.DEBUG))) {
       message("\n\n!ERROR:");
       e.printStackTrace(err);
     } else {
@@ -3234,7 +3235,7 @@ public class OConsoleDatabaseApp extends OrientConsole
       buffer.append(urlConnection.getUrl());
     }
 
-    final String promptDateFormat = properties.get("promptDateFormat");
+    final String promptDateFormat = properties.get(OConsoleProperties.PROMPT_DATE_FORMAT);
     if (promptDateFormat != null) {
       buffer.append(" (");
       final SimpleDateFormat df = new SimpleDateFormat(promptDateFormat);
@@ -3332,8 +3333,8 @@ public class OConsoleDatabaseApp extends OrientConsole
   }
 
   public int getMaxMultiValueEntries() {
-    if (properties.containsKey("maxMultiValueEntries"))
-      return Integer.parseInt(properties.get("maxMultiValueEntries"));
+    if (properties.containsKey(OConsoleProperties.MAX_MULTI_VALUE_ENTRIES))
+      return Integer.parseInt(properties.get(OConsoleProperties.MAX_MULTI_VALUE_ENTRIES));
     return maxMultiValueEntries;
   }
 
@@ -3387,7 +3388,7 @@ public class OConsoleDatabaseApp extends OrientConsole
 
       final byte[] value = rec.toStream();
       final int max =
-          Math.min(Integer.parseInt(properties.get("maxBinaryDisplay")), Array.getLength(value));
+          Math.min(Integer.parseInt(properties.get(OConsoleProperties.MAX_BINARY_DISPLAY)), Array.getLength(value));
       for (int i = 0; i < max; ++i) {
         message("%03d", Array.getByte(value, i));
       }
@@ -3417,7 +3418,7 @@ public class OConsoleDatabaseApp extends OrientConsole
   }
 
   private void browseRecords(final OIdentifiableIterator<?> it) {
-    final int limit = Integer.parseInt(properties.get("limit"));
+    final int limit = Integer.parseInt(properties.get(OConsoleProperties.LIMIT));
 
     final OTableFormatter tableFormatter =
         new OTableFormatter(this)
