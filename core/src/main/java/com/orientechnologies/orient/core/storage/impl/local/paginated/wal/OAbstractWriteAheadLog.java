@@ -20,7 +20,6 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
-
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 6/25/14
