@@ -2572,7 +2572,8 @@ public class OConsoleDatabaseApp extends OrientConsole
     }
 
     int bufferSize = Integer.parseInt(properties.get(OConsoleProperties.BACKUP_BUFFER_SIZE));
-    int compressionLevel = Integer.parseInt(properties.get(OConsoleProperties.BACKUP_COMPRESSION_LEVEL));
+    int compressionLevel =
+        Integer.parseInt(properties.get(OConsoleProperties.BACKUP_COMPRESSION_LEVEL));
     boolean incremental = false;
 
     for (int i = 2; i < items.size(); ++i) {
@@ -3194,7 +3195,8 @@ public class OConsoleDatabaseApp extends OrientConsole
   }
 
   protected void printError(final Exception e) {
-    if (properties.get(OConsoleProperties.DEBUG) != null && Boolean.parseBoolean(properties.get(OConsoleProperties.DEBUG))) {
+    if (properties.get(OConsoleProperties.DEBUG) != null
+        && Boolean.parseBoolean(properties.get(OConsoleProperties.DEBUG))) {
       message("\n\n!ERROR:");
       e.printStackTrace(err);
     } else {
@@ -3388,7 +3390,9 @@ public class OConsoleDatabaseApp extends OrientConsole
 
       final byte[] value = rec.toStream();
       final int max =
-          Math.min(Integer.parseInt(properties.get(OConsoleProperties.MAX_BINARY_DISPLAY)), Array.getLength(value));
+          Math.min(
+              Integer.parseInt(properties.get(OConsoleProperties.MAX_BINARY_DISPLAY)),
+              Array.getLength(value));
       for (int i = 0; i < max; ++i) {
         message("%03d", Array.getByte(value, i));
       }

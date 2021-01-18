@@ -166,8 +166,7 @@ public class WOWCacheTestIT {
             OChecksumMode.StoreAndVerify,
             null,
             null,
-            false
-        );
+            false);
 
     wowCache.loadRegisteredFiles();
   }
@@ -271,8 +270,7 @@ public class WOWCacheTestIT {
             OChecksumMode.StoreAndVerify,
             iv,
             aesKey,
-            false
-        );
+            false);
 
     wowCache.loadRegisteredFiles();
 
@@ -503,8 +501,7 @@ public class WOWCacheTestIT {
             OChecksumMode.StoreAndVerify,
             iv,
             aesKey,
-            false
-        );
+            false);
 
     wowCache.loadRegisteredFiles();
 

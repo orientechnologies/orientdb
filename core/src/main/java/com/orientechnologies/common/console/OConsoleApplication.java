@@ -284,7 +284,8 @@ public class OConsoleApplication {
           commandLine = null;
 
           if (status == RESULT.EXIT
-              || (status == RESULT.ERROR && !Boolean.parseBoolean(properties.get(OConsoleProperties.IGNORE_ERRORS)))
+              || (status == RESULT.ERROR
+                      && !Boolean.parseBoolean(properties.get(OConsoleProperties.IGNORE_ERRORS)))
                   && iBatchMode) return false;
         }
       }
@@ -299,7 +300,8 @@ public class OConsoleApplication {
 
         final RESULT status = execute(commandBuffer.toString());
         if (status == RESULT.EXIT
-            || (status == RESULT.ERROR && !Boolean.parseBoolean(properties.get(OConsoleProperties.IGNORE_ERRORS)))
+            || (status == RESULT.ERROR
+                    && !Boolean.parseBoolean(properties.get(OConsoleProperties.IGNORE_ERRORS)))
                 && iBatchMode) return false;
       }
     } finally {
