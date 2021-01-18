@@ -3,10 +3,9 @@ package com.orientechnologies.orient.core.db.tool;
 import static com.orientechnologies.orient.core.db.tool.ODatabaseImport.EXPORT_IMPORT_CLASS_NAME;
 import static com.orientechnologies.orient.core.db.tool.ODatabaseImport.EXPORT_IMPORT_INDEX_NAME;
 
+import com.orientechnologies.orient.core.OCreateDatabaseUtil;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -27,10 +26,10 @@ public class TestImportRewriteLinks {
 
   @Test
   public void testNestedLinkRewrite() {
-    try (final OrientDB orientDB =
-        new OrientDB("embedded:mapperTest", OrientDBConfig.defaultConfig())) {
-      orientDB.create("testDB", ODatabaseType.MEMORY);
-      try (final ODatabaseSession session = orientDB.open("testDB", "admin", "admin")) {
+    try (final OrientDB orientDb =
+        OCreateDatabaseUtil.createDatabase(
+            "testDB", "embedded:mapperTest", OCreateDatabaseUtil.TYPE_MEMORY)) {
+      try (final ODatabaseSession session = orientDb.open("testDB", "admin", "adminpwd")) {
         final OSchema schema = session.getMetadata().getSchema();
 
         final OClass cls = schema.createClass(EXPORT_IMPORT_CLASS_NAME);

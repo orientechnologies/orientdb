@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.db.tool;
 
+import com.orientechnologies.orient.core.OCreateDatabaseUtil;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.record.OEdge;
@@ -26,7 +27,9 @@ public class ODatabaseSuperNodeTest {
       final String databaseName = "superNode_export";
       final String exportDbUrl =
           "memory:target/export_" + ODatabaseSuperNodeTest.class.getSimpleName();
-      OrientDB orientDB = new ODatabaseImportTest().createDatabase(databaseName, exportDbUrl);
+      OrientDB orientDB =
+          OCreateDatabaseUtil.createDatabase(
+              databaseName, exportDbUrl, OCreateDatabaseUtil.TYPE_PLOCAL);
 
       final ByteArrayOutputStream output = new ByteArrayOutputStream();
       try {
@@ -41,7 +44,9 @@ public class ODatabaseSuperNodeTest {
 
       final String importDbUrl =
           "memory:target/import_" + ODatabaseSuperNodeTest.class.getSimpleName();
-      orientDB = new ODatabaseImportTest().createDatabase(databaseName + "_reImport", importDbUrl);
+      orientDB =
+          OCreateDatabaseUtil.createDatabase(
+              databaseName + "_reImport", importDbUrl, OCreateDatabaseUtil.TYPE_PLOCAL);
       try {
         testImportDatabase(numberEdge, databaseName, orientDB, output, importStats);
       } finally {
@@ -64,7 +69,7 @@ public class ODatabaseSuperNodeTest {
       final OutputStream output) {
 
     try (final ODatabaseSession session =
-        orientDB.open(databaseName, "admin", ODatabaseImportTest.NEW_ADMIN_PASSWORD)) {
+        orientDB.open(databaseName, "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD)) {
       session.createClassIfNotExist("SuperNodeClass", "V");
       session.createClassIfNotExist("NonSuperEdgeClass", "E");
 
@@ -109,7 +114,7 @@ public class ODatabaseSuperNodeTest {
       List<Long> stats) {
     try (final ODatabaseSession db =
         orientDB.open(
-            databaseName + "_reImport", "admin", ODatabaseImportTest.NEW_ADMIN_PASSWORD)) {
+            databaseName + "_reImport", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD)) {
       final ODatabaseImport importer =
           new ODatabaseImport(
               (ODatabaseDocumentInternal) db,

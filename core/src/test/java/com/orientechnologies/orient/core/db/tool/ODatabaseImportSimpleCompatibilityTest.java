@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.db.tool;
 
+import com.orientechnologies.orient.core.OCreateDatabaseUtil;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.*;
 import java.io.*;
@@ -80,8 +81,10 @@ public class ODatabaseImportSimpleCompatibilityTest {
   private void setup(
       final String databaseName, final InputStream input, final OutputStream output) {
     final String importDbUrl = "memory:target/import_" + this.getClass().getSimpleName();
-    orientDB = new ODatabaseImportTest().createDatabase(databaseName, importDbUrl);
-    importDatabase = orientDB.open(databaseName, "admin", ODatabaseImportTest.NEW_ADMIN_PASSWORD);
+    orientDB =
+        OCreateDatabaseUtil.createDatabase(
+            databaseName, importDbUrl, OCreateDatabaseUtil.TYPE_PLOCAL);
+    importDatabase = orientDB.open(databaseName, "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
     try {
       importer =
           new ODatabaseImport(

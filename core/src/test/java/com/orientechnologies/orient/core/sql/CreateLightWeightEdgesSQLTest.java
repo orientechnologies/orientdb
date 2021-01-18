@@ -2,11 +2,10 @@ package com.orientechnologies.orient.core.sql;
 
 import static org.junit.Assert.assertEquals;
 
+import com.orientechnologies.orient.core.OCreateDatabaseUtil;
 import com.orientechnologies.orient.core.db.ODatabasePool;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.util.concurrent.CountDownLatch;
@@ -16,19 +15,24 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class CreateLightWeightEdgesSQLTest {
-
   private OrientDB orientDB;
 
   @Before
   public void before() {
-    orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
-    orientDB.create(CreateLightWeightEdgesSQLTest.class.getSimpleName(), ODatabaseType.MEMORY);
+    orientDB =
+        OCreateDatabaseUtil.createDatabase(
+            CreateLightWeightEdgesSQLTest.class.getSimpleName(),
+            "embedded:",
+            OCreateDatabaseUtil.TYPE_MEMORY);
   }
 
   @Test
   public void test() {
     ODatabaseSession session =
-        orientDB.open(CreateLightWeightEdgesSQLTest.class.getSimpleName(), "admin", "admin");
+        orientDB.open(
+            CreateLightWeightEdgesSQLTest.class.getSimpleName(),
+            "admin",
+            OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
 
     session.command("ALTER DATABASE CUSTOM useLightweightEdges = true");
     session.command("create vertex v set name='a' ");
@@ -46,7 +50,10 @@ public class CreateLightWeightEdgesSQLTest {
 
     ODatabasePool pool =
         new ODatabasePool(
-            orientDB, CreateLightWeightEdgesSQLTest.class.getSimpleName(), "admin", "admin");
+            orientDB,
+            CreateLightWeightEdgesSQLTest.class.getSimpleName(),
+            "admin",
+            OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
 
     ODatabaseSession session = pool.acquire();
 

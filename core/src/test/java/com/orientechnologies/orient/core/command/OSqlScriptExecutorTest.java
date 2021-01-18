@@ -1,8 +1,7 @@
 package com.orientechnologies.orient.core.command;
 
-import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.OCreateDatabaseUtil;
 import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.util.HashMap;
@@ -14,14 +13,14 @@ import org.junit.Test;
 
 /** Created by luigidellaquila on 10/02/17. */
 public class OSqlScriptExecutorTest {
-
   @Test
   public void testPlain() {
-    OrientDB factory = new OrientDB("embedded:./", "root", "root", OrientDBConfig.defaultConfig());
-    if (!factory.exists("test")) factory.create("test", ODatabaseType.MEMORY);
-    String dbName = getClass().getSimpleName() + "test";
-    factory.create(dbName, ODatabaseType.MEMORY);
-    ODatabaseDocument db = factory.open(dbName, "admin", "admin");
+    final OrientDB factory =
+        OCreateDatabaseUtil.createDatabase("test", "embedded:./", OCreateDatabaseUtil.TYPE_MEMORY);
+    final String dbName = getClass().getSimpleName() + "test";
+    OCreateDatabaseUtil.createDatabase(dbName, factory, OCreateDatabaseUtil.TYPE_MEMORY);
+    final ODatabaseDocument db =
+        factory.open(dbName, "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
 
     String script = "insert into V set name ='a';";
     script += "insert into V set name ='b';";
@@ -47,11 +46,12 @@ public class OSqlScriptExecutorTest {
 
   @Test
   public void testWithPositionalParams() {
-    OrientDB factory = new OrientDB("embedded:./", "root", "root", OrientDBConfig.defaultConfig());
-    if (!factory.exists("test")) factory.create("test", ODatabaseType.MEMORY);
-    String dbName = getClass().getSimpleName() + "test";
-    factory.create(dbName, ODatabaseType.MEMORY);
-    ODatabaseDocument db = factory.open(dbName, "admin", "admin");
+    final OrientDB factory =
+        OCreateDatabaseUtil.createDatabase("test", "embedded:./", OCreateDatabaseUtil.TYPE_MEMORY);
+    final String dbName = getClass().getSimpleName() + "test";
+    OCreateDatabaseUtil.createDatabase(dbName, factory, OCreateDatabaseUtil.TYPE_MEMORY);
+    final ODatabaseDocument db =
+        factory.open(dbName, "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
 
     String script = "insert into V set name ='a';";
     script += "insert into V set name ='b';";
@@ -75,11 +75,12 @@ public class OSqlScriptExecutorTest {
 
   @Test
   public void testWithNamedParams() {
-    OrientDB factory = new OrientDB("embedded:./", "root", "root", OrientDBConfig.defaultConfig());
-    if (!factory.exists("test")) factory.create("test", ODatabaseType.MEMORY);
-    String dbName = getClass().getSimpleName() + "test";
-    factory.create(dbName, ODatabaseType.MEMORY);
-    ODatabaseDocument db = factory.open(dbName, "admin", "admin");
+    final OrientDB factory =
+        OCreateDatabaseUtil.createDatabase("test", "embedded:./", OCreateDatabaseUtil.TYPE_MEMORY);
+    final String dbName = getClass().getSimpleName() + "test";
+    OCreateDatabaseUtil.createDatabase(dbName, factory, OCreateDatabaseUtil.TYPE_MEMORY);
+    final ODatabaseDocument db =
+        factory.open(dbName, "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
 
     String script = "insert into V set name ='a';";
     script += "insert into V set name ='b';";
@@ -106,10 +107,12 @@ public class OSqlScriptExecutorTest {
   @Test
   public void testMultipleCreateEdgeOnTheSameLet() {
     // issue #7635
-    OrientDB factory = new OrientDB("embedded:./", "root", "root", OrientDBConfig.defaultConfig());
-    String dbName = getClass().getSimpleName() + "testMultipleCreateEdgeOnTheSameLet";
-    factory.create(dbName, ODatabaseType.MEMORY);
-    ODatabaseDocument db = factory.open(dbName, "admin", "admin");
+    final OrientDB factory =
+        OCreateDatabaseUtil.createDatabase("test", "embedded:./", OCreateDatabaseUtil.TYPE_MEMORY);
+    final String dbName = getClass().getSimpleName() + "test";
+    OCreateDatabaseUtil.createDatabase(dbName, factory, OCreateDatabaseUtil.TYPE_MEMORY);
+    final ODatabaseDocument db =
+        factory.open(dbName, "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
 
     String script = "begin;";
     script += "let $v1 = create vertex v set name = 'Foo';";

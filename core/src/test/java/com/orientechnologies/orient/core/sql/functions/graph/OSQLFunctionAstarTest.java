@@ -21,10 +21,9 @@ package com.orientechnologies.orient.core.sql.functions.graph;
 
 import static org.junit.Assert.assertEquals;
 
+import com.orientechnologies.orient.core.OCreateDatabaseUtil;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.record.ODirection;
@@ -75,9 +74,10 @@ public class OSQLFunctionAstarTest {
   private void setUpDatabase() {
     dbCounter++;
 
-    orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
-    orientDB.createIfNotExists("OSQLFunctionAstarTest", ODatabaseType.MEMORY);
-    graph = orientDB.open("OSQLFunctionAstarTest", "admin", "admin");
+    orientDB =
+        OCreateDatabaseUtil.createDatabase(
+            "OSQLFunctionAstarTest", "embedded:", OCreateDatabaseUtil.TYPE_MEMORY);
+    graph = orientDB.open("OSQLFunctionAstarTest", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
 
     graph.createEdgeClass("has_path");
 
