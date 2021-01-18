@@ -34,7 +34,7 @@ public class AsyncFileTest {
 
   @Test
   public void testWrite() throws Exception {
-    final AsyncFile file = new AsyncFile(buildDirectoryPath, 1, true);
+    final AsyncFile file = new AsyncFile(buildDirectoryPath, 1);
     file.create();
 
     file.allocateSpace(128);
@@ -59,7 +59,7 @@ public class AsyncFileTest {
 
   @Test
   public void testOpenWrite() throws Exception {
-    AsyncFile file = new AsyncFile(buildDirectoryPath, 1, true);
+    AsyncFile file = new AsyncFile(buildDirectoryPath, 1);
     file.create();
 
     file.allocateSpace(128);
@@ -87,7 +87,7 @@ public class AsyncFileTest {
 
   @Test
   public void testWriteSeveralChunks() throws Exception {
-    AsyncFile file = new AsyncFile(buildDirectoryPath, 1, true);
+    AsyncFile file = new AsyncFile(buildDirectoryPath, 1);
     file.create();
 
     final long position1 = file.allocateSpace(128);
@@ -134,7 +134,7 @@ public class AsyncFileTest {
 
   @Test
   public void testOpenWriteSeveralChunks() throws Exception {
-    AsyncFile file = new AsyncFile(buildDirectoryPath, 1, true);
+    AsyncFile file = new AsyncFile(buildDirectoryPath, 1);
     file.create();
 
     final long position1 = file.allocateSpace(128);
@@ -179,7 +179,7 @@ public class AsyncFileTest {
 
   @Test
   public void testOpenWriteSeveralChunksTwo() throws Exception {
-    AsyncFile file = new AsyncFile(buildDirectoryPath, 1, true);
+    AsyncFile file = new AsyncFile(buildDirectoryPath, 1);
     file.create();
 
     final long position1 = file.allocateSpace(128);
@@ -223,7 +223,7 @@ public class AsyncFileTest {
 
   @Test
   public void testOpenWriteSeveralChunksThree() throws Exception {
-    AsyncFile file = new AsyncFile(buildDirectoryPath, 1, true);
+    AsyncFile file = new AsyncFile(buildDirectoryPath, 1);
     file.create();
 
     final long position1 = file.allocateSpace(128 * 1024);
@@ -272,7 +272,7 @@ public class AsyncFileTest {
 
   @Test
   public void testOpenClose() throws Exception {
-    AsyncFile file = new AsyncFile(buildDirectoryPath, 1, true);
+    AsyncFile file = new AsyncFile(buildDirectoryPath, 1);
     Assert.assertFalse(file.isOpen());
 
     file.create();

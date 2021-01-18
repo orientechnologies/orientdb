@@ -144,7 +144,6 @@ public class WOWCacheTestIT {
             true,
             Locale.US,
             -1,
-            1024L * 1024 * 1024,
             1000,
             false,
             false,
@@ -167,8 +166,8 @@ public class WOWCacheTestIT {
             OChecksumMode.StoreAndVerify,
             null,
             null,
-            false,
-            true);
+            false
+        );
 
     wowCache.loadRegisteredFiles();
   }
@@ -250,7 +249,6 @@ public class WOWCacheTestIT {
             true,
             Locale.US,
             -1,
-            1024L * 1024 * 1024,
             1000,
             false,
             false,
@@ -273,8 +271,8 @@ public class WOWCacheTestIT {
             OChecksumMode.StoreAndVerify,
             iv,
             aesKey,
-            false,
-            true);
+            false
+        );
 
     wowCache.loadRegisteredFiles();
 
@@ -483,7 +481,6 @@ public class WOWCacheTestIT {
             true,
             Locale.US,
             -1,
-            1024L * 1024 * 1024,
             1000,
             false,
             false,
@@ -506,8 +503,8 @@ public class WOWCacheTestIT {
             OChecksumMode.StoreAndVerify,
             iv,
             aesKey,
-            false,
-            true);
+            false
+        );
 
     wowCache.loadRegisteredFiles();
 
@@ -707,7 +704,7 @@ public class WOWCacheTestIT {
     assert fileName != null;
 
     final Path path = storagePath.resolve(fileName);
-    final OFile file = new AsyncFile(path, pageSize, true);
+    final OFile file = new AsyncFile(path, pageSize);
     file.open();
     file.write(
         ODurablePage.NEXT_FREE_POSITION,
@@ -747,7 +744,7 @@ public class WOWCacheTestIT {
     assert fileName != null;
 
     final Path path = storagePath.resolve(fileName);
-    final OFile file = new AsyncFile(path, pageSize, true);
+    final OFile file = new AsyncFile(path, pageSize);
     file.open();
     file.write(0, ByteBuffer.wrap(new byte[] {1}).order(ByteOrder.nativeOrder()));
     file.close();
@@ -785,7 +782,7 @@ public class WOWCacheTestIT {
     assert fileName != null;
 
     final Path path = storagePath.resolve(fileName);
-    final OFile file = new AsyncFile(path, pageSize, true);
+    final OFile file = new AsyncFile(path, pageSize);
     file.open();
     file.write(
         ODurablePage.NEXT_FREE_POSITION,
@@ -820,7 +817,7 @@ public class WOWCacheTestIT {
     assert fileName != null;
 
     final Path path = storagePath.resolve(fileName);
-    final OFile file = new AsyncFile(path, pageSize, true);
+    final OFile file = new AsyncFile(path, pageSize);
     file.open();
     file.write(
         ODurablePage.NEXT_FREE_POSITION,
@@ -855,7 +852,7 @@ public class WOWCacheTestIT {
     assert fileName != null;
 
     final Path path = storagePath.resolve(fileName);
-    final OFile file = new AsyncFile(path, pageSize, true);
+    final OFile file = new AsyncFile(path, pageSize);
     file.open();
     file.write(
         ODurablePage.NEXT_FREE_POSITION,
@@ -890,7 +887,7 @@ public class WOWCacheTestIT {
     assert fileName != null;
 
     final Path path = storagePath.resolve(fileName);
-    final OFile file = new AsyncFile(path, pageSize, true);
+    final OFile file = new AsyncFile(path, pageSize);
     file.open();
     file.write(
         ODurablePage.NEXT_FREE_POSITION,
@@ -903,7 +900,7 @@ public class WOWCacheTestIT {
 
   private static void assertFile(
       long pageIndex, byte[] value, OLogSequenceNumber lsn, String fileName) throws IOException {
-    OFile fileClassic = new AsyncFile(storagePath.resolve(fileName), pageSize, true);
+    OFile fileClassic = new AsyncFile(storagePath.resolve(fileName), pageSize);
     fileClassic.open();
     byte[] content = new byte[8 + ODurablePage.NEXT_FREE_POSITION];
     fileClassic.read(
@@ -942,7 +939,7 @@ public class WOWCacheTestIT {
       final byte[] aesKey,
       final byte[] iv)
       throws Exception {
-    OFile fileClassic = new AsyncFile(storagePath.resolve(fileName), pageSize, true);
+    OFile fileClassic = new AsyncFile(storagePath.resolve(fileName), pageSize);
     fileClassic.open();
     byte[] content = new byte[8 + ODurablePage.NEXT_FREE_POSITION];
     fileClassic.read(

@@ -76,7 +76,6 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OInvalidDatabaseNameException;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
-import com.orientechnologies.orient.core.exception.OLowDiskSpaceException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.ORetryQueryException;
 import com.orientechnologies.orient.core.exception.OStorageDoesNotExistException;
@@ -131,16 +130,11 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.MetaDataRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAbstractCheckPointStartRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitEndRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartMetadataRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OCheckpointEndRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFileCreatedWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFileDeletedWALRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFullCheckpointStartRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFuzzyCheckpointEndRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFuzzyCheckpointStartRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OHighLevelTransactionChangeRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ONonTxOperationPerformedWALRecord;
@@ -150,6 +144,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdat
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPageBrokenException;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.EmptyWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.WriteableWALRecord;
 import com.orientechnologies.orient.core.storage.index.engine.OHashTableIndexEngine;
 import com.orientechnologies.orient.core.storage.index.engine.OSBTreeIndexEngine;
@@ -211,8 +206,7 @@ import java.util.zip.ZipOutputStream;
  * @since 28.03.13
  */
 public abstract class OAbstractPaginatedStorage extends OStorageAbstract
-    implements OLowDiskSpaceListener,
-        OCheckpointRequestListener,
+    implements OCheckpointRequestListener,
         OIdentifiableStorage,
         OBackgroundExceptionListener,
         OFreezableStorageComponent,
@@ -243,7 +237,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private final List<OCluster> clusters = new ArrayList<>();
 
   private volatile ThreadLocal<OStorageTransaction> transaction;
-  private final AtomicBoolean checkpointInProgress = new AtomicBoolean();
   private final AtomicBoolean walVacuumInProgress = new AtomicBoolean();
 
   protected volatile OWriteAheadLog writeAheadLog;
@@ -258,7 +251,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private volatile int defaultClusterId = -1;
   protected volatile OAtomicOperationsManager atomicOperationsManager;
   private volatile boolean wereNonTxOperationsPerformedInPreviousOpen;
-  private volatile OLowDiskSpaceInformation lowDiskSpace;
   private volatile boolean modificationLock;
   private volatile boolean readLock;
 
@@ -934,7 +926,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         interruptionManager.enterCriticalPath();
         checkOpenness();
         checkIfThreadIsBlocked();
-        checkLowDiskSpaceRequests();
 
         makeStorageDirty();
         return atomicOperationsManager.calculateInsideAtomicOperation(
@@ -964,8 +955,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         interruptionManager.enterCriticalPath();
         checkOpenness();
         checkIfThreadIsBlocked();
-
-        checkLowDiskSpaceRequests();
 
         if (requestedId < 0) {
           throw new OConfigurationException("Cluster id must be positive!");
@@ -1007,8 +996,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         interruptionManager.enterCriticalPath();
         checkOpenness();
         checkIfThreadIsBlocked();
-
-        checkLowDiskSpaceRequests();
 
         if (clusterId < 0 || clusterId >= clusters.size()) {
           throw new IllegalArgumentException(
@@ -1075,8 +1062,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         checkOpenness();
         checkIfThreadIsBlocked();
 
-        checkLowDiskSpaceRequests();
-
         checkClusterId(clusterId);
         final OCluster cluster = clusters.get(clusterId);
         if (cluster == null) {
@@ -1106,8 +1091,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         interruptionManager.enterCriticalPath();
         checkOpenness();
         checkIfThreadIsBlocked();
-
-        checkLowDiskSpaceRequests();
 
         checkClusterId(clusterId);
         final OCluster cluster = clusters.get(clusterId);
@@ -1140,8 +1123,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         checkOpenness();
         checkIfThreadIsBlocked();
 
-        checkLowDiskSpaceRequests();
-
         final OCluster cluster =
             clusterMap.get(clusterName.toLowerCase(configuration.getLocaleInstance()));
         if (cluster == null) {
@@ -1170,8 +1151,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         interruptionManager.enterCriticalPath();
         checkOpenness();
         checkIfThreadIsBlocked();
-
-        checkLowDiskSpaceRequests();
 
         checkClusterId(clusterId);
         final OCluster cluster = clusters.get(clusterId);
@@ -1203,8 +1182,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         interruptionManager.enterCriticalPath();
         checkOpenness();
         checkIfThreadIsBlocked();
-
-        checkLowDiskSpaceRequests();
 
         checkClusterId(clusterId);
         final OCluster cluster = clusters.get(clusterId);
@@ -1264,8 +1241,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         checkOpenness();
         checkIfThreadIsBlocked();
 
-        checkLowDiskSpaceRequests();
-
         checkClusterId(clusterId);
         final OCluster cluster = clusters.get(clusterId);
         if (cluster == null) {
@@ -1295,8 +1270,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         checkOpenness();
         checkIfThreadIsBlocked();
 
-        checkLowDiskSpaceRequests();
-
         checkClusterId(clusterId);
         final OCluster cluster = clusters.get(clusterId);
         if (cluster == null) {
@@ -1325,8 +1298,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         interruptionManager.enterCriticalPath();
         checkOpenness();
         checkIfThreadIsBlocked();
-
-        checkLowDiskSpaceRequests();
 
         final int clusterId = rid.getClusterId();
         checkClusterId(clusterId);
@@ -1754,7 +1725,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         checkOpenness();
 
         checkIfThreadIsBlocked();
-        checkLowDiskSpaceRequests();
 
         makeStorageDirty();
 
@@ -1994,14 +1964,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       stateLock.acquireReadLock();
       try {
+        checkOpenness();
+        checkIfThreadIsBlocked();
+
         interruptionManager.enterCriticalPath();
         // GET THE SHARED LOCK AND GET AN EXCLUSIVE LOCK AGAINST THE RECORD
         final Lock lock = recordVersionManager.acquireExclusiveLock(rid);
         try {
           checkOpenness();
           checkIfThreadIsBlocked();
-
-          checkLowDiskSpaceRequests();
 
           makeStorageDirty();
 
@@ -2060,8 +2031,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         interruptionManager.enterCriticalPath();
         checkOpenness();
         checkIfThreadIsBlocked();
-
-        checkLowDiskSpaceRequests();
 
         final OCluster cluster = doGetAndCheckCluster(rid.getClusterId());
 
@@ -2170,8 +2139,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         interruptionManager.enterCriticalPath();
         checkOpenness();
         checkIfThreadIsBlocked();
-
-        checkLowDiskSpaceRequests();
 
         makeStorageDirty();
         atomicOperationsManager.executeInsideAtomicOperation(
@@ -2363,7 +2330,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         }
         try {
           checkOpenness();
-          checkLowDiskSpaceRequests();
 
           checkIfThreadIsBlocked();
 
@@ -2596,8 +2562,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         checkOpenness();
         checkIfThreadIsBlocked();
 
-        checkLowDiskSpaceRequests();
-
         // this method introduced for binary compatibility only
         if (configuration.getBinaryFormatVersion() > 15) {
           return -1;
@@ -2715,8 +2679,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         interruptionManager.enterCriticalPath();
         checkOpenness();
         checkIfThreadIsBlocked();
-
-        checkLowDiskSpaceRequests();
 
         makeStorageDirty();
         return atomicOperationsManager.calculateInsideAtomicOperation(
@@ -2969,8 +2931,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         checkOpenness();
         checkIfThreadIsBlocked();
 
-        checkLowDiskSpaceRequests();
-
         checkIndexId(internalIndexId);
 
         makeStorageDirty();
@@ -3050,8 +3010,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         checkOpenness();
         checkIfThreadIsBlocked();
 
-        checkLowDiskSpaceRequests();
-
         makeStorageDirty();
 
         return atomicOperationsManager.calculateInsideAtomicOperation(
@@ -3111,8 +3069,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         interruptionManager.enterCriticalPath();
         checkOpenness();
         checkIfThreadIsBlocked();
-
-        checkLowDiskSpaceRequests();
 
         makeStorageDirty();
 
@@ -3293,8 +3249,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         checkOpenness();
         checkIfThreadIsBlocked();
 
-        checkLowDiskSpaceRequests();
-
         makeStorageDirty();
 
         atomicOperationsManager.executeInsideAtomicOperation(
@@ -3395,8 +3349,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         checkOpenness();
         checkIfThreadIsBlocked();
 
-        checkLowDiskSpaceRequests();
-
         makeStorageDirty();
 
         atomicOperationsManager.executeInsideAtomicOperation(
@@ -3451,8 +3403,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         interruptionManager.enterCriticalPath();
         checkOpenness();
         checkIfThreadIsBlocked();
-
-        checkLowDiskSpaceRequests();
 
         makeStorageDirty();
 
@@ -3509,8 +3459,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         interruptionManager.enterCriticalPath();
         checkOpenness();
         checkIfThreadIsBlocked();
-
-        checkLowDiskSpaceRequests();
 
         makeStorageDirty();
 
@@ -3582,8 +3530,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         interruptionManager.enterCriticalPath();
         checkOpenness();
         checkIfThreadIsBlocked();
-
-        checkLowDiskSpaceRequests();
 
         makeStorageDirty();
 
@@ -4066,7 +4012,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               }
             }
 
-            makeFullCheckpoint();
+            flushAllData();
 
           } else {
             OLogManager.instance()
@@ -4357,11 +4303,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   @SuppressWarnings("unused")
   public String getMode() {
     return mode;
-  }
-
-  @Override
-  public final void lowDiskSpace(final OLowDiskSpaceInformation information) {
-    lowDiskSpace = information;
   }
 
   /** @inheritDoc */
@@ -4854,8 +4795,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireWriteLock();
       try {
         checkOpenness();
-        checkLowDiskSpaceRequests();
-
         blockedThreads.add(thread);
       } finally {
         stateLock.releaseWriteLock();
@@ -4936,7 +4875,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       if (fuzzySegment > beginLSN.getSegment() && beginLSN.getSegment() < endLSN.getSegment()) {
         OLogManager.instance().debugNoDb(this, "Making fuzzy checkpoint", null);
-        writeCache.makeFuzzyCheckpoint(fuzzySegment, lastMetadata);
+        writeCache.syncDataFiles(fuzzySegment, lastMetadata);
 
         beginLSN = writeAheadLog.begin();
         endLSN = writeAheadLog.end();
@@ -4965,8 +4904,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           interruptionManager.enterCriticalPath();
           checkOpenness();
           checkIfThreadIsBlocked();
-
-          checkLowDiskSpaceRequests();
 
           makeStorageDirty();
 
@@ -5000,7 +4937,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           @Override
           public void run() {
             checkOpenness();
-            checkLowDiskSpaceRequests();
 
             stateLock.acquireWriteLock();
             try {
@@ -5033,17 +4969,18 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     ridBag.confirmDelete();
   }
 
-  protected void makeFullCheckpoint() {
+  protected void flushAllData() {
     try {
-
       writeAheadLog.flush();
 
       // so we will be able to cut almost all the log
       writeAheadLog.appendNewSegment();
 
-      final OLogSequenceNumber lastLSN = writeAheadLog.logFullCheckpointStart();
+      final OLogSequenceNumber lastLSN;
       if (lastMetadata != null) {
-        writeAheadLog.log(new MetaDataRecord(lastMetadata));
+        lastLSN = writeAheadLog.log(new MetaDataRecord(lastMetadata));
+      } else {
+        lastLSN = writeAheadLog.log(new EmptyWALRecord());
       }
 
       writeCache.flush();
@@ -5055,7 +4992,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             "Can not perform full checkpoint if some of atomic operations in progress");
       }
 
-      writeAheadLog.logFullCheckpointEnd();
       writeAheadLog.flush();
 
       writeAheadLog.cutTill(lastLSN);
@@ -5268,7 +5204,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           recoverListener.onStorageRecover();
         }
 
-        makeFullCheckpoint();
+        flushAllData();
       } catch (final Exception e) {
         OLogManager.instance().error(this, "Exception during storage data restore", e);
         throw e;
@@ -5663,7 +5599,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         checkOpenness();
         checkIfThreadIsBlocked();
-        checkLowDiskSpaceRequests();
 
         final OCluster cluster =
             clusterMap.get(clusterName.toLowerCase(configuration.getLocaleInstance()));
@@ -5780,7 +5715,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       if (status != STATUS.INTERNAL_ERROR) {
         if (!onDelete) {
-          makeFullCheckpoint();
+          flushAllData();
         }
 
         params = preCloseSteps();
@@ -5829,13 +5764,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         super.close(force, onDelete);
 
         if (writeCache != null) {
-          writeCache.removeLowDiskSpaceListener(this);
           writeCache.removeBackgroundExceptionListener(this);
           writeCache.removePageIsBrokenListener(this);
         }
 
-        writeAheadLog.removeFullCheckpointListener(this);
-        writeAheadLog.removeLowDiskSpaceListener(this);
+        writeAheadLog.removeCheckpointListener(this);
 
         if (readCache != null) {
           if (!onDelete) {
@@ -6097,116 +6030,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     writeAheadLog.addCutTillLimit(end);
     try {
-      OLogSequenceNumber lastCheckPoint;
-      try {
-        lastCheckPoint = writeAheadLog.getLastCheckpoint();
-      } catch (final OWALPageBrokenException ignore) {
-        lastCheckPoint = null;
-      }
-
-      if (lastCheckPoint == null) {
-        OLogManager.instance()
-            .info(this, "Checkpoints are absent, the restore will start from the beginning.");
-        return restoreFromBeginning();
-      }
-
-      List<WriteableWALRecord> checkPointRecord;
-      try {
-        checkPointRecord = writeAheadLog.read(lastCheckPoint, 1);
-      } catch (final OWALPageBrokenException ignore) {
-        checkPointRecord = Collections.emptyList();
-      }
-
-      if (checkPointRecord.isEmpty()) {
-        OLogManager.instance()
-            .info(this, "Checkpoints are absent, the restore will start from the beginning.");
-        return restoreFromBeginning();
-      }
-
-      if (checkPointRecord.get(0) instanceof OFuzzyCheckpointStartRecord) {
-        OLogManager.instance().info(this, "Found FUZZY checkpoint.");
-
-        final boolean fuzzyCheckPointIsComplete = checkFuzzyCheckPointIsComplete(lastCheckPoint);
-        if (!fuzzyCheckPointIsComplete) {
-          OLogManager.instance().warn(this, "FUZZY checkpoint is not complete.");
-
-          OFuzzyCheckpointStartRecord checkpointStartRecord =
-              (OFuzzyCheckpointStartRecord) checkPointRecord.get(0);
-          final OLogSequenceNumber previousCheckpoint =
-              checkpointStartRecord.getPreviousCheckpoint();
-          checkPointRecord = Collections.emptyList();
-
-          if (previousCheckpoint != null) {
-            checkPointRecord = writeAheadLog.read(previousCheckpoint, 1);
-          }
-
-          if (!checkPointRecord.isEmpty()) {
-            OLogManager.instance().warn(this, "Restore will start from the previous checkpoint.");
-            return restoreFromCheckPoint((OAbstractCheckPointStartRecord) checkPointRecord.get(0));
-          } else {
-            OLogManager.instance().warn(this, "Restore will start from the beginning.");
-            return restoreFromBeginning();
-          }
-        } else {
-          return restoreFromCheckPoint((OAbstractCheckPointStartRecord) checkPointRecord.get(0));
-        }
-      }
-
-      if (checkPointRecord.get(0) instanceof OFullCheckpointStartRecord) {
-        OLogManager.instance().info(this, "FULL checkpoint found.");
-        final boolean fullCheckPointIsComplete = checkFullCheckPointIsComplete(lastCheckPoint);
-
-        if (!fullCheckPointIsComplete) {
-          OLogManager.instance().warn(this, "FULL checkpoint has not completed.");
-
-          OFullCheckpointStartRecord checkpointStartRecord =
-              (OFullCheckpointStartRecord) checkPointRecord.get(0);
-          final OLogSequenceNumber previousCheckpoint =
-              checkpointStartRecord.getPreviousCheckpoint();
-
-          checkPointRecord = Collections.emptyList();
-          if (previousCheckpoint != null) {
-            checkPointRecord = writeAheadLog.read(previousCheckpoint, 1);
-          }
-
-          if (!checkPointRecord.isEmpty()) {
-            OLogManager.instance().warn(this, "Restore will start from the previous checkpoint.");
-            return restoreFromCheckPoint((OAbstractCheckPointStartRecord) checkPointRecord.get(0));
-          } else {
-            OLogManager.instance().warn(this, "Restore will start from the beginning.");
-            return restoreFromBeginning();
-          }
-        } else {
-          return restoreFromCheckPoint((OAbstractCheckPointStartRecord) checkPointRecord.get(0));
-        }
-      }
-
-      throw new OStorageException(
-          "Unknown checkpoint record type " + checkPointRecord.get(0).getClass().getName());
+      return restoreFromBeginning();
     } finally {
       writeAheadLog.removeCutTillLimit(end);
     }
-  }
-
-  private boolean checkFullCheckPointIsComplete(final OLogSequenceNumber lastCheckPoint)
-      throws IOException {
-    try {
-      List<WriteableWALRecord> walRecords = writeAheadLog.next(lastCheckPoint, 10);
-
-      while (!walRecords.isEmpty()) {
-        for (final WriteableWALRecord walRecord : walRecords) {
-          if (walRecord instanceof OCheckpointEndRecord) {
-            return true;
-          }
-        }
-
-        walRecords = writeAheadLog.next(walRecords.get(walRecords.size() - 1).getLsn(), 10);
-      }
-    } catch (final OWALPageBrokenException ignore) {
-      return false;
-    }
-
-    return false;
   }
 
   @SuppressWarnings("CanBeFinal")
@@ -6241,72 +6068,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throws UnsupportedOperationException {
     throw new UnsupportedOperationException(
         "Incremental backup is supported only in enterprise version");
-  }
-
-  private boolean checkFuzzyCheckPointIsComplete(final OLogSequenceNumber lastCheckPoint)
-      throws IOException {
-    try {
-      List<WriteableWALRecord> walRecords = writeAheadLog.next(lastCheckPoint, 10);
-
-      while (!walRecords.isEmpty()) {
-        for (final WriteableWALRecord walRecord : walRecords) {
-          if (walRecord instanceof OFuzzyCheckpointEndRecord) {
-            return true;
-          }
-        }
-
-        walRecords = writeAheadLog.next(walRecords.get(walRecords.size() - 1).getLsn(), 10);
-      }
-    } catch (final OWALPageBrokenException ignore) {
-      return false;
-    }
-
-    return false;
-  }
-
-  private OLogSequenceNumber restoreFromCheckPoint(
-      final OAbstractCheckPointStartRecord checkPointRecord) throws IOException {
-    if (checkPointRecord instanceof OFuzzyCheckpointStartRecord) {
-      return restoreFromFuzzyCheckPoint((OFuzzyCheckpointStartRecord) checkPointRecord);
-    }
-
-    if (checkPointRecord instanceof OFullCheckpointStartRecord) {
-      return restoreFromFullCheckPoint((OFullCheckpointStartRecord) checkPointRecord);
-    }
-
-    throw new OStorageException(
-        "Unknown checkpoint record type " + checkPointRecord.getClass().getName());
-  }
-
-  private OLogSequenceNumber restoreFromFullCheckPoint(
-      final OFullCheckpointStartRecord checkPointRecord) throws IOException {
-    OLogManager.instance()
-        .info(
-            this,
-            "Data restore procedure from full checkpoint is started. Restore is performed from LSN %s",
-            checkPointRecord.getLsn());
-
-    final OLogSequenceNumber lsn = writeAheadLog.next(checkPointRecord.getLsn(), 1).get(0).getLsn();
-    return restoreFrom(lsn, writeAheadLog, true);
-  }
-
-  private OLogSequenceNumber restoreFromFuzzyCheckPoint(
-      final OFuzzyCheckpointStartRecord checkPointRecord) throws IOException {
-    OLogManager.instance()
-        .infoNoDb(this, "Data restore procedure from FUZZY checkpoint is started.");
-    OLogSequenceNumber flushedLsn = checkPointRecord.getFlushedLsn();
-
-    if (flushedLsn.compareTo(writeAheadLog.begin()) < 0) {
-      OLogManager.instance()
-          .errorNoDb(
-              this,
-              "Fuzzy checkpoint points to removed part of the log, "
-                  + "will try to restore data from the rest of the WAL",
-              null);
-      flushedLsn = writeAheadLog.begin();
-    }
-
-    return restoreFrom(flushedLsn, writeAheadLog, true);
   }
 
   private OLogSequenceNumber restoreFromBeginning() throws IOException {
@@ -6536,53 +6297,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                 walRecord.getClass());
 
         assert false : "Invalid WAL record type was passed " + walRecord.getClass().getName();
-      }
-    }
-  }
-
-  private void checkLowDiskSpaceRequests() {
-    if (transaction.get() != null) {
-      return;
-    }
-
-    if (lowDiskSpace != null) {
-      if (checkpointInProgress.compareAndSet(false, true)) {
-        try {
-          if (writeCache.checkLowDiskSpace()) {
-            OLogManager.instance()
-                .error(this, "Not enough disk space, force sync will be called", null);
-            synch();
-
-            if (writeCache.checkLowDiskSpace()) {
-              throw new OLowDiskSpaceException(
-                  "Error occurred while executing a write operation to database '"
-                      + name
-                      + "' due to limited free space on the disk ("
-                      + (lowDiskSpace.freeSpace / (1024 * 1024))
-                      + " MB). The database is now working in read-only mode."
-                      + " Please close the database (or stop OrientDB), make room on your hard drive and then reopen the database. "
-                      + "The minimal required space is "
-                      + (lowDiskSpace.requiredSpace / (1024 * 1024))
-                      + " MB. "
-                      + "Required space is now set to "
-                      + configuration
-                          .getContextConfiguration()
-                          .getValueAsInteger(OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT)
-                      + "MB (you can change it by setting parameter "
-                      + OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT.getKey()
-                      + ") .");
-            } else {
-              lowDiskSpace = null;
-            }
-          } else {
-            lowDiskSpace = null;
-          }
-        } catch (final IOException e) {
-          throw OException.wrapException(
-              new OStorageException("Error during low disk space handling"), e);
-        } finally {
-          checkpointInProgress.set(false);
-        }
       }
     }
   }
@@ -7346,13 +7060,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         do {
           writeCache.flushTillSegment(flushTillSegmentId);
 
-          // we should take min lsn BEFORE min write cache LSN call
+          // we should take active segment BEFORE min write cache LSN call
           // to avoid case when new data are changed before call
-          final OLogSequenceNumber endLSN = writeAheadLog.end();
+          final long activeSegment = writeAheadLog.activeSegment();
           final Long minLSNSegment = writeCache.getMinimalNotFlushedSegment();
 
           if (minLSNSegment == null) {
-            minDirtySegment = endLSN.getSegment();
+            minDirtySegment = activeSegment;
           } else {
             minDirtySegment = minLSNSegment;
           }
@@ -7369,8 +7083,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           return;
         }
 
-        writeCache.makeFuzzyCheckpoint(minDirtySegment, lastMetadata);
-
+        writeCache.syncDataFiles(minDirtySegment, lastMetadata);
       } catch (final Exception e) {
         OLogManager.instance()
             .error(

@@ -513,7 +513,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
         true,
         locale,
         OGlobalConfiguration.WAL_MAX_SIZE.getValueAsLong() * 1024 * 1024,
-        OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT.getValueAsLong() * 1024 * 1024,
         contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_COMMIT_TIMEOUT),
         contextConfiguration.getValueAsBoolean(OGlobalConfiguration.WAL_KEEP_SINGLE_SEGMENT),
         contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_CALL_FSYNC),
@@ -779,9 +778,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
             true,
             Locale.getDefault(),
             contextConfiguration.getValueAsLong(OGlobalConfiguration.WAL_MAX_SIZE) * 1024 * 1024,
-            contextConfiguration.getValueAsLong(OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT)
-                * 1024
-                * 1024,
             contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_COMMIT_TIMEOUT),
             contextConfiguration.getValueAsBoolean(OGlobalConfiguration.WAL_KEEP_SINGLE_SEGMENT),
             contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_CALL_FSYNC),
@@ -790,9 +786,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
             contextConfiguration.getValueAsInteger(
                 OGlobalConfiguration.STORAGE_PRINT_WAL_PERFORMANCE_INTERVAL));
 
-    diskWriteAheadLog.addLowDiskSpaceListener(this);
     writeAheadLog = diskWriteAheadLog;
-    writeAheadLog.addFullCheckpointListener(this);
+    writeAheadLog.addCheckpointListener(this);
 
     diskWriteAheadLog.addSegmentOverflowListener(
         (segment) -> {
@@ -849,10 +844,9 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
                 OGlobalConfiguration.STORAGE_CHECKSUM_MODE, OChecksumMode.class),
             iv,
             aesKey,
-            contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_CALL_FSYNC),
-            contextConfiguration.getValueAsBoolean(OGlobalConfiguration.DISK_USE_NATIVE_OS_API));
+            contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_CALL_FSYNC)
+        );
 
-    wowCache.addLowDiskSpaceListener(this);
     wowCache.loadRegisteredFiles();
     wowCache.addBackgroundExceptionListener(this);
     wowCache.addPageIsBrokenListener(this);

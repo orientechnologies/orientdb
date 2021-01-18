@@ -21,7 +21,6 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.orient.core.storage.impl.local.OCheckpointRequestListener;
-import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationMetadata;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.WriteableWALRecord;
 import java.io.File;
@@ -107,10 +106,10 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   @Override
-  public void addFullCheckpointListener(OCheckpointRequestListener listener) {}
+  public void addCheckpointListener(OCheckpointRequestListener listener) {}
 
   @Override
-  public void removeFullCheckpointListener(OCheckpointRequestListener listener) {}
+  public void removeCheckpointListener(OCheckpointRequestListener listener) {}
 
   @Override
   public void moveLsnAfter(OLogSequenceNumber lsn) {}
@@ -135,12 +134,6 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   public long activeSegment() {
     return 0;
   }
-
-  @Override
-  public void addLowDiskSpaceListener(OLowDiskSpaceListener listener) {}
-
-  @Override
-  public void removeLowDiskSpaceListener(OLowDiskSpaceListener listener) {}
 
   @Override
   public OLogSequenceNumber begin(long segmentId) {

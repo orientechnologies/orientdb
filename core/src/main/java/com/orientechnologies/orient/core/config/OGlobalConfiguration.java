@@ -207,6 +207,7 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       Boolean.class,
       true),
 
+  @Deprecated
   DISK_USE_NATIVE_OS_API(
       "storage.disk.useNativeOsAPI",
       "Allows to call native OS methods if possible",
@@ -484,7 +485,7 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       "storage.wal.segmentsInterval",
       "Maximum interval in time in min. after which new WAL segment will be added",
       Integer.class,
-      5),
+      10),
 
   WAL_FILE_AUTOCLOSE_INTERVAL(
       "storage.wal.fileAutoCloseInterval",
@@ -531,7 +532,7 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       "storage.wal.keepSingleSegment",
       "Database will provide the best efforts to keep only single WAL inside the storage",
       Boolean.class,
-      false),
+      true),
 
   @Deprecated
   WAL_ALLOW_DIRECT_IO(
