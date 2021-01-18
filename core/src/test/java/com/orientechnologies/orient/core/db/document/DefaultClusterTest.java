@@ -15,13 +15,11 @@ public class DefaultClusterTest {
         OCreateDatabaseUtil.createDatabase("test", "embedded:", OCreateDatabaseUtil.TYPE_MEMORY);
     try (final ODatabaseSession db =
         context.open("test", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD)) {
-      OVertex v = db.newVertex("V");
+      final OVertex vertex = db.newVertex("V");
+      vertex.setProperty("embedded", new ODocument());
+      db.save(vertex);
 
-      v.setProperty("embedded", new ODocument());
-
-      db.save(v);
-
-      ODocument embedded = v.getProperty("embedded");
+      final ODocument embedded = vertex.getProperty("embedded");
       Assert.assertFalse("Found: " + embedded.getIdentity(), embedded.getIdentity().isValid());
     }
   }
