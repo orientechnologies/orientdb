@@ -531,10 +531,10 @@ public class AsyncReadCacheTestIT {
         final OCachePointer pointer, final OLogSequenceNumber startLSN) {}
 
     @Override
-    public void create() throws IOException {}
+    public void create() {}
 
     @Override
-    public void open() throws IOException {}
+    public void open() {}
   }
 
   private static final class ScrambledZipfianGenerator {

@@ -1867,7 +1867,7 @@ public final class OWOWCache extends OAbstractWriteCache
 
         if (files.get(externalId) == null) {
           final Path path = storagePath.resolve(idFileNameMap.get((nameIdEntry.getValue())));
-          final AsyncFile file = new AsyncFile(path, pageSize, useNativeOsAPI);
+          final AsyncFile file = new AsyncFile(path, pageSize);
 
           if (file.exists()) {
             file.open();

@@ -75,7 +75,7 @@ public class SBTreeV1WALTestIT extends SBTreeV1TestIT {
     OFileUtils.deleteRecursively(buildDir);
 
     orientDB = new OrientDB("plocal:" + buildDir, OrientDBConfig.defaultConfig());
-    storage = (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage();
+    storage = (OAbstractPaginatedStorage) ((ODatabaseInternal<?>) databaseDocumentTx).getStorage();
     createExpectedSBTree();
     createActualSBTree();
   }
@@ -92,7 +92,7 @@ public class SBTreeV1WALTestIT extends SBTreeV1TestIT {
     orientDB.create(ACTUAL_DB_NAME, ODatabaseType.PLOCAL);
 
     databaseDocumentTx = orientDB.open(ACTUAL_DB_NAME, "admin", "admin");
-    actualStorage = (OLocalPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage();
+    actualStorage = (OLocalPaginatedStorage) ((ODatabaseInternal<?>) databaseDocumentTx).getStorage();
     actualStorageDir = actualStorage.getStoragePath().toString();
     CASDiskWriteAheadLog writeAheadLog = (CASDiskWriteAheadLog) actualStorage.getWALInstance();
 
@@ -121,7 +121,7 @@ public class SBTreeV1WALTestIT extends SBTreeV1TestIT {
 
     expectedDatabaseDocumentTx = orientDB.open(EXPECTED_DB_NAME, "admin", "admin");
     expectedStorage =
-        (OLocalPaginatedStorage) ((ODatabaseInternal) expectedDatabaseDocumentTx).getStorage();
+        (OLocalPaginatedStorage) ((ODatabaseInternal<?>) expectedDatabaseDocumentTx).getStorage();
     expectedReadCache = expectedStorage.getReadCache();
     expectedWriteCache = expectedStorage.getWriteCache();
 
