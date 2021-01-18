@@ -27,7 +27,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /** Created by tglman on 08/04/16. */
@@ -127,28 +126,19 @@ public class OrientDBEmbeddedTests {
     orientDb.close();
   }
 
-  // FIXME: add test again
-  @Ignore
   @Test
   public void testRegisterDatabase() {
-    final OrientDBEmbedded orientDb =
-        (OrientDBEmbedded)
-            new OrientDB(
-                    "embedded:",
-                    OrientDBConfig.builder()
-                        .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
-                        .build())
-                .getInternal();
+    final OrientDB orient = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
+    orient.execute("create system user admin identified by 'admin' role root");
+    final OrientDBEmbedded orientDb = (OrientDBEmbedded) orient.getInternal();
     assertEquals(orientDb.listDatabases("", "").size(), 0);
     orientDb.initCustomStorage("database1", "./target/databases/database1", "", "");
-    try (final ODatabaseSession db =
-        orientDb.open("database1", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD)) {
+    try (final ODatabaseSession db = orientDb.open("database1", "admin", "admin")) {
       assertEquals("database1", db.getName());
     }
     orientDb.initCustomStorage("database2", "./target/databases/database2", "", "");
 
-    try (final ODatabaseSession db =
-        orientDb.open("database2", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD)) {
+    try (final ODatabaseSession db = orientDb.open("database2", "admin", "admin")) {
       assertEquals("database2", db.getName());
     }
     orientDb.drop("database1", null, null);
