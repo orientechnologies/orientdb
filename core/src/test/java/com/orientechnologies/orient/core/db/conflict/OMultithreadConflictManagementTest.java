@@ -22,8 +22,7 @@ public class OMultithreadConflictManagementTest {
 
   @Test
   public void testAutomergeConflictStrategyThreaded() {
-
-    ODatabaseDocument db =
+    final ODatabaseDocument db =
         new ODatabaseDocumentTx(
             "memory:" + OMultithreadConflictManagementTest.class.getSimpleName());
     db.create();

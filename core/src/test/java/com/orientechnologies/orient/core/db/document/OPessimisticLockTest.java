@@ -3,7 +3,8 @@ package com.orientechnologies.orient.core.db.document;
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.STORAGE_PESSIMISTIC_LOCKING;
 import static com.orientechnologies.orient.core.db.OrientDBConfig.LOCK_TYPE_READWRITE;
 
-import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.OCreateDatabaseUtil;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.record.OElement;
@@ -21,14 +22,21 @@ public class OPessimisticLockTest {
 
   @Before
   public void before() throws Exception {
+
     orientDB =
         new OrientDB(
             "embedded:",
             OrientDBConfig.builder()
                 .addConfig(STORAGE_PESSIMISTIC_LOCKING, LOCK_TYPE_READWRITE)
+                .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
                 .build());
-    orientDB.create(OPessimisticLockTest.class.getSimpleName(), ODatabaseType.MEMORY);
-    session = orientDB.open(OPessimisticLockTest.class.getSimpleName(), "admin", "admin");
+    OCreateDatabaseUtil.createDatabase(
+        OPessimisticLockTest.class.getSimpleName(), orientDB, OCreateDatabaseUtil.TYPE_MEMORY);
+    session =
+        orientDB.open(
+            OPessimisticLockTest.class.getSimpleName(),
+            "admin",
+            OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
     session.createVertexClass("ToLock");
   }
 

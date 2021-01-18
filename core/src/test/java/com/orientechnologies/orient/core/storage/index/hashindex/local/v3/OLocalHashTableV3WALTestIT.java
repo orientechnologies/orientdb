@@ -2,9 +2,10 @@ package com.orientechnologies.orient.core.storage.index.hashindex.local.v3;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.orient.core.OCreateDatabaseUtil;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -75,13 +76,22 @@ public class OLocalHashTableV3WALTestIT extends OLocalHashTableV3Base {
     final java.io.File buildDir = new java.io.File(buildDirectory);
     OFileUtils.deleteRecursively(buildDir);
 
-    orientDB = new OrientDB("plocal:" + buildDirectory, OrientDBConfig.defaultConfig());
+    orientDB =
+        new OrientDB(
+            "plocal:" + buildDirectory,
+            OrientDBConfig.builder()
+                .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
+                .build());
 
-    orientDB.create(ACTUAL_DB_NAME, ODatabaseType.PLOCAL);
-    databaseDocumentTx = orientDB.open(ACTUAL_DB_NAME, "admin", "admin");
+    OCreateDatabaseUtil.createDatabase(ACTUAL_DB_NAME, orientDB, OCreateDatabaseUtil.TYPE_PLOCAL);
+    // orientDB.create(ACTUAL_DB_NAME, ODatabaseType.PLOCAL);
+    databaseDocumentTx =
+        orientDB.open(ACTUAL_DB_NAME, "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
 
-    orientDB.create(EXPECTED_DB_NAME, ODatabaseType.PLOCAL);
-    expectedDatabaseDocumentTx = orientDB.open(EXPECTED_DB_NAME, "admin", "admin");
+    OCreateDatabaseUtil.createDatabase(EXPECTED_DB_NAME, orientDB, OCreateDatabaseUtil.TYPE_PLOCAL);
+    // orientDB.create(EXPECTED_DB_NAME, ODatabaseType.PLOCAL);
+    expectedDatabaseDocumentTx =
+        orientDB.open(EXPECTED_DB_NAME, "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
 
     expectedStorage =
         ((OLocalPaginatedStorage) ((ODatabaseInternal<?>) expectedDatabaseDocumentTx).getStorage());

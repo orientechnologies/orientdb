@@ -28,7 +28,6 @@ public class TestSchemaImportExport {
     } finally {
       db.drop();
     }
-
     ODatabaseDocumentTx db1 =
         new ODatabaseDocumentTx("memory:imp_" + TestSchemaImportExport.class.getSimpleName());
     db1.create();

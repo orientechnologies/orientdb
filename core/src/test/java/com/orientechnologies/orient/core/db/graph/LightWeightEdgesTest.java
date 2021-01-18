@@ -3,10 +3,9 @@ package com.orientechnologies.orient.core.db.graph;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import com.orientechnologies.orient.core.OCreateDatabaseUtil;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OVertex;
@@ -25,9 +24,11 @@ public class LightWeightEdgesTest {
 
   @Before
   public void before() {
-    orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
-    orientDB.create("test", ODatabaseType.MEMORY);
-    session = orientDB.open("test", "admin", "admin");
+    // orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
+    // orientDB.create("test", ODatabaseType.MEMORY);
+    orientDB =
+        OCreateDatabaseUtil.createDatabase("test", "embedded:", OCreateDatabaseUtil.TYPE_MEMORY);
+    session = orientDB.open("test", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
     session.command("ALTER database custom useLightweightEdges = true").close();
     session.createVertexClass("Vertex");
     session.createEdgeClass("Edge");

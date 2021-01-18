@@ -3,10 +3,9 @@ package com.orientechnologies.orient.core.ridbag;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+import com.orientechnologies.orient.core.OCreateDatabaseUtil;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
@@ -60,10 +59,14 @@ public class ORidBagBasicTest {
 
   @Test
   public void allowOnlyAtRoot() {
-    OrientDB orientDB = new OrientDB("memory:", OrientDBConfig.defaultConfig());
-    orientDB.create(ORidBagBasicTest.class.getSimpleName(), ODatabaseType.MEMORY);
-    ODatabaseSession session =
-        orientDB.open(ORidBagBasicTest.class.getSimpleName(), "admin", "admin");
+    final OrientDB orientDB =
+        OCreateDatabaseUtil.createDatabase(
+            ORidBagBasicTest.class.getSimpleName(), "memory:", OCreateDatabaseUtil.TYPE_MEMORY);
+    final ODatabaseSession session =
+        orientDB.open(
+            ORidBagBasicTest.class.getSimpleName(),
+            "admin",
+            OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
     try {
       OVertex record = session.newVertex();
       List<Object> valueList = new ArrayList<>();

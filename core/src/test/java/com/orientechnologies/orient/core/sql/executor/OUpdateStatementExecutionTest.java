@@ -2,10 +2,9 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import static com.orientechnologies.orient.core.sql.executor.ExecutionPlanPrintUtils.printExecutionPlan;
 
+import com.orientechnologies.orient.core.OCreateDatabaseUtil;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.viewmanager.ViewCreationListener;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -36,12 +35,10 @@ public class OUpdateStatementExecutionTest {
 
   @Before
   public void before() {
-
-    orientDB = new OrientDB("embedded:./target/databases", OrientDBConfig.defaultConfig());
-
-    orientDB.create(name.getMethodName(), ODatabaseType.MEMORY);
-
-    db = orientDB.open(name.getMethodName(), "admin", "admin");
+    orientDB =
+        OCreateDatabaseUtil.createDatabase(
+            name.getMethodName(), "embedded:./target/databases", OCreateDatabaseUtil.TYPE_MEMORY);
+    db = orientDB.open(name.getMethodName(), "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
 
     className = name.getMethodName();
     OClass clazz = db.getMetadata().getSchema().createClass(className);

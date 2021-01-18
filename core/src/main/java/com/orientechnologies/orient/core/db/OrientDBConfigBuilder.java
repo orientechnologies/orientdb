@@ -63,12 +63,13 @@ public class OrientDBConfigBuilder {
     listeners.add(listener);
   }
 
-  public OrientDBConfigBuilder addConfig(OGlobalConfiguration configuration, Object value) {
+  public OrientDBConfigBuilder addConfig(
+      final OGlobalConfiguration configuration, final Object value) {
     configurations.setValue(configuration, value);
     return this;
   }
 
-  public OrientDBConfigBuilder addAttribute(ATTRIBUTES attribute, Object value) {
+  public OrientDBConfigBuilder addAttribute(final ATTRIBUTES attribute, final Object value) {
     attributes.put(attribute, value);
     return this;
   }
@@ -97,12 +98,13 @@ public class OrientDBConfigBuilder {
         users);
   }
 
-  public OrientDBConfigBuilder fromContext(OContextConfiguration contextConfiguration) {
+  public OrientDBConfigBuilder fromContext(final OContextConfiguration contextConfiguration) {
     configurations = contextConfiguration;
     return this;
   }
 
-  public OrientDBConfigBuilder addGlobalUser(String user, String password, String resource) {
+  public OrientDBConfigBuilder addGlobalUser(
+      final String user, final String password, final String resource) {
     users.add(new OGlobalUserImpl(user, password, resource));
     return this;
   }
