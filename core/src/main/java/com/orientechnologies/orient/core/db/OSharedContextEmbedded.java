@@ -2,6 +2,8 @@ package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.viewmanager.ViewManager;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexFactory;
 import com.orientechnologies.orient.core.index.OIndexManagerShared;
@@ -12,6 +14,9 @@ import com.orientechnologies.orient.core.metadata.schema.OSchemaEmbedded;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryImpl;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.schedule.OSchedulerImpl;
 import com.orientechnologies.orient.core.sql.executor.OQueryStats;
 import com.orientechnologies.orient.core.sql.parser.OExecutionPlanCache;
@@ -155,5 +160,42 @@ public class OSharedContextEmbedded extends OSharedContext {
 
   public ViewManager getViewManager() {
     return viewManager;
+  }
+
+  public synchronized ODocument loadConfig(ODatabaseSession session, String name) {
+    assert !session.getTransaction().isActive();
+    String propertyName = "__config__" + name;
+    String id = storage.getConfiguration().getProperty(propertyName);
+    if (id != null) {
+      ORecordId recordId = new ORecordId(id);
+      ODocument config = session.load(recordId, null, false);
+      ORecordInternal.setIdentity(config, null);
+      return config;
+    } else {
+      return null;
+    }
+  }
+
+  /**
+   * Store a configuration with a key, without checking eventual update version.
+   *
+   * @param session
+   * @param name
+   * @param value
+   */
+  public synchronized void saveConfig(ODatabaseSession session, String name, ODocument value) {
+    assert !session.getTransaction().isActive();
+    String propertyName = "__config__" + name;
+    String id = storage.getConfiguration().getProperty(propertyName);
+    if (id != null) {
+      ORecordId recordId = new ORecordId(id);
+      ORecord record = session.load(recordId, null, false);
+      ORecordInternal.setIdentity(value, recordId);
+      ORecordInternal.setVersion(value, record.getVersion());
+      session.save(value);
+    } else {
+      ORID recordId = session.save(value, "internal").getIdentity();
+      storage.setProperty(propertyName, recordId.toString());
+    }
   }
 }

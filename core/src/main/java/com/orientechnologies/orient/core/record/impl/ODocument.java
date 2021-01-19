@@ -3357,7 +3357,7 @@ public class ODocument extends ORecordAbstract
 
   private void fetchClassName() {
     final ODatabaseDocumentInternal database = getDatabaseIfDefinedInternal();
-    if (database != null && database.getStorageVersions() != null) {
+    if (recordId != null && database != null && database.getStorageVersions() != null) {
       if (recordId.getClusterId() < 0) {
         checkForLoading();
         checkForFields(ODocumentHelper.ATTRIBUTE_CLASS);
