@@ -35,14 +35,7 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
-import com.orientechnologies.orient.core.db.ODatabaseListener;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
-import com.orientechnologies.orient.core.db.OSharedContext;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
@@ -170,7 +163,16 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   protected Map<String, OResultSet> activeQueries = new HashMap<>();
   private Map<UUID, OBonsaiCollectionPointer> collectionsChanges;
 
+  //database stats!
   protected long loadedRecordsCount;
+  protected long totalRecordLoadMs;
+  protected long minRecordLoadMs;
+  protected long maxRecordLoadMs;
+  protected long ridbagPrefetchCount;
+  protected long totalRidbagPrefetchMs;
+  protected long minRidbagPrefetchMs;
+  protected long maxRidbagPrefetchMs;
+
 
   protected ODatabaseDocumentAbstract() {
     // DO NOTHING IS FOR EXTENDED OBJECTS
@@ -1387,47 +1389,59 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       }
 
       loadedRecordsCount++;
+      long begin = System.currentTimeMillis();
+      try {
+        final ORawBuffer recordBuffer;
+        if (!rid.isValid())
+          recordBuffer = null;
+        else {
+          OFetchHelper.checkFetchPlanValid(fetchPlan);
 
-      final ORawBuffer recordBuffer;
-      if (!rid.isValid())
-        recordBuffer = null;
-      else {
-        OFetchHelper.checkFetchPlanValid(fetchPlan);
+          int version;
+          if (iRecord != null)
+            version = iRecord.getVersion();
+          else
+            version = recordVersion;
 
-        int version;
-        if (iRecord != null)
-          version = iRecord.getVersion();
-        else
-          version = recordVersion;
+          recordBuffer = recordReader.readRecord(getStorage(), rid, fetchPlan, ignoreCache, version);
+        }
 
-        recordBuffer = recordReader.readRecord(getStorage(), rid, fetchPlan, ignoreCache, version);
-      }
+        if (recordBuffer == null)
+          return null;
 
-      if (recordBuffer == null)
-        return null;
+        if (iRecord == null || ORecordInternal.getRecordType(iRecord) != recordBuffer.recordType)
+          // NO SAME RECORD TYPE: CAN'T REUSE OLD ONE BUT CREATE A NEW ONE FOR IT
+          iRecord = Orient.instance().getRecordFactoryManager().newInstance(recordBuffer.recordType, rid.getClusterId(), this);
 
-      if (iRecord == null || ORecordInternal.getRecordType(iRecord) != recordBuffer.recordType)
-        // NO SAME RECORD TYPE: CAN'T REUSE OLD ONE BUT CREATE A NEW ONE FOR IT
-        iRecord = Orient.instance().getRecordFactoryManager().newInstance(recordBuffer.recordType, rid.getClusterId(), this);
+        ORecordInternal.fill(iRecord, rid, recordBuffer.version, recordBuffer.buffer, false, this);
 
-      ORecordInternal.fill(iRecord, rid, recordBuffer.version, recordBuffer.buffer, false, this);
+        if (iRecord instanceof ODocument)
+          ODocumentInternal.checkClass((ODocument) iRecord, this);
 
-      if (iRecord instanceof ODocument)
-        ODocumentInternal.checkClass((ODocument) iRecord, this);
+        if (ORecordVersionHelper.isTombstone(iRecord.getVersion()))
+          return (RET) iRecord;
 
-      if (ORecordVersionHelper.isTombstone(iRecord.getVersion()))
+        if (beforeReadOperations(iRecord))
+          return null;
+
+        iRecord.fromStream(recordBuffer.buffer);
+
+        afterReadOperations(iRecord);
+        if (iUpdateCache)
+          getLocalCache().updateRecord(iRecord);
+
         return (RET) iRecord;
-
-      if (beforeReadOperations(iRecord))
-        return null;
-
-      iRecord.fromStream(recordBuffer.buffer);
-
-      afterReadOperations(iRecord);
-      if (iUpdateCache)
-        getLocalCache().updateRecord(iRecord);
-
-      return (RET) iRecord;
+      } finally {
+        long readTime = System.currentTimeMillis() - begin;
+        if (this.loadedRecordsCount == 1) {
+          this.minRecordLoadMs = readTime;
+          this.maxRecordLoadMs = readTime;
+        } else {
+          this.minRecordLoadMs = Math.min(this.minRecordLoadMs, readTime);
+          this.maxRecordLoadMs = Math.max(this.maxRecordLoadMs, readTime);
+        }
+        this.totalRecordLoadMs += readTime;
+      }
     } catch (OOfflineClusterException t) {
       throw t;
     } catch (ORecordNotFoundException t) {
@@ -2775,11 +2789,35 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     return collectionsChanges;
   }
 
-  public long getLoadedRecordsCount() {
-    return loadedRecordsCount;
+  public ODatabaseStats getStats() {
+    ODatabaseStats stats = new ODatabaseStats();
+    stats.loadedRecords = loadedRecordsCount;
+    stats.minLoadRecordTimeMs = minRecordLoadMs;
+    stats.maxLoadRecordTimeMs = minRecordLoadMs;
+    stats.averageLoadRecordTimeMs = loadedRecordsCount == 0 ? 0 : (this.totalRecordLoadMs / loadedRecordsCount);
+    return stats;
   }
 
-  public void resetLoadedRecordsCount() {
-    loadedRecordsCount = 0L;
+  public void addRidbagPrefetchStats(long execTimeMs) {
+    this.ridbagPrefetchCount++;
+    totalRidbagPrefetchMs += execTimeMs;
+    if (this.ridbagPrefetchCount == 1) {
+      this.minRidbagPrefetchMs = execTimeMs;
+      this.maxRidbagPrefetchMs = execTimeMs;
+    } else {
+      this.minRidbagPrefetchMs = Math.min(this.minRidbagPrefetchMs, execTimeMs);
+      this.maxRidbagPrefetchMs = Math.max(this.maxRidbagPrefetchMs, execTimeMs);
+    }
+  }
+
+  public void resetRecordLoadStats() {
+    this.loadedRecordsCount = 0L;
+    this.totalRecordLoadMs = 0L;
+    this.minRecordLoadMs = 0L;
+    this.maxRecordLoadMs = 0L;
+    this.ridbagPrefetchCount = 0L;
+    this.totalRidbagPrefetchMs = 0L;
+    this.minRidbagPrefetchMs = 0L;
+    this.maxRidbagPrefetchMs = 0L;
   }
 }

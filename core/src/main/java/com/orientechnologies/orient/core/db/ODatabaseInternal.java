@@ -152,10 +152,15 @@ public interface ODatabaseInternal<T> extends ODatabase<T> {
   default void interruptExecution(Thread thread) {
   }
 
-  default long getLoadedRecordsCount() {
-    return -1;
+  default ODatabaseStats getStats() {
+    return new ODatabaseStats();
   }
 
-  default void resetLoadedRecordsCount() {
+  default void resetRecordLoadStats() {
   }
+
+  default void addRidbagPrefetchStats(long execTimeMs){
+  }
+
+
 }

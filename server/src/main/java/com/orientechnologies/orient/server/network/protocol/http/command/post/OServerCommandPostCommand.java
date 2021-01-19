@@ -22,6 +22,7 @@ package com.orientechnologies.orient.server.network.protocol.http.command.post;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.ODatabaseStats;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
@@ -92,7 +93,7 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
 
     try {
       db = getProfiledDatabaseInstance(iRequest);
-      ((ODatabaseInternal)db).resetLoadedRecordsCount();
+      ((ODatabaseInternal)db).resetRecordLoadStats();
       OStatement stm = parseStatement(language, text, db);
       OResultSet result = executeStatement(language, text, params, db);
       limit = getLimitFromStatement(stm, limit);
@@ -127,7 +128,8 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
         iResponse.setStreaming(true);
 
       additionalContent.put("elapsedMs", elapsedMs);
-      additionalContent.put("loadedRecords", ((ODatabaseInternal)db).getLoadedRecordsCount());
+      ODatabaseStats dbStats = ((ODatabaseInternal) db).getStats();
+      additionalContent.put("dbStats", dbStats.toResult().toElement());
       iResponse.writeResult(response, format, accept, additionalContent, mode);
 
     } finally {

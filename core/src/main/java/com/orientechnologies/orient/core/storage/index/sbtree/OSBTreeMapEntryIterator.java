@@ -20,6 +20,9 @@
 
 package com.orientechnologies.orient.core.storage.index.sbtree;
 
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.ODatabaseThreadLocalFactory;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OMixedIndexRIDContainer;
@@ -30,10 +33,10 @@ import java.util.*;
  * @author Artem Orobets (enisher-at-gmail.com)
  */
 public class OSBTreeMapEntryIterator<K, V> implements Iterator<Map.Entry<K, V>> {
-  private       LinkedList<Map.Entry<K, V>> preFetchedValues;
-  private final OTreeInternal<K, V>         sbTree;
-  private       K                           firstKey;
-  private       Map.Entry<K, V>             currentEntry;
+  private LinkedList<Map.Entry<K, V>> preFetchedValues;
+  private final OTreeInternal<K, V> sbTree;
+  private K firstKey;
+  private Map.Entry<K, V> currentEntry;
 
   private final int prefetchSize;
 
@@ -57,40 +60,48 @@ public class OSBTreeMapEntryIterator<K, V> implements Iterator<Map.Entry<K, V>> 
   }
 
   private void prefetchData(boolean firstTime) {
-    sbTree.loadEntriesMajor(firstKey, firstTime, true, entry -> {
-      final V value = entry.getValue();
-      final V resultValue;
-      if (value instanceof OIndexRIDContainer || value instanceof OMixedIndexRIDContainer) {
-        //noinspection unchecked
-        resultValue = (V) new HashSet<OIdentifiable>((Collection<? extends OIdentifiable>) value);
-      } else {
-        resultValue = value;
-      }
-
-      preFetchedValues.add(new Map.Entry<K, V>() {
-        @Override
-        public K getKey() {
-          return entry.getKey();
+    ODatabaseInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
+    long begin = System.currentTimeMillis();
+    try {
+      sbTree.loadEntriesMajor(firstKey, firstTime, true, entry -> {
+        final V value = entry.getValue();
+        final V resultValue;
+        if (value instanceof OIndexRIDContainer || value instanceof OMixedIndexRIDContainer) {
+          //noinspection unchecked
+          resultValue = (V) new HashSet<OIdentifiable>((Collection<? extends OIdentifiable>) value);
+        } else {
+          resultValue = value;
         }
 
-        @Override
-        public V getValue() {
-          return resultValue;
-        }
+        preFetchedValues.add(new Map.Entry<K, V>() {
+          @Override
+          public K getKey() {
+            return entry.getKey();
+          }
 
-        @Override
-        public V setValue(V v) {
-          throw new UnsupportedOperationException("setValue");
-        }
+          @Override
+          public V getValue() {
+            return resultValue;
+          }
+
+          @Override
+          public V setValue(V v) {
+            throw new UnsupportedOperationException("setValue");
+          }
+        });
+
+        return preFetchedValues.size() <= prefetchSize;
       });
 
-      return preFetchedValues.size() <= prefetchSize;
-    });
-
-    if (preFetchedValues.isEmpty()) {
-      preFetchedValues = null;
-    } else {
-      firstKey = preFetchedValues.getLast().getKey();
+      if (preFetchedValues.isEmpty()) {
+        preFetchedValues = null;
+      } else {
+        firstKey = preFetchedValues.getLast().getKey();
+      }
+    } finally {
+      if (db != null) {
+        db.addRidbagPrefetchStats(System.currentTimeMillis() - begin);
+      }
     }
   }
 
