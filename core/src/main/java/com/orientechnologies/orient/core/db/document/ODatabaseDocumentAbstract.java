@@ -606,22 +606,21 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   }
 
   @Override
-  public boolean declareIntent(final OIntent iIntent) {
+  public boolean declareIntent(final OIntent intent) {
     checkIfActive();
-
     if (currentIntent != null) {
-      if (iIntent != null && iIntent.getClass().equals(currentIntent.getClass()))
+      if (intent != null && intent.getClass().equals(currentIntent.getClass())) {
         // SAME INTENT: JUMP IT
         return false;
-
+      }
       // END CURRENT INTENT
       currentIntent.end(this);
     }
+    currentIntent = intent;
 
-    currentIntent = iIntent;
-
-    if (iIntent != null) iIntent.begin(this);
-
+    if (intent != null) {
+      intent.begin(this);
+    }
     return true;
   }
 

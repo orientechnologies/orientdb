@@ -130,45 +130,44 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
   public ODatabaseImport(
       final ODatabaseDocumentInternal database,
-      final String iFileName,
-      final OCommandOutputListener iListener)
+      final String fileName,
+      final OCommandOutputListener outputListener)
       throws IOException {
-    super(database, iFileName, iListener);
+    super(database, fileName, outputListener);
 
-    if (iListener == null)
-      listener =
-          new OCommandOutputListener() {
-            @Override
-            public void onMessage(String iText) {}
-          };
-
-    InputStream inStream;
-    final BufferedInputStream bf = new BufferedInputStream(new FileInputStream(fileName));
-    bf.mark(1024);
-    try {
-      inStream = new GZIPInputStream(bf, 16384); // 16KB
-    } catch (Exception ignore) {
-      bf.reset();
-      inStream = bf;
+    if (outputListener == null) {
+      listener = text -> {};
     }
 
-    jsonReader = new OJSONReader(new InputStreamReader(inStream));
-    database.declareIntent(new OIntentMassiveInsert());
+    try (final BufferedInputStream bufferedInputStream =
+             new BufferedInputStream(new FileInputStream(this.fileName))) {
+      bufferedInputStream.mark(1024);
+      InputStream inputStream;
+      try {
+        inputStream = new GZIPInputStream(bufferedInputStream, 16384); // 16KB
+      } catch (final Exception ignore) {
+        bufferedInputStream.reset();
+        inputStream = bufferedInputStream;
+      }
+      jsonReader = new OJSONReader(new InputStreamReader(inputStream));
+      database.declareIntent(new OIntentMassiveInsert());
+    }
   }
 
   public ODatabaseImport(
       final ODatabaseDocumentInternal database,
-      final InputStream iStream,
-      final OCommandOutputListener iListener)
+      final InputStream inputStream,
+      final OCommandOutputListener listener)
       throws IOException {
-    super(database, "streaming", iListener);
-    jsonReader = new OJSONReader(new InputStreamReader(iStream));
+    super(database, "streaming", listener);
+
+    jsonReader = new OJSONReader(new InputStreamReader(inputStream));
     database.declareIntent(new OIntentMassiveInsert());
   }
 
   @Override
-  public ODatabaseImport setOptions(String iOptions) {
-    super.setOptions(iOptions);
+  public ODatabaseImport setOptions(final String options) {
+    super.setOptions(options);
     return this;
   }
 
@@ -178,12 +177,12 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   }
 
   public ODatabaseImport importDatabase() {
-    boolean preValidation = database.isValidationEnabled();
+    final boolean preValidation = database.isValidationEnabled();
     try {
       listener.onMessage(
           "\nStarted import of database '" + database.getURL() + "' from " + fileName + "...");
 
-      long time = System.currentTimeMillis();
+      final long time = System.currentTimeMillis();
 
       jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
 
@@ -196,7 +195,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         database.getMetadata().getIndexManagerInternal().reload();
       }
 
-      for (OIndex index : database.getMetadata().getIndexManagerInternal().getIndexes(database)) {
+      for (final OIndex index : database.getMetadata().getIndexManagerInternal().getIndexes(database)) {
         if (index.isAutomatic()) indexesToRebuild.add(index.getName());
       }
 
@@ -250,33 +249,30 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
       try {
         writer.close();
-      } catch (IOException e1) {
+      } catch (final IOException e1) {
         throw new ODatabaseExportException(
             "Error on importing database '" + database.getName() + "' from file: " + fileName, e1);
       }
-
       throw new ODatabaseExportException(
           "Error on importing database '" + database.getName() + "' from file: " + fileName, e);
     } finally {
       database.setValidationEnabled(preValidation);
       close();
     }
-
     return this;
   }
 
   private void processBrokenRids() throws IOException, ParseException {
-    Set<ORID> brokenRids = new HashSet<>();
+    final Set<ORID> brokenRids = new HashSet<>();
     processBrokenRids(brokenRids);
     jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
   }
 
   // just read collection so import process can continue
-  private void processBrokenRids(Set<ORID> brokenRids) throws IOException, ParseException {
+  private void processBrokenRids(final Set<ORID> brokenRids) throws IOException, ParseException {
     if (exporterVersion >= 12) {
       listener.onMessage(
           "Reading of set of RIDs of records which were detected as broken during database export\n");
-
       jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
 
       while (true) {
@@ -555,9 +551,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           final OIdentifiable newRid;
           if (!doc.<Boolean>field("binary")) {
             try (final OResultSet result =
-                database.query(
-                    "select value from " + EXPORT_IMPORT_CLASS_NAME + " where key = ?",
-                    String.valueOf(oldRid))) {
+                     database.query(
+                         "select value from " + EXPORT_IMPORT_CLASS_NAME + " where key = ?",
+                         String.valueOf(oldRid))) {
               if (!result.hasNext()) {
                 newRid = oldRid;
               } else {
@@ -572,9 +568,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
             OBinarySerializer<?> binarySerializer = runtimeKeyIndexDefinition.getSerializer();
 
             try (final OResultSet result =
-                database.query(
-                    "select value from " + EXPORT_IMPORT_CLASS_NAME + " where key = ?",
-                    String.valueOf(doc.<OIdentifiable>field("rid")))) {
+                     database.query(
+                         "select value from " + EXPORT_IMPORT_CLASS_NAME + " where key = ?",
+                         String.valueOf(doc.<OIdentifiable>field("rid")))) {
               if (!result.hasNext()) {
                 newRid = doc.field("rid");
               } else {

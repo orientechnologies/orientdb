@@ -1,3 +1,5 @@
+
+
 /*
  *
  *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
@@ -72,7 +74,6 @@ import java.util.Set;
 
 @SuppressWarnings("serial")
 public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
-
   public static final String NAME = "json";
   public static final ORecordSerializerJSON INSTANCE = new ORecordSerializerJSON();
   public static final String ATTRIBUTE_FIELD_TYPES = "@fieldTypes";
@@ -660,20 +661,20 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         case BINARY:
           return OStringSerializerHelper.fieldTypeFromStream(iRecord, iType, iFieldValueAsString);
         case CUSTOM:
-          {
-            try {
-              ByteArrayInputStream bais =
-                  new ByteArrayInputStream(Base64.getDecoder().decode(iFieldValueAsString));
-              ObjectInputStream input = new ObjectInputStream(bais);
-              return input.readObject();
-            } catch (IOException e) {
-              throw OException.wrapException(
-                  new OSerializationException("Error on custom field deserialization"), e);
-            } catch (ClassNotFoundException e) {
-              throw OException.wrapException(
-                  new OSerializationException("Error on custom field deserialization"), e);
-            }
+        {
+          try {
+            ByteArrayInputStream bais =
+                new ByteArrayInputStream(Base64.getDecoder().decode(iFieldValueAsString));
+            ObjectInputStream input = new ObjectInputStream(bais);
+            return input.readObject();
+          } catch (IOException e) {
+            throw OException.wrapException(
+                new OSerializationException("Error on custom field deserialization"), e);
+          } catch (ClassNotFoundException e) {
+            throw OException.wrapException(
+                new OSerializationException("Error on custom field deserialization"), e);
           }
+        }
         default:
           return OStringSerializerHelper.fieldTypeFromStream(iRecord, iType, iFieldValue);
       }
