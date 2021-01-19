@@ -58,7 +58,7 @@ public class OClassDistributed extends OClassEmbedded {
 
   public int getClusterForNewInstance(ODatabaseDocumentDistributed db, ODocument doc) {
     if (getDatabase().getConfiguration().getValueAsBoolean(OGlobalConfiguration.DISTRIBUTED_AUTO_CREATE_CLUSTERS)) {
-      return getClusterForNewInstance(db, doc);
+      return super.getClusterForNewInstance(doc);
     } 
     
     final OStorage storage = db.getStorage();
