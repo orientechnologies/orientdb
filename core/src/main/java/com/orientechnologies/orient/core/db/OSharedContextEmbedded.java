@@ -163,17 +163,21 @@ public class OSharedContextEmbedded extends OSharedContext {
   }
 
   public synchronized ODocument loadConfig(ODatabaseSession session, String name) {
-    assert !session.getTransaction().isActive();
-    String propertyName = "__config__" + name;
-    String id = storage.getConfiguration().getProperty(propertyName);
-    if (id != null) {
-      ORecordId recordId = new ORecordId(id);
-      ODocument config = session.load(recordId, null, false);
-      ORecordInternal.setIdentity(config, null);
-      return config;
-    } else {
-      return null;
-    }
+    return (ODocument)
+        OScenarioThreadLocal.executeAsDistributed(
+            () -> {
+              assert !session.getTransaction().isActive();
+              String propertyName = "__config__" + name;
+              String id = storage.getConfiguration().getProperty(propertyName);
+              if (id != null) {
+                ORecordId recordId = new ORecordId(id);
+                ODocument config = session.load(recordId, null, false);
+                ORecordInternal.setIdentity(config, null);
+                return config;
+              } else {
+                return null;
+              }
+            });
   }
 
   /**
@@ -184,18 +188,22 @@ public class OSharedContextEmbedded extends OSharedContext {
    * @param value
    */
   public synchronized void saveConfig(ODatabaseSession session, String name, ODocument value) {
-    assert !session.getTransaction().isActive();
-    String propertyName = "__config__" + name;
-    String id = storage.getConfiguration().getProperty(propertyName);
-    if (id != null) {
-      ORecordId recordId = new ORecordId(id);
-      ORecord record = session.load(recordId, null, false);
-      ORecordInternal.setIdentity(value, recordId);
-      ORecordInternal.setVersion(value, record.getVersion());
-      session.save(value);
-    } else {
-      ORID recordId = session.save(value, "internal").getIdentity();
-      storage.setProperty(propertyName, recordId.toString());
-    }
+    OScenarioThreadLocal.executeAsDistributed(
+        () -> {
+          assert !session.getTransaction().isActive();
+          String propertyName = "__config__" + name;
+          String id = storage.getConfiguration().getProperty(propertyName);
+          if (id != null) {
+            ORecordId recordId = new ORecordId(id);
+            ORecord record = session.load(recordId, null, false);
+            ORecordInternal.setIdentity(value, recordId);
+            ORecordInternal.setVersion(value, record.getVersion());
+            session.save(value);
+          } else {
+            ORID recordId = session.save(value, "internal").getIdentity();
+            storage.setProperty(propertyName, recordId.toString());
+          }
+          return null;
+        });
   }
 }
