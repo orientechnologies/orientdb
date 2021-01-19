@@ -140,7 +140,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     }
 
     try (final BufferedInputStream bufferedInputStream =
-             new BufferedInputStream(new FileInputStream(this.fileName))) {
+        new BufferedInputStream(new FileInputStream(this.fileName))) {
       bufferedInputStream.mark(1024);
       InputStream inputStream;
       try {
@@ -149,6 +149,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         bufferedInputStream.reset();
         inputStream = bufferedInputStream;
       }
+
       jsonReader = new OJSONReader(new InputStreamReader(inputStream));
       database.declareIntent(new OIntentMassiveInsert());
     }
@@ -195,7 +196,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         database.getMetadata().getIndexManagerInternal().reload();
       }
 
-      for (final OIndex index : database.getMetadata().getIndexManagerInternal().getIndexes(database)) {
+      for (final OIndex index :
+          database.getMetadata().getIndexManagerInternal().getIndexes(database)) {
         if (index.isAutomatic()) indexesToRebuild.add(index.getName());
       }
 
@@ -551,9 +553,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           final OIdentifiable newRid;
           if (!doc.<Boolean>field("binary")) {
             try (final OResultSet result =
-                     database.query(
-                         "select value from " + EXPORT_IMPORT_CLASS_NAME + " where key = ?",
-                         String.valueOf(oldRid))) {
+                database.query(
+                    "select value from " + EXPORT_IMPORT_CLASS_NAME + " where key = ?",
+                    String.valueOf(oldRid))) {
               if (!result.hasNext()) {
                 newRid = oldRid;
               } else {
@@ -568,9 +570,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
             OBinarySerializer<?> binarySerializer = runtimeKeyIndexDefinition.getSerializer();
 
             try (final OResultSet result =
-                     database.query(
-                         "select value from " + EXPORT_IMPORT_CLASS_NAME + " where key = ?",
-                         String.valueOf(doc.<OIdentifiable>field("rid")))) {
+                database.query(
+                    "select value from " + EXPORT_IMPORT_CLASS_NAME + " where key = ?",
+                    String.valueOf(doc.<OIdentifiable>field("rid")))) {
               if (!result.hasNext()) {
                 newRid = doc.field("rid");
               } else {
