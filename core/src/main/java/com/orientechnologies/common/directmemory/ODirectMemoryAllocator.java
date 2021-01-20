@@ -37,7 +37,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 import jnr.ffi.NativeLong;
@@ -55,8 +54,6 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
 
   private static final int MEMORY_STATISTICS_PRINTING_INTERVAL =
       OGlobalConfiguration.MEMORY_PROFILING_REPORT_INTERVAL.getValueAsInteger();
-
-  private static final AtomicLong EVICTION_INDICATOR_ID_GEN = new AtomicLong();
 
   /** Whether we should track memory leaks during application execution */
   private static final boolean TRACK =
@@ -174,10 +171,7 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
       if (consumptionMap.isEmpty()) {
         consumptionMaps.add(
             new ConsumptionMapEvictionIndicator(
-                Thread.currentThread(),
-                consumptionMapEvictionQueue,
-                consumptionMap,
-                EVICTION_INDICATOR_ID_GEN.getAndIncrement()));
+                Thread.currentThread(), consumptionMapEvictionQueue, consumptionMap));
       }
 
       accumulateEvictedConsumptionMaps(consumptionMap);
@@ -239,13 +233,10 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
               return v;
             });
 
-        if (!consumptionMap.isEmpty() && wasEmpty) {
+        if (wasEmpty) {
           consumptionMaps.add(
               new ConsumptionMapEvictionIndicator(
-                  Thread.currentThread(),
-                  consumptionMapEvictionQueue,
-                  consumptionMap,
-                  EVICTION_INDICATOR_ID_GEN.getAndIncrement()));
+                  Thread.currentThread(), consumptionMapEvictionQueue, consumptionMap));
         }
       }
 
@@ -471,36 +462,14 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
 
   private static final class ConsumptionMapEvictionIndicator extends WeakReference<Thread> {
     private final EnumMap<Intention, OModifiableLong> consumptionMap;
-    private final long id;
 
     public ConsumptionMapEvictionIndicator(
         Thread referent,
         ReferenceQueue<? super Thread> q,
-        EnumMap<Intention, OModifiableLong> consumptionMap,
-        long id) {
+        EnumMap<Intention, OModifiableLong> consumptionMap) {
       super(referent, q);
 
       this.consumptionMap = consumptionMap;
-      this.id = id;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-
-      ConsumptionMapEvictionIndicator that = (ConsumptionMapEvictionIndicator) o;
-
-      return id == that.id;
-    }
-
-    @Override
-    public int hashCode() {
-      return (int) (id ^ (id >>> 32));
     }
   }
 
