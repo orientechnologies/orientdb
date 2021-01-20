@@ -571,7 +571,7 @@ public class OVertexDelegate implements OVertex {
 
     if (out != null)
       // OVERWRITE IT
-      iFromVertex.field(iFieldName, out, outType);
+      iFromVertex.setProperty(iFieldName, out, outType);
 
     return out;
   }
@@ -781,7 +781,7 @@ public class OVertexDelegate implements OVertex {
         if (!fieldValue.equals(iVertexToRemove)) {
           return;
         }
-        iVertex.field(iFieldName, iNewVertex);
+        iVertex.setProperty(iFieldName, iNewVertex);
       }
 
     } else if (fieldValue instanceof ORidBag) {
