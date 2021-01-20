@@ -722,6 +722,13 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     checkNodeInConfiguration(serverName, cfg);
   }
 
+  public void initFirstOpen(ODatabaseDocumentInternal session) {
+    ODistributedConfiguration cfg = configurationManager.getDistributedConfiguration(session);
+    checkNodeInConfiguration(getLocalNodeName(), cfg);
+    resume();
+    setOnline();
+  }
+
   protected String getLocalNodeName() {
     return localNodeName;
   }

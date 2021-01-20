@@ -109,10 +109,10 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         || !plugin.isEnabled()) {
       embedded = new ODatabaseDocumentEmbedded(storage);
     } else {
-      plugin.registerNewDatabaseIfNeeded(storage.getName());
       embedded = new ODatabaseDocumentDistributed(storage, plugin);
     }
     embedded.init(config, getOrCreateSharedContext(storage));
+    plugin.registerNewDatabaseIfNeeded(storage.getName());
     return embedded;
   }
 
@@ -125,10 +125,10 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         || !plugin.isEnabled()) {
       embedded = new ODatabaseDocumentEmbedded(storage);
     } else {
-      plugin.registerNewDatabaseIfNeeded(storage.getName());
       embedded = new ODatabaseDocumentDistributed(storage, plugin);
     }
     embedded.internalCreate(config, getOrCreateSharedContext(storage));
+    plugin.registerNewDatabaseIfNeeded(storage.getName());
     return embedded;
   }
 
@@ -140,10 +140,10 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         || !plugin.isEnabled()) {
       embedded = new ODatabaseDocumentEmbeddedPooled(pool, storage);
     } else {
-      plugin.registerNewDatabaseIfNeeded(storage.getName());
       embedded = new ODatabaseDocumentDistributedPooled(pool, storage, plugin);
     }
     embedded.init(pool.getConfig(), getOrCreateSharedContext(storage));
+    plugin.registerNewDatabaseIfNeeded(storage.getName());
     return embedded;
   }
 

@@ -118,6 +118,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   public ODatabaseDocumentDistributed(OStorage storage, ODistributedPlugin distributedPlugin) {
     super(storage);
     this.distributedManager = distributedPlugin;
+    distributedPlugin.registerNewDatabaseIfNeeded(storage.getName(), this);
   }
 
   /**

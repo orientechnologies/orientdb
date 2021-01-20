@@ -397,15 +397,15 @@ public class ODistributedPlugin extends OServerPluginAbstract
   @Override
   public void onOpen(final ODatabaseInternal iDatabase) {}
 
-  public void registerNewDatabaseIfNeeded(String dbName) {
+  public boolean registerNewDatabaseIfNeeded(String dbName, ODatabaseDocumentInternal session) {
     ODistributedDatabaseImpl distribDatabase = getDatabase(dbName);
     if (distribDatabase == null) {
       // CHECK TO PUBLISH IT TO THE CLUSTER
-      distribDatabase = getMessageService().registerDatabase(dbName);
-      distribDatabase.checkNodeInConfiguration(getLocalNodeName());
-      distribDatabase.resume();
-      distribDatabase.setOnline();
+      distribDatabase = messageService.registerDatabase(dbName);
+      distribDatabase.initFirstOpen(session);
+      return true;
     }
+    return false;
   }
 
   /** Remove myself as hook. */

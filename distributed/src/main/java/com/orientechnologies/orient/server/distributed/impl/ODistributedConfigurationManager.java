@@ -1,5 +1,9 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
@@ -8,8 +12,8 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
 
 public class ODistributedConfigurationManager {
 
@@ -24,6 +28,10 @@ public class ODistributedConfigurationManager {
   }
 
   public ODistributedConfiguration getDistributedConfiguration() {
+    return getDistributedConfiguration(null);
+  }
+
+  public ODistributedConfiguration getDistributedConfiguration(ODatabaseSession session) {
     if (distributedConfiguration == null) {
       ODocument doc = distributedManager.getOnlineDatabaseConfiguration(databaseName);
       if (doc != null) {
@@ -37,10 +45,10 @@ public class ODistributedConfigurationManager {
             databaseName);
         setDistributedConfiguration(new OModifiableDistributedConfiguration(doc));
       } else {
-        doc = loadDatabaseConfiguration(getDistributedConfigFile());
+        doc = loadDatabaseConfiguration(session);
         if (doc == null) {
           // LOOK FOR THE STD FILE
-          doc = loadDatabaseConfiguration(distributedManager.getDefaultDatabaseConfigFile());
+          doc = loadConfiguration();
           if (doc == null)
             throw new OConfigurationException(
                 "Cannot load default distributed for database '"
@@ -82,7 +90,54 @@ public class ODistributedConfigurationManager {
     }
   }
 
-  public ODocument loadDatabaseConfiguration(final File file) {
+  public ODocument loadDatabaseConfiguration(ODatabaseSession session) {
+
+    ODocument config = null;
+    try {
+      if (session != null) {
+        return readConfig(session);
+      } else {
+        OrientDBInternal context = distributedManager.getServerInstance().getDatabases();
+        config =
+            context
+                .executeNoAuthorization(databaseName, ODistributedConfigurationManager::readConfig)
+                .get();
+      }
+    } catch (InterruptedException | ExecutionException e) {
+      ODistributedServerLog.error(
+          this,
+          distributedManager.getLocalNodeName(),
+          null,
+          ODistributedServerLog.DIRECTION.NONE,
+          "Error on loading distributed configuration",
+          e);
+    }
+
+    return config;
+  }
+
+  private static ODocument readConfig(ODatabaseSession session) {
+    OSharedContextEmbedded value =
+        (OSharedContextEmbedded) ((ODatabaseDocumentInternal) session).getSharedContext();
+    ODocument doc = value.loadConfig(session, "ditributedConfig");
+    return doc;
+  }
+
+  public void saveDatabaseConfiguration() {
+    OrientDBInternal context = distributedManager.getServerInstance().getDatabases();
+    context.executeNoAuthorization(
+        databaseName,
+        (session) -> {
+          ODocument doc = distributedConfiguration.getDocument();
+          OSharedContextEmbedded value =
+              (OSharedContextEmbedded) ((ODatabaseDocumentInternal) session).getSharedContext();
+          value.saveConfig(session, "ditributedConfig", doc);
+          return null;
+        });
+  }
+
+  public ODocument loadConfiguration() {
+    final File file = distributedManager.getDefaultDatabaseConfigFile();
     if (!file.exists() || file.length() == 0) return null;
 
     ODistributedServerLog.info(
@@ -121,54 +176,5 @@ public class ODistributedConfigurationManager {
         }
     }
     return null;
-  }
-
-  public void saveDatabaseConfiguration() {
-    // SAVE THE CONFIGURATION TO DISK
-    FileOutputStream f = null;
-    try {
-      File file = getDistributedConfigFile();
-
-      ODistributedServerLog.debug(
-          this,
-          distributedManager.getLocalNodeName(),
-          null,
-          ODistributedServerLog.DIRECTION.NONE,
-          "Saving distributed configuration file for database '%s' to: %s",
-          databaseName,
-          file);
-
-      if (!file.exists()) {
-        file.getParentFile().mkdirs();
-        file.createNewFile();
-      }
-
-      f = new FileOutputStream(file);
-      f.write(distributedConfiguration.getDocument().toJSON().getBytes());
-      f.flush();
-    } catch (Exception e) {
-      ODistributedServerLog.error(
-          this,
-          distributedManager.getLocalNodeName(),
-          null,
-          ODistributedServerLog.DIRECTION.NONE,
-          "Error on saving distributed configuration file",
-          e);
-
-    } finally {
-      if (f != null)
-        try {
-          f.close();
-        } catch (IOException e) {
-        }
-    }
-  }
-
-  protected File getDistributedConfigFile() {
-    return new File(
-        distributedManager.getServerInstance().getDatabaseDirectory()
-            + databaseName
-            + "/"
-            + ODistributedServerManager.FILE_DISTRIBUTED_DB_CONFIG);
   }
 }
