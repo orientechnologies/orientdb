@@ -5,6 +5,10 @@ import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 
+/**
+ * Used as part of the security test refactoring of the ODB `core` module, cf.
+ * https://gist.github.com/tglman/4a24fa59efd88415e765a78487d64366#file-test-migrations-md
+ */
 public class OCreateDatabaseUtil {
   public static final String NEW_ADMIN_PASSWORD = "adminpwd";
 
@@ -19,7 +23,6 @@ public class OCreateDatabaseUtil {
             OrientDBConfig.builder()
                 .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
                 .build());
-    // orientDB.create(database, ODatabaseType.PLOCAL);
     if (!orientDB.exists(database)) {
       orientDB.execute(
           "create database "
@@ -35,7 +38,6 @@ public class OCreateDatabaseUtil {
 
   public static void createDatabase(
       final String database, final OrientDB orientDB, final String type) {
-    // orientDB.create(database, ODatabaseType.PLOCAL);
     if (!orientDB.exists(database)) {
       orientDB.execute(
           "create database "
