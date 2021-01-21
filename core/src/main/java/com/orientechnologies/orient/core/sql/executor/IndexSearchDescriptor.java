@@ -41,7 +41,7 @@ public class IndexSearchDescriptor {
       range = op.isRangeOperator();
     }
 
-    long val = stats.getIndexStats(indexName, size, range, additionalRangeCondition != null);
+    long val = stats.getIndexStats(indexName, size, range, additionalRangeCondition != null, ctx.getDatabase());
     if (val == -1) {
       //TODO query the index!
     }
