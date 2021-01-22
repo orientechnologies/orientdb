@@ -84,6 +84,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
+import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
@@ -3033,6 +3034,113 @@ public class OConsoleDatabaseApp extends OrientConsole
     message("\nOK");
   }
 
+  /**
+   * console command to open a db
+   *
+   * <p>usage: <code>
+   *   use dbName dbUser dbPwd
+   * </code>
+   *
+   * @param dbName
+   * @param user
+   * @param password
+   */
+  @ConsoleCommand(description = "Open a database", onlineHelp = "Console-Command-Use")
+  public void use(
+      @ConsoleParameter(name = "db-name", description = "The database name") final String dbName,
+      @ConsoleParameter(name = "user", description = "The database user") final String user,
+      @ConsoleParameter(name = "password", description = "The database password")
+          final String password) {
+
+    if (orientDB == null) {
+      message("Invalid context. Please use 'connect env' first");
+      return;
+    }
+
+    currentDatabase = (ODatabaseDocumentInternal) orientDB.open(dbName, user, password);
+
+    currentDatabaseName = currentDatabase.getName();
+
+    message("OK");
+
+    final ODocument distribCfg = getDistributedConfiguration();
+    if (distribCfg != null) listServers();
+  }
+
+  @Override
+  protected RESULT executeServerCommand(String iCommand) {
+    if (super.executeServerCommand(iCommand) == RESULT.NOT_EXECUTED) {
+      iCommand = iCommand.trim();
+      if (iCommand.toLowerCase().startsWith("connect ")) {
+        if (iCommand.substring("connect ".length()).trim().toLowerCase().startsWith("env ")) {
+          return connectEnv(iCommand);
+        }
+        return RESULT.NOT_EXECUTED;
+      }
+      if (orientDB != null) {
+        int displayLimit;
+        try {
+          displayLimit = Integer.parseInt(properties.get(OConsoleProperties.LIMIT));
+          OResultSet rs = orientDB.execute(iCommand);
+          int count = 0;
+          List<OIdentifiable> result = new ArrayList<>();
+          while (rs.hasNext() && (displayLimit < 0 || count < displayLimit)) {
+            OResult item = rs.next();
+            if (item.isBlob()) {
+              result.add(item.getBlob().get());
+            } else {
+              result.add(item.toElement());
+            }
+          }
+          setResultset(result);
+          dumpResultSet(displayLimit);
+          return RESULT.OK;
+        } catch (OCommandSQLParsingException parseEx) {
+          return RESULT.NOT_EXECUTED;
+        } catch (Exception e) {
+          printError(e);
+          return RESULT.ERROR;
+        }
+      }
+    }
+    return RESULT.NOT_EXECUTED;
+  }
+
+  /**
+   * console command to open an OrientDB context
+   *
+   * <p>usage: <code>
+   *   connect env URL serverUser serverPwd
+   * </code> eg. <code>
+   *   connect env remote:localhost root root
+   *
+   *   connect env embedded:. root root
+   *
+   * </code>
+   *
+   * @param iCommand
+   * @return
+   */
+  private RESULT connectEnv(String iCommand) {
+    String[] p = iCommand.split(" ");
+    List<String> parts = Arrays.stream(p).filter(x -> x.length() > 0).collect(Collectors.toList());
+    if (parts.size() < 3) {
+      error("\n!Invalid syntax: '%s'", iCommand);
+      return RESULT.ERROR;
+    }
+    String url = parts.get(2);
+    String user = null;
+    String pw = null;
+
+    if (parts.size() > 4) {
+      user = parts.get(3);
+      pw = parts.get(4);
+    }
+
+    orientDB = new OrientDB(url, user, pw, OrientDBConfig.defaultConfig());
+    return RESULT.OK;
+  }
+
   /** Should be used only by console commands */
   protected void checkForRemoteServer() {
     if (orientDB == null || OrientDBInternal.extract(orientDB).isEmbedded())
@@ -3169,6 +3277,8 @@ public class OConsoleDatabaseApp extends OrientConsole
     properties.put(OConsoleProperties.IGNORE_ERRORS, "false");
     properties.put(OConsoleProperties.BACKUP_COMPRESSION_LEVEL, "9"); // 9 = MAX
     properties.put(OConsoleProperties.BACKUP_BUFFER_SIZE, "1048576"); // 1MB
+    properties.put(
+        OConsoleProperties.COMPATIBILITY_LEVEL, "" + OConsoleProperties.COMPATIBILITY_LEVEL_LATEST);
   }
 
   protected OIdentifiable setCurrentRecord(final int iIndex) {
