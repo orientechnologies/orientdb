@@ -155,22 +155,22 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
   }
 
   public ORecord fromString(
-      String iSource, ORecord iRecord, final String[] iFields, boolean needReload) {
-    return fromString(iSource, iRecord, iFields, null, needReload);
+      String source, ORecord record, final String[] fields, boolean needReload) {
+    return fromString(source, record, fields, null, needReload);
   }
 
   @Override
-  public ORecord fromString(String iSource, ORecord iRecord, final String[] iFields) {
-    return fromString(iSource, iRecord, iFields, null, false);
+  public ORecord fromString(String source, ORecord record, final String[] fields) {
+    return fromString(source, record, fields, null, false);
   }
 
   public ORecord fromString(
-      String iSource,
-      ORecord iRecord,
-      final String[] iFields,
-      final String iOptions,
+      String source,
+      ORecord record,
+      final String[] fields,
+      final String options,
       boolean needReload) {
-    return fromString(iSource, iRecord, iFields, iOptions, needReload, -1, new HashSet<>());
+    return fromString(source, record, fields, options, needReload, -1, new HashSet<>());
   }
 
   public ORecord fromString(

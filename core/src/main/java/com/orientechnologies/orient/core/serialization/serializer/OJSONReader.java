@@ -37,11 +37,11 @@ import java.util.regex.Pattern;
 public class OJSONReader {
   public static final char NEW_LINE = '\n';
   public static final char[] DEFAULT_JUMP = new char[] {' ', '\r', '\n', '\t'};
-  public static final char[] DEFAULT_SKIP = new char[] {'\r', '\n', '\t'};
+  // public static final char[] DEFAULT_SKIP = new char[] {'\r', '\n', '\t'};
   public static final char[] BEGIN_OBJECT = new char[] {'{'};
   public static final char[] END_OBJECT = new char[] {'}'};
   public static final char[] FIELD_ASSIGNMENT = new char[] {':'};
-  public static final char[] BEGIN_STRING = new char[] {'"'};
+  // public static final char[] BEGIN_STRING = new char[] {'"'};
   public static final char[] COMMA_SEPARATOR = new char[] {','};
   public static final char[] NEXT_IN_OBJECT = new char[] {',', '}'};
   public static final char[] NEXT_IN_ARRAY = new char[] {',', ']'};
@@ -50,6 +50,11 @@ public class OJSONReader {
       new char[] {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
   public static final char[] BEGIN_COLLECTION = new char[] {'['};
   public static final char[] END_COLLECTION = new char[] {']'};
+
+  public BufferedReader getIn() {
+    return in;
+  }
+
   private BufferedReader in;
   private int cursor = 0;
   private int lineNumber = 0;

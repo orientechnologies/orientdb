@@ -19,6 +19,9 @@
  */
 package com.orientechnologies.orient.core.db.tool;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.listener.OProgressListener;
@@ -42,23 +45,13 @@ import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
-import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
-import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OClassEmbedded;
-import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
-import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.metadata.security.OIdentity;
 import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.metadata.security.OSecurityPolicy;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.OElement;
@@ -73,34 +66,15 @@ import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.executor.ORidSet;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
-import java.io.BufferedInputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.io.StringWriter;
+
+import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
-import java.util.AbstractList;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.zip.GZIPInputStream;
 
-/**
- * Import data from a file into a database.
- *
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- */
+/** Import data from a file into a database. */
 public class ODatabaseImport extends ODatabaseImpExpAbstract {
   public static final String EXPORT_IMPORT_CLASS_NAME = "___exportImportRIDMap";
   public static final String EXPORT_IMPORT_INDEX_NAME = EXPORT_IMPORT_CLASS_NAME + "Index";
@@ -109,7 +83,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
   private Map<OPropertyImpl, String> linkedClasses = new HashMap<>();
   private Map<OClass, List<String>> superClasses = new HashMap<>();
-  private final OJSONReader jsonReader;
+  private OJSONReader jsonReader;
   private ORecord record;
   private boolean schemaImported = false;
   private int exporterVersion = -1;
@@ -128,16 +102,15 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
   private int maxRidbagStringSizeBeforeLazyImport = 100_000_000;
 
+  // Jackson Stream Parser support
+  private final JsonFactory factory = new JsonFactory();
+
   public ODatabaseImport(
       final ODatabaseDocumentInternal database,
       final String fileName,
       final OCommandOutputListener outputListener)
       throws IOException {
     super(database, fileName, outputListener);
-
-    if (outputListener == null) {
-      listener = text -> {};
-    }
 
     try (final BufferedInputStream bufferedInputStream =
         new BufferedInputStream(new FileInputStream(this.fileName))) {
@@ -149,21 +122,61 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         bufferedInputStream.reset();
         inputStream = bufferedInputStream;
       }
-
-      jsonReader = new OJSONReader(new InputStreamReader(inputStream));
-      database.declareIntent(new OIntentMassiveInsert());
+      createJsonReaderDefaultListenerAndDeclareIntent(database, outputListener, inputStream);
     }
   }
 
   public ODatabaseImport(
       final ODatabaseDocumentInternal database,
       final InputStream inputStream,
-      final OCommandOutputListener listener)
+      final OCommandOutputListener outputListener)
       throws IOException {
-    super(database, "streaming", listener);
+    super(database, "streaming", outputListener);
+    createJsonReaderDefaultListenerAndDeclareIntent(database, outputListener, inputStream);
+  }
 
+  private void createJsonReaderDefaultListenerAndDeclareIntent(
+      final ODatabaseDocumentInternal database,
+      final OCommandOutputListener outputListener,
+      final InputStream inputStream) {
+    if (outputListener == null) {
+      listener = text -> {};
+    }
     jsonReader = new OJSONReader(new InputStreamReader(inputStream));
     database.declareIntent(new OIntentMassiveInsert());
+  }
+
+  // WIP
+  private void parse() throws IOException {
+    try (final JsonParser parser = factory.createParser(jsonReader.getIn())) {
+      while (!parser.isClosed()) {
+        JsonToken jsonToken = parser.nextToken();
+
+        System.out.println(jsonToken + " " + parser.getValueAsString());
+
+        if (JsonToken.START_OBJECT.equals(jsonToken)) {
+          jsonToken = parser.nextToken();
+          if (JsonToken.FIELD_NAME.equals(jsonToken) && parser.getValueAsString().equals("info")) {
+            this.handleInfo(parser);
+          }
+        }
+      }
+    }
+  }
+
+  private void handleInfo(final JsonParser parser) throws IOException {
+    System.out.println("Info");
+    JsonToken jsonToken = parser.nextToken();
+    while (!JsonToken.END_OBJECT.equals(jsonToken)) {
+      if (JsonToken.FIELD_NAME.equals(jsonToken)) {
+        final StringBuffer sb = new StringBuffer();
+        sb.append("\t" + jsonToken + "=" + parser.getValueAsString()).append(":::");
+        jsonToken = parser.nextToken();
+        sb.append(jsonToken + " " + parser.getValueAsString());
+        System.out.println(sb.toString());
+      }
+      jsonToken = parser.nextToken();
+    }
   }
 
   @Override
@@ -174,21 +187,41 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
   @Override
   public void run() {
-    importDatabase();
+    // TODO: importDatabase();
+    importDatabaseV2();
   }
 
-  public ODatabaseImport importDatabase() {
-    final boolean preValidation = database.isValidationEnabled();
+  @Override
+  protected void parseSetting(final String option, final List<String> items) {
+    if (option.equalsIgnoreCase("-deleteRIDMapping"))
+      deleteRIDMapping = Boolean.parseBoolean(items.get(0));
+    else if (option.equalsIgnoreCase("-preserveClusterIDs"))
+      preserveClusterIDs = Boolean.parseBoolean(items.get(0));
+    else if (option.equalsIgnoreCase("-merge")) merge = Boolean.parseBoolean(items.get(0));
+    else if (option.equalsIgnoreCase("-migrateLinks"))
+      migrateLinks = Boolean.parseBoolean(items.get(0));
+    else if (option.equalsIgnoreCase("-rebuildIndexes"))
+      rebuildIndexes = Boolean.parseBoolean(items.get(0));
+    else super.parseSetting(option, items);
+  }
+
+  // WIP
+  public ODatabaseImport importDatabaseV2() {
+    try {
+      parse();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
+    /*final boolean preValidation = database.isValidationEnabled();
     try {
       listener.onMessage(
           "\nStarted import of database '" + database.getURL() + "' from " + fileName + "...");
-
-      final long time = System.currentTimeMillis();
+      final long time = System.nanoTime();
 
       jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
-
       database.setValidationEnabled(false);
-
+      // status concept seems deprecated - status `IMPORTING` never checked
       database.setStatus(STATUS.IMPORTING);
 
       if (!merge) {
@@ -201,13 +234,13 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         if (index.isAutomatic()) indexesToRebuild.add(index.getName());
       }
 
-      String tag;
       boolean clustersImported = false;
       while (jsonReader.hasNext() && jsonReader.lastChar() != '}') {
-        tag = jsonReader.readString(OJSONReader.FIELD_ASSIGNMENT);
+        final String tag = jsonReader.readString(OJSONReader.FIELD_ASSIGNMENT);
 
-        if (tag.equals("info")) importInfo();
-        else if (tag.equals("clusters")) {
+        if (tag.equals("info")) {
+          importInfo();
+        } else if (tag.equals("clusters")) {
           importClusters();
           clustersImported = true;
         } else if (tag.equals("schema")) importSchema(clustersImported);
@@ -219,8 +252,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         } else
           throw new ODatabaseImportException("Invalid format. Found unsupported tag '" + tag + "'");
       }
-
-      if (rebuildIndexes) rebuildIndexes();
+      if (rebuildIndexes) {
+        rebuildIndexes();
+      }
 
       // This is needed to insure functions loaded into an open
       // in memory database are available after the import.
@@ -228,14 +262,102 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       database.getMetadata().reload();
 
       database.getStorage().synch();
+      // status concept seems deprecated, but status `OPEN` is checked elsewhere
       database.setStatus(STATUS.OPEN);
 
-      if (isDeleteRIDMapping()) removeExportImportRIDsMap();
-
+      if (isDeleteRIDMapping()) {
+        removeExportImportRIDsMap();
+      }
       listener.onMessage(
-          "\n\nDatabase import completed in " + ((System.currentTimeMillis() - time)) + " ms");
+          "\n\nDatabase import completed in " + ((System.nanoTime() - time) / 1000000) + " ms");
+    } catch (final Exception e) {
+      final StringWriter writer = new StringWriter();
+      writer.append(
+          "Error on database import happened just before line "
+              + jsonReader.getLineNumber()
+              + ", column "
+              + jsonReader.getColumnNumber()
+              + "\n");
+      final PrintWriter printWriter = new PrintWriter(writer);
+      e.printStackTrace(printWriter);
+      printWriter.flush();
 
-    } catch (Exception e) {
+      listener.onMessage(writer.toString());
+
+      try {
+        writer.close();
+      } catch (final IOException e1) {
+        throw new ODatabaseExportException(
+            "Error on importing database '" + database.getName() + "' from file: " + fileName, e1);
+      }
+      throw new ODatabaseExportException(
+          "Error on importing database '" + database.getName() + "' from file: " + fileName, e);
+    } finally {
+      database.setValidationEnabled(preValidation);
+      close();
+    }*/
+    return this;
+  }
+
+  public ODatabaseImport importDatabase() {
+    final boolean preValidation = database.isValidationEnabled();
+    try {
+      listener.onMessage(
+          "\nStarted import of database '" + database.getURL() + "' from " + fileName + "...");
+      final long time = System.nanoTime();
+
+      jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
+      database.setValidationEnabled(false);
+      // status concept seems deprecated - status `IMPORTING` never checked
+      database.setStatus(STATUS.IMPORTING);
+
+      if (!merge) {
+        removeDefaultNonSecurityClasses();
+        database.getMetadata().getIndexManagerInternal().reload();
+      }
+
+      for (final OIndex index :
+          database.getMetadata().getIndexManagerInternal().getIndexes(database)) {
+        if (index.isAutomatic()) indexesToRebuild.add(index.getName());
+      }
+
+      boolean clustersImported = false;
+      while (jsonReader.hasNext() && jsonReader.lastChar() != '}') {
+        final String tag = jsonReader.readString(OJSONReader.FIELD_ASSIGNMENT);
+
+        if (tag.equals("info")) {
+          importInfo();
+        } else if (tag.equals("clusters")) {
+          importClusters();
+          clustersImported = true;
+        } else if (tag.equals("schema")) importSchema(clustersImported);
+        else if (tag.equals("records")) importRecords();
+        else if (tag.equals("indexes")) importIndexes();
+        else if (tag.equals("manualIndexes")) importManualIndexes();
+        else if (tag.equals("brokenRids")) {
+          processBrokenRids();
+        } else
+          throw new ODatabaseImportException("Invalid format. Found unsupported tag '" + tag + "'");
+      }
+      if (rebuildIndexes) {
+        rebuildIndexes();
+      }
+
+      // This is needed to insure functions loaded into an open
+      // in memory database are available after the import.
+      // see issue #5245
+      database.getMetadata().reload();
+
+      database.getStorage().synch();
+      // status concept seems deprecated, but status `OPEN` is checked elsewhere
+      database.setStatus(STATUS.OPEN);
+
+      if (isDeleteRIDMapping()) {
+        removeExportImportRIDsMap();
+      }
+      listener.onMessage(
+          "\n\nDatabase import completed in " + ((System.nanoTime() - time) / 1000000) + " ms");
+    } catch (final Exception e) {
       final StringWriter writer = new StringWriter();
       writer.append(
           "Error on database import happened just before line "
@@ -373,20 +495,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     this.deleteRIDMapping = deleteRIDMapping;
   }
 
-  @Override
-  protected void parseSetting(final String option, final List<String> items) {
-    if (option.equalsIgnoreCase("-deleteRIDMapping"))
-      deleteRIDMapping = Boolean.parseBoolean(items.get(0));
-    else if (option.equalsIgnoreCase("-preserveClusterIDs"))
-      preserveClusterIDs = Boolean.parseBoolean(items.get(0));
-    else if (option.equalsIgnoreCase("-merge")) merge = Boolean.parseBoolean(items.get(0));
-    else if (option.equalsIgnoreCase("-migrateLinks"))
-      migrateLinks = Boolean.parseBoolean(items.get(0));
-    else if (option.equalsIgnoreCase("-rebuildIndexes"))
-      rebuildIndexes = Boolean.parseBoolean(items.get(0));
-    else super.parseSetting(option, items);
-  }
-
   public void setOption(final String option, String value) {
     parseSetting("-" + option, Arrays.asList(value));
   }
@@ -451,39 +559,38 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     listener.onMessage(
         "\nNon merge mode (-merge=false): removing all default non security classes");
 
-    OSchema schema = database.getMetadata().getSchema();
-    Collection<OClass> classes = schema.getClasses();
-    OClass orole = schema.getClass(ORole.CLASS_NAME);
-    OClass ouser = schema.getClass(OUser.CLASS_NAME);
-    OClass oidentity = schema.getClass(OIdentity.CLASS_NAME);
-    OClass oSecurityPolicy = schema.getClass(OSecurityPolicy.class.getSimpleName());
+    final OSchema schema = database.getMetadata().getSchema();
+    final Collection<OClass> classes = schema.getClasses();
+    final OClass role = schema.getClass(ORole.CLASS_NAME);
+    final OClass user = schema.getClass(OUser.CLASS_NAME);
+    final OClass identity = schema.getClass(OIdentity.CLASS_NAME);
+    // final OClass oSecurityPolicy = schema.getClass(OSecurityPolicy.class.getSimpleName());
     final Map<String, OClass> classesToDrop = new HashMap<>();
-    final Set<String> indexes = new HashSet<>();
-    for (OClass dbClass : classes) {
-      String className = dbClass.getName();
-
-      if (!dbClass.isSuperClassOf(orole)
-          && !dbClass.isSuperClassOf(ouser)
-          && !dbClass.isSuperClassOf(oidentity) /*&& !dbClass.isSuperClassOf(oSecurityPolicy)*/) {
+    final Set<String> indexNames = new HashSet<>();
+    for (final OClass dbClass : classes) {
+      final String className = dbClass.getName();
+      if (!dbClass.isSuperClassOf(role)
+          && !dbClass.isSuperClassOf(user)
+          && !dbClass.isSuperClassOf(identity) /*&& !dbClass.isSuperClassOf(oSecurityPolicy)*/) {
         classesToDrop.put(className, dbClass);
-        for (OIndex index : dbClass.getIndexes()) {
-          indexes.add(index.getName());
+        for (final OIndex index : dbClass.getIndexes()) {
+          indexNames.add(index.getName());
         }
       }
     }
 
     final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
-    for (String indexName : indexes) {
+    for (final String indexName : indexNames) {
       indexManager.dropIndex(database, indexName);
     }
 
     int removedClasses = 0;
     while (!classesToDrop.isEmpty()) {
       final AbstractList<String> classesReadyToDrop = new ArrayList<>();
-      for (String className : classesToDrop.keySet()) {
+      for (final String className : classesToDrop.keySet()) {
         boolean isSuperClass = false;
         for (OClass dbClass : classesToDrop.values()) {
-          List<OClass> parentClasses = dbClass.getSuperClasses();
+          final List<OClass> parentClasses = dbClass.getSuperClasses();
           if (parentClasses != null) {
             for (OClass parentClass : parentClasses) {
               if (className.equalsIgnoreCase(parentClass.getName())) {
@@ -497,23 +604,21 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           classesReadyToDrop.add(className);
         }
       }
-      for (String className : classesReadyToDrop) {
+      for (final String className : classesReadyToDrop) {
         schema.dropClass(className);
         classesToDrop.remove(className);
         removedClasses++;
         listener.onMessage("\n- Class " + className + " was removed.");
       }
     }
-
     schema.reload();
-
     listener.onMessage("\nRemoved " + removedClasses + " classes.");
   }
 
   private void importManualIndexes() throws IOException, ParseException {
     listener.onMessage("\nImporting manual index entries...");
 
-    ODocument doc = new ODocument();
+    ODocument document = new ODocument();
 
     OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
     // FORCE RELOADING
@@ -544,14 +649,14 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         }
 
         if (!value.isEmpty()) {
-          doc = (ODocument) ORecordSerializerJSON.INSTANCE.fromString(value, doc, null);
-          doc.setLazyLoad(false);
+          document = (ODocument) ORecordSerializerJSON.INSTANCE.fromString(value, document, null);
+          document.setLazyLoad(false);
 
-          final OIdentifiable oldRid = doc.field("rid");
+          final OIdentifiable oldRid = document.field("rid");
           assert oldRid != null;
 
           final OIdentifiable newRid;
-          if (!doc.<Boolean>field("binary")) {
+          if (!document.<Boolean>field("binary")) {
             try (final OResultSet result =
                 database.query(
                     "select value from " + EXPORT_IMPORT_CLASS_NAME + " where key = ?",
@@ -563,7 +668,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
               }
             }
 
-            index.put(doc.field("key"), newRid.getIdentity());
+            index.put(document.field("key"), newRid.getIdentity());
           } else {
             ORuntimeKeyIndexDefinition<?> runtimeKeyIndexDefinition =
                 (ORuntimeKeyIndexDefinition<?>) index.getDefinition();
@@ -572,15 +677,15 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
             try (final OResultSet result =
                 database.query(
                     "select value from " + EXPORT_IMPORT_CLASS_NAME + " where key = ?",
-                    String.valueOf(doc.<OIdentifiable>field("rid")))) {
+                    String.valueOf(document.<OIdentifiable>field("rid")))) {
               if (!result.hasNext()) {
-                newRid = doc.field("rid");
+                newRid = document.field("rid");
               } else {
                 newRid = new ORecordId(result.next().<String>getProperty("value"));
               }
             }
 
-            index.put(binarySerializer.deserialize(doc.field("key"), 0), newRid);
+            index.put(binarySerializer.deserialize(document.field("key"), 0), newRid);
           }
           tot++;
         }
@@ -799,7 +904,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       } while (jsonReader.lastChar() == ',');
 
       // REBUILD ALL THE INHERITANCE
-      for (Map.Entry<OClass, List<String>> entry : superClasses.entrySet())
+      for (Entry<OClass, List<String>> entry : superClasses.entrySet())
         for (String s : entry.getValue()) {
           OClass superClass = database.getMetadata().getSchema().getClass(s);
 
@@ -808,7 +913,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         }
 
       // SET ALL THE LINKED CLASSES
-      for (Map.Entry<OPropertyImpl, String> entry : linkedClasses.entrySet()) {
+      for (Entry<OPropertyImpl, String> entry : linkedClasses.entrySet()) {
         entry
             .getKey()
             .setLinkedClass(database.getMetadata().getSchema().getClass(entry.getValue()));
@@ -908,7 +1013,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       prop.setDefaultValue(value);
     }
     if (customFields != null) {
-      for (Map.Entry<String, String> entry : customFields.entrySet()) {
+      for (Entry<String, String> entry : customFields.entrySet()) {
         prop.setCustom(entry.getKey(), entry.getValue());
       }
     }
@@ -1439,7 +1544,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         throw t;
       }
     }
-
     return record.getIdentity();
   }
 
