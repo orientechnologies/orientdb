@@ -2795,6 +2795,12 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     stats.minLoadRecordTimeMs = minRecordLoadMs;
     stats.maxLoadRecordTimeMs = minRecordLoadMs;
     stats.averageLoadRecordTimeMs = loadedRecordsCount == 0 ? 0 : (this.totalRecordLoadMs / loadedRecordsCount);
+
+    stats.prefetchedRidbagsCount = ridbagPrefetchCount;
+    stats.minRidbagPrefetchTimeMs = minRidbagPrefetchMs;
+    stats.maxRidbagPrefetchTimeMs = maxRidbagPrefetchMs;
+    stats.ridbagPrefetchTimeMs = totalRidbagPrefetchMs;
+
     return stats;
   }
 
