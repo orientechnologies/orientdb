@@ -49,7 +49,7 @@ public class ODatabaseImportTest {
                 @Override
                 public void onMessage(String iText) {}
               });
-      importer.importDatabase();
+      importer.importDatabaseV2();
       Assert.assertTrue(db.getMetadata().getSchema().existsClass("SimpleClass"));
     }
     orientDB.drop(databaseName);

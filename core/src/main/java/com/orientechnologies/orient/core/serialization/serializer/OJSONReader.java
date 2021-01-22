@@ -51,10 +51,6 @@ public class OJSONReader {
   public static final char[] BEGIN_COLLECTION = new char[] {'['};
   public static final char[] END_COLLECTION = new char[] {']'};
 
-  public BufferedReader getIn() {
-    return in;
-  }
-
   private BufferedReader in;
   private int cursor = 0;
   private int lineNumber = 0;

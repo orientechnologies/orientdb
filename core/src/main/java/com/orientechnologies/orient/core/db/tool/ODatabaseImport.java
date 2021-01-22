@@ -66,7 +66,6 @@ import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.executor.ORidSet;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
-
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
@@ -104,6 +103,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
   // Jackson Stream Parser support
   private final JsonFactory factory = new JsonFactory();
+  private InputStream input;
 
   public ODatabaseImport(
       final ODatabaseDocumentInternal database,
@@ -144,24 +144,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     }
     jsonReader = new OJSONReader(new InputStreamReader(inputStream));
     database.declareIntent(new OIntentMassiveInsert());
-  }
 
-  // WIP
-  private void parse() throws IOException {
-    try (final JsonParser parser = factory.createParser(jsonReader.getIn())) {
-      while (!parser.isClosed()) {
-        JsonToken jsonToken = parser.nextToken();
-
-        System.out.println(jsonToken + " " + parser.getValueAsString());
-
-        if (JsonToken.START_OBJECT.equals(jsonToken)) {
-          jsonToken = parser.nextToken();
-          if (JsonToken.FIELD_NAME.equals(jsonToken) && parser.getValueAsString().equals("info")) {
-            this.handleInfo(parser);
-          }
-        }
-      }
-    }
+    input = inputStream;
   }
 
   private void handleInfo(final JsonParser parser) throws IOException {
@@ -187,8 +171,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
   @Override
   public void run() {
-    // TODO: importDatabase();
-    importDatabaseV2();
+    importDatabase();
+    // TODO: importDatabaseV2();
   }
 
   @Override
@@ -206,9 +190,27 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   }
 
   // WIP
+  private void parse(final InputStream inputStream) throws IOException {
+    try (final JsonParser parser = factory.createParser(inputStream)) {
+      while (!parser.isClosed()) {
+        JsonToken jsonToken = parser.nextToken();
+
+        System.out.println(jsonToken + " " + parser.getValueAsString());
+
+        if (JsonToken.START_OBJECT.equals(jsonToken)) {
+          jsonToken = parser.nextToken();
+          if (JsonToken.FIELD_NAME.equals(jsonToken) && parser.getValueAsString().equals("info")) {
+            this.handleInfo(parser);
+          }
+        }
+      }
+    }
+  }
+
+  // WIP
   public ODatabaseImport importDatabaseV2() {
     try {
-      parse();
+      parse(input);
     } catch (IOException e) {
       e.printStackTrace();
     }
