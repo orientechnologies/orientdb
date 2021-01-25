@@ -171,8 +171,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
   @Override
   public void run() {
-    importDatabase();
-    // TODO: importDatabaseV2();
+    // TODO: importDatabase();
+    importDatabaseV2();
   }
 
   @Override
@@ -209,19 +209,14 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
   // WIP
   public ODatabaseImport importDatabaseV2() {
-    try {
-      parse(input);
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
+    final boolean preValidation = database.isValidationEnabled();
 
-    /*final boolean preValidation = database.isValidationEnabled();
-    try {
+    try (final JsonParser parser = factory.createParser(input)) {
       listener.onMessage(
           "\nStarted import of database '" + database.getURL() + "' from " + fileName + "...");
       final long time = System.nanoTime();
 
-      jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
+      // TODO: jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
       database.setValidationEnabled(false);
       // status concept seems deprecated - status `IMPORTING` never checked
       database.setStatus(STATUS.IMPORTING);
@@ -237,22 +232,26 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       }
 
       boolean clustersImported = false;
-      while (jsonReader.hasNext() && jsonReader.lastChar() != '}') {
-        final String tag = jsonReader.readString(OJSONReader.FIELD_ASSIGNMENT);
+      while (!parser.isClosed()) {
+        // TODO: while (jsonReader.hasNext() && jsonReader.lastChar() != '}') {
+        // TODO: final String tag = jsonReader.readString(OJSONReader.FIELD_ASSIGNMENT);
+        JsonToken jsonToken = parser.nextToken();
 
-        if (tag.equals("info")) {
-          importInfo();
-        } else if (tag.equals("clusters")) {
-          importClusters();
-          clustersImported = true;
-        } else if (tag.equals("schema")) importSchema(clustersImported);
-        else if (tag.equals("records")) importRecords();
-        else if (tag.equals("indexes")) importIndexes();
-        else if (tag.equals("manualIndexes")) importManualIndexes();
-        else if (tag.equals("brokenRids")) {
-          processBrokenRids();
-        } else
-          throw new ODatabaseImportException("Invalid format. Found unsupported tag '" + tag + "'");
+        // if (tag.equals("info")) {
+        //   importInfo();
+        if (JsonToken.FIELD_NAME.equals(jsonToken) && parser.getValueAsString().equals("info")) {
+          importInfo(parser);
+        } /*FIXME: else if (tag.equals("clusters")) {
+            importClusters();
+            clustersImported = true;
+          } else if (tag.equals("schema")) importSchema(clustersImported);
+          else if (tag.equals("records")) importRecords();
+          else if (tag.equals("indexes")) importIndexes();
+          else if (tag.equals("manualIndexes")) importManualIndexes();
+          else if (tag.equals("brokenRids")) {
+            processBrokenRids();
+          } else
+            throw new ODatabaseImportException("Invalid format. Found unsupported tag '" + tag + "'");*/
       }
       if (rebuildIndexes) {
         rebuildIndexes();
@@ -297,8 +296,44 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     } finally {
       database.setValidationEnabled(preValidation);
       close();
-    }*/
+    }
     return this;
+  }
+
+  private void importInfo(final JsonParser parser) throws IOException {
+    listener.onMessage("\nImporting database info...");
+
+    JsonToken jsonToken = parser.nextToken();
+    while (!JsonToken.END_OBJECT.equals(jsonToken)) {
+      if (JsonToken.FIELD_NAME.equals(jsonToken)) {
+        final StringBuffer sb = new StringBuffer();
+        if (parser.getValueAsString().equals("exporter-version")) {
+          parser.nextToken();
+          exporterVersion = parser.getValueAsInt();
+        } else if (parser.getValueAsString().equals("schemaRecordId")) {
+          parser.nextToken();
+          schemaRecordId = new ORecordId(parser.getValueAsString());
+        } else if (parser.getValueAsString().equals("indexMgrRecordId")) {
+          parser.nextToken();
+          indexMgrRecordId = new ORecordId(parser.getValueAsString());
+        } else {
+          sb.append("\t" + jsonToken + "=" + parser.getValueAsString()).append(":::");
+          jsonToken = parser.nextToken();
+          sb.append(jsonToken + " " + parser.getValueAsString());
+          System.out.println(sb.toString());
+        }
+      }
+      jsonToken = parser.nextToken();
+    }
+
+    if (schemaRecordId == null) {
+      schemaRecordId = new ORecordId(database.getStorage().getConfiguration().getSchemaRecordId());
+    }
+    if (indexMgrRecordId == null) {
+      indexMgrRecordId =
+          new ORecordId(database.getStorage().getConfiguration().getIndexMgrRecordId());
+    }
+    listener.onMessage("OK");
   }
 
   public ODatabaseImport importDatabase() {
