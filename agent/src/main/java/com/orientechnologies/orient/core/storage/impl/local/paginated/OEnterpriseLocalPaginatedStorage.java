@@ -88,8 +88,8 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
   private static final ThreadLocal<Cipher> CIPHER =
       ThreadLocal.withInitial(OEnterpriseLocalPaginatedStorage::getCipherInstance);
 
-  private static final String IBU_EXTENSION_V2 = ".ibu2";
-  private static final int INCREMENTAL_BACKUP_VERSION = 421;
+  private static final String IBU_EXTENSION_V3 = ".ibu3";
+  private static final int INCREMENTAL_BACKUP_VERSION = 423;
   private static final String CONF_ENTRY_NAME = "database.ocf";
   private static final String INCREMENTAL_BACKUP_DATEFORMAT = "yyyy-MM-dd-HH-mm-ss";
   private static final String CONF_UTF_8_ENTRY_NAME = "database_utf8.ocf";
@@ -173,7 +173,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
                     + dateFormat.format(new Date())
                     + "_"
                     + nextIndex
-                    + IBU_EXTENSION_V2;
+                    + IBU_EXTENSION_V3;
           else
             fileName =
                 getName()
@@ -182,7 +182,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
                     + "_"
                     + nextIndex
                     + "_full"
-                    + IBU_EXTENSION_V2;
+                    + IBU_EXTENSION_V3;
 
           final File ibuFile = new File(backupDirectory, fileName);
           if (started != null) started.call(null);
@@ -197,8 +197,8 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
             OIOUtils.writeByteBuffer(versionBuffer, ibuChannel, 0);
 
             ibuChannel.position(
-                OIntegerSerializer.INT_SIZE
-                    + 3 * OLongSerializer.LONG_SIZE
+                2 * OIntegerSerializer.INT_SIZE
+                    + 2 * OLongSerializer.LONG_SIZE
                     + OByteSerializer.BYTE_SIZE);
 
             OutputStream stream = Channels.newOutputStream(ibuChannel);
@@ -206,11 +206,12 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
             try {
               maxLsn = incrementalBackup(stream, lastLsn, true);
               final ByteBuffer dataBuffer =
-                  ByteBuffer.allocate(3 * OLongSerializer.LONG_SIZE + OByteSerializer.BYTE_SIZE);
+                  ByteBuffer.allocate(OIntegerSerializer.INT_SIZE +
+                          2 * OLongSerializer.LONG_SIZE + OByteSerializer.BYTE_SIZE);
 
               dataBuffer.putLong(nextIndex);
               dataBuffer.putLong(maxLsn.getSegment());
-              dataBuffer.putLong(maxLsn.getPosition());
+              dataBuffer.putInt(maxLsn.getPosition());
 
               if (lastLsn == null) dataBuffer.put((byte) 1);
               else dataBuffer.put((byte) 0);
@@ -278,7 +279,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
             (dir, name) ->
                 new File(dir, name).length() > 0
                     && name.toLowerCase(configuration.getLocaleInstance())
-                        .endsWith(IBU_EXTENSION_V2));
+                        .endsWith(IBU_EXTENSION_V3));
 
     if (files == null)
       throw new OStorageException(
@@ -318,12 +319,12 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
         final FileChannel ibuChannel = rndIBUFile.getChannel();
         ibuChannel.position(OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE);
 
-        ByteBuffer lsnData = ByteBuffer.allocate(2 * OLongSerializer.LONG_SIZE);
+        ByteBuffer lsnData = ByteBuffer.allocate(OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE);
         ibuChannel.read(lsnData);
         lsnData.rewind();
 
         final long segment = lsnData.getLong();
-        final long position = lsnData.getLong();
+        final int position = lsnData.getInt();
 
         return new OLogSequenceNumber(segment, position);
       } finally {
@@ -638,7 +639,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
     if (!backupDirectory.exists()) {
       throw new OStorageException(
           "Directory which should contain incremental backup files (files with extension '"
-              + IBU_EXTENSION_V2
+              + IBU_EXTENSION_V3
               + "') is absent. It should be located at '"
               + backupDirectory.getAbsolutePath()
               + "'");
@@ -649,7 +650,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
       if (files.length == 0) {
         throw new OStorageException(
             "Cannot find incremental backup files (files with extension '"
-                + IBU_EXTENSION_V2
+                + IBU_EXTENSION_V3
                 + "') in directory '"
                 + backupDirectory.getAbsolutePath()
                 + "'");
@@ -677,7 +678,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
                       + backupVersion);
             }
 
-            ibuChannel.position(OIntegerSerializer.INT_SIZE + 3 * OLongSerializer.LONG_SIZE);
+            ibuChannel.position(2 * OIntegerSerializer.INT_SIZE + 2 * OLongSerializer.LONG_SIZE);
             final ByteBuffer buffer = ByteBuffer.allocate(1);
             ibuChannel.read(buffer);
             buffer.rewind();
@@ -913,7 +914,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
 
       if (restoreLog != null) {
         final OLogSequenceNumber beginLsn = restoreLog.begin();
-        restoreLsn = restoreFrom(beginLsn, restoreLog, false);
+        restoreLsn = restoreFrom(restoreLog, beginLsn, Integer.MIN_VALUE);
 
         restoreLog.delete();
       }
@@ -971,7 +972,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
       atomicOperationsManager.executeInsideAtomicOperation(null, this::openClusters);
       openIndexes();
 
-      makeFullCheckpoint();
+      flushAllData();
     } finally {
       stateLock.releaseWriteLock();
       this.interruptionManager.exitCriticalPath();
