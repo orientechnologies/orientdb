@@ -22,6 +22,7 @@ import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.*;
 import com.orientechnologies.agent.services.backup.log.OBackupUploadFinishedLog;
@@ -76,74 +77,8 @@ public class OS3DeltaUploadingStrategy implements OUploadingStrategy {
     AmazonS3Client s3client = new AmazonS3Client(awsCredentials);
 
     try {
-
-      /*
-       * preparing bucket: if not present it's built
-       */
-
-      List<Bucket> buckets = s3client.listBuckets();
-
-      boolean alreadyPresent = false;
-      for (Bucket b : buckets) {
-        if (b.getName().equals(bucketName)) {
-          alreadyPresent = true;
-          break;
-        }
-      }
-      // if the bucket is not present build it
-      if (!alreadyPresent) {
-        s3client.createBucket(bucketName);
-      }
-
-      /*
-       * uploading file to the bucket
-       */
-
-      File localBackupDirectory = new File(sourceBackupDirectory);
-
-      File[] filesLocalBackup = localBackupDirectory.listFiles();
-      Map<String, File> localFileName2File = new ConcurrentHashMap<String, File>();
-      for (File f : filesLocalBackup) {
-        localFileName2File.put(f.getName(), f);
-      }
-
-      List<S3ObjectSummary> filesOnBucket = s3client.listObjects(bucketName).getObjectSummaries();
-      List<String> remoteFileNames = new ArrayList<String>();
-
-      String currentFileName;
-      for (S3ObjectSummary obj : filesOnBucket) {
-        remoteFileNames.add(obj.getKey());
-      }
-
-      // preparing folder: if folder does not exist  it's created (case: first incremental backup)
-      int lastIndex = destinationDirectoryPath.length() - 1;
-      if (destinationDirectoryPath.charAt(lastIndex) == '/')
-        destinationDirectoryPath = destinationDirectoryPath.substring(0, lastIndex);
-      if (destinationDirectoryPath.charAt(0) == '/')
-        destinationDirectoryPath = destinationDirectoryPath.substring(1);
-
-      if (!(remoteFileNames.contains(destinationDirectoryPath))) {
-        this.createFolder(s3client, bucketName, destinationDirectoryPath);
-      }
-
-      // compare files in the bucket with the local ones and populate filesToUpload list
-      for (String fileName : localFileName2File.keySet()) {
-        if (remoteFileNames.contains(destinationDirectoryPath + suffix + fileName)) {
-          localFileName2File.remove(fileName);
-        }
-      }
-
-      // upload each file contained in the filesToUpload list
-      for (File currentFile : localFileName2File.values()) {
-        s3client.putObject(
-            new PutObjectRequest(
-                bucketName,
-                destinationDirectoryPath + suffix + currentFile.getName(),
-                currentFile));
-      }
-
-      success = true;
-
+      success =
+          executeS3Upload(s3client, bucketName, sourceBackupDirectory, destinationDirectoryPath);
     } catch (AmazonServiceException ase) {
       OLogManager.instance()
           .info(
@@ -175,10 +110,87 @@ public class OS3DeltaUploadingStrategy implements OUploadingStrategy {
     return success;
   }
 
+  protected Boolean executeS3Upload(
+      AmazonS3 s3client,
+      String bucketName,
+      String sourceBackupDirectory,
+      String destinationDirectoryPath) {
+    /*
+     * preparing bucket: if not present it's built
+     */
+
+    List<Bucket> buckets = s3client.listBuckets();
+
+    boolean alreadyPresent = false;
+    for (Bucket b : buckets) {
+      if (b.getName().equals(bucketName)) {
+        alreadyPresent = true;
+        break;
+      }
+    }
+    // if the bucket is not present build it
+    if (!alreadyPresent) {
+      s3client.createBucket(bucketName);
+    }
+
+    /*
+     * uploading file to the bucket
+     */
+
+    File localBackupDirectory = new File(sourceBackupDirectory);
+
+    File[] filesLocalBackup = localBackupDirectory.listFiles();
+    Map<String, File> localFileName2File = new ConcurrentHashMap<String, File>();
+    for (File f : filesLocalBackup) {
+      localFileName2File.put(f.getName(), f);
+    }
+
+    List<S3ObjectSummary> filesOnBucket = s3client.listObjects(bucketName).getObjectSummaries();
+    List<String> remoteFileNames = new ArrayList<String>();
+
+    String currentFileName;
+    for (S3ObjectSummary obj : filesOnBucket) {
+      remoteFileNames.add(obj.getKey());
+    }
+
+    // preparing folder: if folder does not exist  it's created (case: first incremental backup)
+    int lastIndex = destinationDirectoryPath.length() - 1;
+    if (destinationDirectoryPath.charAt(lastIndex) == '/')
+      destinationDirectoryPath = destinationDirectoryPath.substring(0, lastIndex);
+    if (destinationDirectoryPath.charAt(0) == '/')
+      destinationDirectoryPath = destinationDirectoryPath.substring(1);
+
+    if (!(remoteFileNames.contains(destinationDirectoryPath))) {
+      this.createFolder(s3client, bucketName, destinationDirectoryPath);
+    }
+
+    // compare files in the bucket with the local ones and populate filesToUpload list
+    for (String fileName : localFileName2File.keySet()) {
+      if (remoteFileNames.contains(destinationDirectoryPath + suffix + fileName)) {
+        localFileName2File.remove(fileName);
+      }
+    }
+
+    // upload each file contained in the filesToUpload list
+    for (File currentFile : localFileName2File.values()) {
+      s3client.putObject(
+          new PutObjectRequest(
+              bucketName, destinationDirectoryPath + suffix + currentFile.getName(), currentFile));
+    }
+
+    return true;
+  }
+
   @Override
   public OUploadMetadata executeUpload(
       String sourceFile, String fName, String destinationDirectoryPath) {
+    AWSCredentials awsCredentials = new BasicAWSCredentials(accessKey, secretKey);
+    AmazonS3Client s3client = new AmazonS3Client(awsCredentials);
+    return executeS3FileUpload(s3client, bucketName, sourceFile, destinationDirectoryPath);
+  }
 
+  protected OUploadMetadata executeS3FileUpload(
+      AmazonS3 s3Client, String bucketName, String sourceFile, String destinationDirectoryPath) {
     long start = System.currentTimeMillis();
 
     // Do the Upload
@@ -186,19 +198,16 @@ public class OS3DeltaUploadingStrategy implements OUploadingStrategy {
     metadata.putIfAbsent("directory", destinationDirectoryPath);
     metadata.putIfAbsent("bucketName", bucketName);
 
-    AWSCredentials awsCredentials = new BasicAWSCredentials(accessKey, secretKey);
-    AmazonS3Client s3client = new AmazonS3Client(awsCredentials);
-
-    if (!s3client.doesBucketExist(bucketName)) {
-      s3client.createBucket(bucketName);
+    if (!s3Client.doesBucketExist(bucketName)) {
+      s3Client.createBucket(bucketName);
     }
 
-    if (!s3client.doesObjectExist(bucketName, destinationDirectoryPath)) {
-      this.createFolder(s3client, bucketName, destinationDirectoryPath);
+    if (!s3Client.doesObjectExist(bucketName, destinationDirectoryPath)) {
+      this.createFolder(s3Client, bucketName, destinationDirectoryPath);
     }
 
     File file = new File(sourceFile);
-    s3client.putObject(bucketName, destinationDirectoryPath + suffix + file.getName(), file);
+    s3Client.putObject(bucketName, destinationDirectoryPath + suffix + file.getName(), file);
 
     long end = System.currentTimeMillis();
     long elapsed = end - start;
@@ -219,7 +228,7 @@ public class OS3DeltaUploadingStrategy implements OUploadingStrategy {
     }
   }
 
-  public void createFolder(AmazonS3Client s3Client, String bucketName, String folderName) {
+  public void createFolder(AmazonS3 s3Client, String bucketName, String folderName) {
 
     // create meta-data for your folder and set content-length to 0
     ObjectMetadata metadata = new ObjectMetadata();
@@ -247,7 +256,11 @@ public class OS3DeltaUploadingStrategy implements OUploadingStrategy {
     String directory = metadata.get("directory");
     String bucketName = metadata.get("bucketName");
 
-    ObjectListing objectListing = s3client.listObjects(bucketName, directory);
+    return executeS3Download(s3client, bucketName, directory);
+  }
+
+  protected String executeS3Download(AmazonS3 s3Client, String bucketName, String directory) {
+    ObjectListing objectListing = s3Client.listObjects(bucketName, directory);
 
     try {
       Path tempDir = Files.createTempDirectory(directory);
@@ -256,7 +269,7 @@ public class OS3DeltaUploadingStrategy implements OUploadingStrategy {
         String[] strings = s3ObjectSummary.getKey().split("/");
 
         if (strings.length > 1) {
-          S3Object object = s3client.getObject(bucketName, s3ObjectSummary.getKey());
+          S3Object object = s3Client.getObject(bucketName, s3ObjectSummary.getKey());
           Files.copy(object.getObjectContent(), tempDir.resolve(strings[1]));
         }
       }
