@@ -682,7 +682,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
                         generateStorageId());
           } else {
             storage =
-                (OAbstractPaginatedStorage)
+                (OAbstractPaginatedStorage) // TODO start the investigation where is the key storage used to create the durable data storage
                     disk.createStorage(
                         buildName(name),
                         new HashMap<>(),
@@ -825,6 +825,9 @@ public class OrientDBEmbedded implements OrientDBInternal {
     // No need to close
     final ODatabaseDocumentEmbedded embedded = newSessionInstance(storage);
     embedded.setSerializer(serializer);
+    //TODO TEST BM variation
+    Object STORAGE_ENCRYPTION_KEYpath = OGlobalConfiguration.WAL_LOCATION;
+    config.getConfigurations().setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY,STORAGE_ENCRYPTION_KEYpath);
     embedded.internalCreate(config, getOrCreateSharedContext(storage));
     return embedded;
   }
