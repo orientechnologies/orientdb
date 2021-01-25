@@ -163,6 +163,16 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   protected Map<String, OResultSet> activeQueries = new HashMap<>();
   private Map<UUID, OBonsaiCollectionPointer> collectionsChanges;
 
+  // database stats!
+  protected long loadedRecordsCount;
+  protected long totalRecordLoadMs;
+  protected long minRecordLoadMs;
+  protected long maxRecordLoadMs;
+  protected long ridbagPrefetchCount;
+  protected long totalRidbagPrefetchMs;
+  protected long minRidbagPrefetchMs;
+  protected long maxRidbagPrefetchMs;
+
   protected ODatabaseDocumentAbstract() {
     // DO NOTHING IS FOR EXTENDED OBJECTS
     super(false);

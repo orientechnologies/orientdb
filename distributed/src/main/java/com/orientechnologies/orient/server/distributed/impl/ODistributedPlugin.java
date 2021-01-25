@@ -389,31 +389,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
   /** Auto register myself as hook. */
   @Override
-  public void onOpen(final ODatabaseInternal iDatabase) {
-    if (!isRelatedToLocalServer(iDatabase)) return;
-
-    if (isOffline() && getNodeStatus() != NODE_STATUS.STARTING) return;
-
-    final ODatabaseDocumentInternal currDb = ODatabaseRecordThreadLocal.instance().getIfDefined();
-    try {
-      final String dbName = iDatabase.getName();
-
-      final ODistributedConfiguration cfg = getDatabaseConfiguration(dbName);
-      if (cfg == null) return;
-
-    } catch (HazelcastException e) {
-      throw OException.wrapException(
-          new OOfflineNodeException("Hazelcast instance is not available"), e);
-
-    } catch (HazelcastInstanceNotActiveException e) {
-      throw OException.wrapException(
-          new OOfflineNodeException("Hazelcast instance is not available"), e);
-
-    } finally {
-      // RESTORE ORIGINAL DATABASE INSTANCE IN TL
-      ODatabaseRecordThreadLocal.instance().set(currDb);
-    }
-  }
+  public void onOpen(final ODatabaseInternal iDatabase) {}
 
   public void registerNewDatabaseIfNeeded(String dbName) {
     ODistributedDatabaseImpl distribDatabase = getMessageService().getDatabase(dbName);

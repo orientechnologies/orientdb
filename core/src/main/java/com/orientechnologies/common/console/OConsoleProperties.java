@@ -13,4 +13,15 @@ public class OConsoleProperties {
   public static final String MAX_BINARY_DISPLAY = "maxBinaryDisplay";
   public static final String PROMPT_DATE_FORMAT = "promptDateFormat";
   public static final String MAX_MULTI_VALUE_ENTRIES = "maxMultiValueEntries";
+
+  /**
+   * Integer
+   *
+   * <p>0 for compatibility with v 3.1 or previous, 1 for compatibility with v 3.2
+   */
+  public static final String COMPATIBILITY_LEVEL = "compatibilityLevel";
+
+  public static final int COMPATIBILITY_LEVEL_0 = 0;
+  public static final int COMPATIBILITY_LEVEL_1 = 1;
+  public static final int COMPATIBILITY_LEVEL_LATEST = COMPATIBILITY_LEVEL_1;
 }

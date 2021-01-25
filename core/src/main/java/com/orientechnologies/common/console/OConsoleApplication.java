@@ -320,6 +320,15 @@ public class OConsoleApplication {
   }
 
   protected RESULT execute(String iCommand) {
+    int compLevel = getCompatibilityLevel();
+    if (compLevel >= OConsoleProperties.COMPATIBILITY_LEVEL_1) {
+
+      RESULT result = executeServerCommand(iCommand);
+      if (result != RESULT.NOT_EXECUTED) {
+        return result;
+      }
+    }
+
     iCommand = iCommand.replaceAll("\n", ";\n");
     iCommand = iCommand.trim();
 
@@ -467,6 +476,19 @@ public class OConsoleApplication {
 
     error("\n!Unrecognized command: '%s'", iCommand);
     return RESULT.ERROR;
+  }
+
+  protected RESULT executeServerCommand(String iCommand) {
+    return RESULT.NOT_EXECUTED;
+  }
+
+  private int getCompatibilityLevel() {
+    try {
+      String compLevelString = properties.get(OConsoleProperties.COMPATIBILITY_LEVEL);
+      return Integer.parseInt(compLevelString);
+    } catch (Exception e) {
+      return OConsoleProperties.COMPATIBILITY_LEVEL_LATEST;
+    }
   }
 
   protected Method getMethod(String iCommand) {
@@ -773,6 +795,7 @@ public class OConsoleApplication {
   protected enum RESULT {
     OK,
     ERROR,
-    EXIT
+    EXIT,
+    NOT_EXECUTED
   }
 }
