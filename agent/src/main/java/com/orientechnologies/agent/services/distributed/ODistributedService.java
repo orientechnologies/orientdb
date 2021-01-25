@@ -2,6 +2,7 @@ package com.orientechnologies.agent.services.distributed;
 
 import com.orientechnologies.agent.functions.OAgentProfilerService;
 import com.orientechnologies.agent.http.command.OServerCommandDistributedManager;
+import com.orientechnologies.agent.profiler.OEnterpriseProfiler;
 import com.orientechnologies.agent.services.OEnterpriseService;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
 
@@ -22,8 +23,11 @@ public class ODistributedService implements OEnterpriseService {
         .getServiceByClass(OAgentProfilerService.class)
         .ifPresent(
             (e) -> {
-              if (this.server.getDistributedManager() != null && e.getProfiler() != null) {
-                this.server.getDistributedManager().registerLifecycleListener(e.getProfiler());
+              if (this.server.getDistributedManager() != null) {
+                OEnterpriseProfiler profiler = e.getProfiler();
+                if (profiler != null) {
+                  this.server.getDistributedManager().registerLifecycleListener(profiler);
+                }
               }
             });
   }
