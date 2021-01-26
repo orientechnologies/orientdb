@@ -1730,7 +1730,14 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
 
   @Override
   public void interruptExecution(Thread thread) {
-    ((OAbstractPaginatedStorage) storage).interruptExecution(thread);
+    if (storage instanceof OAbstractPaginatedStorage) {
+      ((OAbstractPaginatedStorage) storage).interruptExecution(thread);
+    } else {
+      OStorage underlying = storage.getUnderlying();
+      if (underlying != null && underlying instanceof OAbstractPaginatedStorage) {
+        ((OAbstractPaginatedStorage) underlying).interruptExecution(thread);
+      }
+    }
   }
 
   public boolean isCommandInterrupted() {
