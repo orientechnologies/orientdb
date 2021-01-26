@@ -21,8 +21,6 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
 import com.orientechnologies.orient.core.db.OSystemDatabase;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -43,8 +41,6 @@ import java.util.concurrent.ConcurrentHashMap;
 /** Created by Enrico Risa on 10/04/15. */
 public class ODefaultAuditing
     implements OAuditingService, ODatabaseLifecycleListener, ODistributedLifecycleListener {
-  private static final String AUDITING_CONFIG_KEY = "auditingConfig";
-
   public static final String AUDITING_LOG_CLASSNAME = "OAuditingLog";
 
   private boolean enabled = true;
@@ -132,10 +128,12 @@ public class ODefaultAuditing
   }
 
   private OAuditingHook defaultHook(final ODatabaseInternal iDatabase) {
+    final File auditingFileConfig = getConfigFile(iDatabase.getName());
     String content = null;
-    OSharedContextEmbedded sharedContext = (OSharedContextEmbedded) iDatabase.getSharedContext();
-    ODocument cfg = sharedContext.loadConfig((ODatabaseSession) iDatabase, AUDITING_CONFIG_KEY);
-    if (cfg == null) {
+    if (auditingFileConfig != null && auditingFileConfig.exists()) {
+      content = getContent(auditingFileConfig);
+
+    } else {
       final InputStream resourceAsStream =
           this.getClass().getClassLoader().getResourceAsStream(DEFAULT_FILE_AUDITING_DB_CONFIG);
       try {
@@ -143,8 +141,23 @@ public class ODefaultAuditing
           OLogManager.instance().error(this, "defaultHook() resourceAsStream is null", null);
 
         content = getString(resourceAsStream);
-        cfg = new ODocument().fromJSON(content, "noMap");
-        sharedContext.saveConfig((ODatabaseSession) iDatabase, AUDITING_CONFIG_KEY, cfg);
+        if (auditingFileConfig != null) {
+          try {
+            auditingFileConfig.getParentFile().mkdirs();
+            auditingFileConfig.createNewFile();
+
+            final FileOutputStream f = new FileOutputStream(auditingFileConfig);
+            try {
+              f.write(content.getBytes());
+              f.flush();
+            } finally {
+              f.close();
+            }
+          } catch (IOException e) {
+            content = "{}";
+            OLogManager.instance().error(this, "Cannot save auditing file configuration", e);
+          }
+        }
       } finally {
         try {
           if (resourceAsStream != null) resourceAsStream.close();
@@ -153,8 +166,33 @@ public class ODefaultAuditing
         }
       }
     }
-
+    final ODocument cfg = new ODocument().fromJSON(content, "noMap");
     return new OAuditingHook(cfg, security);
+  }
+
+  private String getContent(File auditingFileConfig) {
+    FileInputStream f = null;
+    String content = "";
+    try {
+      f = new FileInputStream(auditingFileConfig);
+      final byte[] buffer = new byte[(int) auditingFileConfig.length()];
+      f.read(buffer);
+
+      content = new String(buffer);
+
+    } catch (Exception e) {
+      content = "{}";
+      OLogManager.instance().error(this, "Cannot get auditing file configuration", e);
+    } finally {
+      if (f != null) {
+        try {
+          f.close();
+        } catch (IOException e) {
+          OLogManager.instance().error(this, "Cannot get auditing file configuration", e);
+        }
+      }
+    }
+    return content;
   }
 
   public String getString(InputStream is) {
@@ -204,6 +242,13 @@ public class ODefaultAuditing
     if (oAuditingHook != null) {
       oAuditingHook.shutdown(false);
     }
+
+    File f = getConfigFile(iDatabase.getName());
+    if (f != null && f.exists()) {
+      OLogManager.instance()
+          .info(this, "Removing Auditing config for db : %s", iDatabase.getName());
+      f.delete();
+    }
   }
 
   private File getConfigFile(String iDatabaseName) {
@@ -238,10 +283,15 @@ public class ODefaultAuditing
 
   protected void updateConfigOnDisk(final String iDatabaseName, final ODocument cfg)
       throws IOException {
-    try (ODatabaseDocumentInternal session =
-        security.getContext().openNoAuthorization(iDatabaseName)) {
-      OSharedContextEmbedded sharedContext = ((OSharedContextEmbedded) session.getSharedContext());
-      sharedContext.saveConfig(session, AUDITING_CONFIG_KEY, cfg);
+    final File auditingFileConfig = getConfigFile(iDatabaseName);
+    if (auditingFileConfig != null) {
+      final FileOutputStream f = new FileOutputStream(auditingFileConfig);
+      try {
+        f.write(cfg.toJSON("prettyPrint=true").getBytes());
+        f.flush();
+      } finally {
+        f.close();
+      }
     }
   }
 
