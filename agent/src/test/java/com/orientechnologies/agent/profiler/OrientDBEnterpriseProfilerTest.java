@@ -133,5 +133,10 @@ public class OrientDBEnterpriseProfilerTest {
   public void testEnterpriseProfiler() {
     OEnterpriseProfiler profiler = new OEnterpriseProfiler();
     profiler.dump();
+    profiler.startRecording();
+    profiler.dumpHookValues();
+    profiler.stopRecording();
+
+    profiler.cpuUsageFallback();
   }
 }

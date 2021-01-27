@@ -392,11 +392,11 @@
   </dependencies>
   <properties>
     <metrics.version>4.1.6</metrics.version>
-    <project.rootdir>${project.basedir}/../</project.rootdir>
-    <jackson.version>2.10.3</jackson.version>
     <orientdb.version>3.2.0-SNAPSHOT</orientdb.version>
-    <surefire.version>2.19.1</surefire.version>
+    <jackson.version>2.10.3</jackson.version>
     <exclude.kerberos.tests>%regex[com.orientechnologies.security.kerberos.*Test.*]</exclude.kerberos.tests>
+    <project.rootdir>${project.basedir}/../</project.rootdir>
+    <surefire.version>2.19.1</surefire.version>
   </properties>
 </project>
 
