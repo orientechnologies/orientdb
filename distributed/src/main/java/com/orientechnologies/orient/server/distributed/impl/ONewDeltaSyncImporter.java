@@ -39,7 +39,7 @@ public class ONewDeltaSyncImporter {
             }
           });
     } catch (OException e) {
-
+      e.printStackTrace();
     }
   }
 }
