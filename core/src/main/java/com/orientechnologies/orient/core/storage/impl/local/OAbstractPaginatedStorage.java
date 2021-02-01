@@ -40,10 +40,7 @@ import com.orientechnologies.common.serialization.types.OUTF8Serializer;
 import com.orientechnologies.common.thread.OScheduledThreadPoolExecutorWithLogging;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.types.OModifiableLong;
-import com.orientechnologies.common.util.OCallable;
-import com.orientechnologies.common.util.OCommonConst;
-import com.orientechnologies.common.util.ORawPair;
-import com.orientechnologies.common.util.OUncaughtExceptionHandler;
+import com.orientechnologies.common.util.*;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
@@ -198,6 +195,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipOutputStream;
 
@@ -1528,9 +1526,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     List<OTransactionData> finished = new ArrayList<>();
     stateLock.acquireReadLock();
     try {
-      Set<OTransactionId> transactionsToRead = new HashSet<>(transactionsMetadata);
+      Set<OPair<Integer, Long>> transactionsToRead =
+          transactionsMetadata.stream()
+              .map(x -> new OPair<Integer, Long>(x.getPosition(), x.getSequence()))
+              .collect(Collectors.toSet());
       // we iterate till the last record is contained in wal at the moment when we call this method
-      OLogSequenceNumber beginLsn = writeAheadLog.end();
+      OLogSequenceNumber beginLsn = writeAheadLog.begin();
       Map<Long, OTransactionData> units = new HashMap<>();
 
       writeAheadLog.addCutTillLimit(beginLsn);
@@ -1554,11 +1555,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               // This will not be a byte to byte compare, but should compare only the tx id not all
               // status
               //noinspection ConstantConditions
-              if (transactionsToRead.contains(data.getId())) {
+              OPair txData = new OPair(data.getId().getPosition(), data.getId().getSequence());
+              if (transactionsToRead.contains(txData)) {
                 long unitId = ((OAtomicUnitStartMetadataRecord) record).getOperationUnitId();
                 units.put(unitId, new OTransactionData(data.getId()));
+                transactionsToRead.remove(txData);
               }
-              transactionsToRead.remove(data.getId());
             }
             if (record instanceof OAtomicUnitEndRecord) {
               long opId = ((OAtomicUnitEndRecord) record).getOperationUnitId();
