@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.storage.impl.local;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.tx.OTransactionData;
 import java.io.DataOutput;
 import java.io.DataOutputStream;
@@ -36,7 +37,7 @@ public class OBackgroundNewDelta implements Runnable, OSyncSource {
       output.writeBoolean(false);
       outputStream.close();
     } catch (IOException e) {
-      e.printStackTrace();
+      OLogManager.instance().debug(this, "Error on network delta serialization", e);
     } finally {
       finished.countDown();
     }

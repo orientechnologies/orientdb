@@ -195,7 +195,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipOutputStream;
 
@@ -1526,10 +1525,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     List<OTransactionData> finished = new ArrayList<>();
     stateLock.acquireReadLock();
     try {
-      Set<OPair<Integer, Long>> transactionsToRead =
-          transactionsMetadata.stream()
-              .map(x -> new OPair<Integer, Long>(x.getPosition(), x.getSequence()))
-              .collect(Collectors.toSet());
+      Set<OTransactionId> transactionsToRead = new HashSet<OTransactionId>(transactionsMetadata);
       // we iterate till the last record is contained in wal at the moment when we call this method
       OLogSequenceNumber beginLsn = writeAheadLog.begin();
       Map<Long, OTransactionData> units = new HashMap<>();
@@ -1555,17 +1551,21 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               // This will not be a byte to byte compare, but should compare only the tx id not all
               // status
               //noinspection ConstantConditions
-              OPair txData = new OPair(data.getId().getPosition(), data.getId().getSequence());
-              if (transactionsToRead.contains(txData)) {
+              OTransactionId txId =
+                  new OTransactionId(
+                      Optional.empty(), data.getId().getPosition(), data.getId().getSequence());
+              if (transactionsToRead.contains(txId)) {
                 long unitId = ((OAtomicUnitStartMetadataRecord) record).getOperationUnitId();
-                units.put(unitId, new OTransactionData(data.getId()));
-                transactionsToRead.remove(txData);
+                units.put(unitId, new OTransactionData(txId));
+                transactionsToRead.remove(txId);
               }
             }
             if (record instanceof OAtomicUnitEndRecord) {
               long opId = ((OAtomicUnitEndRecord) record).getOperationUnitId();
               OTransactionData opes = units.remove(opId);
-              finished.add(opes);
+              if (opes != null) {
+                finished.add(opes);
+              }
             }
             if (record instanceof OHighLevelTransactionChangeRecord) {
               byte[] data = ((OHighLevelTransactionChangeRecord) record).getData();
