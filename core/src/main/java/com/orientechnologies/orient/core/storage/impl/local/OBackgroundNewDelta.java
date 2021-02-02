@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 public class OBackgroundNewDelta implements Runnable, OSyncSource {
+  public static final int CHUNK_MAX_SIZE = 8388608; // 8MB
   private List<OTransactionData> transactions;
   private PipedOutputStream outputStream;
   private InputStream inputStream;
@@ -20,7 +21,7 @@ public class OBackgroundNewDelta implements Runnable, OSyncSource {
   public OBackgroundNewDelta(List<OTransactionData> transactions) throws IOException {
     this.transactions = transactions;
     outputStream = new PipedOutputStream();
-    inputStream = new PipedInputStream(outputStream);
+    inputStream = new PipedInputStream(outputStream, CHUNK_MAX_SIZE);
     Thread t = new Thread(this);
     t.setDaemon(true);
     t.start();

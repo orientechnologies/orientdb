@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.tx.OTransactionData;
@@ -39,7 +40,7 @@ public class ONewDeltaSyncImporter {
             }
           });
     } catch (OException e) {
-      e.printStackTrace();
+      OLogManager.instance().error(this, "Error running delta sync import", e);
     }
   }
 }

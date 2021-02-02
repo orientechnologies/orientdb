@@ -1157,4 +1157,22 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     }
     return involvedClusters;
   }
+
+  @Override
+  public void syncCommit(OTransactionData data) {
+    OScenarioThreadLocal.executeAsDistributed(
+        () -> {
+          assert !this.getTransaction().isActive();
+          OTransactionOptimistic tx = new OTransactionOptimistic(this);
+          data.fill(tx, this);
+          ODistributedDatabaseImpl ddb = (ODistributedDatabaseImpl) getDistributedShared();
+          ONewDistributedTxContextImpl txContext =
+              new ONewDistributedTxContextImpl(
+                  ddb, new ODistributedRequestId(-1, -1), tx, data.getTransactionId());
+          ddb.validate(data.getTransactionId());
+          ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(tx);
+          txContext.commit(this);
+          return null;
+        });
+  }
 }

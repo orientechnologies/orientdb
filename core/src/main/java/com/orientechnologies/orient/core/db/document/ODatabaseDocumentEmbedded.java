@@ -104,8 +104,6 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
-import com.orientechnologies.orient.core.tx.OTransactionData;
-import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Map.Entry;
@@ -1711,19 +1709,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     final ORule.ResourceGeneric resourceGeneric =
         ORule.mapLegacyResourceToGenericResource(iResourceGeneric);
     return checkSecurity(resourceGeneric, iOperation, iResourcesSpecific);
-  }
-
-  @Override
-  public void syncCommit(final OTransactionData data) {
-    OScenarioThreadLocal.executeAsDistributed(
-        () -> {
-          assert !this.getTransaction().isActive();
-          final OTransactionOptimistic tx = new OTransactionOptimistic(this);
-          data.fill(tx, this);
-          this.rawBegin(tx);
-          this.commit();
-          return null;
-        });
   }
 
   @Override
