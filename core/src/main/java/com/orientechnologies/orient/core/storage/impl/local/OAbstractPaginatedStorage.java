@@ -1535,7 +1535,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   public Optional<OBackgroundNewDelta> extractTransactionsFromWal(
       List<OTransactionId> transactionsMetadata) {
-    List<OTransactionData> finished = new ArrayList<>();
+    Map<OTransactionId, OTransactionData> finished = new HashMap<>();
+    List<OTransactionId> started = new ArrayList<>();
     stateLock.acquireReadLock();
     try {
       Set<OTransactionId> transactionsToRead = new HashSet<OTransactionId>(transactionsMetadata);
@@ -1570,14 +1571,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               if (transactionsToRead.contains(txId)) {
                 long unitId = ((OAtomicUnitStartMetadataRecord) record).getOperationUnitId();
                 units.put(unitId, new OTransactionData(txId));
-                transactionsToRead.remove(txId);
+                started.add(txId);
               }
             }
             if (record instanceof OAtomicUnitEndRecord) {
               long opId = ((OAtomicUnitEndRecord) record).getOperationUnitId();
               OTransactionData opes = units.remove(opId);
               if (opes != null) {
-                finished.add(opes);
+                transactionsToRead.remove(opes.getTransactionId());
+                finished.put(opes.getTransactionId(), opes);
               }
             }
             if (record instanceof OHighLevelTransactionChangeRecord) {
@@ -1590,7 +1592,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             }
             if (transactionsToRead.isEmpty() && units.isEmpty()) {
               // all read stop scanning and return the transactions
-              return Optional.of(new OBackgroundNewDelta(finished));
+              List<OTransactionData> transactions = new ArrayList<>();
+              for (OTransactionId id : started) {
+                OTransactionData data = finished.get(id);
+                if (data != null) {
+                  transactions.add(data);
+                }
+              }
+              return Optional.of(new OBackgroundNewDelta(transactions));
             }
           }
 
@@ -1600,7 +1609,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         writeAheadLog.removeCutTillLimit(beginLsn);
       }
       if (transactionsToRead.isEmpty()) {
-        return Optional.of(new OBackgroundNewDelta(finished));
+        List<OTransactionData> transactions = new ArrayList<>();
+        for (OTransactionId id : started) {
+          OTransactionData data = finished.get(id);
+          if (data != null) {
+            transactions.add(data);
+          }
+        }
+        return Optional.of(new OBackgroundNewDelta(transactions));
       } else {
         return Optional.empty();
       }

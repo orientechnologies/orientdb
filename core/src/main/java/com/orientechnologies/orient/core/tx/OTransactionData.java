@@ -129,4 +129,9 @@ public class OTransactionData {
                 })
             .iterator());
   }
+
+  @Override
+  public String toString() {
+    return "id:" + transactionId + " nchanges:" + changes.size() + "]";
+  }
 }
