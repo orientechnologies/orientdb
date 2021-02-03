@@ -110,7 +110,7 @@ public class ODistributedStorage
 
     this.wrapped = wrapped;
     this.localDistributedDatabase = dManager.getMessageService().getDatabase(getName());
-
+    ((ODistributedDatabaseImpl) this.localDistributedDatabase).loadStatus();
     ODistributedServerLog.debug(
         this,
         dManager != null ? dManager.getLocalNodeName() : "?",

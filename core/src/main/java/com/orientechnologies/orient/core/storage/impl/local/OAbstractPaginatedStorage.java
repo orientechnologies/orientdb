@@ -201,7 +201,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipOutputStream;
 
@@ -1536,13 +1535,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   public Optional<OBackgroundNewDelta> extractTransactionsFromWal(
       List<OTransactionId> transactionsMetadata) {
-    List<OTransactionData> finished = new ArrayList<>();
+    Map<OTransactionId, OTransactionData> finished = new HashMap<>();
+    List<OTransactionId> started = new ArrayList<>();
     stateLock.acquireReadLock();
     try {
-      Set<OPair<Integer, Long>> transactionsToRead =
-          transactionsMetadata.stream()
-              .map(x -> new OPair<Integer, Long>(x.getPosition(), x.getSequence()))
-              .collect(Collectors.toSet());
+      Set<OTransactionId> transactionsToRead = new HashSet<OTransactionId>(transactionsMetadata);
       // we iterate till the last record is contained in wal at the moment when we call this method
       OLogSequenceNumber beginLsn = writeAheadLog.begin();
       Map<Long, OTransactionData> units = new HashMap<>();
@@ -1568,17 +1565,22 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               // This will not be a byte to byte compare, but should compare only the tx id not all
               // status
               //noinspection ConstantConditions
-              OPair txData = new OPair(data.getId().getPosition(), data.getId().getSequence());
-              if (transactionsToRead.contains(txData)) {
+              OTransactionId txId =
+                  new OTransactionId(
+                      Optional.empty(), data.getId().getPosition(), data.getId().getSequence());
+              if (transactionsToRead.contains(txId)) {
                 long unitId = ((OAtomicUnitStartMetadataRecord) record).getOperationUnitId();
-                units.put(unitId, new OTransactionData(data.getId()));
-                transactionsToRead.remove(txData);
+                units.put(unitId, new OTransactionData(txId));
+                started.add(txId);
               }
             }
             if (record instanceof OAtomicUnitEndRecord) {
               long opId = ((OAtomicUnitEndRecord) record).getOperationUnitId();
               OTransactionData opes = units.remove(opId);
-              finished.add(opes);
+              if (opes != null) {
+                transactionsToRead.remove(opes.getTransactionId());
+                finished.put(opes.getTransactionId(), opes);
+              }
             }
             if (record instanceof OHighLevelTransactionChangeRecord) {
               byte[] data = ((OHighLevelTransactionChangeRecord) record).getData();
@@ -1590,7 +1592,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             }
             if (transactionsToRead.isEmpty() && units.isEmpty()) {
               // all read stop scanning and return the transactions
-              return Optional.of(new OBackgroundNewDelta(finished));
+              List<OTransactionData> transactions = new ArrayList<>();
+              for (OTransactionId id : started) {
+                OTransactionData data = finished.get(id);
+                if (data != null) {
+                  transactions.add(data);
+                }
+              }
+              return Optional.of(new OBackgroundNewDelta(transactions));
             }
           }
 
@@ -1600,7 +1609,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         writeAheadLog.removeCutTillLimit(beginLsn);
       }
       if (transactionsToRead.isEmpty()) {
-        return Optional.of(new OBackgroundNewDelta(finished));
+        List<OTransactionData> transactions = new ArrayList<>();
+        for (OTransactionId id : started) {
+          OTransactionData data = finished.get(id);
+          if (data != null) {
+            transactions.add(data);
+          }
+        }
+        return Optional.of(new OBackgroundNewDelta(transactions));
       } else {
         return Optional.empty();
       }

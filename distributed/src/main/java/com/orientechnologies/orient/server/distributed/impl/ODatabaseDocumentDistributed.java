@@ -51,6 +51,7 @@ import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.tx.OTransactionData;
 import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
@@ -1030,5 +1031,24 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     } else {
       return super.dropClusterInternal(clusterId);
     }
+  }
+
+  @Override
+  public void syncCommit(OTransactionData data) {
+    OScenarioThreadLocal.executeAsDistributed(
+        () -> {
+          assert !this.getTransaction().isActive();
+          OTransactionOptimistic tx = new OTransactionOptimistic(this);
+          data.fill(tx, this);
+          ODistributedDatabaseImpl ddb =
+              (ODistributedDatabaseImpl) getStorageDistributed().getLocalDistributedDatabase();
+          ONewDistributedTxContextImpl txContext =
+              new ONewDistributedTxContextImpl(
+                  ddb, new ODistributedRequestId(-1, -1), tx, data.getTransactionId());
+          ddb.validate(data.getTransactionId());
+          ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(tx);
+          txContext.commit(this);
+          return null;
+        });
   }
 }
