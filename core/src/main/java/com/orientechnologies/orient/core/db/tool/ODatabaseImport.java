@@ -171,8 +171,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
   @Override
   public void run() {
-    // TODO: importDatabase();
-    importDatabaseV2();
+    importDatabase();
+    // importDatabaseV2();
   }
 
   @Override
@@ -207,16 +207,15 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     }
   }
 
-  // WIP
-  public ODatabaseImport importDatabaseV2() {
+  // TODO: WIP - using existing OJSONReader
+  public ODatabaseImport importDatabaseV3() {
     final boolean preValidation = database.isValidationEnabled();
-
     try (final JsonParser parser = factory.createParser(input)) {
       listener.onMessage(
           "\nStarted import of database '" + database.getURL() + "' from " + fileName + "...");
       final long time = System.nanoTime();
 
-      // TODO: jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
+      jsonReader.readNext(parser, JsonToken.START_OBJECT);
       database.setValidationEnabled(false);
       // status concept seems deprecated - status `IMPORTING` never checked
       database.setStatus(STATUS.IMPORTING);
@@ -233,25 +232,113 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
       boolean clustersImported = false;
       while (!parser.isClosed()) {
-        // TODO: while (jsonReader.hasNext() && jsonReader.lastChar() != '}') {
-        // TODO: final String tag = jsonReader.readString(OJSONReader.FIELD_ASSIGNMENT);
+      // while (jsonReader.hasNext() && jsonReader.lastChar() != '}') {
+        // final String tag = jsonReader.readString(OJSONReader.FIELD_ASSIGNMENT);
+        final String tag = jsonReader.readString(parser, JsonToken.FIELD_NAME);
+
+        if (tag.equals("info")) {
+          importInfoV2(parser);
+        } else if (tag.equals("clusters")) {
+          importClusters();
+          clustersImported = true;
+        } else if (tag.equals("schema")) importSchema(clustersImported);
+        else if (tag.equals("records")) importRecords();
+        else if (tag.equals("indexes")) importIndexes();
+        else if (tag.equals("manualIndexes")) importManualIndexes();
+        else if (tag.equals("brokenRids")) {
+          processBrokenRids();
+        } else
+          throw new ODatabaseImportException("Invalid format. Found unsupported tag '" + tag + "'");
+      }
+      if (rebuildIndexes) {
+        rebuildIndexes();
+      }
+
+      // This is needed to insure functions loaded into an open
+      // in memory database are available after the import.
+      // see issue #5245
+      database.getMetadata().reload();
+
+      database.getStorage().synch();
+      // status concept seems deprecated, but status `OPEN` is checked elsewhere
+      database.setStatus(STATUS.OPEN);
+
+      if (isDeleteRIDMapping()) {
+        removeExportImportRIDsMap();
+      }
+      listener.onMessage(
+          "\n\nDatabase import completed in " + ((System.nanoTime() - time) / 1000000) + " ms");
+    } catch (final Exception e) {
+      final StringWriter writer = new StringWriter();
+      writer.append(
+          "Error on database import happened just before line "
+              + jsonReader.getLineNumber()
+              + ", column "
+              + jsonReader.getColumnNumber()
+              + "\n");
+      final PrintWriter printWriter = new PrintWriter(writer);
+      e.printStackTrace(printWriter);
+      printWriter.flush();
+
+      listener.onMessage(writer.toString());
+
+      try {
+        writer.close();
+      } catch (final IOException e1) {
+        throw new ODatabaseExportException(
+            "Error on importing database '" + database.getName() + "' from file: " + fileName, e1);
+      }
+      throw new ODatabaseExportException(
+          "Error on importing database '" + database.getName() + "' from file: " + fileName, e);
+    } finally {
+      database.setValidationEnabled(preValidation);
+      close();
+    }
+    return this;
+  }
+
+  // TODO: WIP - adding jackson stream parser replacing old logic
+  public ODatabaseImport importDatabaseV2() {
+    final boolean preValidation = database.isValidationEnabled();
+
+    try (final JsonParser parser = factory.createParser(input)) {
+      listener.onMessage(
+          "\nStarted import of database '" + database.getURL() + "' from " + fileName + "...");
+      final long time = System.nanoTime();
+
+      database.setValidationEnabled(false);
+      // status concept seems deprecated - status `IMPORTING` never checked
+      database.setStatus(STATUS.IMPORTING);
+
+      if (!merge) {
+        removeDefaultNonSecurityClasses();
+        database.getMetadata().getIndexManagerInternal().reload();
+      }
+
+      for (final OIndex index :
+          database.getMetadata().getIndexManagerInternal().getIndexes(database)) {
+        if (index.isAutomatic()) indexesToRebuild.add(index.getName());
+      }
+
+      boolean clustersImported = false;
+      while (!parser.isClosed()) {
         JsonToken jsonToken = parser.nextToken();
 
-        // if (tag.equals("info")) {
-        //   importInfo();
-        if (JsonToken.FIELD_NAME.equals(jsonToken) && parser.getValueAsString().equals("info")) {
-          importInfo(parser);
-        } /*FIXME: else if (tag.equals("clusters")) {
-            importClusters();
+        if (JsonToken.FIELD_NAME.equals(jsonToken)) {
+          if (parser.getValueAsString().equals("info")) {
+            importInfo(parser);
+          } else if (parser.getValueAsString().equals("clusters")) {
+            importClusters(parser);
             clustersImported = true;
-          } else if (tag.equals("schema")) importSchema(clustersImported);
-          else if (tag.equals("records")) importRecords();
-          else if (tag.equals("indexes")) importIndexes();
-          else if (tag.equals("manualIndexes")) importManualIndexes();
-          else if (tag.equals("brokenRids")) {
-            processBrokenRids();
-          } else
-            throw new ODatabaseImportException("Invalid format. Found unsupported tag '" + tag + "'");*/
+          } /*FIXME: else if (tag.equals("schema")) importSchema(clustersImported);
+            else if (tag.equals("records")) importRecords();
+            else if (tag.equals("indexes")) importIndexes();
+            else if (tag.equals("manualIndexes")) importManualIndexes();
+            else if (tag.equals("brokenRids")) {
+              processBrokenRids();
+            } else
+              throw new ODatabaseImportException("Invalid format. Found unsupported tag '" + tag + "'");*/
+        }
       }
       if (rebuildIndexes) {
         rebuildIndexes();
@@ -306,7 +393,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     JsonToken jsonToken = parser.nextToken();
     while (!JsonToken.END_OBJECT.equals(jsonToken)) {
       if (JsonToken.FIELD_NAME.equals(jsonToken)) {
-        final StringBuffer sb = new StringBuffer();
         if (parser.getValueAsString().equals("exporter-version")) {
           parser.nextToken();
           exporterVersion = parser.getValueAsInt();
@@ -317,6 +403,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           parser.nextToken();
           indexMgrRecordId = new ORecordId(parser.getValueAsString());
         } else {
+          final StringBuffer sb = new StringBuffer();
           sb.append("\t" + jsonToken + "=" + parser.getValueAsString()).append(":::");
           jsonToken = parser.nextToken();
           sb.append(jsonToken + " " + parser.getValueAsString());
@@ -334,6 +421,209 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           new ORecordId(database.getStorage().getConfiguration().getIndexMgrRecordId());
     }
     listener.onMessage("OK");
+  }
+
+  private long importClusters(final JsonParser parser) throws IOException {
+    listener.onMessage("\nImporting clusters...");
+    long total = 0;
+    boolean recreateManualIndex = false;
+    if (exporterVersion <= 4) {
+      removeDefaultClusters();
+      recreateManualIndex = true;
+    }
+    final Set<String> indexesToRebuild = new HashSet<>();
+
+    JsonToken jsonToken = parser.nextToken();
+    @SuppressWarnings("unused")
+    ORecordId rid = null;
+    while (!JsonToken.END_ARRAY.equals(jsonToken)) {
+      if (JsonToken.START_OBJECT.equals(jsonToken) || JsonToken.END_OBJECT.equals(jsonToken)) {
+        jsonToken = parser.nextToken();
+      } else if (JsonToken.FIELD_NAME.equals(jsonToken)) {
+        if (parser.getValueAsString().equals("name")) {
+          jsonToken = parser.nextToken();
+          String name = parser.getValueAsString();
+          if (name.length() == 0) {
+            name = null;
+          }
+          name = OClassImpl.decodeClassName(name);
+          if (name != null) {
+            // CHECK IF THE CLUSTER IS INCLUDED
+            if (includeClusters != null) {
+              if (!includeClusters.contains(name)) {
+                jsonToken = parser.nextToken();
+                continue;
+              }
+            } else if (excludeClusters != null) {
+              if (excludeClusters.contains(name)) {
+                jsonToken = parser.nextToken();
+                continue;
+              }
+            }
+            int id = -1;
+            if (exporterVersion < 9) {
+              jsonToken = parser.nextToken();
+              if (parser.getValueAsString().equals("id")) {
+                jsonToken = parser.nextToken();
+                id = parser.getValueAsInt();
+                /*id =
+                jsonReader
+                    .readNext(OJSONReader.FIELD_ASSIGNMENT)
+                    .checkContent("\"id\"")
+                    .readInteger(OJSONReader.COMMA_SEPARATOR);*/
+                // TODO: dead code?
+                /*String type =
+                jsonReader
+                    .readNext(OJSONReader.FIELD_ASSIGNMENT)
+                    .checkContent("\"type\"")
+                    .readString(OJSONReader.NEXT_IN_OBJECT);*/
+              }
+            } else {
+              jsonToken = parser.nextToken();
+              if (parser.getValueAsString().equals("id")) {
+                jsonToken = parser.nextToken();
+                id = parser.getValueAsInt();
+                /*id =
+                jsonReader
+                    .readNext(OJSONReader.FIELD_ASSIGNMENT)
+                    .checkContent("\"id\"")
+                    .readInteger(OJSONReader.NEXT_IN_OBJECT);*/
+              } else {
+                throw new IllegalStateException();
+              }
+            }
+
+            // TODO: dead code?
+            /*String type;
+            if (jsonReader.lastChar() == ',') {
+              type =
+                  jsonReader
+                      .readNext(OJSONReader.FIELD_ASSIGNMENT)
+                      .checkContent("\"type\"")
+                      .readString(OJSONReader.NEXT_IN_OBJECT);
+            } else {
+              type = "PHYSICAL";
+            }
+
+            if (jsonReader.lastChar() == ',') {
+              rid =
+                  new ORecordId(
+                      jsonReader
+                          .readNext(OJSONReader.FIELD_ASSIGNMENT)
+                          .checkContent("\"rid\"")
+                          .readString(OJSONReader.NEXT_IN_OBJECT));
+            } else {
+              rid = null;
+            }*/
+            addCluster(name, id);
+            total++;
+          }
+          // jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
+        }
+        jsonToken = parser.nextToken();
+      } else {
+        jsonToken = parser.nextToken();
+      }
+    }
+    // jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
+    rebuildIndexes(indexesToRebuild);
+    recreateManualIndex(recreateManualIndex);
+    listener.onMessage("\nDone. Imported " + total + " clusters");
+    handleDatabaseLoadNull();
+    return total;
+  }
+
+  private void addCluster(String name, int id) {
+    listener.onMessage(
+        "\n- Creating cluster " + (name != null ? "'" + name + "'" : "NULL") + "...");
+
+    int clusterId = name != null ? database.getClusterIdByName(name) : -1;
+    if (clusterId == -1) {
+      // CREATE IT
+      if (!preserveClusterIDs) clusterId = database.addCluster(name);
+      else {
+        clusterId = database.addCluster(name, id, null);
+        assert clusterId == id;
+      }
+    }
+
+    if (clusterId != id) {
+      if (!preserveClusterIDs) {
+        if (database.countClusterElements(clusterId - 1) == 0) {
+          listener.onMessage("Found previous version: migrating old clusters...");
+          database.dropCluster(name);
+          database.addCluster("temp_" + clusterId, null);
+          clusterId = database.addCluster(name);
+        } else
+          throw new OConfigurationException(
+              "Imported cluster '"
+                  + name
+                  + "' has id="
+                  + clusterId
+                  + " different from the original: "
+                  + id
+                  + ". To continue the import drop the cluster '"
+                  + database.getClusterNameById(clusterId - 1)
+                  + "' that has "
+                  + database.countClusterElements(clusterId - 1)
+                  + " records");
+      } else {
+        final OClass clazz = database.getMetadata().getSchema().getClassByClusterId(clusterId);
+        if (clazz != null && clazz instanceof OClassEmbedded)
+          ((OClassEmbedded) clazz).removeClusterId(clusterId, true);
+        database.dropCluster(clusterId);
+        database.addCluster(name, id, null);
+      }
+    }
+    listener.onMessage("OK, assigned id=" + clusterId);
+  }
+
+  private void handleDatabaseLoadNull() {
+    if (database.load(new ORecordId(database.getStorage().getConfiguration().getIndexMgrRecordId()))
+        == null) {
+      ODocument indexDocument = new ODocument();
+      indexDocument.save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
+
+      database.getStorage().setIndexMgrRecordId(indexDocument.getIdentity().toString());
+    }
+  }
+
+  private void rebuildIndexes(final Set<String> indexesToRebuild) {
+    listener.onMessage("\nRebuilding indexes of truncated clusters ...");
+    for (final String indexName : indexesToRebuild)
+      database
+          .getMetadata()
+          .getIndexManagerInternal()
+          .getIndex(database, indexName)
+          .rebuild(
+              new OProgressListener() {
+                private long last = 0;
+
+                @Override
+                public void onBegin(Object iTask, long iTotal, Object metadata) {
+                  listener.onMessage(
+                      "\n- Cluster content was updated: rebuilding index '" + indexName + "'...");
+                }
+
+                @Override
+                public boolean onProgress(Object iTask, long iCounter, float iPercent) {
+                  final long now = System.currentTimeMillis();
+                  if (last == 0) last = now;
+                  else if (now - last > 1000) {
+                    listener.onMessage(
+                        String.format(
+                            "\nIndex '%s' is rebuilding (%.2f/100)", indexName, iPercent));
+                    last = now;
+                  }
+                  return true;
+                }
+
+                @Override
+                public void onCompletition(Object iTask, boolean iSucceed) {
+                  listener.onMessage(" Index " + indexName + " was successfully rebuilt.");
+                }
+              });
+    listener.onMessage("\nDone " + indexesToRebuild.size() + " indexes were rebuilt.");
   }
 
   public ODatabaseImport importDatabase() {
@@ -564,6 +854,32 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     new ODocument().save(OStorage.CLUSTER_DEFAULT_NAME);
 
     database.getSharedContext().getSecurity().create(database);
+  }
+
+  private void importInfoV2(final JsonParser parser) throws IOException, ParseException {
+    listener.onMessage("\nImporting database info...");
+
+    final JsonToken jsonToken = jsonReader.readNext(parser, JsonToken.START_OBJECT);
+    while (!JsonToken.END_OBJECT.equals(jsonToken)) {
+      final String fieldName = jsonReader.readString(parser, JsonToken.FIELD_NAME);
+      if (fieldName.equals("exporter-version"))
+        exporterVersion = jsonReader.readInteger(parser);
+      else if (fieldName.equals("schemaRecordId"))
+        schemaRecordId = new ORecordId(jsonReader.readString(parser, JsonToken.VALUE_STRING));
+      else if (fieldName.equals("indexMgrRecordId"))
+        indexMgrRecordId = new ORecordId(jsonReader.readString(parser, JsonToken.VALUE_STRING));
+      else jsonReader.readNext(OJSONReader.NEXT_IN_OBJECT);
+    }
+    jsonReader.readNext(parser, JsonToken.END_OBJECT);
+
+    if (schemaRecordId == null)
+      schemaRecordId = new ORecordId(database.getStorage().getConfiguration().getSchemaRecordId());
+
+    if (indexMgrRecordId == null)
+      indexMgrRecordId =
+          new ORecordId(database.getStorage().getConfiguration().getIndexMgrRecordId());
+
+    listener.onMessage("OK");
   }
 
   private void importInfo() throws IOException, ParseException {
@@ -1073,6 +1389,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     return result;
   }
 
+  @Deprecated
   private long importClusters() throws ParseException, IOException {
     listener.onMessage("\nImporting clusters...");
 
@@ -1151,116 +1468,64 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
                     .readNext(OJSONReader.FIELD_ASSIGNMENT)
                     .checkContent("\"rid\"")
                     .readString(OJSONReader.NEXT_IN_OBJECT));
-      } else rid = null;
-
-      listener.onMessage(
-          "\n- Creating cluster " + (name != null ? "'" + name + "'" : "NULL") + "...");
-
-      int clusterId = name != null ? database.getClusterIdByName(name) : -1;
-      if (clusterId == -1) {
-        // CREATE IT
-        if (!preserveClusterIDs) clusterId = database.addCluster(name);
-        else {
-          clusterId = database.addCluster(name, id, null);
-          assert clusterId == id;
-        }
+      } else {
+        rid = null;
       }
-
-      if (clusterId != id) {
-        if (!preserveClusterIDs) {
-          if (database.countClusterElements(clusterId - 1) == 0) {
-            listener.onMessage("Found previous version: migrating old clusters...");
-            database.dropCluster(name);
-            database.addCluster("temp_" + clusterId, null);
-            clusterId = database.addCluster(name);
-          } else
-            throw new OConfigurationException(
-                "Imported cluster '"
-                    + name
-                    + "' has id="
-                    + clusterId
-                    + " different from the original: "
-                    + id
-                    + ". To continue the import drop the cluster '"
-                    + database.getClusterNameById(clusterId - 1)
-                    + "' that has "
-                    + database.countClusterElements(clusterId - 1)
-                    + " records");
-        } else {
-
-          final OClass clazz = database.getMetadata().getSchema().getClassByClusterId(clusterId);
-          if (clazz != null && clazz instanceof OClassEmbedded)
-            ((OClassEmbedded) clazz).removeClusterId(clusterId, true);
-
-          database.dropCluster(clusterId);
-          database.addCluster(name, id, null);
-        }
-      }
-
-      listener.onMessage("OK, assigned id=" + clusterId);
-
+      addCluster(name, id);
       total++;
-
       jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
     }
     jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
 
-    listener.onMessage("\nRebuilding indexes of truncated clusters ...");
+    rebuildIndexes(indexesToRebuild);
+    recreateManualIndex(recreateManualIndex);
+    listener.onMessage("\nDone. Imported " + total + " clusters");
+    handleDatabaseLoadNull();
+    return total;
+  }
 
-    for (final String indexName : indexesToRebuild)
-      database
-          .getMetadata()
-          .getIndexManagerInternal()
-          .getIndex(database, indexName)
-          .rebuild(
-              new OProgressListener() {
-                private long last = 0;
+  private void addCluster(String name, int id, int clusterId) {
+    if (clusterId != id) {
+      if (!preserveClusterIDs) {
+        if (database.countClusterElements(clusterId - 1) == 0) {
+          listener.onMessage("Found previous version: migrating old clusters...");
+          database.dropCluster(name);
+          database.addCluster("temp_" + clusterId, null);
+          clusterId = database.addCluster(name);
+        } else
+          throw new OConfigurationException(
+              "Imported cluster '"
+                  + name
+                  + "' has id="
+                  + clusterId
+                  + " different from the original: "
+                  + id
+                  + ". To continue the import drop the cluster '"
+                  + database.getClusterNameById(clusterId - 1)
+                  + "' that has "
+                  + database.countClusterElements(clusterId - 1)
+                  + " records");
+      } else {
 
-                @Override
-                public void onBegin(Object iTask, long iTotal, Object metadata) {
-                  listener.onMessage(
-                      "\n- Cluster content was updated: rebuilding index '" + indexName + "'...");
-                }
+        final OClass clazz = database.getMetadata().getSchema().getClassByClusterId(clusterId);
+        if (clazz != null && clazz instanceof OClassEmbedded)
+          ((OClassEmbedded) clazz).removeClusterId(clusterId, true);
 
-                @Override
-                public boolean onProgress(Object iTask, long iCounter, float iPercent) {
-                  final long now = System.currentTimeMillis();
-                  if (last == 0) last = now;
-                  else if (now - last > 1000) {
-                    listener.onMessage(
-                        String.format(
-                            "\nIndex '%s' is rebuilding (%.2f/100)", indexName, iPercent));
-                    last = now;
-                  }
-                  return true;
-                }
+        database.dropCluster(clusterId);
+        database.addCluster(name, id, null);
+      }
+    }
 
-                @Override
-                public void onCompletition(Object iTask, boolean iSucceed) {
-                  listener.onMessage(" Index " + indexName + " was successfully rebuilt.");
-                }
-              });
+    listener.onMessage("OK, assigned id=" + clusterId);
+  }
 
-    listener.onMessage("\nDone " + indexesToRebuild.size() + " indexes were rebuilt.");
-
+  private void recreateManualIndex(boolean recreateManualIndex) {
     if (recreateManualIndex) {
       database.addCluster(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME);
       database.getMetadata().getIndexManagerInternal().create();
 
       listener.onMessage("\nManual index cluster was recreated.");
     }
-
-    listener.onMessage("\nDone. Imported " + total + " clusters");
-
-    if (database.load(new ORecordId(database.getStorage().getConfiguration().getIndexMgrRecordId()))
-        == null) {
-      ODocument indexDocument = new ODocument();
-      indexDocument.save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
-
-      database.getStorage().setIndexMgrRecordId(indexDocument.getIdentity().toString());
-    }
-
-    return total;
   }
 
   private long importRecords() throws Exception {

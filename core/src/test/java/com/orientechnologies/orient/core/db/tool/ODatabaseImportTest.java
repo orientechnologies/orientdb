@@ -56,7 +56,6 @@ public class ODatabaseImportTest {
     orientDB.close();
   }
 
-  @Ignore
   @Test
   public void exportImportOnlySchemaTestV2() throws IOException {
     final String databaseName = "test";
