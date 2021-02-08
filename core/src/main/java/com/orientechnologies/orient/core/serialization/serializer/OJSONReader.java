@@ -86,7 +86,7 @@ public class OJSONReader {
   }
 
   public int readInteger(final JsonParser parser) throws IOException, ParseException {
-    while (!JsonToken.VALUE_NUMBER_INT.equals(parser.nextToken())){}
+    while (!JsonToken.VALUE_NUMBER_INT.equals(parser.nextToken())) {}
     return parser.getValueAsInt();
   }
 
@@ -101,8 +101,9 @@ public class OJSONReader {
     return readString(iUntil, false);
   }
 
-  public String readString(final JsonParser parser, final JsonToken until) throws IOException, ParseException {
-    while (!until.equals(parser.nextToken())){}
+  public String readString(final JsonParser parser, final JsonToken until)
+      throws IOException, ParseException {
+    while (!until.equals(parser.nextToken())) {}
     return parser.getValueAsString();
   }
 
