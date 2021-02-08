@@ -9,7 +9,7 @@ Import steps / phases:
 - Records
 - Broken RIDs
 - Indexes
-- (Legacy: manuale indexes)
+- (Legacy: manual indexes)
 
 Topics:
 - [x] JSON parser selection
