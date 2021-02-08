@@ -94,6 +94,10 @@ public class ODurablePage {
     this.changes = cacheEntry.getChanges();
   }
 
+  public final int getPageIndex() {
+    return cacheEntry.getPageIndex();
+  }
+
   public final OLogSequenceNumber getLSN() {
     final long segment = getLongValue(WAL_SEGMENT_OFFSET);
     final int position = getIntValue(WAL_POSITION_OFFSET);

@@ -240,8 +240,8 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
       throw new OStorageException("File with id " + fileId + " is deleted.");
     }
 
-    final FileChanges changesContainer = fileChanges.get(fileId);
-    assert changesContainer != null;
+    final FileChanges changesContainer =
+        fileChanges.computeIfAbsent(fileId, k -> new FileChanges());
 
     final long filledUpTo = internalFilledUpTo(fileId, changesContainer);
 
