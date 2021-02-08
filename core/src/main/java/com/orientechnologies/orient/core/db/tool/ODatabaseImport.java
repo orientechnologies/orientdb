@@ -171,8 +171,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
   @Override
   public void run() {
-    importDatabase();
-    // importDatabaseV2();
+    // TODO: importDatabase();
+    importDatabaseV2();
   }
 
   @Override
@@ -232,7 +232,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
       boolean clustersImported = false;
       while (!parser.isClosed()) {
-      // while (jsonReader.hasNext() && jsonReader.lastChar() != '}') {
+        // while (jsonReader.hasNext() && jsonReader.lastChar() != '}') {
         // final String tag = jsonReader.readString(OJSONReader.FIELD_ASSIGNMENT);
         final String tag = jsonReader.readString(parser, JsonToken.FIELD_NAME);
 
@@ -862,8 +862,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     final JsonToken jsonToken = jsonReader.readNext(parser, JsonToken.START_OBJECT);
     while (!JsonToken.END_OBJECT.equals(jsonToken)) {
       final String fieldName = jsonReader.readString(parser, JsonToken.FIELD_NAME);
-      if (fieldName.equals("exporter-version"))
-        exporterVersion = jsonReader.readInteger(parser);
+      if (fieldName.equals("exporter-version")) exporterVersion = jsonReader.readInteger(parser);
       else if (fieldName.equals("schemaRecordId"))
         schemaRecordId = new ORecordId(jsonReader.readString(parser, JsonToken.VALUE_STRING));
       else if (fieldName.equals("indexMgrRecordId"))
