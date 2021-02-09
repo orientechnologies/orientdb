@@ -1520,6 +1520,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         return;
       }
 
+      error = e;
       status = STATUS.INTERNAL_ERROR;
 
       try {
@@ -4025,6 +4026,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public void moveToErrorStateIfNeeded(final Throwable error) {
     if (error != null
         && !((error instanceof OHighLevelException) || (error instanceof ONeedRetryException))) {
+      this.error = error;
       status = STATUS.INTERNAL_ERROR;
     }
   }
@@ -4383,6 +4385,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         return;
       }
 
+      this.error = new RuntimeException("Page " + pageIndex + " is broken in file " + fileName);
       status = STATUS.INTERNAL_ERROR;
 
       try {
@@ -4891,10 +4894,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   public void checkErrorState() {
     if (status == STATUS.INTERNAL_ERROR) {
-      throw new OStorageException(
-          "Internal error happened in storage "
-              + name
-              + " please restart the server or re-open the storage to undergo the restore process and fix the error.");
+      throw OException.wrapException(
+          new OStorageException(
+              "Internal error happened in storage "
+                  + name
+                  + " please restart the server or re-open the storage to undergo the restore process and fix the error."),
+          this.error);
     }
   }
 
@@ -5824,7 +5829,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       }
 
       if (status != STATUS.OPEN && status != STATUS.INTERNAL_ERROR) {
-        throw new OStorageException("Storage " + name + " was not opened, so can not be closed");
+        throw OException.wrapException(
+            new OStorageException("Storage " + name + " was not opened, so can not be closed"),
+            this.error);
       }
 
       status = STATUS.CLOSING;
@@ -6734,6 +6741,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     if (!(runtimeException instanceof OHighLevelException
         || runtimeException instanceof ONeedRetryException)) {
       if (putInReadOnlyMode) {
+        this.error = runtimeException;
         status = STATUS.INTERNAL_ERROR;
       }
 
@@ -6757,6 +6765,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private Error logAndPrepareForRethrow(final Error error, final boolean putInReadOnlyMode) {
     if (!(error instanceof OHighLevelException)) {
       if (putInReadOnlyMode) {
+        this.error = error;
         status = STATUS.INTERNAL_ERROR;
       }
 
@@ -6781,6 +6790,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final Throwable throwable, final boolean putInReadOnlyMode) {
     if (!(throwable instanceof OHighLevelException || throwable instanceof ONeedRetryException)) {
       if (putInReadOnlyMode) {
+        this.error = throwable;
         status = STATUS.INTERNAL_ERROR;
       }
       OLogManager.instance()
