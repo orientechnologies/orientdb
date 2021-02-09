@@ -58,7 +58,9 @@ public abstract class OStorageAbstract implements OStorage {
   protected volatile OCurrentStorageComponentsFactory componentsFactory;
   protected String name;
   private final AtomicLong version = new AtomicLong();
+
   protected volatile STATUS status = STATUS.CLOSED;
+  protected Throwable error = null;
 
   public OStorageAbstract(final String name, final String iURL, final String mode) {
     this.name = normalizeName(name);
