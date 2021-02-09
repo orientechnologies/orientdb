@@ -40,10 +40,7 @@ import com.orientechnologies.common.serialization.types.OUTF8Serializer;
 import com.orientechnologies.common.thread.OScheduledThreadPoolExecutorWithLogging;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.types.OModifiableLong;
-import com.orientechnologies.common.util.OCallable;
-import com.orientechnologies.common.util.OCommonConst;
-import com.orientechnologies.common.util.ORawPair;
-import com.orientechnologies.common.util.OUncaughtExceptionHandler;
+import com.orientechnologies.common.util.*;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
@@ -1523,6 +1520,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         return;
       }
 
+      error = e;
       status = STATUS.INTERNAL_ERROR;
 
       try {
@@ -1538,12 +1536,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   public Optional<OBackgroundNewDelta> extractTransactionsFromWal(
       List<OTransactionId> transactionsMetadata) {
-    List<OTransactionData> finished = new ArrayList<>();
+    Map<OTransactionId, OTransactionData> finished = new HashMap<>();
+    List<OTransactionId> started = new ArrayList<>();
     stateLock.acquireReadLock();
     try {
-      Set<OTransactionId> transactionsToRead = new HashSet<>(transactionsMetadata);
+      Set<OTransactionId> transactionsToRead = new HashSet<OTransactionId>(transactionsMetadata);
       // we iterate till the last record is contained in wal at the moment when we call this method
-      OLogSequenceNumber beginLsn = writeAheadLog.end();
+      OLogSequenceNumber beginLsn = writeAheadLog.begin();
       Map<Long, OTransactionData> units = new HashMap<>();
 
       writeAheadLog.addCutTillLimit(beginLsn);
@@ -1567,16 +1566,22 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               // This will not be a byte to byte compare, but should compare only the tx id not all
               // status
               //noinspection ConstantConditions
-              if (transactionsToRead.contains(data.getId())) {
+              OTransactionId txId =
+                  new OTransactionId(
+                      Optional.empty(), data.getId().getPosition(), data.getId().getSequence());
+              if (transactionsToRead.contains(txId)) {
                 long unitId = ((OAtomicUnitStartMetadataRecord) record).getOperationUnitId();
-                units.put(unitId, new OTransactionData(data.getId()));
+                units.put(unitId, new OTransactionData(txId));
+                started.add(txId);
               }
-              transactionsToRead.remove(data.getId());
             }
             if (record instanceof OAtomicUnitEndRecord) {
               long opId = ((OAtomicUnitEndRecord) record).getOperationUnitId();
               OTransactionData opes = units.remove(opId);
-              finished.add(opes);
+              if (opes != null) {
+                transactionsToRead.remove(opes.getTransactionId());
+                finished.put(opes.getTransactionId(), opes);
+              }
             }
             if (record instanceof OHighLevelTransactionChangeRecord) {
               byte[] data = ((OHighLevelTransactionChangeRecord) record).getData();
@@ -1588,7 +1593,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             }
             if (transactionsToRead.isEmpty() && units.isEmpty()) {
               // all read stop scanning and return the transactions
-              return Optional.of(new OBackgroundNewDelta(finished));
+              List<OTransactionData> transactions = new ArrayList<>();
+              for (OTransactionId id : started) {
+                OTransactionData data = finished.get(id);
+                if (data != null) {
+                  transactions.add(data);
+                }
+              }
+              return Optional.of(new OBackgroundNewDelta(transactions));
             }
           }
 
@@ -1598,7 +1610,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         writeAheadLog.removeCutTillLimit(beginLsn);
       }
       if (transactionsToRead.isEmpty()) {
-        return Optional.of(new OBackgroundNewDelta(finished));
+        List<OTransactionData> transactions = new ArrayList<>();
+        for (OTransactionId id : started) {
+          OTransactionData data = finished.get(id);
+          if (data != null) {
+            transactions.add(data);
+          }
+        }
+        return Optional.of(new OBackgroundNewDelta(transactions));
       } else {
         return Optional.empty();
       }
@@ -4007,6 +4026,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public void moveToErrorStateIfNeeded(final Throwable error) {
     if (error != null
         && !((error instanceof OHighLevelException) || (error instanceof ONeedRetryException))) {
+      this.error = error;
       status = STATUS.INTERNAL_ERROR;
     }
   }
@@ -4365,6 +4385,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         return;
       }
 
+      this.error = new RuntimeException("Page " + pageIndex + " is broken in file " + fileName);
       status = STATUS.INTERNAL_ERROR;
 
       try {
@@ -4873,10 +4894,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   public void checkErrorState() {
     if (status == STATUS.INTERNAL_ERROR) {
-      throw new OStorageException(
-          "Internal error happened in storage "
-              + name
-              + " please restart the server or re-open the storage to undergo the restore process and fix the error.");
+      throw OException.wrapException(
+          new OStorageException(
+              "Internal error happened in storage "
+                  + name
+                  + " please restart the server or re-open the storage to undergo the restore process and fix the error."),
+          this.error);
     }
   }
 
@@ -5806,7 +5829,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       }
 
       if (status != STATUS.OPEN && status != STATUS.INTERNAL_ERROR) {
-        throw new OStorageException("Storage " + name + " was not opened, so can not be closed");
+        throw OException.wrapException(
+            new OStorageException("Storage " + name + " was not opened, so can not be closed"),
+            this.error);
       }
 
       status = STATUS.CLOSING;
@@ -6716,6 +6741,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     if (!(runtimeException instanceof OHighLevelException
         || runtimeException instanceof ONeedRetryException)) {
       if (putInReadOnlyMode) {
+        this.error = runtimeException;
         status = STATUS.INTERNAL_ERROR;
       }
 
@@ -6739,6 +6765,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private Error logAndPrepareForRethrow(final Error error, final boolean putInReadOnlyMode) {
     if (!(error instanceof OHighLevelException)) {
       if (putInReadOnlyMode) {
+        this.error = error;
         status = STATUS.INTERNAL_ERROR;
       }
 
@@ -6763,6 +6790,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final Throwable throwable, final boolean putInReadOnlyMode) {
     if (!(throwable instanceof OHighLevelException || throwable instanceof ONeedRetryException)) {
       if (putInReadOnlyMode) {
+        this.error = throwable;
         status = STATUS.INTERNAL_ERROR;
       }
       OLogManager.instance()

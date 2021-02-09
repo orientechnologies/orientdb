@@ -61,7 +61,9 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
   protected volatile OCurrentStorageComponentsFactory componentsFactory;
   protected String name;
   private final AtomicLong version = new AtomicLong();
+
   protected volatile STATUS status = STATUS.CLOSED;
+  protected Throwable error = null;
 
   /** This field is used in EE version, do not make it private */
   @SuppressWarnings("WeakerAccess")

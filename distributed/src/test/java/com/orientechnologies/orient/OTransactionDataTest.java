@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.tx;
+package com.orientechnologies.orient;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -18,6 +18,11 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.tx.OTransactionData;
+import com.orientechnologies.orient.core.tx.OTransactionDataChange;
+import com.orientechnologies.orient.core.tx.OTransactionId;
+import com.orientechnologies.orient.core.tx.OTransactionInternal;
+import com.orientechnologies.orient.server.OServer;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -92,9 +97,11 @@ public class OTransactionDataTest {
   }
 
   @Test
-  public void testReApplyFromTransactionData() throws IOException {
+  public void testReApplyFromTransactionData()
+      throws IOException, ClassNotFoundException, InstantiationException, IllegalAccessException {
+    OServer server0 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-0.xml");
 
-    try (OrientDB orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig())) {
+    try (OrientDB orientDB = server0.getContext()) {
       orientDB.create("test", ODatabaseType.MEMORY);
       ByteArrayOutputStream backup = new ByteArrayOutputStream();
       try (ODatabaseSession db = orientDB.open("test", "admin", "admin")) {
@@ -123,7 +130,7 @@ public class OTransactionDataTest {
         imp.close();
       }
 
-      OTransactionData data = new OTransactionData(new OTransactionId(Optional.empty(), 1, 2));
+      OTransactionData data = new OTransactionData(new OTransactionId(Optional.empty(), 1, 1));
       try (ODatabaseSession db = orientDB.open("test", "admin", "admin")) {
         db.begin();
         ODocument doc = new ODocument("test");
@@ -155,5 +162,6 @@ public class OTransactionDataTest {
         }
       }
     }
+    server0.shutdown();
   }
 }
