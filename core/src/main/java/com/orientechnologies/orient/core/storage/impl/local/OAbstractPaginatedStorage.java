@@ -2845,13 +2845,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       switch (op.operation) {
       case PUT:
         assert op.value != null;
-        index.doPut(this, changes.key, op.value.getIdentity());
+        index.doPut(this, index.getCollatingValue(changes.key), op.value.getIdentity());
         break;
       case REMOVE:
         if (op.value != null) {
-          index.doRemove(this, changes.key, op.value.getIdentity());
+          index.doRemove(this, index.getCollatingValue(changes.key), op.value.getIdentity());
         } else {
-          index.doRemove(this, changes.key);
+          index.doRemove(this, index.getCollatingValue(changes.key));
         }
         break;
       case CLEAR:
