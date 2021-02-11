@@ -825,11 +825,12 @@ public abstract class OIndexAbstract implements OIndexInternal {
     for (OTransactionIndexChangesPerKey.OTransactionIndexEntry op : interpretTxKeyChanges(entry)) {
       switch (op.operation) {
         case PUT:
-          putInSnapshot(entry.key, op.value, snapshot);
+          putInSnapshot(getCollatingValue(entry.key), op.value, snapshot);
           break;
         case REMOVE:
-          if (op.value != null) removeFromSnapshot(entry.key, op.value, snapshot);
-          else removeFromSnapshot(entry.key, snapshot);
+          if (op.value != null)
+            removeFromSnapshot(getCollatingValue(entry.key), op.value, snapshot);
+          else removeFromSnapshot(getCollatingValue(entry.key), snapshot);
           break;
         case CLEAR:
           // SHOULD NEVER BE THE CASE HANDLE BY cleared FLAG
