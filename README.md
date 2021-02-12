@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/orientechnologies/orientdb-gremlin.svg?branch=develop)](https://travis-ci.org/orientechnologies/orientdb-gremlin?branch=develop) [![Coverage Status](https://coveralls.io/repos/mpollmeier/orientdb-gremlin/badge.svg?branch=master)](https://coveralls.io/r/mpollmeier/orientdb-gremlin?branch=master) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.michaelpollmeier/orientdb-gremlin/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.michaelpollmeier/orientdb-gremlin/) 
 
-[Apache TinkerPop](https://tinkerpop.apache.org/) 3 Graph Structure Implementation for OrientDB. This started off as just a proof of concept, but thanks to a lot of help it's now in a really good shape and it has been officially adopted by OrientDB Team to be part of OrientDB `v3.x`. 
+[Apache TinkerPop](https://tinkerpop.apache.org/) 3 Graph Structure Implementation for OrientDB. This started off as just a proof of concept, but thanks to a lot of help it's now in a really good shape and it has been officially adopted by OrientDB Team to be part of OrientDB `v3.x` and eventually should replace OrientDB's `graphdb` implementation that is still on TinkerPop 2. 
 
 The main area that need some more work is index lookups - currently it does find the right index for a simple case, e.g. `g.V.hasLabel("myLabel").has("someKey", "someValue")`. However if there are multiple indexes on the same property, or if there the traversal should better use a composite index, that's not handled well yet. If you feel inclined you can add these cases to the `OrientGraphIndexTest.java`. The function that looks up indexes is `OrientGraphStep.findIndex`.
 
