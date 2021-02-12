@@ -30,110 +30,73 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.util.ODateHelper;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.profile.StackProfiler;
+import org.openjdk.jmh.runner.Runner;
+import org.openjdk.jmh.runner.RunnerException;
+import org.openjdk.jmh.runner.options.Options;
+import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-@SuppressWarnings("unchecked")
-@Test
-public class JSONTest extends DocumentDBBaseTest {
-  @Parameters(value = "url")
-  public JSONTest(@Optional final String iURL) {
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+
+@State(Scope.Thread)
+@BenchmarkMode(Mode.AverageTime)
+@OutputTimeUnit(TimeUnit.MICROSECONDS)
+@Measurement(iterations = 1, batchSize = 1)
+@Warmup(iterations = 1, batchSize = 1)
+@Fork(1)
+public class JSONTestBenchmark extends DocumentDBBaseTest {
+  // @Parameters(value = "url")
+  /* public JSONTestBenchmark(@Optional final String iURL) {
     super(iURL);
+  }*/
+
+  public static void main(String[] args) throws RunnerException {
+    final Options opt =
+        new OptionsBuilder()
+            .include("JSONTestBenchmark.*")
+            .addProfiler(StackProfiler.class, "detailLine=true;excludePackages=true;period=1")
+            .jvmArgs("-server", "-XX:+UseConcMarkSweepGC", "-Xmx4G", "-Xms1G")
+            // .result("target" + "/" + "results.csv")
+            // .param("offHeapMessages", "true""
+            // .resultFormat(ResultFormatType.CSV)
+            .build();
+    new Runner(opt).run();
   }
 
-  @Test
+  @Benchmark
   public void testAlmostLink() {
     final ODocument doc = new ODocument();
     doc.fromJSON("{'title': '#330: Dollar Coins Are Done'}");
   }
 
-  @Test
+  @Benchmark
   public void testNullList() throws Exception {
     final ODocument documentSource = new ODocument();
     documentSource.fromJSON("{\"list\" : [\"string\", null]}");
 
     final ODocument documentTarget = new ODocument();
     documentTarget.fromStream(documentSource.toStream());
-
-    final OTrackedList<Object> list = documentTarget.field("list", OType.EMBEDDEDLIST);
-    Assert.assertEquals(list.get(0), "string");
-    Assert.assertNull(list.get(1));
   }
 
-  @Test
-  public void testBooleanList() {
-    final ODocument documentSource = new ODocument();
-    documentSource.fromJSON("{\"list\" : [true, false]}");
-
-    final ODocument documentTarget = new ODocument();
-    documentTarget.fromStream(documentSource.toStream());
-
-    final OTrackedList<Object> list = documentTarget.field("list", OType.EMBEDDEDLIST);
-    Assert.assertEquals(list.get(0), true);
-    Assert.assertEquals(list.get(1), false);
-  }
-
-  @Test
-  public void testNumericIntegerList() {
-    final ODocument documentSource = new ODocument();
-    documentSource.fromJSON("{\"list\" : [17,42]}");
-
-    final ODocument documentTarget = new ODocument();
-    documentTarget.fromStream(documentSource.toStream());
-
-    final OTrackedList<Object> list = documentTarget.field("list", OType.EMBEDDEDLIST);
-    Assert.assertEquals(list.get(0), 17);
-    Assert.assertEquals(list.get(1), 42);
-  }
-
-  @Test
-  public void testNumericLongList() {
-    final ODocument documentSource = new ODocument();
-    documentSource.fromJSON("{\"list\" : [100000000000,100000000001]}");
-
-    final ODocument documentTarget = new ODocument();
-    documentTarget.fromStream(documentSource.toStream());
-
-    final OTrackedList<Object> list = documentTarget.field("list", OType.EMBEDDEDLIST);
-    Assert.assertEquals(list.get(0), 100000000000l);
-    Assert.assertEquals(list.get(1), 100000000001l);
-  }
-
-  @Test
-  public void testNumericFloatList() {
-    final ODocument documentSource = new ODocument();
-    documentSource.fromJSON("{\"list\" : [17.3,42.7]}");
-
-    final ODocument documentTarget = new ODocument();
-    documentTarget.fromStream(documentSource.toStream());
-
-    final OTrackedList<Object> list = documentTarget.field("list", OType.EMBEDDEDLIST);
-    Assert.assertEquals(list.get(0), 17.3);
-    Assert.assertEquals(list.get(1), 42.7);
-  }
-
-  @Test
+  @Benchmark
   public void testNullity() {
-    final ODocument doc = new ODocument();
-    doc.fromJSON(
+    final ODocument newDoc = new ODocument();
+    newDoc.fromJSON(
         "{\"gender\":{\"name\":\"Male\"},\"firstName\":\"Jack\",\"lastName\":\"Williams\","
             + "\"phone\":\"561-401-3348\",\"email\":\"0586548571@example.com\",\"address\":{\"street1\":\"Smith Ave\","
             + "\"street2\":null,\"city\":\"GORDONSVILLE\",\"state\":\"VA\",\"code\":\"22942\"},"
             + "\"dob\":\"2011-11-17 03:17:04\"}");
-    final String json = doc.toJSON();
-    final ODocument loadedDoc = new ODocument().fromJSON(json);
-    Assert.assertTrue(doc.hasSameContentOf(loadedDoc));
+
+    // final String json = newDoc.toJSON();
+    // new ODocument().fromJSON(json);
   }
 
-  // TODO: from here
   /*@Test
   public void testNan() {
     ODocument newDoc = new ODocument();
@@ -161,32 +124,34 @@ public class JSONTest extends DocumentDBBaseTest {
     json = newDoc.toJSON();
 
     Assert.assertEquals(input, json);
-  }*/
+  }
 
-  // TODO: WIP
   @Test
   public void testEmbeddedList() {
-    final ODocument doc = new ODocument();
-    final List<ODocument> list = new ArrayList<ODocument>();
-    doc.field("embeddedList", list, OType.EMBEDDEDLIST);
+    ODocument newDoc = new ODocument();
+
+    final ArrayList<ODocument> list = new ArrayList<ODocument>();
+    newDoc.field("embeddedList", list, OType.EMBEDDEDLIST);
     list.add(new ODocument().field("name", "Luca"));
     list.add(new ODocument().field("name", "Marcus"));
 
-    final String json = doc.toJSON();
-    final ODocument loadedDoc = new ODocument().fromJSON(json);
-    Assert.assertTrue(doc.hasSameContentOf(loadedDoc));
+    String json = newDoc.toJSON();
+    ODocument loadedDoc = new ODocument().fromJSON(json);
+
+    Assert.assertTrue(newDoc.hasSameContentOf(loadedDoc));
+
     Assert.assertTrue(loadedDoc.containsField("embeddedList"));
     Assert.assertTrue(loadedDoc.field("embeddedList") instanceof List<?>);
     Assert.assertTrue(
         ((List<ODocument>) loadedDoc.field("embeddedList")).get(0) instanceof ODocument);
 
-    ODocument newDoc = ((List<ODocument>) loadedDoc.field("embeddedList")).get(0);
-    Assert.assertEquals(newDoc.field("name"), "Luca");
-    newDoc = ((List<ODocument>) loadedDoc.field("embeddedList")).get(1);
-    Assert.assertEquals(newDoc.field("name"), "Marcus");
+    ODocument d = ((List<ODocument>) loadedDoc.field("embeddedList")).get(0);
+    Assert.assertEquals(d.field("name"), "Luca");
+    d = ((List<ODocument>) loadedDoc.field("embeddedList")).get(1);
+    Assert.assertEquals(d.field("name"), "Marcus");
   }
 
-  /*@Test
+  @Test
   public void testListToJSON() {
 
     final ArrayList<ODocument> list = new ArrayList<ODocument>();
@@ -967,44 +932,30 @@ public class JSONTest extends DocumentDBBaseTest {
     Assert.assertEquals(unmarshalled.field("date"), now);
   }
 
-  @Test
+  // NPE
+  @Benchmark
   public void shouldDeserializeFieldWithCurlyBraces() {
     final String json = "{\"a\":\"{dd}\",\"bl\":{\"b\":\"c\",\"a\":\"d\"}}";
-    final ODocument in =
-        (ODocument)
-            ORecordSerializerJSON.INSTANCE.fromString(
-                json, database.newInstance(), new String[] {});
-    Assert.assertEquals(in.field("a"), "{dd}");
-    Assert.assertTrue(in.field("bl") instanceof Map);
-  }
+    ORecordSerializerJSON.INSTANCE.fromString(json, database.newInstance(), new String[] {});
+  }*/
 
-  @Test
+  @Benchmark
   public void testList() throws Exception {
-    ODocument documentSource = new ODocument();
+    final ODocument documentSource = new ODocument();
     documentSource.fromJSON("{\"list\" : [\"string\", 42]}");
 
-    ODocument documentTarget = new ODocument();
+    final ODocument documentTarget = new ODocument();
     documentTarget.fromStream(documentSource.toStream());
-
-    OTrackedList<Object> list = documentTarget.field("list", OType.EMBEDDEDLIST);
-    Assert.assertEquals(list.get(0), "string");
-    Assert.assertEquals(list.get(1), 42);
   }
 
-  @Test
+  @Benchmark
   public void testEmbeddedRIDBagDeserialisationWhenFieldTypeIsProvided() throws Exception {
-    ODocument documentSource = new ODocument();
+    final ODocument documentSource = new ODocument();
     documentSource.fromJSON(
         "{FirstName:\"Student A 0\",in_EHasGoodStudents:[#57:0],@fieldTypes:\"in_EHasGoodStudents=g\"}");
-
-    ORidBag bag = documentSource.field("in_EHasGoodStudents");
-    Assert.assertEquals(bag.size(), 1);
-    OIdentifiable rid = bag.rawIterator().next();
-    Assert.assertTrue(rid.getIdentity().getClusterId() == 57);
-    Assert.assertTrue(rid.getIdentity().getClusterPosition() == 0);
   }
 
-  public void testNestedLinkCreation() {
+  /*public void testNestedLinkCreation() {
     ODocument jaimeDoc = new ODocument("NestedLinkCreation");
     jaimeDoc.field("name", "jaime");
     jaimeDoc.save();
@@ -1324,16 +1275,11 @@ public class JSONTest extends DocumentDBBaseTest {
     new ODocument()
         .fromJSON(
             "{\"Salary\":1500.0,\"Type\":\"Person\",\"Address\":[{\"Zip\":\"JX2 MSX\",\"Type\":\"Home\",\"Street1\":\"13 Marge Street\",\"Country\":\"Holland\",\"Id\":\"Address-28813211\",\"City\":\"Amsterdam\",\"From\":\"1996-02-01\",\"To\":\"1998-01-01\"},{\"Zip\":\"90210\",\"Type\":\"Work\",\"Street1\":\"100 Hollywood Drive\",\"Country\":\"USA\",\"Id\":\"Address-11595040\",\"City\":\"Los Angeles\",\"From\":\"2009-09-01\"}],\"Id\":\"Person-7464251\",\"Name\":\"Stan\"}");
-  }
-
-  @Test
-  public void testScientificNotation() {
-    ODocument doc = new ODocument();
-    doc.fromJSON("{'number1': -9.2741500e-31, 'number2': 741800E+290}");
-
-    double number1 = doc.field("number1");
-    Assert.assertEquals(number1, -9.27415E-31);
-    double number2 = doc.field("number2");
-    Assert.assertEquals(number2, 741800E+290);
   }*/
+
+  @Benchmark
+  public void testScientificNotation() {
+    final ODocument doc = new ODocument();
+    doc.fromJSON("{'number1': -9.2741500e-31, 'number2': 741800E+290}");
+  }
 }
