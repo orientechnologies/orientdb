@@ -3,13 +3,13 @@
 The `databases_x` files are OrientDB exports in different databas eversions and used in several import / export and compatibility tests.
 
 Import steps / phases:
-- Info
-- Clusters
-- Schema
-- Records
-- Broken RIDs
-- Indexes
-- (Legacy: manual indexes)
+- [x] Info
+- [x] Clusters
+- [ ] Schema
+- [ ] Records
+- [ ] Broken RIDs
+- [ ] Indexes
+- [ ] (Legacy: manual indexes)
 
 Topics:
 - [x] JSON parser selection
