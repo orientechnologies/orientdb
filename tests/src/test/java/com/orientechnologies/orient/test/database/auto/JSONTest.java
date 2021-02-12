@@ -134,7 +134,7 @@ public class JSONTest extends DocumentDBBaseTest {
   }
 
   // TODO: from here
-  /*@Test
+  @Test
   public void testNan() {
     ODocument newDoc = new ODocument();
 
@@ -161,7 +161,7 @@ public class JSONTest extends DocumentDBBaseTest {
     json = newDoc.toJSON();
 
     Assert.assertEquals(input, json);
-  }*/
+  }
 
   // TODO: WIP
   @Test
@@ -186,7 +186,7 @@ public class JSONTest extends DocumentDBBaseTest {
     Assert.assertEquals(newDoc.field("name"), "Marcus");
   }
 
-  /*@Test
+  @Test
   public void testListToJSON() {
 
     final ArrayList<ODocument> list = new ArrayList<ODocument>();
@@ -1335,5 +1335,5 @@ public class JSONTest extends DocumentDBBaseTest {
     Assert.assertEquals(number1, -9.27415E-31);
     double number2 = doc.field("number2");
     Assert.assertEquals(number2, 741800E+290);
-  }*/
+  }
 }
