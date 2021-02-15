@@ -181,11 +181,13 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   private void checkDbAvailable(String name) {
-    if (OSystemDatabase.SYSTEM_DB_NAME.equals(name))
-      return;
-    ODistributedServerManager.DB_STATUS dbStatus = plugin.getDatabaseStatus(plugin.getLocalNodeName(), name);
-    if (dbStatus != ODistributedServerManager.DB_STATUS.ONLINE && dbStatus != ODistributedServerManager.DB_STATUS.BACKUP) {
-      throw new OOfflineNodeException("database " + name + " not online on " + plugin.getLocalNodeName());
+    if (OSystemDatabase.SYSTEM_DB_NAME.equals(name)) return;
+    ODistributedServerManager.DB_STATUS dbStatus =
+        plugin.getDatabaseStatus(plugin.getLocalNodeName(), name);
+    if (dbStatus != ODistributedServerManager.DB_STATUS.ONLINE
+        && dbStatus != ODistributedServerManager.DB_STATUS.BACKUP) {
+      throw new OOfflineNodeException(
+          "database " + name + " not online on " + plugin.getLocalNodeName());
     }
   }
 
@@ -196,7 +198,8 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   @Override
-  public ODatabaseDocumentInternal open(String name, String user, String password, OrientDBConfig config) {
+  public ODatabaseDocumentInternal open(
+      String name, String user, String password, OrientDBConfig config) {
     checkDbAvailable(name);
     return super.open(name, user, password, config);
   }
