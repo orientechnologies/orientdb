@@ -39,18 +39,6 @@ public abstract class OSBTreeCollectionManagerAbstract
         OSBTreeCollectionManager,
         OOrientStartupListener,
         OOrientShutdownListener {
-  public static final String FILE_NAME_PREFIX = "collections_";
-  public static final String DEFAULT_EXTENSION = ".sbc";
-
-  /**
-   * Generates a lock name for the given cluster ID.
-   *
-   * @param clusterId the cluster ID to generate the lock name for.
-   * @return the generated lock name.
-   */
-  public static String generateLockName(int clusterId) {
-    return FILE_NAME_PREFIX + clusterId + DEFAULT_EXTENSION;
-  }
 
   private static final ConcurrentLinkedHashMap<CacheKey, SBTreeBonsaiContainer> GLOBAL_TREE_CACHE =
       new ConcurrentLinkedHashMap.Builder<CacheKey, SBTreeBonsaiContainer>()

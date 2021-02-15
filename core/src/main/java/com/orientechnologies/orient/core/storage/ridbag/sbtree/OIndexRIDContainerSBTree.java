@@ -114,7 +114,7 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
 
   @Override
   public boolean isEmpty() {
-    return tree.size() == 0L;
+    return tree.isEmpty();
   }
 
   @Override
