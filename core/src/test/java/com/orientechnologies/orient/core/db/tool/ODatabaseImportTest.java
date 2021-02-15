@@ -7,6 +7,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /** Created by tglman on 23/05/16. */
@@ -55,6 +56,8 @@ public class ODatabaseImportTest {
     orientDB.close();
   }
 
+  // TODO: add test, when schema import refactoring done
+  @Ignore
   @Test
   public void exportImportOnlySchemaTestV2() throws IOException {
     final String databaseName = "test";
