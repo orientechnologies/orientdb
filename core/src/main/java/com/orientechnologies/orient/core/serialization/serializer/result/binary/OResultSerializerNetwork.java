@@ -145,31 +145,37 @@ public class OResultSerializerNetwork {
       }
     }
 
-    Set<String> metadataKeys = document.getMetadataKeys();
-    OVarIntSerializer.write(bytes, metadataKeys.size());
+    // NOT SENDING METADATA!
+    OVarIntSerializer.write(bytes, 0);
 
-    for (String field : metadataKeys) {
-      writeString(bytes, field);
-      final Object value = document.getMetadata(field);
-      if (value != null) {
-        if (value instanceof OResult) {
-          writeOType(bytes, bytes.alloc(1), OType.EMBEDDED);
-          serializeValue(bytes, value, OType.EMBEDDED, null);
-        } else {
-          final OType type = OType.getTypeByValue(value);
-          if (type == null) {
-            throw new OSerializationException(
-                "Impossible serialize value of type "
-                    + value.getClass()
-                    + " with the Result binary serializer");
-          }
-          writeOType(bytes, bytes.alloc(1), type);
-          serializeValue(bytes, value, type, null);
-        }
-      } else {
-        writeOType(bytes, bytes.alloc(1), null);
-      }
-    }
+    // is there a real need to send metadata over the network???
+    // maybe only in case of sharding...?
+    // this thing breaks queries with LET on potentially big iterators, eg. LET $x = out()
+
+    //    Set<String> metadataKeys = document.getMetadataKeys();
+    //    OVarIntSerializer.write(bytes, metadataKeys.size());
+    //    for (String field : metadataKeys) {
+    //      writeString(bytes, field);
+    //      final Object value = document.getMetadata(field);
+    //      if (value != null) {
+    //        if (value instanceof OResult) {
+    //          writeOType(bytes, bytes.alloc(1), OType.EMBEDDED);
+    //          serializeValue(bytes, value, OType.EMBEDDED, null);
+    //        } else {
+    //          final OType type = OType.getTypeByValue(value);
+    //          if (type == null) {
+    //            throw new OSerializationException(
+    //                "Impossible serialize value of type "
+    //                    + value.getClass()
+    //                    + " with the Result binary serializer");
+    //          }
+    //          writeOType(bytes, bytes.alloc(1), type);
+    //          serializeValue(bytes, value, type, null);
+    //        }
+    //      } else {
+    //        writeOType(bytes, bytes.alloc(1), null);
+    //      }
+    //    }
   }
 
   protected OType readOType(final BytesContainer bytes) {

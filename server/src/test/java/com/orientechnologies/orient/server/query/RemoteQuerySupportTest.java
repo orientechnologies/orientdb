@@ -270,6 +270,44 @@ public class RemoteQuerySupportTest {
     rs.close();
   }
 
+  @Test
+  public void testQueryWithOut() {
+    session.command("create class testScriptWithRidbagsV extends V");
+    session.command("create class testScriptWithRidbagsE extends E");
+    session.command("create vertex testScriptWithRidbagsV set name = 'a'");
+    session.command("create vertex testScriptWithRidbagsV set name = 'b'");
+
+    session.command(
+        "create edge testScriptWithRidbagsE from (select from testScriptWithRidbagsV where name = 'a') TO (select from testScriptWithRidbagsV where name = 'b');");
+
+    String script =
+        "select name, $o.name from testScriptWithRidbagsV let $o=OUT(\"testScriptWithRidbagsE\")";
+
+    OResultSet rs = session.query(script);
+
+    rs.forEachRemaining(x -> System.out.println(x));
+    rs.close();
+  }
+
+  @Test
+  public void testQueryWithOutThenIn() {
+    session.command("create class testScriptWithRidbagsV extends V");
+    session.command("create class testScriptWithRidbagsE extends E");
+    session.command("create vertex testScriptWithRidbagsV set name = 'a'");
+    session.command("create vertex testScriptWithRidbagsV set name = 'b'");
+
+    session.command(
+        "create edge testScriptWithRidbagsE from (select from testScriptWithRidbagsV where name = 'a') TO (select from testScriptWithRidbagsV where name = 'b');");
+
+    String script =
+        "select name, $p.name from testScriptWithRidbagsV let $p=OUT(\"testScriptWithRidbagsE\").IN(\"testScriptWithRidbagsE\")";
+
+    OResultSet rs = session.query(script);
+
+    rs.forEachRemaining(x -> System.out.println(x));
+    rs.close();
+  }
+
   @After
   public void after() {
     QUERY_REMOTE_RESULTSET_PAGE_SIZE.setValue(oldPageSize);
