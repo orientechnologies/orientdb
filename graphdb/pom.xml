@@ -111,6 +111,11 @@
             </exclusions>
         </dependency>
         <dependency>
+            <groupId>commons-collections</groupId>
+            <artifactId>commons-collections</artifactId>
+            <version>3.2.2</version>
+        </dependency>
+        <dependency>
             <groupId>com.tinkerpop.rexster</groupId>
             <artifactId>rexster-core</artifactId>
             <version>${blueprints.version}</version>
@@ -162,6 +167,11 @@
             <artifactId>commons-io</artifactId>
             <version>2.8.0</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.12.1</version>
         </dependency>
     </dependencies>
     <build>
