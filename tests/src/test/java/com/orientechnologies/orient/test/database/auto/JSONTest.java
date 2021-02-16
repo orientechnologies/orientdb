@@ -133,37 +133,27 @@ public class JSONTest extends DocumentDBBaseTest {
     Assert.assertTrue(doc.hasSameContentOf(loadedDoc));
   }
 
-  // TODO: from here
   @Test
   public void testNan() {
-    ODocument newDoc = new ODocument();
-
+    ODocument doc = new ODocument();
     String input =
         "{\"@type\":\"d\",\"@version\":0,\"nan\":null,\"p_infinity\":null,\"n_infinity\":null,\"@fieldTypes\":\"nan=d,p_infinity=d,n_infinity=d\"}";
-
-    newDoc.field("nan", Double.NaN);
-    newDoc.field("p_infinity", Double.POSITIVE_INFINITY);
-    newDoc.field("n_infinity", Double.NEGATIVE_INFINITY);
-
-    String json = newDoc.toJSON();
-
+    doc.field("nan", Double.NaN);
+    doc.field("p_infinity", Double.POSITIVE_INFINITY);
+    doc.field("n_infinity", Double.NEGATIVE_INFINITY);
+    String json = doc.toJSON();
     Assert.assertEquals(input, json);
 
-    newDoc = new ODocument();
-
+    doc = new ODocument();
     input =
         "{\"@type\":\"d\",\"@version\":0,\"nan\":null,\"p_infinity\":null,\"n_infinity\":null,\"@fieldTypes\":\"nan=f,p_infinity=f,n_infinity=f\"}";
-
-    newDoc.field("nan", Float.NaN);
-    newDoc.field("p_infinity", Float.POSITIVE_INFINITY);
-    newDoc.field("n_infinity", Float.NEGATIVE_INFINITY);
-
-    json = newDoc.toJSON();
-
+    doc.field("nan", Float.NaN);
+    doc.field("p_infinity", Float.POSITIVE_INFINITY);
+    doc.field("n_infinity", Float.NEGATIVE_INFINITY);
+    json = doc.toJSON();
     Assert.assertEquals(input, json);
   }
 
-  // TODO: WIP
   @Test
   public void testEmbeddedList() {
     final ODocument doc = new ODocument();
@@ -187,58 +177,19 @@ public class JSONTest extends DocumentDBBaseTest {
   }
 
   @Test
-  public void testListToJSON() {
-
-    final ArrayList<ODocument> list = new ArrayList<ODocument>();
-    ODocument first = new ODocument().field("name", "Luca");
-    ODocument second = new ODocument().field("name", "Marcus");
-    list.add(first);
-    list.add(second);
-
-    String jsonResult = OJSONWriter.listToJSON(list, null);
-    ODocument doc = new ODocument();
-    doc.fromJSON("{\"result\": " + jsonResult + "}");
-    Collection<ODocument> result = doc.field("result");
-    Assert.assertTrue(result instanceof Collection);
-    Assert.assertEquals(result.size(), 2);
-    for (ODocument resultDoc : result) {
-      Assert.assertTrue(first.hasSameContentOf(resultDoc) || second.hasSameContentOf(resultDoc));
-    }
-  }
-
-  @Test
-  public void testEmptyEmbeddedMap() {
-    ODocument newDoc = new ODocument();
-
-    final Map<String, ODocument> map = new HashMap<String, ODocument>();
-    newDoc.field("embeddedMap", map, OType.EMBEDDEDMAP);
-
-    String json = newDoc.toJSON();
-    ODocument loadedDoc = new ODocument().fromJSON(json);
-
-    Assert.assertTrue(newDoc.hasSameContentOf(loadedDoc));
-
-    Assert.assertTrue(loadedDoc.containsField("embeddedMap"));
-    Assert.assertTrue(loadedDoc.field("embeddedMap") instanceof Map<?, ?>);
-
-    final Map<String, ODocument> loadedMap = loadedDoc.field("embeddedMap");
-    Assert.assertEquals(loadedMap.size(), 0);
-  }
-
-  @Test
   public void testEmbeddedMap() {
-    ODocument newDoc = new ODocument();
+    final ODocument doc = new ODocument();
 
     final Map<String, ODocument> map = new HashMap<String, ODocument>();
-    newDoc.field("map", map);
+    doc.field("map", map);
     map.put("Luca", new ODocument().field("name", "Luca"));
     map.put("Marcus", new ODocument().field("name", "Marcus"));
     map.put("Cesare", new ODocument().field("name", "Cesare"));
 
-    String json = newDoc.toJSON();
-    ODocument loadedDoc = new ODocument().fromJSON(json);
+    final String json = doc.toJSON();
+    final ODocument loadedDoc = new ODocument().fromJSON(json);
 
-    Assert.assertTrue(newDoc.hasSameContentOf(loadedDoc));
+    Assert.assertTrue(doc.hasSameContentOf(loadedDoc));
 
     Assert.assertTrue(loadedDoc.containsField("map"));
     Assert.assertTrue(loadedDoc.field("map") instanceof Map<?, ?>);
@@ -246,16 +197,53 @@ public class JSONTest extends DocumentDBBaseTest {
         ((Map<String, ODocument>) loadedDoc.field("map")).values().iterator().next()
             instanceof ODocument);
 
-    ODocument d = ((Map<String, ODocument>) loadedDoc.field("map")).get("Luca");
-    Assert.assertEquals(d.field("name"), "Luca");
+    ODocument newDoc = ((Map<String, ODocument>) loadedDoc.field("map")).get("Luca");
+    Assert.assertEquals(newDoc.field("name"), "Luca");
 
-    d = ((Map<String, ODocument>) loadedDoc.field("map")).get("Marcus");
-    Assert.assertEquals(d.field("name"), "Marcus");
+    newDoc = ((Map<String, ODocument>) loadedDoc.field("map")).get("Marcus");
+    Assert.assertEquals(newDoc.field("name"), "Marcus");
 
-    d = ((Map<String, ODocument>) loadedDoc.field("map")).get("Cesare");
-    Assert.assertEquals(d.field("name"), "Cesare");
+    newDoc = ((Map<String, ODocument>) loadedDoc.field("map")).get("Cesare");
+    Assert.assertEquals(newDoc.field("name"), "Cesare");
   }
 
+  @Test
+  public void testListToJSON() {
+    final List<ODocument> list = new ArrayList<ODocument>();
+    final ODocument first = new ODocument().field("name", "Luca");
+    final ODocument second = new ODocument().field("name", "Marcus");
+    list.add(first);
+    list.add(second);
+
+    final String jsonResult = OJSONWriter.listToJSON(list, null);
+    final ODocument doc = new ODocument();
+    doc.fromJSON("{\"result\": " + jsonResult + "}");
+    Collection<ODocument> result = doc.field("result");
+    Assert.assertTrue(result instanceof Collection);
+    Assert.assertEquals(result.size(), 2);
+    for (final ODocument resultDoc : result) {
+      Assert.assertTrue(first.hasSameContentOf(resultDoc) || second.hasSameContentOf(resultDoc));
+    }
+  }
+
+  @Test
+  public void testEmptyEmbeddedMap() {
+    final ODocument doc = new ODocument();
+
+    final Map<String, ODocument> map = new HashMap<String, ODocument>();
+    doc.field("embeddedMap", map, OType.EMBEDDEDMAP);
+
+    final String json = doc.toJSON();
+    final ODocument loadedDoc = new ODocument().fromJSON(json);
+    Assert.assertTrue(doc.hasSameContentOf(loadedDoc));
+    Assert.assertTrue(loadedDoc.containsField("embeddedMap"));
+    Assert.assertTrue(loadedDoc.field("embeddedMap") instanceof Map<?, ?>);
+
+    final Map<String, ODocument> loadedMap = loadedDoc.field("embeddedMap");
+    Assert.assertEquals(loadedMap.size(), 0);
+  }
+
+  // TODO: from here
   @Test
   public void testMultiLevelTypes() {
     String oldDataTimeFormat = database.get(ODatabase.ATTRIBUTES.DATETIMEFORMAT).toString();
