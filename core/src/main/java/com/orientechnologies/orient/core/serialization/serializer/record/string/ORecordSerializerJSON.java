@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
 import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.orientechnologies.common.collection.OMultiValue;
@@ -185,7 +186,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
       final String iOptions,
       boolean needReload,
       int maxRidbagSizeBeforeSkip,
-      Set<Integer> skippedPartsIndexes) {
+      Set<Integer> skippedPartsIndexes)
+      throws JsonParseException {
 
     String className = null;
     boolean noMap = false;
@@ -282,6 +284,10 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         // Trigger the default value
         ((ODocument) record).setClassName(className);
       }
+    } catch (final JsonParseException e) {
+      // compatibility mode for invalid JSON
+      OLogManager.instance().warn(this, "Falling back to legacy JSON parser due to invalid JSON.");
+      throw e;
     } catch (final Exception e) {
       if (record.getIdentity().isValid()) {
         throw OException.wrapException(
@@ -322,8 +328,14 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
       int maxRidbagSizeBeforeSkip,
       Set<Integer> skippedPartsIndexes) {
     // TODO: WIP
-    // return this.fromString(
-    //     source, record, iOptions, needReload, maxRidbagSizeBeforeSkip, skippedPartsIndexes);
+
+    /*try {
+      return this.fromString(
+          source, record, iOptions, needReload, maxRidbagSizeBeforeSkip, skippedPartsIndexes);
+    } catch (final JsonParseException e) {
+      return this.fromStringV0(
+          source, record, iOptions, needReload, maxRidbagSizeBeforeSkip, skippedPartsIndexes);
+    }*/
     return this.fromStringV0(
         source, record, iOptions, needReload, maxRidbagSizeBeforeSkip, skippedPartsIndexes);
   }
@@ -336,7 +348,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
       final String iOptions,
       boolean needReload,
       int maxRidbagSizeBeforeSkip,
-      Set<Integer> skippedPartsIndexes) {
+      Set<Integer> skippedPartsIndexes)
+      throws JsonParseException {
     // TODO: WIP
     return this.fromString(
         source, record, iOptions, needReload, maxRidbagSizeBeforeSkip, skippedPartsIndexes);
