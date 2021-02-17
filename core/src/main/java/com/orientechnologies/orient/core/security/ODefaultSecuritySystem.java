@@ -132,6 +132,20 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
       guest.addRule(ResourceGeneric.SERVER, "listDatabases", ORole.PERMISSION_ALL);
       guest.save();
     }
+    // for monitoring/logging purposes, intended to connect from external monitoring systems
+    if (security.getRole("monitor") == null) {
+      ORole guest = security.createRole("monitor", ORole.ALLOW_MODES.DENY_ALL_BUT);
+      guest.addRule(ResourceGeneric.CLASS, null, ORole.PERMISSION_READ);
+      guest.addRule(ResourceGeneric.CLUSTER, null, ORole.PERMISSION_READ);
+      guest.addRule(ResourceGeneric.SYSTEM_CLUSTERS, null, ORole.PERMISSION_READ);
+      guest.addRule(ResourceGeneric.SCHEMA, null, ORole.PERMISSION_READ);
+      guest.addRule(ResourceGeneric.FUNCTION, null, ORole.PERMISSION_ALL);
+      guest.addRule(ResourceGeneric.COMMAND, null, ORole.PERMISSION_ALL);
+      guest.addRule(ResourceGeneric.COMMAND_GREMLIN, null, ORole.PERMISSION_ALL);
+      guest.addRule(ResourceGeneric.DATABASE, null, ORole.PERMISSION_READ);
+      guest.addRule(ResourceGeneric.SERVER, null, ORole.PERMISSION_READ);
+      guest.save();
+    }
   }
 
   private void initDefultAuthenticators() {
