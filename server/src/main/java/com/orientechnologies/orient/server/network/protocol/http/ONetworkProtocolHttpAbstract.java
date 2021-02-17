@@ -191,7 +191,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol
             request.getHttpVersion(),
             additionalResponseHeaders,
             responseCharSet,
-            connection.getData().serverInfo,
+            "OrientDB",
             request.getSessionId(),
             callbackF,
             request.isKeepAlive(),
