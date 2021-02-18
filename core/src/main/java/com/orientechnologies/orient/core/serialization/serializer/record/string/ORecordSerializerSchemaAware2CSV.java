@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -268,6 +269,11 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
     }
 
     return iRecord;
+  }
+
+  @Override
+  public ORecord fromStream(InputStream source, ORecord record, String[] fields) {
+    throw new UnsupportedOperationException("Use fromString instead.");
   }
 
   @Override
