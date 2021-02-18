@@ -4016,7 +4016,7 @@ public class OSelectStatementExecutionTest {
       doc.setProperty("val", i);
       doc.save();
     }
-    try (OResultSet result = db.query("select " + funcitonName + "(), * from " + className + " timeout 10")) {
+    try (OResultSet result = db.query("select " + funcitonName + "(), * from " + className + " timeout 5")) {
       while (result.hasNext()) {
         result.next();
       }

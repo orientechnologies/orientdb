@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
+import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -132,7 +133,7 @@ public class OrderByStep extends AbstractExecutionStep {
             sorted = true;
           }
           if(Thread.currentThread().isInterrupted()){
-            throw new OCommandExecutionException("Operation interrupted");
+            throw new OInterruptedException("Operation interrupted");
           }
         } finally {
           if (profilingEnabled) {
@@ -152,7 +153,7 @@ public class OrderByStep extends AbstractExecutionStep {
           sorted = true;
         }
         if(Thread.currentThread().isInterrupted()){
-          throw new OCommandExecutionException("Operation interrupted");
+          throw new OInterruptedException("Operation interrupted");
         }
       } finally {
         if (profilingEnabled) {
