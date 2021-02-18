@@ -13,6 +13,7 @@
     <modules>
         <module>agent</module>
         <module>distribution-community-importers</module>
+        <module>distribution-ee-bundle</module>
     </modules>
 
     <build>
