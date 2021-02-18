@@ -296,7 +296,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
             jsonToken = processRecord(parser, record, iOptions, noMap);
           }
         } else {
-          System.out.println("Assumption: JSON document needs to be an JSON Object.");
+          // System.out.println("Assumption: JSON document needs to be an JSON Object.");
         }
       }
       if (className != null) {
@@ -333,7 +333,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
       final String value = parser.getValueAsString();
       this.processRecords(parser, record, noMap, iOptions, fieldName, value);
     } else {
-      System.out.println("Not supported: " + jsonToken);
+      // System.out.println("Not supported: " + jsonToken);
     }
     return jsonToken;
   }

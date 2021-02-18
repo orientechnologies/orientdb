@@ -18,6 +18,7 @@ package com.orientechnologies.orient.test.database.auto;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -58,7 +59,7 @@ public class JSONStreamTest extends DocumentDBBaseTest {
     Assert.assertNull(list.get(1));
   }
 
-  /*@Test
+  @Test
   public void testBooleanList() {
     final ODocument documentSource = new ODocument();
     documentSource.fromJSON("{\"list\" : [true, false]}");
@@ -123,6 +124,7 @@ public class JSONStreamTest extends DocumentDBBaseTest {
     Assert.assertTrue(doc.hasSameContentOf(loadedDoc));
   }
 
+  // no benchmark
   @Test
   public void testNan() {
     ODocument doc = new ODocument();
@@ -144,6 +146,7 @@ public class JSONStreamTest extends DocumentDBBaseTest {
     Assert.assertEquals(input, json);
   }
 
+  // no benchmark
   @Test
   public void testEmbeddedList() {
     final ODocument doc = new ODocument();
@@ -166,6 +169,7 @@ public class JSONStreamTest extends DocumentDBBaseTest {
     Assert.assertEquals(newDoc.field("name"), "Marcus");
   }
 
+  // no benchmark
   @Test
   public void testEmbeddedMap() {
     final ODocument doc = new ODocument();
@@ -197,6 +201,7 @@ public class JSONStreamTest extends DocumentDBBaseTest {
     Assert.assertEquals(newDoc.field("name"), "Cesare");
   }
 
+  // no benchmark
   @Test
   public void testListToJSON() {
     final List<ODocument> list = new ArrayList<ODocument>();
@@ -216,6 +221,7 @@ public class JSONStreamTest extends DocumentDBBaseTest {
     }
   }
 
+  // no benchmark
   @Test
   public void testEmptyEmbeddedMap() {
     final ODocument doc = new ODocument();
@@ -234,7 +240,7 @@ public class JSONStreamTest extends DocumentDBBaseTest {
   }
 
   // TODO: from here
-  @Test
+  /*@Test
   public void testMultiLevelTypes() {
     String oldDataTimeFormat = database.get(ODatabase.ATTRIBUTES.DATETIMEFORMAT).toString();
     database.set(ODatabase.ATTRIBUTES.DATETIMEFORMAT, ODateHelper.DEF_DATETIME_FORMAT);
