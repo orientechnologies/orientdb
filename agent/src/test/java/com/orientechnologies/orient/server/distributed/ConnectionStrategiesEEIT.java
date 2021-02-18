@@ -18,6 +18,7 @@ import java.util.HashSet;
 import java.util.Set;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Test;
 
 public class ConnectionStrategiesEEIT {
 
@@ -37,7 +38,7 @@ public class ConnectionStrategiesEEIT {
     remote.close();
   }
 
-  //  @Test
+  @Test
   public void testRoundRobinShutdownWrite()
       throws InterruptedException, ClassNotFoundException, InstantiationException,
           IllegalAccessException, IOException {
@@ -113,7 +114,7 @@ public class ConnectionStrategiesEEIT {
     remote1.close();
   }
 
-  //  @Test
+  @Test
   public void testRoundRobinShutdownWriteRestartWithoutWait()
       throws InterruptedException, ClassNotFoundException, InstantiationException,
           IllegalAccessException, IOException {
