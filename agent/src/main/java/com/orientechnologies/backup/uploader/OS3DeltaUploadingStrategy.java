@@ -87,11 +87,16 @@ public class OS3DeltaUploadingStrategy implements OUploadingStrategy {
                   + "means your request made it "
                   + "to Amazon S3, but was rejected with an error response"
                   + " for some reason.");
-      OLogManager.instance().info(this, "Error Message:    %s", ase.getMessage());
-      OLogManager.instance().info(this, "HTTP Status Code: %s", ase.getStatusCode());
-      OLogManager.instance().info(this, "AWS Error Code:   %s", ase.getErrorCode());
-      OLogManager.instance().info(this, "Error Type:       %s", ase.getErrorType());
-      OLogManager.instance().info(this, "Request ID:       %s", ase.getRequestId());
+      OLogManager.instance()
+          .info(
+              this,
+              "Error Message:    %s\nHTTP Status Code: %s\nAWS Error Code:   %s\n"
+                  + "Error Type:       %s\nRequest ID:       %s",
+              ase.getMessage(),
+              ase.getStatusCode(),
+              ase.getErrorCode(),
+              ase.getErrorType(),
+              ase.getRequestId());
     } catch (AmazonClientException ace) {
       OLogManager.instance()
           .info(
@@ -103,8 +108,8 @@ public class OS3DeltaUploadingStrategy implements OUploadingStrategy {
                   + "such as not being able to access the network.");
       OLogManager.instance().info(this, "Error Message: %s", ace.getMessage());
     } catch (Exception e) {
-      OLogManager.instance().info(this, "Caught an exception client side.");
-      OLogManager.instance().info(this, "Error Message: %s", e.getMessage());
+      OLogManager.instance()
+          .info(this, "Caught an exception client side. Error Message: %s", e.getMessage());
     }
 
     return success;
