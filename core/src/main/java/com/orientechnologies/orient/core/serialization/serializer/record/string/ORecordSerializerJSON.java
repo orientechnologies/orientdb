@@ -60,10 +60,7 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.util.ODateHelper;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.StringWriter;
+import java.io.*;
 import java.text.ParseException;
 import java.util.Base64;
 import java.util.Collection;
@@ -85,6 +82,18 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
   private static final Long MIN_INT = (long) Integer.MIN_VALUE;
   private static final Double MAX_FLOAT = (double) Float.MAX_VALUE;
   private static final Double MIN_FLOAT = (double) Float.MIN_VALUE;
+
+  private static final JsonFactory factory = new JsonFactory();
+
+  static {
+    factory.enable(JsonParser.Feature.ALLOW_SINGLE_QUOTES);
+    factory.enable(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES);
+    factory.enable(JsonParser.Feature.ALLOW_TRAILING_COMMA);
+
+    // factory.enable(JsonParser.Feature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER);
+    // factory.enable(JsonParser.Feature.ALLOW_COMMENTS);
+    // factory.enable(JsonParser.Feature.ALLOW_MISSING_VALUES);
+  }
 
   private interface CollectionItemVisitor {
     void visitItem(Object item);
@@ -168,6 +177,11 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     return fromString(source, record, fields, null, false);
   }
 
+  @Override
+  public ORecord fromStream(final InputStream source, ORecord record, final String[] fields) {
+    return fromStream(source, record, fields, null, false);
+  }
+
   public ORecord fromString(
       String source,
       ORecord record,
@@ -177,11 +191,17 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     return fromString(source, record, fields, options, needReload, -1, new HashSet<>());
   }
 
-  // TODO: WIP
-  private static final JsonFactory factory = new JsonFactory();
+  public ORecord fromStream(
+      final InputStream source,
+      ORecord record,
+      final String[] fields,
+      final String options,
+      boolean needReload) {
+    return fromStream(source, record, fields, options, needReload, -1, new HashSet<>());
+  }
 
-  public ORecord fromString(
-      final String source,
+  public ORecord fromStream(
+      final InputStream source,
       ORecord record,
       final String iOptions,
       boolean needReload,
@@ -266,7 +286,6 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     }
 
     try {
-      factory.enable(JsonParser.Feature.ALLOW_SINGLE_QUOTES);
       final JsonParser parser = factory.createParser(source);
 
       JsonToken jsonToken = null;
@@ -319,6 +338,41 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     return jsonToken;
   }
 
+  public ORecord fromStream(
+      final InputStream source,
+      ORecord record,
+      final String[] iFields,
+      final String iOptions,
+      boolean needReload,
+      int maxRidbagSizeBeforeSkip,
+      Set<Integer> skippedPartsIndexes) {
+    try {
+      return this.fromStream(
+          source, record, iOptions, needReload, maxRidbagSizeBeforeSkip, skippedPartsIndexes);
+    } catch (final JsonParseException e) {
+      final OutputStream out = new ByteArrayOutputStream();
+      try {
+        OIOUtils.copyStream(source, out, -1);
+        return this.fromStringV0(
+            out.toString(),
+            record,
+            iOptions,
+            needReload,
+            maxRidbagSizeBeforeSkip,
+            skippedPartsIndexes);
+      } catch (final IOException ex) {
+        throw OException.wrapException(
+            new OSerializationException(
+                "Error on unmarshalling JSON content for record "
+                    + record.getIdentity()
+                    + " failed fromStream "
+                    + e.getMessage()
+                    + " and failed fallback to fromString"),
+            ex);
+      }
+    }
+  }
+
   public ORecord fromString(
       String source,
       ORecord record,
@@ -327,22 +381,13 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
       boolean needReload,
       int maxRidbagSizeBeforeSkip,
       Set<Integer> skippedPartsIndexes) {
-    // TODO: WIP
-
-    /*try {
-      return this.fromString(
-          source, record, iOptions, needReload, maxRidbagSizeBeforeSkip, skippedPartsIndexes);
-    } catch (final JsonParseException e) {
-      return this.fromStringV0(
-          source, record, iOptions, needReload, maxRidbagSizeBeforeSkip, skippedPartsIndexes);
-    }*/
     return this.fromStringV0(
         source, record, iOptions, needReload, maxRidbagSizeBeforeSkip, skippedPartsIndexes);
   }
 
-  public ORecord fromString(
+  public ORecord fromStream(
       final JsonParser parser,
-      String source,
+      InputStream source,
       ORecord record,
       final String[] iFields,
       final String iOptions,
@@ -350,8 +395,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
       int maxRidbagSizeBeforeSkip,
       Set<Integer> skippedPartsIndexes)
       throws JsonParseException {
-    // TODO: WIP
-    return this.fromString(
+    return this.fromStream(
         source, record, iOptions, needReload, maxRidbagSizeBeforeSkip, skippedPartsIndexes);
   }
 

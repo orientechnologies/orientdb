@@ -15,50 +15,40 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
-import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.exception.OSerializationException;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
-import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
-import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.core.util.ODateHelper;
-import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import org.testng.Assert;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+import org.junit.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 @SuppressWarnings("unchecked")
 @Test
-public class JSONTest extends DocumentDBBaseTest {
+public class JSONStreamTest extends DocumentDBBaseTest {
   @Parameters(value = "url")
-  public JSONTest(@Optional final String iURL) {
+  public JSONStreamTest(@Optional final String iURL) {
     super(iURL);
   }
 
   @Test
-  public void testAlmostLink() {
+  public void testAlmostLink() throws IOException {
     final ODocument doc = new ODocument();
-    doc.fromJSON("{'title': '#330: Dollar Coins Are Done'}");
+    doc.fromJSON(
+        new ByteArrayInputStream(
+            "{'title': '#330: Dollar Coins Are Done'}".getBytes(StandardCharsets.UTF_8)));
   }
 
   @Test
   public void testNullList() throws Exception {
     final ODocument documentSource = new ODocument();
-    documentSource.fromJSON("{\"list\" : [\"string\", null]}");
+    documentSource.fromJSON(
+        new ByteArrayInputStream(
+            "{\"list\" : [\"string\", null]}".getBytes(StandardCharsets.UTF_8)));
 
     final ODocument documentTarget = new ODocument();
     documentTarget.fromStream(documentSource.toStream());
@@ -68,7 +58,7 @@ public class JSONTest extends DocumentDBBaseTest {
     Assert.assertNull(list.get(1));
   }
 
-  @Test
+  /*@Test
   public void testBooleanList() {
     final ODocument documentSource = new ODocument();
     documentSource.fromJSON("{\"list\" : [true, false]}");
@@ -243,6 +233,7 @@ public class JSONTest extends DocumentDBBaseTest {
     Assert.assertEquals(loadedMap.size(), 0);
   }
 
+  // TODO: from here
   @Test
   public void testMultiLevelTypes() {
     String oldDataTimeFormat = database.get(ODatabase.ATTRIBUTES.DATETIMEFORMAT).toString();
@@ -541,6 +532,7 @@ public class JSONTest extends DocumentDBBaseTest {
     Assert.assertEquals(doc, loadedDoc);
   }
 
+  // TODO
   public void testJsonToStream() {
     final String doc1Json =
         "{Key1:{\"%Field1\":[{},{},{},{},{}],\"%Field2\":false,\"%Field3\":\"Value1\"}}";
@@ -737,6 +729,7 @@ public class JSONTest extends DocumentDBBaseTest {
     Assert.assertTrue(res.contains("\"quotes\":\"\\\"\\\",\\\"oops\\\":\\\"123\\\"\""));
   }
 
+  // TODO
   public void testEscapingDoubleQuotes() {
     final ODocument doc = new ODocument();
     final StringBuilder sb = new StringBuilder();
@@ -764,6 +757,8 @@ public class JSONTest extends DocumentDBBaseTest {
     Assert.assertEquals(((Map) doc2.get("datavalue")).get("value"), "\"\"");
   }
 
+  // TODO
+  // Requires JsonParser.Feature.ALLOW_TRAILING_COMMA
   public void testEscapingDoubleQuotes2() {
     final ODocument doc = new ODocument();
     final StringBuilder sb = new StringBuilder();
@@ -793,6 +788,7 @@ public class JSONTest extends DocumentDBBaseTest {
     Assert.assertEquals(((Map) doc2.get("datavalue")).get("value"), "\"");
   }
 
+  // TODO
   public void testEscapingDoubleQuotes3() {
     final ODocument doc = new ODocument();
     final StringBuilder sb = new StringBuilder();
@@ -845,6 +841,7 @@ public class JSONTest extends DocumentDBBaseTest {
     Assert.assertEquals(doc.field("datavalue"), "Sub\\urban");
   }
 
+  // TODO
   public void testEmbeddedQuotes3() {
     final ODocument doc = new ODocument();
     final StringBuilder sb = new StringBuilder();
@@ -853,6 +850,7 @@ public class JSONTest extends DocumentDBBaseTest {
     Assert.assertEquals(doc.field("mainsnak.datavalue.value"), "Suburban\\\"");
   }
 
+  // TODO
   public void testEmbeddedQuotes4() {
     final ODocument doc = new ODocument();
     final StringBuilder sb = new StringBuilder();
@@ -861,6 +859,7 @@ public class JSONTest extends DocumentDBBaseTest {
     Assert.assertEquals(doc.field("datavalue.value"), "Suburban\\\"");
   }
 
+  // TODO
   public void testEmbeddedQuotes5() {
     final ODocument doc = new ODocument();
     final StringBuilder sb = new StringBuilder();
@@ -950,7 +949,7 @@ public class JSONTest extends DocumentDBBaseTest {
     final String json = "{\"a\":\"{dd}\",\"bl\":{\"b\":\"c\",\"a\":\"d\"}}";
     final ODocument in =
         (ODocument)
-            ORecordSerializerJSON.INSTANCE.fromString(
+            ORecordSerializerJSON.INSTANCE.fromStream(
                 json, database.newInstance(), new String[] {});
     Assert.assertEquals(in.field("a"), "{dd}");
     Assert.assertTrue(in.field("bl") instanceof Map);
@@ -969,6 +968,7 @@ public class JSONTest extends DocumentDBBaseTest {
     Assert.assertEquals(list.get(1), 42);
   }
 
+  // TODO: fallback to legacy parser for invalid JSON
   @Test
   public void testEmbeddedRIDBagDeserialisationWhenFieldTypeIsProvided() throws Exception {
     ODocument documentSource = new ODocument();
@@ -1055,6 +1055,7 @@ public class JSONTest extends DocumentDBBaseTest {
     Assert.assertTrue(traverseMap.isEmpty());
   }
 
+  // TODO
   public void testNestedLinkCreationFieldTypes() {
     ODocument jaimeDoc = new ODocument("NestedLinkCreationFieldTypes");
     jaimeDoc.field("name", "jaime");
@@ -1182,6 +1183,7 @@ public class JSONTest extends DocumentDBBaseTest {
     Assert.assertTrue(traverseMap.isEmpty());
   }
 
+  // TODO: fallback to legacy parser for invalid JSON
   public void testInnerDocCreationFieldTypes() {
     ODocument adamDoc = new ODocument("InnerDocCreationFieldTypes");
     adamDoc.fromJSON("{\"name\":\"adam\"}");
@@ -1310,5 +1312,5 @@ public class JSONTest extends DocumentDBBaseTest {
     Assert.assertEquals(number1, -9.27415E-31);
     final double number2 = doc.field("number2");
     Assert.assertEquals(number2, 741800E+290);
-  }
+  }*/
 }
