@@ -58,7 +58,8 @@ public class ODatabaseImportSimpleCompatibilityTest {
   @Test
   public void testImportExportNewerSimple() throws Exception {
     // Only required in case of manual indexes:
-    System.setProperty(OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES.getKey(), String.valueOf(true));
+    System.setProperty(
+        OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES.getKey(), String.valueOf(true));
 
     final InputStream simpleDbV3 = load("/databases/databases_3_1/OrderCustomer-sl-0.json");
     Assert.assertNotNull("Input must not be null!", simpleDbV3);
@@ -74,7 +75,8 @@ public class ODatabaseImportSimpleCompatibilityTest {
 
     this.tearDown(databaseName);
     Assert.assertTrue(output.size() > 0);
-    System.setProperty(OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES.getKey(), String.valueOf(false));
+    System.setProperty(
+        OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES.getKey(), String.valueOf(false));
   }
 
   private InputStream load(final String path) throws FileNotFoundException {
