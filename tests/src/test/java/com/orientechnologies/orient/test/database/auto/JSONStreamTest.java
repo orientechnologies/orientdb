@@ -15,7 +15,12 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.exception.OSerializationException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
@@ -23,6 +28,13 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.util.ODateHelper;
+import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import org.junit.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -60,9 +72,10 @@ public class JSONStreamTest extends DocumentDBBaseTest {
   }
 
   @Test
-  public void testBooleanList() {
+  public void testBooleanList() throws IOException {
     final ODocument documentSource = new ODocument();
-    documentSource.fromJSON("{\"list\" : [true, false]}");
+    documentSource.fromJSON(
+        new ByteArrayInputStream("{\"list\" : [true, false]}".getBytes(StandardCharsets.UTF_8)));
 
     final ODocument documentTarget = new ODocument();
     documentTarget.fromStream(documentSource.toStream());
@@ -240,7 +253,8 @@ public class JSONStreamTest extends DocumentDBBaseTest {
   }
 
   // TODO: from here
-  /*@Test
+  /*
+  @Test
   public void testMultiLevelTypes() {
     String oldDataTimeFormat = database.get(ODatabase.ATTRIBUTES.DATETIMEFORMAT).toString();
     database.set(ODatabase.ATTRIBUTES.DATETIMEFORMAT, ODateHelper.DEF_DATETIME_FORMAT);
@@ -939,14 +953,15 @@ public class JSONStreamTest extends DocumentDBBaseTest {
     }
   }
 
-  public void testDates() {
+  public void testDates() throws IOException {
     final Date now = new Date(1350518475000l);
 
     final ODocument doc = new ODocument();
     doc.field("date", now);
     final String json = doc.toJSON();
 
-    final ODocument unmarshalled = new ODocument().fromJSON(json);
+    final ODocument unmarshalled =
+        new ODocument().fromJSON(new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
     Assert.assertEquals(unmarshalled.field("date"), now);
   }
 
@@ -956,7 +971,9 @@ public class JSONStreamTest extends DocumentDBBaseTest {
     final ODocument in =
         (ODocument)
             ORecordSerializerJSON.INSTANCE.fromStream(
-                json, database.newInstance(), new String[] {});
+                new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)),
+                database.newInstance(),
+                new String[] {});
     Assert.assertEquals(in.field("a"), "{dd}");
     Assert.assertTrue(in.field("bl") instanceof Map);
   }
@@ -1318,5 +1335,6 @@ public class JSONStreamTest extends DocumentDBBaseTest {
     Assert.assertEquals(number1, -9.27415E-31);
     final double number2 = doc.field("number2");
     Assert.assertEquals(number2, 741800E+290);
-  }*/
+  }
+  */
 }
