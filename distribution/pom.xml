@@ -172,8 +172,9 @@
                                 <argument>-classpath</argument>
                                 <classpath/>
                                 <argument>com.orientechnologies.orient.console.OConsoleDatabaseApp</argument>
-                                <argument>CREATE DATABASE plocal:${basedir}/target/databases/demodb;</argument>
-                                <argument>CONNECT plocal:${basedir}/target/databases/demodb admin admin;</argument>
+                                <argument>connect env embedded:${basedir}/target/databases/ root root;</argument>
+                                <argument>create database demodb plocal users (admin identified by 'admin' role admin, reader identified by 'reader' role reader, writer identified by 'writer' role writer);</argument>
+                                <argument>open demodb admin admin;</argument>
                                 <argument>LOAD SCRIPT ${basedir}/src/main/resources/demodb-1-schema.osql;</argument>
                                 <argument>LOAD SCRIPT ${basedir}/src/main/resources/demodb-2.osql;</argument>
                                 <argument>LOAD SCRIPT ${basedir}/src/main/resources/demodb-3.osql;</argument>
