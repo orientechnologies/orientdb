@@ -110,7 +110,7 @@ public class ODatabaseImportSimpleCompatibilityTest {
   }
 
   private void executeImport() {
-    importer.setOptions(" -includeManualIndexes=false");
+    importer.setOptions(" -includeManualIndexes=true");
     importer.importDatabase();
   }
 
