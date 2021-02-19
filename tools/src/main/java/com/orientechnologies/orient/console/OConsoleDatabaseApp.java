@@ -3038,7 +3038,7 @@ public class OConsoleDatabaseApp extends OrientConsole
    * console command to open a db
    *
    * <p>usage: <code>
-   *   use dbName dbUser dbPwd
+   *   open dbName dbUser dbPwd
    * </code>
    *
    * @param dbName
@@ -3046,7 +3046,7 @@ public class OConsoleDatabaseApp extends OrientConsole
    * @param password
    */
   @ConsoleCommand(description = "Open a database", onlineHelp = "Console-Command-Use")
-  public void use(
+  public void open(
       @ConsoleParameter(name = "db-name", description = "The database name") final String dbName,
       @ConsoleParameter(name = "user", description = "The database user") final String user,
       @ConsoleParameter(name = "password", description = "The database password")
@@ -3078,9 +3078,11 @@ public class OConsoleDatabaseApp extends OrientConsole
         return RESULT.NOT_EXECUTED;
       }
       if (orientDB != null) {
-        int displayLimit;
+        int displayLimit = 20;
         try {
-          displayLimit = Integer.parseInt(properties.get(OConsoleProperties.LIMIT));
+          if (properties.get(OConsoleProperties.LIMIT) != null) {
+            displayLimit = Integer.parseInt(properties.get(OConsoleProperties.LIMIT));
+          }
           OResultSet rs = orientDB.execute(iCommand);
           int count = 0;
           List<OIdentifiable> result = new ArrayList<>();

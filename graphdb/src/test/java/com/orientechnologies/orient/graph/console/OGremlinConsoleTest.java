@@ -65,9 +65,13 @@ public class OGremlinConsoleTest {
   @Test
   public void testGraphMLImport() {
     final String INPUT_FILE = "src/test/resources/graph-example-2.xml";
-    String dbUrl = "memory:testGraphMLImport";
+
     StringBuilder builder = new StringBuilder();
-    builder.append("create database " + dbUrl + ";\n");
+    builder.append("connect env embedded:./target/ root root;\n");
+    builder.append(
+        "create database testGraphMLImport memory users (admin identified by 'admin' role admin);\n");
+    builder.append("open testGraphMLImport admin admin;\n");
+
     builder.append("import database " + INPUT_FILE + ";\n");
     OConsoleDatabaseApp console = new TestOGremlinConsole(new String[] {builder.toString()});
     try {
@@ -92,9 +96,13 @@ public class OGremlinConsoleTest {
   public void testGraphMLExport() {
     final String INPUT_FILE = "src/test/resources/graph-example-2.xml";
     final String OUTPUT_FILE = "target/test/resources/graph-example-2.xml";
-    String dbUrl = "memory:testGraphMLExport";
+
     StringBuilder builder = new StringBuilder();
-    builder.append("create database " + dbUrl + ";\n");
+    builder.append("connect env embedded:./target/ root root;\n");
+    builder.append(
+        "create database testGraphMLExport memory users (admin identified by 'admin' role admin);\n");
+    builder.append("open testGraphMLExport admin admin;\n");
+
     builder.append("import database " + INPUT_FILE + ";\n");
     builder.append("export database " + OUTPUT_FILE + ";\n");
     OConsoleDatabaseApp console = new TestOGremlinConsole(new String[] {builder.toString()});
@@ -113,9 +121,12 @@ public class OGremlinConsoleTest {
   @Test
   public void testMoveVertexCommand() {
     final String INPUT_FILE = "src/test/resources/graph-example-2.xml";
-    String dbUrl = "memory:testMoveVertexCommand";
+
     StringBuilder builder = new StringBuilder();
-    builder.append("create database " + dbUrl + ";\n");
+    builder.append("connect env embedded:./target/ root root;\n");
+    builder.append(
+        "create database testMoveVertexCommand memory users (admin identified by 'admin' role admin);\n");
+    builder.append("open testMoveVertexCommand admin admin;\n");
     builder.append("import database " + INPUT_FILE + " batchSize=10;\n");
     builder.append("create class newposition extends V;\n");
     builder.append("move vertex (select from V) to class:newposition;\n");
@@ -140,9 +151,12 @@ public class OGremlinConsoleTest {
   @Test
   public void testGremlin() {
     final String INPUT_FILE = "src/test/resources/graph-example-2.xml";
-    String dbUrl = "memory:testGremlin";
+
     StringBuilder builder = new StringBuilder();
-    builder.append("create database " + dbUrl + ";\n");
+    builder.append("connect env embedded:./target/ root root;\n");
+    builder.append(
+        "create database testGremlin memory users (admin identified by 'admin' role admin);\n");
+    builder.append("open testGremlin admin admin;\n");
     builder.append("import database " + INPUT_FILE + " batchSize=10;\n");
     builder.append("gremlin g.V;\n");
     OConsoleDatabaseApp console = new TestOGremlinConsole(new String[] {builder.toString()});
@@ -170,9 +184,12 @@ public class OGremlinConsoleTest {
   @Test
   public void testGraphMLImportWithSmallBatch() {
     final String INPUT_FILE = "src/test/resources/graph-example-2.xml";
-    String dbUrl = "memory:testGraphMLImportWithSmallBatch";
+
     StringBuilder builder = new StringBuilder();
-    builder.append("create database " + dbUrl + ";\n");
+    builder.append("connect env embedded:./target/ root root;\n");
+    builder.append(
+        "create database testGraphMLImportWithSmallBatch memory users (admin identified by 'admin' role admin);\n");
+    builder.append("open testGraphMLImportWithSmallBatch admin admin;\n");
     builder.append("import database " + INPUT_FILE + " batchSize=10;\n");
     OConsoleDatabaseApp console = new TestOGremlinConsole(new String[] {builder.toString()});
 
@@ -345,9 +362,11 @@ public class OGremlinConsoleTest {
 
   @Test
   public void testSimple() {
-    String dbUrl = "memory:OConsoleDatabaseAppTest";
     StringBuilder builder = new StringBuilder();
-    builder.append("create database " + dbUrl + ";\n");
+    builder.append("connect env embedded:./target/ root root;\n");
+    builder.append(
+        "create database OConsoleDatabaseAppTest memory users (admin identified by 'admin' role admin);\n");
+    builder.append("open OConsoleDatabaseAppTest admin admin;\n");
     builder.append("profile storage on;\n");
     builder.append("create class foo;\n");
     builder.append("config;\n");
