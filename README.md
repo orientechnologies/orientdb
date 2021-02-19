@@ -38,4 +38,9 @@ Copy the `ID` of the correction request to the initial comment in your PR e.g. `
 
 > Put CWB CR to "patch request", only after the "stage, promote" was successful.
 
+### Toolchain (news)
+
+- Vulas was deprecated 3/2021 and replaced by blackduck. However, Whitesource is considered an alternative, and thus nothing needs to be changed
+
+
 
