@@ -55,7 +55,8 @@ public class StorageBackupTest {
     OFileUtils.deleteRecursively(new File(dbDirectory));
 
     OrientDB orientDB = new OrientDB("embedded:" + buildDirectory, OrientDBConfig.defaultConfig());
-    orientDB.create(dbName, ODatabaseType.PLOCAL);
+    orientDB.execute(
+        "create database `" + dbName + "` plocal users(admin identified by 'admin' role admin)");
 
     ODatabaseDocument db = orientDB.open(dbName, "admin", "admin");
 
@@ -135,7 +136,8 @@ public class StorageBackupTest {
     OrientDB orientDB = new OrientDB("embedded:" + buildDirectory, OrientDBConfig.defaultConfig());
 
     final String dbName = StorageBackupTest.class.getSimpleName();
-    orientDB.create(dbName, ODatabaseType.PLOCAL);
+    orientDB.execute(
+        "create database `" + dbName + "` plocal users(admin identified by 'admin' role admin)");
 
     ODatabaseDocument db = orientDB.open(dbName, "admin", "admin");
 
@@ -240,7 +242,8 @@ public class StorageBackupTest {
     OrientDB orientDB = new OrientDB("embedded:" + buildDirectory, config);
 
     final String dbName = StorageBackupTest.class.getSimpleName();
-    orientDB.create(dbName, ODatabaseType.PLOCAL);
+    orientDB.execute(
+        "create database `" + dbName + "` plocal users(admin identified by 'admin' role admin)");
 
     ODatabaseDocument db = orientDB.open(dbName, "admin", "admin");
 

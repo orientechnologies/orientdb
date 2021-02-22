@@ -4,7 +4,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.remote.message.ORemoteResultSet;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.sql.executor.OResult;
@@ -29,7 +28,12 @@ public class QueryProfilerTest {
   public void init() throws Exception {
 
     server = OServer.startFromClasspathConfig("orientdb-server-config.xml");
-    server.getContext().create(QueryProfilerTest.class.getSimpleName(), ODatabaseType.MEMORY);
+    server
+        .getContext()
+        .execute(
+            "create database "
+                + QueryProfilerTest.class.getSimpleName()
+                + " memory users(admin identified by 'admin' role admin, reader identified by 'reader' role reader, writer identified by 'writer' role writer)");
   }
 
   @Test

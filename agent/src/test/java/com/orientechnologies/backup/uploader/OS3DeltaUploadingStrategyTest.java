@@ -9,7 +9,6 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -63,8 +62,9 @@ public class OS3DeltaUploadingStrategyTest {
 
     // Create DB and schema
     orientDB = new OrientDB(dbURL, OrientDBConfig.defaultConfig());
-    orientDB.create(dbName, ODatabaseType.PLOCAL);
-    // TODO: create admin user
+    orientDB.execute(
+        "create database `" + dbName + "` plocal users(admin identified by 'admin' role admin)");
+
     try (ODatabaseSession session = orientDB.open(dbName, "admin", "admin")) {
       /* Create schema */
       OClass personClass = session.createVertexClass("Person");

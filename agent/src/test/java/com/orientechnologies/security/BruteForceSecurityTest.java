@@ -1,7 +1,6 @@
 package com.orientechnologies.security;
 
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
@@ -22,7 +21,12 @@ public class BruteForceSecurityTest {
   public void init() throws Exception {
 
     server = OServer.startFromClasspathConfig("orientdb-server-config.xml");
-    server.getContext().create(BruteForceSecurityTest.class.getSimpleName(), ODatabaseType.MEMORY);
+    server
+        .getContext()
+        .execute(
+            "create database `"
+                + BruteForceSecurityTest.class.getSimpleName()
+                + "` memory users(admin identified by 'admin' role admin)");
   }
 
   @Test
