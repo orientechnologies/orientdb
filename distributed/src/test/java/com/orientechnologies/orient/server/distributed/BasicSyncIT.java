@@ -30,6 +30,18 @@ public class BasicSyncIT {
     remote.close();
   }
 
+  private void waitForDbOnlineStatus(String dbName) throws InterruptedException {
+    server0
+        .getDistributedManager()
+        .waitUntilNodeOnline(server0.getDistributedManager().getLocalNodeName(), dbName);
+    server1
+        .getDistributedManager()
+        .waitUntilNodeOnline(server1.getDistributedManager().getLocalNodeName(), dbName);
+    server2
+        .getDistributedManager()
+        .waitUntilNodeOnline(server2.getDistributedManager().getLocalNodeName(), dbName);
+  }
+
   @Test
   public void sync()
       throws ClassNotFoundException, InstantiationException, IllegalAccessException, IOException,
@@ -51,6 +63,7 @@ public class BasicSyncIT {
     server0 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-0.xml");
     server1 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-1.xml");
     server2 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-2.xml");
+    waitForDbOnlineStatus("test");
     // Test server 0
     try (OrientDB remote = new OrientDB("remote:localhost", OrientDBConfig.defaultConfig())) {
       try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
@@ -92,6 +105,7 @@ public class BasicSyncIT {
     server2 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-2.xml");
     server1 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-1.xml");
     server0 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-0.xml");
+    waitForDbOnlineStatus("test");
     // Test server 0
     try (OrientDB remote = new OrientDB("remote:localhost", OrientDBConfig.defaultConfig())) {
       try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
