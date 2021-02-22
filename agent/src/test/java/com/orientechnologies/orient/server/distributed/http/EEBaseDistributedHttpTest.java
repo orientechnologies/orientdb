@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.server.distributed.http;
 
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.server.OServer;
@@ -56,7 +55,10 @@ public abstract class EEBaseDistributedHttpTest {
     server2 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-2.xml");
 
     remote = new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
-    remote.create(name.getMethodName(), ODatabaseType.PLOCAL);
+    remote.execute(
+        "create database `"
+            + name.getMethodName()
+            + "` plocal users(admin identified by 'admin' role admin, reader identified by 'reader' role reader, writer identified by 'writer' role writer)");
   }
 
   @After

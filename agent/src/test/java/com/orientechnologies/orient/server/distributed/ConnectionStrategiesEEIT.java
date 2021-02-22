@@ -6,7 +6,6 @@ import static org.junit.Assert.assertEquals;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentRemote;
@@ -34,7 +33,10 @@ public class ConnectionStrategiesEEIT {
     server2 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-2.xml");
     OrientDB remote =
         new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
-    remote.create(ConnectionStrategiesEEIT.class.getSimpleName(), ODatabaseType.PLOCAL);
+    remote.execute(
+        "create database `"
+            + ConnectionStrategiesEEIT.class.getSimpleName()
+            + "` plocal users(admin identified by 'admin' role admin, reader identified by 'reader' role reader, writer identified by 'writer' role writer)");
     remote.close();
   }
 
