@@ -2,6 +2,7 @@ package com.orientechnologies.orient.setup;
 
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import java.util.Collection;
 
 // A setup allows creating and managing a cluster of OrientDB servers.
@@ -30,5 +31,18 @@ public interface TestSetup {
   enum PortType {
     HTTP,
     BINARY
+  }
+
+  static void waitForDbOnlineStatus(TestSetup setup, String dbName) throws InterruptedException {
+    // When using a Kubernetes setup, the remote.open() call would retry upon
+    // failure. However, when using local setup, you'd have to wait for the correct DB status.
+    if (setup instanceof LocalTestSetup) {
+      LocalTestSetup localSetup = (LocalTestSetup) setup;
+      for (ServerRun server : localSetup.getServers()) {
+        ODistributedServerManager distributedManager =
+            server.getServerInstance().getDistributedManager();
+        distributedManager.waitUntilNodeOnline(distributedManager.getLocalNodeName(), dbName);
+      }
+    }
   }
 }

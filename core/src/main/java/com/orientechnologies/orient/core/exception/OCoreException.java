@@ -74,7 +74,7 @@ public abstract class OCoreException extends OException {
 
   @Override
   public final String getMessage() {
-    final StringBuilder builder = new StringBuilder(super.getMessage());
+    final StringBuilder builder = new StringBuilder("" + super.getMessage());
     if (dbName != null) {
       builder.append("\r\n\t").append("DB name=\"").append(dbName).append("\"");
     }
