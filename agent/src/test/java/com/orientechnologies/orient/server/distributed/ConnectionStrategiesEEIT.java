@@ -3,6 +3,7 @@ package com.orientechnologies.orient.server.distributed;
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.CLIENT_CONNECTION_STRATEGY;
 import static org.junit.Assert.assertEquals;
 
+import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
@@ -143,7 +144,14 @@ public class ConnectionStrategiesEEIT {
           remote1.open(ConnectionStrategiesEEIT.class.getSimpleName(), "admin", "admin");
       urls.add(((ODatabaseDocumentRemote) session2).getSessionMetadata().getDebugLastHost());
       for (int ji = 0; ji < V_PER_CYCLE; ji++) {
-        session2.save(session2.newVertex());
+        for (int retry = 0; retry < 10; retry++) {
+          try {
+            session2.save(session2.newVertex());
+            break;
+          } catch (ONeedRetryException ex) {
+
+          }
+        }
       }
       session2.close();
     }
@@ -166,7 +174,14 @@ public class ConnectionStrategiesEEIT {
           remote1.open(ConnectionStrategiesEEIT.class.getSimpleName(), "admin", "admin");
       urls.add(((ODatabaseDocumentRemote) session2).getSessionMetadata().getDebugLastHost());
       for (int ji = 0; ji < V_PER_CYCLE; ji++) {
-        session2.save(session2.newVertex());
+        for (int retry = 0; retry < 10; retry++) {
+          try {
+            session2.save(session2.newVertex());
+            break;
+          } catch (ONeedRetryException ex) {
+
+          }
+        }
       }
       session2.close();
     }
@@ -189,12 +204,14 @@ public class ConnectionStrategiesEEIT {
     start.setDaemon(true);
     start.start();
 
+    Thread.sleep(10000);
+
     for (int i = 0; i < 1000; i++) {
       OLogManager.instance().error(this, "phase 3 opening session " + i, null);
       ODatabaseSession session2 =
           remote1.open(ConnectionStrategiesEEIT.class.getSimpleName(), "admin", "admin");
       try (OResultSet res = session2.query("select count(*) as count from V")) {
-        assertEquals((long) res.next().getProperty("count"), CYCLES * V_PER_CYCLE * 2);
+        assertEquals(CYCLES * V_PER_CYCLE * 2, (long) res.next().getProperty("count"));
       }
       urls.add(((ODatabaseDocumentRemote) session2).getSessionMetadata().getDebugLastHost());
       session2.close();
