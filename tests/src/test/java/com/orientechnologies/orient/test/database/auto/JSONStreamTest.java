@@ -15,26 +15,21 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
-import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-
-import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
-import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.core.util.ODateHelper;
-import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import org.junit.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -86,9 +81,10 @@ public class JSONStreamTest extends DocumentDBBaseTest {
   }
 
   @Test
-  public void testNumericIntegerList() {
+  public void testNumericIntegerList() throws IOException {
     final ODocument documentSource = new ODocument();
-    documentSource.fromJSON("{\"list\" : [17,42]}");
+    documentSource.fromJSON(
+        new ByteArrayInputStream("{\"list\" : [17,42]}".getBytes(StandardCharsets.UTF_8)));
 
     final ODocument documentTarget = new ODocument();
     documentTarget.fromStream(documentSource.toStream());
@@ -99,9 +95,11 @@ public class JSONStreamTest extends DocumentDBBaseTest {
   }
 
   @Test
-  public void testNumericLongList() {
+  public void testNumericLongList() throws IOException {
     final ODocument documentSource = new ODocument();
-    documentSource.fromJSON("{\"list\" : [100000000000,100000000001]}");
+    documentSource.fromJSON(
+        new ByteArrayInputStream(
+            "{\"list\" : [100000000000,100000000001]}".getBytes(StandardCharsets.UTF_8)));
 
     final ODocument documentTarget = new ODocument();
     documentTarget.fromStream(documentSource.toStream());
@@ -112,9 +110,10 @@ public class JSONStreamTest extends DocumentDBBaseTest {
   }
 
   @Test
-  public void testNumericFloatList() {
+  public void testNumericFloatList() throws IOException {
     final ODocument documentSource = new ODocument();
-    documentSource.fromJSON("{\"list\" : [17.3,42.7]}");
+    documentSource.fromJSON(
+        new ByteArrayInputStream("{\"list\" : [17.3,42.7]}".getBytes(StandardCharsets.UTF_8)));
 
     final ODocument documentTarget = new ODocument();
     documentTarget.fromStream(documentSource.toStream());
@@ -125,13 +124,14 @@ public class JSONStreamTest extends DocumentDBBaseTest {
   }
 
   @Test
-  public void testNullity() {
+  public void testNullity() throws IOException {
     final ODocument doc = new ODocument();
-    doc.fromJSON(
+    final String docString =
         "{\"gender\":{\"name\":\"Male\"},\"firstName\":\"Jack\",\"lastName\":\"Williams\","
             + "\"phone\":\"561-401-3348\",\"email\":\"0586548571@example.com\",\"address\":{\"street1\":\"Smith Ave\","
             + "\"street2\":null,\"city\":\"GORDONSVILLE\",\"state\":\"VA\",\"code\":\"22942\"},"
-            + "\"dob\":\"2011-11-17 03:17:04\"}");
+            + "\"dob\":\"2011-11-17 03:17:04\"}";
+    doc.fromJSON(new ByteArrayInputStream(docString.getBytes(StandardCharsets.UTF_8)));
     final String json = doc.toJSON();
     final ODocument loadedDoc = new ODocument().fromJSON(json);
     Assert.assertTrue(doc.hasSameContentOf(loadedDoc));
@@ -139,29 +139,7 @@ public class JSONStreamTest extends DocumentDBBaseTest {
 
   // no benchmark
   @Test
-  public void testNan() {
-    ODocument doc = new ODocument();
-    String input =
-        "{\"@type\":\"d\",\"@version\":0,\"nan\":null,\"p_infinity\":null,\"n_infinity\":null,\"@fieldTypes\":\"nan=d,p_infinity=d,n_infinity=d\"}";
-    doc.field("nan", Double.NaN);
-    doc.field("p_infinity", Double.POSITIVE_INFINITY);
-    doc.field("n_infinity", Double.NEGATIVE_INFINITY);
-    String json = doc.toJSON();
-    Assert.assertEquals(input, json);
-
-    doc = new ODocument();
-    input =
-        "{\"@type\":\"d\",\"@version\":0,\"nan\":null,\"p_infinity\":null,\"n_infinity\":null,\"@fieldTypes\":\"nan=f,p_infinity=f,n_infinity=f\"}";
-    doc.field("nan", Float.NaN);
-    doc.field("p_infinity", Float.POSITIVE_INFINITY);
-    doc.field("n_infinity", Float.NEGATIVE_INFINITY);
-    json = doc.toJSON();
-    Assert.assertEquals(input, json);
-  }
-
-  // no benchmark
-  @Test
-  public void testEmbeddedList() {
+  public void testEmbeddedList() throws IOException {
     final ODocument doc = new ODocument();
     final List<ODocument> list = new ArrayList<ODocument>();
     doc.field("embeddedList", list, OType.EMBEDDEDLIST);
@@ -169,7 +147,8 @@ public class JSONStreamTest extends DocumentDBBaseTest {
     list.add(new ODocument().field("name", "Marcus"));
 
     final String json = doc.toJSON();
-    final ODocument loadedDoc = new ODocument().fromJSON(json);
+    final ODocument loadedDoc =
+        new ODocument().fromJSON(new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
     Assert.assertTrue(doc.hasSameContentOf(loadedDoc));
     Assert.assertTrue(loadedDoc.containsField("embeddedList"));
     Assert.assertTrue(loadedDoc.field("embeddedList") instanceof List<?>);
@@ -184,7 +163,7 @@ public class JSONStreamTest extends DocumentDBBaseTest {
 
   // no benchmark
   @Test
-  public void testEmbeddedMap() {
+  public void testEmbeddedMap() throws IOException {
     final ODocument doc = new ODocument();
 
     final Map<String, ODocument> map = new HashMap<String, ODocument>();
@@ -194,7 +173,8 @@ public class JSONStreamTest extends DocumentDBBaseTest {
     map.put("Cesare", new ODocument().field("name", "Cesare"));
 
     final String json = doc.toJSON();
-    final ODocument loadedDoc = new ODocument().fromJSON(json);
+    final ODocument loadedDoc =
+        new ODocument().fromJSON(new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
 
     Assert.assertTrue(doc.hasSameContentOf(loadedDoc));
 
@@ -216,7 +196,7 @@ public class JSONStreamTest extends DocumentDBBaseTest {
 
   // no benchmark
   @Test
-  public void testListToJSON() {
+  public void testListToJSON() throws IOException {
     final List<ODocument> list = new ArrayList<ODocument>();
     final ODocument first = new ODocument().field("name", "Luca");
     final ODocument second = new ODocument().field("name", "Marcus");
@@ -225,8 +205,9 @@ public class JSONStreamTest extends DocumentDBBaseTest {
 
     final String jsonResult = OJSONWriter.listToJSON(list, null);
     final ODocument doc = new ODocument();
-    doc.fromJSON("{\"result\": " + jsonResult + "}");
-    Collection<ODocument> result = doc.field("result");
+    final String docString = "{\"result\": " + jsonResult + "}";
+    doc.fromJSON(new ByteArrayInputStream(docString.getBytes(StandardCharsets.UTF_8)));
+    final Collection<ODocument> result = doc.field("result");
     Assert.assertTrue(result instanceof Collection);
     Assert.assertEquals(result.size(), 2);
     for (final ODocument resultDoc : result) {
@@ -236,14 +217,15 @@ public class JSONStreamTest extends DocumentDBBaseTest {
 
   // no benchmark
   @Test
-  public void testEmptyEmbeddedMap() {
+  public void testEmptyEmbeddedMap() throws IOException {
     final ODocument doc = new ODocument();
 
     final Map<String, ODocument> map = new HashMap<String, ODocument>();
     doc.field("embeddedMap", map, OType.EMBEDDEDMAP);
 
     final String json = doc.toJSON();
-    final ODocument loadedDoc = new ODocument().fromJSON(json);
+    final ODocument loadedDoc =
+        new ODocument().fromJSON(new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
     Assert.assertTrue(doc.hasSameContentOf(loadedDoc));
     Assert.assertTrue(loadedDoc.containsField("embeddedMap"));
     Assert.assertTrue(loadedDoc.field("embeddedMap") instanceof Map<?, ?>);
@@ -252,47 +234,50 @@ public class JSONStreamTest extends DocumentDBBaseTest {
     Assert.assertEquals(loadedMap.size(), 0);
   }
 
-  // TODO: from here
-  /*
-  @Test
-  public void testMultiLevelTypes() {
-    String oldDataTimeFormat = database.get(ODatabase.ATTRIBUTES.DATETIMEFORMAT).toString();
+  // FIXME: date / time handling
+  /*@Test
+  public void testMultiLevelTypes() throws IOException {
+    final String oldDataTimeFormat = database.get(ODatabase.ATTRIBUTES.DATETIMEFORMAT).toString();
     database.set(ODatabase.ATTRIBUTES.DATETIMEFORMAT, ODateHelper.DEF_DATETIME_FORMAT);
     try {
-      ODocument newDoc = new ODocument();
-      newDoc.field("long", 100000000000l);
-      newDoc.field("date", new Date());
-      newDoc.field("byte", (byte) 12);
-      ODocument firstLevelDoc = new ODocument();
+      final ODocument doc = new ODocument();
+      doc.field("long", 100000000000l);
+      doc.field("date", new Date());
+      doc.field("byte", (byte) 12);
+
+      final ODocument firstLevelDoc = new ODocument();
       firstLevelDoc.field("long", 200000000000l);
       firstLevelDoc.field("date", new Date());
       firstLevelDoc.field("byte", (byte) 13);
-      ODocument secondLevelDoc = new ODocument();
+
+      final ODocument secondLevelDoc = new ODocument();
       secondLevelDoc.field("long", 300000000000l);
       secondLevelDoc.field("date", new Date());
       secondLevelDoc.field("byte", (byte) 14);
-      ODocument thirdLevelDoc = new ODocument();
+
+      final ODocument thirdLevelDoc = new ODocument();
       thirdLevelDoc.field("long", 400000000000l);
       thirdLevelDoc.field("date", new Date());
       thirdLevelDoc.field("byte", (byte) 15);
-      newDoc.field("doc", firstLevelDoc);
+      doc.field("doc", firstLevelDoc);
       firstLevelDoc.field("doc", secondLevelDoc);
       secondLevelDoc.field("doc", thirdLevelDoc);
 
-      String json = newDoc.toJSON();
-      ODocument loadedDoc = new ODocument().fromJSON(json);
+      final String json = doc.toJSON();
+      ODocument loadedDoc =
+          new ODocument().fromJSON(new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
 
-      Assert.assertTrue(newDoc.hasSameContentOf(loadedDoc));
+      Assert.assertTrue(doc.hasSameContentOf(loadedDoc));
       Assert.assertTrue(loadedDoc.field("long") instanceof Long);
       Assert.assertEquals(
-          ((Long) newDoc.field("long")).longValue(), ((Long) loadedDoc.field("long")).longValue());
+          ((Long) doc.field("long")).longValue(), ((Long) loadedDoc.field("long")).longValue());
       Assert.assertTrue(loadedDoc.field("date") instanceof Date);
       Assert.assertTrue(loadedDoc.field("byte") instanceof Byte);
       Assert.assertEquals(
-          ((Byte) newDoc.field("byte")).byteValue(), ((Byte) loadedDoc.field("byte")).byteValue());
+          ((Byte) doc.field("byte")).byteValue(), ((Byte) loadedDoc.field("byte")).byteValue());
       Assert.assertTrue(loadedDoc.field("doc") instanceof ODocument);
 
-      ODocument firstDoc = loadedDoc.field("doc");
+      final ODocument firstDoc = loadedDoc.field("doc");
       Assert.assertTrue(firstLevelDoc.hasSameContentOf(firstDoc));
       Assert.assertTrue(firstDoc.field("long") instanceof Long);
       Assert.assertEquals(
@@ -305,7 +290,7 @@ public class JSONStreamTest extends DocumentDBBaseTest {
           ((Byte) firstDoc.field("byte")).byteValue());
       Assert.assertTrue(firstDoc.field("doc") instanceof ODocument);
 
-      ODocument secondDoc = firstDoc.field("doc");
+      final ODocument secondDoc = firstDoc.field("doc");
       Assert.assertTrue(secondLevelDoc.hasSameContentOf(secondDoc));
       Assert.assertTrue(secondDoc.field("long") instanceof Long);
       Assert.assertEquals(
@@ -318,7 +303,7 @@ public class JSONStreamTest extends DocumentDBBaseTest {
           ((Byte) secondDoc.field("byte")).byteValue());
       Assert.assertTrue(secondDoc.field("doc") instanceof ODocument);
 
-      ODocument thirdDoc = secondDoc.field("doc");
+      final ODocument thirdDoc = secondDoc.field("doc");
       Assert.assertTrue(thirdLevelDoc.hasSameContentOf(thirdDoc));
       Assert.assertTrue(thirdDoc.field("long") instanceof Long);
       Assert.assertEquals(
@@ -332,74 +317,24 @@ public class JSONStreamTest extends DocumentDBBaseTest {
     } finally {
       database.set(ODatabase.ATTRIBUTES.DATETIMEFORMAT, oldDataTimeFormat);
     }
-  }
+  }*/
 
   @Test
-  public void testMerge() {
-    ODocument doc1 = new ODocument();
-    final ArrayList<String> list = new ArrayList<String>();
-    doc1.field("embeddedList", list, OType.EMBEDDEDLIST);
-    list.add("Luca");
-    list.add("Marcus");
-    list.add("Jay");
-    doc1.field("salary", 10000);
-    doc1.field("years", 16);
+  public void testNestedEmbeddedMap() throws IOException {
+    final ODocument newDoc = new ODocument();
 
-    ODocument doc2 = new ODocument();
-    final ArrayList<String> list2 = new ArrayList<String>();
-    doc2.field("embeddedList", list2, OType.EMBEDDEDLIST);
-    list2.add("Luca");
-    list2.add("Michael");
-    doc2.field("years", 32);
-
-    ODocument docMerge1 = doc1.copy();
-    docMerge1.merge(doc2, true, true);
-
-    Assert.assertTrue(docMerge1.containsField("embeddedList"));
-    Assert.assertTrue(docMerge1.field("embeddedList") instanceof List<?>);
-    Assert.assertEquals(((List<String>) docMerge1.field("embeddedList")).size(), 4);
-    Assert.assertTrue(((List<String>) docMerge1.field("embeddedList")).get(0) instanceof String);
-    Assert.assertEquals(((Integer) docMerge1.field("salary")).intValue(), 10000);
-    Assert.assertEquals(((Integer) docMerge1.field("years")).intValue(), 32);
-
-    ODocument docMerge2 = doc1.copy();
-    docMerge2.merge(doc2, true, false);
-
-    Assert.assertTrue(docMerge2.containsField("embeddedList"));
-    Assert.assertTrue(docMerge2.field("embeddedList") instanceof List<?>);
-    Assert.assertEquals(((List<String>) docMerge2.field("embeddedList")).size(), 2);
-    Assert.assertTrue(((List<String>) docMerge2.field("embeddedList")).get(0) instanceof String);
-    Assert.assertEquals(((Integer) docMerge2.field("salary")).intValue(), 10000);
-    Assert.assertEquals(((Integer) docMerge2.field("years")).intValue(), 32);
-
-    ODocument docMerge3 = doc1.copy();
-
-    doc2.removeField("years");
-    docMerge3.merge(doc2, false, false);
-
-    Assert.assertTrue(docMerge3.containsField("embeddedList"));
-    Assert.assertTrue(docMerge3.field("embeddedList") instanceof List<?>);
-    Assert.assertEquals(((List<String>) docMerge3.field("embeddedList")).size(), 2);
-    Assert.assertTrue(((List<String>) docMerge3.field("embeddedList")).get(0) instanceof String);
-    Assert.assertFalse(docMerge3.containsField("salary"));
-    Assert.assertFalse(docMerge3.containsField("years"));
-  }
-
-  @Test
-  public void testNestedEmbeddedMap() {
-    ODocument newDoc = new ODocument();
-
-    final Map<String, HashMap<?, ?>> map1 = new HashMap<String, HashMap<?, ?>>();
+    final Map<String, HashMap<?, ?>> map1 = new HashMap<>();
     newDoc.field("map1", map1, OType.EMBEDDEDMAP);
 
-    final Map<String, HashMap<?, ?>> map2 = new HashMap<String, HashMap<?, ?>>();
+    final Map<String, HashMap<?, ?>> map2 = new HashMap<>();
     map1.put("map2", (HashMap<?, ?>) map2);
 
-    final Map<String, HashMap<?, ?>> map3 = new HashMap<String, HashMap<?, ?>>();
+    final Map<String, HashMap<?, ?>> map3 = new HashMap<>();
     map2.put("map3", (HashMap<?, ?>) map3);
 
     String json = newDoc.toJSON();
-    ODocument loadedDoc = new ODocument().fromJSON(json);
+    final ODocument loadedDoc =
+        new ODocument().fromJSON(new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
 
     Assert.assertTrue(newDoc.hasSameContentOf(loadedDoc));
 
@@ -420,8 +355,8 @@ public class JSONStreamTest extends DocumentDBBaseTest {
   }
 
   @Test
-  public void testFetchedJson() {
-    OObjectDatabaseTx database = new OObjectDatabaseTx(url);
+  public void testFetchedJson() throws IOException {
+    final OObjectDatabaseTx database = new OObjectDatabaseTx(url);
     database.open("admin", "admin");
     try {
       database
@@ -434,7 +369,7 @@ public class JSONStreamTest extends DocumentDBBaseTest {
           .getEntityManager()
           .registerEntityClasses("com.orientechnologies.orient.test.domain.base");
 
-      List<ODocument> result =
+      final List<ODocument> result =
           database
               .getUnderlying()
               .command(
@@ -442,11 +377,12 @@ public class JSONStreamTest extends DocumentDBBaseTest {
                       "select * from Profile where name = 'Barack' and surname = 'Obama'"))
               .execute();
 
-      for (ODocument doc : result) {
-        String jsonFull =
+      for (final ODocument doc : result) {
+        final String jsonFull =
             doc.toJSON("type,rid,version,class,keepTypes,attribSameRow,indent:0,fetchPlan:*:-1");
-        ODocument loadedDoc = new ODocument().fromJSON(jsonFull);
-
+        final ODocument loadedDoc =
+            new ODocument()
+                .fromJSON(new ByteArrayInputStream(jsonFull.getBytes(StandardCharsets.UTF_8)));
         Assert.assertTrue(doc.hasSameContentOf(loadedDoc));
       }
     } finally {
@@ -454,98 +390,52 @@ public class JSONStreamTest extends DocumentDBBaseTest {
     }
   }
 
-  @Test
-  public void testToJSONWithNoLazyLoadAndClosedDatabase() {
-    List<ODocument> result =
-        database
-            .command(
-                new OSQLSynchQuery<ODocument>(
-                    "select * from Profile where name = 'Barack' and surname = 'Obama'"))
-            .execute();
-
-    for (ODocument doc : result) {
-      doc.reload("*:0");
-      String jsonFull = doc.toJSON();
-      ORID rid = doc.getIdentity();
-      database.close();
-      database.open("admin", "admin");
-      doc = database.load(rid);
-      doc.setLazyLoad(false);
-      doc.reload("*:0");
-      database.close();
-      String jsonLoaded = doc.toJSON();
-      Assert.assertEquals(jsonLoaded, jsonFull);
-      database.open("admin", "admin");
-      doc = database.load(rid);
-      doc.setLazyLoad(false);
-      doc.load("*:0");
-      database.close();
-      jsonLoaded = doc.toJSON();
-
-      Assert.assertEquals(jsonLoaded, jsonFull);
-    }
-
-    if (database.isClosed()) database.open("admin", "admin");
-
-    for (ODocument doc : result) {
-      doc.reload("*:1");
-      String jsonFull = doc.toJSON();
-      ORID rid = doc.getIdentity();
-      database.close();
-      database.open("admin", "admin");
-      doc = database.load(rid);
-      doc.setLazyLoad(false);
-      doc.reload("*:1");
-      database.close();
-      String jsonLoaded = doc.toJSON();
-      Assert.assertEquals(jsonFull, jsonLoaded);
-      database.open("admin", "admin");
-      doc = database.load(rid);
-      doc.setLazyLoad(false);
-      doc.load("*:1");
-      database.close();
-      jsonLoaded = doc.toJSON();
-
-      Assert.assertEquals(jsonFull, jsonLoaded);
-    }
-  }
-
   // Requires JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES
-  public void testSpecialChar() {
+  public void testSpecialChar() throws IOException {
     final ODocument doc =
         new ODocument()
             .fromJSON(
-                "{name:{\"%Field\":[\"value1\",\"value2\"],\"%Field2\":{},\"%Field3\":\"value3\"}}");
+                new ByteArrayInputStream(
+                    "{name:{\"%Field\":[\"value1\",\"value2\"],\"%Field2\":{},\"%Field3\":\"value3\"}}"
+                        .getBytes(StandardCharsets.UTF_8)));
     doc.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument loadedDoc = database.load(doc.getIdentity());
     Assert.assertEquals(doc, loadedDoc);
   }
 
-  public void testArrayOfArray() {
+  // Required loading @class
+  public void testArrayOfArray() throws IOException {
     final ODocument doc = new ODocument();
     doc.fromJSON(
-        "{\"@type\": \"d\",\"@class\": \"Track\",\"type\": \"LineString\",\"coordinates\": [ [ 100,  0 ],  [ 101, 1 ] ]}");
+        new ByteArrayInputStream(
+            "{\"@type\": \"d\",\"@class\": \"Track\",\"type\": \"LineString\",\"coordinates\": [ [ 100,  0 ],  [ 101, 1 ] ]}"
+                .getBytes(StandardCharsets.UTF_8)));
     doc.save();
     final ODocument loadedDoc = database.load(doc.getIdentity());
     Assert.assertTrue(doc.hasSameContentOf(loadedDoc));
   }
 
-  public void testLongTypes() {
+  // Required loading @class
+  public void testLongTypes() throws IOException {
     final ODocument doc = new ODocument();
     doc.fromJSON(
-        "{\"@type\": \"d\",\"@class\": \"Track\",\"type\": \"LineString\",\"coordinates\": [ [ 32874387347347,  0 ],  [ -23736753287327, 1 ] ]}");
+        new ByteArrayInputStream(
+            "{\"@type\": \"d\",\"@class\": \"Track\",\"type\": \"LineString\",\"coordinates\": [ [ 32874387347347,  0 ],  [ -23736753287327, 1 ] ]}"
+                .getBytes(StandardCharsets.UTF_8)));
     doc.save();
     final ODocument loadedDoc = database.load(doc.getIdentity());
     Assert.assertTrue(doc.hasSameContentOf(loadedDoc));
   }
 
   // Requires JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES
-  public void testSpecialChars() {
+  public void testSpecialChars() throws IOException {
     final ODocument doc =
         new ODocument()
             .fromJSON(
-                "{Field:{\"Key1\":[\"Value1\",\"Value2\"],\"Key2\":{\"%%dummy%%\":null},\"Key3\":\"Value3\"}}");
+                new ByteArrayInputStream(
+                    "{Field:{\"Key1\":[\"Value1\",\"Value2\"],\"Key2\":{\"%%dummy%%\":null},\"Key3\":\"Value3\"}}"
+                        .getBytes(StandardCharsets.UTF_8)));
     doc.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument loadedDoc = database.load(doc.getIdentity());
@@ -553,34 +443,39 @@ public class JSONStreamTest extends DocumentDBBaseTest {
   }
 
   // TODO
-  public void testJsonToStream() {
+  public void testJsonToStream() throws IOException {
     final String doc1Json =
         "{Key1:{\"%Field1\":[{},{},{},{},{}],\"%Field2\":false,\"%Field3\":\"Value1\"}}";
-    final ODocument doc1 = new ODocument().fromJSON(doc1Json);
+    final ODocument doc1 =
+        new ODocument()
+            .fromJSON(new ByteArrayInputStream(doc1Json.getBytes(StandardCharsets.UTF_8)));
     final String doc1String = new String(ORecordSerializerSchemaAware2CSV.INSTANCE.toStream(doc1));
     Assert.assertEquals(doc1Json, "{" + doc1String + "}");
 
     final String doc2Json =
         "{Key1:{\"%Field1\":[{},{},{},{},{}],\"%Field2\":false,\"%Field3\":\"Value1\"}}";
-    final ODocument doc2 = new ODocument().fromJSON(doc2Json);
+    final ODocument doc2 =
+        new ODocument()
+            .fromJSON(new ByteArrayInputStream(doc2Json.getBytes(StandardCharsets.UTF_8)));
     final String doc2String = new String(ORecordSerializerSchemaAware2CSV.INSTANCE.toStream(doc2));
     Assert.assertEquals(doc2Json, "{" + doc2String + "}");
   }
 
-  public void testSameNameCollectionsAndMap() {
+  // TODO
+  public void testSameNameCollectionsAndMap() throws IOException {
     ODocument doc = new ODocument();
     doc.field("string", "STRING_VALUE");
-    List<ODocument> list = new ArrayList<ODocument>();
+    List<ODocument> list = new ArrayList<>();
     for (int i = 0; i < 10; i++) {
       ODocument doc1 = new ODocument();
       doc.field("number", i);
       list.add(doc1);
-      Map<String, ODocument> docMap = new HashMap<String, ODocument>();
+      final Map<String, ODocument> docMap = new HashMap<>();
       for (int j = 0; j < 5; j++) {
-        ODocument doc2 = new ODocument();
+        final ODocument doc2 = new ODocument();
         doc2.field("blabla", j);
         docMap.put(String.valueOf(j), doc2);
-        ODocument doc3 = new ODocument();
+        final ODocument doc3 = new ODocument();
         doc3.field("blubli", String.valueOf(i + j));
         doc2.field("out", doc3);
       }
@@ -589,13 +484,14 @@ public class JSONStreamTest extends DocumentDBBaseTest {
     }
     doc.field("out", list);
     String json = doc.toJSON();
-    ODocument newDoc = new ODocument().fromJSON(json);
+    ODocument newDoc =
+        new ODocument().fromJSON(new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
     Assert.assertEquals(newDoc.toJSON(), json);
     Assert.assertTrue(newDoc.hasSameContentOf(doc));
 
     doc = new ODocument();
     doc.field("string", "STRING_VALUE");
-    Map<String, ODocument> docMap = new HashMap<String, ODocument>();
+    final Map<String, ODocument> docMap = new HashMap<String, ODocument>();
     for (int i = 0; i < 10; i++) {
       ODocument doc1 = new ODocument();
       doc.field("number", i);
@@ -619,16 +515,17 @@ public class JSONStreamTest extends DocumentDBBaseTest {
     Assert.assertTrue(newDoc.hasSameContentOf(doc));
   }
 
-  public void testSameNameCollectionsAndMap2() {
-    ODocument doc = new ODocument();
+  // TODO
+  public void testSameNameCollectionsAndMap2() throws IOException {
+    final ODocument doc = new ODocument();
     doc.field("string", "STRING_VALUE");
-    List<ODocument> list = new ArrayList<ODocument>();
+    final List<ODocument> list = new ArrayList<>();
     for (int i = 0; i < 2; i++) {
-      ODocument doc1 = new ODocument();
+      final ODocument doc1 = new ODocument();
       list.add(doc1);
-      Map<String, ODocument> docMap = new HashMap<String, ODocument>();
+      final Map<String, ODocument> docMap = new HashMap<>();
       for (int j = 0; j < 5; j++) {
-        ODocument doc2 = new ODocument();
+        final ODocument doc2 = new ODocument();
         doc2.field("blabla", j);
         docMap.put(String.valueOf(j), doc2);
       }
@@ -636,13 +533,14 @@ public class JSONStreamTest extends DocumentDBBaseTest {
       list.add(doc1);
     }
     doc.field("theList", list);
-    String json = doc.toJSON();
-    ODocument newDoc = new ODocument().fromJSON(json);
+    final String json = doc.toJSON();
+    final ODocument newDoc =
+        new ODocument().fromJSON(new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
     Assert.assertEquals(newDoc.toJSON(), json);
     Assert.assertTrue(newDoc.hasSameContentOf(doc));
   }
 
-  public void testSameNameCollectionsAndMap3() {
+  public void testSameNameCollectionsAndMap3() throws IOException {
     ODocument doc = new ODocument();
     doc.field("string", "STRING_VALUE");
     List<Map<String, ODocument>> list = new ArrayList<Map<String, ODocument>>();
@@ -658,73 +556,14 @@ public class JSONStreamTest extends DocumentDBBaseTest {
     }
     doc.field("theList", list);
     String json = doc.toJSON();
-    ODocument newDoc = new ODocument().fromJSON(json);
+    ODocument newDoc =
+        new ODocument().fromJSON(new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
     Assert.assertEquals(newDoc.toJSON(), json);
   }
 
-  public void testNestedJsonCollection() {
-    if (!database.getMetadata().getSchema().existsClass("Device"))
-      database.getMetadata().getSchema().createClass("Device");
-
-    database
-        .command(
-            new OCommandSQL(
-                "insert into device (resource_id, domainset) VALUES (0, [ { 'domain' : 'abc' }, { 'domain' : 'pqr' } ])"))
-        .execute();
-
-    List<ODocument> result =
-        database.query(
-            new OSQLSynchQuery<Object>("select from device where domainset.domain contains 'abc'"));
-    Assert.assertTrue(result.size() > 0);
-
-    result =
-        database.query(
-            new OSQLSynchQuery<Object>(
-                "select from device where domainset[domain = 'abc'] is not null"));
-    Assert.assertTrue(result.size() > 0);
-
-    result =
-        database.query(
-            new OSQLSynchQuery<Object>("select from device where domainset.domain contains 'pqr'"));
-    Assert.assertTrue(result.size() > 0);
-  }
-
-  public void testNestedEmbeddedJson() {
-    if (!database.getMetadata().getSchema().existsClass("Device"))
-      database.getMetadata().getSchema().createClass("Device");
-
-    database
-        .command(
-            new OCommandSQL(
-                "insert into device (resource_id, domainset) VALUES (1, { 'domain' : 'eee' })"))
-        .execute();
-
-    List<ODocument> result =
-        database.query(
-            new OSQLSynchQuery<Object>("select from device where domainset.domain = 'eee'"));
-    Assert.assertTrue(result.size() > 0);
-  }
-
-  public void testNestedMultiLevelEmbeddedJson() {
-    if (!database.getMetadata().getSchema().existsClass("Device"))
-      database.getMetadata().getSchema().createClass("Device");
-
-    database
-        .command(
-            new OCommandSQL(
-                "insert into device (domainset) values ({'domain' : { 'lvlone' : { 'value' : 'five' } } } )"))
-        .execute();
-
-    List<ODocument> result =
-        database.query(
-            new OSQLSynchQuery<Object>(
-                "select from device where domainset.domain.lvlone.value = 'five'"));
-    Assert.assertTrue(result.size() > 0);
-  }
-
-  public void testSpaces() {
-    ODocument doc = new ODocument();
-    String test =
+  public void testSpaces() throws IOException {
+    final ODocument doc = new ODocument();
+    final String test =
         "{"
             + "\"embedded\": {"
             + "\"second_embedded\":  {"
@@ -732,15 +571,15 @@ public class JSONStreamTest extends DocumentDBBaseTest {
             + "}"
             + "}"
             + "}";
-    doc.fromJSON(test);
+    doc.fromJSON(new ByteArrayInputStream(test.getBytes(StandardCharsets.UTF_8)));
     Assert.assertTrue(doc.toJSON("fetchPlan:*:0,rid").indexOf("this is a test") > -1);
   }
 
-  public void testEscaping() {
-    ODocument doc = new ODocument();
+  public void testEscaping() throws IOException {
+    final ODocument doc = new ODocument();
     String s =
         "{\"name\": \"test\", \"nested\": { \"key\": \"value\", \"anotherKey\": 123 }, \"deep\": {\"deeper\": { \"k\": \"v\",\"quotes\": \"\\\"\\\",\\\"oops\\\":\\\"123\\\"\", \"likeJson\": \"[1,2,3]\",\"spaces\": \"value with spaces\"}}}";
-    doc.fromJSON(s);
+    doc.fromJSON(new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8)));
     Assert.assertEquals(doc.field("deep[deeper][quotes]"), "\"\",\"oops\":\"123\"");
 
     String res = doc.toJSON();
@@ -750,7 +589,7 @@ public class JSONStreamTest extends DocumentDBBaseTest {
   }
 
   // TODO
-  public void testEscapingDoubleQuotes() {
+  public void testEscapingDoubleQuotes() throws IOException {
     final ODocument doc = new ODocument();
     final StringBuilder sb = new StringBuilder();
     sb.append(
@@ -769,7 +608,7 @@ public class JSONStreamTest extends DocumentDBBaseTest {
             + "            \"three\": \"a\"\n"
             + "        }\n"
             + "} ");
-    doc.fromJSON(sb.toString());
+    doc.fromJSON(new ByteArrayInputStream(sb.toString().getBytes(StandardCharsets.UTF_8)));
     Assert.assertEquals(doc.field("foo.three"), "a");
     final Collection c = doc.field("foo.bar.P357");
     Assert.assertEquals(c.size(), 1);
@@ -779,7 +618,7 @@ public class JSONStreamTest extends DocumentDBBaseTest {
 
   // TODO
   // Requires JsonParser.Feature.ALLOW_TRAILING_COMMA
-  public void testEscapingDoubleQuotes2() {
+  public void testEscapingDoubleQuotes2() throws IOException {
     final ODocument doc = new ODocument();
     final StringBuilder sb = new StringBuilder();
     sb.append(
@@ -800,7 +639,7 @@ public class JSONStreamTest extends DocumentDBBaseTest {
             + "        }\n"
             + "} ");
 
-    doc.fromJSON(sb.toString());
+    doc.fromJSON(new ByteArrayInputStream(sb.toString().getBytes(StandardCharsets.UTF_8)));
     Assert.assertEquals(doc.field("foo.three"), "a");
     final Collection c = doc.field("foo.bar.P357");
     Assert.assertEquals(c.size(), 1);
@@ -809,7 +648,7 @@ public class JSONStreamTest extends DocumentDBBaseTest {
   }
 
   // TODO
-  public void testEscapingDoubleQuotes3() {
+  public void testEscapingDoubleQuotes3() throws IOException {
     final ODocument doc = new ODocument();
     final StringBuilder sb = new StringBuilder();
     sb.append(
@@ -829,131 +668,132 @@ public class JSONStreamTest extends DocumentDBBaseTest {
             + "        }\n"
             + "} ");
 
-    doc.fromJSON(sb.toString());
+    doc.fromJSON(new ByteArrayInputStream(sb.toString().getBytes(StandardCharsets.UTF_8)));
     final Collection c = doc.field("foo.bar.P357");
     Assert.assertEquals(c.size(), 1);
     final Map doc2 = (Map) c.iterator().next();
     Assert.assertEquals(((Map) doc2.get("datavalue")).get("value"), "\"");
   }
 
-  public void testEmbeddedQuotes() {
-    ODocument doc = new ODocument();
-    StringBuilder builder = new StringBuilder();
+  public void testEmbeddedQuotes() throws IOException {
+    final ODocument doc = new ODocument();
+    final StringBuilder builder = new StringBuilder();
     // FROM ISSUE 3151
     builder.append("{\"mainsnak\":{\"datavalue\":{\"value\":\"Sub\\\\urban\"}}}");
-    doc.fromJSON(builder.toString());
+    doc.fromJSON(new ByteArrayInputStream(builder.toString().getBytes(StandardCharsets.UTF_8)));
     Assert.assertEquals(doc.field("mainsnak.datavalue.value"), "Sub\\urban");
   }
 
-  public void testEmbeddedQuotes2() {
-    ODocument doc = new ODocument();
-    StringBuilder builder = new StringBuilder();
+  public void testEmbeddedQuotes2() throws IOException {
+    final ODocument doc = new ODocument();
+    final StringBuilder builder = new StringBuilder();
     builder.append("{\"datavalue\":{\"value\":\"Sub\\\\urban\"}}");
-    doc.fromJSON(builder.toString());
+    doc.fromJSON(new ByteArrayInputStream(builder.toString().getBytes(StandardCharsets.UTF_8)));
     Assert.assertEquals(doc.field("datavalue.value"), "Sub\\urban");
   }
 
-  public void testEmbeddedQuotes2a() {
-    ODocument doc = new ODocument();
-    StringBuilder builder = new StringBuilder();
+  public void testEmbeddedQuotes2a() throws IOException {
+    final ODocument doc = new ODocument();
+    final StringBuilder builder = new StringBuilder();
     builder.append("{\"datavalue\":\"Sub\\\\urban\"}");
-    doc.fromJSON(builder.toString());
+    doc.fromJSON(new ByteArrayInputStream(builder.toString().getBytes(StandardCharsets.UTF_8)));
     Assert.assertEquals(doc.field("datavalue"), "Sub\\urban");
   }
 
-  // TODO
-  public void testEmbeddedQuotes3() {
+  // TODO: fallback to legacy parser for invalid JSON
+  /*public void testEmbeddedQuotes3() throws IOException {
     final ODocument doc = new ODocument();
     final StringBuilder sb = new StringBuilder();
     sb.append("{\"mainsnak\":{\"datavalue\":{\"value\":\"Suburban\\\\\"\"}}}");
-    doc.fromJSON(sb.toString());
+    doc.fromJSON(new ByteArrayInputStream(sb.toString().getBytes(StandardCharsets.UTF_8)));
     Assert.assertEquals(doc.field("mainsnak.datavalue.value"), "Suburban\\\"");
   }
 
-  // TODO
-  public void testEmbeddedQuotes4() {
+  // TODO: fallback to legacy parser for invalid JSON
+  public void testEmbeddedQuotes4() throws IOException {
     final ODocument doc = new ODocument();
     final StringBuilder sb = new StringBuilder();
     sb.append("{\"datavalue\":{\"value\":\"Suburban\\\\\"\"}}");
-    doc.fromJSON(sb.toString());
+    doc.fromJSON(new ByteArrayInputStream(sb.toString().getBytes(StandardCharsets.UTF_8)));
     Assert.assertEquals(doc.field("datavalue.value"), "Suburban\\\"");
   }
 
-  // TODO
-  public void testEmbeddedQuotes5() {
+  // TODO: fallback to legacy parser for invalid JSON
+  public void testEmbeddedQuotes5() throws IOException {
     final ODocument doc = new ODocument();
     final StringBuilder sb = new StringBuilder();
     sb.append("{\"datavalue\":\"Suburban\\\\\"\"}");
-    doc.fromJSON(sb.toString());
+    doc.fromJSON(new ByteArrayInputStream(sb.toString().getBytes(StandardCharsets.UTF_8)));
     Assert.assertEquals(doc.field("datavalue"), "Suburban\\\"");
-  }
+  }*/
 
-  public void testEmbeddedQuotes6() {
-    ODocument doc = new ODocument();
-    StringBuilder builder = new StringBuilder();
+  public void testEmbeddedQuotes6() throws IOException {
+    final ODocument doc = new ODocument();
+    final StringBuilder builder = new StringBuilder();
     builder.append("{\"mainsnak\":{\"datavalue\":{\"value\":\"Suburban\\\\\"}}}");
-    doc.fromJSON(builder.toString());
+    doc.fromJSON(new ByteArrayInputStream(builder.toString().getBytes(StandardCharsets.UTF_8)));
     Assert.assertEquals(doc.field("mainsnak.datavalue.value"), "Suburban\\");
   }
 
-  public void testEmbeddedQuotes7() {
-    ODocument doc = new ODocument();
-    StringBuilder builder = new StringBuilder();
+  public void testEmbeddedQuotes7() throws IOException {
+    final ODocument doc = new ODocument();
+    final StringBuilder builder = new StringBuilder();
     builder.append("{\"datavalue\":{\"value\":\"Suburban\\\\\"}}");
-    doc.fromJSON(builder.toString());
+    doc.fromJSON(new ByteArrayInputStream(builder.toString().getBytes(StandardCharsets.UTF_8)));
     Assert.assertEquals(doc.field("datavalue.value"), "Suburban\\");
   }
 
-  public void testEmbeddedQuotes8() {
+  public void testEmbeddedQuotes8() throws IOException {
     ODocument doc = new ODocument();
     StringBuilder builder = new StringBuilder();
     builder.append("{\"datavalue\":\"Suburban\\\\\"}");
-    doc.fromJSON(builder.toString());
+    doc.fromJSON(new ByteArrayInputStream(builder.toString().getBytes(StandardCharsets.UTF_8)));
     Assert.assertEquals(doc.field("datavalue"), "Suburban\\");
   }
 
-  public void testEmpty() {
-    ODocument doc = new ODocument();
-    StringBuilder builder = new StringBuilder();
+  public void testEmpty() throws IOException {
+    final ODocument doc = new ODocument();
+    final StringBuilder builder = new StringBuilder();
     builder.append("{}");
-    doc.fromJSON(builder.toString());
+    doc.fromJSON(new ByteArrayInputStream(builder.toString().getBytes(StandardCharsets.UTF_8)));
     Assert.assertEquals(doc.fieldNames().length, 0);
   }
 
   public void testInvalidJson() {
-    ODocument doc = new ODocument();
+    final ODocument doc = new ODocument();
     try {
-      doc.fromJSON("{");
+      doc.fromJSON(new ByteArrayInputStream("{".getBytes(StandardCharsets.UTF_8)));
       Assert.fail();
-    } catch (OSerializationException e) {
+    } catch (OSerializationException | IOException e) {
     }
 
     try {
-      doc.fromJSON("{\"foo\":{}");
+      doc.fromJSON(new ByteArrayInputStream("{\"foo\":{}".getBytes(StandardCharsets.UTF_8)));
       Assert.fail();
-    } catch (OSerializationException e) {
+    } catch (OSerializationException | IOException e) {
     }
 
     try {
-      doc.fromJSON("{{}");
+      doc.fromJSON(new ByteArrayInputStream("{{}".getBytes(StandardCharsets.UTF_8)));
       Assert.fail();
-    } catch (OSerializationException e) {
+    } catch (OSerializationException | IOException e) {
     }
 
     try {
-      doc.fromJSON("{}}");
+      doc.fromJSON(new ByteArrayInputStream("{}}".getBytes(StandardCharsets.UTF_8)));
       Assert.fail();
-    } catch (OSerializationException e) {
+    } catch (OSerializationException | IOException e) {
     }
 
     try {
-      doc.fromJSON("}");
+      doc.fromJSON(new ByteArrayInputStream("}".getBytes(StandardCharsets.UTF_8)));
       Assert.fail();
-    } catch (OSerializationException e) {
+    } catch (OSerializationException | IOException e) {
     }
   }
 
-  public void testDates() throws IOException {
+  // TODO: @fieldTypes parsing
+  /*public void testDates() throws IOException {
     final Date now = new Date(1350518475000l);
 
     final ODocument doc = new ODocument();
@@ -963,7 +803,7 @@ public class JSONStreamTest extends DocumentDBBaseTest {
     final ODocument unmarshalled =
         new ODocument().fromJSON(new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
     Assert.assertEquals(unmarshalled.field("date"), now);
-  }
+  }*/
 
   @Test
   public void shouldDeserializeFieldWithCurlyBraces() {
@@ -979,49 +819,53 @@ public class JSONStreamTest extends DocumentDBBaseTest {
   }
 
   @Test
-  public void testList() throws Exception {
-    ODocument documentSource = new ODocument();
-    documentSource.fromJSON("{\"list\" : [\"string\", 42]}");
+  public void testList() throws IOException {
+    final ODocument documentSource = new ODocument();
+    documentSource.fromJSON(
+        new ByteArrayInputStream("{\"list\" : [\"string\", 42]}".getBytes(StandardCharsets.UTF_8)));
 
-    ODocument documentTarget = new ODocument();
+    final ODocument documentTarget = new ODocument();
     documentTarget.fromStream(documentSource.toStream());
 
-    OTrackedList<Object> list = documentTarget.field("list", OType.EMBEDDEDLIST);
+    final OTrackedList<Object> list = documentTarget.field("list", OType.EMBEDDEDLIST);
     Assert.assertEquals(list.get(0), "string");
     Assert.assertEquals(list.get(1), 42);
   }
 
   // TODO: fallback to legacy parser for invalid JSON
   @Test
-  public void testEmbeddedRIDBagDeserialisationWhenFieldTypeIsProvided() throws Exception {
-    ODocument documentSource = new ODocument();
+  /*public void testEmbeddedRIDBagDeserialisationWhenFieldTypeIsProvided() throws Exception {
+    final ODocument documentSource = new ODocument();
     documentSource.fromJSON(
-        "{FirstName:\"Student A 0\",in_EHasGoodStudents:[#57:0],@fieldTypes:\"in_EHasGoodStudents=g\"}");
-
-    ORidBag bag = documentSource.field("in_EHasGoodStudents");
+        new ByteArrayInputStream(
+            "{FirstName:\"Student A 0\",in_EHasGoodStudents:[#57:0],@fieldTypes:\"in_EHasGoodStudents=g\"}"
+                .getBytes(StandardCharsets.UTF_8)));
+    final ORidBag bag = documentSource.field("in_EHasGoodStudents");
     Assert.assertEquals(bag.size(), 1);
-    OIdentifiable rid = bag.rawIterator().next();
+    final OIdentifiable rid = bag.rawIterator().next();
     Assert.assertTrue(rid.getIdentity().getClusterId() == 57);
     Assert.assertTrue(rid.getIdentity().getClusterPosition() == 0);
-  }
+  }*/
 
-  public void testNestedLinkCreation() {
+  public void testNestedLinkCreation() throws IOException {
     ODocument jaimeDoc = new ODocument("NestedLinkCreation");
     jaimeDoc.field("name", "jaime");
     jaimeDoc.save();
 
     // The link between jaime and cersei is saved properly - the #2263 test case
     ODocument cerseiDoc = new ODocument("NestedLinkCreation");
-    cerseiDoc.fromJSON(
-        "{\"@type\":\"d\",\"name\":\"cersei\",\"valonqar\":" + jaimeDoc.toJSON() + "}");
+    final String jsonString =
+        "{\"@type\":\"d\",\"name\":\"cersei\",\"valonqar\":" + jaimeDoc.toJSON() + "}";
+    cerseiDoc.fromJSON(new ByteArrayInputStream(jsonString.getBytes(StandardCharsets.UTF_8)));
     cerseiDoc.save();
 
     // The link between jamie and tyrion is not saved properly
-    ODocument tyrionDoc = new ODocument("NestedLinkCreation");
-    tyrionDoc.fromJSON(
+    final ODocument tyrionDoc = new ODocument("NestedLinkCreation");
+    final String jsonString2 =
         "{\"@type\":\"d\",\"name\":\"tyrion\",\"emergency_contact\":{\"@type\":\"d\", \"relationship\":\"brother\",\"contact\":"
             + jaimeDoc.toJSON()
-            + "}}");
+            + "}}";
+    tyrionDoc.fromJSON(new ByteArrayInputStream(jsonString2.getBytes(StandardCharsets.UTF_8)));
     tyrionDoc.save();
 
     final Map<ORID, ODocument> contentMap = new HashMap<ORID, ODocument>();
@@ -1074,30 +918,31 @@ public class JSONStreamTest extends DocumentDBBaseTest {
 
       Assert.assertTrue(traverse.isEmpty());
     }
-
     Assert.assertTrue(traverseMap.isEmpty());
   }
 
-  // TODO
-  public void testNestedLinkCreationFieldTypes() {
+  // TODO: fallback to legacy parser for invalid JSON
+  /*public void testNestedLinkCreationFieldTypes() throws IOException {
     ODocument jaimeDoc = new ODocument("NestedLinkCreationFieldTypes");
     jaimeDoc.field("name", "jaime");
     jaimeDoc.save();
 
     // The link between jaime and cersei is saved properly - the #2263 test case
     ODocument cerseiDoc = new ODocument("NestedLinkCreationFieldTypes");
-    cerseiDoc.fromJSON(
+    String jsonString =
         "{\"@type\":\"d\",\"@fieldTypes\":\"valonqar=x\",\"name\":\"cersei\",\"valonqar\":"
             + jaimeDoc.getIdentity()
-            + "}");
+            + "}";
+    cerseiDoc.fromJSON(new ByteArrayInputStream(jsonString.getBytes(StandardCharsets.UTF_8)));
     cerseiDoc.save();
 
     // The link between jamie and tyrion is not saved properly
     ODocument tyrionDoc = new ODocument("NestedLinkCreationFieldTypes");
-    tyrionDoc.fromJSON(
+    jsonString =
         "{\"@type\":\"d\",\"name\":\"tyrion\",\"emergency_contact\":{\"@type\":\"d\", \"@fieldTypes\":\"contact=x\",\"relationship\":\"brother\",\"contact\":"
             + jaimeDoc.getIdentity()
-            + "}}");
+            + "}}";
+    tyrionDoc.fromJSON(new ByteArrayInputStream(jsonString.getBytes(StandardCharsets.UTF_8)));
     tyrionDoc.save();
 
     final Map<ORID, ODocument> contentMap = new HashMap<ORID, ODocument>();
@@ -1147,20 +992,21 @@ public class JSONStreamTest extends DocumentDBBaseTest {
           new OSQLSynchQuery<ODocument>("traverse * from " + o.getIdentity().toString())) {
         Assert.assertTrue(traverse.remove(id.getIdentity()));
       }
-
       Assert.assertTrue(traverse.isEmpty());
     }
-
     Assert.assertTrue(traverseMap.isEmpty());
-  }
+  }*/
 
-  public void testInnerDocCreation() {
+  public void testInnerDocCreation() throws IOException {
     ODocument adamDoc = new ODocument("InnerDocCreation");
-    adamDoc.fromJSON("{\"name\":\"adam\"}");
+    adamDoc.fromJSON(
+        new ByteArrayInputStream("{\"name\":\"adam\"}".getBytes(StandardCharsets.UTF_8)));
     adamDoc.save();
 
     ODocument eveDoc = new ODocument("InnerDocCreation");
-    eveDoc.fromJSON("{\"@type\":\"d\",\"name\":\"eve\",\"friends\":[" + adamDoc.toJSON() + "]}");
+    final String jsonString =
+        "{\"@type\":\"d\",\"name\":\"eve\",\"friends\":[" + adamDoc.toJSON() + "]}";
+    eveDoc.fromJSON(new ByteArrayInputStream(jsonString.getBytes(StandardCharsets.UTF_8)));
     eveDoc.save();
 
     Map<ORID, ODocument> contentMap = new HashMap<ORID, ODocument>();
@@ -1207,16 +1053,17 @@ public class JSONStreamTest extends DocumentDBBaseTest {
   }
 
   // TODO: fallback to legacy parser for invalid JSON
-  public void testInnerDocCreationFieldTypes() {
-    ODocument adamDoc = new ODocument("InnerDocCreationFieldTypes");
-    adamDoc.fromJSON("{\"name\":\"adam\"}");
+  /*public void testInnerDocCreationFieldTypes() throws IOException {
+    final ODocument adamDoc = new ODocument("InnerDocCreationFieldTypes");
+    adamDoc.fromJSON(new ByteArrayInputStream("{\"name\":\"adam\"}".getBytes(StandardCharsets.UTF_8)));
     adamDoc.save();
 
-    ODocument eveDoc = new ODocument("InnerDocCreationFieldTypes");
-    eveDoc.fromJSON(
+    final ODocument eveDoc = new ODocument("InnerDocCreationFieldTypes");
+    final String jsonString =
         "{\"@type\":\"d\", \"@fieldTypes\" : \"friends=z\", \"name\":\"eve\",\"friends\":["
             + adamDoc.getIdentity()
-            + "]}");
+            + "]}";
+    eveDoc.fromJSON(new ByteArrayInputStream(jsonString.getBytes(StandardCharsets.UTF_8)));
     eveDoc.save();
 
     Map<ORID, ODocument> contentMap = new HashMap<ORID, ODocument>();
@@ -1260,81 +1107,87 @@ public class JSONStreamTest extends DocumentDBBaseTest {
 
       Assert.assertTrue(traverse.isEmpty());
     }
-
     Assert.assertTrue(traverseMap.isEmpty());
-  }
+  }*/
 
-  public void testJSONTxDoc() {
+  // TODO
+  public void testJSONTxDoc() throws IOException {
     if (!database.getMetadata().getSchema().existsClass("JSONTxDocOne"))
       database.getMetadata().getSchema().createClass("JSONTxDocOne");
 
     if (!database.getMetadata().getSchema().existsClass("JSONTxDocTwo"))
       database.getMetadata().getSchema().createClass("JSONTxDocTwo");
 
-    ODocument adamDoc = new ODocument("JSONTxDocOne");
+    final ODocument adamDoc = new ODocument("JSONTxDocOne");
     adamDoc.field("name", "adam");
     adamDoc.save();
 
     database.begin();
-    ODocument eveDoc = new ODocument("JSONTxDocOne");
+    final ODocument eveDoc = new ODocument("JSONTxDocOne");
     eveDoc.field("name", "eve");
     eveDoc.save();
 
-    ODocument nestedWithTypeD = new ODocument("JSONTxDocTwo");
-    nestedWithTypeD.fromJSON(
+    final ODocument nestedWithTypeD = new ODocument("JSONTxDocTwo");
+    final String jsonString =
         "{\"@type\":\"d\",\"event_name\":\"world cup 2014\",\"admin\":["
             + eveDoc.toJSON()
             + ","
             + adamDoc.toJSON()
-            + "]}");
+            + "]}";
+    nestedWithTypeD.fromJSON(new ByteArrayInputStream(jsonString.getBytes(StandardCharsets.UTF_8)));
     nestedWithTypeD.save();
-
     database.commit();
-
     Assert.assertEquals(database.countClass("JSONTxDocOne"), 2);
 
-    Map<ORID, ODocument> contentMap = new HashMap<ORID, ODocument>();
-    ODocument adam = new ODocument("JSONTxDocOne");
+    final Map<ORID, ODocument> contentMap = new HashMap<>();
+    final ODocument adam = new ODocument("JSONTxDocOne");
     adam.field("name", "adam");
     contentMap.put(adamDoc.getIdentity(), adam);
 
-    ODocument eve = new ODocument("JSONTxDocOne");
+    final ODocument eve = new ODocument("JSONTxDocOne");
     eve.field("name", "eve");
     contentMap.put(eveDoc.getIdentity(), eve);
 
-    for (ODocument o : database.browseClass("JSONTxDocOne")) {
-      ODocument content = contentMap.get(o.getIdentity());
+    for (final ODocument o : database.browseClass("JSONTxDocOne")) {
+      final ODocument content = contentMap.get(o.getIdentity());
       Assert.assertTrue(content.hasSameContentOf(o));
     }
   }
 
-  public void testInvalidLink() {
-    ODocument nullRefDoc = new ODocument();
-    nullRefDoc.fromJSON("{\"name\":\"Luca\", \"ref\":\"#-1:-1\"}");
+  public void testInvalidLink() throws IOException {
+    final ODocument nullRefDoc = new ODocument();
+    nullRefDoc.fromJSON(
+        new ByteArrayInputStream(
+            "{\"name\":\"Luca\", \"ref\":\"#-1:-1\"}".getBytes(StandardCharsets.UTF_8)));
     // Assert.assertNull(nullRefDoc.rawField("ref"));
 
-    String json = nullRefDoc.toJSON();
+    final String json = nullRefDoc.toJSON();
     int pos = json.indexOf("\"ref\":");
 
     Assert.assertTrue(pos > -1);
     Assert.assertEquals(json.charAt(pos + "\"ref\":".length()), 'n');
   }
 
-  public void testOtherJson() {
+  public void testOtherJson() throws IOException {
     new ODocument()
         .fromJSON(
-            "{\"Salary\":1500.0,\"Type\":\"Person\",\"Address\":[{\"Zip\":\"JX2 MSX\",\"Type\":\"Home\",\"Street1\":\"13 Marge Street\",\"Country\":\"Holland\",\"Id\":\"Address-28813211\",\"City\":\"Amsterdam\",\"From\":\"1996-02-01\",\"To\":\"1998-01-01\"},{\"Zip\":\"90210\",\"Type\":\"Work\",\"Street1\":\"100 Hollywood Drive\",\"Country\":\"USA\",\"Id\":\"Address-11595040\",\"City\":\"Los Angeles\",\"From\":\"2009-09-01\"}],\"Id\":\"Person-7464251\",\"Name\":\"Stan\"}");
+            new ByteArrayInputStream(
+                "{\"Salary\":1500.0,\"Type\":\"Person\",\"Address\":[{\"Zip\":\"JX2 MSX\",\"Type\":\"Home\",\"Street1\":\"13 Marge Street\",\"Country\":\"Holland\",\"Id\":\"Address-28813211\",\"City\":\"Amsterdam\",\"From\":\"1996-02-01\",\"To\":\"1998-01-01\"},{\"Zip\":\"90210\",\"Type\":\"Work\",\"Street1\":\"100 Hollywood Drive\",\"Country\":\"USA\",\"Id\":\"Address-11595040\",\"City\":\"Los Angeles\",\"From\":\"2009-09-01\"}],\"Id\":\"Person-7464251\",\"Name\":\"Stan\"}"
+                    .getBytes(StandardCharsets.UTF_8)));
   }
 
+  // TODO
   @Test
-  public void testScientificNotation() {
+  public void testScientificNotation() throws IOException {
     final ODocument doc = new ODocument();
-    doc.fromJSON("{'number1': -9.2741500e-31, 'number2': 741800E+290}");
+    doc.fromJSON(
+        new ByteArrayInputStream(
+            "{'number1': -9.2741500e-31, 'number2': 741800E+290}"
+                .getBytes(StandardCharsets.UTF_8)));
 
     final double number1 = doc.field("number1");
     Assert.assertEquals(number1, -9.27415E-31);
     final double number2 = doc.field("number2");
     Assert.assertEquals(number2, 741800E+290);
   }
-  */
 }

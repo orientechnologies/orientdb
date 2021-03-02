@@ -91,7 +91,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     factory.enable(JsonParser.Feature.ALLOW_TRAILING_COMMA);
 
     // factory.enable(JsonParser.Feature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER);
-    // factory.enable(JsonParser.Feature.ALLOW_COMMENTS);
+    factory.enable(JsonParser.Feature.ALLOW_COMMENTS);
     // factory.enable(JsonParser.Feature.ALLOW_MISSING_VALUES);
   }
 
@@ -208,7 +208,6 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
       int maxRidbagSizeBeforeSkip,
       Set<Integer> skippedPartsIndexes)
       throws JsonParseException {
-
     String className = null;
     boolean noMap = false;
     if (iOptions != null) {
@@ -350,6 +349,16 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
       return this.fromStream(
           source, record, iOptions, needReload, maxRidbagSizeBeforeSkip, skippedPartsIndexes);
     } catch (final JsonParseException e) {
+      throw OException.wrapException(
+          new OSerializationException(
+              "Error on unmarshalling JSON content for record "
+                  + record.getIdentity()
+                  + " failed fromStream "
+                  + e.getMessage()
+                  + " and failed fallback to fromString"),
+          e);
+    }
+    /*} catch (final JsonParseException e) {
       final OutputStream out = new ByteArrayOutputStream();
       try {
         OIOUtils.copyStream(source, out, -1);
@@ -370,7 +379,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
                     + " and failed fallback to fromString"),
             ex);
       }
-    }
+    }*/
   }
 
   public ORecord fromString(
@@ -530,8 +539,16 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
       ORecordInternal.setIdentity(record, new ORecordId(fieldValueAsString));
     } else if (fieldName.equals(ODocumentHelper.ATTRIBUTE_VERSION)) {
       ORecordInternal.setVersion(record, Integer.parseInt(fieldValue));
-    } else if (fieldName.equals(ODocumentHelper.ATTRIBUTE_CLASS)
-        || fieldName.equals(ODocumentHelper.ATTRIBUTE_TYPE)) {
+    } else if (fieldName.equals(ODocumentHelper.ATTRIBUTE_CLASS) && record instanceof ODocument) {
+      final String className = "null".equals(fieldValueAsString) ? null : fieldValueAsString;
+      ODocumentInternal.fillClassNameIfNeeded(((ODocument) record), className);
+
+      if (className != null) {
+        // Trigger the default value
+        ((ODocument) record).setClassName(className);
+      }
+      return;
+    } else if (fieldName.equals(ODocumentHelper.ATTRIBUTE_TYPE)) {
       return;
     } else if (fieldName.equals(ATTRIBUTE_FIELD_TYPES) && record instanceof ODocument) {
       return;
@@ -1089,7 +1106,6 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
       switch (iType) {
         case STRING:
           return decodeJSON(iFieldValueAsString);
-
         case LINK:
           final int pos = iFieldValueAsString.indexOf('@');
           if (pos > -1)
@@ -1101,10 +1117,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
             // CREATE SIMPLE RID
             return new ORecordId(iFieldValueAsString);
           }
-
         case EMBEDDED:
           return fromString(iFieldValueAsString, new ODocumentEmbedded(), null);
-
         case DATE:
           if (iFieldValueAsString == null || iFieldValueAsString.equals("")) return null;
           try {
@@ -1126,7 +1140,6 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
                   ex);
             }
           }
-
         case DATETIME:
           if (iFieldValueAsString == null || iFieldValueAsString.equals("")) return null;
           try {
