@@ -1284,7 +1284,9 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
           embeddedMap.put(
               fieldName,
               getValue(parser, record, fieldName, value, value, linkedType, null, noMap, options));
-        } else if (value == null && JsonToken.START_OBJECT.equals(currentToken)) {
+        } else if (value == null
+            && (JsonToken.START_OBJECT.equals(currentToken)
+                || JsonToken.START_ARRAY.equals(currentToken))) {
           embeddedMap.put(
               fieldName,
               getValue(parser, record, fieldName, value, value, linkedType, null, noMap, options));
@@ -1335,13 +1337,13 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
       boolean iNoMap,
       String iOptions,
       String[] fields) {
-    if (fields.length % 2 == 1)
+    if (fields.length % 2 == 1) {
       throw new OSerializationException(
           "Bad JSON format on map. Expected pairs of field:value but received '"
               + iFieldValue
               + "'");
-
-    final Map<String, Object> embeddedMap = new LinkedHashMap<String, Object>();
+    }
+    final Map<String, Object> embeddedMap = new LinkedHashMap<>();
 
     for (int i = 0; i < fields.length; i += 2) {
       String iFieldName = fields[i];
