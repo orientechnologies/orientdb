@@ -17,7 +17,7 @@ import org.junit.Test;
  */
 public class HttpGraphTest extends BaseHttpDatabaseTest {
 
-  // TODO: failing due to stream parser refactoring
+  // TODO: "@fieldTypes":"out_FooEdge=g"
   @Test
   public void updateWithEdges() throws IOException {
     Assert.assertEquals(
