@@ -1689,7 +1689,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
                   iNoMap,
                   iOptions);
 
-          // TODO redundant in some cases, owner is already added by getValueV0 in some cases
+          // TODO: redundant in some cases, owner is already added by getValueV0 in some cases
           if (shouldBeDeserializedAsEmbedded(collectionItem, iType))
             ODocumentInternal.addOwner((ODocument) collectionItem, iRecord);
 
