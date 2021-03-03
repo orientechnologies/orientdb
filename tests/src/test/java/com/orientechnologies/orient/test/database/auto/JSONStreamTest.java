@@ -577,18 +577,17 @@ public class JSONStreamTest extends DocumentDBBaseTest {
 
   public void testEscaping() throws IOException {
     final ODocument doc = new ODocument();
-    String s =
+    final String s =
         "{\"name\": \"test\", \"nested\": { \"key\": \"value\", \"anotherKey\": 123 }, \"deep\": {\"deeper\": { \"k\": \"v\",\"quotes\": \"\\\"\\\",\\\"oops\\\":\\\"123\\\"\", \"likeJson\": \"[1,2,3]\",\"spaces\": \"value with spaces\"}}}";
     doc.fromJSON(new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8)));
     Assert.assertEquals(doc.field("deep[deeper][quotes]"), "\"\",\"oops\":\"123\"");
 
-    String res = doc.toJSON();
+    final String res = doc.toJSON();
 
     // LOOK FOR "quotes": \"\",\"oops\":\"123\"
     Assert.assertTrue(res.contains("\"quotes\":\"\\\"\\\",\\\"oops\\\":\\\"123\\\"\""));
   }
 
-  // TODO
   public void testEscapingDoubleQuotes() throws IOException {
     final ODocument doc = new ODocument();
     final StringBuilder sb = new StringBuilder();
@@ -616,7 +615,6 @@ public class JSONStreamTest extends DocumentDBBaseTest {
     Assert.assertEquals(((Map) doc2.get("datavalue")).get("value"), "\"\"");
   }
 
-  // TODO
   // Requires JsonParser.Feature.ALLOW_TRAILING_COMMA
   public void testEscapingDoubleQuotes2() throws IOException {
     final ODocument doc = new ODocument();
@@ -647,7 +645,6 @@ public class JSONStreamTest extends DocumentDBBaseTest {
     Assert.assertEquals(((Map) doc2.get("datavalue")).get("value"), "\"");
   }
 
-  // TODO
   public void testEscapingDoubleQuotes3() throws IOException {
     final ODocument doc = new ODocument();
     final StringBuilder sb = new StringBuilder();
