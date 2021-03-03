@@ -559,12 +559,12 @@ public class JSONTest extends DocumentDBBaseTest {
     ODocument doc = new ODocument();
     doc.field("string", "STRING_VALUE");
     List<ODocument> list = new ArrayList<ODocument>();
-    for (int i = 0; i < 10; i++) {
-      ODocument doc1 = new ODocument();
+    for (int i = 0; i < 1; i++) {
+      final ODocument doc1 = new ODocument();
       doc.field("number", i);
       list.add(doc1);
       Map<String, ODocument> docMap = new HashMap<String, ODocument>();
-      for (int j = 0; j < 5; j++) {
+      for (int j = 0; j < 1; j++) {
         ODocument doc2 = new ODocument();
         doc2.field("blabla", j);
         docMap.put(String.valueOf(j), doc2);
@@ -578,17 +578,17 @@ public class JSONTest extends DocumentDBBaseTest {
     doc.field("out", list);
     String json = doc.toJSON();
     ODocument newDoc = new ODocument().fromJSON(json);
-    Assert.assertEquals(newDoc.toJSON(), json);
+    Assert.assertEquals(json, newDoc.toJSON());
     Assert.assertTrue(newDoc.hasSameContentOf(doc));
 
     doc = new ODocument();
     doc.field("string", "STRING_VALUE");
-    Map<String, ODocument> docMap = new HashMap<String, ODocument>();
+    final Map<String, ODocument> docMap = new HashMap<String, ODocument>();
     for (int i = 0; i < 10; i++) {
       ODocument doc1 = new ODocument();
       doc.field("number", i);
       list.add(doc1);
-      list = new ArrayList<ODocument>();
+      list = new ArrayList<>();
       for (int j = 0; j < 5; j++) {
         ODocument doc2 = new ODocument();
         doc2.field("blabla", j);

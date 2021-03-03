@@ -852,7 +852,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     // LOAD THE FIELD TYPE MAP
     final String[] fieldTypesParts = fieldValueAsString.split(",");
     if (fieldTypesParts.length > 0) {
-      fieldTypes = new HashMap<String, Character>();
+      fieldTypes = new HashMap<>();
       String[] part;
       for (String f : fieldTypesParts) {
         part = f.split("=");
