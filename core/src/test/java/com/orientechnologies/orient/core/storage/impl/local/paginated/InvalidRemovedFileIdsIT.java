@@ -5,7 +5,6 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.serialization.types.OStringSerializer;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -37,7 +36,8 @@ public class InvalidRemovedFileIdsIT {
         OrientDBConfig.builder().addAttribute(ODatabase.ATTRIBUTES.MINIMUMCLUSTERS, 1).build();
 
     OrientDB orientDB = new OrientDB("plocal:" + buildDirectory, config);
-    orientDB.create(dbName, ODatabaseType.PLOCAL);
+    orientDB.execute(
+        "create database " + dbName + " plocal users ( admin identified by 'admin' role admin)");
     ODatabaseDocument db = orientDB.open(dbName, "admin", "admin");
 
     OStorage storage = ((ODatabaseInternal) db).getStorage();

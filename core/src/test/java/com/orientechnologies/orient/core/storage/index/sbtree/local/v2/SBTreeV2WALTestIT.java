@@ -5,7 +5,6 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
@@ -89,7 +88,10 @@ public class SBTreeV2WALTestIT extends SBTreeV2TestIT {
   }
 
   private void createActualSBTree() throws Exception {
-    orientDB.create(ACTUAL_DB_NAME, ODatabaseType.PLOCAL);
+    orientDB.execute(
+        "create database "
+            + ACTUAL_DB_NAME
+            + " plocal users ( admin identified by 'admin' role admin)");
 
     databaseDocumentTx = orientDB.open(ACTUAL_DB_NAME, "admin", "admin");
     actualStorage =
@@ -118,7 +120,10 @@ public class SBTreeV2WALTestIT extends SBTreeV2TestIT {
   }
 
   private void createExpectedSBTree() {
-    orientDB.create(EXPECTED_DB_NAME, ODatabaseType.PLOCAL);
+    orientDB.execute(
+        "create database "
+            + EXPECTED_DB_NAME
+            + " plocal users ( admin identified by 'admin' role admin)");
 
     expectedDatabaseDocumentTx = orientDB.open(EXPECTED_DB_NAME, "admin", "admin");
     expectedStorage =

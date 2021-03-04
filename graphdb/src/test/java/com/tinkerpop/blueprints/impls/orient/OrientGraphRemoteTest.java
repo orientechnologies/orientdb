@@ -84,8 +84,12 @@ public abstract class OrientGraphRemoteTest extends OrientGraphTest {
     if (clientContext.exists(graphDirectoryName)) {
       clientContext.drop(graphDirectoryName);
     }
-    clientContext.create(
-        graphDirectoryName, ODatabaseType.valueOf(OrientGraphTest.getStorageType().toUpperCase()));
+    clientContext.execute(
+        "create database "
+            + graphDirectoryName
+            + " "
+            + ODatabaseType.valueOf(OrientGraphTest.getStorageType().toUpperCase())
+            + " users ( admin identified by 'admin' role admin)");
 
     OrientGraphFactory factory = graphFactories.get(url);
     if (factory == null) {

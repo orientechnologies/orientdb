@@ -37,7 +37,8 @@ public class OStorageEncryptionTestIT {
             .build();
     try (final OrientDB orientDB =
         new OrientDB("embedded:" + dbDirectoryFile.getAbsolutePath(), orientDBConfig)) {
-      orientDB.create("encryption", ODatabaseType.PLOCAL);
+      orientDB.execute(
+          "create database encryption plocal users ( admin identified by 'admin' role admin)");
       try (final ODatabaseSession session = orientDB.open("encryption", "admin", "admin")) {
         final OSchema schema = session.getMetadata().getSchema();
         final OClass cls = schema.createClass("EncryptedData");

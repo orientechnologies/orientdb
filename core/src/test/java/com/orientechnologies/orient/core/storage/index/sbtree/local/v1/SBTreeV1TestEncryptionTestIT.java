@@ -3,7 +3,6 @@ package com.orientechnologies.orient.core.storage.index.sbtree.local.v1;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.encryption.OEncryption;
@@ -23,7 +22,8 @@ public class SBTreeV1TestEncryptionTestIT extends SBTreeV1TestIT {
 
     orientDB = new OrientDB("plocal:" + buildDirectory, OrientDBConfig.defaultConfig());
 
-    orientDB.create(dbName, ODatabaseType.PLOCAL);
+    orientDB.execute(
+        "create database " + dbName + " plocal users ( admin identified by 'admin' role admin)");
     databaseDocumentTx = orientDB.open(dbName, "admin", "admin");
 
     sbTree =
