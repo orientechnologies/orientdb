@@ -161,8 +161,14 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
       auditor.addRule(ORule.ResourceGeneric.CLASS, "OUser", ORole.PERMISSION_NONE);
       auditor.addRule(ORule.ResourceGeneric.CLASS, "orole", ORole.PERMISSION_NONE);
       auditor.addRule(ORule.ResourceGeneric.SYSTEM_CLUSTERS, null, ORole.PERMISSION_NONE);
-      auditor.addRule(ORule.ResourceGeneric.CLASS, "OAuditingLog", ORole.PERMISSION_ALL);
-      auditor.addRule(ORule.ResourceGeneric.CLUSTER, "oauditinglog", ORole.PERMISSION_ALL);
+      auditor.addRule(
+          ORule.ResourceGeneric.CLASS,
+          "OAuditingLog",
+          ORole.PERMISSION_CREATE + ORole.PERMISSION_READ + ORole.PERMISSION_UPDATE);
+      auditor.addRule(
+          ORule.ResourceGeneric.CLUSTER,
+          "oauditinglog",
+          ORole.PERMISSION_CREATE + ORole.PERMISSION_READ + ORole.PERMISSION_UPDATE);
       auditor.save();
     }
   }
@@ -493,7 +499,7 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
     }
   }
 
-  /** * OServerSecurity Interface * */
+  /** OServerSecurity Interface * */
 
   // OServerSecurity
   public OAuditingService getAuditing() {
