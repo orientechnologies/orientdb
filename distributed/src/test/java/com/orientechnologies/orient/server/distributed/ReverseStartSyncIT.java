@@ -36,7 +36,7 @@ public class ReverseStartSyncIT {
   }
 
   @Test
-  public void reverseStartSync() {
+  public void reverseStartSync() throws InterruptedException {
     try (OrientDB remote = setup.createRemote(server0, OrientDBConfig.defaultConfig())) {
       try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
         session.createClass("One");
@@ -55,6 +55,7 @@ public class ReverseStartSyncIT {
     setup.startServer(server2);
     setup.startServer(server1);
     setup.startServer(server0);
+    TestSetup.waitForDbOnlineStatus(setup, "test");
     // Test server 0
     try (OrientDB remote = setup.createRemote(server0, OrientDBConfig.defaultConfig())) {
       try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
