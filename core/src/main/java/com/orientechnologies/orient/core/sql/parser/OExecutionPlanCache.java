@@ -26,6 +26,7 @@ public class OExecutionPlanCache implements OMetadataUpdateListener {
   int                                 mapSize;
 
   protected long lastInvalidation = -1;
+  protected long lastGlobalTimeout = OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsLong();
 
   /**
    * @param size the size of the cache
@@ -122,6 +123,14 @@ public class OExecutionPlanCache implements OMetadataUpdateListener {
    */
   public OExecutionPlan getInternal(String statement, OCommandContext ctx, ODatabaseDocumentInternal db) {
     OInternalExecutionPlan result;
+
+    long currentGlobalTimeout =
+        db.getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT);
+    if (currentGlobalTimeout != this.lastGlobalTimeout) {
+      invalidate();
+    }
+    this.lastGlobalTimeout = currentGlobalTimeout;
+
     if (statement == null) {
       return null;
     }
