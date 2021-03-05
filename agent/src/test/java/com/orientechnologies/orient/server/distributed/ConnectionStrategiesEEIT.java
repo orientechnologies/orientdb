@@ -53,6 +53,10 @@ public class ConnectionStrategiesEEIT {
             OrientDBConfig.builder()
                 .addConfig(CLIENT_CONNECTION_STRATEGY, "ROUND_ROBIN_CONNECT")
                 .build());
+
+
+
+    Thread.sleep(3000);
     Set<String> urls = new HashSet<>();
     ODatabaseSession session =
         remote1.open(ConnectionStrategiesEEIT.class.getSimpleName(), "admin", "admin");
@@ -204,7 +208,7 @@ public class ConnectionStrategiesEEIT {
     start.setDaemon(true);
     start.start();
 
-    Thread.sleep(10000);
+    Thread.sleep(20000);
 
     for (int i = 0; i < 1000; i++) {
       OLogManager.instance().error(this, "phase 3 opening session " + i, null);
