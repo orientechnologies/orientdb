@@ -54,8 +54,6 @@ public class ConnectionStrategiesEEIT {
                 .addConfig(CLIENT_CONNECTION_STRATEGY, "ROUND_ROBIN_CONNECT")
                 .build());
 
-
-
     Thread.sleep(3000);
     Set<String> urls = new HashSet<>();
     ODatabaseSession session =
