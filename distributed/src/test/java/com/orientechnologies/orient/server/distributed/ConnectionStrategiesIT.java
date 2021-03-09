@@ -33,8 +33,22 @@ public class ConnectionStrategiesIT {
     server2 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-2.xml");
     OrientDB remote =
         new OrientDB("remote:localhost", "root", "test", OrientDBConfig.defaultConfig());
-    remote.create(ConnectionStrategiesIT.class.getSimpleName(), ODatabaseType.PLOCAL);
+    String dbName = ConnectionStrategiesIT.class.getSimpleName();
+    remote.create(dbName, ODatabaseType.PLOCAL);
     remote.close();
+    waitForDbOnlineStatus(dbName);
+  }
+
+  private void waitForDbOnlineStatus(String dbName) throws InterruptedException {
+    server0
+        .getDistributedManager()
+        .waitUntilNodeOnline(server0.getDistributedManager().getLocalNodeName(), dbName);
+    server1
+        .getDistributedManager()
+        .waitUntilNodeOnline(server1.getDistributedManager().getLocalNodeName(), dbName);
+    server2
+        .getDistributedManager()
+        .waitUntilNodeOnline(server2.getDistributedManager().getLocalNodeName(), dbName);
   }
 
   @Test

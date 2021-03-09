@@ -42,7 +42,7 @@ public class OLuceneDirectoryFactoryTest extends BaseLuceneTest {
     meta.field(DIRECTORY_TYPE, DIRECTORY_NIO);
     ODatabaseDocumentTx db =
         dropOrCreate("plocal:./target/testDatabase/" + name.getMethodName(), true);
-    Directory directory = fc.createDirectory(db, "index.name", meta).getDirectory();
+    Directory directory = fc.createDirectory(db.getStorage(), "index.name", meta).getDirectory();
     assertThat(directory).isInstanceOf(NIOFSDirectory.class);
     assertThat(
             new File("./target/testDatabase/" + name.getMethodName() + "/luceneIndexes/index.name"))
@@ -55,7 +55,7 @@ public class OLuceneDirectoryFactoryTest extends BaseLuceneTest {
     meta.field(DIRECTORY_TYPE, DIRECTORY_MMAP);
     ODatabaseDocumentTx db =
         dropOrCreate("plocal:./target/testDatabase/" + name.getMethodName(), true);
-    Directory directory = fc.createDirectory(db, "index.name", meta).getDirectory();
+    Directory directory = fc.createDirectory(db.getStorage(), "index.name", meta).getDirectory();
     assertThat(directory).isInstanceOf(MMapDirectory.class);
     assertThat(
             new File("./target/testDatabase/" + name.getMethodName() + "/luceneIndexes/index.name"))
@@ -68,7 +68,7 @@ public class OLuceneDirectoryFactoryTest extends BaseLuceneTest {
     meta.field(DIRECTORY_TYPE, DIRECTORY_RAM);
     ODatabaseDocumentTx db =
         dropOrCreate("plocal:./target/testDatabase/" + name.getMethodName(), true);
-    Directory directory = fc.createDirectory(db, "index.name", meta).getDirectory();
+    Directory directory = fc.createDirectory(db.getStorage(), "index.name", meta).getDirectory();
     assertThat(directory).isInstanceOf(RAMDirectory.class);
     db.drop();
   }
@@ -78,7 +78,8 @@ public class OLuceneDirectoryFactoryTest extends BaseLuceneTest {
     meta.field(DIRECTORY_TYPE, DIRECTORY_RAM);
     final ODatabaseDocumentTx db =
         dropOrCreate(ODatabaseType.MEMORY.name().toLowerCase() + ":" + name.getMethodName(), true);
-    final Directory directory = fc.createDirectory(db, "index.name", meta).getDirectory();
+    final Directory directory =
+        fc.createDirectory(db.getStorage(), "index.name", meta).getDirectory();
     // 'ODatabaseType.MEMORY' and 'DIRECTORY_RAM' determines the RAMDirectory.
     assertThat(directory).isInstanceOf(RAMDirectory.class);
   }
@@ -88,7 +89,8 @@ public class OLuceneDirectoryFactoryTest extends BaseLuceneTest {
     meta.field(DIRECTORY_TYPE, DIRECTORY_MMAP);
     final ODatabaseDocumentTx db =
         dropOrCreate(ODatabaseType.MEMORY.name().toLowerCase() + ":" + name.getMethodName(), true);
-    final Directory directory = fc.createDirectory(db, "index.name", meta).getDirectory();
+    final Directory directory =
+        fc.createDirectory(db.getStorage(), "index.name", meta).getDirectory();
     // 'ODatabaseType.MEMORY' plus 'DIRECTORY_MMAP' leads to the same result as just
     // 'DIRECTORY_RAM'.
     assertThat(directory).isInstanceOf(RAMDirectory.class);

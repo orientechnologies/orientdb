@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.db;
 
+import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
@@ -14,6 +15,7 @@ import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerAware;
 import com.orientechnologies.orient.server.OSystemDatabase;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributedPooled;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
@@ -176,6 +178,33 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         sharedContexts.remove(name);
       }
     }
+  }
+
+  private void checkDbAvailable(String name) {
+    if (getPlugin() == null || !getPlugin().isRunning()) {
+      return;
+    }
+    if (OSystemDatabase.SYSTEM_DB_NAME.equals(name)) return;
+    ODistributedServerManager.DB_STATUS dbStatus =
+        plugin.getDatabaseStatus(plugin.getLocalNodeName(), name);
+    if (dbStatus != ODistributedServerManager.DB_STATUS.ONLINE
+        && dbStatus != ODistributedServerManager.DB_STATUS.BACKUP) {
+      throw new OOfflineNodeException(
+          "database " + name + " not online on " + plugin.getLocalNodeName());
+    }
+  }
+
+  @Override
+  public ODatabaseDocumentInternal open(String name, String user, String password) {
+    checkDbAvailable(name);
+    return super.open(name, user, password);
+  }
+
+  @Override
+  public ODatabaseDocumentInternal open(
+      String name, String user, String password, OrientDBConfig config) {
+    checkDbAvailable(name);
+    return super.open(name, user, password, config);
   }
 
   @Override

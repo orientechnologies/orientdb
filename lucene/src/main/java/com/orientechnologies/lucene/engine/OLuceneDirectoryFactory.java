@@ -1,9 +1,9 @@
 package com.orientechnologies.lucene.engine;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorage;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -26,21 +26,21 @@ public class OLuceneDirectoryFactory {
   public static final String DIRECTORY_PATH = "directory_path";
 
   public OLuceneDirectory createDirectory(
-      final ODatabaseDocumentInternal database, final String indexName, final ODocument metadata) {
+      final OStorage storage, final String indexName, final ODocument metadata) {
     final String luceneType =
         metadata.containsField(DIRECTORY_TYPE)
             ? metadata.<String>field(DIRECTORY_TYPE)
             : DIRECTORY_MMAP;
-    if (database.getStorage().getType().equals(ODatabaseType.MEMORY.name().toLowerCase())
+    if (storage.getType().equals(ODatabaseType.MEMORY.name().toLowerCase())
         || DIRECTORY_RAM.equals(luceneType)) {
       final Directory dir = new RAMDirectory();
       return new OLuceneDirectory(dir, null);
     }
-    return createDirectory(database, indexName, metadata, luceneType);
+    return createDirectory(storage, indexName, metadata, luceneType);
   }
 
   private OLuceneDirectory createDirectory(
-      final ODatabaseDocumentInternal database,
+      final OStorage storage,
       final String indexName,
       final ODocument metadata,
       final String luceneType) {
@@ -51,8 +51,7 @@ public class OLuceneDirectoryFactory {
       luceneBasePath = OLUCENE_BASE_DIR;
     }
     final Path luceneIndexPath =
-        Paths.get(
-            database.getStorage().getConfiguration().getDirectory(), luceneBasePath, indexName);
+        Paths.get(storage.getConfiguration().getDirectory(), luceneBasePath, indexName);
     try {
       Directory dir = null;
       if (DIRECTORY_NIO.equals(luceneType)) {

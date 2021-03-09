@@ -558,7 +558,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   public void open(
       final String iUserName, final String iUserPassword, final OContextConfiguration conf) {
 
-    stateLock.acquireWriteLock();
     addUser();
     try {
       OStorageRemoteSession session = getCurrentSession();
@@ -601,9 +600,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       else
         throw OException.wrapException(
             new OStorageException("Cannot open the remote storage: " + name), e);
-
-    } finally {
-      stateLock.releaseWriteLock();
     }
   }
 
