@@ -39,6 +39,19 @@ public class ConnectionStrategiesEEIT {
             + ConnectionStrategiesEEIT.class.getSimpleName()
             + "` plocal users(admin identified by 'admin' role admin, reader identified by 'reader' role reader, writer identified by 'writer' role writer)");
     remote.close();
+    waitForDbOnlineStatus(ConnectionStrategiesEEIT.class.getSimpleName());
+  }
+
+  private void waitForDbOnlineStatus(String dbName) throws InterruptedException {
+    server0
+        .getDistributedManager()
+        .waitUntilNodeOnline(server0.getDistributedManager().getLocalNodeName(), dbName);
+    server1
+        .getDistributedManager()
+        .waitUntilNodeOnline(server1.getDistributedManager().getLocalNodeName(), dbName);
+    server2
+        .getDistributedManager()
+        .waitUntilNodeOnline(server2.getDistributedManager().getLocalNodeName(), dbName);
   }
 
   @Test
@@ -54,7 +67,6 @@ public class ConnectionStrategiesEEIT {
                 .addConfig(CLIENT_CONNECTION_STRATEGY, "ROUND_ROBIN_CONNECT")
                 .build());
 
-    Thread.sleep(3000);
     Set<String> urls = new HashSet<>();
     ODatabaseSession session =
         remote1.open(ConnectionStrategiesEEIT.class.getSimpleName(), "admin", "admin");
