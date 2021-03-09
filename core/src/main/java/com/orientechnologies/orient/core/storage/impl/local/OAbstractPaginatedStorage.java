@@ -399,7 +399,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         atomicOperationsManager.executeInsideAtomicOperation(
             null,
-            (atomicOperation) -> {
+            atomicOperation -> {
               if (OClusterBasedStorageConfiguration.exists(writeCache)) {
                 configuration = new OClusterBasedStorageConfiguration(this);
                 ((OClusterBasedStorageConfiguration) configuration)
@@ -409,29 +409,36 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               }
 
               initConfiguration(atomicOperation, contextConfiguration);
+            });
 
+        atomicOperationsManager.executeInsideAtomicOperation(
+            null,
+            (atomicOperation) -> {
               String uuid = configuration.getUuid();
               if (uuid == null) {
                 uuid = UUID.randomUUID().toString();
                 configuration.setUuid(atomicOperation, uuid);
               }
               this.uuid = UUID.fromString(uuid);
+            });
 
-              checkPageSizeAndRelatedParameters();
+        checkPageSizeAndRelatedParameters();
 
-              componentsFactory = new OCurrentStorageComponentsFactory(configuration);
+        componentsFactory = new OCurrentStorageComponentsFactory(configuration);
 
-              sbTreeCollectionManager.load();
+        sbTreeCollectionManager.load();
 
-              openClusters(atomicOperation);
-              openIndexes();
+        atomicOperationsManager.executeInsideAtomicOperation(null, this::openClusters);
+        openIndexes();
 
-              // we need to check presence of ridbags for backward compatibility with previous
-              // versions
-              checkRidBagsPresence(atomicOperation);
+        // we need to check presence of ridbags for backward compatibility with previous
+        // versions
+        atomicOperationsManager.executeInsideAtomicOperation(null, this::checkRidBagsPresence);
+        status = STATUS.OPEN;
 
-              status = STATUS.OPEN;
-
+        atomicOperationsManager.executeInsideAtomicOperation(
+            null,
+            (atomicOperation) -> {
               final String cs = configuration.getConflictStrategy();
               if (cs != null) {
                 // SET THE CONFLICT STORAGE STRATEGY FROM THE LOADED CONFIGURATION
