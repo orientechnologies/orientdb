@@ -423,11 +423,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         atomicOperationsManager.executeInsideAtomicOperation(null, this::openClusters);
         openIndexes();
 
-        // we need to check presence of ridbags for backward compatibility with previous
-        // versions
-        atomicOperationsManager.executeInsideAtomicOperation(null, this::checkRidBagsPresence);
-        status = STATUS.OPEN;
-
         atomicOperationsManager.executeInsideAtomicOperation(
             null,
             (atomicOperation) -> {
@@ -441,6 +436,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                 lastMetadata = startupMetadata.txMetadata;
               }
             });
+
+        // we need to check presence of ridbags for backward compatibility with previous
+        // versions
+        atomicOperationsManager.executeInsideAtomicOperation(null, this::checkRidBagsPresence);
+        status = STATUS.OPEN;
       } catch (final RuntimeException e) {
         try {
           if (writeCache != null) {
