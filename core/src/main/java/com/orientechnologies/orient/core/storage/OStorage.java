@@ -54,6 +54,7 @@ public interface OStorage extends OBackupable, OSharedContainer, OStorageInfo {
   enum STATUS {
     CLOSED,
     OPEN,
+    MIGRATION,
     CLOSING,
     @Deprecated
     OPENING,

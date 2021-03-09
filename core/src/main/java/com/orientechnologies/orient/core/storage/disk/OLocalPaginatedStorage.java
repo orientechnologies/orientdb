@@ -904,13 +904,13 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     @Override
     public Void call() {
       try {
-        if (status != STATUS.OPEN) {
+        if (status != STATUS.OPEN && status != STATUS.MIGRATION) {
           return null;
         }
 
         stateLock.acquireReadLock();
         try {
-          if (status != STATUS.OPEN) {
+          if (status != STATUS.OPEN && status != STATUS.MIGRATION) {
             return null;
           }
 

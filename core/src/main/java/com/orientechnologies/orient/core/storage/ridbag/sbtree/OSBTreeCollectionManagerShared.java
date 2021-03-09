@@ -24,12 +24,10 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.OOrientShutdownListener;
 import com.orientechnologies.orient.core.OOrientStartupListener;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.exception.OAccessToSBtreeCollectionManagerIsProhibitedException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
@@ -52,27 +50,7 @@ public final class OSBTreeCollectionManagerShared
   public static final String FILE_EXTENSION = ".grb";
   public static final String FILE_NAME_PREFIX = "global_collection_";
 
-  /**
-   * Message which is provided during throwing of {@link
-   * OAccessToSBtreeCollectionManagerIsProhibitedException}.
-   */
-  private static final String PROHIBITED_EXCEPTION_MESSAGE =
-      "Access to the manager of RidBags "
-          + "which are based on B-Tree "
-          + "implementation is prohibited. Typically it means that you use database under distributed "
-          + "cluster configuration. Please check "
-          + "that following setting in your server configuration "
-          + OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getKey()
-          + " is set to "
-          + Integer.MAX_VALUE;
-
   private final OAbstractPaginatedStorage storage;
-
-  /**
-   * If this flag is set to {@code true} then all access to the manager will be prohibited and
-   * exception {@link OAccessToSBtreeCollectionManagerIsProhibitedException} will be thrown.
-   */
-  private volatile boolean prohibitAccess = false;
 
   private final ConcurrentHashMap<Integer, BTree> fileIdBTreeMap = new ConcurrentHashMap<>();
 
@@ -105,25 +83,11 @@ public final class OSBTreeCollectionManagerShared
     }
   }
 
-  /**
-   * Once this method is called any attempt to load/create/delete b-tree will be resulted in
-   * exception thrown.
-   */
-  public void prohibitAccess() {
-    prohibitAccess = true;
-  }
-
-  private void checkAccess() {
-    if (prohibitAccess) {
-      throw new OAccessToSBtreeCollectionManagerIsProhibitedException(PROHIBITED_EXCEPTION_MESSAGE);
-    }
-  }
+  public void migrate() {}
 
   @Override
   public OSBTreeBonsai<OIdentifiable, Integer> createAndLoadTree(
       final OAtomicOperation atomicOperation, final int clusterId) {
-    checkAccess();
-
     return doCreateRidBag(atomicOperation, clusterId);
   }
 
@@ -239,8 +203,6 @@ public final class OSBTreeCollectionManagerShared
   @Override
   public OBonsaiCollectionPointer createSBTree(
       int clusterId, OAtomicOperation atomicOperation, UUID ownerUUID) {
-    checkAccess();
-
     final BTreeBonsaiGlobal bonsaiGlobal = doCreateRidBag(atomicOperation, clusterId);
     final OBonsaiCollectionPointer pointer = bonsaiGlobal.getCollectionPointer();
 
