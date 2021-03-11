@@ -19,10 +19,7 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.core.*;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
@@ -288,14 +285,13 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
       final JsonParser parser = factory.createParser(source);
 
       JsonToken jsonToken = null;
+      final Map<String, Character> fieldTypes = new HashMap<>();
       while ((jsonToken = parser.nextToken()) != null) {
         if (jsonToken.equals(JsonToken.START_OBJECT)) {
           while (jsonToken != JsonToken.END_OBJECT) {
             parser.nextToken();
-            jsonToken = processRecord(parser, record, iOptions, noMap);
+            jsonToken = processRecord(parser, record, fieldTypes, iOptions, noMap);
           }
-        } else {
-          // System.out.println("Assumption: JSON document needs to be an JSON Object.");
         }
       }
       if (className != null) {
@@ -323,16 +319,32 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     return record;
   }
 
+  /*public String reformat(final String json) throws IOException {
+    final ByteArrayOutputStream stream = new ByteArrayOutputStream();
+    final JsonGenerator generator = factory
+        .createGenerator(stream, JsonEncoding.UTF8);
+
+    final JsonParser parser = factory.createParser(json);
+    JsonToken jsonToken = null;
+    while ((jsonToken = parser.nextToken()) != null) {
+      generator.
+    }
+    return new String(stream.toByteArray());
+  }*/
+
   private JsonToken processRecord(
-      final JsonParser parser, ORecord record, String iOptions, boolean noMap) throws IOException {
+      final JsonParser parser,
+      ORecord record,
+      Map<String, Character> fieldTypes,
+      String iOptions,
+      boolean noMap)
+      throws IOException {
     JsonToken jsonToken = parser.currentToken();
     if (jsonToken.equals(JsonToken.FIELD_NAME)) {
       final String fieldName = parser.getValueAsString();
       jsonToken = parser.nextToken();
       final String value = parser.getValueAsString();
-      this.processRecords(parser, record, noMap, iOptions, fieldName, value);
-    } else {
-      // System.out.println("Not supported: " + jsonToken);
+      this.processRecords(parser, record, fieldTypes, noMap, iOptions, fieldName, value);
     }
     return jsonToken;
   }
@@ -463,7 +475,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         final String fieldValueAsString = OIOUtils.getStringContent(fieldValue);
 
         if (fieldName.equals(ATTRIBUTE_FIELD_TYPES) && record instanceof ODocument) {
-          fieldTypes = loadFieldTypes(fieldTypes, fieldValueAsString);
+          fieldTypes = loadFieldTypesV0(fieldTypes, fieldValueAsString);
         } else if (fieldName.equals(ODocumentHelper.ATTRIBUTE_TYPE)) {
           if (record == null
               || ORecordInternal.getRecordType(record) != fieldValueAsString.charAt(0)) {
@@ -525,7 +537,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
   private void processRecords(
       final JsonParser parser,
       ORecord record,
-      // Map<String, Character> fieldTypes,
+      Map<String, Character> fieldTypes,
       boolean noMap,
       String iOptions,
       String fieldName,
@@ -551,6 +563,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     } else if (fieldName.equals(ODocumentHelper.ATTRIBUTE_TYPE)) {
       return;
     } else if (fieldName.equals(ATTRIBUTE_FIELD_TYPES) && record instanceof ODocument) {
+      loadFieldTypes(fieldTypes, fieldValueAsString);
       return;
     } else if (fieldName.equals("value") && !(record instanceof ODocument)) {
       // RECORD VALUE(S)
@@ -580,6 +593,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
                 fieldValueAsString,
                 type,
                 null,
+                fieldTypes,
                 noMap,
                 iOptions);
       }
@@ -795,7 +809,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
       json.beginObject();
 
-      OJSONFetchContext context = new OJSONFetchContext(json, settings);
+      final OJSONFetchContext context = new OJSONFetchContext(json, settings);
       context.writeSignature(json, iRecord);
 
       if (iRecord instanceof ODocument) {
@@ -847,8 +861,9 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     return type;
   }
 
-  private Map<String, Character> loadFieldTypes(
-      Map<String, Character> fieldTypes, String fieldValueAsString) {
+  @Deprecated
+  private Map<String, Character> loadFieldTypesV0(
+      Map<String, Character> fieldTypes, final String fieldValueAsString) {
     // LOAD THE FIELD TYPE MAP
     final String[] fieldTypesParts = fieldValueAsString.split(",");
     if (fieldTypesParts.length > 0) {
@@ -860,6 +875,19 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
       }
     }
     return fieldTypes;
+  }
+
+  private void loadFieldTypes(
+      final Map<String, Character> fieldTypes, final String fieldValueAsString) {
+    // LOAD THE FIELD TYPE MAP
+    final String[] fieldTypesParts = fieldValueAsString.split(",");
+    if (fieldTypesParts.length > 0) {
+      String[] part;
+      for (String f : fieldTypesParts) {
+        part = f.split("=");
+        if (part.length == 2) fieldTypes.put(part[0], part[1].charAt(0));
+      }
+    }
   }
 
   private String unwrapSource(String iSource) {
@@ -883,7 +911,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
       String fieldValueAsString,
       OType type,
       OType linkedType,
-      // final Map<String, Character> fieldTypes,
+      final Map<String, Character> fieldTypes,
       final boolean noMap,
       final String options)
       throws IOException {
@@ -896,14 +924,15 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     }
 
     // TODO: handle fieldTypes
-    /*if (type == null && fieldTypes != null && fieldTypes.containsKey(fieldName)) {
+    if (type == null && fieldTypes != null && fieldTypes.containsKey(fieldName)) {
       type = ORecordSerializerStringAbstract.getType(fieldValue, fieldTypes.get(fieldName));
-    }*/
+    }
 
     final JsonToken jsonToken = parser.currentToken();
     if (JsonToken.START_OBJECT.equals(jsonToken)) {
       // Json object
-      return getValueAsObjectOrMap(parser, iRecord, fieldValue, type, linkedType, noMap, options);
+      return getValueAsObjectOrMap(
+          parser, iRecord, fieldValue, type, linkedType, fieldTypes, noMap, options);
     } else if (JsonToken.START_ARRAY.equals(jsonToken)) {
       // Json array
       return getValueAsCollection(parser, iRecord, fieldValue, type, linkedType, noMap, options);
@@ -941,10 +970,10 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
           }
         }
         // TODO: handle field types
-        /*if (fieldTypes != null) {
+        if (fieldTypes != null) {
           Character c = fieldTypes.get(fieldName);
           if (c != null) type = ORecordSerializerStringAbstract.getType(fieldValueAsString, c);
-        }*/
+        }
         if (type == null) {
           return parser.getValueAsString();
         }
@@ -1202,7 +1231,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
       String fieldValue,
       OType type,
       OType linkedType,
-      // Map<String, Character> fieldTypes,
+      Map<String, Character> fieldTypes,
       boolean noMap,
       String options)
       throws IOException {
@@ -1231,32 +1260,33 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     if (noMap || "@type".equals(fieldValue)) {
       return getObjectValueAsRecord(parser, record, fieldValue, type, options);
     } else {
-      return getObjectValueAsMap(parser, record, linkedType, false, options);
+      return getObjectValueAsMap(parser, record, linkedType, fieldTypes, false, options);
     }
   }
 
   // FIXME: WIP
   private Object getObjectValueAsRecord(
-      JsonParser parser, ODocument record, String iFieldValue, OType iType, String iOptions)
+      JsonParser parser, ODocument record, String fieldValue, OType iType, String iOptions)
       throws IOException {
     // FIXME: handle missing fields
     // ORID rid = new ORecordId(OIOUtils.getStringContent(getFieldValue("@rid", fields)));
     ORID rid = new ORecordId(OIOUtils.getStringContent(getFieldValue("@rid", new String[0])));
     boolean shouldReload = rid.isTemporary();
 
+    final Map<String, Character> fieldTypes = new HashMap<>();
     JsonToken jsonToken = parser.currentToken();
     final ODocument recordInternal = new ODocument();
     while (JsonToken.END_OBJECT != jsonToken) {
-      processRecord(parser, recordInternal, iFieldValue, false);
+      processRecord(parser, recordInternal, fieldTypes, fieldValue, false);
       jsonToken = parser.nextToken();
     }
     // final ODocument recordInternal =
-    //    (ODocument) fromString(iFieldValue, new ODocument(), null, iOptions, shouldReload);
+    //    (ODocument) fromString(fieldValue, new ODocument(), null, iOptions, shouldReload);
 
     if (shouldBeDeserializedAsEmbedded(recordInternal, iType))
       ODocumentInternal.addOwner(recordInternal, record);
     else {
-      ODatabaseDocument database = ODatabaseRecordThreadLocal.instance().getIfDefined();
+      final ODatabaseDocument database = ODatabaseRecordThreadLocal.instance().getIfDefined();
 
       if (rid.isPersistent() && database != null) {
         ODocument documentToMerge = database.load(rid);
@@ -1269,7 +1299,12 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
   // FIXME: WIP
   private Object getObjectValueAsMap(
-      final JsonParser parser, ODocument record, OType linkedType, boolean noMap, String options)
+      final JsonParser parser,
+      ODocument record,
+      OType linkedType,
+      final Map<String, Character> fieldTypes,
+      boolean noMap,
+      String options)
       throws IOException {
     final Map<String, Object> embeddedMap = new LinkedHashMap<>();
     JsonToken jsonToken = parser.currentToken();
@@ -1283,13 +1318,33 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         if (value != null) {
           embeddedMap.put(
               fieldName,
-              getValue(parser, record, fieldName, value, value, linkedType, null, noMap, options));
+              getValue(
+                  parser,
+                  record,
+                  fieldName,
+                  value,
+                  value,
+                  linkedType,
+                  null,
+                  fieldTypes,
+                  noMap,
+                  options));
         } else if (value == null
             && (JsonToken.START_OBJECT.equals(currentToken)
                 || JsonToken.START_ARRAY.equals(currentToken))) {
           embeddedMap.put(
               fieldName,
-              getValue(parser, record, fieldName, value, value, linkedType, null, noMap, options));
+              getValue(
+                  parser,
+                  record,
+                  fieldName,
+                  value,
+                  value,
+                  linkedType,
+                  null,
+                  fieldTypes,
+                  noMap,
+                  options));
         } else {
           // early out
           embeddedMap.put(fieldName, null);
@@ -1724,7 +1779,17 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
       //    continue;
       //  }
       final Object collectionItem =
-          getValue(parser, record, null, itemValue, itemValue, linkedType, null, noMap, options);
+          getValue(
+              parser,
+              record,
+              null,
+              itemValue,
+              itemValue,
+              linkedType,
+              null,
+              fieldTypes,
+              noMap,
+              options);
       // }
 
       // TODO: redundant in some cases, owner might have been already added by getValue before

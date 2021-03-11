@@ -18,8 +18,10 @@ package com.orientechnologies.orient.test.database.auto;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.results.RunResult;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
@@ -30,12 +32,12 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @Measurement(iterations = 1, batchSize = 1)
 @Warmup(iterations = 1, batchSize = 1)
-@Fork(1)
+@Fork(0)
 public class JSONTestBenchmark extends DocumentDBBaseTest {
   public static void main(String[] args) throws RunnerException {
     final Options opt =
         new OptionsBuilder()
-            .include("JSONTestBenchmark.*")
+            .include("JSONTestBenchmark.testAlmostLink*")
             // .addProfiler(StackProfiler.class, "detailLine=true;excludePackages=true;period=1")
             // .addProfiler(GCProfiler.class)
             .jvmArgs("-server", "-XX:+UseConcMarkSweepGC", "-Xmx4G", "-Xms1G")
@@ -43,7 +45,41 @@ public class JSONTestBenchmark extends DocumentDBBaseTest {
             // .param("offHeapMessages", "true""
             // .resultFormat(ResultFormatType.CSV)
             .build();
-    new Runner(opt).run();
+    final Collection<RunResult> results = new Runner(opt).run();
+
+    /*final TDoubleArrayList xData = new TDoubleArrayList(scaleResults.keySet().size());
+    scales.forEach(xData::add);
+
+    final Map<String, TDoubleArrayList> yData = new HashMap<>();
+    final Map<String, TDoubleArrayList> errorData = new HashMap<>();
+
+    final List<SeriesBundle> allData = new ArrayList();
+
+    for (final RunResult runResult : results) {
+      final String name = runResult.getParams().getBenchmark();
+      String benchmarkName = name.substring(name.lastIndexOf(".",name.lastIndexOf(".")-1) + 1);
+
+      TDoubleArrayList yValues = yData.get(benchmarkName);
+      if (yValues == null) {
+        yValues = new TDoubleArrayList();
+        yData.put(benchmarkName, yValues);
+      }
+      yValues.add(runResult.getPrimaryResult().getScore());
+
+      TDoubleArrayList errorValues = errorData.get(benchmarkName);
+      if (errorValues == null) {
+        errorValues = new TDoubleArrayList();
+        errorData.put(benchmarkName, errorValues);
+      }
+      errorValues.add(runResult.getPrimaryResult().getScoreError());
+    }
+
+    final Chart chart = createChart("", getParam(scaleResults, "scaleName"), getParam(scaleResults, "scaleUnit"));
+
+    for (final String seriesName : yData.keySet()) {
+      final ScaleSeriesBundle currentSeries = new ScaleSeriesBundle(seriesName,xData,yData.get(seriesName), null, errorData.get(seriesName), true);
+      allData.add(currentSeries);
+    }*/
   }
 
   @Benchmark

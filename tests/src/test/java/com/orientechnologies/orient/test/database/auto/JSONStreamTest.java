@@ -789,18 +789,22 @@ public class JSONStreamTest extends DocumentDBBaseTest {
     }
   }
 
-  // TODO: @fieldTypes parsing
-  /*public void testDates() throws IOException {
+  // @fieldTypes parsing
+  public void testDates() throws IOException {
     final Date now = new Date(1350518475000l);
 
     final ODocument doc = new ODocument();
     doc.field("date", now);
-    final String json = doc.toJSON();
+    // TODO: WIP move @fileTypes from end to signature: {"@type":"d","@version":0,"date":"2012-10-18
+    // 02:01:15","@fieldTypes":"date=t"}
+    //  final String json = doc.toJSON();
+    final String json =
+        "{\"@type\":\"d\",\"@version\":0,\"@fieldTypes\":\"date=t\",\"date\":\"2012-10-18 02:01:15\"}";
 
     final ODocument unmarshalled =
         new ODocument().fromJSON(new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
     Assert.assertEquals(unmarshalled.field("date"), now);
-  }*/
+  }
 
   @Test
   public void shouldDeserializeFieldWithCurlyBraces() {

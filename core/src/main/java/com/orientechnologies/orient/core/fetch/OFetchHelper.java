@@ -439,18 +439,18 @@ public class OFetchHelper {
       final OFetchContext iContext,
       final String iFormat)
       throws IOException {
-
-    if (record == null) return;
-
-    if (!iListener.requireFieldProcessing() && iFetchPlan == OFetchHelper.DEFAULT_FETCHPLAN) return;
+    if (record == null) {
+      return;
+    }
+    if (!iListener.requireFieldProcessing() && iFetchPlan == OFetchHelper.DEFAULT_FETCHPLAN) {
+      return;
+    }
+    iContext.onBeforeFetch(record);
 
     Object fieldValue;
-
-    iContext.onBeforeFetch(record);
-    Set<String> toRemove = new HashSet<String>();
-
-    for (String fieldName : record.getPropertyNames()) {
-      String fieldPath =
+    final Set<String> toRemove = new HashSet<>();
+    for (final String fieldName : record.getPropertyNames()) {
+      final String fieldPath =
           !iFieldPathFromRoot.isEmpty() ? iFieldPathFromRoot + "." + fieldName : fieldName;
       int depthLevel;
       depthLevel = getDepthLevel(iFetchPlan, fieldPath, iCurrentLevel);
@@ -461,20 +461,19 @@ public class OFetchHelper {
       if (iFieldDepthLevel > -1) depthLevel = iFieldDepthLevel;
 
       fieldValue = ODocumentInternal.getRawProperty(record, fieldName);
-      OType fieldType = record.fieldType(fieldName);
-
+      final OType fieldType = record.fieldType(fieldName);
       boolean fetch =
           !iFormat.contains("shallow")
               && (!(fieldValue instanceof OIdentifiable)
                   || depthLevel == -1
                   || iCurrentLevel <= depthLevel
                   || (iFetchPlan != null && iFetchPlan.has(fieldPath, iCurrentLevel)));
-
       final boolean isEmbedded = isEmbedded(fieldValue);
 
-      if (!fetch && isEmbedded && iContext.fetchEmbeddedDocuments())
+      if (!fetch && isEmbedded && iContext.fetchEmbeddedDocuments()) {
         // EMBEDDED, GO DEEPER
         fetch = true;
+      }
 
       if (iFormat.contains("shallow")
           || fieldValue == null
@@ -496,7 +495,6 @@ public class OFetchHelper {
         try {
           if (fetch) {
             final int nextLevel = isEmbedded ? iLevelFromRoot : iLevelFromRoot + 1;
-
             fetch(
                 record,
                 iUserObject,
@@ -512,14 +510,13 @@ public class OFetchHelper {
                 iListener,
                 iContext);
           }
-
-        } catch (Exception e) {
+        } catch (final Exception e) {
           OLogManager.instance()
               .error(null, "Fetching error on record %s", e, record.getIdentity());
         }
       }
     }
-    for (String fieldName : toRemove) {
+    for (final String fieldName : toRemove) {
       iListener.skipStandardField(record, fieldName, iContext, iUserObject, iFormat);
     }
     iContext.onAfterFetch(record);
