@@ -2,6 +2,8 @@
 
 To run ITs on Kubernetes you need to have kubectl installed, and you must provide a kubeconfig file. Make sure the installed kubectl is [compatible](https://kubernetes.io/docs/setup/release/version-skew-policy/#kubectl) with the Kubernetes cluster.
 
+> Only few ITs can be run on Kubernetes due to development effort, but mostly due to a requied running `OServer` instances.
+
 To run the integration tests on Kubernetes you must use the Maven `it-k8s` build profile.
 
 Run a single test (e.g. on OrientDB 3.1.3):
@@ -23,8 +25,6 @@ OrientDB Docker images before 3.1.3 do not support node discovery on Kubernetes 
 Volume size and storage classes used for the PVs, can also be configured via the `it-k8s` build profile properties.
 
 Please note that due to issues that the official Kuberbenetes Java client has with some versions of JDK8 (broken pipe error), you should use JDK9 or later to run the tests. 
-
-> Only few ITs can be run on Kubernetes due to development effort, but mostly due to a requied running `OServer` instances.
 
 **Next steps**
 
