@@ -23,3 +23,9 @@ OrientDB Docker images before 3.1.3 do not support node discovery on Kubernetes 
 Volume size and storage classes used for the PVs, can also be configured via the `it-k8s` build profile properties.
 
 Please note that due to issues that the official Kuberbenetes Java client has with some versions of JDK8 (broken pipe error), you should use JDK9 or later to run the tests. 
+
+> Only few ITs can be run on Kubernetes due to development effort, but mostly due to a requied running `OServer` instances.
+
+**Next steps**
+
+- Use the Kubernetes setup for more sophisticated tests of `distributed`, e.g., add delays.
