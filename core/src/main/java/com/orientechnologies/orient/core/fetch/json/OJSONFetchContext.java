@@ -41,8 +41,8 @@ public class OJSONFetchContext implements OFetchContext {
 
   protected final OJSONWriter jsonWriter;
   protected final FormatSettings settings;
-  protected final Stack<StringBuilder> typesStack = new Stack<StringBuilder>();
-  protected final Stack<ODocument> collectionStack = new Stack<ODocument>();
+  protected final Stack<StringBuilder> typesStack = new Stack<>();
+  protected final Stack<ODocument> collectionStack = new Stack<>();
 
   public OJSONFetchContext(final OJSONWriter iJsonWriter, final FormatSettings iSettings) {
     jsonWriter = iJsonWriter;
