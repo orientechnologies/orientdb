@@ -172,8 +172,11 @@ public class OETLProcessor {
   public void execute() {
     configure();
     begin();
-    runExtractorAndPipeline();
-    end();
+    try {
+    	runExtractorAndPipeline();
+    } finally {
+    	end();
+    }
   }
 
   private void configure() {}
