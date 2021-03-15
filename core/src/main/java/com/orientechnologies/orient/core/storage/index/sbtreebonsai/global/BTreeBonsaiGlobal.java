@@ -28,21 +28,19 @@ public class BTreeBonsaiGlobal implements OSBTreeBonsai<OIdentifiable, Integer> 
   private final BTree bTree;
   private final int intFileId;
   private final long ridBagId;
-  private final int clusterId;
+
 
   private final OBinarySerializer<OIdentifiable> keySerializer;
   private final OBinarySerializer<Integer> valueSerializer;
 
   public BTreeBonsaiGlobal(
-      final BTree bTree,
-      final int intFileId,
-      int clusterId,
-      final long ridBagId,
-      OBinarySerializer<OIdentifiable> keySerializer,
-      OBinarySerializer<Integer> valueSerializer) {
+          final BTree bTree,
+          final int intFileId,
+          final long ridBagId,
+          OBinarySerializer<OIdentifiable> keySerializer,
+          OBinarySerializer<Integer> valueSerializer) {
     this.bTree = bTree;
     this.intFileId = intFileId;
-    this.clusterId = clusterId;
     this.ridBagId = ridBagId;
     this.keySerializer = keySerializer;
     this.valueSerializer = valueSerializer;
@@ -60,7 +58,7 @@ public class BTreeBonsaiGlobal implements OSBTreeBonsai<OIdentifiable, Integer> 
 
   @Override
   public OBonsaiBucketPointer getRootBucketPointer() {
-    return new OBonsaiBucketPointer(ridBagId, clusterId);
+    return new OBonsaiBucketPointer(ridBagId, 0);
   }
 
   @Override
@@ -335,10 +333,6 @@ public class BTreeBonsaiGlobal implements OSBTreeBonsai<OIdentifiable, Integer> 
     while (iterator.hasNext() && cont) {
       cont = consumer.apply(iterator.next());
     }
-  }
-
-  public static boolean isGlobalPointer(final OBonsaiCollectionPointer collectionPointer) {
-    return (collectionPointer.getFileId() & (1L << 32)) != 0;
   }
 
   private static List<Integer> streamToList(
