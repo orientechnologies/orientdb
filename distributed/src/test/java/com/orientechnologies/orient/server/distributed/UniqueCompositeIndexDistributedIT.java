@@ -66,6 +66,32 @@ public class UniqueCompositeIndexDistributedIT {
     }
   }
 
+  @Test
+  public void testUniqueInQuorum() throws InterruptedException {
+    OElement doc = session.newElement("test");
+    doc.setProperty("test", "1");
+    doc.setProperty("testa", "2");
+    doc = session.save(doc);
+    session.begin();
+    session.delete(doc.getIdentity());
+
+    setup.shutdownServer(SimpleDServerConfig.SERVER2);
+
+    Thread.sleep(1000);
+    OElement doc1 = session.newElement("test");
+    doc1.setProperty("test", "1");
+    doc1.setProperty("testa", "2");
+    doc1 = session.save(doc1);
+    session.commit();
+
+    try (OResultSet res = session.query("select from test")) {
+      assertTrue(res.hasNext());
+      assertEquals(res.next().getIdentity().get(), doc1.getIdentity());
+    }
+
+    setup.startServer(SimpleDServerConfig.SERVER2);
+  }
+
   @After
   public void after() throws InterruptedException {
     try {
