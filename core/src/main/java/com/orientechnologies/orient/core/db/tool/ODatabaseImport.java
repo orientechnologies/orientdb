@@ -126,6 +126,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   private Set<String> indexesToRebuild = new HashSet<>();
   private Map<String, String> convertedClassNames = new HashMap<>();
 
+  private Map<Integer, Integer> clusterToClusterMapping = new HashMap<>();
+
   private int maxRidbagStringSizeBeforeLazyImport = 100_000_000;
 
   public ODatabaseImport(
@@ -687,6 +689,11 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           classDefClusterId = Integer.parseInt(next);
         } else classDefClusterId = database.getDefaultClusterId();
 
+        int realClassDefClusterId = classDefClusterId;
+        if (!clusterToClusterMapping.isEmpty()
+            && clusterToClusterMapping.get(classDefClusterId) != null) {
+          realClassDefClusterId = clusterToClusterMapping.get(classDefClusterId);
+        }
         String classClusterIds =
             jsonReader
                 .readNext(OJSONReader.FIELD_ASSIGNMENT)
@@ -710,15 +717,15 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         OClassImpl cls = (OClassImpl) database.getMetadata().getSchema().getClass(className);
 
         if (cls != null) {
-          if (cls.getDefaultClusterId() != classDefClusterId)
-            cls.setDefaultClusterId(classDefClusterId);
+          if (cls.getDefaultClusterId() != realClassDefClusterId)
+            cls.setDefaultClusterId(realClassDefClusterId);
         } else if (clustersImported) {
           cls =
               (OClassImpl)
                   database
                       .getMetadata()
                       .getSchema()
-                      .createClass(className, new int[] {classDefClusterId});
+                      .createClass(className, new int[] {realClassDefClusterId});
         } else if (className.equalsIgnoreCase("ORestricted")) {
           cls = (OClassImpl) database.getMetadata().getSchema().createAbstractClass(className);
         } else {
@@ -731,7 +738,13 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
           // ASSIGN OTHER CLUSTER IDS
           for (int i : OStringSerializerHelper.splitIntArray(classClusterIds)) {
-            if (i != -1) cls.addClusterId(i);
+            if (i != -1) {
+              if (!clusterToClusterMapping.isEmpty()
+                  && clusterToClusterMapping.get(classDefClusterId) != null) {
+                i = clusterToClusterMapping.get(i);
+              }
+              cls.addClusterId(i);
+            }
           }
         }
 
@@ -976,9 +989,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           }
         }
 
-      int id;
+      int clusterIdFromJson;
       if (exporterVersion < 9) {
-        id =
+        clusterIdFromJson =
             jsonReader
                 .readNext(OJSONReader.FIELD_ASSIGNMENT)
                 .checkContent("\"id\"")
@@ -989,7 +1002,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
                 .checkContent("\"type\"")
                 .readString(OJSONReader.NEXT_IN_OBJECT);
       } else
-        id =
+        clusterIdFromJson =
             jsonReader
                 .readNext(OJSONReader.FIELD_ASSIGNMENT)
                 .checkContent("\"id\"")
@@ -1016,48 +1029,55 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       listener.onMessage(
           "\n- Creating cluster " + (name != null ? "'" + name + "'" : "NULL") + "...");
 
-      int clusterId = name != null ? database.getClusterIdByName(name) : -1;
-      if (clusterId == -1) {
+      int createdClusterId = name != null ? database.getClusterIdByName(name) : -1;
+      if (createdClusterId == -1) {
         // CREATE IT
-        if (!preserveClusterIDs) clusterId = database.addCluster(name);
-        else {
-          clusterId = database.addCluster(name, id, null);
-          assert clusterId == id;
+        if (!preserveClusterIDs) createdClusterId = database.addCluster(name);
+        else if (getDatabase().getClusterNameById(clusterIdFromJson) == null) {
+          createdClusterId = database.addCluster(name, clusterIdFromJson, null);
+          assert createdClusterId == clusterIdFromJson;
+        } else {
+          createdClusterId = database.addCluster(name);
+          listener.onMessage(
+              "\n- WARNING cluster with id " + clusterIdFromJson + " already exists");
         }
       }
 
-      if (clusterId != id) {
+      if (createdClusterId != clusterIdFromJson) {
         if (!preserveClusterIDs) {
-          if (database.countClusterElements(clusterId - 1) == 0) {
+          if (database.countClusterElements(createdClusterId - 1) == 0) {
             listener.onMessage("Found previous version: migrating old clusters...");
             database.dropCluster(name);
-            database.addCluster("temp_" + clusterId, null);
-            clusterId = database.addCluster(name);
+            database.addCluster("temp_" + createdClusterId, null);
+            createdClusterId = database.addCluster(name);
           } else
             throw new OConfigurationException(
                 "Imported cluster '"
                     + name
                     + "' has id="
-                    + clusterId
+                    + createdClusterId
                     + " different from the original: "
-                    + id
+                    + clusterIdFromJson
                     + ". To continue the import drop the cluster '"
-                    + database.getClusterNameById(clusterId - 1)
+                    + database.getClusterNameById(createdClusterId - 1)
                     + "' that has "
-                    + database.countClusterElements(clusterId - 1)
+                    + database.countClusterElements(createdClusterId - 1)
                     + " records");
         } else {
 
-          final OClass clazz = database.getMetadata().getSchema().getClassByClusterId(clusterId);
+          final OClass clazz =
+              database.getMetadata().getSchema().getClassByClusterId(createdClusterId);
           if (clazz != null && clazz instanceof OClassEmbedded)
-            ((OClassEmbedded) clazz).removeClusterId(clusterId, true);
+            ((OClassEmbedded) clazz).removeClusterId(createdClusterId, true);
 
-          database.dropCluster(clusterId);
-          database.addCluster(name, id, null);
+          database.dropCluster(createdClusterId);
+          createdClusterId = database.addCluster(name, clusterIdFromJson, null);
         }
       }
 
-      listener.onMessage("OK, assigned id=" + clusterId);
+      clusterToClusterMapping.put(clusterIdFromJson, createdClusterId);
+
+      listener.onMessage("OK, assigned id=" + createdClusterId + ", was " + clusterIdFromJson);
 
       total++;
 
