@@ -452,9 +452,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           stateLock.releaseWriteLock();
         }
 
+        //we need to use read lock to allow for example correctly truncate WAL during data processing
+        //all operations are prohibited on storage because of usage of special status.
         stateLock.acquireReadLock();
         try {
           if (status != STATUS.MIGRATION) {
+            OLogManager.instance().errorStorage(
+                    this, "Unexpected storage status %s, process of creation of storage is aborted", null, status.name());
             return;
           }
 
@@ -466,6 +470,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         stateLock.acquireWriteLock();
         try {
           if (status != STATUS.MIGRATION) {
+            OLogManager.instance().errorStorage(
+                    this, "Unexpected storage status %s, process of creation of storage is aborted", null, status.name());
             return;
           }
 
@@ -500,8 +506,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         status = STATUS.CLOSED;
         throw e;
-      } finally {
-        stateLock.releaseWriteLock();
       }
     } catch (final RuntimeException ee) {
       throw logAndPrepareForRethrow(ee);
