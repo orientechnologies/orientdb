@@ -56,7 +56,7 @@ public class ODistributedMomentum implements OStreamable {
       if (embedded == null) return null;
 
       return new OLogSequenceNumber(
-          (Long) embedded.field("segment"), (Integer) embedded.field("position"));
+          (Long) embedded.field("segment"), ((Number) embedded.field("position")).intValue());
     }
   }
 

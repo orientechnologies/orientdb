@@ -19,8 +19,8 @@
     <parent>
         <groupId>com.orientechnologies</groupId>
         <artifactId>orientdb-parent</artifactId>
-        <version>3.1.10-SNAPSHOT</version>
-        <relativePath>../pom.xml</relativePath>
+        <version>3.1.11-SNAPSHOT</version>
+        <relativePath>../</relativePath>
     </parent>
 
     <artifactId>orientdb-core</artifactId>
@@ -270,6 +270,12 @@
             <artifactId>javax.activation-api</artifactId>
             <version>1.2.0</version>
         </dependency>
+        <dependency>
+            <groupId>org.eclipse.collections</groupId>
+            <artifactId>eclipse-collections-api</artifactId>
+            <version>10.4.0</version>
+        </dependency>
+
         <dependency>
             <groupId>org.eclipse.collections</groupId>
             <artifactId>eclipse-collections-api</artifactId>
