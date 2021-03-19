@@ -75,7 +75,6 @@ public class JSONTestBenchmark extends DocumentDBBaseTest {
     }
 
     final Chart chart = createChart("", getParam(scaleResults, "scaleName"), getParam(scaleResults, "scaleUnit"));
-
     for (final String seriesName : yData.keySet()) {
       final ScaleSeriesBundle currentSeries = new ScaleSeriesBundle(seriesName,xData,yData.get(seriesName), null, errorData.get(seriesName), true);
       allData.add(currentSeries);
