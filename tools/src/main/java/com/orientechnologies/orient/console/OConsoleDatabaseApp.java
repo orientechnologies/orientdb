@@ -62,6 +62,7 @@ import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImportException;
 import com.orientechnologies.orient.core.db.tool.ODatabaseRepair;
 import com.orientechnologies.orient.core.db.tool.OGraphRepair;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORetryQueryException;
@@ -84,7 +85,6 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
-import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
@@ -1994,7 +1994,7 @@ public class OConsoleDatabaseApp extends OrientConsole
         final ODocument row = new ODocument();
         resultSet.add(row);
 
-        final long indexSize = index.getInternal().size();
+        final long indexSize = index.getSize(); // getInternal doesn't work in remote...
         totalIndexedRecords += indexSize;
 
         row.field("NAME", index.getName());
@@ -3038,7 +3038,7 @@ public class OConsoleDatabaseApp extends OrientConsole
    * console command to open a db
    *
    * <p>usage: <code>
-   *   open dbName dbUser dbPwd
+   * open dbName dbUser dbPwd
    * </code>
    *
    * @param dbName
@@ -3097,11 +3097,15 @@ public class OConsoleDatabaseApp extends OrientConsole
           setResultset(result);
           dumpResultSet(displayLimit);
           return RESULT.OK;
-        } catch (OCommandSQLParsingException parseEx) {
-          return RESULT.NOT_EXECUTED;
-        } catch (Exception e) {
+        } catch (OCommandExecutionException e) {
           printError(e);
           return RESULT.ERROR;
+        } catch (Exception e) {
+          if (e.getCause() instanceof OCommandExecutionException) {
+            printError(e);
+            return RESULT.ERROR;
+          }
+          return RESULT.NOT_EXECUTED;
         }
       }
     }
@@ -3112,11 +3116,11 @@ public class OConsoleDatabaseApp extends OrientConsole
    * console command to open an OrientDB context
    *
    * <p>usage: <code>
-   *   connect env URL serverUser serverPwd
+   * connect env URL serverUser serverPwd
    * </code> eg. <code>
-   *   connect env remote:localhost root root
-   *
-   *   connect env embedded:. root root
+   * connect env remote:localhost root root
+   * <p>
+   * connect env embedded:. root root
    *
    * </code>
    *
