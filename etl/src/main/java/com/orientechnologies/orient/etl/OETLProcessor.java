@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.block.OETLBlock;
+import com.orientechnologies.orient.etl.context.OETLContext;
 import com.orientechnologies.orient.etl.context.OETLContextWrapper;
 import com.orientechnologies.orient.etl.extractor.OETLExtractor;
 import com.orientechnologies.orient.etl.loader.OETLLoader;
@@ -61,7 +62,7 @@ public class OETLProcessor {
   protected OETLSource source;
   protected OETLExtractor extractor;
   protected OETLLoader loader;
-  protected OCommandContext context;
+  protected OETLContext context;
   protected long startTime;
   protected long elapsed;
   protected TimerTask dumpTask;
@@ -89,7 +90,7 @@ public class OETLProcessor {
       final List<OETLTransformer> iTransformers,
       final OETLLoader iLoader,
       final List<OETLBlock> iEndBlocks,
-      final OCommandContext iContext) {
+      final OETLContext iContext) {
     beginBlocks = iBeginBlocks;
     source = iSource;
     extractor = iExtractor;
@@ -105,7 +106,7 @@ public class OETLProcessor {
     configRunBehaviour(context);
 
     // Context setting
-    OETLContextWrapper.newInstance().setContext(context);
+    OETLContextWrapper.getInstance().setContext(context);
   }
 
   public static void main(final String[] args) {
@@ -165,7 +166,7 @@ public class OETLProcessor {
     return logLevel;
   }
 
-  public OCommandContext getContext() {
+  public OETLContext getContext() {
     return context;
   }
 
@@ -190,7 +191,7 @@ public class OETLProcessor {
   private void runExtractorAndPipeline() {
     try {
 
-      OETLContextWrapper.getInstance()
+      getContext()
           .getMessageHandler()
           .info(this, "Started execution with %d worker threads", workers);
       extractor.extract(source.read());
@@ -217,13 +218,13 @@ public class OETLProcessor {
 
       futures.forEach(cf -> cf.join());
 
-      OETLContextWrapper.getInstance().getMessageHandler().debug(this, "all items extracted");
+      getContext().getMessageHandler().debug(this, "all items extracted");
       executor.shutdown();
     } catch (OETLProcessHaltedException e) {
-      OETLContextWrapper.getInstance().getMessageHandler().error(this, "ETL process halted: ", e);
+      getContext().getMessageHandler().error(this, "ETL process halted: ", e);
       executor.shutdownNow();
     } catch (Exception e) {
-      OETLContextWrapper.getInstance()
+      getContext()
           .getMessageHandler()
           .error(this, "ETL process has problem: ", e);
       executor.shutdownNow();
@@ -232,7 +233,7 @@ public class OETLProcessor {
   }
 
   protected void begin() {
-    OETLContextWrapper.getInstance().getMessageHandler().info(this, "BEGIN ETL PROCESSOR");
+    getContext().getMessageHandler().info(this, "BEGIN ETL PROCESSOR");
     final Integer cfgMaxRetries = (Integer) context.getVariable("maxRetries");
     if (cfgMaxRetries != null) maxRetries = cfgMaxRetries;
 
@@ -278,7 +279,7 @@ public class OETLProcessor {
       dumpTask.cancel();
     }
 
-    OETLContextWrapper.getInstance().getMessageHandler().info(this, "END ETL PROCESSOR");
+    getContext().getMessageHandler().info(this, "END ETL PROCESSOR");
     dumpProgress();
   }
 
@@ -300,7 +301,7 @@ public class OETLProcessor {
         extractorTotal > -1 ? String.format("%,d", extractorTotal) : "?";
 
     if (extractorTotal == -1) {
-      OETLContextWrapper.getInstance()
+      getContext()
           .getMessageHandler()
           .info(
               this,
@@ -322,7 +323,7 @@ public class OETLProcessor {
     } else {
       float extractorPercentage = ((float) extractorProgress * 100 / extractorTotal);
 
-      OETLContextWrapper.getInstance()
+      getContext()
           .getMessageHandler()
           .info(
               this,

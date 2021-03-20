@@ -51,7 +51,7 @@ public class OETLProcessorConfigurator {
     this.factory = factory;
   }
 
-  protected OCommandContext createDefaultContext(OrientDB orientDB) {
+  protected OETLContext createDefaultContext(OrientDB orientDB) {
     final OETLContext context = new OETLContext();
     if (orientDB != null) {
       context.registerOrientDB(orientDB);
@@ -60,7 +60,7 @@ public class OETLProcessorConfigurator {
     return context;
   }
 
-  protected OCommandContext createDefaultContext() {
+  protected OETLContext createDefaultContext() {
     return createDefaultContext(null);
   }
 
@@ -70,7 +70,7 @@ public class OETLProcessorConfigurator {
 
   public OETLProcessor parseConfigAndParametersWithContext(OrientDB orientDB, String[] args) {
 
-    final OCommandContext context = createDefaultContext(orientDB);
+    final OETLContext context = createDefaultContext(orientDB);
 
     ODocument configuration = new ODocument().fromJSON("{}");
     for (final String arg : args) {
@@ -103,7 +103,7 @@ public class OETLProcessorConfigurator {
     return parse(configuration, context);
   }
 
-  public OETLProcessor parse(final ODocument cfg, final OCommandContext context) {
+  public OETLProcessor parse(final ODocument cfg, final OETLContext context) {
 
     // setup contex vars
 

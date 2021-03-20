@@ -95,7 +95,7 @@ public class OETLPipeline {
         for (OETLTransformer t : transformers) {
           current = t.transform(db, current);
           if (current == null) {
-            OETLContextWrapper.getInstance()
+            processor.getContext()
                 .getMessageHandler()
                 .warn(this, "Transformer [%s] returned null, skip rest of pipeline execution", t);
           }
@@ -110,7 +110,7 @@ public class OETLPipeline {
       } catch (ONeedRetryException e) {
         loader.rollback(db);
         retry++;
-        OETLContextWrapper.getInstance()
+        processor.getContext()
             .getMessageHandler()
             .info(
                 this,
@@ -119,7 +119,7 @@ public class OETLPipeline {
                 maxRetries,
                 e);
       } catch (OETLProcessHaltedException e) {
-        OETLContextWrapper.getInstance()
+        processor.getContext()
             .getMessageHandler()
             .error(this, "Pipeline execution halted");
 
@@ -129,7 +129,7 @@ public class OETLPipeline {
         throw e;
 
       } catch (Exception e) {
-        OETLContextWrapper.getInstance()
+        processor.getContext()
             .getMessageHandler()
             .error(this, "Error in Pipeline execution:", e);
 

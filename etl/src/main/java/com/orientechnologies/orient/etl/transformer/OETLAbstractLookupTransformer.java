@@ -72,7 +72,7 @@ public abstract class OETLAbstractLookupTransformer extends OETLAbstractTransfor
         else {
           index = db.getMetadata().getIndexManagerInternal().getIndex(db, lookup);
           if (index == null) {
-            OETLContextWrapper.getInstance()
+            getContext()
                 .getMessageHandler()
                 .warn(this, "WARNING: index %s not found. Lookups could be really slow", lookup);
             final String[] parts = lookup.split("\\.");

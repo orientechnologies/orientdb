@@ -147,7 +147,7 @@ public class OETLFileSource extends OETLAbstractSource {
       try {
         lock = channel.lock();
       } catch (IOException e) {
-        OETLContextWrapper.getInstance()
+        getContext()
             .getMessageHandler()
             .error(this, "Error on locking file: %s", e, fileName);
       }

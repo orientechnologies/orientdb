@@ -122,7 +122,7 @@ public class OETLOrientDBLoader extends OETLAbstractLoader implements OETLLoader
       } else if (doc.getClassName() != null) {
         db.save(doc);
       } else {
-        OETLContextWrapper.getInstance()
+        getContext()
             .getMessageHandler()
             .debug(
                 this,
@@ -131,7 +131,7 @@ public class OETLOrientDBLoader extends OETLAbstractLoader implements OETLLoader
       }
 
     } else {
-      OETLContextWrapper.getInstance()
+      getContext()
           .getMessageHandler()
           .error(this, "input type not supported::  %s", input.getClass());
     }
