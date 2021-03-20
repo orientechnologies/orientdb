@@ -67,9 +67,9 @@ public class OETLPipeline {
     loader.beginLoader(this);
     for (OETLTransformer transformer : transformers) {
       transformer.setContext(context);
-      ODatabaseDocument db = pool.acquire();
-      transformer.begin(db);
-      db.close();
+      try(ODatabaseDocument db = acquire()) {
+        transformer.begin(db);
+      }
     }
   }
 
@@ -80,12 +80,18 @@ public class OETLPipeline {
   public OCommandContext getContext() {
     return context;
   }
+  
+  protected ODatabaseDocument acquire() {
+	  if(pool==null) return null;
+	  ODatabaseDocument db = pool.acquire();
+	  db.activateOnCurrentThread();
+	  return db;
+  }
 
   protected Object execute(final OETLExtractedItem source) {
     int retry = 0;
     do {
-      ODatabaseDocument db = pool.acquire();
-      db.activateOnCurrentThread();
+      try(ODatabaseDocument db = acquire()) {
       try {
         Object current = source.payload;
 
@@ -142,8 +148,7 @@ public class OETLPipeline {
         loader.rollback(db);
         throw OException.wrapException(new OETLProcessHaltedException("Halt"), e);
 
-      } finally {
-        db.close();
+      }
       }
     } while (retry < maxRetries);
 
