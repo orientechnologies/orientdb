@@ -1,6 +1,5 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -230,7 +229,8 @@ public class OrientGraphTxTest extends OrientGraphBaseTest {
   public void testOrientDBTX() {
 
     OrientDB orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
-    orientDB.create("testTX", ODatabaseType.MEMORY);
+    orientDB.execute(
+        "create database testTX memory users (admin identified by 'admin' role admin)");
     ODatabaseDocument db = orientDB.open("testTX", "admin", "admin");
 
     db.begin();

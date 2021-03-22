@@ -3,7 +3,6 @@ package org.apache.tinkerpop.gremlin.orientdb;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import java.util.concurrent.ThreadLocalRandom;
@@ -17,7 +16,8 @@ public class OPartitionedReCreatableDatabasePoolTest {
 
     String dbName = "memorydb" + ThreadLocalRandom.current().nextInt(Integer.MAX_VALUE);
 
-    orientDB.create(dbName, ODatabaseType.MEMORY);
+    orientDB.execute(
+        "create database " + dbName + " memory users(admin identified by 'admin' role admin)");
 
     return new OPartitionedReCreatableDatabasePool(orientDB, dbName, "admin", "admin", 5);
   }
