@@ -49,7 +49,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 
 /** ETL Loader that saves record into OrientDB database. */
-public class OETLOrientDBLoader extends OETLAbstractLoader implements OETLLoader {
+public class OETLOrientDBLoader extends OETLAbstractLoader {
 
   private static String NOT_DEF = "not_defined";
   public ODatabasePool pool;
