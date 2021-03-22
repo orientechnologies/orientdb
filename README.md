@@ -22,6 +22,8 @@ Put JAR file into folder: \\\\mediaserver.wdf.sap.corp\UPLINBOX\ORIENTDB_30_EE a
 
 > Note for 3.1: https://launchpad.support.sap.com/#/notes/2915917
 
+> Note for 3.2: **TODO**
+
 ### CWB process
 
 > FA automation still WIP.
