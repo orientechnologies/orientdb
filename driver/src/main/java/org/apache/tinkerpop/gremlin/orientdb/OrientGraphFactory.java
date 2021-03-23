@@ -58,10 +58,20 @@ public final class OrientGraphFactory implements AutoCloseable, OrientGraphBaseF
     this(url, ADMIN, ADMIN);
   }
 
+  public OrientGraphFactory(String url, ODatabaseType type) {
+    this(url, ADMIN, ADMIN);
+    this.type = Optional.of(type);
+  }
+
   public OrientGraphFactory(String url, String user, String password) {
+    this(url, user, password, null);
+  }
+
+  public OrientGraphFactory(String url, String user, String password, ODatabaseType type) {
     this.user = user;
     this.password = password;
     this.labelAsClassName = true;
+    this.type = Optional.ofNullable(type);
     initConnectionParameters(url);
     factory =
         new OrientDB(

@@ -1,7 +1,5 @@
 package com.orientechnologies.tinkerpop;
 
-import com.orientechnologies.orient.core.db.ODatabaseType;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
@@ -44,8 +42,16 @@ public class AbstractRemoteTest {
     server.startup(stream);
     server.activate();
 
-    server.createDatabase(
-        name.getMethodName(), ODatabaseType.MEMORY, OrientDBConfig.defaultConfig());
+    server
+        .getDatabases()
+        .executeServerStatement(
+            "create database "
+                + name.getMethodName()
+                + " memory users (admin identified by 'admin' role admin,"
+                + "reader identified by 'reader' role reader,"
+                + "writer identified by 'writer' role writer )",
+            "root",
+            "root");
   }
 
   protected void installGremlinServer() {

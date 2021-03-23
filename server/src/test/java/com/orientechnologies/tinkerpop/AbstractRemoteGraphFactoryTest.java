@@ -1,5 +1,6 @@
 package com.orientechnologies.tinkerpop;
 
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import org.apache.tinkerpop.gremlin.orientdb.OrientGraphFactory;
 import org.junit.After;
 import org.junit.Before;
@@ -12,7 +13,9 @@ public abstract class AbstractRemoteGraphFactoryTest extends AbstractRemoteTest 
   @Before
   public void setup() throws Exception {
     super.setup();
-    factory = new OrientGraphFactory("remote:localhost/" + name.getMethodName());
+    factory =
+        new OrientGraphFactory(
+            "remote:localhost/" + name.getMethodName(), "root", "root", ODatabaseType.PLOCAL);
   }
 
   @After
