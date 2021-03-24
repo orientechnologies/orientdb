@@ -218,7 +218,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   protected static final OScheduledThreadPoolExecutorWithLogging fuzzyCheckpointExecutor;
 
-  protected OStorageInterruptionManager interruptionManager = new OStorageInterruptionManager();
+  public OStorageInterruptionManager interruptionManager = new OStorageInterruptionManager();
 
   static {
     fuzzyCheckpointExecutor =
