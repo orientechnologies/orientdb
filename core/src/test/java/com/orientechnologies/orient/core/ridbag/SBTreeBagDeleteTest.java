@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.ridbag;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.RID_BAG_SBTREEBONSAI_DELETE_DELAY;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -13,7 +14,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
-import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManagerShared;
+import java.util.Collections;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -58,10 +59,9 @@ public class SBTreeBagDeleteTest {
     assertNull(doc);
 
     Thread.sleep(100);
-    ((OSBTreeCollectionManagerShared) db.getSbTreeCollectionManager()).clear();
     OSBTreeBonsai<OIdentifiable, Integer> tree =
         db.getSbTreeCollectionManager().loadSBTree(pointer);
-    assertNull(tree);
+    assertEquals(0, tree.getRealBagSize(Collections.emptyMap()));
   }
 
   @Test
@@ -84,9 +84,9 @@ public class SBTreeBagDeleteTest {
     assertNull(doc);
 
     Thread.sleep(100);
-    ((OSBTreeCollectionManagerShared) db.getSbTreeCollectionManager()).clear();
+
     OSBTreeBonsai<OIdentifiable, Integer> tree =
         db.getSbTreeCollectionManager().loadSBTree(pointer);
-    assertNull(tree);
+    assertEquals(0, tree.getRealBagSize(Collections.emptyMap()));
   }
 }

@@ -27,6 +27,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 public final class BTree extends ODurableComponent {
+
   private static final int MAX_PATH_LENGTH =
       OGlobalConfiguration.SBTREE_MAX_DEPTH.getValueAsInteger();
 
@@ -38,6 +39,10 @@ public final class BTree extends ODurableComponent {
   public BTree(
       final OAbstractPaginatedStorage storage, final String name, final String fileExtension) {
     super(storage, name, fileExtension, name + fileExtension);
+  }
+
+  public long getFileId() {
+    return fileId;
   }
 
   public void create(final OAtomicOperation atomicOperation) {
@@ -69,7 +74,7 @@ public final class BTree extends ODurableComponent {
         });
   }
 
-  public void load(final String name) {
+  public void load() {
     acquireExclusiveLock();
     try {
       final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
@@ -77,7 +82,7 @@ public final class BTree extends ODurableComponent {
       fileId = openFile(atomicOperation, getFullName());
     } catch (final IOException e) {
       throw OException.wrapException(
-          new OStorageException("Exception during loading of rid bag " + name), e);
+          new OStorageException("Exception during loading of rid bag " + getFullName()), e);
     } finally {
       releaseExclusiveLock();
     }
@@ -129,10 +134,11 @@ public final class BTree extends ODurableComponent {
     }
   }
 
-  public void put(final OAtomicOperation atomicOperation, final EdgeKey key, final int value) {
-    executeInsideComponentOperation(
+  public boolean put(final OAtomicOperation atomicOperation, final EdgeKey key, final int value) {
+    return calculateInsideComponentOperation(
         atomicOperation,
         operation -> {
+          final boolean result;
           acquireExclusiveLock();
           try {
             final byte[] serializedKey =
@@ -147,8 +153,10 @@ public final class BTree extends ODurableComponent {
 
             if (bucketSearchResult.itemIndex > -1) {
               oldRawValue = keyBucket.getRawValue(bucketSearchResult.itemIndex);
+              result = false;
             } else {
               oldRawValue = null;
+              result = true;
             }
 
             final byte[] serializedValue =
@@ -163,10 +171,10 @@ public final class BTree extends ODurableComponent {
                 keyBucket.updateValue(
                     bucketSearchResult.itemIndex, serializedValue, serializedKey.length);
                 releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
-                return;
+                return false;
               } else {
                 keyBucket.removeLeafEntry(
-                    bucketSearchResult.itemIndex, serializedKey.length, serializedValue.length);
+                    bucketSearchResult.itemIndex, serializedKey.length, oldRawValue.length);
                 insertionIndex = bucketSearchResult.itemIndex;
                 sizeDiff = 0;
               }
@@ -208,6 +216,8 @@ public final class BTree extends ODurableComponent {
           } finally {
             releaseExclusiveLock();
           }
+
+          return result;
         });
   }
 
@@ -474,7 +484,7 @@ public final class BTree extends ODurableComponent {
         assert pageSize == getFilledUpTo(atomicOperation, fileId) - 1;
 
         rightBucketEntry = addPage(atomicOperation, fileId);
-        entryPoint.setPagesSize((int) rightBucketEntry.getPageIndex());
+        entryPoint.setPagesSize(rightBucketEntry.getPageIndex());
       }
     } finally {
       releasePageFromWrite(atomicOperation, entryPointCacheEntry);
@@ -515,8 +525,8 @@ public final class BTree extends ODurableComponent {
         int insertionIndex = itemPointers.get(itemPointers.size() - 2);
         while (!parentBucket.addNonLeafEntry(
             insertionIndex,
-            (int) pageIndex,
-            (int) rightBucketEntry.getPageIndex(),
+            pageIndex,
+            rightBucketEntry.getPageIndex(),
             EdgeKeySerializer.INSTANCE.serializeNativeAsWhole(separationKey, (Object[]) null),
             true)) {
           final UpdateBucketSearchResult bucketSearchResult =
@@ -607,7 +617,7 @@ public final class BTree extends ODurableComponent {
       } else {
         assert pageSize == filledUpTo - 1;
         leftBucketEntry = addPage(atomicOperation, fileId);
-        pageSize = (int) leftBucketEntry.getPageIndex();
+        pageSize = leftBucketEntry.getPageIndex();
       }
 
       if (pageSize < filledUpTo) {
@@ -616,7 +626,7 @@ public final class BTree extends ODurableComponent {
       } else {
         assert pageSize == filledUpTo;
         rightBucketEntry = addPage(atomicOperation, fileId);
-        pageSize = (int) rightBucketEntry.getPageIndex();
+        pageSize = rightBucketEntry.getPageIndex();
       }
 
       entryPoint.setPagesSize(pageSize);
@@ -657,8 +667,8 @@ public final class BTree extends ODurableComponent {
 
     bucketToSplit.addNonLeafEntry(
         0,
-        (int) leftBucketEntry.getPageIndex(),
-        (int) rightBucketEntry.getPageIndex(),
+        leftBucketEntry.getPageIndex(),
+        rightBucketEntry.getPageIndex(),
         EdgeKeySerializer.INSTANCE.serializeNativeAsWhole(separationKey, (Object[]) null),
         true);
 
@@ -1039,7 +1049,7 @@ public final class BTree extends ODurableComponent {
       OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
       try {
         Bucket bucket = new Bucket(cacheEntry);
-        if (lastLSN == null || bucket.getLSN().equals(lastLSN)) {
+        if (lastLSN == null || bucket.getLSN().equals(lastLSN) && atomicOperation == null) {
           while (true) {
             int bucketSize = bucket.size();
             if (itemIndex >= bucketSize) {
@@ -1241,7 +1251,7 @@ public final class BTree extends ODurableComponent {
       OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
       try {
         Bucket bucket = new Bucket(cacheEntry);
-        if (lastLSN == null || bucket.getLSN().equals(lastLSN)) {
+        if (lastLSN == null || bucket.getLSN().equals(lastLSN) && atomicOperation == null) {
           while (true) {
             if (itemIndex < 0) {
               pageIndex = (int) bucket.getLeftSibling();

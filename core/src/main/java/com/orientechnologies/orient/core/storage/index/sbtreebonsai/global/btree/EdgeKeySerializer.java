@@ -12,7 +12,7 @@ final class EdgeKeySerializer implements OBinarySerializer<EdgeKey> {
 
   @Override
   public int getObjectSize(EdgeKey object, Object... hints) {
-    return IntSerializer.INSTANCE.getObjectSize(object.ownerId)
+    return LongSerializer.getObjectSize(object.ridBagId)
         + IntSerializer.INSTANCE.getObjectSize(object.targetCluster)
         + LongSerializer.getObjectSize(object.targetPosition);
   }
@@ -23,7 +23,7 @@ final class EdgeKeySerializer implements OBinarySerializer<EdgeKey> {
   }
 
   private int doGetObjectSize(byte[] stream, int startPosition) {
-    int size = IntSerializer.INSTANCE.getObjectSize(stream, startPosition);
+    int size = LongSerializer.getObjectSize(stream, startPosition);
     size += IntSerializer.INSTANCE.getObjectSize(stream, startPosition);
     return size + LongSerializer.getObjectSize(stream, startPosition + size);
   }
@@ -34,8 +34,7 @@ final class EdgeKeySerializer implements OBinarySerializer<EdgeKey> {
   }
 
   private void doSerialize(EdgeKey object, byte[] stream, int startPosition) {
-    startPosition =
-        IntSerializer.INSTANCE.serializePrimitive(stream, startPosition, object.ownerId);
+    startPosition = LongSerializer.serialize(object.ridBagId, stream, startPosition);
     startPosition =
         IntSerializer.INSTANCE.serializePrimitive(stream, startPosition, object.targetCluster);
     LongSerializer.serialize(object.targetPosition, stream, startPosition);
@@ -47,7 +46,7 @@ final class EdgeKeySerializer implements OBinarySerializer<EdgeKey> {
   }
 
   private EdgeKey doDeserialize(byte[] stream, int startPosition) {
-    int ownerId = IntSerializer.INSTANCE.deserialize(stream, startPosition);
+    long ownerId = LongSerializer.deserialize(stream, startPosition);
     int size = LongSerializer.getObjectSize(stream, startPosition);
     startPosition += size;
 
@@ -97,14 +96,14 @@ final class EdgeKeySerializer implements OBinarySerializer<EdgeKey> {
 
   @Override
   public void serializeInByteBufferObject(EdgeKey object, ByteBuffer buffer, Object... hints) {
-    IntSerializer.INSTANCE.serializeInByteBufferObject(object.ownerId, buffer);
+    LongSerializer.serialize(object.ridBagId, buffer);
     IntSerializer.INSTANCE.serializeInByteBufferObject(object.targetCluster, buffer);
     LongSerializer.serialize(object.targetPosition, buffer);
   }
 
   @Override
   public EdgeKey deserializeFromByteBufferObject(ByteBuffer buffer) {
-    final int ownerId = IntSerializer.INSTANCE.deserializeFromByteBufferObject(buffer);
+    final long ownerId = LongSerializer.deserialize(buffer);
     final int targetCluster = IntSerializer.INSTANCE.deserializeFromByteBufferObject(buffer);
     final long targetPosition = LongSerializer.deserialize(buffer);
 
@@ -114,7 +113,7 @@ final class EdgeKeySerializer implements OBinarySerializer<EdgeKey> {
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
     final int position = buffer.position();
-    int size = IntSerializer.INSTANCE.getObjectSizeInByteBuffer(buffer);
+    int size = LongSerializer.getObjectSize(buffer);
     buffer.position(position + size);
 
     size += IntSerializer.INSTANCE.getObjectSizeInByteBuffer(buffer);
@@ -126,8 +125,7 @@ final class EdgeKeySerializer implements OBinarySerializer<EdgeKey> {
   @Override
   public EdgeKey deserializeFromByteBufferObject(
       ByteBuffer buffer, OWALChanges walChanges, int offset) {
-    int ownerId =
-        IntSerializer.INSTANCE.deserializeFromByteBufferObject(buffer, walChanges, offset);
+    long ownerId = LongSerializer.deserialize(buffer, walChanges, offset);
     int size = LongSerializer.getObjectSize(buffer, walChanges, offset);
     offset += size;
 
@@ -143,7 +141,7 @@ final class EdgeKeySerializer implements OBinarySerializer<EdgeKey> {
 
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
-    int size = IntSerializer.INSTANCE.getObjectSizeInByteBuffer(buffer, walChanges, offset);
+    int size = LongSerializer.getObjectSize(buffer, walChanges, offset);
     size += IntSerializer.INSTANCE.getObjectSizeInByteBuffer(buffer, walChanges, offset + size);
     return size + LongSerializer.getObjectSize(buffer, walChanges, offset + size);
   }

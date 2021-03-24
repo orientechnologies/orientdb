@@ -627,7 +627,6 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     }
   }
 
-  @Override
   public long size() {
     atomicOperationsManager.acquireReadLock(this);
     try {
@@ -659,6 +658,11 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     } finally {
       atomicOperationsManager.releaseReadLock(this);
     }
+  }
+
+  @Override
+  public boolean isEmpty() {
+    return size() == 0;
   }
 
   @Override
@@ -1825,7 +1829,6 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     }
   }
 
-  @Override
   public void markToDelete(final OAtomicOperation atomicOperation) {
     executeInsideComponentOperation(
         atomicOperation,

@@ -972,7 +972,10 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     ORidBag bag = new ORidBag();
     assertEmbedded(bag.isEmbedded());
 
-    Random random = new Random();
+    final long seed = System.nanoTime();
+    System.out.println("testMassiveChanges seed: " + seed);
+
+    Random random = new Random(seed);
     List<OIdentifiable> rids = new ArrayList<OIdentifiable>();
     document.field("bag", bag);
     document.save(database.getClusterNameById(database.getDefaultClusterId()));
@@ -1149,7 +1152,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(7);
     OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(-1);
 
-    if (database.isRemote()) {
+    if (database.getStorage() instanceof OStorageProxy) {
       OServerAdmin server =
           new OServerAdmin(database.getURL())
               .connect("root", ODatabaseHelper.getServerRootPassword());
@@ -1672,8 +1675,8 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
         final OIdentifiable rid = rids.remove(index);
         bag.remove(rid);
       } else {
-        final int positionIndex = rnd.nextInt(300);
-        final long position = positionIndex;
+        final long position;
+        position = rnd.nextInt(300);
 
         final ORecordId recordId = new ORecordId(1, position);
         rids.add(recordId);

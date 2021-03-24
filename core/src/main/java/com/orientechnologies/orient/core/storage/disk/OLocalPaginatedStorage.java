@@ -129,7 +129,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     OClusterPositionMap.DEF_EXTENSION,
     OSBTreeIndexEngine.DATA_FILE_EXTENSION,
     OIndexRIDContainer.INDEX_FILE_EXTENSION,
-    OSBTreeCollectionManagerShared.DEFAULT_EXTENSION,
+    OSBTreeCollectionManagerShared.FILE_EXTENSION,
     OSBTreeIndexEngine.NULL_BUCKET_FILE_EXTENSION,
     OClusterBasedStorageConfiguration.MAP_FILE_EXTENSION,
     OClusterBasedStorageConfiguration.DATA_FILE_EXTENSION,
