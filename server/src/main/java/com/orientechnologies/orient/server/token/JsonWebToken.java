@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.metadata.security.jwt.OJsonWebToken;
 import com.orientechnologies.orient.core.metadata.security.jwt.OJwtPayload;
 import com.orientechnologies.orient.core.metadata.security.jwt.OTokenHeader;
+import com.orientechnologies.orient.core.metadata.security.jwt.OrientJwtHeader;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**

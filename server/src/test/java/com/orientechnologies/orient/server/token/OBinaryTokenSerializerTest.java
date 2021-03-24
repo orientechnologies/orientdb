@@ -6,8 +6,10 @@ import static org.junit.Assert.assertNull;
 
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.server.binary.impl.OBinaryToken;
-import com.orientechnologies.orient.server.binary.impl.OBinaryTokenPayloadImpl;
+import com.orientechnologies.orient.core.metadata.security.binary.OBinaryToken;
+import com.orientechnologies.orient.core.metadata.security.binary.OBinaryTokenPayloadImpl;
+import com.orientechnologies.orient.core.metadata.security.binary.OBinaryTokenSerializer;
+import com.orientechnologies.orient.core.metadata.security.jwt.OrientJwtHeader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
