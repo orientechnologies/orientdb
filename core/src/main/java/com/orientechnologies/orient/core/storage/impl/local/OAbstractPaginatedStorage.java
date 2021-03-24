@@ -243,7 +243,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private int txProfilerInterval;
   private int txProfilerStackTraceMapThreshold;
 
-  protected OStorageInterruptionManager interruptionManager = new OStorageInterruptionManager();
+  public OStorageInterruptionManager interruptionManager = new OStorageInterruptionManager();
 
   static {
     fuzzyCheckpointExecutor = new OScheduledThreadPoolExecutorWithLogging(1, new FuzzyCheckpointThreadFactory());
