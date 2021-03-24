@@ -2025,7 +2025,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         // GET THE SHARED LOCK AND GET AN EXCLUSIVE LOCK AGAINST THE RECORD
         final Lock lock = recordVersionManager.acquireExclusiveLock(rid);
         try {
-          checkOpenness();
+          checkOpennessAndMigration();
           checkIfThreadIsBlocked();
 
           makeStorageDirty();
