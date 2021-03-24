@@ -49,7 +49,7 @@
             -Dstorage.diskCache.bufferSize=4096
             -Dindex.allowManualIndexes=false
             -Dsecurity.warningDefaultUsers=false
-            -Dsecurity.createDefaultUsers=false 
+            -Dsecurity.createDefaultUsers=false
         </argLine>
         <project.rootdir>${project.basedir}/../</project.rootdir>
     </properties>
