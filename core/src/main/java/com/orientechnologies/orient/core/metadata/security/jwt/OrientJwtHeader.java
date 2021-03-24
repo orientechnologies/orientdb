@@ -1,6 +1,4 @@
-package com.orientechnologies.orient.server.token;
-
-import com.orientechnologies.orient.core.metadata.security.jwt.OJwtHeader;
+package com.orientechnologies.orient.core.metadata.security.jwt;
 
 /**
  * Created by emrul on 28/09/2014.

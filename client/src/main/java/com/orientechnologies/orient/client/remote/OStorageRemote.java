@@ -298,7 +298,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
         // In case i do not have a token or i'm switching between server i've to execute a open operation.
         OStorageRemoteNodeSession nodeSession = session.getServerSession(network.getServerURL());
-        if (nodeSession == null || !nodeSession.isValid()) {
+        if (nodeSession == null || !nodeSession.isValid() && !session.isStickToSession()) {
+          if (nodeSession != null) {
+            session.removeServerSession(nodeSession.getServerURL());
+          }
           openRemoteDatabase(network);
           if (!network.tryLock())
             continue;

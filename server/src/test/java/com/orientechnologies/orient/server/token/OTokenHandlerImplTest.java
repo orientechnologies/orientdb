@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.metadata.security.jwt.OJwtHeader;
 import com.orientechnologies.orient.core.metadata.security.jwt.OJwtPayload;
+import com.orientechnologies.orient.core.metadata.security.jwt.OrientJwtHeader;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
 import org.junit.Before;
 import org.junit.Ignore;
