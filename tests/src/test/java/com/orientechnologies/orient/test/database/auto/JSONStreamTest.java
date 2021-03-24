@@ -234,7 +234,7 @@ public class JSONStreamTest extends DocumentDBBaseTest {
     Assert.assertEquals(loadedMap.size(), 0);
   }
 
-  // FIXME: date / time handling
+  // TODO: "@fieldTypes":"date=t,byte=b,long=l"
   /*@Test
   public void testMultiLevelTypes() throws IOException {
     final String oldDataTimeFormat = database.get(ODatabase.ATTRIBUTES.DATETIMEFORMAT).toString();
@@ -263,10 +263,12 @@ public class JSONStreamTest extends DocumentDBBaseTest {
       firstLevelDoc.field("doc", secondLevelDoc);
       secondLevelDoc.field("doc", thirdLevelDoc);
 
-      final String json = doc.toJSON();
-      ODocument loadedDoc =
+      // TODO: WIP move @fileTypes from end to signature:
+      // final String json = doc.toJSON();
+      final String json =
+          "{\"@type\":\"d\",\"@version\":0,\"@fieldTypes\":\"date=t,byte=b,long=l\",\"date\":\"2021-03-11 14:26:13:141\",\"byte\":12,\"doc\":{\"@type\":\"d\",\"@version\":0,\"@fieldTypes\":\"date=t,byte=b,long=l\",\"date\":\"2021-03-11 14:26:13:141\",\"byte\":13,\"doc\":{\"@type\":\"d\",\"@version\":0,\"@fieldTypes\":\"date=t,byte=b,long=l\",\"date\":\"2021-03-11 14:26:13:141\",\"byte\":14,\"doc\":{\"@type\":\"d\",\"@version\":0,\"@fieldTypes\":\"date=t,byte=b,long=l\",\"date\":\"2021-03-11 14:26:13:141\",\"byte\":15,\"long\":400000000000},\"long\":300000000000},\"long\":200000000000},\"long\":100000000000}";
+      final ODocument loadedDoc =
           new ODocument().fromJSON(new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
-
       Assert.assertTrue(doc.hasSameContentOf(loadedDoc));
       Assert.assertTrue(loadedDoc.field("long") instanceof Long);
       Assert.assertEquals(
@@ -1122,14 +1124,48 @@ public class JSONStreamTest extends DocumentDBBaseTest {
     Assert.assertTrue(traverseMap.isEmpty());
   }*/
 
-  // TODO: NPE
-  /*public void testJSONTxDoc() throws IOException {
-    if (!database.getMetadata().getSchema().existsClass("JSONTxDocOne"))
+  public void testJSONTxDocInsertOnly() throws IOException {
+    final String classNameOne = "JSONTxDocOneInsertOnly";
+    if (!database.getMetadata().getSchema().existsClass(classNameOne)) {
+      database.getMetadata().getSchema().createClass(classNameOne);
+    }
+    final String classNameTwo = "JSONTxDocTwoInsertOnly";
+    if (!database.getMetadata().getSchema().existsClass(classNameTwo)) {
+      database.getMetadata().getSchema().createClass(classNameTwo);
+    }
+    database.begin();
+    final ODocument eveDoc = new ODocument(classNameOne);
+    eveDoc.field("name", "eve");
+    eveDoc.save();
+
+    final ODocument nestedWithTypeD = new ODocument(classNameTwo);
+    final String jsonString =
+        "{\"@type\":\"d\",\"event_name\":\"world cup 2014\",\"admin\":[" + eveDoc.toJSON() + "]}";
+    nestedWithTypeD.fromJSON(new ByteArrayInputStream(jsonString.getBytes(StandardCharsets.UTF_8)));
+    nestedWithTypeD.save();
+    database.commit();
+    Assert.assertEquals(database.countClass(classNameOne), 1);
+
+    final Map<ORID, ODocument> contentMap = new HashMap<>();
+
+    final ODocument eve = new ODocument(classNameOne);
+    eve.field("name", "eve");
+    contentMap.put(eveDoc.getIdentity(), eve);
+
+    for (final ODocument document : database.browseClass(classNameOne)) {
+      final ODocument content = contentMap.get(document.getIdentity());
+      Assert.assertTrue(content.hasSameContentOf(document));
+    }
+  }
+
+  public void testJSONTxDoc() throws IOException {
+    if (!database.getMetadata().getSchema().existsClass("JSONTxDocOne")) {
       database.getMetadata().getSchema().createClass("JSONTxDocOne");
+    }
 
-    if (!database.getMetadata().getSchema().existsClass("JSONTxDocTwo"))
+    if (!database.getMetadata().getSchema().existsClass("JSONTxDocTwo")) {
       database.getMetadata().getSchema().createClass("JSONTxDocTwo");
-
+    }
     final ODocument adamDoc = new ODocument("JSONTxDocOne");
     adamDoc.field("name", "adam");
     adamDoc.save();
@@ -1164,7 +1200,7 @@ public class JSONStreamTest extends DocumentDBBaseTest {
       final ODocument content = contentMap.get(o.getIdentity());
       Assert.assertTrue(content.hasSameContentOf(o));
     }
-  }*/
+  }
 
   public void testInvalidLink() throws IOException {
     final ODocument nullRefDoc = new ODocument();

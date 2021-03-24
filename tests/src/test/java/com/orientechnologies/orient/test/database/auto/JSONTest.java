@@ -1239,6 +1239,36 @@ public class JSONTest extends DocumentDBBaseTest {
     Assert.assertTrue(traverseMap.isEmpty());
   }
 
+  public void testJSONTxDocInsertOnly() {
+    if (!database.getMetadata().getSchema().existsClass("JSONTxDocOne")) {
+      database.getMetadata().getSchema().createClass("JSONTxDocOne");
+    }
+    if (!database.getMetadata().getSchema().existsClass("JSONTxDocTwo")) {
+      database.getMetadata().getSchema().createClass("JSONTxDocTwo");
+    }
+    database.begin();
+    final ODocument eveDoc = new ODocument("JSONTxDocOne");
+    eveDoc.field("name", "eve");
+    eveDoc.save();
+
+    final ODocument nestedWithTypeD = new ODocument("JSONTxDocTwo");
+    nestedWithTypeD.fromJSON(
+        "{\"@type\":\"d\",\"event_name\":\"world cup 2014\",\"admin\":[" + eveDoc.toJSON() + "]}");
+    nestedWithTypeD.save();
+    database.commit();
+    Assert.assertEquals(database.countClass("JSONTxDocOne"), 1);
+
+    final Map<ORID, ODocument> contentMap = new HashMap<>();
+    final ODocument eve = new ODocument("JSONTxDocOne");
+    eve.field("name", "eve");
+    contentMap.put(eveDoc.getIdentity(), eve);
+
+    for (final ODocument document : database.browseClass("JSONTxDocOne")) {
+      final ODocument content = contentMap.get(document.getIdentity());
+      Assert.assertTrue(content.hasSameContentOf(document));
+    }
+  }
+
   public void testJSONTxDoc() {
     if (!database.getMetadata().getSchema().existsClass("JSONTxDocOne"))
       database.getMetadata().getSchema().createClass("JSONTxDocOne");
@@ -1255,7 +1285,7 @@ public class JSONTest extends DocumentDBBaseTest {
     eveDoc.field("name", "eve");
     eveDoc.save();
 
-    ODocument nestedWithTypeD = new ODocument("JSONTxDocTwo");
+    final ODocument nestedWithTypeD = new ODocument("JSONTxDocTwo");
     nestedWithTypeD.fromJSON(
         "{\"@type\":\"d\",\"event_name\":\"world cup 2014\",\"admin\":["
             + eveDoc.toJSON()
@@ -1268,7 +1298,7 @@ public class JSONTest extends DocumentDBBaseTest {
 
     Assert.assertEquals(database.countClass("JSONTxDocOne"), 2);
 
-    Map<ORID, ODocument> contentMap = new HashMap<ORID, ODocument>();
+    Map<ORID, ODocument> contentMap = new HashMap<>();
     ODocument adam = new ODocument("JSONTxDocOne");
     adam.field("name", "adam");
     contentMap.put(adamDoc.getIdentity(), adam);

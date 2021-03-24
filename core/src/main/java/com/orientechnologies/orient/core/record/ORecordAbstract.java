@@ -173,6 +173,7 @@ public abstract class ORecordAbstract implements ORecord {
     return (RET) this;
   }
 
+  // TODO: for export
   public String toJSON() {
     return toJSON(
         "rid,version,class,type,attribSameRow,keepTypes,alwaysFetchEmbedded,fetchPlan:*:0");
