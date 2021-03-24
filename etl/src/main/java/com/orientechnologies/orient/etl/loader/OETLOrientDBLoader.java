@@ -51,31 +51,31 @@ import java.util.logging.Level;
 /** ETL Loader that saves record into OrientDB database. */
 public class OETLOrientDBLoader extends OETLAbstractLoader {
 
-  private static String NOT_DEF = "not_defined";
+  protected static final String NOT_DEF = "not_defined";
   public ODatabasePool pool;
   public OrientDB orient;
-  private String clusterName;
-  private String className;
+  protected String clusterName;
+  protected String className;
   private List<ODocument> classes;
   private List<ODocument> indexes;
-  private OClass schemaClass;
-  private String dbURL;
-  private String dbUser = "admin";
-  private String dbPassword = "admin";
-  private String serverUser = NOT_DEF;
-  private String serverPassword = NOT_DEF;
-  private boolean dbAutoCreate = true;
-  private boolean dbAutoDropIfExists = false;
-  private boolean dbAutoCreateProperties = false;
-  private boolean useLightweightEdges = false;
-  private boolean standardElementConstraints = true;
-  private boolean tx = false;
-  private int batchCommitSize = 0;
-  private AtomicLong batchCounter = new AtomicLong(0);
-  private DB_TYPE dbType = DOCUMENT;
-  private boolean wal = true;
-  private boolean txUseLog = false;
-  private boolean skipDuplicates = false;
+  protected OClass schemaClass;
+  protected String dbURL;
+  protected String dbUser = "admin";
+  protected String dbPassword = "admin";
+  protected String serverUser = NOT_DEF;
+  protected String serverPassword = NOT_DEF;
+  protected boolean dbAutoCreate = true;
+  protected boolean dbAutoDropIfExists = false;
+  protected boolean dbAutoCreateProperties = false;
+  protected boolean useLightweightEdges = false;
+  protected boolean standardElementConstraints = true;
+  protected boolean tx = false;
+  protected int batchCommitSize = 0;
+  protected AtomicLong batchCounter = new AtomicLong(0);
+  protected DB_TYPE dbType = DOCUMENT;
+  protected boolean wal = true;
+  protected boolean txUseLog = false;
+  protected boolean skipDuplicates = false;
 
   public OETLOrientDBLoader() {}
 
@@ -155,7 +155,7 @@ public class OETLOrientDBLoader extends OETLAbstractLoader {
     }
   }
 
-  private void autoCreateProperties(ODatabaseDocument db, Object input) {
+  protected void autoCreateProperties(ODatabaseDocument db, Object input) {
     if (dbType == DOCUMENT && input instanceof ODocument) {
       autoCreatePropertiesOnDocument(db, (ODocument) input);
     } else if (dbType == GRAPH && input instanceof OVertex) {
@@ -163,7 +163,7 @@ public class OETLOrientDBLoader extends OETLAbstractLoader {
     }
   }
 
-  private void autoCreatePropertiesOnElement(ODatabaseDocument db, OVertex element) {
+  protected void autoCreatePropertiesOnElement(ODatabaseDocument db, OVertex element) {
 
     final OClass cls;
     Optional<OClass> schemaType = element.getSchemaType();
@@ -190,7 +190,7 @@ public class OETLOrientDBLoader extends OETLAbstractLoader {
     }
   }
 
-  private void autoCreatePropertiesOnDocument(ODatabaseDocument db, ODocument doc) {
+  protected void autoCreatePropertiesOnDocument(ODatabaseDocument db, ODocument doc) {
     final OClass cls;
     if (className != null) cls = getOrCreateClass(db, className, null);
     else cls = doc.getSchemaClass();
@@ -406,7 +406,7 @@ public class OETLOrientDBLoader extends OETLAbstractLoader {
       }
     }
 
-    createDatabasePool();
+    pool = getDatabasePool();
   }
 
   @Override
@@ -421,9 +421,10 @@ public class OETLOrientDBLoader extends OETLAbstractLoader {
     pipeline.setPool(pool);
   }
 
-  private void createDatabasePool() {
-    if (pool != null) return;
+  protected ODatabasePool getDatabasePool() {
+    if (pool != null) return pool;
 
+    ODatabasePool pool;
     String kind = dbURL.substring(0, dbURL.indexOf(":"));
     String dbCtx = dbURL.substring(dbURL.indexOf(":") + 1);
     OETLContext context = (OETLContext) this.context;
@@ -484,6 +485,7 @@ public class OETLOrientDBLoader extends OETLAbstractLoader {
       }
       pool = new ODatabasePool(orient, dbName, dbUser, dbPassword);
     }
+    return pool;
   }
 
   private void createSchema(ODatabaseDocumentInternal db) {
