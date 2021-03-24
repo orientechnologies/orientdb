@@ -1,16 +1,20 @@
 package org.apache.tinkerpop.gremlin.orientdb.executor;
 
+import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.script.transformer.OScriptTransformer;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OQueryMetrics;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import java.nio.channels.ClosedChannelException;
 import java.util.Map;
 import java.util.Optional;
 import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
 import org.apache.tinkerpop.gremlin.process.traversal.Traversal;
+import org.apache.tinkerpop.gremlin.process.traversal.util.TraversalInterruptedException;
 
 /** Created by Enrico Risa on 24/01/17. */
 public class OGremlinScriptResultSet implements OResultSet, OQueryMetrics {
@@ -40,7 +44,17 @@ public class OGremlinScriptResultSet implements OResultSet, OQueryMetrics {
 
   @Override
   public boolean hasNext() {
-    return traversal.hasNext();
+    try {
+      return traversal.hasNext();
+    } catch (TraversalInterruptedException e) {
+      throw new OInterruptedException("Timeout expired");
+    } catch (OStorageException se) {
+      if (se.getCause() instanceof TraversalInterruptedException
+          || se.getCause() instanceof ClosedChannelException) {
+        throw new OInterruptedException("Timeout expired");
+      }
+      throw se;
+    }
   }
 
   @Override
@@ -51,6 +65,14 @@ public class OGremlinScriptResultSet implements OResultSet, OQueryMetrics {
     try {
       Object next = traversal.next();
       return transformer.toResult(next);
+    } catch (TraversalInterruptedException e) {
+      throw new OInterruptedException("Timeout expired");
+    } catch (OStorageException se) {
+      if (se.getCause() instanceof TraversalInterruptedException
+          || se.getCause() instanceof ClosedChannelException) {
+        throw new OInterruptedException("Timeout expired");
+      }
+      throw se;
     } finally {
       totalExecutionTime += (System.currentTimeMillis() - begin);
     }
