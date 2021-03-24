@@ -284,6 +284,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     this.id = id;
     lockManager = new ONotThreadRWLockManager<>();
     recordVersionManager = new OPartitionedLockManager<>();
+    sbTreeCollectionManager = new OSBTreeCollectionManagerShared(this);
 
     registerProfilerHooks();
   }
