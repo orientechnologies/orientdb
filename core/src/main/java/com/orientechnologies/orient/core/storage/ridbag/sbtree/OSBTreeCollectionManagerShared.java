@@ -68,7 +68,6 @@ public final class OSBTreeCollectionManagerShared
           + Integer.MAX_VALUE;
 
   private final OAbstractPaginatedStorage storage;
-  private final OAtomicOperationsManager atomicOperationsManager;
 
   /**
    * If this flag is set to {@code true} then all access to the manager will be prohibited and
@@ -82,7 +81,6 @@ public final class OSBTreeCollectionManagerShared
 
   public OSBTreeCollectionManagerShared(OAbstractPaginatedStorage storage) {
     this.storage = storage;
-    this.atomicOperationsManager = storage.getAtomicOperationsManager();
   }
 
   public void load() {

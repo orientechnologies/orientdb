@@ -7,7 +7,6 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.global.EntryPoint;
@@ -77,7 +76,7 @@ public final class BTree extends ODurableComponent {
   public void load() {
     acquireExclusiveLock();
     try {
-      final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+      final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
       fileId = openFile(atomicOperation, getFullName());
     } catch (final IOException e) {
@@ -106,7 +105,7 @@ public final class BTree extends ODurableComponent {
     try {
       acquireSharedLock();
       try {
-        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
         final BucketSearchResult bucketSearchResult = findBucket(key, atomicOperation);
         if (bucketSearchResult.itemIndex < 0) {
           return -1;
@@ -226,7 +225,7 @@ public final class BTree extends ODurableComponent {
     try {
       acquireSharedLock();
       try {
-        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
         final Optional<BucketSearchResult> searchResult = firstItem(atomicOperation);
         if (!searchResult.isPresent()) {
@@ -318,7 +317,7 @@ public final class BTree extends ODurableComponent {
     try {
       acquireSharedLock();
       try {
-        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
         final Optional<BucketSearchResult> searchResult = lastItem(atomicOperation);
         if (!searchResult.isPresent()) {
@@ -985,7 +984,7 @@ public final class BTree extends ODurableComponent {
       try {
         acquireSharedLock();
         try {
-          final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+          final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
           if (pageIndex > -1) {
             if (readKeysFromBuckets(atomicOperation)) {
               return;
@@ -1187,7 +1186,7 @@ public final class BTree extends ODurableComponent {
       try {
         acquireSharedLock();
         try {
-          final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+          final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
           if (pageIndex > -1) {
             if (readKeysFromBuckets(atomicOperation)) {
               return;
