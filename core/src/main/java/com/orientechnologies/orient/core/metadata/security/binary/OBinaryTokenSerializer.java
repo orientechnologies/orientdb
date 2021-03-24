@@ -1,9 +1,9 @@
-package com.orientechnologies.orient.server.token;
+package com.orientechnologies.orient.core.metadata.security.binary;
 
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.jwt.OJwtHeader;
-import com.orientechnologies.orient.server.binary.impl.OBinaryToken;
+import com.orientechnologies.orient.core.metadata.security.jwt.OrientJwtHeader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -34,6 +34,14 @@ public class OBinaryTokenSerializer {
     associetedKeys = createMap(keys);
     associetedAlgorithms = createMap(algorithms);
     associetedTypes = createMap(entityTypes);
+  }
+
+  public OBinaryTokenSerializer() {
+    this(
+        new String[] {"plocal", "memory"},
+        new String[] {"dafault"},
+        new String[] {"HmacSHA256"},
+        new String[] {"OrientDB", "node"});
   }
 
   public Map<String, Byte> createMap(String[] entries) {
