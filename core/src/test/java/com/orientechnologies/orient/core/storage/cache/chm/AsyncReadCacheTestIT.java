@@ -539,7 +539,10 @@ public class AsyncReadCacheTestIT {
     public void create() {}
 
     @Override
-    public void open() {}
+    public void open() throws IOException {}
+
+    @Override
+    public void replaceFileId(long fileId, long newFileId) {}
   }
 
   private static final class ScrambledZipfianGenerator {

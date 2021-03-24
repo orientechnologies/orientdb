@@ -29,16 +29,15 @@ public class BTreeBonsaiGlobal implements OSBTreeBonsai<OIdentifiable, Integer> 
   private final int intFileId;
   private final long ridBagId;
 
-
   private final OBinarySerializer<OIdentifiable> keySerializer;
   private final OBinarySerializer<Integer> valueSerializer;
 
   public BTreeBonsaiGlobal(
-          final BTree bTree,
-          final int intFileId,
-          final long ridBagId,
-          OBinarySerializer<OIdentifiable> keySerializer,
-          OBinarySerializer<Integer> valueSerializer) {
+      final BTree bTree,
+      final int intFileId,
+      final long ridBagId,
+      OBinarySerializer<OIdentifiable> keySerializer,
+      OBinarySerializer<Integer> valueSerializer) {
     this.bTree = bTree;
     this.intFileId = intFileId;
     this.ridBagId = ridBagId;
