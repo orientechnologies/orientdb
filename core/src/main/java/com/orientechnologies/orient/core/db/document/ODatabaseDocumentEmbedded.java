@@ -1777,4 +1777,9 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     this.minRidbagPrefetchMs = 0L;
     this.maxRidbagPrefetchMs = 0L;
   }
+
+  @Override
+  public TimerTask createInterruptTimerTask() {
+    return new InterruptTimerTask(Thread.currentThread());
+  }
 }
