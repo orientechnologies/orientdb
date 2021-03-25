@@ -131,6 +131,14 @@
           <artifactId>javax.activation-api</artifactId>
           <groupId>javax.activation</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>eclipse-collections-api</artifactId>
+          <groupId>org.eclipse.collections</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>eclipse-collections</artifactId>
+          <groupId>org.eclipse.collections</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -297,6 +305,14 @@
         <exclusion>
           <artifactId>javax.activation-api</artifactId>
           <groupId>javax.activation</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>eclipse-collections-api</artifactId>
+          <groupId>org.eclipse.collections</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>eclipse-collections</artifactId>
+          <groupId>org.eclipse.collections</groupId>
         </exclusion>
       </exclusions>
     </dependency>

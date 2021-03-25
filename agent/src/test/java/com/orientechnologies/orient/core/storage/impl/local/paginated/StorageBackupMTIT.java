@@ -44,9 +44,7 @@ public class StorageBackupMTIT {
 
       orientDB = new OrientDB("embedded:" + buildDirectory, OrientDBConfig.defaultConfig());
       orientDB.execute(
-          "create database `"
-              + dbName
-              + "` plocal users(admin identified by 'admin' role admin, reader identified by 'reader' role reader, writer identified by 'writer' role writer)");
+          "create database " + dbName + " plocal users ( admin identified by 'admin' role admin)");
 
       ODatabaseDocument db = orientDB.open(dbName, "admin", "admin");
 
@@ -163,9 +161,7 @@ public class StorageBackupMTIT {
 
       orientDB = new OrientDB("embedded:" + buildDirectory, config);
       orientDB.execute(
-          "create database `"
-              + dbName
-              + "` plocal users(admin identified by 'admin' role admin, reader identified by 'reader' role reader, writer identified by 'writer' role writer)");
+          "create database " + dbName + " plocal users ( admin identified by 'admin' role admin)");
 
       ODatabaseDocument db = orientDB.open(dbName, "admin", "admin");
 
