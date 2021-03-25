@@ -363,7 +363,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
       throws IOException {
     OLogSequenceNumber lastLsn;
 
-    checkOpenness();
+    checkOpennessAndMigration();
     if (singleThread && !backupInProgress.compareAndSet(false, true)) {
       throw new OBackupInProgressException(
           "You are trying to start incremental backup but it is in progress now, please wait till it will be finished",
@@ -375,7 +375,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
     try {
 
       this.interruptionManager.enterCriticalPath();
-      checkOpenness();
+      checkOpennessAndMigration();
       final long freezeId;
 
       if (!isWriteAllowedDuringIncrementalBackup())
@@ -739,7 +739,6 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
             ((OClusterBasedStorageConfiguration) configuration).close(atomicOperation);
           });
 
-      sbTreeCollectionManager.clear();
       configuration = null;
 
       final BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
