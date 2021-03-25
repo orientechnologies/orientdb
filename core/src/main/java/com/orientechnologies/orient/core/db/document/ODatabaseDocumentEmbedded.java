@@ -1261,4 +1261,9 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   public void setCommandInterruptionDepth(int commandInterruptionDepth) {
     this.commandInterruptionDepth = commandInterruptionDepth;
   }
+
+  @Override
+  public TimerTask createInterruptTimerTask() {
+    return new InterruptTimerTask(Thread.currentThread());
+  }
 }

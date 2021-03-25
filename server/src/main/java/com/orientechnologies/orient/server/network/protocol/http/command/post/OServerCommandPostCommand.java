@@ -19,7 +19,9 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseStats;
@@ -35,12 +37,12 @@ import com.orientechnologies.orient.server.network.protocol.http.command.OServer
 import java.util.*;
 
 public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbstract {
-  private static final String[] NAMES = { "GET|command/*", "POST|command/*" };
+  private static final String[] NAMES = {"GET|command/*", "POST|command/*"};
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
     final String[] urlParts = checkSyntax(iRequest.url, 3,
-        "Syntax error: command/<database>/<language>/<command-text>[/limit][/<fetchPlan>]");
+            "Syntax error: command/<database>/<language>/<command-text>[/limit][/<fetchPlan>]");
 
     // TRY TO GET THE COMMAND FROM THE URL, THEN FROM THE CONTENT
     final String language = urlParts.length > 2 ? urlParts[2].trim() : "sql";
@@ -93,7 +95,7 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
 
     try {
       db = getProfiledDatabaseInstance(iRequest);
-      ((ODatabaseInternal)db).resetRecordLoadStats();
+      ((ODatabaseInternal) db).resetRecordLoadStats();
       OStatement stm = parseStatement(language, text, db);
       OResultSet result = executeStatement(language, text, params, db);
       limit = getLimitFromStatement(stm, limit);
@@ -103,14 +105,33 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
       }
       int i = 0;
       List response = new ArrayList();
-      while (result.hasNext()) {
-        if (limit >= 0 && i >= limit) {
-          break;
+      TimerTask commandInterruptTimer = null;
+      TimerTask commandInterruptRunnable = null;
+      if (db.getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
+        commandInterruptRunnable = ((ODatabaseInternal) db).createInterruptTimerTask();
+        if (commandInterruptRunnable != null) {
+          commandInterruptTimer = Orient.instance()
+                  .scheduleTask(
+                          commandInterruptRunnable,
+                          db.getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT), 0);
         }
-        response.add(result.next());
-        i++;
       }
-
+      try {
+        while (result.hasNext()) {
+          if (limit >= 0 && i >= limit) {
+            break;
+          }
+          response.add(result.next());
+          i++;
+        }
+      } finally {
+        if (commandInterruptTimer != null) {
+          commandInterruptTimer.cancel();
+        }
+        if (commandInterruptRunnable != null) {
+          commandInterruptRunnable.cancel();
+        }
+      }
       Map<String, Object> additionalContent = new HashMap<>();
       if (returnExecutionPlan) {
         result.getExecutionPlan().ifPresent(x -> additionalContent.put("executionPlan", x.toResult().toElement()));

@@ -26,10 +26,7 @@ import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.storage.OBasicTransaction;
 import com.orientechnologies.orient.core.storage.OStorage;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public interface ODatabaseInternal<T> extends ODatabase<T> {
 
@@ -162,5 +159,12 @@ public interface ODatabaseInternal<T> extends ODatabase<T> {
   default void addRidbagPrefetchStats(long execTimeMs){
   }
 
+  /**
+   * creates an interrupt timer task for this db instance (without scheduling it!)
+   * @return the timer task. Null if this operation is not supported for current db impl.
+   */
+  default TimerTask createInterruptTimerTask(){
+    return null;
+  }
 
 }
