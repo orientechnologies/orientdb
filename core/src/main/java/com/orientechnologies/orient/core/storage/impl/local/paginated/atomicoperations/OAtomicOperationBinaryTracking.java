@@ -240,8 +240,8 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
       throw new OStorageException("File with id " + fileId + " is deleted.");
     }
 
-    final FileChanges changesContainer = fileChanges.get(fileId);
-    assert changesContainer != null;
+    final FileChanges changesContainer =
+        fileChanges.computeIfAbsent(fileId, k -> new FileChanges());
 
     final long filledUpTo = internalFilledUpTo(fileId, changesContainer);
 
@@ -408,6 +408,20 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
     }
 
     return writeCache.fileNameById(fileId);
+  }
+
+  @Override
+  public long fileIdByName(final String fileName) {
+    Long fileId = newFileNamesId.get(fileName);
+    if (fileId != null) {
+      return fileId;
+    }
+
+    if (deletedFileNameIdMap.containsKey(fileName)) {
+      return -1;
+    }
+
+    return writeCache.fileIdByName(fileName);
   }
 
   @Override

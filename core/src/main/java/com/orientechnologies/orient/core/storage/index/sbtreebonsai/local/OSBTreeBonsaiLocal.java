@@ -26,6 +26,7 @@ import com.orientechnologies.common.concur.lock.OPartitionedLockManager;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.types.OModifiableInteger;
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.NotEmptyComponentCanNotBeRemovedException;
 import com.orientechnologies.orient.core.exception.OSBTreeBonsaiLocalException;
@@ -50,6 +51,8 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
+import java.util.function.Consumer;
+import org.eclipse.collections.impl.set.mutable.primitive.LongHashSet;
 
 /**
  * Tree-based dictionary algorithm. Similar to {@link OSBTreeV1} but uses subpages of disk cache
@@ -343,6 +346,117 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
         });
   }
 
+  public List<OBonsaiBucketPointer> loadRoots() throws IOException {
+    atomicOperationsManager.acquireReadLock(this);
+    try {
+      final Lock lock = FILE_LOCK_MANAGER.acquireSharedLock(fileId);
+      try {
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
+        final int filledUpTo = (int) getFilledUpTo(atomicOperation, fileId);
+
+        final LongHashSet children = new LongHashSet();
+        final LongHashSet roots = new LongHashSet();
+
+        for (int pageIndex = 0; pageIndex < filledUpTo; pageIndex++) {
+          final OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
+          try {
+            for (int bucketOffset = pageIndex > 0 ? 0 : OSBTreeBonsaiBucket.MAX_BUCKET_SIZE_BYTES;
+                bucketOffset < OSBTreeBonsaiBucket.MAX_PAGE_SIZE_BYTES;
+                bucketOffset += OSBTreeBonsaiBucket.MAX_BUCKET_SIZE_BYTES) {
+              final OSBTreeBonsaiBucket<K, V> bucket =
+                  new OSBTreeBonsaiBucket<>(
+                      cacheEntry, bucketOffset, keySerializer, valueSerializer, this);
+
+              if (!bucket.isLeaf()) {
+                for (int bucketIndex = 0; bucketIndex < bucket.size(); bucketIndex++) {
+                  final OSBTreeBonsaiBucket.SBTreeEntry<K, V> entry = bucket.getEntry(bucketIndex);
+
+                  final long leftPointer =
+                      (entry.leftChild.getPageIndex() << 16) + entry.leftChild.getPageOffset();
+                  final long rightPointer =
+                      (entry.rightChild.getPageIndex() << 16) + entry.rightChild.getPageOffset();
+
+                  roots.remove(leftPointer);
+                  roots.remove(rightPointer);
+
+                  children.add(leftPointer);
+                  children.add(rightPointer);
+                }
+              }
+
+              final long bucketPointer = (((long) pageIndex) << 16) + bucketOffset;
+              if (!children.contains(bucketPointer)) {
+                roots.add(bucketPointer);
+              }
+            }
+          } finally {
+            releasePageFromRead(atomicOperation, cacheEntry);
+          }
+        }
+
+        final List<OBonsaiBucketPointer> rootPointers = new ArrayList<>(roots.size());
+        roots.forEach(
+            root -> {
+              final int rootPageOffset = (int) (root & 0xFFFF);
+              final int rootPageIndex = (int) (root >>> 16);
+
+              rootPointers.add(new OBonsaiBucketPointer(rootPageIndex, rootPageOffset));
+            });
+
+        return rootPointers;
+      } finally {
+        lock.unlock();
+      }
+    } finally {
+      atomicOperationsManager.releaseReadLock(this);
+    }
+  }
+
+  public void forEachItem(
+      final OBonsaiBucketPointer rootBucketPointer, final Consumer<ORawPair<K, V>> consumer)
+      throws IOException {
+    atomicOperationsManager.acquireReadLock(this);
+    try {
+      final Lock lock = FILE_LOCK_MANAGER.acquireSharedLock(fileId);
+      try {
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
+
+        final OBonsaiBucketPointer firstBucket =
+            findFirstBucket(rootBucketPointer, atomicOperation);
+        if (firstBucket == null) {
+          return;
+        }
+
+        OBonsaiBucketPointer pointer = firstBucket;
+        while (pointer.getPageIndex() >= 0) {
+          final OCacheEntry cacheEntry =
+              loadPageForRead(atomicOperation, fileId, pointer.getPageIndex(), false);
+          try {
+            final OSBTreeBonsaiBucket<K, V> bucket =
+                new OSBTreeBonsaiBucket<>(
+                    cacheEntry, pointer.getPageOffset(), keySerializer, valueSerializer, this);
+            assert bucket.isLeaf();
+
+            final int bucketSize = bucket.size();
+            for (int entryIndex = 0; entryIndex < bucketSize; entryIndex++) {
+              final OSBTreeBonsaiBucket.SBTreeEntry<K, V> entry = bucket.getEntry(entryIndex);
+              consumer.accept(new ORawPair<>(entry.key, entry.value));
+            }
+
+            pointer = bucket.getRightSibling();
+          } finally {
+            releasePageFromRead(atomicOperation, cacheEntry);
+          }
+        }
+
+      } finally {
+        lock.unlock();
+      }
+    } finally {
+      atomicOperationsManager.releaseReadLock(this);
+    }
+  }
+
   public void close(final boolean flush) {
     final Lock lock = FILE_LOCK_MANAGER.acquireExclusiveLock(fileId);
     try {
@@ -608,6 +722,22 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     }
   }
 
+  public final void load(
+      final OBinarySerializer<K> keySerializer, final OBinarySerializer<V> valueSerializer)
+      throws IOException {
+    final Lock lock = FILE_LOCK_MANAGER.acquireExclusiveLock(fileId);
+    try {
+      final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
+
+      this.keySerializer = keySerializer;
+      this.valueSerializer = valueSerializer;
+
+      this.fileId = openFile(atomicOperation, getFullName());
+    } finally {
+      lock.unlock();
+    }
+  }
+
   private void updateSize(final long diffSize, final OAtomicOperation atomicOperation)
       throws IOException {
     final OCacheEntry rootCacheEntry =
@@ -627,7 +757,6 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     }
   }
 
-  @Override
   public long size() {
     atomicOperationsManager.acquireReadLock(this);
     try {
@@ -659,6 +788,11 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     } finally {
       atomicOperationsManager.releaseReadLock(this);
     }
+  }
+
+  @Override
+  public boolean isEmpty() {
+    return size() == 0;
   }
 
   @Override
@@ -891,79 +1025,92 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     return result;
   }
 
+  private OBonsaiBucketPointer findFirstBucket(
+      final OBonsaiBucketPointer root, final OAtomicOperation atomicOperation) throws IOException {
+    final LinkedList<PagePathItemUnit> path = new LinkedList<>();
+
+    OBonsaiBucketPointer bucketPointer = root;
+
+    OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, root.getPageIndex(), false);
+    int itemIndex = 0;
+    try {
+      OSBTreeBonsaiBucket<K, V> bucket =
+          new OSBTreeBonsaiBucket<>(
+              cacheEntry, bucketPointer.getPageOffset(), keySerializer, valueSerializer, this);
+
+      while (true) {
+        if (bucket.isLeaf()) {
+          if (bucket.isEmpty()) {
+            if (path.isEmpty()) {
+              return null;
+            } else {
+              final PagePathItemUnit pagePathItemUnit = path.removeLast();
+
+              bucketPointer = pagePathItemUnit.bucketPointer;
+              itemIndex = pagePathItemUnit.itemIndex + 1;
+            }
+          } else {
+            return new OBonsaiBucketPointer(
+                cacheEntry.getPageIndex(), bucketPointer.getPageOffset());
+          }
+        } else {
+          if (bucket.isEmpty() || itemIndex > bucket.size()) {
+            if (path.isEmpty()) {
+              return null;
+            } else {
+              final PagePathItemUnit pagePathItemUnit = path.removeLast();
+
+              bucketPointer = pagePathItemUnit.bucketPointer;
+              itemIndex = pagePathItemUnit.itemIndex + 1;
+            }
+          } else {
+            path.add(new PagePathItemUnit(bucketPointer, itemIndex));
+
+            if (itemIndex < bucket.size()) {
+              final OSBTreeBonsaiBucket.SBTreeEntry<K, V> entry = bucket.getEntry(itemIndex);
+              bucketPointer = entry.leftChild;
+            } else {
+              final OSBTreeBonsaiBucket.SBTreeEntry<K, V> entry = bucket.getEntry(itemIndex - 1);
+              bucketPointer = entry.rightChild;
+            }
+
+            itemIndex = 0;
+          }
+        }
+
+        releasePageFromRead(atomicOperation, cacheEntry);
+
+        cacheEntry = loadPageForRead(atomicOperation, fileId, bucketPointer.getPageIndex(), false);
+
+        bucket =
+            new OSBTreeBonsaiBucket<>(
+                cacheEntry, bucketPointer.getPageOffset(), keySerializer, valueSerializer, this);
+      }
+    } finally {
+      releasePageFromRead(atomicOperation, cacheEntry);
+    }
+  }
+
   @Override
   public K firstKey() {
     atomicOperationsManager.acquireReadLock(this);
     try {
       final Lock lock = FILE_LOCK_MANAGER.acquireSharedLock(fileId);
       try {
-        final LinkedList<PagePathItemUnit> path = new LinkedList<>();
-
-        OBonsaiBucketPointer bucketPointer = rootBucketPointer;
-
         final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
+        final OBonsaiBucketPointer firstBucket =
+            findFirstBucket(this.rootBucketPointer, atomicOperation);
+        if (firstBucket == null) {
+          return null;
+        }
 
-        OCacheEntry cacheEntry =
-            loadPageForRead(atomicOperation, fileId, rootBucketPointer.getPageIndex(), false);
-        int itemIndex = 0;
+        final OCacheEntry cacheEntry =
+            loadPageForRead(atomicOperation, fileId, firstBucket.getPageIndex(), false);
         try {
-          OSBTreeBonsaiBucket<K, V> bucket =
+          final OSBTreeBonsaiBucket<K, V> bucket =
               new OSBTreeBonsaiBucket<>(
-                  cacheEntry, bucketPointer.getPageOffset(), keySerializer, valueSerializer, this);
-
-          while (true) {
-            if (bucket.isLeaf()) {
-              if (bucket.isEmpty()) {
-                if (path.isEmpty()) {
-                  return null;
-                } else {
-                  final PagePathItemUnit pagePathItemUnit = path.removeLast();
-
-                  bucketPointer = pagePathItemUnit.bucketPointer;
-                  itemIndex = pagePathItemUnit.itemIndex + 1;
-                }
-              } else {
-                return bucket.getKey(0);
-              }
-            } else {
-              if (bucket.isEmpty() || itemIndex > bucket.size()) {
-                if (path.isEmpty()) {
-                  return null;
-                } else {
-                  final PagePathItemUnit pagePathItemUnit = path.removeLast();
-
-                  bucketPointer = pagePathItemUnit.bucketPointer;
-                  itemIndex = pagePathItemUnit.itemIndex + 1;
-                }
-              } else {
-                path.add(new PagePathItemUnit(bucketPointer, itemIndex));
-
-                if (itemIndex < bucket.size()) {
-                  final OSBTreeBonsaiBucket.SBTreeEntry<K, V> entry = bucket.getEntry(itemIndex);
-                  bucketPointer = entry.leftChild;
-                } else {
-                  final OSBTreeBonsaiBucket.SBTreeEntry<K, V> entry =
-                      bucket.getEntry(itemIndex - 1);
-                  bucketPointer = entry.rightChild;
-                }
-
-                itemIndex = 0;
-              }
-            }
-
-            releasePageFromRead(atomicOperation, cacheEntry);
-
-            cacheEntry =
-                loadPageForRead(atomicOperation, fileId, bucketPointer.getPageIndex(), false);
-
-            bucket =
-                new OSBTreeBonsaiBucket<>(
-                    cacheEntry,
-                    bucketPointer.getPageOffset(),
-                    keySerializer,
-                    valueSerializer,
-                    this);
-          }
+                  cacheEntry, firstBucket.getPageOffset(), keySerializer, valueSerializer, this);
+          return bucket.getKey(0);
         } finally {
           releasePageFromRead(atomicOperation, cacheEntry);
         }
@@ -1825,7 +1972,6 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     }
   }
 
-  @Override
   public void markToDelete(final OAtomicOperation atomicOperation) {
     executeInsideComponentOperation(
         atomicOperation,

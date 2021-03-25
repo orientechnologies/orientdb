@@ -28,7 +28,7 @@ import java.util.Map;
 
 /** @author Artem Orobets (enisher-at-gmail.com) */
 public interface OTreeInternal<K, V> {
-  long size();
+  boolean isEmpty();
 
   void loadEntriesMajor(
       K key, boolean inclusive, boolean ascSortOrder, RangeResultListener<K, V> listener);

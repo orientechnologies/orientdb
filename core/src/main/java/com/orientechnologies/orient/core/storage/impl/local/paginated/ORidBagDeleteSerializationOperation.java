@@ -20,52 +20,20 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
-import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
-import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
-import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeRidBag;
-import java.io.IOException;
 
 public class ORidBagDeleteSerializationOperation implements ORecordSerializationOperation {
-  private final OBonsaiCollectionPointer collectionPointer;
-
-  private final OSBTreeCollectionManager collectionManager;
   private final OSBTreeRidBag ridBag;
-  private Runnable deleteTask;
 
-  public ORidBagDeleteSerializationOperation(
-      OBonsaiCollectionPointer collectionPointer, OSBTreeRidBag ridBag) {
-    this.collectionPointer = collectionPointer;
+  public ORidBagDeleteSerializationOperation(OSBTreeRidBag ridBag) {
     this.ridBag = ridBag;
-    collectionManager = ODatabaseRecordThreadLocal.instance().get().getSbTreeCollectionManager();
   }
 
   @Override
   public void execute(
       final OAtomicOperation atomicOperation, final OAbstractPaginatedStorage paginatedStorage) {
-    OSBTreeBonsai<OIdentifiable, Integer> treeBonsai = loadTree();
-    try {
-      treeBonsai.markToDelete(atomicOperation);
-    } catch (IOException e) {
-      throw OException.wrapException(new ODatabaseException("Error during ridbag deletion"), e);
-    } finally {
-      releaseTree();
-    }
-
-    paginatedStorage.tryToDeleteTreeRidBag(ridBag);
-  }
-
-  private OSBTreeBonsai<OIdentifiable, Integer> loadTree() {
-    return collectionManager.loadSBTree(collectionPointer);
-  }
-
-  private void releaseTree() {
-    collectionManager.releaseSBTree(collectionPointer);
+    paginatedStorage.deleteTreeRidBag(ridBag);
   }
 }

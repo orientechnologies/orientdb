@@ -13,6 +13,7 @@ import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.cache.local.OBackgroundExceptionListener;
 import com.orientechnologies.orient.core.storage.impl.local.OPageIsBrokenListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -539,7 +540,10 @@ public class AsyncReadCacheTestIT {
     public void create() {}
 
     @Override
-    public void open() {}
+    public void open() throws IOException {}
+
+    @Override
+    public void replaceFileId(long fileId, long newFileId) {}
   }
 
   private static final class ScrambledZipfianGenerator {

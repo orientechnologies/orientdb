@@ -129,7 +129,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     OClusterPositionMap.DEF_EXTENSION,
     OSBTreeIndexEngine.DATA_FILE_EXTENSION,
     OIndexRIDContainer.INDEX_FILE_EXTENSION,
-    OSBTreeCollectionManagerShared.DEFAULT_EXTENSION,
+    OSBTreeCollectionManagerShared.FILE_EXTENSION,
     OSBTreeIndexEngine.NULL_BUCKET_FILE_EXTENSION,
     OClusterBasedStorageConfiguration.MAP_FILE_EXTENSION,
     OClusterBasedStorageConfiguration.DATA_FILE_EXTENSION,
@@ -235,7 +235,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   @Override
   public final boolean exists() {
     try {
-      if (status == STATUS.OPEN || status == STATUS.INTERNAL_ERROR) return true;
+      if (status == STATUS.OPEN || status == STATUS.INTERNAL_ERROR || status == STATUS.MIGRATION)
+        return true;
 
       return exists(storagePath);
     } catch (final RuntimeException e) {
@@ -791,7 +792,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
     diskWriteAheadLog.addSegmentOverflowListener(
         (segment) -> {
-          if (status != STATUS.OPEN) {
+          if (status != STATUS.OPEN && status != STATUS.MIGRATION) {
             return;
           }
 
@@ -902,13 +903,13 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     @Override
     public Void call() {
       try {
-        if (status != STATUS.OPEN) {
+        if (status != STATUS.OPEN && status != STATUS.MIGRATION) {
           return null;
         }
 
         stateLock.acquireReadLock();
         try {
-          if (status != STATUS.OPEN) {
+          if (status != STATUS.OPEN && status != STATUS.MIGRATION) {
             return null;
           }
 

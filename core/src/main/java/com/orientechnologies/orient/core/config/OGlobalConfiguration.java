@@ -1817,7 +1817,7 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       "security.createDefaultUsers",
       "Indicates whether default database users should be created",
       Boolean.class,
-      true),
+      false),
   WARNING_DEFAULT_USERS(
       "security.warningDefaultUsers",
       "Indicates whether access with default users should show a warning",

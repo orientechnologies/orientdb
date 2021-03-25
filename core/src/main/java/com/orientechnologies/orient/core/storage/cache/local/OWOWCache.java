@@ -1295,6 +1295,47 @@ public final class OWOWCache extends OAbstractWriteCache
     }
   }
 
+  @Override
+  public void replaceFileId(final long fileId, final long newFileId) throws IOException {
+    filesLock.acquireWriteLock();
+    try {
+      final OFile file = files.remove(fileId);
+      final OFile newFile = files.remove(newFileId);
+
+      final int intFileId = extractFileId(fileId);
+      final int newIntFileId = extractFileId(newFileId);
+
+      final String fileName = idNameMap.get(intFileId);
+      final String newFileName = idNameMap.remove(newIntFileId);
+
+      if (!file.isOpen()) {
+        file.open();
+      }
+      if (!newFile.isOpen()) {
+        newFile.open();
+      }
+
+      // invalidate old entries
+      writeNameIdEntry(new NameFileIdEntry(fileName, 0, ""), false);
+      writeNameIdEntry(new NameFileIdEntry(newFileName, 0, ""), false);
+
+      // add new one
+      writeNameIdEntry(new NameFileIdEntry(newFileName, intFileId, file.getName()), true);
+
+      file.delete();
+
+      files.add(fileId, newFile);
+
+      idNameMap.put(intFileId, newFileName);
+      nameIdMap.remove(fileName);
+      nameIdMap.put(newFileName, intFileId);
+    } catch (final InterruptedException e) {
+      throw OException.wrapException(new OStorageException("Replace of file was interrupted"), e);
+    } finally {
+      filesLock.releaseWriteLock();
+    }
+  }
+
   private void stopFlush() {
     stopFlush = true;
 
@@ -1922,8 +1963,13 @@ public final class OWOWCache extends OAbstractWriteCache
         localFileCounter = absFileId;
       }
 
-      nameIdMap.put(nameFileIdEntry.name, nameFileIdEntry.fileId);
-      idNameMap.put(nameFileIdEntry.fileId, nameFileIdEntry.name);
+      if (absFileId != 0) {
+        nameIdMap.put(nameFileIdEntry.name, nameFileIdEntry.fileId);
+        idNameMap.put(nameFileIdEntry.fileId, nameFileIdEntry.name);
+      } else {
+        nameIdMap.remove(nameFileIdEntry.name);
+        idFileNameMap.remove(nameFileIdEntry.fileId);
+      }
 
       idFileNameMap.put(nameFileIdEntry.fileId, nameFileIdEntry.fileSystemName);
     }
@@ -1931,7 +1977,7 @@ public final class OWOWCache extends OAbstractWriteCache
     for (final Map.Entry<String, Integer> nameIdEntry : nameIdMap.entrySet()) {
       final int fileId = nameIdEntry.getValue();
 
-      if (fileId >= 0) {
+      if (fileId > 0) {
         final long externalId = composeFileId(id, nameIdEntry.getValue());
 
         if (files.get(externalId) == null) {
@@ -2772,7 +2818,7 @@ public final class OWOWCache extends OAbstractWriteCache
 
           long ewcSize = exclusiveWriteCacheSize.get();
           if (ewcSize >= 0) {
-            flushExclusiveWriteCache(null, Math.min(ewcSize, 4 * chunkSize));
+            flushExclusiveWriteCache(null, Math.min(ewcSize, 4L * chunkSize));
 
             if (exclusiveWriteCacheSize.get() > 0) {
               flushInterval = 1;

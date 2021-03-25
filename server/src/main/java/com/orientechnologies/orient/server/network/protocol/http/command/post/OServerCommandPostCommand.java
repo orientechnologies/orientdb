@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseStats;
@@ -36,11 +37,7 @@ import com.orientechnologies.orient.core.sql.parser.OTraverseStatement;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbstract {
   private static final String[] NAMES = {"GET|command/*", "POST|command/*"};
@@ -112,14 +109,31 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
       }
       int i = 0;
       List response = new ArrayList();
-      while (result.hasNext()) {
-        if (limit >= 0 && i >= limit) {
-          break;
+      TimerTask commandInterruptTimer = null;
+      if (db.getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
+        commandInterruptTimer = ((ODatabaseInternal) db).createInterruptTimerTask();
+        if (commandInterruptTimer != null) {
+          ((ODatabaseInternal) db)
+              .getSharedContext()
+              .getOrientDB()
+              .scheduleOnce(
+                  commandInterruptTimer,
+                  db.getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT));
         }
-        response.add(result.next());
-        i++;
       }
-
+      try {
+        while (result.hasNext()) {
+          if (limit >= 0 && i >= limit) {
+            break;
+          }
+          response.add(result.next());
+          i++;
+        }
+      } finally {
+        if (commandInterruptTimer != null) {
+          commandInterruptTimer.cancel();
+        }
+      }
       Map<String, Object> additionalContent = new HashMap<>();
       if (returnExecutionPlan) {
         result
