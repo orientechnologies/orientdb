@@ -206,8 +206,10 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
             try {
               maxLsn = incrementalBackup(stream, lastLsn, true);
               final ByteBuffer dataBuffer =
-                  ByteBuffer.allocate(OIntegerSerializer.INT_SIZE +
-                          2 * OLongSerializer.LONG_SIZE + OByteSerializer.BYTE_SIZE);
+                  ByteBuffer.allocate(
+                      OIntegerSerializer.INT_SIZE
+                          + 2 * OLongSerializer.LONG_SIZE
+                          + OByteSerializer.BYTE_SIZE);
 
               dataBuffer.putLong(nextIndex);
               dataBuffer.putLong(maxLsn.getSegment());
@@ -319,7 +321,8 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
         final FileChannel ibuChannel = rndIBUFile.getChannel();
         ibuChannel.position(OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE);
 
-        ByteBuffer lsnData = ByteBuffer.allocate(OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE);
+        ByteBuffer lsnData =
+            ByteBuffer.allocate(OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE);
         ibuChannel.read(lsnData);
         lsnData.rewind();
 

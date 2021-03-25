@@ -5,7 +5,6 @@ import com.orientechnologies.agent.profiler.metrics.OHistogram;
 import com.orientechnologies.agent.services.metrics.OrientDBMetricsService;
 import com.orientechnologies.agent.services.metrics.OrientDBMetricsSettings;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.server.OServer;
@@ -43,7 +42,12 @@ public class QueryProfilerFilterTest {
     metricsService = agent.getServiceByClass(OrientDBMetricsService.class).get();
     metricsService.changeSettings(settings);
 
-    server.getContext().create(QueryProfilerFilterTest.class.getSimpleName(), ODatabaseType.PLOCAL);
+    server
+        .getContext()
+        .execute(
+            "create database "
+                + QueryProfilerFilterTest.class.getSimpleName()
+                + " plocal users(admin identified by 'admin' role admin)");
   }
 
   @Test

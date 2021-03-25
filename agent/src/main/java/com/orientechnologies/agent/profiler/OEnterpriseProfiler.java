@@ -725,6 +725,13 @@ public class OEnterpriseProfiler extends OAbstractProfiler
     } catch (IllegalAccessException e) {
 
     }
+    return cpuUsageFallback();
+  }
+
+  public double cpuUsageFallback() {
+    OperatingSystemMXBean operatingSystemMXBean =
+        (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+
     double cpuUsage;
     RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();
     int availableProcessors = operatingSystemMXBean.getAvailableProcessors();

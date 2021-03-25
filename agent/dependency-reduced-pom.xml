@@ -262,10 +262,6 @@
           <groupId>junit</groupId>
         </exclusion>
         <exclusion>
-          <artifactId>mockito-core</artifactId>
-          <groupId>org.mockito</groupId>
-        </exclusion>
-        <exclusion>
           <artifactId>assertj-core</artifactId>
           <groupId>org.assertj</groupId>
         </exclusion>
@@ -389,14 +385,84 @@
         </exclusion>
       </exclusions>
     </dependency>
+    <dependency>
+      <groupId>io.findify</groupId>
+      <artifactId>s3mock_2.13</artifactId>
+      <version>0.2.6</version>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <artifactId>scala-library</artifactId>
+          <groupId>org.scala-lang</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>akka-stream_2.13</artifactId>
+          <groupId>com.typesafe.akka</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>akka-http_2.13</artifactId>
+          <groupId>com.typesafe.akka</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>scala-xml_2.13</artifactId>
+          <groupId>org.scala-lang.modules</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>scala-collection-compat_2.13</artifactId>
+          <groupId>org.scala-lang.modules</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>better-files_2.13</artifactId>
+          <groupId>com.github.pathikrit</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>scala-logging_2.13</artifactId>
+          <groupId>com.typesafe.scala-logging</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>leveldb</artifactId>
+          <groupId>org.iq80.leveldb</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>jaxb-api</artifactId>
+          <groupId>javax.xml.bind</groupId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-simple</artifactId>
+      <version>1.6.2</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>3.6.0</version>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <artifactId>byte-buddy</artifactId>
+          <groupId>net.bytebuddy</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>byte-buddy-agent</artifactId>
+          <groupId>net.bytebuddy</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>objenesis</artifactId>
+          <groupId>org.objenesis</groupId>
+        </exclusion>
+      </exclusions>
+    </dependency>
   </dependencies>
   <properties>
     <metrics.version>4.1.6</metrics.version>
-    <project.rootdir>${project.basedir}/../</project.rootdir>
-    <jackson.version>2.10.3</jackson.version>
     <orientdb.version>3.2.0-SNAPSHOT</orientdb.version>
-    <surefire.version>2.19.1</surefire.version>
+    <jackson.version>2.10.3</jackson.version>
     <exclude.kerberos.tests>%regex[com.orientechnologies.security.kerberos.*Test.*]</exclude.kerberos.tests>
+    <project.rootdir>${project.basedir}/../</project.rootdir>
+    <surefire.version>2.19.1</surefire.version>
   </properties>
 </project>
 

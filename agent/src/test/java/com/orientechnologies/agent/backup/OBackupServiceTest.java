@@ -31,7 +31,6 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
@@ -85,7 +84,8 @@ public class OBackupServiceTest {
     server.startup(stream);
 
     orientDB = server.getContext();
-    orientDB.create(DB_NAME, ODatabaseType.PLOCAL);
+    orientDB.execute(
+        "create database " + DB_NAME + " plocal users(admin identified by 'admin' role admin)");
     server.activate();
     server
         .getSystemDatabase()
@@ -357,7 +357,7 @@ public class OBackupServiceTest {
 
       try (ODatabaseSession open = orientDB.open(DB_NAME_RESTORED, "admin", "admin")) {
         long oUser = open.countClass("OUser");
-        Assert.assertEquals(3, oUser);
+        Assert.assertEquals(1, oUser);
       }
 
     } finally {

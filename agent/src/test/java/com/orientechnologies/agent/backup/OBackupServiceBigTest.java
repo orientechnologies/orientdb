@@ -31,7 +31,6 @@ import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabasePool;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -105,7 +104,8 @@ public class OBackupServiceBigTest {
     server.startup(stream);
 
     orient = server.getContext();
-    orient.create(DB_NAME, ODatabaseType.PLOCAL);
+    orient.execute(
+        "create database " + DB_NAME + " plocal users(admin identified by 'admin' role admin)");
     server.activate();
     server
         .getSystemDatabase()

@@ -103,8 +103,8 @@ public class OrientDBEnterpriseProfilerTest {
     Assert.assertEquals(10, histogram.getSnapshot().getMax());
     Assert.assertEquals(5, histogram.getSnapshot().getMin());
 
-    Assert.assertEquals(7.5, histogram.getSnapshot().getMean(), 0);
-    Assert.assertEquals(10, histogram.getSnapshot().getMedian(), 0);
+    Assert.assertEquals(7.5, histogram.getSnapshot().getMean(), 0.1);
+    Assert.assertEquals(10, histogram.getSnapshot().getMedian(), 0.1);
   }
 
   @Test
@@ -133,5 +133,10 @@ public class OrientDBEnterpriseProfilerTest {
   public void testEnterpriseProfiler() {
     OEnterpriseProfiler profiler = new OEnterpriseProfiler();
     profiler.dump();
+    profiler.startRecording();
+    profiler.dumpHookValues();
+    profiler.stopRecording();
+
+    profiler.cpuUsageFallback();
   }
 }

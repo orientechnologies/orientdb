@@ -26,7 +26,8 @@ public class TransactionMetadataTest {
   public void before() {
 
     orientDB = new OrientDB("embedded:./target/", OrientDBConfig.defaultConfig());
-    orientDB.create(DB_NAME, ODatabaseType.PLOCAL);
+    orientDB.execute(
+        "create database `" + DB_NAME + "` plocal users(admin identified by 'admin' role admin)");
     db = orientDB.open(DB_NAME, "admin", "admin");
   }
 

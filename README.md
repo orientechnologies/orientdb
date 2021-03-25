@@ -22,6 +22,8 @@ Put JAR file into folder: \\\\mediaserver.wdf.sap.corp\UPLINBOX\ORIENTDB_30_EE a
 
 > Note for 3.1: https://launchpad.support.sap.com/#/notes/2915917
 
+> Note for 3.2: **TODO**
+
 ### CWB process
 
 > FA automation still WIP.
@@ -37,5 +39,10 @@ Copy the `ID` of the correction request to the initial comment in your PR e.g. `
 > For patches do not check `Not Patch Relevant`! If you get a validity issue with the note, go into it, edit validity and save.
 
 > Put CWB CR to "patch request", only after the "stage, promote" was successful.
+
+### Toolchain (news)
+
+- Vulas was deprecated 3/2021 and replaced by blackduck. However, Whitesource is considered an alternative, and thus nothing needs to be changed
+
 
 

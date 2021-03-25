@@ -25,7 +25,6 @@ import com.orientechnologies.agent.services.metrics.OrientDBMetricsService;
 import com.orientechnologies.agent.services.metrics.OrientDBMetricsSettings;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.server.distributed.http.EEBaseServerHttpTest;
 import java.io.FileReader;
 import java.nio.file.Files;
@@ -61,7 +60,10 @@ public class OMetricCSVQueryAggregatorTest extends EEBaseServerHttpTest {
 
     metricsService.changeSettings(settings);
 
-    remote.create(name.getMethodName(), ODatabaseType.PLOCAL);
+    remote.execute(
+        "create database "
+            + name.getMethodName()
+            + " plocal users(admin identified by 'admin' role admin)");
   }
 
   @Test

@@ -57,7 +57,12 @@ public class OSFTPDeltaUploadingStrategy implements OUploadingStrategy {
    */
   public boolean executeUpload(
       String sourceBackupDirectory, String destinationDirectoryPath, String... accessParameters) {
+    JSch ssh = new JSch();
+    return executeSftpUpload(ssh, sourceBackupDirectory, destinationDirectoryPath);
+  }
 
+  protected boolean executeSftpUpload(
+      JSch ssh, String sourceBackupDirectory, String destinationDirectoryPath) {
     boolean success = false;
     Session session = null;
     Channel channel = null;
@@ -66,7 +71,6 @@ public class OSFTPDeltaUploadingStrategy implements OUploadingStrategy {
     try {
 
       // SFTP connection
-      JSch ssh = new JSch();
       session = ssh.getSession(username, host, port);
       session.setPassword(password);
       java.util.Properties config = new java.util.Properties();
@@ -151,7 +155,12 @@ public class OSFTPDeltaUploadingStrategy implements OUploadingStrategy {
   @Override
   public OUploadMetadata executeUpload(
       String sourceFile, String fName, String destinationDirectoryPath) {
+    JSch ssh = new JSch();
+    return executeSftpFileUpload(ssh, sourceFile, fName, destinationDirectoryPath);
+  }
 
+  protected OUploadMetadata executeSftpFileUpload(
+      JSch ssh, String sourceFile, String fName, String destinationDirectoryPath) {
     boolean success = false;
     Session session = null;
     Channel channel = null;
@@ -164,7 +173,6 @@ public class OSFTPDeltaUploadingStrategy implements OUploadingStrategy {
 
     try {
       // SFTP connection
-      JSch ssh = new JSch();
       session = ssh.getSession(username, host, port);
       session.setPassword(password);
       java.util.Properties config = new java.util.Properties();

@@ -3,9 +3,10 @@ package com.orientechnologies.orient.server.distributed;
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.CLIENT_CONNECTION_STRATEGY;
 import static org.junit.Assert.assertEquals;
 
+import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentRemote;
@@ -33,8 +34,24 @@ public class ConnectionStrategiesEEIT {
     server2 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-2.xml");
     OrientDB remote =
         new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
-    remote.create(ConnectionStrategiesEEIT.class.getSimpleName(), ODatabaseType.PLOCAL);
+    remote.execute(
+        "create database `"
+            + ConnectionStrategiesEEIT.class.getSimpleName()
+            + "` plocal users(admin identified by 'admin' role admin, reader identified by 'reader' role reader, writer identified by 'writer' role writer)");
     remote.close();
+    waitForDbOnlineStatus(ConnectionStrategiesEEIT.class.getSimpleName());
+  }
+
+  private void waitForDbOnlineStatus(String dbName) throws InterruptedException {
+    server0
+        .getDistributedManager()
+        .waitUntilNodeOnline(server0.getDistributedManager().getLocalNodeName(), dbName);
+    server1
+        .getDistributedManager()
+        .waitUntilNodeOnline(server1.getDistributedManager().getLocalNodeName(), dbName);
+    server2
+        .getDistributedManager()
+        .waitUntilNodeOnline(server2.getDistributedManager().getLocalNodeName(), dbName);
   }
 
   @Test
@@ -49,6 +66,7 @@ public class ConnectionStrategiesEEIT {
             OrientDBConfig.builder()
                 .addConfig(CLIENT_CONNECTION_STRATEGY, "ROUND_ROBIN_CONNECT")
                 .build());
+
     Set<String> urls = new HashSet<>();
     ODatabaseSession session =
         remote1.open(ConnectionStrategiesEEIT.class.getSimpleName(), "admin", "admin");
@@ -131,12 +149,23 @@ public class ConnectionStrategiesEEIT {
     urls.add(((ODatabaseDocumentRemote) session).getSessionMetadata().getDebugLastHost());
     session.close();
 
-    for (int i = 0; i < 10; i++) {
+    long CYCLES = 10l;
+
+    long V_PER_CYCLE = 100L;
+
+    for (int i = 0; i < CYCLES; i++) {
       ODatabaseSession session2 =
           remote1.open(ConnectionStrategiesEEIT.class.getSimpleName(), "admin", "admin");
       urls.add(((ODatabaseDocumentRemote) session2).getSessionMetadata().getDebugLastHost());
-      for (int ji = 0; ji < 100; ji++) {
-        session2.save(session2.newVertex());
+      for (int ji = 0; ji < V_PER_CYCLE; ji++) {
+        for (int retry = 0; retry < 10; retry++) {
+          try {
+            session2.save(session2.newVertex());
+            break;
+          } catch (ONeedRetryException ex) {
+
+          }
+        }
       }
       session2.close();
     }
@@ -154,12 +183,19 @@ public class ConnectionStrategiesEEIT {
     server1.waitForShutdown();
     urls.clear();
 
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < CYCLES; i++) {
       ODatabaseSession session2 =
           remote1.open(ConnectionStrategiesEEIT.class.getSimpleName(), "admin", "admin");
       urls.add(((ODatabaseDocumentRemote) session2).getSessionMetadata().getDebugLastHost());
-      for (int ji = 0; ji < 100; ji++) {
-        session2.save(session2.newVertex());
+      for (int ji = 0; ji < V_PER_CYCLE; ji++) {
+        for (int retry = 0; retry < 10; retry++) {
+          try {
+            session2.save(session2.newVertex());
+            break;
+          } catch (ONeedRetryException ex) {
+
+          }
+        }
       }
       session2.close();
     }
@@ -182,11 +218,14 @@ public class ConnectionStrategiesEEIT {
     start.setDaemon(true);
     start.start();
 
+    Thread.sleep(20000);
+
     for (int i = 0; i < 1000; i++) {
+      OLogManager.instance().error(this, "phase 3 opening session " + i, null);
       ODatabaseSession session2 =
           remote1.open(ConnectionStrategiesEEIT.class.getSimpleName(), "admin", "admin");
       try (OResultSet res = session2.query("select count(*) as count from V")) {
-        assertEquals((long) res.next().getProperty("count"), 2000l);
+        assertEquals(CYCLES * V_PER_CYCLE * 2, (long) res.next().getProperty("count"));
       }
       urls.add(((ODatabaseDocumentRemote) session2).getSessionMetadata().getDebugLastHost());
       session2.close();

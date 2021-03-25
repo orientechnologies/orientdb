@@ -28,7 +28,6 @@ import com.orientechnologies.agent.services.metrics.OGlobalMetrics;
 import com.orientechnologies.agent.services.metrics.OrientDBMetricsService;
 import com.orientechnologies.agent.services.metrics.OrientDBMetricsSettings;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.server.OServer;
@@ -59,7 +58,10 @@ public class OMetricServiceTest {
 
     if (orientDB.exists(testName.getMethodName())) orientDB.drop(testName.getMethodName());
 
-    orientDB.create(testName.getMethodName(), ODatabaseType.PLOCAL);
+    orientDB.execute(
+        "create database "
+            + testName.getMethodName()
+            + " plocal users(admin identified by 'admin' role admin)");
 
     server.activate();
 
