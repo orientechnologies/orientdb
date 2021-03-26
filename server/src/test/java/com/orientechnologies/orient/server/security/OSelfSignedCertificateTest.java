@@ -77,9 +77,4 @@ public class OSelfSignedCertificateTest extends TestCase {
         });
     }
 
-//    @Test
-//    public void testSaveCertificate() {
-//
-//    }
-
 }
