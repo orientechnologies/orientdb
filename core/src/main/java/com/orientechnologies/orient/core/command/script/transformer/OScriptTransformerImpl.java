@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.core.command.script.transformer;
 
-import com.oracle.truffle.polyglot.*;
 import com.orientechnologies.orient.core.command.script.OScriptResultSet;
 import com.orientechnologies.orient.core.command.script.OScriptResultSets;
 import com.orientechnologies.orient.core.command.script.transformer.result.MapTransformer;
