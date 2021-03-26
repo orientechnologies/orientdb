@@ -15,7 +15,7 @@
         <orientdb.version>3.2.0-SNAPSHOT</orientdb.version>
         <surefire.version>2.19.1</surefire.version>
         <metrics.version>4.1.6</metrics.version>
-        <jackson.version>2.10.3</jackson.version>
+        <jackson.version>2.10.5.1</jackson.version>
         <exclude.kerberos.tests>%regex[com.orientechnologies.security.kerberos.*Test.*]</exclude.kerberos.tests>
         <project.rootdir>${project.basedir}/../</project.rootdir>
     </properties>
@@ -178,7 +178,7 @@
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-s3</artifactId>
-            <version>1.11.718</version>
+            <version>1.11.893</version>
         </dependency>
 
         <!-- ODB CE -->
@@ -222,6 +222,25 @@
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-security</artifactId>
             <version>${orientdb.version}</version>
+        </dependency>
+
+
+        <!-- forced dependencies -->
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-cbor</artifactId>
+            <version>2.12.1</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+            <version>1.13</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.13</version>
         </dependency>
 
         <!-- utils -->
