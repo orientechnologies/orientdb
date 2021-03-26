@@ -169,8 +169,6 @@ public class OETLLinkTransformer extends OETLAbstractLookupTransformer {
     // SET THE TRANSFORMED FIELD BACK
     doc.field(linkFieldName, result);
 
-    doc.save();
-
     log(Level.FINE, "set %s=%s in document=%s", linkFieldName, result, input);
 
     return input;
