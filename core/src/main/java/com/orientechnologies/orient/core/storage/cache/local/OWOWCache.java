@@ -1761,10 +1761,14 @@ public final class OWOWCache extends OAbstractWriteCache
 
     final Path nameIdMapHolderV1 = storagePath.resolve(NAME_ID_MAP_V1);
     final Path nameIdMapHolderV2 = storagePath.resolve(NAME_ID_MAP_V2);
+    final Path nameIdMapHolderV3 = storagePath.resolve(NAME_ID_MAP_V3);
 
     if (Files.exists(nameIdMapHolderV1)) {
       if (Files.exists(nameIdMapHolderV2)) {
         Files.delete(nameIdMapHolderV2);
+      }
+      if (Files.exists(nameIdMapHolderV3)) {
+        Files.delete(nameIdMapHolderV3);
       }
 
       try (final FileChannel nameIdMapHolder =
@@ -1774,7 +1778,9 @@ public final class OWOWCache extends OAbstractWriteCache
 
       Files.delete(nameIdMapHolderV1);
     } else if (Files.exists(nameIdMapHolderV2)) {
-      nameIdMapHolderPath = storagePath.resolve(NAME_ID_MAP_V2);
+      if (Files.exists(nameIdMapHolderV3)) {
+        Files.delete(nameIdMapHolderV3);
+      }
 
       try (final FileChannel nameIdMapHolder =
           FileChannel.open(nameIdMapHolderV2, StandardOpenOption.WRITE, StandardOpenOption.READ)) {
@@ -1784,7 +1790,7 @@ public final class OWOWCache extends OAbstractWriteCache
       Files.delete(nameIdMapHolderV2);
     }
 
-    nameIdMapHolderPath = storagePath.resolve(NAME_ID_MAP_V3);
+    nameIdMapHolderPath = nameIdMapHolderV3;
     if (Files.exists(nameIdMapHolderPath)) {
       try (final FileChannel nameIdMapHolder =
           FileChannel.open(
@@ -1903,10 +1909,16 @@ public final class OWOWCache extends OAbstractWriteCache
         localFileCounter = absFileId;
       }
 
-      nameIdMap.put(nameFileIdEntry.name, nameFileIdEntry.fileId);
-      idNameMap.put(nameFileIdEntry.fileId, nameFileIdEntry.name);
+      if (absFileId != 0) {
+        nameIdMap.put(nameFileIdEntry.name, nameFileIdEntry.fileId);
+        idNameMap.put(nameFileIdEntry.fileId, nameFileIdEntry.name);
 
-      idFileNameMap.put(nameFileIdEntry.fileId, nameFileIdEntry.fileSystemName);
+        idFileNameMap.put(nameFileIdEntry.fileId, nameFileIdEntry.fileSystemName);
+      } else {
+        nameIdMap.remove(nameFileIdEntry.name);
+        idNameMap.remove(nameFileIdEntry.fileId);
+        idFileNameMap.remove(nameFileIdEntry.fileId);
+      }
     }
 
     for (final Map.Entry<String, Integer> nameIdEntry : nameIdMap.entrySet()) {
@@ -1966,12 +1978,14 @@ public final class OWOWCache extends OAbstractWriteCache
       if (absFileId != 0) {
         nameIdMap.put(nameFileIdEntry.name, nameFileIdEntry.fileId);
         idNameMap.put(nameFileIdEntry.fileId, nameFileIdEntry.name);
+
+        idFileNameMap.put(nameFileIdEntry.fileId, nameFileIdEntry.fileSystemName);
       } else {
         nameIdMap.remove(nameFileIdEntry.name);
+        idNameMap.remove(nameFileIdEntry.fileId);
+
         idFileNameMap.remove(nameFileIdEntry.fileId);
       }
-
-      idFileNameMap.put(nameFileIdEntry.fileId, nameFileIdEntry.fileSystemName);
     }
 
     for (final Map.Entry<String, Integer> nameIdEntry : nameIdMap.entrySet()) {

@@ -4,7 +4,6 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -69,7 +68,8 @@ public class BTreeTestIT {
       orientDB.drop(DB_NAME);
     }
 
-    orientDB.create(DB_NAME, ODatabaseType.PLOCAL);
+    orientDB.execute(
+        "create database " + DB_NAME + " plocal users ( admin identified by 'admin' role admin)");
 
     ODatabaseSession databaseSession = orientDB.open(DB_NAME, "admin", "admin");
     storage = (OAbstractPaginatedStorage) ((ODatabaseInternal<?>) databaseSession).getStorage();

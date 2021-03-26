@@ -5,7 +5,6 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -37,7 +36,8 @@ public class LocalHashTableV2TestIT extends LocalHashTableV2Base {
             .build();
     orientDB = new OrientDB("plocal:" + buildDirectory, config);
 
-    orientDB.create(DB_NAME, ODatabaseType.PLOCAL, config);
+    orientDB.execute(
+        "create database " + DB_NAME + " plocal users ( admin identified by 'admin' role admin)");
     final ODatabaseSession databaseDocumentTx = orientDB.open(DB_NAME, "admin", "admin", config);
     storage = (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage();
     OMurmurHash3HashFunction<Integer> murmurHash3HashFunction =
