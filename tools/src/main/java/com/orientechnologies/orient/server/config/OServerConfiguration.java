@@ -71,7 +71,7 @@ public class OServerConfiguration {
 
   public static final String DEFAULT_ROOT_USER = "root";
   public static final String GUEST_USER = "guest";
-  public static final String GUEST_PASS = "guest";
+  public static final String DEFAULT_GUEST_PASSWORD = "!!!TheGuestPw123";
 
   /** Empty constructor for JAXB */
   public OServerConfiguration() {}
