@@ -37,7 +37,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.global.BTreeBonsaiGlobal;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.global.btree.BTree;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.global.btree.EdgeKey;
-import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
 import java.util.Map;
 import java.util.UUID;
@@ -75,10 +74,10 @@ public final class OSBTreeCollectionManagerShared
         bTree.load();
 
         fileIdBTreeMap.put(OWOWCache.extractFileId(entry.getValue()), bTree);
-        final EdgeKey edgeKey = bTree.firstKey();
+        final EdgeKey edgeKey = bTree.lastKey();
 
-        if (edgeKey != null && edgeKey.ridBagId < 0 && ridBagIdCounter.get() < -edgeKey.ridBagId) {
-          ridBagIdCounter.set(-edgeKey.ridBagId);
+        if (edgeKey != null && ridBagIdCounter.get() < edgeKey.ridBagId) {
+          ridBagIdCounter.set(edgeKey.ridBagId);
         }
       }
     }
@@ -113,6 +112,7 @@ public final class OSBTreeCollectionManagerShared
     final long fileId = atomicOperation.fileIdByName(generateLockName(clusterId));
     final int intFileId = OWOWCache.extractFileId(fileId);
     final BTree bTree = fileIdBTreeMap.remove(intFileId);
+
     bTree.delete(atomicOperation);
   }
 
@@ -126,7 +126,7 @@ public final class OSBTreeCollectionManagerShared
       bTree.create(atomicOperation);
 
       fileId = bTree.getFileId();
-      final long nextRidBagId = -ridBagIdCounter.incrementAndGet();
+      final long nextRidBagId = generateNextRidBagId(bTree);
 
       final int intFileId = OWOWCache.extractFileId(fileId);
       fileIdBTreeMap.put(intFileId, bTree);
@@ -134,21 +134,48 @@ public final class OSBTreeCollectionManagerShared
       return new BTreeBonsaiGlobal(
           bTree,
           intFileId,
-              nextRidBagId,
+          clusterId,
+          nextRidBagId,
           OLinkSerializer.INSTANCE,
           OIntegerSerializer.INSTANCE);
     } else {
       final int intFileId = OWOWCache.extractFileId(fileId);
       final BTree bTree = fileIdBTreeMap.get(intFileId);
-      final long nextRidBagId = -ridBagIdCounter.incrementAndGet();
+      final long nextRidBagId = generateNextRidBagId(bTree);
 
       return new BTreeBonsaiGlobal(
           bTree,
           intFileId,
-              nextRidBagId,
+          clusterId,
+          nextRidBagId,
           OLinkSerializer.INSTANCE,
           OIntegerSerializer.INSTANCE);
     }
+  }
+
+  private long generateNextRidBagId(BTree bTree) {
+    long nextRidBagId;
+    while (true) {
+      nextRidBagId = ridBagIdCounter.incrementAndGet();
+
+      if (nextRidBagId < 0) {
+        ridBagIdCounter.compareAndSet(nextRidBagId, -nextRidBagId);
+        continue;
+      }
+
+      try (final Stream<ORawPair<EdgeKey, Integer>> stream =
+          bTree.iterateEntriesBetween(
+              new EdgeKey(nextRidBagId, Integer.MIN_VALUE, Long.MIN_VALUE),
+              true,
+              new EdgeKey(nextRidBagId, Integer.MAX_VALUE, Long.MAX_VALUE),
+              true,
+              true)) {
+        if (!stream.findAny().isPresent()) {
+          break;
+        }
+      }
+    }
+    return nextRidBagId;
   }
 
   @Override
@@ -158,17 +185,11 @@ public final class OSBTreeCollectionManagerShared
 
     final BTree bTree = fileIdBTreeMap.get(intFileId);
 
-    final long ridBagId;
-    final OBonsaiBucketPointer rootPointer = collectionPointer.getRootPointer();
-    if(rootPointer.getPageIndex() < 0) {
-      ridBagId = rootPointer.getPageIndex();
-    } else {
-      ridBagId = (rootPointer.getPageIndex() << 16) + rootPointer.getPageOffset();
-    }
-
     return new BTreeBonsaiGlobal(
         bTree,
-        intFileId, ridBagId,
+        intFileId,
+        collectionPointer.getRootPointer().getPageOffset(),
+        collectionPointer.getRootPointer().getPageIndex(),
         OLinkSerializer.INSTANCE,
         OIntegerSerializer.INSTANCE);
   }
@@ -247,13 +268,7 @@ public final class OSBTreeCollectionManagerShared
           "RidBug for with collection pointer " + collectionPointer + " does not exist");
     }
 
-    final long ridBagId;
-    final OBonsaiBucketPointer rootPointer = collectionPointer.getRootPointer();
-    if(rootPointer.getPageIndex() < 0) {
-      ridBagId = rootPointer.getPageIndex();
-    } else {
-      ridBagId = (rootPointer.getPageIndex() << 16) + rootPointer.getPageOffset();
-    }
+    final long ridBagId = collectionPointer.getRootPointer().getPageIndex();
 
     try (Stream<ORawPair<EdgeKey, Integer>> stream =
         bTree.iterateEntriesBetween(
