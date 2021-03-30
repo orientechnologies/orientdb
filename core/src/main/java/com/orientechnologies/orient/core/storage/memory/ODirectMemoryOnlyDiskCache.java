@@ -37,7 +37,6 @@ import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.cache.local.OBackgroundExceptionListener;
 import com.orientechnologies.orient.core.storage.impl.local.OPageIsBrokenListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
@@ -386,11 +385,6 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache
     }
 
     return new long[0];
-  }
-
-  @Override
-  public void replaceFileId(long fileId, long newFileId) throws IOException {
-    throw new UnsupportedOperationException();
   }
 
   @Override

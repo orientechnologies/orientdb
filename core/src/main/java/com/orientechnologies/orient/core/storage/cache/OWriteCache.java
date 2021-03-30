@@ -207,6 +207,4 @@ public interface OWriteCache {
   void create() throws IOException;
 
   void open() throws IOException;
-
-  void replaceFileId(long fileId, long newFileId) throws IOException;
 }
