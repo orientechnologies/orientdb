@@ -973,10 +973,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     ORidBag bag = new ORidBag();
     assertEmbedded(bag.isEmbedded());
 
-    final long seed = System.nanoTime();
-    System.out.println("testMassiveChanges seed: " + seed);
-
-    Random random = new Random(seed);
+    Random random = new Random();
     List<OIdentifiable> rids = new ArrayList<OIdentifiable>();
     document.field("bag", bag);
     document.save(database.getClusterNameById(database.getDefaultClusterId()));
@@ -1147,6 +1144,99 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     for (OIdentifiable id : ridBag) Assert.assertTrue(itemsToAdd.remove(id));
 
     Assert.assertTrue(itemsToAdd.isEmpty());
+  }
+
+  public void testFromEmbeddedToSBTreeAndBack() throws IOException {
+    OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(7);
+    OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(-1);
+
+    if (database.getStorage() instanceof OStorageProxy) {
+      OServerAdmin server =
+          new OServerAdmin(database.getURL())
+              .connect("root", ODatabaseHelper.getServerRootPassword());
+      server.setGlobalConfiguration(
+          OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD, 7);
+      server.setGlobalConfiguration(
+          OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD, -1);
+      server.close();
+    }
+
+    ORidBag ridBag = new ORidBag();
+    ODocument document = new ODocument();
+    document.field("ridBag", ridBag);
+
+    Assert.assertTrue(ridBag.isEmbedded());
+    document.save(database.getClusterNameById(database.getDefaultClusterId()));
+    document.reload();
+
+    ridBag = document.field("ridBag");
+    Assert.assertTrue(ridBag.isEmbedded());
+
+    List<OIdentifiable> addedItems = new ArrayList<OIdentifiable>();
+
+    for (int i = 0; i < 6; i++) {
+      ODocument docToAdd = new ODocument();
+      docToAdd.save(database.getClusterNameById(database.getDefaultClusterId()));
+
+      ridBag.add(docToAdd);
+      addedItems.add(docToAdd);
+    }
+
+    document.save();
+
+    document.reload();
+
+    ridBag = document.field("ridBag");
+    Assert.assertTrue(ridBag.isEmbedded());
+
+    ODocument docToAdd = new ODocument();
+    docToAdd.save(database.getClusterNameById(database.getDefaultClusterId()));
+    ridBag.add(docToAdd);
+    addedItems.add(docToAdd);
+
+    document.save();
+
+    Assert.assertTrue(!ridBag.isEmbedded());
+
+    List<OIdentifiable> addedItemsCopy = new ArrayList<OIdentifiable>(addedItems);
+    for (OIdentifiable id : ridBag) Assert.assertTrue(addedItems.remove(id));
+
+    Assert.assertTrue(addedItems.isEmpty());
+
+    document.reload();
+
+    ridBag = document.field("ridBag");
+    Assert.assertTrue(!ridBag.isEmbedded());
+
+    addedItems.addAll(addedItemsCopy);
+    for (OIdentifiable id : ridBag) Assert.assertTrue(addedItems.remove(id));
+
+    Assert.assertTrue(addedItems.isEmpty());
+
+    addedItems.addAll(addedItemsCopy);
+
+    for (int i = 0; i < 3; i++) ridBag.remove(addedItems.remove(i));
+
+    addedItemsCopy.clear();
+    addedItemsCopy.addAll(addedItems);
+
+    document.save();
+
+    Assert.assertTrue(!ridBag.isEmbedded());
+
+    for (OIdentifiable id : ridBag) Assert.assertTrue(addedItems.remove(id));
+
+    Assert.assertTrue(addedItems.isEmpty());
+
+    document.reload();
+
+    ridBag = document.field("ridBag");
+    Assert.assertTrue(!ridBag.isEmbedded());
+
+    addedItems.addAll(addedItemsCopy);
+    for (OIdentifiable id : ridBag) Assert.assertTrue(addedItems.remove(id));
+
+    Assert.assertTrue(addedItems.isEmpty());
   }
 
   public void testFromEmbeddedToSBTreeAndBackTx() throws IOException {
@@ -1583,8 +1673,8 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
         final OIdentifiable rid = rids.remove(index);
         bag.remove(rid);
       } else {
-        final long position;
-        position = rnd.nextInt(300);
+        final int positionIndex = rnd.nextInt(300);
+        final long position = positionIndex;
 
         final ORecordId recordId = new ORecordId(1, position);
         rids.add(recordId);

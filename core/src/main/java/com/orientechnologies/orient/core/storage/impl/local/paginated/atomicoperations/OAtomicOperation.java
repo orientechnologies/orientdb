@@ -43,8 +43,6 @@ public interface OAtomicOperation {
 
   String fileNameById(long fileId);
 
-  long fileIdByName(String name);
-
   void truncateFile(long fileId) throws IOException;
 
   boolean containsInLockedObjects(String lockName);

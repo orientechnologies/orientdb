@@ -1,13 +1,13 @@
 package com.orientechnologies.orient.core.storage.index.sbtreebonsai.global.btree;
 
-public final class EdgeKey implements Comparable<EdgeKey> {
+final class EdgeKey implements Comparable<EdgeKey> {
 
-  public final long ridBagId;
-  public final int targetCluster;
-  public final long targetPosition;
+  final int ownerId;
+  final int targetCluster;
+  final long targetPosition;
 
-  public EdgeKey(long ridBagId, int targetCluster, long targetPosition) {
-    this.ridBagId = ridBagId;
+  EdgeKey(int ownerId, int targetCluster, long targetPosition) {
+    this.ownerId = ownerId;
     this.targetCluster = targetCluster;
     this.targetPosition = targetPosition;
   }
@@ -15,8 +15,8 @@ public final class EdgeKey implements Comparable<EdgeKey> {
   @Override
   public String toString() {
     return "EdgeKey{"
-        + " ridBagId="
-        + ridBagId
+        + " ownerId="
+        + ownerId
         + ", targetCluster="
         + targetCluster
         + ", targetPosition="
@@ -35,7 +35,7 @@ public final class EdgeKey implements Comparable<EdgeKey> {
 
     EdgeKey edgeKey = (EdgeKey) o;
 
-    if (ridBagId != edgeKey.ridBagId) {
+    if (ownerId != edgeKey.ownerId) {
       return false;
     }
     if (targetCluster != edgeKey.targetCluster) {
@@ -46,7 +46,7 @@ public final class EdgeKey implements Comparable<EdgeKey> {
 
   @Override
   public int hashCode() {
-    int result = (int) (ridBagId ^ (ridBagId >>> 32));
+    int result = ownerId;
     result = 31 * result + targetCluster;
     result = 31 * result + (int) (targetPosition ^ (targetPosition >>> 32));
     return result;
@@ -54,8 +54,8 @@ public final class EdgeKey implements Comparable<EdgeKey> {
 
   @Override
   public int compareTo(final EdgeKey other) {
-    if (ridBagId != other.ridBagId) {
-      if (ridBagId < other.ridBagId) {
+    if (ownerId != other.ownerId) {
+      if (ownerId < other.ownerId) {
         return -1;
       } else {
         return 1;

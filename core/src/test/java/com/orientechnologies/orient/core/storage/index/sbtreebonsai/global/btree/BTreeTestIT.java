@@ -426,7 +426,7 @@ public class BTreeTestIT {
       EdgeKey fromKey = keys[fromKeyIndex];
 
       if (random.nextBoolean() && fromKey.targetPosition > Long.MIN_VALUE) {
-        fromKey = new EdgeKey(fromKey.ridBagId, fromKey.targetCluster, fromKey.targetPosition - 1);
+        fromKey = new EdgeKey(fromKey.ownerId, fromKey.targetCluster, fromKey.targetPosition - 1);
       }
 
       final Iterator<ORawPair<EdgeKey, Integer>> indexIterator;
@@ -517,7 +517,7 @@ public class BTreeTestIT {
       int toKeyIndex = random.nextInt(keys.length);
       EdgeKey toKey = keys[toKeyIndex];
       if (random.nextBoolean()) {
-        toKey = new EdgeKey(toKey.ridBagId, toKey.targetCluster, toKey.targetPosition + 1);
+        toKey = new EdgeKey(toKey.ownerId, toKey.targetCluster, toKey.targetPosition + 1);
       }
 
       final Iterator<ORawPair<EdgeKey, Integer>> indexIterator;
@@ -611,11 +611,11 @@ public class BTreeTestIT {
       EdgeKey toKey = keys[toKeyIndex];
 
       if (random.nextBoolean()) {
-        fromKey = new EdgeKey(fromKey.ridBagId, fromKey.targetCluster, fromKey.targetPosition - 1);
+        fromKey = new EdgeKey(fromKey.ownerId, fromKey.targetCluster, fromKey.targetPosition - 1);
       }
 
       if (random.nextBoolean()) {
-        toKey = new EdgeKey(toKey.ridBagId, toKey.targetCluster, toKey.targetPosition + 1);
+        toKey = new EdgeKey(toKey.ownerId, toKey.targetCluster, toKey.targetPosition + 1);
       }
 
       if (fromKey.compareTo(toKey) > 0) {

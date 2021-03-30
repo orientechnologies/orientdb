@@ -48,7 +48,7 @@ public class OSBTreeMapEntryIterator<K, V> implements Iterator<Map.Entry<K, V>> 
     this.sbTree = sbTree;
     this.prefetchSize = prefetchSize;
 
-    if (sbTree.isEmpty()) {
+    if (sbTree.size() == 0) {
       this.preFetchedValues = null;
       return;
     }

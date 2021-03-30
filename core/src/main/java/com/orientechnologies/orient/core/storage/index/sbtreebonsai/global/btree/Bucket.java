@@ -113,10 +113,6 @@ final class Bucket extends ODurablePage {
       throw new IllegalStateException("Remove is applies to leaf buckets only");
     }
 
-    final int freePointer = getIntValue(FREE_POINTER_OFFSET);
-    assert freePointer <= ODurablePage.MAX_PAGE_SIZE_BYTES;
-    assert freePointer + entrySize <= ODurablePage.MAX_PAGE_SIZE_BYTES;
-
     int size = getIntValue(SIZE_OFFSET);
     if (entryIndex < size - 1) {
       moveData(
@@ -128,6 +124,7 @@ final class Bucket extends ODurablePage {
     size--;
     setIntValue(SIZE_OFFSET, size);
 
+    final int freePointer = getIntValue(FREE_POINTER_OFFSET);
     if (size > 0 && entryPosition > freePointer) {
       moveData(freePointer, freePointer + entrySize, entryPosition - freePointer);
     }
@@ -169,13 +166,10 @@ final class Bucket extends ODurablePage {
     setIntValue(SIZE_OFFSET, size);
 
     final int freePointer = getIntValue(FREE_POINTER_OFFSET);
-    assert freePointer <= ODurablePage.MAX_PAGE_SIZE_BYTES;
-
     if (size > 0 && entryPosition > freePointer) {
       moveData(freePointer, freePointer + entrySize, entryPosition - freePointer);
     }
 
-    assert freePointer + entrySize <= ODurablePage.MAX_PAGE_SIZE_BYTES;
     setIntValue(FREE_POINTER_OFFSET, freePointer + entrySize);
 
     int currentPositionOffset = POSITIONS_ARRAY_OFFSET;
@@ -283,11 +277,7 @@ final class Bucket extends ODurablePage {
 
   private void appendRawEntry(final int index, final byte[] rawEntry) {
     int freePointer = getIntValue(FREE_POINTER_OFFSET);
-    assert freePointer <= ODurablePage.MAX_PAGE_SIZE_BYTES;
-
     freePointer -= rawEntry.length;
-
-    assert freePointer <= ODurablePage.MAX_PAGE_SIZE_BYTES;
 
     setIntValue(FREE_POINTER_OFFSET, freePointer);
     setIntValue(POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE, freePointer);
@@ -338,8 +328,6 @@ final class Bucket extends ODurablePage {
     final int size = getIntValue(SIZE_OFFSET);
 
     int freePointer = getIntValue(FREE_POINTER_OFFSET);
-    assert freePointer <= ODurablePage.MAX_PAGE_SIZE_BYTES;
-
     if (freePointer - entrySize
         < (size + 1) * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET) {
       return false;
@@ -353,8 +341,6 @@ final class Bucket extends ODurablePage {
     }
 
     freePointer -= entrySize;
-
-    assert freePointer <= ODurablePage.MAX_PAGE_SIZE_BYTES;
 
     setIntValue(FREE_POINTER_OFFSET, freePointer);
     setIntValue(POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE, freePointer);
@@ -380,8 +366,6 @@ final class Bucket extends ODurablePage {
 
     int size = size();
     int freePointer = getIntValue(FREE_POINTER_OFFSET);
-    assert freePointer <= ODurablePage.MAX_PAGE_SIZE_BYTES;
-
     if (freePointer - entrySize
         < (size + 1) * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET) {
       return false;
@@ -395,8 +379,6 @@ final class Bucket extends ODurablePage {
     }
 
     freePointer -= entrySize;
-
-    assert freePointer <= ODurablePage.MAX_PAGE_SIZE_BYTES;
 
     setIntValue(FREE_POINTER_OFFSET, freePointer);
     setIntValue(POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE, freePointer);

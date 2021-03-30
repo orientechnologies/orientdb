@@ -89,7 +89,7 @@ public interface OSBTreeBonsai<K, V> extends OTreeInternal<K, V> {
    */
   void delete(OAtomicOperation atomicOperation);
 
-  boolean isEmpty();
+  long size();
 
   V remove(OAtomicOperation atomicOperation, K key) throws IOException;
 
@@ -129,4 +129,6 @@ public interface OSBTreeBonsai<K, V> extends OTreeInternal<K, V> {
   OBinarySerializer<K> getKeySerializer();
 
   OBinarySerializer<V> getValueSerializer();
+
+  void markToDelete(OAtomicOperation atomicOperation) throws IOException;
 }
