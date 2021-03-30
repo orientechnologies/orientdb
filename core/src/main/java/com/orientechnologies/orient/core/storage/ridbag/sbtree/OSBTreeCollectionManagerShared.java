@@ -132,14 +132,22 @@ public final class OSBTreeCollectionManagerShared
       fileIdBTreeMap.put(intFileId, bTree);
 
       return new BTreeBonsaiGlobal(
-          bTree, intFileId, nextRidBagId, OLinkSerializer.INSTANCE, OIntegerSerializer.INSTANCE);
+          bTree,
+          intFileId,
+              nextRidBagId,
+          OLinkSerializer.INSTANCE,
+          OIntegerSerializer.INSTANCE);
     } else {
       final int intFileId = OWOWCache.extractFileId(fileId);
       final BTree bTree = fileIdBTreeMap.get(intFileId);
       final long nextRidBagId = -ridBagIdCounter.incrementAndGet();
 
       return new BTreeBonsaiGlobal(
-          bTree, intFileId, nextRidBagId, OLinkSerializer.INSTANCE, OIntegerSerializer.INSTANCE);
+          bTree,
+          intFileId,
+              nextRidBagId,
+          OLinkSerializer.INSTANCE,
+          OIntegerSerializer.INSTANCE);
     }
   }
 
@@ -152,14 +160,17 @@ public final class OSBTreeCollectionManagerShared
 
     final long ridBagId;
     final OBonsaiBucketPointer rootPointer = collectionPointer.getRootPointer();
-    if (rootPointer.getPageIndex() < 0) {
+    if(rootPointer.getPageIndex() < 0) {
       ridBagId = rootPointer.getPageIndex();
     } else {
       ridBagId = (rootPointer.getPageIndex() << 16) + rootPointer.getPageOffset();
     }
 
     return new BTreeBonsaiGlobal(
-        bTree, intFileId, ridBagId, OLinkSerializer.INSTANCE, OIntegerSerializer.INSTANCE);
+        bTree,
+        intFileId, ridBagId,
+        OLinkSerializer.INSTANCE,
+        OIntegerSerializer.INSTANCE);
   }
 
   @Override
@@ -238,7 +249,7 @@ public final class OSBTreeCollectionManagerShared
 
     final long ridBagId;
     final OBonsaiBucketPointer rootPointer = collectionPointer.getRootPointer();
-    if (rootPointer.getPageIndex() < 0) {
+    if(rootPointer.getPageIndex() < 0) {
       ridBagId = rootPointer.getPageIndex();
     } else {
       ridBagId = (rootPointer.getPageIndex() << 16) + rootPointer.getPageOffset();
