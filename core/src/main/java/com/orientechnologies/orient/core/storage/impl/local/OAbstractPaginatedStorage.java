@@ -4994,14 +4994,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   protected final void makeFuzzyCheckpoint() {
     // check every 1 ms.
     while (!stateLock.tryAcquireReadLock(1_000_000)) {
-      if (status != STATUS.OPEN || status != STATUS.MIGRATION) {
+      if (status != STATUS.OPEN) {
         return;
       }
     }
 
     try {
       interruptionManager.enterCriticalPath();
-      if (status != STATUS.OPEN || status != STATUS.MIGRATION) {
+      if (status != STATUS.OPEN) {
         return;
       }
 

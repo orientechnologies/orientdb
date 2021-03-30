@@ -21,7 +21,6 @@
 package com.orientechnologies.orient.core.storage.ridbag.sbtree;
 
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.OOrientShutdownListener;
@@ -107,30 +106,11 @@ public final class OSBTreeCollectionManagerShared
       }
     }
 
-    if (!filesToMigrate.isEmpty()) {
-      OLogManager.instance()
-          .infoNoDb(
-              this,
-              "There are found %d RidBags "
-                  + "(containers for edges which are going to be migrated). "
-                  + "PLEASE DO NOT SHUTDOWN YOUR DATABASE DURING MIGRATION BECAUSE THAT RISKS TO DAMAGE YOUR DATA !!!",
-              filesToMigrate.size());
-    } else {
-      return;
-    }
-
-    int migrationCounter = 0;
     for (String fileName : filesToMigrate) {
       final String clusterIdStr =
           fileName.substring("collections_".length(), fileName.length() - ".sbc".length());
       final int clusterId = Integer.parseInt(clusterIdStr);
 
-      OLogManager.instance()
-          .infoNoDb(
-              this,
-              "Migration of RidBag for cluster #%s is started ... "
-                  + "PLEASE WAIT FOR COMPLETION !",
-              clusterIdStr);
       final BTree bTree = new BTree(storage, FILE_NAME_PREFIX + clusterId, FILE_EXTENSION);
       atomicOperationsManager.executeInsideAtomicOperation(null, bTree::create);
 
@@ -164,21 +144,9 @@ public final class OSBTreeCollectionManagerShared
               }
             });
       }
-
-      migrationCounter++;
-      OLogManager.instance()
-          .infoNoDb(
-              this,
-              "%d RidBags out of %d are migrated ... PLEASE WAIT FOR COMPLETION !",
-              migrationCounter,
-              filesToMigrate.size());
     }
 
-    OLogManager.instance()
-        .infoNoDb(this, "All RidBags are going to be flushed out ... PLEASE WAIT FOR COMPLETION !");
     final OReadCache readCache = storage.getReadCache();
-
-    int flushCounter = 0;
     for (final String fileName : filesToMigrate) {
       final String clusterIdStr =
           fileName.substring("collections_".length(), fileName.length() - ".sbc".length());
@@ -190,19 +158,10 @@ public final class OSBTreeCollectionManagerShared
       final long newFileId = writeCache.fileIdByName(newFileName);
 
       readCache.closeFile(fileId, false, writeCache);
-      readCache.closeFile(newFileId, true, writeCache);
 
       // old file is removed and id of this file is used as id of the new file
       // new file keeps the same name
       writeCache.replaceFileId(fileId, newFileId);
-      flushCounter++;
-
-      OLogManager.instance()
-          .infoNoDb(
-              this,
-              "%d RidBags are flushed out of %d ... PLEASE WAIT FOR COMPLETION !",
-              flushCounter,
-              filesToMigrate.size());
     }
 
     for (final String fileName : filesToMigrate) {
@@ -215,8 +174,6 @@ public final class OSBTreeCollectionManagerShared
 
       fileIdBTreeMap.put(OWOWCache.extractFileId(bTree.getFileId()), bTree);
     }
-
-    OLogManager.instance().infoNoDb(this, "All RidBags are migrated.");
   }
 
   @Override

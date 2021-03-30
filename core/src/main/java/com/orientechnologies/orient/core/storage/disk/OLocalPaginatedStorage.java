@@ -235,8 +235,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   @Override
   public final boolean exists() {
     try {
-      if (status == STATUS.OPEN || status == STATUS.INTERNAL_ERROR || status == STATUS.MIGRATION)
-        return true;
+      if (status == STATUS.OPEN || status == STATUS.INTERNAL_ERROR) return true;
 
       return exists(storagePath);
     } catch (final RuntimeException e) {
@@ -794,7 +793,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
     diskWriteAheadLog.addSegmentOverflowListener(
         (segment) -> {
-          if (status != STATUS.OPEN && status != STATUS.MIGRATION) {
+          if (status != STATUS.OPEN) {
             return;
           }
 
