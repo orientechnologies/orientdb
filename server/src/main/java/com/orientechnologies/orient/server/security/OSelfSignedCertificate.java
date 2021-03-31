@@ -7,6 +7,7 @@ import sun.security.x509.*;
 
 import java.io.*;
 import java.math.BigInteger;
+import java.net.InetAddress;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -20,7 +21,7 @@ import java.util.Date;
  *
  * Class developed to generate self-signed certificate
  */
-public class OSelfSignedCertificate {
+public class OSelfSignedCertificate<tmpLocalHost> {
 
 //    public static final String PARAM_NETWORK_SSL_CLIENT_AUTH = "network.ssl.clientAuth";
 //    public static final String PARAM_NETWORK_SSL_KEYSTORE = "network.ssl.keyStore";
@@ -39,7 +40,9 @@ public class OSelfSignedCertificate {
     private static final String DEFAULT_KEYSTORE_TYPE = KeyStore.getDefaultType();
     private static final String DEFAULT_KEYSTORE_PWD = "";
 
-    public static final String DEFAULT_CERTIFICATE_OWNER = "CN=OrientDB, OU=SAP HANA Core, O=SAP SE, L=Walldorf, C=DE";
+    public static final String DEFAULT_CERTIFICATE_OWNER = "CN=SelfSigenedOrientDBtestOnly, OU=SAP HANA Core, O=SAP SE, L=Walldorf, C=DE";
+//    public static final String DEFAULT_CERTIFICATE_OWNER = "CN=localhost.localdomain";
+//    public static final String DEFAULT_CERTIFICATE_OWNER = "CN=C02WP0WUHV2Q.local";
     public static final String DEFAULT_CERTIFICATE_NAME = "ssl";
 
     private String clientAuth;

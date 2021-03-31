@@ -147,17 +147,20 @@ public class OServerSSLCertificateManager {
         FileOutputStream ks_FOs = null;
         try {
 
-            ks_FOs = new FileOutputStream(keyStore_FilePointer);
+//            ks_FOs = new FileOutputStream(keyStore_FilePointer);
 
-            keyStore_instance.load(null, ks_pwd);
+            if (!keyStore_FilePointer.exists())
+                keyStore_instance.load(null, null);
 
-            keyStore_instance.store(ks_FOs, ks_pwd);
+//            keyStore_instance.load(null, ks_pwd);
+
+//            keyStore_instance.store(ks_FOs, ks_pwd);
 
         } catch (Exception e) {
             e.printStackTrace();
             throw e;
         } finally {
-            ks_FOs.close();
+//            ks_FOs.close();
             throw new CertificateException("the KeyStore is empty");
         }
     }
