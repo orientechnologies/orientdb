@@ -32,7 +32,7 @@ public abstract class OAbstractCollectionConverter<T> implements OValuesConverte
       if (!newValue.equals(item)) updated = true;
     } else {
       final OValuesConverter valuesConverter =
-          OImportConvertersFactory.INSTANCE.getConverter(item.getClass(), converterData);
+          OImportConvertersFactory.INSTANCE.getConverter(item, converterData);
       if (valuesConverter == null) result.add(item);
       else {
         final Object newValue = valuesConverter.convert(item);
