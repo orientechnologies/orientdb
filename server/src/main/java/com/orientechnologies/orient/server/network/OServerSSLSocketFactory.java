@@ -20,6 +20,7 @@ import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
@@ -125,10 +126,8 @@ public class OServerSSLSocketFactory extends OServerSocketFactory {
 
       KeyStore keyStore = KeyStore.getInstance(keyStoreType);
       char[] keyStorePass = keyStorePassword.toCharArray();
-      //      keyStore.load(new FileInputStream(keyStoreFile), keyStorePass); // edited by MB
-      OServerSSLCertificateManager oServerSSLCertificateManager =
-          OServerSSLCertificateManager.getInstance(
-              this, keyStore, keyStoreFile, keyStorePass); // added by MB
+//      keyStore.load(new FileInputStream(keyStoreFile), keyStorePass); // edited by MB
+      OServerSSLCertificateManager oServerSSLCertificateManager = OServerSSLCertificateManager.getInstance(this,keyStore,keyStoreFile,keyStorePass); // added by MB
       oServerSSLCertificateManager.loadKeyStoreForSSLSocket(); // added by MB
       kmf.init(keyStore, keyStorePass);
 
@@ -137,10 +136,8 @@ public class OServerSSLSocketFactory extends OServerSocketFactory {
         tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
         KeyStore trustStore = KeyStore.getInstance(trustStoreType);
         char[] trustStorePass = trustStorePassword.toCharArray();
-        //        trustStore.load(new FileInputStream(trustStoreFile), trustStorePass); // edited by
-        // MB
-        oServerSSLCertificateManager.loadTrustStoreForSSLSocket(
-            trustStore, trustStoreFile, trustStorePass); // added by MB
+//        trustStore.load(new FileInputStream(trustStoreFile), trustStorePass); // edited by MB
+        oServerSSLCertificateManager.loadTrustStoreForSSLSocket(trustStore,trustStoreFile,trustStorePass); // added by MB
         tmf.init(trustStore);
       }
 
