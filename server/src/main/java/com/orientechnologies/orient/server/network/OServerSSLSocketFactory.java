@@ -125,11 +125,9 @@ public class OServerSSLSocketFactory extends OServerSocketFactory {
 
       KeyStore keyStore = KeyStore.getInstance(keyStoreType);
       char[] keyStorePass = keyStorePassword.toCharArray();
-      //      keyStore.load(new FileInputStream(keyStoreFile), keyStorePass); // edited by MB
       OServerSSLCertificateManager oServerSSLCertificateManager =
-          OServerSSLCertificateManager.getInstance(
-              this, keyStore, keyStoreFile, keyStorePass); // added by MB
-      oServerSSLCertificateManager.loadKeyStoreForSSLSocket(); // added by MB
+          OServerSSLCertificateManager.getInstance(this, keyStore, keyStoreFile, keyStorePass);
+      oServerSSLCertificateManager.loadKeyStoreForSSLSocket();
       kmf.init(keyStore, keyStorePass);
 
       TrustManagerFactory tmf = null;
@@ -137,10 +135,8 @@ public class OServerSSLSocketFactory extends OServerSocketFactory {
         tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
         KeyStore trustStore = KeyStore.getInstance(trustStoreType);
         char[] trustStorePass = trustStorePassword.toCharArray();
-        //        trustStore.load(new FileInputStream(trustStoreFile), trustStorePass); // edited by
-        // MB
         oServerSSLCertificateManager.loadTrustStoreForSSLSocket(
-            trustStore, trustStoreFile, trustStorePass); // added by MB
+            trustStore, trustStoreFile, trustStorePass);
         tmf.init(trustStore);
       }
 

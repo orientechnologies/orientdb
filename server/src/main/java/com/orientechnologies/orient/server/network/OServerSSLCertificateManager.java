@@ -85,7 +85,7 @@ public class OServerSSLCertificateManager {
             this.trustStoreFile,
             this.trustStore,
             this.trustStorePass,
-            this.oSelfSignedCertificate.getCertificate_name(),
+            this.oSelfSignedCertificate.getCertificateName(),
             this.oSelfSignedCertificate.getCertificate());
     }
   }
@@ -105,7 +105,7 @@ public class OServerSSLCertificateManager {
       storeCertificate(
           this.oSelfSignedCertificate.getCertificate(),
           this.oSelfSignedCertificate.getPrivateKey(),
-          this.oSelfSignedCertificate.getCertificate_name(),
+          this.oSelfSignedCertificate.getCertificateName(),
           this.keyStorePass,
           this.keyStoreFile,
           this.keyStore,
@@ -121,16 +121,15 @@ public class OServerSSLCertificateManager {
   private void initOSelfSignedCertificateParameters() {
     this.oSelfSignedCertificate = new OSelfSignedCertificate();
     this.oSelfSignedCertificate.setAlgorithm(OSelfSignedCertificate.DEFAULT_CERTIFICATE_ALGORITHM);
-    this.oSelfSignedCertificate.setCertificate_name(
-        OSelfSignedCertificate.DEFAULT_CERTIFICATE_NAME);
+    this.oSelfSignedCertificate.setCertificateName(OSelfSignedCertificate.DEFAULT_CERTIFICATE_NAME);
     try {
-      this.oSelfSignedCertificate.setCertificate_SN(
+      this.oSelfSignedCertificate.setCertificateSN(
           0); // trick to force it to conpute a random BigInteger
     } catch (SwitchToDefaultParamsException e) {
     }
-    this.oSelfSignedCertificate.setCertificate_pwd(null);
+    this.oSelfSignedCertificate.setCertificatePwd(null);
     this.oSelfSignedCertificate.setKey_size(OSelfSignedCertificate.DEFAULT_CERTIFICATE_KEY_SIZE);
-    this.oSelfSignedCertificate.setOwner_FDN(OSelfSignedCertificate.DEFAULT_CERTIFICATE_OWNER);
+    this.oSelfSignedCertificate.setOwnerFDN(OSelfSignedCertificate.DEFAULT_CERTIFICATE_OWNER);
     this.oSelfSignedCertificate.setValidity(OSelfSignedCertificate.DEFAULT_CERTIFICATE_VALIDITY);
   }
 
@@ -146,94 +145,84 @@ public class OServerSSLCertificateManager {
   }
 
   public static void initKeyStore(
-      File keyStore_FilePointer, KeyStore keyStore_instance, char[] ks_pwd)
+      File keyStoreFilePointer, KeyStore keyStoreInstance, char[] ks_pwd)
       throws IOException, CertificateException, NoSuchAlgorithmException {
-    FileOutputStream ks_FOs = null;
     try {
-
-      //            ks_FOs = new FileOutputStream(keyStore_FilePointer);
-
-      if (!keyStore_FilePointer.exists()) keyStore_instance.load(null, null);
-
-      //            keyStore_instance.load(null, ks_pwd);
-
-      //            keyStore_instance.store(ks_FOs, ks_pwd);
-
+      if (!keyStoreFilePointer.exists()) keyStoreInstance.load(null, null);
     } catch (Exception e) {
       e.printStackTrace();
       throw e;
     } finally {
-      //            ks_FOs.close();
       throw new CertificateException("the KeyStore is empty");
     }
   }
 
   public static void loadKeyStore(
-      File keyStore_FilePointer, KeyStore keyStore_instance, char[] ks_pwd)
+      File keyStoreFilePointer, KeyStore keyStoreInstance, char[] ks_pwd)
       throws IOException, CertificateException, NoSuchAlgorithmException {
 
-    FileInputStream ks_FIs = null;
+    FileInputStream ksFIs = null;
     try {
-      ks_FIs = new FileInputStream(keyStore_FilePointer);
+      ksFIs = new FileInputStream(keyStoreFilePointer);
 
-      keyStore_instance.load(ks_FIs, ks_pwd);
+      keyStoreInstance.load(ksFIs, ks_pwd);
 
     } catch (FileNotFoundException e) {
       e.printStackTrace();
       throw e;
     } finally {
-      ks_FIs.close();
+      ksFIs.close();
     }
   }
 
   public static void storeCertificate(
       X509Certificate cert,
       PrivateKey key,
-      String cert_name,
-      char[] cert_pwd,
+      String certName,
+      char[] certPwd,
       File keyStore_FilePointer,
       KeyStore keyStore_instance,
-      char[] ks_pwd)
+      char[] ksPwd)
       throws KeyStoreException, IOException, CertificateException, NoSuchAlgorithmException {
 
-    FileOutputStream ks_FOs = null;
+    FileOutputStream ksFOs = null;
     try {
-      ks_FOs = new FileOutputStream(keyStore_FilePointer, true);
+      ksFOs = new FileOutputStream(keyStore_FilePointer, true);
 
       keyStore_instance.setKeyEntry(
-          cert_name, key, cert_pwd, new java.security.cert.Certificate[] {cert});
+          certName, key, certPwd, new java.security.cert.Certificate[] {cert});
 
-      keyStore_instance.store(ks_FOs, ks_pwd);
+      keyStore_instance.store(ksFOs, ksPwd);
 
     } catch (FileNotFoundException e) {
       e.printStackTrace();
       throw e;
     } finally {
-      ks_FOs.close();
+      ksFOs.close();
     }
   }
 
   public static void trustCertificate(
-      File keyStore_FilePointer,
-      KeyStore keyStore_instance,
-      char[] ks_pwd,
-      String cert_name,
+      File keyStoreFilePointer,
+      KeyStore keyStoreInstance,
+      char[] ksPwd,
+      String certName,
       X509Certificate cert)
       throws KeyStoreException, IOException, CertificateException, NoSuchAlgorithmException {
 
-    FileOutputStream ks_FOs = null;
+    FileOutputStream ksFOs = null;
     try {
-      ks_FOs = new FileOutputStream(keyStore_FilePointer, true);
+      ksFOs = new FileOutputStream(keyStoreFilePointer, true);
 
-      keyStore_instance.setCertificateEntry(cert_name, cert);
+      keyStoreInstance.setCertificateEntry(certName, cert);
 
-      keyStore_instance.store(ks_FOs, ks_pwd);
+      keyStoreInstance.store(ksFOs, ksPwd);
 
     } catch (FileNotFoundException e) {
       e.printStackTrace();
       throw e;
     } finally {
-      ks_FOs.close();
+      ksFOs.close();
     }
   }
 }
