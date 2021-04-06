@@ -16,11 +16,15 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.test.database.auto.benchmark.Plotter;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.Collection;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
+import org.knowm.xchart.XYChart;
+import org.knowm.xchart.style.Styler;
 import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.results.Result;
 import org.openjdk.jmh.results.RunResult;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
@@ -30,55 +34,51 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 @State(Scope.Thread)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
-@Measurement(iterations = 1, batchSize = 1)
-@Warmup(iterations = 1, batchSize = 1)
-@Fork(0)
+@Measurement(iterations = 5, batchSize = 1)
+@Warmup(iterations = 5, batchSize = 1)
+@Fork(3)
 public class JSONTestBenchmark extends DocumentDBBaseTest {
-  public static void main(String[] args) throws RunnerException {
+  public static void main(String[] args) throws RunnerException, IOException {
     final Options opt =
         new OptionsBuilder()
-            .include("JSONTestBenchmark.testAlmostLink*")
+            .include("JSONTestBenchmark.*")
             // .addProfiler(StackProfiler.class, "detailLine=true;excludePackages=true;period=1")
             // .addProfiler(GCProfiler.class)
             .jvmArgs("-server", "-XX:+UseConcMarkSweepGC", "-Xmx4G", "-Xms1G")
-            // .result("target" + "/" + "results.csv")
+            // .result("tests" + "/" + "target" + "/" + "results.csv")
             // .param("offHeapMessages", "true""
             // .resultFormat(ResultFormatType.CSV)
             .build();
-    final Collection<RunResult> results = new Runner(opt).run();
+    postProcessRunResult(new Runner(opt).run());
+    return;
+  }
 
-    /*final TDoubleArrayList xData = new TDoubleArrayList(scaleResults.keySet().size());
-    scales.forEach(xData::add);
+  private static void postProcessRunResult(final Collection<RunResult> results) throws IOException {
+    final Plotter plotter = new Plotter();
+    final XYChart chart =
+        plotter.getXYChart(
+            "String vs. Stream", "Test", "Average time (us)", Styler.LegendPosition.InsideNW);
+    final List<Integer> xData = new ArrayList<>();
+    final List<Double> yData = new ArrayList<>();
 
-    final Map<String, TDoubleArrayList> yData = new HashMap<>();
-    final Map<String, TDoubleArrayList> errorData = new HashMap<>();
-
-    final List<SeriesBundle> allData = new ArrayList();
-
-    for (final RunResult runResult : results) {
-      final String name = runResult.getParams().getBenchmark();
-      String benchmarkName = name.substring(name.lastIndexOf(".",name.lastIndexOf(".")-1) + 1);
-
-      TDoubleArrayList yValues = yData.get(benchmarkName);
-      if (yValues == null) {
-        yValues = new TDoubleArrayList();
-        yData.put(benchmarkName, yValues);
+    final List<Integer> xDataStream = new ArrayList<>();
+    final List<Double> yDataStream = new ArrayList<>();
+    for (int i = 0; i < results.size(); i++) {
+      final RunResult runResult = (RunResult) results.toArray()[i];
+      final Result result = runResult.getPrimaryResult();
+      final double score = result.getScore();
+      if (!result.getLabel().contains("Stream")) {
+        xData.add(i);
+        yData.add(score);
+      } else {
+        xDataStream.add(i - 1);
+        yDataStream.add(score);
       }
-      yValues.add(runResult.getPrimaryResult().getScore());
-
-      TDoubleArrayList errorValues = errorData.get(benchmarkName);
-      if (errorValues == null) {
-        errorValues = new TDoubleArrayList();
-        errorData.put(benchmarkName, errorValues);
-      }
-      errorValues.add(runResult.getPrimaryResult().getScoreError());
     }
+    plotter.addSeriesToLineChart(chart, "String", xData, yData);
+    plotter.addSeriesToLineChart(chart, "Stream", xDataStream, yDataStream);
 
-    final Chart chart = createChart("", getParam(scaleResults, "scaleName"), getParam(scaleResults, "scaleUnit"));
-    for (final String seriesName : yData.keySet()) {
-      final ScaleSeriesBundle currentSeries = new ScaleSeriesBundle(seriesName,xData,yData.get(seriesName), null, errorData.get(seriesName), true);
-      allData.add(currentSeries);
-    }*/
+    plotter.exportChartAsPDF(chart, "tests/target/stringVsStreamParsing");
   }
 
   @Benchmark
