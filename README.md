@@ -26,7 +26,7 @@ Put JAR file into folder: \\\\mediaserver.wdf.sap.corp\UPLINBOX\ORIENTDB_30_EE a
 
 ### CWB process
 
-> FA automation still WIP.
+> OrientDB version 3.2 will be the last minor / major version. From now on, only micro / patch versions will be delivered via CWB.
 
 When creating a pull request in https://github.wdf.sap.corp/final-assembly/orientdb-enterprise (e.g. 3.2.x -> fa/rel-3.2), a `CR-Id: unique technical ID` is required. This can be created following the `New CR` link in the PR.
 Note that when fixing the build, select `No Bug Report` as `Type` and check `Not Patch Relevant`!
