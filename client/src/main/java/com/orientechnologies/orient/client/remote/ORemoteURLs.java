@@ -20,11 +20,8 @@ import javax.naming.directory.InitialDirContext;
 
 public class ORemoteURLs {
 
-  private static final String DEFAULT_HOST = "localhost";
   private static final int DEFAULT_PORT = 2424;
   private static final int DEFAULT_SSL_PORT = 2434;
-  private static final String LOCAL_IP = "127.0.0.1";
-  private static final String LOCALHOST = "localhost";
 
   private final List<String> serverURLs = new ArrayList<String>();
   private List<String> initialServerURLs;
@@ -65,7 +62,6 @@ public class ORemoteURLs {
 
   /** Registers the remote server with port. */
   protected String addHost(String host, OContextConfiguration clientConfiguration) {
-    if (host.startsWith(LOCALHOST)) host = LOCAL_IP + host.substring("localhost".length());
 
     if (host.contains("/")) host = host.substring(0, host.indexOf("/"));
 

@@ -3,6 +3,7 @@ package com.tinkerpop.blueprints.impls.orient;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
@@ -84,6 +85,7 @@ public abstract class OrientGraphRemoteTest extends OrientGraphTest {
     if (clientContext.exists(graphDirectoryName)) {
       clientContext.drop(graphDirectoryName);
     }
+
     clientContext.execute(
         "create database "
             + graphDirectoryName
@@ -123,6 +125,7 @@ public abstract class OrientGraphRemoteTest extends OrientGraphTest {
       if (clientContext.exists(graphDirectoryName)) {
         clientContext.drop(graphDirectoryName);
       }
+      ODatabaseDocumentTx.closeAll();
 
     } catch (Exception e) {
       throw new IllegalStateException(e);
