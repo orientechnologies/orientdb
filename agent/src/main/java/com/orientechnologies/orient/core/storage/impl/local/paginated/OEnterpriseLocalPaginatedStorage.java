@@ -144,6 +144,8 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
       }
     }
 
+    checkNoBackupInStorageDir(backupDirectory);
+
     final Path fileLockPath = backupDirectory.toPath().resolve(INCREMENTAL_BACKUP_LOCK);
     try (FileChannel lockChannel =
         FileChannel.open(fileLockPath, StandardOpenOption.CREATE, StandardOpenOption.WRITE)) {
@@ -265,6 +267,24 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
     }
 
     return fileName;
+  }
+
+  private void checkNoBackupInStorageDir(File backupDirectory) {
+    if (getStoragePath() == null || backupDirectory == null) {
+      return;
+    }
+
+    boolean invalid = false;
+    try {
+      File storageDir = getStoragePath().toFile();
+      if (backupDirectory.equals(storageDir)) {
+        invalid = true;
+      }
+    } catch (Exception e) {
+    }
+    if (invalid) {
+      throw new OStorageException("Backup cannot be performed in the storage path");
+    }
   }
 
   public void registerStorageListener(OEnterpriseStorageOperationListener listener) {
