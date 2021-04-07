@@ -302,5 +302,12 @@
             <version>1.22</version>
             <scope>test</scope>
         </dependency>
+        <!-- plotting -->
+        <dependency>
+            <groupId>org.knowm.xchart</groupId>
+            <artifactId>xchart</artifactId>
+            <version>3.8.0</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 </project>

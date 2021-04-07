@@ -16,15 +16,17 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.serialization.types.OShortSerializer;
 import com.orientechnologies.common.serialization.types.OStringSerializer;
 import com.orientechnologies.common.serialization.types.OUTF8Serializer;
+import com.orientechnologies.orient.core.storage.index.nkbtree.normalizers.benchmark.Plotter;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteOrder;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
+import org.knowm.xchart.XYChart;
+import org.knowm.xchart.style.Styler;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -37,6 +39,8 @@ import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
 import org.openjdk.jmh.profile.StackProfiler;
+import org.openjdk.jmh.results.Result;
+import org.openjdk.jmh.results.RunResult;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
@@ -47,12 +51,12 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @Measurement(iterations = 1, batchSize = 1)
 @Warmup(iterations = 1, batchSize = 1)
-@Fork(1)
+@Fork(0)
 public class KeyNormalizerVsSerializerBenchmark {
   private KeyNormalizer keyNormalizer;
   private ByteOrder byteOrder;
 
-  public static void main(String[] args) throws RunnerException {
+  public static void main(String[] args) throws RunnerException, IOException {
     final Options opt =
         new OptionsBuilder()
             .include("KeyNormalizerVsSerializerBenchmark.*")
@@ -62,7 +66,90 @@ public class KeyNormalizerVsSerializerBenchmark {
             // .param("offHeapMessages", "true""
             // .resultFormat(ResultFormatType.CSV)
             .build();
-    new Runner(opt).run();
+    new KeyNormalizerVsSerializerBenchmark().postProcessRunResult(new Runner(opt).run());
+  }
+
+  private class Pair {
+    private RunResult serializer;
+    private RunResult normalizer;
+
+    public Pair() {}
+
+    public RunResult getSerializer() {
+      return serializer;
+    }
+
+    public void setSerializer(RunResult serializer) {
+      this.serializer = serializer;
+    }
+
+    public RunResult getNormalizer() {
+      return normalizer;
+    }
+
+    public void setNormalizer(RunResult normalizer) {
+      this.normalizer = normalizer;
+    }
+  }
+
+  private void postProcessRunResult(final Collection<RunResult> results) throws IOException {
+    final Map<String, Pair> resultMap = buildResultMap(results);
+
+    final Plotter plotter = new Plotter();
+    final XYChart chart =
+        plotter.getXYChart(
+            "Serializer vs. Normalizer",
+            "Test",
+            "Average time (us)",
+            Styler.LegendPosition.InsideNE);
+    final List<Integer> xData = new ArrayList<>();
+    final List<Double> yData = new ArrayList<>();
+
+    final List<Integer> xDataNormalizer = new ArrayList<>();
+    final List<Double> yDataNormalizer = new ArrayList<>();
+
+    int counter = 0;
+    for (final Map.Entry<String, Pair> pair : resultMap.entrySet()) {
+      xData.add(counter);
+      if (pair.getValue().getSerializer() != null) {
+        yData.add(pair.getValue().getSerializer().getPrimaryResult().getScore());
+      } else {
+        yData.add(0.0);
+      }
+
+      xDataNormalizer.add(counter);
+      if (pair.getValue().getNormalizer() != null) {
+        yDataNormalizer.add(pair.getValue().getNormalizer().getPrimaryResult().getScore());
+      } else {
+        yDataNormalizer.add(0.0);
+      }
+      counter++;
+    }
+    plotter.addSeriesToLineChart(chart, "Serializer", xData, yData);
+    plotter.addSeriesToLineChart(chart, "Normalizer", xDataNormalizer, yDataNormalizer);
+
+    plotter.exportChartAsPDF(chart, "core/target/normalizerVsSerializer");
+  }
+
+  private Map<String, Pair> buildResultMap(Collection<RunResult> results) {
+    final Map<String, Pair> map = new HashMap<>();
+    for (final RunResult rr : results) {
+      final Result pr = rr.getPrimaryResult();
+      final String key = pr.getLabel().replaceAll("Normalizer", "").replaceAll("Serializer", "");
+
+      Pair pair = new Pair();
+      if (map.containsKey(key)) {
+        pair = map.get(key);
+      }
+
+      if (pr.getLabel().contains("Normalizer")) {
+        pair.setNormalizer(rr);
+      } else {
+        pair.setSerializer(rr);
+      }
+      map.put(key, pair);
+    }
+    return map;
   }
 
   @Setup(Level.Iteration)
