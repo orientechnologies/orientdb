@@ -54,7 +54,7 @@ UserModule.controller("UsersController", ['$scope', '$rootScope', '$routeParams'
       language: 'sql',
       verbose: false,
       text: selectAllUsers,
-      limit: $scope.limit,
+      limit: -1,
       shallow: false
     }, function (data) {
       $scope.usersResult = data.result;
@@ -89,7 +89,7 @@ UserModule.controller("UsersController", ['$scope', '$rootScope', '$routeParams'
       language: 'sql',
       verbose: false,
       text: selectAllRoles,
-      limit: $scope.limit,
+      limit: -1,
       shallow: false
     }, function (data) {
       $scope.roles = data.result;
