@@ -16,10 +16,13 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.test.database.auto.benchmark.Plotter;
-import java.io.*;
+import com.orientechnologies.orient.core.storage.index.nkbtree.normalizers.benchmark.Plotter;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.knowm.xchart.XYChart;
 import org.knowm.xchart.style.Styler;
@@ -36,7 +39,7 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @Measurement(iterations = 5, batchSize = 1)
 @Warmup(iterations = 5, batchSize = 1)
-@Fork(3)
+@Fork(1)
 public class JSONTestBenchmark extends DocumentDBBaseTest {
   public static void main(String[] args) throws RunnerException, IOException {
     final Options opt =
