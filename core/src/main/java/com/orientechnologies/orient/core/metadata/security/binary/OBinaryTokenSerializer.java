@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.server.token;
+package com.orientechnologies.orient.core.metadata.security.binary;
 
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.security.jwt.OBinaryTokenPayload;
@@ -6,7 +6,7 @@ import com.orientechnologies.orient.core.metadata.security.jwt.OTokenHeader;
 import com.orientechnologies.orient.core.metadata.security.jwt.OTokenMetaInfo;
 import com.orientechnologies.orient.core.metadata.security.jwt.OTokenPayload;
 import com.orientechnologies.orient.core.metadata.security.jwt.OTokenPayloadDeserializer;
-import com.orientechnologies.orient.server.binary.impl.OBinaryToken;
+import com.orientechnologies.orient.core.metadata.security.jwt.OrientJwtHeader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -49,6 +49,14 @@ public class OBinaryTokenSerializer implements OTokenMetaInfo {
         return new OBinaryTokenPayloadDeserializer();
     }
     throw new ODatabaseException("Unknown payload type");
+  }
+
+  public OBinaryTokenSerializer() {
+    this(
+        new String[] {"plocal", "memory"},
+        new String[] {"dafault"},
+        new String[] {"HmacSHA256"},
+        new String[] {"OrientDB", "node"});
   }
 
   public Map<String, Byte> createMap(String[] entries) {

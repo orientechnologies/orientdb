@@ -45,6 +45,7 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.auth.OTokenAuthInfo;
+import com.orientechnologies.orient.core.security.OInvalidPasswordException;
 import com.orientechnologies.orient.core.security.OParsedToken;
 import com.orientechnologies.orient.core.security.OSecuritySystem;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
@@ -1028,7 +1029,21 @@ public class OServer {
                     "$ANSI{red ERROR: Passwords don't match, please reinsert both of them, or press ENTER to auto generate it}"));
           } else
             // PASSWORDS MATCH
-            break;
+
+            try {
+              if (getSecurity() != null) {
+                getSecurity().validatePassword("root", rootPassword);
+              }
+              // PASSWORD IS STRONG ENOUGH
+              break;
+            } catch (OInvalidPasswordException ex) {
+              System.out.println(
+                  OAnsiCode.format(
+                      "$ANSI{red ERROR: Root password does not match the password policies}"));
+              if (ex.getMessage() != null) {
+                System.out.println(ex.getMessage());
+              }
+            }
         }
 
       } while (rootPassword != null);
@@ -1050,9 +1065,8 @@ public class OServer {
 
     if (!existsSystemUser(OServerConfiguration.GUEST_USER)) {
       context.execute(
-          "CREATE SYSTEM USER "
-              + OServerConfiguration.GUEST_USER
-              + " IDENTIFIED BY 'guest' ROLE guest");
+          "CREATE SYSTEM USER " + OServerConfiguration.GUEST_USER + " IDENTIFIED BY ? ROLE guest",
+          OServerConfiguration.DEFAULT_GUEST_PASSWORD);
     }
   }
 

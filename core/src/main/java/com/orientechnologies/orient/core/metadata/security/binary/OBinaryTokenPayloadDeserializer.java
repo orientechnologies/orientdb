@@ -1,10 +1,9 @@
-package com.orientechnologies.orient.server.token;
+package com.orientechnologies.orient.core.metadata.security.binary;
 
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.jwt.OBinaryTokenPayload;
 import com.orientechnologies.orient.core.metadata.security.jwt.OTokenMetaInfo;
 import com.orientechnologies.orient.core.metadata.security.jwt.OTokenPayloadDeserializer;
-import com.orientechnologies.orient.server.binary.impl.OBinaryTokenPayloadImpl;
 import java.io.DataInputStream;
 import java.io.IOException;
 

@@ -20,7 +20,6 @@ import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
@@ -126,8 +125,9 @@ public class OServerSSLSocketFactory extends OServerSocketFactory {
 
       KeyStore keyStore = KeyStore.getInstance(keyStoreType);
       char[] keyStorePass = keyStorePassword.toCharArray();
-      keyStore.load(new FileInputStream(keyStoreFile), keyStorePass);
-
+      OServerSSLCertificateManager oServerSSLCertificateManager =
+          OServerSSLCertificateManager.getInstance(this, keyStore, keyStoreFile, keyStorePass);
+      oServerSSLCertificateManager.loadKeyStoreForSSLSocket();
       kmf.init(keyStore, keyStorePass);
 
       TrustManagerFactory tmf = null;
@@ -135,13 +135,15 @@ public class OServerSSLSocketFactory extends OServerSocketFactory {
         tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
         KeyStore trustStore = KeyStore.getInstance(trustStoreType);
         char[] trustStorePass = trustStorePassword.toCharArray();
-        trustStore.load(new FileInputStream(trustStoreFile), trustStorePass);
+        oServerSSLCertificateManager.loadTrustStoreForSSLSocket(
+            trustStore, trustStoreFile, trustStorePass);
         tmf.init(trustStore);
       }
 
       context.init(kmf.getKeyManagers(), (tmf == null ? null : tmf.getTrustManagers()), null);
 
       return context;
+
     } catch (Exception e) {
       throw OException.wrapException(
           new OConfigurationException("Failed to create SSL context"), e);
