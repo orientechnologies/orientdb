@@ -21,7 +21,7 @@ export class CronComponent implements OnInit, OnChanges {
   constructor(private elem: ElementRef) {}
 
   @Input()
-  private cron;
+  private cronVal;
 
   @Output()
   private changed: EventEmitter<any> = new EventEmitter();
@@ -33,6 +33,7 @@ export class CronComponent implements OnInit, OnChanges {
   }
   ngOnInit(): void {
     let self = this;
+
     this.cronElement = $(this.elem.nativeElement).cron({
       onChange: function() {
         self.changed.emit($(this).cron("value"));
@@ -41,7 +42,8 @@ export class CronComponent implements OnInit, OnChanges {
         "5 Minutes": "0 0/5 * * * ?",
         "10 Minutes": "0 0/10 * * * ?",
         "30 Minutes": "0 0/30 * * * ?"
-      }
+      },
+      initial: this.cronVal
     });
   }
 }

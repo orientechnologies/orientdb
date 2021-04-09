@@ -125,6 +125,14 @@ class SingleBackupComponent implements OnInit, OnDestroy, OnChanges {
   ngOnInit(): void {
     this.ee = this.agent.active;
     this.canEdit = this.permissionService.isAllow("server.backup.edit");
+
+      if(this.backup.modes["INCREMENTAL_BACKUP"] && this.backup.modes["FULL_BACKUP"]){
+          this.mode = "3";
+        } else if(this.backup.modes["INCREMENTAL_BACKUP"]){
+          this.mode = "1";
+        } else {
+          this.mode = "2";
+        }
   }
 
   ngOnChanges(changes: SimpleChanges) {
