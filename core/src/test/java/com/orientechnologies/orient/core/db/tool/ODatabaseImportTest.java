@@ -7,7 +7,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /** Created by tglman on 23/05/16. */
@@ -57,11 +56,12 @@ public class ODatabaseImportTest {
   }
 
   // TODO: add test, when schema import refactoring done
-  @Ignore
+  // @Ignore
   @Test
   public void exportImportOnlySchemaTestV2() throws IOException {
-    final String databaseName = "test";
-    final String exportDbUrl = "memory:target/export_" + ODatabaseImportTest.class.getSimpleName();
+    final String databaseName = "testV2";
+    final String exportDbUrl =
+        "memory:target/exportV2_" + ODatabaseImportTest.class.getSimpleName();
     final OrientDB orientDB =
         OCreateDatabaseUtil.createDatabase(
             databaseName, exportDbUrl, OCreateDatabaseUtil.TYPE_PLOCAL);
@@ -83,7 +83,8 @@ public class ODatabaseImportTest {
       export.exportDatabase();
     }
 
-    final String importDbUrl = "memory:target/import_" + ODatabaseImportTest.class.getSimpleName();
+    final String importDbUrl =
+        "memory:target/importV2_" + ODatabaseImportTest.class.getSimpleName();
     OCreateDatabaseUtil.createDatabase(databaseName, importDbUrl, OCreateDatabaseUtil.TYPE_PLOCAL);
     try (final ODatabaseSession db =
         orientDB.open(databaseName, "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD)) {
