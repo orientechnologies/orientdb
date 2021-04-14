@@ -148,21 +148,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     input = inputStream;
   }
 
-  private void handleInfo(final JsonParser parser) throws IOException {
-    System.out.println("Info");
-    JsonToken jsonToken = parser.nextToken();
-    while (!JsonToken.END_OBJECT.equals(jsonToken)) {
-      if (JsonToken.FIELD_NAME.equals(jsonToken)) {
-        final StringBuffer sb = new StringBuffer();
-        sb.append("\t" + jsonToken + "=" + parser.getValueAsString()).append(":::");
-        jsonToken = parser.nextToken();
-        sb.append(jsonToken + " " + parser.getValueAsString());
-        System.out.println(sb.toString());
-      }
-      jsonToken = parser.nextToken();
-    }
-  }
-
   @Override
   public ODatabaseImport setOptions(final String options) {
     super.setOptions(options);
@@ -187,24 +172,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     else if (option.equalsIgnoreCase("-rebuildIndexes"))
       rebuildIndexes = Boolean.parseBoolean(items.get(0));
     else super.parseSetting(option, items);
-  }
-
-  // WIP
-  private void parse(final InputStream inputStream) throws IOException {
-    try (final JsonParser parser = factory.createParser(inputStream)) {
-      while (!parser.isClosed()) {
-        JsonToken jsonToken = parser.nextToken();
-
-        System.out.println(jsonToken + " " + parser.getValueAsString());
-
-        if (JsonToken.START_OBJECT.equals(jsonToken)) {
-          jsonToken = parser.nextToken();
-          if (JsonToken.FIELD_NAME.equals(jsonToken) && parser.getValueAsString().equals("info")) {
-            this.handleInfo(parser);
-          }
-        }
-      }
-    }
   }
 
   // TODO: WIP - using existing OJSONReader
@@ -330,8 +297,12 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           } else if (parser.getValueAsString().equals("clusters")) {
             importClusters(parser);
             clustersImported = true;
-          } /*FIXME: else if (tag.equals("schema")) importSchema(clustersImported);
-            else if (tag.equals("records")) importRecords();
+          } else if (parser.getValueAsString().equals("schema")) {
+            importSchema(parser, clustersImported);
+          } /*FIXME: else if (parser.getValueAsString().equals("records")) {
+              importRecords(parser);
+            }
+
             else if (tag.equals("indexes")) importIndexes();
             else if (tag.equals("manualIndexes")) importManualIndexes();
             else if (tag.equals("brokenRids")) {
@@ -402,12 +373,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         } else if (parser.getValueAsString().equals("indexMgrRecordId")) {
           parser.nextToken();
           indexMgrRecordId = new ORecordId(parser.getValueAsString());
-        } else {
-          final StringBuffer sb = new StringBuffer();
-          sb.append("\t" + jsonToken + "=" + parser.getValueAsString()).append(":::");
-          jsonToken = parser.nextToken();
-          sb.append(jsonToken + " " + parser.getValueAsString());
-          System.out.println(sb.toString());
         }
       }
       jsonToken = parser.nextToken();
@@ -832,8 +797,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
             + " Manual index cluster will be dropped.");
 
     // In v4 new cluster for manual indexes has been implemented. To keep database consistent we
-    // should shift back
-    // all clusters and recreate cluster for manual indexes in the end.
+    // should shift back all clusters and recreate cluster for manual indexes in the end.
     database.dropCluster(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME);
 
     final OSchema schema = database.getMetadata().getSchema();
@@ -856,6 +820,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     database.getSharedContext().getSecurity().create(database);
   }
 
+  // TODO: WIP - reusing OJSONReader
   private void importInfoV2(final JsonParser parser) throws IOException, ParseException {
     listener.onMessage("\nImporting database info...");
 
@@ -1058,6 +1023,247 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     jsonReader.readNext(OJSONReader.NEXT_IN_OBJECT);
   }
 
+  private void importSchema(final JsonParser parser, final boolean clustersImported)
+      throws IOException, ParseException {
+    if (!clustersImported) {
+      removeDefaultClusters();
+    }
+    listener.onMessage("\nImporting database schema...");
+
+    JsonToken jsonToken = parser.nextToken();
+    @SuppressWarnings("unused")
+    int schemaVersion = 0;
+    long classImported = 0;
+    while (!JsonToken.END_OBJECT.equals(jsonToken)) {
+      if (JsonToken.FIELD_NAME.equals(jsonToken) && "version".equals(parser.getValueAsString())) {
+        parser.nextToken();
+        schemaVersion = parser.getValueAsInt();
+        jsonToken = parser.nextToken();
+      } else if (JsonToken.FIELD_NAME.equals(jsonToken)
+          && "blob-clusters".equals(parser.getValueAsString())) {
+        // FIXME: implement (tests insufficient)
+        while (!JsonToken.END_ARRAY.equals(jsonToken)) {
+          jsonToken = parser.nextToken();
+          System.out.println("within blob-clusters: " + jsonToken);
+          /*String blobClusterIds = jsonReader.readString(OJSONReader.END_COLLECTION, true).trim();
+          blobClusterIds = blobClusterIds.substring(1, blobClusterIds.length() - 1);
+
+          if (!"".equals(blobClusterIds)) {
+            // READ BLOB CLUSTER IDS
+            for (String i :
+                OStringSerializerHelper.split(
+                    blobClusterIds, OStringSerializerHelper.RECORD_SEPARATOR)) {
+              Integer cluster = Integer.parseInt(i);
+              if (!database.getBlobClusterIds().contains(cluster)) {
+                String name = database.getClusterNameById(cluster);
+                database.addBlobCluster(name);
+              }
+            }
+          }
+          jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
+          jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT);*/
+        }
+        jsonToken = parser.nextToken();
+      } else if (JsonToken.FIELD_NAME.equals(jsonToken)
+          && "globalProperties".equals(parser.getValueAsString())) {
+        // This can be removed after the M1 expires
+        // FIXME: implement (tests insufficient)
+        while (!JsonToken.END_ARRAY.equals(jsonToken)) {
+          jsonToken = parser.nextToken();
+          System.out.println("within globalProperties: " + jsonToken);
+          /*jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
+          do {
+            jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
+            jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"name\"");
+            String name = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
+            jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"global-id\"");
+            String id = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
+            jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"type\"");
+            String type = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
+            // getDatabase().getMetadata().getSchema().createGlobalProperty(name, OType.valueOf(type),
+            // Integer.valueOf(id));
+            jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
+          } while (jsonReader.lastChar() == ',');
+          jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
+          jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT);*/
+        }
+      } else if (JsonToken.FIELD_NAME.equals(jsonToken)
+          && "classes".equals(parser.getValueAsString())) {
+        while (!JsonToken.END_ARRAY.equals(jsonToken)) {
+          jsonToken = parser.nextToken();
+
+          String className = null;
+          // FIXME:
+          int classDefClusterId = -666;
+          OClassImpl cls = null;
+          while (!JsonToken.END_OBJECT.equals(jsonToken)) {
+            // @COMPATIBILITY 1.0rc4 IGNORE THE ID
+
+            if (JsonToken.FIELD_NAME.equals(jsonToken)) {
+              if (parser.getValueAsString().equals("name")) {
+                parser.nextToken();
+                className = parser.getValueAsString();
+              } else if (parser.getValueAsString().equals("default-cluster-id")) {
+                parser.nextToken();
+                classDefClusterId = parser.getIntValue();
+              } else if (parser.getValueAsString().equals("cluster-ids")) {
+                if (classDefClusterId == -666) {
+                  classDefClusterId = database.getDefaultClusterId();
+                }
+                if (className.contains(".")) {
+                  // MIGRATE OLD NAME WITH . TO _
+                  final String newClassName = className.replace('.', '_');
+                  convertedClassNames.put(className, newClassName);
+                  listener.onMessage(
+                      "\nWARNING: class '"
+                          + className
+                          + "' has been renamed in '"
+                          + newClassName
+                          + "'\n");
+                  className = newClassName;
+                }
+                cls = (OClassImpl) database.getMetadata().getSchema().getClass(className);
+                if (cls != null) {
+                  if (cls.getDefaultClusterId() != classDefClusterId)
+                    cls.setDefaultClusterId(classDefClusterId);
+                } else if (clustersImported) {
+                  cls =
+                      (OClassImpl)
+                          database
+                              .getMetadata()
+                              .getSchema()
+                              .createClass(className, new int[] {classDefClusterId});
+                } else if (className.equalsIgnoreCase("ORestricted")) {
+                  cls =
+                      (OClassImpl)
+                          database.getMetadata().getSchema().createAbstractClass(className);
+                } else {
+                  cls = (OClassImpl) database.getMetadata().getSchema().createClass(className);
+                }
+                while (!JsonToken.END_ARRAY.equals(jsonToken)) {
+                  jsonToken = parser.nextToken();
+                  if (JsonToken.VALUE_NUMBER_INT.equals(jsonToken)) {
+                    int clusterId = parser.getValueAsInt();
+                    // ASSIGN OTHER CLUSTER IDS
+                    if (clusterId != -1) {
+                      cls.addClusterId(clusterId);
+                    }
+                  }
+                }
+              } else if (parser.getValueAsString().equals("strictMode")) {
+                parser.nextToken();
+                final boolean strictMode = parser.getValueAsBoolean();
+                cls.setStrictMode(strictMode);
+              } else if (parser.getValueAsString().equals("abstract")) {
+                parser.nextToken();
+                final boolean abstractValue = parser.getValueAsBoolean();
+                cls.setAbstract(abstractValue);
+              } else if (parser.getValueAsString().equals("oversize")) {
+                parser.nextToken();
+                final float oversize = parser.getFloatValue();
+                cls.setOverSize(oversize);
+              } else if (parser.getValueAsString().equals("short-name")) {
+                parser.nextToken();
+                final String shortName = parser.getValueAsString();
+                if (!cls.getName().equalsIgnoreCase(shortName)) cls.setShortName(shortName);
+              } else if (parser.getValueAsString().equals("super-class")) {
+                // @compatibility <2.1 SINGLE CLASS ONLY
+                parser.nextToken();
+                final String classSuper = parser.getValueAsString();
+                final List<String> superClassNames = new ArrayList<>();
+                superClassNames.add(classSuper);
+                superClasses.put(cls, superClassNames);
+              } else if (parser.getValueAsString().equals("super-classes")) {
+                // MULTIPLE CLASSES
+                final List<String> superClassNames = new ArrayList<>();
+                while (!JsonToken.END_ARRAY.equals(jsonToken)) {
+                  while (!JsonToken.VALUE_STRING.equals(jsonToken)) {
+                    jsonToken = parser.nextToken();
+                  }
+                  final String clsName = parser.getValueAsString();
+                  superClassNames.add(clsName);
+                  jsonToken = parser.nextToken();
+                }
+                superClasses.put(cls, superClassNames);
+              } else if (parser.getValueAsString().equals("properties")) {
+                while (!JsonToken.START_OBJECT.equals(jsonToken)) {
+                  jsonToken = parser.nextToken();
+                }
+                // GET PROPERTIES
+                while (!JsonToken.END_ARRAY.equals(jsonToken)) {
+                  importProperty(parser, cls);
+                  jsonToken = parser.nextToken();
+                }
+              } else if (parser.getValueAsString().equals("customFields")) {
+                final Map<String, String> customFields = importCustomFields(parser);
+                for (final Entry<String, String> entry : customFields.entrySet()) {
+                  cls.setCustom(entry.getKey(), entry.getValue());
+                }
+              } else if (parser.getValueAsString().equals("cluster-selection")) {
+                // @SINCE 1.7
+                parser.nextToken();
+                final String clusterSelection = parser.getValueAsString();
+                cls.setClusterSelection(clusterSelection);
+              }
+            }
+            jsonToken = parser.nextToken();
+          }
+          classImported++;
+          jsonToken = parser.nextToken();
+        }
+        listener.onMessage("OK (" + classImported + " classes)");
+        schemaImported = true;
+      } else if (!JsonToken.START_ARRAY.equals(jsonToken)) {
+        System.out.println(jsonToken);
+        jsonToken = parser.nextToken();
+      } else {
+        final StringBuffer sb = new StringBuffer();
+        sb.append("\t" + jsonToken + "=" + parser.getValueAsString()).append(":::");
+        jsonToken = parser.nextToken();
+        sb.append(jsonToken + " " + parser.getValueAsString());
+        System.out.println(sb.toString());
+      }
+    }
+
+    this.rebuildCompleteClassInheritence();
+    this.setLinkedClasses();
+
+    if (exporterVersion < 11) {
+      OClass role = database.getMetadata().getSchema().getClass("ORole");
+      role.dropProperty("rules");
+    }
+    listener.onMessage("OK (" + classImported + " classes)");
+    schemaImported = true;
+
+    this.rebuildCompleteClassInheritence();
+
+    // SET ALL THE LINKED CLASSES
+    setLinkedClasses();
+
+    if (exporterVersion < 11) {
+      final OClass role = database.getMetadata().getSchema().getClass("ORole");
+      role.dropProperty("rules");
+    }
+
+    /*  listener.onMessage("OK (" + classImported + " classes)");
+      schemaImported = true;
+      jsonReader.readNext(OJSONReader.END_OBJECT);
+      jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
+    } catch (Exception e) {
+      OLogManager.instance().error(this, "Error on importing schema", e);
+      listener.onMessage("ERROR (" + classImported + " entries): " + e);
+    }*/
+  }
+
+  private void setLinkedClasses() {
+    for (final Entry<OPropertyImpl, String> linkedClass : linkedClasses.entrySet()) {
+      linkedClass
+          .getKey()
+          .setLinkedClass(database.getMetadata().getSchema().getClass(linkedClass.getValue()));
+    }
+  }
+
+  @Deprecated
   private void importSchema(boolean clustersImported) throws IOException, ParseException {
     if (!clustersImported) {
       removeDefaultClusters();
@@ -1202,7 +1408,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           } else if (value.equals("\"oversize\"")) {
             final String oversize = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
             cls.setOverSize(Float.parseFloat(oversize));
-          } else if (value.equals("\"strictMode\"")) {
+          } else if (value.equals("\"strictMode\"")) { // TODO: check redundant?
             final String strictMode = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
             cls.setStrictMode(Boolean.parseBoolean(strictMode));
           } else if (value.equals("\"short-name\"")) {
@@ -1255,21 +1461,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
       } while (jsonReader.lastChar() == ',');
 
-      // REBUILD ALL THE INHERITANCE
-      for (Entry<OClass, List<String>> entry : superClasses.entrySet())
-        for (String s : entry.getValue()) {
-          OClass superClass = database.getMetadata().getSchema().getClass(s);
-
-          if (!entry.getKey().getSuperClasses().contains(superClass))
-            entry.getKey().addSuperClass(superClass);
-        }
-
-      // SET ALL THE LINKED CLASSES
-      for (Entry<OPropertyImpl, String> entry : linkedClasses.entrySet()) {
-        entry
-            .getKey()
-            .setLinkedClass(database.getMetadata().getSchema().getClass(entry.getValue()));
-      }
+      this.rebuildCompleteClassInheritence();
+      this.setLinkedClasses();
 
       if (exporterVersion < 11) {
         OClass role = database.getMetadata().getSchema().getClass("ORole");
@@ -1286,6 +1479,122 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     }
   }
 
+  private void rebuildCompleteClassInheritence() {
+    for (final Entry<OClass, List<String>> entry : superClasses.entrySet()) {
+      for (final String superClassName : entry.getValue()) {
+        final OClass superClass = database.getMetadata().getSchema().getClass(superClassName);
+
+        if (!entry.getKey().getSuperClasses().contains(superClass)) {
+          entry.getKey().addSuperClass(superClass);
+        }
+      }
+    }
+  }
+
+  private void importProperty(final JsonParser parser, final OClass iClass)
+      throws IOException, ParseException {
+    JsonToken jsonToken = parser.currentToken();
+    if (!JsonToken.START_OBJECT.equals(jsonToken)) {
+      throw new IllegalStateException("Expected JSON Object, but found " + jsonToken);
+    }
+    String propertyName = null;
+    OType propertyType = null;
+
+    String min = null;
+    String max = null;
+    String linkedClass = null;
+    OType linkedType = null;
+    boolean mandatory = false;
+    boolean readonly = false;
+    boolean notNull = false;
+    String collate = null;
+    String regexp = null;
+    String defaultValue = null;
+
+    Map<String, String> customFields = null;
+    while (!JsonToken.END_OBJECT.equals(jsonToken)) {
+      if (JsonToken.FIELD_NAME.equals(jsonToken)) {
+        // @COMPATIBILITY 1.0rc4 IGNORE THE ID
+
+        // jsonToken = parser.nextToken();
+        if (parser.getValueAsString().equals("name")) {
+          parser.nextToken();
+          propertyName = parser.getValueAsString();
+        } else if (parser.getValueAsString().equals("type")) {
+          parser.nextToken();
+          final String type = parser.getValueAsString();
+          propertyType = OType.valueOf(type);
+        } else if (parser.getValueAsString().equals("customFields")) {
+          jsonToken = parser.nextToken();
+          System.out.println(jsonToken + "-" + parser.getValueAsString());
+        } else {
+          final String value = parser.getValueAsString();
+          if (value.equals("min")) {
+            parser.nextToken();
+            min = parser.getValueAsString();
+          } else if (value.equals("max")) {
+            parser.nextToken();
+            max = parser.getValueAsString();
+          } else if (value.equals("linked-class")) {
+            parser.nextToken();
+            linkedClass = parser.getValueAsString();
+          } else if (value.equals("mandatory")) {
+            parser.nextToken();
+            mandatory = parser.getValueAsBoolean();
+          } else if (value.equals("readonly")) {
+            parser.nextToken();
+            readonly = parser.getValueAsBoolean();
+          } else if (value.equals("not-null")) {
+            parser.nextToken();
+            notNull = parser.getValueAsBoolean();
+          } else if (value.equals("linked-type")) {
+            parser.nextToken();
+            linkedType = OType.valueOf(parser.getValueAsString());
+          } else if (value.equals("collate")) {
+            parser.nextToken();
+            collate = parser.getValueAsString();
+          } else if (value.equals("default-value")) {
+            parser.nextToken();
+            defaultValue = parser.getValueAsString();
+          } else if (value.equals("customFields")) {
+            parser.nextToken();
+            customFields = importCustomFields(parser);
+          } else if (value.equals("regexp")) {
+            parser.nextToken();
+            regexp = parser.getValueAsString();
+          }
+        }
+      }
+      jsonToken = parser.nextToken();
+    }
+
+    OPropertyImpl prop = (OPropertyImpl) iClass.getProperty(propertyName);
+    if (prop == null) {
+      // CREATE IT
+      prop = (OPropertyImpl) iClass.createProperty(propertyName, propertyType, (OType) null, true);
+    }
+    prop.setMandatory(mandatory);
+    prop.setReadonly(readonly);
+    prop.setNotNull(notNull);
+
+    if (min != null) prop.setMin(min);
+    if (max != null) prop.setMax(max);
+    if (linkedClass != null) linkedClasses.put(prop, linkedClass);
+    if (linkedType != null) prop.setLinkedType(linkedType);
+    if (collate != null) prop.setCollate(collate);
+    if (regexp != null) prop.setRegexp(regexp);
+    if (defaultValue != null) {
+      // was VALUE before
+      prop.setDefaultValue(defaultValue);
+    }
+    if (customFields != null) {
+      for (Entry<String, String> entry : customFields.entrySet()) {
+        prop.setCustom(entry.getKey(), entry.getValue());
+      }
+    }
+  }
+
+  @Deprecated
   private void importProperty(final OClass iClass) throws IOException, ParseException {
     jsonReader.readNext(OJSONReader.NEXT_OBJ_IN_ARRAY);
 
@@ -1371,6 +1680,25 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     }
   }
 
+  private Map<String, String> importCustomFields(final JsonParser parser)
+      throws ParseException, IOException {
+    Map<String, String> result = new HashMap<>();
+
+    JsonToken jsonToken = parser.currentToken();
+    while (!JsonToken.END_OBJECT.equals(jsonToken)) {
+      if (JsonToken.FIELD_NAME.equals(jsonToken)) {
+        // FIXME
+        // final String key = jsonReader.readString(OJSONReader.FIELD_ASSIGNMENT);
+        // final String value = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
+
+        // result.put(key, value);
+      }
+      jsonToken = parser.nextToken();
+    }
+    return result;
+  }
+
+  @Deprecated
   private Map<String, String> importCustomFields() throws ParseException, IOException {
     Map<String, String> result = new HashMap<>();
 
@@ -1527,7 +1855,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     }
   }
 
-  private long importRecords() throws Exception {
+  private long importRecords(final JsonParser parser) throws Exception {
     long total = 0;
 
     final OSchema schema = database.getMetadata().getSchema();
@@ -1624,6 +1952,102 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     return total;
   }
 
+  @Deprecated
+  private long importRecords() throws Exception {
+    long total = 0;
+
+    final OSchema schema = database.getMetadata().getSchema();
+    if (schema.getClass(EXPORT_IMPORT_CLASS_NAME) != null) {
+      schema.dropClass(EXPORT_IMPORT_CLASS_NAME);
+    }
+
+    final OClass cls = schema.createClass(EXPORT_IMPORT_CLASS_NAME);
+    cls.createProperty("key", OType.STRING);
+    cls.createProperty("value", OType.STRING);
+    cls.createIndex(EXPORT_IMPORT_INDEX_NAME, OClass.INDEX_TYPE.DICTIONARY, "key");
+
+    jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
+
+    long totalRecords = 0;
+
+    listener.onMessage("\n\nImporting records...");
+
+    // the only security records are left at this moment so we need to overwrite them
+    // and then remove left overs
+    final HashSet<ORID> recordsBeforeImport = new HashSet<>();
+
+    for (final String clusterName : database.getClusterNames()) {
+      final Iterator<ORecord> recordIterator = database.browseCluster(clusterName);
+      while (recordIterator.hasNext()) {
+        recordsBeforeImport.add(recordIterator.next().getIdentity());
+      }
+    }
+
+    ORID rid;
+    ORID lastRid = new ORecordId();
+    final long begin = System.currentTimeMillis();
+    long lastLapRecords = 0;
+    long last = begin;
+    Set<String> involvedClusters = new HashSet<>();
+
+    while (jsonReader.lastChar() != ']') {
+      rid = importRecord(recordsBeforeImport);
+
+      total++;
+      if (rid != null) {
+        ++lastLapRecords;
+        ++totalRecords;
+
+        if (rid.getClusterId() != lastRid.getClusterId() || involvedClusters.isEmpty())
+          involvedClusters.add(database.getClusterNameById(rid.getClusterId()));
+        lastRid = rid;
+      }
+
+      final long now = System.currentTimeMillis();
+      if (now - last > IMPORT_RECORD_DUMP_LAP_EVERY_MS) {
+        final List<String> sortedClusters = new ArrayList<>(involvedClusters);
+        Collections.sort(sortedClusters);
+
+        listener.onMessage(
+            String.format(
+                "\n- Imported %,d records into clusters: %s. "
+                    + "Total JSON records imported so for %,d .Total records imported so far: %,d (%,.2f/sec)",
+                lastLapRecords,
+                total,
+                sortedClusters.size(),
+                totalRecords,
+                (float) lastLapRecords * 1000 / (float) IMPORT_RECORD_DUMP_LAP_EVERY_MS));
+
+        // RESET LAP COUNTERS
+        last = now;
+        lastLapRecords = 0;
+        involvedClusters.clear();
+      }
+      record = null;
+    }
+
+    if (!merge) {
+      // remove all records which were absent in new database but
+      // exist in old database
+      for (final ORID leftOverRid : recordsBeforeImport) {
+        database.delete(leftOverRid);
+      }
+    }
+    database.getMetadata().reload();
+
+    final Set<ORID> brokenRids = new HashSet<>();
+    processBrokenRids(brokenRids);
+
+    listener.onMessage(
+        String.format(
+            "\n\nDone. Imported %,d records in %,.2f secs\n",
+            totalRecords, ((float) (System.currentTimeMillis() - begin)) / 1000));
+
+    jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
+
+    return total;
+  }
+
   private ORID importRecord(final HashSet<ORID> recordsBeforeImport) throws Exception {
     OPair<String, Map<String, ORidSet>> recordParse =
         jsonReader.readRecordString(this.maxRidbagStringSizeBeforeLazyImport);
@@ -1647,7 +2071,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     Set<Integer> skippedPartsIndexes = new HashSet<>();
 
     try {
-
       try {
         record =
             ORecordSerializerJSON.INSTANCE.fromString(
