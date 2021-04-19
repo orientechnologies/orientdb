@@ -738,6 +738,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     }
   }
 
+  // FIXME: @fileTypes from end to signatures, increase the exporter version?
   @Override
   public StringBuilder toString(
       final ORecord iRecord,

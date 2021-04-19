@@ -156,8 +156,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
   @Override
   public void run() {
-    // TODO: importDatabase();
-    importDatabaseV2();
+    importDatabase();
+    // TODO: importDatabaseV2();
   }
 
   @Override
@@ -299,16 +299,16 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
             clustersImported = true;
           } else if (parser.getValueAsString().equals("schema")) {
             importSchema(parser, clustersImported);
-          } /*FIXME: else if (parser.getValueAsString().equals("records")) {
-              importRecords(parser);
-            }
-
-            else if (tag.equals("indexes")) importIndexes();
-            else if (tag.equals("manualIndexes")) importManualIndexes();
-            else if (tag.equals("brokenRids")) {
-              processBrokenRids();
-            } else
-              throw new ODatabaseImportException("Invalid format. Found unsupported tag '" + tag + "'");*/
+          } else if (parser.getValueAsString().equals("records")) {
+            importRecords(parser);
+          }
+          /*FIXME:
+          else if (tag.equals("indexes")) importIndexes();
+          else if (tag.equals("manualIndexes")) importManualIndexes();
+          else if (tag.equals("brokenRids")) {
+            processBrokenRids();
+          } else
+            throw new ODatabaseImportException("Invalid format. Found unsupported tag '" + tag + "'");*/
         }
       }
       if (rebuildIndexes) {
@@ -1868,10 +1868,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     cls.createProperty("value", OType.STRING);
     cls.createIndex(EXPORT_IMPORT_INDEX_NAME, OClass.INDEX_TYPE.DICTIONARY, "key");
 
-    jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
-
     long totalRecords = 0;
-
     listener.onMessage("\n\nImporting records...");
 
     // the only security records are left at this moment so we need to overwrite them
@@ -1887,13 +1884,15 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
     ORID rid;
     ORID lastRid = new ORecordId();
-    final long begin = System.currentTimeMillis();
+    final long begin = System.nanoTime();
     long lastLapRecords = 0;
     long last = begin;
     Set<String> involvedClusters = new HashSet<>();
 
-    while (jsonReader.lastChar() != ']') {
-      rid = importRecord(recordsBeforeImport);
+    final JsonToken jsonToken = parser.currentToken();
+
+    while (!JsonToken.END_ARRAY.equals(jsonToken)) {
+      rid = importRecord(parser, recordsBeforeImport);
 
       total++;
       if (rid != null) {
@@ -1925,7 +1924,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         lastLapRecords = 0;
         involvedClusters.clear();
       }
-
       record = null;
     }
 
@@ -1936,19 +1934,15 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         database.delete(leftOverRid);
       }
     }
-
     database.getMetadata().reload();
 
     final Set<ORID> brokenRids = new HashSet<>();
     processBrokenRids(brokenRids);
-
     listener.onMessage(
         String.format(
             "\n\nDone. Imported %,d records in %,.2f secs\n",
-            totalRecords, ((float) (System.currentTimeMillis() - begin)) / 1000));
-
-    jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
-
+            totalRecords, ((float) (System.nanoTime() - begin)) / 1000000));
+    // jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
     return total;
   }
 
@@ -2048,7 +2042,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     return total;
   }
 
-  private ORID importRecord(final HashSet<ORID> recordsBeforeImport) throws Exception {
+  // FIXME
+  private ORID importRecord(final JsonParser parser, final HashSet<ORID> recordsBeforeImport)
+      throws Exception {
     OPair<String, Map<String, ORidSet>> recordParse =
         jsonReader.readRecordString(this.maxRidbagStringSizeBeforeLazyImport);
     String value = recordParse.getKey().trim();
@@ -2270,6 +2266,460 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     }
     return record.getIdentity();
   }
+
+  // TODO: WIP
+  @Deprecated
+  private ORID importRecord(final HashSet<ORID> recordsBeforeImport) throws Exception {
+    final OPair<String, Map<String, ORidSet>> recordParse =
+        jsonReader.readRecordString(this.maxRidbagStringSizeBeforeLazyImport);
+    InputStream value = new ByteArrayInputStream(recordParse.getKey().trim().getBytes());
+
+    // TODO:
+    // if (value.isEmpty()) {
+    //   return null;
+    // }
+
+    // TODO:
+    // JUMP EMPTY RECORDS
+    // while (!value.isEmpty() && value.charAt(0) != '{') {
+    //   value = value.substring(1);
+    // }
+
+    record = null;
+
+    // big ridbags (ie. supernodes) sometimes send the system OOM, so they have to be discarded at
+    // this stage
+    // and processed later. The following collects the positions ("value" inside the string) of
+    // skipped fields.
+    Set<Integer> skippedPartsIndexes = new HashSet<>();
+
+    try {
+      try {
+        // TODO:
+        record =
+            ORecordSerializerJSON.INSTANCE.fromStream(
+                value,
+                record,
+                null,
+                null,
+                false,
+                maxRidbagStringSizeBeforeLazyImport,
+                skippedPartsIndexes);
+      } catch (OSerializationException e) {
+        if (e.getCause() instanceof OSchemaException) {
+          // EXTRACT CLASS NAME If ANY
+          // TODO:
+          final int pos = recordParse.getKey().trim().indexOf("\"@class\":\"");
+          if (pos > -1) {
+            final int end = recordParse.getKey().trim().indexOf("\"", pos + "\"@class\":\"".length() + 1);
+            final String value1 = recordParse.getKey().trim().substring(0, pos + "\"@class\":\"".length());
+            final String clsName = recordParse.getKey().trim().substring(pos + "\"@class\":\"".length(), end);
+            final String value2 = recordParse.getKey().trim().substring(end);
+
+            final String newClassName = convertedClassNames.get(clsName);
+
+            // TODO:
+            value = new ByteArrayInputStream((value1 + newClassName + value2).getBytes());
+            // OVERWRITE CLASS NAME WITH NEW NAME
+            record =
+                ORecordSerializerJSON.INSTANCE.fromStream(
+                    value,
+                    record,
+                    null,
+                    null,
+                    false,
+                    maxRidbagStringSizeBeforeLazyImport,
+                    skippedPartsIndexes);
+          }
+        } else
+          throw OException.wrapException(
+              new ODatabaseImportException("Error on importing record"), e);
+      }
+
+      // Incorrect record format , skip this record
+      if (record == null || record.getIdentity() == null) {
+        OLogManager.instance().warn(this, "Broken record was detected and will be skipped");
+        return null;
+      }
+
+      if (schemaImported && record.getIdentity().equals(schemaRecordId)) {
+        recordsBeforeImport.remove(record.getIdentity());
+        // JUMP THE SCHEMA
+        return null;
+      }
+
+      // CHECK IF THE CLUSTER IS INCLUDED
+      if (includeClusters != null) {
+        if (!includeClusters.contains(
+            database.getClusterNameById(record.getIdentity().getClusterId()))) {
+          recordsBeforeImport.remove(record.getIdentity());
+          return null;
+        }
+      } else if (excludeClusters != null) {
+        if (excludeClusters.contains(
+            database.getClusterNameById(record.getIdentity().getClusterId()))) {
+          recordsBeforeImport.remove(record.getIdentity());
+          return null;
+        }
+      }
+
+      if (record instanceof ODocument && excludeClasses != null) {
+        if (excludeClasses.contains(((ODocument) record).getClassName())) {
+          recordsBeforeImport.remove(record.getIdentity());
+          return null;
+        }
+      }
+
+      if (record.getIdentity().getClusterId() == 0
+          && record.getIdentity().getClusterPosition() == 1) {
+        recordsBeforeImport.remove(record.getIdentity());
+        // JUMP INTERNAL RECORDS
+        return null;
+      }
+
+      if (exporterVersion >= 3) {
+        int oridsId = database.getClusterIdByName("ORIDs");
+        int indexId = database.getClusterIdByName(OMetadataDefault.CLUSTER_INDEX_NAME);
+
+        if (record.getIdentity().getClusterId() == indexId
+            || record.getIdentity().getClusterId() == oridsId) {
+          recordsBeforeImport.remove(record.getIdentity());
+          // JUMP INDEX RECORDS
+          return null;
+        }
+      }
+
+      final int manualIndexCluster =
+          database.getClusterIdByName(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME);
+      final int internalCluster =
+          database.getClusterIdByName(OMetadataDefault.CLUSTER_INTERNAL_NAME);
+      final int indexCluster = database.getClusterIdByName(OMetadataDefault.CLUSTER_INDEX_NAME);
+
+      if (exporterVersion >= 4) {
+        if (record.getIdentity().getClusterId() == manualIndexCluster) {
+          // JUMP INDEX RECORDS
+          recordsBeforeImport.remove(record.getIdentity());
+          return null;
+        }
+      }
+
+      if (record.getIdentity().equals(indexMgrRecordId)) {
+        recordsBeforeImport.remove(record.getIdentity());
+        return null;
+      }
+
+      final ORID rid = record.getIdentity();
+
+      final int clusterId = rid.getClusterId();
+
+      if ((clusterId != manualIndexCluster
+          && clusterId != internalCluster
+          && clusterId != indexCluster)) {
+        if (recordsBeforeImport.remove(rid)) {
+          final ORecord loadedRecord = database.load(rid);
+          if (loadedRecord == null) {
+            throw new IllegalStateException(
+                "Record with rid = " + rid + " should exist in database " + database.getName());
+          }
+
+          if (!record.getClass().isAssignableFrom(loadedRecord.getClass())) {
+            throw new IllegalStateException(
+                "Imported record and record stored in database under id "
+                    + rid.toString()
+                    + " have different types. "
+                    + "Stored record class is : "
+                    + record.getClass()
+                    + " and imported "
+                    + loadedRecord.getClass()
+                    + " .");
+          }
+
+          ORecordInternal.setVersion(record, loadedRecord.getVersion());
+        } else {
+          ORecordInternal.setVersion(record, 0);
+          ORecordInternal.setIdentity(record, new ORecordId());
+        }
+
+        record.setDirty();
+
+        if (!preserveRids
+            && record instanceof ODocument
+            && ODocumentInternal.getImmutableSchemaClass(database, ((ODocument) record)) != null)
+          record.save();
+        else record.save(database.getClusterNameById(clusterId));
+
+        if (!rid.equals(record.getIdentity())) {
+          // SAVE IT ONLY IF DIFFERENT
+          new ODocument(EXPORT_IMPORT_CLASS_NAME)
+              .field("key", rid.toString())
+              .field("value", record.getIdentity().toString())
+              .save();
+        }
+      }
+
+      // import skipped records (too big to be imported before)
+      if (skippedPartsIndexes.size() > 0) {
+        for (Integer skippedPartsIndex : skippedPartsIndexes) {
+          importSkippedRidbag(record, recordParse.getKey().trim(), skippedPartsIndex);
+        }
+      }
+
+      if (recordParse.value.size() > 0) {
+        importSkippedRidbag(record, recordParse.getValue());
+      }
+
+    } catch (Exception t) {
+      if (record != null)
+        OLogManager.instance()
+            .error(
+                this,
+                "Error importing record "
+                    + record.getIdentity()
+                    + ". Source line "
+                    + jsonReader.getLineNumber()
+                    + ", column "
+                    + jsonReader.getColumnNumber(),
+                t);
+      else
+        OLogManager.instance()
+            .error(
+                this,
+                "Error importing record. Source line "
+                    + jsonReader.getLineNumber()
+                    + ", column "
+                    + jsonReader.getColumnNumber(),
+                t);
+
+      if (!(t instanceof ODatabaseException)) {
+        throw t;
+      }
+    }
+    return record.getIdentity();
+  }
+
+  @Deprecated
+  /*private ORID importRecord(final HashSet<ORID> recordsBeforeImport) throws Exception {
+    final OPair<String, Map<String, ORidSet>> recordParse =
+        jsonReader.readRecordString(this.maxRidbagStringSizeBeforeLazyImport);
+    String value = recordParse.getKey().trim();
+
+    if (value.isEmpty()) {
+      return null;
+    }
+
+    // JUMP EMPTY RECORDS
+    while (!value.isEmpty() && value.charAt(0) != '{') {
+      value = value.substring(1);
+    }
+
+    record = null;
+
+    // big ridbags (ie. supernodes) sometimes send the system OOM, so they have to be discarded at
+    // this stage
+    // and processed later. The following collects the positions ("value" inside the string) of
+    // skipped fields.
+    Set<Integer> skippedPartsIndexes = new HashSet<>();
+
+    try {
+      try {
+        record =
+            ORecordSerializerJSON.INSTANCE.fromString(
+                value,
+                record,
+                null,
+                null,
+                false,
+                maxRidbagStringSizeBeforeLazyImport,
+                skippedPartsIndexes);
+      } catch (OSerializationException e) {
+        if (e.getCause() instanceof OSchemaException) {
+          // EXTRACT CLASS NAME If ANY
+          final int pos = value.indexOf("\"@class\":\"");
+          if (pos > -1) {
+            final int end = value.indexOf("\"", pos + "\"@class\":\"".length() + 1);
+            final String value1 = value.substring(0, pos + "\"@class\":\"".length());
+            final String clsName = value.substring(pos + "\"@class\":\"".length(), end);
+            final String value2 = value.substring(end);
+
+            final String newClassName = convertedClassNames.get(clsName);
+
+            value = value1 + newClassName + value2;
+            // OVERWRITE CLASS NAME WITH NEW NAME
+            record =
+                ORecordSerializerJSON.INSTANCE.fromString(
+                    value,
+                    record,
+                    null,
+                    null,
+                    false,
+                    maxRidbagStringSizeBeforeLazyImport,
+                    skippedPartsIndexes);
+          }
+        } else
+          throw OException.wrapException(
+              new ODatabaseImportException("Error on importing record"), e);
+      }
+
+      // Incorrect record format , skip this record
+      if (record == null || record.getIdentity() == null) {
+        OLogManager.instance().warn(this, "Broken record was detected and will be skipped");
+        return null;
+      }
+
+      if (schemaImported && record.getIdentity().equals(schemaRecordId)) {
+        recordsBeforeImport.remove(record.getIdentity());
+        // JUMP THE SCHEMA
+        return null;
+      }
+
+      // CHECK IF THE CLUSTER IS INCLUDED
+      if (includeClusters != null) {
+        if (!includeClusters.contains(
+            database.getClusterNameById(record.getIdentity().getClusterId()))) {
+          recordsBeforeImport.remove(record.getIdentity());
+          return null;
+        }
+      } else if (excludeClusters != null) {
+        if (excludeClusters.contains(
+            database.getClusterNameById(record.getIdentity().getClusterId()))) {
+          recordsBeforeImport.remove(record.getIdentity());
+          return null;
+        }
+      }
+
+      if (record instanceof ODocument && excludeClasses != null) {
+        if (excludeClasses.contains(((ODocument) record).getClassName())) {
+          recordsBeforeImport.remove(record.getIdentity());
+          return null;
+        }
+      }
+
+      if (record.getIdentity().getClusterId() == 0
+          && record.getIdentity().getClusterPosition() == 1) {
+        recordsBeforeImport.remove(record.getIdentity());
+        // JUMP INTERNAL RECORDS
+        return null;
+      }
+
+      if (exporterVersion >= 3) {
+        int oridsId = database.getClusterIdByName("ORIDs");
+        int indexId = database.getClusterIdByName(OMetadataDefault.CLUSTER_INDEX_NAME);
+
+        if (record.getIdentity().getClusterId() == indexId
+            || record.getIdentity().getClusterId() == oridsId) {
+          recordsBeforeImport.remove(record.getIdentity());
+          // JUMP INDEX RECORDS
+          return null;
+        }
+      }
+
+      final int manualIndexCluster =
+          database.getClusterIdByName(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME);
+      final int internalCluster =
+          database.getClusterIdByName(OMetadataDefault.CLUSTER_INTERNAL_NAME);
+      final int indexCluster = database.getClusterIdByName(OMetadataDefault.CLUSTER_INDEX_NAME);
+
+      if (exporterVersion >= 4) {
+        if (record.getIdentity().getClusterId() == manualIndexCluster) {
+          // JUMP INDEX RECORDS
+          recordsBeforeImport.remove(record.getIdentity());
+          return null;
+        }
+      }
+
+      if (record.getIdentity().equals(indexMgrRecordId)) {
+        recordsBeforeImport.remove(record.getIdentity());
+        return null;
+      }
+
+      final ORID rid = record.getIdentity();
+
+      final int clusterId = rid.getClusterId();
+
+      if ((clusterId != manualIndexCluster
+          && clusterId != internalCluster
+          && clusterId != indexCluster)) {
+        if (recordsBeforeImport.remove(rid)) {
+          final ORecord loadedRecord = database.load(rid);
+          if (loadedRecord == null) {
+            throw new IllegalStateException(
+                "Record with rid = " + rid + " should exist in database " + database.getName());
+          }
+
+          if (!record.getClass().isAssignableFrom(loadedRecord.getClass())) {
+            throw new IllegalStateException(
+                "Imported record and record stored in database under id "
+                    + rid.toString()
+                    + " have different types. "
+                    + "Stored record class is : "
+                    + record.getClass()
+                    + " and imported "
+                    + loadedRecord.getClass()
+                    + " .");
+          }
+
+          ORecordInternal.setVersion(record, loadedRecord.getVersion());
+        } else {
+          ORecordInternal.setVersion(record, 0);
+          ORecordInternal.setIdentity(record, new ORecordId());
+        }
+
+        record.setDirty();
+
+        if (!preserveRids
+            && record instanceof ODocument
+            && ODocumentInternal.getImmutableSchemaClass(database, ((ODocument) record)) != null)
+          record.save();
+        else record.save(database.getClusterNameById(clusterId));
+
+        if (!rid.equals(record.getIdentity())) {
+          // SAVE IT ONLY IF DIFFERENT
+          new ODocument(EXPORT_IMPORT_CLASS_NAME)
+              .field("key", rid.toString())
+              .field("value", record.getIdentity().toString())
+              .save();
+        }
+      }
+
+      // import skipped records (too big to be imported before)
+      if (skippedPartsIndexes.size() > 0) {
+        for (Integer skippedPartsIndex : skippedPartsIndexes) {
+          importSkippedRidbag(record, value, skippedPartsIndex);
+        }
+      }
+
+      if (recordParse.value.size() > 0) {
+        importSkippedRidbag(record, recordParse.getValue());
+      }
+
+    } catch (Exception t) {
+      if (record != null)
+        OLogManager.instance()
+            .error(
+                this,
+                "Error importing record "
+                    + record.getIdentity()
+                    + ". Source line "
+                    + jsonReader.getLineNumber()
+                    + ", column "
+                    + jsonReader.getColumnNumber(),
+                t);
+      else
+        OLogManager.instance()
+            .error(
+                this,
+                "Error importing record. Source line "
+                    + jsonReader.getLineNumber()
+                    + ", column "
+                    + jsonReader.getColumnNumber(),
+                t);
+
+      if (!(t instanceof ODatabaseException)) {
+        throw t;
+      }
+    }
+    return record.getIdentity();
+  }*/
 
   private void importSkippedRidbag(ORecord record, Map<String, ORidSet> bags) {
     if (bags == null) {
