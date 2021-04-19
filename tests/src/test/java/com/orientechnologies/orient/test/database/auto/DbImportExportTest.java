@@ -72,17 +72,16 @@ public class DbImportExportTest extends DocumentDBBaseTest implements OCommandOu
     if (importDir.exists()) for (File f : importDir.listFiles()) f.delete();
     else importDir.mkdir();
 
-    ODatabaseDocumentTx database =
+    final ODatabaseDocumentTx database =
         new ODatabaseDocumentTx(getStorageType() + ":" + testPath + "/" + NEW_DB_URL);
     database.create();
 
     ODatabaseImport dbImport = new ODatabaseImport(database, testPath + "/" + exportFilePath, this);
 
     // UNREGISTER ALL THE HOOKS
-    for (ORecordHook hook : new ArrayList<ORecordHook>(database.getHooks().keySet())) {
+    for (final ORecordHook hook : new ArrayList<>(database.getHooks().keySet())) {
       database.unregisterHook(hook);
     }
-
     dbImport.setPreserveRids(true);
     dbImport.setDeleteRIDMapping(false);
     dbImport.importDatabase();

@@ -120,16 +120,16 @@ public class CRUDObjectInheritanceTestSchemaFull extends ObjectDBBaseTest {
         importDir.delete();
       } else {
 
-        ODatabaseImport impor = new ODatabaseImport(importDatabase, EXPORT_DIR, listener);
+        ODatabaseImport dbImport = new ODatabaseImport(importDatabase, EXPORT_DIR, listener);
 
         // UNREGISTER ALL THE HOOKS
-        for (ORecordHook hook : new ArrayList<ORecordHook>(importDatabase.getHooks().keySet())) {
+        for (ORecordHook hook : new ArrayList<>(importDatabase.getHooks().keySet())) {
           importDatabase.unregisterHook(hook);
         }
 
-        impor.setDeleteRIDMapping(true);
-        impor.importDatabase();
-        impor.close();
+        dbImport.setDeleteRIDMapping(true);
+        dbImport.importDatabase();
+        dbImport.close();
 
         importDatabase.close();
         final File importDir = new File(EXPORT_DIR);
