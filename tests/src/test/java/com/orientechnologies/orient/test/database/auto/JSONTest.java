@@ -1240,30 +1240,32 @@ public class JSONTest extends DocumentDBBaseTest {
   }
 
   public void testJSONTxDocInsertOnly() {
-    if (!database.getMetadata().getSchema().existsClass("JSONTxDocOne")) {
-      database.getMetadata().getSchema().createClass("JSONTxDocOne");
+    final String classNameDocOne = "JSONTxDocOneInsertOnly";
+    if (!database.getMetadata().getSchema().existsClass(classNameDocOne)) {
+      database.getMetadata().getSchema().createClass(classNameDocOne);
     }
-    if (!database.getMetadata().getSchema().existsClass("JSONTxDocTwo")) {
-      database.getMetadata().getSchema().createClass("JSONTxDocTwo");
+    final String classNameDocTwo = "JSONTxDocTwoInsertOnly";
+    if (!database.getMetadata().getSchema().existsClass(classNameDocTwo)) {
+      database.getMetadata().getSchema().createClass(classNameDocTwo);
     }
     database.begin();
-    final ODocument eveDoc = new ODocument("JSONTxDocOne");
+    final ODocument eveDoc = new ODocument(classNameDocOne);
     eveDoc.field("name", "eve");
     eveDoc.save();
 
-    final ODocument nestedWithTypeD = new ODocument("JSONTxDocTwo");
+    final ODocument nestedWithTypeD = new ODocument(classNameDocTwo);
     nestedWithTypeD.fromJSON(
         "{\"@type\":\"d\",\"event_name\":\"world cup 2014\",\"admin\":[" + eveDoc.toJSON() + "]}");
     nestedWithTypeD.save();
     database.commit();
-    Assert.assertEquals(database.countClass("JSONTxDocOne"), 1);
+    Assert.assertEquals(database.countClass(classNameDocOne), 1);
 
     final Map<ORID, ODocument> contentMap = new HashMap<>();
-    final ODocument eve = new ODocument("JSONTxDocOne");
+    final ODocument eve = new ODocument(classNameDocOne);
     eve.field("name", "eve");
     contentMap.put(eveDoc.getIdentity(), eve);
 
-    for (final ODocument document : database.browseClass("JSONTxDocOne")) {
+    for (final ODocument document : database.browseClass(classNameDocOne)) {
       final ODocument content = contentMap.get(document.getIdentity());
       Assert.assertTrue(content.hasSameContentOf(document));
     }
