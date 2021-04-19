@@ -166,7 +166,7 @@ public class ODatabaseImportTest {
 
     final ByteArrayOutputStream output = new ByteArrayOutputStream();
     try (final ODatabaseSession db =
-             orientDB.open(databaseName, "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD)) {
+        orientDB.open(databaseName, "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD)) {
       db.createClass("SimpleClass");
 
       final ODatabaseExport export =
@@ -186,7 +186,7 @@ public class ODatabaseImportTest {
     OCreateDatabaseUtil.createDatabase(databaseName, importDbUrl, OCreateDatabaseUtil.TYPE_PLOCAL);
 
     try (final ODatabaseSession db =
-             orientDB.open(databaseName, "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD)) {
+        orientDB.open(databaseName, "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD)) {
       final ODatabaseImport importer =
           new ODatabaseImport(
               (ODatabaseDocumentInternal) db,
