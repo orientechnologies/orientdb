@@ -2311,9 +2311,12 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           // TODO:
           final int pos = recordParse.getKey().trim().indexOf("\"@class\":\"");
           if (pos > -1) {
-            final int end = recordParse.getKey().trim().indexOf("\"", pos + "\"@class\":\"".length() + 1);
-            final String value1 = recordParse.getKey().trim().substring(0, pos + "\"@class\":\"".length());
-            final String clsName = recordParse.getKey().trim().substring(pos + "\"@class\":\"".length(), end);
+            final int end =
+                recordParse.getKey().trim().indexOf("\"", pos + "\"@class\":\"".length() + 1);
+            final String value1 =
+                recordParse.getKey().trim().substring(0, pos + "\"@class\":\"".length());
+            final String clsName =
+                recordParse.getKey().trim().substring(pos + "\"@class\":\"".length(), end);
             final String value2 = recordParse.getKey().trim().substring(end);
 
             final String newClassName = convertedClassNames.get(clsName);
