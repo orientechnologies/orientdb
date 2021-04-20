@@ -31,13 +31,14 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.setup.ServerRun;
+import org.junit.Assert;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicLong;
-import org.junit.Assert;
 
 // import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 
@@ -122,6 +123,8 @@ public abstract class AbstractServerClusterTest {
     if (startupNodesInSequence) {
       for (final ServerRun server : serverInstance) {
         banner("STARTING SERVER -> " + server.getServerId() + "...");
+
+        onServerStarting(server);
 
         server.startServer(getDistributedServerConfiguration(server));
 
@@ -273,9 +276,13 @@ public abstract class AbstractServerClusterTest {
       OrientDB orientDB =
           new OrientDB(
               "embedded:" + master.getServerHome() + "/databases/", OrientDBConfig.defaultConfig());
+
+      if (orientDB.exists(getDatabaseName())) orientDB.drop(getDatabaseName());
+
       orientDB.execute(
           "create database ? plocal users(admin identified by 'admin' role admin)",
           getDatabaseName());
+
       final ODatabaseDocument graph = orientDB.open(getDatabaseName(), "admin", "admin");
       try {
         onAfterDatabaseCreation(graph);
