@@ -2287,6 +2287,19 @@ public class OMatchStatementExecutionNewTest {
     return db.query(query.toString());
   }
 
+  @Test
+  public void testQuotedClassName() {
+    String className = "testQuotedClassName";
+    db.command(new OCommandSQL("CREATE CLASS " + className + " EXTENDS V")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX " + className + " SET name = 'a'")).execute();
+
+    String query = "MATCH {class: `" + className + "`, as:foo} RETURN $elements";
+
+    try (OResultSet rs = db.query(query)) {
+      Assert.assertEquals(1L, rs.stream().count());
+    }
+  }
+
   private long indexUsages(ODatabaseDocumentTx db) {
     final long oldIndexUsage;
     try {

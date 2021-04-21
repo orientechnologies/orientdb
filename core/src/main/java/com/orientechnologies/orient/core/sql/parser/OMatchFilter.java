@@ -89,6 +89,8 @@ public class OMatchFilter extends SimpleNode {
           ((SimpleNode) item.className.value)
               .toString(context == null ? null : context.getInputParameters(), builder);
           return builder.toString();
+        } else if (item.className.isBaseIdentifier()) {
+          return item.className.getDefaultAlias().getStringValue();
         } else {
           return item.className.toString();
         }
