@@ -38,7 +38,7 @@ import java.io.IOException;
 public class ServerRun {
   private final String serverId;
   private String rootPath;
-  private OServer server;
+  public OServer server;
 
   public ServerRun(final String iRootPath, final String serverId) {
     this.rootPath = iRootPath;

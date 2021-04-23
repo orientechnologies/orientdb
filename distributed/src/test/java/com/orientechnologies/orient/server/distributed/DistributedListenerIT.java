@@ -16,12 +16,12 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.setup.ServerRun;
+import java.util.HashSet;
+import java.util.Set;
 import org.assertj.core.api.Assertions;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Checks the listeners are correctly invoked at every status change of databases even after a

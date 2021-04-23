@@ -31,14 +31,13 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.setup.ServerRun;
-import org.junit.Assert;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicLong;
+import org.junit.Assert;
 
 // import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 
