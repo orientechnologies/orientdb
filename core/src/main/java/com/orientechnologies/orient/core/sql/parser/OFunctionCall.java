@@ -124,6 +124,9 @@ public class OFunctionCall extends SimpleNode {
     OSQLFunction function = OSQLEngine.getInstance().getFunction(name);
     function.config(this.params.toArray());
     if (function != null) {
+
+      validateFunctionParams(function, paramValues);
+
       if (record instanceof OIdentifiable) {
         return function.execute(
             targetObjects, (OIdentifiable) record, null, paramValues.toArray(), ctx);
@@ -141,6 +144,27 @@ public class OFunctionCall extends SimpleNode {
       }
     } else {
       throw new OCommandExecutionException("Funciton not found: " + name);
+    }
+  }
+
+  private void validateFunctionParams(OSQLFunction function, List<Object> paramValues) {
+    if (function.getMaxParams() == -1 || function.getMaxParams() > 0) {
+      if (paramValues.size() < function.getMinParams()
+          || (function.getMaxParams() > -1 && paramValues.size() > function.getMaxParams())) {
+        String params;
+        if (function.getMinParams() == function.getMaxParams()) {
+          params = "" + function.getMinParams();
+        } else {
+          params = function.getMinParams() + "-" + function.getMaxParams();
+        }
+        throw new OCommandExecutionException(
+            "Syntax error: function '"
+                + function.getName()
+                + "' needs "
+                + params
+                + " argument(s) while has been received "
+                + paramValues.size());
+      }
     }
   }
 
