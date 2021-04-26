@@ -105,9 +105,11 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     public boolean alwaysFetchEmbeddedDocuments;
     public int indentLevel;
     public String fetchPlan = null;
-    public boolean keepTypes = true;
+    public boolean keepTypes;
     public boolean dateAsLong = false;
     public boolean prettyPrint = false;
+    // '@fieldTypes' become part of the signature
+    public boolean earlyTypes;
 
     public FormatSettings(final String iFormat) {
       if (iFormat == null) {
@@ -120,6 +122,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         fetchPlan = "";
         keepTypes = true;
         alwaysFetchEmbeddedDocuments = true;
+        earlyTypes = true;
       } else {
         includeType = false;
         includeVer = false;
@@ -129,6 +132,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         alwaysFetchEmbeddedDocuments = false;
         indentLevel = 0;
         keepTypes = false;
+        earlyTypes = false;
 
         if (iFormat != null && !iFormat.isEmpty()) {
           final String[] format = iFormat.split(",");
@@ -148,6 +152,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
             else if (f.startsWith("graph") || f.startsWith("shallow"))
               // SUPPORTED IN OTHER PARTS
               ;
+            else if (f.startsWith("earlyTypes")) earlyTypes = true;
             else throw new IllegalArgumentException("Unrecognized JSON formatting option: " + f);
         }
       }
@@ -738,17 +743,16 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     }
   }
 
-  // FIXME: @fileTypes from end to signatures, increase the exporter version?
   @Override
   public StringBuilder toString(
       final ORecord iRecord,
-      final StringBuilder iOutput,
-      final String iFormat,
+      final StringBuilder output,
+      final String format,
       boolean autoDetectCollectionType) {
     try {
       final StringWriter buffer = new StringWriter(INITIAL_SIZE);
-      final OJSONWriter json = new OJSONWriter(buffer, iFormat);
-      final FormatSettings settings = new FormatSettings(iFormat);
+      final OJSONWriter json = new OJSONWriter(buffer, format);
+      final FormatSettings settings = new FormatSettings(format);
 
       json.beginObject();
 
@@ -758,13 +762,11 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
       if (iRecord instanceof ODocument) {
         final OFetchPlan fp = OFetchHelper.buildFetchPlan(settings.fetchPlan);
 
-        OFetchHelper.fetch(iRecord, null, fp, new OJSONFetchListener(), context, iFormat);
+        OFetchHelper.fetch(iRecord, null, fp, new OJSONFetchListener(), context, format);
       } else if (iRecord instanceof ORecordStringable) {
-
         // STRINGABLE
         final ORecordStringable record = (ORecordStringable) iRecord;
         json.writeAttribute(settings.indentLevel, true, "value", record.value());
-
       } else if (iRecord instanceof OBlob) {
         // BYTES
         final OBlob record = (OBlob) iRecord;
@@ -773,17 +775,17 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
             true,
             "value",
             Base64.getEncoder().encodeToString(record.toStream()));
-      } else
+      } else {
         throw new OSerializationException(
             "Error on marshalling record of type '"
                 + iRecord.getClass()
                 + "' to JSON. The record type cannot be exported to JSON");
-
+      }
       json.endObject(settings.indentLevel, true);
 
-      iOutput.append(buffer);
-      return iOutput;
-    } catch (IOException e) {
+      output.append(buffer);
+      return output;
+    } catch (final IOException e) {
       throw OException.wrapException(
           new OSerializationException("Error on marshalling of record to JSON"), e);
     }

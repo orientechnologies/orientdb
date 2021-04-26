@@ -44,27 +44,28 @@ public class OJSONFetchContext implements OFetchContext {
   protected final Stack<StringBuilder> typesStack = new Stack<>();
   protected final Stack<ODocument> collectionStack = new Stack<>();
 
-  public OJSONFetchContext(final OJSONWriter iJsonWriter, final FormatSettings iSettings) {
-    jsonWriter = iJsonWriter;
-    settings = iSettings;
+  public OJSONFetchContext(final OJSONWriter jsonWriter, final FormatSettings settings) {
+    this.jsonWriter = jsonWriter;
+    this.settings = settings;
   }
 
-  public void onBeforeFetch(final ODocument iRootRecord) {
+  public void onBeforeFetch(final ODocument rootRecord) {
     typesStack.add(new StringBuilder());
   }
 
-  public void onAfterFetch(final ODocument iRootRecord) {
-    StringBuilder buffer = typesStack.pop();
-    if (settings.keepTypes && buffer.length() > 0)
+  public void onAfterFetch(final ODocument rootRecord) {
+    final StringBuilder sb = typesStack.pop();
+    if (settings.keepTypes && sb.length() > 0) {
       try {
         jsonWriter.writeAttribute(
             settings.indentLevel > -1 ? settings.indentLevel : 1,
             true,
             ORecordSerializerJSON.ATTRIBUTE_FIELD_TYPES,
-            buffer.toString());
-      } catch (IOException e) {
+            sb.toString());
+      } catch (final IOException e) {
         throw OException.wrapException(new OFetchException("Error writing field types"), e);
       }
+    }
   }
 
   public void onBeforeStandardField(
@@ -223,7 +224,6 @@ public class OJSONFetchContext implements OFetchContext {
       json.write("null");
       return;
     }
-
     boolean firstAttribute = true;
 
     if (settings.includeType) {

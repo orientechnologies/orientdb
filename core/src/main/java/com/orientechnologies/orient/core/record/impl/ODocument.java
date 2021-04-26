@@ -366,6 +366,7 @@ public class ODocument extends ORecordAbstract
 
     return fields.entrySet().stream()
         .filter(
+            // s.getValue().property.getType() returns OType
             s ->
                 s.getValue().exists()
                     && (propertyAccess == null || propertyAccess.isReadable(s.getKey())))

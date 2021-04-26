@@ -22,6 +22,7 @@ import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
@@ -44,9 +45,12 @@ import org.testng.annotations.Test;
 @SuppressWarnings("unchecked")
 @Test
 public class JSONTest extends DocumentDBBaseTest {
+  public static final String FORMAT_WITHOUT_TYPES =
+      "rid,version,class,type,attribSameRow,alwaysFetchEmbedded,fetchPlan:*:0";
+
   @Parameters(value = "url")
-  public JSONTest(@Optional final String iURL) {
-    super(iURL);
+  public JSONTest(@Optional final String url) {
+    super(url);
   }
 
   @Test
@@ -141,12 +145,53 @@ public class JSONTest extends DocumentDBBaseTest {
     doc.field("nan", Double.NaN);
     doc.field("p_infinity", Double.POSITIVE_INFINITY);
     doc.field("n_infinity", Double.NEGATIVE_INFINITY);
+    String json = doc.toJSON(ORecordAbstract.OLD_FORMAT_WITH_LATE_TYPES);
+    Assert.assertEquals(json, input);
+
+    doc = new ODocument();
+    input =
+        "{\"@type\":\"d\",\"@version\":0,\"nan\":null,\"p_infinity\":null,\"n_infinity\":null,\"@fieldTypes\":\"nan=f,p_infinity=f,n_infinity=f\"}";
+    doc.field("nan", Float.NaN);
+    doc.field("p_infinity", Float.POSITIVE_INFINITY);
+    doc.field("n_infinity", Float.NEGATIVE_INFINITY);
+    json = doc.toJSON(ORecordAbstract.OLD_FORMAT_WITH_LATE_TYPES);
+    Assert.assertEquals(json, input);
+  }
+
+  @Test
+  public void testNanNoTypes() {
+    ODocument doc = new ODocument();
+    String input =
+        "{\"@type\":\"d\",\"@version\":0,\"nan\":null,\"p_infinity\":null,\"n_infinity\":null}";
+    doc.field("nan", Double.NaN);
+    doc.field("p_infinity", Double.POSITIVE_INFINITY);
+    doc.field("n_infinity", Double.NEGATIVE_INFINITY);
+    String json = doc.toJSON(FORMAT_WITHOUT_TYPES);
+    Assert.assertEquals(json, input);
+
+    doc = new ODocument();
+    input = "{\"@type\":\"d\",\"@version\":0,\"nan\":null,\"p_infinity\":null,\"n_infinity\":null}";
+    doc.field("nan", Float.NaN);
+    doc.field("p_infinity", Float.POSITIVE_INFINITY);
+    doc.field("n_infinity", Float.NEGATIVE_INFINITY);
+    json = doc.toJSON(FORMAT_WITHOUT_TYPES);
+    Assert.assertEquals(json, input);
+  }
+
+  @Test
+  public void testNanEarlyTypes() {
+    ODocument doc = new ODocument();
+    String input =
+        "{\"@type\":\"d\",\"@version\":0,\"@fieldTypes\":\"nan=d,p_infinity=d,n_infinity=d\",\"nan\":null,\"p_infinity\":null,\"n_infinity\":null}";
+    doc.field("nan", Double.NaN);
+    doc.field("p_infinity", Double.POSITIVE_INFINITY);
+    doc.field("n_infinity", Double.NEGATIVE_INFINITY);
     String json = doc.toJSON();
     Assert.assertEquals(input, json);
 
     doc = new ODocument();
     input =
-        "{\"@type\":\"d\",\"@version\":0,\"nan\":null,\"p_infinity\":null,\"n_infinity\":null,\"@fieldTypes\":\"nan=f,p_infinity=f,n_infinity=f\"}";
+        "{\"@type\":\"d\",\"@version\":0,\"@fieldTypes\":\"nan=f,p_infinity=f,n_infinity=f\",\"nan\":null,\"p_infinity\":null,\"n_infinity\":null}";
     doc.field("nan", Float.NaN);
     doc.field("p_infinity", Float.POSITIVE_INFINITY);
     doc.field("n_infinity", Float.NEGATIVE_INFINITY);
@@ -162,7 +207,7 @@ public class JSONTest extends DocumentDBBaseTest {
     list.add(new ODocument().field("name", "Luca"));
     list.add(new ODocument().field("name", "Marcus"));
 
-    final String json = doc.toJSON();
+    final String json = doc.toJSON(ORecordAbstract.OLD_FORMAT_WITH_LATE_TYPES);
     final ODocument loadedDoc = new ODocument().fromJSON(json);
     Assert.assertTrue(doc.hasSameContentOf(loadedDoc));
     Assert.assertTrue(loadedDoc.containsField("embeddedList"));
@@ -268,7 +313,7 @@ public class JSONTest extends DocumentDBBaseTest {
       firstLevelDoc.field("doc", secondLevelDoc);
       secondLevelDoc.field("doc", thirdLevelDoc);
 
-      String json = newDoc.toJSON();
+      final String json = newDoc.toJSON(ORecordAbstract.OLD_FORMAT_WITH_LATE_TYPES);
       ODocument loadedDoc = new ODocument().fromJSON(json);
 
       Assert.assertTrue(newDoc.hasSameContentOf(loadedDoc));
@@ -576,9 +621,9 @@ public class JSONTest extends DocumentDBBaseTest {
       list.add(doc1);
     }
     doc.field("out", list);
-    String json = doc.toJSON();
+    String json = doc.toJSON(ORecordAbstract.OLD_FORMAT_WITH_LATE_TYPES);
     ODocument newDoc = new ODocument().fromJSON(json);
-    Assert.assertEquals(json, newDoc.toJSON());
+    Assert.assertEquals(json, newDoc.toJSON(ORecordAbstract.OLD_FORMAT_WITH_LATE_TYPES));
     Assert.assertTrue(newDoc.hasSameContentOf(doc));
 
     doc = new ODocument();
@@ -601,9 +646,9 @@ public class JSONTest extends DocumentDBBaseTest {
       docMap.put(String.valueOf(i), doc1);
     }
     doc.field("out", docMap);
-    json = doc.toJSON();
+    json = doc.toJSON(ORecordAbstract.OLD_FORMAT_WITH_LATE_TYPES);
     newDoc = new ODocument().fromJSON(json);
-    Assert.assertEquals(newDoc.toJSON(), json);
+    Assert.assertEquals(newDoc.toJSON(ORecordAbstract.OLD_FORMAT_WITH_LATE_TYPES), json);
     Assert.assertTrue(newDoc.hasSameContentOf(doc));
   }
 
@@ -624,9 +669,9 @@ public class JSONTest extends DocumentDBBaseTest {
       list.add(doc1);
     }
     doc.field("theList", list);
-    String json = doc.toJSON();
+    String json = doc.toJSON(ORecordAbstract.OLD_FORMAT_WITH_LATE_TYPES);
     ODocument newDoc = new ODocument().fromJSON(json);
-    Assert.assertEquals(newDoc.toJSON(), json);
+    Assert.assertEquals(newDoc.toJSON(ORecordAbstract.OLD_FORMAT_WITH_LATE_TYPES), json);
     Assert.assertTrue(newDoc.hasSameContentOf(doc));
   }
 
@@ -1320,7 +1365,7 @@ public class JSONTest extends DocumentDBBaseTest {
     nullRefDoc.fromJSON("{\"name\":\"Luca\", \"ref\":\"#-1:-1\"}");
     // Assert.assertNull(nullRefDoc.rawField("ref"));
 
-    String json = nullRefDoc.toJSON();
+    String json = nullRefDoc.toJSON(ORecordAbstract.OLD_FORMAT_WITH_LATE_TYPES);
     int pos = json.indexOf("\"ref\":");
 
     Assert.assertTrue(pos > -1);
