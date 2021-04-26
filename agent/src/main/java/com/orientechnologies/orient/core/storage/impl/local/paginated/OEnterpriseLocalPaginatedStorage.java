@@ -62,6 +62,7 @@ import java.nio.channels.OverlappingFileLockException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -186,7 +187,10 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
                     + "_full"
                     + IBU_EXTENSION_V3;
 
-          final File ibuFile = new File(backupDirectory, fileName);
+          final Path normalizedBackupDirectory =
+              Paths.get(backupDirectory.getCanonicalPath()).normalize();
+          final File ibuFile = new File(normalizedBackupDirectory.toFile(), fileName);
+          // final File ibuFile = new File(backupDirectory, fileName);
           if (started != null) started.call(null);
           rndIBUFile = new RandomAccessFile(ibuFile, "rw");
           try {
