@@ -187,10 +187,11 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
                     + "_full"
                     + IBU_EXTENSION_V3;
 
-          final Path normalizedBackupDirectory =
-              Paths.get(backupDirectory.getCanonicalPath()).normalize();
-          final File ibuFile = new File(normalizedBackupDirectory.toFile(), fileName);
+          // Avoid path manipulation:
           // final File ibuFile = new File(backupDirectory, fileName);
+          final Path normalizedBackupDirectory =
+              Paths.get(backupDirectory.getCanonicalPath(), fileName).normalize();
+          final File ibuFile = new File(normalizedBackupDirectory.toUri());
           if (started != null) started.call(null);
           rndIBUFile = new RandomAccessFile(ibuFile, "rw");
           try {
