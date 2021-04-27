@@ -675,13 +675,18 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   private void checkRidBagsPresence(final OAtomicOperation operation) {
     for (final OCluster cluster : clusters) {
-      final int clusterId = cluster.getId();
+      // FIXME: this should not be needed, no null clusters should be in the clusters list
+      if (cluster != null) {
+        final int clusterId = cluster.getId();
 
-      if (!sbTreeCollectionManager.isComponentPresent(operation, clusterId)) {
-        OLogManager.instance()
-            .info(
-                this, "Cluster with id %d does not have associated rid bag, fixing ...", clusterId);
-        sbTreeCollectionManager.createComponent(operation, clusterId);
+        if (!sbTreeCollectionManager.isComponentPresent(operation, clusterId)) {
+          OLogManager.instance()
+              .info(
+                  this,
+                  "Cluster with id %d does not have associated rid bag, fixing ...",
+                  clusterId);
+          sbTreeCollectionManager.createComponent(operation, clusterId);
+        }
       }
     }
   }
