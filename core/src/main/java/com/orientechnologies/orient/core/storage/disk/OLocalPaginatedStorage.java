@@ -356,7 +356,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
               }
           }
         }
-
+        Files.createDirectories(Paths.get(storagePath.toString()));
         OZIPCompressionUtil.uncompressDirectory(in, storagePath.toString(), iListener);
 
         final java.io.File[] newStorageFiles = dbDir.listFiles();
