@@ -1027,7 +1027,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     }
   }
 
-  public synchronized void removeShutdownHook() {
+  public void removeShutdownHook() {
     orient.removeOrientDB(this);
   }
 
