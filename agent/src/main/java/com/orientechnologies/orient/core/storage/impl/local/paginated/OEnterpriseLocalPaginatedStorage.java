@@ -189,9 +189,9 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
 
           // Avoid path manipulation:
           final File ibuFile = new File(backupDirectory, fileName);
-          if (!ibuFile.getCanonicalPath().endsWith(IBU_EXTENSION_V3)) {
-            throw new IllegalArgumentException("Path traversal detected.");
-          }
+          // if (!ibuFile.getCanonicalPath().endsWith(IBU_EXTENSION_V3)) {
+          //   throw new IllegalArgumentException("Path traversal detected.");
+          // }
           // final Path normalizedBackupDirectory =
           //     backupDirectory.toPath().resolve(fileName).normalize();
           // final File ibuFile = new File(normalizedBackupDirectory.toUri());
