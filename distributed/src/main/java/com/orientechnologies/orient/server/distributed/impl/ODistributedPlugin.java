@@ -54,7 +54,6 @@ import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OSystemDatabase;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBDistributed;
-import com.orientechnologies.orient.core.db.OrientDBEmbedded;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -73,7 +72,6 @@ import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolderImpl;
-import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
@@ -1818,28 +1816,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
         "No response received from remote nodes for auto-deploy of database '"
             + databaseName
             + "'");
-  }
-
-  private void replaceStorageInSessions(final OStorage storage) {
-    ((OrientDBEmbedded) serverInstance.getDatabases())
-        .executeNoDb(
-            () -> {
-              for (OClientConnection conn :
-                  serverInstance.getClientConnectionManager().getConnections()) {
-                final ODatabaseDocumentInternal connDb = conn.getDatabase();
-                if (connDb != null && connDb.getName().equals(storage.getName())) {
-                  conn.acquire();
-                  try {
-                    connDb.activateOnCurrentThread();
-                    connDb.replaceStorage(storage);
-                    connDb.getMetadata().reload();
-                  } finally {
-                    conn.release();
-                  }
-                }
-              }
-              return null;
-            });
   }
 
   protected File getClusterOwnedExclusivelyByCurrentNode(
