@@ -180,31 +180,47 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     }
   }
 
-  private void checkDbAvailable(String name) {
+  private boolean checkDbAvailable(String name) {
     if (getPlugin() == null || !getPlugin().isEnabled()) {
-      return;
+      return true;
     }
-    if (OSystemDatabase.SYSTEM_DB_NAME.equals(name)) return;
+    if (OSystemDatabase.SYSTEM_DB_NAME.equals(name)) return true;
     ODistributedServerManager.DB_STATUS dbStatus =
         plugin.getDatabaseStatus(plugin.getLocalNodeName(), name);
     if (dbStatus != ODistributedServerManager.DB_STATUS.ONLINE
         && dbStatus != ODistributedServerManager.DB_STATUS.BACKUP) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+
+  @Override
+  public ODatabaseDocumentInternal open(String name, String user, String password) {
+    if (checkDbAvailable(name)) {
+      return super.open(name, user, password);
+    } else {
+      if (exists(name, user, password)) {
+        super.open(name, user, password);
+      }
       throw new OOfflineNodeException(
           "database " + name + " not online on " + plugin.getLocalNodeName());
     }
   }
 
   @Override
-  public ODatabaseDocumentInternal open(String name, String user, String password) {
-    checkDbAvailable(name);
-    return super.open(name, user, password);
-  }
-
-  @Override
   public ODatabaseDocumentInternal open(
       String name, String user, String password, OrientDBConfig config) {
-    checkDbAvailable(name);
-    return super.open(name, user, password, config);
+
+    if (checkDbAvailable(name)) {
+      return super.open(name, user, password, config);
+    } else {
+      if (exists(name, user, password)) {
+        super.open(name, user, password, config);
+      }
+      throw new OOfflineNodeException(
+          "database " + name + " not online on " + plugin.getLocalNodeName());
+    }
   }
 
   @Override
