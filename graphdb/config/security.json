@@ -2,7 +2,7 @@
   "enabled": true,
   "debug": false,
   "server": {
-    "createDefaultUsers": true
+    "createDefaultUsers": false
   },
   "authentication": {
     "enabled": true,
