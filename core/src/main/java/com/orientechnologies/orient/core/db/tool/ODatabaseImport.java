@@ -112,18 +112,18 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       throws IOException {
     super(database, fileName, outputListener);
 
-    try (final BufferedInputStream bufferedInputStream =
-        new BufferedInputStream(new FileInputStream(this.fileName))) {
-      bufferedInputStream.mark(1024);
-      InputStream inputStream;
-      try {
-        inputStream = new GZIPInputStream(bufferedInputStream, 16384); // 16KB
-      } catch (final Exception ignore) {
-        bufferedInputStream.reset();
-        inputStream = bufferedInputStream;
-      }
-      createJsonReaderDefaultListenerAndDeclareIntent(database, outputListener, inputStream);
+    // FIXME: unclosed stream
+    final BufferedInputStream bufferedInputStream =
+        new BufferedInputStream(new FileInputStream(this.fileName));
+    bufferedInputStream.mark(1024);
+    InputStream inputStream;
+    try {
+      inputStream = new GZIPInputStream(bufferedInputStream, 16384); // 16KB
+    } catch (final Exception ignore) {
+      bufferedInputStream.reset();
+      inputStream = bufferedInputStream;
     }
+    createJsonReaderDefaultListenerAndDeclareIntent(database, outputListener, inputStream);
   }
 
   public ODatabaseImport(
@@ -2272,19 +2272,19 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   private ORID importRecord(final HashSet<ORID> recordsBeforeImport) throws Exception {
     final OPair<String, Map<String, ORidSet>> recordParse =
         jsonReader.readRecordString(this.maxRidbagStringSizeBeforeLazyImport);
-    InputStream value = new ByteArrayInputStream(recordParse.getKey().trim().getBytes());
-
+    // InputStream value =
+    //     new ByteArrayInputStream(recordParse.getKey().trim().getBytes())
+    String value = recordParse.getKey().trim();
     // TODO:
-    // if (value.isEmpty()) {
-    //   return null;
-    // }
+    if (value.isEmpty()) {
+      return null;
+    }
 
     // TODO:
     // JUMP EMPTY RECORDS
-    // while (!value.isEmpty() && value.charAt(0) != '{') {
-    //   value = value.substring(1);
-    // }
-
+    while (!value.isEmpty() && value.charAt(0) != '{') {
+      value = value.substring(1);
+    }
     record = null;
 
     // big ridbags (ie. supernodes) sometimes send the system OOM, so they have to be discarded at
@@ -2297,7 +2297,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       try {
         // TODO:
         record =
-            ORecordSerializerJSON.INSTANCE.fromStream(
+            // ORecordSerializerJSON.INSTANCE.fromStream(
+            ORecordSerializerJSON.INSTANCE.fromString(
                 value,
                 record,
                 null,
@@ -2322,10 +2323,12 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
             final String newClassName = convertedClassNames.get(clsName);
 
             // TODO:
-            value = new ByteArrayInputStream((value1 + newClassName + value2).getBytes());
+            // value = new ByteArrayInputStream((value1 + newClassName + value2).getBytes());
+            value = (value1 + newClassName + value2);
             // OVERWRITE CLASS NAME WITH NEW NAME
             record =
-                ORecordSerializerJSON.INSTANCE.fromStream(
+                // ORecordSerializerJSON.INSTANCE.fromStream(
+                ORecordSerializerJSON.INSTANCE.fromString(
                     value,
                     record,
                     null,
