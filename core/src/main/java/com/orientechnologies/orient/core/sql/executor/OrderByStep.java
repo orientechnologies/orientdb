@@ -135,10 +135,13 @@ public class OrderByStep extends AbstractExecutionStep {
           }
           sorted = false;
           // compact, only at twice as the buffer, to avoid to do it at each add
-          if (this.maxResults != null && maxResults * 2 < cachedResult.size()) {
-            cachedResult.sort((a, b) -> orderBy.compare(a, b, ctx));
-            cachedResult = new ArrayList<>(cachedResult.subList(0, maxResults));
-            sorted = true;
+          if (this.maxResults != null) {
+            long compactThreshold = 2L * maxResults;
+            if (compactThreshold < cachedResult.size()) {
+              cachedResult.sort((a, b) -> orderBy.compare(a, b, ctx));
+              cachedResult = new ArrayList<>(cachedResult.subList(0, maxResults));
+              sorted = true;
+            }
           }
         } finally {
           if (profilingEnabled) {
