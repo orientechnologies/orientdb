@@ -3,7 +3,7 @@
   <parent>
     <artifactId>orientdb-enterprise-parent</artifactId>
     <groupId>com.orientechnologies</groupId>
-    <version>3.2.0-SNAPSHOT</version>
+    <version>3.2.0-sap-01</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <artifactId>agent</artifactId>
@@ -108,7 +108,7 @@
     <dependency>
       <groupId>com.orientechnologies</groupId>
       <artifactId>orientdb-core</artifactId>
-      <version>3.2.0-SNAPSHOT</version>
+      <version>3.2.0</version>
       <scope>provided</scope>
       <exclusions>
         <exclusion>
@@ -144,13 +144,13 @@
     <dependency>
       <groupId>com.orientechnologies</groupId>
       <artifactId>orientdb-client</artifactId>
-      <version>3.2.0-SNAPSHOT</version>
+      <version>3.2.0</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.orientechnologies</groupId>
       <artifactId>orientdb-server</artifactId>
-      <version>3.2.0-SNAPSHOT</version>
+      <version>3.2.0</version>
       <scope>provided</scope>
       <exclusions>
         <exclusion>
@@ -170,7 +170,7 @@
     <dependency>
       <groupId>com.orientechnologies</groupId>
       <artifactId>orientdb-distributed</artifactId>
-      <version>3.2.0-SNAPSHOT</version>
+      <version>3.2.0</version>
       <scope>provided</scope>
       <exclusions>
         <exclusion>
@@ -186,7 +186,7 @@
     <dependency>
       <groupId>com.orientechnologies</groupId>
       <artifactId>orientdb-lucene</artifactId>
-      <version>3.2.0-SNAPSHOT</version>
+      <version>3.2.0</version>
       <scope>provided</scope>
       <exclusions>
         <exclusion>
@@ -250,7 +250,7 @@
     <dependency>
       <groupId>com.orientechnologies</groupId>
       <artifactId>orientdb-tools</artifactId>
-      <version>3.2.0-SNAPSHOT</version>
+      <version>3.2.0</version>
       <scope>provided</scope>
       <exclusions>
         <exclusion>
@@ -262,7 +262,7 @@
     <dependency>
       <groupId>com.orientechnologies</groupId>
       <artifactId>orientdb-test-commons</artifactId>
-      <version>3.2.0-SNAPSHOT</version>
+      <version>3.2.0</version>
       <scope>test</scope>
       <exclusions>
         <exclusion>
@@ -282,7 +282,7 @@
     <dependency>
       <groupId>com.orientechnologies</groupId>
       <artifactId>orientdb-core</artifactId>
-      <version>3.2.0-SNAPSHOT</version>
+      <version>3.2.0</version>
       <type>test-jar</type>
       <scope>test</scope>
       <exclusions>
@@ -319,7 +319,7 @@
     <dependency>
       <groupId>com.orientechnologies</groupId>
       <artifactId>orientdb-lucene</artifactId>
-      <version>3.2.0-SNAPSHOT</version>
+      <version>3.2.0</version>
       <type>test-jar</type>
       <scope>test</scope>
       <exclusions>
@@ -384,7 +384,7 @@
     <dependency>
       <groupId>com.orientechnologies</groupId>
       <artifactId>orientdb-graphdb</artifactId>
-      <version>3.2.0-SNAPSHOT</version>
+      <version>3.2.0</version>
       <scope>test</scope>
       <exclusions>
         <exclusion>
@@ -474,7 +474,7 @@
   </dependencies>
   <properties>
     <metrics.version>4.1.6</metrics.version>
-    <orientdb.version>3.2.0-SNAPSHOT</orientdb.version>
+    <orientdb.version>3.2.0</orientdb.version>
     <jackson.version>2.10.5.1</jackson.version>
     <exclude.kerberos.tests>%regex[com.orientechnologies.security.kerberos.*Test.*]</exclude.kerberos.tests>
     <project.rootdir>${project.basedir}/../</project.rootdir>

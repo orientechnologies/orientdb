@@ -62,6 +62,7 @@ import java.nio.channels.OverlappingFileLockException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -132,7 +133,8 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
     }
   }
 
-  private String incrementalBackup(final File backupDirectory, OCallable<Void, Void> started) {
+  private String incrementalBackup(
+      final File backupDirectory, final OCallable<Void, Void> started) {
     String fileName = "";
 
     if (!backupDirectory.exists()) {
@@ -143,14 +145,13 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
                 + " does not exist and can not be created");
       }
     }
-
     checkNoBackupInStorageDir(backupDirectory);
 
     final Path fileLockPath = backupDirectory.toPath().resolve(INCREMENTAL_BACKUP_LOCK);
-    try (FileChannel lockChannel =
+    try (final FileChannel lockChannel =
         FileChannel.open(fileLockPath, StandardOpenOption.CREATE, StandardOpenOption.WRITE)) {
       try (@SuppressWarnings("unused")
-          FileLock fileLock = lockChannel.lock()) {
+          final FileLock fileLock = lockChannel.lock()) {
         RandomAccessFile rndIBUFile = null;
         try {
           final String[] files = fetchIBUFiles(backupDirectory);
@@ -167,8 +168,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
           }
 
           final SimpleDateFormat dateFormat = new SimpleDateFormat(INCREMENTAL_BACKUP_DATEFORMAT);
-
-          if (lastLsn != null)
+          if (lastLsn != null) {
             fileName =
                 getName()
                     + "_"
@@ -176,7 +176,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
                     + "_"
                     + nextIndex
                     + IBU_EXTENSION_V3;
-          else
+          } else {
             fileName =
                 getName()
                     + "_"
@@ -185,8 +185,17 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
                     + nextIndex
                     + "_full"
                     + IBU_EXTENSION_V3;
+          }
 
+          // Avoid path manipulation:
           final File ibuFile = new File(backupDirectory, fileName);
+          // if (!ibuFile.getCanonicalPath().endsWith(IBU_EXTENSION_V3)) {
+          //   throw new IllegalArgumentException("Path traversal detected.");
+          // }
+          // final Path normalizedBackupDirectory =
+          //     backupDirectory.toPath().resolve(fileName).normalize();
+          // final File ibuFile = new File(normalizedBackupDirectory.toUri());
+
           if (started != null) started.call(null);
           rndIBUFile = new RandomAccessFile(ibuFile, "rw");
           try {
@@ -269,18 +278,18 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
     return fileName;
   }
 
-  private void checkNoBackupInStorageDir(File backupDirectory) {
+  private void checkNoBackupInStorageDir(final File backupDirectory) {
     if (getStoragePath() == null || backupDirectory == null) {
       return;
     }
 
     boolean invalid = false;
     try {
-      File storageDir = getStoragePath().toFile();
+      final File storageDir = getStoragePath().toFile();
       if (backupDirectory.equals(storageDir)) {
         invalid = true;
       }
-    } catch (Exception e) {
+    } catch (final Exception e) {
     }
     if (invalid) {
       throw new OStorageException("Backup cannot be performed in the storage path");
