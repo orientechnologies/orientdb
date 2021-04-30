@@ -1,8 +1,12 @@
 package com.orientechnologies.orient.test.server.network.http;
 
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -52,7 +56,14 @@ public class HttpGraphTest extends BaseHttpDatabaseTest {
 
     Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
 
-    final ODocument result = new ODocument().fromJSON(response.getEntity().getContent());
+    InputStream content = response.getEntity().getContent();
+    final ByteArrayOutputStream out = new ByteArrayOutputStream();
+    OIOUtils.copyStream(content, out, -1);
+
+    final String correctedFormat = new ODocument().fromJSON(out.toString()).toJSON();
+    final ODocument result =
+        new ODocument()
+            .fromJSON(new ByteArrayInputStream(correctedFormat.getBytes())); // out.toString()
 
     final List<ODocument> res = result.field("result");
     Assert.assertEquals(res.size(), 1);
