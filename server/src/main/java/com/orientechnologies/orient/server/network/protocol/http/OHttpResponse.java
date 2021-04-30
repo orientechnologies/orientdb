@@ -160,8 +160,8 @@ public abstract class OHttpResponse {
     }
   }
 
-  public void writeResult(Object iResult) throws InterruptedException, IOException {
-    writeResult(iResult, null, null, null);
+  public void writeResult(final Object result) throws InterruptedException, IOException {
+    writeResult(result, null, null, null);
   }
 
   public void writeResult(Object iResult, final String iFormat, final String iAccept)
