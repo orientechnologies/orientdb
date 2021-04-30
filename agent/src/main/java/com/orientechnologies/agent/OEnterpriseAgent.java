@@ -61,10 +61,7 @@ import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Properties;
+import java.util.*;
 
 public class OEnterpriseAgent extends OServerPluginAbstract
     implements ODatabaseLifecycleListener,
@@ -252,16 +249,32 @@ public class OEnterpriseAgent extends OServerPluginAbstract
   }
 
   private boolean checkVersion() {
-    if (!OConstants.getRawVersion().equalsIgnoreCase(enterpriseVersion)) {
-      OLogManager.instance()
-          .warn(
-              this,
-              "The current agent version %s is not compatible with OrientDB %s. Please use the same version.",
-              enterpriseVersion,
-              OConstants.getVersion());
-      return false;
+    if (OConstants.getRawVersion().equalsIgnoreCase(enterpriseVersion)) {
+      return true;
     }
-    return true;
+
+    String ceLower = OConstants.getRawVersion().toLowerCase(Locale.ENGLISH);
+    String eeLower = enterpriseVersion.toLowerCase(Locale.ENGLISH);
+
+    if (ceLower.contains("-snapshot") && eeLower.contains("snapshot")) {
+      ceLower.replace("-snapshot", "");
+      eeLower.replace("-snapshot", "");
+    }
+
+    if (eeLower.contains("-sap")) {
+      eeLower = eeLower.substring(0, eeLower.indexOf("-sap"));
+    }
+    if (eeLower.equals(ceLower)) {
+      return true;
+    }
+
+    OLogManager.instance()
+        .warn(
+            this,
+            "The current agent version %s is not compatible with OrientDB %s. Please use the same version.",
+            enterpriseVersion,
+            OConstants.getVersion());
+    return false;
   }
 
   private void installComponents() {
