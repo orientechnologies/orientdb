@@ -20,6 +20,8 @@
 package com.orientechnologies.orient.core.command.script;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,14 +39,15 @@ public class OCommandExecutorUtility {
   static {
     Method isArray = null;
 
-    try {
-      isArray =
-          Class.forName("jdk.nashorn.api.scripting.JSObject").getDeclaredMethod("isArray", null);
-    } catch (LinkageError
-        | ClassNotFoundException
-        | NoSuchMethodException
-        | SecurityException ignore) {
-    }
+    if (!OGlobalConfiguration.SCRIPT_POLYGLOT_USE_GRAAL.getValueAsBoolean())
+      try {
+        isArray =
+            Class.forName("jdk.nashorn.api.scripting.JSObject").getDeclaredMethod("isArray", null);
+      } catch (LinkageError
+          | ClassNotFoundException
+          | NoSuchMethodException
+          | SecurityException ignore) {
+      }
 
     java8MethodIsArray = isArray;
   }
