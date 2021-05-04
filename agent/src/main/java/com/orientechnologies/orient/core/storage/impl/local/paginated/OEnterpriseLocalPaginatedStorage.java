@@ -376,7 +376,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
   }
 
   private long validateLongIndex(final long index) {
-    return index < 0 ? Math.abs(index) : 0;
+    return index < 0 ? 0 : Math.abs(index);
   }
 
   private OLogSequenceNumber incrementalBackup(
