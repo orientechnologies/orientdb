@@ -371,12 +371,12 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
 
     try (final RandomAccessFile rndFile = new RandomAccessFile(file, "r")) {
       rndFile.seek(OIntegerSerializer.INT_SIZE);
-      return validateLongIndex(rndFile);
+      return validateLongIndex(rndFile.readLong());
     }
   }
 
-  private long validateLongIndex(final RandomAccessFile rndFile) throws IOException {
-    return Math.abs(rndFile.readLong());
+  private long validateLongIndex(final long index) {
+    return index < 0 ? Math.abs(index) : 0;
   }
 
   private OLogSequenceNumber incrementalBackup(
