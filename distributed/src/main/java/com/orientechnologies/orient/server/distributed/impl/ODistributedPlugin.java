@@ -1971,7 +1971,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
           }
           Files.createDirectories(backupFullPath.toPath());
 
-          Files.move(oldDirectory.toPath(), backupFullPath.toPath());
+          Files.move(oldDirectory.toPath(), Paths.get(backupPath, oldDirectory.getName()));
         }
       }
     } catch (IOException e) {
