@@ -478,7 +478,7 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
     key = getCollatingValue(key);
     ORID result = backendValue;
     final OTransactionIndexChangesPerKey changesPerKey = indexChanges.getChangesPerKey(key);
-    if (changesPerKey.entries.isEmpty()) {
+    if (changesPerKey.isEmpty()) {
       if (backendValue == null) {
         return null;
       } else {
@@ -486,9 +486,9 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
       }
     }
 
-    for (OTransactionIndexEntry entry : changesPerKey.entries) {
-      if (entry.operation == OPERATION.REMOVE) result = null;
-      else if (entry.operation == OPERATION.PUT) result = entry.value.getIdentity();
+    for (OTransactionIndexEntry entry : changesPerKey.getEntriesAsList()) {
+      if (entry.getOperation() == OPERATION.REMOVE) result = null;
+      else if (entry.getOperation() == OPERATION.PUT) result = entry.getValue().getIdentity();
     }
 
     if (result == null) {

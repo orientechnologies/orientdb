@@ -817,19 +817,19 @@ public abstract class OIndexAbstract implements OIndexInternal {
    */
   public Iterable<OTransactionIndexChangesPerKey.OTransactionIndexEntry> interpretTxKeyChanges(
       OTransactionIndexChangesPerKey changes) {
-    return changes.entries;
+    return changes.getEntriesAsList();
   }
 
   private void applyIndexTxEntry(
       Map<Object, Object> snapshot, OTransactionIndexChangesPerKey entry) {
     for (OTransactionIndexChangesPerKey.OTransactionIndexEntry op : interpretTxKeyChanges(entry)) {
-      switch (op.operation) {
+      switch (op.getOperation()) {
         case PUT:
-          putInSnapshot(getCollatingValue(entry.key), op.value, snapshot);
+          putInSnapshot(getCollatingValue(entry.key), op.getValue(), snapshot);
           break;
         case REMOVE:
-          if (op.value != null)
-            removeFromSnapshot(getCollatingValue(entry.key), op.value, snapshot);
+          if (op.getValue() != null)
+            removeFromSnapshot(getCollatingValue(entry.key), op.getValue(), snapshot);
           else removeFromSnapshot(getCollatingValue(entry.key), snapshot);
           break;
         case CLEAR:

@@ -2572,12 +2572,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throws OInvalidIndexEngineIdException {
     for (OTransactionIndexChangesPerKey.OTransactionIndexEntry op :
         index.interpretTxKeyChanges(changes)) {
-      switch (op.operation) {
+      switch (op.getOperation()) {
         case PUT:
-          index.doPut(this, changes.key, op.value.getIdentity());
+          index.doPut(this, changes.key, op.getValue().getIdentity());
           break;
         case REMOVE:
-          if (op.value != null) index.doRemove(this, changes.key, op.value.getIdentity());
+          if (op.getValue() != null) index.doRemove(this, changes.key, op.getValue().getIdentity());
           else index.doRemove(this, changes.key);
           break;
         case CLEAR:
@@ -6531,7 +6531,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           break;
         }
       }
-      if (!fullyLocked && !changes.nullKeyChanges.entries.isEmpty()) {
+      if (!fullyLocked && !changes.nullKeyChanges.isEmpty()) {
         index.acquireAtomicExclusiveLock(null);
       }
     }
