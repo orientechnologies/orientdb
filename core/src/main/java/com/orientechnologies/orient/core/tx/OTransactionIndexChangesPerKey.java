@@ -42,13 +42,13 @@ public class OTransactionIndexChangesPerKey {
   /* internal */ static final int SET_ADD_THRESHOLD = 8;
 
   public final Object key;
-  public final List<OTransactionIndexEntry> entries;
+  private final List<OTransactionIndexEntry> entries;
 
   public boolean clientTrackOnly;
 
-  public static class OTransactionIndexEntry {
-    public OPERATION operation;
-    public OIdentifiable value;
+  public class OTransactionIndexEntry {
+    private OPERATION operation;
+    private OIdentifiable value;
 
     public OTransactionIndexEntry(final OIdentifiable iValue, final OPERATION iOperation) {
       value = iValue;
@@ -74,6 +74,18 @@ public class OTransactionIndexChangesPerKey {
     public int hashCode() {
       return value == null ? 0 : value.hashCode();
     }
+
+    public OPERATION getOperation() {
+      return operation;
+    }
+
+    public OIdentifiable getValue() {
+      return value;
+    }
+
+    public void setValue(OIdentifiable newValue) {
+      this.value = newValue;
+    }
   }
 
   public OTransactionIndexChangesPerKey(final Object iKey) {
@@ -92,8 +104,9 @@ public class OTransactionIndexChangesPerKey {
           return;
         }
       }
-      entries.add(
-          new OTransactionIndexEntry(iValue != null ? iValue.getIdentity() : null, iOperation));
+      OTransactionIndexEntry item =
+          new OTransactionIndexEntry(iValue != null ? iValue.getIdentity() : null, iOperation);
+      entries.add(item);
     }
   }
 
@@ -441,5 +454,39 @@ public class OTransactionIndexChangesPerKey {
 
     /** Interpret changes like they was done for non-unique index. */
     NonUnique
+  }
+
+  public boolean isEmpty() {
+    return entries == null || entries.isEmpty();
+  }
+
+  public int size() {
+    return entries == null ? 0 : entries.size();
+  }
+
+  /** @return a copy of the entries of this object */
+  public List<OTransactionIndexEntry> getEntriesAsList() {
+    return Collections.unmodifiableList(new ArrayList<>(this.entries));
+  }
+
+  /**
+   * Only needed for old tests, will be removed soon. PLEASE DON'T USE IT
+   *
+   * @return the entries (not a copy, the exact list)
+   */
+  protected List<OTransactionIndexEntry> getEntriesInternal() {
+    return entries;
+  }
+
+  /**
+   * Only needed for old tests, will be removed soon. PLEASE DON'T USE IT
+   *
+   * @param iValue
+   * @param iOperation
+   * @return
+   */
+  protected OTransactionIndexEntry createEntryInternal(
+      final OIdentifiable iValue, final OPERATION iOperation) {
+    return new OTransactionIndexEntry(iValue, iOperation);
   }
 }

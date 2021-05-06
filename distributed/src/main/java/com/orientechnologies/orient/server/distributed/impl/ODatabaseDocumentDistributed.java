@@ -487,7 +487,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
             change.getValue().changesPerKey.values()) {
           keys.add(name + "#" + changesPerKey.key);
         }
-        if (!change.getValue().nullKeyChanges.entries.isEmpty()) {
+        if (!change.getValue().nullKeyChanges.isEmpty()) {
           keys.add(name + "#null");
         }
       }
@@ -807,19 +807,20 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       if (OClass.INDEX_TYPE.UNIQUE.name().equals(index.getType())
           || OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name().equals(index.getType())) {
         OTransactionIndexChangesPerKey nullKeyChanges = change.getValue().nullKeyChanges;
-        if (!nullKeyChanges.entries.isEmpty()) {
+        if (!nullKeyChanges.isEmpty()) {
           OIdentifiable old;
           try (Stream<ORID> stream = index.getInternal().getRids(null)) {
             old = stream.findFirst().orElse(null);
           }
-          Object newValue = nullKeyChanges.entries.get(nullKeyChanges.entries.size() - 1).value;
+          Object newValue =
+              nullKeyChanges.getEntriesAsList().get(nullKeyChanges.size() - 1).getValue();
           if (old != null && !old.equals(newValue)) {
             boolean oldValueRemoved = false;
             for (OTransactionIndexChangesPerKey.OTransactionIndexEntry entry :
-                nullKeyChanges.entries) {
-              if (entry.value != null
-                  && entry.value.equals(old)
-                  && entry.operation == OTransactionIndexChanges.OPERATION.REMOVE) {
+                nullKeyChanges.getEntriesAsList()) {
+              if (entry.getValue() != null
+                  && entry.getValue().equals(old)
+                  && entry.getOperation() == OTransactionIndexChanges.OPERATION.REMOVE) {
                 oldValueRemoved = true;
                 break;
               }
@@ -842,15 +843,16 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           try (Stream<ORID> rids = index.getInternal().getRids(changesPerKey.key)) {
             old = rids.findFirst().orElse(null);
           }
-          if (!changesPerKey.entries.isEmpty()) {
-            Object newValue = changesPerKey.entries.get(changesPerKey.entries.size() - 1).value;
+          if (!changesPerKey.isEmpty()) {
+            Object newValue =
+                changesPerKey.getEntriesAsList().get(changesPerKey.size() - 1).getValue();
             if (old != null && !old.equals(newValue)) {
               boolean oldValueRemoved = false;
               for (OTransactionIndexChangesPerKey.OTransactionIndexEntry entry :
-                  changesPerKey.entries) {
-                if (entry.value != null
-                    && entry.value.equals(old)
-                    && entry.operation == OTransactionIndexChanges.OPERATION.REMOVE) {
+                  changesPerKey.getEntriesAsList()) {
+                if (entry.getValue() != null
+                    && entry.getValue().equals(old)
+                    && entry.getOperation() == OTransactionIndexChanges.OPERATION.REMOVE) {
                   oldValueRemoved = true;
                   break;
                 }

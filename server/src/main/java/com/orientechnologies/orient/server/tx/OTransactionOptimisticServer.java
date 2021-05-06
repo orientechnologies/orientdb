@@ -204,11 +204,10 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
           }
           OTransactionIndexChangesPerKey singleChange = new OTransactionIndexChangesPerKey(key);
           for (OTransactionIndexChangesPerKey.OTransactionIndexEntry entry :
-              keyChange.getValue().entries) {
-            OIdentifiable rec = entry.value;
+              keyChange.getValue().getEntriesAsList()) {
+            OIdentifiable rec = entry.getValue();
             if (rec != null && !rec.getIdentity().isPersistent()) rec = rec.getRecord();
-            singleChange.entries.add(
-                new OTransactionIndexChangesPerKey.OTransactionIndexEntry(rec, entry.operation));
+            singleChange.add(rec, entry.getOperation());
           }
           changesPerKey.put(key, singleChange);
         }
@@ -217,11 +216,10 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
         if (change.getKeyChanges().nullKeyChanges != null) {
           OTransactionIndexChangesPerKey singleChange = new OTransactionIndexChangesPerKey(null);
           for (OTransactionIndexChangesPerKey.OTransactionIndexEntry entry :
-              change.getKeyChanges().nullKeyChanges.entries) {
-            OIdentifiable rec = entry.value;
+              change.getKeyChanges().nullKeyChanges.getEntriesAsList()) {
+            OIdentifiable rec = entry.getValue();
             if (rec != null && !rec.getIdentity().isPersistent()) rec = rec.getRecord();
-            singleChange.entries.add(
-                new OTransactionIndexChangesPerKey.OTransactionIndexEntry(rec, entry.operation));
+            singleChange.add(rec, entry.getOperation());
           }
           change.getKeyChanges().nullKeyChanges = singleChange;
         }
