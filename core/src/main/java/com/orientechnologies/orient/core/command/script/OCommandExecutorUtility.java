@@ -21,7 +21,6 @@ package com.orientechnologies.orient.core.command.script;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
