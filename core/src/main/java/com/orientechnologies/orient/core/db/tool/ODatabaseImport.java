@@ -1859,6 +1859,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         }
       }
       clusterToClusterMapping.put(clusterIdFromJson, createdClusterId);
+
       listener.onMessage("OK, assigned id=" + createdClusterId + ", was " + clusterIdFromJson);
 
       total++;
@@ -1919,202 +1920,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
       database.getStorage().setIndexMgrRecordId(indexDocument.getIdentity().toString());
     }
-    return total;
-  }
-
-  private void recreateManualIndex(boolean recreateManualIndex) {
-    if (recreateManualIndex) {
-      database.addCluster(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME);
-      database.getMetadata().getIndexManagerInternal().create();
-
-      listener.onMessage("\nManual index cluster was recreated.");
-    }
-  }
-
-  private long importRecords(final JsonParser parser) throws Exception {
-    long total = 0;
-
-    final OSchema schema = database.getMetadata().getSchema();
-    if (schema.getClass(EXPORT_IMPORT_CLASS_NAME) != null) {
-      schema.dropClass(EXPORT_IMPORT_CLASS_NAME);
-    }
-
-    final OClass cls = schema.createClass(EXPORT_IMPORT_CLASS_NAME);
-    cls.createProperty("key", OType.STRING);
-    cls.createProperty("value", OType.STRING);
-    cls.createIndex(EXPORT_IMPORT_INDEX_NAME, OClass.INDEX_TYPE.DICTIONARY, "key");
-
-    long totalRecords = 0;
-    listener.onMessage("\n\nImporting records...");
-
-    // the only security records are left at this moment so we need to overwrite them
-    // and then remove left overs
-    final HashSet<ORID> recordsBeforeImport = new HashSet<>();
-
-    for (final String clusterName : database.getClusterNames()) {
-      final Iterator<ORecord> recordIterator = database.browseCluster(clusterName);
-      while (recordIterator.hasNext()) {
-        recordsBeforeImport.add(recordIterator.next().getIdentity());
-      }
-    }
-
-    ORID rid;
-    ORID lastRid = new ORecordId();
-    final long begin = System.nanoTime();
-    long lastLapRecords = 0;
-    long last = begin;
-    Set<String> involvedClusters = new HashSet<>();
-
-    final JsonToken jsonToken = parser.currentToken();
-
-    while (!JsonToken.END_ARRAY.equals(jsonToken)) {
-      rid = importRecord(parser, recordsBeforeImport);
-
-      total++;
-      if (rid != null) {
-        ++lastLapRecords;
-        ++totalRecords;
-
-        if (rid.getClusterId() != lastRid.getClusterId() || involvedClusters.isEmpty())
-          involvedClusters.add(database.getClusterNameById(rid.getClusterId()));
-        lastRid = rid;
-      }
-
-      final long now = System.currentTimeMillis();
-      if (now - last > IMPORT_RECORD_DUMP_LAP_EVERY_MS) {
-        final List<String> sortedClusters = new ArrayList<>(involvedClusters);
-        Collections.sort(sortedClusters);
-
-        listener.onMessage(
-            String.format(
-                "\n- Imported %,d records into clusters: %s. "
-                    + "Total JSON records imported so for %,d .Total records imported so far: %,d (%,.2f/sec)",
-                lastLapRecords,
-                total,
-                sortedClusters.size(),
-                totalRecords,
-                (float) lastLapRecords * 1000 / (float) IMPORT_RECORD_DUMP_LAP_EVERY_MS));
-
-        // RESET LAP COUNTERS
-        last = now;
-        lastLapRecords = 0;
-        involvedClusters.clear();
-      }
-      record = null;
-    }
-
-    if (!merge) {
-      // remove all records which were absent in new database but
-      // exist in old database
-      for (final ORID leftOverRid : recordsBeforeImport) {
-        database.delete(leftOverRid);
-      }
-    }
-    database.getMetadata().reload();
-
-    final Set<ORID> brokenRids = new HashSet<>();
-    processBrokenRids(brokenRids);
-    listener.onMessage(
-        String.format(
-            "\n\nDone. Imported %,d records in %,.2f secs\n",
-            totalRecords, ((float) (System.nanoTime() - begin)) / 1000000));
-    // jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
-    return total;
-  }
-
-  @Deprecated
-  private long importRecords() throws Exception {
-    long total = 0;
-
-    final OSchema schema = database.getMetadata().getSchema();
-    if (schema.getClass(EXPORT_IMPORT_CLASS_NAME) != null) {
-      schema.dropClass(EXPORT_IMPORT_CLASS_NAME);
-    }
-
-    final OClass cls = schema.createClass(EXPORT_IMPORT_CLASS_NAME);
-    cls.createProperty("key", OType.STRING);
-    cls.createProperty("value", OType.STRING);
-    cls.createIndex(EXPORT_IMPORT_INDEX_NAME, OClass.INDEX_TYPE.DICTIONARY, "key");
-
-    jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
-
-    long totalRecords = 0;
-
-    listener.onMessage("\n\nImporting records...");
-
-    // the only security records are left at this moment so we need to overwrite them
-    // and then remove left overs
-    final HashSet<ORID> recordsBeforeImport = new HashSet<>();
-
-    for (final String clusterName : database.getClusterNames()) {
-      final Iterator<ORecord> recordIterator = database.browseCluster(clusterName);
-      while (recordIterator.hasNext()) {
-        recordsBeforeImport.add(recordIterator.next().getIdentity());
-      }
-    }
-
-    ORID rid;
-    ORID lastRid = new ORecordId();
-    final long begin = System.currentTimeMillis();
-    long lastLapRecords = 0;
-    long last = begin;
-    Set<String> involvedClusters = new HashSet<>();
-
-    while (jsonReader.lastChar() != ']') {
-      rid = importRecord(recordsBeforeImport);
-
-      total++;
-      if (rid != null) {
-        ++lastLapRecords;
-        ++totalRecords;
-
-        if (rid.getClusterId() != lastRid.getClusterId() || involvedClusters.isEmpty())
-          involvedClusters.add(database.getClusterNameById(rid.getClusterId()));
-        lastRid = rid;
-      }
-
-      final long now = System.currentTimeMillis();
-      if (now - last > IMPORT_RECORD_DUMP_LAP_EVERY_MS) {
-        final List<String> sortedClusters = new ArrayList<>(involvedClusters);
-        Collections.sort(sortedClusters);
-
-        listener.onMessage(
-            String.format(
-                "\n- Imported %,d records into clusters: %s. "
-                    + "Total JSON records imported so for %,d .Total records imported so far: %,d (%,.2f/sec)",
-                lastLapRecords,
-                total,
-                sortedClusters.size(),
-                totalRecords,
-                (float) lastLapRecords * 1000 / (float) IMPORT_RECORD_DUMP_LAP_EVERY_MS));
-
-        // RESET LAP COUNTERS
-        last = now;
-        lastLapRecords = 0;
-        involvedClusters.clear();
-      }
-      record = null;
-    }
-
-    if (!merge) {
-      // remove all records which were absent in new database but
-      // exist in old database
-      for (final ORID leftOverRid : recordsBeforeImport) {
-        database.delete(leftOverRid);
-      }
-    }
-    database.getMetadata().reload();
-
-    final Set<ORID> brokenRids = new HashSet<>();
-    processBrokenRids(brokenRids);
-
-    listener.onMessage(
-        String.format(
-            "\n\nDone. Imported %,d records in %,.2f secs\n",
-            totalRecords, ((float) (System.currentTimeMillis() - begin)) / 1000));
-
-    jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
-
     return total;
   }
 
@@ -2346,21 +2151,19 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   // TODO: WIP
   @Deprecated
   private ORID importRecord(final HashSet<ORID> recordsBeforeImport) throws Exception {
-    final OPair<String, Map<String, ORidSet>> recordParse =
+    OPair<String, Map<String, ORidSet>> recordParse =
         jsonReader.readRecordString(this.maxRidbagStringSizeBeforeLazyImport);
-    // InputStream value =
-    //     new ByteArrayInputStream(recordParse.getKey().trim().getBytes())
     String value = recordParse.getKey().trim();
-    // TODO:
+
     if (value.isEmpty()) {
       return null;
     }
 
-    // TODO:
     // JUMP EMPTY RECORDS
     while (!value.isEmpty() && value.charAt(0) != '{') {
       value = value.substring(1);
     }
+
     record = null;
 
     // big ridbags (ie. supernodes) sometimes send the system OOM, so they have to be discarded at
@@ -2370,10 +2173,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     Set<Integer> skippedPartsIndexes = new HashSet<>();
 
     try {
+
       try {
-        // TODO:
         record =
-            // ORecordSerializerJSON.INSTANCE.fromStream(
             ORecordSerializerJSON.INSTANCE.fromString(
                 value,
                 record,
@@ -2385,25 +2187,18 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       } catch (OSerializationException e) {
         if (e.getCause() instanceof OSchemaException) {
           // EXTRACT CLASS NAME If ANY
-          // TODO:
-          final int pos = recordParse.getKey().trim().indexOf("\"@class\":\"");
+          final int pos = value.indexOf("\"@class\":\"");
           if (pos > -1) {
-            final int end =
-                recordParse.getKey().trim().indexOf("\"", pos + "\"@class\":\"".length() + 1);
-            final String value1 =
-                recordParse.getKey().trim().substring(0, pos + "\"@class\":\"".length());
-            final String clsName =
-                recordParse.getKey().trim().substring(pos + "\"@class\":\"".length(), end);
-            final String value2 = recordParse.getKey().trim().substring(end);
+            final int end = value.indexOf("\"", pos + "\"@class\":\"".length() + 1);
+            final String value1 = value.substring(0, pos + "\"@class\":\"".length());
+            final String clsName = value.substring(pos + "\"@class\":\"".length(), end);
+            final String value2 = value.substring(end);
 
             final String newClassName = convertedClassNames.get(clsName);
 
-            // TODO:
-            // value = new ByteArrayInputStream((value1 + newClassName + value2).getBytes());
-            value = (value1 + newClassName + value2);
+            value = value1 + newClassName + value2;
             // OVERWRITE CLASS NAME WITH NEW NAME
             record =
-                // ORecordSerializerJSON.INSTANCE.fromStream(
                 ORecordSerializerJSON.INSTANCE.fromString(
                     value,
                     record,
@@ -2542,7 +2337,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       // import skipped records (too big to be imported before)
       if (skippedPartsIndexes.size() > 0) {
         for (Integer skippedPartsIndex : skippedPartsIndexes) {
-          importSkippedRidbag(record, recordParse.getKey().trim(), skippedPartsIndex);
+          importSkippedRidbag(record, value, skippedPartsIndex);
         }
       }
 
@@ -2577,6 +2372,205 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       }
     }
     return record.getIdentity();
+  }
+
+
+  private void recreateManualIndex(boolean recreateManualIndex) {
+    if (recreateManualIndex) {
+      database.addCluster(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME);
+      database.getMetadata().getIndexManagerInternal().create();
+
+      listener.onMessage("\nManual index cluster was recreated.");
+    }
+  }
+
+  private long importRecords(final JsonParser parser) throws Exception {
+    long total = 0;
+
+    final OSchema schema = database.getMetadata().getSchema();
+    if (schema.getClass(EXPORT_IMPORT_CLASS_NAME) != null) {
+      schema.dropClass(EXPORT_IMPORT_CLASS_NAME);
+    }
+
+    final OClass cls = schema.createClass(EXPORT_IMPORT_CLASS_NAME);
+    cls.createProperty("key", OType.STRING);
+    cls.createProperty("value", OType.STRING);
+    cls.createIndex(EXPORT_IMPORT_INDEX_NAME, OClass.INDEX_TYPE.DICTIONARY, "key");
+
+    long totalRecords = 0;
+    listener.onMessage("\n\nImporting records...");
+
+    // the only security records are left at this moment so we need to overwrite them
+    // and then remove left overs
+    final HashSet<ORID> recordsBeforeImport = new HashSet<>();
+
+    for (final String clusterName : database.getClusterNames()) {
+      final Iterator<ORecord> recordIterator = database.browseCluster(clusterName);
+      while (recordIterator.hasNext()) {
+        recordsBeforeImport.add(recordIterator.next().getIdentity());
+      }
+    }
+
+    ORID rid;
+    ORID lastRid = new ORecordId();
+    final long begin = System.nanoTime();
+    long lastLapRecords = 0;
+    long last = begin;
+    Set<String> involvedClusters = new HashSet<>();
+
+    final JsonToken jsonToken = parser.currentToken();
+
+    while (!JsonToken.END_ARRAY.equals(jsonToken)) {
+      rid = importRecord(parser, recordsBeforeImport);
+
+      total++;
+      if (rid != null) {
+        ++lastLapRecords;
+        ++totalRecords;
+
+        if (rid.getClusterId() != lastRid.getClusterId() || involvedClusters.isEmpty())
+          involvedClusters.add(database.getClusterNameById(rid.getClusterId()));
+        lastRid = rid;
+      }
+
+      final long now = System.currentTimeMillis();
+      if (now - last > IMPORT_RECORD_DUMP_LAP_EVERY_MS) {
+        final List<String> sortedClusters = new ArrayList<>(involvedClusters);
+        Collections.sort(sortedClusters);
+
+        listener.onMessage(
+            String.format(
+                "\n- Imported %,d records into clusters: %s. "
+                    + "Total JSON records imported so for %,d .Total records imported so far: %,d (%,.2f/sec)",
+                lastLapRecords,
+                total,
+                sortedClusters.size(),
+                totalRecords,
+                (float) lastLapRecords * 1000 / (float) IMPORT_RECORD_DUMP_LAP_EVERY_MS));
+
+        // RESET LAP COUNTERS
+        last = now;
+        lastLapRecords = 0;
+        involvedClusters.clear();
+      }
+      record = null;
+    }
+
+    if (!merge) {
+      // remove all records which were absent in new database but
+      // exist in old database
+      for (final ORID leftOverRid : recordsBeforeImport) {
+        database.delete(leftOverRid);
+      }
+    }
+    database.getMetadata().reload();
+
+    final Set<ORID> brokenRids = new HashSet<>();
+    processBrokenRids(brokenRids);
+    listener.onMessage(
+        String.format(
+            "\n\nDone. Imported %,d records in %,.2f secs\n",
+            totalRecords, ((float) (System.nanoTime() - begin)) / 1000000));
+    // jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
+    return total;
+  }
+
+  @Deprecated
+  private long importRecords() throws Exception {
+    long total = 0;
+
+    final OSchema schema = database.getMetadata().getSchema();
+    if (schema.getClass(EXPORT_IMPORT_CLASS_NAME) != null) {
+      schema.dropClass(EXPORT_IMPORT_CLASS_NAME);
+    }
+
+    final OClass cls = schema.createClass(EXPORT_IMPORT_CLASS_NAME);
+    cls.createProperty("key", OType.STRING);
+    cls.createProperty("value", OType.STRING);
+    cls.createIndex(EXPORT_IMPORT_INDEX_NAME, OClass.INDEX_TYPE.DICTIONARY, "key");
+
+    jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
+
+    long totalRecords = 0;
+
+    listener.onMessage("\n\nImporting records...");
+
+    // the only security records are left at this moment so we need to overwrite them
+    // and then remove left overs
+    final HashSet<ORID> recordsBeforeImport = new HashSet<>();
+
+    for (final String clusterName : database.getClusterNames()) {
+      final Iterator<ORecord> recordIterator = database.browseCluster(clusterName);
+      while (recordIterator.hasNext()) {
+        recordsBeforeImport.add(recordIterator.next().getIdentity());
+      }
+    }
+
+    ORID rid;
+    ORID lastRid = new ORecordId();
+    final long begin = System.currentTimeMillis();
+    long lastLapRecords = 0;
+    long last = begin;
+    Set<String> involvedClusters = new HashSet<>();
+
+    while (jsonReader.lastChar() != ']') {
+      rid = importRecord(recordsBeforeImport);
+
+      total++;
+      if (rid != null) {
+        ++lastLapRecords;
+        ++totalRecords;
+
+        if (rid.getClusterId() != lastRid.getClusterId() || involvedClusters.isEmpty())
+          involvedClusters.add(database.getClusterNameById(rid.getClusterId()));
+        lastRid = rid;
+      }
+
+      final long now = System.currentTimeMillis();
+      if (now - last > IMPORT_RECORD_DUMP_LAP_EVERY_MS) {
+        final List<String> sortedClusters = new ArrayList<>(involvedClusters);
+        Collections.sort(sortedClusters);
+
+        listener.onMessage(
+            String.format(
+                "\n- Imported %,d records into clusters: %s. "
+                    + "Total JSON records imported so for %,d .Total records imported so far: %,d (%,.2f/sec)",
+                lastLapRecords,
+                total,
+                sortedClusters.size(),
+                totalRecords,
+                (float) lastLapRecords * 1000 / (float) IMPORT_RECORD_DUMP_LAP_EVERY_MS));
+
+        // RESET LAP COUNTERS
+        last = now;
+        lastLapRecords = 0;
+        involvedClusters.clear();
+      }
+
+      record = null;
+    }
+
+    if (!merge) {
+      // remove all records which were absent in new database but
+      // exist in old database
+      for (final ORID leftOverRid : recordsBeforeImport) {
+        database.delete(leftOverRid);
+      }
+    }
+
+    database.getMetadata().reload();
+
+    final Set<ORID> brokenRids = new HashSet<>();
+    processBrokenRids(brokenRids);
+
+    listener.onMessage(
+        String.format(
+            "\n\nDone. Imported %,d records in %,.2f secs\n",
+            totalRecords, ((float) (System.currentTimeMillis() - begin)) / 1000));
+
+    jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
+
+    return total;
   }
 
   @Deprecated
