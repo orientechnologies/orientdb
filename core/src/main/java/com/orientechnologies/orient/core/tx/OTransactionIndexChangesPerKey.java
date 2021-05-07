@@ -98,25 +98,24 @@ public class OTransactionIndexChangesPerKey {
 
   public void add(OIdentifiable iValue, final OPERATION iOperation) {
     synchronized (this) {
+      ORID valueIdentity = iValue == null ? null : iValue.getIdentity();
       Iterator<OTransactionIndexEntry> iter = entries.iterator();
-      Integer count = ridToNEntries.get(iValue == null ? null : iValue.getIdentity());
+      Integer count = ridToNEntries.get(valueIdentity);
       if (count != null && count > 0) {
         while (iter.hasNext()) {
           OTransactionIndexEntry entry = iter.next();
           if (((entry.value == iValue) || (entry.value != null && entry.value.equals(iValue)))
               && !entry.operation.equals(iOperation)) {
             iter.remove();
-            ridToNEntries.put(iValue == null ? null : iValue.getIdentity(), count - 1);
+            ridToNEntries.put(valueIdentity, count - 1);
             return;
           }
         }
       }
-      OTransactionIndexEntry item =
-          new OTransactionIndexEntry(iValue != null ? iValue.getIdentity() : null, iOperation);
+      OTransactionIndexEntry item = new OTransactionIndexEntry(valueIdentity, iOperation);
 
       entries.add(item);
-      ridToNEntries.put(
-          iValue == null ? null : iValue.getIdentity(), count == null ? 1 : count + 1);
+      ridToNEntries.put(valueIdentity, count == null ? 1 : count + 1);
     }
   }
 
