@@ -2572,8 +2572,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     return total;
   }
 
-  @Deprecated
-  /*private ORID importRecord(final HashSet<ORID> recordsBeforeImport) throws Exception {
+  /*@Deprecated
+  private ORID importRecord(final HashSet<ORID> recordsBeforeImport) throws Exception {
     final OPair<String, Map<String, ORidSet>> recordParse =
         jsonReader.readRecordString(this.maxRidbagStringSizeBeforeLazyImport);
     String value = recordParse.getKey().trim();
