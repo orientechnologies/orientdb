@@ -2374,7 +2374,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     return record.getIdentity();
   }
 
-
   private void recreateManualIndex(boolean recreateManualIndex) {
     if (recreateManualIndex) {
       database.addCluster(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME);
