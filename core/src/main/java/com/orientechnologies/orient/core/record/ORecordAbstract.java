@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.record;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -33,6 +34,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.cluster.OOfflineClusterException;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -43,10 +45,13 @@ import java.util.WeakHashMap;
 
 @SuppressWarnings({"unchecked", "serial"})
 public abstract class ORecordAbstract implements ORecord {
-  public static final String DEFAULT_FORMAT =
-      "rid,version,class,type,attribSameRow,keepTypes,alwaysFetchEmbedded,earlyTypes,fetchPlan:*:0";
+  // public static final String DEFAULT_FORMAT =
+  //
+  // "rid,version,class,type,attribSameRow,keepTypes,alwaysFetchEmbedded,earlyTypes,fetchPlan:*:0";
   public static final String OLD_FORMAT_WITH_LATE_TYPES =
       "rid,version,class,type,attribSameRow,keepTypes,alwaysFetchEmbedded,fetchPlan:*:0";
+  // TODO: take new format
+  public static final String DEFAULT_FORMAT = OLD_FORMAT_WITH_LATE_TYPES;
   protected ORecordId recordId;
   protected int recordVersion = 0;
 
@@ -165,17 +170,18 @@ public abstract class ORecordAbstract implements ORecord {
     return (RET) ORecordSerializerJSON.INSTANCE.fromString(iSource, this, null, needReload);
   }
 
-  /*public <RET extends ORecord> RET fromJSON(final InputStream iContentResult) throws IOException {
+  public <RET extends ORecord> RET fromJSON(final InputStream iContentResult) throws IOException {
     final ByteArrayOutputStream out = new ByteArrayOutputStream();
     OIOUtils.copyStream(iContentResult, out, -1);
     ORecordSerializerJSON.INSTANCE.fromString(out.toString(), this, null);
     return (RET) this;
-  }*/
+  }
 
-  public <RET extends ORecord> RET fromJSON(final InputStream contentStream) throws IOException {
+  // TODO: replace above by this
+  /*public <RET extends ORecord> RET fromJSON(final InputStream contentStream) throws IOException {
     ORecordSerializerJSON.INSTANCE.fromStream(contentStream, this, null);
     return (RET) this;
-  }
+  }*/
 
   public String toJSON() {
     return toJSON(DEFAULT_FORMAT);
