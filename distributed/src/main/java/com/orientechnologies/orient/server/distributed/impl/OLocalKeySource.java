@@ -36,7 +36,7 @@ public final class OLocalKeySource implements OLockKeySource {
                 for (Object keyWithChange : changes.changesPerKey.keySet()) {
                   uniqueIndexKeys.add(new OTransactionUniqueKey(index, keyWithChange, 0));
                 }
-                if (!changes.nullKeyChanges.entries.isEmpty()) {
+                if (!changes.nullKeyChanges.isEmpty()) {
                   uniqueIndexKeys.add(new OTransactionUniqueKey(index, null, 0));
                 }
               }

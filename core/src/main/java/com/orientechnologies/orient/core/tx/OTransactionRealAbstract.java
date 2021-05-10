@@ -426,22 +426,22 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract
     final List<ODocument> operations = new ArrayList<ODocument>();
 
     // SERIALIZE VALUES
-    if (entry.entries != null && !entry.entries.isEmpty()) {
-      for (OTransactionIndexEntry e : entry.entries) {
+    if (!entry.isEmpty()) {
+      for (OTransactionIndexEntry e : entry.getEntriesAsList()) {
 
         final ODocument changeDoc = new ODocument().setAllowChainedAccess(false);
         ODocumentInternal.addOwner((ODocument) changeDoc, indexDoc);
 
         // SERIALIZE OPERATION
-        changeDoc.field("o", e.operation.ordinal());
+        changeDoc.field("o", e.getOperation().ordinal());
 
-        if (e.value instanceof ORecord && e.value.getIdentity().isNew()) {
-          final ORecord saved = getRecord(e.value.getIdentity());
-          if (saved != null) e.value = saved;
-          else ((ORecord) e.value).save();
+        if (e.getValue() instanceof ORecord && e.getValue().getIdentity().isNew()) {
+          final ORecord saved = getRecord(e.getValue().getIdentity());
+          if (saved != null) e.setValue(saved);
+          else ((ORecord) e.getValue()).save();
         }
 
-        changeDoc.field("v", e.value != null ? e.value.getIdentity() : null);
+        changeDoc.field("v", e.getValue() != null ? e.getValue().getIdentity() : null);
 
         operations.add(changeDoc);
       }
@@ -458,8 +458,8 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract
       ORID oldRid, ORID newRid, OTransactionIndexChangesPerKey changesPerKey) {
     if (changesPerKey == null) return;
 
-    for (final OTransactionIndexEntry indexEntry : changesPerKey.entries)
-      if (indexEntry.value.getIdentity().equals(oldRid)) indexEntry.value = newRid;
+    for (final OTransactionIndexEntry indexEntry : changesPerKey.getEntriesAsList())
+      if (indexEntry.getValue().getIdentity().equals(oldRid)) indexEntry.setValue(newRid);
   }
 
   @Override

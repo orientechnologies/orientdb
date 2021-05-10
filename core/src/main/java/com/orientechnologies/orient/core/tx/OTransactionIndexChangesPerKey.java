@@ -23,14 +23,7 @@ import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Deque;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Collects the changes to an index for a certain key
@@ -42,13 +35,14 @@ public class OTransactionIndexChangesPerKey {
   /* internal */ static final int SET_ADD_THRESHOLD = 8;
 
   public final Object key;
-  public final List<OTransactionIndexEntry> entries;
+  private final Map<ORID, Integer> ridToNEntries;
+  private final List<OTransactionIndexEntry> entries;
 
   public boolean clientTrackOnly;
 
-  public static class OTransactionIndexEntry {
-    public OPERATION operation;
-    public OIdentifiable value;
+  public class OTransactionIndexEntry {
+    private OPERATION operation;
+    private OIdentifiable value;
 
     public OTransactionIndexEntry(final OIdentifiable iValue, final OPERATION iOperation) {
       value = iValue;
@@ -74,26 +68,54 @@ public class OTransactionIndexChangesPerKey {
     public int hashCode() {
       return value == null ? 0 : value.hashCode();
     }
+
+    public OPERATION getOperation() {
+      return operation;
+    }
+
+    public OIdentifiable getValue() {
+      return value;
+    }
+
+    public void setValue(OIdentifiable newValue) {
+      ORID oldValueId = value == null ? null : value.getIdentity();
+      Integer oldCount = ridToNEntries.get(oldValueId);
+      ridToNEntries.put(oldValueId, oldCount == null || oldCount < 1 ? 0 : oldCount - 1);
+
+      ORID newValueId = newValue == null ? null : newValue.getIdentity();
+      Integer newCount = ridToNEntries.get(newValueId);
+      ridToNEntries.put(newValueId, newCount == null ? 1 : newCount + 1);
+
+      this.value = newValue;
+    }
   }
 
   public OTransactionIndexChangesPerKey(final Object iKey) {
     this.key = iKey;
     entries = new ArrayList<OTransactionIndexEntry>();
+    ridToNEntries = new HashMap<>();
   }
 
   public void add(OIdentifiable iValue, final OPERATION iOperation) {
     synchronized (this) {
+      ORID valueIdentity = iValue == null ? null : iValue.getIdentity();
       Iterator<OTransactionIndexEntry> iter = entries.iterator();
-      while (iter.hasNext()) {
-        OTransactionIndexEntry entry = iter.next();
-        if (((entry.value == iValue) || (entry.value != null && entry.value.equals(iValue)))
-            && !entry.operation.equals(iOperation)) {
-          iter.remove();
-          return;
+      Integer count = ridToNEntries.get(valueIdentity);
+      if (count != null && count > 0) {
+        while (iter.hasNext()) {
+          OTransactionIndexEntry entry = iter.next();
+          if (((entry.value == iValue) || (entry.value != null && entry.value.equals(iValue)))
+              && !entry.operation.equals(iOperation)) {
+            iter.remove();
+            ridToNEntries.put(valueIdentity, count - 1);
+            return;
+          }
         }
       }
-      entries.add(
-          new OTransactionIndexEntry(iValue != null ? iValue.getIdentity() : null, iOperation));
+      OTransactionIndexEntry item = new OTransactionIndexEntry(valueIdentity, iOperation);
+
+      entries.add(item);
+      ridToNEntries.put(valueIdentity, count == null ? 1 : count + 1);
     }
   }
 
@@ -120,7 +142,8 @@ public class OTransactionIndexChangesPerKey {
 
   public void clear() {
     synchronized (this) {
-      entries.clear();
+      this.entries.clear();
+      this.ridToNEntries.clear();
     }
   }
 
@@ -441,5 +464,39 @@ public class OTransactionIndexChangesPerKey {
 
     /** Interpret changes like they was done for non-unique index. */
     NonUnique
+  }
+
+  public boolean isEmpty() {
+    return entries == null || entries.isEmpty();
+  }
+
+  public int size() {
+    return entries == null ? 0 : entries.size();
+  }
+
+  /** @return a copy of the entries of this object */
+  public List<OTransactionIndexEntry> getEntriesAsList() {
+    return Collections.unmodifiableList(new ArrayList<>(this.entries));
+  }
+
+  /**
+   * Only needed for old tests, will be removed soon. PLEASE DON'T USE IT
+   *
+   * @return the entries (not a copy, the exact list)
+   */
+  protected List<OTransactionIndexEntry> getEntriesInternal() {
+    return entries;
+  }
+
+  /**
+   * Only needed for old tests, will be removed soon. PLEASE DON'T USE IT
+   *
+   * @param iValue
+   * @param iOperation
+   * @return
+   */
+  protected OTransactionIndexEntry createEntryInternal(
+      final OIdentifiable iValue, final OPERATION iOperation) {
+    return new OTransactionIndexEntry(iValue, iOperation);
   }
 }

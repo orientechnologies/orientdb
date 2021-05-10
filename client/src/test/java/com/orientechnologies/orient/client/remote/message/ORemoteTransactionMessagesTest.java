@@ -74,11 +74,11 @@ public class ORemoteTransactionMessagesTest {
     assertEquals(val.changesPerKey.size(), 1);
     OTransactionIndexChangesPerKey entryChange = val.changesPerKey.firstEntry().getValue();
     assertEquals(entryChange.key, "key");
-    assertEquals(entryChange.entries.size(), 2);
-    assertEquals(entryChange.entries.get(0).value, new ORecordId(1, 2));
-    assertEquals(entryChange.entries.get(0).operation, OPERATION.PUT);
-    assertEquals(entryChange.entries.get(1).value, new ORecordId(2, 2));
-    assertEquals(entryChange.entries.get(1).operation, OPERATION.REMOVE);
+    assertEquals(entryChange.size(), 2);
+    assertEquals(entryChange.getEntriesAsList().get(0).getValue(), new ORecordId(1, 2));
+    assertEquals(entryChange.getEntriesAsList().get(0).getOperation(), OPERATION.PUT);
+    assertEquals(entryChange.getEntriesAsList().get(1).getValue(), new ORecordId(2, 2));
+    assertEquals(entryChange.getEntriesAsList().get(1).getOperation(), OPERATION.REMOVE);
   }
 
   @Test
@@ -113,11 +113,11 @@ public class ORemoteTransactionMessagesTest {
     assertEquals(val.changesPerKey.size(), 1);
     OTransactionIndexChangesPerKey entryChange = val.changesPerKey.firstEntry().getValue();
     assertEquals(entryChange.key, "key");
-    assertEquals(entryChange.entries.size(), 2);
-    assertEquals(entryChange.entries.get(0).value, new ORecordId(1, 2));
-    assertEquals(entryChange.entries.get(0).operation, OPERATION.PUT);
-    assertEquals(entryChange.entries.get(1).value, new ORecordId(2, 2));
-    assertEquals(entryChange.entries.get(1).operation, OPERATION.REMOVE);
+    assertEquals(entryChange.size(), 2);
+    assertEquals(entryChange.getEntriesAsList().get(0).getValue(), new ORecordId(1, 2));
+    assertEquals(entryChange.getEntriesAsList().get(0).getOperation(), OPERATION.PUT);
+    assertEquals(entryChange.getEntriesAsList().get(1).getValue(), new ORecordId(2, 2));
+    assertEquals(entryChange.getEntriesAsList().get(1).getOperation(), OPERATION.REMOVE);
   }
 
   @Test
@@ -237,11 +237,11 @@ public class ORemoteTransactionMessagesTest {
     assertEquals(val.changesPerKey.size(), 1);
     OTransactionIndexChangesPerKey entryChange = val.changesPerKey.firstEntry().getValue();
     assertEquals(entryChange.key, "key");
-    assertEquals(entryChange.entries.size(), 2);
-    assertEquals(entryChange.entries.get(0).value, new ORecordId(1, 2));
-    assertEquals(entryChange.entries.get(0).operation, OPERATION.PUT);
-    assertEquals(entryChange.entries.get(1).value, new ORecordId(2, 2));
-    assertEquals(entryChange.entries.get(1).operation, OPERATION.REMOVE);
+    assertEquals(entryChange.size(), 2);
+    assertEquals(entryChange.getEntriesAsList().get(0).getValue(), new ORecordId(1, 2));
+    assertEquals(entryChange.getEntriesAsList().get(0).getOperation(), OPERATION.PUT);
+    assertEquals(entryChange.getEntriesAsList().get(1).getValue(), new ORecordId(2, 2));
+    assertEquals(entryChange.getEntriesAsList().get(1).getOperation(), OPERATION.REMOVE);
   }
 
   @Test
@@ -289,11 +289,11 @@ public class ORemoteTransactionMessagesTest {
     assertEquals(val.changesPerKey.size(), 1);
     OTransactionIndexChangesPerKey entryChange = val.changesPerKey.firstEntry().getValue();
     assertEquals(entryChange.key, "key");
-    assertEquals(entryChange.entries.size(), 2);
-    assertEquals(entryChange.entries.get(0).value, new ORecordId(1, 2));
-    assertEquals(entryChange.entries.get(0).operation, OPERATION.PUT);
-    assertEquals(entryChange.entries.get(1).value, new ORecordId(2, 2));
-    assertEquals(entryChange.entries.get(1).operation, OPERATION.REMOVE);
+    assertEquals(entryChange.size(), 2);
+    assertEquals(entryChange.getEntriesAsList().get(0).getValue(), new ORecordId(1, 2));
+    assertEquals(entryChange.getEntriesAsList().get(0).getOperation(), OPERATION.PUT);
+    assertEquals(entryChange.getEntriesAsList().get(1).getValue(), new ORecordId(2, 2));
+    assertEquals(entryChange.getEntriesAsList().get(1).getOperation(), OPERATION.REMOVE);
   }
 
   @Test
@@ -329,10 +329,10 @@ public class ORemoteTransactionMessagesTest {
     assertEquals(val.changesPerKey.size(), 1);
     OTransactionIndexChangesPerKey entryChange = val.changesPerKey.firstEntry().getValue();
     assertEquals(entryChange.key, "key");
-    assertEquals(entryChange.entries.size(), 2);
-    assertEquals(entryChange.entries.get(0).value, new ORecordId(1, 2));
-    assertEquals(entryChange.entries.get(0).operation, OPERATION.PUT);
-    assertEquals(entryChange.entries.get(1).value, new ORecordId(2, 2));
-    assertEquals(entryChange.entries.get(1).operation, OPERATION.REMOVE);
+    assertEquals(entryChange.size(), 2);
+    assertEquals(entryChange.getEntriesAsList().get(0).getValue(), new ORecordId(1, 2));
+    assertEquals(entryChange.getEntriesAsList().get(0).getOperation(), OPERATION.PUT);
+    assertEquals(entryChange.getEntriesAsList().get(1).getValue(), new ORecordId(2, 2));
+    assertEquals(entryChange.getEntriesAsList().get(1).getOperation(), OPERATION.REMOVE);
   }
 }

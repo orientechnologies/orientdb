@@ -313,11 +313,11 @@ public class OMessageHelper {
       network.writeInt(size);
       if (indexChange.getKeyChanges().nullKeyChanges != null) {
         network.writeByte((byte) -1);
-        network.writeInt(indexChange.getKeyChanges().nullKeyChanges.entries.size());
+        network.writeInt(indexChange.getKeyChanges().nullKeyChanges.size());
         for (OTransactionIndexChangesPerKey.OTransactionIndexEntry perKeyChange :
-            indexChange.getKeyChanges().nullKeyChanges.entries) {
-          network.writeInt(perKeyChange.operation.ordinal());
-          network.writeRID(perKeyChange.value.getIdentity());
+            indexChange.getKeyChanges().nullKeyChanges.getEntriesAsList()) {
+          network.writeInt(perKeyChange.getOperation().ordinal());
+          network.writeRID(perKeyChange.getValue().getIdentity());
         }
       }
       for (OTransactionIndexChangesPerKey change :
@@ -326,15 +326,16 @@ public class OMessageHelper {
         byte[] value = serializer.serializeValue(change.key, type);
         network.writeByte((byte) type.getId());
         network.writeBytes(value);
-        network.writeInt(change.entries.size());
-        for (OTransactionIndexChangesPerKey.OTransactionIndexEntry perKeyChange : change.entries) {
-          OTransactionIndexChanges.OPERATION op = perKeyChange.operation;
-          if (op == OTransactionIndexChanges.OPERATION.REMOVE && perKeyChange.value == null)
+        network.writeInt(change.size());
+        for (OTransactionIndexChangesPerKey.OTransactionIndexEntry perKeyChange :
+            change.getEntriesAsList()) {
+          OTransactionIndexChanges.OPERATION op = perKeyChange.getOperation();
+          if (op == OTransactionIndexChanges.OPERATION.REMOVE && perKeyChange.getValue() == null)
             op = OTransactionIndexChanges.OPERATION.CLEAR;
 
           network.writeInt(op.ordinal());
           if (op != OTransactionIndexChanges.OPERATION.CLEAR)
-            network.writeRID(perKeyChange.value.getIdentity());
+            network.writeRID(perKeyChange.getValue().getIdentity());
         }
       }
     }
