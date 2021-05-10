@@ -56,11 +56,11 @@ public class IndexChangesInterpretationTest {
     // 1st column is changes sequence, 2nd is expected sequence for unique index, 3rd for
     // dictionary, 4th for non-unique.
 
-    //    {"", "", "", ""},
-    //    {"p1", "p1", "p1", "p1"},
-    //    {"r1", "r", "r", "r1"},
-    //    {"d", "d", "d", "d"},
-    //    {"p1 p2", "{p1 p2}", "p2", "{p1 p2}"},
+    {"", "", "", ""},
+    {"p1", "p1", "p1", "p1"},
+    {"r1", "r", "r", "r1"},
+    {"d", "d", "d", "d"},
+    {"p1 p2", "{p1 p2}", "p2", "{p1 p2}"},
     {"p1 r1", "p1 r1", "p1 r1", "p1 r1"},
     {"p1 r2", "r p1", "p1", "{p1 r2}"},
     {"r1 r2", "r", "r", "{r1 r2}"},
