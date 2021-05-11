@@ -21,7 +21,6 @@ import javax.management.InstanceAlreadyExistsException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
-
 import org.junit.*;
 
 /** Created by tglman on 04/05/16. */
