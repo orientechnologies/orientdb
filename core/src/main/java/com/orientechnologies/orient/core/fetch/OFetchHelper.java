@@ -65,40 +65,30 @@ public class OFetchHelper {
   }
 
   public static void fetch(
-      final ORecord iRootRecord,
-      final Object iUserObject,
-      final OFetchPlan iFetchPlan,
-      final OFetchListener iListener,
-      final OFetchContext iContext,
+      final ORecord rootRecord,
+      final Object userObject,
+      final OFetchPlan fetchPlan,
+      final OFetchListener listener,
+      final OFetchContext context,
       final String format) {
     try {
-      if (iRootRecord instanceof ODocument) {
+      if (rootRecord instanceof ODocument) {
         // SCHEMA AWARE
-        final ODocument record = (ODocument) iRootRecord;
+        final ODocument record = (ODocument) rootRecord;
         final Map<ORID, Integer> parsedRecords = new HashMap<>();
 
         final boolean isEmbedded = record.isEmbedded() || !record.getIdentity().isPersistent();
-        if (!isEmbedded) parsedRecords.put(iRootRecord.getIdentity(), 0);
+        if (!isEmbedded) parsedRecords.put(rootRecord.getIdentity(), 0);
 
         if (!format.contains("shallow")) {
-          processRecordRidMap(record, iFetchPlan, 0, 0, -1, parsedRecords, "", iContext);
+          processRecordRidMap(record, fetchPlan, 0, 0, -1, parsedRecords, "", context);
         }
         processRecord(
-            record,
-            iUserObject,
-            iFetchPlan,
-            0,
-            0,
-            -1,
-            parsedRecords,
-            "",
-            iListener,
-            iContext,
-            format);
+            record, userObject, fetchPlan, 0, 0, -1, parsedRecords, "", listener, context, format);
       }
-    } catch (Exception e) {
+    } catch (final Exception e) {
       OLogManager.instance()
-          .error(null, "Fetching error on record %s", e, iRootRecord.getIdentity());
+          .error(null, "Fetching error on record %s", e, rootRecord.getIdentity());
     }
   }
 
@@ -438,8 +428,7 @@ public class OFetchHelper {
       final String fieldPathFromRoot,
       final OFetchListener fetchListener,
       final OFetchContext fetchContext,
-      final String format)
-      throws IOException {
+      final String format) {
     if (record == null) {
       return;
     }
@@ -467,6 +456,7 @@ public class OFetchHelper {
       fetchContext.onAfterFetch(record);
     }
 
+    fetchContext.onBeforeFetch(record);
     final Set<String> toRemove = new HashSet<>();
     for (final String fieldName : record.getPropertyNames()) {
       process(
@@ -546,19 +536,19 @@ public class OFetchHelper {
   }
 
   private static void process(
-      ODocument record,
-      Object userObject,
-      OFetchPlan fetchPlan,
-      int currentLevel,
-      int levelFromRoot,
-      int fieldDepthLevel,
-      Map<ORID, Integer> parsedRecords,
-      String fieldPathFromRoot,
-      OFetchListener fetchListener,
-      OFetchContext fetchContext,
-      String format,
-      Set<String> toRemove,
-      String fieldName) {
+      final ODocument record,
+      final Object userObject,
+      final OFetchPlan fetchPlan,
+      final int currentLevel,
+      final int levelFromRoot,
+      final int fieldDepthLevel,
+      final Map<ORID, Integer> parsedRecords,
+      final String fieldPathFromRoot,
+      final OFetchListener fetchListener,
+      final OFetchContext fetchContext,
+      final String format,
+      final Set<String> toRemove,
+      final String fieldName) {
     final ORecordSerializerJSON.FormatSettings settings =
         new ORecordSerializerJSON.FormatSettings(format);
 
@@ -685,7 +675,7 @@ public class OFetchHelper {
       final String iFieldPathFromRoot,
       final OFetchListener iListener,
       final OFetchContext iContext,
-      ORecordSerializerJSON.FormatSettings settings)
+      final ORecordSerializerJSON.FormatSettings settings)
       throws IOException {
     int currentLevel = iCurrentLevel + 1;
     int fieldDepthLevel = iFieldDepthLevel;
@@ -928,7 +918,7 @@ public class OFetchHelper {
     final Iterable<?> linked;
     if (fieldValue instanceof Iterable<?> || fieldValue instanceof ORidBag) {
       linked = (Iterable<OIdentifiable>) fieldValue;
-      context.onBeforeCollection(iRootRecord, fieldName, iUserObject, (Iterable) linked);
+      context.onBeforeCollection(iRootRecord, fieldName, iUserObject, linked);
     } else if (fieldValue.getClass().isArray()) {
       linked = OMultiValue.getMultiValueIterable(fieldValue, false);
       context.onBeforeCollection(iRootRecord, fieldName, iUserObject, linked);
