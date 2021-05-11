@@ -2556,7 +2556,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         database.delete(leftOverRid);
       }
     }
-
     database.getMetadata().reload();
 
     final Set<ORID> brokenRids = new HashSet<>();

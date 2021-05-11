@@ -520,7 +520,6 @@ public class OJSONWriter {
         }
       }
     }
-
     return this;
   }
 }

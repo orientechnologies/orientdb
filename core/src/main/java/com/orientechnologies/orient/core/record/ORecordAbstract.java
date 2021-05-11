@@ -45,13 +45,12 @@ import java.util.WeakHashMap;
 
 @SuppressWarnings({"unchecked", "serial"})
 public abstract class ORecordAbstract implements ORecord {
-  // public static final String DEFAULT_FORMAT =
-  //
-  // "rid,version,class,type,attribSameRow,keepTypes,alwaysFetchEmbedded,earlyTypes,fetchPlan:*:0";
+  public static final String DEFAULT_FORMAT =
+      "rid,version,class,type,attribSameRow,keepTypes,alwaysFetchEmbedded,earlyTypes,fetchPlan:*:0";
   public static final String OLD_FORMAT_WITH_LATE_TYPES =
       "rid,version,class,type,attribSameRow,keepTypes,alwaysFetchEmbedded,fetchPlan:*:0";
   // TODO: take new format
-  public static final String DEFAULT_FORMAT = OLD_FORMAT_WITH_LATE_TYPES;
+  // public static final String DEFAULT_FORMAT = OLD_FORMAT_WITH_LATE_TYPES;
   protected ORecordId recordId;
   protected int recordVersion = 0;
 

@@ -101,7 +101,7 @@ public class OJSONFetchContext implements OFetchContext {
       manageTypes(iFieldName, iterable, null);
       jsonWriter.beginCollection(++settings.indentLevel, true, iFieldName);
       collectionStack.add(iRootRecord);
-    } catch (IOException e) {
+    } catch (final IOException e) {
       throw OException.wrapException(
           new OFetchException(
               "Error writing collection field "

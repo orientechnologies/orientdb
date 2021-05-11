@@ -711,7 +711,6 @@ public class OFetchHelper {
           iListener,
           iContext,
           settings);
-
     } else if (fieldValue instanceof Map<?, ?>) {
       fetchMap(
           iRootRecord,
