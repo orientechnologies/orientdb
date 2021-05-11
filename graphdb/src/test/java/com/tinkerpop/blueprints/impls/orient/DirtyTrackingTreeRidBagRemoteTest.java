@@ -68,9 +68,6 @@ public class DirtyTrackingTreeRidBagRemoteTest {
     Orient.instance().startup();
   }
 
-  // TODO: add when "DirtyTrackingTreeRidBagRemoteTest.test:119 » OSecurityAccess Invalid
-  // authentic..." was fixed
-  @Ignore
   @Test
   public void test() {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(
