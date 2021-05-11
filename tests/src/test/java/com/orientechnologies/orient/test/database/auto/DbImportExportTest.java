@@ -45,13 +45,12 @@ public class DbImportExportTest extends DocumentDBBaseTest implements OCommandOu
   public DbImportExportTest(@Optional String url, String testPath) {
     super(url);
     this.testPath = testPath;
-
-    exportFilePath = System.getProperty("exportFilePath", EXPORT_FILE_PATH);
+    this.exportFilePath = System.getProperty("exportFilePath", EXPORT_FILE_PATH);
   }
 
   @Test
   public void testDbExport() throws IOException {
-    ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
+    final ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
     database.open("admin", "admin");
 
     // ADD A CUSTOM TO THE CLASS
@@ -59,30 +58,35 @@ public class DbImportExportTest extends DocumentDBBaseTest implements OCommandOu
         .command(new OCommandSQL("alter class V custom onBeforeCreate=onBeforeCreateItem"))
         .execute();
 
-    ODatabaseExport export = new ODatabaseExport(database, testPath + "/" + exportFilePath, this);
+    final ODatabaseExport export =
+        new ODatabaseExport(database, testPath + "/" + exportFilePath, this);
     export.exportDatabase();
     export.close();
-
     database.close();
   }
 
   @Test(dependsOnMethods = "testDbExport")
   public void testDbImport() throws IOException {
     final File importDir = new File(testPath + "/" + NEW_DB_PATH);
-    if (importDir.exists()) for (File f : importDir.listFiles()) f.delete();
-    else importDir.mkdir();
+    if (importDir.exists()) {
+      for (final File f : importDir.listFiles()) {
+        f.delete();
+      }
+    } else {
+      importDir.mkdir();
+    }
 
-    ODatabaseDocumentTx database =
+    final ODatabaseDocumentTx database =
         new ODatabaseDocumentTx(getStorageType() + ":" + testPath + "/" + NEW_DB_URL);
     database.create();
 
-    ODatabaseImport dbImport = new ODatabaseImport(database, testPath + "/" + exportFilePath, this);
+    final ODatabaseImport dbImport =
+        new ODatabaseImport(database, testPath + "/" + exportFilePath, this);
 
     // UNREGISTER ALL THE HOOKS
-    for (ORecordHook hook : new ArrayList<ORecordHook>(database.getHooks().keySet())) {
+    for (final ORecordHook hook : new ArrayList<>(database.getHooks().keySet())) {
       database.unregisterHook(hook);
     }
-
     dbImport.setPreserveRids(true);
     dbImport.setDeleteRIDMapping(false);
     dbImport.importDatabase();
@@ -94,13 +98,13 @@ public class DbImportExportTest extends DocumentDBBaseTest implements OCommandOu
   @Test(dependsOnMethods = "testDbImport")
   public void testCompareDatabases() throws IOException {
     if ("remote".equals(getStorageType()) || url.startsWith("remote:")) {
-      String env = getTestEnv();
-      if (env == null || env.equals("dev")) return;
-
+      final String env = getTestEnv();
+      if (env == null || env.equals("dev")) {
+        return;
+      }
       // EXECUTES ONLY IF NOT REMOTE ON CI/RELEASE TEST ENV
     }
-
-    String urlPrefix = getStorageType() + ":";
+    final String urlPrefix = getStorageType() + ":";
 
     final ODatabaseCompare databaseCompare =
         new ODatabaseCompare(
@@ -118,10 +122,12 @@ public class DbImportExportTest extends DocumentDBBaseTest implements OCommandOu
   @Override
   @Test(enabled = false)
   public void onMessage(final String iText) {
-    if (iText != null && iText.contains("ERR"))
+    if (iText != null && iText.contains("ERR")) {
       // ACTIVATE DUMP MODE
       dumpMode = true;
-
-    if (dumpMode) OLogManager.instance().error(this, iText, null);
+    }
+    if (dumpMode) {
+      OLogManager.instance().error(this, iText, null);
+    }
   }
 }

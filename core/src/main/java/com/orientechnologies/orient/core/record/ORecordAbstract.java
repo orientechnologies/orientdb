@@ -45,6 +45,13 @@ import java.util.WeakHashMap;
 
 @SuppressWarnings({"unchecked", "serial"})
 public abstract class ORecordAbstract implements ORecord {
+  // public static final String DEFAULT_FORMAT =
+  //
+  // "rid,version,class,type,attribSameRow,keepTypes,alwaysFetchEmbedded,earlyTypes,fetchPlan:*:0";
+  public static final String OLD_FORMAT_WITH_LATE_TYPES =
+      "rid,version,class,type,attribSameRow,keepTypes,alwaysFetchEmbedded,fetchPlan:*:0";
+  // TODO: take new format
+  public static final String DEFAULT_FORMAT = OLD_FORMAT_WITH_LATE_TYPES;
   protected ORecordId recordId;
   protected int recordVersion = 0;
 
@@ -170,23 +177,28 @@ public abstract class ORecordAbstract implements ORecord {
     return (RET) this;
   }
 
+  // TODO: replace above by this
+  /*public <RET extends ORecord> RET fromJSON(final InputStream contentStream) throws IOException {
+    ORecordSerializerJSON.INSTANCE.fromStream(contentStream, this, null);
+    return (RET) this;
+  }*/
+
   public String toJSON() {
-    return toJSON(
-        "rid,version,class,type,attribSameRow,keepTypes,alwaysFetchEmbedded,fetchPlan:*:0");
+    return toJSON(DEFAULT_FORMAT);
   }
 
-  public String toJSON(final String iFormat) {
+  public String toJSON(final String format) {
     return ORecordSerializerJSON.INSTANCE
-        .toString(this, new StringBuilder(1024), iFormat == null ? "" : iFormat)
+        .toString(this, new StringBuilder(1024), format == null ? "" : format)
         .toString();
   }
 
-  public void toJSON(final String iFormat, final OutputStream stream) throws IOException {
-    stream.write(toJSON(iFormat).toString().getBytes());
+  public void toJSON(final String format, final OutputStream stream) throws IOException {
+    stream.write(toJSON(format).getBytes());
   }
 
   public void toJSON(final OutputStream stream) throws IOException {
-    stream.write(toJSON().toString().getBytes());
+    stream.write(toJSON().getBytes());
   }
 
   @Override

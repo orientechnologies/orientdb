@@ -366,6 +366,7 @@ public class ODocument extends ORecordAbstract
 
     return fields.entrySet().stream()
         .filter(
+            // s.getValue().property.getType() returns OType
             s ->
                 s.getValue().exists()
                     && (propertyAccess == null || propertyAccess.isReadable(s.getKey())))
@@ -2300,8 +2301,8 @@ public class ODocument extends ORecordAbstract
   }
 
   @Override
-  public ODocument fromJSON(final InputStream iContentResult) throws IOException {
-    return (ODocument) super.fromJSON(iContentResult);
+  public ODocument fromJSON(final InputStream contentStream) throws IOException {
+    return (ODocument) super.fromJSON(contentStream);
   }
 
   @Override

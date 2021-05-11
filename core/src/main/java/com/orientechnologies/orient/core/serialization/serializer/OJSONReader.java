@@ -19,6 +19,8 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer;
 
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -37,11 +39,11 @@ import java.util.regex.Pattern;
 public class OJSONReader {
   public static final char NEW_LINE = '\n';
   public static final char[] DEFAULT_JUMP = new char[] {' ', '\r', '\n', '\t'};
-  public static final char[] DEFAULT_SKIP = new char[] {'\r', '\n', '\t'};
+  // public static final char[] DEFAULT_SKIP = new char[] {'\r', '\n', '\t'};
   public static final char[] BEGIN_OBJECT = new char[] {'{'};
   public static final char[] END_OBJECT = new char[] {'}'};
   public static final char[] FIELD_ASSIGNMENT = new char[] {':'};
-  public static final char[] BEGIN_STRING = new char[] {'"'};
+  // public static final char[] BEGIN_STRING = new char[] {'"'};
   public static final char[] COMMA_SEPARATOR = new char[] {','};
   public static final char[] NEXT_IN_OBJECT = new char[] {',', '}'};
   public static final char[] NEXT_IN_ARRAY = new char[] {',', ']'};
@@ -50,6 +52,7 @@ public class OJSONReader {
       new char[] {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
   public static final char[] BEGIN_COLLECTION = new char[] {'['};
   public static final char[] END_COLLECTION = new char[] {']'};
+
   private BufferedReader in;
   private int cursor = 0;
   private int lineNumber = 0;
@@ -82,6 +85,11 @@ public class OJSONReader {
     return readNumber(iUntil, false);
   }
 
+  public int readInteger(final JsonParser parser) throws IOException, ParseException {
+    while (!JsonToken.VALUE_NUMBER_INT.equals(parser.nextToken())) {}
+    return parser.getValueAsInt();
+  }
+
   public int readNumber(final char[] iUntil, final boolean iInclude)
       throws IOException, ParseException {
     if (readNext(iUntil, iInclude) == null) throw new ParseException("Expected integer", cursor);
@@ -91,6 +99,12 @@ public class OJSONReader {
 
   public String readString(final char[] iUntil) throws IOException, ParseException {
     return readString(iUntil, false);
+  }
+
+  public String readString(final JsonParser parser, final JsonToken until)
+      throws IOException, ParseException {
+    while (!until.equals(parser.nextToken())) {}
+    return parser.getValueAsString();
   }
 
   public String readString(final char[] iUntil, final boolean iInclude)
@@ -160,6 +174,14 @@ public class OJSONReader {
   public OJSONReader readNext(final char[] iUntil) throws IOException, ParseException {
     readNext(iUntil, false);
     return this;
+  }
+
+  public JsonToken readNext(final JsonParser parser, final JsonToken until) throws IOException {
+    JsonToken jsonToken = parser.nextToken();
+    while (!until.equals(jsonToken)) {
+      jsonToken = parser.nextToken();
+    }
+    return jsonToken;
   }
 
   public OJSONReader readNext(final char[] iUntil, final boolean iInclude)

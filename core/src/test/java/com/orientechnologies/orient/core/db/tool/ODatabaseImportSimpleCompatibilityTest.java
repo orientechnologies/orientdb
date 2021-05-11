@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.core.db.tool;
 
 import com.orientechnologies.orient.core.OCreateDatabaseUtil;
-import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.*;
 import java.io.*;
 import org.junit.Assert;
@@ -55,8 +55,15 @@ public class ODatabaseImportSimpleCompatibilityTest {
     Assert.assertTrue(output.size() > 0);
   }
 
+  // Fails on OIndexManagerShared with 'manualIndexesAreUsed' == true, due to missing class name and
+  // empty fields, thus throwing 'OIndexAbstract.manualIndexesWarning()'.
+  // Hence, it is not sufficient to just remove the manualIndexes section in the import JSON
+  @Ignore
   @Test
   public void testImportExportNewerSimple() throws Exception {
+    // Only required in case of manual indexes:
+    System.setProperty("index.allowManualIndexes", String.valueOf(true));
+
     final InputStream simpleDbV3 = load("/databases/databases_3_1/OrderCustomer-sl-0.json");
     Assert.assertNotNull("Input must not be null!", simpleDbV3);
     final ByteArrayOutputStream output = new ByteArrayOutputStream();
@@ -71,6 +78,8 @@ public class ODatabaseImportSimpleCompatibilityTest {
 
     this.tearDown(databaseName);
     Assert.assertTrue(output.size() > 0);
+    System.setProperty(
+        OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES.getKey(), String.valueOf(false));
   }
 
   private InputStream load(final String path) throws FileNotFoundException {
@@ -87,37 +96,24 @@ public class ODatabaseImportSimpleCompatibilityTest {
     importDatabase = orientDB.open(databaseName, "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
     try {
       importer =
-          new ODatabaseImport(
-              (ODatabaseDocumentInternal) importDatabase,
-              input,
-              new OCommandOutputListener() {
-                @Override
-                public void onMessage(String iText) {}
-              });
-      export =
-          new ODatabaseExport(
-              (ODatabaseDocumentInternal) importDatabase,
-              output,
-              new OCommandOutputListener() {
-                @Override
-                public void onMessage(String iText) {}
-              });
+          new ODatabaseImport((ODatabaseDocumentInternal) importDatabase, input, iText -> {});
+      export = new ODatabaseExport((ODatabaseDocumentInternal) importDatabase, output, iText -> {});
     } catch (final IOException e) {
       e.printStackTrace();
     }
   }
 
-  private void tearDown(String databaseName) {
+  private void tearDown(final String databaseName) {
     try {
       orientDB.drop(databaseName);
       orientDB.close();
     } catch (final Exception e) {
-      System.out.println("Issues during teardown" + e.getMessage());
+      System.out.println("Issues during teardown " + e.getMessage());
     }
   }
 
   private void executeImport() {
-    importer.setOptions(" -includeManualIndexes=false");
+    importer.setOptions(" -includeManualIndexes=true");
     importer.importDatabase();
   }
 

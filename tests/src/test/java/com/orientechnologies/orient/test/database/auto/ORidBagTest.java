@@ -12,6 +12,7 @@ import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
@@ -1612,13 +1613,13 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
 
   @Test
   public void testJsonSerialization() {
-    ODocument externalDoc = new ODocument();
-    ODocument testDocument = new ODocument();
-    ORidBag highLevelRidBag = new ORidBag();
-    for (int i = 0; i < 10; i++)
+    final ODocument externalDoc = new ODocument();
+    final ODocument testDocument = new ODocument();
+    final ORidBag highLevelRidBag = new ORidBag();
+    for (int i = 0; i < 10; i++) {
       highLevelRidBag.add(
           new ODocument().save(database.getClusterNameById(database.getDefaultClusterId())));
-
+    }
     externalDoc.save(database.getClusterNameById(database.getDefaultClusterId()));
     testDocument.field("type", "testDocument");
     testDocument.field("ridBag", highLevelRidBag);
@@ -1628,9 +1629,9 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     testDocument.save(database.getClusterNameById(database.getDefaultClusterId()));
     testDocument.reload();
 
-    final String json = testDocument.toJSON();
+    final String json = testDocument.toJSON(ORecordAbstract.OLD_FORMAT_WITH_LATE_TYPES);
 
-    ODocument doc = new ODocument();
+    final ODocument doc = new ODocument();
     doc.fromJSON(json);
 
     Assert.assertTrue(

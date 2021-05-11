@@ -74,7 +74,7 @@ public abstract class ODatabaseImpExpAbstract extends ODatabaseTool {
     if (fileName != null && fileName.indexOf('.') == -1) fileName += DEFAULT_EXT;
 
     listener = iListener;
-    excludeClusters = new LinkedHashSet<String>();
+    excludeClusters = new LinkedHashSet<>();
     excludeClusters.add(OMetadataDefault.CLUSTER_INDEX_NAME);
     excludeClusters.add(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME);
   }
