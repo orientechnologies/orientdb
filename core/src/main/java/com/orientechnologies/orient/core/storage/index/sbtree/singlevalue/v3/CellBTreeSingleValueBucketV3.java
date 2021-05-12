@@ -120,7 +120,7 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
     return -(low + 1); // key not found.
   }
 
-  public void removeLeafEntry(final int entryIndex, byte[] key, byte[] value) {
+  public int removeLeafEntry(final int entryIndex, byte[] key, byte[] value) {
     final int entryPosition =
         getIntValue(POSITIONS_ARRAY_OFFSET + entryIndex * OIntegerSerializer.INT_SIZE);
 
@@ -160,9 +160,29 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
     }
 
     addPageOperation(new CellBTreeBucketSingleValueV3RemoveLeafEntryPO(entryIndex, key, value));
+
+    return size;
   }
 
-  public void removeNonLeafEntry(final int entryIndex, final byte[] key) {
+  public int removeNonLeafEntry(
+      final int entryIndex,
+      boolean keepLeftChildPointer,
+      final OBinarySerializer<K> keySerializer) {
+    if (isLeaf()) {
+      throw new IllegalStateException("Remove is applied to non-leaf buckets only");
+    }
+
+    final int entryPosition =
+        getIntValue(POSITIONS_ARRAY_OFFSET + entryIndex * OIntegerSerializer.INT_SIZE);
+    final int keySize =
+        getObjectSizeInDirectMemory(keySerializer, entryPosition + 2 * OIntegerSerializer.INT_SIZE);
+    final byte[] key = getBinaryValue(entryPosition + 2 * OIntegerSerializer.INT_SIZE, keySize);
+
+    return removeNonLeafEntry(entryIndex, key, keepLeftChildPointer);
+  }
+
+  public int removeNonLeafEntry(
+      final int entryIndex, final byte[] key, boolean keepLeftChildPointer) {
     if (isLeaf()) {
       throw new IllegalStateException("Remove is applied to non-leaf buckets only");
     }
@@ -203,21 +223,25 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
     }
 
     if (size > 0) {
+      final int childPointer = keepLeftChildPointer ? leftChild : rightChild;
+
       if (entryIndex > 0) {
         final int prevEntryPosition =
             getIntValue(POSITIONS_ARRAY_OFFSET + (entryIndex - 1) * OIntegerSerializer.INT_SIZE);
-        setIntValue(prevEntryPosition + OIntegerSerializer.INT_SIZE, leftChild);
+        setIntValue(prevEntryPosition + OIntegerSerializer.INT_SIZE, childPointer);
       }
       if (entryIndex < size) {
         final int nextEntryPosition =
             getIntValue(POSITIONS_ARRAY_OFFSET + entryIndex * OIntegerSerializer.INT_SIZE);
-        setIntValue(nextEntryPosition, leftChild);
+        setIntValue(nextEntryPosition, childPointer);
       }
     }
 
     addPageOperation(
         new CellBTreeBucketSingleValueV3RemoveNonLeafEntryPO(
             entryIndex, key, leftChild, rightChild));
+
+    return size;
   }
 
   public int size() {

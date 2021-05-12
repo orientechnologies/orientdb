@@ -43,7 +43,7 @@ public final class CellBTreeBucketSingleValueV3RemoveNonLeafEntryPO extends Page
   @Override
   public void redo(OCacheEntry cacheEntry) {
     final CellBTreeSingleValueBucketV3<?> bucket = new CellBTreeSingleValueBucketV3<>(cacheEntry);
-    bucket.removeNonLeafEntry(index, key);
+    bucket.removeNonLeafEntry(index, key, true);
   }
 
   @Override
