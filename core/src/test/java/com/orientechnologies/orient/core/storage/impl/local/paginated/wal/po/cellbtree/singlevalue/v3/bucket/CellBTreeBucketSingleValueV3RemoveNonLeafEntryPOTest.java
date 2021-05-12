@@ -46,7 +46,7 @@ public class CellBTreeBucketSingleValueV3RemoveNonLeafEntryPOTest {
 
       restoredBuffer.put(originalBuffer);
 
-      bucket.removeNonLeafEntry(1, new byte[] {1});
+      bucket.removeNonLeafEntry(1, new byte[] {1}, true);
 
       final List<PageOperationRecord> operations = entry.getPageOperations();
       Assert.assertEquals(1, operations.size());
@@ -109,7 +109,7 @@ public class CellBTreeBucketSingleValueV3RemoveNonLeafEntryPOTest {
 
       entry.clearPageOperations();
 
-      bucket.removeNonLeafEntry(1, new byte[] {1});
+      bucket.removeNonLeafEntry(1, new byte[] {1}, true);
 
       final List<PageOperationRecord> operations = entry.getPageOperations();
       Assert.assertEquals(1, operations.size());

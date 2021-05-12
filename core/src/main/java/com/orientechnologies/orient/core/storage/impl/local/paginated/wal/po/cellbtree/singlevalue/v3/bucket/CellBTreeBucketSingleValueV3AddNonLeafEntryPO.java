@@ -52,7 +52,7 @@ public final class CellBTreeBucketSingleValueV3AddNonLeafEntryPO extends PageOpe
   @Override
   public void undo(OCacheEntry cacheEntry) {
     final CellBTreeSingleValueBucketV3<?> bucket = new CellBTreeSingleValueBucketV3<>(cacheEntry);
-    bucket.removeNonLeafEntry(index, key);
+    bucket.removeNonLeafEntry(index, key, true);
   }
 
   @Override
