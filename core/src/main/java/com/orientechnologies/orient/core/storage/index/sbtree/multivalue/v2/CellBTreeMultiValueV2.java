@@ -332,6 +332,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
     executeInsideComponentOperation(atomicOperation, (operation) -> {
       acquireExclusiveLock();
       try {
+        storage.interruptionManager.enterCriticalPath();
         if (key != null) {
 
           //noinspection RedundantCast
@@ -410,6 +411,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
         }
       } finally {
         releaseExclusiveLock();
+        storage.interruptionManager.exitCriticalPath();
       }
     });
   }
@@ -1700,78 +1702,84 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
 
     @Override
     public K next(int prefetchSize) {
-      if (keysIterator == null) {
-        return null;
-      }
-
-      if (keysIterator.hasNext()) {
-        return keysIterator.next();
-      }
-
-      keysCache.clear();
-
-      if (prefetchSize <= 0) {
-        prefetchSize = OGlobalConfiguration.INDEX_CURSOR_PREFETCH_SIZE.getValueAsInteger();
-      }
-
-      atomicOperationsManager.acquireReadLock(CellBTreeMultiValueV2.this);
       try {
-        acquireSharedLock();
+        storage.interruptionManager.enterCriticalPath();
+
+        if (keysIterator == null) {
+          return null;
+        }
+
+        if (keysIterator.hasNext()) {
+          return keysIterator.next();
+        }
+
+        keysCache.clear();
+
+        if (prefetchSize <= 0) {
+          prefetchSize = OGlobalConfiguration.INDEX_CURSOR_PREFETCH_SIZE.getValueAsInteger();
+        }
+
+        atomicOperationsManager.acquireReadLock(CellBTreeMultiValueV2.this);
         try {
-          final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+          acquireSharedLock();
+          try {
+            final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
 
-          while (keysCache.size() < prefetchSize) {
-            if (pageIndex == -1) {
-              break;
-            }
-
-            final OCacheEntry entryPointCacheEntry = loadPageForRead(atomicOperation, fileId, ENTRY_POINT_INDEX, false);
-            try {
-              final CellBTreeMultiValueV2EntryPoint<K> entryPoint = new CellBTreeMultiValueV2EntryPoint<>(entryPointCacheEntry);
-              if (pageIndex >= entryPoint.getPagesSize() + 1) {
-                pageIndex = -1;
+            while (keysCache.size() < prefetchSize) {
+              if (pageIndex == -1) {
                 break;
               }
-            } finally {
-              releasePageFromRead(atomicOperation, entryPointCacheEntry);
-            }
 
-            final OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
-            try {
-              final CellBTreeMultiValueV2Bucket<K> bucket = new CellBTreeMultiValueV2Bucket<>(cacheEntry);
-
-              final int bucketSize = bucket.size();
-              if (itemIndex >= bucketSize) {
-                pageIndex = bucket.getRightSibling();
-                itemIndex = 0;
-                continue;
+              final OCacheEntry entryPointCacheEntry = loadPageForRead(atomicOperation, fileId, ENTRY_POINT_INDEX, false);
+              try {
+                final CellBTreeMultiValueV2EntryPoint<K> entryPoint = new CellBTreeMultiValueV2EntryPoint<>(entryPointCacheEntry);
+                if (pageIndex >= entryPoint.getPagesSize() + 1) {
+                  pageIndex = -1;
+                  break;
+                }
+              } finally {
+                releasePageFromRead(atomicOperation, entryPointCacheEntry);
               }
 
-              while (itemIndex < bucketSize && keysCache.size() < prefetchSize) {
-                keysCache.add(deserializeKey(bucket.getRawKey(itemIndex, keySerializer, encryption)));
-                itemIndex++;
+              final OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
+              try {
+                final CellBTreeMultiValueV2Bucket<K> bucket = new CellBTreeMultiValueV2Bucket<>(cacheEntry);
+
+                final int bucketSize = bucket.size();
+                if (itemIndex >= bucketSize) {
+                  pageIndex = bucket.getRightSibling();
+                  itemIndex = 0;
+                  continue;
+                }
+
+                while (itemIndex < bucketSize && keysCache.size() < prefetchSize) {
+                  keysCache.add(deserializeKey(bucket.getRawKey(itemIndex, keySerializer, encryption)));
+                  itemIndex++;
+                }
+              } finally {
+                releasePageFromRead(atomicOperation, cacheEntry);
               }
-            } finally {
-              releasePageFromRead(atomicOperation, cacheEntry);
             }
+          } finally {
+            releaseSharedLock();
           }
+        } catch (final IOException e) {
+          throw OException
+                  .wrapException(new CellBTreeMultiValueException("Error during element iteration", CellBTreeMultiValueV2.this), e);
         } finally {
-          releaseSharedLock();
+          atomicOperationsManager.releaseReadLock(CellBTreeMultiValueV2.this);
         }
-      } catch (final IOException e) {
-        throw OException
-            .wrapException(new CellBTreeMultiValueException("Error during element iteration", CellBTreeMultiValueV2.this), e);
+
+        if (keysCache.isEmpty()) {
+          keysCache = null;
+          return null;
+        }
+
+        keysIterator = keysCache.iterator();
+        return keysIterator.next();
       } finally {
-        atomicOperationsManager.releaseReadLock(CellBTreeMultiValueV2.this);
+        storage.interruptionManager.exitCriticalPath();
       }
-
-      if (keysCache.isEmpty()) {
-        keysCache = null;
-        return null;
-      }
-
-      keysIterator = keysCache.iterator();
-      return keysIterator.next();
     }
   }
 
@@ -1798,172 +1806,177 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
 
     @Override
     public Map.Entry<K, ORID> next(int prefetchSize) {
-      if (dataCacheIterator == null) {
-        return null;
-      }
+      try {
+        storage.interruptionManager.enterCriticalPath();
+        if (dataCacheIterator == null) {
+          return null;
+        }
 
-      if (dataCacheIterator.hasNext()) {
+        if (dataCacheIterator.hasNext()) {
+          final Map.Entry<K, ORID> entry = dataCacheIterator.next();
+
+          fromKey = entry.getKey();
+          fromKeyInclusive = false;
+
+          return entry;
+        }
+
+        dataCache.clear();
+
+        if (prefetchSize <= 0) {
+          prefetchSize = OGlobalConfiguration.INDEX_CURSOR_PREFETCH_SIZE.getValueAsInteger();
+        }
+
+        atomicOperationsManager.acquireReadLock(CellBTreeMultiValueV2.this);
+        try {
+          acquireSharedLock();
+          try {
+            final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+
+            final BucketSearchResult bucketSearchResult;
+
+            if (fromKey != null) {
+              bucketSearchResult = findBucket(fromKey, atomicOperation);
+            } else {
+              bucketSearchResult = firstItem(atomicOperation);
+            }
+
+            if (bucketSearchResult == null) {
+              dataCacheIterator = null;
+              return null;
+            }
+
+            long pageIndex = bucketSearchResult.pageIndex;
+            int itemIndex;
+
+            if (bucketSearchResult.itemIndex >= 0) {
+              itemIndex = fromKeyInclusive ? bucketSearchResult.itemIndex : bucketSearchResult.itemIndex + 1;
+            } else {
+              itemIndex = -bucketSearchResult.itemIndex - 1;
+            }
+
+            K lastKey = null;
+
+            boolean firstTry = true;
+            mainCycle:
+            while (true) {
+              if (pageIndex == -1) {
+                break;
+              }
+
+              final OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
+              try {
+                final CellBTreeMultiValueV2Bucket<K> bucket = new CellBTreeMultiValueV2Bucket<>(cacheEntry);
+                if (firstTry && fromKey != null && fromKeyInclusive && bucketSearchResult.itemIndex == 0) {
+                  int leftSibling = (int) bucket.getLeftSibling();
+                  while (leftSibling > 0) {
+                    final OCacheEntry siblingCacheEntry = loadPageForRead(atomicOperation, fileId, leftSibling, false);
+                    final CellBTreeMultiValueV2Bucket<K> siblingBucket = new CellBTreeMultiValueV2Bucket<>(siblingCacheEntry);
+
+                    final int bucketSize = siblingBucket.size();
+                    if (bucketSize == 0) {
+                      leftSibling = (int) siblingBucket.getLeftSibling();
+                    } else if (bucketSize == 1) {
+                      final K key = siblingBucket.getKey(0, keySerializer, encryption);
+
+                      if (key.equals(fromKey)) {
+                        lastKey = key;
+
+                        fetchMapEntries(0, key, dataCache, siblingBucket);
+
+                        leftSibling = (int) siblingBucket.getLeftSibling();
+                      } else {
+                        leftSibling = -1;
+                      }
+                    } else {
+                      final K key = siblingBucket.getKey(bucketSize - 1, keySerializer, encryption);
+                      if (key.equals(fromKey)) {
+                        lastKey = key;
+
+                        fetchMapEntries(0, key, dataCache, siblingBucket);
+
+                        leftSibling = -1;
+                      } else {
+                        leftSibling = -1;
+                      }
+                    }
+
+                    releasePageFromRead(atomicOperation, siblingCacheEntry);
+                  }
+                }
+
+                firstTry = false;
+
+                while (true) {
+                  if (itemIndex >= bucket.size()) {
+                    pageIndex = bucket.getRightSibling();
+                    itemIndex = 0;
+                    continue mainCycle;
+                  }
+
+                  final CellBTreeMultiValueV2Bucket.LeafEntry leafEntry = bucket
+                          .getLeafEntry(itemIndex, keySerializer, encryption != null);
+                  itemIndex++;
+
+                  final K key = deserializeKey(leafEntry.key);
+                  if (dataCache.size() >= prefetchSize && (lastKey == null || !lastKey.equals(key))) {
+                    break mainCycle;
+                  }
+
+                  if (fromKeyInclusive) {
+                    if (fromKey != null && comparator.compare(key, fromKey) < 0) {
+                      continue;
+                    }
+                  } else {
+                    if (fromKey != null && comparator.compare(key, fromKey) <= 0) {
+                      continue;
+                    }
+                  }
+
+                  if (toKeyInclusive) {
+                    if (toKey != null && comparator.compare(key, toKey) > 0) {
+                      break mainCycle;
+                    }
+                  } else {
+                    if (toKey != null && comparator.compare(key, toKey) >= 0) {
+                      break mainCycle;
+                    }
+                  }
+
+                  lastKey = key;
+                  fetchMapEntriesFromLeafEntry(key, dataCache, leafEntry);
+                }
+
+              } finally {
+                releasePageFromRead(atomicOperation, cacheEntry);
+              }
+            }
+          } finally {
+            releaseSharedLock();
+          }
+        } catch (final IOException e) {
+          throw OException
+                  .wrapException(new CellBTreeMultiValueException("Error during element iteration", CellBTreeMultiValueV2.this), e);
+        } finally {
+          atomicOperationsManager.releaseReadLock(CellBTreeMultiValueV2.this);
+        }
+
+        if (dataCache.isEmpty()) {
+          dataCacheIterator = null;
+          return null;
+        }
+
+        dataCacheIterator = dataCache.iterator();
+
         final Map.Entry<K, ORID> entry = dataCacheIterator.next();
 
         fromKey = entry.getKey();
         fromKeyInclusive = false;
 
         return entry;
-      }
-
-      dataCache.clear();
-
-      if (prefetchSize <= 0) {
-        prefetchSize = OGlobalConfiguration.INDEX_CURSOR_PREFETCH_SIZE.getValueAsInteger();
-      }
-
-      atomicOperationsManager.acquireReadLock(CellBTreeMultiValueV2.this);
-      try {
-        acquireSharedLock();
-        try {
-          final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
-
-          final BucketSearchResult bucketSearchResult;
-
-          if (fromKey != null) {
-            bucketSearchResult = findBucket(fromKey, atomicOperation);
-          } else {
-            bucketSearchResult = firstItem(atomicOperation);
-          }
-
-          if (bucketSearchResult == null) {
-            dataCacheIterator = null;
-            return null;
-          }
-
-          long pageIndex = bucketSearchResult.pageIndex;
-          int itemIndex;
-
-          if (bucketSearchResult.itemIndex >= 0) {
-            itemIndex = fromKeyInclusive ? bucketSearchResult.itemIndex : bucketSearchResult.itemIndex + 1;
-          } else {
-            itemIndex = -bucketSearchResult.itemIndex - 1;
-          }
-
-          K lastKey = null;
-
-          boolean firstTry = true;
-          mainCycle:
-          while (true) {
-            if (pageIndex == -1) {
-              break;
-            }
-
-            final OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
-            try {
-              final CellBTreeMultiValueV2Bucket<K> bucket = new CellBTreeMultiValueV2Bucket<>(cacheEntry);
-              if (firstTry && fromKey != null && fromKeyInclusive && bucketSearchResult.itemIndex == 0) {
-                int leftSibling = (int) bucket.getLeftSibling();
-                while (leftSibling > 0) {
-                  final OCacheEntry siblingCacheEntry = loadPageForRead(atomicOperation, fileId, leftSibling, false);
-                  final CellBTreeMultiValueV2Bucket<K> siblingBucket = new CellBTreeMultiValueV2Bucket<>(siblingCacheEntry);
-
-                  final int bucketSize = siblingBucket.size();
-                  if (bucketSize == 0) {
-                    leftSibling = (int) siblingBucket.getLeftSibling();
-                  } else if (bucketSize == 1) {
-                    final K key = siblingBucket.getKey(0, keySerializer, encryption);
-
-                    if (key.equals(fromKey)) {
-                      lastKey = key;
-
-                      fetchMapEntries(0, key, dataCache, siblingBucket);
-
-                      leftSibling = (int) siblingBucket.getLeftSibling();
-                    } else {
-                      leftSibling = -1;
-                    }
-                  } else {
-                    final K key = siblingBucket.getKey(bucketSize - 1, keySerializer, encryption);
-                    if (key.equals(fromKey)) {
-                      lastKey = key;
-
-                      fetchMapEntries(0, key, dataCache, siblingBucket);
-
-                      leftSibling = -1;
-                    } else {
-                      leftSibling = -1;
-                    }
-                  }
-
-                  releasePageFromRead(atomicOperation, siblingCacheEntry);
-                }
-              }
-
-              firstTry = false;
-
-              while (true) {
-                if (itemIndex >= bucket.size()) {
-                  pageIndex = bucket.getRightSibling();
-                  itemIndex = 0;
-                  continue mainCycle;
-                }
-
-                final CellBTreeMultiValueV2Bucket.LeafEntry leafEntry = bucket
-                    .getLeafEntry(itemIndex, keySerializer, encryption != null);
-                itemIndex++;
-
-                final K key = deserializeKey(leafEntry.key);
-                if (dataCache.size() >= prefetchSize && (lastKey == null || !lastKey.equals(key))) {
-                  break mainCycle;
-                }
-
-                if (fromKeyInclusive) {
-                  if (fromKey != null && comparator.compare(key, fromKey) < 0) {
-                    continue;
-                  }
-                } else {
-                  if (fromKey != null && comparator.compare(key, fromKey) <= 0) {
-                    continue;
-                  }
-                }
-
-                if (toKeyInclusive) {
-                  if (toKey != null && comparator.compare(key, toKey) > 0) {
-                    break mainCycle;
-                  }
-                } else {
-                  if (toKey != null && comparator.compare(key, toKey) >= 0) {
-                    break mainCycle;
-                  }
-                }
-
-                lastKey = key;
-                fetchMapEntriesFromLeafEntry(key, dataCache, leafEntry);
-              }
-
-            } finally {
-              releasePageFromRead(atomicOperation, cacheEntry);
-            }
-          }
-        } finally {
-          releaseSharedLock();
-        }
-      } catch (final IOException e) {
-        throw OException
-            .wrapException(new CellBTreeMultiValueException("Error during element iteration", CellBTreeMultiValueV2.this), e);
       } finally {
-        atomicOperationsManager.releaseReadLock(CellBTreeMultiValueV2.this);
+        storage.interruptionManager.exitCriticalPath();
       }
-
-      if (dataCache.isEmpty()) {
-        dataCacheIterator = null;
-        return null;
-      }
-
-      dataCacheIterator = dataCache.iterator();
-
-      final Map.Entry<K, ORID> entry = dataCacheIterator.next();
-
-      fromKey = entry.getKey();
-      fromKeyInclusive = false;
-
-      return entry;
     }
   }
 
@@ -1990,7 +2003,8 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
 
     @Override
     public Map.Entry<K, ORID> next(int prefetchSize) {
-      {
+      try {
+        storage.interruptionManager.enterCriticalPath();
         if (dataCacheIterator == null) {
           return null;
         }
@@ -2158,6 +2172,8 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
         toKeyInclusive = false;
 
         return entry;
+      } finally {
+        storage.interruptionManager.exitCriticalPath();
       }
     }
 
