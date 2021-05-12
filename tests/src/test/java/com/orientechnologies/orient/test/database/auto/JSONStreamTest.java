@@ -21,7 +21,6 @@ import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
@@ -149,8 +148,7 @@ public class JSONStreamTest extends DocumentDBBaseTest {
     list.add(new ODocument().field("name", "Luca"));
     list.add(new ODocument().field("name", "Marcus"));
 
-    // FIXME: export with DEFAULT_FORMAT does not work for collections yet
-    final String json = doc.toJSON(ORecordAbstract.OLD_FORMAT_WITH_LATE_TYPES);
+    final String json = doc.toJSON();
     final ODocument loadedDoc =
         new ODocument().fromJSON(new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
     Assert.assertTrue(doc.hasSameContentOf(loadedDoc));
@@ -1222,8 +1220,7 @@ public class JSONStreamTest extends DocumentDBBaseTest {
             "{\"name\":\"Luca\", \"ref\":\"#-1:-1\"}".getBytes(StandardCharsets.UTF_8)));
     // Assert.assertNull(nullRefDoc.rawField("ref"));
 
-    // FIXME: export with DEFAULT_FORMAT does not work for collections yet
-    final String json = nullRefDoc.toJSON(ORecordAbstract.OLD_FORMAT_WITH_LATE_TYPES);
+    final String json = nullRefDoc.toJSON();
     int pos = json.indexOf("\"ref\":");
 
     Assert.assertTrue(pos > -1);

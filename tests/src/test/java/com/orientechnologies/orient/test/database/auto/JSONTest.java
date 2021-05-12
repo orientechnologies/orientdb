@@ -138,7 +138,7 @@ public class JSONTest extends DocumentDBBaseTest {
   }
 
   @Test
-  public void testNan() {
+  public void testNanOldFormat() {
     ODocument doc = new ODocument();
     String input =
         "{\"@type\":\"d\",\"@version\":0,\"nan\":null,\"p_infinity\":null,\"n_infinity\":null,\"@fieldTypes\":\"nan=d,p_infinity=d,n_infinity=d\"}";
@@ -207,7 +207,7 @@ public class JSONTest extends DocumentDBBaseTest {
     list.add(new ODocument().field("name", "Luca"));
     list.add(new ODocument().field("name", "Marcus"));
 
-    final String json = doc.toJSON(ORecordAbstract.OLD_FORMAT_WITH_LATE_TYPES);
+    final String json = doc.toJSON();
     final ODocument loadedDoc = new ODocument().fromJSON(json);
     Assert.assertTrue(doc.hasSameContentOf(loadedDoc));
     Assert.assertTrue(loadedDoc.containsField("embeddedList"));
@@ -313,7 +313,7 @@ public class JSONTest extends DocumentDBBaseTest {
       firstLevelDoc.field("doc", secondLevelDoc);
       secondLevelDoc.field("doc", thirdLevelDoc);
 
-      final String json = newDoc.toJSON(ORecordAbstract.OLD_FORMAT_WITH_LATE_TYPES);
+      final String json = newDoc.toJSON();
       ODocument loadedDoc = new ODocument().fromJSON(json);
 
       Assert.assertTrue(newDoc.hasSameContentOf(loadedDoc));
@@ -621,9 +621,9 @@ public class JSONTest extends DocumentDBBaseTest {
       list.add(doc1);
     }
     doc.field("out", list);
-    String json = doc.toJSON(ORecordAbstract.OLD_FORMAT_WITH_LATE_TYPES);
+    String json = doc.toJSON();
     ODocument newDoc = new ODocument().fromJSON(json);
-    Assert.assertEquals(json, newDoc.toJSON(ORecordAbstract.OLD_FORMAT_WITH_LATE_TYPES));
+    Assert.assertEquals(json, newDoc.toJSON());
     Assert.assertTrue(newDoc.hasSameContentOf(doc));
 
     doc = new ODocument();
@@ -646,9 +646,9 @@ public class JSONTest extends DocumentDBBaseTest {
       docMap.put(String.valueOf(i), doc1);
     }
     doc.field("out", docMap);
-    json = doc.toJSON(ORecordAbstract.OLD_FORMAT_WITH_LATE_TYPES);
+    json = doc.toJSON();
     newDoc = new ODocument().fromJSON(json);
-    Assert.assertEquals(newDoc.toJSON(ORecordAbstract.OLD_FORMAT_WITH_LATE_TYPES), json);
+    Assert.assertEquals(newDoc.toJSON(), json);
     Assert.assertTrue(newDoc.hasSameContentOf(doc));
   }
 
@@ -669,9 +669,9 @@ public class JSONTest extends DocumentDBBaseTest {
       list.add(doc1);
     }
     doc.field("theList", list);
-    String json = doc.toJSON(ORecordAbstract.OLD_FORMAT_WITH_LATE_TYPES);
+    String json = doc.toJSON();
     ODocument newDoc = new ODocument().fromJSON(json);
-    Assert.assertEquals(newDoc.toJSON(ORecordAbstract.OLD_FORMAT_WITH_LATE_TYPES), json);
+    Assert.assertEquals(newDoc.toJSON(), json);
     Assert.assertTrue(newDoc.hasSameContentOf(doc));
   }
 
@@ -1365,7 +1365,7 @@ public class JSONTest extends DocumentDBBaseTest {
     nullRefDoc.fromJSON("{\"name\":\"Luca\", \"ref\":\"#-1:-1\"}");
     // Assert.assertNull(nullRefDoc.rawField("ref"));
 
-    String json = nullRefDoc.toJSON(ORecordAbstract.OLD_FORMAT_WITH_LATE_TYPES);
+    String json = nullRefDoc.toJSON();
     int pos = json.indexOf("\"ref\":");
 
     Assert.assertTrue(pos > -1);

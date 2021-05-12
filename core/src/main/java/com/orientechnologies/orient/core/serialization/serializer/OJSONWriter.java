@@ -47,7 +47,7 @@ import java.util.Map.Entry;
 public class OJSONWriter {
   private static final String DEF_FORMAT =
       "rid,type,version,class,attribSameRow,earlyTypes,indent:2,dateAsLong"; // TODO: added
-                                                                             // earlyTypes
+  // earlyTypes
   private final String format;
   private Writer out;
   private boolean prettyPrint = false;
