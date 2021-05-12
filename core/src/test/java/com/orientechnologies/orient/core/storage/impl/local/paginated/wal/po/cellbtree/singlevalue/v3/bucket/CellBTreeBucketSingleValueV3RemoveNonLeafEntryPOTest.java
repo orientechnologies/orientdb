@@ -24,12 +24,12 @@ public class CellBTreeBucketSingleValueV3RemoveNonLeafEntryPOTest {
       final OCachePointer cachePointer = new OCachePointer(pointer, byteBufferPool, 0, 0);
       final OCacheEntry entry = new OCacheEntryImpl(0, 0, cachePointer, false);
 
-      CellBTreeSingleValueBucketV3 bucket = new CellBTreeSingleValueBucketV3(entry);
+      CellBTreeSingleValueBucketV3<?> bucket = new CellBTreeSingleValueBucketV3<>(entry);
       bucket.init(false);
 
-      bucket.addNonLeafEntry(0, 1, 2, new byte[] {0}, true);
-      bucket.addNonLeafEntry(1, 2, 3, new byte[] {1}, true);
-      bucket.addNonLeafEntry(2, 3, 4, new byte[] {2}, true);
+      bucket.addNonLeafEntry(0, 1, 2, new byte[] {0});
+      bucket.addNonLeafEntry(1, 2, 3, new byte[] {1});
+      bucket.addNonLeafEntry(2, 3, 4, new byte[] {2});
 
       entry.clearPageOperations();
 
@@ -46,7 +46,7 @@ public class CellBTreeBucketSingleValueV3RemoveNonLeafEntryPOTest {
 
       restoredBuffer.put(originalBuffer);
 
-      bucket.removeNonLeafEntry(1, new byte[] {1}, 3);
+      bucket.removeNonLeafEntry(1, new byte[] {1});
 
       final List<PageOperationRecord> operations = entry.getPageOperations();
       Assert.assertEquals(1, operations.size());
@@ -77,10 +77,10 @@ public class CellBTreeBucketSingleValueV3RemoveNonLeafEntryPOTest {
       Assert.assertEquals(2, restoredBucket.size());
 
       Assert.assertEquals(
-          new CellBTreeSingleValueBucketV3.CellBTreeEntry<>(1, 3, (byte) 0, null),
+          new CellBTreeSingleValueBucketV3.CellBTreeEntry<>(1, 2, (byte) 0, null),
           restoredBucket.getEntry(0, OByteSerializer.INSTANCE));
       Assert.assertEquals(
-          new CellBTreeSingleValueBucketV3.CellBTreeEntry<>(3, 4, (byte) 2, null),
+          new CellBTreeSingleValueBucketV3.CellBTreeEntry<>(2, 4, (byte) 2, null),
           restoredBucket.getEntry(1, OByteSerializer.INSTANCE));
 
       byteBufferPool.release(pointer);
@@ -100,16 +100,16 @@ public class CellBTreeBucketSingleValueV3RemoveNonLeafEntryPOTest {
       final OCachePointer cachePointer = new OCachePointer(pointer, byteBufferPool, 0, 0);
       final OCacheEntry entry = new OCacheEntryImpl(0, 0, cachePointer, false);
 
-      CellBTreeSingleValueBucketV3 bucket = new CellBTreeSingleValueBucketV3(entry);
+      CellBTreeSingleValueBucketV3<?> bucket = new CellBTreeSingleValueBucketV3<>(entry);
       bucket.init(false);
 
-      bucket.addNonLeafEntry(0, 1, 2, new byte[] {0}, true);
-      bucket.addNonLeafEntry(1, 2, 3, new byte[] {1}, true);
-      bucket.addNonLeafEntry(2, 3, 4, new byte[] {2}, true);
+      bucket.addNonLeafEntry(0, 1, 2, new byte[] {0});
+      bucket.addNonLeafEntry(1, 2, 3, new byte[] {1});
+      bucket.addNonLeafEntry(2, 3, 4, new byte[] {2});
 
       entry.clearPageOperations();
 
-      bucket.removeNonLeafEntry(1, new byte[] {1}, 3);
+      bucket.removeNonLeafEntry(1, new byte[] {1});
 
       final List<PageOperationRecord> operations = entry.getPageOperations();
       Assert.assertEquals(1, operations.size());
@@ -126,10 +126,10 @@ public class CellBTreeBucketSingleValueV3RemoveNonLeafEntryPOTest {
       Assert.assertEquals(2, restoredBucket.size());
 
       Assert.assertEquals(
-          new CellBTreeSingleValueBucketV3.CellBTreeEntry<>(1, 3, (byte) 0, null),
+          new CellBTreeSingleValueBucketV3.CellBTreeEntry<>(1, 2, (byte) 0, null),
           restoredBucket.getEntry(0, OByteSerializer.INSTANCE));
       Assert.assertEquals(
-          new CellBTreeSingleValueBucketV3.CellBTreeEntry<>(3, 4, (byte) 2, null),
+          new CellBTreeSingleValueBucketV3.CellBTreeEntry<>(2, 4, (byte) 2, null),
           restoredBucket.getEntry(1, OByteSerializer.INSTANCE));
 
       pageOperation.undo(entry);
@@ -155,7 +155,7 @@ public class CellBTreeBucketSingleValueV3RemoveNonLeafEntryPOTest {
   @Test
   public void testSerialization() {
     CellBTreeBucketSingleValueV3RemoveNonLeafEntryPO operation =
-        new CellBTreeBucketSingleValueV3RemoveNonLeafEntryPO(12, 21, new byte[] {4, 2}, 42, 24);
+        new CellBTreeBucketSingleValueV3RemoveNonLeafEntryPO(12, new byte[] {4, 2}, 42, 24);
 
     operation.setFileId(42);
     operation.setPageIndex(24);
@@ -176,7 +176,6 @@ public class CellBTreeBucketSingleValueV3RemoveNonLeafEntryPOTest {
     Assert.assertEquals(1, restoredOperation.getOperationUnitId());
 
     Assert.assertEquals(12, restoredOperation.getIndex());
-    Assert.assertEquals(21, restoredOperation.getPrevChild());
     Assert.assertArrayEquals(new byte[] {4, 2}, restoredOperation.getKey());
     Assert.assertEquals(42, restoredOperation.getLeftChild());
     Assert.assertEquals(24, restoredOperation.getRightChild());

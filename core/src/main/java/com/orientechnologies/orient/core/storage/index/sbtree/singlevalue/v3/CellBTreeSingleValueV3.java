@@ -1148,8 +1148,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
             insertionIndex,
             (int) pageIndex,
             rightBucketEntry.getPageIndex(),
-            keySerializer.serializeNativeAsWhole(separationKey, (Object[]) keyTypes),
-            true)) {
+            keySerializer.serializeNativeAsWhole(separationKey, (Object[]) keyTypes))) {
           final UpdateBucketSearchResult bucketSearchResult =
               splitBucket(
                   parentBucket,
@@ -1292,8 +1291,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
         0,
         leftBucketEntry.getPageIndex(),
         rightBucketEntry.getPageIndex(),
-        keySerializer.serializeNativeAsWhole(separationKey, (Object[]) keyTypes),
-        true);
+        keySerializer.serializeNativeAsWhole(separationKey, (Object[]) keyTypes));
 
     final ArrayList<Long> resultPath = new ArrayList<>(8);
     resultPath.add(ROOT_INDEX);
