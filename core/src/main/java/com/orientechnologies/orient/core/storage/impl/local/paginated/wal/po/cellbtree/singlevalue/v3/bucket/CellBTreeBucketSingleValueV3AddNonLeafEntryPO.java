@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v3.bucket;
 
-import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
@@ -11,28 +10,18 @@ import java.nio.ByteBuffer;
 public final class CellBTreeBucketSingleValueV3AddNonLeafEntryPO extends PageOperationRecord {
   private int index;
   private byte[] key;
-  private boolean updateNeighbours;
 
   private int leftChild;
   private int rightChild;
 
-  private int prevChild;
-
   public CellBTreeBucketSingleValueV3AddNonLeafEntryPO() {}
 
   public CellBTreeBucketSingleValueV3AddNonLeafEntryPO(
-      int index,
-      byte[] key,
-      boolean updateNeighbours,
-      int leftChild,
-      int rightChild,
-      int prevChild) {
+      int index, byte[] key, int leftChild, int rightChild) {
     this.index = index;
     this.key = key;
-    this.updateNeighbours = updateNeighbours;
     this.leftChild = leftChild;
     this.rightChild = rightChild;
-    this.prevChild = prevChild;
   }
 
   public int getIndex() {
@@ -43,10 +32,6 @@ public final class CellBTreeBucketSingleValueV3AddNonLeafEntryPO extends PageOpe
     return key;
   }
 
-  public boolean isUpdateNeighbours() {
-    return updateNeighbours;
-  }
-
   public int getLeftChild() {
     return leftChild;
   }
@@ -55,15 +40,10 @@ public final class CellBTreeBucketSingleValueV3AddNonLeafEntryPO extends PageOpe
     return rightChild;
   }
 
-  public int getPrevChild() {
-    return prevChild;
-  }
-
   @Override
   public void redo(OCacheEntry cacheEntry) {
-    final CellBTreeSingleValueBucketV3 bucket = new CellBTreeSingleValueBucketV3(cacheEntry);
-    final boolean added =
-        bucket.addNonLeafEntry(index, leftChild, rightChild, key, updateNeighbours);
+    final CellBTreeSingleValueBucketV3<?> bucket = new CellBTreeSingleValueBucketV3<>(cacheEntry);
+    final boolean added = bucket.addNonLeafEntry(index, leftChild, rightChild, key);
     if (!added) {
       throw new IllegalStateException("Can not redo operation of addition of non leaf entry.");
     }
@@ -71,8 +51,8 @@ public final class CellBTreeBucketSingleValueV3AddNonLeafEntryPO extends PageOpe
 
   @Override
   public void undo(OCacheEntry cacheEntry) {
-    final CellBTreeSingleValueBucketV3 bucket = new CellBTreeSingleValueBucketV3(cacheEntry);
-    bucket.removeNonLeafEntry(index, key, prevChild);
+    final CellBTreeSingleValueBucketV3<?> bucket = new CellBTreeSingleValueBucketV3<>(cacheEntry);
+    bucket.removeNonLeafEntry(index, key);
   }
 
   @Override
@@ -82,10 +62,7 @@ public final class CellBTreeBucketSingleValueV3AddNonLeafEntryPO extends PageOpe
 
   @Override
   public int serializedSize() {
-    return super.serializedSize()
-        + 5 * OIntegerSerializer.INT_SIZE
-        + key.length
-        + OByteSerializer.BYTE_SIZE;
+    return super.serializedSize() + 4 * OIntegerSerializer.INT_SIZE + key.length;
   }
 
   @Override
@@ -97,12 +74,8 @@ public final class CellBTreeBucketSingleValueV3AddNonLeafEntryPO extends PageOpe
     buffer.putInt(key.length);
     buffer.put(key);
 
-    buffer.put(updateNeighbours ? (byte) 1 : 0);
-
     buffer.putInt(leftChild);
     buffer.putInt(rightChild);
-
-    buffer.putInt(prevChild);
   }
 
   @Override
@@ -114,11 +87,7 @@ public final class CellBTreeBucketSingleValueV3AddNonLeafEntryPO extends PageOpe
     key = new byte[len];
     buffer.get(key);
 
-    updateNeighbours = buffer.get() > 0;
-
     leftChild = buffer.getInt();
     rightChild = buffer.getInt();
-
-    prevChild = buffer.getInt();
   }
 }

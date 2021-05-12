@@ -56,7 +56,7 @@ public class CellBTreeSingleValueV3TestIT {
 
     OAbstractPaginatedStorage storage;
     try (ODatabaseSession databaseDocumentTx = orientDB.open(dbName, "admin", "admin")) {
-      storage = (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage();
+      storage = (OAbstractPaginatedStorage) ((ODatabaseInternal<?>) databaseDocumentTx).getStorage();
     }
     singleValueTree = new CellBTreeSingleValueV3<>("singleBTree", ".sbt", ".nbt", storage);
     atomicOperationsManager = storage.getAtomicOperationsManager();

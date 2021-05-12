@@ -193,7 +193,6 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
       try {
         final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
         if (key != null) {
-          //noinspection RedundantCast
           key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
           final BucketSearchResult bucketSearchResult = findBucket(key, atomicOperation);
@@ -261,9 +260,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
             ORID value = rid;
 
             if (key != null) {
-              //noinspection RedundantCast
               key = keySerializer.preprocess(key, (Object[]) keyTypes);
-              //noinspection RedundantCast
               final byte[] serializedKey =
                   keySerializer.serializeNativeAsWhole(key, (Object[]) keyTypes);
               if (keySize > MAX_KEY_SIZE) {
@@ -509,7 +506,6 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
             final ORID removedValue;
             K key = k;
             if (key != null) {
-              //noinspection RedundantCast
               key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
               final BucketSearchResult bucketSearchResult = findBucket(key, atomicOperation);
@@ -517,7 +513,6 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
                 return null;
               }
 
-              //noinspection RedundantCast
               final byte[] serializedKey =
                   keySerializer.serializeNativeAsWhole(key, (Object[]) keyTypes);
               final OCacheEntry keyBucketCacheEntry =
@@ -1166,8 +1161,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
             insertionIndex,
             (int) pageIndex,
             rightBucketEntry.getPageIndex(),
-            keySerializer.serializeNativeAsWhole(separationKey, (Object[]) keyTypes),
-            true)) {
+            keySerializer.serializeNativeAsWhole(separationKey, (Object[]) keyTypes))) {
           final UpdateBucketSearchResult bucketSearchResult =
               splitBucket(
                   parentBucket,
@@ -1311,8 +1305,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
         0,
         leftBucketEntry.getPageIndex(),
         rightBucketEntry.getPageIndex(),
-        keySerializer.serializeNativeAsWhole(separationKey, (Object[]) keyTypes),
-        true);
+        keySerializer.serializeNativeAsWhole(separationKey, (Object[]) keyTypes));
 
     final ArrayList<Long> resultPath = new ArrayList<>(8);
     resultPath.add(ROOT_INDEX);
