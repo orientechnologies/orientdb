@@ -5,7 +5,6 @@ import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.jwt.OKeyProvider;
 import com.orientechnologies.orient.core.metadata.security.jwt.OTokenHeader;
@@ -135,14 +134,7 @@ public class OTokenSignImpl implements OTokenSign {
     if (configKey != null && configKey.length() > 0) key = Base64.getUrlDecoder().decode(configKey);
 
     if (key == null) {
-      try {
-        key =
-            OSecurityManager.digestSHA256(
-                String.valueOf(SecureRandom.getInstanceStrong().nextLong()));
-      } catch (NoSuchAlgorithmException e) {
-        throw OException.wrapException(
-            new ODatabaseException("Error generating token sign key"), e);
-      }
+      key = OSecurityManager.digestSHA256(String.valueOf(new SecureRandom().nextLong()));
     }
     return key;
   }
