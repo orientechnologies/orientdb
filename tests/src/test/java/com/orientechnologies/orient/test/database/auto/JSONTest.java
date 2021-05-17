@@ -707,18 +707,18 @@ public class JSONTest extends DocumentDBBaseTest {
 
     List<ODocument> result =
         database.query(
-            new OSQLSynchQuery<Object>("select from device where domainset.domain contains 'abc'"));
+            new OSQLSynchQuery<>("select from device where domainset.domain contains 'abc'"));
     Assert.assertTrue(result.size() > 0);
 
     result =
         database.query(
-            new OSQLSynchQuery<Object>(
+            new OSQLSynchQuery<>(
                 "select from device where domainset[domain = 'abc'] is not null"));
     Assert.assertTrue(result.size() > 0);
 
     result =
         database.query(
-            new OSQLSynchQuery<Object>("select from device where domainset.domain contains 'pqr'"));
+            new OSQLSynchQuery<>("select from device where domainset.domain contains 'pqr'"));
     Assert.assertTrue(result.size() > 0);
   }
 
@@ -750,7 +750,7 @@ public class JSONTest extends DocumentDBBaseTest {
 
     List<ODocument> result =
         database.query(
-            new OSQLSynchQuery<Object>(
+            new OSQLSynchQuery<>(
                 "select from device where domainset.domain.lvlone.value = 'five'"));
     Assert.assertTrue(result.size() > 0);
   }

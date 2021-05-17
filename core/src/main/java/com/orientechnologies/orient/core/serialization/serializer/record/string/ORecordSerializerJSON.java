@@ -745,7 +745,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
   @Override
   public StringBuilder toString(
-      final ORecord iRecord,
+      final ORecord record,
       final StringBuilder output,
       final String format,
       boolean autoDetectCollectionType) {
@@ -757,28 +757,28 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
       json.beginObject();
 
       final OJSONFetchContext context = new OJSONFetchContext(json, settings);
-      context.writeSignature(json, iRecord);
+      context.writeSignature(json, record);
 
-      if (iRecord instanceof ODocument) {
+      if (record instanceof ODocument) {
         final OFetchPlan fp = OFetchHelper.buildFetchPlan(settings.fetchPlan);
 
-        OFetchHelper.fetch(iRecord, null, fp, new OJSONFetchListener(), context, format);
-      } else if (iRecord instanceof ORecordStringable) {
+        OFetchHelper.fetch(record, null, fp, new OJSONFetchListener(), context, format);
+      } else if (record instanceof ORecordStringable) {
         // STRINGABLE
-        final ORecordStringable record = (ORecordStringable) iRecord;
-        json.writeAttribute(settings.indentLevel, true, "value", record.value());
-      } else if (iRecord instanceof OBlob) {
+        final ORecordStringable recordStringable = (ORecordStringable) record;
+        json.writeAttribute(settings.indentLevel, true, "value", recordStringable.value());
+      } else if (record instanceof OBlob) {
         // BYTES
-        final OBlob record = (OBlob) iRecord;
+        final OBlob recordBlob = (OBlob) record;
         json.writeAttribute(
             settings.indentLevel,
             true,
             "value",
-            Base64.getEncoder().encodeToString(record.toStream()));
+            Base64.getEncoder().encodeToString(recordBlob.toStream()));
       } else {
         throw new OSerializationException(
             "Error on marshalling record of type '"
-                + iRecord.getClass()
+                + record.getClass()
                 + "' to JSON. The record type cannot be exported to JSON");
       }
       json.endObject(settings.indentLevel, true);

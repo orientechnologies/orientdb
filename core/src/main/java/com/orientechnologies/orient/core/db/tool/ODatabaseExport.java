@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
@@ -247,15 +248,6 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
           }
 
           brokenRids.addAll(it.getBrokenRIDs());
-        } catch (IOException e) {
-          OLogManager.instance()
-              .error(
-                  this,
-                  "\nError on exporting record %s because of I/O problems",
-                  e,
-                  rec.getIdentity());
-          // RE-THROW THE EXCEPTION UP
-          throw e;
         } catch (OIOException e) {
           OLogManager.instance()
               .error(
@@ -301,14 +293,14 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     writer.beginCollection(level, true, "brokenRids");
 
     boolean firsBrokenRid = true;
-
-    for (ORID rid : brokenRids) {
-      if (firsBrokenRid) firsBrokenRid = false;
-      else writer.append(",");
-
+    for (final ORID rid : brokenRids) {
+      if (firsBrokenRid) {
+        firsBrokenRid = false;
+      } else {
+        writer.append(",");
+      }
       writer.append(rid.toString());
     }
-
     writer.endCollection(level, true);
 
     return totalExportedRecords;
@@ -531,7 +523,6 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
             exportEntry.field("binary", false);
             exportEntry.field("key", indexEntry.<Object>field("key"));
           }
-
           exportEntry.field("rid", indexEntry.<Object>field("rid"));
 
           i++;
@@ -552,7 +543,6 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     if (manualIndexes > 0) {
       writer.endCollection(1, true);
     }
-
     listener.onMessage("\nOK (" + manualIndexes + " manual indexes)");
   }
 
@@ -643,20 +633,16 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     listener.onMessage("OK (" + schema.getClasses().size() + " classes)");
   }
 
-  private boolean exportRecord(long recordTot, long recordNum, ORecord rec, Set<ORID> brokenRids)
-      throws IOException {
+  private boolean exportRecord(long recordTot, long recordNum, ORecord rec, Set<ORID> brokenRids) {
     if (rec != null)
       try {
         if (rec.getIdentity().isValid()) rec.reload();
-
         if (useLineFeedForRecords) writer.append("\n");
-
         if (recordExported > 0) writer.append(",");
 
-        // TODO: central format management in `ORecordAbstract`
         // `earlyTypes` from version `13`
-        final String format =
-            "rid,type,version,class,attribSameRow,keepTypes,alwaysFetchEmbedded,earlyTypes,dateAsLong";
+        // "rid,type,version,class,attribSameRow,keepTypes,alwaysFetchEmbedded,earlyTypes,dateAsLong"
+        final String format = ORecordAbstract.BASE_FORMAT + "," + "earlyTypes,dateAsLong";
         ORecordSerializerJSON.INSTANCE.toString(rec, writer, format == null ? "" : format, true);
 
         recordExported++;
@@ -665,7 +651,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
         if (recordTot > 10 && (recordNum + 1) % (recordTot / 10) == 0) listener.onMessage(".");
 
         return true;
-      } catch (Exception t) {
+      } catch (final Exception t) {
         if (rec != null) {
           final ORID rid = rec.getIdentity().copy();
 
