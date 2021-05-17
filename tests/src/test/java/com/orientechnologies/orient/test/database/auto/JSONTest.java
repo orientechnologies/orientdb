@@ -712,8 +712,7 @@ public class JSONTest extends DocumentDBBaseTest {
 
     result =
         database.query(
-            new OSQLSynchQuery<>(
-                "select from device where domainset[domain = 'abc'] is not null"));
+            new OSQLSynchQuery<>("select from device where domainset[domain = 'abc'] is not null"));
     Assert.assertTrue(result.size() > 0);
 
     result =

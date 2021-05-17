@@ -17,25 +17,13 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.index.nkbtree.normalizers.benchmark.Plotter;
-import org.knowm.xchart.XYChart;
-import org.knowm.xchart.style.Styler;
+import java.util.Date;
+import java.util.concurrent.TimeUnit;
 import org.openjdk.jmh.annotations.*;
-import org.openjdk.jmh.results.Result;
-import org.openjdk.jmh.results.RunResult;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 @State(Scope.Thread)
 @BenchmarkMode(Mode.AverageTime)
