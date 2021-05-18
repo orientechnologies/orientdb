@@ -126,6 +126,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Document API entrypoint.
@@ -160,7 +161,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
   protected OMicroTransaction microTransaction = null;
 
-  protected Map<String, OResultSet> activeQueries = new HashMap<>();
+  protected Map<String, OResultSet> activeQueries = new ConcurrentHashMap<>();
   private Map<UUID, OBonsaiCollectionPointer> collectionsChanges;
 
   //database stats!
