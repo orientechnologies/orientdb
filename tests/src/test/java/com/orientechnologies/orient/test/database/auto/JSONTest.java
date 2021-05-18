@@ -1167,10 +1167,8 @@ public class JSONTest extends DocumentDBBaseTest {
           new OSQLSynchQuery<ODocument>("traverse * from " + o.getIdentity().toString())) {
         Assert.assertTrue(traverse.remove(id.getIdentity()));
       }
-
       Assert.assertTrue(traverse.isEmpty());
     }
-
     Assert.assertTrue(traverseMap.isEmpty());
   }
 

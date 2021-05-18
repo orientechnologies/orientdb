@@ -144,8 +144,7 @@ public class OFetchHelper {
       final int iFieldDepthLevel,
       final Map<ORID, Integer> parsedRecords,
       final String iFieldPathFromRoot,
-      final OFetchContext iContext)
-      throws IOException {
+      final OFetchContext iContext) {
     if (iFetchPlan == null) return;
 
     if (iFetchPlan == OFetchHelper.DEFAULT_FETCHPLAN) return;
@@ -766,7 +765,6 @@ public class OFetchHelper {
       final OFetchContext iContext,
       final ORecordSerializerJSON.FormatSettings settings)
       throws IOException {
-    // FIXME: fieldTypes handling required?
     final Map<String, ODocument> linked = (Map<String, ODocument>) fieldValue;
     iContext.onBeforeMap(iRootRecord, fieldName, iUserObject);
 
@@ -864,7 +862,6 @@ public class OFetchHelper {
       final OFetchListener iListener,
       final OFetchContext context,
       ORecordSerializerJSON.FormatSettings settings) {
-    // FIXME: fieldTypes handling required?
     if (fieldValue instanceof ODocument[]) {
       final ODocument[] linked = (ODocument[]) fieldValue;
       context.onBeforeArray(rootRecord, fieldName, iUserObject, linked);
@@ -1044,7 +1041,6 @@ public class OFetchHelper {
       final OFetchListener iListener,
       final OFetchContext iContext,
       final ORecordSerializerJSON.FormatSettings settings) {
-    // FIXME: fieldTypes handling required?
     if (fieldValue instanceof ORID && !((ORID) fieldValue).isValid()) {
       // RID NULL: TREAT AS "NULL" VALUE
       iContext.onBeforeStandardField(fieldValue, fieldName, iRootRecord, null);
