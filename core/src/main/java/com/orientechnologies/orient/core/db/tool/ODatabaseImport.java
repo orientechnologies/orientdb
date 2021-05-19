@@ -2148,7 +2148,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     return record.getIdentity();
   }
 
-  // TODO: WIP
+  /*
+   * From `exporterVersion` >= `13`, `fromStream()` will be used. However, the import is still of type String, and thus has to be converted to InputStream, which can only be avoided by introducing a new interface method.
+   */
   @Deprecated
   private ORID importRecord(final HashSet<ORID> recordsBeforeImport) throws Exception {
     OPair<String, Map<String, ORidSet>> recordParse =
@@ -2173,12 +2175,12 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     Set<Integer> skippedPartsIndexes = new HashSet<>();
 
     try {
-
       try {
-        if (exporterVersion < 13) {
+        if (exporterVersion >= 13) {
+          // FIXME: adapt e2e stream handling will require new APIs
           record =
-              ORecordSerializerJSON.INSTANCE.fromString(
-                  value,
+              ORecordSerializerJSON.INSTANCE.fromStream(
+                  new ByteArrayInputStream(value.getBytes()),
                   record,
                   null,
                   null,
@@ -2186,7 +2188,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
                   maxRidbagStringSizeBeforeLazyImport,
                   skippedPartsIndexes);
         } else {
-          // FIXME: switch to `fromStream` + adapt e2e stream handling
           record =
               ORecordSerializerJSON.INSTANCE.fromString(
                   value,
@@ -2323,7 +2324,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
                     + loadedRecord.getClass()
                     + " .");
           }
-
           ORecordInternal.setVersion(record, loadedRecord.getVersion());
         } else {
           ORecordInternal.setVersion(record, 0);
