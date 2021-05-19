@@ -93,21 +93,24 @@ public class OJSONFetchContext implements OFetchContext {
   }
 
   public void onBeforeCollection(
-      final ODocument iRootRecord,
-      final String iFieldName,
-      final Object iUserObject,
+      final ODocument rootRecord,
+      final String fieldName,
+      final Object userObject,
       final Iterable<?> iterable) {
     try {
-      manageTypes(iFieldName, iterable, null);
-      jsonWriter.beginCollection(++settings.indentLevel, true, iFieldName);
-      collectionStack.add(iRootRecord);
-    } catch (IOException e) {
+      manageTypes(fieldName, iterable, null);
+      if (settings.earlyTypes) {
+        onAfterFetch(rootRecord);
+      }
+      jsonWriter.beginCollection(++settings.indentLevel, true, fieldName);
+      collectionStack.add(rootRecord);
+    } catch (final IOException e) {
       throw OException.wrapException(
           new OFetchException(
               "Error writing collection field "
-                  + iFieldName
+                  + fieldName
                   + " of record "
-                  + iRootRecord.getIdentity()),
+                  + rootRecord.getIdentity()),
           e);
     }
   }

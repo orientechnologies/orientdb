@@ -51,9 +51,9 @@ public class HttpGraphTest extends BaseHttpDatabaseTest {
             .getResponse();
 
     // TODO: check error later
-    /*Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
+    Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
 
-    InputStream content = response.getEntity().getContent();
+    /*InputStream content = response.getEntity().getContent();
     final ByteArrayOutputStream out = new ByteArrayOutputStream();
     OIOUtils.copyStream(content, out, -1);
 
@@ -87,7 +87,7 @@ public class HttpGraphTest extends BaseHttpDatabaseTest {
     Assert.assertEquals(coll.size(), 1);
   }
 
-  // TODO: failing due to stream parser refactoring
+  // TODO: could be failing due to stream parser refactoring
   @Test
   public void getGraphResult() throws IOException {
     Assert.assertEquals(

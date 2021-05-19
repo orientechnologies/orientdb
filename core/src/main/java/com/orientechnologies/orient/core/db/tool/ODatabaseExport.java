@@ -33,12 +33,12 @@ import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
-import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
@@ -66,7 +66,8 @@ import java.util.zip.GZIPOutputStream;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class ODatabaseExport extends ODatabaseImpExpAbstract {
-  public static final int VERSION = 12;
+  /* from version `13` with `earlyTypes` settings */
+  public static final int EXPORTER_VERSION = 13;
 
   protected OJSONWriter writer;
   protected long recordExported;
@@ -131,7 +132,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
       listener.onMessage(
           "\nStarted export of database '" + database.getName() + "' to " + fileName + "...");
 
-      long time = System.currentTimeMillis();
+      long time = System.nanoTime();
 
       if (includeInfo) exportInfo();
       if (includeClusterDefinitions) exportClusters();
@@ -141,7 +142,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
       if (includeManualIndexes) exportManualIndexes();
 
       listener.onMessage(
-          "\n\nDatabase export completed in " + (System.currentTimeMillis() - time) + "ms");
+          "\n\nDatabase export completed in " + ((System.nanoTime() - time) / 1000000) + "ms");
 
       writer.flush();
     } catch (Exception e) {
@@ -155,7 +156,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     return this;
   }
 
-  public long exportRecords() throws IOException {
+  private long exportRecords() throws IOException {
     long totalFoundRecords = 0;
     long totalExportedRecords = 0;
 
@@ -247,15 +248,6 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
           }
 
           brokenRids.addAll(it.getBrokenRIDs());
-        } catch (IOException e) {
-          OLogManager.instance()
-              .error(
-                  this,
-                  "\nError on exporting record %s because of I/O problems",
-                  e,
-                  rec.getIdentity());
-          // RE-THROW THE EXCEPTION UP
-          throw e;
         } catch (OIOException e) {
           OLogManager.instance()
               .error(
@@ -301,14 +293,14 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     writer.beginCollection(level, true, "brokenRids");
 
     boolean firsBrokenRid = true;
-
-    for (ORID rid : brokenRids) {
-      if (firsBrokenRid) firsBrokenRid = false;
-      else writer.append(",");
-
+    for (final ORID rid : brokenRids) {
+      if (firsBrokenRid) {
+        firsBrokenRid = false;
+      } else {
+        writer.append(",");
+      }
       writer.append(rid.toString());
     }
-
     writer.endCollection(level, true);
 
     return totalExportedRecords;
@@ -342,7 +334,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
       }
   }
 
-  protected int getMaxClusterId() {
+  private int getMaxClusterId() {
     int totalCluster = -1;
     for (String clusterName : database.getClusterNames()) {
       if (database.getClusterIdByName(clusterName) > totalCluster)
@@ -402,7 +394,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     writer.beginObject(1, true, "info");
     writer.writeAttribute(2, true, "name", database.getName().replace('\\', '/'));
     writer.writeAttribute(2, true, "default-cluster-id", database.getDefaultClusterId());
-    writer.writeAttribute(2, true, "exporter-version", VERSION);
+    writer.writeAttribute(2, true, "exporter-version", EXPORTER_VERSION);
     writer.writeAttribute(2, true, "engine-version", OConstants.getVersion());
     final String engineBuild = OConstants.getBuildNumber();
     if (engineBuild != null) writer.writeAttribute(2, true, "engine-build", engineBuild);
@@ -531,7 +523,6 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
             exportEntry.field("binary", false);
             exportEntry.field("key", indexEntry.<Object>field("key"));
           }
-
           exportEntry.field("rid", indexEntry.<Object>field("rid"));
 
           i++;
@@ -552,7 +543,6 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     if (manualIndexes > 0) {
       writer.endCollection(1, true);
     }
-
     listener.onMessage("\nOK (" + manualIndexes + " manual indexes)");
   }
 
@@ -560,13 +550,13 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     listener.onMessage("\nExporting schema...");
 
     writer.beginObject(1, true, "schema");
-    OSchema s = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot();
-    writer.writeAttribute(2, true, "version", s.getVersion());
+    final OSchema schema = (database.getMetadata()).getImmutableSchemaSnapshot();
+    writer.writeAttribute(2, true, "version", schema.getVersion());
     writer.writeAttribute(2, false, "blob-clusters", database.getBlobClusterIds());
-    if (!s.getClasses().isEmpty()) {
+    if (!schema.getClasses().isEmpty()) {
       writer.beginCollection(2, true, "classes");
 
-      final List<OClass> classes = new ArrayList<OClass>(s.getClasses());
+      final List<OClass> classes = new ArrayList<>(schema.getClasses());
       Collections.sort(classes);
 
       for (OClass cls : classes) {
@@ -617,7 +607,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
               writer.writeAttribute(0, false, "default-value", p.getDefaultValue());
             if (p.getRegexp() != null) writer.writeAttribute(0, false, "regexp", p.getRegexp());
             final Set<String> customKeys = p.getCustomKeys();
-            final Map<String, String> custom = new HashMap<String, String>();
+            final Map<String, String> custom = new HashMap<>();
             for (String key : customKeys) custom.put(key, p.getCustom(key));
 
             if (!custom.isEmpty()) writer.writeAttribute(0, false, "customFields", custom);
@@ -630,8 +620,9 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
         final Map<String, String> custom = new HashMap<String, String>();
         for (String key : customKeys) custom.put(key, cls.getCustom(key));
 
-        if (!custom.isEmpty()) writer.writeAttribute(0, false, "customFields", custom);
-
+        if (!custom.isEmpty()) {
+          writer.writeAttribute(0, false, "customFields", custom);
+        }
         writer.endObject(3, true);
       }
       writer.endCollection(2, true);
@@ -639,22 +630,20 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
     writer.endObject(1, true);
 
-    listener.onMessage("OK (" + s.getClasses().size() + " classes)");
+    listener.onMessage("OK (" + schema.getClasses().size() + " classes)");
   }
 
-  private boolean exportRecord(long recordTot, long recordNum, ORecord rec, Set<ORID> brokenRids)
-      throws IOException {
+  private boolean exportRecord(long recordTot, long recordNum, ORecord rec, Set<ORID> brokenRids) {
     if (rec != null)
       try {
         if (rec.getIdentity().isValid()) rec.reload();
-
         if (useLineFeedForRecords) writer.append("\n");
-
         if (recordExported > 0) writer.append(",");
 
-        String iFormat =
-            "rid,type,version,class,attribSameRow,keepTypes,alwaysFetchEmbedded,dateAsLong";
-        ORecordSerializerJSON.INSTANCE.toString(rec, writer, iFormat == null ? "" : iFormat, true);
+        // `earlyTypes` from version `13`
+        // "rid,type,version,class,attribSameRow,keepTypes,alwaysFetchEmbedded,earlyTypes,dateAsLong"
+        final String format = ORecordAbstract.BASE_FORMAT + "," + "earlyTypes,dateAsLong";
+        ORecordSerializerJSON.INSTANCE.toString(rec, writer, format == null ? "" : format, true);
 
         recordExported++;
         recordNum++;
@@ -662,7 +651,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
         if (recordTot > 10 && (recordNum + 1) % (recordTot / 10) == 0) listener.onMessage(".");
 
         return true;
-      } catch (Exception t) {
+      } catch (final Exception t) {
         if (rec != null) {
           final ORID rid = rec.getIdentity().copy();
 

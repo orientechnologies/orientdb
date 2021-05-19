@@ -25,7 +25,6 @@ import org.junit.*;
 
 /** Created by tglman on 04/05/16. */
 public class DirtyTrackingTreeRidBagRemoteTest {
-
   private OServer server;
   private String serverHome;
   private String oldOrientDBHome;
@@ -37,7 +36,6 @@ public class DirtyTrackingTreeRidBagRemoteTest {
           NoSuchMethodException, InstantiationException, IOException, IllegalAccessException {
     final String buildDirectory = System.getProperty("buildDirectory", ".");
     serverHome = buildDirectory + "/" + DirtyTrackingTreeRidBagRemoteTest.class.getSimpleName();
-
     deleteDirectory(new File(serverHome));
 
     final File file = new File(serverHome);
@@ -74,7 +72,7 @@ public class DirtyTrackingTreeRidBagRemoteTest {
         OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getDefValue());
     final int max =
         OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger() * 2;
-    OrientGraph graph =
+    final OrientGraph graph =
         new OrientGraph(
             "remote:localhost:3064/" + DirtyTrackingTreeRidBagRemoteTest.class.getSimpleName(),
             "root",
@@ -84,9 +82,9 @@ public class DirtyTrackingTreeRidBagRemoteTest {
       graph.getRawGraph().declareIntent(new OIntentMassiveInsert());
       graph.createEdgeType("Edge");
       OIdentifiable oneVertex = null;
-      Map<Object, Vertex> vertices = new HashMap<Object, Vertex>();
+      final Map<Object, Vertex> vertices = new HashMap<Object, Vertex>();
       for (int i = 0; i < max; i++) {
-        Vertex v = graph.addVertex("class:V");
+        final Vertex v = graph.addVertex("class:V");
         v.setProperty("key", "foo" + i);
         graph.commit();
         vertices.put(v.getProperty("key"), v);
@@ -95,16 +93,16 @@ public class DirtyTrackingTreeRidBagRemoteTest {
       graph.commit();
       // Add the edges
       for (int i = 0; i < max; i++) {
-        String codeUCD1 = "foo" + i;
+        final String codeUCD1 = "foo" + i;
         // Take the first vertex
-        Vertex med1 = (Vertex) vertices.get(codeUCD1);
+        final Vertex med1 = vertices.get(codeUCD1);
         // For the 2nd term
         for (int j = 0; j < max; j++) {
-          String key = "foo" + j;
+          final String key = "foo" + j;
           // Take the second vertex
-          Vertex med2 = (Vertex) vertices.get(key);
+          final Vertex med2 = vertices.get(key);
           // ((OrientVertex)med2).getRecord().reload();
-          OrientEdge eInteraction = graph.addEdge(null, med1, med2, "Edge");
+          graph.addEdge(null, med1, med2, "Edge");
           assertNotNull(
               graph
                   .getRawGraph()
@@ -116,21 +114,20 @@ public class DirtyTrackingTreeRidBagRemoteTest {
       }
       graph.getRawGraph().getLocalCache().clear();
 
-      OrientVertex vertex = graph.getVertex(oneVertex);
+      final OrientVertex vertex = graph.getVertex(oneVertex);
       assertEquals(new GremlinPipeline<Vertex, Long>().start(vertex).in("Edge").count(), max);
     } finally {
       graph.shutdown();
     }
   }
 
-  private static void deleteDirectory(File f) throws IOException {
+  private static void deleteDirectory(final File f) throws IOException {
     if (f.isDirectory()) {
       final File[] files = f.listFiles();
       if (files != null) {
-        for (File c : files) deleteDirectory(c);
+        for (final File c : files) deleteDirectory(c);
       }
     }
-
     if (f.exists() && !f.delete()) throw new FileNotFoundException("Failed to delete file: " + f);
   }
 }
