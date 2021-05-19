@@ -114,7 +114,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       throws IOException {
     super(database, fileName, outputListener);
 
-    // FIXME: unclosed stream
+    // FIXME: unclosed stream?
     final BufferedInputStream bufferedInputStream =
         new BufferedInputStream(new FileInputStream(this.fileName));
     bufferedInputStream.mark(1024);
@@ -2148,8 +2148,10 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     return record.getIdentity();
   }
 
-  /*
-   * From `exporterVersion` >= `13`, `fromStream()` will be used. However, the import is still of type String, and thus has to be converted to InputStream, which can only be avoided by introducing a new interface method.
+  /**
+   * From `exporterVersion` >= `13`, `fromStream()` will be used. However, the import is still of
+   * type String, and thus has to be converted to InputStream, which can only be avoided by
+   * introducing a new interface method.
    */
   @Deprecated
   private ORID importRecord(final HashSet<ORID> recordsBeforeImport) throws Exception {
