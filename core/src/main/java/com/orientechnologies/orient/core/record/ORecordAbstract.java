@@ -169,18 +169,18 @@ public abstract class ORecordAbstract implements ORecord {
     return (RET) ORecordSerializerJSON.INSTANCE.fromString(iSource, this, null, needReload);
   }
 
-  public <RET extends ORecord> RET fromJSON(final InputStream iContentResult) throws IOException {
+  /*public <RET extends ORecord> RET fromJSON(final InputStream iContentResult) throws IOException {
     final ByteArrayOutputStream out = new ByteArrayOutputStream();
     OIOUtils.copyStream(iContentResult, out, -1);
     ORecordSerializerJSON.INSTANCE.fromString(out.toString(), this, null);
     return (RET) this;
-  }
+  }*/
 
-  // TODO: replace above by this
-  /*public <RET extends ORecord> RET fromJSON(final InputStream contentStream) throws IOException {
+  // requires streaming friendly placement of `fieldTypes` from exporter version 13 onwards
+  public <RET extends ORecord> RET fromJSON(final InputStream contentStream) throws IOException {
     ORecordSerializerJSON.INSTANCE.fromStream(contentStream, this, null);
     return (RET) this;
-  }*/
+  }
 
   public String toJSON() {
     return toJSON(DEFAULT_FORMAT);
