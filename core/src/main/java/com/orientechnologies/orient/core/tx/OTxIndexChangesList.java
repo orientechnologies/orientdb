@@ -46,6 +46,16 @@ public class OTxIndexChangesList
       // update size
       size--;
     }
+
+    public void onRidChange(ORID oldRid, ORID newRid) {
+      ridToNodes.get(oldRid).remove(this);
+      List<Node> newMapList = ridToNodes.get(newRid);
+      if (newMapList == null) {
+        newMapList = new ArrayList<>();
+        ridToNodes.put(newRid, newMapList);
+      }
+      newMapList.add(this);
+    }
   }
 
   private Node first;
@@ -416,5 +426,22 @@ public class OTxIndexChangesList
       int fromIndex, int toIndex) {
     // TODO implement this
     throw new UnsupportedOperationException();
+  }
+
+  public Optional<Node> getFirstNode(ORID rid, OTransactionIndexChanges.OPERATION op) {
+    List<Node> list = ridToNodes.get(rid);
+    if (list != null) {
+      return list.stream().filter(x -> x.entry.getOperation() == op).findFirst();
+    }
+    return Optional.empty();
+  }
+
+  public Optional<Node> getNode(OTransactionIndexChangesPerKey.OTransactionIndexEntry entry) {
+    ORID rid = entry.getValue() == null ? null : entry.getValue().getIdentity();
+    List<Node> list = ridToNodes.get(rid);
+    if (list != null) {
+      return list.stream().filter(x -> x.entry == entry).findFirst();
+    }
+    return Optional.empty();
   }
 }
