@@ -1424,9 +1424,9 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     if (iType == OType.LINKBAG) {
       final ORidBag bag = new ORidBag();
 
-      parseRidbag(
+      parseRidBag(
+          parser,
           iRecord,
-          iFieldValue,
           iType,
           OType.LINK,
           null,
@@ -1502,7 +1502,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     if (iType == OType.LINKBAG) {
       final ORidBag bag = new ORidBag();
 
-      parseRidbag(
+      parseRidBagV0(
           iRecord,
           iFieldValue,
           iType,
@@ -1672,7 +1672,63 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     return collection;
   }
 
-  private void parseRidbag(
+  private void parseRidBag(
+      JsonParser parser,
+      ODocument iRecord,
+      OType iType,
+      OType iLinkedType,
+      Map<String, Character> iFieldTypes,
+      boolean iNoMap,
+      String iOptions,
+      CollectionItemVisitor visitor)
+      throws IOException {
+    JsonToken jsonToken = parser.nextToken();
+    while (!JsonToken.END_ARRAY.equals(jsonToken)) {
+      // RidBags are of type String
+      if (JsonToken.VALUE_STRING.equals(jsonToken)) {
+        final String value = parser.getValueAsString();
+        if (!value.isEmpty()) {
+          int lastCommaPosition = -1;
+          for (int i = 1; i < value.length(); i++) {
+            if (value.charAt(i) == ',' || i == value.length() - 1) {
+              String item;
+              if (i == value.length() - 1) {
+                item = value.substring(lastCommaPosition + 1);
+              } else {
+                item = value.substring(lastCommaPosition + 1, i);
+              }
+              lastCommaPosition = i;
+              final String itemValue = item.trim();
+              if (itemValue.length() == 0) continue;
+
+              final Object collectionItem =
+                  getValue(
+                      parser,
+                      iRecord,
+                      null,
+                      itemValue,
+                      OIOUtils.getStringContent(itemValue),
+                      iLinkedType,
+                      null,
+                      iFieldTypes,
+                      iNoMap,
+                      iOptions);
+
+              // TODO: redundant in some cases, owner is already added by getValueV0 in some cases
+              if (shouldBeDeserializedAsEmbedded(collectionItem, iType)) {
+                ODocumentInternal.addOwner((ODocument) collectionItem, iRecord);
+              }
+              visitor.visitItem(collectionItem);
+            }
+          }
+        }
+      }
+      jsonToken = parser.nextToken();
+    }
+  }
+
+  @Deprecated
+  private void parseRidBagV0(
       ODocument iRecord,
       String iFieldValue,
       OType iType,

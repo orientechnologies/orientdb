@@ -49,8 +49,6 @@ public class HttpGraphTest extends BaseHttpDatabaseTest {
         post("batch/" + getDatabaseName() + "/sql/")
             .payload(String.format(scriptPayload, script), CONTENT.JSON)
             .getResponse();
-
-    // TODO: check error later
     Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
 
     /*InputStream content = response.getEntity().getContent();

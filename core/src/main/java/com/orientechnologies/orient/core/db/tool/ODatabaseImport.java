@@ -147,6 +147,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     jsonReader = new OJSONReader(new InputStreamReader(inputStream));
     database.declareIntent(new OIntentMassiveInsert());
 
+    // TODO: replace jsonReader by JsonParser for all imports, based on the exporter version?!
     input = inputStream;
   }
 
