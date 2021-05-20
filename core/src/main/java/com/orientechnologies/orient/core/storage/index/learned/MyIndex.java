@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.storage.index.learned;
 import java.util.ArrayList;
 import java.util.List;
 
+// FIXME: migrate to MyIndexEngine
 public class MyIndex<T> {
   private int numberOfEntries = 0;
   private T firstKey = null;
