@@ -154,7 +154,7 @@ public class MyIndexEngine implements OIndexEngine {
 
   @Override
   public void updateUniqueIndexVersion(Object key) {
-
+    
   }
 
   @Override
