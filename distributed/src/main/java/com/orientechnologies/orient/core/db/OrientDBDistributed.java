@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.core.db;
 
-import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
@@ -16,8 +15,8 @@ import com.orientechnologies.orient.server.OServerAware;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributedPooled;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
 import java.io.File;
 import java.io.IOException;
@@ -29,7 +28,7 @@ import java.util.Iterator;
 public class OrientDBDistributed extends OrientDBEmbedded implements OServerAware {
 
   private OServer server;
-  private volatile ODistributedPlugin plugin;
+  private volatile ODistributedAbstractPlugin plugin;
 
   public OrientDBDistributed(String directoryPath, OrientDBConfig config, Orient instance) {
     super(directoryPath, config, instance);
@@ -42,7 +41,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     this.server = server;
   }
 
-  public synchronized ODistributedPlugin getPlugin() {
+  public synchronized ODistributedAbstractPlugin getPlugin() {
     if (plugin == null) {
       if (server != null && server.isActive()) plugin = server.getPlugin("cluster");
     }
@@ -79,7 +78,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     return new ODatabaseDocumentDistributedPooled(pool, storage, plugin);
   }
 
-  public void setPlugin(ODistributedPlugin plugin) {
+  public void setPlugin(ODistributedAbstractPlugin plugin) {
     this.plugin = plugin;
   }
 
@@ -177,49 +176,6 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         storages.remove(name);
         sharedContexts.remove(name);
       }
-    }
-  }
-
-  private boolean checkDbAvailable(String name) {
-    if (getPlugin() == null || !getPlugin().isEnabled()) {
-      return true;
-    }
-    if (OSystemDatabase.SYSTEM_DB_NAME.equals(name)) return true;
-    ODistributedServerManager.DB_STATUS dbStatus =
-        plugin.getDatabaseStatus(plugin.getLocalNodeName(), name);
-    if (dbStatus != ODistributedServerManager.DB_STATUS.ONLINE
-        && dbStatus != ODistributedServerManager.DB_STATUS.BACKUP) {
-      return false;
-    } else {
-      return true;
-    }
-  }
-
-  @Override
-  public ODatabaseDocumentInternal open(String name, String user, String password) {
-    if (checkDbAvailable(name)) {
-      return super.open(name, user, password);
-    } else {
-      if (exists(name, user, password)) {
-        super.open(name, user, password);
-      }
-      throw new OOfflineNodeException(
-          "database " + name + " not online on " + plugin.getLocalNodeName());
-    }
-  }
-
-  @Override
-  public ODatabaseDocumentInternal open(
-      String name, String user, String password, OrientDBConfig config) {
-
-    if (checkDbAvailable(name)) {
-      return super.open(name, user, password, config);
-    } else {
-      if (exists(name, user, password)) {
-        super.open(name, user, password, config);
-      }
-      throw new OOfflineNodeException(
-          "database " + name + " not online on " + plugin.getLocalNodeName());
     }
   }
 

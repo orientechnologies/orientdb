@@ -79,7 +79,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class ODistributedDatabaseImpl implements ODistributedDatabase {
   public static final String DISTRIBUTED_SYNC_JSON_FILENAME = "distributed-sync.json";
-  protected final ODistributedPlugin manager;
+  protected final ODistributedAbstractPlugin manager;
   protected final ODistributedMessageServiceImpl msgService;
   protected final String databaseName;
   private final String localNodeName;
@@ -104,7 +104,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private OFreezeGuard freezeGuard;
 
   public ODistributedDatabaseImpl(
-      final ODistributedPlugin manager,
+      final ODistributedAbstractPlugin manager,
       final ODistributedMessageServiceImpl msgService,
       final String iDatabaseName,
       OServer server) {
@@ -441,7 +441,14 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   @Override
   public void setOnline() {
-    fillStatus();
+    OAbstractPaginatedStorage storage =
+        (OAbstractPaginatedStorage)
+            ((OrientDBDistributed) manager.getServerInstance().getDatabases())
+                .getStorage(databaseName);
+
+    if (storage != null) {
+      sequenceManager.fill(storage.getLastMetadata());
+    }
     ODistributedServerLog.info(
         this,
         localNodeName,
@@ -455,17 +462,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     manager.setDatabaseStatus(
         localNodeName, databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
     resume();
-  }
-
-  public void fillStatus() {
-    OAbstractPaginatedStorage storage =
-        (OAbstractPaginatedStorage)
-            ((OrientDBDistributed) manager.getServerInstance().getDatabases())
-                .getStorage(databaseName);
-
-    if (storage != null) {
-      sequenceManager.fill(storage.getLastMetadata());
-    }
   }
 
   @Override

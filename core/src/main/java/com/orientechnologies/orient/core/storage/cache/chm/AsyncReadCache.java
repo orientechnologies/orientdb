@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.storage.cache.chm;
 
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.directmemory.OByteBufferPool;
-import com.orientechnologies.common.directmemory.ODirectMemoryAllocator.Intention;
 import com.orientechnologies.common.directmemory.OPointer;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.types.OModifiableBoolean;
@@ -140,7 +139,11 @@ public final class AsyncReadCache implements OReadCache {
     for (; ; ) {
       OCacheEntry cacheEntry = data.get(pageKey);
 
-      if (cacheEntry == null) {
+      if (cacheEntry != null) {
+        if (cacheEntry.acquireEntry()) {
+          return cacheEntry;
+        }
+      } else {
         final OCacheEntry[] updatedEntry = new OCacheEntry[1];
 
         cacheEntry =
@@ -179,9 +182,10 @@ public final class AsyncReadCache implements OReadCache {
         if (cacheEntry == null) {
           return null;
         }
-      }
-      if (cacheEntry.acquireEntry()) {
-        return cacheEntry;
+
+        if (cacheEntry.acquireEntry()) {
+          return cacheEntry;
+        }
       }
     }
   }
@@ -277,7 +281,7 @@ public final class AsyncReadCache implements OReadCache {
   private OCacheEntry addNewPagePointerToTheCache(final long fileId, final int pageIndex) {
     final PageKey pageKey = new PageKey(fileId, pageIndex);
 
-    final OPointer pointer = bufferPool.acquireDirect(true, Intention.ADD_NEW_PAGE_IN_DISK_CACHE);
+    final OPointer pointer = bufferPool.acquireDirect(true);
     final OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, fileId, pageIndex);
     cachePointer.incrementReadersReferrer();
 

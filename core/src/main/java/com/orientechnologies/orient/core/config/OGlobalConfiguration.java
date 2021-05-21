@@ -92,18 +92,6 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       Boolean.class,
       true),
 
-  MEMORY_PROFILING(
-      "memory.profiling",
-      "Switches on profiling of allocations of direct memory inside of OrientDB.",
-      Boolean.class,
-      false),
-
-  MEMORY_PROFILING_REPORT_INTERVAL(
-      "memory.profiling.reportInterval",
-      "Interval of printing of memory profiling results in minutes",
-      Integer.class,
-      15),
-
   @Deprecated
   MEMORY_CHUNK_SIZE(
       "memory.chunk.size",
@@ -219,7 +207,6 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       Boolean.class,
       true),
 
-  @Deprecated
   DISK_USE_NATIVE_OS_API(
       "storage.disk.useNativeOsAPI",
       "Allows to call native OS methods if possible",
@@ -301,13 +288,6 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       OChecksumMode.class,
       OChecksumMode.StoreAndSwitchReadOnlyMode,
       false),
-
-  STORAGE_CHECK_LATEST_OPERATION_ID(
-      "storage.checkLatestOperationId",
-      "Indicates wether storage should be checked for latest operation id, "
-          + "to ensure that all the records are needed to restore database are stored into the WAL (true by default)",
-      Boolean.class,
-      true),
 
   STORAGE_EXCLUSIVE_FILE_ACCESS(
       "storage.exclusiveFileAccess",
@@ -504,7 +484,7 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       "storage.wal.segmentsInterval",
       "Maximum interval in time in min. after which new WAL segment will be added",
       Integer.class,
-      10),
+      5),
 
   WAL_FILE_AUTOCLOSE_INTERVAL(
       "storage.wal.fileAutoCloseInterval",
@@ -551,7 +531,7 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       "storage.wal.keepSingleSegment",
       "Database will provide the best efforts to keep only single WAL inside the storage",
       Boolean.class,
-      true),
+      false),
 
   @Deprecated
   WAL_ALLOW_DIRECT_IO(
@@ -1817,7 +1797,7 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       "security.createDefaultUsers",
       "Indicates whether default database users should be created",
       Boolean.class,
-      false),
+      true),
   WARNING_DEFAULT_USERS(
       "security.warningDefaultUsers",
       "Indicates whether access with default users should show a warning",

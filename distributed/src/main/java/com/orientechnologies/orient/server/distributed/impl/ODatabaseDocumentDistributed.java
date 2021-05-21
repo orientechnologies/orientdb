@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.metadata.schema.OView;
@@ -67,9 +68,10 @@ import java.util.stream.Stream;
 /** Created by tglman on 30/03/17. */
 public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
-  private final ODistributedPlugin distributedManager;
+  private final ODistributedAbstractPlugin distributedManager;
 
-  public ODatabaseDocumentDistributed(OStorage storage, ODistributedPlugin distributedPlugin) {
+  public ODatabaseDocumentDistributed(
+      OStorage storage, ODistributedAbstractPlugin distributedPlugin) {
     super(storage);
     this.distributedManager = distributedPlugin;
   }
@@ -123,6 +125,19 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       result.addAll(more);
     }
     return result;
+  }
+
+  @Override
+  protected void loadMetadata() {
+    loadMetadata(this.getSharedContext());
+  }
+
+  @Override
+  protected void loadMetadata(OSharedContext ctx) {
+    metadata = new OMetadataDefault(this);
+    sharedContext = ctx;
+    metadata.init(sharedContext);
+    sharedContext.load(this);
   }
 
   /**
@@ -469,7 +484,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           int keyVersion = getVersionForIndexKey(tx, name, changesPerKey.key, isCoordinator);
           keys.add(new OPair<>(name + "#" + changesPerKey.key, keyVersion));
         }
-        if (!change.getValue().nullKeyChanges.isEmpty()) {
+        if (!change.getValue().nullKeyChanges.entries.isEmpty()) {
           int keyVersion = getVersionForIndexKey(tx, name, null, isCoordinator);
           keys.add(new OPair<>(name + "#null", keyVersion));
         }
@@ -830,20 +845,19 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       if (OClass.INDEX_TYPE.UNIQUE.name().equals(index.getType())
           || OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name().equals(index.getType())) {
         OTransactionIndexChangesPerKey nullKeyChanges = change.getValue().nullKeyChanges;
-        if (!nullKeyChanges.isEmpty()) {
+        if (!nullKeyChanges.entries.isEmpty()) {
           OIdentifiable old;
           try (Stream<ORID> stream = index.getInternal().getRids(null)) {
             old = stream.findFirst().orElse(null);
           }
-          Object newValue =
-              nullKeyChanges.getEntriesAsList().get(nullKeyChanges.size() - 1).getValue();
+          Object newValue = nullKeyChanges.entries.get(nullKeyChanges.entries.size() - 1).value;
           if (old != null && !old.equals(newValue)) {
             boolean oldValueRemoved = false;
             for (OTransactionIndexChangesPerKey.OTransactionIndexEntry entry :
-                nullKeyChanges.getEntriesAsList()) {
-              if (entry.getValue() != null
-                  && entry.getValue().equals(old)
-                  && entry.getOperation() == OTransactionIndexChanges.OPERATION.REMOVE) {
+                nullKeyChanges.entries) {
+              if (entry.value != null
+                  && entry.value.equals(old)
+                  && entry.operation == OTransactionIndexChanges.OPERATION.REMOVE) {
                 oldValueRemoved = true;
                 break;
               }
@@ -879,16 +893,15 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           try (final Stream<ORID> rids = index.getInternal().getRids(changesPerKey.key)) {
             old = rids.findFirst().orElse(null);
           }
-          if (!changesPerKey.isEmpty()) {
-            Object newValue =
-                changesPerKey.getEntriesAsList().get(changesPerKey.size() - 1).getValue();
+          if (!changesPerKey.entries.isEmpty()) {
+            Object newValue = changesPerKey.entries.get(changesPerKey.entries.size() - 1).value;
             if (old != null && !old.equals(newValue)) {
               boolean oldValueRemoved = false;
               for (OTransactionIndexChangesPerKey.OTransactionIndexEntry entry :
-                  changesPerKey.getEntriesAsList()) {
-                if (entry.getValue() != null
-                    && entry.getValue().equals(old)
-                    && entry.getOperation() == OTransactionIndexChanges.OPERATION.REMOVE) {
+                  changesPerKey.entries) {
+                if (entry.value != null
+                    && entry.value.equals(old)
+                    && entry.operation == OTransactionIndexChanges.OPERATION.REMOVE) {
                   oldValueRemoved = true;
                   break;
                 }
@@ -1158,23 +1171,5 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       involvedClusters.add(getStorage().getClusterNameById(record.getIdentity().getClusterId()));
     }
     return involvedClusters;
-  }
-
-  @Override
-  public void syncCommit(OTransactionData data) {
-    OScenarioThreadLocal.executeAsDistributed(
-        () -> {
-          assert !this.getTransaction().isActive();
-          OTransactionOptimistic tx = new OTransactionOptimistic(this);
-          data.fill(tx, this);
-          ODistributedDatabaseImpl ddb = (ODistributedDatabaseImpl) getDistributedShared();
-          ONewDistributedTxContextImpl txContext =
-              new ONewDistributedTxContextImpl(
-                  ddb, new ODistributedRequestId(-1, -1), tx, data.getTransactionId());
-          ddb.validate(data.getTransactionId());
-          ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(tx);
-          txContext.commit(this);
-          return null;
-        });
   }
 }

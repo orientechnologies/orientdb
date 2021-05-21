@@ -106,6 +106,7 @@ public class OrientDBRemote implements OrientDBInternal {
   private volatile boolean open = true;
   private Timer timer;
   private final ORemoteURLs urls;
+  private OConnectionNext connectionNext;
 
   public OrientDBRemote(String[] hosts, OrientDBConfig configurations, Orient orient) {
     super();
@@ -118,7 +119,8 @@ public class OrientDBRemote implements OrientDBInternal {
         new ORemoteConnectionManager(this.configurations.getConfigurations(), timer);
     orient.addOrientDB(this);
     cachedPoolFactory = createCachedDatabasePoolFactory(this.configurations);
-    urls = new ORemoteURLs(hosts, this.configurations.getConfigurations());
+    this.connectionNext = new OConnectionNext(hosts.length);
+    urls = new ORemoteURLs(hosts, this.configurations.getConfigurations(), this.connectionNext);
   }
 
   protected OCachedDatabasePoolFactory createCachedDatabasePoolFactory(OrientDBConfig config) {
@@ -149,13 +151,14 @@ public class OrientDBRemote implements OrientDBInternal {
       synchronized (this) {
         storage = storages.get(name);
         if (storage == null) {
-          storage = new OStorageRemote(urls, name, this, "rw", connectionManager, resolvedConfig);
+          storage =
+              new OStorageRemote(
+                  hosts, name, this, "rw", connectionManager, resolvedConfig, connectionNext);
           storages.put(name, storage);
         }
       }
-      ODatabaseDocumentRemote db =
-          new ODatabaseDocumentRemote(storage, getOrCreateSharedContext(storage));
-      db.internalOpen(user, password, resolvedConfig);
+      ODatabaseDocumentRemote db = new ODatabaseDocumentRemote(storage);
+      db.internalOpen(user, password, resolvedConfig, getOrCreateSharedContext(storage));
       return db;
     } catch (Exception e) {
       throw OException.wrapException(
@@ -214,7 +217,13 @@ public class OrientDBRemote implements OrientDBInternal {
         try {
           storage =
               new OStorageRemote(
-                  urls, name, this, "rw", connectionManager, solveConfig(pool.getConfig()));
+                  hosts,
+                  name,
+                  this,
+                  "rw",
+                  connectionManager,
+                  solveConfig(pool.getConfig()),
+                  connectionNext);
           storages.put(name, storage);
         } catch (Exception e) {
           throw OException.wrapException(
@@ -222,9 +231,8 @@ public class OrientDBRemote implements OrientDBInternal {
         }
       }
     }
-    ODatabaseDocumentRemotePooled db =
-        new ODatabaseDocumentRemotePooled(pool, storage, getOrCreateSharedContext(storage));
-    db.internalOpen(user, password, pool.getConfig());
+    ODatabaseDocumentRemotePooled db = new ODatabaseDocumentRemotePooled(pool, storage);
+    db.internalOpen(user, password, pool.getConfig(), getOrCreateSharedContext(storage));
     return db;
   }
 
@@ -234,6 +242,7 @@ public class OrientDBRemote implements OrientDBInternal {
       ctx.close();
       sharedContexts.remove(remote.getName());
     }
+    ODatabaseDocumentRemote.deInit(remote);
     storages.remove(remote.getName());
     remote.shutdown();
   }
@@ -401,6 +410,7 @@ public class OrientDBRemote implements OrientDBInternal {
 
     for (OStorageRemote stg : storagesCopy) {
       try {
+        ODatabaseDocumentRemote.deInit(stg);
         OLogManager.instance().info(this, "- shutdown storage: " + stg.getName() + "...");
         stg.shutdown();
       } catch (Exception e) {
@@ -491,7 +501,7 @@ public class OrientDBRemote implements OrientDBInternal {
         "impossible skip authentication and authorization in remote");
   }
 
-  protected synchronized OSharedContext getOrCreateSharedContext(OStorageRemote storage) {
+  protected synchronized OSharedContext getOrCreateSharedContext(OStorage storage) {
 
     OSharedContext result = sharedContexts.get(storage.getName());
     if (result == null) {
@@ -501,10 +511,10 @@ public class OrientDBRemote implements OrientDBInternal {
     return result;
   }
 
-  private OSharedContext createSharedContext(OStorageRemote storage) {
-    OSharedContextRemote context = new OSharedContextRemote(storage, this);
-    storage.setSharedContext(context);
-    return context;
+  private OSharedContext createSharedContext(OStorage storage) {
+    OSharedContextRemote result = new OSharedContextRemote(storage, this);
+    storage.getResource(OSharedContext.class.getName(), () -> result);
+    return result;
   }
 
   public void schedule(TimerTask task, long delay, long period) {
@@ -638,7 +648,7 @@ public class OrientDBRemote implements OrientDBInternal {
     OContextConfiguration config = getContextConfiguration();
     try {
       String serverUrl =
-          urls.getNextAvailableServerURL(false, session, config, CONNECTION_STRATEGY.STICKY);
+          urls.getNextAvailableServerURL(false, session, config, null, CONNECTION_STRATEGY.STICKY);
       do {
         try {
           network = OStorageRemote.getNetwork(serverUrl, connectionManager, config);
@@ -731,17 +741,6 @@ public class OrientDBRemote implements OrientDBInternal {
 
   @Override
   public OSecuritySystem getSecuritySystem() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void create(
-      String name,
-      String user,
-      String password,
-      ODatabaseType type,
-      OrientDBConfig config,
-      ODatabaseTask<Void> createOps) {
     throw new UnsupportedOperationException();
   }
 }

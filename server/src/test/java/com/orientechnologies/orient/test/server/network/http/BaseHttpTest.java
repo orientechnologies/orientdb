@@ -61,12 +61,12 @@ public abstract class BaseHttpTest {
     JSON
   }
 
-  public BaseHttpTest payload(final String content, final CONTENT contentType) {
+  public BaseHttpTest payload(final String s, final CONTENT iContent) {
     payload =
         new StringEntity(
-            content,
+            s,
             ContentType.create(
-                contentType == CONTENT.JSON ? "application/json" : "plain/text", Consts.UTF_8));
+                iContent == CONTENT.JSON ? "application/json" : "plain/text", Consts.UTF_8));
     return this;
   }
 

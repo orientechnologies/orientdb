@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.server.distributed.impl.task;
 
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OBackgroundNewDelta;
@@ -13,7 +12,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseChunk;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -57,7 +55,6 @@ public class OSyncDatabaseNewDeltaTask extends OAbstractReplicatedTask {
       Optional<OBackgroundNewDelta> delta =
           ((OAbstractPaginatedStorage) database.getStorage()).extractTransactionsFromWal(missing);
       if (delta.isPresent()) {
-        ((ODistributedDatabaseImpl) db).setLastValidBackup(delta.get());
         return new ONewDeltaTaskResponse(
             new ODistributedDatabaseChunk(delta.get(), CHUNK_MAX_SIZE));
       } else {
@@ -85,10 +82,5 @@ public class OSyncDatabaseNewDeltaTask extends OAbstractReplicatedTask {
   @Override
   public int getFactoryId() {
     return FACTORYID;
-  }
-
-  @Override
-  public long getDistributedTimeout() {
-    return OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_SYNCH_TIMEOUT.getValueAsLong();
   }
 }

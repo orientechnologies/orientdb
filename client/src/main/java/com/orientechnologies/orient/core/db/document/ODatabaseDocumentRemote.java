@@ -109,7 +109,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   private OrientDBConfig config;
   private OStorageRemote storage;
 
-  public ODatabaseDocumentRemote(final OStorageRemote storage, OSharedContext sharedContext) {
+  public ODatabaseDocumentRemote(final OStorageRemote storage) {
     activateOnCurrentThread();
 
     try {
@@ -118,7 +118,6 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
       // OVERWRITE THE URL
       url = storage.getURL();
       this.storage = storage;
-      this.sharedContext = sharedContext;
       this.componentsFactory = storage.getComponentsFactory();
 
       unmodifiableHooks = Collections.unmodifiableMap(hooks);
@@ -128,7 +127,6 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
       init();
 
       databaseOwner = this;
-
     } catch (Exception t) {
       ODatabaseRecordThreadLocal.instance().remove();
 
@@ -215,12 +213,12 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   }
 
   public ODatabaseDocumentInternal copy() {
-    ODatabaseDocumentRemote database = new ODatabaseDocumentRemote(storage, this.sharedContext);
+    ODatabaseDocumentRemote database = new ODatabaseDocumentRemote(storage);
     database.storage = storage.copy(this, database);
     database.storage.addUser();
     database.status = STATUS.OPEN;
     database.applyAttributes(config);
-    database.initAtFirstOpen();
+    database.initAtFirstOpen(this.getSharedContext());
     database.user = this.user;
     this.activateOnCurrentThread();
     return database;
@@ -231,7 +229,8 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     throw new UnsupportedOperationException("use OrientDB");
   }
 
-  public void internalOpen(String user, String password, OrientDBConfig config) {
+  public void internalOpen(
+      String user, String password, OrientDBConfig config, OSharedContext ctx) {
     this.config = config;
     applyAttributes(config);
     applyListeners(config);
@@ -241,7 +240,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
       status = STATUS.OPEN;
 
-      initAtFirstOpen();
+      initAtFirstOpen(ctx);
       this.user =
           new OImmutableUser(
               -1, new OUser(user, password)); // .addRole(new ORole("passthrough", null,
@@ -268,7 +267,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     }
   }
 
-  private void initAtFirstOpen() {
+  private void initAtFirstOpen(OSharedContext ctx) {
     if (initialized) return;
 
     ORecordSerializerFactory serializerFactory = ORecordSerializerFactory.instance();
@@ -277,14 +276,19 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     componentsFactory = getStorage().getComponentsFactory();
     user = null;
 
-    loadMetadata();
+    loadMetadata(ctx);
 
     initialized = true;
   }
 
   @Override
   protected void loadMetadata() {
+    loadMetadata(this.getSharedContext());
+  }
+
+  protected void loadMetadata(OSharedContext ctx) {
     metadata = new OMetadataDefault(this);
+    sharedContext = ctx;
     metadata.init(sharedContext);
     sharedContext.load(this);
   }
@@ -484,30 +488,36 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     return null;
   }
 
+  public static void deInit(OStorageRemote storage) {
+    OSharedContext sharedContext = storage.removeResource(OSharedContext.class.getName());
+    // This storage may not have been completely opened yet
+    if (sharedContext != null) sharedContext.close();
+  }
+
   public static void updateSchema(OStorageRemote storage, ODocument schema) {
     //    storage.get
-    OSharedContext shared = storage.getSharedContext();
+    OSharedContext shared = storage.getResource(OSharedContext.class.getName(), () -> null);
     if (shared != null) {
       ((OSchemaRemote) shared.getSchema()).update(schema);
     }
   }
 
   public static void updateIndexManager(OStorageRemote storage, ODocument indexManager) {
-    OSharedContext shared = storage.getSharedContext();
+    OSharedContext shared = storage.getResource(OSharedContext.class.getName(), () -> null);
     if (shared != null) {
       ((OIndexManagerRemote) shared.getIndexManager()).update(indexManager);
     }
   }
 
   public static void updateFunction(OStorageRemote storage) {
-    OSharedContext shared = storage.getSharedContext();
+    OSharedContext shared = storage.getResource(OSharedContext.class.getName(), () -> null);
     if (shared != null) {
       (shared.getFunctionLibrary()).update();
     }
   }
 
   public static void updateSequences(OStorageRemote storage) {
-    OSharedContext shared = storage.getSharedContext();
+    OSharedContext shared = storage.getResource(OSharedContext.class.getName(), () -> null);
     if (shared != null) {
       (shared.getSequenceLibrary()).update();
     }

@@ -1,8 +1,6 @@
 package com.orientechnologies.orient.core.sql.executor;
 
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.index.OIndex;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -21,8 +19,7 @@ public class OQueryStats {
     return db.getSharedContext().getQueryStats();
   }
 
-  public long getIndexStats(
-      String indexName, int params, boolean range, boolean additionalRange, ODatabase database) {
+  public long getIndexStats(String indexName, int params, boolean range, boolean additionalRange) {
     String key =
         generateKey(
             "INDEX",
@@ -33,13 +30,6 @@ public class OQueryStats {
     Long val = stats.get(key);
     if (val != null) {
       return val;
-    }
-    if (database != null && database instanceof ODatabaseDocumentInternal) {
-      ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) database;
-      OIndex idx = db.getMetadata().getIndexManagerInternal().getIndex(db, indexName);
-      if (idx.isUnique() && (idx.getDefinition().getFields().size() == params) && !range) {
-        return 1;
-      }
     }
     return -1;
   }

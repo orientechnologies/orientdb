@@ -6,6 +6,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.remote.OStorageRemote.CONNECTION_STRATEGY;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.OConnectionNext;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import java.util.ArrayList;
@@ -20,19 +21,22 @@ import javax.naming.directory.InitialDirContext;
 
 public class ORemoteURLs {
 
+  private static final String DEFAULT_HOST = "localhost";
   private static final int DEFAULT_PORT = 2424;
   private static final int DEFAULT_SSL_PORT = 2434;
+  private static final String LOCAL_IP = "127.0.0.1";
+  private static final String LOCALHOST = "localhost";
 
   private final List<String> serverURLs = new ArrayList<String>();
   private List<String> initialServerURLs;
   private int nextServerToConnect;
 
-  public ORemoteURLs(String[] hosts, OContextConfiguration config) {
+  public ORemoteURLs(String[] hosts, OContextConfiguration config, OConnectionNext connectionNext) {
     for (String host : hosts) {
       addHost(host, config);
     }
     this.initialServerURLs = new ArrayList<String>(serverURLs);
-    this.nextServerToConnect = 0;
+    this.nextServerToConnect = connectionNext.next();
   }
 
   public synchronized void remove(String serverUrl) {
@@ -62,6 +66,7 @@ public class ORemoteURLs {
 
   /** Registers the remote server with port. */
   protected String addHost(String host, OContextConfiguration clientConfiguration) {
+    if (host.startsWith(LOCALHOST)) host = LOCAL_IP + host.substring("localhost".length());
 
     if (host.contains("/")) host = host.substring(0, host.indexOf("/"));
 
@@ -80,9 +85,23 @@ public class ORemoteURLs {
       }
     }
 
-    if (!serverURLs.contains(host)) {
-      serverURLs.add(host);
-      OLogManager.instance().debug(this, "Registered the new available server '%s'", host);
+    // DISABLED BECAUSE THIS DID NOT ALLOW TO CONNECT TO LOCAL HOST ANYMORE IF THE SERVER IS BOUND
+    // TO 127.0.0.1
+    // CONVERT 127.0.0.1 TO THE PUBLIC IP IF POSSIBLE
+    // if (host.startsWith(LOCAL_IP)) {
+    // try {
+    // final String publicIP = InetAddress.getLocalHost().getHostAddress();
+    // host = publicIP + host.substring(LOCAL_IP.length());
+    // } catch (UnknownHostException e) {
+    // // IGNORE IT
+    // }
+    // }
+
+    synchronized (serverURLs) {
+      if (!serverURLs.contains(host)) {
+        serverURLs.add(host);
+        OLogManager.instance().debug(this, "Registered the new available server '%s'", host);
+      }
     }
 
     return host;
@@ -188,8 +207,8 @@ public class ORemoteURLs {
     return toAdd;
   }
 
-  private synchronized String getNextConnectUrl(
-      OStorageRemoteSession session, OContextConfiguration contextConfiguration) {
+  public synchronized String getNextConnectUrl(
+      OStorageRemoteSession session, OContextConfiguration contextConfiguration, String name) {
     if (serverURLs.isEmpty()) {
       reloadOriginalURLs();
       if (serverURLs.isEmpty())
@@ -202,7 +221,7 @@ public class ORemoteURLs {
       // RESET INDEX
       this.nextServerToConnect = 0;
 
-    final String serverURL = serverURLs.get(this.nextServerToConnect);
+    final String serverURL = serverURLs.get(this.nextServerToConnect) + "/" + name;
     if (session != null) {
       session.serverURLIndex = this.nextServerToConnect;
       session.currentUrl = serverURL;
@@ -214,7 +233,8 @@ public class ORemoteURLs {
   public synchronized String getServerURFromList(
       boolean iNextAvailable,
       OStorageRemoteSession session,
-      OContextConfiguration contextConfiguration) {
+      OContextConfiguration contextConfiguration,
+      String name) {
     if (session != null && session.getCurrentUrl() != null && !iNextAvailable) {
       return session.getCurrentUrl();
     }
@@ -236,7 +256,7 @@ public class ORemoteURLs {
       // RESET INDEX
       serverURLIndex = 0;
 
-    final String serverURL = serverURLs.get(serverURLIndex);
+    final String serverURL = serverURLs.get(serverURLIndex) + "/" + name;
 
     if (session != null) {
       session.serverURLIndex = serverURLIndex;
@@ -250,6 +270,7 @@ public class ORemoteURLs {
       boolean iIsConnectOperation,
       OStorageRemoteSession session,
       OContextConfiguration contextConfiguration,
+      String name,
       CONNECTION_STRATEGY strategy) {
     String url = null;
     if (session.isStickToSession()) {
@@ -258,12 +279,12 @@ public class ORemoteURLs {
     switch (strategy) {
       case STICKY:
         url = session.getServerUrl();
-        if (url == null) url = getServerURFromList(false, session, contextConfiguration);
+        if (url == null) url = getServerURFromList(false, session, contextConfiguration, name);
         break;
 
       case ROUND_ROBIN_CONNECT:
         if (iIsConnectOperation || session.getServerUrl() == null) {
-          url = getNextConnectUrl(session, contextConfiguration);
+          url = getNextConnectUrl(session, contextConfiguration, name);
         } else {
           url = session.getServerUrl();
         }
@@ -276,7 +297,7 @@ public class ORemoteURLs {
         break;
 
       case ROUND_ROBIN_REQUEST:
-        url = getServerURFromList(true, session, contextConfiguration);
+        url = getServerURFromList(true, session, contextConfiguration, name);
         OLogManager.instance()
             .debug(
                 this,

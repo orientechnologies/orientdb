@@ -3,10 +3,10 @@ package com.orientechnologies.orient.core.storage.impl.local;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertNotNull;
 
-import com.orientechnologies.orient.core.OCreateDatabaseUtil;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.record.OVertex;
@@ -16,6 +16,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class OBrowseClusterTest {
+
   private ODatabaseSession db;
   private OrientDB orientDb;
 
@@ -26,17 +27,9 @@ public class OBrowseClusterTest {
             "embedded:",
             OrientDBConfig.builder()
                 .addConfig(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS, 1)
-                .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
                 .build());
-    orientDb.execute(
-        "create database "
-            + "test"
-            + " "
-            + "memory"
-            + " users ( admin identified by '"
-            + OCreateDatabaseUtil.NEW_ADMIN_PASSWORD
-            + "' role admin)");
-    db = orientDb.open("test", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
+    orientDb.create("test", ODatabaseType.MEMORY);
+    db = orientDb.open("test", "admin", "admin");
     db.createVertexClass("One");
   }
 

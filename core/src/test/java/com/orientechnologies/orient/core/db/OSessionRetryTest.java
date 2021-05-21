@@ -3,7 +3,6 @@ package com.orientechnologies.orient.core.db;
 import static org.junit.Assert.assertEquals;
 
 import com.orientechnologies.common.types.OModifiableInteger;
-import com.orientechnologies.orient.core.OCreateDatabaseUtil;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.OElement;
 import java.util.concurrent.CountDownLatch;
@@ -18,18 +17,14 @@ public class OSessionRetryTest {
 
   @Before
   public void before() {
-    orientDB =
-        OCreateDatabaseUtil.createDatabase(
-            OSessionRetryTest.class.getSimpleName(), "embedded:", OCreateDatabaseUtil.TYPE_MEMORY);
+    orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
+    orientDB.create(OSessionRetryTest.class.getSimpleName(), ODatabaseType.MEMORY);
   }
 
   @Test
   public void testRetry() {
     ODatabaseSession session =
-        orientDB.open(
-            OSessionRetryTest.class.getSimpleName(),
-            "admin",
-            OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
+        orientDB.open(OSessionRetryTest.class.getSimpleName(), "admin", "admin");
     session.createClass("Test");
     OElement doc = session.newElement("Test");
     doc.setProperty("one", "tas");
@@ -42,10 +37,7 @@ public class OSessionRetryTest {
         .execute(
             () -> {
               ODatabaseSession session1 =
-                  orientDB.open(
-                      OSessionRetryTest.class.getSimpleName(),
-                      "admin",
-                      OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
+                  orientDB.open(OSessionRetryTest.class.getSimpleName(), "admin", "admin");
               OElement loaded = session1.load(id);
               try {
                 read.await();

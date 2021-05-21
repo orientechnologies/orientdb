@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.spatial.engine.OLuceneSpatialIndexContainer;
 import com.orientechnologies.spatial.shape.OShapeFactory;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -76,7 +77,7 @@ public class OLuceneSpatialIndex extends OLuceneIndexNotUnique {
             if (((OLuceneSpatialIndexContainer) engine).isLegacy()) {
               return OLuceneSpatialIndex.super.interpretTxKeyChanges(changes);
             } else {
-              return interpretAsSpatial(changes);
+              return interpretAsSpatial(changes.entries);
             }
           });
     } catch (OInvalidIndexEngineIdException e) {
@@ -107,19 +108,20 @@ public class OLuceneSpatialIndex extends OLuceneIndexNotUnique {
   }
 
   private static Iterable<OTransactionIndexChangesPerKey.OTransactionIndexEntry> interpretAsSpatial(
-      OTransactionIndexChangesPerKey item) {
+      List<OTransactionIndexChangesPerKey.OTransactionIndexEntry> entries) {
     // 1. Handle common fast paths.
 
-    List<OTransactionIndexChangesPerKey.OTransactionIndexEntry> entries = item.getEntriesAsList();
+    List<OTransactionIndexChangesPerKey.OTransactionIndexEntry> newChanges = new ArrayList<>();
+
     Map<OIdentifiable, Integer> counters = new LinkedHashMap<>();
 
     for (OTransactionIndexChangesPerKey.OTransactionIndexEntry entry : entries) {
 
-      Integer counter = counters.get(entry.getValue());
+      Integer counter = counters.get(entry.value);
       if (counter == null) {
         counter = 0;
       }
-      switch (entry.getOperation()) {
+      switch (entry.operation) {
         case PUT:
           counter++;
           break;
@@ -129,22 +131,24 @@ public class OLuceneSpatialIndex extends OLuceneIndexNotUnique {
         case CLEAR:
           break;
       }
-      counters.put(entry.getValue(), counter);
+      counters.put(entry.value, counter);
     }
-
-    OTransactionIndexChangesPerKey changes = new OTransactionIndexChangesPerKey(item.key);
 
     for (Map.Entry<OIdentifiable, Integer> entry : counters.entrySet()) {
       OIdentifiable oIdentifiable = entry.getKey();
       switch (entry.getValue()) {
         case 1:
-          changes.add(oIdentifiable, OTransactionIndexChanges.OPERATION.PUT);
+          newChanges.add(
+              new OTransactionIndexChangesPerKey.OTransactionIndexEntry(
+                  oIdentifiable, OTransactionIndexChanges.OPERATION.PUT));
           break;
         case -1:
-          changes.add(oIdentifiable, OTransactionIndexChanges.OPERATION.REMOVE);
+          newChanges.add(
+              new OTransactionIndexChangesPerKey.OTransactionIndexEntry(
+                  oIdentifiable, OTransactionIndexChanges.OPERATION.REMOVE));
           break;
       }
     }
-    return changes.getEntriesAsList();
+    return newChanges;
   }
 }

@@ -1333,20 +1333,6 @@ public class OSecurityShared implements OSecurityInternal {
     if (clazz == null) {
       return true;
     }
-    String className = clazz.getName();
-
-    if (roleHasPredicateSecurityForClass != null) {
-      for (OSecurityRole role : session.getUser().getRoles()) {
-        Map<String, Boolean> roleMap = roleHasPredicateSecurityForClass.get(role.getName());
-        if (roleMap == null) {
-          return true; // TODO hierarchy...?
-        }
-        Boolean val = roleMap.get(className);
-        if (!(Boolean.TRUE.equals(val))) {
-          return true; // TODO hierarchy...?
-        }
-      }
-    }
 
     if (document.getIdentity().isNew()) {
       OBooleanExpression predicate =

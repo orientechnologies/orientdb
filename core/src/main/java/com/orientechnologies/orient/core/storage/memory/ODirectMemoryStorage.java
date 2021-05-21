@@ -99,7 +99,7 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
-  public void flushAllData() {}
+  public void makeFullCheckpoint() {}
 
   @Override
   protected void readIv() {}

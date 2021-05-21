@@ -3,6 +3,7 @@ package com.orientechnologies.orient.server.distributed;
 import static org.junit.Assert.assertEquals;
 
 import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -30,13 +31,12 @@ public class ReverseStartSyncIT {
     setup.setup();
 
     OrientDB remote = setup.createRemote(server0, "root", "test", OrientDBConfig.defaultConfig());
-    remote.execute(
-        "create database ? plocal users(admin identified by 'admin' role admin)", "test");
+    remote.create("test", ODatabaseType.PLOCAL);
     remote.close();
   }
 
   @Test
-  public void reverseStartSync() throws InterruptedException {
+  public void reverseStartSync() {
     try (OrientDB remote = setup.createRemote(server0, OrientDBConfig.defaultConfig())) {
       try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
         session.createClass("One");
@@ -55,7 +55,6 @@ public class ReverseStartSyncIT {
     setup.startServer(server2);
     setup.startServer(server1);
     setup.startServer(server0);
-    TestSetup.waitForDbOnlineStatus(setup, "test");
     // Test server 0
     try (OrientDB remote = setup.createRemote(server0, OrientDBConfig.defaultConfig())) {
       try (ODatabaseSession session = remote.open("test", "admin", "admin")) {

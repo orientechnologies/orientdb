@@ -154,7 +154,8 @@ public class ODistributedOutput {
     return buffer.toString();
   }
 
-  public static String formatLatency(final ODistributedPlugin manager, final ODocument distribCfg) {
+  public static String formatLatency(
+      final ODistributedAbstractPlugin manager, final ODocument distribCfg) {
     final List<OIdentifiable> rows = new ArrayList<OIdentifiable>();
 
     final List<ODocument> members = distribCfg.field("members");
@@ -226,13 +227,13 @@ public class ODistributedOutput {
   }
 
   public static String formatMessages(
-      final ODistributedPlugin manager, final ODocument distribCfg) {
+      final ODistributedAbstractPlugin manager, final ODocument distribCfg) {
     return formatMessageBetweenServers(manager, distribCfg)
         + formatMessageStats(manager, distribCfg);
   }
 
   public static String formatMessageBetweenServers(
-      final ODistributedPlugin manager, final ODocument distribCfg) {
+      final ODistributedAbstractPlugin manager, final ODocument distribCfg) {
     final List<OIdentifiable> rows = new ArrayList<OIdentifiable>();
 
     final List<ODocument> members = distribCfg.field("members");
@@ -331,7 +332,7 @@ public class ODistributedOutput {
   }
 
   public static String formatMessageStats(
-      final ODistributedPlugin manager, final ODocument distribCfg) {
+      final ODistributedAbstractPlugin manager, final ODocument distribCfg) {
     final List<OIdentifiable> rows = new ArrayList<OIdentifiable>();
 
     final List<ODocument> members = distribCfg.field("members");
@@ -638,11 +639,12 @@ public class ODistributedOutput {
   }
 
   protected static String formatServerName(
-      final ODistributedPlugin manager, final String fromServer) {
+      final ODistributedAbstractPlugin manager, final String fromServer) {
     return fromServer + (manager.getLocalNodeName().equals(fromServer) ? "*" : "");
   }
 
-  public static Object formatNewRecordLocks(final ODistributedPlugin manager, final String db) {
+  public static Object formatNewRecordLocks(
+      final ODistributedAbstractPlugin manager, final String db) {
     final List<ODocument> rows = getRequestsStatus(manager, db);
 
     final StringBuilder buffer = new StringBuilder();
@@ -664,7 +666,7 @@ public class ODistributedOutput {
   }
 
   public static List<ODocument> getRequestsStatus(
-      final ODistributedPlugin manager, final String db) {
+      final ODistributedAbstractPlugin manager, final String db) {
     final List<ODocument> rows = new ArrayList<ODocument>();
 
     Map<ODistributedRequestId, ODistributedTxContext> activeTxContexts =

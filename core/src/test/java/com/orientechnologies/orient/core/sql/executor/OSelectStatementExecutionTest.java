@@ -45,6 +45,7 @@ public class OSelectStatementExecutionTest {
 
   @BeforeClass
   public static void beforeClass() {
+
     db = new ODatabaseDocumentTx("memory:OSelectStatementExecutionTest");
     db.create();
   }
@@ -4149,7 +4150,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
     try (OResultSet result =
-        db.query("select " + funcitonName + "(), * from " + className + " timeout 1")) {
+        db.query("select " + funcitonName + "(), * from " + className + " timeout 10")) {
       while (result.hasNext()) {
         result.next();
       }

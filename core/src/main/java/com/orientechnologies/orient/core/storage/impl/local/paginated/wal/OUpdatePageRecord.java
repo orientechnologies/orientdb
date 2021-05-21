@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import java.nio.ByteBuffer;
-import java.util.Objects;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -73,8 +72,8 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
   }
 
   @Override
-  public boolean trackOperationId() {
-    return true;
+  public boolean isUpdateMasterRecord() {
+    return false;
   }
 
   @Override
@@ -85,28 +84,21 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
 
     final OUpdatePageRecord that = (OUpdatePageRecord) o;
 
-    if (operationIdLSN == null && that.operationIdLSN == null) {
-      return true;
-    }
-    if (operationIdLSN == null) {
-      return false;
-    }
+    if (lsn == null && that.lsn == null) return true;
 
-    if (that.operationIdLSN == null) {
-      return false;
-    }
+    if (lsn == null) return false;
 
-    return Objects.equals(operationIdLSN.lsn, that.operationIdLSN.lsn);
+    if (that.lsn == null) return false;
+
+    if (!lsn.equals(that.lsn)) return false;
+
+    return true;
   }
 
   @Override
   public int hashCode() {
     int result = super.hashCode();
-    result =
-        31 * result
-            + (operationIdLSN != null && operationIdLSN.lsn != null
-                ? operationIdLSN.lsn.hashCode()
-                : 0);
+    result = 31 * result + lsn.hashCode();
     return result;
   }
 

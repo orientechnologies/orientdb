@@ -5,6 +5,7 @@ import static org.junit.Assert.assertTrue;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -39,8 +40,7 @@ public class SimpleQueryDistributedIT {
     setup.setup();
 
     remote = setup.createRemote(server0, "root", "test", OrientDBConfig.defaultConfig());
-    remote.execute(
-        "create database ? plocal users(admin identified by 'admin' role admin)", "test");
+    remote.create("test", ODatabaseType.PLOCAL);
     session = remote.open("test", "admin", "admin");
   }
 

@@ -22,7 +22,6 @@ import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
@@ -45,196 +44,153 @@ import org.testng.annotations.Test;
 @SuppressWarnings("unchecked")
 @Test
 public class JSONTest extends DocumentDBBaseTest {
-  public static final String FORMAT_WITHOUT_TYPES =
-      "rid,version,class,type,attribSameRow,alwaysFetchEmbedded,fetchPlan:*:0";
-
   @Parameters(value = "url")
-  public JSONTest(@Optional final String url) {
-    super(url);
+  public JSONTest(@Optional final String iURL) {
+    super(iURL);
   }
 
   @Test
   public void testAlmostLink() {
-    final ODocument doc = new ODocument();
+    ODocument doc = new ODocument();
     doc.fromJSON("{'title': '#330: Dollar Coins Are Done'}");
   }
 
   @Test
   public void testNullList() throws Exception {
-    final ODocument documentSource = new ODocument();
+    ODocument documentSource = new ODocument();
     documentSource.fromJSON("{\"list\" : [\"string\", null]}");
 
-    final ODocument documentTarget = new ODocument();
+    ODocument documentTarget = new ODocument();
     documentTarget.fromStream(documentSource.toStream());
 
-    final OTrackedList<Object> list = documentTarget.field("list", OType.EMBEDDEDLIST);
+    OTrackedList<Object> list = documentTarget.field("list", OType.EMBEDDEDLIST);
     Assert.assertEquals(list.get(0), "string");
     Assert.assertNull(list.get(1));
   }
 
   @Test
-  public void testBooleanList() {
-    final ODocument documentSource = new ODocument();
-    documentSource.fromJSON("{\"list\" : [true, false]}");
-
-    final ODocument documentTarget = new ODocument();
-    documentTarget.fromStream(documentSource.toStream());
-
-    final OTrackedList<Object> list = documentTarget.field("list", OType.EMBEDDEDLIST);
-    Assert.assertEquals(list.get(0), true);
-    Assert.assertEquals(list.get(1), false);
-  }
-
-  @Test
-  public void testNumericIntegerList() {
-    final ODocument documentSource = new ODocument();
-    documentSource.fromJSON("{\"list\" : [17,42]}");
-
-    final ODocument documentTarget = new ODocument();
-    documentTarget.fromStream(documentSource.toStream());
-
-    final OTrackedList<Object> list = documentTarget.field("list", OType.EMBEDDEDLIST);
-    Assert.assertEquals(list.get(0), 17);
-    Assert.assertEquals(list.get(1), 42);
-  }
-
-  @Test
-  public void testNumericLongList() {
-    final ODocument documentSource = new ODocument();
-    documentSource.fromJSON("{\"list\" : [100000000000,100000000001]}");
-
-    final ODocument documentTarget = new ODocument();
-    documentTarget.fromStream(documentSource.toStream());
-
-    final OTrackedList<Object> list = documentTarget.field("list", OType.EMBEDDEDLIST);
-    Assert.assertEquals(list.get(0), 100000000000l);
-    Assert.assertEquals(list.get(1), 100000000001l);
-  }
-
-  @Test
-  public void testNumericFloatList() {
-    final ODocument documentSource = new ODocument();
-    documentSource.fromJSON("{\"list\" : [17.3,42.7]}");
-
-    final ODocument documentTarget = new ODocument();
-    documentTarget.fromStream(documentSource.toStream());
-
-    final OTrackedList<Object> list = documentTarget.field("list", OType.EMBEDDEDLIST);
-    Assert.assertEquals(list.get(0), 17.3);
-    Assert.assertEquals(list.get(1), 42.7);
-  }
-
-  @Test
   public void testNullity() {
-    final ODocument doc = new ODocument();
-    doc.fromJSON(
+    ODocument newDoc = new ODocument();
+
+    newDoc.fromJSON(
         "{\"gender\":{\"name\":\"Male\"},\"firstName\":\"Jack\",\"lastName\":\"Williams\","
             + "\"phone\":\"561-401-3348\",\"email\":\"0586548571@example.com\",\"address\":{\"street1\":\"Smith Ave\","
             + "\"street2\":null,\"city\":\"GORDONSVILLE\",\"state\":\"VA\",\"code\":\"22942\"},"
             + "\"dob\":\"2011-11-17 03:17:04\"}");
-    final String json = doc.toJSON();
-    final ODocument loadedDoc = new ODocument().fromJSON(json);
-    Assert.assertTrue(doc.hasSameContentOf(loadedDoc));
+
+    String json = newDoc.toJSON();
+    ODocument loadedDoc = new ODocument().fromJSON(json);
+
+    Assert.assertTrue(newDoc.hasSameContentOf(loadedDoc));
   }
 
   @Test
-  public void testNanOldFormat() {
-    ODocument doc = new ODocument();
+  public void testNan() {
+    ODocument newDoc = new ODocument();
+
     String input =
         "{\"@type\":\"d\",\"@version\":0,\"nan\":null,\"p_infinity\":null,\"n_infinity\":null,\"@fieldTypes\":\"nan=d,p_infinity=d,n_infinity=d\"}";
-    doc.field("nan", Double.NaN);
-    doc.field("p_infinity", Double.POSITIVE_INFINITY);
-    doc.field("n_infinity", Double.NEGATIVE_INFINITY);
-    String json = doc.toJSON(ORecordAbstract.OLD_FORMAT_WITH_LATE_TYPES);
-    Assert.assertEquals(json, input);
 
-    doc = new ODocument();
-    input =
-        "{\"@type\":\"d\",\"@version\":0,\"nan\":null,\"p_infinity\":null,\"n_infinity\":null,\"@fieldTypes\":\"nan=f,p_infinity=f,n_infinity=f\"}";
-    doc.field("nan", Float.NaN);
-    doc.field("p_infinity", Float.POSITIVE_INFINITY);
-    doc.field("n_infinity", Float.NEGATIVE_INFINITY);
-    json = doc.toJSON(ORecordAbstract.OLD_FORMAT_WITH_LATE_TYPES);
-    Assert.assertEquals(json, input);
-  }
+    newDoc.field("nan", Double.NaN);
+    newDoc.field("p_infinity", Double.POSITIVE_INFINITY);
+    newDoc.field("n_infinity", Double.NEGATIVE_INFINITY);
 
-  @Test
-  public void testNanNoTypes() {
-    ODocument doc = new ODocument();
-    String input =
-        "{\"@type\":\"d\",\"@version\":0,\"nan\":null,\"p_infinity\":null,\"n_infinity\":null}";
-    doc.field("nan", Double.NaN);
-    doc.field("p_infinity", Double.POSITIVE_INFINITY);
-    doc.field("n_infinity", Double.NEGATIVE_INFINITY);
-    String json = doc.toJSON(FORMAT_WITHOUT_TYPES);
-    Assert.assertEquals(json, input);
+    String json = newDoc.toJSON();
 
-    doc = new ODocument();
-    input = "{\"@type\":\"d\",\"@version\":0,\"nan\":null,\"p_infinity\":null,\"n_infinity\":null}";
-    doc.field("nan", Float.NaN);
-    doc.field("p_infinity", Float.POSITIVE_INFINITY);
-    doc.field("n_infinity", Float.NEGATIVE_INFINITY);
-    json = doc.toJSON(FORMAT_WITHOUT_TYPES);
-    Assert.assertEquals(json, input);
-  }
-
-  @Test
-  public void testNanEarlyTypes() {
-    ODocument doc = new ODocument();
-    String input =
-        "{\"@type\":\"d\",\"@version\":0,\"@fieldTypes\":\"nan=d,p_infinity=d,n_infinity=d\",\"nan\":null,\"p_infinity\":null,\"n_infinity\":null}";
-    doc.field("nan", Double.NaN);
-    doc.field("p_infinity", Double.POSITIVE_INFINITY);
-    doc.field("n_infinity", Double.NEGATIVE_INFINITY);
-    String json = doc.toJSON();
     Assert.assertEquals(input, json);
 
-    doc = new ODocument();
+    newDoc = new ODocument();
+
     input =
-        "{\"@type\":\"d\",\"@version\":0,\"@fieldTypes\":\"nan=f,p_infinity=f,n_infinity=f\",\"nan\":null,\"p_infinity\":null,\"n_infinity\":null}";
-    doc.field("nan", Float.NaN);
-    doc.field("p_infinity", Float.POSITIVE_INFINITY);
-    doc.field("n_infinity", Float.NEGATIVE_INFINITY);
-    json = doc.toJSON();
+        "{\"@type\":\"d\",\"@version\":0,\"nan\":null,\"p_infinity\":null,\"n_infinity\":null,\"@fieldTypes\":\"nan=f,p_infinity=f,n_infinity=f\"}";
+
+    newDoc.field("nan", Float.NaN);
+    newDoc.field("p_infinity", Float.POSITIVE_INFINITY);
+    newDoc.field("n_infinity", Float.NEGATIVE_INFINITY);
+
+    json = newDoc.toJSON();
+
     Assert.assertEquals(input, json);
   }
 
   @Test
   public void testEmbeddedList() {
-    final ODocument doc = new ODocument();
-    final List<ODocument> list = new ArrayList<ODocument>();
-    doc.field("embeddedList", list, OType.EMBEDDEDLIST);
+    ODocument newDoc = new ODocument();
+
+    final ArrayList<ODocument> list = new ArrayList<ODocument>();
+    newDoc.field("embeddedList", list, OType.EMBEDDEDLIST);
     list.add(new ODocument().field("name", "Luca"));
     list.add(new ODocument().field("name", "Marcus"));
 
-    final String json = doc.toJSON();
-    final ODocument loadedDoc = new ODocument().fromJSON(json);
-    Assert.assertTrue(doc.hasSameContentOf(loadedDoc));
+    String json = newDoc.toJSON();
+    ODocument loadedDoc = new ODocument().fromJSON(json);
+
+    Assert.assertTrue(newDoc.hasSameContentOf(loadedDoc));
+
     Assert.assertTrue(loadedDoc.containsField("embeddedList"));
     Assert.assertTrue(loadedDoc.field("embeddedList") instanceof List<?>);
     Assert.assertTrue(
         ((List<ODocument>) loadedDoc.field("embeddedList")).get(0) instanceof ODocument);
 
-    ODocument newDoc = ((List<ODocument>) loadedDoc.field("embeddedList")).get(0);
-    Assert.assertEquals(newDoc.field("name"), "Luca");
-    newDoc = ((List<ODocument>) loadedDoc.field("embeddedList")).get(1);
-    Assert.assertEquals(newDoc.field("name"), "Marcus");
+    ODocument d = ((List<ODocument>) loadedDoc.field("embeddedList")).get(0);
+    Assert.assertEquals(d.field("name"), "Luca");
+    d = ((List<ODocument>) loadedDoc.field("embeddedList")).get(1);
+    Assert.assertEquals(d.field("name"), "Marcus");
+  }
+
+  @Test
+  public void testListToJSON() {
+
+    final ArrayList<ODocument> list = new ArrayList<ODocument>();
+    ODocument first = new ODocument().field("name", "Luca");
+    ODocument second = new ODocument().field("name", "Marcus");
+    list.add(first);
+    list.add(second);
+
+    String jsonResult = OJSONWriter.listToJSON(list, null);
+    ODocument doc = new ODocument();
+    doc.fromJSON("{\"result\": " + jsonResult + "}");
+    Collection<ODocument> result = doc.field("result");
+    Assert.assertTrue(result instanceof Collection);
+    Assert.assertEquals(result.size(), 2);
+    for (ODocument resultDoc : result) {
+      Assert.assertTrue(first.hasSameContentOf(resultDoc) || second.hasSameContentOf(resultDoc));
+    }
+  }
+
+  @Test
+  public void testEmptyEmbeddedMap() {
+    ODocument newDoc = new ODocument();
+
+    final Map<String, ODocument> map = new HashMap<String, ODocument>();
+    newDoc.field("embeddedMap", map, OType.EMBEDDEDMAP);
+
+    String json = newDoc.toJSON();
+    ODocument loadedDoc = new ODocument().fromJSON(json);
+
+    Assert.assertTrue(newDoc.hasSameContentOf(loadedDoc));
+
+    Assert.assertTrue(loadedDoc.containsField("embeddedMap"));
+    Assert.assertTrue(loadedDoc.field("embeddedMap") instanceof Map<?, ?>);
+
+    final Map<String, ODocument> loadedMap = loadedDoc.field("embeddedMap");
+    Assert.assertEquals(loadedMap.size(), 0);
   }
 
   @Test
   public void testEmbeddedMap() {
-    final ODocument doc = new ODocument();
+    ODocument newDoc = new ODocument();
 
     final Map<String, ODocument> map = new HashMap<String, ODocument>();
-    doc.field("map", map);
+    newDoc.field("map", map);
     map.put("Luca", new ODocument().field("name", "Luca"));
     map.put("Marcus", new ODocument().field("name", "Marcus"));
     map.put("Cesare", new ODocument().field("name", "Cesare"));
 
-    final String json = doc.toJSON();
-    final ODocument loadedDoc = new ODocument().fromJSON(json);
+    String json = newDoc.toJSON();
+    ODocument loadedDoc = new ODocument().fromJSON(json);
 
-    Assert.assertTrue(doc.hasSameContentOf(loadedDoc));
+    Assert.assertTrue(newDoc.hasSameContentOf(loadedDoc));
 
     Assert.assertTrue(loadedDoc.containsField("map"));
     Assert.assertTrue(loadedDoc.field("map") instanceof Map<?, ?>);
@@ -242,50 +198,14 @@ public class JSONTest extends DocumentDBBaseTest {
         ((Map<String, ODocument>) loadedDoc.field("map")).values().iterator().next()
             instanceof ODocument);
 
-    ODocument newDoc = ((Map<String, ODocument>) loadedDoc.field("map")).get("Luca");
-    Assert.assertEquals(newDoc.field("name"), "Luca");
+    ODocument d = ((Map<String, ODocument>) loadedDoc.field("map")).get("Luca");
+    Assert.assertEquals(d.field("name"), "Luca");
 
-    newDoc = ((Map<String, ODocument>) loadedDoc.field("map")).get("Marcus");
-    Assert.assertEquals(newDoc.field("name"), "Marcus");
+    d = ((Map<String, ODocument>) loadedDoc.field("map")).get("Marcus");
+    Assert.assertEquals(d.field("name"), "Marcus");
 
-    newDoc = ((Map<String, ODocument>) loadedDoc.field("map")).get("Cesare");
-    Assert.assertEquals(newDoc.field("name"), "Cesare");
-  }
-
-  @Test
-  public void testListToJSON() {
-    final List<ODocument> list = new ArrayList<ODocument>();
-    final ODocument first = new ODocument().field("name", "Luca");
-    final ODocument second = new ODocument().field("name", "Marcus");
-    list.add(first);
-    list.add(second);
-
-    final String jsonResult = OJSONWriter.listToJSON(list, null);
-    final ODocument doc = new ODocument();
-    doc.fromJSON("{\"result\": " + jsonResult + "}");
-    Collection<ODocument> result = doc.field("result");
-    Assert.assertTrue(result instanceof Collection);
-    Assert.assertEquals(result.size(), 2);
-    for (final ODocument resultDoc : result) {
-      Assert.assertTrue(first.hasSameContentOf(resultDoc) || second.hasSameContentOf(resultDoc));
-    }
-  }
-
-  @Test
-  public void testEmptyEmbeddedMap() {
-    final ODocument doc = new ODocument();
-
-    final Map<String, ODocument> map = new HashMap<String, ODocument>();
-    doc.field("embeddedMap", map, OType.EMBEDDEDMAP);
-
-    final String json = doc.toJSON();
-    final ODocument loadedDoc = new ODocument().fromJSON(json);
-    Assert.assertTrue(doc.hasSameContentOf(loadedDoc));
-    Assert.assertTrue(loadedDoc.containsField("embeddedMap"));
-    Assert.assertTrue(loadedDoc.field("embeddedMap") instanceof Map<?, ?>);
-
-    final Map<String, ODocument> loadedMap = loadedDoc.field("embeddedMap");
-    Assert.assertEquals(loadedMap.size(), 0);
+    d = ((Map<String, ODocument>) loadedDoc.field("map")).get("Cesare");
+    Assert.assertEquals(d.field("name"), "Cesare");
   }
 
   @Test
@@ -313,7 +233,7 @@ public class JSONTest extends DocumentDBBaseTest {
       firstLevelDoc.field("doc", secondLevelDoc);
       secondLevelDoc.field("doc", thirdLevelDoc);
 
-      final String json = newDoc.toJSON();
+      String json = newDoc.toJSON();
       ODocument loadedDoc = new ODocument().fromJSON(json);
 
       Assert.assertTrue(newDoc.hasSameContentOf(loadedDoc));
@@ -544,59 +464,65 @@ public class JSONTest extends DocumentDBBaseTest {
     }
   }
 
-  // Requires JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES
   public void testSpecialChar() {
-    final ODocument doc =
+    ODocument doc =
         new ODocument()
             .fromJSON(
                 "{name:{\"%Field\":[\"value1\",\"value2\"],\"%Field2\":{},\"%Field3\":\"value3\"}}");
     doc.save(database.getClusterNameById(database.getDefaultClusterId()));
 
-    final ODocument loadedDoc = database.load(doc.getIdentity());
-    Assert.assertEquals(doc, loadedDoc);
+    ODocument doc2 = database.load(doc.getIdentity());
+    Assert.assertEquals(doc, doc2);
   }
 
   public void testArrayOfArray() {
-    final ODocument doc = new ODocument();
-    doc.fromJSON(
+    ODocument newDoc = new ODocument();
+
+    newDoc.fromJSON(
         "{\"@type\": \"d\",\"@class\": \"Track\",\"type\": \"LineString\",\"coordinates\": [ [ 100,  0 ],  [ 101, 1 ] ]}");
-    doc.save();
-    final ODocument loadedDoc = database.load(doc.getIdentity());
-    Assert.assertTrue(doc.hasSameContentOf(loadedDoc));
+
+    newDoc.save();
+
+    ODocument loadedDoc = database.load(newDoc.getIdentity());
+
+    Assert.assertTrue(newDoc.hasSameContentOf(loadedDoc));
   }
 
   public void testLongTypes() {
-    final ODocument doc = new ODocument();
-    doc.fromJSON(
+    ODocument newDoc = new ODocument();
+
+    newDoc.fromJSON(
         "{\"@type\": \"d\",\"@class\": \"Track\",\"type\": \"LineString\",\"coordinates\": [ [ 32874387347347,  0 ],  [ -23736753287327, 1 ] ]}");
-    doc.save();
-    final ODocument loadedDoc = database.load(doc.getIdentity());
-    Assert.assertTrue(doc.hasSameContentOf(loadedDoc));
+
+    newDoc.save();
+
+    ODocument loadedDoc = database.load(newDoc.getIdentity());
+
+    Assert.assertTrue(newDoc.hasSameContentOf(loadedDoc));
   }
 
-  // Requires JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES
   public void testSpecialChars() {
-    final ODocument doc =
+    ODocument doc =
         new ODocument()
             .fromJSON(
                 "{Field:{\"Key1\":[\"Value1\",\"Value2\"],\"Key2\":{\"%%dummy%%\":null},\"Key3\":\"Value3\"}}");
     doc.save(database.getClusterNameById(database.getDefaultClusterId()));
 
-    final ODocument loadedDoc = database.load(doc.getIdentity());
-    Assert.assertEquals(doc, loadedDoc);
+    ODocument doc2 = database.load(doc.getIdentity());
+    Assert.assertEquals(doc, doc2);
   }
 
   public void testJsonToStream() {
-    final String doc1Json =
+    String doc1Json =
         "{Key1:{\"%Field1\":[{},{},{},{},{}],\"%Field2\":false,\"%Field3\":\"Value1\"}}";
-    final ODocument doc1 = new ODocument().fromJSON(doc1Json);
-    final String doc1String = new String(ORecordSerializerSchemaAware2CSV.INSTANCE.toStream(doc1));
+    ODocument doc1 = new ODocument().fromJSON(doc1Json);
+    String doc1String = new String(ORecordSerializerSchemaAware2CSV.INSTANCE.toStream(doc1));
     Assert.assertEquals(doc1Json, "{" + doc1String + "}");
 
-    final String doc2Json =
+    String doc2Json =
         "{Key1:{\"%Field1\":[{},{},{},{},{}],\"%Field2\":false,\"%Field3\":\"Value1\"}}";
-    final ODocument doc2 = new ODocument().fromJSON(doc2Json);
-    final String doc2String = new String(ORecordSerializerSchemaAware2CSV.INSTANCE.toStream(doc2));
+    ODocument doc2 = new ODocument().fromJSON(doc2Json);
+    String doc2String = new String(ORecordSerializerSchemaAware2CSV.INSTANCE.toStream(doc2));
     Assert.assertEquals(doc2Json, "{" + doc2String + "}");
   }
 
@@ -604,12 +530,12 @@ public class JSONTest extends DocumentDBBaseTest {
     ODocument doc = new ODocument();
     doc.field("string", "STRING_VALUE");
     List<ODocument> list = new ArrayList<ODocument>();
-    for (int i = 0; i < 1; i++) {
-      final ODocument doc1 = new ODocument();
+    for (int i = 0; i < 10; i++) {
+      ODocument doc1 = new ODocument();
       doc.field("number", i);
       list.add(doc1);
       Map<String, ODocument> docMap = new HashMap<String, ODocument>();
-      for (int j = 0; j < 1; j++) {
+      for (int j = 0; j < 5; j++) {
         ODocument doc2 = new ODocument();
         doc2.field("blabla", j);
         docMap.put(String.valueOf(j), doc2);
@@ -623,17 +549,17 @@ public class JSONTest extends DocumentDBBaseTest {
     doc.field("out", list);
     String json = doc.toJSON();
     ODocument newDoc = new ODocument().fromJSON(json);
-    Assert.assertEquals(json, newDoc.toJSON());
+    Assert.assertEquals(newDoc.toJSON(), json);
     Assert.assertTrue(newDoc.hasSameContentOf(doc));
 
     doc = new ODocument();
     doc.field("string", "STRING_VALUE");
-    final Map<String, ODocument> docMap = new HashMap<String, ODocument>();
+    Map<String, ODocument> docMap = new HashMap<String, ODocument>();
     for (int i = 0; i < 10; i++) {
       ODocument doc1 = new ODocument();
       doc.field("number", i);
       list.add(doc1);
-      list = new ArrayList<>();
+      list = new ArrayList<ODocument>();
       for (int j = 0; j < 5; j++) {
         ODocument doc2 = new ODocument();
         doc2.field("blabla", j);
@@ -707,17 +633,18 @@ public class JSONTest extends DocumentDBBaseTest {
 
     List<ODocument> result =
         database.query(
-            new OSQLSynchQuery<>("select from device where domainset.domain contains 'abc'"));
+            new OSQLSynchQuery<Object>("select from device where domainset.domain contains 'abc'"));
     Assert.assertTrue(result.size() > 0);
 
     result =
         database.query(
-            new OSQLSynchQuery<>("select from device where domainset[domain = 'abc'] is not null"));
+            new OSQLSynchQuery<Object>(
+                "select from device where domainset[domain = 'abc'] is not null"));
     Assert.assertTrue(result.size() > 0);
 
     result =
         database.query(
-            new OSQLSynchQuery<>("select from device where domainset.domain contains 'pqr'"));
+            new OSQLSynchQuery<Object>("select from device where domainset.domain contains 'pqr'"));
     Assert.assertTrue(result.size() > 0);
   }
 
@@ -749,7 +676,7 @@ public class JSONTest extends DocumentDBBaseTest {
 
     List<ODocument> result =
         database.query(
-            new OSQLSynchQuery<>(
+            new OSQLSynchQuery<Object>(
                 "select from device where domainset.domain.lvlone.value = 'five'"));
     Assert.assertTrue(result.size() > 0);
   }
@@ -782,9 +709,10 @@ public class JSONTest extends DocumentDBBaseTest {
   }
 
   public void testEscapingDoubleQuotes() {
-    final ODocument doc = new ODocument();
-    final StringBuilder sb = new StringBuilder();
-    sb.append(
+    ODocument doc = new ODocument();
+    StringBuilder builder = new StringBuilder();
+
+    builder.append(
         " {\n"
             + "    \"foo\":{\n"
             + "            \"bar\":{\n"
@@ -800,18 +728,19 @@ public class JSONTest extends DocumentDBBaseTest {
             + "            \"three\": \"a\"\n"
             + "        }\n"
             + "} ");
-    doc.fromJSON(sb.toString());
+    doc.fromJSON(builder.toString());
     Assert.assertEquals(doc.field("foo.three"), "a");
-    final Collection c = doc.field("foo.bar.P357");
+    Collection c = doc.field("foo.bar.P357");
     Assert.assertEquals(c.size(), 1);
-    final Map doc2 = (Map) c.iterator().next();
+    Map doc2 = (Map) c.iterator().next();
     Assert.assertEquals(((Map) doc2.get("datavalue")).get("value"), "\"\"");
   }
 
   public void testEscapingDoubleQuotes2() {
-    final ODocument doc = new ODocument();
-    final StringBuilder sb = new StringBuilder();
-    sb.append(
+    ODocument doc = new ODocument();
+    StringBuilder builder = new StringBuilder();
+
+    builder.append(
         " {\n"
             + "    \"foo\":{\n"
             + "            \"bar\":{\n"
@@ -829,18 +758,19 @@ public class JSONTest extends DocumentDBBaseTest {
             + "        }\n"
             + "} ");
 
-    doc.fromJSON(sb.toString());
+    doc.fromJSON(builder.toString());
     Assert.assertEquals(doc.field("foo.three"), "a");
-    final Collection c = doc.field("foo.bar.P357");
+    Collection c = doc.field("foo.bar.P357");
     Assert.assertEquals(c.size(), 1);
-    final Map doc2 = (Map) c.iterator().next();
+    Map doc2 = (Map) c.iterator().next();
     Assert.assertEquals(((Map) doc2.get("datavalue")).get("value"), "\"");
   }
 
   public void testEscapingDoubleQuotes3() {
-    final ODocument doc = new ODocument();
-    final StringBuilder sb = new StringBuilder();
-    sb.append(
+    ODocument doc = new ODocument();
+    StringBuilder builder = new StringBuilder();
+
+    builder.append(
         " {\n"
             + "    \"foo\":{\n"
             + "            \"bar\":{\n"
@@ -857,10 +787,10 @@ public class JSONTest extends DocumentDBBaseTest {
             + "        }\n"
             + "} ");
 
-    doc.fromJSON(sb.toString());
-    final Collection c = doc.field("foo.bar.P357");
+    doc.fromJSON(builder.toString());
+    Collection c = doc.field("foo.bar.P357");
     Assert.assertEquals(c.size(), 1);
-    final Map doc2 = (Map) c.iterator().next();
+    Map doc2 = (Map) c.iterator().next();
     Assert.assertEquals(((Map) doc2.get("datavalue")).get("value"), "\"");
   }
 
@@ -890,26 +820,26 @@ public class JSONTest extends DocumentDBBaseTest {
   }
 
   public void testEmbeddedQuotes3() {
-    final ODocument doc = new ODocument();
-    final StringBuilder sb = new StringBuilder();
-    sb.append("{\"mainsnak\":{\"datavalue\":{\"value\":\"Suburban\\\\\"\"}}}");
-    doc.fromJSON(sb.toString());
+    ODocument doc = new ODocument();
+    StringBuilder builder = new StringBuilder();
+    builder.append("{\"mainsnak\":{\"datavalue\":{\"value\":\"Suburban\\\\\"\"}}}");
+    doc.fromJSON(builder.toString());
     Assert.assertEquals(doc.field("mainsnak.datavalue.value"), "Suburban\\\"");
   }
 
   public void testEmbeddedQuotes4() {
-    final ODocument doc = new ODocument();
-    final StringBuilder sb = new StringBuilder();
-    sb.append("{\"datavalue\":{\"value\":\"Suburban\\\\\"\"}}");
-    doc.fromJSON(sb.toString());
+    ODocument doc = new ODocument();
+    StringBuilder builder = new StringBuilder();
+    builder.append("{\"datavalue\":{\"value\":\"Suburban\\\\\"\"}}");
+    doc.fromJSON(builder.toString());
     Assert.assertEquals(doc.field("datavalue.value"), "Suburban\\\"");
   }
 
   public void testEmbeddedQuotes5() {
-    final ODocument doc = new ODocument();
-    final StringBuilder sb = new StringBuilder();
-    sb.append("{\"datavalue\":\"Suburban\\\\\"\"}");
-    doc.fromJSON(sb.toString());
+    ODocument doc = new ODocument();
+    StringBuilder builder = new StringBuilder();
+    builder.append("{\"datavalue\":\"Suburban\\\\\"\"}");
+    doc.fromJSON(builder.toString());
     Assert.assertEquals(doc.field("datavalue"), "Suburban\\\"");
   }
 
@@ -979,23 +909,24 @@ public class JSONTest extends DocumentDBBaseTest {
   }
 
   public void testDates() {
-    final Date now = new Date(1350518475000l);
+    Date now = new Date(1350518475000l);
 
-    final ODocument doc = new ODocument();
+    ODocument doc = new ODocument();
     doc.field("date", now);
-    final String json = doc.toJSON();
+    String json = doc.toJSON();
 
-    final ODocument unmarshalled = new ODocument().fromJSON(json);
+    ODocument unmarshalled = new ODocument().fromJSON(json);
     Assert.assertEquals(unmarshalled.field("date"), now);
   }
 
   @Test
   public void shouldDeserializeFieldWithCurlyBraces() {
-    final String json = "{\"a\":\"{dd}\",\"bl\":{\"b\":\"c\",\"a\":\"d\"}}";
-    final ODocument in =
+    String json = "{\"a\":\"{dd}\",\"bl\":{\"b\":\"c\",\"a\":\"d\"}}";
+    ODocument in =
         (ODocument)
             ORecordSerializerJSON.INSTANCE.fromString(
                 json, database.newInstance(), new String[] {});
+
     Assert.assertEquals(in.field("a"), "{dd}");
     Assert.assertTrue(in.field("bl") instanceof Map);
   }
@@ -1167,8 +1098,10 @@ public class JSONTest extends DocumentDBBaseTest {
           new OSQLSynchQuery<ODocument>("traverse * from " + o.getIdentity().toString())) {
         Assert.assertTrue(traverse.remove(id.getIdentity()));
       }
+
       Assert.assertTrue(traverse.isEmpty());
     }
+
     Assert.assertTrue(traverseMap.isEmpty());
   }
 
@@ -1213,14 +1146,16 @@ public class JSONTest extends DocumentDBBaseTest {
       Assert.assertTrue(content.hasSameContentOf(o));
     }
 
-    for (final ODocument o : database.browseClass("InnerDocCreation")) {
-      final List<ORID> traverse = traverseMap.remove(o.getIdentity());
-      for (final OIdentifiable id :
+    for (ODocument o : database.browseClass("InnerDocCreation")) {
+      List<ORID> traverse = traverseMap.remove(o.getIdentity());
+      for (OIdentifiable id :
           new OSQLSynchQuery<ODocument>("traverse * from " + o.getIdentity().toString())) {
         Assert.assertTrue(traverse.remove(id.getIdentity()));
       }
+
       Assert.assertTrue(traverse.isEmpty());
     }
+
     Assert.assertTrue(traverseMap.isEmpty());
   }
 
@@ -1281,38 +1216,6 @@ public class JSONTest extends DocumentDBBaseTest {
     Assert.assertTrue(traverseMap.isEmpty());
   }
 
-  public void testJSONTxDocInsertOnly() {
-    final String classNameDocOne = "JSONTxDocOneInsertOnly";
-    if (!database.getMetadata().getSchema().existsClass(classNameDocOne)) {
-      database.getMetadata().getSchema().createClass(classNameDocOne);
-    }
-    final String classNameDocTwo = "JSONTxDocTwoInsertOnly";
-    if (!database.getMetadata().getSchema().existsClass(classNameDocTwo)) {
-      database.getMetadata().getSchema().createClass(classNameDocTwo);
-    }
-    database.begin();
-    final ODocument eveDoc = new ODocument(classNameDocOne);
-    eveDoc.field("name", "eve");
-    eveDoc.save();
-
-    final ODocument nestedWithTypeD = new ODocument(classNameDocTwo);
-    nestedWithTypeD.fromJSON(
-        "{\"@type\":\"d\",\"event_name\":\"world cup 2014\",\"admin\":[" + eveDoc.toJSON() + "]}");
-    nestedWithTypeD.save();
-    database.commit();
-    Assert.assertEquals(database.countClass(classNameDocOne), 1);
-
-    final Map<ORID, ODocument> contentMap = new HashMap<>();
-    final ODocument eve = new ODocument(classNameDocOne);
-    eve.field("name", "eve");
-    contentMap.put(eveDoc.getIdentity(), eve);
-
-    for (final ODocument document : database.browseClass(classNameDocOne)) {
-      final ODocument content = contentMap.get(document.getIdentity());
-      Assert.assertTrue(content.hasSameContentOf(document));
-    }
-  }
-
   public void testJSONTxDoc() {
     if (!database.getMetadata().getSchema().existsClass("JSONTxDocOne"))
       database.getMetadata().getSchema().createClass("JSONTxDocOne");
@@ -1329,7 +1232,7 @@ public class JSONTest extends DocumentDBBaseTest {
     eveDoc.field("name", "eve");
     eveDoc.save();
 
-    final ODocument nestedWithTypeD = new ODocument("JSONTxDocTwo");
+    ODocument nestedWithTypeD = new ODocument("JSONTxDocTwo");
     nestedWithTypeD.fromJSON(
         "{\"@type\":\"d\",\"event_name\":\"world cup 2014\",\"admin\":["
             + eveDoc.toJSON()
@@ -1342,7 +1245,7 @@ public class JSONTest extends DocumentDBBaseTest {
 
     Assert.assertEquals(database.countClass("JSONTxDocOne"), 2);
 
-    Map<ORID, ODocument> contentMap = new HashMap<>();
+    Map<ORID, ODocument> contentMap = new HashMap<ORID, ODocument>();
     ODocument adam = new ODocument("JSONTxDocOne");
     adam.field("name", "adam");
     contentMap.put(adamDoc.getIdentity(), adam);
@@ -1360,7 +1263,8 @@ public class JSONTest extends DocumentDBBaseTest {
   public void testInvalidLink() {
     ODocument nullRefDoc = new ODocument();
     nullRefDoc.fromJSON("{\"name\":\"Luca\", \"ref\":\"#-1:-1\"}");
-    // Assert.assertNull(nullRefDoc.rawField("ref"));
+
+    //    Assert.assertNull(nullRefDoc.rawField("ref"));
 
     String json = nullRefDoc.toJSON();
     int pos = json.indexOf("\"ref\":");
@@ -1377,12 +1281,12 @@ public class JSONTest extends DocumentDBBaseTest {
 
   @Test
   public void testScientificNotation() {
-    final ODocument doc = new ODocument();
+    ODocument doc = new ODocument();
     doc.fromJSON("{'number1': -9.2741500e-31, 'number2': 741800E+290}");
 
-    final double number1 = doc.field("number1");
+    double number1 = doc.field("number1");
     Assert.assertEquals(number1, -9.27415E-31);
-    final double number2 = doc.field("number2");
+    double number2 = doc.field("number2");
     Assert.assertEquals(number2, 741800E+290);
   }
 }

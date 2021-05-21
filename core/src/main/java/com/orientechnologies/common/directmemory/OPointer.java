@@ -1,7 +1,6 @@
 package com.orientechnologies.common.directmemory;
 
 import com.kenai.jffi.MemoryIO;
-import com.orientechnologies.common.directmemory.ODirectMemoryAllocator.Intention;
 import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -10,15 +9,13 @@ public final class OPointer {
 
   private final long pointer;
   private final int size;
-  private final Intention intention;
 
   private WeakReference<ByteBuffer> byteBuffer;
   private int hash = 0;
 
-  OPointer(long pointer, int size, Intention intention) {
+  OPointer(long pointer, int size) {
     this.pointer = pointer;
     this.size = size;
-    this.intention = intention;
   }
 
   public void clear() {
@@ -47,10 +44,6 @@ public final class OPointer {
 
   int getSize() {
     return size;
-  }
-
-  Intention getIntention() {
-    return intention;
   }
 
   private ByteBuffer createNativeBuffer() {

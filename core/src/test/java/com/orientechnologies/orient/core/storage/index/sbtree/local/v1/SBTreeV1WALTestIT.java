@@ -5,6 +5,7 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
@@ -19,13 +20,14 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitEndRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFileCreatedWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFuzzyCheckpointEndRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFuzzyCheckpointStartRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ONonTxOperationPerformedWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitBodyRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.CASDiskWriteAheadLog;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.OperationIdLSN;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.WriteableWALRecord;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -75,7 +77,7 @@ public class SBTreeV1WALTestIT extends SBTreeV1TestIT {
     OFileUtils.deleteRecursively(buildDir);
 
     orientDB = new OrientDB("plocal:" + buildDir, OrientDBConfig.defaultConfig());
-    storage = (OAbstractPaginatedStorage) ((ODatabaseInternal<?>) databaseDocumentTx).getStorage();
+    storage = (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage();
     createExpectedSBTree();
     createActualSBTree();
   }
@@ -89,14 +91,10 @@ public class SBTreeV1WALTestIT extends SBTreeV1TestIT {
   }
 
   private void createActualSBTree() throws Exception {
-    orientDB.execute(
-        "create database "
-            + ACTUAL_DB_NAME
-            + " plocal users ( admin identified by 'admin' role admin)");
+    orientDB.create(ACTUAL_DB_NAME, ODatabaseType.PLOCAL);
 
     databaseDocumentTx = orientDB.open(ACTUAL_DB_NAME, "admin", "admin");
-    actualStorage =
-        (OLocalPaginatedStorage) ((ODatabaseInternal<?>) databaseDocumentTx).getStorage();
+    actualStorage = (OLocalPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage();
     actualStorageDir = actualStorage.getStoragePath().toString();
     CASDiskWriteAheadLog writeAheadLog = (CASDiskWriteAheadLog) actualStorage.getWALInstance();
 
@@ -121,14 +119,11 @@ public class SBTreeV1WALTestIT extends SBTreeV1TestIT {
   }
 
   private void createExpectedSBTree() {
-    orientDB.execute(
-        "create database "
-            + EXPECTED_DB_NAME
-            + " plocal users ( admin identified by 'admin' role admin)");
+    orientDB.create(EXPECTED_DB_NAME, ODatabaseType.PLOCAL);
 
     expectedDatabaseDocumentTx = orientDB.open(EXPECTED_DB_NAME, "admin", "admin");
     expectedStorage =
-        (OLocalPaginatedStorage) ((ODatabaseInternal<?>) expectedDatabaseDocumentTx).getStorage();
+        (OLocalPaginatedStorage) ((ODatabaseInternal) expectedDatabaseDocumentTx).getStorage();
     expectedReadCache = expectedStorage.getReadCache();
     expectedWriteCache = expectedStorage.getWriteCache();
 
@@ -280,6 +275,7 @@ public class SBTreeV1WALTestIT extends SBTreeV1TestIT {
             false,
             Locale.ENGLISH,
             -1,
+            -1,
             1_000,
             false,
             true,
@@ -348,7 +344,7 @@ public class SBTreeV1WALTestIT extends SBTreeV1TestIT {
               try {
                 ODurablePage durablePage = new ODurablePage(cacheEntry);
                 durablePage.restoreChanges(updatePageRecord.getChanges());
-                durablePage.setOperationIdLSN(new OperationIdLSN(0, new OLogSequenceNumber(0, 0)));
+                durablePage.setLsn(new OLogSequenceNumber(0, 0));
               } finally {
                 expectedReadCache.releaseFromWrite(cacheEntry, expectedWriteCache, true);
               }
@@ -360,7 +356,9 @@ public class SBTreeV1WALTestIT extends SBTreeV1TestIT {
               "WAL record type is " + walRecord.getClass().getName(),
               walRecord instanceof OUpdatePageRecord
                   || walRecord instanceof ONonTxOperationPerformedWALRecord
-                  || walRecord instanceof OFileCreatedWALRecord);
+                  || walRecord instanceof OFileCreatedWALRecord
+                  || walRecord instanceof OFuzzyCheckpointStartRecord
+                  || walRecord instanceof OFuzzyCheckpointEndRecord);
         }
       }
 

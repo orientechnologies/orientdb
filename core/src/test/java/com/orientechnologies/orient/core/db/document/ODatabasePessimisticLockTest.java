@@ -3,9 +3,9 @@ package com.orientechnologies.orient.core.db.document;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
-import com.orientechnologies.orient.core.OCreateDatabaseUtil;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.record.OElement;
@@ -28,19 +28,10 @@ public class ODatabasePessimisticLockTest {
             .addConfig(
                 OGlobalConfiguration.STORAGE_PESSIMISTIC_LOCKING,
                 OrientDBConfig.LOCK_TYPE_READWRITE)
-            .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
             .build();
     orientDB = new OrientDB("embedded:", config);
-    orientDB.execute(
-        "create database "
-            + "test"
-            + " "
-            + "memory"
-            + " users ( admin identified by '"
-            + OCreateDatabaseUtil.NEW_ADMIN_PASSWORD
-            + "' role admin)");
-    final ODatabaseSession session =
-        orientDB.open("test", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
+    orientDB.create("test", ODatabaseType.MEMORY);
+    ODatabaseSession session = orientDB.open("test", "admin", "admin");
     session.createClass("test");
     session.save(new ODocument("test")).getIdentity();
   }
@@ -53,8 +44,7 @@ public class ODatabasePessimisticLockTest {
     final CountDownLatch checkPreSecondCommit = new CountDownLatch(1);
     new Thread(
             () -> {
-              ODatabaseSession session =
-                  orientDB.open("test", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
+              ODatabaseSession session = orientDB.open("test", "admin", "admin");
               session.begin();
               try (OResultSet set = session.query("select from test lock record")) {
                 OElement element = set.next().getElement().get();
@@ -76,8 +66,7 @@ public class ODatabasePessimisticLockTest {
 
     new Thread(
             () -> {
-              ODatabaseSession session =
-                  orientDB.open("test", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
+              ODatabaseSession session = orientDB.open("test", "admin", "admin");
               session.begin();
               try {
                 pessimisticQueryDone.await();
@@ -103,8 +92,7 @@ public class ODatabasePessimisticLockTest {
         .start();
 
     firstCommitted.await();
-    ODatabaseSession session =
-        orientDB.open("test", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
+    ODatabaseSession session = orientDB.open("test", "admin", "admin");
 
     try (OResultSet set = session.query("select from test")) {
       assertEquals(set.next().getProperty("a"), "a");
@@ -112,8 +100,7 @@ public class ODatabasePessimisticLockTest {
     checkPreSecondCommit.countDown();
     session.close();
     finished.await();
-    ODatabaseSession session1 =
-        orientDB.open("test", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
+    ODatabaseSession session1 = orientDB.open("test", "admin", "admin");
     try (OResultSet set = session1.query("select from test")) {
       assertEquals(set.next().getProperty("a"), "b");
     }

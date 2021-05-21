@@ -12,12 +12,10 @@ import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import java.io.IOException;
@@ -974,10 +972,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     ORidBag bag = new ORidBag();
     assertEmbedded(bag.isEmbedded());
 
-    final long seed = System.nanoTime();
-    System.out.println("testMassiveChanges seed: " + seed);
-
-    Random random = new Random(seed);
+    Random random = new Random();
     List<OIdentifiable> rids = new ArrayList<OIdentifiable>();
     document.field("bag", bag);
     document.save(database.getClusterNameById(database.getDefaultClusterId()));
@@ -1154,7 +1149,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(7);
     OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(-1);
 
-    if (database.getStorage() instanceof OStorageProxy) {
+    if (database.isRemote()) {
       OServerAdmin server =
           new OServerAdmin(database.getURL())
               .connect("root", ODatabaseHelper.getServerRootPassword());
@@ -1613,13 +1608,13 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
 
   @Test
   public void testJsonSerialization() {
-    final ODocument externalDoc = new ODocument();
-    final ODocument testDocument = new ODocument();
-    final ORidBag highLevelRidBag = new ORidBag();
-    for (int i = 0; i < 10; i++) {
+    ODocument externalDoc = new ODocument();
+    ODocument testDocument = new ODocument();
+    ORidBag highLevelRidBag = new ORidBag();
+    for (int i = 0; i < 10; i++)
       highLevelRidBag.add(
           new ODocument().save(database.getClusterNameById(database.getDefaultClusterId())));
-    }
+
     externalDoc.save(database.getClusterNameById(database.getDefaultClusterId()));
     testDocument.field("type", "testDocument");
     testDocument.field("ridBag", highLevelRidBag);
@@ -1629,10 +1624,9 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     testDocument.save(database.getClusterNameById(database.getDefaultClusterId()));
     testDocument.reload();
 
-    // FIXME: switch to DEFAULT format
-    final String json = testDocument.toJSON(ORecordAbstract.OLD_FORMAT_WITH_LATE_TYPES);
+    final String json = testDocument.toJSON();
 
-    final ODocument doc = new ODocument();
+    ODocument doc = new ODocument();
     doc.fromJSON(json);
 
     Assert.assertTrue(
@@ -1678,8 +1672,8 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
         final OIdentifiable rid = rids.remove(index);
         bag.remove(rid);
       } else {
-        final long position;
-        position = rnd.nextInt(300);
+        final int positionIndex = rnd.nextInt(300);
+        final long position = positionIndex;
 
         final ORecordId recordId = new ORecordId(1, position);
         rids.add(recordId);

@@ -124,7 +124,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Document API entrypoint.
@@ -161,18 +160,8 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
   protected OMicroTransaction microTransaction = null;
 
-  protected Map<String, OResultSet> activeQueries = new ConcurrentHashMap<>();
+  protected Map<String, OResultSet> activeQueries = new HashMap<>();
   private Map<UUID, OBonsaiCollectionPointer> collectionsChanges;
-
-  // database stats!
-  protected long loadedRecordsCount;
-  protected long totalRecordLoadMs;
-  protected long minRecordLoadMs;
-  protected long maxRecordLoadMs;
-  protected long ridbagPrefetchCount;
-  protected long totalRidbagPrefetchMs;
-  protected long minRidbagPrefetchMs;
-  protected long maxRidbagPrefetchMs;
 
   protected ODatabaseDocumentAbstract() {
     // DO NOTHING IS FOR EXTENDED OBJECTS
@@ -202,6 +191,8 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   }
 
   protected abstract void loadMetadata();
+
+  protected abstract void loadMetadata(OSharedContext ctx);
 
   public void callOnCloseListeners() {
     wakeupOnCloseDbLifecycleListeners();
@@ -617,21 +608,22 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   }
 
   @Override
-  public boolean declareIntent(final OIntent intent) {
+  public boolean declareIntent(final OIntent iIntent) {
     checkIfActive();
+
     if (currentIntent != null) {
-      if (intent != null && intent.getClass().equals(currentIntent.getClass())) {
+      if (iIntent != null && iIntent.getClass().equals(currentIntent.getClass()))
         // SAME INTENT: JUMP IT
         return false;
-      }
+
       // END CURRENT INTENT
       currentIntent.end(this);
     }
-    currentIntent = intent;
 
-    if (intent != null) {
-      intent.begin(this);
-    }
+    currentIntent = iIntent;
+
+    if (iIntent != null) iIntent.begin(this);
+
     return true;
   }
 

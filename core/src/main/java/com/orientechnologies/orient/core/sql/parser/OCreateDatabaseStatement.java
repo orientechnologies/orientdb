@@ -2,7 +2,6 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OServerCommandContext;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.*;
@@ -18,7 +17,6 @@ import java.util.Map;
 public class OCreateDatabaseStatement extends OSimpleExecServerStatement {
 
   protected OIdentifier name;
-  protected OInputParameter nameParam;
   protected OIdentifier type;
   protected boolean ifNotExists = false;
   protected OJson config;
@@ -38,11 +36,7 @@ public class OCreateDatabaseStatement extends OSimpleExecServerStatement {
     OrientDBInternal server = ctx.getServer();
     OResultInternal result = new OResultInternal();
     result.setProperty("operation", "create database");
-    String dbName =
-        name != null
-            ? name.getStringValue()
-            : String.valueOf(nameParam.getValue(ctx.getInputParameters()));
-    result.setProperty("name", dbName);
+    result.setProperty("name", name.getStringValue());
 
     ODatabaseType dbType;
     try {
@@ -51,41 +45,28 @@ public class OCreateDatabaseStatement extends OSimpleExecServerStatement {
     } catch (IllegalArgumentException ex) {
       throw new OCommandExecutionException("Invalid db type: " + type.getStringValue());
     }
-    if (ifNotExists && server.exists(dbName, null, null)) {
+    if (ifNotExists && server.exists(name.getStringValue(), null, null)) {
       result.setProperty("created", false);
       result.setProperty("existing", true);
     } else {
       try {
-        OrientDBConfigBuilder configBuilder = OrientDBConfig.builder();
-
-        if (config != null) {
-          configBuilder = mapOrientDBConfig(this.config, ctx, configBuilder);
+        if (config == null) {
+          server.create(name.getStringValue(), null, null, dbType);
+        } else {
+          server.create(name.getStringValue(), null, null, dbType, toOrientDBConfig(config, ctx));
         }
-
-        if (!users.isEmpty()) {
-          configBuilder = configBuilder.addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false);
-        }
-
-        server.create(
-            dbName,
-            null,
-            null,
-            dbType,
-            configBuilder.build(),
-            (session) -> {
-              if (!users.isEmpty()) {
-                for (ODatabaseUserData user : users) {
-                  user.executeCreate((ODatabaseDocumentInternal) session, ctx);
-                }
-              }
-              return null;
-            });
         result.setProperty("created", true);
       } catch (Exception e) {
-        throw OException.wrapException(
-            new OCommandExecutionException(
-                "Could not create database " + type.getStringValue() + ":" + e.getMessage()),
-            e);
+        throw new OCommandExecutionException(
+            "Could not create database " + type.getStringValue() + ":" + e.getMessage());
+      }
+    }
+    // TODO create users!
+    if (!users.isEmpty()) {
+      try (ODatabaseDocumentInternal db = server.openNoAuthorization(name.getStringValue())) {
+        for (ODatabaseUserData user : users) {
+          user.executeCreate(db, ctx);
+        }
       }
     }
 
@@ -94,8 +75,8 @@ public class OCreateDatabaseStatement extends OSimpleExecServerStatement {
     return rs;
   }
 
-  private OrientDBConfigBuilder mapOrientDBConfig(
-      OJson config, OServerCommandContext ctx, OrientDBConfigBuilder builder) {
+  private OrientDBConfig toOrientDBConfig(OJson config, OServerCommandContext ctx) {
+    OrientDBConfigBuilder builder = new OrientDBConfigBuilder();
     Map<String, Object> configMap = config.toMap(new OResultInternal(), ctx);
     Object globalConfig = configMap.get("config");
     if (globalConfig != null && globalConfig instanceof Map) {
@@ -105,17 +86,13 @@ public class OCreateDatabaseStatement extends OSimpleExecServerStatement {
               .forEach(
                   x -> builder.addConfig(OGlobalConfiguration.findByKey(x.getKey()), x.getValue()));
     }
-    return builder;
+    return builder.build();
   }
 
   @Override
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("CREATE DATABASE ");
-    if (name != null) {
-      name.toString(params, builder);
-    } else {
-      nameParam.toString(params, builder);
-    }
+    name.toString(params, builder);
     builder.append(" ");
     type.toString(params, builder);
     if (ifNotExists) {

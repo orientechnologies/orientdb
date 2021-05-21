@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.setup.ServerRun;
 import org.junit.Test;
@@ -58,10 +60,7 @@ public class DistributedDbDropAndReCreateAnotherIT extends AbstractServerCluster
 
       server
           .getServerInstance()
-          .getContext()
-          .execute(
-              "create database ? plocal users(admin identified by 'admin' role admin)",
-              getDatabaseName());
+          .createDatabase(getDatabaseName(), ODatabaseType.PLOCAL, OrientDBConfig.defaultConfig());
 
       waitForDatabaseIsOnline(0, "europe-0", getDatabaseName(), 15000);
       waitForDatabaseIsOnline(0, "europe-1", getDatabaseName(), 15000);

@@ -1,9 +1,8 @@
 package com.orientechnologies.orient.core.metadata.security;
 
-import com.orientechnologies.orient.core.OCreateDatabaseUtil;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.record.OElement;
@@ -23,12 +22,7 @@ public class OSecurityEngineTest {
 
   @BeforeClass
   public static void beforeClass() {
-    orient =
-        new OrientDB(
-            "plocal:.",
-            OrientDBConfig.builder()
-                .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
-                .build());
+    orient = new OrientDB("plocal:.", OrientDBConfig.defaultConfig());
   }
 
   @AfterClass
@@ -38,15 +32,8 @@ public class OSecurityEngineTest {
 
   @Before
   public void before() {
-    orient.execute(
-        "create database "
-            + DB_NAME
-            + " "
-            + "memory"
-            + " users ( admin identified by '"
-            + OCreateDatabaseUtil.NEW_ADMIN_PASSWORD
-            + "' role admin)");
-    this.db = orient.open(DB_NAME, "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
+    orient.create(DB_NAME, ODatabaseType.MEMORY);
+    this.db = orient.open(DB_NAME, "admin", "admin");
   }
 
   @After
@@ -202,7 +189,7 @@ public class OSecurityEngineTest {
     db.command(
         "Update OUser set roles = roles || (select from orole where name = 'reader') where name = 'admin'");
     db.close();
-    db = orient.open(DB_NAME, "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
+    db = orient.open(DB_NAME, "admin", "admin");
 
     OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
 

@@ -21,7 +21,6 @@
 package com.orientechnologies.orient.core.storage.memory;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
-import com.orientechnologies.common.directmemory.ODirectMemoryAllocator.Intention;
 import com.orientechnologies.common.directmemory.OPointer;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.OCommonConst;
@@ -35,9 +34,9 @@ import com.orientechnologies.orient.core.storage.cache.OPageDataVerificationErro
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.cache.local.OBackgroundExceptionListener;
+import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.OPageIsBrokenListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
@@ -387,11 +386,6 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache
   }
 
   @Override
-  public void replaceFileId(long fileId, long newFileId) throws IOException {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public final void deleteStorage(final OWriteCache writeCache) {
     delete();
   }
@@ -501,8 +495,7 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache
           }
 
           final OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-          final OPointer pointer =
-              bufferPool.acquireDirect(true, Intention.ADD_NEW_PAGE_IN_MEMORY_STORAGE);
+          final OPointer pointer = bufferPool.acquireDirect(true);
 
           final OCachePointer cachePointer =
               new OCachePointer(pointer, bufferPool, id, (int) index);
@@ -596,6 +589,12 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache
   public final void removePageIsBrokenListener(final OPageIsBrokenListener listener) {}
 
   @Override
+  public final void addLowDiskSpaceListener(final OLowDiskSpaceListener listener) {}
+
+  @Override
+  public final void removeLowDiskSpaceListener(final OLowDiskSpaceListener listener) {}
+
+  @Override
   public final long loadFile(final String fileName) {
     metadataLock.lock();
     try {
@@ -628,7 +627,7 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache
   }
 
   @Override
-  public final void syncDataFiles(final long segmentId, byte[] lastMetadata) {}
+  public final void makeFuzzyCheckpoint(final long segmentId, byte[] lastMetadata) {}
 
   @Override
   public final void flushTillSegment(final long segmentId) {}

@@ -528,17 +528,16 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
       Object key, final ORID backendValue, OTransactionIndexChanges indexChanges) {
     key = getCollatingValue(key);
     final OTransactionIndexChangesPerKey changesPerKey = indexChanges.getChangesPerKey(key);
-    if (changesPerKey.isEmpty()) {
+    if (changesPerKey.entries.isEmpty()) {
       return new ORawPair<>(key, backendValue);
     }
 
     int putCounter = 1;
-    for (OTransactionIndexEntry entry : changesPerKey.getEntriesAsList()) {
-      if (entry.getOperation() == OPERATION.PUT && entry.getValue().equals(backendValue))
-        putCounter++;
-      else if (entry.getOperation() == OPERATION.REMOVE) {
-        if (entry.getValue() == null) putCounter = 0;
-        else if (entry.getValue().equals(backendValue) && putCounter > 0) putCounter--;
+    for (OTransactionIndexEntry entry : changesPerKey.entries) {
+      if (entry.operation == OPERATION.PUT && entry.value.equals(backendValue)) putCounter++;
+      else if (entry.operation == OPERATION.REMOVE) {
+        if (entry.value == null) putCounter = 0;
+        else if (entry.value.equals(backendValue) && putCounter > 0) putCounter--;
       }
     }
 
@@ -553,15 +552,15 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
       final Object key, OTransactionIndexChanges indexChanges) {
     final List<OIdentifiable> result = new ArrayList<>();
     final OTransactionIndexChangesPerKey changesPerKey = indexChanges.getChangesPerKey(key);
-    if (changesPerKey.isEmpty()) {
+    if (changesPerKey.entries.isEmpty()) {
       return null;
     }
 
-    for (OTransactionIndexEntry entry : changesPerKey.getEntriesAsList()) {
-      if (entry.getOperation() == OPERATION.REMOVE) {
-        if (entry.getValue() == null) result.clear();
-        else result.remove(entry.getValue());
-      } else result.add(entry.getValue());
+    for (OTransactionIndexEntry entry : changesPerKey.entries) {
+      if (entry.operation == OPERATION.REMOVE) {
+        if (entry.value == null) result.clear();
+        else result.remove(entry.value);
+      } else result.add(entry.value);
     }
 
     if (result.isEmpty()) return null;

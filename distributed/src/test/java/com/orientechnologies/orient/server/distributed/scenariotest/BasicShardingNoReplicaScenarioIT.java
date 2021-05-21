@@ -23,6 +23,7 @@ import static org.junit.Assert.fail;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -33,7 +34,7 @@ import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedAbstractPlugin;
 import java.util.LinkedList;
 import java.util.List;
 import org.junit.Ignore;
@@ -64,8 +65,9 @@ public class BasicShardingNoReplicaScenarioIT extends AbstractShardingScenarioTe
   @Override
   public void executeTest() throws Exception {
 
-    ODistributedPlugin manager1 =
-        (ODistributedPlugin) serverInstance.get(0).getServerInstance().getDistributedManager();
+    ODistributedAbstractPlugin manager1 =
+        (ODistributedAbstractPlugin)
+            serverInstance.get(0).getServerInstance().getDistributedManager();
 
     final OModifiableDistributedConfiguration databaseConfiguration =
         manager1.getDatabaseConfiguration(this.getDatabaseName()).modify();
@@ -75,9 +77,7 @@ public class BasicShardingNoReplicaScenarioIT extends AbstractShardingScenarioTe
     try {
       OrientDB orientDB = serverInstance.get(0).getServerInstance().getContext();
       if (!orientDB.exists(getDatabaseName())) {
-        orientDB.execute(
-            "create database ? plocal users(admin identified by 'admin' role admin)",
-            getDatabaseName());
+        orientDB.create(getDatabaseName(), ODatabaseType.PLOCAL);
       }
       graphNoTx = (ODatabaseDocumentInternal) orientDB.open(getDatabaseName(), "admin", "admin");
 
@@ -176,9 +176,7 @@ public class BasicShardingNoReplicaScenarioIT extends AbstractShardingScenarioTe
 
         OrientDB orientDB1 = serverInstance.get(2).getServerInstance().getContext();
         if (!orientDB1.exists(getDatabaseName())) {
-          orientDB1.execute(
-              "create database ? plocal users(admin identified by 'admin' role admin)",
-              getDatabaseName());
+          orientDB1.create(getDatabaseName(), ODatabaseType.PLOCAL);
         }
         graphNoTx = (ODatabaseDocumentInternal) orientDB1.open(getDatabaseName(), "admin", "admin");
         graphNoTx.activateOnCurrentThread();

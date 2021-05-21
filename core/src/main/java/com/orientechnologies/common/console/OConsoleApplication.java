@@ -175,18 +175,18 @@ public class OConsoleApplication {
   }
 
   public int getVerboseLevel() {
-    final String v = properties.get(OConsoleProperties.VERBOSE);
+    final String v = properties.get("verbose");
     final int verboseLevel = v != null ? Integer.parseInt(v) : 2;
     return verboseLevel;
   }
 
   protected int getConsoleWidth() {
-    final String width = properties.get(OConsoleProperties.WIDTH);
+    final String width = properties.get("width");
     return width == null ? reader.getConsoleWidth() : Integer.parseInt(width);
   }
 
   public boolean isEchoEnabled() {
-    return isPropertyEnabled(OConsoleProperties.ECHO);
+    return isPropertyEnabled("echo");
   }
 
   protected boolean isPropertyEnabled(final String iPropertyName) {
@@ -284,8 +284,7 @@ public class OConsoleApplication {
           commandLine = null;
 
           if (status == RESULT.EXIT
-              || (status == RESULT.ERROR
-                      && !Boolean.parseBoolean(properties.get(OConsoleProperties.IGNORE_ERRORS)))
+              || (status == RESULT.ERROR && !Boolean.parseBoolean(properties.get("ignoreErrors")))
                   && iBatchMode) return false;
         }
       }
@@ -300,8 +299,7 @@ public class OConsoleApplication {
 
         final RESULT status = execute(commandBuffer.toString());
         if (status == RESULT.EXIT
-            || (status == RESULT.ERROR
-                    && !Boolean.parseBoolean(properties.get(OConsoleProperties.IGNORE_ERRORS)))
+            || (status == RESULT.ERROR && !Boolean.parseBoolean(properties.get("ignoreErrors")))
                 && iBatchMode) return false;
       }
     } finally {
@@ -320,15 +318,6 @@ public class OConsoleApplication {
   }
 
   protected RESULT execute(String iCommand) {
-    int compLevel = getCompatibilityLevel();
-    if (compLevel >= OConsoleProperties.COMPATIBILITY_LEVEL_1) {
-
-      RESULT result = executeServerCommand(iCommand);
-      if (result != RESULT.NOT_EXECUTED) {
-        return result;
-      }
-    }
-
     iCommand = iCommand.replaceAll("\n", ";\n");
     iCommand = iCommand.trim();
 
@@ -476,19 +465,6 @@ public class OConsoleApplication {
 
     error("\n!Unrecognized command: '%s'", iCommand);
     return RESULT.ERROR;
-  }
-
-  protected RESULT executeServerCommand(String iCommand) {
-    return RESULT.NOT_EXECUTED;
-  }
-
-  private int getCompatibilityLevel() {
-    try {
-      String compLevelString = properties.get(OConsoleProperties.COMPATIBILITY_LEVEL);
-      return Integer.parseInt(compLevelString);
-    } catch (Exception e) {
-      return OConsoleProperties.COMPATIBILITY_LEVEL_LATEST;
-    }
   }
 
   protected Method getMethod(String iCommand) {
@@ -795,7 +771,6 @@ public class OConsoleApplication {
   protected enum RESULT {
     OK,
     ERROR,
-    EXIT,
-    NOT_EXECUTED
+    EXIT
   }
 }

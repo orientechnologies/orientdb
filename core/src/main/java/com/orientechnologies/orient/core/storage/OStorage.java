@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.storage;
 
+import com.orientechnologies.common.concur.resource.OSharedContainer;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -47,13 +48,12 @@ import java.util.TimeZone;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  * @see com.orientechnologies.orient.core.storage.memory.ODirectMemoryStorage
  */
-public interface OStorage extends OBackupable, OStorageInfo {
+public interface OStorage extends OBackupable, OSharedContainer, OStorageInfo {
   String CLUSTER_DEFAULT_NAME = "default";
 
   enum STATUS {
     CLOSED,
     OPEN,
-    MIGRATION,
     CLOSING,
     @Deprecated
     OPENING,

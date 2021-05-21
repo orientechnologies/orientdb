@@ -2,10 +2,9 @@ package com.orientechnologies.orient.core.storage.index.hashindex.local.v3;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.orient.core.OCreateDatabaseUtil;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -21,13 +20,14 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitEndRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFileCreatedWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFuzzyCheckpointEndRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFuzzyCheckpointStartRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ONonTxOperationPerformedWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitBodyRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.CASDiskWriteAheadLog;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.OperationIdLSN;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.WriteableWALRecord;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OMurmurHash3HashFunction;
 import java.io.IOException;
@@ -76,22 +76,13 @@ public class OLocalHashTableV3WALTestIT extends OLocalHashTableV3Base {
     final java.io.File buildDir = new java.io.File(buildDirectory);
     OFileUtils.deleteRecursively(buildDir);
 
-    orientDB =
-        new OrientDB(
-            "plocal:" + buildDirectory,
-            OrientDBConfig.builder()
-                .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
-                .build());
+    orientDB = new OrientDB("plocal:" + buildDirectory, OrientDBConfig.defaultConfig());
 
-    OCreateDatabaseUtil.createDatabase(ACTUAL_DB_NAME, orientDB, OCreateDatabaseUtil.TYPE_PLOCAL);
-    // orientDB.create(ACTUAL_DB_NAME, ODatabaseType.PLOCAL);
-    databaseDocumentTx =
-        orientDB.open(ACTUAL_DB_NAME, "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
+    orientDB.create(ACTUAL_DB_NAME, ODatabaseType.PLOCAL);
+    databaseDocumentTx = orientDB.open(ACTUAL_DB_NAME, "admin", "admin");
 
-    OCreateDatabaseUtil.createDatabase(EXPECTED_DB_NAME, orientDB, OCreateDatabaseUtil.TYPE_PLOCAL);
-    // orientDB.create(EXPECTED_DB_NAME, ODatabaseType.PLOCAL);
-    expectedDatabaseDocumentTx =
-        orientDB.open(EXPECTED_DB_NAME, "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
+    orientDB.create(EXPECTED_DB_NAME, ODatabaseType.PLOCAL);
+    expectedDatabaseDocumentTx = orientDB.open(EXPECTED_DB_NAME, "admin", "admin");
 
     expectedStorage =
         ((OLocalPaginatedStorage) ((ODatabaseInternal<?>) expectedDatabaseDocumentTx).getStorage());
@@ -291,6 +282,7 @@ public class OLocalHashTableV3WALTestIT extends OLocalHashTableV3Base {
             false,
             Locale.ENGLISH,
             -1,
+            -1,
             1_000,
             false,
             true,
@@ -361,7 +353,7 @@ public class OLocalHashTableV3WALTestIT extends OLocalHashTableV3Base {
               try {
                 ODurablePage durablePage = new ODurablePage(cacheEntry);
                 durablePage.restoreChanges(updatePageRecord.getChanges());
-                durablePage.setOperationIdLSN(new OperationIdLSN(0, new OLogSequenceNumber(0, 0)));
+                durablePage.setLsn(new OLogSequenceNumber(0, 0));
               } finally {
                 expectedReadCache.releaseFromWrite(cacheEntry, expectedWriteCache, true);
               }
@@ -373,7 +365,9 @@ public class OLocalHashTableV3WALTestIT extends OLocalHashTableV3Base {
               "WAL record type is " + walRecord.getClass().getName(),
               walRecord instanceof OUpdatePageRecord
                   || walRecord instanceof ONonTxOperationPerformedWALRecord
-                  || walRecord instanceof OFileCreatedWALRecord);
+                  || walRecord instanceof OFileCreatedWALRecord
+                  || walRecord instanceof OFuzzyCheckpointStartRecord
+                  || walRecord instanceof OFuzzyCheckpointEndRecord);
         }
       }
 

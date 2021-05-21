@@ -3,7 +3,6 @@ package com.orientechnologies.orient.core.schedule;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 
-import com.orientechnologies.orient.core.OCreateDatabaseUtil;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -11,6 +10,7 @@ import com.orientechnologies.orient.core.db.ODatabasePool;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseThreadLocalFactory;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
@@ -31,10 +31,10 @@ public class OSchedulerTest {
 
   @Test
   public void scheduleSQLFunction() throws Exception {
-    final OrientDB context = createContext();
+    OrientDB context = createContext();
+
     try {
-      final ODatabaseSession db =
-          context.cachedPool("test", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD).acquire();
+      ODatabaseSession db = context.cachedPool("test", "admin", "admin").acquire();
       createLogEvent(db);
 
       Thread.sleep(2000);
@@ -50,13 +50,13 @@ public class OSchedulerTest {
   @Test
   public void scheduleWithDbClosed() throws Exception {
     OrientDB context = createContext();
-    ODatabaseSession db = context.open("test", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
+    ODatabaseSession db = context.open("test", "admin", "admin");
     createLogEvent(db);
     db.close();
 
     Thread.sleep(2000);
 
-    db = context.open("test", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
+    db = context.open("test", "admin", "admin");
     Long count = getLogCounter(db);
 
     Assert.assertTrue(count >= 2);
@@ -69,8 +69,7 @@ public class OSchedulerTest {
   public void eventLifecycle() throws Exception {
     OrientDB context = createContext();
     try {
-      ODatabaseSession db =
-          context.cachedPool("test", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD).acquire();
+      ODatabaseSession db = context.cachedPool("test", "admin", "admin").acquire();
       createLogEvent(db);
 
       Thread.sleep(2000);
@@ -97,17 +96,17 @@ public class OSchedulerTest {
 
   @Test
   public void eventSavedAndLoaded() throws Exception {
+
     OrientDB context = createContext();
-    final ODatabaseSession db =
-        context.open("test", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
+    final ODatabaseSession db = context.open("test", "admin", "admin");
     createLogEvent(db);
     db.close();
 
     Thread.sleep(1000);
 
-    final ODatabaseSession db2 =
-        context.open("test", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
+    final ODatabaseSession db2 = context.open("test", "admin", "admin");
     try {
+
       Thread.sleep(2000);
       Long count = getLogCounter(db2);
       Assert.assertTrue(count >= 2);
@@ -120,26 +119,17 @@ public class OSchedulerTest {
 
   @Test
   public void testScheduleEventWithMultipleActiveDatabaseConnections() {
-    final OrientDB orientDb =
+    OrientDB orientDb =
         new OrientDB(
             "embedded:",
-            OrientDBConfig.builder()
-                .addConfig(OGlobalConfiguration.DB_POOL_MAX, 1)
-                .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
-                .build());
+            OrientDBConfig.builder().addConfig(OGlobalConfiguration.DB_POOL_MAX, 1).build());
+
     if (!orientDb.exists("test")) {
-      orientDb.execute(
-          "create database "
-              + "test"
-              + " "
-              + "memory"
-              + " users ( admin identified by '"
-              + OCreateDatabaseUtil.NEW_ADMIN_PASSWORD
-              + "' role admin)");
+      orientDb.create("test", ODatabaseType.MEMORY);
     }
-    final ODatabasePool pool =
-        orientDb.cachedPool("test", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
-    final ODatabaseSession db = pool.acquire();
+
+    ODatabasePool pool = orientDb.cachedPool("test", "admin", "admin");
+    ODatabaseSession db = pool.acquire();
 
     assertEquals(db, ODatabaseRecordThreadLocal.instance().getIfDefined());
     createLogEvent(db);
@@ -152,8 +142,7 @@ public class OSchedulerTest {
   public void eventBySQL() throws Exception {
 
     OrientDB context = createContext();
-    final ODatabaseSession db =
-        context.open("test", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
+    final ODatabaseSession db = context.open("test", "admin", "admin");
     try {
       OFunction func = createFunction(db);
 
@@ -198,12 +187,11 @@ public class OSchedulerTest {
   }
 
   private OrientDB createContext() {
-    final OrientDB orientDB =
-        OCreateDatabaseUtil.createDatabase("test", "embedded:./", OCreateDatabaseUtil.TYPE_MEMORY);
+    OrientDB orientDB = new OrientDB("embedded:.", OrientDBConfig.defaultConfig());
+    orientDB.createIfNotExists("test", ODatabaseType.MEMORY);
     Orient.instance()
         .registerThreadDatabaseFactory(
-            new TestScheduleDatabaseFactory(
-                orientDB, "test", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD));
+            new TestScheduleDatabaseFactory(orientDB, "test", "admin", "admin"));
     return orientDB;
   }
 

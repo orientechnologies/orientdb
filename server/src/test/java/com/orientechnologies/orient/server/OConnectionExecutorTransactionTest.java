@@ -22,6 +22,7 @@ import com.orientechnologies.orient.client.remote.message.ORollbackTransactionRe
 import com.orientechnologies.orient.client.remote.message.OUpdateRecordRequest;
 import com.orientechnologies.orient.client.remote.message.OUpdateRecordResponse;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
@@ -65,9 +66,7 @@ public class OConnectionExecutorTransactionTest {
             .getPath("./target/" + OConnectionExecutorTransactionTest.class.getSimpleName());
     Files.createDirectories(path);
     orientDb = new OrientDB("embedded:" + path.toString(), OrientDBConfig.defaultConfig());
-    orientDb.execute(
-        "create database ? memory users (admin identified by 'admin' role admin)",
-        OConnectionExecutorTransactionTest.class.getSimpleName());
+    orientDb.create(OConnectionExecutorTransactionTest.class.getSimpleName(), ODatabaseType.MEMORY);
     database =
         (ODatabaseDocumentInternal)
             orientDb.open(

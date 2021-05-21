@@ -151,4 +151,14 @@ public class MyIndexEngine implements OIndexEngine {
   public String getIndexNameByKey(Object key) {
     return null;
   }
+
+  @Override
+  public void updateUniqueIndexVersion(Object key) {
+
+  }
+
+  @Override
+  public int getUniqueIndexVersion(Object key) {
+    return 0;
+  }
 }

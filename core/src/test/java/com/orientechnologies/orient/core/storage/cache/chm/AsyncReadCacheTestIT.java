@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.storage.cache.chm;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.directmemory.ODirectMemoryAllocator;
-import com.orientechnologies.common.directmemory.ODirectMemoryAllocator.Intention;
 import com.orientechnologies.common.directmemory.OPointer;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -11,6 +10,7 @@ import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.cache.OPageDataVerificationError;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.cache.local.OBackgroundExceptionListener;
+import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.OPageIsBrokenListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import java.io.IOException;
@@ -352,6 +352,12 @@ public class AsyncReadCacheTestIT {
     public void removePageIsBrokenListener(final OPageIsBrokenListener listener) {}
 
     @Override
+    public void addLowDiskSpaceListener(final OLowDiskSpaceListener listener) {}
+
+    @Override
+    public void removeLowDiskSpaceListener(final OLowDiskSpaceListener listener) {}
+
+    @Override
     public long bookFileId(final String fileName) {
       return 0;
     }
@@ -382,7 +388,7 @@ public class AsyncReadCacheTestIT {
     }
 
     @Override
-    public void syncDataFiles(long segmentId, byte[] lastMetadata) {}
+    public void makeFuzzyCheckpoint(long segmentId, byte[] lastMetadata) throws IOException {}
 
     @Override
     public void flushTillSegment(final long segmentId) {}
@@ -420,7 +426,7 @@ public class AsyncReadCacheTestIT {
         final long startPageIndex,
         final OModifiableBoolean cacheHit,
         final boolean verifyChecksums) {
-      final OPointer pointer = byteBufferPool.acquireDirect(true, Intention.TEST);
+      final OPointer pointer = byteBufferPool.acquireDirect(true);
       final OCachePointer cachePointer =
           new OCachePointer(pointer, byteBufferPool, fileId, (int) startPageIndex);
       cachePointer.incrementReadersReferrer();
@@ -497,6 +503,11 @@ public class AsyncReadCacheTestIT {
     }
 
     @Override
+    public boolean fileIdsAreEqual(final long firsId, final long secondId) {
+      return false;
+    }
+
+    @Override
     public String restoreFileById(final long fileId) {
       return null;
     }
@@ -523,11 +534,6 @@ public class AsyncReadCacheTestIT {
     }
 
     @Override
-    public boolean fileIdsAreEqual(long firsId, long secondId) {
-      return false;
-    }
-
-    @Override
     public Long getMinimalNotFlushedSegment() {
       return null;
     }
@@ -537,13 +543,10 @@ public class AsyncReadCacheTestIT {
         final OCachePointer pointer, final OLogSequenceNumber startLSN) {}
 
     @Override
-    public void create() {}
+    public void create() throws IOException {}
 
     @Override
     public void open() throws IOException {}
-
-    @Override
-    public void replaceFileId(long fileId, long newFileId) {}
   }
 
   private static final class ScrambledZipfianGenerator {

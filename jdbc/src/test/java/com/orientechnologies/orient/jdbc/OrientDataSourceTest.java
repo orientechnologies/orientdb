@@ -18,6 +18,7 @@ package com.orientechnologies.orient.jdbc;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import java.sql.Connection;
@@ -142,8 +143,7 @@ public class OrientDataSourceTest extends OrientJdbcDbPerClassTemplateTest {
 
     OrientDB orientDB =
         new OrientDB("embedded:.", serverUser, serverPassword, OrientDBConfig.defaultConfig());
-    orientDB.execute(
-        "create database ? memory users(admin identified by 'admin' role admin)", dbName);
+    orientDB.create(dbName, ODatabaseType.MEMORY);
 
     OrientDataSource ods = new OrientDataSource(orientDB, dbName);
     Connection connection = ods.getConnection(serverUser, serverPassword);

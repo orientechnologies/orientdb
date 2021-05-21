@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.storage.index.hashindex.local.cache;
 
 import com.orientechnologies.common.collection.closabledictionary.OClosableLinkedContainer;
 import com.orientechnologies.common.directmemory.OByteBufferPool;
-import com.orientechnologies.common.directmemory.ODirectMemoryAllocator.Intention;
 import com.orientechnologies.common.directmemory.OPointer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
@@ -145,6 +144,7 @@ public class WOWCacheTestIT {
             true,
             Locale.US,
             -1,
+            1024L * 1024 * 1024,
             1000,
             false,
             false,
@@ -167,7 +167,8 @@ public class WOWCacheTestIT {
             OChecksumMode.StoreAndVerify,
             null,
             null,
-            false);
+            false,
+            true);
 
     wowCache.loadRegisteredFiles();
   }
@@ -249,6 +250,7 @@ public class WOWCacheTestIT {
             true,
             Locale.US,
             -1,
+            1024L * 1024 * 1024,
             1000,
             false,
             false,
@@ -271,7 +273,8 @@ public class WOWCacheTestIT {
             OChecksumMode.StoreAndVerify,
             iv,
             aesKey,
-            false);
+            false,
+            true);
 
     wowCache.loadRegisteredFiles();
 
@@ -359,7 +362,7 @@ public class WOWCacheTestIT {
     for (int i = 0; i < 2048; i++) {
       wowCache.allocateNewPage(fileId);
 
-      final OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
+      final OPointer pointer = bufferPool.acquireDirect(true);
       final OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, fileId, i);
 
       cachePointer.incrementReadersReferrer();
@@ -480,6 +483,7 @@ public class WOWCacheTestIT {
             true,
             Locale.US,
             -1,
+            1024L * 1024 * 1024,
             1000,
             false,
             false,
@@ -502,7 +506,8 @@ public class WOWCacheTestIT {
             OChecksumMode.StoreAndVerify,
             iv,
             aesKey,
-            false);
+            false,
+            true);
 
     wowCache.loadRegisteredFiles();
 
@@ -702,7 +707,7 @@ public class WOWCacheTestIT {
     assert fileName != null;
 
     final Path path = storagePath.resolve(fileName);
-    final OFile file = new AsyncFile(path, pageSize);
+    final OFile file = new AsyncFile(path, pageSize, true);
     file.open();
     file.write(
         ODurablePage.NEXT_FREE_POSITION,
@@ -742,7 +747,7 @@ public class WOWCacheTestIT {
     assert fileName != null;
 
     final Path path = storagePath.resolve(fileName);
-    final OFile file = new AsyncFile(path, pageSize);
+    final OFile file = new AsyncFile(path, pageSize, true);
     file.open();
     file.write(0, ByteBuffer.wrap(new byte[] {1}).order(ByteOrder.nativeOrder()));
     file.close();
@@ -780,7 +785,7 @@ public class WOWCacheTestIT {
     assert fileName != null;
 
     final Path path = storagePath.resolve(fileName);
-    final OFile file = new AsyncFile(path, pageSize);
+    final OFile file = new AsyncFile(path, pageSize, true);
     file.open();
     file.write(
         ODurablePage.NEXT_FREE_POSITION,
@@ -815,7 +820,7 @@ public class WOWCacheTestIT {
     assert fileName != null;
 
     final Path path = storagePath.resolve(fileName);
-    final OFile file = new AsyncFile(path, pageSize);
+    final OFile file = new AsyncFile(path, pageSize, true);
     file.open();
     file.write(
         ODurablePage.NEXT_FREE_POSITION,
@@ -850,7 +855,7 @@ public class WOWCacheTestIT {
     assert fileName != null;
 
     final Path path = storagePath.resolve(fileName);
-    final OFile file = new AsyncFile(path, pageSize);
+    final OFile file = new AsyncFile(path, pageSize, true);
     file.open();
     file.write(
         ODurablePage.NEXT_FREE_POSITION,
@@ -885,7 +890,7 @@ public class WOWCacheTestIT {
     assert fileName != null;
 
     final Path path = storagePath.resolve(fileName);
-    final OFile file = new AsyncFile(path, pageSize);
+    final OFile file = new AsyncFile(path, pageSize, true);
     file.open();
     file.write(
         ODurablePage.NEXT_FREE_POSITION,
@@ -898,7 +903,7 @@ public class WOWCacheTestIT {
 
   private static void assertFile(
       long pageIndex, byte[] value, OLogSequenceNumber lsn, String fileName) throws IOException {
-    OFile fileClassic = new AsyncFile(storagePath.resolve(fileName), pageSize);
+    OFile fileClassic = new AsyncFile(storagePath.resolve(fileName), pageSize, true);
     fileClassic.open();
     byte[] content = new byte[8 + ODurablePage.NEXT_FREE_POSITION];
     fileClassic.read(
@@ -914,10 +919,12 @@ public class WOWCacheTestIT {
     long magicNumber = OLongSerializer.INSTANCE.deserializeNative(content, 0);
     Assert.assertEquals(magicNumber, OWOWCache.MAGIC_NUMBER_WITH_CHECKSUM);
 
-    long segment =
-        OLongSerializer.INSTANCE.deserializeNative(content, ODurablePage.WAL_SEGMENT_OFFSET);
-    int position =
-        OIntegerSerializer.INSTANCE.deserializeNative(content, ODurablePage.WAL_POSITION_OFFSET);
+    int segment =
+        OIntegerSerializer.INSTANCE.deserializeNative(
+            content, OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE);
+    long position =
+        OLongSerializer.INSTANCE.deserializeNative(
+            content, OLongSerializer.LONG_SIZE + 2 * OIntegerSerializer.INT_SIZE);
 
     OLogSequenceNumber readLsn = new OLogSequenceNumber(segment, position);
 
@@ -935,7 +942,7 @@ public class WOWCacheTestIT {
       final byte[] aesKey,
       final byte[] iv)
       throws Exception {
-    OFile fileClassic = new AsyncFile(storagePath.resolve(fileName), pageSize);
+    OFile fileClassic = new AsyncFile(storagePath.resolve(fileName), pageSize, true);
     fileClassic.open();
     byte[] content = new byte[8 + ODurablePage.NEXT_FREE_POSITION];
     fileClassic.read(
@@ -1034,6 +1041,11 @@ public class WOWCacheTestIT {
     @Override
     public int serializedSize() {
       return data.length + OIntegerSerializer.INT_SIZE;
+    }
+
+    @Override
+    public boolean isUpdateMasterRecord() {
+      return false;
     }
 
     @Override

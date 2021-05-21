@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.common.directmemory;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryAllocator.Intention;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -124,10 +123,9 @@ public final class OByteBufferPool implements OByteBufferPoolMXBean {
    * direct memory page we reuse it, otherwise new memory chunk is allocated from direct memory.
    *
    * @param clear Whether returned buffer should be filled with zeros before return.
-   * @param intention Why this memory is allocated. This parameter is used for memory profiling.
    * @return Direct memory buffer instance.
    */
-  public final OPointer acquireDirect(boolean clear, Intention intention) {
+  public final OPointer acquireDirect(boolean clear) {
     OPointer pointer;
 
     pointer = pointersPool.poll();
@@ -139,7 +137,7 @@ public final class OByteBufferPool implements OByteBufferPoolMXBean {
         pointer.clear();
       }
     } else {
-      pointer = allocator.allocate(pageSize, -1, clear, intention);
+      pointer = allocator.allocate(pageSize, -1, clear);
     }
 
     pointer.getNativeByteBuffer().position(0);

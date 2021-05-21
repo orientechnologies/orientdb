@@ -65,7 +65,10 @@ public class ODistributedTxResponseManagerImpl implements ODistributedTxResponse
   }
 
   @Override
-  public synchronized void removeServerBecauseUnreachable(String node) {}
+  public synchronized void removeServerBecauseUnreachable(String node) {
+    responseCount += 1;
+    checkFinished(new ArrayList<>());
+  }
 
   @Override
   public synchronized boolean waitForSynchronousResponses() {

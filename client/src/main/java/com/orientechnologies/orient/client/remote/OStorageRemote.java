@@ -127,10 +127,10 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
+import com.orientechnologies.orient.core.db.OConnectionNext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OLiveQueryMonitor;
-import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBRemote;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentRemote;
@@ -229,7 +229,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       new ConcurrentHashMap<>();
   private volatile OStorageRemotePushThread pushThread;
   protected final OrientDBRemote context;
-  protected OSharedContext sharedContext = null;
 
   public static final String ADDRESS_SEPARATOR = ";";
 
@@ -238,29 +237,28 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   public OStorageRemote(
-      final ORemoteURLs hosts,
+      final String[] hosts,
       String name,
       OrientDBRemote context,
       final String iMode,
       ORemoteConnectionManager connectionManager,
-      OrientDBConfig config)
+      OrientDBConfig config,
+      OConnectionNext connectionNext)
       throws IOException {
-    this(hosts, name, context, iMode, connectionManager, null, config);
+    this(hosts, name, context, iMode, connectionManager, null, config, connectionNext);
   }
 
   public OStorageRemote(
-      final ORemoteURLs hosts,
+      final String[] hosts,
       String name,
       OrientDBRemote context,
       final String iMode,
       ORemoteConnectionManager connectionManager,
       final STATUS status,
-      OrientDBConfig config)
+      OrientDBConfig config,
+      OConnectionNext connectionNext)
       throws IOException {
-    super(
-        name,
-        buildUrl(hosts.getUrls().toArray(new String[] {}), name),
-        iMode); // NO TIMEOUT @SINCE 1.5
+    super(name, buildUrl(hosts, name), iMode); // NO TIMEOUT @SINCE 1.5
     if (status != null) this.status = status;
 
     configuration = null;
@@ -274,16 +272,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
         clientConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_RETRY);
     connectionRetryDelay =
         clientConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_RETRY_DELAY);
-    serverURLs = hosts;
+    serverURLs = new ORemoteURLs(hosts, clientConfiguration, connectionNext);
 
     asynchExecutor = new OScheduledThreadPoolExecutorWithLogging(1);
 
     this.connectionManager = connectionManager;
     this.context = context;
-  }
-
-  public void setSharedContext(OSharedContext sharedContext) {
-    this.sharedContext = sharedContext;
   }
 
   public <T extends OBinaryResponse> T asyncNetworkOperationNoRetry(
@@ -444,10 +438,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
         // In case i do not have a token or i'm switching between server i've to execute a open
         // operation.
         OStorageRemoteNodeSession nodeSession = session.getServerSession(network.getServerURL());
-        if (nodeSession == null || !nodeSession.isValid() && !session.isStickToSession()) {
-          if (nodeSession != null) {
-            session.removeServerSession(nodeSession.getServerURL());
-          }
+        if (nodeSession == null || !nodeSession.isValid()) {
           openRemoteDatabase(network);
           if (!network.tryLock()) continue;
         }
@@ -547,6 +538,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   public void open(
       final String iUserName, final String iUserPassword, final OContextConfiguration conf) {
 
+    stateLock.acquireWriteLock();
     addUser();
     try {
       OStorageRemoteSession session = getCurrentSession();
@@ -589,6 +581,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       else
         throw OException.wrapException(
             new OStorageException("Cannot open the remote storage: " + name), e);
+
+    } finally {
+      stateLock.releaseWriteLock();
     }
   }
 
@@ -676,6 +671,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     stateLock.acquireWriteLock();
     try {
       // CLOSE ALL THE SOCKET POOLS
+      for (String url : serverURLs.getUrls()) {
+        connectionManager.closePool(url);
+      }
       sbTreeCollectionManager.close();
 
       status = STATUS.CLOSED;
@@ -1957,12 +1955,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     OContextConfiguration config = null;
     if (configuration != null) config = configuration.getContextConfiguration();
     return serverURLs.getNextAvailableServerURL(
-        iIsConnectOperation, session, config, connectionStrategy);
+        iIsConnectOperation, session, config, name, connectionStrategy);
   }
 
   protected String getCurrentServerURL() {
     return serverURLs.getServerURFromList(
-        false, getCurrentSession(), configuration.getContextConfiguration());
+        false, getCurrentSession(), configuration.getContextConfiguration(), name);
   }
 
   public OChannelBinaryAsynchClient getNetwork(final String iCurrentURL) {
@@ -2480,9 +2478,5 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   public List<String> getServerURLs() {
     return serverURLs.getUrls();
-  }
-
-  public OSharedContext getSharedContext() {
-    return sharedContext;
   }
 }

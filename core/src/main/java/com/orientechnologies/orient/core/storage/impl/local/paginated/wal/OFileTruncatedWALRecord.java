@@ -33,6 +33,11 @@ public class OFileTruncatedWALRecord extends OOperationUnitBodyRecord {
   }
 
   @Override
+  public boolean isUpdateMasterRecord() {
+    return false;
+  }
+
+  @Override
   public int getId() {
     return WALRecordTypes.FILE_TRUNCATED_WAL_RECORD;
   }

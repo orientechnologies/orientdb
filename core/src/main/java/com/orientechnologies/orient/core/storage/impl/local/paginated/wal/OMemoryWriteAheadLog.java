@@ -21,21 +21,21 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.orient.core.storage.impl.local.OCheckpointRequestListener;
+import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationMetadata;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.WriteableWALRecord;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 6/25/14
  */
 public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
-  private final AtomicInteger nextPosition = new AtomicInteger();
-  private final AtomicInteger nextOperationId = new AtomicInteger();
+  private final AtomicLong nextPosition = new AtomicLong();
 
   @Override
   public OLogSequenceNumber begin() {
@@ -74,23 +74,7 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
 
   @Override
   public OLogSequenceNumber log(WriteableWALRecord record) {
-    final OLogSequenceNumber lsn = new OLogSequenceNumber(0, nextPosition.incrementAndGet());
-    final int operationId;
-
-    if (record.trackOperationId()) {
-      operationId = nextOperationId.getAndIncrement();
-    } else {
-      operationId = nextOperationId.get();
-    }
-
-    record.setOperationIdLsn(lsn, operationId);
-
-    return lsn;
-  }
-
-  @Override
-  public int lastOperationId() {
-    return nextOperationId.get();
+    return new OLogSequenceNumber(0, nextPosition.incrementAndGet());
   }
 
   @Override
@@ -123,10 +107,10 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   @Override
-  public void addCheckpointListener(OCheckpointRequestListener listener) {}
+  public void addFullCheckpointListener(OCheckpointRequestListener listener) {}
 
   @Override
-  public void removeCheckpointListener(OCheckpointRequestListener listener) {}
+  public void removeFullCheckpointListener(OCheckpointRequestListener listener) {}
 
   @Override
   public void moveLsnAfter(OLogSequenceNumber lsn) {}
@@ -151,6 +135,12 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   public long activeSegment() {
     return 0;
   }
+
+  @Override
+  public void addLowDiskSpaceListener(OLowDiskSpaceListener listener) {}
+
+  @Override
+  public void removeLowDiskSpaceListener(OLowDiskSpaceListener listener) {}
 
   @Override
   public OLogSequenceNumber begin(long segmentId) {

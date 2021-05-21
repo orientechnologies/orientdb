@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.core.storage.index.sbtreebonsai.local;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
-import com.orientechnologies.common.directmemory.ODirectMemoryAllocator.Intention;
 import com.orientechnologies.common.directmemory.OPointer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -26,7 +25,7 @@ public class OSBTreeBonsaiLeafBucketTest {
   @Test
   public void testInitialization() throws Exception {
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-    OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
+    OPointer pointer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -66,7 +65,7 @@ public class OSBTreeBonsaiLeafBucketTest {
     }
 
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-    OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
+    OPointer pointer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -118,7 +117,7 @@ public class OSBTreeBonsaiLeafBucketTest {
     }
 
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-    OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
+    OPointer pointer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -183,7 +182,7 @@ public class OSBTreeBonsaiLeafBucketTest {
     }
 
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-    OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
+    OPointer pointer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false);
@@ -282,7 +281,7 @@ public class OSBTreeBonsaiLeafBucketTest {
     }
 
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-    OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
+    OPointer pointer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -374,7 +373,7 @@ public class OSBTreeBonsaiLeafBucketTest {
   @Test
   public void testSetLeftSibling() throws Exception {
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-    OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
+    OPointer pointer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -396,7 +395,7 @@ public class OSBTreeBonsaiLeafBucketTest {
   @Test
   public void testSetRightSibling() throws Exception {
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-    OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
+    OPointer pointer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();

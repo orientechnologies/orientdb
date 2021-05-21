@@ -3,10 +3,13 @@ package com.orientechnologies.orient.server.distributed;
 import static org.junit.Assert.assertEquals;
 
 import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.setup.*;
+import com.orientechnologies.orient.setup.SetupConfig;
+import com.orientechnologies.orient.setup.TestSetup;
+import com.orientechnologies.orient.setup.TestSetupUtil;
 import com.orientechnologies.orient.setup.configs.SimpleDServerConfig;
 import org.junit.After;
 import org.junit.Before;
@@ -28,12 +31,12 @@ public class BasicSyncIT {
     setup.setup();
 
     OrientDB remote = setup.createRemote(server0, "root", "test", OrientDBConfig.defaultConfig());
-    remote.execute("create database test plocal users(admin identified by 'admin' role admin)");
+    remote.create("test", ODatabaseType.PLOCAL);
     remote.close();
   }
 
   @Test
-  public void sync() throws InterruptedException {
+  public void sync() {
     try (OrientDB remote = setup.createRemote(server0, OrientDBConfig.defaultConfig())) {
       try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
         session.createClass("One");
@@ -51,7 +54,6 @@ public class BasicSyncIT {
     setup.startServer(server0);
     setup.startServer(server1);
     setup.startServer(server2);
-    TestSetup.waitForDbOnlineStatus(setup, "test");
     // Test server 0
     try (OrientDB remote = setup.createRemote(server0, OrientDBConfig.defaultConfig())) {
       try (ODatabaseSession session = remote.open("test", "admin", "admin")) {

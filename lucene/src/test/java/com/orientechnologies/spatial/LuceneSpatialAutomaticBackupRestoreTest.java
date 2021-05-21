@@ -25,6 +25,7 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -108,8 +109,7 @@ public class LuceneSpatialAutomaticBackupRestoreTest {
 
     dropIfExists();
 
-    orientDB.execute(
-        "create database ? plocal users(admin identified by 'admin' role admin)", DBNAME);
+    orientDB.create(DBNAME, ODatabaseType.PLOCAL);
 
     db = (ODatabaseDocumentInternal) orientDB.open(DBNAME, "admin", "admin");
 
@@ -329,8 +329,7 @@ public class LuceneSpatialAutomaticBackupRestoreTest {
   }
 
   private ODatabaseDocumentInternal createAndOpen() {
-    orientDB.execute(
-        "create database ? plocal users(admin identified by 'admin' role admin)", DBNAME);
+    orientDB.create(DBNAME, ODatabaseType.PLOCAL);
     return open();
   }
 

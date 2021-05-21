@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.test.database;
 
 import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.id.ORID;
@@ -24,8 +25,7 @@ public class TraversalTest {
     if (orientdb.exists("test")) {
       orientdb.drop("test");
     }
-    orientdb.execute(
-        "create database " + "test" + " plocal users ( admin identified by 'admin' role admin)");
+    orientdb.create("test", ODatabaseType.PLOCAL);
 
     ODatabaseSession db = orientdb.open("test", "admin", "admin");
 

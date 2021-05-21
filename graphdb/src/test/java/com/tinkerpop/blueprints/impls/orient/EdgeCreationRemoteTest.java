@@ -112,8 +112,7 @@ public class EdgeCreationRemoteTest {
           "Currently only 'embedded' and 'remote' are supported.");
     }
     if (createDB) {
-      orient.execute(
-          "create database ? plocal users (admin identified by 'admin' role admin)", dbName);
+      orient.create(dbName, ODatabaseType.PLOCAL);
     }
     pool = new ODatabasePool(orient, dbName, "admin", "admin", oriendDBconfig);
   }

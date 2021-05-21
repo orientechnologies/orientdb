@@ -20,6 +20,8 @@ public interface WriteableWALRecord extends OWALRecord {
 
   int serializedSize();
 
+  boolean isUpdateMasterRecord();
+
   void written();
 
   boolean isWritten();

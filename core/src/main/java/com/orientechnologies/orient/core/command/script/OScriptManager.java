@@ -89,6 +89,7 @@ public class OScriptManager {
     scriptEngineManager = new ScriptEngineManager();
 
     final boolean useGraal = OGlobalConfiguration.SCRIPT_POLYGLOT_USE_GRAAL.getValueAsBoolean();
+
     executorsFactories.put(
         "javascript",
         (lang) ->
@@ -109,13 +110,7 @@ public class OScriptManager {
     }
 
     if (!existsEngine(DEF_LANGUAGE)) {
-      // if graal is disabled, try to load nashorn manually
-      ScriptEngine defEngine =
-          scriptEngineManager.getEngineByName(useGraal ? DEF_LANGUAGE : "nashorn");
-      if (defEngine == null) {
-        // no nashorn engine, use the default
-        defEngine = scriptEngineManager.getEngineByName(DEF_LANGUAGE);
-      }
+      final ScriptEngine defEngine = scriptEngineManager.getEngineByName(DEF_LANGUAGE);
       if (defEngine == null) {
         OLogManager.instance()
             .warnNoDb(this, "Cannot find default script language for %s", DEF_LANGUAGE);

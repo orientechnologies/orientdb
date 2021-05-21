@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -38,7 +39,7 @@ public class UniqueCompositeIndexDistributedIT {
     setup.setup();
 
     remote = setup.createRemote(server0, "root", "test", OrientDBConfig.defaultConfig());
-    remote.execute("create database test plocal users(admin identified by 'admin' role admin)");
+    remote.create("test", ODatabaseType.PLOCAL);
     session = remote.open("test", "admin", "admin");
     OClass clazz = session.createClass("Test");
     clazz.createProperty("test", OType.STRING);
@@ -64,32 +65,6 @@ public class UniqueCompositeIndexDistributedIT {
       assertTrue(res.hasNext());
       assertEquals(res.next().getIdentity().get(), doc1.getIdentity());
     }
-  }
-
-  @Test
-  public void testUniqueInQuorum() throws InterruptedException {
-    OElement doc = session.newElement("test");
-    doc.setProperty("test", "1");
-    doc.setProperty("testa", "2");
-    doc = session.save(doc);
-    session.begin();
-    session.delete(doc.getIdentity());
-
-    setup.shutdownServer(SimpleDServerConfig.SERVER2);
-
-    Thread.sleep(1000);
-    OElement doc1 = session.newElement("test");
-    doc1.setProperty("test", "1");
-    doc1.setProperty("testa", "2");
-    doc1 = session.save(doc1);
-    session.commit();
-
-    try (OResultSet res = session.query("select from test")) {
-      assertTrue(res.hasNext());
-      assertEquals(res.next().getIdentity().get(), doc1.getIdentity());
-    }
-
-    setup.startServer(SimpleDServerConfig.SERVER2);
   }
 
   @After

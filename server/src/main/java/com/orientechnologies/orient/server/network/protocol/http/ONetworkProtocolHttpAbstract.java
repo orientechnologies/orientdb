@@ -191,7 +191,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol
             request.getHttpVersion(),
             additionalResponseHeaders,
             responseCharSet,
-            "OrientDB",
+            connection.getData().serverInfo,
             request.getSessionId(),
             callbackF,
             request.isKeepAlive(),
@@ -550,7 +550,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol
     writeLine("Pragma: no-cache");
     writeLine("Date: " + new Date());
     writeLine("Content-Type: " + iContentType + "; charset=" + responseCharSet);
-    writeLine("Server: OrientDB");
+    writeLine("Server: " + connection.getData().serverInfo);
     writeLine("Connection: " + (iKeepAlive ? "Keep-Alive" : "close"));
     if (getAdditionalResponseHeaders() != null)
       for (String h : getAdditionalResponseHeaders()) writeLine(h);

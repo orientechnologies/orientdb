@@ -30,7 +30,18 @@ import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OScriptExecutor;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
+import com.orientechnologies.orient.core.db.ODatabaseListener;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OHookReplacedRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OLiveQueryMonitor;
+import com.orientechnologies.orient.core.db.OLiveQueryResultListener;
+import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
+import com.orientechnologies.orient.core.db.OSharedContext;
+import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
@@ -104,6 +115,8 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
+import com.orientechnologies.orient.core.tx.OTransactionData;
+import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Map.Entry;
@@ -202,7 +215,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
 
       localCache.startup();
 
-      loadMetadata();
+      loadMetadata(this.sharedContext);
 
       installHooksEmbedded();
 
@@ -335,7 +348,14 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
 
   @Override
   protected void loadMetadata() {
+    loadMetadata(this.sharedContext);
+  }
+
+  @Override
+  protected void loadMetadata(OSharedContext shared) {
     metadata = new OMetadataDefault(this);
+    sharedContext = shared;
+
     metadata.init(sharedContext);
     sharedContext.load(this);
   }
@@ -1481,58 +1501,42 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
         return (RET) record;
       }
 
-      loadedRecordsCount++;
-      long begin = System.currentTimeMillis();
-      try {
-        final ORawBuffer recordBuffer;
-        if (!rid.isValid()) recordBuffer = null;
-        else {
-          OFetchHelper.checkFetchPlanValid(fetchPlan);
+      final ORawBuffer recordBuffer;
+      if (!rid.isValid()) recordBuffer = null;
+      else {
+        OFetchHelper.checkFetchPlanValid(fetchPlan);
 
-          int version;
-          if (iRecord != null) version = iRecord.getVersion();
-          else version = recordVersion;
+        int version;
+        if (iRecord != null) version = iRecord.getVersion();
+        else version = recordVersion;
 
-          recordBuffer =
-              recordReader.readRecord(getStorage(), rid, fetchPlan, ignoreCache, version);
-        }
-
-        if (recordBuffer == null) return null;
-
-        if (iRecord == null || ORecordInternal.getRecordType(iRecord) != recordBuffer.recordType)
-          // NO SAME RECORD TYPE: CAN'T REUSE OLD ONE BUT CREATE A NEW ONE FOR IT
-          iRecord =
-              Orient.instance()
-                  .getRecordFactoryManager()
-                  .newInstance(recordBuffer.recordType, rid.getClusterId(), this);
-
-        ORecordInternal.setRecordSerializer(iRecord, getSerializer());
-        ORecordInternal.fill(iRecord, rid, recordBuffer.version, recordBuffer.buffer, false, this);
-
-        if (iRecord instanceof ODocument) ODocumentInternal.checkClass((ODocument) iRecord, this);
-
-        if (ORecordVersionHelper.isTombstone(iRecord.getVersion())) return (RET) iRecord;
-
-        if (beforeReadOperations(iRecord)) return null;
-
-        iRecord.fromStream(recordBuffer.buffer);
-
-        afterReadOperations(iRecord);
-        if (iUpdateCache) getLocalCache().updateRecord(iRecord);
-
-        return (RET) iRecord;
-      } finally {
-        long readTime = System.currentTimeMillis() - begin;
-        if (this.loadedRecordsCount == 1) {
-          this.minRecordLoadMs = readTime;
-          this.maxRecordLoadMs = readTime;
-        } else {
-          this.minRecordLoadMs = Math.min(this.minRecordLoadMs, readTime);
-          this.maxRecordLoadMs = Math.max(this.maxRecordLoadMs, readTime);
-        }
-        this.totalRecordLoadMs += readTime;
+        recordBuffer = recordReader.readRecord(getStorage(), rid, fetchPlan, ignoreCache, version);
       }
 
+      if (recordBuffer == null) return null;
+
+      if (iRecord == null || ORecordInternal.getRecordType(iRecord) != recordBuffer.recordType)
+        // NO SAME RECORD TYPE: CAN'T REUSE OLD ONE BUT CREATE A NEW ONE FOR IT
+        iRecord =
+            Orient.instance()
+                .getRecordFactoryManager()
+                .newInstance(recordBuffer.recordType, rid.getClusterId(), this);
+
+      ORecordInternal.setRecordSerializer(iRecord, getSerializer());
+      ORecordInternal.fill(iRecord, rid, recordBuffer.version, recordBuffer.buffer, false, this);
+
+      if (iRecord instanceof ODocument) ODocumentInternal.checkClass((ODocument) iRecord, this);
+
+      if (ORecordVersionHelper.isTombstone(iRecord.getVersion())) return (RET) iRecord;
+
+      if (beforeReadOperations(iRecord)) return null;
+
+      iRecord.fromStream(recordBuffer.buffer);
+
+      afterReadOperations(iRecord);
+      if (iUpdateCache) getLocalCache().updateRecord(iRecord);
+
+      return (RET) iRecord;
     } catch (OOfflineClusterException t) {
       throw t;
     } catch (ORecordNotFoundException t) {
@@ -1712,6 +1716,19 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
   }
 
   @Override
+  public void syncCommit(final OTransactionData data) {
+    OScenarioThreadLocal.executeAsDistributed(
+        () -> {
+          assert !this.getTransaction().isActive();
+          final OTransactionOptimistic tx = new OTransactionOptimistic(this);
+          data.fill(tx, this);
+          this.rawBegin(tx);
+          this.commit();
+          return null;
+        });
+  }
+
+  @Override
   public int addCluster(final String iClusterName, final Object... iParameters) {
     checkIfActive();
     return getStorage().addCluster(iClusterName, iParameters);
@@ -1866,14 +1883,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
 
   @Override
   public void interruptExecution(Thread thread) {
-    if (storage instanceof OAbstractPaginatedStorage) {
-      ((OAbstractPaginatedStorage) storage).interruptExecution(thread);
-    } else {
-      OStorage underlying = storage.getUnderlying();
-      if (underlying != null && underlying instanceof OAbstractPaginatedStorage) {
-        ((OAbstractPaginatedStorage) underlying).interruptExecution(thread);
-      }
-    }
+    ((OAbstractPaginatedStorage) storage).interruptExecution(thread);
   }
 
   public boolean isCommandInterrupted() {
@@ -1890,48 +1900,5 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
 
   public void setCommandInterruptionDepth(int commandInterruptionDepth) {
     this.commandInterruptionDepth = commandInterruptionDepth;
-  }
-
-  public ODatabaseStats getStats() {
-    ODatabaseStats stats = new ODatabaseStats();
-    stats.loadedRecords = loadedRecordsCount;
-    stats.minLoadRecordTimeMs = minRecordLoadMs;
-    stats.maxLoadRecordTimeMs = minRecordLoadMs;
-    stats.averageLoadRecordTimeMs =
-        loadedRecordsCount == 0 ? 0 : (this.totalRecordLoadMs / loadedRecordsCount);
-
-    stats.prefetchedRidbagsCount = ridbagPrefetchCount;
-    stats.minRidbagPrefetchTimeMs = minRidbagPrefetchMs;
-    stats.maxRidbagPrefetchTimeMs = maxRidbagPrefetchMs;
-    stats.ridbagPrefetchTimeMs = totalRidbagPrefetchMs;
-    return stats;
-  }
-
-  public void addRidbagPrefetchStats(long execTimeMs) {
-    this.ridbagPrefetchCount++;
-    totalRidbagPrefetchMs += execTimeMs;
-    if (this.ridbagPrefetchCount == 1) {
-      this.minRidbagPrefetchMs = execTimeMs;
-      this.maxRidbagPrefetchMs = execTimeMs;
-    } else {
-      this.minRidbagPrefetchMs = Math.min(this.minRidbagPrefetchMs, execTimeMs);
-      this.maxRidbagPrefetchMs = Math.max(this.maxRidbagPrefetchMs, execTimeMs);
-    }
-  }
-
-  public void resetRecordLoadStats() {
-    this.loadedRecordsCount = 0L;
-    this.totalRecordLoadMs = 0L;
-    this.minRecordLoadMs = 0L;
-    this.maxRecordLoadMs = 0L;
-    this.ridbagPrefetchCount = 0L;
-    this.totalRidbagPrefetchMs = 0L;
-    this.minRidbagPrefetchMs = 0L;
-    this.maxRidbagPrefetchMs = 0L;
-  }
-
-  @Override
-  public TimerTask createInterruptTimerTask() {
-    return new InterruptTimerTask(Thread.currentThread());
   }
 }

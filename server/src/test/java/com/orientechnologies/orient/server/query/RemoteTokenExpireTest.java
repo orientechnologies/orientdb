@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabasePool;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -46,9 +47,7 @@ public class RemoteTokenExpireTest {
     token.setSessionInMills(expireTimeout);
 
     orientDB = new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
-    orientDB.execute(
-        "create database ? memory users (admin identified by 'admin' role admin)",
-        RemoteTokenExpireTest.class.getSimpleName());
+    orientDB.create(RemoteTokenExpireTest.class.getSimpleName(), ODatabaseType.MEMORY);
     session = orientDB.open(RemoteTokenExpireTest.class.getSimpleName(), "admin", "admin");
     session.createClass("Some");
     oldPageSize = QUERY_REMOTE_RESULTSET_PAGE_SIZE.getValueAsInteger();
@@ -128,7 +127,7 @@ public class RemoteTokenExpireTest {
 
     QUERY_REMOTE_RESULTSET_PAGE_SIZE.setValue(1);
 
-    try (OResultSet res = session.query("select from ORole")) {
+    try (OResultSet res = session.query("select from OUser")) {
 
       waitAndClean();
       session.activateOnCurrentThread();

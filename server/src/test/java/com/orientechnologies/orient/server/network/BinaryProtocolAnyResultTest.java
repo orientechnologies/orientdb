@@ -5,6 +5,7 @@ import static org.junit.Assert.assertTrue;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.server.OServer;
@@ -39,7 +40,7 @@ public class BinaryProtocolAnyResultTest {
       orient.drop("test");
     }
 
-    orient.execute("create database test memory users (admin identified by 'admin' role admin)");
+    orient.create("test", ODatabaseType.MEMORY);
     ODatabaseSession db = orient.open("test", "admin", "admin");
 
     Object res = db.execute("SQL", " let $one = select from OUser limit 1; return [$one,1]");

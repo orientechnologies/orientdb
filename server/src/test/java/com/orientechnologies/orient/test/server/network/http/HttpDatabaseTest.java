@@ -2,7 +2,6 @@ package com.orientechnologies.orient.test.server.network.http;
 
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.test.server.network.http.BaseHttpTest.CONTENT;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.util.Map;
@@ -45,13 +44,10 @@ public class HttpDatabaseTest extends BaseHttpTest {
   @Test
   public void testCreateAndGetDatabase() throws IOException {
 
-    ODocument pass = new ODocument();
-    pass.setProperty("adminPassword", "admin");
     Assert.assertEquals(
         setUserName("root")
             .setUserPassword("root")
             .post("database/" + getDatabaseName() + "/memory")
-            .payload(pass.toJSON(), CONTENT.JSON)
             .getResponse()
             .getStatusLine()
             .getStatusCode(),
@@ -73,13 +69,10 @@ public class HttpDatabaseTest extends BaseHttpTest {
 
   @Test
   public void testCreateQueryAndDropDatabase() throws Exception {
-    ODocument pass = new ODocument();
-    pass.setProperty("adminPassword", "admin");
     Assert.assertEquals(
         setUserName("root")
             .setUserPassword("root")
             .post("database/" + getDatabaseName() + "/memory")
-            .payload(pass.toJSON(), CONTENT.JSON)
             .getResponse()
             .getStatusLine()
             .getStatusCode(),

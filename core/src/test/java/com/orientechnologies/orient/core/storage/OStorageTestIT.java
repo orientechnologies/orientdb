@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
@@ -52,10 +53,7 @@ public class OStorageTestIT {
             .build();
 
     orientDB = new OrientDB("embedded:" + buildPath.toFile().getAbsolutePath(), config);
-    orientDB.execute(
-        "create database "
-            + OStorageTestIT.class.getSimpleName()
-            + " plocal users ( admin identified by 'admin' role admin)");
+    orientDB.create(OStorageTestIT.class.getSimpleName(), ODatabaseType.PLOCAL, config);
 
     ODatabaseSession session =
         orientDB.open(OStorageTestIT.class.getSimpleName(), "admin", "admin", config);
@@ -116,10 +114,7 @@ public class OStorageTestIT {
             .build();
 
     orientDB = new OrientDB("embedded:" + buildPath.toFile().getAbsolutePath(), config);
-    orientDB.execute(
-        "create database "
-            + OStorageTestIT.class.getSimpleName()
-            + " plocal users ( admin identified by 'admin' role admin)");
+    orientDB.create(OStorageTestIT.class.getSimpleName(), ODatabaseType.PLOCAL, config);
 
     ODatabaseSession session =
         orientDB.open(OStorageTestIT.class.getSimpleName(), "admin", "admin", config);
@@ -176,10 +171,7 @@ public class OStorageTestIT {
             .build();
 
     orientDB = new OrientDB("embedded:" + buildPath.toFile().getAbsolutePath(), config);
-    orientDB.execute(
-        "create database "
-            + OStorageTestIT.class.getSimpleName()
-            + " plocal users ( admin identified by 'admin' role admin)");
+    orientDB.create(OStorageTestIT.class.getSimpleName(), ODatabaseType.PLOCAL, config);
 
     ODatabaseSession session =
         orientDB.open(OStorageTestIT.class.getSimpleName(), "admin", "admin", config);
@@ -238,10 +230,7 @@ public class OStorageTestIT {
             .build();
 
     orientDB = new OrientDB("embedded:" + buildPath.toFile().getAbsolutePath(), config);
-    orientDB.execute(
-        "create database "
-            + OStorageTestIT.class.getSimpleName()
-            + " plocal users ( admin identified by 'admin' role admin)");
+    orientDB.create(OStorageTestIT.class.getSimpleName(), ODatabaseType.PLOCAL, config);
 
     ODatabaseSession session =
         orientDB.open(OStorageTestIT.class.getSimpleName(), "admin", "admin", config);
@@ -298,10 +287,8 @@ public class OStorageTestIT {
     orientDB =
         new OrientDB(
             "embedded:" + buildPath.toFile().getAbsolutePath(), OrientDBConfig.defaultConfig());
-    orientDB.execute(
-        "create database "
-            + OStorageTestIT.class.getSimpleName()
-            + " plocal users ( admin identified by 'admin' role admin)");
+    orientDB.create(
+        OStorageTestIT.class.getSimpleName(), ODatabaseType.PLOCAL, OrientDBConfig.defaultConfig());
 
     final ODatabaseSession session =
         orientDB.open(OStorageTestIT.class.getSimpleName(), "admin", "admin");

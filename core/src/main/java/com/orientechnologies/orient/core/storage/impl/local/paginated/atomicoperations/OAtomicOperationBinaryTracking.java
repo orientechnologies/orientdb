@@ -240,8 +240,8 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
       throw new OStorageException("File with id " + fileId + " is deleted.");
     }
 
-    final FileChanges changesContainer =
-        fileChanges.computeIfAbsent(fileId, k -> new FileChanges());
+    final FileChanges changesContainer = fileChanges.get(fileId);
+    assert changesContainer != null;
 
     final long filledUpTo = internalFilledUpTo(fileId, changesContainer);
 
@@ -411,20 +411,6 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
   }
 
   @Override
-  public long fileIdByName(final String fileName) {
-    Long fileId = newFileNamesId.get(fileName);
-    if (fileId != null) {
-      return fileId;
-    }
-
-    if (deletedFileNameIdMap.containsKey(fileName)) {
-      return -1;
-    }
-
-    return writeCache.fileIdByName(fileName);
-  }
-
-  @Override
   public void truncateFile(long fileId) {
     fileId = checkFileIdCompatibility(fileId, storageId);
 
@@ -475,10 +461,11 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
             final long pageIndex = filePageChangesEntry.getKey();
             final OCacheEntryChanges filePageChanges = filePageChangesEntry.getValue();
 
-            final OUpdatePageRecord updatePageRecord =
-                new OUpdatePageRecord(pageIndex, fileId, operationUnitId, filePageChanges.changes);
-            writeAheadLog.log(updatePageRecord);
-            filePageChanges.setChangeOperationIdLSN(updatePageRecord.getOperationIdLSN());
+            final OLogSequenceNumber changesLSN =
+                writeAheadLog.log(
+                    new OUpdatePageRecord(
+                        pageIndex, fileId, operationUnitId, filePageChanges.changes));
+            filePageChanges.setChangeLSN(changesLSN);
           } else {
             filePageChangesIterator.remove();
           }
@@ -538,7 +525,7 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
               cacheEntry.setEndLSN(txEndLsn);
 
               durablePage.restoreChanges(filePageChanges.changes);
-              durablePage.setOperationIdLSN(filePageChanges.getChangeOperationIdLSN());
+              durablePage.setLsn(filePageChanges.getChangeLSN());
             } finally {
               readCache.releaseFromWrite(cacheEntry, writeCache, true);
             }

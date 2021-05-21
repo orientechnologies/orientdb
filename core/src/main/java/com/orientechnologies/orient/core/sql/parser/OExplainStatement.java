@@ -5,7 +5,6 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseStats;
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -51,7 +50,7 @@ public class OExplainStatement extends OStatement {
       executionPlan = statement.createExecutionPlanNoCache(ctx, false);
     }
 
-    OExplainResultSet result = new OExplainResultSet(executionPlan, new ODatabaseStats());
+    OExplainResultSet result = new OExplainResultSet(executionPlan);
     return result;
   }
 
@@ -72,7 +71,7 @@ public class OExplainStatement extends OStatement {
       executionPlan = statement.createExecutionPlanNoCache(ctx, false);
     }
 
-    OExplainResultSet result = new OExplainResultSet(executionPlan, new ODatabaseStats());
+    OExplainResultSet result = new OExplainResultSet(executionPlan);
     return result;
   }
 

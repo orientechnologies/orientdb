@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -123,9 +124,7 @@ public class DistributedHookIT extends AbstractServerClusterTest {
 
       OrientDB orientDB = serverInstance.get(s - 1).getServerInstance().getContext();
       if (!orientDB.exists(getDatabaseName())) {
-        orientDB.execute(
-            "create database ? plocal users(admin identified by 'admin' role admin)",
-            getDatabaseName());
+        orientDB.create(getDatabaseName(), ODatabaseType.PLOCAL);
       }
       ODatabaseDocument g = orientDB.open(getDatabaseName(), "admin", "admin");
       g.registerHook(new TestHookSourceNode(), ORecordHook.HOOK_POSITION.REGULAR);

@@ -23,7 +23,14 @@ import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Collects the changes to an index for a certain key
@@ -35,13 +42,13 @@ public class OTransactionIndexChangesPerKey {
   /* internal */ static final int SET_ADD_THRESHOLD = 8;
 
   public final Object key;
-  private final OTxIndexChangesList entries;
+  public final List<OTransactionIndexEntry> entries;
 
   public boolean clientTrackOnly;
 
-  public class OTransactionIndexEntry {
-    private OPERATION operation;
-    private OIdentifiable value;
+  public static class OTransactionIndexEntry {
+    public OPERATION operation;
+    public OIdentifiable value;
 
     public OTransactionIndexEntry(final OIdentifiable iValue, final OPERATION iOperation) {
       value = iValue;
@@ -67,46 +74,26 @@ public class OTransactionIndexChangesPerKey {
     public int hashCode() {
       return value == null ? 0 : value.hashCode();
     }
-
-    public OPERATION getOperation() {
-      return operation;
-    }
-
-    public OIdentifiable getValue() {
-      return value;
-    }
-
-    public void setValue(OIdentifiable newValue) {
-      ORID oldValueId = value == null ? null : value.getIdentity();
-      ORID newValueId = newValue == null ? null : newValue.getIdentity();
-      Optional<OTxIndexChangesList.Node> node = entries.getNode(this);
-
-      this.value = newValue;
-      node.ifPresent(x -> x.onRidChange(oldValueId, newValueId));
-    }
   }
 
   public OTransactionIndexChangesPerKey(final Object iKey) {
     this.key = iKey;
-    entries = new OTxIndexChangesList();
+    entries = new ArrayList<OTransactionIndexEntry>();
   }
 
   public void add(OIdentifiable iValue, final OPERATION iOperation) {
     synchronized (this) {
-      ORID valueIdentity = iValue == null ? null : iValue.getIdentity();
       Iterator<OTransactionIndexEntry> iter = entries.iterator();
-
-      Optional<OTxIndexChangesList.Node> nodeToRemove =
-          entries.getFirstNode(
-              valueIdentity, iOperation == OPERATION.PUT ? OPERATION.REMOVE : OPERATION.PUT);
-      if (nodeToRemove.isPresent()) {
-        nodeToRemove.get().remove();
-        return;
+      while (iter.hasNext()) {
+        OTransactionIndexEntry entry = iter.next();
+        if (((entry.value == iValue) || (entry.value != null && entry.value.equals(iValue)))
+            && !entry.operation.equals(iOperation)) {
+          iter.remove();
+          return;
+        }
       }
-
-      OTransactionIndexEntry item = new OTransactionIndexEntry(valueIdentity, iOperation);
-
-      entries.add(item);
+      entries.add(
+          new OTransactionIndexEntry(iValue != null ? iValue.getIdentity() : null, iOperation));
     }
   }
 
@@ -133,7 +120,7 @@ public class OTransactionIndexChangesPerKey {
 
   public void clear() {
     synchronized (this) {
-      this.entries.clear();
+      entries.clear();
     }
   }
 
@@ -454,39 +441,5 @@ public class OTransactionIndexChangesPerKey {
 
     /** Interpret changes like they was done for non-unique index. */
     NonUnique
-  }
-
-  public boolean isEmpty() {
-    return entries == null || entries.isEmpty();
-  }
-
-  public int size() {
-    return entries == null ? 0 : entries.size();
-  }
-
-  /** @return a copy of the entries of this object */
-  public List<OTransactionIndexEntry> getEntriesAsList() {
-    return Collections.unmodifiableList(new ArrayList<>(this.entries));
-  }
-
-  /**
-   * Only needed for old tests, will be removed soon. PLEASE DON'T USE IT
-   *
-   * @return the entries (not a copy, the exact list)
-   */
-  protected List<OTransactionIndexEntry> getEntriesInternal() {
-    return entries;
-  }
-
-  /**
-   * Only needed for old tests, will be removed soon. PLEASE DON'T USE IT
-   *
-   * @param iValue
-   * @param iOperation
-   * @return
-   */
-  protected OTransactionIndexEntry createEntryInternal(
-      final OIdentifiable iValue, final OPERATION iOperation) {
-    return new OTransactionIndexEntry(iValue, iOperation);
   }
 }

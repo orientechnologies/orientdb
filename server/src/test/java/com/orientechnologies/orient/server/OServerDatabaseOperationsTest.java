@@ -8,6 +8,8 @@ import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
@@ -72,9 +74,7 @@ public class OServerDatabaseOperationsTest {
 
   @Test
   public void testCreateOpenDatabase() {
-    server
-        .getContext()
-        .execute("create database test memory users (admin identified by 'admin' role admin)");
+    server.createDatabase("test", ODatabaseType.MEMORY, OrientDBConfig.defaultConfig());
     assertTrue(server.existsDatabase("test"));
     ODatabaseSession session = server.openDatabase("test");
     assertNotNull(session);

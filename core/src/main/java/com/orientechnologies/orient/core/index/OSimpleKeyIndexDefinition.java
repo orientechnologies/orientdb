@@ -131,8 +131,7 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
   }
 
   @Override
-  public void fromStream(ODocument document) {
-    this.document = document;
+  protected void fromStream() {
     serializeFromStream();
   }
 

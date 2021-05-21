@@ -3,10 +3,9 @@ package com.orientechnologies.orient.core.tx;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertTrue;
 
-import com.orientechnologies.orient.core.OCreateDatabaseUtil;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.record.OVertex;
@@ -27,10 +26,10 @@ public class TransactionMetadataTest {
 
   @Before
   public void before() {
-    orientDB =
-        OCreateDatabaseUtil.createDatabase(
-            DB_NAME, "embedded:./target/", OCreateDatabaseUtil.TYPE_PLOCAL);
-    db = orientDB.open(DB_NAME, "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
+
+    orientDB = new OrientDB("embedded:./target/", OrientDBConfig.defaultConfig());
+    orientDB.create(DB_NAME, ODatabaseType.PLOCAL);
+    db = orientDB.open(DB_NAME, "admin", "admin");
   }
 
   @Test
@@ -45,15 +44,8 @@ public class TransactionMetadataTest {
     db.commit();
     db.close();
     orientDB.close();
-
-    orientDB =
-        new OrientDB(
-            "embedded:./target/",
-            OrientDBConfig.builder()
-                .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
-                .build());
-    db = orientDB.open(DB_NAME, "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
-
+    orientDB = new OrientDB("embedded:./target/", OrientDBConfig.defaultConfig());
+    db = orientDB.open(DB_NAME, "admin", "admin");
     Optional<byte[]> fromStorage =
         ((OAbstractPaginatedStorage) ((ODatabaseDocumentInternal) db).getStorage())
             .getLastMetadata();
@@ -74,23 +66,11 @@ public class TransactionMetadataTest {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     db.backup(out, null, null, null, 1, 1024);
     db.close();
-
-    orientDB.execute(
-        "create database "
-            + DB_NAME
-            + "_re"
-            + " "
-            + "plocal"
-            + " users ( admin identified by '"
-            + OCreateDatabaseUtil.NEW_ADMIN_PASSWORD
-            + "' role admin)");
-    ODatabaseSession db1 =
-        orientDB.open(DB_NAME + "_re", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
-
+    orientDB.create(DB_NAME + "_re", ODatabaseType.PLOCAL);
+    ODatabaseSession db1 = orientDB.open(DB_NAME + "_re", "admin", "admin");
     db1.restore(new ByteArrayInputStream(out.toByteArray()), null, null, null);
     db1.close();
-    db1 = orientDB.open(DB_NAME + "_re", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
-
+    db1 = orientDB.open(DB_NAME + "_re", "admin", "admin");
     Optional<byte[]> fromStorage =
         ((OAbstractPaginatedStorage) ((ODatabaseDocumentInternal) db1).getStorage())
             .getLastMetadata();

@@ -23,6 +23,7 @@ import static org.junit.Assert.fail;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -144,9 +145,7 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
     // checking inserted vertice
     // checking total amount of records (map-reduce aggregation)
     if (!orientDB.exists(getDatabaseName())) {
-      orientDB.execute(
-          "create database ? plocal users(admin identified by 'admin' role admin)",
-          getDatabaseName());
+      orientDB.create(getDatabaseName(), ODatabaseType.PLOCAL);
     }
     ODatabaseDocument graph = orientDB.open(getDatabaseName(), "admin", "admin");
 
@@ -167,9 +166,7 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
       if (server.isActive()) {
         OrientDB orientDB1 = server.getServerInstance().getContext();
         if (!orientDB1.exists(getDatabaseName())) {
-          orientDB1.execute(
-              "create database ? plocal users(admin identified by 'admin' role admin)",
-              getDatabaseName());
+          orientDB1.create(getDatabaseName(), ODatabaseType.PLOCAL);
         }
         graph = orientDB1.open(getDatabaseName(), "admin", "admin");
         try {
@@ -218,9 +215,7 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
 
       OrientDB context = server.getServerInstance().getContext();
       if (!context.exists(getDatabaseName())) {
-        context.execute(
-            "create database ? plocal users(admin identified by 'admin' role admin)",
-            getDatabaseName());
+        context.create(getDatabaseName(), ODatabaseType.PLOCAL);
       }
       ODatabaseSession db = context.open(getDatabaseName(), "admin", "admin");
       dbs.add(db);
@@ -358,9 +353,7 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
         // checking inserted vertice
         // checking total amount of records (map-reduce aggregation)
         if (!orientDB.exists(getDatabaseName())) {
-          orientDB.execute(
-              "create database ? plocal users(admin identified by 'admin' role admin)",
-              getDatabaseName());
+          orientDB.create(getDatabaseName(), ODatabaseType.PLOCAL);
         }
         ODatabaseDocument graph = orientDB.open(getDatabaseName(), "admin", "admin");
 

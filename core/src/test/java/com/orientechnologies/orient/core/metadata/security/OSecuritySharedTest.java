@@ -1,9 +1,8 @@
 package com.orientechnologies.orient.core.metadata.security;
 
-import com.orientechnologies.orient.core.OCreateDatabaseUtil;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import org.junit.After;
@@ -20,12 +19,7 @@ public class OSecuritySharedTest {
 
   @BeforeClass
   public static void beforeClass() {
-    orient =
-        new OrientDB(
-            "plocal:.",
-            OrientDBConfig.builder()
-                .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
-                .build());
+    orient = new OrientDB("plocal:.", OrientDBConfig.defaultConfig());
   }
 
   @AfterClass
@@ -35,15 +29,8 @@ public class OSecuritySharedTest {
 
   @Before
   public void before() {
-    orient.execute(
-        "create database "
-            + "test"
-            + " "
-            + "memory"
-            + " users ( admin identified by '"
-            + OCreateDatabaseUtil.NEW_ADMIN_PASSWORD
-            + "' role admin)");
-    this.db = orient.open("test", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
+    orient.create("test", ODatabaseType.MEMORY);
+    this.db = orient.open("test", "admin", "admin");
   }
 
   @After

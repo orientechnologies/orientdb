@@ -2,6 +2,7 @@ package com.orientechnologies.orient.test.database.security;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import java.io.File;
@@ -23,9 +24,7 @@ public class SystemUsersTest {
             OrientDBConfig.defaultConfig());
 
     try {
-      orient.execute(
-          "create database " + "test" + " memory users ( admin identified by 'admin' role admin)");
-
+      orient.create("test", ODatabaseType.MEMORY);
       orient.execute("create system user systemxx identified by systemxx role admin").close();
       ODatabaseSession db = orient.open("test", "systemxx", "systemxx");
 

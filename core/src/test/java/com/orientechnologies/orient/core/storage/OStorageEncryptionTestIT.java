@@ -6,6 +6,7 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.id.ORID;
@@ -36,8 +37,7 @@ public class OStorageEncryptionTestIT {
             .build();
     try (final OrientDB orientDB =
         new OrientDB("embedded:" + dbDirectoryFile.getAbsolutePath(), orientDBConfig)) {
-      orientDB.execute(
-          "create database encryption plocal users ( admin identified by 'admin' role admin)");
+      orientDB.create("encryption", ODatabaseType.PLOCAL);
       try (final ODatabaseSession session = orientDB.open("encryption", "admin", "admin")) {
         final OSchema schema = session.getMetadata().getSchema();
         final OClass cls = schema.createClass("EncryptedData");
@@ -169,8 +169,7 @@ public class OStorageEncryptionTestIT {
               .addConfig(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY, "T1JJRU5UREJfSVNfQ09PTA==")
               .build();
 
-      orientDB.execute(
-          "create database encryption plocal users ( admin identified by 'admin' role admin)");
+      orientDB.create("encryption", ODatabaseType.PLOCAL, orientDBConfig);
     }
     try (final OrientDB orientDB =
         new OrientDB(

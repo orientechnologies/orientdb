@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.test.database.auto.hooks;
 
 import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -12,9 +13,7 @@ public class HookOnIndexedMapTest {
   @Test
   public void test() {
     OrientDB orient = new OrientDB("plocal:.", "root", "root", OrientDBConfig.defaultConfig());
-
-    orient.execute(
-        "create database " + "test" + " memory users ( admin identified by 'admin' role admin)");
+    orient.create("test", ODatabaseType.MEMORY);
     ODatabaseSession db = orient.open("test", "admin", "admin");
     db.registerHook(new BrokenMapHook());
 

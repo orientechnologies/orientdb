@@ -12,6 +12,10 @@ public final class MetaDataRecord extends OAbstractWALRecord {
     this.metadata = metadata;
   }
 
+  public MetaDataRecord(OLogSequenceNumber previousCheckpoint) {
+    super(previousCheckpoint);
+  }
+
   public byte[] getMetadata() {
     return metadata;
   }
@@ -45,6 +49,11 @@ public final class MetaDataRecord extends OAbstractWALRecord {
   @Override
   public int serializedSize() {
     return OIntegerSerializer.INT_SIZE + metadata.length;
+  }
+
+  @Override
+  public boolean isUpdateMasterRecord() {
+    return false;
   }
 
   @Override

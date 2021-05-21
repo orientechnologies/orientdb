@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.storage.cluster.v0;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.storage.cluster.LocalPaginatedClusterAbstract;
@@ -31,8 +32,7 @@ public class LocalPaginatedClusterV0TestIT extends LocalPaginatedClusterAbstract
             .addConfig(OGlobalConfiguration.STORAGE_TRACK_PAGE_OPERATIONS_IN_TX, true)
             .build();
     orientDB = new OrientDB("plocal:" + buildDirectory, config);
-    orientDB.execute(
-        "create database " + dbName + " plocal users ( admin identified by 'admin' role admin)");
+    orientDB.create(dbName, ODatabaseType.PLOCAL);
 
     databaseDocumentTx = (ODatabaseDocumentInternal) orientDB.open(dbName, "admin", "admin");
 

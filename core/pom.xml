@@ -13,15 +13,18 @@
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
     <modelVersion>4.0.0</modelVersion>
+
     <parent>
         <groupId>com.orientechnologies</groupId>
         <artifactId>orientdb-parent</artifactId>
-        <version>3.2.1-SNAPSHOT</version>
-        <relativePath>../pom.xml</relativePath>
+        <version>3.2.0-SNAPSHOT</version>
+        <relativePath>../</relativePath>
     </parent>
 
     <artifactId>orientdb-core</artifactId>
+
     <name>OrientDB Core</name>
 
     <properties>
@@ -60,9 +63,7 @@
             -Djava.util.logging.manager=com.orientechnologies.common.log.ShutdownLogManager
             -Dstorage.diskCache.checksumMode=storeAndThrow
             -Dindex.allowManualIndexes=false
-            -Dsecurity.warningDefaultUsers=false
-            <!-- new security feature -->
-            -Dsecurity.createDefaultUsers=false
+	    -Dsecurity.warningDefaultUsers=false
         </argLine>
         <project.rootdir>${project.basedir}/../</project.rootdir>
     </properties>
@@ -269,29 +270,6 @@
             <artifactId>javax.activation-api</artifactId>
             <version>1.2.0</version>
         </dependency>
-        <dependency>
-            <groupId>org.eclipse.collections</groupId>
-            <artifactId>eclipse-collections-api</artifactId>
-            <version>10.4.0</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.eclipse.collections</groupId>
-            <artifactId>eclipse-collections</artifactId>
-            <version>10.4.0</version>
-        </dependency>
-
-        <!-- json parser -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-core</artifactId>
-            <version>2.12.1</version>
-        </dependency>
-        <!--<dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>2.12.1</version>
-        </dependency>-->
 
         <!-- test -->
         <dependency>
@@ -311,13 +289,6 @@
             <groupId>org.openjdk.jmh</groupId>
             <artifactId>jmh-generator-annprocess</artifactId>
             <version>1.22</version>
-            <scope>test</scope>
-        </dependency>
-        <!-- plotting -->
-        <dependency>
-            <groupId>org.knowm.xchart</groupId>
-            <artifactId>xchart</artifactId>
-            <version>3.8.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

@@ -229,7 +229,7 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
     }
   }
 
-  private void reOpen(OStorage storage) throws IOException {
+  private void reOpen() throws IOException {
     //noinspection resource
     if (indexWriter != null
         && indexWriter.isOpen()
@@ -237,14 +237,14 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
       // don't waste time reopening an in memory index
       return;
     }
-    open(storage);
+    open();
   }
 
   protected static ODatabaseDocumentInternal getDatabase() {
     return ODatabaseRecordThreadLocal.instance().get();
   }
 
-  private void open(OStorage storage) throws IOException {
+  private void open() throws IOException {
 
     try {
 
@@ -254,7 +254,7 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
 
       OLuceneDirectoryFactory directoryFactory = new OLuceneDirectoryFactory();
 
-      directory = directoryFactory.createDirectory(storage, name, metadata);
+      directory = directoryFactory.createDirectory(getDatabase(), name, metadata);
 
       indexWriter = createIndexWriter(directory.getDirectory());
       searcherManager = new SearcherManager(indexWriter, true, true, null);
@@ -364,7 +364,7 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
   public void delete(OAtomicOperation atomicOperation) {
     try {
       updateLastAccess();
-      openIfClosed(storage);
+      openIfClosed();
 
       if (indexWriter != null && indexWriter.isOpen()) {
         doClose(true);
@@ -468,18 +468,14 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
     return collectionDelete;
   }
 
-  protected void openIfClosed(OStorage storage) {
+  protected void openIfClosed() {
     if (closed.get()) {
       try {
-        reOpen(storage);
+        reOpen();
       } catch (final IOException e) {
         OLogManager.instance().error(this, "error while opening closed index:: " + indexName(), e);
       }
     }
-  }
-
-  protected void openIfClosed() {
-    openIfClosed(getDatabase().getStorage());
   }
 
   @Override
@@ -659,7 +655,7 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
   public void release() {
     try {
       close();
-      reOpen(getDatabase().getStorage());
+      reOpen();
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on releasing Lucene index:: " + indexName(), e);
     }

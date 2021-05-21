@@ -4,6 +4,7 @@ import static org.junit.Assert.assertTrue;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
@@ -39,9 +40,8 @@ public class DistributedDatabaseImportIT {
   @Test
   public void test() throws IOException {
     final OrientDB ctx1 = setup.getServer(server0).getServerInstance().getContext();
-    ctx1.execute(
-        "create database ? plocal users(admin identified by 'admin' role admin)", "db-to-export");
-    final ODatabaseSession session = ctx1.open("db-to-export", "admin", "admin");
+    ctx1.create("import-test", ODatabaseType.PLOCAL);
+    final ODatabaseSession session = ctx1.open("import-test", "admin", "admin");
     session.createClass("testa");
     final ODatabaseExport export =
         new ODatabaseExport((ODatabaseDocumentInternal) session, exportFileName, iText -> {});
@@ -49,9 +49,8 @@ public class DistributedDatabaseImportIT {
     export.close();
     session.close();
 
-    ctx1.execute(
-        "create database ? plocal users(admin identified by 'admin' role admin)", "imported-db");
-    final ODatabaseSession session1 = ctx1.open("imported-db", "admin", "admin");
+    ctx1.create("imported-test", ODatabaseType.PLOCAL);
+    final ODatabaseSession session1 = ctx1.open("imported-test", "admin", "admin");
     final ODatabaseImport imp =
         new ODatabaseImport((ODatabaseDocumentInternal) session1, exportFileName, iText -> {});
     imp.importDatabase();
@@ -59,7 +58,7 @@ public class DistributedDatabaseImportIT {
     session1.close();
 
     final OrientDB ctx2 = setup.getServer(server1).getServerInstance().getContext();
-    final ODatabaseSession session2 = ctx2.open("imported-db", "admin", "admin");
+    final ODatabaseSession session2 = ctx2.open("imported-test", "admin", "admin");
     assertTrue(session2.getMetadata().getSchema().existsClass("testa"));
     session2.close();
   }
@@ -67,8 +66,8 @@ public class DistributedDatabaseImportIT {
   @After
   public void after() {
     try {
-      setup.getServer(server0).getServerInstance().dropDatabase("db-to-export");
-      setup.getServer(server0).getServerInstance().dropDatabase("imported-db");
+      setup.getServer(server0).getServerInstance().dropDatabase("import-test");
+      setup.getServer(server0).getServerInstance().dropDatabase("imported-test");
     } finally {
       setup.teardown();
       File file = new File(exportFileName);

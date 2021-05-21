@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.core.storage.index.versionmap;
 
 import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.orient.core.OCreateDatabaseUtil;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
@@ -29,17 +28,13 @@ public class VersionPositionMapTestIT {
       buildDirectory += DIR_NAME;
     }
     OFileUtils.deleteRecursively(new File(buildDirectory));
-
-    orientDB =
-        OCreateDatabaseUtil.createDatabase(
-            DB_NAME, "plocal:" + buildDirectory, OCreateDatabaseUtil.TYPE_PLOCAL);
+    orientDB = new OrientDB("plocal:" + buildDirectory, OrientDBConfig.defaultConfig());
     if (orientDB.exists(DB_NAME)) {
       orientDB.drop(DB_NAME);
     }
-    OCreateDatabaseUtil.createDatabase(DB_NAME, orientDB, OCreateDatabaseUtil.TYPE_PLOCAL);
+    orientDB.create(DB_NAME, ODatabaseType.PLOCAL);
 
-    ODatabaseSession databaseSession =
-        orientDB.open(DB_NAME, "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
+    ODatabaseSession databaseSession = orientDB.open(DB_NAME, "admin", "admin");
     storage = (OAbstractPaginatedStorage) ((ODatabaseInternal<?>) databaseSession).getStorage();
     atomicOperationsManager = storage.getAtomicOperationsManager();
     databaseSession.close();

@@ -428,8 +428,9 @@ public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
     return "`" + next + "`";
   }
 
-  public void fromStream(ODocument document) {
-    this.document = document;
+  /** {@inheritDoc} */
+  @Override
+  protected void fromStream() {
     serializeFromStream();
   }
 

@@ -153,11 +153,6 @@ final class OAtomicOperationPageOperationsTracking implements OAtomicOperation {
   }
 
   @Override
-  public long fileIdByName(String fileName) {
-    return writeCache.fileIdByName(fileName);
-  }
-
-  @Override
   public void truncateFile(long fileId) throws IOException {
     readCache.truncateFile(fileId, writeCache);
   }

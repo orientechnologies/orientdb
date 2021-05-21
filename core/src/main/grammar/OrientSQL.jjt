@@ -5577,11 +5577,7 @@ OCreateDatabaseStatement CreateDatabaseStatement():
 {
   (
     <CREATE> <DATABASE>
-    (
-       jjtThis.name = Identifier()
-       |
-       jjtThis.nameParam = InputParameter()
-    )
+    jjtThis.name = Identifier()
     jjtThis.type = Identifier()
     [ <IF> <NOT> <EXISTS> { jjtThis.ifNotExists = true; } ]
     [

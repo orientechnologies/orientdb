@@ -56,9 +56,7 @@ public class OrientDBRemoteTest {
 
   @Test
   public void createAndUseRemoteDatabase() {
-    if (!factory.exists("test")) {
-      factory.execute("create database test memory users (admin identified by 'admin' role admin)");
-    }
+    if (!factory.exists("test")) factory.create("test", ODatabaseType.MEMORY);
 
     ODatabaseDocument db = factory.open("test", "admin", "admin");
     db.save(new ODocument(), db.getClusterNameById(db.getDefaultClusterId()));
@@ -69,13 +67,13 @@ public class OrientDBRemoteTest {
   // TODO: Uniform database exist exceptions
   @Test(expected = OStorageException.class)
   public void doubleCreateRemoteDatabase() {
-    factory.execute("create database test memory users (admin identified by 'admin' role admin)");
-    factory.execute("create database test memory users (admin identified by 'admin' role admin)");
+    factory.create("test", ODatabaseType.MEMORY);
+    factory.create("test", ODatabaseType.MEMORY);
   }
 
   @Test
   public void createDropRemoteDatabase() {
-    factory.execute("create database test memory users (admin identified by 'admin' role admin)");
+    factory.create("test", ODatabaseType.MEMORY);
     assertTrue(factory.exists("test"));
     factory.drop("test");
     assertFalse(factory.exists("test"));
@@ -83,8 +81,7 @@ public class OrientDBRemoteTest {
 
   @Test
   public void testPool() {
-    if (!factory.exists("test"))
-      factory.execute("create database test memory users (admin identified by 'admin' role admin)");
+    if (!factory.exists("test")) factory.create("test", ODatabaseType.MEMORY);
 
     ODatabasePool pool = new ODatabasePool(factory, "test", "admin", "admin");
     ODatabaseDocument db = pool.acquire();
@@ -95,9 +92,7 @@ public class OrientDBRemoteTest {
 
   @Test
   public void testCachedPool() {
-    if (!factory.exists("testdb"))
-      factory.execute(
-          "create database testdb memory users (admin identified by 'admin' role admin, reader identified by 'reader' role reader, writer identified by 'writer' role writer)");
+    if (!factory.exists("testdb")) factory.create("testdb", ODatabaseType.MEMORY);
 
     ODatabasePool poolAdmin1 = factory.cachedPool("testdb", "admin", "admin");
     ODatabasePool poolAdmin2 = factory.cachedPool("testdb", "admin", "admin");
@@ -122,9 +117,7 @@ public class OrientDBRemoteTest {
 
   @Test
   public void testCachedPoolFactoryCleanUp() throws Exception {
-    if (!factory.exists("testdb"))
-      factory.execute(
-          "create database testdb memory users (admin identified by 'admin' role admin)");
+    if (!factory.exists("testdb")) factory.create("testdb", ODatabaseType.MEMORY);
 
     ODatabasePool poolAdmin1 = factory.cachedPool("testdb", "admin", "admin");
     ODatabasePool poolAdmin2 = factory.cachedPool("testdb", "admin", "admin");
@@ -147,9 +140,7 @@ public class OrientDBRemoteTest {
 
   @Test
   public void testMultiThread() {
-    if (!factory.exists("test"))
-      factory.execute(
-          "create database test memory users (admin identified by 'admin' role admin, reader identified by 'reader' role reader, writer identified by 'writer' role writer)");
+    if (!factory.exists("test")) factory.create("test", ODatabaseType.MEMORY);
 
     ODatabasePool pool = new ODatabasePool(factory, "test", "admin", "admin");
 
@@ -186,7 +177,7 @@ public class OrientDBRemoteTest {
   @Test
   public void testListDatabases() {
     assertEquals(factory.list().size(), 0);
-    factory.execute("create database test memory users (admin identified by 'admin' role admin)");
+    factory.create("test", ODatabaseType.MEMORY);
     List<String> databases = factory.list();
     assertEquals(databases.size(), 1);
     assertTrue(databases.contains("test"));
@@ -220,7 +211,7 @@ public class OrientDBRemoteTest {
 
   @Test
   public void testCopyOpenedDatabase() {
-    factory.execute("create database test memory users (admin identified by 'admin' role admin)");
+    factory.create("test", ODatabaseType.MEMORY);
     ODatabaseDocument db1;
     try (ODatabaseDocumentInternal db =
         (ODatabaseDocumentInternal) factory.open("test", "admin", "admin")) {

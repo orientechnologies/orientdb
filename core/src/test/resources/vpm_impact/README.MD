@@ -18,7 +18,6 @@ OR distributed
 2) Get the YCSB benchmark runner (incl. the new ODB driver for v3.1.x)
 ```
 git clone https://github.com/brianfrankcooper/YCSB.git
-cd YCSB
 ```
 
 3) Create an output directory for the benchmark results

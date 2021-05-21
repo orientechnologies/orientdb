@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import java.nio.ByteBuffer;
-import java.util.Objects;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -75,31 +74,17 @@ public abstract class OAbstractPageWALRecord extends OOperationUnitBodyRecord {
 
     if (fileId != that.fileId) return false;
     if (pageIndex != that.pageIndex) return false;
+    if (lsn != null ? !lsn.equals(that.lsn) : that.lsn != null) return false;
 
-    if (operationIdLSN == null) {
-      if (that.operationIdLSN != null) {
-        return false;
-      }
-
-      return true;
-    }
-
-    return Objects.equals(operationIdLSN.lsn, that.operationIdLSN.lsn);
+    return true;
   }
 
   @Override
   public int hashCode() {
     int result = super.hashCode();
-
-    result =
-        31 * result
-            + (operationIdLSN != null && operationIdLSN.lsn != null
-                ? operationIdLSN.lsn.hashCode()
-                : 0);
-
+    result = 31 * result + (lsn != null ? lsn.hashCode() : 0);
     result = 31 * result + (int) (pageIndex ^ (pageIndex >>> 32));
     result = 31 * result + (int) (fileId ^ (fileId >>> 32));
-
     return result;
   }
 

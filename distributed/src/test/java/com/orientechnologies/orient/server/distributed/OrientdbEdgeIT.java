@@ -27,6 +27,7 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabasePool;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -84,8 +85,7 @@ public class OrientdbEdgeIT {
     OrientDB orientDB =
         new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
     if (!orientDB.exists("test")) {
-      orientDB.execute(
-          "create database ? plocal users(admin identified by 'admin' role admin)", "test");
+      orientDB.create("test", ODatabaseType.PLOCAL);
     }
 
     ODatabaseDocument t = orientDB.open("test", "root", "root");

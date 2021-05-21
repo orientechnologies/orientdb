@@ -81,9 +81,7 @@ public class FulltextIndexFunctionBenchmark {
     if (context.exists(name)) {
       context.drop(name);
     }
-
-    context.execute(
-        "create database " + name + " plocal users ( admin identified by 'admin' role admin)");
+    context.create(name, type);
 
     db = (ODatabaseDocumentInternal) context.open(name, "admin", "admin");
     db.set(ODatabase.ATTRIBUTES.MINIMUMCLUSTERS, 8);

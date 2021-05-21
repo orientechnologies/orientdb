@@ -27,7 +27,6 @@ import com.orientechnologies.common.concur.lock.OPartitionedLockManager;
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.directmemory.ODirectMemoryAllocator;
-import com.orientechnologies.common.directmemory.ODirectMemoryAllocator.Intention;
 import com.orientechnologies.common.directmemory.OPointer;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
@@ -58,6 +57,8 @@ import com.orientechnologies.orient.core.storage.cache.local.doublewritelog.Doub
 import com.orientechnologies.orient.core.storage.fs.AsyncFile;
 import com.orientechnologies.orient.core.storage.fs.IOResult;
 import com.orientechnologies.orient.core.storage.fs.OFile;
+import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceInformation;
+import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.OPageIsBrokenListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.MetaDataRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
@@ -254,9 +255,30 @@ public final class OWOWCache extends OAbstractWriteCache
   private final long freeSpaceLimit =
       OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT.getValueAsLong() * 1024L * 1024L;
 
+  /**
+   * Interval between values of {@link #amountOfNewPagesAdded} field, after which we will check
+   * amount of free space on disk
+   */
+  private final int diskSizeCheckInterval =
+      OGlobalConfiguration.DISC_CACHE_FREE_SPACE_CHECK_INTERVAL_IN_PAGES.getValueAsInteger();
+
+  /**
+   * Listeners which are called once we detect that there is not enough space left on disk to work.
+   * Mostly used to put database in "read only" mode
+   */
+  private final List<WeakReference<OLowDiskSpaceListener>> lowDiskSpaceListeners =
+      new CopyOnWriteArrayList<>();
+
   /** Listeners which are called once we detect that some of the pages of files are broken. */
   private final List<WeakReference<OPageIsBrokenListener>> pageIsBrokenListeners =
       new CopyOnWriteArrayList<>();
+
+  /**
+   * The last amount of pages which were added to the file system by database when check of free
+   * space was performed. It is used together with {@link #amountOfNewPagesAdded} to detect when new
+   * disk space check should be performed.
+   */
+  private final AtomicLong lastDiskSpaceCheck = new AtomicLong(0);
 
   /** Path to the storage root directory where all files served by write cache will be stored */
   private final Path storagePath;
@@ -325,6 +347,12 @@ public final class OWOWCache extends OAbstractWriteCache
    * @see #localDirtyPages for details
    */
   private final TreeMap<Long, TreeSet<PageKey>> localDirtyPagesBySegment = new TreeMap<>();
+
+  /**
+   * This counter is need for "free space" check implementation. Once amount of added pages is
+   * reached some threshold, amount of free space available on disk will be checked.
+   */
+  private final AtomicLong amountOfNewPagesAdded = new AtomicLong();
 
   /** Approximate amount of all pages contained by write cache at the moment */
   private final AtomicLong writeCacheSize = new AtomicLong();
@@ -400,6 +428,8 @@ public final class OWOWCache extends OAbstractWriteCache
   /** Key is used for AES encryption */
   private final byte[] aesKey;
 
+  private final boolean useNativeOsAPI;
+
   private final int exclusiveWriteCacheMaxSize;
 
   private final boolean callFsync;
@@ -440,7 +470,8 @@ public final class OWOWCache extends OAbstractWriteCache
       final OChecksumMode checksumMode,
       final byte[] iv,
       final byte[] aesKey,
-      final boolean callFsync) {
+      final boolean callFsync,
+      boolean useNativeOsAPI) {
 
     if (aesKey != null && aesKey.length != 16 && aesKey.length != 24 && aesKey.length != 32) {
       throw new OInvalidStorageEncryptionKeyException(
@@ -451,6 +482,7 @@ public final class OWOWCache extends OAbstractWriteCache
       throw new OInvalidStorageEncryptionKeyException("IV can not be null");
     }
 
+    this.useNativeOsAPI = useNativeOsAPI;
     this.shutdownTimeout = shutdownTimeout;
     this.pagesFlushInterval = pagesFlushInterval;
     this.iv = iv;
@@ -565,6 +597,11 @@ public final class OWOWCache extends OAbstractWriteCache
     return storagePath;
   }
 
+  @Override
+  public void addLowDiskSpaceListener(final OLowDiskSpaceListener listener) {
+    lowDiskSpaceListeners.add(new WeakReference<>(listener));
+  }
+
   /** @inheritDoc */
   @Override
   public void addPageIsBrokenListener(final OPageIsBrokenListener listener) {
@@ -585,6 +622,69 @@ public final class OWOWCache extends OAbstractWriteCache
     }
 
     pageIsBrokenListeners.removeAll(itemsToRemove);
+  }
+
+  @Override
+  public void removeLowDiskSpaceListener(final OLowDiskSpaceListener listener) {
+    final List<WeakReference<OLowDiskSpaceListener>> itemsToRemove = new ArrayList<>(1);
+
+    for (final WeakReference<OLowDiskSpaceListener> ref : lowDiskSpaceListeners) {
+      final OLowDiskSpaceListener lowDiskSpaceListener = ref.get();
+
+      if (lowDiskSpaceListener == null || lowDiskSpaceListener.equals(listener)) {
+        itemsToRemove.add(ref);
+      }
+    }
+
+    lowDiskSpaceListeners.removeAll(itemsToRemove);
+  }
+
+  /**
+   * This method is called once new pages are added to the disk inside of {@link
+   * OWriteCache#load(long, long, OModifiableBoolean, boolean)} lmethod. If total amount of added
+   * pages minus amount of added pages at the time of last disk space check bigger than threshold
+   * value {@link #diskSizeCheckInterval} new disk space check is performed and if amount of space
+   * left on disk less than threshold {@link #freeSpaceLimit} then database is switched in "read
+   * only" mode
+   */
+  private void freeSpaceCheckAfterNewPageAdd() throws IOException {
+    final long newPagesAdded = amountOfNewPagesAdded.addAndGet(1);
+    final long lastSpaceCheck = lastDiskSpaceCheck.get();
+
+    if (newPagesAdded - lastSpaceCheck > diskSizeCheckInterval || lastSpaceCheck == 0) {
+      // usable space may be less than free space
+      final long freeSpace = Files.getFileStore(storagePath).getUsableSpace();
+
+      if (freeSpace < freeSpaceLimit) {
+        callLowSpaceListeners(new OLowDiskSpaceInformation(freeSpace, freeSpaceLimit));
+      }
+
+      lastDiskSpaceCheck.lazySet(newPagesAdded);
+    }
+  }
+
+  private void callLowSpaceListeners(final OLowDiskSpaceInformation information) {
+    cacheEventsPublisher.execute(
+        new Runnable() {
+          @Override
+          public void run() {
+            for (final WeakReference<OLowDiskSpaceListener> lowDiskSpaceListenerWeakReference :
+                lowDiskSpaceListeners) {
+              final OLowDiskSpaceListener listener = lowDiskSpaceListenerWeakReference.get();
+              if (listener != null) {
+                try {
+                  listener.lowDiskSpace(information);
+                } catch (final Exception e) {
+                  OLogManager.instance()
+                      .error(
+                          this,
+                          "Error during notification of low disk space for storage " + storageName,
+                          e);
+                }
+              }
+            }
+          }
+        });
   }
 
   private void callPageIsBrokenListeners(final String fileName, final long pageIndex) {
@@ -641,6 +741,15 @@ public final class OWOWCache extends OAbstractWriteCache
   @Override
   public int pageSize() {
     return pageSize;
+  }
+
+  /** @inheritDoc */
+  @Override
+  public boolean fileIdsAreEqual(final long firsId, final long secondId) {
+    final int firstIntId = extractFileId(firsId);
+    final int secondIntId = extractFileId(secondId);
+
+    return firstIntId == secondIntId;
   }
 
   @Override
@@ -883,11 +992,18 @@ public final class OWOWCache extends OAbstractWriteCache
   }
 
   @Override
-  public void syncDataFiles(final long segmentId, final byte[] lastMetadata) throws IOException {
+  public void makeFuzzyCheckpoint(final long segmentId, final byte[] lastMetadata)
+      throws IOException {
     filesLock.acquireReadLock();
     try {
       doubleWriteLog.startCheckpoint();
       try {
+        final OLogSequenceNumber startLSN = writeAheadLog.begin(segmentId);
+        if (startLSN == null) {
+          return;
+        }
+
+        writeAheadLog.logFuzzyCheckPointStart(startLSN);
         if (lastMetadata != null) {
           writeAheadLog.log(new MetaDataRecord(lastMetadata));
         }
@@ -909,6 +1025,7 @@ public final class OWOWCache extends OAbstractWriteCache
           }
         }
 
+        writeAheadLog.logFuzzyCheckPointEnd();
         writeAheadLog.flush();
 
         writeAheadLog.cutAllSegmentsSmallerThan(segmentId);
@@ -1112,6 +1229,10 @@ public final class OWOWCache extends OAbstractWriteCache
         final long allocatedPosition = fileClassic.allocateSpace(pageSize);
         final long allocationIndex = allocatedPosition / pageSize;
 
+        // we check is it enough space on disk to continue to write data on it
+        // otherwise we switch storage in read-only mode
+        freeSpaceCheckAfterNewPageAdd();
+
         final int pageIndex = (int) allocationIndex;
         if (pageIndex < 0) {
           throw new IllegalStateException("Illegal page index value " + pageIndex);
@@ -1246,14 +1367,6 @@ public final class OWOWCache extends OAbstractWriteCache
   }
 
   @Override
-  public boolean fileIdsAreEqual(final long firsId, final long secondId) {
-    final int firstIntId = extractFileId(firsId);
-    final int secondIntId = extractFileId(secondId);
-
-    return firstIntId == secondIntId;
-  }
-
-  @Override
   public void renameFile(long fileId, final String newFileName) throws IOException {
     final int intId = extractFileId(fileId);
     fileId = composeFileId(id, intId);
@@ -1290,47 +1403,6 @@ public final class OWOWCache extends OAbstractWriteCache
       writeNameIdEntry(new NameFileIdEntry(newFileName, intId, newOsFileName), true);
     } catch (final InterruptedException e) {
       throw OException.wrapException(new OStorageException("Rename of file was interrupted"), e);
-    } finally {
-      filesLock.releaseWriteLock();
-    }
-  }
-
-  @Override
-  public void replaceFileId(final long fileId, final long newFileId) throws IOException {
-    filesLock.acquireWriteLock();
-    try {
-      final OFile file = files.remove(fileId);
-      final OFile newFile = files.remove(newFileId);
-
-      final int intFileId = extractFileId(fileId);
-      final int newIntFileId = extractFileId(newFileId);
-
-      final String fileName = idNameMap.get(intFileId);
-      final String newFileName = idNameMap.remove(newIntFileId);
-
-      if (!file.isOpen()) {
-        file.open();
-      }
-      if (!newFile.isOpen()) {
-        newFile.open();
-      }
-
-      // invalidate old entries
-      writeNameIdEntry(new NameFileIdEntry(fileName, 0, ""), false);
-      writeNameIdEntry(new NameFileIdEntry(newFileName, 0, ""), false);
-
-      // add new one
-      writeNameIdEntry(new NameFileIdEntry(newFileName, intFileId, file.getName()), true);
-
-      file.delete();
-
-      files.add(fileId, newFile);
-
-      idNameMap.put(intFileId, newFileName);
-      nameIdMap.remove(fileName);
-      nameIdMap.put(newFileName, intFileId);
-    } catch (final InterruptedException e) {
-      throw OException.wrapException(new OStorageException("Replace of file was interrupted"), e);
     } finally {
       filesLock.releaseWriteLock();
     }
@@ -1425,7 +1497,7 @@ public final class OWOWCache extends OAbstractWriteCache
             StandardCopyOption.REPLACE_EXISTING,
             StandardCopyOption.ATOMIC_MOVE);
       } catch (AtomicMoveNotSupportedException e) {
-        Files.move(nameIdMapBackupPath, nameIdMapHolderPath, StandardCopyOption.REPLACE_EXISTING);
+        Files.move(nameIdMapBackupPath, nameIdMapBackupPath, StandardCopyOption.REPLACE_EXISTING);
       }
 
       doubleWriteLog.close();
@@ -1547,7 +1619,7 @@ public final class OWOWCache extends OAbstractWriteCache
 
         final byte[] data = new byte[pageSize];
 
-        final OPointer pointer = bufferPool.acquireDirect(true, Intention.CHECK_FILE_STORAGE);
+        final OPointer pointer = bufferPool.acquireDirect(true);
         try {
           final ByteBuffer byteBuffer = pointer.getNativeByteBuffer();
           fileClassic.read(pos, byteBuffer, true);
@@ -1742,6 +1814,7 @@ public final class OWOWCache extends OAbstractWriteCache
       throws IOException {
     if (!fileClassic.exists()) {
       fileClassic.create();
+
     } else {
       if (!fileClassic.isOpen()) {
         fileClassic.open();
@@ -1761,14 +1834,10 @@ public final class OWOWCache extends OAbstractWriteCache
 
     final Path nameIdMapHolderV1 = storagePath.resolve(NAME_ID_MAP_V1);
     final Path nameIdMapHolderV2 = storagePath.resolve(NAME_ID_MAP_V2);
-    final Path nameIdMapHolderV3 = storagePath.resolve(NAME_ID_MAP_V3);
 
     if (Files.exists(nameIdMapHolderV1)) {
       if (Files.exists(nameIdMapHolderV2)) {
         Files.delete(nameIdMapHolderV2);
-      }
-      if (Files.exists(nameIdMapHolderV3)) {
-        Files.delete(nameIdMapHolderV3);
       }
 
       try (final FileChannel nameIdMapHolder =
@@ -1778,9 +1847,7 @@ public final class OWOWCache extends OAbstractWriteCache
 
       Files.delete(nameIdMapHolderV1);
     } else if (Files.exists(nameIdMapHolderV2)) {
-      if (Files.exists(nameIdMapHolderV3)) {
-        Files.delete(nameIdMapHolderV3);
-      }
+      nameIdMapHolderPath = storagePath.resolve(NAME_ID_MAP_V2);
 
       try (final FileChannel nameIdMapHolder =
           FileChannel.open(nameIdMapHolderV2, StandardOpenOption.WRITE, StandardOpenOption.READ)) {
@@ -1790,7 +1857,7 @@ public final class OWOWCache extends OAbstractWriteCache
       Files.delete(nameIdMapHolderV2);
     }
 
-    nameIdMapHolderPath = nameIdMapHolderV3;
+    nameIdMapHolderPath = storagePath.resolve(NAME_ID_MAP_V3);
     if (Files.exists(nameIdMapHolderPath)) {
       try (final FileChannel nameIdMapHolder =
           FileChannel.open(
@@ -1846,7 +1913,7 @@ public final class OWOWCache extends OAbstractWriteCache
 
   private OFile createFileInstance(final String fileName, final int fileId) {
     final String internalFileName = createInternalFileName(fileName, fileId);
-    return new AsyncFile(storagePath.resolve(internalFileName), pageSize);
+    return new AsyncFile(storagePath.resolve(internalFileName), pageSize, useNativeOsAPI);
   }
 
   private static String createInternalFileName(final String fileName, final int fileId) {
@@ -1909,16 +1976,10 @@ public final class OWOWCache extends OAbstractWriteCache
         localFileCounter = absFileId;
       }
 
-      if (absFileId != 0) {
-        nameIdMap.put(nameFileIdEntry.name, nameFileIdEntry.fileId);
-        idNameMap.put(nameFileIdEntry.fileId, nameFileIdEntry.name);
+      nameIdMap.put(nameFileIdEntry.name, nameFileIdEntry.fileId);
+      idNameMap.put(nameFileIdEntry.fileId, nameFileIdEntry.name);
 
-        idFileNameMap.put(nameFileIdEntry.fileId, nameFileIdEntry.fileSystemName);
-      } else {
-        nameIdMap.remove(nameFileIdEntry.name);
-        idNameMap.remove(nameFileIdEntry.fileId);
-        idFileNameMap.remove(nameFileIdEntry.fileId);
-      }
+      idFileNameMap.put(nameFileIdEntry.fileId, nameFileIdEntry.fileSystemName);
     }
 
     for (final Map.Entry<String, Integer> nameIdEntry : nameIdMap.entrySet()) {
@@ -1929,7 +1990,7 @@ public final class OWOWCache extends OAbstractWriteCache
 
         if (files.get(externalId) == null) {
           final Path path = storagePath.resolve(idFileNameMap.get((nameIdEntry.getValue())));
-          final AsyncFile file = new AsyncFile(path, pageSize);
+          final AsyncFile file = new AsyncFile(path, pageSize, useNativeOsAPI);
 
           if (file.exists()) {
             file.open();
@@ -1975,28 +2036,21 @@ public final class OWOWCache extends OAbstractWriteCache
         localFileCounter = absFileId;
       }
 
-      if (absFileId != 0) {
-        nameIdMap.put(nameFileIdEntry.name, nameFileIdEntry.fileId);
-        idNameMap.put(nameFileIdEntry.fileId, nameFileIdEntry.name);
+      nameIdMap.put(nameFileIdEntry.name, nameFileIdEntry.fileId);
+      idNameMap.put(nameFileIdEntry.fileId, nameFileIdEntry.name);
 
-        idFileNameMap.put(nameFileIdEntry.fileId, nameFileIdEntry.fileSystemName);
-      } else {
-        nameIdMap.remove(nameFileIdEntry.name);
-        idNameMap.remove(nameFileIdEntry.fileId);
-
-        idFileNameMap.remove(nameFileIdEntry.fileId);
-      }
+      idFileNameMap.put(nameFileIdEntry.fileId, nameFileIdEntry.fileSystemName);
     }
 
     for (final Map.Entry<String, Integer> nameIdEntry : nameIdMap.entrySet()) {
       final int fileId = nameIdEntry.getValue();
 
-      if (fileId > 0) {
+      if (fileId >= 0) {
         final long externalId = composeFileId(id, nameIdEntry.getValue());
 
         if (files.get(externalId) == null) {
           final Path path = storagePath.resolve(idFileNameMap.get((nameIdEntry.getValue())));
-          final AsyncFile file = new AsyncFile(path, pageSize);
+          final AsyncFile file = new AsyncFile(path, pageSize, useNativeOsAPI);
 
           if (file.exists()) {
             file.open();
@@ -2070,7 +2124,7 @@ public final class OWOWCache extends OAbstractWriteCache
 
         if (files.get(externalId) == null) {
           final OFile fileClassic =
-              new AsyncFile(storagePath.resolve(nameIdEntry.getKey()), pageSize);
+              new AsyncFile(storagePath.resolve(nameIdEntry.getKey()), pageSize, useNativeOsAPI);
 
           if (fileClassic.exists()) {
             fileClassic.open();
@@ -2319,7 +2373,7 @@ public final class OWOWCache extends OAbstractWriteCache
 
         // if page is not stored in the file may be page is stored in double write log
         if (fileClassic.getFileSize() >= pageEndPosition) {
-          OPointer pointer = bufferPool.acquireDirect(true, Intention.LOAD_PAGE_FROM_DISK);
+          OPointer pointer = bufferPool.acquireDirect(true);
           ByteBuffer buffer = pointer.getNativeByteBuffer();
 
           assert buffer.position() == 0;
@@ -2832,7 +2886,7 @@ public final class OWOWCache extends OAbstractWriteCache
 
           long ewcSize = exclusiveWriteCacheSize.get();
           if (ewcSize >= 0) {
-            flushExclusiveWriteCache(null, Math.min(ewcSize, 4L * chunkSize));
+            flushExclusiveWriteCache(null, Math.min(ewcSize, 4 * chunkSize));
 
             if (exclusiveWriteCacheSize.get() > 0) {
               flushInterval = 1;
@@ -3015,8 +3069,7 @@ public final class OWOWCache extends OAbstractWriteCache
           final long version;
           final OLogSequenceNumber fullLogLSN;
 
-          final OPointer directPointer =
-              bufferPool.acquireDirect(false, Intention.COPY_PAGE_DURING_FLUSH);
+          final OPointer directPointer = bufferPool.acquireDirect(false);
           final ByteBuffer copy = directPointer.getNativeByteBuffer();
           assert copy.position() == 0;
           try {
@@ -3123,12 +3176,7 @@ public final class OWOWCache extends OAbstractWriteCache
         flushedPages += chunk.size();
 
         final OPointer containerPointer =
-            ODirectMemoryAllocator.instance()
-                .allocate(
-                    chunk.size() * pageSize,
-                    -1,
-                    false,
-                    Intention.ALLOCATE_CHUNK_TO_WRITE_DATA_IN_BATCH);
+            ODirectMemoryAllocator.instance().allocate(chunk.size() * pageSize, -1, false);
         final ByteBuffer containerBuffer = containerPointer.getNativeByteBuffer();
         assert containerBuffer.position() == 0;
 
@@ -3313,8 +3361,7 @@ public final class OWOWCache extends OAbstractWriteCache
           if (pointer.tryAcquireSharedLock()) {
             final OLogSequenceNumber fullLSN;
 
-            final OPointer directPointer =
-                bufferPool.acquireDirect(false, Intention.COPY_PAGE_DURING_EXCLUSIVE_PAGE_FLUSH);
+            final OPointer directPointer = bufferPool.acquireDirect(false);
             final ByteBuffer copy = directPointer.getNativeByteBuffer();
             assert copy.position() == 0;
             try {
@@ -3462,7 +3509,7 @@ public final class OWOWCache extends OAbstractWriteCache
             try {
               final ByteBuffer buffer = pagePointer.getBufferDuplicate();
 
-              final OPointer directPointer = bufferPool.acquireDirect(false, Intention.FILE_FLUSH);
+              final OPointer directPointer = bufferPool.acquireDirect(false);
               final ByteBuffer copy = directPointer.getNativeByteBuffer();
               assert copy.position() == 0;
 

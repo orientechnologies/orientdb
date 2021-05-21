@@ -11,7 +11,6 @@ import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentRemote;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.setup.LocalTestSetup;
-import com.orientechnologies.orient.setup.ServerRun;
 import com.orientechnologies.orient.setup.SetupConfig;
 import com.orientechnologies.orient.setup.configs.SimpleDServerConfig;
 import java.util.Arrays;
@@ -39,8 +38,7 @@ public class SimpleConnectionStrategiesIT {
     setup = new LocalTestSetup(config);
     setup.setup();
     OrientDB remote = setup.createRemote(server0, "root", "test", OrientDBConfig.defaultConfig());
-    remote.execute(
-        "create database ? plocal users(admin identified by 'admin' role admin)", databaseName);
+    remote.create(databaseName, ODatabaseType.PLOCAL);
     remote.close();
   }
 
@@ -75,7 +73,8 @@ public class SimpleConnectionStrategiesIT {
     urls.add(((ODatabaseDocumentRemote) session1).getSessionMetadata().getDebugLastHost());
     session1.close();
 
-    assertEquals(urls.stream().count(), 2);
+    assertEquals(urls.stream().filter((x) -> x.contains("2424")).count(), 1);
+    assertEquals(urls.stream().filter((x) -> x.contains("2425")).count(), 1);
 
     remote1.close();
   }
@@ -101,7 +100,8 @@ public class SimpleConnectionStrategiesIT {
 
     session.activateOnCurrentThread();
     session.close();
-    assertEquals(urls.stream().count(), 2);
+    assertEquals(urls.stream().filter((x) -> x.contains("2424")).count(), 1);
+    assertEquals(urls.stream().filter((x) -> x.contains("2425")).count(), 1);
 
     Set<String> poolUrls = new HashSet<>();
 
@@ -116,7 +116,8 @@ public class SimpleConnectionStrategiesIT {
       sessionP.activateOnCurrentThread();
       sessionP.close();
     }
-    assertEquals(poolUrls.stream().count(), 2);
+    assertEquals(poolUrls.stream().filter((x) -> x.contains("2424")).count(), 1);
+    assertEquals(poolUrls.stream().filter((x) -> x.contains("2425")).count(), 1);
     remote1.close();
   }
 
@@ -139,7 +140,8 @@ public class SimpleConnectionStrategiesIT {
     urls.add(((ODatabaseDocumentRemote) session).getSessionMetadata().getDebugLastHost());
 
     session.close();
-    assertEquals(urls.stream().count(), 2);
+    assertEquals(urls.stream().filter((x) -> x.contains("2424")).count(), 1);
+    assertEquals(urls.stream().filter((x) -> x.contains("2425")).count(), 1);
     remote1.close();
   }
 
@@ -204,50 +206,5 @@ public class SimpleConnectionStrategiesIT {
     session1.close();
     pool1.close();
     remote1.close();
-  }
-
-  @Test
-  public void testRoundRobinShutdown() throws Exception {
-    OrientDB remote1 =
-        new OrientDB(
-            "remote:localhost;localhost:2425;localhost:2426",
-            "root",
-            "test",
-            OrientDBConfig.builder()
-                .addConfig(CLIENT_CONNECTION_STRATEGY, "ROUND_ROBIN_CONNECT")
-                .build());
-    Set<String> urls = new HashSet<>();
-    for (int i = 0; i < 10; i++) {
-      ODatabaseSession session =
-          remote1.open(SimpleConnectionStrategiesIT.class.getSimpleName(), "admin", "admin");
-      urls.add(((ODatabaseDocumentRemote) session).getSessionMetadata().getDebugLastHost());
-      session.close();
-    }
-
-    assertTrue(urls.stream().count() >= 3);
-
-    ServerRun toStop = setup.getServer(server1);
-    toStop.shutdown();
-    toStop.getServerInstance().waitForShutdown();
-    urls.clear();
-
-    for (int i = 0; i < 10; i++) {
-      ODatabaseSession session2 =
-          remote1.open(SimpleConnectionStrategiesIT.class.getSimpleName(), "admin", "admin");
-      session2.query("select from OUSer").close();
-      urls.add(((ODatabaseDocumentRemote) session2).getSessionMetadata().getDebugLastHost());
-      session2.close();
-    }
-
-    assertEquals(urls.stream().filter((x) -> x.contains("2425")).count(), 0);
-
-    remote1.close();
-    toStop.startServer("orientdb-simple-dserver-config-1.xml");
-    toStop
-        .getServerInstance()
-        .getDistributedManager()
-        .waitUntilNodeOnline(
-            toStop.getServerInstance().getDistributedManager().getLocalNodeName(),
-            SimpleConnectionStrategiesIT.class.getSimpleName());
   }
 }

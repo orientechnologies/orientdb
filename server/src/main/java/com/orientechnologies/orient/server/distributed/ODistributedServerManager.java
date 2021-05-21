@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
+import com.orientechnologies.orient.server.distributed.conflict.ODistributedConflictResolverFactory;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import java.io.File;
 import java.io.IOException;
@@ -133,7 +134,7 @@ public interface ODistributedServerManager {
 
   void setNodeStatus(NODE_STATUS iStatus);
 
-  boolean checkNodeStatus(NODE_STATUS status);
+  boolean checkNodeStatus(NODE_STATUS string);
 
   void removeServer(String nodeLeftName, boolean removeOnlyDynamicServers);
 
@@ -245,6 +246,8 @@ public interface ODistributedServerManager {
   ORemoteTaskFactoryManager getTaskFactoryManager();
 
   Set<String> getActiveServers();
+
+  ODistributedConflictResolverFactory getConflictResolverFactory();
 
   /**
    * Returns the cluster-wide time in milliseconds.

@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.sql.functions.math;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import java.util.List;
@@ -47,10 +46,7 @@ public class OSQLFunctionEval extends OSQLFunctionMathAbstract {
       final Object iCurrentResult,
       final Object[] iParams,
       OCommandContext iContext) {
-    if (iParams.length < 1) {
-      throw new OCommandExecutionException("invalid ");
-    }
-    if (predicate == null) predicate = new OSQLPredicate(String.valueOf(iParams[0]));
+    if (predicate == null) predicate = new OSQLPredicate((String) iParams[0].toString());
 
     final ODocument currentResult =
         iCurrentResult instanceof ODocument ? (ODocument) iCurrentResult : null;

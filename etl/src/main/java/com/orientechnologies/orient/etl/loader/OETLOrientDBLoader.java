@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabasePool;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -436,11 +437,7 @@ public class OETLOrientDBLoader extends OETLAbstractLoader implements OETLLoader
       }
 
       if (!orient.exists(dbCtx)) {
-        orient.execute(
-            "create database ?  memory if not exists users (? identified by ? role admin)",
-            dbCtx,
-            dbUser,
-            dbPassword);
+        orient.create(dbCtx, ODatabaseType.MEMORY);
       }
 
       pool = new ODatabasePool(orient, dbCtx, dbUser, dbPassword);
@@ -458,11 +455,7 @@ public class OETLOrientDBLoader extends OETLAbstractLoader implements OETLLoader
       }
 
       if (!orient.exists(dbName) && dbAutoCreate) {
-        orient.execute(
-            "create database ?  plocal if not exists users (? identified by ? role admin)",
-            dbName,
-            dbUser,
-            dbPassword);
+        orient.create(dbName, ODatabaseType.PLOCAL);
       }
       pool = new ODatabasePool(orient, dbName, dbUser, dbPassword);
     } else {
@@ -476,11 +469,7 @@ public class OETLOrientDBLoader extends OETLAbstractLoader implements OETLLoader
       }
 
       if (!orient.exists(dbName) && dbAutoCreate) {
-        orient.execute(
-            "create database ?  plocal if not exists users (? identified by ? role admin)",
-            dbName,
-            dbUser,
-            dbPassword);
+        orient.create(dbName, ODatabaseType.PLOCAL);
       }
       pool = new ODatabasePool(orient, dbName, dbUser, dbPassword);
     }

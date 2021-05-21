@@ -653,17 +653,6 @@ public class OrientDBEmbedded implements OrientDBInternal {
   @Override
   public void create(
       String name, String user, String password, ODatabaseType type, OrientDBConfig config) {
-    create(name, user, password, type, config, null);
-  }
-
-  @Override
-  public void create(
-      String name,
-      String user,
-      String password,
-      ODatabaseType type,
-      OrientDBConfig config,
-      ODatabaseTask<Void> createOps) {
     checkDatabaseName(name);
     final ODatabaseDocumentEmbedded embedded;
     synchronized (this) {
@@ -692,13 +681,6 @@ public class OrientDBEmbedded implements OrientDBInternal {
           }
           storages.put(name, storage);
           embedded = internalCreate(config, storage);
-          if (createOps != null) {
-            OScenarioThreadLocal.executeAsDistributed(
-                () -> {
-                  createOps.call(embedded);
-                  return null;
-                });
-          }
         } catch (Exception e) {
           throw OException.wrapException(
               new ODatabaseException("Cannot create database '" + name + "'"), e);
@@ -774,7 +756,6 @@ public class OrientDBEmbedded implements OrientDBInternal {
     }
     storage.restoreFromIncrementalBackup(path);
     embedded.callOnCreateListeners();
-    embedded.getSharedContext().reload(embedded);
     ODatabaseRecordThreadLocal.instance().remove();
   }
 
@@ -970,10 +951,10 @@ public class OrientDBEmbedded implements OrientDBInternal {
     }
     synchronized (this) {
       scriptManager.closeAll();
+      removeShutdownHook();
       internalClose();
       currentStorageIds.clear();
     }
-    removeShutdownHook();
   }
 
   public synchronized void internalClose() {
@@ -1093,7 +1074,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     }
   }
 
-  public void removeShutdownHook() {
+  public synchronized void removeShutdownHook() {
     orient.removeOrientDB(this);
   }
 

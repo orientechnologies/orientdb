@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.db.record.OProxedResource;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import java.util.Collection;
 import java.util.Set;
 
@@ -177,9 +178,8 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract>
   }
 
   @Override
-  public OIndexManager save() {
-    delegate.save();
-    return this;
+  public <RET extends ODocumentWrapper> RET save() {
+    return delegate.save();
   }
 
   public void removeClassPropertyIndex(final OIndex idx) {

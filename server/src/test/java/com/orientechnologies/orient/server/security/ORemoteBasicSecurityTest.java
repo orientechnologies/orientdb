@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -33,8 +34,7 @@ public class ORemoteBasicSecurityTest {
 
     OrientDB orientDB =
         new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
-    orientDB.execute(
-        "create database test memory users (admin identified by 'admin' role admin, reader identified by 'reader' role reader, writer identified by 'writer' role writer)");
+    orientDB.create("test", ODatabaseType.MEMORY);
     try (ODatabaseSession session = orientDB.open("test", "admin", "admin")) {
       session.createClass("one");
       session.save(new ODocument("one"));

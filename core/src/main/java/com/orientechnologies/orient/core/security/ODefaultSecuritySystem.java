@@ -125,51 +125,12 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
       for (ORule.ResourceGeneric resource : ORule.ResourceGeneric.values()) {
         root.addRule(resource, null, ORole.PERMISSION_ALL);
       }
-      // Do not allow root to have access to audit log class by default.
-      root.addRule(ORule.ResourceGeneric.CLASS, "OAuditingLog", ORole.PERMISSION_NONE);
-      root.addRule(ORule.ResourceGeneric.CLUSTER, "oauditinglog", ORole.PERMISSION_NONE);
       root.save();
     }
     if (security.getRole("guest") == null) {
       ORole guest = security.createRole("guest", ORole.ALLOW_MODES.DENY_ALL_BUT);
       guest.addRule(ResourceGeneric.SERVER, "listDatabases", ORole.PERMISSION_ALL);
       guest.save();
-    }
-    // for monitoring/logging purposes, intended to connect from external monitoring systems
-    if (security.getRole("monitor") == null) {
-      ORole guest = security.createRole("monitor", ORole.ALLOW_MODES.DENY_ALL_BUT);
-      guest.addRule(ResourceGeneric.CLASS, null, ORole.PERMISSION_READ);
-      guest.addRule(ResourceGeneric.CLUSTER, null, ORole.PERMISSION_READ);
-      guest.addRule(ResourceGeneric.SYSTEM_CLUSTERS, null, ORole.PERMISSION_READ);
-      guest.addRule(ResourceGeneric.SCHEMA, null, ORole.PERMISSION_READ);
-      guest.addRule(ResourceGeneric.FUNCTION, null, ORole.PERMISSION_ALL);
-      guest.addRule(ResourceGeneric.COMMAND, null, ORole.PERMISSION_ALL);
-      guest.addRule(ResourceGeneric.COMMAND_GREMLIN, null, ORole.PERMISSION_ALL);
-      guest.addRule(ResourceGeneric.DATABASE, null, ORole.PERMISSION_READ);
-      guest.addRule(ResourceGeneric.SERVER, null, ORole.PERMISSION_READ);
-      guest.save();
-    }
-    // a separate role for accessing the auditing logs
-    if (security.getRole("auditor") == null) {
-      ORole auditor = security.createRole("auditor", OSecurityRole.ALLOW_MODES.DENY_ALL_BUT);
-      auditor.addRule(ORule.ResourceGeneric.DATABASE, null, ORole.PERMISSION_READ);
-      auditor.addRule(ORule.ResourceGeneric.SCHEMA, null, ORole.PERMISSION_READ);
-      auditor.addRule(ORule.ResourceGeneric.CLASS, null, ORole.PERMISSION_READ);
-      auditor.addRule(ORule.ResourceGeneric.CLUSTER, null, ORole.PERMISSION_READ);
-      auditor.addRule(ORule.ResourceGeneric.CLUSTER, "orole", ORole.PERMISSION_NONE);
-      auditor.addRule(ORule.ResourceGeneric.CLUSTER, "ouser", ORole.PERMISSION_NONE);
-      auditor.addRule(ORule.ResourceGeneric.CLASS, "OUser", ORole.PERMISSION_NONE);
-      auditor.addRule(ORule.ResourceGeneric.CLASS, "orole", ORole.PERMISSION_NONE);
-      auditor.addRule(ORule.ResourceGeneric.SYSTEM_CLUSTERS, null, ORole.PERMISSION_NONE);
-      auditor.addRule(
-          ORule.ResourceGeneric.CLASS,
-          "OAuditingLog",
-          ORole.PERMISSION_CREATE + ORole.PERMISSION_READ + ORole.PERMISSION_UPDATE);
-      auditor.addRule(
-          ORule.ResourceGeneric.CLUSTER,
-          "oauditinglog",
-          ORole.PERMISSION_CREATE + ORole.PERMISSION_READ + ORole.PERMISSION_UPDATE);
-      auditor.save();
     }
   }
 
@@ -499,7 +460,7 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
     }
   }
 
-  /** OServerSecurity Interface * */
+  /** * OServerSecurity Interface * */
 
   // OServerSecurity
   public OAuditingService getAuditing() {

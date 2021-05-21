@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.orientechnologies.orient.client.remote.message.MockChannel;
 import com.orientechnologies.orient.client.remote.message.OMessageHelper;
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -33,8 +34,7 @@ public class OMessageHelperTest {
 
     OrientDB orientDB = new OrientDB("embedded", OrientDBConfig.defaultConfig());
 
-    orientDB.execute(
-        "create database testOIdentifiable memory users (admin identified by 'admin' role admin)");
+    orientDB.create("testOIdentifiable", ODatabaseType.MEMORY);
 
     ODatabaseDocument open = orientDB.open("testOIdentifiable", "admin", "admin");
     int id = open.getClusterIdByName("V");

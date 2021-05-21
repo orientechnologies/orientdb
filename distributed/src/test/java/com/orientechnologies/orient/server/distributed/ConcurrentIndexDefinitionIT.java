@@ -4,6 +4,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -37,7 +38,7 @@ public class ConcurrentIndexDefinitionIT {
     setup = TestSetupUtil.create(config);
     setup.setup();
     remote = setup.createRemote(server0, "root", "test", OrientDBConfig.defaultConfig());
-    remote.execute("create database test plocal users(admin identified by 'admin' role admin)");
+    remote.create("test", ODatabaseType.PLOCAL);
   }
 
   @Test

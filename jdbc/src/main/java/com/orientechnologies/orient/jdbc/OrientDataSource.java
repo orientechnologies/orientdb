@@ -141,15 +141,9 @@ public class OrientDataSource implements DataSource {
               serverPassword,
               settings);
 
-      if (!serverUsername.isEmpty() && !serverPassword.isEmpty()) {
-        orientDB.execute(
-            "create database ? "
-                + connUrl.getDbType().orElse(ODatabaseType.MEMORY)
-                + " if not exists users (? identified by ? role admin)",
-            connUrl.getDbName(),
-            username,
-            password);
-      }
+      if (!serverUsername.isEmpty() && !serverPassword.isEmpty())
+        orientDB.createIfNotExists(
+            connUrl.getDbName(), connUrl.getDbType().orElse(ODatabaseType.MEMORY));
 
       pool = new ODatabasePool(orientDB, connUrl.getDbName(), username, password);
     } else if (pool == null) {

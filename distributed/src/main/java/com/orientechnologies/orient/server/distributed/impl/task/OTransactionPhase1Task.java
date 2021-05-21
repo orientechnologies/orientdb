@@ -398,7 +398,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask implements O
                   int version = storage.getVersionForKey(index, keyWithChange);
                   uniqueIndexKeys.add(new OTransactionUniqueKey(index, keyWithChange, version));
                 }
-                if (!changes.nullKeyChanges.isEmpty()) {
+                if (!changes.nullKeyChanges.entries.isEmpty()) {
                   int version = storage.getVersionForKey(index, null);
                   uniqueIndexKeys.add(new OTransactionUniqueKey(index, null, version));
                 }

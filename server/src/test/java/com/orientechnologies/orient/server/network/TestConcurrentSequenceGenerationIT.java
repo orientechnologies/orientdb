@@ -6,6 +6,7 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabasePool;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.record.OVertex;
@@ -31,9 +32,7 @@ public class TestConcurrentSequenceGenerationIT {
     server.startup(getClass().getResourceAsStream("orientdb-server-config.xml"));
     server.activate();
     orientDB = new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
-    orientDB.execute(
-        "create database ? memory users (admin identified by 'admin' role admin)",
-        TestConcurrentSequenceGenerationIT.class.getSimpleName());
+    orientDB.create(TestConcurrentSequenceGenerationIT.class.getSimpleName(), ODatabaseType.MEMORY);
     ODatabaseSession databaseSession =
         orientDB.open(TestConcurrentSequenceGenerationIT.class.getSimpleName(), "admin", "admin");
     databaseSession.execute(

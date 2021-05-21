@@ -3,7 +3,6 @@ package com.orientechnologies.orient.core.storage.cluster.v2;
 import static org.junit.Assert.*;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
-import com.orientechnologies.common.directmemory.ODirectMemoryAllocator.Intention;
 import com.orientechnologies.common.directmemory.OPointer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
@@ -18,7 +17,7 @@ public class FreeSpaceMapPageTest {
   @Test
   public void findSinglePageSameSpaceEvenIndex() {
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-    OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
+    OPointer pointer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -38,7 +37,7 @@ public class FreeSpaceMapPageTest {
   @Test
   public void findSinglePageSameSpaceOddIndex() {
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-    OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
+    OPointer pointer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -58,7 +57,7 @@ public class FreeSpaceMapPageTest {
   @Test
   public void findSinglePageLessSpaceEvenIndex() {
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-    OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
+    OPointer pointer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -78,7 +77,7 @@ public class FreeSpaceMapPageTest {
   @Test
   public void findSinglePageLessSpaceOddIndex() {
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-    OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
+    OPointer pointer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -98,7 +97,7 @@ public class FreeSpaceMapPageTest {
   @Test
   public void findCouplePagesSameSpaceOne() {
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-    OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
+    OPointer pointer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -119,7 +118,7 @@ public class FreeSpaceMapPageTest {
   @Test
   public void findCouplePagesSameSpaceTwo() {
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-    OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
+    OPointer pointer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -140,7 +139,7 @@ public class FreeSpaceMapPageTest {
   @Test
   public void findCouplePagesSmallerSpaceOne() {
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-    OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
+    OPointer pointer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -161,7 +160,7 @@ public class FreeSpaceMapPageTest {
   @Test
   public void findCouplePagesSmallerSpaceTwo() {
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-    OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
+    OPointer pointer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -182,7 +181,7 @@ public class FreeSpaceMapPageTest {
   @Test
   public void bigSpaceOne() {
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-    OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
+    OPointer pointer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -206,7 +205,7 @@ public class FreeSpaceMapPageTest {
   @Test
   public void bigSpaceTwo() {
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-    OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
+    OPointer pointer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -233,7 +232,7 @@ public class FreeSpaceMapPageTest {
     final int checks = 1_000;
 
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-    OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
+    OPointer pointer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -284,7 +283,7 @@ public class FreeSpaceMapPageTest {
     final int checks = 1_000;
 
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-    OPointer pointer = bufferPool.acquireDirect(true, Intention.TEST);
+    OPointer pointer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();

@@ -137,67 +137,52 @@ public class IndexChangesInterpretationTest {
   private static String entryToString(OTransactionIndexEntry entry) {
     if (entry == null) return "r";
 
-    return entry.getOperation() == OPERATION.PUT
-        ? "p" + entry.getValue().getIdentity().getClusterPosition()
-        : entry.getValue() == null
-            ? "d"
-            : "r" + entry.getValue().getIdentity().getClusterPosition();
+    return entry.operation == OPERATION.PUT
+        ? "p" + entry.value.getIdentity().getClusterPosition()
+        : entry.value == null ? "d" : "r" + entry.value.getIdentity().getClusterPosition();
   }
 
   private static boolean entryEquals(OTransactionIndexEntry a, OTransactionIndexEntry b) {
     if (a == b) return true;
 
-    if (a == null) return b.getOperation() == OPERATION.REMOVE;
+    if (a == null) return b.operation == OPERATION.REMOVE;
 
-    if (b == null) return a.getOperation() == OPERATION.REMOVE;
+    if (b == null) return a.operation == OPERATION.REMOVE;
 
-    return a.getOperation() == b.getOperation() && a.equals(b);
+    return a.operation == b.operation && a.equals(b);
   }
 
   @Test
   public void test() {
-    OTransactionIndexChangesPerKey changes;
-
+    final OTransactionIndexChangesPerKey changes = new OTransactionIndexChangesPerKey("key");
     final List<OutputCollection> expectedUnique = new ArrayList<OutputCollection>();
     final List<OutputCollection> expectedDictionary = new ArrayList<OutputCollection>();
     final List<OutputCollection> expectedNonUnique = new ArrayList<OutputCollection>();
 
     for (String[] vector : TEST_VECTORS) {
-      changes = parseInput(vector[0]);
+      parseInput(vector[0], changes.entries);
       parseOutput(vector[1], expectedUnique);
       parseOutput(vector[2], expectedDictionary);
       parseOutput(vector[3], expectedNonUnique);
 
-      verify(
-          expectedUnique,
-          changes.interpret(Interpretation.Unique),
-          "unique",
-          changes.getEntriesAsList());
+      verify(expectedUnique, changes.interpret(Interpretation.Unique), "unique", changes.entries);
       verify(
           expectedDictionary,
           changes.interpret(Interpretation.Dictionary),
           "dictionary",
-          changes.getEntriesAsList());
+          changes.entries);
       verify(
           expectedNonUnique,
           changes.interpret(Interpretation.NonUnique),
           "non-unique",
-          changes.getEntriesAsList());
+          changes.entries);
     }
   }
 
-  private OTransactionIndexChangesPerKey parseInput(String text) {
-    OTransactionIndexChangesPerKey result = new OTransactionIndexChangesPerKey("key");
+  private void parseInput(String text, Collection<OTransactionIndexEntry> result) {
+    result.clear();
     final Matcher matcher = INPUT_GRAMMAR.matcher(text);
-    while (matcher.find()) {
-      // TODO this is a hack! The logic should go through OTransactionIndexChangesPerKey.add(),
-      // not create the entries manually
-      OTransactionIndexEntry change = parseChange(matcher.group(1));
-      result
-          .getEntriesInternal()
-          .add(result.createEntryInternal(change.getValue(), change.getOperation()));
-    }
-    return result;
+    while (matcher.find()) result.add(parseChange(matcher.group(1)));
   }
 
   private void parseOutputItems(String text, Collection<OTransactionIndexEntry> result) {
@@ -239,23 +224,17 @@ public class IndexChangesInterpretationTest {
   }
 
   private OTransactionIndexEntry parseChange(String text) {
-    OTransactionIndexChangesPerKey changes = new OTransactionIndexChangesPerKey(null);
-
     switch (text.charAt(0)) {
       case 'p':
-        changes.add(new ORecordId(1, Integer.parseInt(text.substring(1))), OPERATION.PUT);
-        return changes.getEntriesAsList().get(0);
+        return new OTransactionIndexEntry(
+            new ORecordId(1, Integer.parseInt(text.substring(1))), OPERATION.PUT);
       case 'r':
-        if (text.length() == 1) {
-          return null;
-        } else {
-          changes.add(new ORecordId(1, Integer.parseInt(text.substring(1))), OPERATION.REMOVE);
-          return changes.getEntriesAsList().get(0);
-        }
-
+        return text.length() == 1
+            ? null
+            : new OTransactionIndexEntry(
+                new ORecordId(1, Integer.parseInt(text.substring(1))), OPERATION.REMOVE);
       case 'd':
-        changes.add(null, OPERATION.REMOVE);
-        return changes.getEntriesAsList().get(0);
+        return new OTransactionIndexEntry(null, OPERATION.REMOVE);
     }
 
     throw new IllegalStateException("can't parse change");

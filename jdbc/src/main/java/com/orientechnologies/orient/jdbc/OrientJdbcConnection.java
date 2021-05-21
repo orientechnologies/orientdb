@@ -83,13 +83,8 @@ public class OrientJdbcConnection implements Connection {
             OrientDBConfig.defaultConfig());
 
     if (!serverUsername.isEmpty() && !serverPassword.isEmpty()) {
-      orientDB.execute(
-          "create database ? "
-              + connUrl.getDbType().orElse(ODatabaseType.MEMORY)
-              + " if not exists users (? identified by ? role admin)",
-          connUrl.getDbName(),
-          username,
-          password);
+      orientDB.createIfNotExists(
+          connUrl.getDbName(), connUrl.getDbType().orElse(ODatabaseType.MEMORY));
     }
 
     database = orientDB.open(connUrl.getDbName(), username, password);

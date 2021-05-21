@@ -3,6 +3,7 @@ package com.orientechnologies.orient.server.distributed;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.db.ODatabasePool;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -43,8 +44,7 @@ public final class StandAloneDatabaseJavaThreadPoolTest {
   public void runTest() {
     OrientDB orientDB = getOrientDB();
     if (!orientDB.exists(dbName)) {
-      orientDB.execute(
-          "create database ? plocal users(admin identified by 'admin' role admin)", dbName);
+      orientDB.create(dbName, ODatabaseType.PLOCAL);
     }
     ODatabaseDocument orientGraph = orientDB.open(dbName, "admin", "admin");
     createVertexType(orientGraph, "Test");

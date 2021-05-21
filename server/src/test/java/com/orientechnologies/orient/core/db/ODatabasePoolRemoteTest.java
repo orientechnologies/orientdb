@@ -40,8 +40,7 @@ public class ODatabasePoolRemoteTest {
             OrientDBConfig.builder().addConfig(OGlobalConfiguration.DB_POOL_MAX, 1).build());
 
     if (!orientDb.exists("test")) {
-      orientDb.execute(
-          "create database test memory users (admin identified by 'admin' role admin)");
+      orientDb.create("test", ODatabaseType.MEMORY);
     }
 
     ODatabasePool pool = new ODatabasePool(orientDb, "test", "admin", "admin");
@@ -65,8 +64,7 @@ public class ODatabasePoolRemoteTest {
             OrientDBConfig.builder().addConfig(OGlobalConfiguration.DB_POOL_MAX, 1).build());
 
     if (!orientDb.exists("test")) {
-      orientDb.execute(
-          "create database test memory users (admin identified by 'admin' role admin)");
+      orientDb.create("test", ODatabaseType.MEMORY);
     }
 
     ODatabasePool pool = new ODatabasePool(orientDb, "test", "admin", "admin");

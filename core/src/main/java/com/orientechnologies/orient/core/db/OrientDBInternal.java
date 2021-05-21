@@ -364,14 +364,6 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
     throw new UnsupportedOperationException();
   }
 
-  void create(
-      String name,
-      String user,
-      String password,
-      ODatabaseType type,
-      OrientDBConfig config,
-      ODatabaseTask<Void> createOps);
-
   OrientDBConfig getConfigurations();
 
   OSecuritySystem getSecuritySystem();

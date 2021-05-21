@@ -33,6 +33,11 @@ public class OFileDeletedWALRecord extends OOperationUnitBodyRecord {
   }
 
   @Override
+  public boolean isUpdateMasterRecord() {
+    return false;
+  }
+
+  @Override
   public int getId() {
     return WALRecordTypes.FILE_DELETED_WAL_RECORD;
   }

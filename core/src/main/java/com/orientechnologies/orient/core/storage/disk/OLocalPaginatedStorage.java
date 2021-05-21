@@ -129,7 +129,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     OClusterPositionMap.DEF_EXTENSION,
     OSBTreeIndexEngine.DATA_FILE_EXTENSION,
     OIndexRIDContainer.INDEX_FILE_EXTENSION,
-    OSBTreeCollectionManagerShared.FILE_EXTENSION,
+    OSBTreeCollectionManagerShared.DEFAULT_EXTENSION,
     OSBTreeIndexEngine.NULL_BUCKET_FILE_EXTENSION,
     OClusterBasedStorageConfiguration.MAP_FILE_EXTENSION,
     OClusterBasedStorageConfiguration.DATA_FILE_EXTENSION,
@@ -235,8 +235,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   @Override
   public final boolean exists() {
     try {
-      if (status == STATUS.OPEN || status == STATUS.INTERNAL_ERROR || status == STATUS.MIGRATION)
-        return true;
+      if (status == STATUS.OPEN || status == STATUS.INTERNAL_ERROR) return true;
 
       return exists(storagePath);
     } catch (final RuntimeException e) {
@@ -356,7 +355,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
               }
           }
         }
-        Files.createDirectories(Paths.get(storagePath.toString()));
+
         OZIPCompressionUtil.uncompressDirectory(in, storagePath.toString(), iListener);
 
         final java.io.File[] newStorageFiles = dbDir.listFiles();
@@ -514,6 +513,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
         true,
         locale,
         OGlobalConfiguration.WAL_MAX_SIZE.getValueAsLong() * 1024 * 1024,
+        OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT.getValueAsLong() * 1024 * 1024,
         contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_COMMIT_TIMEOUT),
         contextConfiguration.getValueAsBoolean(OGlobalConfiguration.WAL_KEEP_SINGLE_SEGMENT),
         contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_CALL_FSYNC),
@@ -604,8 +604,9 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   }
 
   public static void deleteFilesFromDisc(
-      final String name, final int maxRetries, final int waitTime, final String databaseDirectory) {
-    File dbDir = new java.io.File(databaseDirectory);
+      String name, int maxRetries, int waitTime, String databaseDirectory) {
+    java.io.File dbDir; // GET REAL DIRECTORY
+    dbDir = new java.io.File(databaseDirectory);
     if (!dbDir.exists() || !dbDir.isDirectory()) dbDir = dbDir.getParentFile();
 
     // RETRIES
@@ -613,11 +614,11 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
       if (dbDir != null && dbDir.exists() && dbDir.isDirectory()) {
         int notDeletedFiles = 0;
 
-        final File[] storageFiles = dbDir.listFiles();
+        final java.io.File[] storageFiles = dbDir.listFiles();
         if (storageFiles == null) continue;
 
         // TRY TO DELETE ALL THE FILES
-        for (final File f : storageFiles) {
+        for (final java.io.File f : storageFiles) {
           // DELETE ONLY THE SUPPORTED FILES
           for (final String ext : ALL_FILE_EXTENSIONS)
             if (f.getPath().endsWith(ext)) {
@@ -642,6 +643,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
           return;
         }
       } else return;
+
       OLogManager.instance()
           .debug(
               OLocalPaginatedStorage.class,
@@ -779,6 +781,9 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
             true,
             Locale.getDefault(),
             contextConfiguration.getValueAsLong(OGlobalConfiguration.WAL_MAX_SIZE) * 1024 * 1024,
+            contextConfiguration.getValueAsLong(OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT)
+                * 1024
+                * 1024,
             contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_COMMIT_TIMEOUT),
             contextConfiguration.getValueAsBoolean(OGlobalConfiguration.WAL_KEEP_SINGLE_SEGMENT),
             contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_CALL_FSYNC),
@@ -787,12 +792,13 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
             contextConfiguration.getValueAsInteger(
                 OGlobalConfiguration.STORAGE_PRINT_WAL_PERFORMANCE_INTERVAL));
 
+    diskWriteAheadLog.addLowDiskSpaceListener(this);
     writeAheadLog = diskWriteAheadLog;
-    writeAheadLog.addCheckpointListener(this);
+    writeAheadLog.addFullCheckpointListener(this);
 
     diskWriteAheadLog.addSegmentOverflowListener(
         (segment) -> {
-          if (status != STATUS.OPEN && status != STATUS.MIGRATION) {
+          if (status != STATUS.OPEN) {
             return;
           }
 
@@ -845,8 +851,10 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
                 OGlobalConfiguration.STORAGE_CHECKSUM_MODE, OChecksumMode.class),
             iv,
             aesKey,
-            contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_CALL_FSYNC));
+            contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_CALL_FSYNC),
+            contextConfiguration.getValueAsBoolean(OGlobalConfiguration.DISK_USE_NATIVE_OS_API));
 
+    wowCache.addLowDiskSpaceListener(this);
     wowCache.loadRegisteredFiles();
     wowCache.addBackgroundExceptionListener(this);
     wowCache.addPageIsBrokenListener(this);
@@ -903,13 +911,13 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     @Override
     public Void call() {
       try {
-        if (status != STATUS.OPEN && status != STATUS.MIGRATION) {
+        if (status != STATUS.OPEN) {
           return null;
         }
 
         stateLock.acquireReadLock();
         try {
-          if (status != STATUS.OPEN && status != STATUS.MIGRATION) {
+          if (status != STATUS.OPEN) {
             return null;
           }
 

@@ -49,6 +49,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.object.db.OObjectLazyMap;
@@ -115,18 +116,16 @@ public class OObjectEntitySerializer {
   }
 
   protected static OObjectEntitySerializedSchema getCurrentSerializedSchema() {
-    ODatabaseDocumentInternal instance = ODatabaseRecordThreadLocal.instance().get();
+    OStorage storage = ODatabaseRecordThreadLocal.instance().get().getStorage();
     OObjectEntitySerializedSchema serializedShchema =
-        instance
-            .getSharedContext()
-            .getResource(
-                SIMPLE_NAME,
-                new Callable<OObjectEntitySerializedSchema>() {
-                  @Override
-                  public OObjectEntitySerializedSchema call() throws Exception {
-                    return new OObjectEntitySerializedSchema();
-                  }
-                });
+        storage.getResource(
+            SIMPLE_NAME,
+            new Callable<OObjectEntitySerializedSchema>() {
+              @Override
+              public OObjectEntitySerializedSchema call() throws Exception {
+                return new OObjectEntitySerializedSchema();
+              }
+            });
 
     return serializedShchema;
   }

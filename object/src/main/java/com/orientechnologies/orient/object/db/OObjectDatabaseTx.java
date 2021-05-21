@@ -112,7 +112,6 @@ public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
   protected boolean automaticSchemaGeneration;
   protected OMetadataObject metadata;
 
-  @Deprecated
   public OObjectDatabaseTx(final String iURL) {
     super(new ODatabaseDocumentTx(iURL));
     underlying.setDatabaseOwner(this);

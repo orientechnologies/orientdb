@@ -80,6 +80,7 @@ import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.CELL_BTREE_NULL_BUCKET_SINGLE_VALUE_V3_INIT_PO;
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.CELL_BTREE_NULL_BUCKET_SINGLE_VALUE_V3_REMOVE_VALUE_PO;
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.CELL_BTREE_NULL_BUCKET_SINGLE_VALUE_V3_SET_VALUE_PO;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.CHECKPOINT_END_RECORD;
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.CLUSTER_PAGE_APPEND_RECORD_PO;
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.CLUSTER_PAGE_DELETE_RECORD_PO;
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.CLUSTER_PAGE_INIT_PO;
@@ -98,6 +99,9 @@ import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.FILE_DELETED_WAL_RECORD;
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.FREE_SPACE_MAP_INIT;
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.FREE_SPACE_MAP_UPDATE;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.FULL_CHECKPOINT_START_RECORD;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.FUZZY_CHECKPOINT_END_RECORD;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.FUZZY_CHECKPOINT_START_RECORD;
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.HIGH_LEVEL_TRANSACTION_CHANGE_RECORD;
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.LOCAL_HASH_TABLE_V2_BUCKET_ADD_ENTRY_PO;
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.LOCAL_HASH_TABLE_V2_BUCKET_DELETE_ENTRY_PO;
@@ -164,6 +168,7 @@ import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OShortSerializer;
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.EmptyWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.WriteableWALRecord;
@@ -316,18 +321,6 @@ import net.jpountz.lz4.LZ4FastDecompressor;
  * @since 25.04.13
  */
 public final class OWALRecordsFactory {
-  private static final int RECORD_ID_OFFSET = 0;
-  private static final int RECORD_ID_SIZE = 2;
-
-  private static final int OPERATION_ID_OFFSET = RECORD_ID_OFFSET + RECORD_ID_SIZE;
-  private static final int OPERATION_ID_SIZE = 4;
-
-  private static final int ORIGINAL_CONTENT_SIZE_OFFSET = OPERATION_ID_OFFSET + OPERATION_ID_SIZE;
-  private static final int ORIGINAL_CONTENT_SIZE = 4;
-
-  private static final int METADATA_SIZE = RECORD_ID_SIZE + OPERATION_ID_SIZE;
-  private static final int COMPRESSED_METADATA_SIZE =
-      RECORD_ID_SIZE + OPERATION_ID_SIZE + ORIGINAL_CONTENT_SIZE;
 
   private final Map<Integer, Class<?>> idToTypeMap = new HashMap<>();
 
@@ -337,78 +330,56 @@ public final class OWALRecordsFactory {
   private static final int MIN_COMPRESSED_RECORD_SIZE =
       OGlobalConfiguration.WAL_MIN_COMPRESSED_RECORD_SIZE.getValueAsInteger();
 
-  public static ByteBuffer toStream(final WriteableWALRecord walRecord) {
-    final int contentSize = walRecord.serializedSize() + METADATA_SIZE;
+  public static OPair<ByteBuffer, Long> toStream(final WriteableWALRecord walRecord) {
+    final int contentSize = walRecord.serializedSize() + 2;
 
     final ByteBuffer content = ByteBuffer.allocate(contentSize).order(ByteOrder.nativeOrder());
 
     final int recordId = walRecord.getId();
-    content.putShort(RECORD_ID_OFFSET, (short) recordId);
-    content.position(METADATA_SIZE);
-
+    content.putShort((short) recordId);
     walRecord.toStream(content);
 
     if (MIN_COMPRESSED_RECORD_SIZE <= 0 || contentSize < MIN_COMPRESSED_RECORD_SIZE) {
-      return content;
+      return new OPair<>(content, 0L);
     }
 
     final LZ4Compressor compressor = factory.fastCompressor();
     final int maxCompressedLength = compressor.maxCompressedLength(contentSize - 1);
 
     final ByteBuffer compressedContent =
-        ByteBuffer.allocate(maxCompressedLength + COMPRESSED_METADATA_SIZE)
-            .order(ByteOrder.nativeOrder());
+        ByteBuffer.allocate(maxCompressedLength + 6).order(ByteOrder.nativeOrder());
 
-    content.position(OPERATION_ID_OFFSET + OPERATION_ID_SIZE);
-    compressedContent.position(COMPRESSED_METADATA_SIZE);
+    content.position(2);
+    compressedContent.position(6);
     final int compressedLength =
-        compressor.compress(
-            content,
-            METADATA_SIZE,
-            contentSize - METADATA_SIZE,
-            compressedContent,
-            COMPRESSED_METADATA_SIZE,
-            maxCompressedLength);
+        compressor.compress(content, 2, contentSize - 2, compressedContent, 6, maxCompressedLength);
 
-    if (compressedLength + COMPRESSED_METADATA_SIZE < contentSize) {
-      compressedContent.limit(compressedLength + COMPRESSED_METADATA_SIZE);
-      compressedContent.putShort(RECORD_ID_OFFSET, (short) (-(recordId + 1)));
-      compressedContent.putInt(ORIGINAL_CONTENT_SIZE_OFFSET, contentSize);
+    if (compressedLength + 6 < contentSize) {
+      compressedContent.limit(compressedLength + 6);
+      compressedContent.putShort(0, (short) (-(recordId + 1)));
+      compressedContent.putInt(2, contentSize);
 
-      return compressedContent;
+      return new OPair<>(compressedContent, 0L);
     } else {
-      return content;
+      return new OPair<>(content, 0L);
     }
   }
 
-  public static void serializeRecordId(final ByteBuffer buffer, final int operationId) {
-    buffer.putInt(OPERATION_ID_OFFSET, operationId);
-  }
-
   public WriteableWALRecord fromStream(byte[] content) {
-    int recordId = OShortSerializer.INSTANCE.deserializeNative(content, RECORD_ID_OFFSET);
-    int operationId = OIntegerSerializer.INSTANCE.deserializeNative(content, OPERATION_ID_OFFSET);
-
+    int recordId = OShortSerializer.INSTANCE.deserializeNative(content, 0);
     if (recordId < 0) {
-      final int originalLen =
-          OIntegerSerializer.INSTANCE.deserializeNative(content, ORIGINAL_CONTENT_SIZE_OFFSET);
+      final int originalLen = OIntegerSerializer.INSTANCE.deserializeNative(content, 2);
       final byte[] restored = new byte[originalLen];
 
       final LZ4FastDecompressor decompressor = factory.fastDecompressor();
-      decompressor.decompress(
-          content,
-          COMPRESSED_METADATA_SIZE,
-          restored,
-          METADATA_SIZE,
-          restored.length - METADATA_SIZE);
+      decompressor.decompress(content, 6, restored, 2, restored.length - 2);
       recordId = -recordId - 1;
       content = restored;
     }
 
     final WriteableWALRecord walRecord = walRecordById(recordId);
 
-    walRecord.fromStream(content, METADATA_SIZE);
-    walRecord.setOperationIdLsn(null, operationId);
+    walRecord.fromStream(content, 2);
 
     if (walRecord.getId() != recordId) {
       throw new IllegalStateException(
@@ -427,8 +398,20 @@ public final class OWALRecordsFactory {
       case UPDATE_PAGE_RECORD:
         walRecord = new OUpdatePageRecord();
         break;
+      case FUZZY_CHECKPOINT_START_RECORD:
+        walRecord = new OFuzzyCheckpointStartRecord();
+        break;
+      case FUZZY_CHECKPOINT_END_RECORD:
+        walRecord = new OFuzzyCheckpointEndRecord();
+        break;
+      case FULL_CHECKPOINT_START_RECORD:
+        walRecord = new OFullCheckpointStartRecord();
+        break;
       case HIGH_LEVEL_TRANSACTION_CHANGE_RECORD:
         walRecord = new OHighLevelTransactionChangeRecord();
+        break;
+      case CHECKPOINT_END_RECORD:
+        walRecord = new OCheckpointEndRecord();
         break;
       case ATOMIC_UNIT_START_RECORD:
         walRecord = new OAtomicUnitStartRecord();

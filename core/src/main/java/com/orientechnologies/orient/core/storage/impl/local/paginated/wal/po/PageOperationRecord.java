@@ -12,6 +12,11 @@ public abstract class PageOperationRecord extends OOperationUnitBodyRecord {
 
   public PageOperationRecord() {}
 
+  @Override
+  public boolean isUpdateMasterRecord() {
+    return false;
+  }
+
   public abstract void redo(OCacheEntry cacheEntry);
 
   public abstract void undo(OCacheEntry cacheEntry);
@@ -30,11 +35,6 @@ public abstract class PageOperationRecord extends OOperationUnitBodyRecord {
 
   public int getPageIndex() {
     return pageIndex;
-  }
-
-  @Override
-  public boolean trackOperationId() {
-    return true;
   }
 
   @Override
