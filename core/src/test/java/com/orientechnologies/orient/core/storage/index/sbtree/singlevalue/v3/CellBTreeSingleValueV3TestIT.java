@@ -56,7 +56,8 @@ public class CellBTreeSingleValueV3TestIT {
 
     OAbstractPaginatedStorage storage;
     try (ODatabaseSession databaseDocumentTx = orientDB.open(dbName, "admin", "admin")) {
-      storage = (OAbstractPaginatedStorage) ((ODatabaseInternal<?>) databaseDocumentTx).getStorage();
+      storage =
+          (OAbstractPaginatedStorage) ((ODatabaseInternal<?>) databaseDocumentTx).getStorage();
     }
     singleValueTree = new CellBTreeSingleValueV3<>("singleBTree", ".sbt", ".nbt", storage);
     atomicOperationsManager = storage.getAtomicOperationsManager();
@@ -449,6 +450,61 @@ public class CellBTreeSingleValueV3TestIT {
             new ORecordId((keysCount + i) % 32000, keysCount + i));
       }
     }
+  }
+
+  @Test
+  public void testKeyAddDeleteAll() throws Exception {
+    for (int iterations = 0; iterations < 3; iterations++) {
+      final int keysCount = 3_330;
+
+      for (int i = 0; i < keysCount; i++) {
+        final int key = i;
+        atomicOperationsManager.executeInsideAtomicOperation(
+            null,
+            atomicOperation ->
+                singleValueTree.put(
+                    atomicOperation, Integer.toString(key), new ORecordId(key % 32000, key)));
+
+        Assert.assertEquals(singleValueTree.get(Integer.toString(i)), new ORecordId(i % 32000, i));
+      }
+      final int rollbackInterval = 1;
+
+      for (int i = 0; i < keysCount / rollbackInterval; i++) {
+        //        for (int n = 0; n < 2; n++) {
+        // final int rollbackCounter = n;
+        final int iterationsCounter = i;
+
+        try {
+          atomicOperationsManager.executeInsideAtomicOperation(
+              null,
+              atomicOperation -> {
+                for (int j = 0; j < rollbackInterval; j++) {
+                  final int key = iterationsCounter * rollbackInterval + j;
+                  Assert.assertEquals(
+                      singleValueTree.remove(atomicOperation, Integer.toString(key)),
+                      new ORecordId(key % 32000, key));
+
+                  if (key > 0 && key % 1_00 == 0) {
+                    for (int keyToVerify = 0; keyToVerify < keysCount; keyToVerify++) {
+                      if (keyToVerify > key) {
+                        Assert.assertEquals(
+                            new ORecordId(keyToVerify % 32000, keyToVerify),
+                            singleValueTree.get(Integer.toString(keyToVerify)));
+                      } else {
+                        Assert.assertNull(singleValueTree.get(Integer.toString(keyToVerify)));
+                      }
+                    }
+                  }
+                }
+                //                  if (rollbackCounter == 0) {
+                //                    throw new RollbackException();
+                //                  }
+              });
+        } catch (RollbackException ignore) {
+        }
+      }
+    }
+    //    }
   }
 
   @Test
