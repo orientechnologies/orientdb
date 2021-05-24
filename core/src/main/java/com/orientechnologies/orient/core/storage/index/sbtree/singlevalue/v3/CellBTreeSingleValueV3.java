@@ -544,7 +544,10 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
 
                 if (bucketSize == 0) {
                   final List<ORawTriple<Long, Integer, Boolean>> path = removeSearchResult.path;
-                  removeNonLeafEntry(path, atomicOperation);
+
+                  if (removeNonLeafEntry(path, atomicOperation)) {
+                    addToFreeList(atomicOperation, (int)removeSearchResult.leafPageIndex);
+                  }
                 }
               } else {
                 return null;
@@ -563,12 +566,10 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
         });
   }
 
-  private void removeNonLeafEntry(
+  private boolean removeNonLeafEntry(
       final List<ORawTriple<Long, Integer, Boolean>> path, final OAtomicOperation atomicOperation)
       throws IOException {
-    if (path.isEmpty()) {
-      return;
-    }
+    assert !path.isEmpty();
 
     final ORawTriple<Long, Integer, Boolean> parentEntry = path.get(path.size() - 1);
     final long pageIndex = parentEntry.first;
@@ -576,6 +577,8 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
     final boolean leftDirection = parentEntry.third;
 
     final int bucketSize;
+    final boolean entryRemoved;
+
     final OCacheEntry cacheEntry =
         loadPageForWrite(atomicOperation, fileId, pageIndex, false, true);
     try {
@@ -583,8 +586,11 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
       final int initialBucketSize = bucket.size();
 
       if (initialBucketSize == 1) {
+        assert entryIndex == 0;
+
         final int siblingSize;
-        final int siblingPageIndex = leftDirection ? bucket.getRight(entryIndex) : bucket.getLeft(entryIndex);
+        final int siblingPageIndex =
+            leftDirection ? bucket.getRight(0) : bucket.getLeft(0);
         final OCacheEntry siblingCacheEntry =
             loadPageForRead(atomicOperation, fileId, siblingPageIndex, true);
         try {
@@ -597,42 +603,56 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
 
         if (siblingSize == 0) {
           bucket.removeNonLeafEntry(entryIndex, leftDirection, keySerializer);
+          entryRemoved = true;
 
           if (path.size() == 1) {
             bucket.switchBucketType();
-          } else {
-            addToFreeList(atomicOperation, (int) pageIndex, bucket);
           }
 
           bucketSize = 0;
         } else {
+          entryRemoved = false;
           bucketSize = 1;
         }
       } else {
         bucket.removeNonLeafEntry(entryIndex, leftDirection, keySerializer);
+        entryRemoved = true;
+
         bucketSize = initialBucketSize - 1;
       }
     } finally {
       releasePageFromWrite(atomicOperation, cacheEntry);
     }
 
-    if (bucketSize == 0) {
-      removeNonLeafEntry(path.subList(0, path.size() - 1), atomicOperation);
+    if (entryRemoved && bucketSize == 0 && path.size() > 1) {
+      if (removeNonLeafEntry(path.subList(0, path.size() - 1), atomicOperation)) {
+        addToFreeList(atomicOperation, (int) pageIndex);
+      }
     }
+
+    return entryRemoved;
   }
 
-  private void addToFreeList(OAtomicOperation atomicOperation, int pageIndex, CellBTreeSingleValueBucketV3<K> bucket) throws IOException {
-    final OCacheEntry entryPointEntry =
-        loadPageForWrite(atomicOperation, fileId, ENTRY_POINT_INDEX, false, true);
+  private void addToFreeList(OAtomicOperation atomicOperation, int pageIndex) throws IOException {
+    final OCacheEntry cacheEntry =
+        loadPageForWrite(atomicOperation, fileId, pageIndex, false, true);
     try {
-      final CellBTreeSingleValueEntryPointV3<K> entryPoint =
-          new CellBTreeSingleValueEntryPointV3<>(entryPointEntry);
+      final CellBTreeSingleValueBucketV3<K> bucket = new CellBTreeSingleValueBucketV3<>(cacheEntry);
 
-      final int freeListHead = entryPoint.getFreeListHead();
-      entryPoint.setFreeListHead(pageIndex);
-      bucket.setNextFreeListPage(freeListHead);
+      final OCacheEntry entryPointEntry =
+          loadPageForWrite(atomicOperation, fileId, ENTRY_POINT_INDEX, false, true);
+      try {
+        final CellBTreeSingleValueEntryPointV3<K> entryPoint =
+            new CellBTreeSingleValueEntryPointV3<>(entryPointEntry);
+
+        final int freeListHead = entryPoint.getFreeListHead();
+        entryPoint.setFreeListHead(pageIndex);
+        bucket.setNextFreeListPage(freeListHead);
+      } finally {
+        releasePageFromWrite(atomicOperation, entryPointEntry);
+      }
     } finally {
-      releasePageFromWrite(atomicOperation, entryPointEntry);
+      releasePageFromWrite(atomicOperation, cacheEntry);
     }
   }
 
