@@ -1187,7 +1187,8 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     connection.getData().supportsLegacyPushMessages = request.isSupportPush();
     connection.getData().collectStats = request.isCollectStats();
 
-    if (!request.isTokenBased()) {
+    if (!request.isTokenBased()
+        && !OGlobalConfiguration.NETWORK_BINARY_ALLOW_NO_TOKEN.getValueAsBoolean()) {
       OLogManager.instance()
           .warn(
               this,
@@ -1257,7 +1258,8 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     connection.getData().protocolVersion = request.getProtocolVersion();
     connection.getData().clientId = request.getClientId();
     connection.getData().setSerializationImpl(request.getRecordFormat());
-    if (!request.isUseToken()) {
+    if (!request.isUseToken()
+        && !OGlobalConfiguration.NETWORK_BINARY_ALLOW_NO_TOKEN.getValueAsBoolean()) {
       OLogManager.instance()
           .warn(
               this,
