@@ -177,8 +177,10 @@ public final class WALRecordTypes {
 
   public static final int TX_METADATA = 194;
 
-  public static final int PAGINATED_VERSION_STATE_V0_SET_FILE_SIZE_PO = 195;
+  public static final int FREE_SPACE_MAP_INIT = 195;
+  public static final int FREE_SPACE_MAP_UPDATE = 196;
 
-  public static final int FREE_SPACE_MAP_INIT = 196;
-  public static final int FREE_SPACE_MAP_UPDATE = 197;
+  public static final int CELL_BTREE_ENTRY_POINT_SINGLE_VALUE_V3_SET_FREE_LIST_HEAD_PO = 197;
+
+  public static final int CELL_BTREE_BUCKET_SINGLE_VALUE_V3_SET_NEXT_FREE_LIST_PAGE_PO = 198;
 }

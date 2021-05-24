@@ -576,10 +576,37 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
         loadPageForWrite(atomicOperation, fileId, pageIndex, false, true);
     try {
       final CellBTreeSingleValueBucketV3<K> bucket = new CellBTreeSingleValueBucketV3<>(cacheEntry);
-      bucketSize = bucket.removeNonLeafEntry(entryIndex, !leftDirection, keySerializer);
+      final int initialBucketSize = bucket.size();
 
-      if (bucketSize == 0 && path.size() == 1) {
-        bucket.switchBucketType();
+      if (initialBucketSize == 1) {
+        final int siblingSize;
+        final int siblingPageIndex = leftDirection ? bucket.getRight(entryIndex) : bucket.getLeft(entryIndex);
+        final OCacheEntry siblingCacheEntry =
+            loadPageForRead(atomicOperation, fileId, siblingPageIndex, true);
+        try {
+          final CellBTreeSingleValueBucketV3<K> siblingBucket =
+              new CellBTreeSingleValueBucketV3<>(siblingCacheEntry);
+          siblingSize = siblingBucket.size();
+        } finally {
+          releasePageFromRead(atomicOperation, siblingCacheEntry);
+        }
+
+        if (siblingSize == 0) {
+          bucket.removeNonLeafEntry(entryIndex, leftDirection, keySerializer);
+
+          if (path.size() == 1) {
+            bucket.switchBucketType();
+          } else {
+            addToFreeList(atomicOperation, (int) pageIndex, bucket);
+          }
+
+          bucketSize = 0;
+        } else {
+          bucketSize = 1;
+        }
+      } else {
+        bucket.removeNonLeafEntry(entryIndex, leftDirection, keySerializer);
+        bucketSize = initialBucketSize - 1;
       }
     } finally {
       releasePageFromWrite(atomicOperation, cacheEntry);
@@ -587,6 +614,21 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
 
     if (bucketSize == 0) {
       removeNonLeafEntry(path.subList(0, path.size() - 1), atomicOperation);
+    }
+  }
+
+  private void addToFreeList(OAtomicOperation atomicOperation, int pageIndex, CellBTreeSingleValueBucketV3<K> bucket) throws IOException {
+    final OCacheEntry entryPointEntry =
+        loadPageForWrite(atomicOperation, fileId, ENTRY_POINT_INDEX, false, true);
+    try {
+      final CellBTreeSingleValueEntryPointV3<K> entryPoint =
+          new CellBTreeSingleValueEntryPointV3<>(entryPointEntry);
+
+      final int freeListHead = entryPoint.getFreeListHead();
+      entryPoint.setFreeListHead(pageIndex);
+      bucket.setNextFreeListPage(freeListHead);
+    } finally {
+      releasePageFromWrite(atomicOperation, entryPointEntry);
     }
   }
 
@@ -1132,28 +1174,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
       final OAtomicOperation atomicOperation)
       throws IOException {
 
-    final OCacheEntry rightBucketEntry;
-    final OCacheEntry entryPointCacheEntry =
-        loadPageForWrite(atomicOperation, fileId, ENTRY_POINT_INDEX, false, true);
-    try {
-      final CellBTreeSingleValueEntryPointV3<K> entryPoint =
-          new CellBTreeSingleValueEntryPointV3<>(entryPointCacheEntry);
-      int pageSize = entryPoint.getPagesSize();
-
-      if (pageSize < getFilledUpTo(atomicOperation, fileId) - 1) {
-        pageSize++;
-        rightBucketEntry = loadPageForWrite(atomicOperation, fileId, pageSize, false, false);
-        entryPoint.setPagesSize(pageSize);
-      } else {
-        assert pageSize == getFilledUpTo(atomicOperation, fileId) - 1;
-
-        rightBucketEntry = addPage(atomicOperation, fileId);
-        entryPoint.setPagesSize(rightBucketEntry.getPageIndex());
-      }
-    } finally {
-      releasePageFromWrite(atomicOperation, entryPointCacheEntry);
-    }
-
+    final OCacheEntry rightBucketEntry = allocateNewPage(atomicOperation);
     try {
       final CellBTreeSingleValueBucketV3<K> newRightBucket =
           new CellBTreeSingleValueBucketV3<>(rightBucketEntry);
@@ -1250,6 +1271,39 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
         resultItemPointers, resultPath, keyIndex - indexToSplit - 1);
   }
 
+  private OCacheEntry allocateNewPage(OAtomicOperation atomicOperation) throws IOException {
+    final OCacheEntry rightBucketEntry;
+    final OCacheEntry entryPointCacheEntry =
+        loadPageForWrite(atomicOperation, fileId, ENTRY_POINT_INDEX, false, true);
+    try {
+      final CellBTreeSingleValueEntryPointV3<K> entryPoint =
+          new CellBTreeSingleValueEntryPointV3<>(entryPointCacheEntry);
+      final int freeListHead = entryPoint.getFreeListHead();
+      if (freeListHead > -1) {
+        rightBucketEntry = loadPageForWrite(atomicOperation, fileId, freeListHead, false, false);
+        final CellBTreeSingleValueBucketV3<?> bucket =
+            new CellBTreeSingleValueBucketV3<>(rightBucketEntry);
+        entryPoint.setFreeListHead(bucket.getNextFreeListPage());
+      } else {
+        int pageSize = entryPoint.getPagesSize();
+        if (pageSize < getFilledUpTo(atomicOperation, fileId) - 1) {
+          pageSize++;
+          rightBucketEntry = loadPageForWrite(atomicOperation, fileId, pageSize, false, false);
+          entryPoint.setPagesSize(pageSize);
+        } else {
+          assert pageSize == getFilledUpTo(atomicOperation, fileId) - 1;
+
+          rightBucketEntry = addPage(atomicOperation, fileId);
+          entryPoint.setPagesSize(rightBucketEntry.getPageIndex());
+        }
+      }
+    } finally {
+      releasePageFromWrite(atomicOperation, entryPointCacheEntry);
+    }
+
+    return rightBucketEntry;
+  }
+
   private UpdateBucketSearchResult splitRootBucket(
       final int keyIndex,
       final OCacheEntry bucketEntry,
@@ -1269,37 +1323,8 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
     final OCacheEntry leftBucketEntry;
     final OCacheEntry rightBucketEntry;
 
-    final OCacheEntry entryPointCacheEntry =
-        loadPageForWrite(atomicOperation, fileId, ENTRY_POINT_INDEX, false, true);
-    try {
-      final CellBTreeSingleValueEntryPointV3<K> entryPoint =
-          new CellBTreeSingleValueEntryPointV3<>(entryPointCacheEntry);
-      int pageSize = entryPoint.getPagesSize();
-
-      final int filledUpTo = (int) getFilledUpTo(atomicOperation, fileId);
-
-      if (pageSize < filledUpTo - 1) {
-        pageSize++;
-        leftBucketEntry = loadPageForWrite(atomicOperation, fileId, pageSize, false, false);
-      } else {
-        assert pageSize == filledUpTo - 1;
-        leftBucketEntry = addPage(atomicOperation, fileId);
-        pageSize = leftBucketEntry.getPageIndex();
-      }
-
-      if (pageSize < filledUpTo) {
-        pageSize++;
-        rightBucketEntry = loadPageForWrite(atomicOperation, fileId, pageSize, false, false);
-      } else {
-        assert pageSize == filledUpTo;
-        rightBucketEntry = addPage(atomicOperation, fileId);
-        pageSize = rightBucketEntry.getPageIndex();
-      }
-
-      entryPoint.setPagesSize(pageSize);
-    } finally {
-      releasePageFromWrite(atomicOperation, entryPointCacheEntry);
-    }
+    leftBucketEntry = allocateNewPage(atomicOperation);
+    rightBucketEntry = allocateNewPage(atomicOperation);
 
     try {
       final CellBTreeSingleValueBucketV3<K> newLeftBucket =
@@ -1403,11 +1428,11 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
         } else {
           final int insertionIndex = -index - 1;
           if (insertionIndex >= bucket.size()) {
-            path.add(new ORawTriple<>(pageIndex, index, false));
+            path.add(new ORawTriple<>(pageIndex, insertionIndex - 1, false));
 
             pageIndex = bucket.getRight(insertionIndex - 1);
           } else {
-            path.add(new ORawTriple<>(pageIndex, index, false));
+            path.add(new ORawTriple<>(pageIndex, insertionIndex, true));
 
             pageIndex = bucket.getLeft(insertionIndex);
           }
