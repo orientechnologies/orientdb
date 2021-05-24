@@ -1090,6 +1090,13 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       false,
       true),
 
+  NETWORK_BINARY_ALLOW_NO_TOKEN(
+      "network.binary.allowNoToken",
+      "Backward compatibility option to allow binary connections without tokens (STRONGLY DISCOURAGED, FOR SECURITY REASONS)",
+      Boolean.class,
+      Boolean.FALSE,
+      true),
+
   // HTTP
 
   /** Since v2.2.8 */
