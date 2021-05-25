@@ -17,7 +17,6 @@ public class HttpGraphTest extends BaseHttpDatabaseTest {
 
   @Test
   public void updateWithEdges() throws IOException {
-
     Assert.assertEquals(
         post("command/" + getDatabaseName() + "/sql/")
             .payload("create class Foo extends V", CONTENT.TEXT)
