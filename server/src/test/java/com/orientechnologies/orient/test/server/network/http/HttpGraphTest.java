@@ -17,7 +17,6 @@ import org.junit.Test;
  */
 public class HttpGraphTest extends BaseHttpDatabaseTest {
 
-  // TODO: "@fieldTypes":"out_FooEdge=g"
   @Test
   public void updateWithEdges() throws IOException {
     Assert.assertEquals(
@@ -51,14 +50,6 @@ public class HttpGraphTest extends BaseHttpDatabaseTest {
             .getResponse();
     Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
 
-    /*InputStream content = response.getEntity().getContent();
-    final ByteArrayOutputStream out = new ByteArrayOutputStream();
-    OIOUtils.copyStream(content, out, -1);
-
-    final String correctedFormat = new ODocument().fromJSON(out.toString()).toJSON();
-    final ODocument result =
-        new ODocument()
-            .fromJSON(new ByteArrayInputStream(correctedFormat.getBytes())); // out.toString()*/
     final ODocument result = new ODocument().fromJSON(response.getEntity().getContent());
 
     final List<ODocument> res = result.field("result");
@@ -85,7 +76,6 @@ public class HttpGraphTest extends BaseHttpDatabaseTest {
     Assert.assertEquals(coll.size(), 1);
   }
 
-  // TODO: could be failing due to stream parser refactoring
   @Test
   public void getGraphResult() throws IOException {
     Assert.assertEquals(

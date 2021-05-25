@@ -305,6 +305,15 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
       return this.fromStream(
           source, record, iOptions, needReload, maxRidbagSizeBeforeSkip, skippedPartsIndexes);
     } catch (final JsonParseException e) {
+      if (record == null) {
+        throw OException.wrapException(
+            new OSerializationException(
+                "Error on unmarshalling JSON content for record null"
+                    + " failed fromStream "
+                    + e.getMessage()
+                    + " and failed fallback to fromString"),
+            e);
+      }
       throw OException.wrapException(
           new OSerializationException(
               "Error on unmarshalling JSON content for record "
