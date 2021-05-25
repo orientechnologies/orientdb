@@ -8,7 +8,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
-
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
@@ -49,7 +48,16 @@ public class MyIndexFactory implements OIndexFactory {
   }
 
   @Override
-  public OIndexInternal createIndex(String name, OStorage storage, String indexType, String algorithm, String valueContainerAlgorithm, ODocument metadata, int version, OAtomicOperationsManager atomicOperationsManager) throws OConfigurationException {
+  public OIndexInternal createIndex(
+      String name,
+      OStorage storage,
+      String indexType,
+      String algorithm,
+      String valueContainerAlgorithm,
+      ODocument metadata,
+      int version,
+      OAtomicOperationsManager atomicOperationsManager)
+      throws OConfigurationException {
     return null;
   }
 
