@@ -45,7 +45,7 @@ public class OHashTableDirectory extends ODurableComponent {
   private final long firstEntryIndex;
 
   OHashTableDirectory(final String defaultExtension, final String name, final String lockName,
-      final OAbstractPaginatedStorage storage) {
+                      final OAbstractPaginatedStorage storage) {
     super(storage, name, defaultExtension, lockName);
     this.firstEntryIndex = 0;
   }
@@ -56,41 +56,56 @@ public class OHashTableDirectory extends ODurableComponent {
   }
 
   private void init(final OAtomicOperation atomicOperation) throws IOException {
-    OCacheEntry firstEntry = loadPageForWrite(atomicOperation, fileId, firstEntryIndex, true, true);
-
-    if (firstEntry == null) {
-      firstEntry = addPage(atomicOperation, fileId);
-      assert firstEntry.getPageIndex() == 0;
-    }
-
-    pinPage(atomicOperation, firstEntry);
-
     try {
-      final ODirectoryFirstPage firstPage = new ODirectoryFirstPage(firstEntry, firstEntry);
+      storage.interruptionManager.enterCriticalPath();
+      OCacheEntry firstEntry = loadPageForWrite(atomicOperation, fileId, firstEntryIndex, true, true);
 
-      firstPage.setTreeSize(0);
-      firstPage.setTombstone(-1);
+      if (firstEntry == null) {
+        firstEntry = addPage(atomicOperation, fileId);
+        assert firstEntry.getPageIndex() == 0;
+      }
 
+      pinPage(atomicOperation, firstEntry);
+
+      try {
+        final ODirectoryFirstPage firstPage = new ODirectoryFirstPage(firstEntry, firstEntry);
+
+        firstPage.setTreeSize(0);
+        firstPage.setTombstone(-1);
+
+      } finally {
+        releasePageFromWrite(atomicOperation, firstEntry);
+      }
     } finally {
-      releasePageFromWrite(atomicOperation, firstEntry);
+      storage.interruptionManager.exitCriticalPath();
     }
   }
 
   public void open(final OAtomicOperation atomicOperation) throws IOException {
-    fileId = openFile(atomicOperation, getFullName());
-    final int filledUpTo = (int) getFilledUpTo(atomicOperation, fileId);
+    try {
+      storage.interruptionManager.enterCriticalPath();
+      fileId = openFile(atomicOperation, getFullName());
+      final int filledUpTo = (int) getFilledUpTo(atomicOperation, fileId);
 
-    for (int i = 0; i < filledUpTo; i++) {
-      final OCacheEntry entry = loadPageForRead(atomicOperation, fileId, i, true);
-      assert entry != null;
+      for (int i = 0; i < filledUpTo; i++) {
+        final OCacheEntry entry = loadPageForRead(atomicOperation, fileId, i, true);
+        assert entry != null;
 
-      pinPage(atomicOperation, entry);
-      releasePageFromRead(atomicOperation, entry);
+        pinPage(atomicOperation, entry);
+        releasePageFromRead(atomicOperation, entry);
+      }
+    } finally {
+      storage.interruptionManager.exitCriticalPath();
     }
   }
 
   public void close() throws IOException {
-    readCache.closeFile(fileId, true, writeCache);
+    try {
+      storage.interruptionManager.enterCriticalPath();
+      readCache.closeFile(fileId, true, writeCache);
+    } finally {
+      storage.interruptionManager.exitCriticalPath();
+    }
   }
 
   public void delete(final OAtomicOperation atomicOperation) throws IOException {
@@ -98,261 +113,344 @@ public class OHashTableDirectory extends ODurableComponent {
   }
 
   void deleteWithoutOpen(final OAtomicOperation atomicOperation) throws IOException {
-    if (isFileExists(atomicOperation, getFullName())) {
-      fileId = openFile(atomicOperation, getFullName());
-      deleteFile(atomicOperation, fileId);
+    try {
+      storage.interruptionManager.enterCriticalPath();
+      if (isFileExists(atomicOperation, getFullName())) {
+        fileId = openFile(atomicOperation, getFullName());
+        deleteFile(atomicOperation, fileId);
+      }
+    } finally {
+      storage.interruptionManager.exitCriticalPath();
     }
   }
 
   int addNewNode(final byte maxLeftChildDepth, final byte maxRightChildDepth, final byte nodeLocalDepth, final long[] newNode,
-      final OAtomicOperation atomicOperation) throws IOException {
-    int nodeIndex;
-    final OCacheEntry firstEntry = loadPageForWrite(atomicOperation, fileId, firstEntryIndex, true, true);
+                 final OAtomicOperation atomicOperation) throws IOException {
     try {
-      final ODirectoryFirstPage firstPage = new ODirectoryFirstPage(firstEntry, firstEntry);
+      storage.interruptionManager.enterCriticalPath();
+      int nodeIndex;
+      final OCacheEntry firstEntry = loadPageForWrite(atomicOperation, fileId, firstEntryIndex, true, true);
+      try {
+        final ODirectoryFirstPage firstPage = new ODirectoryFirstPage(firstEntry, firstEntry);
 
-      final int tombstone = firstPage.getTombstone();
-
-      if (tombstone >= 0) {
-        nodeIndex = tombstone;
-      } else {
-        nodeIndex = firstPage.getTreeSize();
-        firstPage.setTreeSize(nodeIndex + 1);
-      }
-
-      if (nodeIndex < ODirectoryFirstPage.NODES_PER_PAGE) {
-        @SuppressWarnings("UnnecessaryLocalVariable")
-        final int localNodeIndex = nodeIndex;
-
-        firstPage.setMaxLeftChildDepth(localNodeIndex, maxLeftChildDepth);
-        firstPage.setMaxRightChildDepth(localNodeIndex, maxRightChildDepth);
-        firstPage.setNodeLocalDepth(localNodeIndex, nodeLocalDepth);
+        final int tombstone = firstPage.getTombstone();
 
         if (tombstone >= 0) {
-          firstPage.setTombstone((int) firstPage.getPointer(nodeIndex, 0));
+          nodeIndex = tombstone;
+        } else {
+          nodeIndex = firstPage.getTreeSize();
+          firstPage.setTreeSize(nodeIndex + 1);
         }
 
-        for (int i = 0; i < newNode.length; i++) {
-          firstPage.setPointer(localNodeIndex, i, newNode[i]);
-        }
+        if (nodeIndex < ODirectoryFirstPage.NODES_PER_PAGE) {
+          @SuppressWarnings("UnnecessaryLocalVariable") final int localNodeIndex = nodeIndex;
 
-      } else {
-        final int pageIndex = nodeIndex / ODirectoryPage.NODES_PER_PAGE;
-        final int localLevel = nodeIndex % ODirectoryPage.NODES_PER_PAGE;
-
-        OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, true, true);
-        while (cacheEntry == null || cacheEntry.getPageIndex() < pageIndex) {
-          if (cacheEntry != null) {
-            releasePageFromWrite(atomicOperation, cacheEntry);
-          }
-
-          cacheEntry = addPage(atomicOperation, fileId);
-        }
-
-        try {
-          final ODirectoryPage page = new ODirectoryPage(cacheEntry, cacheEntry);
-
-          page.setMaxLeftChildDepth(localLevel, maxLeftChildDepth);
-          page.setMaxRightChildDepth(localLevel, maxRightChildDepth);
-          page.setNodeLocalDepth(localLevel, nodeLocalDepth);
+          firstPage.setMaxLeftChildDepth(localNodeIndex, maxLeftChildDepth);
+          firstPage.setMaxRightChildDepth(localNodeIndex, maxRightChildDepth);
+          firstPage.setNodeLocalDepth(localNodeIndex, nodeLocalDepth);
 
           if (tombstone >= 0) {
-            firstPage.setTombstone((int) page.getPointer(localLevel, 0));
+            firstPage.setTombstone((int) firstPage.getPointer(nodeIndex, 0));
           }
 
           for (int i = 0; i < newNode.length; i++) {
-            page.setPointer(localLevel, i, newNode[i]);
+            firstPage.setPointer(localNodeIndex, i, newNode[i]);
           }
 
-        } finally {
-          releasePageFromWrite(atomicOperation, cacheEntry);
+        } else {
+          final int pageIndex = nodeIndex / ODirectoryPage.NODES_PER_PAGE;
+          final int localLevel = nodeIndex % ODirectoryPage.NODES_PER_PAGE;
+
+          OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, true, true);
+          while (cacheEntry == null || cacheEntry.getPageIndex() < pageIndex) {
+            if (cacheEntry != null) {
+              releasePageFromWrite(atomicOperation, cacheEntry);
+            }
+
+            cacheEntry = addPage(atomicOperation, fileId);
+          }
+
+          try {
+            final ODirectoryPage page = new ODirectoryPage(cacheEntry, cacheEntry);
+
+            page.setMaxLeftChildDepth(localLevel, maxLeftChildDepth);
+            page.setMaxRightChildDepth(localLevel, maxRightChildDepth);
+            page.setNodeLocalDepth(localLevel, nodeLocalDepth);
+
+            if (tombstone >= 0) {
+              firstPage.setTombstone((int) page.getPointer(localLevel, 0));
+            }
+
+            for (int i = 0; i < newNode.length; i++) {
+              page.setPointer(localLevel, i, newNode[i]);
+            }
+
+          } finally {
+            releasePageFromWrite(atomicOperation, cacheEntry);
+          }
         }
+
+      } finally {
+        releasePageFromWrite(atomicOperation, firstEntry);
       }
 
+      return nodeIndex;
     } finally {
-      releasePageFromWrite(atomicOperation, firstEntry);
+      storage.interruptionManager.exitCriticalPath();
     }
-
-    return nodeIndex;
   }
 
   void deleteNode(final int nodeIndex, final OAtomicOperation atomicOperation) throws IOException {
-    final OCacheEntry firstEntry = loadPageForWrite(atomicOperation, fileId, firstEntryIndex, true, true);
     try {
-      final ODirectoryFirstPage firstPage = new ODirectoryFirstPage(firstEntry, firstEntry);
-      if (nodeIndex < ODirectoryFirstPage.NODES_PER_PAGE) {
-        firstPage.setPointer(nodeIndex, 0, firstPage.getTombstone());
-        firstPage.setTombstone(nodeIndex);
-      } else {
-        final int pageIndex = nodeIndex / ODirectoryPage.NODES_PER_PAGE;
-        final int localNodeIndex = nodeIndex % ODirectoryPage.NODES_PER_PAGE;
-
-        final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, true, true);
-        try {
-          final ODirectoryPage page = new ODirectoryPage(cacheEntry, cacheEntry);
-
-          page.setPointer(localNodeIndex, 0, firstPage.getTombstone());
+      storage.interruptionManager.enterCriticalPath();
+      final OCacheEntry firstEntry = loadPageForWrite(atomicOperation, fileId, firstEntryIndex, true, true);
+      try {
+        final ODirectoryFirstPage firstPage = new ODirectoryFirstPage(firstEntry, firstEntry);
+        if (nodeIndex < ODirectoryFirstPage.NODES_PER_PAGE) {
+          firstPage.setPointer(nodeIndex, 0, firstPage.getTombstone());
           firstPage.setTombstone(nodeIndex);
+        } else {
+          final int pageIndex = nodeIndex / ODirectoryPage.NODES_PER_PAGE;
+          final int localNodeIndex = nodeIndex % ODirectoryPage.NODES_PER_PAGE;
 
-        } finally {
-          releasePageFromWrite(atomicOperation, cacheEntry);
+          final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, true, true);
+          try {
+            final ODirectoryPage page = new ODirectoryPage(cacheEntry, cacheEntry);
+
+            page.setPointer(localNodeIndex, 0, firstPage.getTombstone());
+            firstPage.setTombstone(nodeIndex);
+
+          } finally {
+            releasePageFromWrite(atomicOperation, cacheEntry);
+          }
         }
+      } finally {
+        releasePageFromWrite(atomicOperation, firstEntry);
       }
     } finally {
-      releasePageFromWrite(atomicOperation, firstEntry);
+      storage.interruptionManager.exitCriticalPath();
     }
   }
 
   byte getMaxLeftChildDepth(final int nodeIndex, final OAtomicOperation atomicOperation) throws IOException {
-    final ODirectoryPage page = loadPage(nodeIndex, false, atomicOperation);
     try {
-      return page.getMaxLeftChildDepth(getLocalNodeIndex(nodeIndex));
+      storage.interruptionManager.enterCriticalPath();
+      final ODirectoryPage page = loadPage(nodeIndex, false, atomicOperation);
+      try {
+        return page.getMaxLeftChildDepth(getLocalNodeIndex(nodeIndex));
+      } finally {
+        releasePage(page, false, atomicOperation);
+      }
     } finally {
-      releasePage(page, false, atomicOperation);
+      storage.interruptionManager.exitCriticalPath();
     }
   }
 
   void setMaxLeftChildDepth(final int nodeIndex, final byte maxLeftChildDepth, final OAtomicOperation atomicOperation)
-      throws IOException {
-    final ODirectoryPage page = loadPage(nodeIndex, true, atomicOperation);
+          throws IOException {
     try {
-      page.setMaxLeftChildDepth(getLocalNodeIndex(nodeIndex), maxLeftChildDepth);
+      storage.interruptionManager.enterCriticalPath();
+      final ODirectoryPage page = loadPage(nodeIndex, true, atomicOperation);
+      try {
+        page.setMaxLeftChildDepth(getLocalNodeIndex(nodeIndex), maxLeftChildDepth);
+      } finally {
+        releasePage(page, true, atomicOperation);
+      }
     } finally {
-      releasePage(page, true, atomicOperation);
+      storage.interruptionManager.exitCriticalPath();
     }
   }
 
   byte getMaxRightChildDepth(final int nodeIndex, final OAtomicOperation atomicOperation) throws IOException {
-    final ODirectoryPage page = loadPage(nodeIndex, false, atomicOperation);
     try {
-      return page.getMaxRightChildDepth(getLocalNodeIndex(nodeIndex));
+      storage.interruptionManager.enterCriticalPath();
+      final ODirectoryPage page = loadPage(nodeIndex, false, atomicOperation);
+      try {
+        return page.getMaxRightChildDepth(getLocalNodeIndex(nodeIndex));
+      } finally {
+        releasePage(page, false, atomicOperation);
+      }
     } finally {
-      releasePage(page, false, atomicOperation);
+      storage.interruptionManager.exitCriticalPath();
     }
   }
 
   void setMaxRightChildDepth(final int nodeIndex, final byte maxRightChildDepth, final OAtomicOperation atomicOperation)
-      throws IOException {
-    final ODirectoryPage page = loadPage(nodeIndex, true, atomicOperation);
+          throws IOException {
     try {
-      page.setMaxRightChildDepth(getLocalNodeIndex(nodeIndex), maxRightChildDepth);
+      storage.interruptionManager.enterCriticalPath();
+      final ODirectoryPage page = loadPage(nodeIndex, true, atomicOperation);
+      try {
+        page.setMaxRightChildDepth(getLocalNodeIndex(nodeIndex), maxRightChildDepth);
+      } finally {
+        releasePage(page, true, atomicOperation);
+      }
     } finally {
-      releasePage(page, true, atomicOperation);
+      storage.interruptionManager.exitCriticalPath();
     }
   }
 
   byte getNodeLocalDepth(final int nodeIndex, final OAtomicOperation atomicOperation) throws IOException {
-    final ODirectoryPage page = loadPage(nodeIndex, false, atomicOperation);
     try {
-      return page.getNodeLocalDepth(getLocalNodeIndex(nodeIndex));
+      storage.interruptionManager.enterCriticalPath();
+      final ODirectoryPage page = loadPage(nodeIndex, false, atomicOperation);
+      try {
+        return page.getNodeLocalDepth(getLocalNodeIndex(nodeIndex));
+      } finally {
+        releasePage(page, false, atomicOperation);
+      }
     } finally {
-      releasePage(page, false, atomicOperation);
+      storage.interruptionManager.exitCriticalPath();
     }
   }
 
   void setNodeLocalDepth(final int nodeIndex, final byte localNodeDepth, final OAtomicOperation atomicOperation)
-      throws IOException {
-    final ODirectoryPage page = loadPage(nodeIndex, true, atomicOperation);
+          throws IOException {
     try {
-      page.setNodeLocalDepth(getLocalNodeIndex(nodeIndex), localNodeDepth);
+      storage.interruptionManager.enterCriticalPath();
+      final ODirectoryPage page = loadPage(nodeIndex, true, atomicOperation);
+      try {
+        page.setNodeLocalDepth(getLocalNodeIndex(nodeIndex), localNodeDepth);
+      } finally {
+        releasePage(page, true, atomicOperation);
+      }
     } finally {
-      releasePage(page, true, atomicOperation);
+      storage.interruptionManager.exitCriticalPath();
     }
   }
 
   long[] getNode(final int nodeIndex, final OAtomicOperation atomicOperation) throws IOException {
-    final long[] node = new long[LEVEL_SIZE];
-    final ODirectoryPage page = loadPage(nodeIndex, false, atomicOperation);
-
     try {
-      final int localNodeIndex = getLocalNodeIndex(nodeIndex);
-      for (int i = 0; i < LEVEL_SIZE; i++) {
-        node[i] = page.getPointer(localNodeIndex, i);
-      }
-    } finally {
-      releasePage(page, false, atomicOperation);
-    }
+      storage.interruptionManager.enterCriticalPath();
+      final long[] node = new long[LEVEL_SIZE];
+      final ODirectoryPage page = loadPage(nodeIndex, false, atomicOperation);
 
-    return node;
+      try {
+        final int localNodeIndex = getLocalNodeIndex(nodeIndex);
+        for (int i = 0; i < LEVEL_SIZE; i++) {
+          node[i] = page.getPointer(localNodeIndex, i);
+        }
+      } finally {
+        releasePage(page, false, atomicOperation);
+      }
+
+      return node;
+    } finally {
+      storage.interruptionManager.exitCriticalPath();
+    }
   }
 
   void setNode(final int nodeIndex, final long[] node, final OAtomicOperation atomicOperation) throws IOException {
-    final ODirectoryPage page = loadPage(nodeIndex, true, atomicOperation);
     try {
-      final int localNodeIndex = getLocalNodeIndex(nodeIndex);
-      for (int i = 0; i < LEVEL_SIZE; i++) {
-        page.setPointer(localNodeIndex, i, node[i]);
+      storage.interruptionManager.enterCriticalPath();
+      final ODirectoryPage page = loadPage(nodeIndex, true, atomicOperation);
+      try {
+        final int localNodeIndex = getLocalNodeIndex(nodeIndex);
+        for (int i = 0; i < LEVEL_SIZE; i++) {
+          page.setPointer(localNodeIndex, i, node[i]);
+        }
+      } finally {
+        releasePage(page, true, atomicOperation);
       }
     } finally {
-      releasePage(page, true, atomicOperation);
+      storage.interruptionManager.exitCriticalPath();
     }
   }
 
   long getNodePointer(final int nodeIndex, final int index, final OAtomicOperation atomicOperation) throws IOException {
-    final ODirectoryPage page = loadPage(nodeIndex, false, atomicOperation);
     try {
-      return page.getPointer(getLocalNodeIndex(nodeIndex), index);
+      storage.interruptionManager.enterCriticalPath();
+      final ODirectoryPage page = loadPage(nodeIndex, false, atomicOperation);
+      try {
+        return page.getPointer(getLocalNodeIndex(nodeIndex), index);
+      } finally {
+        releasePage(page, false, atomicOperation);
+      }
     } finally {
-      releasePage(page, false, atomicOperation);
+      storage.interruptionManager.exitCriticalPath();
     }
   }
 
   void setNodePointer(final int nodeIndex, final int index, final long pointer, final OAtomicOperation atomicOperation)
-      throws IOException {
-    final ODirectoryPage page = loadPage(nodeIndex, true, atomicOperation);
+          throws IOException {
     try {
-      page.setPointer(getLocalNodeIndex(nodeIndex), index, pointer);
+      storage.interruptionManager.enterCriticalPath();
+      final ODirectoryPage page = loadPage(nodeIndex, true, atomicOperation);
+      try {
+        page.setPointer(getLocalNodeIndex(nodeIndex), index, pointer);
+      } finally {
+        releasePage(page, true, atomicOperation);
+      }
     } finally {
-      releasePage(page, true, atomicOperation);
+      storage.interruptionManager.exitCriticalPath();
     }
   }
 
   public void clear(final OAtomicOperation atomicOperation) throws IOException {
-    truncateFile(atomicOperation, fileId);
+    try {
+      storage.interruptionManager.enterCriticalPath();
+      truncateFile(atomicOperation, fileId);
 
-    init(atomicOperation);
+      init(atomicOperation);
+    } finally {
+      storage.interruptionManager.exitCriticalPath();
+    }
   }
 
   public void flush() {
-    writeCache.flush(fileId);
+    try {
+      storage.interruptionManager.enterCriticalPath();
+      writeCache.flush(fileId);
+    } finally {
+      storage.interruptionManager.exitCriticalPath();
+    }
   }
 
   private ODirectoryPage loadPage(final int nodeIndex, final boolean exclusiveLock, final OAtomicOperation atomicOperation)
-      throws IOException {
-    if (nodeIndex < ODirectoryFirstPage.NODES_PER_PAGE) {
+          throws IOException {
+    try {
+      storage.interruptionManager.enterCriticalPath();
+      if (nodeIndex < ODirectoryFirstPage.NODES_PER_PAGE) {
+        final OCacheEntry cacheEntry;
+
+        if (exclusiveLock) {
+          cacheEntry = loadPageForWrite(atomicOperation, fileId, firstEntryIndex, true, true);
+        } else {
+          cacheEntry = loadPageForRead(atomicOperation, fileId, firstEntryIndex, true);
+        }
+
+        return new ODirectoryFirstPage(cacheEntry, cacheEntry);
+      }
+
+      final int pageIndex = nodeIndex / ODirectoryPage.NODES_PER_PAGE;
+
       final OCacheEntry cacheEntry;
 
       if (exclusiveLock) {
-        cacheEntry = loadPageForWrite(atomicOperation, fileId, firstEntryIndex, true, true);
+        cacheEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, true, true);
       } else {
-        cacheEntry = loadPageForRead(atomicOperation, fileId, firstEntryIndex, true);
+        cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, true);
       }
 
-      return new ODirectoryFirstPage(cacheEntry, cacheEntry);
+      return new ODirectoryPage(cacheEntry, cacheEntry);
+    } finally {
+      storage.interruptionManager.exitCriticalPath();
     }
-
-    final int pageIndex = nodeIndex / ODirectoryPage.NODES_PER_PAGE;
-
-    final OCacheEntry cacheEntry;
-
-    if (exclusiveLock) {
-      cacheEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, true, true);
-    } else {
-      cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, true);
-    }
-
-    return new ODirectoryPage(cacheEntry, cacheEntry);
   }
 
   private void releasePage(final ODirectoryPage page, final boolean exclusiveLock, final OAtomicOperation atomicOperation) {
-    final OCacheEntry cacheEntry = page.getEntry();
+    try {
+      storage.interruptionManager.enterCriticalPath();
+      final OCacheEntry cacheEntry = page.getEntry();
 
-    if (exclusiveLock) {
-      releasePageFromWrite(atomicOperation, cacheEntry);
-    } else {
-      releasePageFromRead(atomicOperation, cacheEntry);
+      if (exclusiveLock) {
+        releasePageFromWrite(atomicOperation, cacheEntry);
+      } else {
+        releasePageFromRead(atomicOperation, cacheEntry);
+      }
+    } finally {
+      storage.interruptionManager.exitCriticalPath();
     }
-
   }
 
   private static int getLocalNodeIndex(final int nodeIndex) {
