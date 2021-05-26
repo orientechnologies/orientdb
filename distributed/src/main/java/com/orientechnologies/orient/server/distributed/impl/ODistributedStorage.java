@@ -1885,13 +1885,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
       if (!(cls instanceof OClassDistributed))
         throw new ODistributedException("Cannot install local cluster strategy on class '" + cls.getName() + "'");
-
-      dbCfg = ((OClassDistributed) cls).readConfiguration((ODatabaseDocumentDistributed) db, getDistributedManager());
-
-      final String newOwnerNode = dbCfg.getClusterOwner(clusterName);
-      if (newOwnerNode.equals(localNodeName))
-        // NO CHANGES
-        return null;
+     
 
       // ONLY IF IT'S A CLIENT REQUEST (NON DISTRIBUTED) AND THE AVAILABLE SERVER IS ONLINE, REDIRECT THE REQUEST TO THAT SERVER
       if (!isLocalEnv()) {
