@@ -849,6 +849,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     listener.onMessage("OK");
   }
 
+  @Deprecated
   private void importInfo() throws IOException, ParseException {
     listener.onMessage("\nImporting database info...");
 
