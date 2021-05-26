@@ -304,29 +304,35 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     try {
       return this.fromStream(
           source, record, iOptions, needReload, maxRidbagSizeBeforeSkip, skippedPartsIndexes);
-    } catch (final JsonParseException e) {
-      if (record == null) {
+      // TODO: fallback OR not?
+      /* } catch (final JsonParseException e) {
+        if (record == null) {
+          throw OException.wrapException(
+              new OSerializationException(
+                  "Error on unmarshalling JSON content for record null"
+                      + " failed fromStream "
+                      + e.getMessage()
+                      + " and failed fallback to fromString"),
+              e);
+        }
         throw OException.wrapException(
             new OSerializationException(
-                "Error on unmarshalling JSON content for record null"
+                "Error on unmarshalling JSON content for record "
+                    + record.getIdentity()
                     + " failed fromStream "
                     + e.getMessage()
                     + " and failed fallback to fromString"),
             e);
-      }
-      throw OException.wrapException(
-          new OSerializationException(
-              "Error on unmarshalling JSON content for record "
-                  + record.getIdentity()
-                  + " failed fromStream "
-                  + e.getMessage()
-                  + " and failed fallback to fromString"),
-          e);
-    }
-    /*} catch (final JsonParseException e) {
+      }*/
+    } catch (final JsonParseException e) {
       final OutputStream out = new ByteArrayOutputStream();
       try {
         OIOUtils.copyStream(source, out, -1);
+        OLogManager.instance()
+            .warn(
+                ORecordSerializerJSON.class,
+                "Failing back to fromString due to non-standard JSON: \n" + out.toString(),
+                e);
         return this.fromStringV0(
             out.toString(),
             record,
@@ -344,7 +350,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
                     + " and failed fallback to fromString"),
             ex);
       }
-    }*/
+    }
   }
 
   public ORecord fromString(
