@@ -272,7 +272,8 @@ public class OJSONFetchContext implements OFetchContext {
 
   protected void manageTypes(
       final String fieldName, final Object fieldValue, final OType fieldType) {
-    if (typesStack.peek() == null) {
+    // TODO: avoid `EmptyStackException`, but check root cause
+    if (typesStack.empty()) {
       typesStack.push(new StringBuilder());
       OLogManager.instance()
           .warn(
