@@ -67,7 +67,6 @@ import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.executor.ORidSet;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.tx.OTransaction;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
@@ -2184,10 +2183,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       try {
         if (exporterVersion >= 13) {
           // FIXME: adapt e2e stream handling will require new APIs
-          // import records within a transaction and rollback, if non-standard format is detected.
-          final OTransaction transaction = database.getTransaction();
           try {
-            transaction.begin();
             record =
                 ORecordSerializerJSON.INSTANCE.fromStream(
                     new ByteArrayInputStream(value.getBytes()),
@@ -2197,11 +2193,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
                     false,
                     maxRidbagStringSizeBeforeLazyImport,
                     skippedPartsIndexes);
-            // commit on success
-            transaction.commit();
           } catch (final JsonParseException e) {
-            // rollback for non-standard format and try with old parser
-            transaction.rollback();
             OLogManager.instance()
                 .warn(
                     ORecordSerializerJSON.class,
@@ -2257,7 +2249,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
               new ODatabaseImportException("Error on importing record"), e);
       }
 
-      // Incorrect record format , skip this record
+      // Incorrect record format, skip this record
       if (record == null || record.getIdentity() == null) {
         OLogManager.instance().warn(this, "Broken record was detected and will be skipped");
         return null;
@@ -2359,7 +2351,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           ORecordInternal.setVersion(record, 0);
           ORecordInternal.setIdentity(record, new ORecordId());
         }
-
         record.setDirty();
 
         if (!preserveRids
