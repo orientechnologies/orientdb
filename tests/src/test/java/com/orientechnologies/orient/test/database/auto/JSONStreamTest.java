@@ -831,7 +831,7 @@ public class JSONStreamTest extends DocumentDBBaseTest {
   }
 
   @Test
-  public void shouldDeserializeFieldWithCurlyBraces() {
+  public void shouldDeserializeFieldWithCurlyBraces() throws Exception {
     final String json = "{\"a\":\"{dd}\",\"bl\":{\"b\":\"c\",\"a\":\"d\"}}";
     final ODocument in =
         (ODocument)

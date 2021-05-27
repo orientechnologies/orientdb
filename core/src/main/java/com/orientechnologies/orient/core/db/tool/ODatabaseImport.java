@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.db.tool;
 
 import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.orientechnologies.common.exception.OException;
@@ -66,6 +67,7 @@ import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.executor.ORidSet;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.tx.OTransaction;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
@@ -2182,15 +2184,39 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       try {
         if (exporterVersion >= 13) {
           // FIXME: adapt e2e stream handling will require new APIs
-          record =
-              ORecordSerializerJSON.INSTANCE.fromStream(
-                  new ByteArrayInputStream(value.getBytes()),
-                  record,
-                  null,
-                  null,
-                  false,
-                  maxRidbagStringSizeBeforeLazyImport,
-                  skippedPartsIndexes);
+          // import records within a transaction and rollback, if non-standard format is detected.
+          final OTransaction transaction = database.getTransaction();
+          try {
+            transaction.begin();
+            record =
+                ORecordSerializerJSON.INSTANCE.fromStream(
+                    new ByteArrayInputStream(value.getBytes()),
+                    record,
+                    null,
+                    null,
+                    false,
+                    maxRidbagStringSizeBeforeLazyImport,
+                    skippedPartsIndexes);
+            // commit on success
+            transaction.commit();
+          } catch (final JsonParseException e) {
+            // rollback for non-standard format and try with old parser
+            transaction.rollback();
+            OLogManager.instance()
+                .warn(
+                    ORecordSerializerJSON.class,
+                    "Falling back to fromString due to non-standard JSON: \n" + value,
+                    e);
+            record =
+                ORecordSerializerJSON.INSTANCE.fromString(
+                    value,
+                    record,
+                    null,
+                    null,
+                    false,
+                    maxRidbagStringSizeBeforeLazyImport,
+                    skippedPartsIndexes);
+          }
         } else {
           record =
               ORecordSerializerJSON.INSTANCE.fromString(
@@ -2499,7 +2525,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     if (schema.getClass(EXPORT_IMPORT_CLASS_NAME) != null) {
       schema.dropClass(EXPORT_IMPORT_CLASS_NAME);
     }
-
     final OClass cls = schema.createClass(EXPORT_IMPORT_CLASS_NAME);
     cls.createProperty("key", OType.STRING);
     cls.createProperty("value", OType.STRING);
