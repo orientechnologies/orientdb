@@ -180,7 +180,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
   }
 
   @Override
-  public ORecord fromStream(final InputStream source, ORecord record, final String[] fields) {
+  public ORecord fromStream(final InputStream source, ORecord record, final String[] fields)
+      throws JsonParseException {
     return fromStream(source, record, fields, null, false);
   }
 
@@ -198,7 +199,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
       ORecord record,
       final String[] fields,
       final String options,
-      boolean needReload) {
+      boolean needReload)
+      throws JsonParseException {
     return fromStream(source, record, fields, options, needReload, -1, new HashSet<>());
   }
 
@@ -300,38 +302,39 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
       final String iOptions,
       boolean needReload,
       int maxRidbagSizeBeforeSkip,
-      Set<Integer> skippedPartsIndexes) {
-    try {
-      return this.fromStream(
-          source, record, iOptions, needReload, maxRidbagSizeBeforeSkip, skippedPartsIndexes);
-      // TODO: fallback OR not?
-      /* } catch (final JsonParseException e) {
-        if (record == null) {
-          throw OException.wrapException(
-              new OSerializationException(
-                  "Error on unmarshalling JSON content for record null"
-                      + " failed fromStream "
-                      + e.getMessage()
-                      + " and failed fallback to fromString"),
-              e);
-        }
+      Set<Integer> skippedPartsIndexes)
+      throws JsonParseException {
+    // try {
+    return this.fromStream(
+        source, record, iOptions, needReload, maxRidbagSizeBeforeSkip, skippedPartsIndexes);
+    // TODO: fallback OR not?
+    /* } catch (final JsonParseException e) {
+      if (record == null) {
         throw OException.wrapException(
             new OSerializationException(
-                "Error on unmarshalling JSON content for record "
-                    + record.getIdentity()
+                "Error on unmarshalling JSON content for record null"
                     + " failed fromStream "
                     + e.getMessage()
                     + " and failed fallback to fromString"),
             e);
-      }*/
-    } catch (final JsonParseException e) {
+      }
+      throw OException.wrapException(
+          new OSerializationException(
+              "Error on unmarshalling JSON content for record "
+                  + record.getIdentity()
+                  + " failed fromStream "
+                  + e.getMessage()
+                  + " and failed fallback to fromString"),
+          e);
+    }*/
+    /*} catch (final JsonParseException e) {
       final OutputStream out = new ByteArrayOutputStream();
       try {
         OIOUtils.copyStream(source, out, -1);
         OLogManager.instance()
             .warn(
                 ORecordSerializerJSON.class,
-                "Failing back to fromString due to non-standard JSON: \n" + out.toString(),
+                "Falling back to fromString due to non-standard JSON: \n" + out.toString(),
                 e);
         return this.fromStringV0(
             out.toString(),
@@ -350,7 +353,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
                     + " and failed fallback to fromString"),
             ex);
       }
-    }
+    }*/
   }
 
   public ORecord fromString(
