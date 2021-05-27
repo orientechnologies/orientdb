@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.core.db.tool;
 
 import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.orientechnologies.common.exception.OException;
@@ -2182,33 +2181,16 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     try {
       try {
         if (exporterVersion >= 13) {
-          // FIXME: adapt e2e stream handling will require new APIs
-          try {
-            record =
-                ORecordSerializerJSON.INSTANCE.fromStream(
-                    new ByteArrayInputStream(value.getBytes()),
-                    record,
-                    null,
-                    null,
-                    false,
-                    maxRidbagStringSizeBeforeLazyImport,
-                    skippedPartsIndexes);
-          } catch (final JsonParseException e) {
-            OLogManager.instance()
-                .warn(
-                    ORecordSerializerJSON.class,
-                    "Falling back to fromString due to non-standard JSON: \n" + value,
-                    e);
-            record =
-                ORecordSerializerJSON.INSTANCE.fromString(
-                    value,
-                    record,
-                    null,
-                    null,
-                    false,
-                    maxRidbagStringSizeBeforeLazyImport,
-                    skippedPartsIndexes);
-          }
+          record =
+              ORecordSerializerJSON.INSTANCE.fromStream(
+                  // FIXME: adapt e2e stream handling will require new APIs
+                  new ByteArrayInputStream(value.getBytes()),
+                  record,
+                  null,
+                  null,
+                  false,
+                  maxRidbagStringSizeBeforeLazyImport,
+                  skippedPartsIndexes);
         } else {
           record =
               ORecordSerializerJSON.INSTANCE.fromString(
