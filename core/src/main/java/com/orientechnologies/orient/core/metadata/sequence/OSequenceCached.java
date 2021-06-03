@@ -23,6 +23,8 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -156,11 +158,20 @@ public class OSequenceCached extends OSequence {
 
   @Override
   public long next() throws OSequenceLimitReachedException, ODatabaseException {
+    checkSecurity();
     boolean shouldGoOverDistributted = shouldGoOverDistrtibute();
     if (shouldGoOverDistributted) {
       return nextWithNewCurrentValue(cacheStart, true);
     }
     return nextWork();
+  }
+
+  private void checkSecurity() {
+    getDatabase()
+        .checkSecurity(
+            ORule.ResourceGeneric.CLASS,
+            ORole.PERMISSION_UPDATE,
+            this.getDocument().getClassName());
   }
 
   @Override
