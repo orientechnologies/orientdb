@@ -21,6 +21,8 @@ package com.orientechnologies.orient.core.metadata.sequence;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.concurrent.Callable;
@@ -65,6 +67,7 @@ public class OSequenceCached extends OSequence {
   @Override
   public long next() {
     ODatabaseDocumentInternal mainDb = getDatabase();
+    mainDb.checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_UPDATE, this.getDocument().getClassName());
     boolean tx = mainDb.getTransaction().isActive();
     try {
       ODatabaseDocumentInternal db = mainDb;
