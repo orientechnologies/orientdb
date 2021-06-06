@@ -1486,7 +1486,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       schemaImported = true;
       jsonReader.readNext(OJSONReader.END_OBJECT);
       jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
-    } catch (Exception e) {
+    } catch (final Exception e) {
       OLogManager.instance().error(this, "Error on importing schema", e);
       listener.onMessage("ERROR (" + classImported + " entries): " + e);
     }
@@ -2175,16 +2175,29 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     try {
 
       try {
-        record =
-            ORecordSerializerJSON.INSTANCE.fromString(
-                value,
-                record,
-                null,
-                null,
-                false,
-                maxRidbagStringSizeBeforeLazyImport,
-                skippedPartsIndexes);
-      } catch (OSerializationException e) {
+        if (exporterVersion < 13) {
+          record =
+              ORecordSerializerJSON.INSTANCE.fromString(
+                  value,
+                  record,
+                  null,
+                  null,
+                  false,
+                  maxRidbagStringSizeBeforeLazyImport,
+                  skippedPartsIndexes);
+        } else {
+          // FIXME: switch to `fromStream` + adapt e2e stream handling
+          record =
+              ORecordSerializerJSON.INSTANCE.fromString(
+                  value,
+                  record,
+                  null,
+                  null,
+                  false,
+                  maxRidbagStringSizeBeforeLazyImport,
+                  skippedPartsIndexes);
+        }
+      } catch (final OSerializationException e) {
         if (e.getCause() instanceof OSchemaException) {
           // EXTRACT CLASS NAME If ANY
           final int pos = value.indexOf("\"@class\":\"");
@@ -2512,7 +2525,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     long last = begin;
     Set<String> involvedClusters = new HashSet<>();
 
+    OLogManager.instance().debug(this, "Detected exporter version " + exporterVersion + ".");
     while (jsonReader.lastChar() != ']') {
+      // TODO: add special handling for `exporterVersion` / `ODatabaseExport.EXPORTER_VERSION` >= 13
       rid = importRecord(recordsBeforeImport);
 
       total++;
@@ -2556,7 +2571,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         database.delete(leftOverRid);
       }
     }
-
     database.getMetadata().reload();
 
     final Set<ORID> brokenRids = new HashSet<>();

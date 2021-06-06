@@ -1329,9 +1329,33 @@ public class OSecurityShared implements OSecurityInternal {
       return true;
     }
 
-    OClass clazz = ((OElement) document).getSchemaType().orElse(null);
-    if (clazz == null) {
+    String className;
+    OClass clazz = null;
+    if (document instanceof ODocument) {
+      className = document.getClassName();
+    } else {
+      clazz = ((OElement) document).getSchemaType().orElse(null);
+      className = clazz == null ? null : clazz.getName();
+    }
+    if (className == null) {
       return true;
+    }
+
+    if (roleHasPredicateSecurityForClass != null) {
+      for (OSecurityRole role : session.getUser().getRoles()) {
+        Map<String, Boolean> roleMap = roleHasPredicateSecurityForClass.get(role.getName());
+        if (roleMap == null) {
+          return true; // TODO hierarchy...?
+        }
+        Boolean val = roleMap.get(className);
+        if (!(Boolean.TRUE.equals(val))) {
+          return true; // TODO hierarchy...?
+        }
+      }
+    }
+
+    if (clazz == null) {
+      clazz = ((OElement) document).getSchemaType().orElse(null);
     }
 
     if (document.getIdentity().isNew()) {
@@ -1471,7 +1495,12 @@ public class OSecurityShared implements OSecurityInternal {
     }
     if (record instanceof OElement) {
 
-      String className = ((OElement) record).getSchemaType().map(x -> x.getName()).orElse(null);
+      String className;
+      if (record instanceof ODocument) {
+        className = ((ODocument) record).getClassName();
+      } else {
+        className = ((OElement) record).getSchemaType().map(x -> x.getName()).orElse(null);
+      }
 
       if (className != null && roleHasPredicateSecurityForClass != null) {
         for (OSecurityRole role : session.getUser().getRoles()) {

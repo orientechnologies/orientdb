@@ -1629,6 +1629,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     testDocument.save(database.getClusterNameById(database.getDefaultClusterId()));
     testDocument.reload();
 
+    // FIXME: switch to DEFAULT format
     final String json = testDocument.toJSON(ORecordAbstract.OLD_FORMAT_WITH_LATE_TYPES);
 
     final ODocument doc = new ODocument();
