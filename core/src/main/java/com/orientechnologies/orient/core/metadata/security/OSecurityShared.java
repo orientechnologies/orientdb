@@ -1428,10 +1428,11 @@ public class OSecurityShared implements OSecurityInternal {
     if (session.getUser() == null) {
       return Collections.emptySet();
     }
-    if (OSecurityPolicy.class.getSimpleName().equalsIgnoreCase(document.getClassName())) {
+    String className = document.getClassName();
+    if (OSecurityPolicy.class.getSimpleName().equalsIgnoreCase(className)) {
       return Collections.emptySet();
     }
-    if (document.getClassName() == null) {
+    if (className == null) {
       return Collections.emptySet();
     }
     if (roleHasPredicateSecurityForClass != null) {
@@ -1441,7 +1442,7 @@ public class OSecurityShared implements OSecurityInternal {
         if (roleMap == null) {
           return Collections.emptySet(); // TODO hierarchy...?
         }
-        Boolean val = roleMap.get(document.getClassName());
+        Boolean val = roleMap.get(className);
         if (!(Boolean.TRUE.equals(val))) {
           return Collections.emptySet(); // TODO hierarchy...?
         }
@@ -1449,16 +1450,13 @@ public class OSecurityShared implements OSecurityInternal {
     }
     Set<String> props = document.getPropertyNames();
     Set<String> result = new HashSet<>();
-    OClass schemaType = ((OElement) document).getSchemaType().orElse(null);
-    if (schemaType == null) {
-      return Collections.emptySet();
-    }
+
     for (String prop : props) {
       OBooleanExpression predicate =
           OSecurityEngine.getPredicateForSecurityResource(
               session,
               this,
-              "database.class.`" + schemaType.getName() + "`.`" + prop + "`",
+              "database.class.`" + className + "`.`" + prop + "`",
               OSecurityPolicy.Scope.READ);
       if (!OSecurityEngine.evaluateSecuirtyPolicyPredicate(session, predicate, document)) {
         result.add(prop);
@@ -1502,16 +1500,12 @@ public class OSecurityShared implements OSecurityInternal {
       }
     }
 
-    if (clazz == null) {
-      clazz = ((OElement) document).getSchemaType().orElse(null);
-    }
-
     if (document.getIdentity().isNew()) {
       OBooleanExpression predicate =
           OSecurityEngine.getPredicateForSecurityResource(
               session,
               this,
-              "database.class.`" + clazz.getName() + "`.`" + propertyName + "`",
+              "database.class.`" + className + "`.`" + propertyName + "`",
               OSecurityPolicy.Scope.CREATE);
       return OSecurityEngine.evaluateSecuirtyPolicyPredicate(session, predicate, document);
     } else {
@@ -1520,7 +1514,7 @@ public class OSecurityShared implements OSecurityInternal {
           OSecurityEngine.getPredicateForSecurityResource(
               session,
               this,
-              "database.class.`" + clazz.getName() + "`.`" + propertyName + "`",
+              "database.class.`" + className + "`.`" + propertyName + "`",
               OSecurityPolicy.Scope.READ);
       if (!OSecurityEngine.evaluateSecuirtyPolicyPredicate(session, readPredicate, document)) {
         return false;
@@ -1530,7 +1524,7 @@ public class OSecurityShared implements OSecurityInternal {
           OSecurityEngine.getPredicateForSecurityResource(
               session,
               this,
-              "database.class.`" + clazz.getName() + "`.`" + propertyName + "`",
+              "database.class.`" + className + "`.`" + propertyName + "`",
               OSecurityPolicy.Scope.BEFORE_UPDATE);
       OResultInternal originalRecord = calculateOriginalValue(document, session);
       if (!OSecurityEngine.evaluateSecuirtyPolicyPredicate(
@@ -1542,7 +1536,7 @@ public class OSecurityShared implements OSecurityInternal {
           OSecurityEngine.getPredicateForSecurityResource(
               session,
               this,
-              "database.class.`" + clazz.getName() + "`.`" + propertyName + "`",
+              "database.class.`" + className + "`.`" + propertyName + "`",
               OSecurityPolicy.Scope.AFTER_UPDATE);
       return OSecurityEngine.evaluateSecuirtyPolicyPredicate(session, predicate, document);
     }
@@ -1620,16 +1614,11 @@ public class OSecurityShared implements OSecurityInternal {
       }
 
       OBooleanExpression predicate =
-          ((OElement) record)
-              .getSchemaType()
-              .map(
-                  x ->
-                      OSecurityEngine.getPredicateForSecurityResource(
-                          session,
-                          this,
-                          "database.class.`" + x.getName() + "`",
-                          OSecurityPolicy.Scope.READ))
-              .orElse(null);
+          OSecurityEngine.getPredicateForSecurityResource(
+              session,
+              this,
+              "database.class.`" + ((ODocument) record).getClassName() + "`",
+              OSecurityPolicy.Scope.READ);
       return OSecurityEngine.evaluateSecuirtyPolicyPredicate(session, predicate, record);
     }
     return true;
@@ -1663,17 +1652,15 @@ public class OSecurityShared implements OSecurityInternal {
         }
       }
 
-      OBooleanExpression beforePredicate =
-          ((OElement) record)
-              .getSchemaType()
-              .map(
-                  x ->
-                      OSecurityEngine.getPredicateForSecurityResource(
-                          session,
-                          this,
-                          "database.class.`" + x.getName() + "`",
-                          OSecurityPolicy.Scope.BEFORE_UPDATE))
-              .orElse(null);
+      OBooleanExpression beforePredicate = null;
+      if (className != null) {
+        beforePredicate =
+            OSecurityEngine.getPredicateForSecurityResource(
+                session,
+                this,
+                "database.class.`" + className + "`",
+                OSecurityPolicy.Scope.BEFORE_UPDATE);
+      }
 
       // TODO avoid calculating original valueif not needed!!!
 
@@ -1683,17 +1670,15 @@ public class OSecurityShared implements OSecurityInternal {
         return false;
       }
 
-      OBooleanExpression predicate =
-          ((OElement) record)
-              .getSchemaType()
-              .map(
-                  x ->
-                      OSecurityEngine.getPredicateForSecurityResource(
-                          session,
-                          this,
-                          "database.class.`" + x.getName() + "`",
-                          OSecurityPolicy.Scope.AFTER_UPDATE))
-              .orElse(null);
+      OBooleanExpression predicate = null;
+      if (className != null) {
+        predicate =
+            OSecurityEngine.getPredicateForSecurityResource(
+                session,
+                this,
+                "database.class.`" + className + "`",
+                OSecurityPolicy.Scope.AFTER_UPDATE);
+      }
       return OSecurityEngine.evaluateSecuirtyPolicyPredicate(session, predicate, record);
     }
     return true;
@@ -1748,17 +1733,19 @@ public class OSecurityShared implements OSecurityInternal {
       return true;
     }
     if (record instanceof OElement) {
-      OBooleanExpression predicate =
-          ((OElement) record)
-              .getSchemaType()
-              .map(
-                  x ->
-                      OSecurityEngine.getPredicateForSecurityResource(
-                          session,
-                          this,
-                          "database.class.`" + x.getName() + "`",
-                          OSecurityPolicy.Scope.DELETE))
-              .orElse(null);
+      String className = null;
+      if (record instanceof ODocument) {
+        className = ((ODocument) record).getClassName();
+      } else {
+        className = ((OElement) record).getSchemaType().map(x -> x.getName()).orElse(null);
+      }
+      OBooleanExpression predicate = null;
+      if (className != null) {
+        predicate =
+            OSecurityEngine.getPredicateForSecurityResource(
+                session, this, "database.class.`" + className + "`", OSecurityPolicy.Scope.DELETE);
+      }
+
       return OSecurityEngine.evaluateSecuirtyPolicyPredicate(session, predicate, record);
     }
     return true;
