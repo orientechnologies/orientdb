@@ -1109,7 +1109,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpennessAndMigration();
         checkIfThreadIsBlocked();
 
@@ -1122,7 +1121,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         return cluster.getName();
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
 
     } catch (final RuntimeException ee) {
