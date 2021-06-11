@@ -255,10 +255,15 @@ public class OSelectExecutionPlanner {
     ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) ctx.getDatabase();
     info.distributedFetchExecutionPlans = new LinkedHashMap<>();
 
-    Map<String, Set<String>> clusterMap = db.getActiveClusterMap();
+    String localNode = db.getLocalNodeName();
+
+    //    Map<String, Set<String>> clusterMap = db.getActiveClusterMap();
+    Map<String, Set<String>> clusterMap = new HashMap<>();
+    clusterMap.put(localNode, new HashSet<>(db.getClusterNames()));
+
     Set<String> queryClusters = calculateTargetClusters(info, ctx);
     if (queryClusters == null || queryClusters.size() == 0) { // no target
-      String localNode = db.getLocalNodeName();
+
       info.serverToClusters = new LinkedHashMap<>();
       info.serverToClusters.put(localNode, clusterMap.get(localNode));
       info.distributedFetchExecutionPlans.put(localNode, new OSelectExecutionPlan(ctx));
