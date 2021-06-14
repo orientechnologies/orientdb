@@ -107,15 +107,15 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
       List response = new ArrayList();
       TimerTask commandInterruptTimer = null;
       TimerTask commandInterruptRunnable = null;
-//      if (db.getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
-//        commandInterruptRunnable = ((ODatabaseInternal) db).createInterruptTimerTask();
-//        if (commandInterruptRunnable != null) {
-//          commandInterruptTimer = Orient.instance()
-//                  .scheduleTask(
-//                          commandInterruptRunnable,
-//                          db.getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT), 0);
-//        }
-//      }
+      if (db.getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
+        commandInterruptRunnable = ((ODatabaseInternal) db).createInterruptTimerTask();
+        if (commandInterruptRunnable != null) {
+          commandInterruptTimer = Orient.instance()
+                  .scheduleTask(
+                          commandInterruptRunnable,
+                          db.getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT), 0);
+        }
+      }
       try {
         while (result.hasNext()) {
           if (limit >= 0 && i >= limit) {

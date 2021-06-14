@@ -546,13 +546,13 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
     TimerTask commandInterruptTimer = null;
     InterruptTimerTask commandInterruptRunnable = null;
-//    if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
-//      commandInterruptRunnable = new InterruptTimerTask(Thread.currentThread());
-//      commandInterruptTimer = Orient.instance()
-//              .scheduleTask(
-//                      commandInterruptRunnable,
-//                      getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT), 0);
-//    }
+    if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
+      commandInterruptRunnable = new InterruptTimerTask(Thread.currentThread());
+      commandInterruptTimer = Orient.instance()
+              .scheduleTask(
+                      commandInterruptRunnable,
+                      getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT), 0);
+    }
     try {
       OStatement statement = OSQLEngine.parse(query, this);
       if (!statement.isIdempotent()) {
@@ -580,13 +580,13 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
     TimerTask commandInterruptTimer = null;
     InterruptTimerTask commandInterruptRunnable = null;
-//    if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
-//      commandInterruptRunnable = new InterruptTimerTask(Thread.currentThread());
-//      commandInterruptTimer = Orient.instance()
-//              .scheduleTask(
-//                      commandInterruptRunnable,
-//                      getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT), 0);
-//    }
+    if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
+      commandInterruptRunnable = new InterruptTimerTask(Thread.currentThread());
+      commandInterruptTimer = Orient.instance()
+              .scheduleTask(
+                      commandInterruptRunnable,
+                      getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT), 0);
+    }
     try {
 
       OStatement statement = OSQLEngine.parse(query, this);
@@ -614,13 +614,13 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     checkIfActive();
     TimerTask commandInterruptTimer = null;
     InterruptTimerTask commandInterruptRunnable = null;
-//    if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
-//      commandInterruptRunnable = new InterruptTimerTask(Thread.currentThread());
-//      commandInterruptTimer = Orient.instance()
-//              .scheduleTask(
-//                      commandInterruptRunnable,
-//                      getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT), 0);
-//    }
+    if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
+      commandInterruptRunnable = new InterruptTimerTask(Thread.currentThread());
+      commandInterruptTimer = Orient.instance()
+              .scheduleTask(
+                      commandInterruptRunnable,
+                      getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT), 0);
+    }
     try {
       OStatement statement = OSQLEngine.parse(query, this);
       OResultSet original = statement.execute(this, args, true);
@@ -656,13 +656,13 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
     TimerTask commandInterruptTimer = null;
     InterruptTimerTask commandInterruptRunnable = null;
-//    if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
-//      commandInterruptRunnable = new InterruptTimerTask(Thread.currentThread());
-//      commandInterruptTimer = Orient.instance()
-//              .scheduleTask(
-//                      commandInterruptRunnable,
-//                      getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT), 0);
-//    }
+    if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
+      commandInterruptRunnable = new InterruptTimerTask(Thread.currentThread());
+      commandInterruptTimer = Orient.instance()
+              .scheduleTask(
+                      commandInterruptRunnable,
+                      getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT), 0);
+    }
     try {
       OStatement statement = OSQLEngine.parse(query, this);
       OResultSet original = statement.execute(this, args, true);
@@ -697,7 +697,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
     TimerTask commandInterruptTimer = null;
     InterruptTimerTask commandInterruptRunnable = null;
-    if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0 && "gremlin".equalsIgnoreCase(language)) {
+    if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
       commandInterruptRunnable = new InterruptTimerTask(Thread.currentThread());
       commandInterruptTimer = Orient.instance()
               .scheduleTask(
@@ -735,7 +735,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
     TimerTask commandInterruptTimer = null;
     InterruptTimerTask commandInterruptRunnable = null;
-    if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0 && "gremlin".equalsIgnoreCase(language)) {
+    if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
       commandInterruptRunnable = new InterruptTimerTask(Thread.currentThread());
       commandInterruptTimer = Orient.instance()
               .scheduleTask(
