@@ -698,11 +698,11 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     TimerTask commandInterruptTimer = null;
     InterruptTimerTask commandInterruptRunnable = null;
     if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0 && "gremlin".equalsIgnoreCase(language)) {
-//      commandInterruptRunnable = new InterruptTimerTask(Thread.currentThread());
-//      commandInterruptTimer = Orient.instance()
-//              .scheduleTask(
-//                      commandInterruptRunnable,
-//                      getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT), 0);
+      commandInterruptRunnable = new InterruptTimerTask(Thread.currentThread());
+      commandInterruptTimer = Orient.instance()
+              .scheduleTask(
+                      commandInterruptRunnable,
+                      getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT), 0);
     }
     try {
       OScriptExecutor executor = OCommandManager.instance().getScriptExecutor(language);
@@ -736,11 +736,11 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     TimerTask commandInterruptTimer = null;
     InterruptTimerTask commandInterruptRunnable = null;
     if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0 && "gremlin".equalsIgnoreCase(language)) {
-//      commandInterruptRunnable = new InterruptTimerTask(Thread.currentThread());
-//      commandInterruptTimer = Orient.instance()
-//              .scheduleTask(
-//                      commandInterruptRunnable,
-//                      getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT), 0);
+      commandInterruptRunnable = new InterruptTimerTask(Thread.currentThread());
+      commandInterruptTimer = Orient.instance()
+              .scheduleTask(
+                      commandInterruptRunnable,
+                      getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT), 0);
     }
     try {
       OScriptExecutor executor = OCommandManager.instance().getScriptExecutor(language);

@@ -1198,29 +1198,29 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     TimerTask commandInterruptTimer = null;
     TimerTask commandInterruptRunnable = null;
     if (database.getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
-//      commandInterruptRunnable = new TimerTask(){
-//
-//        Thread executionThread = Thread.currentThread();
-//        boolean canceled = false;
-//
-//
-//        @Override
-//        public void run() {
-//          if (!canceled) {
-//            executionThread.interrupt();
-//          }
-//        }
-//
-//        @Override
-//        public boolean cancel() {
-//          this.canceled = true;
-//          return super.cancel();
-//        }
-//      };
-//      commandInterruptTimer = Orient.instance()
-//              .scheduleTask(
-//                      commandInterruptRunnable,
-//                      database.getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT), 0);
+      commandInterruptRunnable = new TimerTask(){
+
+        Thread executionThread = Thread.currentThread();
+        boolean canceled = false;
+
+
+        @Override
+        public void run() {
+          if (!canceled) {
+            executionThread.interrupt();
+          }
+        }
+
+        @Override
+        public boolean cancel() {
+          this.canceled = true;
+          return super.cancel();
+        }
+      };
+      commandInterruptTimer = Orient.instance()
+              .scheduleTask(
+                      commandInterruptRunnable,
+                      database.getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT), 0);
     }
 
     List<OResultInternal> rsCopy = null;
