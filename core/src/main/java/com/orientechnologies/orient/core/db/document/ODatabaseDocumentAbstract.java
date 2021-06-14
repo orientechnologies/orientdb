@@ -1090,6 +1090,10 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     checkOpenness();
     checkIfActive();
 
+    // CHECK IT'S NOT INSIDE A HOOK
+    if (!inHook.isEmpty())
+      throw new IllegalStateException("Cannot begin a transaction while a hook is executing");
+
     if (currentTx.isActive()) {
       if (iType == OTransaction.TXTYPE.OPTIMISTIC && currentTx instanceof OTransactionOptimistic) {
         currentTx.begin();
@@ -1097,10 +1101,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       }
       currentTx.rollback(true, 0);
     }
-
-    // CHECK IT'S NOT INSIDE A HOOK
-    if (!inHook.isEmpty())
-      throw new IllegalStateException("Cannot begin a transaction while a hook is executing");
 
     // WAKE UP LISTENERS
     for (ODatabaseListener listener : browseListeners())
