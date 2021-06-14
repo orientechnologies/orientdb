@@ -108,17 +108,11 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
   }
 
   protected long getFilledUpTo(final OAtomicOperation atomicOperation, final long fileId) {
-    try {
-      storage.interruptionManager.enterCriticalPath();
-
-      if (atomicOperation == null) {
-        return writeCache.getFilledUpTo(fileId);
-      }
-
-      return atomicOperation.filledUpTo(fileId);
-    } finally {
-      storage.interruptionManager.exitCriticalPath();
+    if (atomicOperation == null) {
+      return writeCache.getFilledUpTo(fileId);
     }
+
+    return atomicOperation.filledUpTo(fileId);
   }
 
   protected OCacheEntry loadPageForWrite(final OAtomicOperation atomicOperation, final long fileId, final long pageIndex,
@@ -162,128 +156,74 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
   }
 
   protected void pinPage(final OAtomicOperation atomicOperation, final OCacheEntry cacheEntry) {
-    try {
-      storage.interruptionManager.enterCriticalPath();
-
-      if (atomicOperation == null) {
-        readCache.pinPage(cacheEntry, writeCache);
-      } else {
-        atomicOperation.pinPage(cacheEntry);
-      }
-    } finally {
-      storage.interruptionManager.exitCriticalPath();
+    if (atomicOperation == null) {
+      readCache.pinPage(cacheEntry, writeCache);
+    } else {
+      atomicOperation.pinPage(cacheEntry);
     }
   }
 
   protected OCacheEntry addPage(final OAtomicOperation atomicOperation, final long fileId) throws IOException {
-    try {
-      storage.interruptionManager.enterCriticalPath();
-
-      if (atomicOperation == null) {
-        return readCache.allocateNewPage(fileId, writeCache, null);
-      }
-
-      return atomicOperation.addPage(fileId);
-    } finally {
-      storage.interruptionManager.exitCriticalPath();
+    if (atomicOperation == null) {
+      return readCache.allocateNewPage(fileId, writeCache, null);
     }
+
+    return atomicOperation.addPage(fileId);
   }
 
   protected void releasePageFromWrite(final OAtomicOperation atomicOperation, final OCacheEntry cacheEntry) {
-    try {
-      storage.interruptionManager.enterCriticalPath();
-
-      if (atomicOperation == null) {
-        readCache.releaseFromWrite(cacheEntry, writeCache);
-      } else {
-        atomicOperation.releasePageFromWrite(cacheEntry);
-      }
-    } finally {
-      storage.interruptionManager.exitCriticalPath();
+    if (atomicOperation == null) {
+      readCache.releaseFromWrite(cacheEntry, writeCache);
+    } else {
+      atomicOperation.releasePageFromWrite(cacheEntry);
     }
   }
 
   protected void releasePageFromRead(final OAtomicOperation atomicOperation, final OCacheEntry cacheEntry) {
-    try {
-      storage.interruptionManager.enterCriticalPath();
-
-      if (atomicOperation == null) {
-        readCache.releaseFromRead(cacheEntry, writeCache);
-      } else {
-        atomicOperation.releasePageFromRead(cacheEntry);
-      }
-    } finally {
-      storage.interruptionManager.exitCriticalPath();
+    if (atomicOperation == null) {
+      readCache.releaseFromRead(cacheEntry, writeCache);
+    } else {
+      atomicOperation.releasePageFromRead(cacheEntry);
     }
   }
 
   protected long addFile(final OAtomicOperation atomicOperation, final String fileName) throws IOException {
-    try {
-      storage.interruptionManager.enterCriticalPath();
-
-      if (atomicOperation == null) {
-        return readCache.addFile(fileName, writeCache);
-      }
-
-      return atomicOperation.addFile(fileName);
-    } finally {
-      storage.interruptionManager.exitCriticalPath();
+    if (atomicOperation == null) {
+      return readCache.addFile(fileName, writeCache);
     }
+
+    return atomicOperation.addFile(fileName);
   }
 
   protected long openFile(final OAtomicOperation atomicOperation, final String fileName) throws IOException {
-    try {
-      storage.interruptionManager.enterCriticalPath();
-
-      if (atomicOperation == null) {
-        return writeCache.loadFile(fileName);
-      }
-
-      return atomicOperation.loadFile(fileName);
-    } finally {
-      storage.interruptionManager.exitCriticalPath();
+    if (atomicOperation == null) {
+      return writeCache.loadFile(fileName);
     }
+
+    return atomicOperation.loadFile(fileName);
   }
 
   protected void deleteFile(final OAtomicOperation atomicOperation, final long fileId) throws IOException {
-    try {
-      storage.interruptionManager.enterCriticalPath();
-
-      if (atomicOperation == null) {
-        readCache.deleteFile(fileId, writeCache);
-      } else {
-        atomicOperation.deleteFile(fileId);
-      }
-    } finally {
-      storage.interruptionManager.exitCriticalPath();
+    if (atomicOperation == null) {
+      readCache.deleteFile(fileId, writeCache);
+    } else {
+      atomicOperation.deleteFile(fileId);
     }
   }
 
   protected boolean isFileExists(final OAtomicOperation atomicOperation, final String fileName) {
-    try {
-      storage.interruptionManager.enterCriticalPath();
-
-      if (atomicOperation == null) {
-        return writeCache.exists(fileName);
-      }
-
-      return atomicOperation.isFileExists(fileName);
-    } finally {
-      storage.interruptionManager.exitCriticalPath();
+    if (atomicOperation == null) {
+      return writeCache.exists(fileName);
     }
+
+    return atomicOperation.isFileExists(fileName);
   }
 
   protected void truncateFile(final OAtomicOperation atomicOperation, final long filedId) throws IOException {
-    try {
-      storage.interruptionManager.enterCriticalPath();
-
-      if (atomicOperation == null) {
-        readCache.truncateFile(filedId, writeCache);
-      } else {
-        atomicOperation.truncateFile(filedId);
-      }
-    } finally {
-      storage.interruptionManager.exitCriticalPath();
+    if (atomicOperation == null) {
+      readCache.truncateFile(filedId, writeCache);
+    } else {
+      atomicOperation.truncateFile(filedId);
     }
   }
 }
