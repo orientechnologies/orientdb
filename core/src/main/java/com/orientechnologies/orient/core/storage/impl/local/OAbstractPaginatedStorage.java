@@ -2808,35 +2808,28 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   private void commitIndexes(final Map<String, OTransactionIndexChanges> indexesToCommit) {
-    try {
-      interruptionManager.enterCriticalPath();
-
-      for (final OTransactionIndexChanges changes : indexesToCommit.values()) {
-        final OIndexInternal<?> index = changes.getAssociatedIndex();
-        if (!index.isNativeTxSupported()) {
-          final OIndexAbstract.IndexTxSnapshot snapshot = new OIndexAbstract.IndexTxSnapshot();
-          index.addTxOperation(snapshot, changes);
-          index.commit(snapshot);
-        } else {
-          try {
-            final int indexId = index.getIndexId();
-            if (changes.cleared) {
-              clearIndex(indexId);
-            }
-
-            for (final OTransactionIndexChangesPerKey changesPerKey : changes.changesPerKey.values()) {
-              applyTxChanges(changesPerKey, index);
-            }
-            applyTxChanges(changes.nullKeyChanges, index);
-          } catch (OInvalidIndexEngineIdException e) {
-            throw OException.wrapException(new OStorageException("Error during index commit"), e);
+    for (final OTransactionIndexChanges changes : indexesToCommit.values()) {
+      final OIndexInternal<?> index = changes.getAssociatedIndex();
+      if (!index.isNativeTxSupported()) {
+        final OIndexAbstract.IndexTxSnapshot snapshot = new OIndexAbstract.IndexTxSnapshot();
+        index.addTxOperation(snapshot, changes);
+        index.commit(snapshot);
+      } else {
+        try {
+          final int indexId = index.getIndexId();
+          if (changes.cleared) {
+            clearIndex(indexId);
           }
 
+          for (final OTransactionIndexChangesPerKey changesPerKey : changes.changesPerKey.values()) {
+            applyTxChanges(changesPerKey, index);
+          }
+          applyTxChanges(changes.nullKeyChanges, index);
+        } catch (OInvalidIndexEngineIdException e) {
+          throw OException.wrapException(new OStorageException("Error during index commit"), e);
         }
-      }
 
-    } finally {
-      interruptionManager.exitCriticalPath();
+      }
     }
 
   }
@@ -3168,7 +3161,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     indexId = extractInternalId(indexId);
 
     try {
-      interruptionManager.enterCriticalPath();
       if (transaction.get() != null) {
         return doIndexContainsKey(indexId, key);
       }
@@ -3177,14 +3169,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       stateLock.acquireReadLock();
       try {
-
+        interruptionManager.enterCriticalPath();
         checkOpenness();
         checkIfThreadIsBlocked();
 
         return doIndexContainsKey(indexId, key);
       } finally {
         stateLock.releaseReadLock();
-
+        interruptionManager.exitCriticalPath();
       }
     } catch (final OInvalidIndexEngineIdException ie) {
       throw logAndPrepareForRethrow(ie);
@@ -3194,8 +3186,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throw logAndPrepareForRethrow(ee);
     } catch (final Throwable t) {
       throw logAndPrepareForRethrow(t);
-    } finally {
-      interruptionManager.exitCriticalPath();
     }
   }
 
@@ -3210,7 +3200,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public boolean removeKeyFromIndex(int indexId, final Object key) throws OInvalidIndexEngineIdException {
     final int internalId = extractInternalId(indexId);
     try {
-      interruptionManager.enterCriticalPath();
       if (transaction.get() != null) {
         final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
         Objects.requireNonNull(atomicOperation);
@@ -3221,6 +3210,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       stateLock.acquireReadLock();
       try {
+        interruptionManager.enterCriticalPath();
         checkOpenness();
         checkIfThreadIsBlocked();
 
@@ -3231,6 +3221,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                 (atomicOperation) -> doRemoveKeyFromIndex(atomicOperation, internalId, key));
       } finally {
         stateLock.releaseReadLock();
+        interruptionManager.exitCriticalPath();
       }
     } catch (final OInvalidIndexEngineIdException ie) {
       throw logAndPrepareForRethrow(ie);
@@ -3240,15 +3231,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throw logAndPrepareForRethrow(ee);
     } catch (final Throwable t) {
       throw logAndPrepareForRethrow(t);
-    } finally {
-      interruptionManager.exitCriticalPath();
     }
   }
 
   private boolean doRemoveKeyFromIndex(OAtomicOperation atomicOperation, final int indexId, final Object key)
-          throws OInvalidIndexEngineIdException {
+      throws OInvalidIndexEngineIdException {
     try {
-      interruptionManager.enterCriticalPath();
       checkIndexId(indexId);
 
       makeStorageDirty();
@@ -3256,8 +3244,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       return engine.remove(atomicOperation, key);
     } catch (final IOException e) {
       throw OException.wrapException(new OStorageException("Error during removal of entry with key " + key + " from index "), e);
-    } finally {
-      interruptionManager.exitCriticalPath();
     }
   }
 
@@ -3265,7 +3251,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     final int internalId = extractInternalId(indexId);
 
     try {
-      interruptionManager.enterCriticalPath();
       if (transaction.get() != null) {
         final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
         Objects.requireNonNull(atomicOperation);
@@ -3278,6 +3263,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       stateLock.acquireReadLock();
       try {
+        interruptionManager.enterCriticalPath();
         checkOpenness();
         checkIfThreadIsBlocked();
 
@@ -3286,6 +3272,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> doClearIndex(atomicOperation, internalId));
       } finally {
         stateLock.releaseReadLock();
+        interruptionManager.exitCriticalPath();
       }
     } catch (final OInvalidIndexEngineIdException ie) {
       throw logAndPrepareForRethrow(ie);
@@ -3295,14 +3282,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throw logAndPrepareForRethrow(ee);
     } catch (final Throwable t) {
       throw logAndPrepareForRethrow(t);
-    } finally {
-      interruptionManager.exitCriticalPath();
     }
   }
 
   private void doClearIndex(OAtomicOperation atomicOperation, final int indexId) throws OInvalidIndexEngineIdException {
     try {
-      interruptionManager.enterCriticalPath();
       checkIndexId(indexId);
 
       final OBaseIndexEngine engine = indexEngines.get(indexId);
@@ -3311,8 +3295,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       engine.clear(atomicOperation);
     } catch (final IOException e) {
       throw OException.wrapException(new OStorageException("Error during clearing of index"), e);
-    } finally {
-      interruptionManager.exitCriticalPath();
     }
 
   }
@@ -3321,7 +3303,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     indexId = extractInternalId(indexId);
 
     try {
-      interruptionManager.enterCriticalPath();
       if (transaction.get() != null) {
         return doGetIndexValue(indexId, key);
       }
@@ -3330,12 +3311,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       stateLock.acquireReadLock();
       try {
+        interruptionManager.enterCriticalPath();
         checkOpenness();
         checkIfThreadIsBlocked();
 
         return doGetIndexValue(indexId, key);
       } finally {
         stateLock.releaseReadLock();
+        interruptionManager.exitCriticalPath();
       }
     } catch (final OInvalidIndexEngineIdException ie) {
       throw logAndPrepareForRethrow(ie);
@@ -3345,8 +3328,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throw logAndPrepareForRethrow(ee);
     } catch (final Throwable t) {
       throw logAndPrepareForRethrow(t);
-    } finally {
-      interruptionManager.exitCriticalPath();
     }
   }
 
@@ -3384,7 +3365,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
 
     try {
-      interruptionManager.enterCriticalPath();
       if (transaction.get() != null) {
         final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
         Objects.requireNonNull(atomicOperation);
@@ -3396,6 +3376,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       stateLock.acquireReadLock();
       try {
+        interruptionManager.enterCriticalPath();
         checkOpenness();
         checkIfThreadIsBlocked();
 
@@ -3407,6 +3388,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                     valueCreator));
       } finally {
         stateLock.releaseReadLock();
+        interruptionManager.exitCriticalPath();
       }
     } catch (final OInvalidIndexEngineIdException ie) {
       throw logAndPrepareForRethrow(ie);
@@ -3416,8 +3398,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throw logAndPrepareForRethrow(ee);
     } catch (final Throwable t) {
       throw logAndPrepareForRethrow(t);
-    } finally {
-      interruptionManager.exitCriticalPath();
     }
   }
 
