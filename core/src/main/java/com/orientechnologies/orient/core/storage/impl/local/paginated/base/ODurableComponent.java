@@ -47,10 +47,10 @@ import java.io.IOException;
  * @since 8/27/13
  */
 public abstract class ODurableComponent extends OSharedResourceAdaptive {
-  protected final OAtomicOperationsManager atomicOperationsManager;
+  protected final OAtomicOperationsManager  atomicOperationsManager;
   protected final OAbstractPaginatedStorage storage;
-  protected final OReadCache readCache;
-  protected final OWriteCache writeCache;
+  protected final OReadCache                readCache;
+  protected final OWriteCache               writeCache;
 
   private volatile String name;
   private volatile String fullName;
@@ -60,7 +60,7 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
   private final String lockName;
 
   public ODurableComponent(final OAbstractPaginatedStorage storage, final String name, final String extension,
-                           final String lockName) {
+      final String lockName) {
     super(true);
 
     assert name != null;
@@ -116,43 +116,26 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
   }
 
   protected OCacheEntry loadPageForWrite(final OAtomicOperation atomicOperation, final long fileId, final long pageIndex,
-                                         final boolean checkPinnedPages, final boolean verifyCheckSum) throws IOException {
-    try {
-      storage.interruptionManager.enterCriticalPath();
-
-      if (atomicOperation == null) {
-        return readCache.loadForWrite(fileId, pageIndex, checkPinnedPages, writeCache, 1, true, null);
-      }
-
-      return atomicOperation.loadPageForWrite(fileId, pageIndex, checkPinnedPages, 1, verifyCheckSum);
-    } finally {
-      storage.interruptionManager.exitCriticalPath();
+      final boolean checkPinnedPages, final boolean verifyCheckSum) throws IOException {
+    if (atomicOperation == null) {
+      return readCache.loadForWrite(fileId, pageIndex, checkPinnedPages, writeCache, 1, true, null);
     }
+
+    return atomicOperation.loadPageForWrite(fileId, pageIndex, checkPinnedPages, 1, verifyCheckSum);
   }
 
   protected OCacheEntry loadPageForRead(final OAtomicOperation atomicOperation, final long fileId, final long pageIndex,
-                                        final boolean checkPinnedPages) throws IOException {
-    try {
-      storage.interruptionManager.enterCriticalPath();
-      return loadPageForRead(atomicOperation, fileId, pageIndex, checkPinnedPages, 1);
-    } finally {
-      storage.interruptionManager.exitCriticalPath();
-    }
+      final boolean checkPinnedPages) throws IOException {
+    return loadPageForRead(atomicOperation, fileId, pageIndex, checkPinnedPages, 1);
   }
 
   protected OCacheEntry loadPageForRead(final OAtomicOperation atomicOperation, final long fileId, final long pageIndex,
-                                        final boolean checkPinnedPages, final int pageCount) throws IOException {
-    try {
-      storage.interruptionManager.enterCriticalPath();
-
-      if (atomicOperation == null) {
-        return readCache.loadForRead(fileId, pageIndex, checkPinnedPages, writeCache, pageCount, true);
-      }
-
-      return atomicOperation.loadPageForRead(fileId, pageIndex, checkPinnedPages, pageCount);
-    } finally {
-      storage.interruptionManager.exitCriticalPath();
+      final boolean checkPinnedPages, final int pageCount) throws IOException {
+    if (atomicOperation == null) {
+      return readCache.loadForRead(fileId, pageIndex, checkPinnedPages, writeCache, pageCount, true);
     }
+
+    return atomicOperation.loadPageForRead(fileId, pageIndex, checkPinnedPages, pageCount);
   }
 
   protected void pinPage(final OAtomicOperation atomicOperation, final OCacheEntry cacheEntry) {
