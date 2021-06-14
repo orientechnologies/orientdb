@@ -96,30 +96,15 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
   }
 
   protected <T> T calculateInsideComponentOperation(final OAtomicOperation atomicOperation, final TxFunction<T> function) {
-    try {
-      storage.interruptionManager.enterCriticalPath();
-      return atomicOperationsManager.calculateInsideComponentOperation(atomicOperation, this, function);
-    } finally {
-      storage.interruptionManager.exitCriticalPath();
-    }
+    return atomicOperationsManager.calculateInsideComponentOperation(atomicOperation, this, function);
   }
 
   protected void executeInsideComponentOperation(final OAtomicOperation operation, final TxConsumer consumer) {
-    try {
-      storage.interruptionManager.enterCriticalPath();
-      atomicOperationsManager.executeInsideComponentOperation(operation, this, consumer);
-    } finally {
-      storage.interruptionManager.exitCriticalPath();
-    }
+    atomicOperationsManager.executeInsideComponentOperation(operation, this, consumer);
   }
 
   protected boolean tryExecuteInsideComponentOperation(final OAtomicOperation operation, final TxConsumer consumer) {
-    try {
-      storage.interruptionManager.enterCriticalPath();
-      return atomicOperationsManager.tryExecuteInsideComponentOperation(operation, this, consumer);
-    } finally {
-      storage.interruptionManager.exitCriticalPath();
-    }
+    return atomicOperationsManager.tryExecuteInsideComponentOperation(operation, this, consumer);
   }
 
   protected long getFilledUpTo(final OAtomicOperation atomicOperation, final long fileId) {
