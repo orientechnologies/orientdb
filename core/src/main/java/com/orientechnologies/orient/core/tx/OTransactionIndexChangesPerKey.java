@@ -35,8 +35,7 @@ public class OTransactionIndexChangesPerKey {
   /* internal */ static final int SET_ADD_THRESHOLD = 8;
 
   public final Object key;
-  private final Map<ORID, Integer> ridToNEntries;
-  private final List<OTransactionIndexEntry> entries;
+  private final OTxIndexChangesList entries;
 
   public boolean clientTrackOnly;
 
@@ -79,43 +78,35 @@ public class OTransactionIndexChangesPerKey {
 
     public void setValue(OIdentifiable newValue) {
       ORID oldValueId = value == null ? null : value.getIdentity();
-      Integer oldCount = ridToNEntries.get(oldValueId);
-      ridToNEntries.put(oldValueId, oldCount == null || oldCount < 1 ? 0 : oldCount - 1);
-
       ORID newValueId = newValue == null ? null : newValue.getIdentity();
-      Integer newCount = ridToNEntries.get(newValueId);
-      ridToNEntries.put(newValueId, newCount == null ? 1 : newCount + 1);
+      Optional<OTxIndexChangesList.Node> node = entries.getNode(this);
 
       this.value = newValue;
+      node.ifPresent(x -> x.onRidChange(oldValueId, newValueId));
     }
   }
 
   public OTransactionIndexChangesPerKey(final Object iKey) {
     this.key = iKey;
-    entries = new ArrayList<OTransactionIndexEntry>();
-    ridToNEntries = new HashMap<>();
+    entries = new OTxIndexChangesList();
   }
 
   public void add(OIdentifiable iValue, final OPERATION iOperation) {
     synchronized (this) {
       ORID valueIdentity = iValue == null ? null : iValue.getIdentity();
       Iterator<OTransactionIndexEntry> iter = entries.iterator();
-      Integer count = ridToNEntries.get(valueIdentity);
-      if (count != null && count > 0) {
-        while (iter.hasNext()) {
-          OTransactionIndexEntry entry = iter.next();
-          if (((entry.value == iValue) || (entry.value != null && entry.value.equals(iValue)))
-              && !entry.operation.equals(iOperation)) {
-            iter.remove();
-            ridToNEntries.put(valueIdentity, count - 1);
-            return;
-          }
-        }
+
+      Optional<OTxIndexChangesList.Node> nodeToRemove =
+          entries.getFirstNode(
+              valueIdentity, iOperation == OPERATION.PUT ? OPERATION.REMOVE : OPERATION.PUT);
+      if (nodeToRemove.isPresent()) {
+        nodeToRemove.get().remove();
+        return;
       }
+
       OTransactionIndexEntry item = new OTransactionIndexEntry(valueIdentity, iOperation);
 
       entries.add(item);
-      ridToNEntries.put(valueIdentity, count == null ? 1 : count + 1);
     }
   }
 
@@ -143,7 +134,6 @@ public class OTransactionIndexChangesPerKey {
   public void clear() {
     synchronized (this) {
       this.entries.clear();
-      this.ridToNEntries.clear();
     }
   }
 

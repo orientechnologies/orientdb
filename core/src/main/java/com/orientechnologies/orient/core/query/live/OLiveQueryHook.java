@@ -105,8 +105,13 @@ public class OLiveQueryHook {
   }
 
   public static void notifyForTxChanges(ODatabase iDatabase) {
-    if (Boolean.FALSE.equals(iDatabase.getConfiguration().getValue(QUERY_LIVE_SUPPORT))) return;
+
     OLiveQueryOps ops = getOpsReference((ODatabaseInternal) iDatabase);
+    if (ops.pendingOps.isEmpty()) {
+      return;
+    }
+    if (Boolean.FALSE.equals(iDatabase.getConfiguration().getValue(QUERY_LIVE_SUPPORT))) return;
+
     List<ORecordOperation> list;
     synchronized (ops.pendingOps) {
       list = ops.pendingOps.remove(iDatabase);
@@ -136,10 +141,10 @@ public class OLiveQueryHook {
   }
 
   public static void addOp(ODocument iDocument, byte iType, ODatabaseDocument database) {
-    if (Boolean.FALSE.equals(database.getConfiguration().getValue(QUERY_LIVE_SUPPORT))) return;
     ODatabaseDocument db = database;
     OLiveQueryOps ops = getOpsReference((ODatabaseInternal) db);
     if (!ops.queueThread.hasListeners()) return;
+    if (Boolean.FALSE.equals(database.getConfiguration().getValue(QUERY_LIVE_SUPPORT))) return;
     ORecordOperation result = new ORecordOperation(iDocument, iType);
     synchronized (ops.pendingOps) {
       List<ORecordOperation> list = ops.pendingOps.get(db);

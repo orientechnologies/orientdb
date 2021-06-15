@@ -235,14 +235,16 @@ public class ODocumentHelper {
                 + iValue.getClass());
     } else if (Date.class.isAssignableFrom(iFieldType)) {
       if (iValue instanceof String && ODatabaseRecordThreadLocal.instance().isDefined()) {
-        final OStorageConfiguration config =
-            ODatabaseRecordThreadLocal.instance().get().getStorage().getConfiguration();
+        ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
+        final OStorageConfiguration config = db.getStorage().getConfiguration();
 
-        DateFormat formatter = config.getDateFormatInstance();
+        DateFormat formatter;
 
         if (((String) iValue).length() > config.getDateFormat().length()) {
           // ASSUMES YOU'RE USING THE DATE-TIME FORMATTE
           formatter = config.getDateTimeFormatInstance();
+        } else {
+          formatter = config.getDateFormatInstance();
         }
 
         try {

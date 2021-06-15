@@ -1067,7 +1067,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
         checkIfThreadIsBlocked();
 
@@ -1080,7 +1079,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         return cluster.getName();
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
 
     } catch (final RuntimeException ee) {
@@ -4107,7 +4105,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
         checkIfThreadIsBlocked();
 
@@ -4118,7 +4115,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         return clusters.get(iClusterId) != null ? clusters.get(iClusterId).getName() : null;
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
     } catch (final RuntimeException ee) {
       throw logAndPrepareForRethrow(ee);
