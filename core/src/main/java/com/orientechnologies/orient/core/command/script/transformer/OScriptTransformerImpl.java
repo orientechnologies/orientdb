@@ -5,20 +5,48 @@ import com.orientechnologies.orient.core.command.script.OScriptResultSets;
 import com.orientechnologies.orient.core.command.script.transformer.result.MapTransformer;
 import com.orientechnologies.orient.core.command.script.transformer.result.OResultTransformer;
 import com.orientechnologies.orient.core.command.script.transformer.resultset.OResultSetTransformer;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.util.*;
+
+import jdk.nashorn.api.scripting.JSObject;
+import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import org.graalvm.polyglot.Value;
 
 /** Created by Enrico Risa on 27/01/17. */
 public class OScriptTransformerImpl implements OScriptTransformer {
 
   protected Map<Class, OResultSetTransformer> resultSetTransformers = new HashMap<>();
-  protected Map<Class, OResultTransformer> transformers = new HashMap<>();
+  protected Map<Class, OResultTransformer> transformers = new LinkedHashMap<>(2);
 
   public OScriptTransformerImpl() {
 
+    if (!OGlobalConfiguration.SCRIPT_POLYGLOT_USE_GRAAL.getValueAsBoolean()) {
+      try {
+        final Class<?> c = Class.forName("jdk.nashorn.api.scripting.JSObject");
+        registerResultTransformer(
+            c,
+            new OResultTransformer() {
+              @Override
+              public OResult transform(Object value) {
+                OResultInternal internal = new OResultInternal();
+
+                final List res = new ArrayList();
+                internal.setProperty("value", res);
+
+                for (Object v : ((Map) value).values())
+                  res.add(new OResultInternal((OIdentifiable) v));
+
+                return internal;
+              }
+            });
+      } catch (Exception e) {
+        // NASHORN NOT INSTALLED, IGNORE IT
+      }
+    }
     registerResultTransformer(Map.class, new MapTransformer(this));
   }
 

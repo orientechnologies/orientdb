@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.command.script;
 
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.OCreateDatabaseUtil;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -134,7 +135,11 @@ public class JSScriptTest {
 
       Assert.fail("It should receive a class not found exception");
     } catch (RuntimeException e) {
-      Assert.assertEquals(ScriptException.class, e.getCause().getClass());
+      Assert.assertEquals(
+          OGlobalConfiguration.SCRIPT_POLYGLOT_USE_GRAAL.getValueAsBoolean()
+              ? ScriptException.class
+              : ClassNotFoundException.class,
+          e.getCause().getClass());
     } finally {
       orientDB.drop(name.getMethodName());
     }
@@ -223,7 +228,11 @@ public class JSScriptTest {
         db.execute("javascript", "new java.math.BigDecimal(1.0);");
         Assert.fail("It should receive a class not found exception");
       } catch (RuntimeException e) {
-        Assert.assertEquals(ScriptException.class, e.getCause().getClass());
+        Assert.assertEquals(
+            OGlobalConfiguration.SCRIPT_POLYGLOT_USE_GRAAL.getValueAsBoolean()
+                ? ScriptException.class
+                : ClassNotFoundException.class,
+            e.getCause().getClass());
       }
 
       scriptManager.addAllowedPackages(new HashSet<>(Arrays.asList("java.math.*")));
@@ -260,7 +269,11 @@ public class JSScriptTest {
               "com.orientechnologies.orient.core.Orient.instance().getScriptManager().addAllowedPackages([])")) {
         Assert.assertEquals(1, resultSet.stream().count());
       } catch (Exception e) {
-        Assert.assertEquals(ScriptException.class, e.getCause().getClass());
+        Assert.assertEquals(
+            OGlobalConfiguration.SCRIPT_POLYGLOT_USE_GRAAL.getValueAsBoolean()
+                ? ScriptException.class
+                : ClassNotFoundException.class,
+            e.getCause().getClass());
       }
 
       try (OResultSet resultSet =
@@ -269,7 +282,11 @@ public class JSScriptTest {
               "Java.type('com.orientechnologies.orient.core.Orient').instance().getScriptManager().addAllowedPackages([])")) {
         Assert.assertEquals(1, resultSet.stream().count());
       } catch (Exception e) {
-        Assert.assertEquals(ScriptException.class, e.getCause().getClass());
+        Assert.assertEquals(
+                OGlobalConfiguration.SCRIPT_POLYGLOT_USE_GRAAL.getValueAsBoolean()
+                        ? ScriptException.class
+                        : ClassNotFoundException.class,
+                e.getCause().getClass());
       }
     } finally {
       orientDB.drop(name.getMethodName());
