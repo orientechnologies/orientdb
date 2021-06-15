@@ -914,16 +914,22 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
 
     ORecord record = identifiable.getRecord();
     if (record == null) return;
-
+    if (record instanceof ODocument) {
+      if (((ODocument) record).getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
+        ((ODocument) record).reload();
+      }
+    }
     OTransactionAbstract trans = (OTransactionAbstract) this.currentTx;
-    OTransactionOptimistic tx = new OTransactionOptimistic(this);
-    tx.setNoTxLocks(trans.getInternalLocks());
-    this.currentTx = tx;
-    tx.begin();
-    tx.deleteRecord(record, iMode);
-    commit();
-    this.currentTx = trans;
-
+    try {
+      OTransactionOptimistic tx = new OTransactionOptimistic(this);
+      tx.setNoTxLocks(trans.getInternalLocks());
+      this.currentTx = tx;
+      tx.begin();
+      tx.deleteRecord(record, iMode);
+      commit();
+    } finally {
+      this.currentTx = trans;
+    }
     return;
   }
 
@@ -1323,17 +1329,24 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
       boolean iForceCreate,
       ORecordCallback<? extends Number> iRecordCreatedCallback,
       ORecordCallback<Integer> iRecordUpdatedCallback) {
-
     OTransactionAbstract trans = (OTransactionAbstract) this.currentTx;
-    OTransactionOptimistic tx = new OTransactionOptimistic(this);
-    tx.setNoTxLocks(trans.getInternalLocks());
-    this.currentTx = tx;
-    tx.begin();
+    try {
+      OTransactionOptimistic tx = new OTransactionOptimistic(this);
+      tx.setNoTxLocks(trans.getInternalLocks());
+      this.currentTx = tx;
+      tx.begin();
 
-    tx.saveRecord(
-        iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
-    commit();
-    this.currentTx = trans;
+      tx.saveRecord(
+          iRecord,
+          iClusterName,
+          iMode,
+          iForceCreate,
+          iRecordCreatedCallback,
+          iRecordUpdatedCallback);
+      commit();
+    } finally {
+      this.currentTx = trans;
+    }
 
     return iRecord;
   }
