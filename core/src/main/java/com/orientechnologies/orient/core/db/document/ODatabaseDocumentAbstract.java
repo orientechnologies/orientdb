@@ -99,7 +99,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageInfo;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorageComponent;
-import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.tx.OTransaction;
@@ -158,8 +157,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   protected OSharedContext sharedContext;
 
   private boolean prefetchRecords;
-
-  protected OMicroTransaction microTransaction = null;
 
   protected Map<String, OResultSet> activeQueries = new ConcurrentHashMap<>();
   private Map<UUID, OBonsaiCollectionPointer> collectionsChanges;
@@ -839,9 +836,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
   @Override
   public OBasicTransaction getMicroOrRegularTransaction() {
-    return microTransaction != null && microTransaction.isActive()
-        ? microTransaction
-        : getTransaction();
+    return getTransaction();
   }
 
   @SuppressWarnings("unchecked")

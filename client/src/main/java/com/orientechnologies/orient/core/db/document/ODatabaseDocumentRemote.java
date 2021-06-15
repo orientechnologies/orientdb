@@ -89,7 +89,6 @@ import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageInfo;
 import com.orientechnologies.orient.core.storage.cluster.OOfflineClusterException;
-import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
@@ -478,10 +477,6 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   @Override
   public void recycle(ORecord record) {
     throw new UnsupportedOperationException();
-  }
-
-  protected OMicroTransaction beginMicroTransaction() {
-    return null;
   }
 
   public static void updateSchema(OStorageRemote storage, ODocument schema) {

@@ -111,7 +111,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageInfo;
 import com.orientechnologies.orient.core.storage.cluster.OOfflineClusterException;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
@@ -867,18 +866,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     throw new UnsupportedOperationException();
   }
 
-  protected OMicroTransaction beginMicroTransaction() {
-    final OAbstractPaginatedStorage abstractPaginatedStorage =
-        (OAbstractPaginatedStorage) getStorage();
-
-    if (microTransaction == null)
-      microTransaction = new OMicroTransaction(abstractPaginatedStorage, this);
-
-    microTransaction.begin();
-    microTransaction.setNoTxLocks(((OTransactionAbstract) getTransaction()).getInternalLocks());
-    return microTransaction;
-  }
-
   @Override
   public int addBlobCluster(final String iClusterName, final Object... iParameters) {
     int id;
@@ -931,31 +918,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
       this.currentTx = trans;
     }
     return;
-  }
-
-  private void endMicroTransaction(boolean success) {
-    assert microTransaction != null;
-
-    try {
-      if (success) {
-        try {
-          microTransaction.commit();
-          OLiveQueryHook.notifyForTxChanges(this);
-          OLiveQueryHookV2.notifyForTxChanges(this);
-        } catch (Exception e) {
-          microTransaction.rollbackAfterFailedCommit();
-          OLiveQueryHook.removePendingDatabaseOps(this);
-          OLiveQueryHookV2.removePendingDatabaseOps(this);
-          throw e;
-        }
-      } else {
-        microTransaction.rollback();
-        OLiveQueryHook.removePendingDatabaseOps(this);
-        OLiveQueryHookV2.removePendingDatabaseOps(this);
-      }
-    } finally {
-      if (!microTransaction.isActive()) microTransaction = null;
-    }
   }
 
   @Override
@@ -1414,22 +1376,11 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
           ORole.PERMISSION_READ,
           getClusterNameById(rid.getClusterId()));
 
-      // either regular or micro tx must be active or both inactive
-      assert !(getTransaction().isActive()
-          && (microTransaction != null && microTransaction.isActive()));
-
       // SEARCH IN LOCAL TX
       ORecord record = getTransaction().getRecord(rid);
       if (record == OBasicTransaction.DELETED_RECORD)
         // DELETED IN TX
         return null;
-
-      if (record == null) {
-        if (microTransaction != null && microTransaction.isActive()) {
-          record = microTransaction.getRecord(rid);
-          if (record == OBasicTransaction.DELETED_RECORD) return null;
-        }
-      }
 
       if (record == null && !ignoreCache)
         // SEARCH INTO THE CACHE
