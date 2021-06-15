@@ -81,11 +81,11 @@ public abstract class OrientGraphRemoteTest extends OrientGraphTest {
       else return graph;
     }
 
-    if (clientContext.exists(graphDirectoryName)) {
-      clientContext.drop(graphDirectoryName);
+    if (!clientContext.exists(graphDirectoryName)) {
+      clientContext.create(
+          graphDirectoryName,
+          ODatabaseType.valueOf(OrientGraphTest.getStorageType().toUpperCase()));
     }
-    clientContext.create(
-        graphDirectoryName, ODatabaseType.valueOf(OrientGraphTest.getStorageType().toUpperCase()));
 
     OrientGraphFactory factory = graphFactories.get(url);
     if (factory == null) {

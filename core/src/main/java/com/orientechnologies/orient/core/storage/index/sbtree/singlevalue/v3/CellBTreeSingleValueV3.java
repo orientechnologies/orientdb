@@ -46,15 +46,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.OCellBTreeSingleValue;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Spliterator;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -542,11 +534,16 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
                   releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
                 }
 
-                if (bucketSize == 0) {
-                  final List<ORawTriple<Long, Integer, Boolean>> path = removeSearchResult.path;
+                final List<ORawTriple<Long, Integer, Boolean>> path = removeSearchResult.path;
+                if (bucketSize == 0 && !path.isEmpty()) {
+                  final ORawPair<Boolean, Integer> freeListAllowance =
+                      removeNonLeafEntry(path, atomicOperation);
 
-                  if (removeNonLeafEntry(path, atomicOperation)) {
-                    addToFreeList(atomicOperation, (int)removeSearchResult.leafPageIndex);
+                  if (freeListAllowance.first) {
+                    addToFreeList(atomicOperation, (int) removeSearchResult.leafPageIndex);
+                    if (freeListAllowance.second >= 0) {
+                      addToFreeList(atomicOperation, freeListAllowance.second);
+                    }
                   }
                 }
               } else {
@@ -566,7 +563,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
         });
   }
 
-  private boolean removeNonLeafEntry(
+  private ORawPair<Boolean, Integer> removeNonLeafEntry(
       final List<ORawTriple<Long, Integer, Boolean>> path, final OAtomicOperation atomicOperation)
       throws IOException {
     assert !path.isEmpty();
@@ -578,6 +575,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
 
     final int bucketSize;
     final boolean entryRemoved;
+    final int siblingPageIndex;
 
     final OCacheEntry cacheEntry =
         loadPageForWrite(atomicOperation, fileId, pageIndex, false, true);
@@ -589,8 +587,8 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
         assert entryIndex == 0;
 
         final int siblingSize;
-        final int siblingPageIndex =
-            leftDirection ? bucket.getRight(0) : bucket.getLeft(0);
+        siblingPageIndex = leftDirection ? bucket.getRight(0) : bucket.getLeft(0);
+
         final OCacheEntry siblingCacheEntry =
             loadPageForRead(atomicOperation, fileId, siblingPageIndex, true);
         try {
@@ -615,6 +613,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
           bucketSize = 1;
         }
       } else {
+        siblingPageIndex = -1;
         bucket.removeNonLeafEntry(entryIndex, leftDirection, keySerializer);
         entryRemoved = true;
 
@@ -625,12 +624,114 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
     }
 
     if (entryRemoved && bucketSize == 0 && path.size() > 1) {
-      if (removeNonLeafEntry(path.subList(0, path.size() - 1), atomicOperation)) {
+      final ORawPair<Boolean, Integer> freeListAllowance =
+          removeNonLeafEntry(path.subList(0, path.size() - 1), atomicOperation);
+      if (freeListAllowance.first) {
         addToFreeList(atomicOperation, (int) pageIndex);
+
+        if (freeListAllowance.second >= 0) {
+          addToFreeList(atomicOperation, freeListAllowance.second);
+        }
       }
     }
 
-    return entryRemoved;
+    return new ORawPair<>(entryRemoved, siblingPageIndex);
+  }
+
+  private void removePagesStoredInFreeList(
+      OAtomicOperation atomicOperation, Set<Integer> pages, int filledUpTo) throws IOException {
+    final int freeListHead;
+    final OCacheEntry entryCacheEntry =
+        loadPageForRead(atomicOperation, fileId, ENTRY_POINT_INDEX, true);
+    try {
+      final CellBTreeSingleValueEntryPointV3<K> entryPoint =
+          new CellBTreeSingleValueEntryPointV3<>(entryCacheEntry);
+      assert entryPoint.getPagesSize() == filledUpTo - 1;
+      freeListHead = entryPoint.getFreeListHead();
+    } finally {
+      releasePageFromRead(atomicOperation, entryCacheEntry);
+    }
+
+    int freePageIndex = freeListHead;
+    while (freePageIndex >= 0) {
+      pages.remove(freePageIndex);
+
+      final OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, freePageIndex, true);
+      try {
+        final CellBTreeSingleValueBucketV3<K> bucket =
+            new CellBTreeSingleValueBucketV3<>(cacheEntry);
+        freePageIndex = bucket.getNextFreeListPage();
+        pages.remove(freePageIndex);
+      } finally {
+        releasePageFromRead(atomicOperation, cacheEntry);
+      }
+    }
+  }
+
+  void assertFreePages() {
+    atomicOperationsManager.acquireReadLock(this);
+    try {
+      acquireSharedLock();
+      try {
+        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+
+        final Set<Integer> pages = new HashSet<>();
+        final int filledUpTo = (int) getFilledUpTo(atomicOperation, fileId);
+
+        for (int i = 2; i < filledUpTo; i++) {
+          pages.add(i);
+        }
+
+        removeUsedPages((int) ROOT_INDEX, pages, atomicOperation);
+
+        removePagesStoredInFreeList(atomicOperation, pages, filledUpTo);
+
+        assert pages.isEmpty();
+
+      } finally {
+        releaseSharedLock();
+      }
+    } catch (final IOException e) {
+      throw OException.wrapException(
+          new CellBTreeSingleValueV3Exception(
+              "Error during checking  of btree with name " + getName(), this),
+          e);
+    } finally {
+      atomicOperationsManager.releaseReadLock(this);
+    }
+  }
+
+  private void removeUsedPages(
+      final int pageIndex, final Set<Integer> pages, final OAtomicOperation atomicOperation)
+      throws IOException {
+    final OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, true);
+    try {
+      final CellBTreeSingleValueBucketV3<K> bucket = new CellBTreeSingleValueBucketV3<>(cacheEntry);
+      if (bucket.isLeaf()) {
+        return;
+      }
+
+      final int bucketSize = bucket.size();
+      final List<Integer> pagesToExplore = new ArrayList<>(bucketSize);
+
+      if (bucketSize > 0) {
+        final int leftPage = bucket.getLeft(0);
+        pages.remove(leftPage);
+        pagesToExplore.add(leftPage);
+
+        for (int i = 0; i < bucketSize; i++) {
+          final int rightPage = bucket.getRight(i);
+          pages.remove(rightPage);
+          pagesToExplore.add(rightPage);
+        }
+      }
+
+      for (final int pageToExplore : pagesToExplore) {
+        removeUsedPages(pageToExplore, pages, atomicOperation);
+      }
+    } finally {
+      releasePageFromRead(atomicOperation, cacheEntry);
+    }
   }
 
   private void addToFreeList(OAtomicOperation atomicOperation, int pageIndex) throws IOException {

@@ -948,7 +948,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
     }
 
     final int pageSize = buffer.getShort(CASWALPage.PAGE_SIZE_OFFSET);
-    if (pageSize == 0 || pageSize > walPageSize) {
+    if (pageSize <= 0 || pageSize > walPageSize) {
       return true;
     }
 
