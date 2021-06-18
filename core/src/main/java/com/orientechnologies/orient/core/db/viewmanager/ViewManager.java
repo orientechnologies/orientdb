@@ -55,6 +55,7 @@ import java.util.stream.Collectors;
 public class ViewManager {
   private final OrientDBInternal orientDB;
   private final String dbName;
+  private boolean viewsExist = false;
 
   /**
    * To retain clusters that are being used in queries until the queries are closed.
@@ -113,6 +114,7 @@ public class ViewManager {
 
   public synchronized boolean registerLiveUpdateFor(ODatabaseSession db, String viewName) {
     OView view = db.getMetadata().getSchema().getView(viewName);
+    viewsExist = true;
     boolean registered = false;
     if (view.getUpdateStrategy() != null
         && view.getUpdateStrategy().equalsIgnoreCase(OViewConfig.UPDATE_STRATEGY_LIVE)) {
@@ -506,17 +508,26 @@ public class ViewManager {
 
   public void recordAdded(
       OImmutableClass clazz, ODocument doc, ODatabaseDocumentEmbedded oDatabaseDocumentEmbedded) {
-    lastChangePerClass.put(clazz.getName().toLowerCase(Locale.ENGLISH), System.currentTimeMillis());
+    if (viewsExist) {
+      lastChangePerClass.put(
+          clazz.getName().toLowerCase(Locale.ENGLISH), System.currentTimeMillis());
+    }
   }
 
   public void recordUpdated(
       OImmutableClass clazz, ODocument doc, ODatabaseDocumentEmbedded oDatabaseDocumentEmbedded) {
-    lastChangePerClass.put(clazz.getName().toLowerCase(Locale.ENGLISH), System.currentTimeMillis());
+    if (viewsExist) {
+      lastChangePerClass.put(
+          clazz.getName().toLowerCase(Locale.ENGLISH), System.currentTimeMillis());
+    }
   }
 
   public void recordDeleted(
       OImmutableClass clazz, ODocument doc, ODatabaseDocumentEmbedded oDatabaseDocumentEmbedded) {
-    lastChangePerClass.put(clazz.getName().toLowerCase(Locale.ENGLISH), System.currentTimeMillis());
+    if (viewsExist) {
+      lastChangePerClass.put(
+          clazz.getName().toLowerCase(Locale.ENGLISH), System.currentTimeMillis());
+    }
   }
 
   public String getViewFromOldCluster(int clusterId) {
