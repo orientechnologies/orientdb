@@ -4316,7 +4316,11 @@ ODropClassStatement DropClassStatement():
 {}
 {
 	<DROP> <CLASS>
-	jjtThis.name = Identifier()
+	(
+	  jjtThis.name = Identifier()
+	  |
+	  jjtThis.nameParam = InputParameter()
+	)
 	[ <IF> <EXISTS> { jjtThis.ifExists = true; } ]
 	[ <UNSAFE> { jjtThis.unsafe = true; } ]
 	{ return jjtThis; }

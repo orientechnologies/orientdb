@@ -11,9 +11,6 @@ import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.util.*;
-
-import jdk.nashorn.api.scripting.JSObject;
-import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import org.graalvm.polyglot.Value;
 
 /** Created by Enrico Risa on 27/01/17. */

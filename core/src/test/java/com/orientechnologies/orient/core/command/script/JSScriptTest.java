@@ -283,10 +283,10 @@ public class JSScriptTest {
         Assert.assertEquals(1, resultSet.stream().count());
       } catch (Exception e) {
         Assert.assertEquals(
-                OGlobalConfiguration.SCRIPT_POLYGLOT_USE_GRAAL.getValueAsBoolean()
-                        ? ScriptException.class
-                        : ClassNotFoundException.class,
-                e.getCause().getClass());
+            OGlobalConfiguration.SCRIPT_POLYGLOT_USE_GRAAL.getValueAsBoolean()
+                ? ScriptException.class
+                : ClassNotFoundException.class,
+            e.getCause().getClass());
       }
     } finally {
       orientDB.drop(name.getMethodName());

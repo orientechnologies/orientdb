@@ -11,6 +11,7 @@ public class ODropClassStatementTest extends OParserTestAbstract {
     checkRightSyntax("drop class Foo UNSAFE");
     checkRightSyntax("drop class Foo unsafe");
     checkRightSyntax("DROP CLASS `Foo bar`");
+    checkRightSyntax("drop class ?");
 
     checkWrongSyntax("drop class Foo UNSAFE foo");
     checkWrongSyntax("drop class Foo bar");
@@ -22,6 +23,7 @@ public class ODropClassStatementTest extends OParserTestAbstract {
     checkRightSyntax("DROP CLASS Foo IF EXISTS");
     checkRightSyntax("DROP CLASS if if exists");
     checkRightSyntax("DROP CLASS if if exists unsafe");
+    checkRightSyntax("DROP CLASS ? IF EXISTS");
 
     checkWrongSyntax("drop class Foo if");
     checkWrongSyntax("drop class Foo if exists lkj");
