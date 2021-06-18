@@ -98,4 +98,23 @@ public class ODropClassStatementExecutionTest {
     schema.reload();
     Assert.assertNull(schema.getClass(className));
   }
+
+  @Test
+  public void testParam() {
+    String className = "testParam";
+    OSchema schema = db.getMetadata().getSchema();
+    schema.createClass(className);
+
+    schema.reload();
+    Assert.assertNotNull(schema.getClass(className));
+
+    OResultSet result = db.command("drop class ?", className);
+    Assert.assertTrue(result.hasNext());
+    OResult next = result.next();
+    Assert.assertEquals("drop class", next.getProperty("operation"));
+    Assert.assertFalse(result.hasNext());
+    result.close();
+    schema.reload();
+    Assert.assertNull(schema.getClass(className));
+  }
 }
