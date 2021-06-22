@@ -665,13 +665,11 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
     }
   }
 
-  void assertFreePages() {
+  void assertFreePages(OAtomicOperation atomicOperation) {
     atomicOperationsManager.acquireReadLock(this);
     try {
       acquireSharedLock();
       try {
-        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
-
         final Set<Integer> pages = new HashSet<>();
         final int filledUpTo = (int) getFilledUpTo(atomicOperation, fileId);
 
