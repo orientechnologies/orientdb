@@ -454,8 +454,10 @@ public class CellBTreeSingleValueV3TestIT {
 
   @Test
   public void testKeyAddDeleteAll() throws Exception {
-    for (int iterations = 0; iterations < 3; iterations++) {
-      final int keysCount = 3_330;
+    for (int iterations = 0; iterations < 4; iterations++) {
+      System.out.println("testKeyAddDeleteAll : iteration " + iterations);
+
+      final int keysCount = 1_000_000;
 
       for (int i = 0; i < keysCount; i++) {
         final int key = i;
@@ -467,44 +469,92 @@ public class CellBTreeSingleValueV3TestIT {
 
         Assert.assertEquals(singleValueTree.get(Integer.toString(i)), new ORecordId(i % 32000, i));
       }
-      final int rollbackInterval = 1;
 
-      for (int i = 0; i < keysCount / rollbackInterval; i++) {
-        //        for (int n = 0; n < 2; n++) {
-        // final int rollbackCounter = n;
-        final int iterationsCounter = i;
+      for (int i = 0; i < keysCount; i++) {
+        final int key = i;
+        atomicOperationsManager.executeInsideAtomicOperation(
+            null,
+            atomicOperation -> {
+              Assert.assertEquals(
+                  singleValueTree.remove(atomicOperation, Integer.toString(key)),
+                  new ORecordId(key % 32000, key));
 
-        try {
-          atomicOperationsManager.executeInsideAtomicOperation(
-              null,
-              atomicOperation -> {
-                for (int j = 0; j < rollbackInterval; j++) {
-                  final int key = iterationsCounter * rollbackInterval + j;
-                  Assert.assertEquals(
-                      singleValueTree.remove(atomicOperation, Integer.toString(key)),
-                      new ORecordId(key % 32000, key));
-
-                  if (key > 0 && key % 1_00 == 0) {
-                    for (int keyToVerify = 0; keyToVerify < keysCount; keyToVerify++) {
-                      if (keyToVerify > key) {
-                        Assert.assertEquals(
-                            new ORecordId(keyToVerify % 32000, keyToVerify),
-                            singleValueTree.get(Integer.toString(keyToVerify)));
-                      } else {
-                        Assert.assertNull(singleValueTree.get(Integer.toString(keyToVerify)));
-                      }
-                    }
+              if (key > 0 && key % 100_000 == 0) {
+                for (int keyToVerify = 0; keyToVerify < keysCount; keyToVerify++) {
+                  if (keyToVerify > key) {
+                    Assert.assertEquals(
+                        new ORecordId(keyToVerify % 32000, keyToVerify),
+                        singleValueTree.get(Integer.toString(keyToVerify)));
+                  } else {
+                    Assert.assertNull(singleValueTree.get(Integer.toString(keyToVerify)));
                   }
                 }
-                //                  if (rollbackCounter == 0) {
-                //                    throw new RollbackException();
-                //                  }
-              });
-        } catch (RollbackException ignore) {
+              }
+            });
+      }
+      for (int i = 0; i < keysCount; i++) {
+        Assert.assertNull(singleValueTree.get(Integer.toString(i)));
+      }
+
+      singleValueTree.assertFreePages();
+    }
+  }
+
+  @Test
+  public void testKeyAddDeleteHalf() throws Exception {
+    final int keysCount = 1_000_000;
+
+    for (int i = 0; i < keysCount / 2; i++) {
+      final int key = i;
+      atomicOperationsManager.executeInsideAtomicOperation(
+          null,
+          atomicOperation ->
+              singleValueTree.put(
+                  atomicOperation, Integer.toString(key), new ORecordId(key % 32000, key)));
+
+      Assert.assertEquals(singleValueTree.get(Integer.toString(i)), new ORecordId(i % 32000, i));
+    }
+
+    for (int iterations = 0; iterations < 4; iterations++) {
+      System.out.println("testKeyAddDeleteHalf : iteration " + iterations);
+
+      for (int i = 0; i < keysCount / 2; i++) {
+        final int key = i + (iterations + 1) * keysCount / 2;
+        atomicOperationsManager.executeInsideAtomicOperation(
+            null,
+            atomicOperation ->
+                singleValueTree.put(
+                    atomicOperation, Integer.toString(key), new ORecordId(key % 32000, key)));
+
+        Assert.assertEquals(
+            singleValueTree.get(Integer.toString(key)), new ORecordId(key % 32000, key));
+      }
+
+      final int offset = iterations * (keysCount / 2);
+
+      for (int i = 0; i < keysCount / 2; i++) {
+        final int key = i + offset;
+        atomicOperationsManager.executeInsideAtomicOperation(
+            null,
+            atomicOperation -> {
+              Assert.assertEquals(
+                  singleValueTree.remove(atomicOperation, Integer.toString(key)),
+                  new ORecordId(key % 32000, key));
+            });
+      }
+
+      final int start = (iterations + 1) * (keysCount / 2);
+      for (int i = 0; i < (iterations + 2) * keysCount / 2; i++) {
+        if (i < start) {
+          Assert.assertNull(singleValueTree.get(Integer.toString(i)));
+        } else {
+          Assert.assertEquals(
+              new ORecordId(i % 32000, i), singleValueTree.get(Integer.toString(i)));
         }
       }
+
+      singleValueTree.assertFreePages();
     }
-    //    }
   }
 
   @Test

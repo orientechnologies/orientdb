@@ -23,6 +23,7 @@ import java.util.Locale;
 import java.util.Map;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -61,6 +62,7 @@ public abstract class OrientGraphTest extends GraphTest {
   }
 
   @Test
+  @Ignore
   public void testGraphTestSuite() throws Exception {
     this.stopWatch();
     doTestSuite(new GraphTestSuite(this));
@@ -75,6 +77,7 @@ public abstract class OrientGraphTest extends GraphTest {
   }
 
   @Test
+  @Ignore
   public void testGraphQueryTestSuite() throws Exception {
     this.stopWatch();
     doTestSuite(new GraphQueryTestSuite(this));
