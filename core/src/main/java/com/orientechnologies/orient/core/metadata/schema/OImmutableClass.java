@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibraryImpl;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.OSecurityPolicy;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
@@ -88,6 +89,7 @@ public class OImmutableClass implements OClass {
   private boolean sequence;
   private boolean ouser;
   private boolean orole;
+  private boolean oSecurityPolicy;
   private OIndex autoShardingIndex;
   private HashSet<OIndex> indexes;
 
@@ -152,6 +154,7 @@ public class OImmutableClass implements OClass {
       this.sequence = isSubClassOf(OSequence.CLASS_NAME);
       this.ouser = isSubClassOf(OUser.CLASS_NAME);
       this.orole = isSubClassOf(ORole.CLASS_NAME);
+      this.oSecurityPolicy = isSubClassOf(OSecurityPolicy.CLASS_NAME);
       this.indexes = new HashSet<>();
       getRawIndexes(indexes);
 
@@ -850,5 +853,9 @@ public class OImmutableClass implements OClass {
 
   public boolean isSequence() {
     return sequence;
+  }
+
+  public boolean isOSecurityPolicy() {
+    return oSecurityPolicy;
   }
 }

@@ -72,7 +72,6 @@ import com.orientechnologies.orient.core.metadata.security.ORestrictedOperation;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
-import com.orientechnologies.orient.core.metadata.security.OSecurityPolicy;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceAction;
@@ -1159,9 +1158,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
           this.getSharedContext().getFunctionLibrary().createdFunction(doc);
           sharedContext.getOrientDB().getScriptManager().close(this.getName());
         }
-        if (clazz.isOuser()
-            || clazz.isOrole()
-            || clazz.isSubClassOf(OSecurityPolicy.class.getSimpleName())) {
+        if (clazz.isOuser() || clazz.isOrole() || clazz.isOSecurityPolicy()) {
           sharedContext.getSecurity().incrementVersion(this);
         }
         if (clazz.isSequence()) {
@@ -1195,9 +1192,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
           this.getSharedContext().getFunctionLibrary().updatedFunction(doc);
           sharedContext.getOrientDB().getScriptManager().close(this.getName());
         }
-        if (clazz.isOuser()
-            || clazz.isOrole()
-            || clazz.isSubClassOf(OSecurityPolicy.class.getSimpleName())) {
+        if (clazz.isOuser() || clazz.isOrole() || clazz.isOSecurityPolicy()) {
           sharedContext.getSecurity().incrementVersion(this);
         }
         if (clazz.isSequence()) {

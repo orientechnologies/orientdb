@@ -6,6 +6,8 @@ import com.orientechnologies.orient.core.sql.OSQLEngine;
 
 public class OSecurityPolicy {
 
+  public static String CLASS_NAME = OSecurityPolicy.class.getSimpleName();
+
   public enum Scope {
     CREATE,
     READ,

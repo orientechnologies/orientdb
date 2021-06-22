@@ -460,7 +460,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     OClass orole = schema.getClass(ORole.CLASS_NAME);
     OClass ouser = schema.getClass(OUser.CLASS_NAME);
     OClass oidentity = schema.getClass(OIdentity.CLASS_NAME);
-    OClass oSecurityPolicy = schema.getClass(OSecurityPolicy.class.getSimpleName());
+    OClass oSecurityPolicy = schema.getClass(OSecurityPolicy.CLASS_NAME);
     final Map<String, OClass> classesToDrop = new HashMap<>();
     final Set<String> indexes = new HashSet<>();
     for (OClass dbClass : classes) {
