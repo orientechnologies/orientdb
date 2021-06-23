@@ -773,7 +773,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
   @Override
   public OIdentifiable beforeCreateOperations(OIdentifiable id, String iClusterName) {
-    checkClusterSecurity(ORole.PERMISSION_CREATE, id, iClusterName);
+    checkSecurity(ORole.PERMISSION_CREATE, id, iClusterName);
     ORecordHook.RESULT res = callbackHooks(ORecordHook.TYPE.BEFORE_CREATE, id);
     if (res == ORecordHook.RESULT.RECORD_CHANGED) {
       if (id instanceof ODocument) {
@@ -792,7 +792,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
   @Override
   public OIdentifiable beforeUpdateOperations(OIdentifiable id, String iClusterName) {
-    checkClusterSecurity(ORole.PERMISSION_UPDATE, id, iClusterName);
+    checkSecurity(ORole.PERMISSION_UPDATE, id, iClusterName);
     ORecordHook.RESULT res = callbackHooks(ORecordHook.TYPE.BEFORE_UPDATE, id);
     if (res == ORecordHook.RESULT.RECORD_CHANGED) {
       if (id instanceof ODocument) {
@@ -811,7 +811,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
   @Override
   public void beforeDeleteOperations(OIdentifiable id, String iClusterName) {
-    checkClusterSecurity(ORole.PERMISSION_DELETE, id, iClusterName);
+    checkSecurity(ORole.PERMISSION_DELETE, id, iClusterName);
     callbackHooks(ORecordHook.TYPE.BEFORE_DELETE, id);
   }
 
