@@ -949,7 +949,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
 
   @Override
   public OIdentifiable beforeCreateOperations(OIdentifiable id, String iClusterName) {
-    checkClusterSecurity(ORole.PERMISSION_CREATE, id, iClusterName);
+    checkSecurity(ORole.PERMISSION_CREATE, id, iClusterName);
 
     ORecordHook.RESULT triggerChanged = null;
     boolean changed = false;
@@ -965,6 +965,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
 
       OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
       if (clazz != null) {
+        checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_CREATE, clazz.getName());
         if (clazz.isScheduler()) {
           getSharedContext().getScheduler().initScheduleRecord(doc);
           changed = true;
@@ -1006,7 +1007,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
 
   @Override
   public OIdentifiable beforeUpdateOperations(OIdentifiable id, String iClusterName) {
-    checkClusterSecurity(ORole.PERMISSION_UPDATE, id, iClusterName);
+    checkSecurity(ORole.PERMISSION_UPDATE, id, iClusterName);
 
     ORecordHook.RESULT triggerChanged = null;
     boolean changed = false;
@@ -1124,7 +1125,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
 
   @Override
   public void beforeDeleteOperations(OIdentifiable id, String iClusterName) {
-    checkClusterSecurity(ORole.PERMISSION_DELETE, id, iClusterName);
+    checkSecurity(ORole.PERMISSION_DELETE, id, iClusterName);
     if (id instanceof ODocument) {
       ODocument doc = (ODocument) id;
       OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
