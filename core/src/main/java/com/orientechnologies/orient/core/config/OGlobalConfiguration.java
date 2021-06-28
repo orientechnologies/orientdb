@@ -1976,6 +1976,14 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       "distributed.autoCreateClusters",
       "if true enable auto creation of cluster when a new node join",
       Boolean.class,
+      true),
+  SECURITY_ADVANCED_POLICY(
+      "security.advancedPolicy",
+      "if true enable advanced security policy",
+      Boolean.class,
+      true,
+      false,
+      true,
       true);
 
   static {
