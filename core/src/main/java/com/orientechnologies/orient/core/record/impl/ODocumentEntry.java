@@ -101,8 +101,9 @@ public class ODocumentEntry {
   }
 
   public void removeTimeline() {
-    if (!(value instanceof OTrackedMultiValue)) return;
-    ((OTrackedMultiValue) value).disableTracking(null);
+    if (value instanceof OTrackedMultiValue) {
+      ((OTrackedMultiValue) value).disableTracking(null);
+    }
   }
 
   public void replaceListener(ODocument document, Object oldValue) {
@@ -110,14 +111,18 @@ public class ODocumentEntry {
   }
 
   public boolean enableTracking(ODocument document) {
-    if (!(value instanceof OTrackedMultiValue)) return false;
-    ((OTrackedMultiValue) value).enableTracking(document);
-    return true;
+    if (value instanceof OTrackedMultiValue) {
+      ((OTrackedMultiValue) value).enableTracking(document);
+      return true;
+    } else {
+      return false;
+    }
   }
 
   public void disableTracking(ODocument document, Object fieldValue) {
-    if (!(fieldValue instanceof OTrackedMultiValue)) return;
-    ((OTrackedMultiValue) fieldValue).disableTracking(document);
+    if (fieldValue instanceof OTrackedMultiValue) {
+      ((OTrackedMultiValue) fieldValue).disableTracking(document);
+    }
   }
 
   public boolean isTrackedModified() {
