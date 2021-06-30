@@ -5095,6 +5095,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return false;
   }
 
+  protected String getOpenedAtVersion() {
+    return null;
+  }
+
   private ORawBuffer readRecordIfNotLatest(final ORecordId rid, final int recordVersion)
       throws ORecordNotFoundException {
     checkOpennessAndMigration();
@@ -5251,6 +5255,17 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                   + name
                   + "' was not closed properly. Will try to recover from write ahead log");
       try {
+        final String openedAtVersion = getOpenedAtVersion();
+
+        if (openedAtVersion != null && !openedAtVersion.equals(OConstants.getVersion())) {
+          throw new OStorageException(
+              "Database has been opened at version "
+                  + openedAtVersion
+                  + " but is attempted to be restored at version "
+                  + OConstants.getVersion()
+                  + ". Please use correct version to restore database.");
+        }
+
         wereDataRestoredAfterOpen = restoreFromWAL() != null;
 
         if (recoverListener != null) {
