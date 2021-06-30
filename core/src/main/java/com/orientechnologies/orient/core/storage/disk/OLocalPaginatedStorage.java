@@ -677,6 +677,10 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     return startupMetadata.isDirty();
   }
 
+  protected String getOpenedAtVersion() {
+    return startupMetadata.getOpenedAtVersion();
+  }
+
   @Override
   protected boolean isWriteAllowedDuringIncrementalBackup() {
     return true;
