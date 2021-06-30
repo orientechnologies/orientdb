@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
+import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
@@ -212,7 +213,10 @@ public class OTrackedList<T> extends ArrayList<T>
   @SuppressWarnings("unchecked")
   public <RET> RET setDirty() {
     if (sourceRecord != null) {
-      sourceRecord.setDirty();
+      if (!(sourceRecord instanceof ORecordAbstract)
+          || !((ORecordAbstract) sourceRecord).isDirty()) {
+        sourceRecord.setDirty();
+      }
     }
     this.dirty = true;
     this.transactionDirty = true;

@@ -253,4 +253,11 @@ public class TrackedSetTest {
     Assert.assertEquals(afterSerialization.size(), beforeSerialization.size());
     Assert.assertTrue(beforeSerialization.containsAll(afterSerialization));
   }
+
+  @Test
+  public void testStackOverflowOnRecursion() {
+    final ODocument doc = new ODocument();
+    final OTrackedSet<ODocument> trackedSet = new OTrackedSet<>(doc);
+    trackedSet.add(doc);
+  }
 }
