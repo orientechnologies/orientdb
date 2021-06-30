@@ -67,6 +67,8 @@
     <properties>
         <entry name="log.console.level" value="info"/>
         <entry name="log.file.level" value="fine"/>
+        <entry name="server.database.path" value="./target/server_test_database"/>
+
     </properties>
     <isAfterFirstTime>true</isAfterFirstTime>
 </orient-server>

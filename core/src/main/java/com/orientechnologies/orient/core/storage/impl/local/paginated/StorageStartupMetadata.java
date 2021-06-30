@@ -29,6 +29,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -52,15 +53,14 @@ public class StorageStartupMetadata {
   private static final int XX_HASH_OFFSET = 0;
   private static final int VERSION_OFFSET = XX_HASH_OFFSET + 8;
   private static final int DIRTY_FLAG_OFFSET = VERSION_OFFSET + 4;
-  private static final int TRANSACTION_ID_OFFSET = DIRTY_FLAG_OFFSET + 1;
-  private static final int METADATA_LEN_OFFSET = TRANSACTION_ID_OFFSET + 8;
 
   static {
     final XXHashFactory xxHashFactory = XXHashFactory.fastestInstance();
     XX_HASH_64 = xxHashFactory.hash64();
   }
 
-  private static final int VERSION = 3;
+  private static final int VERSION_WITHOUT_DB_OPEN_VERSION = 3;
+  private static final int VERSION = 4;
 
   private final Path filePath;
   private final Path backupPath;
@@ -70,6 +70,7 @@ public class StorageStartupMetadata {
 
   private volatile boolean dirtyFlag;
   private volatile long lastTxId;
+  private volatile String openedAtVersion;
   private volatile byte[] txMetadata;
 
   private final Lock lock = new ReentrantLock();
@@ -91,7 +92,7 @@ public class StorageStartupMetadata {
     }
   }
 
-  public void create() throws IOException {
+  public void create(final String openedAtVersion) throws IOException {
     lock.lock();
     try {
 
@@ -110,29 +111,15 @@ public class StorageStartupMetadata {
         lockFile();
       }
 
-      final ByteBuffer buffer =
-          ByteBuffer.allocate(
-              1 + 8 + 8 + 4 + 4); // version + dirty flag + transaction id + tx metadata len
+      dirtyFlag = true;
+      lastTxId = -1;
+      this.openedAtVersion = openedAtVersion;
 
-      buffer.position(8);
-
-      buffer.putInt(VERSION);
-      // dirty flag
-      buffer.put((byte) 1);
-      // transaction id
-      buffer.putLong(-1);
-      // tx metadata len
-      buffer.putInt(-1);
-
-      final long xxHash = XX_HASH_64.hash(buffer, 8, buffer.capacity() - 8, XX_HASH_SEED);
-      buffer.putLong(0, xxHash);
-
+      final ByteBuffer buffer = serialize();
       buffer.rewind();
 
       update(buffer);
 
-      dirtyFlag = true;
-      lastTxId = -1;
     } finally {
       lock.unlock();
     }
@@ -178,7 +165,7 @@ public class StorageStartupMetadata {
     }
   }
 
-  public void open() throws IOException {
+  public void open(final String createdAtVersion) throws IOException {
     lock.lock();
     try {
       while (true) {
@@ -192,7 +179,7 @@ public class StorageStartupMetadata {
           } else {
             OLogManager.instance()
                 .infoNoDb(this, "File with startup metadata does not exist, creating new one");
-            create();
+            create(createdAtVersion);
             return;
           }
         }
@@ -236,7 +223,7 @@ public class StorageStartupMetadata {
                           + "creation of new one",
                       null);
               channel.close();
-              create();
+              create(createdAtVersion);
               return;
             } else {
               OLogManager.instance()
@@ -255,12 +242,14 @@ public class StorageStartupMetadata {
 
           buffer.position(8);
           final int version = buffer.getInt();
-          if (version != VERSION) {
+          if (version != VERSION && version != VERSION_WITHOUT_DB_OPEN_VERSION) {
             throw new IllegalStateException(
                 "Invalid version of the binary format of startup metadata file found "
                     + version
                     + " but expected "
-                    + VERSION);
+                    + VERSION
+                    + " or "
+                    + VERSION_WITHOUT_DB_OPEN_VERSION);
           }
 
           dirtyFlag = buffer.get() > 0;
@@ -272,6 +261,17 @@ public class StorageStartupMetadata {
             buffer.get(txMeta);
 
             txMetadata = txMeta;
+          }
+
+          if (version == VERSION) {
+            final int openedAtVersionLen = buffer.getInt();
+
+            if (openedAtVersionLen > 0) {
+              final byte[] rawOpenedAtVersion = new byte[openedAtVersionLen];
+              buffer.get(rawOpenedAtVersion);
+
+              this.openedAtVersion = new String(rawOpenedAtVersion, StandardCharsets.UTF_8);
+            }
           }
         }
 
@@ -329,7 +329,7 @@ public class StorageStartupMetadata {
     }
   }
 
-  public void makeDirty() throws IOException {
+  public void makeDirty(final String openedAtVersion) throws IOException {
     if (dirtyFlag) return;
 
     lock.lock();
@@ -337,6 +337,7 @@ public class StorageStartupMetadata {
       if (dirtyFlag) return;
 
       dirtyFlag = true;
+      this.openedAtVersion = openedAtVersion;
 
       update(serialize());
     } finally {
@@ -392,13 +393,27 @@ public class StorageStartupMetadata {
     return txMetadata;
   }
 
+  public String getOpenedAtVersion() {
+    return openedAtVersion;
+  }
+
   private ByteBuffer serialize() {
     final ByteBuffer buffer;
-    if (txMetadata == null) {
-      buffer = ByteBuffer.allocate(8 + 4 + 1 + 8 + 4);
-    } else {
-      buffer = ByteBuffer.allocate(8 + 4 + 1 + 8 + 4 + txMetadata.length);
+    int bufferSize = 8 + 4 + 1 + 8 + 4 + 4;
+
+    if (txMetadata != null) {
+      bufferSize += txMetadata.length;
     }
+
+    final byte[] openedAtVersionRaw;
+    if (openedAtVersion != null) {
+      openedAtVersionRaw = openedAtVersion.getBytes(StandardCharsets.UTF_8);
+      bufferSize += openedAtVersionRaw.length;
+    } else {
+      openedAtVersionRaw = null;
+    }
+
+    buffer = ByteBuffer.allocate(bufferSize);
 
     buffer.position(8);
 
@@ -414,6 +429,14 @@ public class StorageStartupMetadata {
     } else {
       buffer.putInt(txMetadata.length);
       buffer.put(txMetadata);
+    }
+
+    if (this.openedAtVersion == null) {
+      buffer.putInt(-1);
+    } else {
+
+      buffer.putInt(openedAtVersionRaw.length);
+      buffer.put(openedAtVersionRaw);
     }
 
     final long xxHash = XX_HASH_64.hash(buffer, 8, buffer.capacity() - 8, XX_HASH_SEED);

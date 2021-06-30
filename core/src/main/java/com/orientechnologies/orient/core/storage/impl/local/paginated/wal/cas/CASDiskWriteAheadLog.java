@@ -931,6 +931,10 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
 
   private boolean checkPageIsBrokenAndDecrypt(
       final ByteBuffer buffer, final long segmentId, final long pageIndex, final int walPageSize) {
+    if (buffer.position() < CASWALPage.RECORDS_OFFSET) {
+      return true;
+    }
+
     final long magicNumber = buffer.getLong(CASWALPage.MAGIC_NUMBER_OFFSET);
 
     if (magicNumber != CASWALPage.MAGIC_NUMBER
@@ -1789,7 +1793,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
         }
 
         final long ts = System.nanoTime();
-        final boolean makeFSync = forceSync || ts - lastFSyncTs > fsyncInterval * 1_000_000;
+        final boolean makeFSync = forceSync || ts - lastFSyncTs > fsyncInterval * 1_000_000L;
         final long qSize = queueSize.get();
 
         // even if queue is empty we need to write buffer content to the disk if needed

@@ -32,6 +32,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.serialization.types.OStringSerializer;
 import com.orientechnologies.common.thread.OThreadPoolExecutorWithLogging;
+import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.compression.impl.OZIPCompressionUtil;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -524,10 +525,10 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
   @Override
   protected StartupMetadata checkIfStorageDirty() throws IOException {
-    if (startupMetadata.exists()) startupMetadata.open();
+    if (startupMetadata.exists()) startupMetadata.open(OConstants.getVersion());
     else {
-      startupMetadata.create();
-      startupMetadata.makeDirty();
+      startupMetadata.create(OConstants.getVersion());
+      startupMetadata.makeDirty(OConstants.getVersion());
     }
 
     return new StartupMetadata(startupMetadata.getLastTxId(), startupMetadata.getTxMetadata());
@@ -576,7 +577,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
   @Override
   protected void preCreateSteps() throws IOException {
-    startupMetadata.create();
+    startupMetadata.create(OConstants.getVersion());
   }
 
   @Override
@@ -662,7 +663,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
   @Override
   protected void makeStorageDirty() throws IOException {
-    startupMetadata.makeDirty();
+    startupMetadata.makeDirty(OConstants.getVersion());
   }
 
   @Override
