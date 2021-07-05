@@ -28,11 +28,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.bucket.LocalHashTableV2BucketAddEntryPO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.bucket.LocalHashTableV2BucketDeleteEntryPO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.bucket.LocalHashTableV2BucketInitPO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.bucket.LocalHashTableV2BucketSetDepthPO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.bucket.LocalHashTableV2BucketUpdateEntryPO;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashTable;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -66,8 +61,6 @@ public final class HashIndexBucketV2<K, V> extends ODurablePage {
     setByteValue(DEPTH_OFFSET, (byte) depth);
     setIntValue(FREE_POINTER_OFFSET, MAX_BUCKET_SIZE_BYTES);
     setIntValue(SIZE_OFFSET, 0);
-
-    addPageOperation(new LocalHashTableV2BucketInitPO(depth));
   }
 
   public OHashTable.Entry<K, V> find(
@@ -279,7 +272,6 @@ public final class HashIndexBucketV2<K, V> extends ODurablePage {
 
     setBinaryValue(entryPosition, value);
 
-    addPageOperation(new LocalHashTableV2BucketUpdateEntryPO(index, value, oldValue, keySize));
     return 1;
   }
 
@@ -316,8 +308,6 @@ public final class HashIndexBucketV2<K, V> extends ODurablePage {
 
     setIntValue(FREE_POINTER_OFFSET, freePointer + entrySize);
     setIntValue(SIZE_OFFSET, size - 1);
-
-    addPageOperation(new LocalHashTableV2BucketDeleteEntryPO(index, hashCode, key, value));
   }
 
   public boolean addEntry(final int index, long hashCode, byte[] key, byte[] value) {
@@ -335,7 +325,6 @@ public final class HashIndexBucketV2<K, V> extends ODurablePage {
 
     insertEntry(hashCode, key, value, index, entreeSize);
 
-    addPageOperation(new LocalHashTableV2BucketAddEntryPO(index, hashCode, key, value));
     return true;
   }
 
@@ -375,11 +364,7 @@ public final class HashIndexBucketV2<K, V> extends ODurablePage {
   }
 
   public void setDepth(int depth) {
-    final byte oldDepth = getByteValue(DEPTH_OFFSET);
-
     setByteValue(DEPTH_OFFSET, (byte) depth);
-
-    addPageOperation(new LocalHashTableV2BucketSetDepthPO((byte) depth, oldDepth));
   }
 
   private final class EntryIterator implements Iterator<OHashTable.Entry<K, V>> {
