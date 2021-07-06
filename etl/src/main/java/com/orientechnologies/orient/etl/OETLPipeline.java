@@ -67,9 +67,9 @@ public class OETLPipeline {
     loader.beginLoader(this);
     for (OETLTransformer transformer : transformers) {
       transformer.setContext(context);
-      ODatabaseDocument db = pool.acquire();
-      transformer.begin(db);
-      db.close();
+      try(ODatabaseDocument db = acquire()) {
+        transformer.begin(db);
+      }
     }
   }
 
@@ -80,12 +80,18 @@ public class OETLPipeline {
   public OCommandContext getContext() {
     return context;
   }
+  
+  protected ODatabaseDocument acquire() {
+	  if(pool==null) return null;
+	  ODatabaseDocument db = pool.acquire();
+	  db.activateOnCurrentThread();
+	  return db;
+  }
 
   protected Object execute(final OETLExtractedItem source) {
     int retry = 0;
     do {
-      ODatabaseDocument db = pool.acquire();
-      db.activateOnCurrentThread();
+      try(ODatabaseDocument db = acquire()) {
       try {
         Object current = source.payload;
 
@@ -95,7 +101,7 @@ public class OETLPipeline {
         for (OETLTransformer t : transformers) {
           current = t.transform(db, current);
           if (current == null) {
-            OETLContextWrapper.getInstance()
+            processor.getContext()
                 .getMessageHandler()
                 .warn(this, "Transformer [%s] returned null, skip rest of pipeline execution", t);
           }
@@ -110,7 +116,7 @@ public class OETLPipeline {
       } catch (ONeedRetryException e) {
         loader.rollback(db);
         retry++;
-        OETLContextWrapper.getInstance()
+        processor.getContext()
             .getMessageHandler()
             .info(
                 this,
@@ -119,7 +125,7 @@ public class OETLPipeline {
                 maxRetries,
                 e);
       } catch (OETLProcessHaltedException e) {
-        OETLContextWrapper.getInstance()
+        processor.getContext()
             .getMessageHandler()
             .error(this, "Pipeline execution halted");
 
@@ -129,7 +135,7 @@ public class OETLPipeline {
         throw e;
 
       } catch (Exception e) {
-        OETLContextWrapper.getInstance()
+        processor.getContext()
             .getMessageHandler()
             .error(this, "Error in Pipeline execution:", e);
 
@@ -142,8 +148,7 @@ public class OETLPipeline {
         loader.rollback(db);
         throw OException.wrapException(new OETLProcessHaltedException("Halt"), e);
 
-      } finally {
-        db.close();
+      }
       }
     } while (retry < maxRetries);
 

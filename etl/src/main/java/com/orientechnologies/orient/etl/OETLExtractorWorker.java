@@ -37,7 +37,7 @@ class OETLExtractorWorker implements Runnable {
 
   @Override
   public void run() {
-    OETLContextWrapper.getInstance().getMessageHandler().debug(this, "Start extracting");
+	extractor.getProcessor().getContext().getMessageHandler().debug(this, "Start extracting");
     boolean fetch = true;
     while (fetch == true) {
 
