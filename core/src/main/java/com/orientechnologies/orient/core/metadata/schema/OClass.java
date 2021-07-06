@@ -444,9 +444,6 @@ public interface OClass extends Comparable<OClass> {
   /** @return All indexes for given class and its super classes. */
   Set<OIndex> getIndexes();
 
-  /** Returns the auto sharding index configured for the class if any. */
-  OIndex getAutoShardingIndex();
-
   /** @return true if this class represents a subclass of an edge class (E) */
   boolean isEdgeType();
 

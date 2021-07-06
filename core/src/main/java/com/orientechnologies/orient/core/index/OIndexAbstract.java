@@ -994,29 +994,22 @@ public abstract class OIndexAbstract implements OIndexInternal {
 
     while (true) {
       try {
-        engine = storage.getIndexEngine(indexId);
-        break;
+        return storage.getIndexNameByKey(indexId, key);
       } catch (OInvalidIndexEngineIdException ignore) {
         doReloadIndexEngine();
       }
     }
-    return engine.getIndexNameByKey(key);
   }
 
   @Override
   public boolean acquireAtomicExclusiveLock(Object key) {
-    OBaseIndexEngine engine;
-
     while (true) {
       try {
-        engine = storage.getIndexEngine(indexId);
-        break;
+        return storage.acquireIndexEngineExclusiveLock(indexId, key);
       } catch (OInvalidIndexEngineIdException ignore) {
         doReloadIndexEngine();
       }
     }
-
-    return engine.acquireAtomicExclusiveLock(key);
   }
 
   protected static ODatabaseDocumentInternal getDatabase() {

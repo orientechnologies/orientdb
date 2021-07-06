@@ -42,11 +42,6 @@ public abstract class OClassAbstractDelegate implements OClass {
   }
 
   @Override
-  public OIndex getAutoShardingIndex() {
-    return delegate.getAutoShardingIndex();
-  }
-
-  @Override
   public boolean isStrictMode() {
     return delegate.isStrictMode();
   }

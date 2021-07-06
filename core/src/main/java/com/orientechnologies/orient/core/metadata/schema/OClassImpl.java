@@ -47,7 +47,6 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sharding.auto.OAutoShardingClusterSelectionStrategy;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
@@ -1225,14 +1224,6 @@ public abstract class OClassImpl implements OClass {
   }
 
   @Override
-  public OIndex getAutoShardingIndex() {
-    final ODatabaseDocumentInternal db = getDatabase();
-    return db != null
-        ? db.getMetadata().getIndexManagerInternal().getClassAutoShardingIndex(db, name)
-        : null;
-  }
-
-  @Override
   public boolean isEdgeType() {
     return isSubClassOf(EDGE_CLASS_NAME);
   }
@@ -1240,30 +1231,6 @@ public abstract class OClassImpl implements OClass {
   @Override
   public boolean isVertexType() {
     return isSubClassOf(VERTEX_CLASS_NAME);
-  }
-
-  public void onPostIndexManagement() {
-    final OIndex autoShardingIndex = getAutoShardingIndex();
-    if (autoShardingIndex != null) {
-      if (!getDatabase().getStorage().isRemote()) {
-        // OVERRIDE CLUSTER SELECTION
-        acquireSchemaWriteLock();
-        try {
-          this.clusterSelection =
-              new OAutoShardingClusterSelectionStrategy(this, autoShardingIndex);
-        } finally {
-          releaseSchemaWriteLock();
-        }
-      }
-    } else if (clusterSelection instanceof OAutoShardingClusterSelectionStrategy) {
-      // REMOVE AUTO SHARDING CLUSTER SELECTION
-      acquireSchemaWriteLock();
-      try {
-        this.clusterSelection = owner.getClusterSelectionFactory().newInstanceOfDefaultClass();
-      } finally {
-        releaseSchemaWriteLock();
-      }
-    }
   }
 
   @Override

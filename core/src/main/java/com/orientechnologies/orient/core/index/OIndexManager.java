@@ -84,15 +84,6 @@ public interface OIndexManager {
   OIndex getIndex(final String iName);
 
   /**
-   * Returns the auto-sharding index defined for the class, if any.
-   *
-   * @param className Class name
-   * @deprecated Manual indexes are deprecated and will be removed
-   */
-  @Deprecated
-  OIndex getClassAutoShardingIndex(String className);
-
-  /**
    * Checks if index with specified name exists in database.
    *
    * @param iName name of index.

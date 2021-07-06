@@ -1017,17 +1017,6 @@ public class OrientDBEmbedded implements OrientDBInternal {
     }
   }
 
-  @Override
-  public void rollbackOperationsFromThread(final Thread thread) {
-    synchronized (this) {
-      final Thread currentThread = Thread.currentThread();
-
-      for (final OAbstractPaginatedStorage storage : storages.values()) {
-        storage.rollbackOperationsFromThread(thread);
-      }
-    }
-  }
-
   public void removeShutdownHook() {
     orient.removeOrientDB(this);
   }

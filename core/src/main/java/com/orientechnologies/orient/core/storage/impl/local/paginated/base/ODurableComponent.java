@@ -102,11 +102,6 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     atomicOperationsManager.executeInsideComponentOperation(operation, this, consumer);
   }
 
-  protected boolean tryExecuteInsideComponentOperation(
-      final OAtomicOperation operation, final TxConsumer consumer) {
-    return atomicOperationsManager.tryExecuteInsideComponentOperation(operation, this, consumer);
-  }
-
   protected long getFilledUpTo(final OAtomicOperation atomicOperation, final long fileId) {
     if (atomicOperation == null) {
       return writeCache.getFilledUpTo(fileId);
@@ -141,21 +136,11 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
       final boolean checkPinnedPages,
       final int pageCount)
       throws IOException {
-    try {
-      if (storage != null) {
-        storage.interruptionManager.enterCriticalPath();
-      }
-
-      if (atomicOperation == null) {
-        return readCache.loadForRead(fileId, pageIndex, checkPinnedPages, writeCache, true);
-      }
-
-      return atomicOperation.loadPageForRead(fileId, pageIndex, checkPinnedPages, pageCount);
-    } finally {
-      if (storage != null) {
-        storage.interruptionManager.exitCriticalPath();
-      }
+    if (atomicOperation == null) {
+      return readCache.loadForRead(fileId, pageIndex, checkPinnedPages, writeCache, true);
     }
+
+    return atomicOperation.loadPageForRead(fileId, pageIndex, checkPinnedPages, pageCount);
   }
 
   protected OCacheEntry addPage(final OAtomicOperation atomicOperation, final long fileId)

@@ -90,7 +90,6 @@ public class OImmutableClass implements OClass {
   private boolean ouser;
   private boolean orole;
   private boolean oSecurityPolicy;
-  private OIndex autoShardingIndex;
   private HashSet<OIndex> indexes;
 
   public OImmutableClass(final OClass oClass, final OImmutableSchema schema) {
@@ -157,16 +156,6 @@ public class OImmutableClass implements OClass {
       this.oSecurityPolicy = isSubClassOf(OSecurityPolicy.CLASS_NAME);
       this.indexes = new HashSet<>();
       getRawIndexes(indexes);
-
-      final ODatabaseDocumentInternal db = getDatabase();
-      if (db != null
-          && db.getMetadata() != null
-          && db.getMetadata().getIndexManagerInternal() != null) {
-        this.autoShardingIndex =
-            db.getMetadata().getIndexManagerInternal().getClassAutoShardingIndex(db, name);
-      } else {
-        this.autoShardingIndex = null;
-      }
     }
 
     inited = true;
@@ -718,11 +707,6 @@ public class OImmutableClass implements OClass {
 
   public Set<OIndex> getRawIndexes() {
     return indexes;
-  }
-
-  @Override
-  public OIndex getAutoShardingIndex() {
-    return autoShardingIndex;
   }
 
   @Override

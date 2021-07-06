@@ -23,11 +23,7 @@ package com.orientechnologies.orient.core.storage.impl.local;
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.RID_BAG_SBTREEBONSAI_DELETE_DELAY;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
-import com.orientechnologies.common.concur.lock.OLockManager;
-import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
-import com.orientechnologies.common.concur.lock.ONotThreadRWLockManager;
-import com.orientechnologies.common.concur.lock.OPartitionedLockManager;
-import com.orientechnologies.common.concur.lock.OSimpleRWLockManager;
+import com.orientechnologies.common.concur.lock.*;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OHighLevelException;
 import com.orientechnologies.common.io.OIOException;
@@ -64,20 +60,7 @@ import com.orientechnologies.orient.core.db.record.ridbag.ORidBagDeleter;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.encryption.OEncryptionFactory;
 import com.orientechnologies.orient.core.encryption.impl.ONothingEncryption;
-import com.orientechnologies.orient.core.exception.OClusterDoesNotExistException;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
-import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
-import com.orientechnologies.orient.core.exception.OInvalidDatabaseNameException;
-import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.exception.ORetryQueryException;
-import com.orientechnologies.orient.core.exception.OStorageDoesNotExistException;
-import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.exception.OStorageExistsException;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndexAbstract;
@@ -109,7 +92,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
-import com.orientechnologies.orient.core.sharding.auto.OAutoShardingIndexEngine;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OIdentifiableStorage;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
@@ -193,7 +175,6 @@ import java.util.TimeZone;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.UUID;
-import java.util.WeakHashMap;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -220,8 +201,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       Comparator.comparing(o -> o.getRecord().getIdentity());
 
   protected static final OScheduledThreadPoolExecutorWithLogging fuzzyCheckpointExecutor;
-
-  public OStorageInterruptionManager interruptionManager = new OStorageInterruptionManager();
 
   static {
     fuzzyCheckpointExecutor =
@@ -266,8 +245,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private UUID uuid;
   private volatile byte[] lastMetadata = null;
 
-  private long fullCheckpointCount = 0;
-
   private final OModifiableLong recordCreated = new OModifiableLong();
   private final OModifiableLong recordUpdated = new OModifiableLong();
   private final OModifiableLong recordRead = new OModifiableLong();
@@ -284,8 +261,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private final AtomicLong lastCloseTime = new AtomicLong(System.currentTimeMillis());
 
   protected AtomicOperationsTable atomicOperationsTable;
-
-  private final Set<Thread> blockedThreads = Collections.newSetFromMap(new WeakHashMap<>());
 
   public OAbstractPaginatedStorage(
       final String name, final String filePath, final String mode, final int id) {
@@ -837,11 +812,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         stateLock.releaseReadLock();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -892,9 +867,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         final long lockId = atomicOperationsManager.freezeAtomicOperations(null, null);
         try {
-          interruptionManager.enterCriticalPath();
           checkOpenness();
-          checkIfThreadIsBlocked();
+          checkIfThreadIsInterrupted();
 
           final long start = System.currentTimeMillis();
 
@@ -912,17 +886,16 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           return pageErrors.length == 0;
         } finally {
           atomicOperationsManager.releaseAtomicOperations(lockId);
-          interruptionManager.exitCriticalPath();
         }
       } finally {
         stateLock.releaseReadLock();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -931,9 +904,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       stateLock.acquireWriteLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         makeStorageDirty();
         return atomicOperationsManager.calculateInsideAtomicOperation(
@@ -944,7 +916,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             new OStorageException("Error in creation of new cluster '" + clusterName), e);
       } finally {
         stateLock.releaseWriteLock();
-        interruptionManager.exitCriticalPath();
       }
     } catch (final RuntimeException ee) {
       throw logAndPrepareForRethrow(ee);
@@ -960,9 +931,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       stateLock.acquireWriteLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         if (requestedId < 0) {
           throw new OConfigurationException("Cluster id must be positive!");
@@ -985,7 +955,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             new OStorageException("Error in creation of new cluster '" + clusterName + "'"), e);
       } finally {
         stateLock.releaseWriteLock();
-        interruptionManager.exitCriticalPath();
       }
     } catch (final RuntimeException ee) {
       throw logAndPrepareForRethrow(ee);
@@ -1001,10 +970,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       stateLock.acquireWriteLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
 
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         if (clusterId < 0 || clusterId >= clusters.size()) {
           throw new IllegalArgumentException(
@@ -1038,7 +1006,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       } finally {
         stateLock.releaseWriteLock();
-        interruptionManager.exitCriticalPath();
       }
     } catch (final RuntimeException ee) {
       throw logAndPrepareForRethrow(ee);
@@ -1068,7 +1035,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         checkClusterId(clusterId);
         final OCluster cluster = clusters.get(clusterId);
@@ -1082,11 +1049,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       }
 
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -1095,9 +1062,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         checkClusterId(clusterId);
         final OCluster cluster = clusters.get(clusterId);
@@ -1108,14 +1074,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         return cluster.getRecordsSize();
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -1126,9 +1091,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         final OCluster cluster =
             clusterMap.get(clusterName.toLowerCase(configuration.getLocaleInstance()));
@@ -1139,14 +1103,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         return cluster.getRecordsSize();
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -1155,9 +1118,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         checkClusterId(clusterId);
         final OCluster cluster = clusters.get(clusterId);
@@ -1170,14 +1132,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             .orElse(null);
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -1186,9 +1147,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         checkClusterId(clusterId);
         final OCluster cluster = clusters.get(clusterId);
@@ -1199,14 +1159,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         return cluster.encryption();
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -1215,9 +1174,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         checkClusterId(clusterId);
         final OCluster cluster = clusters.get(clusterId);
@@ -1228,14 +1186,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         return cluster.isSystemCluster();
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -1244,9 +1201,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         checkClusterId(clusterId);
         final OCluster cluster = clusters.get(clusterId);
@@ -1257,14 +1213,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         return cluster.getLastPosition();
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -1273,9 +1228,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         checkClusterId(clusterId);
         final OCluster cluster = clusters.get(clusterId);
@@ -1286,14 +1240,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         return cluster.getNextPosition();
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -1302,9 +1255,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         final int clusterId = rid.getClusterId();
         checkClusterId(clusterId);
@@ -1316,14 +1268,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         return ((OPaginatedCluster) cluster).getRecordStatus(rid.getClusterPosition());
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -1421,9 +1372,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       // COUNT PHYSICAL CLUSTER IF ANY
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         final OCluster cluster = clusters.get(clusterId);
         if (cluster == null) {
@@ -1437,14 +1387,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         return cluster.getEntries() - cluster.getTombstonesCount();
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -1457,9 +1406,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         if (clusters.get(iClusterId) != null) {
           return new long[] {
@@ -1474,14 +1422,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             new OStorageException("Cannot retrieve information about data range"), ioe);
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -1489,11 +1436,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       return writeAheadLog.end();
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -1538,7 +1485,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     List<OTransactionId> started = new ArrayList<>();
     stateLock.acquireReadLock();
     try {
-      Set<OTransactionId> transactionsToRead = new HashSet<OTransactionId>(transactionsMetadata);
+      Set<OTransactionId> transactionsToRead = new HashSet<>(transactionsMetadata);
       // we iterate till the last record is contained in wal at the moment when we call this method
       OLogSequenceNumber beginLsn = writeAheadLog.begin();
       Map<Long, OTransactionData> units = new HashMap<>();
@@ -1704,9 +1651,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         for (final int iClusterId : iClusterIds) {
           if (iClusterId >= clusters.size()) {
@@ -1725,14 +1671,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         return tot;
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -1743,7 +1688,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final byte recordType,
       final ORecordCallback<Long> callback) {
     try {
-      interruptionManager.enterCriticalPath();
       final OCluster cluster = doGetAndCheckCluster(rid.getClusterId());
       if (transaction.get() != null) {
         final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
@@ -1755,7 +1699,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         checkOpenness();
 
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         makeStorageDirty();
 
@@ -1780,8 +1724,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throw logAndPrepareForRethrow(ee);
     } catch (final Throwable t) {
       throw logAndPrepareForRethrow(t);
-    } finally {
-      interruptionManager.exitCriticalPath();
     }
   }
 
@@ -1795,10 +1737,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         final OCluster cluster = doGetAndCheckCluster(rid.getClusterId());
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         final OPhysicalPosition ppos =
             cluster.getPhysicalPosition(new OPhysicalPosition(rid.getClusterPosition()));
@@ -1816,13 +1757,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       return null;
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    } finally {
-      interruptionManager.exitCriticalPath();
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -1835,10 +1774,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         final OCluster cluster = doGetAndCheckCluster(rid.getClusterId());
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         return cluster.isDeleted(new OPhysicalPosition(rid.getClusterPosition()));
 
@@ -1847,16 +1785,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             .error(this, "Retrieval of record  '" + rid + "' cause: " + ioe.getMessage(), ioe);
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
 
       return false;
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -1864,9 +1801,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         final int finalClusterId;
 
@@ -1903,14 +1839,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         };
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -1918,14 +1853,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
 
         final OCluster cluster = doGetAndCheckCluster(clusterId);
         return cluster.nextPage(lastPosition);
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
     } catch (final RuntimeException ee) {
       throw logAndPrepareForRethrow(ee);
@@ -1956,11 +1889,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       return new OStorageOperationResult<>(readRecord(rid, prefetchRecords));
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -1974,11 +1907,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       return new OStorageOperationResult<>(readRecordIfNotLatest(rid, recordVersion));
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -1996,9 +1929,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
-        interruptionManager.enterCriticalPath();
         // GET THE SHARED LOCK AND GET AN EXCLUSIVE LOCK AGAINST THE RECORD
         final Lock lock = recordVersionManager.acquireExclusiveLock(rid);
         try {
@@ -2022,7 +1954,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         }
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
     } catch (final RuntimeException ee) {
       throw logAndPrepareForRethrow(ee);
@@ -2060,9 +1991,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         final OCluster cluster = doGetAndCheckCluster(rid.getClusterId());
 
@@ -2071,7 +2001,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             null, atomicOperation -> doDeleteRecord(atomicOperation, rid, version, cluster));
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
     } catch (final RuntimeException ee) {
       throw logAndPrepareForRethrow(ee);
@@ -2087,21 +2016,19 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         return new HashSet<>(clusterMap.keySet());
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -2118,9 +2045,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         // SEARCH IT BETWEEN PHYSICAL CLUSTERS
 
@@ -2133,14 +2059,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         return -1;
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -2167,9 +2092,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       }
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         makeStorageDirty();
         atomicOperationsManager.executeInsideAtomicOperation(
@@ -2227,7 +2151,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         throw OException.wrapException(new OStorageException("Could not preallocate RIDs"), ioe);
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
 
     } catch (final RuntimeException ee) {
@@ -2342,7 +2265,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final List<ORecordOperation> result = new ArrayList<>(8);
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         if (modificationLock) {
           final List<ORID> recordLocks = new ArrayList<>();
           for (final ORecordOperation recordOperation : recordOperations) {
@@ -2363,7 +2285,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         try {
           checkOpenness();
 
-          checkIfThreadIsBlocked();
+          checkIfThreadIsInterrupted();
 
           makeStorageDirty();
 
@@ -2483,7 +2405,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           }
         } finally {
           stateLock.releaseReadLock();
-          interruptionManager.exitCriticalPath();
         }
       }
 
@@ -2559,9 +2480,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         final OBaseIndexEngine engine = indexEngineNameMap.get(name);
         if (engine == null) {
@@ -2574,14 +2494,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         return generateIndexId(indexId, engine);
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -2600,9 +2519,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       stateLock.acquireWriteLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         // this method introduced for binary compatibility only
         if (configuration.getBinaryFormatVersion() > 15) {
@@ -2689,14 +2607,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             new OStorageException("Cannot add index engine " + engineName + " in storage."), e);
       } finally {
         stateLock.releaseWriteLock();
-        interruptionManager.exitCriticalPath();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -2725,9 +2642,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       stateLock.acquireWriteLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         makeStorageDirty();
         return atomicOperationsManager.calculateInsideAtomicOperation(
@@ -2822,9 +2738,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                   .addIndexEngine(atomicOperation, engineName, engineData);
 
               if (multivalue
-                      && (engine instanceof OSBTreeIndexEngine
-                          || engine instanceof OHashTableIndexEngine)
-                  || engine instanceof OAutoShardingIndexEngine) {
+                  && (engine instanceof OSBTreeIndexEngine
+                      || engine instanceof OHashTableIndexEngine)) {
                 final OSBTreeBonsaiLocal<OIdentifiable, Boolean> tree =
                     new OSBTreeBonsaiLocal<>(
                         engineName, OIndexRIDContainerSBTree.INDEX_FILE_EXTENSION, this);
@@ -2838,7 +2753,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             new OStorageException("Cannot add index engine " + engineName + " in storage."), e);
       } finally {
         stateLock.releaseWriteLock();
-        interruptionManager.exitCriticalPath();
       }
     } catch (final RuntimeException ee) {
       throw logAndPrepareForRethrow(ee);
@@ -2982,9 +2896,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       stateLock.acquireWriteLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         checkIndexId(internalIndexId);
 
@@ -3004,8 +2917,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
               if (engineData.isMultivalue()
                   && (engine instanceof OSBTreeIndexEngine
-                      || engine instanceof OHashTableIndexEngine
-                      || engine instanceof OAutoShardingIndexEngine)) {
+                      || engine instanceof OHashTableIndexEngine)) {
                 final OSBTreeBonsaiLocal<OIdentifiable, Boolean> tree =
                     new OSBTreeBonsaiLocal<>(
                         engineName, OIndexRIDContainerSBTree.INDEX_FILE_EXTENSION, this);
@@ -3017,7 +2929,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         throw OException.wrapException(new OStorageException("Error on index deletion"), e);
       } finally {
         stateLock.releaseWriteLock();
-        interruptionManager.exitCriticalPath();
       }
     } catch (final OInvalidIndexEngineIdException ie) {
       throw logAndPrepareForRethrow(ie);
@@ -3064,9 +2975,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         makeStorageDirty();
         return atomicOperationsManager.calculateInsideAtomicOperation(
@@ -3074,7 +2984,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             atomicOperation -> removeKeyFromIndexInternal(atomicOperation, internalIndexId, key));
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
     } catch (final OInvalidIndexEngineIdException ie) {
       throw logAndPrepareForRethrow(ie);
@@ -3124,9 +3033,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         makeStorageDirty();
 
@@ -3134,7 +3042,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             null, atomicOperation -> doClearIndex(atomicOperation, internalIndexId));
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
     } catch (final OInvalidIndexEngineIdException ie) {
       throw logAndPrepareForRethrow(ie);
@@ -3171,23 +3078,19 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         return doGetIndexValue(indexId, key);
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
-    } catch (final OInvalidIndexEngineIdException ie) {
-      throw logAndPrepareForRethrow(ie);
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(ee, false);
+    } catch (final Throwable ie) {
+      throw logAndPrepareForRethrow(ie, false);
     }
   }
 
@@ -3215,7 +3118,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     indexId = extractInternalId(indexId);
 
     try {
-      interruptionManager.enterCriticalPath();
       if (transaction.get() != null) {
         return doGetIndexValues(indexId, key);
       }
@@ -3223,22 +3125,18 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         return doGetIndexValues(indexId, key);
       } finally {
         stateLock.releaseReadLock();
       }
-    } catch (final OInvalidIndexEngineIdException ie) {
-      throw logAndPrepareForRethrow(ie);
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    } finally {
-      interruptionManager.exitCriticalPath();
+      throw logAndPrepareForRethrow(ee, false);
+    } catch (final Throwable ie) {
+      throw logAndPrepareForRethrow(ie, false);
     }
   }
 
@@ -3252,7 +3150,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return ((OV1IndexEngine) engine).get(key);
   }
 
-  public OBaseIndexEngine getIndexEngine(int indexId) throws OInvalidIndexEngineIdException {
+  public String getIndexNameByKey(int indexId, final Object key)
+      throws OInvalidIndexEngineIdException {
     indexId = extractInternalId(indexId);
 
     try {
@@ -3260,25 +3159,48 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         final OBaseIndexEngine engine = indexEngines.get(indexId);
         assert indexId == engine.getId();
-        return engine;
+        return engine.getIndexNameByKey(key);
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
-    } catch (final OInvalidIndexEngineIdException ie) {
-      throw logAndPrepareForRethrow(ie);
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(ee, false);
+    } catch (final Throwable ie) {
+      throw logAndPrepareForRethrow(ie, false);
+    }
+  }
+
+  public boolean acquireIndexEngineExclusiveLock(int indexId, final Object key)
+      throws OInvalidIndexEngineIdException {
+    indexId = extractInternalId(indexId);
+
+    try {
+      checkIndexId(indexId);
+
+      stateLock.acquireReadLock();
+      try {
+        checkOpenness();
+        checkIfThreadIsInterrupted();
+
+        final OBaseIndexEngine engine = indexEngines.get(indexId);
+        assert indexId == engine.getId();
+        return engine.acquireAtomicExclusiveLock(key);
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (final RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee, false);
+    } catch (final Error ee) {
+      throw logAndPrepareForRethrow(ee, false);
+    } catch (final Throwable ie) {
+      throw logAndPrepareForRethrow(ie, false);
     }
   }
 
@@ -3303,9 +3225,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         makeStorageDirty();
         atomicOperationsManager.executeInsideAtomicOperation(
@@ -3314,7 +3235,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                 doUpdateIndexEntry(atomicOperation, internalIndexId, key, valueCreator));
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
     } catch (final OInvalidIndexEngineIdException ie) {
       throw logAndPrepareForRethrow(ie);
@@ -3335,9 +3255,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         if (!readOperation) {
           makeStorageDirty();
@@ -3346,7 +3265,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         return doCallIndexEngine(indexId, callback);
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
     } catch (final OInvalidIndexEngineIdException ie) {
       throw logAndPrepareForRethrow(ie);
@@ -3402,9 +3320,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         makeStorageDirty();
 
@@ -3414,7 +3331,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                 putRidIndexEntryInternal(atomicOperation, internalIndexId, key, value));
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
     } catch (final OInvalidIndexEngineIdException ie) {
       throw logAndPrepareForRethrow(ie);
@@ -3457,9 +3373,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         makeStorageDirty();
 
@@ -3469,7 +3384,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                 removeRidIndexEntryInternal(atomicOperation, internalIndexId, key, value));
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
     } catch (final OInvalidIndexEngineIdException ie) {
       throw logAndPrepareForRethrow(ie);
@@ -3513,9 +3427,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         makeStorageDirty();
 
@@ -3524,7 +3437,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             atomicOperation -> putIndexValueInternal(atomicOperation, internalIndexId, key, value));
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
     } catch (final OInvalidIndexEngineIdException ie) {
       throw logAndPrepareForRethrow(ie);
@@ -3584,9 +3496,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         makeStorageDirty();
 
@@ -3596,7 +3507,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                 doValidatedPutIndexValue(atomicOperation, internalIndexId, key, value, validator));
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
     } catch (final OInvalidIndexEngineIdException ie) {
       throw logAndPrepareForRethrow(ie);
@@ -3660,24 +3570,20 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         return doIterateIndexEntriesBetween(
             indexId, rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder, transformer);
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
-    } catch (final OInvalidIndexEngineIdException ie) {
-      throw logAndPrepareForRethrow(ie);
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(ee, false);
+    } catch (final Throwable ie) {
+      throw logAndPrepareForRethrow(ie, false);
     }
   }
 
@@ -3715,23 +3621,19 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         return doIterateIndexEntriesMajor(indexId, fromKey, isInclusive, ascSortOrder, transformer);
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
-    } catch (final OInvalidIndexEngineIdException ie) {
-      throw logAndPrepareForRethrow(ie);
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(ee, false);
+    } catch (final Throwable ie) {
+      throw logAndPrepareForRethrow(ie, false);
     }
   }
 
@@ -3766,23 +3668,19 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         return doIterateIndexEntriesMinor(indexId, toKey, isInclusive, ascSortOrder, transformer);
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
-    } catch (final OInvalidIndexEngineIdException ie) {
-      throw logAndPrepareForRethrow(ie);
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(ee, false);
+    } catch (final Throwable ie) {
+      throw logAndPrepareForRethrow(ie, false);
     }
   }
 
@@ -3813,23 +3711,19 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         return doGetIndexStream(indexId, valuesTransformer);
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
-    } catch (final OInvalidIndexEngineIdException ie) {
-      throw logAndPrepareForRethrow(ie);
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(ee, false);
+    } catch (final Throwable ie) {
+      throw logAndPrepareForRethrow(ie, false);
     }
   }
 
@@ -3856,23 +3750,19 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         return doGetIndexDescStream(indexId, valuesTransformer);
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
-    } catch (final OInvalidIndexEngineIdException ie) {
-      throw logAndPrepareForRethrow(ie);
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(ee, false);
+    } catch (final Throwable ie) {
+      throw logAndPrepareForRethrow(ie, false);
     }
   }
 
@@ -3897,23 +3787,19 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         return doGetIndexKeyStream(indexId);
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
-    } catch (final OInvalidIndexEngineIdException ie) {
-      throw logAndPrepareForRethrow(ie);
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(ee, false);
+    } catch (final Throwable ie) {
+      throw logAndPrepareForRethrow(ie, false);
     }
   }
 
@@ -3938,23 +3824,19 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         return doGetIndexSize(indexId, transformer);
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
-    } catch (final OInvalidIndexEngineIdException ie) {
-      throw logAndPrepareForRethrow(ie);
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(ee, false);
+    } catch (final Throwable ie) {
+      throw logAndPrepareForRethrow(ie, false);
     }
   }
 
@@ -3979,23 +3861,19 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         return doHasRangeQuerySupport(indexId);
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
-    } catch (final OInvalidIndexEngineIdException ie) {
-      throw logAndPrepareForRethrow(ie);
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(ee, false);
+    } catch (final Throwable ie) {
+      throw logAndPrepareForRethrow(ie, false);
     }
   }
 
@@ -4034,11 +3912,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       return ppos != null && !ORecordVersionHelper.isTombstone(ppos.recordVersion);
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -4047,12 +3925,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         final long timer = Orient.instance().getProfiler().startChrono();
         final long lockId = atomicOperationsManager.freezeAtomicOperations(null, null);
         try {
           checkOpenness();
-          checkIfThreadIsBlocked();
+          checkIfThreadIsInterrupted();
 
           if (status != STATUS.INTERNAL_ERROR) {
             for (final OBaseIndexEngine indexEngine : indexEngines) {
@@ -4089,7 +3966,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         }
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
     } catch (final RuntimeException ee) {
       throw logAndPrepareForRethrow(ee);
@@ -4106,7 +3982,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         if (iClusterId < 0 || iClusterId >= clusters.size()) {
           return null;
@@ -4117,11 +3993,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         stateLock.releaseReadLock();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -4139,9 +4015,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public String getClusterName(int clusterId) {
     stateLock.acquireReadLock();
     try {
-      interruptionManager.enterCriticalPath();
       checkOpenness();
-      checkIfThreadIsBlocked();
+      checkIfThreadIsInterrupted();
 
       if (clusterId == ORID.CLUSTER_ID_INVALID) {
         clusterId = defaultClusterId;
@@ -4152,14 +4027,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       return doGetAndCheckCluster(clusterId).getName();
 
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     } finally {
       stateLock.releaseReadLock();
-      interruptionManager.exitCriticalPath();
     }
   }
 
@@ -4171,9 +4045,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         stateLock.acquireReadLock();
         try {
-          interruptionManager.enterCriticalPath();
           checkOpenness();
-          checkIfThreadIsBlocked();
+          checkIfThreadIsInterrupted();
 
           for (final OCluster c : clusters) {
             if (c != null) {
@@ -4182,7 +4055,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           }
         } finally {
           stateLock.releaseReadLock();
-          interruptionManager.exitCriticalPath();
         }
 
         return size;
@@ -4190,11 +4062,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         throw OException.wrapException(new OStorageException("Cannot calculate records size"), ioe);
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -4203,21 +4075,19 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         return clusterMap.size();
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -4226,9 +4096,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         final Set<OCluster> result = new HashSet<>(1024);
 
@@ -4243,14 +4112,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -4268,9 +4136,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         if (throwException) {
           atomicOperationsManager.freezeAtomicOperations(
@@ -4301,7 +4168,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         synch();
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
     } catch (final RuntimeException ee) {
       throw logAndPrepareForRethrow(ee);
@@ -4564,9 +4430,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         final OCluster cluster = doGetAndCheckCluster(currentClusterId);
         return cluster.higherPositions(physicalPosition);
@@ -4577,14 +4442,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             ioe);
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -4598,9 +4462,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         final OCluster cluster = doGetAndCheckCluster(clusterId);
         return cluster.ceilingPositions(physicalPosition);
@@ -4611,14 +4474,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             ioe);
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -4632,9 +4494,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         final OCluster cluster = doGetAndCheckCluster(currentClusterId);
 
@@ -4646,14 +4507,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             ioe);
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -4667,9 +4527,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         checkOpenness();
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         final OCluster cluster = doGetAndCheckCluster(clusterId);
 
@@ -4681,14 +4540,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             ioe);
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -4802,9 +4660,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     Objects.requireNonNull(conflictResolver);
     stateLock.acquireWriteLock();
     try {
-      interruptionManager.enterCriticalPath();
       checkOpenness();
-      checkIfThreadIsBlocked();
+      checkIfThreadIsInterrupted();
 
       makeStorageDirty();
 
@@ -4820,7 +4677,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           e);
     } finally {
       stateLock.releaseWriteLock();
-      interruptionManager.exitCriticalPath();
     }
   }
 
@@ -4899,35 +4755,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  public void rollbackOperationsFromThread(final Thread thread) {
-    try {
-      stateLock.acquireWriteLock();
-      try {
-        checkOpenness();
-        blockedThreads.add(thread);
-      } finally {
-        stateLock.releaseWriteLock();
-      }
-    } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    }
-  }
-
-  private void checkIfThreadIsBlocked() {
+  private void checkIfThreadIsInterrupted() {
     final Thread thread = Thread.currentThread();
-    if (!blockedThreads.isEmpty() && blockedThreads.contains(thread)) {
-      thread.interrupt();
+    if (thread.isInterrupted()) {
+      OLogManager.instance()
+          .warnNoDb(this, "Execution  of thread '%s' is interrupted", thread.getName());
 
-      OLogManager.instance().warnNoDb(this, "Execution  of thread '%s' is interrupted", thread);
-
-      throw new OStorageException(
-          "Operations on thread '"
-              + thread
-              + "' are blocked and can not be performed. Thread will be interrupted.");
+      throw new OInterruptedException(
+          "Execution  of thread " + thread.getName() + " is interrupted");
     }
   }
 
@@ -4940,7 +4775,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
 
     try {
-      interruptionManager.enterCriticalPath();
       if (status != STATUS.OPEN) {
         return;
       }
@@ -5001,7 +4835,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throw OException.wrapException(new OIOException("Error during fuzzy checkpoint"), ioe);
     } finally {
       stateLock.releaseReadLock();
-      interruptionManager.exitCriticalPath();
     }
   }
 
@@ -5010,16 +4843,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       if (transaction.get() == null) {
         stateLock.acquireWriteLock();
         try {
-          interruptionManager.enterCriticalPath();
           checkOpenness();
-          checkIfThreadIsBlocked();
+          checkIfThreadIsInterrupted();
 
           makeStorageDirty();
 
           doTryToDeleteTreeRidBag(ridBag);
         } finally {
           stateLock.releaseWriteLock();
-          interruptionManager.exitCriticalPath();
         }
       } else {
         doTryToDeleteTreeRidBag(ridBag);
@@ -5049,7 +4880,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
             stateLock.acquireWriteLock();
             try {
-              interruptionManager.enterCriticalPath();
               if (status == STATUS.OPEN) {
                 try {
                   final OAtomicOperationsManager atomicOperationsManager =
@@ -5069,7 +4899,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               }
             } finally {
               stateLock.releaseWriteLock();
-              interruptionManager.exitCriticalPath();
             }
           }
         };
@@ -5111,12 +4940,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throw OException.wrapException(
           new OStorageException("Error during checkpoint creation for storage " + name), ioe);
     }
-
-    fullCheckpointCount++;
-  }
-
-  public long getFullCheckpointCount() {
-    return fullCheckpointCount;
   }
 
   protected StartupMetadata checkIfStorageDirty() throws IOException {
@@ -5182,7 +5005,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     stateLock.acquireReadLock();
     try {
-      interruptionManager.enterCriticalPath();
       if (readLock) {
         final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
         if (db == null
@@ -5193,7 +5015,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       final ORawBuffer buff;
       checkOpenness();
-      checkIfThreadIsBlocked();
+      checkIfThreadIsInterrupted();
 
       final OCluster cluster = doGetAndCheckCluster(rid.getClusterId());
       buff = doReadRecordIfNotLatest(cluster, rid, recordVersion);
@@ -5209,7 +5031,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         }
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
     }
   }
@@ -5241,7 +5062,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     stateLock.acquireReadLock();
     try {
-      interruptionManager.enterCriticalPath();
       if (readLock) {
         final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
         if (db == null
@@ -5250,7 +5070,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         }
       }
       checkOpenness();
-      checkIfThreadIsBlocked();
+      checkIfThreadIsInterrupted();
       final OCluster cluster;
       try {
         cluster = doGetAndCheckCluster(rid.getClusterId());
@@ -5269,7 +5089,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         }
       } finally {
         stateLock.releaseReadLock();
-        interruptionManager.exitCriticalPath();
       }
     }
   }
@@ -5687,9 +5506,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final int id, final OCluster.ATTRIBUTES attribute, final Object value) {
     stateLock.acquireWriteLock();
     try {
-      interruptionManager.enterCriticalPath();
       checkOpenness();
-      checkIfThreadIsBlocked();
+      checkIfThreadIsInterrupted();
 
       if (id >= clusters.size()) {
         return false;
@@ -5714,7 +5532,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throw logAndPrepareForRethrow(t);
     } finally {
       stateLock.releaseWriteLock();
-      interruptionManager.exitCriticalPath();
     }
   }
 
@@ -5723,13 +5540,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       String clusterName, OCluster.ATTRIBUTES attribute, Object value) {
     Objects.requireNonNull(clusterName);
 
-    interruptionManager.enterCriticalPath();
     try {
       stateLock.acquireWriteLock();
       try {
         checkOpenness();
 
-        checkIfThreadIsBlocked();
+        checkIfThreadIsInterrupted();
 
         final OCluster cluster =
             clusterMap.get(clusterName.toLowerCase(configuration.getLocaleInstance()));
@@ -5751,8 +5567,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throw logAndPrepareForRethrow(ee);
     } catch (final Throwable t) {
       throw logAndPrepareForRethrow(t);
-    } finally {
-      interruptionManager.exitCriticalPath();
     }
   }
 
@@ -5834,7 +5648,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     stateLock.acquireWriteLock();
     try {
-      interruptionManager.enterCriticalPath();
       if (status == STATUS.CLOSED) {
         return;
       }
@@ -5865,8 +5678,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                       && !(engine instanceof OSBTreeIndexEngine
                           || engine instanceof OHashTableIndexEngine
                           || engine instanceof OCellBTreeSingleValueIndexEngine
-                          || engine instanceof OCellBTreeMultiValueIndexEngine
-                          || engine instanceof OAutoShardingIndexEngine)) {
+                          || engine instanceof OCellBTreeMultiValueIndexEngine)) {
                     engine.close();
                   }
                 }
@@ -5878,8 +5690,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                 && !(engine instanceof OSBTreeIndexEngine
                     || engine instanceof OHashTableIndexEngine
                     || engine instanceof OCellBTreeSingleValueIndexEngine
-                    || engine instanceof OCellBTreeMultiValueIndexEngine
-                    || engine instanceof OAutoShardingIndexEngine)) {
+                    || engine instanceof OCellBTreeMultiValueIndexEngine)) {
               // delete method is implemented only in non native indexes, so they do not use ODB
               // atomic operation
               engine.delete(null);
@@ -5941,7 +5752,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           .getProfiler()
           .stopChrono("db." + name + ".close", "Close a database", timer, "db.*.close");
       stateLock.releaseWriteLock();
-      interruptionManager.exitCriticalPath();
     }
 
     postCloseStepsAfterLock(params);
@@ -6540,43 +6350,37 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final OStorageConfigurationUpdateListener storageConfigurationUpdateListener) {
     stateLock.acquireWriteLock();
     try {
-      interruptionManager.enterCriticalPath();
       checkOpenness();
-      checkIfThreadIsBlocked();
+      checkIfThreadIsInterrupted();
 
       ((OClusterBasedStorageConfiguration) configuration)
           .setConfigurationUpdateListener(storageConfigurationUpdateListener);
     } finally {
       stateLock.releaseWriteLock();
-      interruptionManager.exitCriticalPath();
     }
   }
 
   public void pauseConfigurationUpdateNotifications() {
     stateLock.acquireReadLock();
     try {
-      interruptionManager.enterCriticalPath();
       checkOpenness();
-      checkIfThreadIsBlocked();
+      checkIfThreadIsInterrupted();
 
       ((OClusterBasedStorageConfiguration) configuration).pauseUpdateNotifications();
     } finally {
       stateLock.releaseReadLock();
-      interruptionManager.exitCriticalPath();
     }
   }
 
   public void fireConfigurationUpdateNotifications() {
     stateLock.acquireReadLock();
     try {
-      interruptionManager.enterCriticalPath();
       checkOpenness();
-      checkIfThreadIsBlocked();
+      checkIfThreadIsInterrupted();
 
       ((OClusterBasedStorageConfiguration) configuration).fireUpdateNotifications();
     } finally {
       stateLock.releaseReadLock();
-      interruptionManager.exitCriticalPath();
     }
   }
 
@@ -6838,9 +6642,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public final void setSchemaRecordId(final String schemaRecordId) {
     stateLock.acquireWriteLock();
     try {
-      interruptionManager.enterCriticalPath();
       checkOpenness();
-      checkIfThreadIsBlocked();
+      checkIfThreadIsInterrupted();
 
       final OClusterBasedStorageConfiguration storageConfiguration =
           (OClusterBasedStorageConfiguration) configuration;
@@ -6859,7 +6662,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throw logAndPrepareForRethrow(t);
     } finally {
       stateLock.releaseWriteLock();
-      interruptionManager.exitCriticalPath();
     }
   }
 
@@ -6867,9 +6669,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public final void setDateFormat(final String dateFormat) {
     stateLock.acquireWriteLock();
     try {
-      interruptionManager.enterCriticalPath();
       checkOpenness();
-      checkIfThreadIsBlocked();
+      checkIfThreadIsInterrupted();
 
       final OClusterBasedStorageConfiguration storageConfiguration =
           (OClusterBasedStorageConfiguration) configuration;
@@ -6886,7 +6687,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throw logAndPrepareForRethrow(t);
     } finally {
       stateLock.releaseWriteLock();
-      interruptionManager.exitCriticalPath();
     }
   }
 
@@ -6894,9 +6694,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public final void setTimeZone(final TimeZone timeZoneValue) {
     stateLock.acquireWriteLock();
     try {
-      interruptionManager.enterCriticalPath();
       checkOpenness();
-      checkIfThreadIsBlocked();
+      checkIfThreadIsInterrupted();
 
       final OClusterBasedStorageConfiguration storageConfiguration =
           (OClusterBasedStorageConfiguration) configuration;
@@ -6914,7 +6713,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throw logAndPrepareForRethrow(t);
     } finally {
       stateLock.releaseWriteLock();
-      interruptionManager.exitCriticalPath();
     }
   }
 
@@ -6922,9 +6720,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public final void setLocaleLanguage(final String locale) {
     stateLock.acquireWriteLock();
     try {
-      interruptionManager.enterCriticalPath();
       checkOpenness();
-      checkIfThreadIsBlocked();
+      checkIfThreadIsInterrupted();
 
       final OClusterBasedStorageConfiguration storageConfiguration =
           (OClusterBasedStorageConfiguration) configuration;
@@ -6941,7 +6738,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throw logAndPrepareForRethrow(t);
     } finally {
       stateLock.releaseWriteLock();
-      interruptionManager.exitCriticalPath();
     }
   }
 
@@ -6949,9 +6745,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public final void setCharset(final String charset) {
     stateLock.acquireWriteLock();
     try {
-      interruptionManager.enterCriticalPath();
       checkOpenness();
-      checkIfThreadIsBlocked();
+      checkIfThreadIsInterrupted();
 
       final OClusterBasedStorageConfiguration storageConfiguration =
           (OClusterBasedStorageConfiguration) configuration;
@@ -6968,7 +6763,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throw logAndPrepareForRethrow(t);
     } finally {
       stateLock.releaseWriteLock();
-      interruptionManager.exitCriticalPath();
     }
   }
 
@@ -6976,9 +6770,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public final void setIndexMgrRecordId(final String indexMgrRecordId) {
     stateLock.acquireWriteLock();
     try {
-      interruptionManager.enterCriticalPath();
       checkOpenness();
-      checkIfThreadIsBlocked();
+      checkIfThreadIsInterrupted();
 
       final OClusterBasedStorageConfiguration storageConfiguration =
           (OClusterBasedStorageConfiguration) configuration;
@@ -6997,7 +6790,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throw logAndPrepareForRethrow(t);
     } finally {
       stateLock.releaseWriteLock();
-      interruptionManager.exitCriticalPath();
     }
   }
 
@@ -7005,9 +6797,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public final void setDateTimeFormat(final String dateTimeFormat) {
     stateLock.acquireWriteLock();
     try {
-      interruptionManager.enterCriticalPath();
       checkOpenness();
-      checkIfThreadIsBlocked();
+      checkIfThreadIsInterrupted();
 
       final OClusterBasedStorageConfiguration storageConfiguration =
           (OClusterBasedStorageConfiguration) configuration;
@@ -7026,7 +6817,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throw logAndPrepareForRethrow(t);
     } finally {
       stateLock.releaseWriteLock();
-      interruptionManager.exitCriticalPath();
     }
   }
 
@@ -7034,9 +6824,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public final void setLocaleCountry(final String localeCountry) {
     stateLock.acquireWriteLock();
     try {
-      interruptionManager.enterCriticalPath();
       checkOpenness();
-      checkIfThreadIsBlocked();
+      checkIfThreadIsInterrupted();
 
       final OClusterBasedStorageConfiguration storageConfiguration =
           (OClusterBasedStorageConfiguration) configuration;
@@ -7054,7 +6843,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throw logAndPrepareForRethrow(t);
     } finally {
       stateLock.releaseWriteLock();
-      interruptionManager.exitCriticalPath();
     }
   }
 
@@ -7062,9 +6850,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public final void setClusterSelection(final String clusterSelection) {
     stateLock.acquireWriteLock();
     try {
-      interruptionManager.enterCriticalPath();
       checkOpenness();
-      checkIfThreadIsBlocked();
+      checkIfThreadIsInterrupted();
 
       final OClusterBasedStorageConfiguration storageConfiguration =
           (OClusterBasedStorageConfiguration) configuration;
@@ -7083,7 +6870,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throw logAndPrepareForRethrow(t);
     } finally {
       stateLock.releaseWriteLock();
-      interruptionManager.exitCriticalPath();
     }
   }
 
@@ -7091,9 +6877,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public final void setMinimumClusters(final int minimumClusters) {
     stateLock.acquireWriteLock();
     try {
-      interruptionManager.enterCriticalPath();
       checkOpenness();
-      checkIfThreadIsBlocked();
+      checkIfThreadIsInterrupted();
 
       final OClusterBasedStorageConfiguration storageConfiguration =
           (OClusterBasedStorageConfiguration) configuration;
@@ -7109,7 +6894,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throw logAndPrepareForRethrow(t);
     } finally {
       stateLock.releaseWriteLock();
-      interruptionManager.exitCriticalPath();
     }
   }
 
@@ -7117,9 +6901,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public final void setValidation(final boolean validation) {
     stateLock.acquireWriteLock();
     try {
-      interruptionManager.enterCriticalPath();
       checkOpenness();
-      checkIfThreadIsBlocked();
+      checkIfThreadIsInterrupted();
 
       final OClusterBasedStorageConfiguration storageConfiguration =
           (OClusterBasedStorageConfiguration) configuration;
@@ -7136,7 +6919,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throw logAndPrepareForRethrow(t);
     } finally {
       stateLock.releaseWriteLock();
-      interruptionManager.exitCriticalPath();
     }
   }
 
@@ -7144,9 +6926,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public final void removeProperty(final String property) {
     stateLock.acquireWriteLock();
     try {
-      interruptionManager.enterCriticalPath();
       checkOpenness();
-      checkIfThreadIsBlocked();
+      checkIfThreadIsInterrupted();
 
       final OClusterBasedStorageConfiguration storageConfiguration =
           (OClusterBasedStorageConfiguration) configuration;
@@ -7162,7 +6943,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throw logAndPrepareForRethrow(t);
     } finally {
       stateLock.releaseWriteLock();
-      interruptionManager.exitCriticalPath();
     }
   }
 
@@ -7170,9 +6950,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public final void setProperty(final String property, final String value) {
     stateLock.acquireWriteLock();
     try {
-      interruptionManager.enterCriticalPath();
       checkOpenness();
-      checkIfThreadIsBlocked();
+      checkIfThreadIsInterrupted();
 
       final OClusterBasedStorageConfiguration storageConfiguration =
           (OClusterBasedStorageConfiguration) configuration;
@@ -7190,7 +6969,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throw logAndPrepareForRethrow(t);
     } finally {
       stateLock.releaseWriteLock();
-      interruptionManager.exitCriticalPath();
     }
   }
 
@@ -7198,9 +6976,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public final void setRecordSerializer(final String recordSerializer, final int version) {
     stateLock.acquireWriteLock();
     try {
-      interruptionManager.enterCriticalPath();
       checkOpenness();
-      checkIfThreadIsBlocked();
+      checkIfThreadIsInterrupted();
 
       final OClusterBasedStorageConfiguration storageConfiguration =
           (OClusterBasedStorageConfiguration) configuration;
@@ -7221,7 +6998,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throw logAndPrepareForRethrow(t);
     } finally {
       stateLock.releaseWriteLock();
-      interruptionManager.exitCriticalPath();
     }
   }
 
@@ -7229,9 +7005,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public final void clearProperties() {
     stateLock.acquireWriteLock();
     try {
-      interruptionManager.enterCriticalPath();
       checkOpenness();
-      checkIfThreadIsBlocked();
+      checkIfThreadIsInterrupted();
 
       final OClusterBasedStorageConfiguration storageConfiguration =
           (OClusterBasedStorageConfiguration) configuration;
@@ -7248,7 +7023,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throw logAndPrepareForRethrow(t);
     } finally {
       stateLock.releaseWriteLock();
-      interruptionManager.exitCriticalPath();
     }
   }
 
@@ -7274,7 +7048,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     public void run() {
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         if (status == STATUS.CLOSED) {
           return;
         }
@@ -7327,7 +7100,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       } finally {
         stateLock.releaseReadLock();
         walVacuumInProgress.set(false);
-        interruptionManager.exitCriticalPath();
       }
     }
   }
@@ -7357,15 +7129,5 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       this.lastTxId = lastTxId;
       this.txMetadata = txMetadata;
     }
-  }
-
-  /**
-   * forces interruption of this execution
-   *
-   * @param thread The thread where this storage instance is running (has to be provided from higher
-   *     level)
-   */
-  public void interruptExecution(Thread thread) {
-    interruptionManager.interrupt(thread);
   }
 }

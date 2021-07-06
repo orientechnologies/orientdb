@@ -148,10 +148,6 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract>
     return delegate.getClassUniqueIndex(className);
   }
 
-  public OIndex getClassAutoShardingIndex(final String className) {
-    return delegate.getClassAutoShardingIndex(database, className);
-  }
-
   @Override
   public void recreateIndexes() {
     delegate.recreateIndexes(database);

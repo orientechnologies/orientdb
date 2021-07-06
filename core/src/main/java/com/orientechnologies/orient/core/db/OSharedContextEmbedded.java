@@ -83,7 +83,6 @@ public class OSharedContextEmbedded extends OSharedContext {
         functionLibrary.load(database);
         scheduler.load(database);
         sequenceLibrary.load(database);
-        schema.onPostIndexManagement();
         viewManager.load();
         loaded = true;
       }

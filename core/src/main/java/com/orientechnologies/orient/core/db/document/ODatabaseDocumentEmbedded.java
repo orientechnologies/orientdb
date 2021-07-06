@@ -140,8 +140,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     @Override
     public void run() {
       if (!canceled) {
-        System.out.println("**** Interrupting command!!!");
-        interruptExecution(executionThread);
+        executionThread.interrupt();
       }
     }
 
@@ -1706,18 +1705,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     final ORule.ResourceGeneric resourceGeneric =
         ORule.mapLegacyResourceToGenericResource(iResourceGeneric);
     return checkSecurity(resourceGeneric, iOperation, iResourcesSpecific);
-  }
-
-  @Override
-  public void interruptExecution(Thread thread) {
-    if (storage instanceof OAbstractPaginatedStorage) {
-      ((OAbstractPaginatedStorage) storage).interruptExecution(thread);
-    } else {
-      OStorage underlying = storage.getUnderlying();
-      if (underlying != null && underlying instanceof OAbstractPaginatedStorage) {
-        ((OAbstractPaginatedStorage) underlying).interruptExecution(thread);
-      }
-    }
   }
 
   public boolean isCommandInterrupted() {

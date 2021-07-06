@@ -38,7 +38,6 @@ public class OSharedContextRemote extends OSharedContext {
         schema.forceSnapshot(database);
         security.load(database);
         sequenceLibrary.load(database);
-        schema.onPostIndexManagement();
         loaded = true;
       }
     } finally {

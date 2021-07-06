@@ -273,7 +273,6 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
     for (int clusterId : clusterIdsToIndex) {
       final OClass cls = database.getMetadata().getSchema().getClassByClusterId(clusterId);
       if (cls instanceof OClassImpl && !classes.contains(cls.getName())) {
-        ((OClassImpl) cls).onPostIndexManagement();
         classes.add(cls.getName());
       }
     }

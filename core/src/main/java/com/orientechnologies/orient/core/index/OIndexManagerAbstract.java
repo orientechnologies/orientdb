@@ -39,7 +39,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sharding.auto.OAutoShardingIndexFactory;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
@@ -394,22 +393,6 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
         && index.getDefinition().getClassName() != null
         && className.equals(index.getDefinition().getClassName().toLowerCase(locale)))
       return preProcessBeforeReturn(database, index);
-    return null;
-  }
-
-  public OIndex getClassAutoShardingIndex(ODatabaseDocumentInternal database, String className) {
-    final Locale locale = getServerLocale();
-    className = className.toLowerCase(locale);
-
-    // LOOK FOR INDEX
-    for (OIndex index : indexes.values()) {
-      if (index != null
-          && OAutoShardingIndexFactory.AUTOSHARDING_ALGORITHM.equals(index.getAlgorithm())
-          && index.getDefinition() != null
-          && index.getDefinition().getClassName() != null
-          && className.equals(index.getDefinition().getClassName().toLowerCase(locale)))
-        return preProcessBeforeReturn(database, index);
-    }
     return null;
   }
 
