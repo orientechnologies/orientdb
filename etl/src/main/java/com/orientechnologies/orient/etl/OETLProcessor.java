@@ -174,9 +174,9 @@ public class OETLProcessor {
     configure();
     begin();
     try {
-    	runExtractorAndPipeline();
+      runExtractorAndPipeline();
     } finally {
-    	end();
+      end();
     }
   }
 
@@ -224,9 +224,7 @@ public class OETLProcessor {
       getContext().getMessageHandler().error(this, "ETL process halted: ", e);
       executor.shutdownNow();
     } catch (Exception e) {
-      getContext()
-          .getMessageHandler()
-          .error(this, "ETL process has problem: ", e);
+      getContext().getMessageHandler().error(this, "ETL process has problem: ", e);
       executor.shutdownNow();
     }
     executor.shutdown();

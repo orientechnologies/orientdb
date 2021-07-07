@@ -47,9 +47,9 @@ public interface OETLComponent {
    * @return the name of the component
    */
   String getName();
-  
+
   OETLContext getContext();
-  
+
   OETLProcessor getProcessor();
 
   void setProcessor(OETLProcessor processor);

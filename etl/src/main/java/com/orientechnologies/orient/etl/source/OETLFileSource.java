@@ -21,7 +21,6 @@ package com.orientechnologies.orient.etl.source;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.etl.context.OETLContextWrapper;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -34,7 +33,6 @@ import java.nio.channels.FileLock;
 import java.nio.charset.Charset;
 import java.util.logging.Level;
 import java.util.zip.GZIPInputStream;
-
 import org.apache.commons.io.input.BOMInputStream;
 
 public class OETLFileSource extends OETLAbstractSource {
@@ -69,8 +67,9 @@ public class OETLFileSource extends OETLAbstractSource {
     super.configure(iConfiguration, iContext);
 
     if (iConfiguration.containsField("lock")) lockFile = iConfiguration.<Boolean>field("lock");
-    
-    if (iConfiguration.containsField("skipBOM")) skipBOM = iConfiguration.field("skipBOM", Boolean.class);
+
+    if (iConfiguration.containsField("skipBOM"))
+      skipBOM = iConfiguration.field("skipBOM", Boolean.class);
 
     if (iConfiguration.containsField("skipFirst"))
       skipFirst = Long.parseLong(iConfiguration.<String>field("skipFirst"));
@@ -136,7 +135,7 @@ public class OETLFileSource extends OETLAbstractSource {
       raf = new RandomAccessFile(input, fileMode);
       channel = raf.getChannel();
       fis = new FileInputStream(input);
-      if(skipBOM) fis = new BOMInputStream(fis);
+      if (skipBOM) fis = new BOMInputStream(fis);
       if (fileName.endsWith(".gz"))
         fileReader = new InputStreamReader(new GZIPInputStream(fis), encoding);
       else {
@@ -154,9 +153,7 @@ public class OETLFileSource extends OETLAbstractSource {
       try {
         lock = channel.lock();
       } catch (IOException e) {
-        getContext()
-            .getMessageHandler()
-            .error(this, "Error on locking file: %s", e, fileName);
+        getContext().getMessageHandler().error(this, "Error on locking file: %s", e, fileName);
       }
 
     log(Level.INFO, "Reading from file " + path + " with encoding " + encoding.displayName());

@@ -31,7 +31,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.etl.context.OETLContext;
-
 import java.util.logging.Level;
 
 /** ETL abstract component. */
@@ -61,15 +60,15 @@ public abstract class OETLAbstractComponent implements OETLComponent {
 
   @Override
   public void end() {}
-  
+
   @Override
   public OETLContext getContext() {
-	return getProcessor().getContext();
+    return getProcessor().getContext();
   }
 
   @Override
   public OETLProcessor getProcessor() {
-	return processor;
+    return processor;
   }
 
   @Override

@@ -40,7 +40,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.etl.OETLPipeline;
 import com.orientechnologies.orient.etl.context.OETLContext;
-import com.orientechnologies.orient.etl.context.OETLContextWrapper;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;

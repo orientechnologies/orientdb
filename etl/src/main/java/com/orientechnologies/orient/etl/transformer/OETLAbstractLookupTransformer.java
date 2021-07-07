@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.etl.context.OETLContextWrapper;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;

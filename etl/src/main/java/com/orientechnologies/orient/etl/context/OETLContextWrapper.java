@@ -37,9 +37,9 @@ public class OETLContextWrapper {
   private OETLContextWrapper() {}
 
   public static OETLContextWrapper getInstance() {
-	if(instance==null) {
-		instance = new OETLContextWrapper();
-	}
+    if (instance == null) {
+      instance = new OETLContextWrapper();
+    }
     return instance;
   }
 

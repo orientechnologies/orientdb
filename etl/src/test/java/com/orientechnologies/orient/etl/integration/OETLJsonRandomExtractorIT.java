@@ -46,8 +46,8 @@ public class OETLJsonRandomExtractorIT extends OETLBaseTest {
 
   @Test
   public void shouldLoadSingleThread() {
-	OETLContext context = new OETLContext();
-	context.setVariable("parallel", Boolean.FALSE).setVariable("dumpEveryMs", 1000);
+    OETLContext context = new OETLContext();
+    context.setVariable("parallel", Boolean.FALSE).setVariable("dumpEveryMs", 1000);
     configure(
         "{extractor : { random: {items: "
             + TOTAL
@@ -71,8 +71,8 @@ public class OETLJsonRandomExtractorIT extends OETLBaseTest {
 
   @Test
   public void shouldLoadMultipleThreadsInParallel() {
-	OETLContext context = new OETLContext();
-	context.setVariable("parallel", Boolean.TRUE).setVariable("dumpEveryMs", 1000);
+    OETLContext context = new OETLContext();
+    context.setVariable("parallel", Boolean.TRUE).setVariable("dumpEveryMs", 1000);
     configure(
         "{extractor : { random: {items: "
             + TOTAL
@@ -95,8 +95,8 @@ public class OETLJsonRandomExtractorIT extends OETLBaseTest {
 
   @Test
   public void shouldLoadMultipleThreadsInParallelWithBatchCommit() {
-	OETLContext context = new OETLContext();
-	context.setVariable("parallel", Boolean.TRUE).setVariable("dumpEveryMs", 1000);
+    OETLContext context = new OETLContext();
+    context.setVariable("parallel", Boolean.TRUE).setVariable("dumpEveryMs", 1000);
     configure(
         "{extractor : { random: {items: "
             + TOTAL

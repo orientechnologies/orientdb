@@ -257,7 +257,8 @@ public class OETLProcessorConfigurator {
     if (iBeginBlocks != null) {
       for (ODocument block : iBeginBlocks) {
         final String name = block.fieldNames()[0]; // BEGIN BLOCKS
-        final OETLBlock b = configureComponent(factory.getBlock(name), block.<ODocument>field(name), iContext);
+        final OETLBlock b =
+            configureComponent(factory.getBlock(name), block.<ODocument>field(name), iContext);
         blocks.add(b);
         // Execution is necessary to resolve let blocks and provide resolved variables to other
         // components

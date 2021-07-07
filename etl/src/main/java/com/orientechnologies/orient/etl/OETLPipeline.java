@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.etl.context.OETLContextWrapper;
 import com.orientechnologies.orient.etl.loader.OETLLoader;
 import com.orientechnologies.orient.etl.transformer.OETLTransformer;
 import java.util.List;
@@ -67,7 +66,7 @@ public class OETLPipeline {
     loader.beginLoader(this);
     for (OETLTransformer transformer : transformers) {
       transformer.setContext(context);
-      try(ODatabaseDocument db = acquire()) {
+      try (ODatabaseDocument db = acquire()) {
         transformer.begin(db);
       }
     }
@@ -80,75 +79,72 @@ public class OETLPipeline {
   public OCommandContext getContext() {
     return context;
   }
-  
+
   protected ODatabaseDocument acquire() {
-	  if(pool==null) return null;
-	  ODatabaseDocument db = pool.acquire();
-	  db.activateOnCurrentThread();
-	  return db;
+    if (pool == null) return null;
+    ODatabaseDocument db = pool.acquire();
+    db.activateOnCurrentThread();
+    return db;
   }
 
   protected Object execute(final OETLExtractedItem source) {
     int retry = 0;
     do {
-      try(ODatabaseDocument db = acquire()) {
-      try {
-        Object current = source.payload;
+      try (ODatabaseDocument db = acquire()) {
+        try {
+          Object current = source.payload;
 
-        context.setVariable("extractedNum", source.num);
-        context.setVariable("extractedPayload", source.payload);
+          context.setVariable("extractedNum", source.num);
+          context.setVariable("extractedPayload", source.payload);
 
-        for (OETLTransformer t : transformers) {
-          current = t.transform(db, current);
-          if (current == null) {
-            processor.getContext()
-                .getMessageHandler()
-                .warn(this, "Transformer [%s] returned null, skip rest of pipeline execution", t);
+          for (OETLTransformer t : transformers) {
+            current = t.transform(db, current);
+            if (current == null) {
+              processor
+                  .getContext()
+                  .getMessageHandler()
+                  .warn(this, "Transformer [%s] returned null, skip rest of pipeline execution", t);
+            }
           }
+          if (current != null) {
+            // LOAD
+            loader.load(db, current, context);
+          }
+
+          db.commit();
+          return current;
+        } catch (ONeedRetryException e) {
+          loader.rollback(db);
+          retry++;
+          processor
+              .getContext()
+              .getMessageHandler()
+              .info(
+                  this,
+                  "Error in pipeline execution, retry = %d/%d (exception=)",
+                  retry,
+                  maxRetries,
+                  e);
+        } catch (OETLProcessHaltedException e) {
+          processor.getContext().getMessageHandler().error(this, "Pipeline execution halted");
+
+          processor.getStats().incrementErrors();
+
+          loader.rollback(db);
+          throw e;
+
+        } catch (Exception e) {
+          processor.getContext().getMessageHandler().error(this, "Error in Pipeline execution:", e);
+
+          processor.getStats().incrementErrors();
+
+          if (!haltOnError) {
+            return null;
+          }
+
+          loader.rollback(db);
+          throw OException.wrapException(new OETLProcessHaltedException("Halt"), e);
         }
-        if (current != null) {
-          // LOAD
-          loader.load(db, current, context);
-        }
-
-        db.commit();
-        return current;
-      } catch (ONeedRetryException e) {
-        loader.rollback(db);
-        retry++;
-        processor.getContext()
-            .getMessageHandler()
-            .info(
-                this,
-                "Error in pipeline execution, retry = %d/%d (exception=)",
-                retry,
-                maxRetries,
-                e);
-      } catch (OETLProcessHaltedException e) {
-        processor.getContext()
-            .getMessageHandler()
-            .error(this, "Pipeline execution halted");
-
-        processor.getStats().incrementErrors();
-
-        loader.rollback(db);
-        throw e;
-
-      } catch (Exception e) {
-        processor.getContext()
-            .getMessageHandler()
-            .error(this, "Error in Pipeline execution:", e);
-
-        processor.getStats().incrementErrors();
-
-        if (!haltOnError) {
-          return null;
-        }
-
-        loader.rollback(db);
-        throw OException.wrapException(new OETLProcessHaltedException("Halt"), e);
-
-      }
       }
     } while (retry < maxRetries);
 
