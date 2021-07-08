@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.storage.index.hashindex.local.v2;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
@@ -29,10 +28,7 @@ public class LocalHashTableV2EncryptionTestIT extends LocalHashTableV2Base {
     final File dbDirectory = new File(buildDirectory, DB_NAME);
 
     OFileUtils.deleteRecursively(dbDirectory);
-    final OrientDBConfig config =
-        OrientDBConfig.builder()
-            .addConfig(OGlobalConfiguration.STORAGE_TRACK_PAGE_OPERATIONS_IN_TX, true)
-            .build();
+    final OrientDBConfig config = OrientDBConfig.builder().build();
     orientDB = new OrientDB("plocal:" + buildDirectory, config);
     orientDB.create(DB_NAME, ODatabaseType.PLOCAL);
 

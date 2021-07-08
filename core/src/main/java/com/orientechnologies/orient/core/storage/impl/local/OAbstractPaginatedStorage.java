@@ -362,16 +362,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                 contextConfiguration.getValueAsInteger(
                     OGlobalConfiguration.STORAGE_ATOMIC_OPERATIONS_TABLE_COMPACTION_LIMIT),
                 idGen.getLastId() + 1);
-        atomicOperationsManager =
-            new OAtomicOperationsManager(
-                this,
-                contextConfiguration.getValueAsBoolean(
-                    OGlobalConfiguration.STORAGE_TRACK_PAGE_OPERATIONS_IN_TX),
-                contextConfiguration.getValueAsInteger(
-                        OGlobalConfiguration.STORAGE_PAGE_OPERATIONS_CACHE_SIZE)
-                    * 1024
-                    * 1024,
-                atomicOperationsTable);
+        atomicOperationsManager = new OAtomicOperationsManager(this, atomicOperationsTable);
 
         recoverIfNeeded();
 
@@ -677,16 +668,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                 contextConfiguration.getValueAsInteger(
                     OGlobalConfiguration.STORAGE_ATOMIC_OPERATIONS_TABLE_COMPACTION_LIMIT),
                 idGen.getLastId() + 1);
-        atomicOperationsManager =
-            new OAtomicOperationsManager(
-                this,
-                contextConfiguration.getValueAsBoolean(
-                    OGlobalConfiguration.STORAGE_TRACK_PAGE_OPERATIONS_IN_TX),
-                contextConfiguration.getValueAsInteger(
-                        OGlobalConfiguration.STORAGE_PAGE_OPERATIONS_CACHE_SIZE)
-                    * 1024
-                    * 1024,
-                atomicOperationsTable);
+        atomicOperationsManager = new OAtomicOperationsManager(this, atomicOperationsTable);
         transaction = new ThreadLocal<>();
 
         preCreateSteps();

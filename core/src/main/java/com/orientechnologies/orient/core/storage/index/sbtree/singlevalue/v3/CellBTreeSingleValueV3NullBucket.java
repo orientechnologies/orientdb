@@ -24,9 +24,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v3.nullbucket.CellBTreeNullBucketSingleValueV3InitPO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v3.nullbucket.CellBTreeNullBucketSingleValueV3RemoveValuePO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v3.nullbucket.CellBTreeNullBucketSingleValueV3SetValuePO;
 
 /**
  * Bucket which is intended to save values stored in sbtree under <code>null</code> key. Bucket has
@@ -49,19 +46,13 @@ public final class CellBTreeSingleValueV3NullBucket extends ODurablePage {
 
   public void init() {
     setByteValue(NEXT_FREE_POSITION, (byte) 0);
-
-    addPageOperation(new CellBTreeNullBucketSingleValueV3InitPO());
   }
 
   public void setValue(final ORID value) {
-    final ORID prevValue = getValue();
-
     setByteValue(NEXT_FREE_POSITION, (byte) 1);
 
     setShortValue(NEXT_FREE_POSITION + 1, (short) value.getClusterId());
     setLongValue(NEXT_FREE_POSITION + 1 + OShortSerializer.SHORT_SIZE, value.getClusterPosition());
-
-    addPageOperation(new CellBTreeNullBucketSingleValueV3SetValuePO(prevValue, value));
   }
 
   public ORID getValue() {
@@ -75,9 +66,6 @@ public final class CellBTreeSingleValueV3NullBucket extends ODurablePage {
   }
 
   public void removeValue() {
-    final ORID prevValue = getValue();
     setByteValue(NEXT_FREE_POSITION, (byte) 0);
-
-    addPageOperation(new CellBTreeNullBucketSingleValueV3RemoveValuePO(prevValue));
   }
 }

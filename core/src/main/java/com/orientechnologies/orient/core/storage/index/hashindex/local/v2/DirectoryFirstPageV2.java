@@ -23,12 +23,6 @@ package com.orientechnologies.orient.core.storage.index.hashindex.local.v2;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.directoryfirstpage.LocalHashTableV2DirectoryFirstPageSetMaxLeftChildDepthPO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.directoryfirstpage.LocalHashTableV2DirectoryFirstPageSetMaxRightChildDepthPO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.directoryfirstpage.LocalHashTableV2DirectoryFirstPageSetNodeLocalDepthPO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.directoryfirstpage.LocalHashTableV2DirectoryFirstPageSetPointerPO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.directoryfirstpage.LocalHashTableV2DirectoryFirstPageSetTombstonePO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.directoryfirstpage.LocalHashTableV2DirectoryFirstPageSetTreeSizePO;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -49,10 +43,7 @@ public final class DirectoryFirstPageV2 extends DirectoryPageV2 {
   }
 
   public void setTreeSize(int treeSize) {
-    final int pastSize = getIntValue(TREE_SIZE_OFFSET);
     setIntValue(TREE_SIZE_OFFSET, treeSize);
-
-    addPageOperation(new LocalHashTableV2DirectoryFirstPageSetTreeSizePO(treeSize, pastSize));
   }
 
   public int getTreeSize() {
@@ -60,10 +51,7 @@ public final class DirectoryFirstPageV2 extends DirectoryPageV2 {
   }
 
   public void setTombstone(int tombstone) {
-    final int pastTombstone = getIntValue(TOMBSTONE_OFFSET);
     setIntValue(TOMBSTONE_OFFSET, tombstone);
-    addPageOperation(
-        new LocalHashTableV2DirectoryFirstPageSetTombstonePO(tombstone, pastTombstone));
   }
 
   public int getTombstone() {
@@ -73,35 +61,5 @@ public final class DirectoryFirstPageV2 extends DirectoryPageV2 {
   @Override
   protected int getItemsOffset() {
     return ITEMS_OFFSET;
-  }
-
-  @Override
-  protected void logSetMaxLeftChildDepth(
-      int localNodeIndex, byte maxLeftChildDepth, byte pastDepth) {
-    addPageOperation(
-        new LocalHashTableV2DirectoryFirstPageSetMaxLeftChildDepthPO(
-            localNodeIndex, maxLeftChildDepth, pastDepth));
-  }
-
-  @Override
-  protected void logSetMaxRightChildDepth(
-      int localNodeIndex, byte maxRightChildDepth, byte pastDepth) {
-    addPageOperation(
-        new LocalHashTableV2DirectoryFirstPageSetMaxRightChildDepthPO(
-            localNodeIndex, maxRightChildDepth, pastDepth));
-  }
-
-  @Override
-  protected void logSetNodeLocalDepth(int localNodeIndex, byte nodeLocalDepth, byte pastDepth) {
-    addPageOperation(
-        new LocalHashTableV2DirectoryFirstPageSetNodeLocalDepthPO(
-            localNodeIndex, nodeLocalDepth, pastDepth));
-  }
-
-  @Override
-  protected void logSetPointer(int localNodeIndex, int index, long pointer, long pastPointer) {
-    addPageOperation(
-        new LocalHashTableV2DirectoryFirstPageSetPointerPO(
-            localNodeIndex, index, pointer, pastPointer));
   }
 }
