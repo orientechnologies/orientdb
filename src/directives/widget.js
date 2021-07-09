@@ -34,7 +34,7 @@ Widget.directive('docwidget', ["$compile", "$http", "Database", "CommandApi", "D
     formScope.deleteField = scope.deleteField;
     formScope.options = new Array;
     formScope.types = Database.getSupportedTypes();
-    formScope.fieldTypes = new Array;
+    formScope.fieldTypes = {};
     formScope.selectedHeader = {}
     formScope.editorOptions = {
       lineWrapping: true,
