@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.iterator;
 
+import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -127,10 +128,6 @@ public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIt
 
   public boolean hasNext() {
     checkDirection(true);
-
-    if (Thread.interrupted())
-      // INTERRUPTED
-      return false;
 
     updateRangesOnLiveUpdate();
 

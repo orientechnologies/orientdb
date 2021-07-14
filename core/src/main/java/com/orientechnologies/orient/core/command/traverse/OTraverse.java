@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.command.traverse;
 
+import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.orient.core.command.OCommand;
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
 import com.orientechnologies.orient.core.command.OCommandPredicate;
@@ -84,8 +85,9 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
   }
 
   public OIdentifiable next() {
-    if (Thread.interrupted())
-      throw new OCommandExecutionException("The traverse execution has been interrupted");
+    if (Thread.interrupted()) {
+      throw new OInterruptedException("The traverse execution has been interrupted");
+    }
 
     if (lastTraversed != null) {
       // RETURN LATEST AND RESET IT

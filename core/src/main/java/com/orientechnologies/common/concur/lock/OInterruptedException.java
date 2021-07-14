@@ -19,13 +19,14 @@
  */
 package com.orientechnologies.common.concur.lock;
 
+import com.orientechnologies.common.exception.OHighLevelException;
 import com.orientechnologies.common.exception.OSystemException;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 3/6/14
  */
-public class OInterruptedException extends OSystemException {
+public class OInterruptedException extends OSystemException implements OHighLevelException {
 
   public OInterruptedException(OInterruptedException exception) {
     super(exception);

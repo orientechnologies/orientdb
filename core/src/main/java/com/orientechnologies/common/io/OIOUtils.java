@@ -345,8 +345,9 @@ public class OIOUtils {
 
       final int r = channel.read(buffer, position + read);
       if (r < 0)
-        if (throwOnEof) throw new EOFException("End of file is reached");
-        else {
+        if (throwOnEof) {
+          throw new EOFException("End of file is reached");
+        } else {
           buffer.put(new byte[buffer.remaining()]);
           return;
         }
