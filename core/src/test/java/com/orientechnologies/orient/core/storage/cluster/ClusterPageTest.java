@@ -9,8 +9,6 @@ import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -45,7 +43,6 @@ public class ClusterPageTest {
       localPage.init();
       addOneRecord(localPage);
 
-      assertChangesTracking(localPage, bufferPool);
     } finally {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
@@ -91,7 +88,6 @@ public class ClusterPageTest {
       localPage.init();
 
       addThreeRecords(localPage);
-      assertChangesTracking(localPage, bufferPool);
     } finally {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
@@ -168,7 +164,6 @@ public class ClusterPageTest {
 
       addFullPage(localPage);
 
-      assertChangesTracking(localPage, bufferPool);
     } finally {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
@@ -226,7 +221,6 @@ public class ClusterPageTest {
 
       addDeleteAddBookedPositionsOne(localPage);
 
-      assertChangesTracking(localPage, bufferPool);
     } finally {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
@@ -291,7 +285,6 @@ public class ClusterPageTest {
 
       addDeleteAddBookedPositionsTwo(localPage);
 
-      assertChangesTracking(localPage, bufferPool);
     } finally {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
@@ -356,7 +349,6 @@ public class ClusterPageTest {
 
       addDeleteAddBookedPositionsThree(localPage);
 
-      assertChangesTracking(localPage, bufferPool);
     } finally {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
@@ -422,7 +414,6 @@ public class ClusterPageTest {
 
       deleteAddLowerVersion(localPage);
 
-      assertChangesTracking(localPage, bufferPool);
     } finally {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
@@ -475,7 +466,6 @@ public class ClusterPageTest {
 
       deleteAddLowerVersionNFL(localPage);
 
-      assertChangesTracking(localPage, bufferPool);
     } finally {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
@@ -526,7 +516,6 @@ public class ClusterPageTest {
       localPage.init();
 
       deleteAddBiggerVersion(localPage);
-      assertChangesTracking(localPage, bufferPool);
     } finally {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
@@ -580,7 +569,6 @@ public class ClusterPageTest {
       localPage.init();
 
       deleteAddBiggerVersionNFL(localPage);
-      assertChangesTracking(localPage, bufferPool);
     } finally {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
@@ -634,7 +622,6 @@ public class ClusterPageTest {
       localPage.init();
 
       deleteAddEqualVersion(localPage);
-      assertChangesTracking(localPage, bufferPool);
     } finally {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
@@ -682,7 +669,6 @@ public class ClusterPageTest {
       localPage.init();
 
       deleteAddEqualVersionNFL(localPage);
-      assertChangesTracking(localPage, bufferPool);
     } finally {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
@@ -730,7 +716,6 @@ public class ClusterPageTest {
       localPage.init();
 
       deleteAddEqualVersionKeepTombstoneVersion(localPage);
-      assertChangesTracking(localPage, bufferPool);
     } finally {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
@@ -778,7 +763,6 @@ public class ClusterPageTest {
       localPage.init();
 
       deleteTwoOutOfFour(localPage);
-      assertChangesTracking(localPage, bufferPool);
     } finally {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
@@ -863,7 +847,6 @@ public class ClusterPageTest {
       localPage.init();
 
       addFullPageDeleteAndAddAgain(localPage);
-      assertChangesTracking(localPage, bufferPool);
     } finally {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
@@ -945,7 +928,6 @@ public class ClusterPageTest {
       localPage.init();
 
       addFullPageDeleteAndAddAgainNFL(localPage);
-      assertChangesTracking(localPage, bufferPool);
     } finally {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
@@ -1026,7 +1008,6 @@ public class ClusterPageTest {
       localPage.init();
 
       addBigRecordDeleteAndAddSmallRecords(seed, localPage);
-      assertChangesTracking(localPage, bufferPool);
     } finally {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
@@ -1100,7 +1081,6 @@ public class ClusterPageTest {
 
       findFirstRecord(seed, localPage);
 
-      assertChangesTracking(localPage, bufferPool);
     } finally {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
@@ -1180,7 +1160,6 @@ public class ClusterPageTest {
       localPage.init();
 
       findLastRecord(seed, localPage);
-      assertChangesTracking(localPage, bufferPool);
     } finally {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
@@ -1255,7 +1234,6 @@ public class ClusterPageTest {
       localPage.init();
 
       setGetNextPage(localPage);
-      assertChangesTracking(localPage, bufferPool);
     } finally {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
@@ -1282,7 +1260,6 @@ public class ClusterPageTest {
       localPage.init();
       setGetPrevPage(localPage);
 
-      assertChangesTracking(localPage, bufferPool);
     } finally {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
@@ -1309,7 +1286,6 @@ public class ClusterPageTest {
       localPage.init();
 
       replaceOneRecordWithEqualSize(localPage);
-      assertChangesTracking(localPage, bufferPool);
     } finally {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
@@ -1359,7 +1335,6 @@ public class ClusterPageTest {
       localPage.init();
 
       replaceOneRecordNoVersionUpdate(localPage);
-      assertChangesTracking(localPage, bufferPool);
     } finally {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
@@ -1403,7 +1378,6 @@ public class ClusterPageTest {
       localPage.init();
 
       replaceOneRecordLowerVersion(localPage);
-      assertChangesTracking(localPage, bufferPool);
     } finally {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
@@ -1434,41 +1408,5 @@ public class ClusterPageTest {
     assertThat(localPage.getRecordBinaryValue(index, 0, 11))
         .isEqualTo(new byte[] {5, 2, 3, 4, 5, 11, 5, 4, 3, 2, 1});
     Assert.assertEquals(localPage.getRecordVersion(index), recordVersion);
-  }
-
-  private void assertChangesTracking(OClusterPage localPage, OByteBufferPool bufferPool) {
-    final OCacheEntry cacheEntry = localPage.getCacheEntry();
-    OPointer restoredPointer = bufferPool.acquireDirect(true, Intention.TEST);
-
-    OCachePointer restoredCachePointer = new OCachePointer(restoredPointer, bufferPool, 0, 0);
-    restoredCachePointer.incrementReferrer();
-
-    OCacheEntry restoredCacheEntry = new OCacheEntryImpl(0, 0, restoredCachePointer, false);
-    restoredCacheEntry.acquireExclusiveLock();
-    try {
-      final List<PageOperationRecord> pageOperationRecords = cacheEntry.getPageOperations();
-      for (final PageOperationRecord pageOperationRecord : pageOperationRecords) {
-        pageOperationRecord.redo(restoredCacheEntry);
-      }
-
-      final ByteBuffer byteBuffer = cacheEntry.getCachePointer().getBuffer();
-      Assert.assertNotNull(byteBuffer);
-
-      assertThat(
-              getBytes(
-                  restoredPointer.getNativeByteBuffer(), OClusterPage.PAGE_SIZE - SYSTEM_OFFSET))
-          .isEqualTo(getBytes(byteBuffer, OClusterPage.PAGE_SIZE - SYSTEM_OFFSET));
-    } finally {
-      restoredCacheEntry.releaseExclusiveLock();
-      restoredCachePointer.decrementReferrer();
-    }
-  }
-
-  private byte[] getBytes(ByteBuffer buffer, int len) {
-    byte[] result = new byte[len];
-    buffer.position(ClusterPageTest.SYSTEM_OFFSET);
-    buffer.get(result);
-
-    return result;
   }
 }

@@ -24,10 +24,6 @@ import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.directorypage.LocalHashTableV2DirectoryPageSetMaxLeftChildDepthPO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.directorypage.LocalHashTableV2DirectoryPageSetMaxRightChildDepthPO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.directorypage.LocalHashTableV2DirectoryPageSetNodeLocalDepthPO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.directorypage.LocalHashTableV2DirectoryPageSetPointerPO;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -46,18 +42,7 @@ public class DirectoryPageV2 extends ODurablePage {
 
   public void setMaxLeftChildDepth(int localNodeIndex, byte maxLeftChildDepth) {
     final int offset = getItemsOffset() + localNodeIndex * HashTableDirectory.BINARY_LEVEL_SIZE;
-
-    final byte pastDepth = getByteValue(offset);
     setByteValue(offset, maxLeftChildDepth);
-
-    logSetMaxLeftChildDepth(localNodeIndex, maxLeftChildDepth, pastDepth);
-  }
-
-  protected void logSetMaxLeftChildDepth(
-      int localNodeIndex, byte maxLeftChildDepth, byte pastDepth) {
-    addPageOperation(
-        new LocalHashTableV2DirectoryPageSetMaxLeftChildDepthPO(
-            localNodeIndex, maxLeftChildDepth, pastDepth));
   }
 
   public byte getMaxLeftChildDepth(int localNodeIndex) {
@@ -70,18 +55,7 @@ public class DirectoryPageV2 extends ODurablePage {
         getItemsOffset()
             + localNodeIndex * HashTableDirectory.BINARY_LEVEL_SIZE
             + OByteSerializer.BYTE_SIZE;
-    final byte pastDepth = getByteValue(offset);
-
     setByteValue(offset, maxRightChildDepth);
-
-    logSetMaxRightChildDepth(localNodeIndex, maxRightChildDepth, pastDepth);
-  }
-
-  protected void logSetMaxRightChildDepth(
-      int localNodeIndex, byte maxRightChildDepth, byte pastDepth) {
-    addPageOperation(
-        new LocalHashTableV2DirectoryPageSetMaxRightChildDepthPO(
-            localNodeIndex, maxRightChildDepth, pastDepth));
   }
 
   public byte getMaxRightChildDepth(int localNodeIndex) {
@@ -98,15 +72,7 @@ public class DirectoryPageV2 extends ODurablePage {
             + localNodeIndex * HashTableDirectory.BINARY_LEVEL_SIZE
             + 2 * OByteSerializer.BYTE_SIZE;
 
-    final byte pastDepth = getByteValue(offset);
     setByteValue(offset, nodeLocalDepth);
-    logSetNodeLocalDepth(localNodeIndex, nodeLocalDepth, pastDepth);
-  }
-
-  protected void logSetNodeLocalDepth(int localNodeIndex, byte nodeLocalDepth, byte pastDepth) {
-    addPageOperation(
-        new LocalHashTableV2DirectoryPageSetNodeLocalDepthPO(
-            localNodeIndex, nodeLocalDepth, pastDepth));
   }
 
   public byte getNodeLocalDepth(int localNodeIndex) {
@@ -124,14 +90,7 @@ public class DirectoryPageV2 extends ODurablePage {
                 + 3 * OByteSerializer.BYTE_SIZE)
             + index * HashTableDirectory.ITEM_SIZE;
 
-    final long pastPointer = getLongValue(offset);
     setLongValue(offset, pointer);
-    logSetPointer(localNodeIndex, index, pointer, pastPointer);
-  }
-
-  protected void logSetPointer(int localNodeIndex, int index, long pointer, long pastPointer) {
-    addPageOperation(
-        new LocalHashTableV2DirectoryPageSetPointerPO(localNodeIndex, index, pointer, pastPointer));
   }
 
   public long getPointer(int localNodeIndex, int index) {
