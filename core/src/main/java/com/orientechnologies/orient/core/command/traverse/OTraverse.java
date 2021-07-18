@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.command.OCommand;
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
 import com.orientechnologies.orient.core.command.OCommandPredicate;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
