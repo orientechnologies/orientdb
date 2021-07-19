@@ -57,7 +57,7 @@ public class OClassDistributed extends OClassEmbedded {
   }
 
   public int getClusterForNewInstance(ODatabaseDocumentDistributed db, ODocument doc) {
-    if (getDatabase().getConfiguration().getValueAsBoolean(OGlobalConfiguration.DISTRIBUTED_AUTO_CREATE_CLUSTERS)) {
+    if (!getDatabase().getConfiguration().getValueAsBoolean(OGlobalConfiguration.DISTRIBUTED_AUTO_CREATE_CLUSTERS)) {
       return super.getClusterForNewInstance(doc);
     } 
     
@@ -138,7 +138,7 @@ public class OClassDistributed extends OClassEmbedded {
         }
 
         ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-            "Cannot find best cluster for class '%s'. Configured servers for clusters %s are %s (dCfgVersion=%d)", getName(),
+            "  cluster for class '%s'. Configured servers for clusters %s are %s (dCfgVersion=%d)", getName(),
             clusterNames, buffer.toString(), cfg.getVersion());
 
         throw new ODatabaseException(
