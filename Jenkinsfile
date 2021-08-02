@@ -7,7 +7,7 @@ node {
         sh "rm -rf *"
         sh "cp /var/jenkins_home/uploadedContent/settings.xml ."
 
-        executeDocker(
+        dockerExecute(
                 dockerImage:'ldellaquila/maven-gradle-node-zulu-openjdk8:1.1.0',
                 dockerWorkspace: '/orientdb-studio-${env.BRANCH_NAME}'
         ) {
