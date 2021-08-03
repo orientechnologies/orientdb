@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.server.distributed.impl.metadata;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -588,6 +589,11 @@ public class OClassDistributed extends OClassEmbedded {
   }
 
   public int getClusterForNewInstance(ODatabaseDocumentDistributed db, ODocument doc) {
+    if (!db.getConfiguration()
+        .getValueAsBoolean(OGlobalConfiguration.DISTRIBUTED_AUTO_CREATE_CLUSTERS)) {
+      return super.getClusterForNewInstance(doc);
+    }
+
     ODistributedServerManager manager = db.getDistributedManager();
     if (bestClusterIds == null) readConfiguration(db, manager);
     else {
