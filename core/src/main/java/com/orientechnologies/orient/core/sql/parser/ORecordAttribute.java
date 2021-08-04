@@ -3,6 +3,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.sql.executor.OResult;
@@ -68,7 +69,11 @@ public class ORecordAttribute extends SimpleNode {
 
   public Object evaluate(OResult iCurrentRecord, OCommandContext ctx) {
     if (name.equalsIgnoreCase("@rid")) {
-      return iCurrentRecord.getIdentity().orElse(null);
+      ORID identity = iCurrentRecord.getIdentity().orElse(null);
+      if (identity == null) {
+        identity = iCurrentRecord.getProperty(name);
+      }
+      return identity;
     } else if (name.equalsIgnoreCase("@class")) {
       return iCurrentRecord.toElement().getSchemaType().map(x -> x.getName()).orElse(null);
     } else if (name.equalsIgnoreCase("@version")) {
