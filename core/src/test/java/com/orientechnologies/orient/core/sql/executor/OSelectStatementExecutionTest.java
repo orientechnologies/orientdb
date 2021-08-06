@@ -4373,4 +4373,24 @@ public class OSelectStatementExecutionTest {
       Assert.assertFalse(rs.hasNext());
     }
   }
+
+  @Test
+  public void testExclude() {
+    String className = "TestExclude";
+    db.getMetadata().getSchema().createClass(className);
+    ODocument doc = db.newInstance(className);
+    doc.setProperty("name", "foo");
+    doc.setProperty("surname", "bar");
+    doc.save();
+
+    OResultSet result = db.query("select *, !surname from " + className);
+    Assert.assertTrue(result.hasNext());
+    OResult item = result.next();
+    Assert.assertNotNull(item);
+    Assert.assertEquals("foo", item.getProperty("name"));
+    Assert.assertNull(item.getProperty("surname"));
+
+    printExecutionPlan(result);
+    result.close();
+  }
 }
