@@ -7,13 +7,13 @@
 
 ## What is OrientDB?
 
-**OrientDB** is an Open Source Multi-Model [NoSQL](http://en.wikipedia.org/wiki/NoSQL) DBMS with the support of Native Graphs, Documents Full-Text, Reactivity, Geo-Spatial and Object Oriented concepts. It's written in Java and it's amazingly fast. No expensive run-time JOINs, connections are managed as persistent pointers between records. You can traverse thousands of records in no time. Supports schema-less, schema-full and schema-mixed modes. Has a strong security profiling system based on user, roles and predicate security and supports [SQL](http://orientdb.com/docs/last/SQL.html) amongst the query languages. Thanks to the [SQL](http://orientdb.com/docs/last/SQL.html) layer it's straightforward to use for people skilled in the Relational world.
+**OrientDB** is an Open Source Multi-Model [NoSQL](http://en.wikipedia.org/wiki/NoSQL) DBMS with the support of Native Graphs, Documents Full-Text, Reactivity, Geo-Spatial and Object Oriented concepts. It's written in Java and it's amazingly fast. No expensive run-time JOINs, connections are managed as persistent pointers between records. You can traverse thousands of records in no time. Supports schema-less, schema-full and schema-mixed modes. Has a strong security profiling system based on user, roles and predicate security and supports [SQL](https://orientdb.org/docs/3.1.x/sql/) amongst the query languages. Thanks to the [SQL](https://orientdb.org/docs/3.1.x/sql/) layer it's straightforward to use for people skilled in the Relational world.
 
-[Get started with OrientDB](http://orientdb.com/docs/3.1.x/gettingstarted/).
+[Get started with OrientDB](http://orientdb.org/docs/3.1.x/gettingstarted/).
 
 ## Is OrientDB a Relational DBMS?
 
-No. OrientDB adheres to the [NoSQL](http://en.wikipedia.org/wiki/NoSQL) movement even though it supports [ACID Transactions](https://orientdb.com/docs/2.2/Transactions.html) and [SQL](http://orientdb.com/docs/last/SQL.html) as query language. In this way it's easy to start using it without having to learn too much new stuff. 
+No. OrientDB adheres to the [NoSQL](http://en.wikipedia.org/wiki/NoSQL) movement even though it supports [ACID Transactions](https://orientdb.org/docs/3.1.x/internals/Transactions.html) and [SQL](https://orientdb.org/docs/3.1.x/sql/) as query language. In this way it's easy to start using it without having to learn too much new stuff. 
 
 ## Scalability: the database is the bottleneck of most applications
 
@@ -25,14 +25,14 @@ OrientDB has been designed to be very fast. It inherits the best features and co
 
 ## Easy to install and use
 
-Yes. OrientDB is totally written in [Java](http://en.wikipedia.org/wiki/Java_%28programming_language%29) and can run on any platform without configuration and installation. The full Server distribution is a few MBs without the demo database. Do you develop with a language different than Java? No problem, look at the [Programming Language Binding](http://orientdb.com/docs/3.1.x/apis-and-drivers/).
+Yes. OrientDB is totally written in [Java](http://en.wikipedia.org/wiki/Java_%28programming_language%29) and can run on any platform without configuration and installation. The full Server distribution is a few MBs without the demo database. Do you develop with a language different than Java? No problem, look at the [Programming Language Binding](http://orientdb.org/docs/3.1.x/apis-and-drivers/).
 
 
 ## Main References
-- [Documentation](http://orientdb.com/docs/3.1.x/)
+- [Documentation](http://orientdb.org/docs/3.1.x/)
 - For any questions visit the [OrientDB Community Group](https://github.com/orientechnologies/orientdb/discussions)
 
-[Get started with OrientDB](http://orientdb.com/docs/3.1.x/gettingstarted/).
+[Get started with OrientDB](http://orientdb.org/docs/3.1.x/gettingstarted/).
 
 --------
 
