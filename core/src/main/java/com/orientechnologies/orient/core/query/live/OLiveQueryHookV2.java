@@ -30,6 +30,8 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentEntry;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.sql.executor.LiveQueryListenerImpl;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
@@ -272,9 +274,15 @@ public class OLiveQueryHookV2 {
     result.setProperty("@rid", iDocument.getIdentity());
     result.setProperty("@class", iDocument.getClassName());
     result.setProperty("@version", iDocument.getVersion());
-    for (String prop : iDocument.getDirtyFields()) {
-      if (projectionsToLoad == null || projectionsToLoad.contains(prop)) {
-        result.setProperty(prop, convert(iDocument.getOriginalValue(prop)));
+    for (Map.Entry<String, ODocumentEntry> rawEntry : ODocumentInternal.rawEntries(iDocument)) {
+      ODocumentEntry entry = rawEntry.getValue();
+      if (entry.isChanged()) {
+        result.setProperty(
+            rawEntry.getKey(), convert(iDocument.getOriginalValue(rawEntry.getKey())));
+      } else if (entry.isTrackedModified()) {
+        if (entry.value instanceof ODocument && ((ODocument) entry.value).isEmbedded()) {
+          result.setProperty(rawEntry.getKey(), calculateBefore((ODocument) entry.value, null));
+        }
       }
     }
     return result;
