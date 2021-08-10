@@ -156,7 +156,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
           final String[] files = fetchIBUFiles(backupDirectory);
 
           final OLogSequenceNumber lastLsn;
-          final long nextIndex;
+          long nextIndex;
 
           if (files.length == 0) {
             lastLsn = null;
@@ -186,14 +186,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
                     + IBU_EXTENSION_V3;
           }
 
-          // Avoid path manipulation:
           final File ibuFile = new File(backupDirectory, fileName);
-          // if (!ibuFile.getCanonicalPath().endsWith(IBU_EXTENSION_V3)) {
-          //   throw new IllegalArgumentException("Path traversal detected.");
-          // }
-          // final Path normalizedBackupDirectory =
-          //     backupDirectory.toPath().resolve(fileName).normalize();
-          // final File ibuFile = new File(normalizedBackupDirectory.toUri());
 
           if (started != null) started.call(null);
           rndIBUFile = new RandomAccessFile(ibuFile, "rw");
@@ -376,17 +369,14 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
       throws IOException {
     final File file = new File(backupDirectory, fileName);
 
-    RandomAccessFile rndFile = new RandomAccessFile(file, "r");
-    try {
+    try (final RandomAccessFile rndFile = new RandomAccessFile(file, "r")) {
       rndFile.seek(OIntegerSerializer.INT_SIZE);
-      return rndFile.readLong();
-    } finally {
-      try {
-        rndFile.close();
-      } catch (IOException e) {
-        OLogManager.instance().warn(this, "Failed to close resource " + rndFile);
-      }
+      return validateLongIndex(rndFile.readLong());
     }
+  }
+
+  private long validateLongIndex(final long index) {
+    return index < 0 ? 0 : Math.abs(index);
   }
 
   private OLogSequenceNumber incrementalBackup(
