@@ -3,11 +3,9 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.parser.OAndBlock;
-import com.orientechnologies.orient.core.sql.parser.OBooleanExpression;
-import com.orientechnologies.orient.core.sql.parser.OFromClause;
-import com.orientechnologies.orient.core.sql.parser.OWhereClause;
+import com.orientechnologies.orient.core.sql.parser.*;
 import java.util.List;
 
 /** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
@@ -35,17 +33,28 @@ public class UpsertStep extends AbstractExecutionStep {
       return upstream;
     }
     OInternalResultSet result = new OInternalResultSet();
-    result.add(createNewRecord(commandTarget, initialFilter));
+    result.add(createNewRecord(ctx, commandTarget, initialFilter));
     return result;
   }
 
-  private OResult createNewRecord(OFromClause commandTarget, OWhereClause initialFilter) {
-    if (commandTarget.getItem().getIdentifier() == null) {
+  private OResult createNewRecord(
+      OCommandContext ctx, OFromClause commandTarget, OWhereClause initialFilter) {
+    ODocument doc;
+    if (commandTarget.getItem().getIdentifier() != null) {
+      doc = new ODocument(commandTarget.getItem().getIdentifier().getStringValue());
+    } else if (commandTarget.getItem().getCluster() != null) {
+      OCluster cluster = commandTarget.getItem().getCluster();
+      Integer clusterId = cluster.getClusterNumber();
+      if (clusterId == null) {
+        clusterId = ctx.getDatabase().getClusterIdByName(cluster.getClusterName());
+      }
+      OClass clazz = ctx.getDatabase().getMetadata().getSchema().getClassByClusterId(clusterId);
+      doc = new ODocument(clazz);
+    } else {
       throw new OCommandExecutionException(
           "Cannot execute UPSERT on target '" + commandTarget + "'");
     }
 
-    ODocument doc = new ODocument(commandTarget.getItem().getIdentifier().getStringValue());
     OUpdatableResult result = new OUpdatableResult(doc);
     if (initialFilter != null) {
       setContent(result, initialFilter);
