@@ -461,7 +461,7 @@ public class OBinaryCondition extends OBooleanExpression {
     return this;
   }
 
-  private OSelectStatement indexChainToStatement(
+  public static OSelectStatement indexChainToStatement(
       OModifier modifier, OClass clazz, OExpression right, OCommandContext ctx) {
     OClass queryClass = clazz;
 

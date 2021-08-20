@@ -3712,6 +3712,62 @@ public class OSelectStatementExecutionTest {
   }
 
   @Test
+  public void testIndexChainWithContainsAny() {
+    String className1 = "testIndexChainWithContainsAny1";
+    String className2 = "testIndexChainWithContainsAny2";
+    String className3 = "testIndexChainWithContainsAny3";
+
+    OClass clazz3 = db.createClassIfNotExist(className3);
+    OProperty prop = clazz3.createProperty("name", OType.STRING);
+    prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+
+    OClass clazz2 = db.createClassIfNotExist(className2);
+    prop = clazz2.createProperty("next", OType.LINKSET, clazz3);
+    prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+
+    OClass clazz1 = db.createClassIfNotExist(className1);
+    prop = clazz1.createProperty("next", OType.LINKSET, clazz2);
+    prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+
+    OElement elem3 = db.newElement(className3);
+    elem3.setProperty("name", "John");
+    elem3.save();
+
+    OElement elemFoo = db.newElement(className3);
+    elemFoo.setProperty("foo", "bar");
+    elemFoo.save();
+
+    OElement elem2 = db.newElement(className2);
+    List<OElement> elems3 = new ArrayList<>();
+    elems3.add(elem3);
+    elems3.add(elemFoo);
+    elem2.setProperty("next", elems3);
+    elem2.save();
+
+    OElement elem1 = db.newElement(className1);
+    List<OElement> elems2 = new ArrayList<>();
+    elems2.add(elem2);
+    elem1.setProperty("next", elems2);
+    elem1.setProperty("name", "right");
+    elem1.save();
+
+    elem1 = db.newElement(className1);
+    elem1.setProperty("name", "wrong");
+    elem1.save();
+
+    try (OResultSet result =
+        db.query("select from " + className1 + " where next.next.name CONTAINSANY ['John']")) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertEquals("right", item.getProperty("name"));
+      Assert.assertFalse(result.hasNext());
+      Assert.assertTrue(
+          result.getExecutionPlan().get().getSteps().stream()
+              .anyMatch(x -> x instanceof FetchFromIndexStep));
+    }
+  }
+
+  @Test
   public void testQueryView() throws InterruptedException {
     String className = "testQueryView_Class";
     String viewName = "testQueryView_View";
