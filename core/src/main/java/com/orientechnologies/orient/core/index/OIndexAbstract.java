@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OOneEntryPerKeyLockManager;
 import com.orientechnologies.common.concur.lock.OPartitionedLockManager;
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
@@ -914,8 +915,10 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
       long documentIndexed, long documentTotal) {
     try {
       for (final ORecord record : getDatabase().browseCluster(clusterName)) {
-        if (Thread.interrupted())
-          throw new OCommandExecutionException("The index rebuild has been interrupted");
+        if (Thread.interrupted()) {
+          throw new OInterruptedException("The index rebuild has been interrupted");
+        }
+
 
         if (record instanceof ODocument) {
           final ODocument doc = (ODocument) record;

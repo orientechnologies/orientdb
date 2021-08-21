@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -118,8 +119,9 @@ public class OCommandExecutorSQLOptimizeDatabase extends OCommandExecutorSQLAbst
         long lastLapTime = System.currentTimeMillis();
 
         for (ODocument doc : db.browseClass("E")) {
-          if (Thread.currentThread().isInterrupted())
-            break;
+          if (Thread.interrupted()) {
+            throw new OInterruptedException("Thread execution was interrupted");
+          }
 
           browsedEdges++;
 

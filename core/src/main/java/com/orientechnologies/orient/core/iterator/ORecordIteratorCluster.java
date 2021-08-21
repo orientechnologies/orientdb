@@ -119,10 +119,6 @@ public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIt
   public boolean hasNext() {
     checkDirection(true);
 
-    if (Thread.interrupted())
-      // INTERRUPTED
-      return false;
-
     updateRangesOnLiveUpdate();
 
     if (currentRecord != null) {

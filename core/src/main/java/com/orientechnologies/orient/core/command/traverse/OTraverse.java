@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.command.traverse;
 
+import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.orient.core.command.OCommand;
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
 import com.orientechnologies.orient.core.command.OCommandPredicate;
@@ -33,7 +34,7 @@ import java.util.List;
 
 /**
  * Base class for traversing.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OIdentifiable> {
@@ -54,7 +55,7 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
   /*
    * Executes a traverse collecting all the result in the returning List<OIdentifiable>. This could be memory expensive because for
    * large results the list could be huge. it's always better to use it as an Iterable and lazy fetch each result on next() call.
-   * 
+   *
    * @see com.orientechnologies.orient.core.command.OCommand#execute()
    */
   public List<OIdentifiable> execute() {
@@ -87,8 +88,9 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
   }
 
   public OIdentifiable next() {
-    if (Thread.interrupted())
-      throw new OCommandExecutionException("The traverse execution has been interrupted");
+    if (Thread.interrupted()) {
+      throw new OInterruptedException("The traverse execution has been interrupted");
+      }
 
     if (lastTraversed != null) {
       // RETURN LATEST AND RESET IT

@@ -119,12 +119,17 @@ public class AsyncReadCacheTestIT {
 
     long start = System.nanoTime();
     for (int i = 0; i < 4; i++) {
-      futures.add(executor.submit(new ZiphianPageReader(pageLimit, writeCache, pageCount, readCache)));
+      futures.add(executor.submit(new ZiphianPageReader(i, pageLimit, writeCache, pageCount, readCache)));
     }
 
+    System.out.println("4 readers were created");
+
     for (int i = 0; i < 4; i++) {
-      futures.add(executor.submit(new ZiphianPageWriter(pageLimit, writeCache, pageCount, readCache)));
+      futures.add(executor.submit(new ZiphianPageWriter(i, pageLimit, writeCache, pageCount, readCache)));
     }
+
+    System.out.println("4 writers were created");
+
 
     for (Future<Void> future : futures) {
       future.get();
@@ -231,9 +236,11 @@ public class AsyncReadCacheTestIT {
     private final int         pageCount;
 
     private final AsyncReadCache readCache;
+    private final int id;
 
-    private ZiphianPageWriter(final int pageLimit, final OWriteCache writeCache, final int pageCount,
-        final AsyncReadCache readCache) {
+    private ZiphianPageWriter(int id, final int pageLimit, final OWriteCache writeCache, final int pageCount,
+                              final AsyncReadCache readCache) {
+      this.id = id;
       this.pageLimit = pageLimit;
       this.writeCache = writeCache;
       this.pageCount = pageCount;
@@ -251,8 +258,13 @@ public class AsyncReadCacheTestIT {
         final OCacheEntry cacheEntry = readCache.loadForWrite(0, pageIndex, true, writeCache, 1, true, null);
         readCache.releaseFromWrite(cacheEntry, writeCache);
         pageCounter++;
+
+        if (pageCounter % 1_000_000 == 0) {
+          System.out.printf("%,d records were processed out of %,d in writer with id %d%n", pageCounter, pageCount, id);
+        }
       }
 
+      System.out.println("All records were processed by writer " + id);
       return null;
     }
   }
@@ -263,9 +275,11 @@ public class AsyncReadCacheTestIT {
     private final int         pageCount;
 
     private final AsyncReadCache readCache;
+    private final int id;
 
-    private ZiphianPageReader(final int pageLimit, final OWriteCache writeCache, final int pageCount,
-        final AsyncReadCache readCache) {
+    private ZiphianPageReader(int id, final int pageLimit, final OWriteCache writeCache, final int pageCount,
+                              final AsyncReadCache readCache) {
+      this.id = id;
       this.pageLimit = pageLimit;
       this.writeCache = writeCache;
       this.pageCount = pageCount;
@@ -283,8 +297,13 @@ public class AsyncReadCacheTestIT {
         final OCacheEntry cacheEntry = readCache.loadForRead(0, pageIndex, true, writeCache, 1, true);
         readCache.releaseFromRead(cacheEntry, writeCache);
         pageCounter++;
+
+        if (pageCounter % 1_000_000 == 0) {
+          System.out.printf("%,d records were processed out of %,d in reader with id %d%n", pageCounter, pageCount, id);
+        }
       }
 
+      System.out.println("All records were processed by reader " + id);
       return null;
     }
   }

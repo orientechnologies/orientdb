@@ -134,10 +134,6 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
   public boolean hasNext() {
     checkDirection(true);
 
-    if (Thread.interrupted())
-      // INTERRUPTED
-      return false;
-
     if (currentRecord != null)
       return true;
 

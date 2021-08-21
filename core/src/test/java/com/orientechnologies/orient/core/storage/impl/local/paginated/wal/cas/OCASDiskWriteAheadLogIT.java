@@ -37,6 +37,7 @@ public class OCASDiskWriteAheadLogIT {
   }
 
   @Test
+  @Ignore
   public void testAddSingleOnePageRecord() throws Exception {
     final int iterations = 10;
 
@@ -105,6 +106,7 @@ public class OCASDiskWriteAheadLogIT {
   }
 
   @Test
+  @Ignore
   public void testAddSingleRecordSeveralPages() throws Exception {
     final int iterations = 10;
     for (int i = 0; i < iterations; i++) {
@@ -746,6 +748,7 @@ public class OCASDiskWriteAheadLogIT {
   }
 
   @Test
+  @Ignore
   public void testAddNSegments() throws Exception {
     int iterations = 1;
 
@@ -2516,6 +2519,7 @@ public class OCASDiskWriteAheadLogIT {
   }
 
   @Test
+  @Ignore
   public void testAppendSegment() throws Exception {
     int iterations = 1;
     for (int n = 0; n < iterations; n++) {
@@ -3598,6 +3602,7 @@ public class OCASDiskWriteAheadLogIT {
   }
 
   @Test
+  @Ignore
   public void testWALCrash() throws Exception {
     final int iterations = 1;
 

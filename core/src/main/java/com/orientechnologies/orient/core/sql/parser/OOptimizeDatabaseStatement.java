@@ -2,6 +2,7 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -80,8 +81,9 @@ public class OOptimizeDatabaseStatement extends OSimpleExecStatement {
         long lastLapTime = System.currentTimeMillis();
 
         for (ODocument doc : db.browseClass("E")) {
-          if (Thread.currentThread().isInterrupted())
-            break;
+          if (Thread.interrupted()) {
+            throw new OInterruptedException("Thread execution was interrupted");
+          }
 
           browsedEdges++;
 

@@ -457,10 +457,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   public void rollbackOperationsFromThread(Thread thread) {
     synchronized (this) {
       final Thread currentThread = Thread.currentThread();
-
-      for (final OAbstractPaginatedStorage storage : storages.values()) {
-        storage.rollbackOperationsFromThread(thread);
-      }
+      currentThread.interrupt();
     }
   }
 

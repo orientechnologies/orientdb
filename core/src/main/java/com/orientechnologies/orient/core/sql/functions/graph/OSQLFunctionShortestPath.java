@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.sql.functions.graph;
 
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
+import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
@@ -135,8 +136,9 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
       if (ctx.queueLeft.isEmpty() || ctx.queueRight.isEmpty())
         break;
 
-      if (Thread.interrupted())
-        throw new OCommandExecutionException("The shortestPath() function has been interrupted");
+      if (Thread.interrupted()) {
+        throw new OInterruptedException("The shortestPath() function has been interrupted");
+      }
 
       if (!OCommandExecutorAbstract.checkInterruption(iContext))
         break;
