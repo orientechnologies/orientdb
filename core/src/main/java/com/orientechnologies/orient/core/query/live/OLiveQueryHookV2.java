@@ -28,12 +28,15 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.LiveQueryListenerImpl;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+import com.orientechnologies.orient.core.sql.parser.OExpression;
+import com.orientechnologies.orient.core.sql.parser.OProjection;
+import com.orientechnologies.orient.core.sql.parser.OProjectionItem;
+import com.orientechnologies.orient.core.sql.parser.OSelectStatement;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -44,9 +47,9 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.QUER
 public class OLiveQueryHookV2 {
 
   public static class OLiveQueryOp {
-    public    OResult   before;
-    public    OResult   after;
-    public    byte      type;
+    public OResult before;
+    public OResult after;
+    public byte type;
     protected ODocument originalDoc;
 
     OLiveQueryOp(ODocument originalDoc, OResult before, OResult after, byte type) {
@@ -59,11 +62,11 @@ public class OLiveQueryHookV2 {
 
   public static class OLiveQueryOps implements OCloseable {
 
-    protected Map<ODatabaseDocument, List<OLiveQueryOp>> pendingOps  = new ConcurrentHashMap<ODatabaseDocument, List<OLiveQueryOp>>();
-    private   OLiveQueryQueueThreadV2                    queueThread = new OLiveQueryQueueThreadV2(this);
-    private   Object                                     threadLock  = new Object();
+    protected Map<ODatabaseDocument, List<OLiveQueryOp>> pendingOps = new ConcurrentHashMap<ODatabaseDocument, List<OLiveQueryOp>>();
+    private OLiveQueryQueueThreadV2 queueThread = new OLiveQueryQueueThreadV2(this);
+    private Object threadLock = new Object();
 
-    private BlockingQueue<OLiveQueryOp>                  queue       = new LinkedBlockingQueue<OLiveQueryOp>();
+    private BlockingQueue<OLiveQueryOp> queue = new LinkedBlockingQueue<OLiveQueryOp>();
     private ConcurrentMap<Integer, OLiveQueryListenerV2> subscribers = new ConcurrentHashMap<Integer, OLiveQueryListenerV2>();
 
     @Override
@@ -117,8 +120,8 @@ public class OLiveQueryHookV2 {
   public static Integer subscribe(Integer token, OLiveQueryListenerV2 iListener, ODatabaseInternal db) {
     if (Boolean.FALSE.equals(db.getConfiguration().getValue(QUERY_LIVE_SUPPORT))) {
       OLogManager.instance().warn(db,
-          "Live query support is disabled impossible to subscribe a listener, set '%s' to true for enable the live query support",
-          QUERY_LIVE_SUPPORT.getKey());
+              "Live query support is disabled impossible to subscribe a listener, set '%s' to true for enable the live query support",
+              QUERY_LIVE_SUPPORT.getKey());
       return -1;
     }
     OLiveQueryOps ops = getOpsReference(db);
@@ -135,8 +138,8 @@ public class OLiveQueryHookV2 {
   public static void unsubscribe(Integer id, ODatabaseInternal db) {
     if (Boolean.FALSE.equals(db.getConfiguration().getValue(QUERY_LIVE_SUPPORT))) {
       OLogManager.instance().warn(db,
-          "Live query support is disabled impossible to unsubscribe a listener, set '%s' to true for enable the live query support",
-          QUERY_LIVE_SUPPORT.getKey());
+              "Live query support is disabled impossible to unsubscribe a listener, set '%s' to true for enable the live query support",
+              QUERY_LIVE_SUPPORT.getKey());
       return;
     }
     try {
@@ -188,8 +191,10 @@ public class OLiveQueryHookV2 {
     if (!ops.hasListeners())
       return;
 
-    OResult before = iType == ORecordOperation.CREATED ? null : calculateBefore(iDocument);
-    OResult after = iType == ORecordOperation.DELETED ? null : calculateAfter(iDocument);
+    Set<String> projectionsToLoad = calculateProjections(ops);
+
+    OResult before = iType == ORecordOperation.CREATED ? null : calculateBefore(iDocument, projectionsToLoad);
+    OResult after = iType == ORecordOperation.DELETED ? null : calculateAfter(iDocument, projectionsToLoad);
 
     OLiveQueryOp result = new OLiveQueryOp(iDocument, before, after, iType);
     synchronized (ops.pendingOps) {
@@ -211,6 +216,35 @@ public class OLiveQueryHookV2 {
     }
   }
 
+  /**
+   * get all the projections that are needed by the live queries. Null means all
+   *
+   * @param ops
+   * @return
+   */
+  private static Set<String> calculateProjections(OLiveQueryOps ops) {
+    Set<String> result = new HashSet<>();
+    if (ops == null || ops.subscribers == null) {
+      return null;
+    }
+    for (OLiveQueryListenerV2 listener : ops.subscribers.values()) {
+      if (listener instanceof LiveQueryListenerImpl) {
+        OSelectStatement query = ((LiveQueryListenerImpl) listener).getStatement();
+        OProjection proj = query.getProjection();
+        if (proj == null || proj.getItems() == null || proj.getItems().isEmpty()) {
+          return null;
+        }
+        for (OProjectionItem item : proj.getItems()) {
+          if (!item.getExpression().isBaseIdentifier()) {
+            return null;
+          }
+          result.add(item.getExpression().getDefaultAlias().getStringValue());
+        }
+      }
+    }
+    return result;
+  }
+
   private static OLiveQueryOp prevousUpdate(List<OLiveQueryOp> list, ODocument doc) {
     for (OLiveQueryOp oLiveQueryOp : list) {
       if (oLiveQueryOp.originalDoc == doc) {
@@ -220,24 +254,30 @@ public class OLiveQueryHookV2 {
     return null;
   }
 
-  private static OResultInternal calculateBefore(ODocument iDocument) {
+  private static OResultInternal calculateBefore(ODocument iDocument, Set<String> projectionsToLoad) {
     OResultInternal result = new OResultInternal();
     for (String prop : iDocument.getPropertyNames()) {
-      result.setProperty(prop, unboxRidbags(iDocument.getProperty(prop)));
+      if (projectionsToLoad == null || projectionsToLoad.contains(prop)) {
+        result.setProperty(prop, unboxRidbags(iDocument.getProperty(prop)));
+      }
     }
     result.setProperty("@rid", iDocument.getIdentity());
     result.setProperty("@class", iDocument.getClassName());
     result.setProperty("@version", iDocument.getVersion());
     for (String prop : iDocument.getDirtyFields()) {
-      result.setProperty(prop, unboxRidbags(iDocument.getOriginalValue(prop)));
+      if (projectionsToLoad == null || projectionsToLoad.contains(prop)) {
+        result.setProperty(prop, unboxRidbags(iDocument.getOriginalValue(prop)));
+      }
     }
     return result;
   }
 
-  private static OResultInternal calculateAfter(ODocument iDocument) {
+  private static OResultInternal calculateAfter(ODocument iDocument, Set<String> projectionsToLoad) {
     OResultInternal result = new OResultInternal();
     for (String prop : iDocument.getPropertyNames()) {
-      result.setProperty(prop, unboxRidbags(iDocument.getProperty(prop)));
+      if (projectionsToLoad == null || projectionsToLoad.contains(prop)) {
+        result.setProperty(prop, unboxRidbags(iDocument.getProperty(prop)));
+      }
     }
     result.setProperty("@rid", iDocument.getIdentity());
     result.setProperty("@class", iDocument.getClassName());
