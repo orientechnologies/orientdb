@@ -1195,12 +1195,50 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       }
     }
 
-    //copy the result-set to make sure that the execution is successful
-    Stream<OResult> stream = rs.stream();
-    if (database.getActiveQueries().containsKey(((OLocalResultSetLifecycleDecorator) rs).getQueryId())) {
-      stream = stream.limit(request.getRecordsPerPage());
+    TimerTask commandInterruptTimer = null;
+    TimerTask commandInterruptRunnable = null;
+    if (database.getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
+      commandInterruptRunnable = new TimerTask(){
+
+        Thread executionThread = Thread.currentThread();
+        boolean canceled = false;
+
+
+        @Override
+        public void run() {
+          if (!canceled) {
+            executionThread.interrupt();
+          }
+        }
+
+        @Override
+        public boolean cancel() {
+          this.canceled = true;
+          return super.cancel();
+        }
+      };
+      commandInterruptTimer = Orient.instance()
+              .scheduleTask(
+                      commandInterruptRunnable,
+                      database.getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT), 0);
     }
-    List<OResultInternal> rsCopy = stream.map((r) -> (OResultInternal) r).collect(Collectors.toList());
+
+    List<OResultInternal> rsCopy = null;
+    try {
+      //copy the result-set to make sure that the execution is successful
+      Stream<OResult> stream = rs.stream();
+      if (database.getActiveQueries().containsKey(((OLocalResultSetLifecycleDecorator) rs).getQueryId())) {
+        stream = stream.limit(request.getRecordsPerPage());
+      }
+      rsCopy = stream.map((r) -> (OResultInternal) r).collect(Collectors.toList());
+    } finally {
+      if (commandInterruptTimer != null) {
+        commandInterruptTimer.cancel();
+      }
+      if (commandInterruptRunnable != null) {
+        commandInterruptRunnable.cancel();
+      }
+    }
 
     boolean hasNext = rs.hasNext();
     boolean txChanges = false;
