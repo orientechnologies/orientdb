@@ -2533,8 +2533,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     //
     //  OAbstractPaginatedStorage.commit(com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction)
 
+
     final AtomicBoolean txIsCompleted = new AtomicBoolean();
     try {
+      interruptionManager.setWriteOperationsHappening(true);
       checkOpenness();
       checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
@@ -2596,7 +2598,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final List<ORecordOperation> result = new ArrayList<>(8);
       stateLock.acquireReadLock();
       try {
-        interruptionManager.enterCriticalPath();
         if (pessimisticLock) {
           final List<ORID> recordLocks = new ArrayList<>(8);
           for (final ORecordOperation recordOperation : recordOperations) {
@@ -2708,7 +2709,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           }
         } finally {
           stateLock.releaseReadLock();
-          interruptionManager.exitCriticalPath();
         }
       }
 
@@ -2729,6 +2729,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throw logAndPrepareForRethrow(t);
     } finally {
       txIsCompleted.set(true);
+      interruptionManager.setWriteOperationsHappening(false);
     }
   }
 
