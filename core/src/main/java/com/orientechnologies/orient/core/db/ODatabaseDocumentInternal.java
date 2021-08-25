@@ -258,4 +258,16 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
   default void setCommandInterruptionDepth(int commandInterruptionDepth) {
 
   }
+
+  /**
+   * needed for query interrupt
+   * @return
+   */
+  default boolean isStorageCommitHappening() {
+    return false;
+  }
+
+  default void setStorageCommitHappening(boolean commandInterrupted) {
+
+  }
 }

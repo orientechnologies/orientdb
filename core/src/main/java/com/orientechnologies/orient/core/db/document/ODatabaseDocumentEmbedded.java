@@ -94,6 +94,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   // (avoid to kill it in a storage critical path)
   int commandInterruptionDepth = 0;
   boolean commandInterrupted = false;
+  private boolean storageCommitHappening = false;
 
   protected class InterruptTimerTask extends TimerTask {
 
@@ -1260,6 +1261,14 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
   public void setCommandInterruptionDepth(int commandInterruptionDepth) {
     this.commandInterruptionDepth = commandInterruptionDepth;
+  }
+
+  public boolean isStorageCommitHappening() {
+    return this.storageCommitHappening;
+  }
+
+  public void setStorageCommitHappening(boolean val) {
+    this.storageCommitHappening = val;
   }
 
   @Override

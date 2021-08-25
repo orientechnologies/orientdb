@@ -7,13 +7,11 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 
 public class OStorageInterruptionManager {
 
-  protected boolean writeOperationsHappening = false;
-
   public void interrupt(Thread thread) {
     synchronized (this) {
       if (getDepth() > 0) {
         setInterrupted(true);
-      } else if (thread != null && !writeOperationsHappening) {
+      } else if (thread != null && !isWriteOperationsHappening()) {
         thread.interrupt();
       }
     }
@@ -89,6 +87,17 @@ public class OStorageInterruptionManager {
   }
 
   public void setWriteOperationsHappening(boolean writeOperationsHappening) {
-    this.writeOperationsHappening = writeOperationsHappening;
+    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
+    if (db != null) {
+      db.setStorageCommitHappening(writeOperationsHappening);
+    }
+  }
+
+  public boolean isWriteOperationsHappening() {
+    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
+    if (db != null) {
+      return db.isStorageCommitHappening();
+    }
+    return false;
   }
 }
