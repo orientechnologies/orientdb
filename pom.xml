@@ -239,10 +239,6 @@
                                 <value>com.orientechnologies.OJUnitTestListener</value>
                             </property>
                         </properties>
-                    	<parallel>classes</parallel>
-                    	<useUnlimitedThreads>true</useUnlimitedThreads>
-
-
                     </configuration>
                 </plugin>
 
