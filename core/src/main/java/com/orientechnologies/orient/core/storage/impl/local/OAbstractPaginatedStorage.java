@@ -5598,7 +5598,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           OPaginatedClusterFactory.createCluster(
               clusterName,
               configuration.getVersion(),
-              OPaginatedCluster.getLatestBinaryVersion(),
+              getConfiguration()
+                  .getContextConfiguration()
+                  .getValueAsInteger(OGlobalConfiguration.STORAGE_CLUSTER_VERSION),
               this);
       cluster.configure(clusterPos, clusterName);
     } else {

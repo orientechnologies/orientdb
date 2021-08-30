@@ -24,6 +24,8 @@ import com.orientechnologies.DatabaseAbstractTest;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODirtyManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.Collection;
 import org.junit.Assert;
@@ -120,6 +122,8 @@ public class OConflictManagementTest extends DatabaseAbstractTest {
     rootDoc.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     ODocument copy = rootDoc.copy();
+    ORecordInternal.setDirtyManager(copy, new ODirtyManager());
+    ORecordInternal.getDirtyManager(rootDoc).clear();
 
     ODocument linkedDoc2 =
         new ODocument()

@@ -30,13 +30,15 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentEntry;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.sql.executor.LiveQueryListenerImpl;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import com.orientechnologies.orient.core.sql.parser.OProjection;
+import com.orientechnologies.orient.core.sql.parser.OProjectionItem;
+import com.orientechnologies.orient.core.sql.parser.OSelectStatement;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -196,8 +198,12 @@ public class OLiveQueryHookV2 {
     if (!ops.hasListeners()) return;
     if (Boolean.FALSE.equals(database.getConfiguration().getValue(QUERY_LIVE_SUPPORT))) return;
 
-    OResult before = iType == ORecordOperation.CREATED ? null : calculateBefore(iDocument);
-    OResult after = iType == ORecordOperation.DELETED ? null : calculateAfter(iDocument);
+    Set<String> projectionsToLoad = calculateProjections(ops);
+
+    OResult before =
+        iType == ORecordOperation.CREATED ? null : calculateBefore(iDocument, projectionsToLoad);
+    OResult after =
+        iType == ORecordOperation.DELETED ? null : calculateAfter(iDocument, projectionsToLoad);
 
     OLiveQueryOp result = new OLiveQueryOp(iDocument, before, after, iType);
     synchronized (ops.pendingOps) {
@@ -219,6 +225,35 @@ public class OLiveQueryHookV2 {
     }
   }
 
+  /**
+   * get all the projections that are needed by the live queries. Null means all
+   *
+   * @param ops
+   * @return
+   */
+  private static Set<String> calculateProjections(OLiveQueryOps ops) {
+    Set<String> result = new HashSet<>();
+    if (ops == null || ops.subscribers == null) {
+      return null;
+    }
+    for (OLiveQueryListenerV2 listener : ops.subscribers.values()) {
+      if (listener instanceof LiveQueryListenerImpl) {
+        OSelectStatement query = ((LiveQueryListenerImpl) listener).getStatement();
+        OProjection proj = query.getProjection();
+        if (proj == null || proj.getItems() == null || proj.getItems().isEmpty()) {
+          return null;
+        }
+        for (OProjectionItem item : proj.getItems()) {
+          if (!item.getExpression().isBaseIdentifier()) {
+            return null;
+          }
+          result.add(item.getExpression().getDefaultAlias().getStringValue());
+        }
+      }
+    }
+    return result;
+  }
+
   private static OLiveQueryOp prevousUpdate(List<OLiveQueryOp> list, ODocument doc) {
     for (OLiveQueryOp oLiveQueryOp : list) {
       if (oLiveQueryOp.originalDoc == doc) {
@@ -228,16 +263,27 @@ public class OLiveQueryHookV2 {
     return null;
   }
 
-  public static OResultInternal calculateBefore(ODocument iDocument) {
+  public static OResultInternal calculateBefore(
+      ODocument iDocument, Set<String> projectionsToLoad) {
     OResultInternal result = new OResultInternal();
     for (String prop : iDocument.getPropertyNames()) {
-      result.setProperty(prop, unboxRidbags(iDocument.getProperty(prop)));
+      if (projectionsToLoad == null || projectionsToLoad.contains(prop)) {
+        result.setProperty(prop, unboxRidbags(iDocument.getProperty(prop)));
+      }
     }
     result.setProperty("@rid", iDocument.getIdentity());
     result.setProperty("@class", iDocument.getClassName());
     result.setProperty("@version", iDocument.getVersion());
-    for (String prop : iDocument.getDirtyFields()) {
-      result.setProperty(prop, convert(iDocument.getOriginalValue(prop)));
+    for (Map.Entry<String, ODocumentEntry> rawEntry : ODocumentInternal.rawEntries(iDocument)) {
+      ODocumentEntry entry = rawEntry.getValue();
+      if (entry.isChanged()) {
+        result.setProperty(
+            rawEntry.getKey(), convert(iDocument.getOriginalValue(rawEntry.getKey())));
+      } else if (entry.isTrackedModified()) {
+        if (entry.value instanceof ODocument && ((ODocument) entry.value).isEmbedded()) {
+          result.setProperty(rawEntry.getKey(), calculateBefore((ODocument) entry.value, null));
+        }
+      }
     }
     return result;
   }
@@ -251,10 +297,13 @@ public class OLiveQueryHookV2 {
     return originalValue;
   }
 
-  private static OResultInternal calculateAfter(ODocument iDocument) {
+  private static OResultInternal calculateAfter(
+      ODocument iDocument, Set<String> projectionsToLoad) {
     OResultInternal result = new OResultInternal();
     for (String prop : iDocument.getPropertyNames()) {
-      result.setProperty(prop, unboxRidbags(iDocument.getProperty(prop)));
+      if (projectionsToLoad == null || projectionsToLoad.contains(prop)) {
+        result.setProperty(prop, unboxRidbags(iDocument.getProperty(prop)));
+      }
     }
     result.setProperty("@rid", iDocument.getIdentity());
     result.setProperty("@class", iDocument.getClassName());

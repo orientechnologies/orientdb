@@ -30,11 +30,11 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandInterruptedException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
+import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -57,7 +57,7 @@ public abstract class OCommandExecutorAbstract extends OBaseParser implements OC
   public OCommandExecutorAbstract init(final OCommandRequestText iRequest) {
     getDatabase().checkSecurity(ORule.ResourceGeneric.COMMAND, ORole.PERMISSION_READ);
     parserText = iRequest.getText().trim();
-    parserTextUpperCase = upperCase(parserText);
+    parserTextUpperCase = OSQLPredicate.upperCase(parserText);
     return this;
   }
 
@@ -138,19 +138,6 @@ public abstract class OCommandExecutorAbstract extends OBaseParser implements OC
     if (iContext != null && !iContext.checkTimeout()) return false;
 
     return true;
-  }
-
-  protected String upperCase(String text) {
-    StringBuilder result = new StringBuilder(text.length());
-    for (char c : text.toCharArray()) {
-      String upper = ("" + c).toUpperCase(Locale.ENGLISH);
-      if (upper.length() > 1) {
-        result.append(c);
-      } else {
-        result.append(upper);
-      }
-    }
-    return result.toString();
   }
 
   public OCommandDistributedReplicateRequest.DISTRIBUTED_RESULT_MGMT

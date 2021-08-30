@@ -21,6 +21,7 @@ package com.orientechnologies.orient.etl;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.etl.context.OETLContext;
 
 /** ETL basic component. Each ETL component must implement this interface. */
 public interface OETLComponent {
@@ -46,6 +47,10 @@ public interface OETLComponent {
    * @return the name of the component
    */
   String getName();
+
+  OETLContext getContext();
+
+  OETLProcessor getProcessor();
 
   void setProcessor(OETLProcessor processor);
 }

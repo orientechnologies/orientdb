@@ -46,7 +46,8 @@ public class OETLJsonRandomExtractorIT extends OETLBaseTest {
 
   @Test
   public void shouldLoadSingleThread() {
-
+    OETLContext context = new OETLContext();
+    context.setVariable("parallel", Boolean.FALSE).setVariable("dumpEveryMs", 1000);
     configure(
         "{extractor : { random: {items: "
             + TOTAL
@@ -55,7 +56,7 @@ public class OETLJsonRandomExtractorIT extends OETLBaseTest {
             + name.getMethodName()
             + "', dbType:'graph', class: 'Person', useLightweightEdges:false, "
             + "classes: [{name: 'Person', extends: 'V'}] } } }",
-        new OETLContext().setVariable("parallel", Boolean.FALSE).setVariable("dumpEveryMs", 1000));
+        context);
 
     proc.execute();
 
@@ -70,7 +71,8 @@ public class OETLJsonRandomExtractorIT extends OETLBaseTest {
 
   @Test
   public void shouldLoadMultipleThreadsInParallel() {
-
+    OETLContext context = new OETLContext();
+    context.setVariable("parallel", Boolean.TRUE).setVariable("dumpEveryMs", 1000);
     configure(
         "{extractor : { random: {items: "
             + TOTAL
@@ -79,7 +81,7 @@ public class OETLJsonRandomExtractorIT extends OETLBaseTest {
             + name.getMethodName()
             + "', dbType:'graph', class: 'Person', useLightweightEdges:false, "
             + "classes: [{name: 'Person', extends: 'V', clusters: 8  }] } } }",
-        new OETLContext().setVariable("parallel", Boolean.TRUE).setVariable("dumpEveryMs", 1000));
+        context);
 
     proc.execute();
     ODatabasePool pool = proc.getLoader().getPool();
@@ -93,7 +95,8 @@ public class OETLJsonRandomExtractorIT extends OETLBaseTest {
 
   @Test
   public void shouldLoadMultipleThreadsInParallelWithBatchCommit() {
-
+    OETLContext context = new OETLContext();
+    context.setVariable("parallel", Boolean.TRUE).setVariable("dumpEveryMs", 1000);
     configure(
         "{extractor : { random: {items: "
             + TOTAL
@@ -102,7 +105,7 @@ public class OETLJsonRandomExtractorIT extends OETLBaseTest {
             + name.getMethodName()
             + "', dbType:'graph', class: 'Person', useLightweightEdges:false, "
             + "classes: [{name: 'Person', extends: 'V', clusters: 8 }] } } }",
-        new OETLContext().setVariable("parallel", Boolean.TRUE).setVariable("dumpEveryMs", 1000));
+        context);
 
     proc.execute();
     ODatabasePool pool = proc.getLoader().getPool();

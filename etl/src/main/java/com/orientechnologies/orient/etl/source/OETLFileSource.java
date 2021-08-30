@@ -21,10 +21,10 @@ package com.orientechnologies.orient.etl.source;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.etl.context.OETLContextWrapper;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
 import java.io.Reader;
@@ -33,11 +33,13 @@ import java.nio.channels.FileLock;
 import java.nio.charset.Charset;
 import java.util.logging.Level;
 import java.util.zip.GZIPInputStream;
+import org.apache.commons.io.input.BOMInputStream;
 
 public class OETLFileSource extends OETLAbstractSource {
   protected String fileName;
   protected String path;
   protected boolean lockFile = false;
+  protected boolean skipBOM = true;
   protected long byteParsed = 0;
   protected long byteToParse = -1;
   protected long skipFirst = 0;
@@ -45,7 +47,7 @@ public class OETLFileSource extends OETLAbstractSource {
   protected RandomAccessFile raf = null;
   protected FileChannel channel = null;
   protected InputStreamReader fileReader = null;
-  protected FileInputStream fis = null;
+  protected InputStream fis = null;
   protected FileLock lock = null;
   private Charset encoding = Charset.forName("UTF-8");
   private File input;
@@ -65,6 +67,9 @@ public class OETLFileSource extends OETLAbstractSource {
     super.configure(iConfiguration, iContext);
 
     if (iConfiguration.containsField("lock")) lockFile = iConfiguration.<Boolean>field("lock");
+
+    if (iConfiguration.containsField("skipBOM"))
+      skipBOM = iConfiguration.field("skipBOM", Boolean.class);
 
     if (iConfiguration.containsField("skipFirst"))
       skipFirst = Long.parseLong(iConfiguration.<String>field("skipFirst"));
@@ -130,10 +135,11 @@ public class OETLFileSource extends OETLAbstractSource {
       raf = new RandomAccessFile(input, fileMode);
       channel = raf.getChannel();
       fis = new FileInputStream(input);
+      if (skipBOM) fis = new BOMInputStream(fis);
       if (fileName.endsWith(".gz"))
         fileReader = new InputStreamReader(new GZIPInputStream(fis), encoding);
       else {
-        fileReader = new InputStreamReader(new FileInputStream(input), encoding);
+        fileReader = new InputStreamReader(fis, encoding);
         byteToParse = input.length();
       }
 
@@ -147,9 +153,7 @@ public class OETLFileSource extends OETLAbstractSource {
       try {
         lock = channel.lock();
       } catch (IOException e) {
-        OETLContextWrapper.getInstance()
-            .getMessageHandler()
-            .error(this, "Error on locking file: %s", e, fileName);
+        getContext().getMessageHandler().error(this, "Error on locking file: %s", e, fileName);
       }
 
     log(Level.INFO, "Reading from file " + path + " with encoding " + encoding.displayName());

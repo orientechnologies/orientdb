@@ -279,4 +279,43 @@ public class OLiveQueryV2Test {
       db.drop();
     }
   }
+
+  @Test
+  public void testLiveProjections() throws InterruptedException {
+
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OLiveQueryV2Test");
+    db.activateOnCurrentThread();
+    db.create();
+    try {
+      db.getMetadata().getSchema().createClass("test");
+      db.getMetadata().getSchema().createClass("test2");
+      MyLiveQueryListener listener = new MyLiveQueryListener(new CountDownLatch(2));
+
+      OLiveQueryMonitor monitor = db.live("select @class, @rid as rid, name from test", listener);
+      Assert.assertNotNull(monitor);
+
+      db.command("insert into test set name = 'foo', surname = 'bar'").close();
+      db.command("insert into test set name = 'foo', surname = 'baz'").close();
+      db.command("insert into test2 set name = 'foo'").close();
+
+      Assert.assertTrue(listener.latch.await(5, TimeUnit.SECONDS));
+
+      monitor.unSubscribe();
+
+      db.command(new OCommandSQL("insert into test set name = 'foo', surname = 'bax'")).execute();
+      db.command(new OCommandSQL("insert into test2 set name = 'foo'"));
+      db.command(new OCommandSQL("insert into test set name = 'foo', surname = 'baz'")).execute();
+
+      Assert.assertEquals(listener.ops.size(), 2);
+      for (OResult doc : listener.ops) {
+        Assert.assertEquals(doc.getProperty("@class"), "test");
+        Assert.assertEquals(doc.getProperty("name"), "foo");
+        Assert.assertNull(doc.getProperty("surname"));
+        ORID rid = doc.getProperty("rid");
+        Assert.assertTrue(rid.isPersistent());
+      }
+    } finally {
+      db.drop();
+    }
+  }
 }

@@ -5,6 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -263,6 +264,32 @@ public class OContainsAnyCondition extends OBooleanExpression {
       return true;
     }
     return false;
+  }
+
+  @Override
+  public OBooleanExpression rewriteIndexChainsAsSubqueries(OCommandContext ctx, OClass clazz) {
+    if (right.isEarlyCalculated(ctx) && left.isIndexChain(ctx, clazz)) {
+      OContainsAnyCondition result = new OContainsAnyCondition(-1);
+
+      result.left = new OExpression(-1);
+      OBaseExpression base = new OBaseExpression(-1);
+      base.identifier = new OBaseIdentifier(-1);
+      base.identifier.suffix = new OSuffixIdentifier(-1);
+      base.identifier.suffix.identifier =
+          ((OBaseExpression) left.mathExpression).identifier.suffix.identifier;
+      result.left.mathExpression = base;
+
+      OClass nextClazz =
+          clazz.getProperty(base.identifier.suffix.identifier.getStringValue()).getLinkedClass();
+      OParenthesisExpression newRight = new OParenthesisExpression(-1);
+      newRight.statement =
+          OBinaryCondition.indexChainToStatement(
+              ((OBaseExpression) left.mathExpression).modifier, nextClazz, right, ctx);
+      result.right = new OExpression(-1);
+      result.right.mathExpression = newRight;
+      return result;
+    }
+    return this;
   }
 
   @Override

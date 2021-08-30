@@ -66,7 +66,7 @@ public class OSQLTarget extends OBaseParser {
     super();
     context = iContext;
     parserText = iText;
-    parserTextUpperCase = upperCase(iText);
+    parserTextUpperCase = OSQLPredicate.upperCase(iText);
 
     try {
       empty = !extractTargets();
@@ -88,20 +88,6 @@ public class OSQLTarget extends OBaseParser {
               "Error on parsing query", parserText, parserGetCurrentPosition()),
           e);
     }
-  }
-
-  protected String upperCase(String text) {
-    // TODO remove and refactor (see same method in OCommandExecutorAbstract)
-    StringBuilder result = new StringBuilder(text.length());
-    for (char c : text.toCharArray()) {
-      String upper = ("" + c).toUpperCase(Locale.ENGLISH);
-      if (upper.length() > 1) {
-        result.append(c);
-      } else {
-        result.append(upper);
-      }
-    }
-    return result.toString();
   }
 
   public Map<String, String> getTargetClusters() {

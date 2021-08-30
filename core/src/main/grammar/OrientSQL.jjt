@@ -2097,6 +2097,7 @@ OProjectionItem ProjectionItem():
 {}
 {
 (
+    [<BANG> {jjtThis.exclude = true;}]
     jjtThis.expression = Expression()
     [ jjtThis.nestedProjection = NestedProjection() ]
     [ <AS> jjtThis.alias = Alias() ]

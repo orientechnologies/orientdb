@@ -27,6 +27,7 @@ import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -635,6 +636,11 @@ public class ODocument extends ORecordAbstract
   protected static void validateFieldsSecurity(
       ODatabaseDocumentInternal internal, ODocument iRecord) throws OValidationException {
     if (internal == null) {
+      return;
+    }
+    if (!internal
+        .getConfiguration()
+        .getValueAsBoolean(OGlobalConfiguration.SECURITY_ADVANCED_POLICY)) {
       return;
     }
     OSecurityInternal security = internal.getSharedContext().getSecurity();

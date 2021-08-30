@@ -100,12 +100,9 @@ public class LiveQueryListenerImpl implements OLiveQueryListenerV2 {
 
   private void validateStatement(OSelectStatement statement) {
     if (statement.getProjection() != null) {
-      if (statement.getProjection().getItems().size() > 1) {
+      if (statement.getProjection().getItems().stream().anyMatch(x -> x.isAggregate())) {
         throw new OCommandExecutionException(
-            "Projections cannot be used in live query " + statement);
-      } else if (statement.getProjection().getItems().get(0).isAll()) {
-        throw new OCommandExecutionException(
-            "Projections cannot be used in live query " + statement);
+            "Aggregate Projections cannot be used in live query " + statement);
       }
     }
     if (statement.getTarget().getItem().getIdentifier() == null
@@ -148,18 +145,28 @@ public class LiveQueryListenerImpl implements OLiveQueryListenerV2 {
       switch (iRecord.type) {
         case ORecordOperation.DELETED:
           record.setMetadata(BEFORE_METADATA_KEY, null);
-          clientListener.onDelete(execDb, record);
+          clientListener.onDelete(execDb, applyProjections(record));
           break;
         case ORecordOperation.UPDATED:
           OResult before = (OResult) record.getMetadata(BEFORE_METADATA_KEY);
           record.setMetadata(BEFORE_METADATA_KEY, null);
-          clientListener.onUpdate(execDb, before, record);
+          clientListener.onUpdate(execDb, before, applyProjections(record));
           break;
         case ORecordOperation.CREATED:
-          clientListener.onCreate(execDb, record);
+          clientListener.onCreate(execDb, applyProjections(record));
           break;
       }
     }
+  }
+
+  private OResultInternal applyProjections(OResultInternal record) {
+    if (statement.getProjection() != null) {
+      OResultInternal result =
+          (OResultInternal)
+              statement.getProjection().calculateSingle(new OBasicCommandContext(), record);
+      return result;
+    }
+    return record;
   }
 
   private boolean filter(OResult record) {
@@ -242,5 +249,9 @@ public class LiveQueryListenerImpl implements OLiveQueryListenerV2 {
         ODatabaseRecordThreadLocal.instance().remove();
       }
     }
+  }
+
+  public OSelectStatement getStatement() {
+    return statement;
   }
 }

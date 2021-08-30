@@ -72,8 +72,7 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
         iText + ". Use " + syntax, parserText, parserGetPreviousPosition());
   }
 
-  protected String upperCase(String text) {
-    // TODO remove and refactor (see same method in OCommandExecutorAbstract)
+  public static String upperCase(String text) {
     StringBuilder result = new StringBuilder(text.length());
     for (char c : text.toCharArray()) {
       String upper = ("" + c).toUpperCase(Locale.ENGLISH);

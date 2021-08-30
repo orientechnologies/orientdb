@@ -30,7 +30,18 @@ import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OScriptExecutor;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
+import com.orientechnologies.orient.core.db.ODatabaseListener;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.ODatabaseStats;
+import com.orientechnologies.orient.core.db.OHookReplacedRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OLiveQueryMonitor;
+import com.orientechnologies.orient.core.db.OLiveQueryResultListener;
+import com.orientechnologies.orient.core.db.OSharedContext;
+import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
@@ -78,7 +89,6 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
-import com.orientechnologies.orient.core.record.impl.ODirtyManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.record.impl.OEdgeDelegate;
@@ -101,12 +111,18 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageInfo;
 import com.orientechnologies.orient.core.storage.cluster.OOfflineClusterException;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
+import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TimeZone;
+import java.util.TimerTask;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -850,18 +866,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     throw new UnsupportedOperationException();
   }
 
-  protected OMicroTransaction beginMicroTransaction() {
-    final OAbstractPaginatedStorage abstractPaginatedStorage =
-        (OAbstractPaginatedStorage) getStorage();
-
-    if (microTransaction == null)
-      microTransaction = new OMicroTransaction(abstractPaginatedStorage, this);
-
-    microTransaction.begin();
-    microTransaction.setNoTxLocks(((OTransactionAbstract) getTransaction()).getInternalLocks());
-    return microTransaction;
-  }
-
   @Override
   public int addBlobCluster(final String iClusterName, final Object... iParameters) {
     int id;
@@ -897,54 +901,23 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
 
     ORecord record = identifiable.getRecord();
     if (record == null) return;
-
-    final OMicroTransaction microTx = beginMicroTransaction();
-    try {
-      Set<ORecord> records = ORecordInternal.getDirtyManager(record).getUpdateRecords();
-      if (records != null) {
-        for (ORecord rec : records) {
-          microTx.saveRecord(rec, null, ODatabase.OPERATION_MODE.SYNCHRONOUS, false, null, null);
-        }
+    if (record instanceof ODocument) {
+      if (((ODocument) record).getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
+        ((ODocument) record).reload();
       }
-
-      Set<ORecord> newRecords = ORecordInternal.getDirtyManager(record).getNewRecords();
-      if (newRecords != null) {
-        for (ORecord rec : newRecords) {
-          microTx.saveRecord(rec, null, ODatabase.OPERATION_MODE.SYNCHRONOUS, false, null, null);
-        }
-      }
-      microTx.deleteRecord(record, iMode);
-    } catch (Exception e) {
-      endMicroTransaction(false);
-      throw e;
     }
-    endMicroTransaction(true);
-    return;
-  }
-
-  private void endMicroTransaction(boolean success) {
-    assert microTransaction != null;
-
+    OTransactionAbstract trans = (OTransactionAbstract) this.currentTx;
     try {
-      if (success) {
-        try {
-          microTransaction.commit();
-          OLiveQueryHook.notifyForTxChanges(this);
-          OLiveQueryHookV2.notifyForTxChanges(this);
-        } catch (Exception e) {
-          microTransaction.rollbackAfterFailedCommit();
-          OLiveQueryHook.removePendingDatabaseOps(this);
-          OLiveQueryHookV2.removePendingDatabaseOps(this);
-          throw e;
-        }
-      } else {
-        microTransaction.rollback();
-        OLiveQueryHook.removePendingDatabaseOps(this);
-        OLiveQueryHookV2.removePendingDatabaseOps(this);
-      }
+      OTransactionOptimistic tx = new OTransactionOptimistic(this);
+      tx.setNoTxLocks(trans.getInternalLocks());
+      this.currentTx = tx;
+      tx.begin();
+      tx.deleteRecord(record, iMode);
+      commit();
     } finally {
-      if (!microTransaction.isActive()) microTransaction = null;
+      this.currentTx = trans;
     }
+    return;
   }
 
   @Override
@@ -1319,47 +1292,24 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
       boolean iForceCreate,
       ORecordCallback<? extends Number> iRecordCreatedCallback,
       ORecordCallback<Integer> iRecordUpdatedCallback) {
-
-    ORecord toRet = null;
-    ODirtyManager dirtyManager = ORecordInternal.getDirtyManager(iRecord);
-    Set<ORecord> newRecord = dirtyManager.getNewRecords();
-    Set<ORecord> updatedRecord = dirtyManager.getUpdateRecords();
-    dirtyManager.clearForSave();
-    if (iRecord.getIdentity().isNew()) {
-      if (newRecord == null) newRecord = Collections.newSetFromMap(new IdentityHashMap<>());
-      newRecord.add(iRecord);
-    } else {
-      if (updatedRecord == null) updatedRecord = Collections.newSetFromMap(new IdentityHashMap<>());
-      updatedRecord.add(iRecord);
-    }
-
-    final OMicroTransaction microTx = beginMicroTransaction();
+    OTransactionAbstract trans = (OTransactionAbstract) this.currentTx;
     try {
-      if (newRecord != null) {
-        for (ORecord rn : newRecord) {
-          String cluster;
-          if (iRecord == rn) cluster = iClusterName;
-          else cluster = getClusterName(rn);
-          microTx.saveRecord(
-              rn, cluster, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
-        }
-      }
-      if (updatedRecord != null) {
-        for (ORecord rn : updatedRecord) {
-          microTx.saveRecord(
-              rn,
-              iClusterName,
-              iMode,
-              iForceCreate,
-              iRecordCreatedCallback,
-              iRecordUpdatedCallback);
-        }
-      }
-    } catch (Exception e) {
-      endMicroTransaction(false);
-      throw e;
+      OTransactionOptimistic tx = new OTransactionOptimistic(this);
+      tx.setNoTxLocks(trans.getInternalLocks());
+      this.currentTx = tx;
+      tx.begin();
+
+      tx.saveRecord(
+          iRecord,
+          iClusterName,
+          iMode,
+          iForceCreate,
+          iRecordCreatedCallback,
+          iRecordUpdatedCallback);
+      commit();
+    } finally {
+      this.currentTx = trans;
     }
-    endMicroTransaction(true);
 
     return iRecord;
   }
@@ -1427,22 +1377,11 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
           ORole.PERMISSION_READ,
           getClusterNameById(rid.getClusterId()));
 
-      // either regular or micro tx must be active or both inactive
-      assert !(getTransaction().isActive()
-          && (microTransaction != null && microTransaction.isActive()));
-
       // SEARCH IN LOCAL TX
       ORecord record = getTransaction().getRecord(rid);
       if (record == OBasicTransaction.DELETED_RECORD)
         // DELETED IN TX
         return null;
-
-      if (record == null) {
-        if (microTransaction != null && microTransaction.isActive()) {
-          record = microTransaction.getRecord(rid);
-          if (record == OBasicTransaction.DELETED_RECORD) return null;
-        }
-      }
 
       if (record == null && !ignoreCache)
         // SEARCH INTO THE CACHE

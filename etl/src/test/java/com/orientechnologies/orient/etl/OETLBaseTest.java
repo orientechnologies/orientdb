@@ -19,7 +19,6 @@
 package com.orientechnologies.orient.etl;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.context.OETLContext;
 import java.util.List;
@@ -71,7 +70,7 @@ public abstract class OETLBaseTest {
     configure(cfgJson, new OETLContext());
   }
 
-  protected void configure(final String cfgJson, final OCommandContext iContext) {
+  protected void configure(final String cfgJson, final OETLContext iContext) {
     ODocument cfg = new ODocument().fromJSON(cfgJson, "noMap");
 
     proc = configurator.parse(cfg, iContext);

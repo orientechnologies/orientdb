@@ -1280,6 +1280,11 @@ public class OSecurityShared implements OSecurityInternal {
     if (session.getUser() == null) {
       return Collections.emptySet();
     }
+    if (!session
+        .getConfiguration()
+        .getValueAsBoolean(OGlobalConfiguration.SECURITY_ADVANCED_POLICY)) {
+      return Collections.emptySet();
+    }
     String className = document.getClassName();
     if (OSecurityPolicy.class.getSimpleName().equalsIgnoreCase(className)) {
       return Collections.emptySet();
@@ -1327,6 +1332,11 @@ public class OSecurityShared implements OSecurityInternal {
       return true;
     }
 
+    if (!session
+        .getConfiguration()
+        .getValueAsBoolean(OGlobalConfiguration.SECURITY_ADVANCED_POLICY)) {
+      return true;
+    }
     String className;
     OClass clazz = null;
     if (document instanceof ODocument) {
@@ -1400,6 +1410,11 @@ public class OSecurityShared implements OSecurityInternal {
       // executeNoAuth
       return true;
     }
+    if (!session
+        .getConfiguration()
+        .getValueAsBoolean(OGlobalConfiguration.SECURITY_ADVANCED_POLICY)) {
+      return true;
+    }
 
     if (record instanceof OElement) {
       String className;
@@ -1442,6 +1457,12 @@ public class OSecurityShared implements OSecurityInternal {
       // executeNoAuth
       return true;
     }
+    if (!session
+        .getConfiguration()
+        .getValueAsBoolean(OGlobalConfiguration.SECURITY_ADVANCED_POLICY)) {
+      return true;
+    }
+
     if (record instanceof OElement) {
       if (OSecurityPolicy.class
           .getSimpleName()
@@ -1482,6 +1503,12 @@ public class OSecurityShared implements OSecurityInternal {
       // executeNoAuth
       return true;
     }
+    if (!session
+        .getConfiguration()
+        .getValueAsBoolean(OGlobalConfiguration.SECURITY_ADVANCED_POLICY)) {
+      return true;
+    }
+
     if (record instanceof OElement) {
 
       String className;

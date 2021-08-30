@@ -34,14 +34,12 @@ public class OETLContextWrapper {
   private static OETLContextWrapper instance = null;
   private OCommandContext context;
 
-  public OETLContextWrapper() {}
+  private OETLContextWrapper() {}
 
   public static OETLContextWrapper getInstance() {
-    return instance;
-  }
-
-  public static OETLContextWrapper newInstance() {
-    instance = new OETLContextWrapper();
+    if (instance == null) {
+      instance = new OETLContextWrapper();
+    }
     return instance;
   }
 
