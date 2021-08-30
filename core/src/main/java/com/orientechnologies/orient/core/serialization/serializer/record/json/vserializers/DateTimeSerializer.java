@@ -7,18 +7,18 @@ import java.io.IOException;
 import java.util.Date;
 
 public class DateTimeSerializer implements ValueSerializer {
-    @Override
-    public void toJSON(final JsonGenerator generator,final Object value) throws IOException {
-        if (value == null) {
-            generator.writeNull();
-            return;
-        }
-
-        generator.writeNumber(((Date)value).getTime());
+  @Override
+  public void toJSON(final JsonGenerator generator, final Object value) throws IOException {
+    if (value == null) {
+      generator.writeNull();
+      return;
     }
 
-    @Override
-    public String typeId() {
-        return "t";
-    }
+    generator.writeNumber(((Date) value).getTime());
+  }
+
+  @Override
+  public String typeId() {
+    return SerializerIDs.DATE_TIME;
+  }
 }

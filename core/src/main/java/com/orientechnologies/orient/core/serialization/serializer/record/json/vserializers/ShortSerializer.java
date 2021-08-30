@@ -6,18 +6,18 @@ import com.orientechnologies.orient.core.serialization.serializer.record.json.Va
 import java.io.IOException;
 
 public class ShortSerializer implements ValueSerializer {
-    @Override
-    public void toJSON(JsonGenerator generator, Object value) throws IOException {
-        if (value == null) {
-            generator.writeNull();
-            return;
-        }
-
-        generator.writeNumber((short) value);
+  @Override
+  public void toJSON(JsonGenerator generator, Object value) throws IOException {
+    if (value == null) {
+      generator.writeNull();
+      return;
     }
 
-    @Override
-    public String typeId() {
-        return "s";
-    }
+    generator.writeNumber((short) value);
+  }
+
+  @Override
+  public String typeId() {
+    return SerializerIDs.SHORT;
+  }
 }

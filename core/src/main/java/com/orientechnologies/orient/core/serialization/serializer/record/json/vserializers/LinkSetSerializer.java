@@ -6,15 +6,16 @@ import com.orientechnologies.orient.core.serialization.serializer.record.json.Va
 
 import java.io.IOException;
 
-public class LinkSetSerializer extends AbstractLinkedCollectionSerializer implements ValueSerializer {
-    @Override
-    public void toJSON(JsonGenerator generator, Object value) throws IOException {
-        //noinspection unchecked
-        writeLinkCollection(generator, (Iterable<OIdentifiable>) value);
-    }
+public class LinkSetSerializer extends AbstractLinkedCollectionSerializer
+    implements ValueSerializer {
+  @Override
+  public void toJSON(JsonGenerator generator, Object value) throws IOException {
+    //noinspection unchecked
+    writeLinkCollection(generator, (Iterable<OIdentifiable>) value);
+  }
 
-    @Override
-    public String typeId() {
-        return "n";
-    }
+  @Override
+  public String typeId() {
+    return SerializerIDs.LINK_SET;
+  }
 }

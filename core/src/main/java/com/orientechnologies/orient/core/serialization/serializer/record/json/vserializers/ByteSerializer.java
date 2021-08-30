@@ -6,18 +6,18 @@ import com.orientechnologies.orient.core.serialization.serializer.record.json.Va
 import java.io.IOException;
 
 public class ByteSerializer implements ValueSerializer {
-    @Override
-    public void toJSON(JsonGenerator generator, Object value) throws IOException {
-        if (value == null) {
-            generator.writeNull();
-            return;
-        }
-
-        generator.writeNumber((byte) value);
+  @Override
+  public void toJSON(JsonGenerator generator, Object value) throws IOException {
+    if (value == null) {
+      generator.writeNull();
+      return;
     }
 
-    @Override
-    public String typeId() {
-        return "b";
-    }
+    generator.writeNumber((byte) value);
+  }
+
+  @Override
+  public String typeId() {
+    return SerializerIDs.BYTE;
+  }
 }

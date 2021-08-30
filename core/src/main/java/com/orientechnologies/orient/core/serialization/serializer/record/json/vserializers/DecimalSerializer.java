@@ -7,18 +7,18 @@ import java.io.IOException;
 import java.math.BigDecimal;
 
 public class DecimalSerializer implements ValueSerializer {
-    @Override
-    public void toJSON(JsonGenerator generator, Object value) throws IOException {
-        if (value == null) {
-            generator.writeNull();
-            return;
-        }
-
-        generator.writeNumber((BigDecimal) value);
+  @Override
+  public void toJSON(JsonGenerator generator, Object value) throws IOException {
+    if (value == null) {
+      generator.writeNull();
+      return;
     }
 
-    @Override
-    public String typeId() {
-        return "c";
-    }
+    generator.writeNumber((BigDecimal) value);
+  }
+
+  @Override
+  public String typeId() {
+    return SerializerIDs.DECIMAL;
+  }
 }
