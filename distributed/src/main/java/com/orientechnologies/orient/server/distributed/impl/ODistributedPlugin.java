@@ -253,12 +253,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
   @Override
   @Deprecated
   public String getCoordinatorServer() {
-    return getLockManagerServer();
-  }
-
-  @Override
-  public String getLockManagerServer() {
-    return clusterManager.getLockManagerServer();
+    return "";
   }
 
   public File getDefaultDatabaseConfigFile() {
@@ -2634,8 +2629,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
           getLocalNodeName(),
           null,
           DIRECTION.NONE,
-          "Distributed servers status (*=current @=lockmgr[%s]):\n%s",
-          getLockManagerServer(),
+          "Distributed servers status (*=current):\n%s",
           ODistributedOutput.formatServerStatus(this, cfg));
     }
   }
