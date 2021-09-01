@@ -4393,7 +4393,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         return;
       }
 
-      this.error = new RuntimeException("Page " + pageIndex + " is broken in file " + fileName);
+      this.error = new OStorageException("Page " + pageIndex + " is broken in file " + fileName);
       status = STATUS.INTERNAL_ERROR;
 
       try {
