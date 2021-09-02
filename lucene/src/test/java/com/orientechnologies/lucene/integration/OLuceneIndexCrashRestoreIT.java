@@ -5,11 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabasePool;
-import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.OServer;
@@ -41,6 +37,7 @@ public class OLuceneIndexCrashRestoreIT {
   private List<String> surnames;
   private OrientDB orientdb;
   private ODatabasePool databasePool;
+  private static final String BUILD_DIRECTORY = "./target/testLuceneCrash";
 
   @Before
   public void beforeMethod() throws Exception {
@@ -50,6 +47,8 @@ public class OLuceneIndexCrashRestoreIT {
 
     orientdb =
         new OrientDB("remote:localhost:3900", "root", "root", OrientDBConfig.defaultConfig());
+    orientdb.execute(
+        "create database testLuceneCrash plocal users (admin identified by 'admin' role admin)");
 
     databasePool = new ODatabasePool(orientdb, "testLuceneCrash", "admin", "admin");
 
@@ -77,9 +76,7 @@ public class OLuceneIndexCrashRestoreIT {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(3);
     OGlobalConfiguration.FILE_LOCK.setValue(false);
 
-    final String buildDirectory = "./target/testLuceneCrash";
-
-    final File buildDir = new File(buildDirectory);
+    final File buildDir = new File(BUILD_DIRECTORY);
     if (buildDir.exists()) {
       OFileUtils.deleteRecursively(buildDir);
     }
@@ -101,7 +98,7 @@ public class OLuceneIndexCrashRestoreIT {
             "-classpath",
             System.getProperty("java.class.path"),
             "-DmutexFile=" + mutexFile.getAbsolutePath(),
-            "-DORIENTDB_HOME=" + buildDirectory,
+            "-DORIENTDB_HOME=" + BUILD_DIRECTORY,
             RemoteDBRunner.class.getName());
 
     processBuilder.inheritIO();
@@ -186,6 +183,8 @@ public class OLuceneIndexCrashRestoreIT {
 
     // start embedded
     OServer server = OServerMain.create(true);
+    server.setServerRootDirectory(BUILD_DIRECTORY);
+
     InputStream conf = RemoteDBRunner.class.getResourceAsStream("index-crash-config.xml");
 
     server.startup(conf);
