@@ -19,21 +19,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 
-/**
- * @author Luca Molino (molino.luca--at--gmail.com)
- * 
- */
+/** @author Luca Molino (molino.luca--at--gmail.com) */
 public class OHttpMultipartContentInputStream extends InputStream {
 
-  protected String                        boundary;
+  protected String boundary;
 
   protected OHttpMultipartBaseInputStream wrappedInputStream;
 
-  protected int                           nextByte;
+  protected int nextByte;
 
-  protected boolean                       internalAvailable = true;
+  protected boolean internalAvailable = true;
 
-  public OHttpMultipartContentInputStream(OHttpMultipartBaseInputStream in, String iBoundary) throws IOException {
+  public OHttpMultipartContentInputStream(OHttpMultipartBaseInputStream in, String iBoundary)
+      throws IOException {
     wrappedInputStream = in;
     boundary = '\n' + "--" + iBoundary;
   }
@@ -53,8 +51,7 @@ public class OHttpMultipartContentInputStream extends InputStream {
 
   @Override
   public synchronized int read() throws IOException {
-    if (!internalAvailable)
-      return -1;
+    if (!internalAvailable) return -1;
 
     int value = nextByte;
     nextByte = wrappedInputStream.read();
@@ -65,8 +62,7 @@ public class OHttpMultipartContentInputStream extends InputStream {
   }
 
   @Override
-  public void close() throws IOException {
-  }
+  public void close() throws IOException {}
 
   @Override
   public synchronized void mark(int readlimit) {
@@ -124,8 +120,7 @@ public class OHttpMultipartContentInputStream extends InputStream {
       } else {
         internalAvailable = true;
         checkingEnd = false;
-        if (buffer.size() > 0)
-          wrappedInputStream.setSkipInput(buffer);
+        if (buffer.size() > 0) wrappedInputStream.setSkipInput(buffer);
       }
     }
   }

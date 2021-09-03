@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.client.remote.message;
 
-import java.io.IOException;
-
 import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
@@ -29,9 +27,10 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
+import java.io.IOException;
 
 public final class OAddClusterRequest implements OBinaryRequest<OAddClusterResponse> {
-  private int    requestedId = -1;
+  private int requestedId = -1;
   private String clusterName;
 
   public OAddClusterRequest(int iRequestedId, String iClusterName) {
@@ -39,8 +38,7 @@ public final class OAddClusterRequest implements OBinaryRequest<OAddClusterRespo
     this.clusterName = iClusterName;
   }
 
-  public OAddClusterRequest() {
-  }
+  public OAddClusterRequest() {}
 
   @Override
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
@@ -48,10 +46,10 @@ public final class OAddClusterRequest implements OBinaryRequest<OAddClusterRespo
     network.writeShort((short) requestedId);
   }
 
-  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
     String type = "";
-    if (protocolVersion < 24)
-      type = channel.readString();
+    if (protocolVersion < 24) type = channel.readString();
 
     this.clusterName = channel.readString();
 
@@ -75,7 +73,7 @@ public final class OAddClusterRequest implements OBinaryRequest<OAddClusterRespo
   public String getDescription() {
     return "Add cluster";
   }
-  
+
   public String getClusterName() {
     return clusterName;
   }
@@ -88,11 +86,9 @@ public final class OAddClusterRequest implements OBinaryRequest<OAddClusterRespo
   public OAddClusterResponse createResponse() {
     return new OAddClusterResponse();
   }
-  
+
   @Override
   public OBinaryResponse execute(OBinaryRequestExecutor executor) {
     return executor.executeAddCluster(this);
   }
-  
-  
 }

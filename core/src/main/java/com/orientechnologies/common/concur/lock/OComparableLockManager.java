@@ -20,28 +20,27 @@
 package com.orientechnologies.common.concur.lock;
 
 import com.orientechnologies.common.exception.OException;
-
-import java.util.Collection;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class OComparableLockManager<T extends  Comparable> {
+public class OComparableLockManager<T extends Comparable> {
   public enum LOCK {
-    SHARED, EXCLUSIVE
+    SHARED,
+    EXCLUSIVE
   }
 
   private static final int DEFAULT_CONCURRENCY_LEVEL = 16;
-  private         long                                    acquireTimeout;
+  private long acquireTimeout;
   protected final ConcurrentSkipListMap<T, CountableLock> map;
-  private final   boolean                                 enabled;
+  private final boolean enabled;
   private static final Object NULL_KEY = new Object();
 
   @SuppressWarnings("serial")
   private static class CountableLock {
-    private final AtomicInteger countLocks    = new AtomicInteger(1);
+    private final AtomicInteger countLocks = new AtomicInteger(1);
     private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
   }
 
@@ -49,7 +48,8 @@ public class OComparableLockManager<T extends  Comparable> {
     this(iEnabled, iAcquireTimeout, defaultConcurrency());
   }
 
-  public OComparableLockManager(final boolean iEnabled, final int iAcquireTimeout, final int concurrencyLevel) {
+  public OComparableLockManager(
+      final boolean iEnabled, final int iAcquireTimeout, final int concurrencyLevel) {
     map = new ConcurrentSkipListMap<T, CountableLock>();
 
     acquireTimeout = iAcquireTimeout;
@@ -77,22 +77,18 @@ public class OComparableLockManager<T extends  Comparable> {
   }
 
   public void acquireLock(final T iResourceId, final LOCK iLockType, long iTimeout) {
-    if (!enabled)
-      return;
+    if (!enabled) return;
 
     T immutableResource = getImmutableResourceId(iResourceId);
-    if (immutableResource == null)
-      immutableResource = (T) NULL_KEY;
+    if (immutableResource == null) immutableResource = (T) NULL_KEY;
 
     CountableLock lock;
-
 
     while (true) {
       lock = new CountableLock();
 
       CountableLock oldLock = map.putIfAbsent(immutableResource, lock);
-      if (oldLock == null)
-        break;
+      if (oldLock == null) break;
 
       lock = oldLock;
       final int oldValue = lock.countLocks.get();
@@ -109,47 +105,56 @@ public class OComparableLockManager<T extends  Comparable> {
 
     try {
       if (iTimeout <= 0) {
-        if (iLockType == LOCK.SHARED)
-          lock.readWriteLock.readLock().lock();
-        else
-          lock.readWriteLock.writeLock().lock();
+        if (iLockType == LOCK.SHARED) lock.readWriteLock.readLock().lock();
+        else lock.readWriteLock.writeLock().lock();
       } else {
         try {
           if (iLockType == LOCK.SHARED) {
             if (!lock.readWriteLock.readLock().tryLock(iTimeout, TimeUnit.MILLISECONDS))
               throw new OLockException(
-                  "Timeout (" + iTimeout + "ms) on acquiring resource '" + iResourceId + "' because is locked from another thread");
+                  "Timeout ("
+                      + iTimeout
+                      + "ms) on acquiring resource '"
+                      + iResourceId
+                      + "' because is locked from another thread");
           } else {
             if (!lock.readWriteLock.writeLock().tryLock(iTimeout, TimeUnit.MILLISECONDS))
               throw new OLockException(
-                  "Timeout (" + iTimeout + "ms) on acquiring resource '" + iResourceId + "' because is locked from another thread");
+                  "Timeout ("
+                      + iTimeout
+                      + "ms) on acquiring resource '"
+                      + iResourceId
+                      + "' because is locked from another thread");
           }
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
-          throw OException
-              .wrapException(new OLockException("Thread interrupted while waiting for resource '" + iResourceId + "'"), e);
+          throw OException.wrapException(
+              new OLockException(
+                  "Thread interrupted while waiting for resource '" + iResourceId + "'"),
+              e);
         }
       }
     } catch (RuntimeException e) {
       final int usages = lock.countLocks.decrementAndGet();
-      if (usages == 0)
-        map.remove(immutableResource);
+      if (usages == 0) map.remove(immutableResource);
 
       throw e;
     }
   }
 
-  public void releaseLock(final Object iRequester, T iResourceId, final LOCK iLockType) throws OLockException {
-    if (!enabled)
-      return;
+  public void releaseLock(final Object iRequester, T iResourceId, final LOCK iLockType)
+      throws OLockException {
+    if (!enabled) return;
 
-    if (iResourceId == null)
-      iResourceId = (T) NULL_KEY;
+    if (iResourceId == null) iResourceId = (T) NULL_KEY;
 
     final CountableLock lock = map.get(iResourceId);
     if (lock == null)
       throw new OLockException(
-          "Error on releasing a non acquired lock by the requester '" + iRequester + "' against the resource: '" + iResourceId
+          "Error on releasing a non acquired lock by the requester '"
+              + iRequester
+              + "' against the resource: '"
+              + iResourceId
               + "'");
 
     final int lockCount = lock.countLocks.decrementAndGet();
@@ -159,10 +164,8 @@ public class OComparableLockManager<T extends  Comparable> {
       }
     }
 
-    if (iLockType == LOCK.SHARED)
-      lock.readWriteLock.readLock().unlock();
-    else
-      lock.readWriteLock.writeLock().unlock();
+    if (iLockType == LOCK.SHARED) lock.readWriteLock.readLock().unlock();
+    else lock.readWriteLock.writeLock().unlock();
   }
 
   // For tests purposes.
@@ -177,8 +180,7 @@ public class OComparableLockManager<T extends  Comparable> {
   private static int defaultConcurrency() {
     if ((Runtime.getRuntime().availableProcessors() << 6) > DEFAULT_CONCURRENCY_LEVEL)
       return Runtime.getRuntime().availableProcessors() << 6;
-    else
-      return DEFAULT_CONCURRENCY_LEVEL;
+    else return DEFAULT_CONCURRENCY_LEVEL;
   }
 
   private static int closestInteger(int value) {

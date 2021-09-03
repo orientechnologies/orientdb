@@ -20,11 +20,6 @@ import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-
-import javax.net.SocketFactory;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManagerFactory;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -34,20 +29,24 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.net.URL;
 import java.security.KeyStore;
+import javax.net.SocketFactory;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
 
 public class OSocketFactory {
 
-  private SocketFactory         socketFactory;
-  private boolean               useSSL  = false;
-  private SSLContext            context = null;
+  private SocketFactory socketFactory;
+  private boolean useSSL = false;
+  private SSLContext context = null;
   private OContextConfiguration config;
 
-  private String keyStorePath       = null;
-  private String keyStorePassword   = null;
-  private String keyStoreType       = KeyStore.getDefaultType();
-  private String trustStorePath     = null;
+  private String keyStorePath = null;
+  private String keyStorePassword = null;
+  private String keyStoreType = KeyStore.getDefaultType();
+  private String trustStorePath = null;
   private String trustStorePassword = null;
-  private String trustStoreType     = KeyStore.getDefaultType();
+  private String trustStoreType = KeyStore.getDefaultType();
 
   private OSocketFactory(final OContextConfiguration iConfig) {
     config = iConfig;
@@ -56,7 +55,8 @@ public class OSocketFactory {
     keyStorePath = (String) iConfig.getValue(OGlobalConfiguration.CLIENT_SSL_KEYSTORE);
     keyStorePassword = (String) iConfig.getValue(OGlobalConfiguration.CLIENT_SSL_KEYSTORE_PASSWORD);
     trustStorePath = (String) iConfig.getValue(OGlobalConfiguration.CLIENT_SSL_TRUSTSTORE);
-    trustStorePassword = (String) iConfig.getValue(OGlobalConfiguration.CLIENT_SSL_TRUSTSTORE_PASSWORD);
+    trustStorePassword =
+        (String) iConfig.getValue(OGlobalConfiguration.CLIENT_SSL_TRUSTSTORE_PASSWORD);
   }
 
   public static OSocketFactory instance(final OContextConfiguration iConfig) {
@@ -93,7 +93,8 @@ public class OSocketFactory {
 
         SSLContext context = SSLContext.getInstance("TLS");
 
-        KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+        KeyManagerFactory kmf =
+            KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
 
         KeyStore keyStore = KeyStore.getInstance(keyStoreType);
         char[] keyStorePass = keyStorePassword.toCharArray();
@@ -117,9 +118,9 @@ public class OSocketFactory {
         return SSLContext.getDefault();
       }
     } catch (Exception e) {
-      throw OException.wrapException(new OConfigurationException("Failed to create ssl context"), e);
+      throw OException.wrapException(
+          new OConfigurationException("Failed to create ssl context"), e);
     }
-
   }
 
   protected InputStream getAsStream(String path) throws IOException {
@@ -169,5 +170,4 @@ public class OSocketFactory {
   public Socket createSocket() throws IOException {
     return configureSocket(getBackingFactory().createSocket());
   }
-
 }

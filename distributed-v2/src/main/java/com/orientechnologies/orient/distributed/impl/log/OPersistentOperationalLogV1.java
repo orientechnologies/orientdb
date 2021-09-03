@@ -7,8 +7,18 @@ import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
-
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutput;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.RandomAccessFile;
 import java.util.Iterator;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
@@ -61,7 +71,8 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
     }
   }
 
-  protected static final long MAGIC = 6148914691236517205L; //101010101010101010101010101010101010101010101010101010101010101
+  protected static final long MAGIC =
+      6148914691236517205L; // 101010101010101010101010101010101010101010101010101010101010101
   protected static final String OPLOG_INFO_FILE = "oplog.opl";
   protected static final String OPLOG_FILE = "oplog_$NUM$.opl";
   protected static final int LOG_ENTRIES_PER_FILE = 16 * 1024;
@@ -74,15 +85,17 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
 
   private AtomicLong inc;
 
-  public static OOperationLog newInstance(String databaseName, OrientDBInternal context, OLogRequestFactory factory) {
+  public static OOperationLog newInstance(
+      String databaseName, OrientDBInternal context, OLogRequestFactory factory) {
     OAbstractPaginatedStorage s = ((OrientDBDistributed) context).getStorage(databaseName);
     if (s instanceof OLocalPaginatedStorage) {
       OLocalPaginatedStorage storage = (OLocalPaginatedStorage) s;
-      OPersistentOperationalLogV1 result = new OPersistentOperationalLogV1(storage.getStoragePath().toString(), factory);
+      OPersistentOperationalLogV1 result =
+          new OPersistentOperationalLogV1(storage.getStoragePath().toString(), factory);
       result.scheduleLogPrune(context, databaseName);
       return result;
     } else {
-      //TODO replace with in-memory impl!
+      // TODO replace with in-memory impl!
       return new OIncrementOperationalLog();
     }
   }
@@ -111,7 +124,8 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
       this.fileOutput = new FileOutputStream(file, true);
       return new DataOutputStream(fileOutput);
     } catch (IOException e) {
-      throw new ODistributedException("Cannot create oplog file " + info.currentFileNum + ": " + e.getMessage());
+      throw new ODistributedException(
+          "Cannot create oplog file " + info.currentFileNum + ": " + e.getMessage());
     }
   }
 
@@ -127,7 +141,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
     if (infoFile.exists()) {
       info = new OpLogInfo();
       info.fromStream(new FileInputStream(infoFile));
-//      writeInfo(infoFile, result);
+      //      writeInfo(infoFile, result);
     } else {
       initNewInfoFile(infoFile, result);
     }
@@ -141,7 +155,6 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
     } else {
       initNewInfoFile(infoFile, info);
     }
-
   }
 
   private void writeInfo(File infoFile, OpLogInfo result) {
@@ -170,7 +183,6 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
     } catch (IOException e) {
       throw new ODistributedException("Cannot init oplog info:" + e.getMessage());
     }
-
   }
 
   @Override
@@ -181,7 +193,6 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
       }
       return lastId;
     }
-
   }
 
   private void loadLastId() {
@@ -196,25 +207,25 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
     } catch (Exception e) {
 
     }
-
   }
 
   protected AtomicLong readLastLogId() {
-    String filePath = storagePath + File.separator + OPLOG_FILE.replace("$NUM$", "" + info.currentFileNum);
+    String filePath =
+        storagePath + File.separator + OPLOG_FILE.replace("$NUM$", "" + info.currentFileNum);
     File f = new File(filePath);
-    try (RandomAccessFile file = new RandomAccessFile(filePath, "r");) {
+    try (RandomAccessFile file = new RandomAccessFile(filePath, "r"); ) {
       if (!f.exists()) {
         f.createNewFile();
       }
       if (file.length() == 0) {
         return new AtomicLong(info.currentFileNum * LOG_ENTRIES_PER_FILE - 1);
       }
-      file.seek(file.length() - 8); //magic
+      file.seek(file.length() - 8); // magic
       long magic = file.readLong();
       if (magic != MAGIC) {
         return new AtomicLong(recover());
       }
-      file.seek(file.length() - 16); //length plus magic
+      file.seek(file.length() - 16); // length plus magic
       long size = file.readLong();
 
       file.seek(file.length() - 24 - size - 20);
@@ -225,9 +236,14 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
   }
 
   private long recover() {
-    String oldFilePath = storagePath + File.separator + OPLOG_FILE.replace("$NUM$", "" + info.currentFileNum);
+    String oldFilePath =
+        storagePath + File.separator + OPLOG_FILE.replace("$NUM$", "" + info.currentFileNum);
     File oldFile = new File(oldFilePath);
-    String newFilePath = storagePath + File.separator + OPLOG_FILE.replace("$NUM$", "" + info.currentFileNum) + "_temp";
+    String newFilePath =
+        storagePath
+            + File.separator
+            + OPLOG_FILE.replace("$NUM$", "" + info.currentFileNum)
+            + "_temp";
     File newFile = new File(newFilePath);
     if (newFile.exists()) {
       newFile.delete();
@@ -267,7 +283,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
   @Override
   public OLogId log(OLogRequest request) {
     if (!leader) {
-//      throw new IllegalStateException("Cannot log on a non-leader node");
+      //      throw new IllegalStateException("Cannot log on a non-leader node");
     }
     OLogId result;
     paralledThreads.incrementAndGet();
@@ -336,7 +352,8 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
         if (logId.getId() != lastPersistentLog().getId() + 1) {
           return false;
         }
-        if (logId.getPreviousIdTerm() != -1 && logId.getPreviousIdTerm() != lastPersistentLog().getTerm()) {
+        if (logId.getPreviousIdTerm() != -1
+            && logId.getPreviousIdTerm() != lastPersistentLog().getTerm()) {
           return false;
         }
         this.term = logId.getTerm();
@@ -361,11 +378,12 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
   }
 
   /**
-   * given a logId, checks if it requires a log truncate to be written. If it does, the log head is truncated until that id and the
-   * method returns true otherwise it returns false.
+   * given a logId, checks if it requires a log truncate to be written. If it does, the log head is
+   * truncated until that id and the method returns true otherwise it returns false.
    *
    * @param logId
-   * @return true if the log was truncated, ie. if this logId did not fit in the current log sequence, false otherwise
+   * @return true if the log was truncated, ie. if this logId did not fit in the current log
+   *     sequence, false otherwise
    */
   private boolean tryTruncateLogHead(OLogId logId) {
     OLogId logHead = lastPersistentLog();
@@ -392,7 +410,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
 
       OLogId samePositionLog = iterator.next().getLogId();
       if (samePositionLog.getId() > logId.getId()) {
-        //I cannot check this log, it's too old
+        // I cannot check this log, it's too old
         return false;
       }
       if (samePositionLog.getTerm() == logId.getTerm()) {
@@ -413,7 +431,6 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
     } finally {
       iterator.close();
     }
-
 
     return true;
   }
@@ -458,7 +475,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
       int packetType = stream.readInt();
       OLogRequest request = getCoordinateMessagesFactory().createLogRequest(packetType);
       request.deserialize(stream);
-      stream.readLong();//length, again
+      stream.readLong(); // length, again
       long magic = stream.readLong();
       if (magic != MAGIC) {
         throw new ODistributedException("Invalid OpLog magic number for entry " + logId);
@@ -491,7 +508,6 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
   public Optional<OOplogIterator> searchFrom(OLogId from) {
 
     long smallest = from.getId();
-
 
     while (true) {
       OOplogIterator iterator = iterate(smallest, smallest + 11);
@@ -545,21 +561,23 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
   }
 
   private void scheduleLogPrune(OrientDBInternal orient, String dbName) {
-    orient.executeNoAuthorization(dbName, x -> {
-      long lastFileId = info.keepUntil / LOG_ENTRIES_PER_FILE;
-      for (int i = 0; i < lastFileId; i++) {
-        String fileName = calculateLogFileFullPath(i);
-        File file = new File(fileName);
-        if (file.exists()) {
-          try {
-            file.delete();
-          } catch (Exception e) {
+    orient.executeNoAuthorization(
+        dbName,
+        x -> {
+          long lastFileId = info.keepUntil / LOG_ENTRIES_PER_FILE;
+          for (int i = 0; i < lastFileId; i++) {
+            String fileName = calculateLogFileFullPath(i);
+            File file = new File(fileName);
+            if (file.exists()) {
+              try {
+                file.delete();
+              } catch (Exception e) {
 
+              }
+            }
           }
-        }
-      }
-      return null;
-    });
+          return null;
+        });
   }
 
   public void close() {
@@ -577,19 +595,19 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
     synchronized (inc) {
       LogIdStatus status = searchId(id);
       switch (status) {
-      case TOO_OLD:
-        removeAllLogFiles();
-        inc.set(id.getId());
-        break;
-      case INVALID:
-        break;
-      case FUTURE:
-        break;
-      case PRESENT:
-        doRemoveAfter(id);
-        break;
-      default:
-        throw new IllegalArgumentException("Invalid log ID: " + id);
+        case TOO_OLD:
+          removeAllLogFiles();
+          inc.set(id.getId());
+          break;
+        case INVALID:
+          break;
+        case FUTURE:
+          break;
+        case PRESENT:
+          doRemoveAfter(id);
+          break;
+        default:
+          throw new IllegalArgumentException("Invalid log ID: " + id);
       }
       return status;
     }
@@ -623,13 +641,14 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
   }
 
   /**
-   * @param fileId     the file ID
+   * @param fileId the file ID
    * @param untilLogId last log ID to be kept
    */
   private void removeAfterInFile(int fileId, long untilLogId) {
     String oldFilePath = storagePath + File.separator + OPLOG_FILE.replace("$NUM$", "" + fileId);
     File oldFile = new File(oldFilePath);
-    String newFilePath = storagePath + File.separator + OPLOG_FILE.replace("$NUM$", "" + fileId) + "_temp";
+    String newFilePath =
+        storagePath + File.separator + OPLOG_FILE.replace("$NUM$", "" + fileId) + "_temp";
     File newFile = new File(newFilePath);
     if (newFile.exists()) {
       newFile.delete();

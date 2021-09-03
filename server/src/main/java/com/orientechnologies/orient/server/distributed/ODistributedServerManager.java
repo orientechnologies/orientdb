@@ -21,16 +21,10 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
-import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
-import com.orientechnologies.orient.server.distributed.conflict.ODistributedConflictResolverFactory;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
@@ -46,78 +40,59 @@ import java.util.Set;
 public interface ODistributedServerManager {
   String FILE_DISTRIBUTED_DB_CONFIG = "distributed-config.json";
 
-  /**
-   * Server status.
-   */
+  /** Server status. */
   enum NODE_STATUS {
-    /**
-     * The server was never started or the shutdown is complete.
-     */
+    /** The server was never started or the shutdown is complete. */
     OFFLINE,
 
-    /**
-     * The server is STARTING.
-     */
+    /** The server is STARTING. */
     STARTING,
 
-    /**
-     * The server is ONLINE.
-     */
+    /** The server is ONLINE. */
     ONLINE,
 
-    /**
-     * The server starts to merge to another cluster.
-     */
+    /** The server starts to merge to another cluster. */
     MERGING,
 
-    /**
-     * The server is shutting down.
-     */
+    /** The server is shutting down. */
     SHUTTINGDOWN
-  }
+  };
 
-  ;
-
-  /**
-   * Database status.
-   */
+  /** Database status. */
   enum DB_STATUS {
-    /**
-     * The database is not installed. In this status the server does not receive any request.
-     */
+    /** The database is not installed. In this status the server does not receive any request. */
     NOT_AVAILABLE,
 
     /**
-     * The database has been put in OFFLINE status. In this status the server does not receive any request.
+     * The database has been put in OFFLINE status. In this status the server does not receive any
+     * request.
      */
     OFFLINE,
 
     /**
-     * The database is in synchronization status. This status is set when a synchronization (full or delta) is requested. The node
-     * tha accepts the synchronization, is in SYNCHRONIZING mode too. During this status the server receive requests that will be
-     * enqueue until the database is ready. Server in SYNCHRONIZING status do not concur in the quorum.
+     * The database is in synchronization status. This status is set when a synchronization (full or
+     * delta) is requested. The node tha accepts the synchronization, is in SYNCHRONIZING mode too.
+     * During this status the server receive requests that will be enqueue until the database is
+     * ready. Server in SYNCHRONIZING status do not concur in the quorum.
      */
     SYNCHRONIZING,
 
     /**
-     * The database is ONLINE as fully operative. During this status the server is considered in the quorum (if the server's role is
-     * MASTER)
+     * The database is ONLINE as fully operative. During this status the server is considered in the
+     * quorum (if the server's role is MASTER)
      */
     ONLINE,
 
-    /**
-     * The database is ONLINE, but is not involved in the quorum.
-     */
+    /** The database is ONLINE, but is not involved in the quorum. */
     BACKUP
   }
 
   /**
    * Checks the node status if it's one of the statuses received as argument.
    *
-   * @param iNodeName     Node name
+   * @param iNodeName Node name
    * @param iDatabaseName Database name
-   * @param statuses      vararg of statuses
-   *
+   * @param statuses vararg of statuses
    * @return true if the node's status is equals to one of the passed statuses, otherwise false
    */
   boolean isNodeStatusEqualsTo(String iNodeName, String iDatabaseName, DB_STATUS... statuses);
@@ -129,13 +104,9 @@ public interface ODistributedServerManager {
   @Deprecated
   String getCoordinatorServer();
 
-  String getLockManagerServer();
-
   void waitUntilNodeOnline() throws InterruptedException;
 
   void waitUntilNodeOnline(String nodeName, String databaseName) throws InterruptedException;
-
-  OStorage getStorage(String databaseName);
 
   OServer getServerInstance();
 
@@ -145,7 +116,8 @@ public interface ODistributedServerManager {
 
   ODistributedServerManager unregisterLifecycleListener(ODistributedLifecycleListener iListener);
 
-  Object executeOnLocalNode(ODistributedRequestId reqId, ORemoteTask task, ODatabaseDocumentInternal database);
+  Object executeOnLocalNode(
+      ODistributedRequestId reqId, ORemoteTask task, ODatabaseDocumentInternal database);
 
   void executeOnLocalNodeFromRemote(ODistributedRequest request);
 
@@ -159,7 +131,7 @@ public interface ODistributedServerManager {
 
   void setNodeStatus(NODE_STATUS iStatus);
 
-  boolean checkNodeStatus(NODE_STATUS string);
+  boolean checkNodeStatus(NODE_STATUS status);
 
   void removeServer(String nodeLeftName, boolean removeOnlyDynamicServers);
 
@@ -175,8 +147,9 @@ public interface ODistributedServerManager {
 
   void setDistributedStrategy(ODistributedStrategy streatgy);
 
-  boolean updateCachedDatabaseConfiguration(String iDatabaseName, OModifiableDistributedConfiguration cfg,
-      boolean iDeployToCluster);
+  // This is always used with deployToCluster=true!
+  boolean updateCachedDatabaseConfiguration(
+      String iDatabaseName, OModifiableDistributedConfiguration cfg, boolean iDeployToCluster);
 
   long getNextMessageIdCounter();
 
@@ -184,17 +157,16 @@ public interface ODistributedServerManager {
 
   void updateLastClusterChange();
 
-  void reassignClustersOwnership(String iNode, String databaseName, OModifiableDistributedConfiguration cfg,
+  void reassignClustersOwnership(
+      String iNode,
+      String databaseName,
+      OModifiableDistributedConfiguration cfg,
       boolean canCreateNewClusters);
 
-  /**
-   * Available means not OFFLINE, so ONLINE or SYNCHRONIZING.
-   */
+  /** Available means not OFFLINE, so ONLINE or SYNCHRONIZING. */
   boolean isNodeAvailable(String iNodeName, String databaseName);
 
-  /**
-   * Returns true if the node status is ONLINE.
-   */
+  /** Returns true if the node status is ONLINE. */
   boolean isNodeOnline(String iNodeName, String databaseName);
 
   int getTotalNodes(String iDatabaseName);
@@ -221,7 +193,8 @@ public interface ODistributedServerManager {
 
   ODistributedConfiguration getDatabaseConfiguration(String iDatabaseName);
 
-  ODistributedConfiguration getDatabaseConfiguration(String iDatabaseName, boolean createIfNotPresent);
+  ODistributedConfiguration getDatabaseConfiguration(
+      String iDatabaseName, boolean createIfNotPresent);
 
   /**
    * Sends a distributed request against multiple servers.
@@ -230,17 +203,29 @@ public interface ODistributedServerManager {
    * @param iClusterNames
    * @param iTargetNodeNames
    * @param iTask
-   * @param messageId          Message Id as long
+   * @param messageId Message Id as long
    * @param iExecutionMode
-   * @param localResult        It's the result of the request executed locally
-   * @param iAfterSentCallback
-   * @param endCallback
-   *
+   * @param localResult It's the result of the request executed locally
    * @return
    */
-  ODistributedResponse sendRequest(String iDatabaseName, Collection<String> iClusterNames, Collection<String> iTargetNodeNames,
-      ORemoteTask iTask, long messageId, EXECUTION_MODE iExecutionMode, Object localResult,
-      OCallable<Void, ODistributedRequestId> iAfterSentCallback, OCallable<Void, ODistributedResponseManager> endCallback);
+  ODistributedResponse sendRequest(
+      String iDatabaseName,
+      Collection<String> iClusterNames,
+      Collection<String> iTargetNodeNames,
+      ORemoteTask iTask,
+      long messageId,
+      EXECUTION_MODE iExecutionMode,
+      Object localResult);
+
+  ODistributedResponse sendRequest(
+      String iDatabaseName,
+      Collection<String> iClusterNames,
+      Collection<String> iTargetNodeNames,
+      ORemoteTask iTask,
+      long messageId,
+      EXECUTION_MODE iExecutionMode,
+      Object localResult,
+      ODistributedResponseManagerFactory responseManagerFactory);
 
   ODocument getStats();
 
@@ -248,27 +233,22 @@ public interface ODistributedServerManager {
 
   List<String> getOnlineNodes(String iDatabaseName);
 
-  boolean installDatabase(boolean iStartup, String databaseName, boolean forceDeployment, boolean tryWithDeltaFirst);
+  boolean installDatabase(
+      boolean iStartup, String databaseName, boolean forceDeployment, boolean tryWithDeltaFirst);
 
   /**
-   * Returns the task factory manager. During first connect the minor version of the protocol is used.
+   * Returns the task factory manager. During first connect the minor version of the protocol is
+   * used.
    */
   ORemoteTaskFactoryManager getTaskFactoryManager();
 
-  /**
-   * Elects a new Lock Manager.
-   */
-  String electNewLockManager();
-
   Set<String> getActiveServers();
-
-  ODistributedConflictResolverFactory getConflictResolverFactory();
 
   /**
    * Returns the cluster-wide time in milliseconds.
-   * <p/>
-   * Cluster tries to keep a cluster-wide time which might be different than the member's own system time. Cluster-wide time is
-   * -almost- the same on all members of the cluster.
+   *
+   * <p>Cluster tries to keep a cluster-wide time which might be different than the member's own
+   * system time. Cluster-wide time is -almost- the same on all members of the cluster.
    */
   long getClusterTime();
 
@@ -281,17 +261,20 @@ public interface ODistributedServerManager {
   /**
    * Executes an operation protected by a distributed lock (one per database).
    *
-   * @param <T>            Return type
-   * @param databaseName   Database name
+   * @param <T> Return type
+   * @param databaseName Database name
    * @param timeoutLocking
-   * @param iCallback      Operation @return The operation's result of type T
+   * @param iCallback Operation @return The operation's result of type T
    */
-  <T> T executeInDistributedDatabaseLock(String databaseName, long timeoutLocking, OModifiableDistributedConfiguration lastCfg,
+  <T> T executeInDistributedDatabaseLock(
+      String databaseName,
+      long timeoutLocking,
+      OModifiableDistributedConfiguration lastCfg,
       OCallable<T, OModifiableDistributedConfiguration> iCallback);
 
   /**
-   * Returns true if the quorum is present in terms of number of available nodes for full replication only. With sharding, instead,
-   * the quorum may depend on the involved clusters.
+   * Returns true if the quorum is present in terms of number of available nodes for full
+   * replication only. With sharding, instead, the quorum may depend on the involved clusters.
    *
    * @return
    */
@@ -299,31 +282,18 @@ public interface ODistributedServerManager {
 
   void notifyClients(String databaseName);
 
-  default void messageReceived(ODistributedRequest request) {
+  default void messageReceived(ODistributedRequest request) {}
 
-  }
+  default void messagePartitionCalculate(
+      ODistributedRequest request, Set<Integer> involvedWorkerQueues) {}
 
-  default void messagePartitionCalculate(ODistributedRequest request, Set<Integer> involvedWorkerQueues) {
+  default void messageBeforeOp(String op, ODistributedRequestId requestId) {}
 
-  }
+  default void messageAfterOp(String op, ODistributedRequestId requestId) {}
 
-  default void messageBeforeOp(String op, ODistributedRequestId requestId) {
+  default void messageCurrentPayload(ODistributedRequestId requestId, Object responsePayload) {}
 
-  }
+  default void messageProcessStart(ODistributedRequest message) {}
 
-  default void messageAfterOp(String op, ODistributedRequestId requestId) {
-
-  }
-
-  default void messageCurrentPayload(ODistributedRequestId requestId, Object responsePayload) {
-
-  }
-
-  default void messageProcessStart(ODistributedRequest message) {
-
-  }
-
-  default void messageProcessEnd(ODistributedRequest iRequest, Object responsePayload) {
-
-  }
+  default void messageProcessEnd(ODistributedRequest iRequest, Object responsePayload) {}
 }

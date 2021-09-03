@@ -4,18 +4,15 @@ import javax.persistence.Id;
 import javax.persistence.Version;
 
 public class Address {
-  @Id
-  private String  id;
+  @Id private String id;
 
-  @Version
-  private Integer version;
+  @Version private Integer version;
 
-  private String  type;
-  private String  street;
-  private City    city;
+  private String type;
+  private String street;
+  private City city;
 
-  public Address() {
-  }
+  public Address() {}
 
   public Address(String iStreet) {
     street = iStreet;

@@ -9,7 +9,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -19,7 +18,7 @@ public class OInstanceofCondition extends OBooleanExpression {
 
   protected OExpression left;
   protected OIdentifier right;
-  protected String      rightString;
+  protected String rightString;
 
   public OInstanceofCondition(int id) {
     super(id);
@@ -152,17 +151,13 @@ public class OInstanceofCondition extends OBooleanExpression {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OInstanceofCondition that = (OInstanceofCondition) o;
 
-    if (left != null ? !left.equals(that.left) : that.left != null)
-      return false;
-    if (right != null ? !right.equals(that.right) : that.right != null)
-      return false;
+    if (left != null ? !left.equals(that.left) : that.left != null) return false;
+    if (right != null ? !right.equals(that.right) : that.right != null) return false;
     if (rightString != null ? !rightString.equals(that.rightString) : that.rightString != null)
       return false;
 
@@ -186,6 +181,5 @@ public class OInstanceofCondition extends OBooleanExpression {
   public boolean isCacheable() {
     return left.isCacheable();
   }
-
 }
 /* JavaCC - OriginalChecksum=0b5eb529744f307228faa6b26f0592dc (do not edit this line) */

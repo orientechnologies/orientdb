@@ -1,21 +1,15 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
-import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
-import com.orientechnologies.orient.core.storage.OStorage;
-
-import java.util.*;
-import java.util.concurrent.Callable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class OViewEmbedded extends OViewImpl {
 
@@ -27,7 +21,11 @@ public class OViewEmbedded extends OViewImpl {
     super(iOwner, iDocument, iName);
   }
 
-  public OProperty addProperty(final String propertyName, final OType type, final OType linkedType, final OClass linkedClass,
+  public OProperty addProperty(
+      final String propertyName,
+      final OType type,
+      final OType linkedType,
+      final OClass linkedClass,
       final boolean unsafe) {
     throw new UnsupportedOperationException();
   }
@@ -59,11 +57,9 @@ public class OViewEmbedded extends OViewImpl {
     try {
       checkEmbedded();
 
-      if (subclasses == null)
-        return this;
+      if (subclasses == null) return this;
 
-      if (subclasses.remove(baseClass))
-        removePolymorphicClusterIds((OClassImpl) baseClass);
+      if (subclasses.remove(baseClass)) removePolymorphicClusterIds((OClassImpl) baseClass);
 
       return this;
     } finally {
@@ -87,8 +83,7 @@ public class OViewEmbedded extends OViewImpl {
     for (OClass superClass : classes) {
       if (superClass instanceof OClassAbstractDelegate)
         cls = (OClassImpl) ((OClassAbstractDelegate) superClass).delegate;
-      else
-        cls = (OClassImpl) superClass;
+      else cls = (OClassImpl) superClass;
 
       if (newSuperClasses.contains(cls)) {
         throw new OSchemaException("Duplicated superclass '" + cls.getName() + "'");
@@ -144,8 +139,7 @@ public class OViewEmbedded extends OViewImpl {
 
       addPolymorphicClusterId(clusterId);
 
-      if (defaultClusterId == NOT_EXISTENT_CLUSTER_ID)
-        defaultClusterId = clusterId;
+      if (defaultClusterId == NOT_EXISTENT_CLUSTER_ID) defaultClusterId = clusterId;
 
       ((OSchemaEmbedded) owner).addClusterForView(database, clusterId, this);
       return this;
@@ -162,9 +156,7 @@ public class OViewEmbedded extends OViewImpl {
     return new OPropertyEmbedded(this, p);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public OClass truncateCluster(String clusterName) {
     throw new UnsupportedOperationException();
@@ -201,7 +193,10 @@ public class OViewEmbedded extends OViewImpl {
     database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
     if (clusterIds.length == 1 && clusterId == clusterIds[0])
-      throw new ODatabaseException(" Impossible to remove the last cluster of class '" + getName() + "' drop the class instead");
+      throw new ODatabaseException(
+          " Impossible to remove the last cluster of class '"
+              + getName()
+              + "' drop the class instead");
 
     acquireSchemaWriteLock();
     try {
@@ -213,7 +208,8 @@ public class OViewEmbedded extends OViewImpl {
     return this;
   }
 
-  private OClass removeClusterIdInternal(ODatabaseDocumentInternal database, final int clusterToRemove) {
+  private OClass removeClusterIdInternal(
+      ODatabaseDocumentInternal database, final int clusterToRemove) {
 
     acquireSchemaWriteLock();
     try {
@@ -243,10 +239,8 @@ public class OViewEmbedded extends OViewImpl {
       }
 
       if (defaultClusterId == clusterToRemove) {
-        if (clusterIds.length >= 1)
-          defaultClusterId = clusterIds[0];
-        else
-          defaultClusterId = NOT_EXISTENT_CLUSTER_ID;
+        if (clusterIds.length >= 1) defaultClusterId = clusterIds[0];
+        else defaultClusterId = NOT_EXISTENT_CLUSTER_ID;
       }
 
       ((OSchemaEmbedded) owner).removeClusterForView(database, clusterToRemove, this);
@@ -273,5 +267,4 @@ public class OViewEmbedded extends OViewImpl {
   public OClass setAbstract(boolean isAbstract) {
     throw new UnsupportedOperationException();
   }
-
 }

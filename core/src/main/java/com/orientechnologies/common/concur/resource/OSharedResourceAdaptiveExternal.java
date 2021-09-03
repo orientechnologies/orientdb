@@ -24,8 +24,10 @@ package com.orientechnologies.common.concur.resource;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public class OSharedResourceAdaptiveExternal extends OSharedResourceAdaptive implements OSharedResource {
-  public OSharedResourceAdaptiveExternal(final boolean iConcurrent, final int iTimeout, final boolean ignoreThreadInterruption) {
+public class OSharedResourceAdaptiveExternal extends OSharedResourceAdaptive
+    implements OSharedResource {
+  public OSharedResourceAdaptiveExternal(
+      final boolean iConcurrent, final int iTimeout, final boolean ignoreThreadInterruption) {
     super(iConcurrent, iTimeout, ignoreThreadInterruption);
   }
 

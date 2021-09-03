@@ -1,11 +1,9 @@
 package com.orientechnologies.orient.test.internal;
 
-import java.io.IOException;
-
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
+import java.io.IOException;
 import org.testng.annotations.Test;
 
 @Test

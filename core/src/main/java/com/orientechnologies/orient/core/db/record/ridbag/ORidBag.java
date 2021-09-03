@@ -24,9 +24,14 @@ import com.orientechnologies.common.collection.OCollection;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OUUIDSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.*;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
+import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
 import com.orientechnologies.orient.core.db.record.ridbag.embedded.OEmbeddedRidBag;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
@@ -41,49 +46,62 @@ import com.orientechnologies.orient.core.storage.ridbag.sbtree.Change;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeRidBag;
-
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.*;
+import java.util.Base64;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.Objects;
+import java.util.UUID;
 
 /**
- * A collection that contain links to {@link OIdentifiable}. Bag is similar to set but can contain several entering of the same
- * object.<br>
- * <p>
- * Could be tree based and embedded representation.<br>
+ * A collection that contain links to {@link OIdentifiable}. Bag is similar to set but can contain
+ * several entering of the same object.<br>
+ *
+ * <p>Could be tree based and embedded representation.<br>
+ *
  * <ul>
- * <li>
- * <b>Embedded</b> stores its content directly to the document that owns it.<br>
- * It better fits for cases when only small amount of links are stored to the bag.<br>
- * </li>
- * <li>
- * <b>Tree-based</b> implementation stores its content in a separate data structure called {@link OSBTreeBonsai}.<br>
- * It fits great for cases when you have a huge amount of links.<br>
- * </li>
+ *   <li><b>Embedded</b> stores its content directly to the document that owns it.<br>
+ *       It better fits for cases when only small amount of links are stored to the bag.<br>
+ *   <li><b>Tree-based</b> implementation stores its content in a separate data structure called
+ *       {@link OSBTreeBonsai}.<br>
+ *       It fits great for cases when you have a huge amount of links.<br>
  * </ul>
+ *
  * <br>
- * The representation is automatically converted to tree-based implementation when top threshold is reached. And backward to
- * embedded one when size is decreased to bottom threshold. <br> The thresholds could be configured by {@link
- * OGlobalConfiguration#RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD} and {@link OGlobalConfiguration#RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD}.
- * <br>
+ * The representation is automatically converted to tree-based implementation when top threshold is
+ * reached. And backward to embedded one when size is decreased to bottom threshold. <br>
+ * The thresholds could be configured by {@link
+ * OGlobalConfiguration#RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD} and {@link
+ * OGlobalConfiguration#RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD}. <br>
  * <br>
  * This collection is used to efficiently manage relationships in graph model.<br>
  * <br>
- * Does not implement {@link Collection} interface because some operations could not be efficiently implemented and that's why
- * should be avoided.<br>
+ * Does not implement {@link Collection} interface because some operations could not be efficiently
+ * implemented and that's why should be avoided.<br>
  *
  * @author Artem Orobets (enisher-at-gmail.com)
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 1.7rc1
  */
-public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiable>, ORecordLazyMultiValue,
-    OTrackedMultiValue<OIdentifiable, OIdentifiable>, OCollection<OIdentifiable>, ORecordElement {
+public class ORidBag
+    implements OStringBuilderSerializable,
+        Iterable<OIdentifiable>,
+        ORecordLazyMultiValue,
+        OTrackedMultiValue<OIdentifiable, OIdentifiable>,
+        OCollection<OIdentifiable>,
+        ORecordElement {
   private ORidBagDelegate delegate;
-  private ORecordId       ownerRecord;
-  private String          fieldName;
+  private ORecordId ownerRecord;
+  private String fieldName;
 
-  private int topThreshold    = OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
-  private int bottomThreshold = OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.getValueAsInteger();
+  private int topThreshold =
+      OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
+  private int bottomThreshold =
+      OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.getValueAsInteger();
 
   private UUID uuid;
 
@@ -148,7 +166,8 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
    * THIS IS VERY EXPENSIVE METHOD AND CAN NOT BE CALLED IN REMOTE STORAGE.
    *
    * @param identifiable Object to check.
-   * @return true if ridbag contains at leas one instance with the same rid as passed in identifiable.
+   * @return true if ridbag contains at leas one instance with the same rid as passed in
+   *     identifiable.
    */
   public boolean contains(OIdentifiable identifiable) {
     return delegate.contains(identifiable);
@@ -161,6 +180,11 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
   @Override
   public void add(OIdentifiable identifiable) {
     delegate.add(identifiable);
+  }
+
+  @Override
+  public boolean addInternal(OIdentifiable e) {
+    return delegate.addInternal(e);
   }
 
   @Override
@@ -217,12 +241,12 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
   }
 
   public boolean isToSerializeEmbedded() {
-    if (isEmbedded())
-      return true;
+    if (isEmbedded()) return true;
     if (getOwner() instanceof ORecord && !((ORecord) getOwner()).getIdentity().isPersistent()) {
       return true;
     }
-    if (OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.getValueAsInteger() >= size()) {
+    if (OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.getValueAsInteger()
+        >= size()) {
       return true;
     }
     return false;
@@ -233,8 +257,8 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     checkAndConvert();
 
     final UUID oldUuid = uuid;
-    final OSBTreeCollectionManager sbTreeCollectionManager = ODatabaseRecordThreadLocal.instance().get()
-        .getSbTreeCollectionManager();
+    final OSBTreeCollectionManager sbTreeCollectionManager =
+        ODatabaseRecordThreadLocal.instance().get().getSbTreeCollectionManager();
     if (sbTreeCollectionManager != null) {
       uuid = sbTreeCollectionManager.listenForChanges(this);
     } else {
@@ -244,7 +268,9 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     boolean hasUuid = uuid != null;
 
     final int serializedSize =
-        OByteSerializer.BYTE_SIZE + delegate.getSerializedSize() + ((hasUuid) ? OUUIDSerializer.UUID_SIZE : 0);
+        OByteSerializer.BYTE_SIZE
+            + delegate.getSerializedSize()
+            + ((hasUuid) ? OUUIDSerializer.UUID_SIZE : 0);
     int pointer = bytesContainer.alloc(serializedSize);
     int offset = pointer;
     final byte[] stream = bytesContainer.bytes;
@@ -270,58 +296,67 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
   }
 
   public void checkAndConvert() {
-    ODatabaseInternal database = ODatabaseRecordThreadLocal.instance().getIfDefined();
-    if (database != null && !database.getStorage().isRemote()) {
-      if (isEmbedded() && ODatabaseRecordThreadLocal.instance().get().getSbTreeCollectionManager() != null
+    ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.instance().getIfDefined();
+    if (database != null && !database.isRemote()) {
+      if (isEmbedded()
+          && ODatabaseRecordThreadLocal.instance().get().getSbTreeCollectionManager() != null
           && delegate.size() >= topThreshold) {
-        ORidBagDelegate oldDelegate = delegate;
-        boolean isTransactionModified = oldDelegate.isTransactionModified();
-        delegate = new OSBTreeRidBag();
-        boolean oldAutoConvert = oldDelegate.isAutoConvertToRecord();
-        oldDelegate.setAutoConvertToRecord(false);
-
-        final ORecordElement owner = oldDelegate.getOwner();
-        delegate.disableTracking(owner);
-        for (OIdentifiable identifiable : oldDelegate) {
-          delegate.add(identifiable);
-        }
-
-        delegate.setOwner(owner);
-
-        delegate.setTracker(oldDelegate.getTracker());
-        oldDelegate.disableTracking(owner);
-        delegate.setDirty();
-        delegate.setTransactionModified(isTransactionModified);
-        delegate.enableTracking(owner);
-
-        oldDelegate.setAutoConvertToRecord(oldAutoConvert);
-        oldDelegate.requestDelete();
+        convertToTree();
       } else if (bottomThreshold >= 0 && !isEmbedded() && delegate.size() <= bottomThreshold) {
-        ORidBagDelegate oldDelegate = delegate;
-        boolean isTransactionModified = oldDelegate.isTransactionModified();
-        boolean oldAutoConvert = oldDelegate.isAutoConvertToRecord();
-        oldDelegate.setAutoConvertToRecord(false);
-        delegate = new OEmbeddedRidBag();
-
-        final ORecordElement owner = oldDelegate.getOwner();
-        delegate.disableTracking(owner);
-        for (OIdentifiable identifiable : oldDelegate) {
-          delegate.add(identifiable);
-        }
-
-        delegate.setOwner(owner);
-
-        delegate.setTracker(oldDelegate.getTracker());
-        oldDelegate.disableTracking(owner);
-
-        delegate.setDirty();
-        delegate.setTransactionModified(isTransactionModified);
-        delegate.enableTracking(owner);
-
-        oldDelegate.setAutoConvertToRecord(oldAutoConvert);
-        oldDelegate.requestDelete();
+        convertToEmbedded();
       }
     }
+  }
+
+  private void convertToEmbedded() {
+    ORidBagDelegate oldDelegate = delegate;
+    boolean isTransactionModified = oldDelegate.isTransactionModified();
+    boolean oldAutoConvert = oldDelegate.isAutoConvertToRecord();
+    oldDelegate.setAutoConvertToRecord(false);
+    delegate = new OEmbeddedRidBag();
+
+    final ORecordElement owner = oldDelegate.getOwner();
+    delegate.disableTracking(owner);
+    for (OIdentifiable identifiable : oldDelegate) {
+      delegate.add(identifiable);
+    }
+
+    delegate.setOwner(owner);
+
+    delegate.setTracker(oldDelegate.getTracker());
+    oldDelegate.disableTracking(owner);
+
+    delegate.setDirty();
+    delegate.setTransactionModified(isTransactionModified);
+    delegate.enableTracking(owner);
+
+    oldDelegate.setAutoConvertToRecord(oldAutoConvert);
+    oldDelegate.requestDelete();
+  }
+
+  private void convertToTree() {
+    ORidBagDelegate oldDelegate = delegate;
+    boolean isTransactionModified = oldDelegate.isTransactionModified();
+    delegate = new OSBTreeRidBag();
+    boolean oldAutoConvert = oldDelegate.isAutoConvertToRecord();
+    oldDelegate.setAutoConvertToRecord(false);
+
+    final ORecordElement owner = oldDelegate.getOwner();
+    delegate.disableTracking(owner);
+    for (OIdentifiable identifiable : oldDelegate) {
+      delegate.add(identifiable);
+    }
+
+    delegate.setOwner(owner);
+
+    delegate.setTracker(oldDelegate.getTracker());
+    oldDelegate.disableTracking(owner);
+    delegate.setDirty();
+    delegate.setTransactionModified(isTransactionModified);
+    delegate.enableTracking(owner);
+
+    oldDelegate.setAutoConvertToRecord(oldAutoConvert);
+    oldDelegate.requestDelete();
   }
 
   @Override
@@ -369,7 +404,8 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
   }
 
   @Override
-  public Object returnOriginalState(List<OMultiValueChangeEvent<OIdentifiable, OIdentifiable>> multiValueChangeEvents) {
+  public Object returnOriginalState(
+      List<OMultiValueChangeEvent<OIdentifiable, OIdentifiable>> multiValueChangeEvents) {
     return delegate.returnOriginalState(multiValueChangeEvents);
   }
 
@@ -379,7 +415,8 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
   }
 
   public void setOwner(ORecordElement owner) {
-    if ((!(owner instanceof ODocument) && owner != null) || (owner != null && ((ODocument) owner).isEmbedded())) {
+    if ((!(owner instanceof ODocument) && owner != null)
+        || (owner != null && ((ODocument) owner).isEmbedded())) {
       throw new ODatabaseException("RidBag are supported only at document root");
     }
     delegate.setOwner(owner);
@@ -387,8 +424,8 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
 
   /**
    * Temporary id of collection to track changes in remote mode.
-   * <p>
-   * WARNING! Method is for internal usage.
+   *
+   * <p>WARNING! Method is for internal usage.
    *
    * @return UUID
    */
@@ -401,9 +438,10 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
   }
 
   /**
-   * Notify collection that changes has been saved. Converts to non embedded implementation if needed.
-   * <p>
-   * WARNING! Method is for internal usage.
+   * Notify collection that changes has been saved. Converts to non embedded implementation if
+   * needed.
+   *
+   * <p>WARNING! Method is for internal usage.
    *
    * @param newPointer new collection pointer
    */
@@ -428,9 +466,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     }
   }
 
-  /**
-   * IMPORTANT! Only for internal usage.
-   */
+  /** IMPORTANT! Only for internal usage. */
   public boolean tryMerge(final ORidBag otherValue, boolean iMergeSingleItemsOfMultiValueFields) {
     if (!isEmbedded() && !otherValue.isEmbedded()) {
       final OSBTreeRidBag thisTree = (OSBTreeRidBag) delegate;
@@ -469,7 +505,8 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
 
   protected void init() {
     if (topThreshold < 0) {
-      if (ODatabaseRecordThreadLocal.instance().isDefined() && !ODatabaseRecordThreadLocal.instance().get().isRemote()) {
+      if (ODatabaseRecordThreadLocal.instance().isDefined()
+          && !ODatabaseRecordThreadLocal.instance().get().isRemote()) {
         delegate = new OSBTreeRidBag();
       } else {
         delegate = new OEmbeddedRidBag();
@@ -514,7 +551,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
 
   @Override
   public void replace(OMultiValueChangeEvent<Object, Object> event, Object newValue) {
-    //not needed do nothing
+    // not needed do nothing
   }
 
   @Override
@@ -548,7 +585,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     return true;
   }
 
-  //  @Override
+  @Override
   public void enableTracking(ORecordElement parent) {
     delegate.enableTracking(parent);
   }
@@ -605,4 +642,15 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     this.fieldName = fieldName;
   }
 
+  public void makeTree() {
+    if (isEmbedded()) {
+      convertToTree();
+    }
+  }
+
+  public void makeEmbedded() {
+    if (!isEmbedded()) {
+      convertToEmbedded();
+    }
+  }
 }

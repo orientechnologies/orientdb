@@ -19,7 +19,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLFactory;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -37,7 +36,8 @@ public class ODistributedCommandExecutorSQLFactory implements OCommandExecutorSQ
   static {
 
     // COMMANDS
-    final Map<String, Class<? extends OCommandExecutorSQLAbstract>> commands = new HashMap<String, Class<? extends OCommandExecutorSQLAbstract>>();
+    final Map<String, Class<? extends OCommandExecutorSQLAbstract>> commands =
+        new HashMap<String, Class<? extends OCommandExecutorSQLAbstract>>();
 
     commands.put(OCommandExecutorSQLHASyncDatabase.NAME, OCommandExecutorSQLHASyncDatabase.class);
     commands.put(OCommandExecutorSQLHASyncCluster.NAME, OCommandExecutorSQLHASyncCluster.class);
@@ -47,17 +47,14 @@ public class ODistributedCommandExecutorSQLFactory implements OCommandExecutorSQ
     COMMANDS = Collections.unmodifiableMap(commands);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   public Set<String> getCommandNames() {
     return COMMANDS.keySet();
   }
 
-  /**
-   * {@inheritDoc}
-   */
-  public OCommandExecutorSQLAbstract createCommand(final String name) throws OCommandExecutionException {
+  /** {@inheritDoc} */
+  public OCommandExecutorSQLAbstract createCommand(final String name)
+      throws OCommandExecutionException {
     final Class<? extends OCommandExecutorSQLAbstract> clazz = COMMANDS.get(name);
 
     if (clazz == null) {
@@ -67,8 +64,12 @@ public class ODistributedCommandExecutorSQLFactory implements OCommandExecutorSQ
     try {
       return clazz.newInstance();
     } catch (Exception e) {
-      throw OException.wrapException(new OCommandExecutionException("Error in creation of command " + name
-          + "(). Probably there is not an empty constructor or the constructor generates errors"), e);
+      throw OException.wrapException(
+          new OCommandExecutionException(
+              "Error in creation of command "
+                  + name
+                  + "(). Probably there is not an empty constructor or the constructor generates errors"),
+          e);
     }
   }
 }

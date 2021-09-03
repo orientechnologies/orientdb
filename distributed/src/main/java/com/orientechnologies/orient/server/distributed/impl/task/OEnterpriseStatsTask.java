@@ -37,18 +37,23 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 public class OEnterpriseStatsTask extends OAbstractRemoteTask {
   public static final int FACTORYID = 29;
 
-  public OEnterpriseStatsTask() {
-  }
+  public OEnterpriseStatsTask() {}
 
   @Override
-  public Object execute(final ODistributedRequestId msgId, final OServer iServer, ODistributedServerManager iManager,
-      final ODatabaseDocumentInternal database) throws Exception {
-    return new ODocument().fromJSON(Orient.instance().getProfiler().getStatsAsJson());
+  public Object execute(
+      final ODistributedRequestId msgId,
+      final OServer iServer,
+      ODistributedServerManager iManager,
+      final ODatabaseDocumentInternal database)
+      throws Exception {
+    if (Orient.instance().getProfiler().getStatsAsJson() != null) {
+      return new ODocument().fromJSON(Orient.instance().getProfiler().getStatsAsJson());
+    } else {
+      return new ODocument();
+    }
   }
 
-  /**
-   * Uses the UNLOCK queue that is never blocked.
-   */
+  /** Uses the UNLOCK queue that is never blocked. */
   @Override
   public int[] getPartitionKey() {
     return FAST_NOLOCK;

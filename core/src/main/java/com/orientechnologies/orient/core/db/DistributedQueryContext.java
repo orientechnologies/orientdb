@@ -2,15 +2,12 @@ package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.util.List;
 
-/**
- * Created by luigidellaquila on 28/06/17.
- */
+/** Created by luigidellaquila on 28/06/17. */
 public class DistributedQueryContext {
-  private String     queryId;
-  private ODatabase  db;
+  private String queryId;
+  private ODatabase db;
   private OResultSet resultSet;
 
   public String getQueryId() {
@@ -59,7 +56,9 @@ public class DistributedQueryContext {
       db.activateOnCurrentThread();
       resultSet.close();
       db.close();
-      ((OSharedContextEmbedded) ((ODatabaseInternal) db).getSharedContext()).getActiveDistributedQueries().remove(queryId);
+      ((OSharedContextEmbedded) ((ODatabaseInternal) db).getSharedContext())
+          .getActiveDistributedQueries()
+          .remove(queryId);
     } finally {
       if (prev == null) {
         ODatabaseRecordThreadLocal.instance().remove();

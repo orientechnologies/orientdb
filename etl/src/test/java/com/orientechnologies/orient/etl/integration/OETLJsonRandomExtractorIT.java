@@ -18,17 +18,16 @@
 
 package com.orientechnologies.orient.etl.integration;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.db.ODatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.etl.OETLBaseTest;
 import com.orientechnologies.orient.etl.context.OETLContext;
+import java.io.File;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.io.File;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Tests ETL JSON Extractor.
@@ -37,7 +36,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 public class OETLJsonRandomExtractorIT extends OETLBaseTest {
 
-  private final static int TOTAL = 1000000;
+  private static final int TOTAL = 1000000;
 
   @Before
   public void cleanFolder() throws Exception {
@@ -47,11 +46,17 @@ public class OETLJsonRandomExtractorIT extends OETLBaseTest {
 
   @Test
   public void shouldLoadSingleThread() {
-
-    configure("{extractor : { random: {items: " + TOTAL + ", fields: 10} }, "
-            + "loader: { orientdb: {batchCommit: 10000 , dbURL: 'plocal:./target/" + name.getMethodName()
-            + "', dbType:'graph', class: 'Person', useLightweightEdges:false, " + "classes: [{name: 'Person', extends: 'V'}] } } }",
-        new OETLContext().setVariable("parallel", Boolean.FALSE).setVariable("dumpEveryMs", 1000));
+    OETLContext context = new OETLContext();
+    context.setVariable("parallel", Boolean.FALSE).setVariable("dumpEveryMs", 1000);
+    configure(
+        "{extractor : { random: {items: "
+            + TOTAL
+            + ", fields: 10} }, "
+            + "loader: { orientdb: {batchCommit: 10000 , dbURL: 'plocal:./target/"
+            + name.getMethodName()
+            + "', dbType:'graph', class: 'Person', useLightweightEdges:false, "
+            + "classes: [{name: 'Person', extends: 'V'}] } } }",
+        context);
 
     proc.execute();
 
@@ -66,13 +71,17 @@ public class OETLJsonRandomExtractorIT extends OETLBaseTest {
 
   @Test
   public void shouldLoadMultipleThreadsInParallel() {
-
+    OETLContext context = new OETLContext();
+    context.setVariable("parallel", Boolean.TRUE).setVariable("dumpEveryMs", 1000);
     configure(
-        "{extractor : { random: {items: " + TOTAL + ", fields: 10, delay: 0} }, "
-            + "loader: { orientdb: { dbURL: 'plocal:./target/" + name.getMethodName()
+        "{extractor : { random: {items: "
+            + TOTAL
+            + ", fields: 10, delay: 0} }, "
+            + "loader: { orientdb: { dbURL: 'plocal:./target/"
+            + name.getMethodName()
             + "', dbType:'graph', class: 'Person', useLightweightEdges:false, "
             + "classes: [{name: 'Person', extends: 'V', clusters: 8  }] } } }",
-        new OETLContext().setVariable("parallel", Boolean.TRUE).setVariable("dumpEveryMs", 1000));
+        context);
 
     proc.execute();
     ODatabasePool pool = proc.getLoader().getPool();
@@ -86,12 +95,17 @@ public class OETLJsonRandomExtractorIT extends OETLBaseTest {
 
   @Test
   public void shouldLoadMultipleThreadsInParallelWithBatchCommit() {
-
-    configure("{extractor : { random: {items: " + TOTAL + ", fields: 10, delay: 0} }, "
-            + "loader: { orientdb: {batchCommit: 10000 ,dbURL: 'plocal:./target/" + name.getMethodName()
+    OETLContext context = new OETLContext();
+    context.setVariable("parallel", Boolean.TRUE).setVariable("dumpEveryMs", 1000);
+    configure(
+        "{extractor : { random: {items: "
+            + TOTAL
+            + ", fields: 10, delay: 0} }, "
+            + "loader: { orientdb: {batchCommit: 10000 ,dbURL: 'plocal:./target/"
+            + name.getMethodName()
             + "', dbType:'graph', class: 'Person', useLightweightEdges:false, "
             + "classes: [{name: 'Person', extends: 'V', clusters: 8 }] } } }",
-        new OETLContext().setVariable("parallel", Boolean.TRUE).setVariable("dumpEveryMs", 1000));
+        context);
 
     proc.execute();
     ODatabasePool pool = proc.getLoader().getPool();
@@ -101,7 +115,5 @@ public class OETLJsonRandomExtractorIT extends OETLBaseTest {
 
     db.browseClass("Person").forEach(doc -> assertThat(doc.fields()).isEqualTo(10));
     db.close();
-
   }
-
 }

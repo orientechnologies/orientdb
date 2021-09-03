@@ -22,7 +22,7 @@ import com.orientechnologies.orient.core.sql.method.misc.OAbstractSQLMethod;
 
 /**
  * Returns the first characters from the beginning of the string.
- * 
+ *
  * @author Johann Sorel (Geomatys)
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
@@ -40,7 +40,12 @@ public class OSQLMethodLeft extends OAbstractSQLMethod {
   }
 
   @Override
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
+  public Object execute(
+      Object iThis,
+      OIdentifiable iCurrentRecord,
+      OCommandContext iContext,
+      Object ioResult,
+      Object[] iParams) {
     if (iParams[0] == null || iThis == null) {
       return null;
     }

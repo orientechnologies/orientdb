@@ -24,11 +24,11 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.Change;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
-
 import java.io.IOException;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -44,7 +44,8 @@ public class ORidBagUpdateSerializationOperation implements ORecordSerialization
 
   private final OSBTreeCollectionManager collectionManager;
 
-  public ORidBagUpdateSerializationOperation(final NavigableMap<OIdentifiable, Change> changedValues,
+  public ORidBagUpdateSerializationOperation(
+      final NavigableMap<OIdentifiable, Change> changedValues,
       OBonsaiCollectionPointer collectionPointer) {
     this.changedValues = changedValues;
     this.collectionPointer = collectionPointer;
@@ -53,7 +54,8 @@ public class ORidBagUpdateSerializationOperation implements ORecordSerialization
   }
 
   @Override
-  public void execute(OAbstractPaginatedStorage paginatedStorage) {
+  public void execute(
+      OAtomicOperation atomicOperation, OAbstractPaginatedStorage paginatedStorage) {
     if (changedValues.isEmpty()) {
       return;
     }
@@ -65,9 +67,9 @@ public class ORidBagUpdateSerializationOperation implements ORecordSerialization
 
         storedCounter = entry.getValue().applyTo(storedCounter);
         if (storedCounter <= 0) {
-          tree.remove(entry.getKey());
+          tree.remove(atomicOperation, entry.getKey());
         } else {
-          tree.put(entry.getKey(), storedCounter);
+          tree.put(atomicOperation, entry.getKey(), storedCounter);
         }
       }
     } catch (IOException e) {
@@ -86,5 +88,4 @@ public class ORidBagUpdateSerializationOperation implements ORecordSerialization
   private void releaseTree() {
     collectionManager.releaseSBTree(collectionPointer);
   }
-
 }

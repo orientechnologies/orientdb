@@ -1,11 +1,10 @@
 package com.orientechnologies.common.concur.lock;
 
-import org.junit.Test;
+import static org.junit.Assert.assertTrue;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
-import static org.junit.Assert.assertTrue;
+import org.junit.Test;
 
 public class SimpleRWNotThreadBoundTest {
 
@@ -16,14 +15,15 @@ public class SimpleRWNotThreadBoundTest {
     manager.acquireReadLock("aaa", 0);
 
     CountDownLatch error = new CountDownLatch(1);
-    new Thread(() -> {
-      try {
-        manager.acquireWriteLock("aaa", 10);
-      } catch (OLockException e) {
-        error.countDown();
-      }
-
-    }).start();
+    new Thread(
+            () -> {
+              try {
+                manager.acquireWriteLock("aaa", 10);
+              } catch (OLockException e) {
+                error.countDown();
+              }
+            })
+        .start();
 
     assertTrue(error.await(40, TimeUnit.MILLISECONDS));
     manager.releaseReadLock("aaa");
@@ -36,19 +36,19 @@ public class SimpleRWNotThreadBoundTest {
     manager.acquireWriteLock("aaa", 0);
 
     CountDownLatch error = new CountDownLatch(1);
-    new Thread(() -> {
-      try {
-        manager.acquireReadLock("aaa", 10);
-      } catch (OLockException e) {
-        error.countDown();
-      }
-
-    }).start();
+    new Thread(
+            () -> {
+              try {
+                manager.acquireReadLock("aaa", 10);
+              } catch (OLockException e) {
+                error.countDown();
+              }
+            })
+        .start();
 
     assertTrue(error.await(40, TimeUnit.MILLISECONDS));
 
     manager.releaseWriteLock("aaa");
-
   }
 
   @Test
@@ -58,31 +58,32 @@ public class SimpleRWNotThreadBoundTest {
     manager.acquireReadLock("aaa", 0);
 
     CountDownLatch error = new CountDownLatch(1);
-    new Thread(() -> {
-      try {
-        manager.acquireWriteLock("aaa", 10);
-      } catch (OLockException e) {
-        error.countDown();
-      }
-
-    }).start();
+    new Thread(
+            () -> {
+              try {
+                manager.acquireWriteLock("aaa", 10);
+              } catch (OLockException e) {
+                error.countDown();
+              }
+            })
+        .start();
 
     assertTrue(error.await(40, TimeUnit.MILLISECONDS));
 
     CountDownLatch ok = new CountDownLatch(1);
-    new Thread(() -> {
-      try {
-        manager.acquireWriteLock("aaa", 10);
-        ok.countDown();
-      } catch (OLockException e) {
-      }
-
-    }).start();
+    new Thread(
+            () -> {
+              try {
+                manager.acquireWriteLock("aaa", 10);
+                ok.countDown();
+              } catch (OLockException e) {
+              }
+            })
+        .start();
 
     manager.releaseReadLock("aaa");
 
     assertTrue(ok.await(20, TimeUnit.MILLISECONDS));
-
   }
 
   @Test
@@ -92,28 +93,29 @@ public class SimpleRWNotThreadBoundTest {
     manager.acquireReadLock("aaa", 0);
 
     CountDownLatch ok = new CountDownLatch(1);
-    new Thread(() -> {
-      try {
-        manager.acquireReadLock("aaa", 10);
-        ok.countDown();
-      } catch (OLockException e) {
-      }
-
-    }).start();
+    new Thread(
+            () -> {
+              try {
+                manager.acquireReadLock("aaa", 10);
+                ok.countDown();
+              } catch (OLockException e) {
+              }
+            })
+        .start();
 
     CountDownLatch error = new CountDownLatch(1);
-    new Thread(() -> {
-      try {
-        manager.acquireWriteLock("aaa", 10);
-      } catch (OLockException e) {
-        error.countDown();
-      }
-
-    }).start();
+    new Thread(
+            () -> {
+              try {
+                manager.acquireWriteLock("aaa", 10);
+              } catch (OLockException e) {
+                error.countDown();
+              }
+            })
+        .start();
 
     assertTrue(ok.await(40, TimeUnit.MILLISECONDS));
     assertTrue(error.await(40, TimeUnit.MILLISECONDS));
     manager.releaseReadLock("aaa");
   }
-
 }

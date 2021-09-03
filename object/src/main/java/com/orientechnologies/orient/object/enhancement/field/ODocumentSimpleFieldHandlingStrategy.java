@@ -18,16 +18,19 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
- * {@link ODocumentFieldHandlingStrategy} that delegates to the default {@link ODocument#field(String)} implementation.
- * 
+ * {@link ODocumentFieldHandlingStrategy} that delegates to the default {@link
+ * ODocument#field(String)} implementation.
+ *
  * @author diegomtassis <a href="mailto:dta@compart.com">Diego Martin Tassis</a>
  */
 public class ODocumentSimpleFieldHandlingStrategy implements ODocumentFieldHandlingStrategy {
 
   @Override
-  public ODocument store(ODocument iRecord, String fieldName, Object fieldValue, OType suggestedFieldType) {
+  public ODocument store(
+      ODocument iRecord, String fieldName, Object fieldValue, OType suggestedFieldType) {
 
-    return iRecord.field(fieldName, fieldValue, deriveFieldType(iRecord, fieldName, suggestedFieldType));
+    return iRecord.field(
+        fieldName, fieldValue, deriveFieldType(iRecord, fieldName, suggestedFieldType));
   }
 
   @Override
@@ -49,7 +52,7 @@ public class ODocumentSimpleFieldHandlingStrategy implements ODocumentFieldHandl
 
   /**
    * Derives the type of a field in a document.
-   * 
+   *
    * @param iRecord
    * @param fieldName
    * @param requestedFieldType

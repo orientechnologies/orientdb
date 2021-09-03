@@ -27,6 +27,14 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.OResultBinary;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.OVarIntSerializer;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -34,26 +42,22 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.io.UnsupportedEncodingException;
-import java.util.*;
-
-/**
- * @author mdjurovi
- */
+/** @author mdjurovi */
 @RunWith(Parameterized.class)
 public class ORecordSerializerBinaryTest {
 
-  private static ODatabaseDocumentTx     db = null;
+  private static ODatabaseDocumentTx db = null;
   private static ORecordSerializerBinary serializer;
-  private final  int                     serializerVersion;
+  private final int serializerVersion;
 
   @Parameterized.Parameters
   public static Collection<Object[]> generateParams() {
     List<Object[]> params = new ArrayList<Object[]>();
-    //first we want to run tests for all registreted serializers, and then for two network serializers
-    //testig for each serializer type has its own index
+    // first we want to run tests for all registreted serializers, and then for two network
+    // serializers
+    // testig for each serializer type has its own index
     for (byte i = 0; i < ORecordSerializerBinary.INSTANCE.getNumberOfSupportedVersions(); i++) {
-      params.add(new Object[] { i });
+      params.add(new Object[] {i});
     }
     return params;
   }
@@ -87,7 +91,8 @@ public class ORecordSerializerBinaryTest {
     doc.setProperty("TestPropAny", setValue);
     db.save(doc);
     byte[] serializedDoc = serializer.toStream(doc);
-    OResultBinary docBinary = (OResultBinary) serializer.getBinaryResult(db, serializedDoc, new ORecordId(-1, -1));
+    OResultBinary docBinary =
+        (OResultBinary) serializer.getBinaryResult(db, serializedDoc, new ORecordId(-1, -1));
     Integer value = docBinary.getProperty("TestPropAny");
     Assert.assertEquals(setValue, value);
   }
@@ -98,7 +103,8 @@ public class ORecordSerializerBinaryTest {
     Integer setValue = 16;
     doc.setProperty("TestField", setValue);
     byte[] serializedDoc = serializer.toStream(doc);
-    OResultBinary docBinary = (OResultBinary) serializer.getBinaryResult(db, serializedDoc, new ORecordId(-1, -1));
+    OResultBinary docBinary =
+        (OResultBinary) serializer.getBinaryResult(db, serializedDoc, new ORecordId(-1, -1));
     Integer value = docBinary.getProperty("TestField");
     Assert.assertEquals(setValue, value);
   }
@@ -119,7 +125,8 @@ public class ORecordSerializerBinaryTest {
   }
 
   protected static int readInteger(final BytesContainer container) {
-    final int value = OIntegerSerializer.INSTANCE.deserializeLiteral(container.bytes, container.offset);
+    final int value =
+        OIntegerSerializer.INSTANCE.deserializeLiteral(container.bytes, container.offset);
     container.offset += OIntegerSerializer.INT_SIZE;
     return value;
   }
@@ -137,7 +144,8 @@ public class ORecordSerializerBinaryTest {
     db.save(root);
 
     byte[] rootBytes = serializer.toStream(root);
-    OResultBinary docBinary = (OResultBinary) serializer.getBinaryResult(db, rootBytes, new ORecordId(-1, -1));
+    OResultBinary docBinary =
+        (OResultBinary) serializer.getBinaryResult(db, rootBytes, new ORecordId(-1, -1));
     OResultBinary embeddedBytesViaGet = docBinary.getProperty("TestEmbedded");
     Set<String> fieldNames = embeddedBytesViaGet.getPropertyNames();
     Assert.assertTrue(fieldNames.contains("TestField"));
@@ -161,23 +169,29 @@ public class ORecordSerializerBinaryTest {
 
     byte[] rootBytes = serializer.toStream(root);
     byte[] embeddedNativeBytes = serializer.toStream(embedded);
-    //want to update data pointers because first byte will be removed
+    // want to update data pointers because first byte will be removed
     decreasePositionsBy(embeddedNativeBytes, 1, false);
-    //skip serializer version
+    // skip serializer version
     embeddedNativeBytes = Arrays.copyOfRange(embeddedNativeBytes, 1, embeddedNativeBytes.length);
-    OResultBinary resBinary = (OResultBinary) serializer.getBinaryResult(db, rootBytes, new ORecordId(-1, -1));
+    OResultBinary resBinary =
+        (OResultBinary) serializer.getBinaryResult(db, rootBytes, new ORecordId(-1, -1));
     OResultBinary embeddedBytesViaGet = resBinary.getProperty("TestEmbedded");
-    byte[] deserializedBytes = Arrays.copyOfRange(embeddedBytesViaGet.getBytes(), embeddedBytesViaGet.getOffset(),
-        embeddedBytesViaGet.getOffset() + embeddedBytesViaGet.getFieldLength());
+    byte[] deserializedBytes =
+        Arrays.copyOfRange(
+            embeddedBytesViaGet.getBytes(),
+            embeddedBytesViaGet.getOffset(),
+            embeddedBytesViaGet.getOffset() + embeddedBytesViaGet.getFieldLength());
     BytesContainer container = new BytesContainer(deserializedBytes);
-    //if by default serializer doesn't store class name then original
-    //value embeddedNativeBytes will not have class name in byes so we want to skip them
+    // if by default serializer doesn't store class name then original
+    // value embeddedNativeBytes will not have class name in byes so we want to skip them
     if (!serializer.getCurrentSerializer().isSerializingClassNameByDefault()) {
       int len = OVarIntSerializer.readAsInteger(container);
       container.skip(len);
     }
-    decreasePositionsBy(deserializedBytes, container.offset + embeddedBytesViaGet.getOffset(), true);
-    deserializedBytes = Arrays.copyOfRange(deserializedBytes, container.offset, deserializedBytes.length);
+    decreasePositionsBy(
+        deserializedBytes, container.offset + embeddedBytesViaGet.getOffset(), true);
+    deserializedBytes =
+        Arrays.copyOfRange(deserializedBytes, container.offset, deserializedBytes.length);
     Assert.assertTrue(Arrays.equals(embeddedNativeBytes, deserializedBytes));
   }
 
@@ -195,7 +209,8 @@ public class ORecordSerializerBinaryTest {
 
     byte[] rootBytes = serializer.toStream(root);
 
-    OResultBinary docBinary = (OResultBinary) serializer.getBinaryResult(db, rootBytes, new ORecordId(-1, -1));
+    OResultBinary docBinary =
+        (OResultBinary) serializer.getBinaryResult(db, rootBytes, new ORecordId(-1, -1));
     OResultBinary embeddedBytesViaGet = docBinary.getProperty("TestEmbedded");
 
     Integer testValue = embeddedBytesViaGet.getProperty("TestField");
@@ -217,7 +232,8 @@ public class ORecordSerializerBinaryTest {
     db.save(root);
 
     byte[] rootBytes = serializer.toStream(root);
-    OResultBinary docBinary = (OResultBinary) serializer.getBinaryResult(db, rootBytes, new ORecordId(-1, -1));
+    OResultBinary docBinary =
+        (OResultBinary) serializer.getBinaryResult(db, rootBytes, new ORecordId(-1, -1));
     OResultBinary embeddedBytesViaGet = docBinary.getProperty("TestEmbedded");
     OResultBinary embeddedLKevel2BytesViaGet = embeddedBytesViaGet.getProperty("TestEmbedded");
     Integer testValue = embeddedLKevel2BytesViaGet.getProperty("InnerTestFields");
@@ -241,7 +257,8 @@ public class ORecordSerializerBinaryTest {
     root.field("TestEmbeddedList", embeddedList, OType.EMBEDDEDLIST);
 
     byte[] rootBytes = serializer.toStream(root);
-    OResultBinary docBinary = (OResultBinary) serializer.getBinaryResult(db, rootBytes, new ORecordId(-1, -1));
+    OResultBinary docBinary =
+        (OResultBinary) serializer.getBinaryResult(db, rootBytes, new ORecordId(-1, -1));
     List<Object> embeddedListFieldValue = docBinary.getProperty("TestEmbeddedList");
     OResultBinary embeddedListElementBytes = (OResultBinary) embeddedListFieldValue.get(0);
     Integer deserializedValue = embeddedListElementBytes.getProperty("InnerTestFields");
@@ -269,7 +286,8 @@ public class ORecordSerializerBinaryTest {
     root.field("TestEmbeddedMap", map, OType.EMBEDDEDMAP);
     byte[] rootBytes = serializer.toStream(root);
 
-    OResultBinary docBinary = (OResultBinary) serializer.getBinaryResult(db, rootBytes, new ORecordId(-1, -1));
+    OResultBinary docBinary =
+        (OResultBinary) serializer.getBinaryResult(db, rootBytes, new ORecordId(-1, -1));
     Map deserializedMap = docBinary.getProperty("TestEmbeddedMap");
     OResultBinary firstValDeserialized = (OResultBinary) deserializedMap.get("first");
     Integer deserializedValue = firstValDeserialized.getProperty("InnerTestFields");
@@ -283,13 +301,11 @@ public class ORecordSerializerBinaryTest {
   }
 
   private void decreasePositionsBy(byte[] recordBytes, int stepSize, boolean isNested) {
-    if (serializerVersion > 0)
-      return;
+    if (serializerVersion > 0) return;
 
     BytesContainer container = new BytesContainer(recordBytes);
-    //for root elements skip serializer version
-    if (!isNested)
-      container.offset++;
+    // for root elements skip serializer version
+    if (!isNested) container.offset++;
     if (serializer.getCurrentSerializer().isSerializingClassNameByDefault() || isNested) {
       readString(container);
     }
@@ -297,26 +313,27 @@ public class ORecordSerializerBinaryTest {
     while (len != 0) {
       len = OVarIntSerializer.readAsInteger(container);
       if (len > 0) {
-        //read field name
+        // read field name
         container.offset += len;
 
-        //read data pointer
+        // read data pointer
         int pointer = readInteger(container);
-        //shift pointer by start ofset
+        // shift pointer by start ofset
         pointer -= stepSize;
-        //write to byte container
-        OIntegerSerializer.INSTANCE.serializeLiteral(pointer, container.bytes, container.offset - OIntegerSerializer.INT_SIZE);
-        //read type
+        // write to byte container
+        OIntegerSerializer.INSTANCE.serializeLiteral(
+            pointer, container.bytes, container.offset - OIntegerSerializer.INT_SIZE);
+        // read type
         container.offset++;
       } else if (len < 0) {
-        //rtead data pointer
+        // rtead data pointer
         int pointer = readInteger(container);
-        //shift pointer
+        // shift pointer
         pointer -= stepSize;
-        //write to byte container
-        OIntegerSerializer.INSTANCE.serializeLiteral(pointer, container.bytes, container.offset - OIntegerSerializer.INT_SIZE);
+        // write to byte container
+        OIntegerSerializer.INSTANCE.serializeLiteral(
+            pointer, container.bytes, container.offset - OIntegerSerializer.INT_SIZE);
       }
     }
   }
-
 }

@@ -20,13 +20,11 @@
 
 package com.orientechnologies.orient.core.storage.index.sbtree;
 
-import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OMixedIndexRIDContainer;
-
-import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -34,14 +32,11 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-/**
- * @author Artem Orobets (enisher-at-gmail.com)
- */
+/** @author Artem Orobets (enisher-at-gmail.com) */
 public class OSBTreeMapEntryIterator<K, V> implements Iterator<Map.Entry<K, V>> {
-  private       LinkedList<Map.Entry<K, V>> preFetchedValues;
-  private final OTreeInternal<K, V>         sbTree;
-  private       K                           firstKey;
-  private       Map.Entry<K, V>             currentEntry;
+  private LinkedList<Map.Entry<K, V>> preFetchedValues;
+  private final OTreeInternal<K, V> sbTree;
+  private K firstKey;
 
   private final int prefetchSize;
 
@@ -53,7 +48,7 @@ public class OSBTreeMapEntryIterator<K, V> implements Iterator<Map.Entry<K, V>> 
     this.sbTree = sbTree;
     this.prefetchSize = prefetchSize;
 
-    if (sbTree.size() == 0) {
+    if (sbTree.isEmpty()) {
       this.preFetchedValues = null;
       return;
     }
@@ -65,40 +60,54 @@ public class OSBTreeMapEntryIterator<K, V> implements Iterator<Map.Entry<K, V>> 
   }
 
   private void prefetchData(boolean firstTime) {
-    sbTree.loadEntriesMajor(firstKey, firstTime, true, entry -> {
-      final V value = entry.getValue();
-      final V resultValue;
-      if (value instanceof OIndexRIDContainer || value instanceof OMixedIndexRIDContainer) {
-        //noinspection unchecked
-        resultValue = (V) new HashSet<OIdentifiable>((Collection<? extends OIdentifiable>) value);
+    ODatabaseInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
+    long begin = System.currentTimeMillis();
+    try {
+      sbTree.loadEntriesMajor(
+          firstKey,
+          firstTime,
+          true,
+          entry -> {
+            final V value = entry.getValue();
+            final V resultValue;
+            if (value instanceof OIndexRIDContainer || value instanceof OMixedIndexRIDContainer) {
+              //noinspection unchecked
+              resultValue =
+                  (V) new HashSet<OIdentifiable>((Collection<? extends OIdentifiable>) value);
+            } else {
+              resultValue = value;
+            }
+
+            preFetchedValues.add(
+                new Map.Entry<K, V>() {
+                  @Override
+                  public K getKey() {
+                    return entry.getKey();
+                  }
+
+                  @Override
+                  public V getValue() {
+                    return resultValue;
+                  }
+
+                  @Override
+                  public V setValue(V v) {
+                    throw new UnsupportedOperationException("setValue");
+                  }
+                });
+
+            return preFetchedValues.size() <= prefetchSize;
+          });
+
+      if (preFetchedValues.isEmpty()) {
+        preFetchedValues = null;
       } else {
-        resultValue = value;
+        firstKey = preFetchedValues.getLast().getKey();
       }
-
-      preFetchedValues.add(new Map.Entry<K, V>() {
-        @Override
-        public K getKey() {
-          return entry.getKey();
-        }
-
-        @Override
-        public V getValue() {
-          return resultValue;
-        }
-
-        @Override
-        public V setValue(V v) {
-          throw new UnsupportedOperationException("setValue");
-        }
-      });
-
-      return preFetchedValues.size() <= prefetchSize;
-    });
-
-    if (preFetchedValues.isEmpty()) {
-      preFetchedValues = null;
-    } else {
-      firstKey = preFetchedValues.getLast().getKey();
+    } finally {
+      if (db != null) {
+        db.addRidbagPrefetchStats(System.currentTimeMillis() - begin);
+      }
     }
   }
 
@@ -118,18 +127,11 @@ public class OSBTreeMapEntryIterator<K, V> implements Iterator<Map.Entry<K, V>> 
       prefetchData(false);
     }
 
-    currentEntry = entry;
-
     return entry;
   }
 
   @Override
   public void remove() {
-    try {
-      sbTree.remove(currentEntry.getKey());
-    } catch (IOException e) {
-      throw OException.wrapException(new ODatabaseException("Error during removal of element of tree"), e);
-    }
-    currentEntry = null;
+    throw new UnsupportedOperationException();
   }
 }

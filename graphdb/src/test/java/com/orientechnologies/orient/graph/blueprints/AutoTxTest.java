@@ -2,14 +2,9 @@ package com.orientechnologies.orient.graph.blueprints;
 
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * @author Sergey Sitnikov
@@ -42,5 +37,4 @@ public class AutoTxTest {
     graph.setAutoStartTx(false);
     graph.begin();
   }
-
 }

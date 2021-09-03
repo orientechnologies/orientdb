@@ -30,5 +30,4 @@ public class OTransactionException extends OCoreException {
   public OTransactionException(String message) {
     super(message);
   }
-
 }

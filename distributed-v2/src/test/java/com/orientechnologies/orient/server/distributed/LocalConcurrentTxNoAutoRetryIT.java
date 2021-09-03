@@ -15,7 +15,7 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 package com.orientechnologies.orient.server.distributed;
 
@@ -25,7 +25,8 @@ import org.junit.Test;
 
 /**
  * Distributed TX test against "plocal" protocol. <br>
- * This test is ignored because TX are not parallel on distributed yet (exclusive lock on dstorage.commit()).
+ * This test is ignored because TX are not parallel on distributed yet (exclusive lock on
+ * dstorage.commit()).
  */
 public class LocalConcurrentTxNoAutoRetryIT extends AbstractDistributedConcurrentTxTest {
 
@@ -37,10 +38,12 @@ public class LocalConcurrentTxNoAutoRetryIT extends AbstractDistributedConcurren
     expectedConcurrentException = true;
     writerCount = 8;
 
-    final int oldAutoRetry = OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.getValueAsInteger();
+    final int oldAutoRetry =
+        OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.getValueAsInteger();
     OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.setValue(1);
 
-    final int oldLockTimeout = OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT.getValueAsInteger();
+    final int oldLockTimeout =
+        OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT.getValueAsInteger();
     OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT.setValue(1);
 
     try {

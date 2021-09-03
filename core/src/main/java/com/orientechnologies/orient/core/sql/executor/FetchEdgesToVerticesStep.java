@@ -8,26 +8,28 @@ import com.orientechnologies.orient.core.record.ODirection;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
-
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * Created by luigidellaquila on 21/02/17.
- */
+/** Created by luigidellaquila on 21/02/17. */
 public class FetchEdgesToVerticesStep extends AbstractExecutionStep {
-  private final String      toAlias;
+  private final String toAlias;
   private final OIdentifier targetCluster;
   private final OIdentifier targetClass;
 
   private boolean inited = false;
-  private Iterator        toIter;
-  private OEdge           nextEdge;
+  private Iterator toIter;
+  private OEdge nextEdge;
   private Iterator<OEdge> currentToEdgesIter;
 
-  public FetchEdgesToVerticesStep(String toAlias, OIdentifier targetClass, OIdentifier targetCluster, OCommandContext ctx, boolean profilingEnabled) {
+  public FetchEdgesToVerticesStep(
+      String toAlias,
+      OIdentifier targetClass,
+      OIdentifier targetCluster,
+      OCommandContext ctx,
+      boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.toAlias = toAlias;
     this.targetClass = targetClass;

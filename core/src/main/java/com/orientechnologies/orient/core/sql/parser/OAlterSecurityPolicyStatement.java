@@ -7,11 +7,10 @@ import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
-import com.orientechnologies.orient.core.metadata.security.OSecurityPolicy;
+import com.orientechnologies.orient.core.metadata.security.OSecurityPolicyImpl;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.util.Map;
 
 public class OAlterSecurityPolicyStatement extends OSimpleExecStatement {
@@ -24,7 +23,6 @@ public class OAlterSecurityPolicyStatement extends OSimpleExecStatement {
   protected OBooleanExpression afterUpdate;
   protected OBooleanExpression delete;
   protected OBooleanExpression execute;
-
 
   protected boolean removeCreate = false;
   protected boolean removeRead = false;
@@ -41,12 +39,11 @@ public class OAlterSecurityPolicyStatement extends OSimpleExecStatement {
     super(p, id);
   }
 
-
   @Override
   public OResultSet executeSimple(OCommandContext ctx) {
     ODatabaseSession db = (ODatabaseSession) ctx.getDatabase();
     OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
-    OSecurityPolicy policy = security.getSecurityPolicy(db, name.getStringValue());
+    OSecurityPolicyImpl policy = security.getSecurityPolicy(db, name.getStringValue());
     if (policy == null) {
       throw new OCommandExecutionException("Cannot find security policy " + name.toString());
     }
@@ -90,14 +87,12 @@ public class OAlterSecurityPolicyStatement extends OSimpleExecStatement {
     }
     security.saveSecurityPolicy(db, policy);
 
-
     OResultInternal result = new OResultInternal();
     result.setProperty("operation", "alter security policy");
     result.setProperty("name", name.getStringValue());
     OInternalResultSet rs = new OInternalResultSet();
     rs.add(result);
     return rs;
-
   }
 
   @Override
@@ -175,7 +170,6 @@ public class OAlterSecurityPolicyStatement extends OSimpleExecStatement {
       firstSet = false;
     }
 
-
     boolean firstRemove = true;
     if (removeCreate) {
       if (firstRemove) {
@@ -234,6 +228,5 @@ public class OAlterSecurityPolicyStatement extends OSimpleExecStatement {
       firstRemove = false;
     }
   }
-
 }
 /* JavaCC - OriginalChecksum=849f284b6e4057d1f554daf024534423 (do not edit this line) */

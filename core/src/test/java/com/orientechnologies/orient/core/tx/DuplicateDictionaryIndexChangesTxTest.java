@@ -25,21 +25,24 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.junit.*;
-
 import java.util.stream.Stream;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
-/**
- * @author Sergey Sitnikov
- */
+/** @author Sergey Sitnikov */
 public class DuplicateDictionaryIndexChangesTxTest {
 
   private static ODatabaseDocumentTx db;
-  private        OIndex              index;
+  private OIndex index;
 
   @BeforeClass
   public static void before() {
-    db = new ODatabaseDocumentTx("memory:" + DuplicateDictionaryIndexChangesTxTest.class.getSimpleName());
+    db =
+        new ODatabaseDocumentTx(
+            "memory:" + DuplicateDictionaryIndexChangesTxTest.class.getSimpleName());
   }
 
   @AfterClass
@@ -49,11 +52,13 @@ public class DuplicateDictionaryIndexChangesTxTest {
 
   @Before
   public void beforeMethod() {
-    if (!db.isClosed())
-      db.drop();
+    if (!db.isClosed()) db.drop();
     db.create();
     final OClass class_ = db.getMetadata().getSchema().createClass("Person");
-    index = class_.createProperty("name", OType.STRING).createIndex(OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX);
+    index =
+        class_
+            .createProperty("name", OType.STRING)
+            .createIndex(OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX);
   }
 
   @Test

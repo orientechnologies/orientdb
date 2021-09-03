@@ -1,25 +1,22 @@
 package com.orientechnologies.orient.core.db;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.OVertex;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.AbstractRemoteTest;
 import org.junit.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * Created by Enrico Risa on 19/05/2017.
- */
+/** Created by Enrico Risa on 19/05/2017. */
 public class OSequenceRemoteTest extends AbstractRemoteTest {
-
 
   ODatabaseDocument db;
 
   @Override
   public void setup() throws Exception {
     super.setup();
-    OrientDB factory = new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
+    OrientDB factory =
+        new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
     db = factory.open(name.getMethodName(), "admin", "admin");
   }
 
@@ -32,10 +29,10 @@ public class OSequenceRemoteTest extends AbstractRemoteTest {
   @Test
   public void shouldSequenceWithDefaultValueNoTx() {
 
-
     db.command("CREATE CLASS Person EXTENDS V");
     db.command("CREATE SEQUENCE personIdSequence TYPE ORDERED;");
-    db.command("CREATE PROPERTY Person.id LONG (MANDATORY TRUE, default \"sequence('personIdSequence').next()\");");
+    db.command(
+        "CREATE PROPERTY Person.id LONG (MANDATORY TRUE, default \"sequence('personIdSequence').next()\");");
     db.command("CREATE INDEX Person.id ON Person (id) UNIQUE");
 
     db.getMetadata().reload();
@@ -54,7 +51,8 @@ public class OSequenceRemoteTest extends AbstractRemoteTest {
 
     db.command("CREATE CLASS Person EXTENDS V");
     db.command("CREATE SEQUENCE personIdSequence TYPE ORDERED;");
-    db.command("CREATE PROPERTY Person.id LONG (MANDATORY TRUE, default \"sequence('personIdSequence').next()\");");
+    db.command(
+        "CREATE PROPERTY Person.id LONG (MANDATORY TRUE, default \"sequence('personIdSequence').next()\");");
     db.command("CREATE INDEX Person.id ON Person (id) UNIQUE");
     db.getMetadata().reload();
 

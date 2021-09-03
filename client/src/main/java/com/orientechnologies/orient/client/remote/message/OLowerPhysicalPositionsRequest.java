@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.client.remote.message;
 
-import java.io.IOException;
-
 import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
@@ -30,18 +28,19 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
+import java.io.IOException;
 
-public class OLowerPhysicalPositionsRequest implements OBinaryRequest<OLowerPhysicalPositionsResponse> {
+public class OLowerPhysicalPositionsRequest
+    implements OBinaryRequest<OLowerPhysicalPositionsResponse> {
   private OPhysicalPosition physicalPosition;
-  private int               iClusterId;
+  private int iClusterId;
 
   public OLowerPhysicalPositionsRequest(OPhysicalPosition physicalPosition, int iClusterId) {
     this.physicalPosition = physicalPosition;
     this.iClusterId = iClusterId;
   }
 
-  public OLowerPhysicalPositionsRequest() {
-  }
+  public OLowerPhysicalPositionsRequest() {}
 
   @Override
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
@@ -49,7 +48,8 @@ public class OLowerPhysicalPositionsRequest implements OBinaryRequest<OLowerPhys
     network.writeLong(physicalPosition.clusterPosition);
   }
 
-  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
     this.iClusterId = channel.readInt();
     this.physicalPosition = new OPhysicalPosition(channel.readLong());
   }
@@ -81,5 +81,4 @@ public class OLowerPhysicalPositionsRequest implements OBinaryRequest<OLowerPhys
   public OBinaryResponse execute(OBinaryRequestExecutor executor) {
     return executor.executeLowerPosition(this);
   }
-
 }

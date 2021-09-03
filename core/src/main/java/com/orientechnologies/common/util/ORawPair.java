@@ -21,7 +21,8 @@ package com.orientechnologies.common.util;
  * @author Anrey Lomakin
  * @since 2.2
  */
-public final class ORawPair<V1, V2> {
+public class ORawPair<V1, V2> {
+
   public final V1 first;
   public final V2 second;
 
@@ -30,19 +31,23 @@ public final class ORawPair<V1, V2> {
     this.second = second;
   }
 
+  public V1 getFirst() {
+    return first;
+  }
+
+  public V2 getSecond() {
+    return second;
+  }
+
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     ORawPair<?, ?> oRawPair = (ORawPair<?, ?>) o;
 
-    if (!first.equals(oRawPair.first))
-      return false;
+    if (!first.equals(oRawPair.first)) return false;
     return second.equals(oRawPair.second);
-
   }
 
   @Override

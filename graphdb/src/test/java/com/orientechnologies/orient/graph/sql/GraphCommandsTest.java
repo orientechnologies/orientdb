@@ -15,7 +15,7 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 
 package com.orientechnologies.orient.graph.sql;
@@ -24,16 +24,15 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.graph.GraphNoTxAbstractTest;
 import com.tinkerpop.blueprints.Vertex;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Ignore;
+import org.junit.Test;
 
 public class GraphCommandsTest extends GraphNoTxAbstractTest {
 
@@ -43,7 +42,8 @@ public class GraphCommandsTest extends GraphNoTxAbstractTest {
     Map<String, Object> queryParams = new HashMap<String, Object>();
     queryParams.put("tags", new HashSet<String>());
 
-    Iterable<Vertex> results = ((Iterable<Vertex>) graph.command(new OSQLSynchQuery(sql)).execute(queryParams));
+    Iterable<Vertex> results =
+        ((Iterable<Vertex>) graph.command(new OSQLSynchQuery(sql)).execute(queryParams));
     Assert.assertTrue(results.iterator().hasNext());
   }
 
@@ -52,22 +52,27 @@ public class GraphCommandsTest extends GraphNoTxAbstractTest {
   public void testParams() {
     String sql = "SELECT FROM V WHERE tags IN :tags";
     Map<String, Object> queryParams = new HashMap<String, Object>();
-    queryParams.put("tags", new HashSet<String>() {
-      {
-        add("Genius");
-      }
-    });
+    queryParams.put(
+        "tags",
+        new HashSet<String>() {
+          {
+            add("Genius");
+          }
+        });
 
-    Iterable<Vertex> results = ((Iterable<Vertex>) graph.command(new OSQLSynchQuery(sql)).execute(queryParams));
+    Iterable<Vertex> results =
+        ((Iterable<Vertex>) graph.command(new OSQLSynchQuery(sql)).execute(queryParams));
     Assert.assertTrue(results.iterator().hasNext());
 
     sql = "SELECT FROM V WHERE tags NOT IN :tags";
     queryParams = new HashMap<String, Object>();
-    queryParams.put("tags", new HashSet<String>() {
-      {
-        add("Genius");
-      }
-    });
+    queryParams.put(
+        "tags",
+        new HashSet<String>() {
+          {
+            add("Genius");
+          }
+        });
 
     results = ((Iterable<Vertex>) graph.command(new OSQLSynchQuery(sql)).execute(queryParams));
     Assert.assertFalse(results.iterator().hasNext());
@@ -75,17 +80,28 @@ public class GraphCommandsTest extends GraphNoTxAbstractTest {
 
   @Test
   public void testAddValueSQL() {
-    graph.command(new OCommandSQL("update V add testprop = 'first' return after @this limit 1")).execute();
+    graph
+        .command(new OCommandSQL("update V add testprop = 'first' return after @this limit 1"))
+        .execute();
 
-    Iterable<Vertex> results = ((Iterable<Vertex>) graph.command(
-        new OSQLSynchQuery("select from V where 'first' in testprop")).execute());
+    Iterable<Vertex> results =
+        ((Iterable<Vertex>)
+            graph.command(new OSQLSynchQuery("select from V where 'first' in testprop")).execute());
     Assert.assertTrue(results.iterator().hasNext());
 
-    graph.command(new OCommandSQL("update V add testprop = 'second' return after @this limit 1")).execute();
+    graph
+        .command(new OCommandSQL("update V add testprop = 'second' return after @this limit 1"))
+        .execute();
 
-    results = ((Iterable<Vertex>) graph.command(new OSQLSynchQuery("select from V where 'first' in testprop")).execute());
+    results =
+        ((Iterable<Vertex>)
+            graph.command(new OSQLSynchQuery("select from V where 'first' in testprop")).execute());
     Assert.assertTrue(results.iterator().hasNext());
-    results = ((Iterable<Vertex>) graph.command(new OSQLSynchQuery("select from V where 'second' in testprop")).execute());
+    results =
+        ((Iterable<Vertex>)
+            graph
+                .command(new OSQLSynchQuery("select from V where 'second' in testprop"))
+                .execute());
     Assert.assertTrue(results.iterator().hasNext());
   }
 

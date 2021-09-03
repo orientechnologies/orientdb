@@ -9,7 +9,6 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.util.Map;
 
 public class OConsoleStatement extends OSimpleExecStatement {
@@ -24,7 +23,8 @@ public class OConsoleStatement extends OSimpleExecStatement {
     super(p, id);
   }
 
-  @Override public OResultSet executeSimple(OCommandContext ctx) {
+  @Override
+  public OResultSet executeSimple(OCommandContext ctx) {
     OInternalResultSet result = new OInternalResultSet();
     OResultInternal item = new OResultInternal();
     Object msg = "" + message.execute((OIdentifiable) null, ctx);
@@ -49,40 +49,39 @@ public class OConsoleStatement extends OSimpleExecStatement {
     item.setProperty("message", msg);
     result.add(item);
     return result;
-
   }
 
-  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("CONSOLE.");
     logLevel.toString(params, builder);
     builder.append(" ");
     message.toString(params, builder);
   }
 
-  @Override public OConsoleStatement copy() {
+  @Override
+  public OConsoleStatement copy() {
     OConsoleStatement result = new OConsoleStatement(-1);
     result.logLevel = logLevel == null ? null : logLevel.copy();
     result.message = message == null ? null : message.copy();
     return result;
   }
 
-  @Override public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OConsoleStatement that = (OConsoleStatement) o;
 
-    if (logLevel != null ? !logLevel.equals(that.logLevel) : that.logLevel != null)
-      return false;
-    if (message != null ? !message.equals(that.message) : that.message != null)
-      return false;
+    if (logLevel != null ? !logLevel.equals(that.logLevel) : that.logLevel != null) return false;
+    if (message != null ? !message.equals(that.message) : that.message != null) return false;
 
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = logLevel != null ? logLevel.hashCode() : 0;
     result = 31 * result + (message != null ? message.hashCode() : 0);
     return result;

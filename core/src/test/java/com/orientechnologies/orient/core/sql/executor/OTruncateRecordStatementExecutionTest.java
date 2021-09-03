@@ -4,31 +4,31 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OTruncateRecordStatementExecutionTest {
   static ODatabaseDocument database;
 
-  @BeforeClass public static void beforeClass() {
+  @BeforeClass
+  public static void beforeClass() {
     database = new ODatabaseDocumentTx("memory:OTruncateRecordStatementExecutionTest");
     database.create();
   }
 
-  @AfterClass public static void afterClass() {
+  @AfterClass
+  public static void afterClass() {
     database.close();
   }
 
-  @Test public void truncateRecord() {
+  @Test
+  public void truncateRecord() {
     if (!database.getMetadata().getSchema().existsClass("truncateRecord"))
       database.command("create class truncateRecord");
 
@@ -36,9 +36,12 @@ public class OTruncateRecordStatementExecutionTest {
 
     final Long total = database.countClass("truncateRecord");
 
-    final OResultSet resultset = database.query("select from truncateRecord where sex = 'female' and salary = 2100");
+    final OResultSet resultset =
+        database.query("select from truncateRecord where sex = 'female' and salary = 2100");
 
-    OResultSet records = database.command("truncate record [" + resultset.next().getElement().get().getIdentity() + "]");
+    OResultSet records =
+        database.command(
+            "truncate record [" + resultset.next().getElement().get().getIdentity() + "]");
 
     resultset.close();
 
@@ -55,11 +58,16 @@ public class OTruncateRecordStatementExecutionTest {
     Assert.assertEquals(database.countClass("truncateRecord"), total - truncatedRecords);
   }
 
-  @Test public void truncateNonExistingRecord() {
+  @Test
+  public void truncateNonExistingRecord() {
     if (!database.getMetadata().getSchema().existsClass("truncateNonExistingRecord"))
       database.command("create class truncateNonExistingRecord");
 
-    OResultSet records = database.command("truncate record [ #" + database.getClusterIdByName("truncateNonExistingRecord") + ":99999999 ]");
+    OResultSet records =
+        database.command(
+            "truncate record [ #"
+                + database.getClusterIdByName("truncateNonExistingRecord")
+                + ":99999999 ]");
 
     Assert.assertEquals(toList(records).size(), 0);
   }
@@ -71,5 +79,4 @@ public class OTruncateRecordStatementExecutionTest {
     }
     return result;
   }
-
 }

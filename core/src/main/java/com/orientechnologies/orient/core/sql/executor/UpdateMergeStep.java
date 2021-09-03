@@ -4,13 +4,10 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.parser.OJson;
-
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * Created by luigidellaquila on 09/08/16.
- */
+/** Created by luigidellaquila on 09/08/16. */
 public class UpdateMergeStep extends AbstractExecutionStep {
   private final OJson json;
 

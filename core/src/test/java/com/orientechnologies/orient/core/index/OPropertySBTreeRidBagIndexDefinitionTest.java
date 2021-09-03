@@ -9,10 +9,11 @@ import org.junit.Before;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 1/30/14
  */
-public class OPropertySBTreeRidBagIndexDefinitionTest extends OPropertyRidBagAbstractIndexDefinition {
+public class OPropertySBTreeRidBagIndexDefinitionTest
+    extends OPropertyRidBagAbstractIndexDefinition {
   protected ODatabaseDocumentTx database;
-  private   int                 topThreshold;
-  private   int                 bottomThreshold;
+  private int topThreshold;
+  private int bottomThreshold;
 
   public OPropertySBTreeRidBagIndexDefinitionTest() {
     final String buildDirectory = System.getProperty("buildDirectory", ".");
@@ -31,8 +32,10 @@ public class OPropertySBTreeRidBagIndexDefinitionTest extends OPropertyRidBagAbs
   public void beforeMethod2() {
     super.beforeMethod();
 
-    topThreshold = OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
-    bottomThreshold = OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.getValueAsInteger();
+    topThreshold =
+        OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
+    bottomThreshold =
+        OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.getValueAsInteger();
 
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(-1);
     OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(-1);
@@ -47,5 +50,4 @@ public class OPropertySBTreeRidBagIndexDefinitionTest extends OPropertyRidBagAbs
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(topThreshold);
     OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(bottomThreshold);
   }
-
 }

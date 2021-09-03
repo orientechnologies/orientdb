@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.speed;
 
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -25,60 +23,67 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
+import org.testng.annotations.Test;
 
 @Test(enabled = false)
 public class LocalCreateIndexedDocumentSpeedTest extends OrientMonoThreadTest {
-	private ODatabaseDocument	database;
-	private ODocument					record;
+  private ODatabaseDocument database;
+  private ODocument record;
 
-	public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
-		LocalCreateIndexedDocumentSpeedTest test = new LocalCreateIndexedDocumentSpeedTest();
-		test.data.go(test);
-	}
+  public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
+    LocalCreateIndexedDocumentSpeedTest test = new LocalCreateIndexedDocumentSpeedTest();
+    test.data.go(test);
+  }
 
-	public LocalCreateIndexedDocumentSpeedTest() throws InstantiationException, IllegalAccessException {
-		super(1000000);
-	}
+  public LocalCreateIndexedDocumentSpeedTest()
+      throws InstantiationException, IllegalAccessException {
+    super(1000000);
+  }
 
-	@Override
-	public void init() {
-	  Orient.instance().getProfiler().startRecording();
+  @Override
+  public void init() {
+    Orient.instance().getProfiler().startRecording();
 
-		database = new ODatabaseDocumentTx(System.getProperty("url")).open("admin", "admin");
-		record = database.newInstance();
+    database = new ODatabaseDocumentTx(System.getProperty("url")).open("admin", "admin");
+    record = database.newInstance();
 
-		// REMOVE THE INDEX
-		System.out.println("Remove index...");
-		database.getMetadata().getSchema().getClass("Profile").getProperty("nick").dropIndexes();
-		System.out.println("Ok");
+    // REMOVE THE INDEX
+    System.out.println("Remove index...");
+    database.getMetadata().getSchema().getClass("Profile").getProperty("nick").dropIndexes();
+    System.out.println("Ok");
 
-		database.declareIntent(new OIntentMassiveInsert());
-		database.begin(TXTYPE.NOTX);
-	}
+    database.declareIntent(new OIntentMassiveInsert());
+    database.begin(TXTYPE.NOTX);
+  }
 
-	@Override
-	public void cycle() {
-		record.reset();
+  @Override
+  public void cycle() {
+    record.reset();
 
-		record.setClassName("Profile");
-		record.field("nick", String.valueOf(100 + data.getCyclesDone()));
-		record.field("name", "Luca");
-		record.field("surname", "Garulli");
+    record.setClassName("Profile");
+    record.field("nick", String.valueOf(100 + data.getCyclesDone()));
+    record.field("name", "Luca");
+    record.field("surname", "Garulli");
 
-		record.save();
+    record.save();
 
-		if (data.getCyclesDone() == data.getCycles() - 1) {
-			database.commit();
+    if (data.getCyclesDone() == data.getCycles() - 1) {
+      database.commit();
 
-			System.out.println("\nIndexing...");
-			database.getMetadata().getSchema().getClass("Profile").getProperty("nick").createIndex(OClass.INDEX_TYPE.UNIQUE);
-			System.out.println("Done");
-		}
-	}
+      System.out.println("\nIndexing...");
+      database
+          .getMetadata()
+          .getSchema()
+          .getClass("Profile")
+          .getProperty("nick")
+          .createIndex(OClass.INDEX_TYPE.UNIQUE);
+      System.out.println("Done");
+    }
+  }
 
-	@Override
-	public void deinit() {
-		database.close();
-		super.deinit();
-	}
+  @Override
+  public void deinit() {
+    database.close();
+    super.deinit();
+  }
 }

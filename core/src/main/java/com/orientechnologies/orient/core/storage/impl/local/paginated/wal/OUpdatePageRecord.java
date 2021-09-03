@@ -21,8 +21,8 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.common.serialization.types.OLongSerializer;
-
 import java.nio.ByteBuffer;
+import java.util.Objects;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -32,10 +32,12 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
   private OWALChanges changes;
 
   @SuppressWarnings("WeakerAccess")
-  public OUpdatePageRecord() {
-  }
+  public OUpdatePageRecord() {}
 
-  public OUpdatePageRecord(final long pageIndex, final long fileId, final OOperationUnitId operationUnitId,
+  public OUpdatePageRecord(
+      final long pageIndex,
+      final long fileId,
+      final long operationUnitId,
       final OWALChanges changes) {
     super(pageIndex, fileId, operationUnitId);
     this.changes = changes;
@@ -71,40 +73,40 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
   }
 
   @Override
-  public boolean isUpdateMasterRecord() {
-    return false;
+  public boolean trackOperationId() {
+    return true;
   }
 
   @Override
   public boolean equals(final Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
-    if (!super.equals(o))
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
 
     final OUpdatePageRecord that = (OUpdatePageRecord) o;
 
-    if (lsn == null && that.lsn == null)
+    if (operationIdLSN == null && that.operationIdLSN == null) {
       return true;
-
-    if (lsn == null)
+    }
+    if (operationIdLSN == null) {
       return false;
+    }
 
-    if (that.lsn == null)
+    if (that.operationIdLSN == null) {
       return false;
+    }
 
-    if (!lsn.equals(that.lsn))
-      return false;
-
-    return true;
+    return Objects.equals(operationIdLSN.lsn, that.operationIdLSN.lsn);
   }
 
   @Override
   public int hashCode() {
     int result = super.hashCode();
-    result = 31 * result + lsn.hashCode();
+    result =
+        31 * result
+            + (operationIdLSN != null && operationIdLSN.lsn != null
+                ? operationIdLSN.lsn.hashCode()
+                : 0);
     return result;
   }
 

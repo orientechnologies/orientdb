@@ -24,11 +24,10 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlRootElement(name = "protocol")
-@XmlType(propOrder = { "implementation", "name" })
+@XmlType(propOrder = {"implementation", "name"})
 public class OServerNetworkProtocolConfiguration {
 
-  public OServerNetworkProtocolConfiguration() {
-  }
+  public OServerNetworkProtocolConfiguration() {}
 
   public OServerNetworkProtocolConfiguration(String name, String implementation) {
     this.name = name;

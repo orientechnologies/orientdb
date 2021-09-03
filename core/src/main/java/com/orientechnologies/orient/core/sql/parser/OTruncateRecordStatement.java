@@ -12,14 +12,13 @@ import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 public class OTruncateRecordStatement extends OSimpleExecStatement {
-  protected ORid       record;
+  protected ORid record;
   protected List<ORid> records;
 
   public OTruncateRecordStatement(int id) {
@@ -44,7 +43,8 @@ public class OTruncateRecordStatement extends OSimpleExecStatement {
     for (ORid rec : recs) {
       try {
         final ORecordId rid = rec.toRecordId((OResult) null, ctx);
-        final OStorageOperationResult<Boolean> result = database.getStorage().deleteRecord(rid, -1, 0, null);
+        final OStorageOperationResult<Boolean> result =
+            database.getStorage().deleteRecord(rid, -1, 0, null);
         database.getLocalCache().deleteRecord(rid);
 
         if (result.getResult()) {
@@ -54,7 +54,8 @@ public class OTruncateRecordStatement extends OSimpleExecStatement {
           rs.add(recordRes);
         }
       } catch (Exception e) {
-        throw OException.wrapException(new OCommandExecutionException("Error on executing command"), e);
+        throw OException.wrapException(
+            new OCommandExecutionException("Error on executing command"), e);
       }
     }
 
@@ -84,23 +85,20 @@ public class OTruncateRecordStatement extends OSimpleExecStatement {
   public OTruncateRecordStatement copy() {
     OTruncateRecordStatement result = new OTruncateRecordStatement(-1);
     result.record = record == null ? null : record.copy();
-    result.records = records == null ? null : records.stream().map(x -> x.copy()).collect(Collectors.toList());
+    result.records =
+        records == null ? null : records.stream().map(x -> x.copy()).collect(Collectors.toList());
     return result;
   }
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OTruncateRecordStatement that = (OTruncateRecordStatement) o;
 
-    if (record != null ? !record.equals(that.record) : that.record != null)
-      return false;
-    if (records != null ? !records.equals(that.records) : that.records != null)
-      return false;
+    if (record != null ? !record.equals(that.record) : that.record != null) return false;
+    if (records != null ? !records.equals(that.records) : that.records != null) return false;
 
     return true;
   }

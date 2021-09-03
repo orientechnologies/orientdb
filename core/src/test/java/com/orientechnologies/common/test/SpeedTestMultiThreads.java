@@ -1,14 +1,14 @@
 package com.orientechnologies.common.test;
 
-import org.junit.Test;
 import java.lang.reflect.Constructor;
 
 public abstract class SpeedTestMultiThreads extends SpeedTestAbstract {
   protected final Class<? extends SpeedTestThread> threadClass;
-  protected final int                              threads;
-  protected long                                   threadCycles;
+  protected final int threads;
+  protected long threadCycles;
 
-  protected SpeedTestMultiThreads(long iCycles, int iThreads, Class<? extends SpeedTestThread> iThreadClass) {
+  protected SpeedTestMultiThreads(
+      long iCycles, int iThreads, Class<? extends SpeedTestThread> iThreadClass) {
     super(1);
     threadClass = iThreadClass;
     threads = iThreads;
@@ -25,7 +25,8 @@ public abstract class SpeedTestMultiThreads extends SpeedTestAbstract {
     SpeedTestThread t;
     for (int i = 0; i < threads; ++i)
       try {
-        final Constructor<? extends SpeedTestThread> c = threadClass.getConstructor(SpeedTestMultiThreads.class, Integer.TYPE);
+        final Constructor<? extends SpeedTestThread> c =
+            threadClass.getConstructor(SpeedTestMultiThreads.class, Integer.TYPE);
         t = c.newInstance(this, i);
         ts[i] = t;
 

@@ -3,16 +3,16 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.parser.OProjectionItem;
-
 import java.util.Map;
 import java.util.Optional;
 
 public class GuaranteeEmptyCountStep extends AbstractExecutionStep {
 
   private final OProjectionItem item;
-  private       boolean         executed = false;
+  private boolean executed = false;
 
-  public GuaranteeEmptyCountStep(OProjectionItem oProjectionItem, OCommandContext ctx, boolean enableProfiling) {
+  public GuaranteeEmptyCountStep(
+      OProjectionItem oProjectionItem, OCommandContext ctx, boolean enableProfiling) {
     super(ctx, enableProfiling);
     this.item = oProjectionItem;
   }

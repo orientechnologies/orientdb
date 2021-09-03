@@ -4,12 +4,12 @@ import com.orientechnologies.orient.core.sql.parser.OAndBlock;
 import com.orientechnologies.orient.core.sql.parser.OBinaryCondition;
 
 /**
- * For internal use. It is used to keep info about an index range search, where the main condition has the lower bound and the
- * additional condition has the upper bound on last field only
+ * For internal use. It is used to keep info about an index range search, where the main condition
+ * has the lower bound and the additional condition has the upper bound on last field only
  */
 class IndexCondPair {
 
-  protected OAndBlock        mainCondition;
+  protected OAndBlock mainCondition;
   protected OBinaryCondition additionalRange;
 
   public IndexCondPair(OAndBlock keyCondition, OBinaryCondition additionalRangeCondition) {
@@ -19,17 +19,17 @@ class IndexCondPair {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     IndexCondPair that = (IndexCondPair) o;
 
-    if (mainCondition != null ? !mainCondition.equals(that.mainCondition) : that.mainCondition != null)
-      return false;
-    if (additionalRange != null ? !additionalRange.equals(that.additionalRange) : that.additionalRange != null)
-      return false;
+    if (mainCondition != null
+        ? !mainCondition.equals(that.mainCondition)
+        : that.mainCondition != null) return false;
+    if (additionalRange != null
+        ? !additionalRange.equals(that.additionalRange)
+        : that.additionalRange != null) return false;
 
     return true;
   }

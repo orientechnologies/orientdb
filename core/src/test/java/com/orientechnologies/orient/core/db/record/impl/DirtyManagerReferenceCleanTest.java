@@ -6,16 +6,11 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.Assert;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-
-/**
- * Created by tglman on 01/10/15.
- */
+/** Created by tglman on 01/10/15. */
 public class DirtyManagerReferenceCleanTest {
 
   private ODatabaseDocument db;
@@ -25,14 +20,12 @@ public class DirtyManagerReferenceCleanTest {
     db = new ODatabaseDocumentTx("memory:" + DirtyManagerReferenceCleanTest.class.getSimpleName());
     db.create();
     db.getMetadata().getSchema().createClass("test");
-
   }
 
   @After
   public void after() {
     db.drop();
   }
-
 
   @Test
   public void testReferDeletedDocument() {
@@ -50,5 +43,4 @@ public class DirtyManagerReferenceCleanTest {
     doc.field("ab", "ab");
     Assert.assertFalse(ORecordInternal.getDirtyManager(doc).getUpdateRecords().contains(doc1));
   }
-
 }

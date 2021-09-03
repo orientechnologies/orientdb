@@ -21,39 +21,37 @@
 package com.orientechnologies.orient.core.storage;
 
 /**
- * Defines per-page checksum modes supported by {@link com.orientechnologies.orient.core.storage.cache.OWriteCache write caches}.
+ * Defines per-page checksum modes supported by {@link
+ * com.orientechnologies.orient.core.storage.cache.OWriteCache write caches}.
  *
  * @author Sergey Sitnikov
  */
 public enum OChecksumMode {
 
-  /**
-   * Checksums are completely off.
-   */
+  /** Checksums are completely off. */
   Off,
 
   /**
-   * Checksums are calculated and stored on page flushes, no verification is done on page loads, stored checksums are verified
-   * only during user-initiated health checks.
+   * Checksums are calculated and stored on page flushes, no verification is done on page loads,
+   * stored checksums are verified only during user-initiated health checks.
    */
   Store,
 
   /**
-   * Checksums are calculated and stored on page flushes, verification is performed on each page load, errors are reported in the
-   * log.
+   * Checksums are calculated and stored on page flushes, verification is performed on each page
+   * load, errors are reported in the log.
    */
   StoreAndVerify,
 
   /**
-   * Same as {@link OChecksumMode#StoreAndVerify} with addition of exceptions thrown on errors. This mode is useful for debugging
-   * and testing, but should be avoided in a production environment.
+   * Same as {@link OChecksumMode#StoreAndVerify} with addition of exceptions thrown on errors. This
+   * mode is useful for debugging and testing, but should be avoided in a production environment.
    */
   StoreAndThrow,
 
   /**
-   * Same as {@link OChecksumMode#StoreAndVerify} with addition that storage will be switched in read only mode
-   * till it will not be repaired.
+   * Same as {@link OChecksumMode#StoreAndVerify} with addition that storage will be switched in
+   * read only mode till it will not be repaired.
    */
   StoreAndSwitchReadOnlyMode
-
 }

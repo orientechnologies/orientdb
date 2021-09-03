@@ -27,15 +27,18 @@ public class OStorageFileConfiguration implements Serializable {
   public transient OStorageSegmentConfiguration parent;
 
   public String path;
-  public String type          = "mmap";
-  public String maxSize       = null;
+  public String type = "mmap";
+  public String maxSize = null;
   public String incrementSize = "50%";
 
-  public OStorageFileConfiguration() {
-  }
+  public OStorageFileConfiguration() {}
 
-  public OStorageFileConfiguration(final OStorageSegmentConfiguration iParent, final String iPath, final String iType,
-      final String iMaxSize, String iIncrementSize) {
+  public OStorageFileConfiguration(
+      final OStorageSegmentConfiguration iParent,
+      final String iPath,
+      final String iType,
+      final String iMaxSize,
+      String iIncrementSize) {
     parent = iParent;
     path = iPath;
     type = iType;

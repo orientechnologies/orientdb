@@ -16,23 +16,20 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import java.io.IOException;
+import java.util.List;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import java.io.IOException;
-import java.util.List;
-
 @Test(groups = "db")
 public class DbCopyTest extends DocumentDBBaseTest implements OCommandOutputListener {
 
-  @Parameters(value = { "url" })
+  @Parameters(value = {"url"})
   public DbCopyTest(@Optional String url) {
     super(url);
   }
@@ -42,25 +39,25 @@ public class DbCopyTest extends DocumentDBBaseTest implements OCommandOutputList
     final String className = "DbCopyTest";
     database.getMetadata().getSchema().createClass(className);
 
-
-    Thread thread = new Thread() {
-      @Override
-      public void run() {
-        final ODatabaseDocument otherDB = database.copy();
-        otherDB.activateOnCurrentThread();
-        for (int i = 0; i < 5; i++) {
-          ODocument doc = otherDB.newInstance(className);
-          doc.field("num", i);
-          doc.save();
-          try {
-            Thread.sleep(10);
-          } catch (InterruptedException e) {
-            e.printStackTrace();
+    Thread thread =
+        new Thread() {
+          @Override
+          public void run() {
+            final ODatabaseDocument otherDB = database.copy();
+            otherDB.activateOnCurrentThread();
+            for (int i = 0; i < 5; i++) {
+              ODocument doc = otherDB.newInstance(className);
+              doc.field("num", i);
+              doc.save();
+              try {
+                Thread.sleep(10);
+              } catch (InterruptedException e) {
+                e.printStackTrace();
+              }
+            }
+            otherDB.close();
           }
-        }
-        otherDB.close();
-      }
-    };
+        };
     thread.start();
 
     for (int i = 0; i < 20; i++) {
@@ -80,12 +77,11 @@ public class DbCopyTest extends DocumentDBBaseTest implements OCommandOutputList
       Assert.fail();
     }
 
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("SELECT FROM " + className));
+    List<ODocument> result =
+        database.query(new OSQLSynchQuery<ODocument>("SELECT FROM " + className));
 
     Assert.assertEquals(result.size(), 25);
-
   }
-
 
   @Override
   @Test(enabled = false)

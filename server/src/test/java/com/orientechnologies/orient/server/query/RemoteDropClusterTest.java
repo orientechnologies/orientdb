@@ -3,25 +3,21 @@ package com.orientechnologies.orient.server.query;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.server.OServer;
+import java.io.File;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.File;
-
-/**
- * Created by tglman on 03/01/17.
- */
+/** Created by tglman on 03/01/17. */
 public class RemoteDropClusterTest {
 
   private static final String SERVER_DIRECTORY = "./target/cluster";
-  private OServer           server;
-  private OrientDB          orientDB;
+  private OServer server;
+  private OrientDB orientDB;
   private ODatabaseDocument session;
 
   @Before
@@ -33,7 +29,9 @@ public class RemoteDropClusterTest {
     server.activate();
 
     orientDB = new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
-    orientDB.create(RemoteDropClusterTest.class.getSimpleName(), ODatabaseType.MEMORY);
+    orientDB.execute(
+        "create database ? memory users (admin identified by 'admin' role admin)",
+        RemoteDropClusterTest.class.getSimpleName());
     session = orientDB.open(RemoteDropClusterTest.class.getSimpleName(), "admin", "admin");
   }
 
@@ -71,5 +69,4 @@ public class RemoteDropClusterTest {
     OFileUtils.deleteRecursively(new File(SERVER_DIRECTORY));
     Orient.instance().startup();
   }
-
 }

@@ -22,7 +22,7 @@ import com.orientechnologies.orient.core.sql.method.misc.OAbstractSQLMethod;
 
 /**
  * Appends strings. Acts as a concatenation.
- * 
+ *
  * @author Johann Sorel (Geomatys)
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
@@ -40,9 +40,13 @@ public class OSQLMethodAppend extends OAbstractSQLMethod {
   }
 
   @Override
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
-    if (iThis == null || iParams[0] == null)
-      return iThis;
+  public Object execute(
+      Object iThis,
+      OIdentifiable iCurrentRecord,
+      OCommandContext iContext,
+      Object ioResult,
+      Object[] iParams) {
+    if (iThis == null || iParams[0] == null) return iThis;
 
     final StringBuilder buffer = new StringBuilder(iThis.toString());
     for (int i = 0; i < iParams.length; ++i) {
@@ -53,5 +57,4 @@ public class OSQLMethodAppend extends OAbstractSQLMethod {
 
     return buffer.toString();
   }
-
 }

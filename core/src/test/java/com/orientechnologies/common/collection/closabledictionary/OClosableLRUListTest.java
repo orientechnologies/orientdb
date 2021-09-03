@@ -1,11 +1,10 @@
 package com.orientechnologies.common.collection.closabledictionary;
 
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class OClosableLRUListTest {
   @Test
@@ -19,7 +18,7 @@ public class OClosableLRUListTest {
     lruList.moveToTheTail(firstEntry);
     Assert.assertEquals(lruList.size(), 1);
     Assert.assertTrue(lruList.contains(firstEntry));
-    assertContent(lruList, new OClosableEntry[] { firstEntry });
+    assertContent(lruList, new OClosableEntry[] {firstEntry});
 
     Assert.assertTrue(lruList.assertBackwardStructure());
     Assert.assertTrue(lruList.assertForwardStructure());
@@ -31,7 +30,7 @@ public class OClosableLRUListTest {
     Assert.assertEquals(lruList.size(), 2);
     Assert.assertTrue(lruList.contains(firstEntry));
     Assert.assertTrue(lruList.contains(secondEntry));
-    assertContent(lruList, new OClosableEntry[] { firstEntry, secondEntry });
+    assertContent(lruList, new OClosableEntry[] {firstEntry, secondEntry});
 
     Assert.assertTrue(lruList.assertBackwardStructure());
     Assert.assertTrue(lruList.assertForwardStructure());
@@ -43,7 +42,7 @@ public class OClosableLRUListTest {
     Assert.assertTrue(lruList.contains(firstEntry));
     Assert.assertTrue(lruList.contains(secondEntry));
     Assert.assertTrue(lruList.contains(thirdEntry));
-    assertContent(lruList, new OClosableEntry[] { firstEntry, secondEntry, thirdEntry });
+    assertContent(lruList, new OClosableEntry[] {firstEntry, secondEntry, thirdEntry});
 
     Assert.assertTrue(lruList.assertBackwardStructure());
     Assert.assertTrue(lruList.assertForwardStructure());
@@ -53,7 +52,7 @@ public class OClosableLRUListTest {
     Assert.assertTrue(lruList.contains(firstEntry));
     Assert.assertTrue(lruList.contains(secondEntry));
     Assert.assertTrue(lruList.contains(thirdEntry));
-    assertContent(lruList, new OClosableEntry[] { firstEntry, thirdEntry, secondEntry });
+    assertContent(lruList, new OClosableEntry[] {firstEntry, thirdEntry, secondEntry});
 
     Assert.assertTrue(lruList.assertBackwardStructure());
     Assert.assertTrue(lruList.assertForwardStructure());
@@ -63,7 +62,7 @@ public class OClosableLRUListTest {
     Assert.assertTrue(lruList.contains(firstEntry));
     Assert.assertTrue(lruList.contains(secondEntry));
     Assert.assertTrue(lruList.contains(thirdEntry));
-    assertContent(lruList, new OClosableEntry[] { thirdEntry, secondEntry, firstEntry });
+    assertContent(lruList, new OClosableEntry[] {thirdEntry, secondEntry, firstEntry});
 
     Assert.assertTrue(lruList.assertBackwardStructure());
     Assert.assertTrue(lruList.assertForwardStructure());
@@ -73,7 +72,7 @@ public class OClosableLRUListTest {
     Assert.assertTrue(lruList.contains(firstEntry));
     Assert.assertTrue(lruList.contains(secondEntry));
     Assert.assertTrue(lruList.contains(thirdEntry));
-    assertContent(lruList, new OClosableEntry[] { thirdEntry, secondEntry, firstEntry });
+    assertContent(lruList, new OClosableEntry[] {thirdEntry, secondEntry, firstEntry});
 
     Assert.assertTrue(lruList.assertBackwardStructure());
     Assert.assertTrue(lruList.assertForwardStructure());
@@ -92,7 +91,7 @@ public class OClosableLRUListTest {
     lruList.moveToTheTail(thirdEntry);
 
     lruList.remove(firstEntry);
-    assertContent(lruList, new OClosableEntry[] { secondEntry, thirdEntry });
+    assertContent(lruList, new OClosableEntry[] {secondEntry, thirdEntry});
 
     Assert.assertEquals(lruList.size(), 2);
     Assert.assertTrue(!lruList.contains(firstEntry));
@@ -103,7 +102,7 @@ public class OClosableLRUListTest {
     Assert.assertTrue(lruList.assertForwardStructure());
 
     lruList.remove(thirdEntry);
-    assertContent(lruList, new OClosableEntry[] { secondEntry });
+    assertContent(lruList, new OClosableEntry[] {secondEntry});
 
     Assert.assertEquals(lruList.size(), 1);
     Assert.assertTrue(!lruList.contains(firstEntry));
@@ -140,7 +139,7 @@ public class OClosableLRUListTest {
     lruList.moveToTheTail(thirdEntry);
 
     lruList.remove(secondEntry);
-    assertContent(lruList, new OClosableEntry[] { firstEntry, thirdEntry });
+    assertContent(lruList, new OClosableEntry[] {firstEntry, thirdEntry});
 
     Assert.assertEquals(lruList.size(), 2);
     Assert.assertTrue(lruList.contains(firstEntry));
@@ -151,11 +150,11 @@ public class OClosableLRUListTest {
     Assert.assertTrue(lruList.assertForwardStructure());
 
     lruList.moveToTheTail(secondEntry);
-    assertContent(lruList, new OClosableEntry[] { firstEntry, thirdEntry, secondEntry });
+    assertContent(lruList, new OClosableEntry[] {firstEntry, thirdEntry, secondEntry});
     Assert.assertEquals(lruList.size(), 3);
 
     lruList.remove(secondEntry);
-    assertContent(lruList, new OClosableEntry[] { firstEntry, thirdEntry });
+    assertContent(lruList, new OClosableEntry[] {firstEntry, thirdEntry});
 
     Assert.assertEquals(lruList.size(), 2);
     Assert.assertTrue(lruList.contains(firstEntry));
@@ -186,7 +185,7 @@ public class OClosableLRUListTest {
     Assert.assertTrue(lruList.contains(secondEntry));
     Assert.assertTrue(lruList.contains(thirdEntry));
 
-    assertContent(lruList, new OClosableEntry[] { secondEntry, thirdEntry });
+    assertContent(lruList, new OClosableEntry[] {secondEntry, thirdEntry});
 
     Assert.assertTrue(lruList.assertBackwardStructure());
     Assert.assertTrue(lruList.assertForwardStructure());
@@ -199,7 +198,7 @@ public class OClosableLRUListTest {
     Assert.assertTrue(!lruList.contains(secondEntry));
     Assert.assertTrue(lruList.contains(thirdEntry));
 
-    assertContent(lruList, new OClosableEntry[] { thirdEntry });
+    assertContent(lruList, new OClosableEntry[] {thirdEntry});
 
     Assert.assertTrue(lruList.assertBackwardStructure());
     Assert.assertTrue(lruList.assertForwardStructure());
@@ -232,7 +231,6 @@ public class OClosableLRUListTest {
     @Override
     public void close() {
       open = false;
-
     }
 
     @Override
@@ -241,7 +239,8 @@ public class OClosableLRUListTest {
     }
   }
 
-  private void assertContent(OClosableLRUList<Long, CIItem> lruList, OClosableEntry<Long, CIItem>[] entries) {
+  private void assertContent(
+      OClosableLRUList<Long, CIItem> lruList, OClosableEntry<Long, CIItem>[] entries) {
     final List<OClosableEntry<Long, CIItem>> entryList = Arrays.asList(entries);
 
     final Iterator<OClosableEntry<Long, CIItem>> iterator = entryList.iterator();

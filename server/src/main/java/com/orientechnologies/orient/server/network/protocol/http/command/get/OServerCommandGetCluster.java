@@ -26,18 +26,19 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
-
 import java.util.ArrayList;
 import java.util.List;
 
 public class OServerCommandGetCluster extends OServerCommandAuthenticatedDbAbstract {
-  private static final String[] NAMES = { "GET|cluster/*" };
+  private static final String[] NAMES = {"GET|cluster/*"};
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    String[] urlParts = checkSyntax(iRequest.getUrl(),
-        3,
-        "Syntax error: cluster/<database>/<cluster-name>[/<limit>]<br>Limit is optional and is setted to 20 by default. Set expressely to 0 to have no limits.");
+    String[] urlParts =
+        checkSyntax(
+            iRequest.getUrl(),
+            3,
+            "Syntax error: cluster/<database>/<cluster-name>[/<limit>]<br>Limit is optional and is setted to 20 by default. Set expressely to 0 to have no limits.");
 
     iRequest.getData().commandInfo = "Browse cluster";
     iRequest.getData().commandDetail = urlParts[2];
@@ -52,19 +53,16 @@ public class OServerCommandGetCluster extends OServerCommandAuthenticatedDbAbstr
 
         final List<OIdentifiable> response = new ArrayList<OIdentifiable>();
         for (ORecord rec : db.browseCluster(urlParts[2])) {
-          if (limit > 0 && response.size() >= limit)
-            break;
+          if (limit > 0 && response.size() >= limit) break;
 
           response.add(rec);
         }
 
         iResponse.writeRecords(response);
-      } else
-        iResponse.send(OHttpUtils.STATUS_NOTFOUND_CODE, null, null, null, null);
+      } else iResponse.send(OHttpUtils.STATUS_NOTFOUND_CODE, null, null, null, null);
 
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
     }
     return false;
   }

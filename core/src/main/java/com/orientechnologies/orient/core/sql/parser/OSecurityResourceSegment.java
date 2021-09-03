@@ -31,7 +31,6 @@ public class OSecurityResourceSegment extends SimpleNode {
     return next;
   }
 
-
   @Override
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (this.star) {

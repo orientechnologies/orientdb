@@ -18,7 +18,6 @@ package com.orientechnologies.lucene.operator;
 
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorFactory;
-
 import java.util.HashSet;
 import java.util.Set;
 
@@ -30,7 +29,6 @@ public class OLuceneOperatorFactory implements OQueryOperatorFactory {
     operators = new HashSet<OQueryOperator>();
 
     operators.add(new OLuceneTextOperator());
-
   }
 
   @Override

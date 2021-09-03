@@ -11,7 +11,6 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence.SEQUENCE_TYPE;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceHelper;
-
 import java.util.Arrays;
 import java.util.Map;
 
@@ -19,16 +18,17 @@ import java.util.Map;
  * @author Matan Shukry (matanshukry@gmail.com)
  * @since 2/28/2015
  */
-public class OCommandExecutorSQLCreateSequence extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
-  public static final String KEYWORD_CREATE    = "CREATE";
-  public static final String KEYWORD_SEQUENCE  = "SEQUENCE";
-  public static final String KEYWORD_TYPE      = "TYPE";
-  public static final String KEYWORD_START     = "START";
+public class OCommandExecutorSQLCreateSequence extends OCommandExecutorSQLAbstract
+    implements OCommandDistributedReplicateRequest {
+  public static final String KEYWORD_CREATE = "CREATE";
+  public static final String KEYWORD_SEQUENCE = "SEQUENCE";
+  public static final String KEYWORD_TYPE = "TYPE";
+  public static final String KEYWORD_START = "START";
   public static final String KEYWORD_INCREMENT = "INCREMENT";
-  public static final String KEYWORD_CACHE     = "CACHE";
+  public static final String KEYWORD_CACHE = "CACHE";
 
-  private String                 sequenceName;
-  private SEQUENCE_TYPE          sequenceType;
+  private String sequenceName;
+  private SEQUENCE_TYPE sequenceType;
   private OSequence.CreateParams params;
 
   @Override
@@ -59,9 +59,13 @@ public class OCommandExecutorSQLCreateSequence extends OCommandExecutorSQLAbstra
           try {
             this.sequenceType = OSequenceHelper.getSequenceTyeFromString(typeAsString);
           } catch (IllegalArgumentException e) {
-            throw OException.wrapException(new OCommandSQLParsingException(
-                "Unknown sequence type '" + typeAsString + "'. Supported attributes are: " + Arrays
-                    .toString(SEQUENCE_TYPE.values())), e);
+            throw OException.wrapException(
+                new OCommandSQLParsingException(
+                    "Unknown sequence type '"
+                        + typeAsString
+                        + "'. Supported attributes are: "
+                        + Arrays.toString(SEQUENCE_TYPE.values())),
+                e);
           }
         } else if (temp.equals(KEYWORD_START)) {
           String startAsString = parserRequiredWord(true, "Expected <start value>");
@@ -87,13 +91,17 @@ public class OCommandExecutorSQLCreateSequence extends OCommandExecutorSQLAbstra
   @Override
   public Object execute(Map<Object, Object> iArgs) {
     if (this.sequenceName == null) {
-      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+      throw new OCommandExecutionException(
+          "Cannot execute the command because it has not been parsed yet");
     }
 
     final ODatabaseDocument database = getDatabase();
 
     try {
-      database.getMetadata().getSequenceLibrary().createSequence(this.sequenceName, this.sequenceType, this.params);
+      database
+          .getMetadata()
+          .getSequenceLibrary()
+          .createSequence(this.sequenceName, this.sequenceType, this.params);
     } catch (ODatabaseException exc) {
       String message = "Unable to execute command: " + exc.getMessage();
       OLogManager.instance().error(this, message, exc, (Object) null);

@@ -19,8 +19,7 @@ class OClosableLRUList<K, V extends OClosableItem> implements Iterable<OClosable
     final OClosableEntry<K, V> next = entry.getNext();
     final OClosableEntry<K, V> prev = entry.getPrev();
 
-    if (!(next != null || prev != null || entry == head))
-      return;
+    if (!(next != null || prev != null || entry == head)) return;
 
     if (prev != null) {
       assert prev.getNext() == entry;
@@ -100,8 +99,7 @@ class OClosableLRUList<K, V extends OClosableItem> implements Iterable<OClosable
       tail = head = entry;
     }
 
-    if (newEntry)
-      size++;
+    if (newEntry) size++;
   }
 
   int size() {
@@ -109,8 +107,7 @@ class OClosableLRUList<K, V extends OClosableItem> implements Iterable<OClosable
   }
 
   OClosableEntry<K, V> poll() {
-    if (head == null)
-      return null;
+    if (head == null) return null;
 
     final OClosableEntry<K, V> entry = head;
 
@@ -124,8 +121,7 @@ class OClosableLRUList<K, V extends OClosableItem> implements Iterable<OClosable
 
     assert head == null || head.getPrev() == null;
 
-    if (head == null)
-      tail = null;
+    if (head == null) tail = null;
 
     entry.setNext(null);
     assert entry.getPrev() == null;
@@ -135,9 +131,7 @@ class OClosableLRUList<K, V extends OClosableItem> implements Iterable<OClosable
     return entry;
   }
 
-  /**
-   * @return Iterator to iterate from head to the tail.
-   */
+  /** @return Iterator to iterate from head to the tail. */
   public Iterator<OClosableEntry<K, V>> iterator() {
     return new Iterator<OClosableEntry<K, V>>() {
       private OClosableEntry<K, V> next = head;
@@ -172,8 +166,7 @@ class OClosableLRUList<K, V extends OClosableItem> implements Iterable<OClosable
   }
 
   boolean assertForwardStructure() {
-    if (head == null)
-      return tail == null;
+    if (head == null) return tail == null;
 
     OClosableEntry<K, V> current = head;
 
@@ -196,8 +189,7 @@ class OClosableLRUList<K, V extends OClosableItem> implements Iterable<OClosable
   }
 
   boolean assertBackwardStructure() {
-    if (tail == null)
-      return head == null;
+    if (tail == null) return head == null;
 
     OClosableEntry<K, V> current = tail;
 

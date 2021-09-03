@@ -5,12 +5,11 @@ import com.orientechnologies.common.util.OApi;
 import com.orientechnologies.orient.core.exception.OBackupInProgressException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
-
 import java.lang.reflect.InvocationTargetException;
 
 /**
- * Enumeration with the error managed by OrientDB. This class has been introduced in v.2.2 and little by little will contain all the
- * OrientDB managed errors.
+ * Enumeration with the error managed by OrientDB. This class has been introduced in v.2.2 and
+ * little by little will contain all the OrientDB managed errors.
  *
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
@@ -18,12 +17,19 @@ import java.lang.reflect.InvocationTargetException;
 public enum OErrorCode {
 
   // eg.
-  QUERY_PARSE_ERROR(OErrorCategory.SQL_PARSING, 1, "query parse error", OQueryParsingException.class),
+  QUERY_PARSE_ERROR(
+      OErrorCategory.SQL_PARSING, 1, "query parse error", OQueryParsingException.class),
 
-  BACKUP_IN_PROGRESS(OErrorCategory.STORAGE, 2, "You are trying to start a backup, but it is already in progress",
+  BACKUP_IN_PROGRESS(
+      OErrorCategory.STORAGE,
+      2,
+      "You are trying to start a backup, but it is already in progress",
       OBackupInProgressException.class),
 
-  MVCC_ERROR(OErrorCategory.CONCURRENCY_RETRY, 3, "The version of the update is outdated compared to the persistent value, retry",
+  MVCC_ERROR(
+      OErrorCategory.CONCURRENCY_RETRY,
+      3,
+      "The version of the update is outdated compared to the persistent value, retry",
       OConcurrentModificationException.class),
 
   VALIDATION_ERROR(OErrorCategory.VALIDATION, 4, "Record validation failure", OException.class),
@@ -38,12 +44,16 @@ public enum OErrorCode {
     }
   }
 
-  protected final OErrorCategory              category;
-  protected final int                         code;
-  protected final String                      description;
+  protected final OErrorCategory category;
+  protected final int code;
+  protected final String description;
   protected final Class<? extends OException> exceptionClass;
 
-  OErrorCode(OErrorCategory category, int code, String description, Class<? extends OException> exceptionClass) {
+  OErrorCode(
+      OErrorCategory category,
+      int code,
+      String description,
+      Class<? extends OException> exceptionClass) {
     this.category = category;
     this.code = code;
     this.description = description;
@@ -74,8 +84,12 @@ public enum OErrorCode {
   public OException newException(String message, Throwable parent) {
     final String fullMessage = String.format("%1$06d_%2$06d - %3$s", category.code, code, message);
     try {
-      return OException.wrapException(exceptionClass.getConstructor(String.class).newInstance(fullMessage), parent);
-    } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+      return OException.wrapException(
+          exceptionClass.getConstructor(String.class).newInstance(fullMessage), parent);
+    } catch (InstantiationException
+        | IllegalAccessException
+        | NoSuchMethodException
+        | InvocationTargetException e) {
       OLogManager.instance().warn(this, "Cannot instantiate exception " + exceptionClass);
     }
     return null;
@@ -84,5 +98,4 @@ public enum OErrorCode {
   public static OErrorCode getErrorCode(int code) {
     return codes[code];
   }
-
 }

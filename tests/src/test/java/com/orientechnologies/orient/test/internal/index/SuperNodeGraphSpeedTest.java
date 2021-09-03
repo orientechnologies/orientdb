@@ -1,23 +1,22 @@
 package com.orientechnologies.orient.test.internal.index;
 
-import org.testng.Assert;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.test.SpeedTestMonoThread;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 14.08.13
  */
 public class SuperNodeGraphSpeedTest extends SpeedTestMonoThread {
-  private final static long TOT = 100000l;
-  private OrientBaseGraph   graph;
-  private OrientVertex      superNode;
+  private static final long TOT = 100000l;
+  private OrientBaseGraph graph;
+  private OrientVertex superNode;
 
   public SuperNodeGraphSpeedTest() {
     super(TOT);
@@ -31,10 +30,10 @@ public class SuperNodeGraphSpeedTest extends SpeedTestMonoThread {
       buildDirectory = ".";
     }
 
-    final OrientGraphFactory factory = new OrientGraphFactory("plocal:" + buildDirectory + "/SuperNodeGraphSpeedTest", "admin",
-        "admin");
-    if (factory.exists())
-      factory.drop();
+    final OrientGraphFactory factory =
+        new OrientGraphFactory(
+            "plocal:" + buildDirectory + "/SuperNodeGraphSpeedTest", "admin", "admin");
+    if (factory.exists()) factory.drop();
 
     graph = factory.getNoTx();
 
@@ -53,8 +52,7 @@ public class SuperNodeGraphSpeedTest extends SpeedTestMonoThread {
   @Test(enabled = false)
   public void deinit() throws Exception {
     int i = 0;
-    for (Edge e : superNode.getEdges(Direction.OUT))
-      i++;
+    for (Edge e : superNode.getEdges(Direction.OUT)) i++;
     Assert.assertEquals(i, TOT);
 
     graph.shutdown();

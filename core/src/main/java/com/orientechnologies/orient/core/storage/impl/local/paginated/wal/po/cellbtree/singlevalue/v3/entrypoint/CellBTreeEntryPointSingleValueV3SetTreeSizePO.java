@@ -5,15 +5,13 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v3.CellBTreeSingleValueEntryPointV3;
-
 import java.nio.ByteBuffer;
 
 public final class CellBTreeEntryPointSingleValueV3SetTreeSizePO extends PageOperationRecord {
   private long prevTreeSize;
   private long treeSize;
 
-  public CellBTreeEntryPointSingleValueV3SetTreeSizePO() {
-  }
+  public CellBTreeEntryPointSingleValueV3SetTreeSizePO() {}
 
   public CellBTreeEntryPointSingleValueV3SetTreeSizePO(long prevTreeSize, long treeSize) {
     this.prevTreeSize = prevTreeSize;
@@ -30,13 +28,15 @@ public final class CellBTreeEntryPointSingleValueV3SetTreeSizePO extends PageOpe
 
   @Override
   public void redo(OCacheEntry cacheEntry) {
-    final CellBTreeSingleValueEntryPointV3 bucket = new CellBTreeSingleValueEntryPointV3(cacheEntry);
+    final CellBTreeSingleValueEntryPointV3 bucket =
+        new CellBTreeSingleValueEntryPointV3(cacheEntry);
     bucket.setTreeSize(treeSize);
   }
 
   @Override
   public void undo(OCacheEntry cacheEntry) {
-    final CellBTreeSingleValueEntryPointV3 bucket = new CellBTreeSingleValueEntryPointV3(cacheEntry);
+    final CellBTreeSingleValueEntryPointV3 bucket =
+        new CellBTreeSingleValueEntryPointV3(cacheEntry);
     bucket.setTreeSize(prevTreeSize);
   }
 

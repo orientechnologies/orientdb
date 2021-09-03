@@ -1,8 +1,13 @@
 package com.orientechnologies.orient.distributed.impl.coordinator.transaction.results;
 
 import com.orientechnologies.common.log.OLogManager;
-
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 
 public class OExceptionResult implements OTransactionResult {
 
@@ -12,9 +17,7 @@ public class OExceptionResult implements OTransactionResult {
     this.exception = exception;
   }
 
-  public OExceptionResult() {
-
-  }
+  public OExceptionResult() {}
 
   public Exception getException() {
     return exception;

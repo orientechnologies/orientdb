@@ -24,17 +24,20 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
 public class OServerCommandGetStorageAllocation extends OServerCommandAuthenticatedDbAbstract {
-  private static final String[] NAMES = { "GET|allocation/*" };
+  private static final String[] NAMES = {"GET|allocation/*"};
 
   @Override
-  public boolean execute(final OHttpRequest iRequest, final OHttpResponse iResponse) throws Exception {
+  public boolean execute(final OHttpRequest iRequest, final OHttpResponse iResponse)
+      throws Exception {
     String[] urlParts = checkSyntax(iRequest.getUrl(), 2, "Syntax error: allocation/<database>");
 
     iRequest.getData().commandInfo = "Storage allocation";
     iRequest.getData().commandDetail = urlParts[1];
 
     throw new IllegalArgumentException(
-        "Cannot get allocation information for database '" + iRequest.getDatabaseName() + "' because it is not implemented yet.");
+        "Cannot get allocation information for database '"
+            + iRequest.getDatabaseName()
+            + "' because it is not implemented yet.");
   }
 
   @Override

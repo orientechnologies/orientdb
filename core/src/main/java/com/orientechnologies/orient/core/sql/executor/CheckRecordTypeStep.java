@@ -5,13 +5,12 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.OElement;
-
 import java.util.Map;
 import java.util.Optional;
 
 /**
- * Checks that all the records from the upstream are of a particular type (or subclasses). Throws OCommandExecutionException in case
- * it's not true
+ * Checks that all the records from the upstream are of a particular type (or subclasses). Throws
+ * OCommandExecutionException in case it's not true
  */
 public class CheckRecordTypeStep extends AbstractExecutionStep {
   private final String clazz;
@@ -38,16 +37,19 @@ public class CheckRecordTypeStep extends AbstractExecutionStep {
         long begin = profilingEnabled ? System.nanoTime() : 0;
         try {
           if (!result.isElement()) {
-            throw new OCommandExecutionException("record " + result + " is not an instance of " + clazz);
+            throw new OCommandExecutionException(
+                "record " + result + " is not an instance of " + clazz);
           }
           OElement doc = result.getElement().get();
           if (doc == null) {
-            throw new OCommandExecutionException("record " + result + " is not an instance of " + clazz);
+            throw new OCommandExecutionException(
+                "record " + result + " is not an instance of " + clazz);
           }
           Optional<OClass> schema = doc.getSchemaType();
 
           if (!schema.isPresent() || !schema.get().isSubClassOf(clazz)) {
-            throw new OCommandExecutionException("record " + result + " is not an instance of " + clazz);
+            throw new OCommandExecutionException(
+                "record " + result + " is not an instance of " + clazz);
           }
           return result;
         } finally {

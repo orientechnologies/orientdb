@@ -27,7 +27,7 @@ public class OExecutionPlanCacheTest {
      */
     Thread.sleep(2);
 
-    //schema changes
+    // schema changes
     db.query(stm).close();
     cache = OExecutionPlanCache.instance(db);
     Assert.assertTrue(cache.contains(stm));
@@ -37,7 +37,7 @@ public class OExecutionPlanCacheTest {
 
     Thread.sleep(2);
 
-    //schema changes 2
+    // schema changes 2
     db.query(stm).close();
     cache = OExecutionPlanCache.instance(db);
     Assert.assertTrue(cache.contains(stm));
@@ -47,7 +47,7 @@ public class OExecutionPlanCacheTest {
 
     Thread.sleep(2);
 
-    //index changes
+    // index changes
     db.query(stm).close();
     cache = OExecutionPlanCache.instance(db);
     Assert.assertTrue(cache.contains(stm));
@@ -56,7 +56,5 @@ public class OExecutionPlanCacheTest {
     Assert.assertFalse(cache.contains(stm));
 
     db.close();
-
   }
-
 }

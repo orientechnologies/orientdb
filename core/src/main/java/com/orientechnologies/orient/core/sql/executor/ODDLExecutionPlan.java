@@ -4,17 +4,14 @@ import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.parser.ODDLStatement;
-
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class ODDLExecutionPlan implements OInternalExecutionPlan {
 
-  private final ODDLStatement   statement;
-  private       OCommandContext ctx;
+  private final ODDLStatement statement;
+  private OCommandContext ctx;
 
   private boolean executed = false;
 
@@ -24,9 +21,7 @@ public class ODDLExecutionPlan implements OInternalExecutionPlan {
   }
 
   @Override
-  public void close() {
-
-  }
+  public void close() {}
 
   @Override
   public OResultSet fetchNext(int n) {
@@ -49,7 +44,8 @@ public class ODDLExecutionPlan implements OInternalExecutionPlan {
 
   public OResultSet executeInternal(OBasicCommandContext ctx) throws OCommandExecutionException {
     if (executed) {
-      throw new OCommandExecutionException("Trying to execute a result-set twice. Please use reset()");
+      throw new OCommandExecutionException(
+          "Trying to execute a result-set twice. Please use reset()");
     }
     executed = true;
     OResultSet result = statement.executeDDL(this.ctx);

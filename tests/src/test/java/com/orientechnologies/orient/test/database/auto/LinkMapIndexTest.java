@@ -8,20 +8,22 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.testng.Assert;
-import org.testng.annotations.*;
-
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
-/**
- * @since 22.03.12
- */
+/** @since 22.03.12 */
 @SuppressWarnings("deprecation")
-@Test(groups = { "index" })
+@Test(groups = {"index"})
 public class LinkMapIndexTest extends DocumentDBBaseTest {
 
   @Parameters(value = "url")
@@ -31,12 +33,13 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
   @BeforeClass
   public void setupSchema() {
-    final OClass linkMapIndexTestClass = database.getMetadata().getSchema().createClass("LinkMapIndexTestClass");
+    final OClass linkMapIndexTestClass =
+        database.getMetadata().getSchema().createClass("LinkMapIndexTestClass");
     linkMapIndexTestClass.createProperty("linkMap", OType.LINKMAP);
 
     linkMapIndexTestClass.createIndex("mapIndexTestKey", OClass.INDEX_TYPE.NOTUNIQUE, "linkMap");
-    linkMapIndexTestClass.createIndex("mapIndexTestValue", OClass.INDEX_TYPE.NOTUNIQUE, "linkMap by value");
-
+    linkMapIndexTestClass.createIndex(
+        "mapIndexTestValue", OClass.INDEX_TYPE.NOTUNIQUE, "linkMap by value");
   }
 
   @AfterClass
@@ -97,7 +100,8 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
       while (valuesIterator.hasNext()) {
         OIdentifiable value = (OIdentifiable) valuesIterator.next();
-        if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docTwo.getIdentity())) {
+        if (!value.getIdentity().equals(docOne.getIdentity())
+            && !value.getIdentity().equals(docTwo.getIdentity())) {
           Assert.fail("Unknown value found: " + value);
         }
       }
@@ -153,7 +157,8 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
       while (valuesIterator.hasNext()) {
         OIdentifiable value = (OIdentifiable) valuesIterator.next();
-        if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docTwo.getIdentity())) {
+        if (!value.getIdentity().equals(docOne.getIdentity())
+            && !value.getIdentity().equals(docTwo.getIdentity())) {
           Assert.fail("Unknown value found: " + value);
         }
       }
@@ -212,7 +217,8 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
       while (valuesIterator.hasNext()) {
         OIdentifiable value = (OIdentifiable) valuesIterator.next();
-        if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docThree.getIdentity())) {
+        if (!value.getIdentity().equals(docOne.getIdentity())
+            && !value.getIdentity().equals(docThree.getIdentity())) {
           Assert.fail("Unknown value found: " + value);
         }
       }
@@ -269,7 +275,8 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
       while (valuesIterator.hasNext()) {
         OIdentifiable value = (OIdentifiable) valuesIterator.next();
-        if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docTwo.getIdentity())) {
+        if (!value.getIdentity().equals(docOne.getIdentity())
+            && !value.getIdentity().equals(docTwo.getIdentity())) {
           Assert.fail("Unknown value found: " + value);
         }
       }
@@ -331,7 +338,8 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
       while (valuesIterator.hasNext()) {
         OIdentifiable value = (OIdentifiable) valuesIterator.next();
-        if (!value.getIdentity().equals(docTwo.getIdentity()) && !value.equals(docOne.getIdentity())) {
+        if (!value.getIdentity().equals(docTwo.getIdentity())
+            && !value.equals(docOne.getIdentity())) {
           Assert.fail("Unknown value found: " + value);
         }
       }
@@ -359,7 +367,13 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     document.field("linkMap", map);
     document.save();
 
-    database.command(new OCommandSQL("UPDATE " + document.getIdentity() + " put linkMap = 'key3', " + docThree.getIdentity()))
+    database
+        .command(
+            new OCommandSQL(
+                "UPDATE "
+                    + document.getIdentity()
+                    + " put linkMap = 'key3', "
+                    + docThree.getIdentity()))
         .execute();
 
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
@@ -386,8 +400,9 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
       while (valuesIterator.hasNext()) {
         OIdentifiable value = (OIdentifiable) valuesIterator.next();
-        if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docTwo.getIdentity()) && !value
-            .getIdentity().equals(docThree.getIdentity())) {
+        if (!value.getIdentity().equals(docOne.getIdentity())
+            && !value.getIdentity().equals(docTwo.getIdentity())
+            && !value.getIdentity().equals(docThree.getIdentity())) {
           Assert.fail("Unknown value found: " + value);
         }
       }
@@ -451,8 +466,9 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
       while (valuesIterator.hasNext()) {
         OIdentifiable value = (OIdentifiable) valuesIterator.next();
-        if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docTwo.getIdentity()) && !value
-            .getIdentity().equals(docThree.getIdentity())) {
+        if (!value.getIdentity().equals(docOne.getIdentity())
+            && !value.getIdentity().equals(docTwo.getIdentity())
+            && !value.getIdentity().equals(docThree.getIdentity())) {
           Assert.fail("Unknown value found: " + value);
         }
       }
@@ -510,7 +526,8 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
       while (valuesIterator.hasNext()) {
         OIdentifiable value = (OIdentifiable) valuesIterator.next();
-        if (!value.getIdentity().equals(docTwo.getIdentity()) && !value.getIdentity().equals(docOne.getIdentity())) {
+        if (!value.getIdentity().equals(docTwo.getIdentity())
+            && !value.getIdentity().equals(docOne.getIdentity())) {
           Assert.fail("Unknown value found: " + value);
         }
       }
@@ -538,7 +555,13 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     document.field("linkMap", map);
     document.save();
 
-    database.command(new OCommandSQL("UPDATE " + document.getIdentity() + " put linkMap = 'key2'," + docThree.getIdentity()))
+    database
+        .command(
+            new OCommandSQL(
+                "UPDATE "
+                    + document.getIdentity()
+                    + " put linkMap = 'key2',"
+                    + docThree.getIdentity()))
         .execute();
 
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
@@ -565,7 +588,8 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
       while (valuesIterator.hasNext()) {
         OIdentifiable value = (OIdentifiable) valuesIterator.next();
-        if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docThree.getIdentity())) {
+        if (!value.getIdentity().equals(docOne.getIdentity())
+            && !value.getIdentity().equals(docThree.getIdentity())) {
           Assert.fail("Unknown value found: " + value);
         }
       }
@@ -629,7 +653,8 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
       while (valuesIterator.hasNext()) {
         OIdentifiable value = (OIdentifiable) valuesIterator.next();
-        if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docThree.getIdentity())) {
+        if (!value.getIdentity().equals(docOne.getIdentity())
+            && !value.getIdentity().equals(docThree.getIdentity())) {
           Assert.fail("Unknown key found: " + value);
         }
       }
@@ -687,7 +712,8 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
       while (valuesIterator.hasNext()) {
         OIdentifiable value = (OIdentifiable) valuesIterator.next();
-        if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docTwo.getIdentity())) {
+        if (!value.getIdentity().equals(docOne.getIdentity())
+            && !value.getIdentity().equals(docTwo.getIdentity())) {
           Assert.fail("Unknown value found: " + value);
         }
       }
@@ -716,7 +742,9 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     document.field("linkMap", map);
     document.save();
 
-    database.command(new OCommandSQL("UPDATE " + document.getIdentity() + " remove linkMap = 'key2'")).execute();
+    database
+        .command(new OCommandSQL("UPDATE " + document.getIdentity() + " remove linkMap = 'key2'"))
+        .execute();
 
     final OIndex keyIndexMap = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndexMap.getInternal().size(), 2);
@@ -742,7 +770,8 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
       while (valuesIterator.hasNext()) {
         OIdentifiable value = (OIdentifiable) valuesIterator.next();
-        if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docThree.getIdentity())) {
+        if (!value.getIdentity().equals(docOne.getIdentity())
+            && !value.getIdentity().equals(docThree.getIdentity())) {
           Assert.fail("Unknown value found: " + value);
         }
       }
@@ -806,7 +835,8 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
       while (valuesIterator.hasNext()) {
         OIdentifiable value = (OIdentifiable) valuesIterator.next();
-        if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docThree.getIdentity())) {
+        if (!value.getIdentity().equals(docOne.getIdentity())
+            && !value.getIdentity().equals(docThree.getIdentity())) {
           Assert.fail("Unknown value found: " + value);
         }
       }
@@ -865,8 +895,9 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
       while (valuesIterator.hasNext()) {
         OIdentifiable value = (OIdentifiable) valuesIterator.next();
-        if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docTwo.getIdentity()) && !value
-            .getIdentity().equals(docThree.getIdentity())) {
+        if (!value.getIdentity().equals(docOne.getIdentity())
+            && !value.getIdentity().equals(docTwo.getIdentity())
+            && !value.getIdentity().equals(docThree.getIdentity())) {
           Assert.fail("Unknown value found: " + value);
         }
       }
@@ -982,7 +1013,8 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
       while (valuesIterator.hasNext()) {
         OIdentifiable value = (OIdentifiable) valuesIterator.next();
-        if (!value.getIdentity().equals(docOne.getIdentity()) && !value.getIdentity().equals(docTwo.getIdentity())) {
+        if (!value.getIdentity().equals(docOne.getIdentity())
+            && !value.getIdentity().equals(docTwo.getIdentity())) {
           Assert.fail("Unknown value found: " + value);
         }
       }
@@ -1005,15 +1037,20 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     document.field("linkMap", map);
     document.save();
 
-    final List<ODocument> resultByKey = database
-        .query(new OSQLSynchQuery<ODocument>("select * from LinkMapIndexTestClass where linkMap containskey ?"), "key1");
+    final List<ODocument> resultByKey =
+        database.query(
+            new OSQLSynchQuery<ODocument>(
+                "select * from LinkMapIndexTestClass where linkMap containskey ?"),
+            "key1");
     Assert.assertNotNull(resultByKey);
     Assert.assertEquals(resultByKey.size(), 1);
 
     Assert.assertEquals(map, document.field("linkMap"));
 
-    final List<ODocument> resultByValue = database
-        .query(new OSQLSynchQuery<ODocument>("select * from LinkMapIndexTestClass where linkMap  containsvalue ?"),
+    final List<ODocument> resultByValue =
+        database.query(
+            new OSQLSynchQuery<ODocument>(
+                "select * from LinkMapIndexTestClass where linkMap  containsvalue ?"),
             docOne.getIdentity());
     Assert.assertNotNull(resultByValue);
     Assert.assertEquals(resultByValue.size(), 1);

@@ -18,18 +18,16 @@
 
 package com.orientechnologies.orient.core.sql;
 
+import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertTrue;
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.security.OSecurityRole;
 import org.junit.Test;
 
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertTrue;
-
-/**
- * Created by Enrico Risa on 07/06/16.
- */
+/** Created by Enrico Risa on 07/06/16. */
 public class OCommandExecutorSQLGrantRevokeTest {
 
   @Test
@@ -39,7 +37,10 @@ public class OCommandExecutorSQLGrantRevokeTest {
     try {
       db.create();
 
-      ORole testRole = db.getMetadata().getSecurity().createRole("testRole", OSecurityRole.ALLOW_MODES.DENY_ALL_BUT);
+      ORole testRole =
+          db.getMetadata()
+              .getSecurity()
+              .createRole("testRole", OSecurityRole.ALLOW_MODES.DENY_ALL_BUT);
 
       assertFalse(testRole.allow(ORule.ResourceGeneric.SERVER, "server", ORole.PERMISSION_EXECUTE));
 

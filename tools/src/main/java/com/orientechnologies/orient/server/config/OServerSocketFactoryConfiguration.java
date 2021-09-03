@@ -22,11 +22,10 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlRootElement(name = "socket")
-@XmlType(propOrder = { "parameters", "implementation", "name" })
+@XmlType(propOrder = {"parameters", "implementation", "name"})
 public class OServerSocketFactoryConfiguration {
 
-  public OServerSocketFactoryConfiguration() {
-  }
+  public OServerSocketFactoryConfiguration() {}
 
   public OServerSocketFactoryConfiguration(String name, String implementation) {
     this.name = name;

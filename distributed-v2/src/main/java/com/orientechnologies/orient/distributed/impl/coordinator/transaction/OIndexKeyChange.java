@@ -3,7 +3,6 @@ package com.orientechnologies.orient.distributed.impl.coordinator.transaction;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetwork;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -13,10 +12,10 @@ import java.util.List;
 public class OIndexKeyChange {
 
   // Key Type
-  private static final int SIMPLE    = 1;
+  private static final int SIMPLE = 1;
   private static final int COMPOSITE = 2;
 
-  private Object                   key;
+  private Object key;
   private List<OIndexKeyOperation> operations;
 
   public OIndexKeyChange(Object key, List<OIndexKeyOperation> operations) {
@@ -24,9 +23,7 @@ public class OIndexKeyChange {
     this.operations = operations;
   }
 
-  public OIndexKeyChange() {
-
-  }
+  public OIndexKeyChange() {}
 
   public Object getKey() {
     return key;
@@ -61,7 +58,6 @@ public class OIndexKeyChange {
         output.write(bytes);
       }
     }
-
   }
 
   public void deserialize(DataInput input) throws IOException {
@@ -86,8 +82,7 @@ public class OIndexKeyChange {
       return new OCompositeKey(keys);
     } else {
       boolean isNull = input.readBoolean();
-      if (isNull)
-        return null;
+      if (isNull) return null;
       OType keyType = OType.getById(input.readByte());
       int keySize = input.readInt();
       byte[] bytes = new byte[keySize];

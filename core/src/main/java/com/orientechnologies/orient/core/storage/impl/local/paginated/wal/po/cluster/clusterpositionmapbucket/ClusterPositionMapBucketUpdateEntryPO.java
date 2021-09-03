@@ -6,25 +6,29 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cluster.OClusterPositionMapBucket;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
-
 import java.nio.ByteBuffer;
 
 public final class ClusterPositionMapBucketUpdateEntryPO extends PageOperationRecord {
   private int index;
 
   private byte oldRecordStatus;
-  private int  oldRecordPageIndex;
-  private int  oldRecordPosition;
+  private int oldRecordPageIndex;
+  private int oldRecordPosition;
 
   private byte recordStatus;
-  private int  recordPageIndex;
-  private int  recordPosition;
+  private int recordPageIndex;
+  private int recordPosition;
 
-  public ClusterPositionMapBucketUpdateEntryPO() {
-  }
+  public ClusterPositionMapBucketUpdateEntryPO() {}
 
-  public ClusterPositionMapBucketUpdateEntryPO(int index, byte oldRecordStatus, int oldRecordPageIndex, int oldRecordPosition,
-      byte recordStatus, int recordPageIndex, int recordPosition) {
+  public ClusterPositionMapBucketUpdateEntryPO(
+      int index,
+      byte oldRecordStatus,
+      int oldRecordPageIndex,
+      int oldRecordPosition,
+      byte recordStatus,
+      int recordPageIndex,
+      int recordPosition) {
     this.index = index;
 
     this.oldRecordStatus = oldRecordStatus;
@@ -83,7 +87,9 @@ public final class ClusterPositionMapBucketUpdateEntryPO extends PageOperationRe
 
   @Override
   public int serializedSize() {
-    return super.serializedSize() + OIntegerSerializer.INT_SIZE + 2 * (OByteSerializer.BYTE_SIZE + 2 * OIntegerSerializer.INT_SIZE);
+    return super.serializedSize()
+        + OIntegerSerializer.INT_SIZE
+        + 2 * (OByteSerializer.BYTE_SIZE + 2 * OIntegerSerializer.INT_SIZE);
   }
 
   @Override

@@ -23,7 +23,6 @@ package com.orientechnologies.common.serialization.types;
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
-
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
@@ -34,19 +33,19 @@ import java.nio.ByteOrder;
  * @since 18.01.12
  */
 public class OShortSerializer implements OBinarySerializer<Short> {
-  public static final  byte             ID         = 12;
-  /**
-   * size of short value in bytes
-   */
-  public static final  int              SHORT_SIZE = 2;
-  private static final OBinaryConverter CONVERTER  = OBinaryConverterFactory.getConverter();
-  public static final  OShortSerializer INSTANCE   = new OShortSerializer();
+  public static final byte ID = 12;
+  /** size of short value in bytes */
+  public static final int SHORT_SIZE = 2;
+
+  private static final OBinaryConverter CONVERTER = OBinaryConverterFactory.getConverter();
+  public static final OShortSerializer INSTANCE = new OShortSerializer();
 
   public int getObjectSize(Short object, Object... hints) {
     return SHORT_SIZE;
   }
 
-  public void serialize(final Short object, final byte[] stream, final int startPosition, final Object... hints) {
+  public void serialize(
+      final Short object, final byte[] stream, final int startPosition, final Object... hints) {
     serializeLiteral(object.shortValue(), stream, startPosition);
   }
 
@@ -76,7 +75,8 @@ public class OShortSerializer implements OBinarySerializer<Short> {
   }
 
   @Override
-  public void serializeNativeObject(final Short object, final byte[] stream, final int startPosition, final Object... hints) {
+  public void serializeNativeObject(
+      final Short object, final byte[] stream, final int startPosition, final Object... hints) {
     checkBoundaries(stream, startPosition);
 
     CONVERTER.putShort(stream, startPosition, object, ByteOrder.nativeOrder());
@@ -89,7 +89,8 @@ public class OShortSerializer implements OBinarySerializer<Short> {
     return CONVERTER.getShort(stream, startPosition, ByteOrder.nativeOrder());
   }
 
-  public void serializeNative(final short object, final byte[] stream, final int startPosition, final Object... hints) {
+  public void serializeNative(
+      final short object, final byte[] stream, final int startPosition, final Object... hints) {
     checkBoundaries(stream, startPosition);
 
     CONVERTER.putShort(stream, startPosition, object, ByteOrder.nativeOrder());
@@ -114,41 +115,32 @@ public class OShortSerializer implements OBinarySerializer<Short> {
     return value;
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public void serializeInByteBufferObject(Short object, ByteBuffer buffer, Object... hints) {
     buffer.putShort(object);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public Short deserializeFromByteBufferObject(ByteBuffer buffer) {
     return buffer.getShort();
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
     return SHORT_SIZE;
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
-  public Short deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+  public Short deserializeFromByteBufferObject(
+      ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return walChanges.getShortValue(buffer, offset);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return SHORT_SIZE;
@@ -157,7 +149,10 @@ public class OShortSerializer implements OBinarySerializer<Short> {
   private static void checkBoundaries(byte[] stream, int startPosition) {
     if (startPosition + SHORT_SIZE > stream.length) {
       throw new IllegalStateException(
-          "Requested stream size is " + (startPosition + SHORT_SIZE) + " but provided stream has size " + stream.length);
+          "Requested stream size is "
+              + (startPosition + SHORT_SIZE)
+              + " but provided stream has size "
+              + stream.length);
     }
   }
 }

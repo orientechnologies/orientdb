@@ -11,9 +11,9 @@ import com.orientechnologies.orient.core.record.OVertex;
 
 public class AsyncReplMode2ServersIT extends BareBoneBase2ServerTest {
 
-  private static final int    NUM_OF_LOOP_ITERATIONS = 3;
-  private static final int    NUM_OF_RETRIES         = 3;
-  private static final String CNT_PROP_NAME          = "cnt";
+  private static final int NUM_OF_LOOP_ITERATIONS = 3;
+  private static final int NUM_OF_RETRIES = 3;
+  private static final String CNT_PROP_NAME = "cnt";
 
   private Object parentV1Id;
   private Object parentV2Id;
@@ -49,8 +49,7 @@ public class AsyncReplMode2ServersIT extends BareBoneBase2ServerTest {
         for (int i = 0; i < NUM_OF_LOOP_ITERATIONS; i++) {
           pause();
 
-          if (exceptionInThread != null)
-            break;
+          if (exceptionInThread != null) break;
 
           for (int attempt = 0; attempt < NUM_OF_RETRIES; attempt++) {
             try {
@@ -114,14 +113,19 @@ public class AsyncReplMode2ServersIT extends BareBoneBase2ServerTest {
         for (int i = 0; i < NUM_OF_LOOP_ITERATIONS; i++) {
           pause();
 
-          if (exceptionInThread != null)
-            break;
+          if (exceptionInThread != null) break;
           sleep(500);
 
           parentV1.reload();
           parentV2.reload();
-          assertEquals("parentV1 (" + parentV1.getRecord() + ")", ++countPropValue, parentV1.<Object>getProperty(CNT_PROP_NAME));
-          assertEquals("parentV2 (" + parentV2.getRecord() + ")", countPropValue, parentV2.<Object>getProperty(CNT_PROP_NAME));
+          assertEquals(
+              "parentV1 (" + parentV1.getRecord() + ")",
+              ++countPropValue,
+              parentV1.<Object>getProperty(CNT_PROP_NAME));
+          assertEquals(
+              "parentV2 (" + parentV2.getRecord() + ")",
+              countPropValue,
+              parentV2.<Object>getProperty(CNT_PROP_NAME));
         }
       } catch (Throwable e) {
         if (exceptionInThread == null) {
@@ -135,5 +139,4 @@ public class AsyncReplMode2ServersIT extends BareBoneBase2ServerTest {
       }
     }
   }
-
 }

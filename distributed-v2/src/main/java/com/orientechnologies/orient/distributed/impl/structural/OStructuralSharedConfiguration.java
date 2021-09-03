@@ -1,17 +1,21 @@
 package com.orientechnologies.orient.distributed.impl.structural;
 
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-public class OStructuralSharedConfiguration implements OReadStructuralSharedConfiguration, Cloneable {
+public class OStructuralSharedConfiguration
+    implements OReadStructuralSharedConfiguration, Cloneable {
 
-  private List<String>                                     databases;
+  private List<String> databases;
   private Map<ONodeIdentity, OStructuralNodeConfiguration> knownNodes;
-  private int                                              quorum;
+  private int quorum;
 
   public void init(int quorum) {
     this.databases = new ArrayList<>();
@@ -49,13 +53,13 @@ public class OStructuralSharedConfiguration implements OReadStructuralSharedConf
 
   @Override
   public void networkSerialize(DataOutput output) throws IOException {
-    //TODO: Make sure that network become independent to the disc.
+    // TODO: Make sure that network become independent to the disc.
     serialize(output);
   }
 
   @Override
   public void networkDeserialize(DataInput input) throws IOException {
-    //TODO: Make sure that network become independent to the disc.
+    // TODO: Make sure that network become independent to the disc.
     deserialize(input);
   }
 
@@ -68,12 +72,12 @@ public class OStructuralSharedConfiguration implements OReadStructuralSharedConf
   }
 
   public void distributeSerialize(DataOutput output) throws IOException {
-    //For now just use the same of disc serialization but this will change in future
+    // For now just use the same of disc serialization but this will change in future
     serialize(output);
   }
 
   public void distributeDeserialize(DataInput input) throws IOException {
-    //For now just use the same of disc serialization but this will change in future
+    // For now just use the same of disc serialization but this will change in future
     deserialize(input);
   }
 

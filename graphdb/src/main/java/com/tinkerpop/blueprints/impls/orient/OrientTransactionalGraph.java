@@ -20,23 +20,22 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import org.apache.commons.configuration.Configuration;
-
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.tx.OTransaction.TXSTATUS;
 import com.orientechnologies.orient.core.tx.OTransactionNoTx;
 import com.tinkerpop.blueprints.TransactionalGraph;
+import org.apache.commons.configuration.Configuration;
 
 /**
  * A Blueprints implementation of the graph database OrientDB (http://orientdb.com)
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com) (http://orientdb.com)
  */
-public abstract class OrientTransactionalGraph extends OrientBaseGraph implements TransactionalGraph {
+public abstract class OrientTransactionalGraph extends OrientBaseGraph
+    implements TransactionalGraph {
 
   /**
    * Constructs a new object using an existent database instance.
@@ -47,24 +46,28 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
     this(iDatabase, true, null, null);
   }
 
-  protected OrientTransactionalGraph(final ODatabaseDocumentInternal iDatabase, final String iUserName, final String iUserPasswd,
+  protected OrientTransactionalGraph(
+      final ODatabaseDocumentInternal iDatabase,
+      final String iUserName,
+      final String iUserPasswd,
       final Settings iConfiguration) {
     super(iDatabase, iUserName, iUserPasswd, iConfiguration);
     setCurrentGraphInThreadLocal();
     super.setAutoStartTx(isAutoStartTx());
 
-    if (isAutoStartTx())
-      ensureTransaction();
+    if (isAutoStartTx()) ensureTransaction();
   }
 
-  protected OrientTransactionalGraph(final ODatabaseDocumentInternal iDatabase, final boolean iAutoStartTx, final String iUserName,
+  protected OrientTransactionalGraph(
+      final ODatabaseDocumentInternal iDatabase,
+      final boolean iAutoStartTx,
+      final String iUserName,
       final String iUserPasswd) {
     super(iDatabase, iUserName, iUserPasswd, null);
     setCurrentGraphInThreadLocal();
     super.setAutoStartTx(iAutoStartTx);
 
-    if (iAutoStartTx)
-      ensureTransaction();
+    if (iAutoStartTx) ensureTransaction();
   }
 
   protected OrientTransactionalGraph(final OPartitionedDatabasePool pool) {
@@ -74,12 +77,12 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
     ensureTransaction();
   }
 
-  protected OrientTransactionalGraph(final OPartitionedDatabasePool pool, final Settings configuration) {
+  protected OrientTransactionalGraph(
+      final OPartitionedDatabasePool pool, final Settings configuration) {
     super(pool, configuration);
     setCurrentGraphInThreadLocal();
 
-    if (configuration.isAutoStartTx())
-      ensureTransaction();
+    if (configuration.isAutoStartTx()) ensureTransaction();
   }
 
   protected OrientTransactionalGraph(final String url) {
@@ -91,29 +94,28 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
     setCurrentGraphInThreadLocal();
     setAutoStartTx(iAutoStartTx);
 
-    if (iAutoStartTx)
-      ensureTransaction();
+    if (iAutoStartTx) ensureTransaction();
   }
 
-  protected OrientTransactionalGraph(final String url, final String username, final String password) {
+  protected OrientTransactionalGraph(
+      final String url, final String username, final String password) {
     this(url, username, password, true);
   }
 
-  protected OrientTransactionalGraph(final String url, final String username, final String password, final boolean iAutoStartTx) {
+  protected OrientTransactionalGraph(
+      final String url, final String username, final String password, final boolean iAutoStartTx) {
     super(url, username, password);
     setCurrentGraphInThreadLocal();
     this.setAutoStartTx(iAutoStartTx);
 
-    if (iAutoStartTx)
-      ensureTransaction();
+    if (iAutoStartTx) ensureTransaction();
   }
 
   protected OrientTransactionalGraph(final Configuration configuration) {
     super(configuration);
 
     final Boolean autoStartTx = configuration.getBoolean("blueprints.orientdb.autoStartTx", null);
-    if (autoStartTx != null)
-      setAutoStartTx(autoStartTx);
+    if (autoStartTx != null) setAutoStartTx(autoStartTx);
   }
 
   public boolean isUseLog() {
@@ -133,23 +135,25 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
   public void setAutoStartTx(boolean autoStartTx) {
     makeActive();
 
-
     final boolean showWarning;
-    if (!autoStartTx && isAutoStartTx() && getDatabase() != null && getDatabase().getTransaction().isActive()) {
+    if (!autoStartTx
+        && isAutoStartTx()
+        && getDatabase() != null
+        && getDatabase().getTransaction().isActive()) {
       if (getDatabase().getTransaction().getEntryCount() == 0) {
         getDatabase().getTransaction().rollback();
         showWarning = false;
-      } else
-        showWarning = true;
-    } else
-      showWarning = false;
-    
+      } else showWarning = true;
+    } else showWarning = false;
+
     super.setAutoStartTx(autoStartTx);
 
     if (showWarning)
-      OLogManager.instance().warn(this,
-          "Auto Transaction for graphs setting has been turned off, but a transaction was already started."
-              + " Commit it manually or consider disabling auto transactions while creating the graph.");
+      OLogManager.instance()
+          .warn(
+              this,
+              "Auto Transaction for graphs setting has been turned off, but a transaction was already started."
+                  + " Commit it manually or consider disabling auto transactions while creating the graph.");
   }
 
   /**
@@ -162,54 +166,47 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
   public void stopTransaction(final Conclusion conclusion) {
     makeActive();
 
-    if (getDatabase().isClosed() || getDatabase().getTransaction() instanceof OTransactionNoTx
-        || getDatabase().getTransaction().getStatus() != TXSTATUS.BEGUN)
-      return;
+    if (getDatabase().isClosed()
+        || getDatabase().getTransaction() instanceof OTransactionNoTx
+        || getDatabase().getTransaction().getStatus() != TXSTATUS.BEGUN) return;
 
-    if (Conclusion.SUCCESS == conclusion)
-      commit();
-    else
-      rollback();
+    if (Conclusion.SUCCESS == conclusion) commit();
+    else rollback();
   }
 
-  /**
-   * Commits the current active transaction.
-   */
+  /** Commits the current active transaction. */
   public void commit() {
     makeActive();
 
-    if (getDatabase() == null)
-      return;
+    if (getDatabase() == null) return;
 
     getDatabase().commit();
-    if (isAutoStartTx())
-      ensureTransaction();
+    if (isAutoStartTx()) ensureTransaction();
   }
 
-  /**
-   * Rollbacks the current active transaction. All the pending changes are rollbacked.
-   */
+  /** Rollbacks the current active transaction. All the pending changes are rollbacked. */
   public void rollback() {
     makeActive();
 
-    if (getDatabase() == null)
-      return;
+    if (getDatabase() == null) return;
 
     getDatabase().rollback();
-    if (isAutoStartTx())
-      ensureTransaction();
+    if (isAutoStartTx()) ensureTransaction();
   }
 
   @Override
   public void begin() {
     makeActive();
 
-    // XXX: Under some circumstances, auto started transactions are committed outside of the graph using the
-    // underlying database and later restarted using the graph. So we have to check the status of the
+    // XXX: Under some circumstances, auto started transactions are committed outside of the graph
+    // using the
+    // underlying database and later restarted using the graph. So we have to check the status of
+    // the
     // database transaction to support this behaviour.
     if (isAutoStartTx() && getDatabase().getTransaction().isActive())
-      throw new OTransactionException("A mixture of auto started and manually started transactions is not allowed. "
-          + "Disable auto transactions for the graph before starting a manual transaction.");
+      throw new OTransactionException(
+          "A mixture of auto started and manually started transactions is not allowed. "
+              + "Disable auto transactions for the graph before starting a manual transaction.");
 
     getDatabase().begin();
     getDatabase().getTransaction().setUsingLog(settings.isUseLog());
@@ -239,5 +236,4 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
       getDatabase().getTransaction().setUsingLog(settings.isUseLog());
     }
   }
-
 }

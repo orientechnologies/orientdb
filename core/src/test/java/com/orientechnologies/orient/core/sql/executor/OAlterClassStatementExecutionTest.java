@@ -10,9 +10,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OAlterClassStatementExecutionTest {
   static ODatabaseDocument db;
 
@@ -79,7 +77,8 @@ public class OAlterClassStatementExecutionTest {
     String className = "testAddCluster";
     OSchema schema = db.getMetadata().getSchema();
     schema.createClass(className);
-    OResultSet result = db.command("alter class " + className + " addcluster " + className + "_new");
+    OResultSet result =
+        db.command("alter class " + className + " addcluster " + className + "_new");
     schema.reload();
     OClass clazz = schema.getClass(className);
     boolean found = false;
@@ -98,7 +97,8 @@ public class OAlterClassStatementExecutionTest {
     String className = "testRemoveCluster";
     OSchema schema = db.getMetadata().getSchema();
     schema.createClass(className);
-    OResultSet result = db.command("alter class " + className + " addcluster " + className + "_new");
+    OResultSet result =
+        db.command("alter class " + className + " addcluster " + className + "_new");
     schema.reload();
     OClass clazz = schema.getClass(className);
     boolean found = false;
@@ -147,7 +147,14 @@ public class OAlterClassStatementExecutionTest {
     schema.createClass(className);
     OClass superclass = schema.createClass(superclassName);
     OClass superclass2 = schema.createClass(superclassName2);
-    OResultSet result = db.command("alter class " + className + " superclasses " + superclassName + ", " + superclassName2);
+    OResultSet result =
+        db.command(
+            "alter class "
+                + className
+                + " superclasses "
+                + superclassName
+                + ", "
+                + superclassName2);
     schema.reload();
     Assert.assertTrue(schema.getClass(className).getSuperClasses().contains(superclass));
     Assert.assertTrue(schema.getClass(className).getSuperClasses().contains(superclass2));
@@ -229,7 +236,8 @@ public class OAlterClassStatementExecutionTest {
     } catch (OCommandExecutionException ex) {
 
     }
-    OResultSet result = db.command("alter class " + className + " name " + className + "_new unsafe");
+    OResultSet result =
+        db.command("alter class " + className + " name " + className + "_new unsafe");
     schema.reload();
     Assert.assertNull(schema.getClass(className));
     Assert.assertNotNull(schema.getClass(className + "_new"));
@@ -262,5 +270,4 @@ public class OAlterClassStatementExecutionTest {
     schema.reload();
     Assert.assertEquals(firstNonDefault, schema.getClass(className).getDefaultClusterId());
   }
-
 }

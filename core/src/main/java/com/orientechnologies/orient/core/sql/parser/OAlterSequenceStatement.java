@@ -13,7 +13,6 @@ import com.orientechnologies.orient.core.metadata.sequence.SequenceOrderType;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.util.Map;
 import java.util.Objects;
 
@@ -22,10 +21,10 @@ public class OAlterSequenceStatement extends ODDLStatement {
   OExpression start;
   OExpression increment;
   OExpression cache;
-  Boolean     positive;
-  Boolean     cyclic;
+  Boolean positive;
+  Boolean cyclic;
   OExpression limitValue;
-  boolean     turnLimitOff = false;
+  boolean turnLimitOff = false;
 
   public OAlterSequenceStatement(int id) {
     super(id);
@@ -41,7 +40,8 @@ public class OAlterSequenceStatement extends ODDLStatement {
     String sequenceName = name.getStringValue();
 
     if (sequenceName == null) {
-      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+      throw new OCommandExecutionException(
+          "Cannot execute the command because it has not been parsed yet");
     }
     final ODatabaseDocument database = getDatabase();
     OSequence sequence = database.getMetadata().getSequenceLibrary().getSequence(sequenceName);
@@ -74,7 +74,8 @@ public class OAlterSequenceStatement extends ODDLStatement {
       params.setCacheSize(((Number) val).intValue());
     }
     if (positive != null) {
-      params.setOrderType(positive == true ? SequenceOrderType.ORDER_POSITIVE : SequenceOrderType.ORDER_NEGATIVE);
+      params.setOrderType(
+          positive == true ? SequenceOrderType.ORDER_POSITIVE : SequenceOrderType.ORDER_NEGATIVE);
     }
     if (cyclic != null) {
       params.setRecyclable(cyclic);
@@ -177,21 +178,16 @@ public class OAlterSequenceStatement extends ODDLStatement {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OAlterSequenceStatement that = (OAlterSequenceStatement) o;
 
-    if (name != null ? !name.equals(that.name) : that.name != null)
-      return false;
-    if (start != null ? !start.equals(that.start) : that.start != null)
-      return false;
+    if (name != null ? !name.equals(that.name) : that.name != null) return false;
+    if (start != null ? !start.equals(that.start) : that.start != null) return false;
     if (increment != null ? !increment.equals(that.increment) : that.increment != null)
       return false;
-    if (cache != null ? !cache.equals(that.cache) : that.cache != null)
-      return false;
+    if (cache != null ? !cache.equals(that.cache) : that.cache != null) return false;
     if (!Objects.equals(positive, that.positive)) {
       return false;
     }

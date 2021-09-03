@@ -12,5 +12,4 @@ public class ValidationBinaryComparable implements Comparable<Object> {
   public int compareTo(Object o) {
     return size - ((byte[]) o).length;
   }
-
 }

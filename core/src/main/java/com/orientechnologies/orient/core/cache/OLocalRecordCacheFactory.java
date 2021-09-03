@@ -22,7 +22,7 @@ package com.orientechnologies.orient.core.cache;
 
 /**
  * Factory interface of local record cache.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public interface OLocalRecordCacheFactory {

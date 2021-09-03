@@ -1,15 +1,23 @@
 package com.orientechnologies.orient.core.index;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertTrue;
+
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
-import org.junit.Test;
-
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-
-import static org.junit.Assert.*;
+import org.junit.Test;
 
 public class OCompositeKeyTest {
 
@@ -155,6 +163,15 @@ public class OCompositeKeyTest {
   }
 
   @Test
+  public void testCompareStringsToLT() {
+    final OCompositeKey compositeKey = new OCompositeKey();
+    compositeKey.addKey("name4");
+    final OCompositeKey anotherCompositeKey = new OCompositeKey();
+    anotherCompositeKey.addKey("name5");
+    assertEquals(compositeKey.compareTo(anotherCompositeKey), -1);
+  }
+
+  @Test
   public void testCompareToSymmetryOne() {
     final OCompositeKey compositeKeyOne = new OCompositeKey();
     compositeKeyOne.addKey(1);
@@ -252,7 +269,8 @@ public class OCompositeKeyTest {
     byte[] data = new byte[len];
     OCompositeKeySerializer.INSTANCE.serializeNativeObject(compositeKeyOne, data, 0);
 
-    final OCompositeKey compositeKeyTwo = OCompositeKeySerializer.INSTANCE.deserializeNativeObject(data, 0);
+    final OCompositeKey compositeKeyTwo =
+        OCompositeKeySerializer.INSTANCE.deserializeNativeObject(data, 0);
 
     assertEquals(compositeKeyOne, compositeKeyTwo);
     assertNotSame(compositeKeyOne, compositeKeyTwo);
@@ -281,7 +299,8 @@ public class OCompositeKeyTest {
     assertEquals(OCompositeKeySerializer.INSTANCE.getObjectSizeInByteBuffer(buffer), len);
 
     buffer.position(serializationOffset);
-    final OCompositeKey compositeKeyTwo = OCompositeKeySerializer.INSTANCE.deserializeFromByteBufferObject(buffer);
+    final OCompositeKey compositeKeyTwo =
+        OCompositeKeySerializer.INSTANCE.deserializeFromByteBufferObject(buffer);
 
     assertEquals(compositeKeyOne, compositeKeyTwo);
     assertNotSame(compositeKeyOne, compositeKeyTwo);
@@ -299,15 +318,37 @@ public class OCompositeKeyTest {
     compositeKey.addKey(2);
 
     final int len = OCompositeKeySerializer.INSTANCE.getObjectSize(compositeKey);
-    final ByteBuffer buffer = ByteBuffer.allocateDirect(len + serializationOffset).order(ByteOrder.nativeOrder());
+    final ByteBuffer buffer =
+        ByteBuffer.allocateDirect(len + serializationOffset).order(ByteOrder.nativeOrder());
     final byte[] data = new byte[len];
 
     OCompositeKeySerializer.INSTANCE.serializeNativeObject(compositeKey, data, 0);
     final OWALChanges walChanges = new OWALChangesTree();
     walChanges.setBinaryValue(buffer, data, serializationOffset);
 
-    assertEquals(OCompositeKeySerializer.INSTANCE.getObjectSizeInByteBuffer(buffer, walChanges, serializationOffset), len);
-    assertEquals(OCompositeKeySerializer.INSTANCE.deserializeFromByteBufferObject(buffer, walChanges, serializationOffset),
+    assertEquals(
+        OCompositeKeySerializer.INSTANCE.getObjectSizeInByteBuffer(
+            buffer, walChanges, serializationOffset),
+        len);
+    assertEquals(
+        OCompositeKeySerializer.INSTANCE.deserializeFromByteBufferObject(
+            buffer, walChanges, serializationOffset),
         compositeKey);
+  }
+
+  @Test
+  public void testNetworkSerialization() throws IOException {
+    String k1 = "key";
+    OCompositeKey k2 = new OCompositeKey(null, new OCompositeKey("user1", 12.5));
+    OCompositeKey compositeKey = new OCompositeKey(k1, k2);
+    ORecordSerializerNetworkV37 serializer = ORecordSerializerNetworkV37.INSTANCE;
+    ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+    DataOutputStream out = new DataOutputStream(outStream);
+    compositeKey.toStream(serializer, out);
+    ByteArrayInputStream inStream = new ByteArrayInputStream(outStream.toByteArray());
+    DataInputStream in = new DataInputStream(inStream);
+    OCompositeKey deserializedCompositeKey = new OCompositeKey();
+    deserializedCompositeKey.fromStream(serializer, in);
+    assertEquals(compositeKey, deserializedCompositeKey);
   }
 }

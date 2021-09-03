@@ -20,19 +20,16 @@
 package com.orientechnologies.orient.core.sql.parser.operators;
 
 import com.orientechnologies.orient.core.sql.parser.OContainsValueOperator;
-import org.junit.Assert; import org.junit.Test;
-
 import java.util.HashMap;
 import java.util.Map;
+import org.junit.Assert;
+import org.junit.Test;
 
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OContainsValueOperatorTest {
   @Test
   public void test() {
     OContainsValueOperator op = new OContainsValueOperator(-1);
-
 
     Assert.assertFalse(op.execute(null, null));
     Assert.assertFalse(op.execute(null, "foo"));

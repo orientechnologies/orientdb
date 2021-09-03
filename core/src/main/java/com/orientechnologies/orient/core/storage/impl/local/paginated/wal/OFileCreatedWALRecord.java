@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.serialization.types.OStringSerializer;
-
 import java.nio.ByteBuffer;
 
 /**
@@ -31,12 +30,11 @@ import java.nio.ByteBuffer;
  */
 public class OFileCreatedWALRecord extends OOperationUnitBodyRecord {
   private String fileName;
-  private long   fileId;
+  private long fileId;
 
-  public OFileCreatedWALRecord() {
-  }
+  public OFileCreatedWALRecord() {}
 
-  public OFileCreatedWALRecord(OOperationUnitId operationUnitId, String fileName, long fileId) {
+  public OFileCreatedWALRecord(long operationUnitId, String fileName, long fileId) {
     super(operationUnitId);
     this.fileName = fileName;
     this.fileId = fileId;
@@ -64,12 +62,9 @@ public class OFileCreatedWALRecord extends OOperationUnitBodyRecord {
 
   @Override
   public int serializedSize() {
-    return super.serializedSize() + OStringSerializer.INSTANCE.getObjectSize(fileName) + OLongSerializer.LONG_SIZE;
-  }
-
-  @Override
-  public boolean isUpdateMasterRecord() {
-    return false;
+    return super.serializedSize()
+        + OStringSerializer.INSTANCE.getObjectSize(fileName)
+        + OLongSerializer.LONG_SIZE;
   }
 
   @Override

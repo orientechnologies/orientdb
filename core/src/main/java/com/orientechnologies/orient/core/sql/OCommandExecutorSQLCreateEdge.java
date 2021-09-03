@@ -36,7 +36,6 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -49,17 +48,18 @@ import java.util.Set;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware implements OCommandDistributedReplicateRequest {
-  public static final  String NAME          = "CREATE EDGE";
+public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware
+    implements OCommandDistributedReplicateRequest {
+  public static final String NAME = "CREATE EDGE";
   private static final String KEYWORD_BATCH = "BATCH";
 
-  private String                      from;
-  private String                      to;
-  private OClass                      clazz;
-  private String                      edgeLabel;
-  private String                      clusterName;
+  private String from;
+  private String to;
+  private OClass clazz;
+  private String edgeLabel;
+  private String clusterName;
   private List<OPair<String, Object>> fields;
-  private int                         batch = 100;
+  private int batch = 100;
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLCreateEdge parse(final OCommandRequest iRequest) {
@@ -102,22 +102,27 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware i
 
         } else if (temp.equals(KEYWORD_BATCH)) {
           temp = parserNextWord(true);
-          if (temp != null)
-            batch = Integer.parseInt(temp);
+          if (temp != null) batch = Integer.parseInt(temp);
 
         } else if (className == null && temp.length() > 0) {
           className = tempLower;
 
-          clazz = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass(temp);
+          clazz =
+              ((OMetadataInternal) database.getMetadata())
+                  .getImmutableSchemaSnapshot()
+                  .getClass(temp);
           if (clazz == null) {
             final int committed;
             if (database.getTransaction().isActive()) {
-              OLogManager.instance().warn(this, "Requested command '" + this.toString()
-                  + "' must be executed outside active transaction: the transaction will be committed and reopen right after it. To avoid this behavior execute it outside a transaction");
+              OLogManager.instance()
+                  .warn(
+                      this,
+                      "Requested command '"
+                          + this.toString()
+                          + "' must be executed outside active transaction: the transaction will be committed and reopen right after it. To avoid this behavior execute it outside a transaction");
               committed = database.getTransaction().amountOfNestedTxs();
               database.commit(true);
-            } else
-              committed = 0;
+            } else committed = 0;
 
             try {
               OSchema schema = database.getMetadata().getSchema();
@@ -125,21 +130,22 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware i
               clazz = schema.createClass(className, e);
             } finally {
               // RESTART TRANSACTION
-              for (int i = 0; i < committed; ++i)
-                database.begin();
+              for (int i = 0; i < committed; ++i) database.begin();
             }
           }
         }
 
         temp = parseOptionalWord(true);
-        if (parserIsEnded())
-          break;
+        if (parserIsEnded()) break;
       }
 
       if (className == null) {
         // ASSIGN DEFAULT CLASS
         className = "E";
-        clazz = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass(className);
+        clazz =
+            ((OMetadataInternal) database.getMetadata())
+                .getImmutableSchemaSnapshot()
+                .getClass(className);
       }
 
       // GET/CHECK CLASS NAME
@@ -153,12 +159,11 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware i
     return this;
   }
 
-  /**
-   * Execute the command and return the ODocument object created.
-   */
+  /** Execute the command and return the ODocument object created. */
   public Object execute(final Map<Object, Object> iArgs) {
     if (clazz == null)
-      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+      throw new OCommandExecutionException(
+          "Cannot execute the command because it has not been parsed yet");
 
     ODatabaseDocumentInternal db = getDatabase();
     final List<Object> edges = new ArrayList<Object>();
@@ -202,13 +207,13 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware i
             if (fields != null)
               // MERGE CONTENT WITH FIELDS
               fields.addAll(OPair.convertFromMap(content.toMap()));
-            else
-              fields = OPair.convertFromMap(content.toMap());
+            else fields = OPair.convertFromMap(content.toMap());
           }
 
           edge = fromVertex.addEdge(toVertex, edgeLabel);
           if (fields != null && !fields.isEmpty()) {
-            OSQLHelper.bindParameters(edge.getRecord(), fields, new OCommandParameters(iArgs), context);
+            OSQLHelper.bindParameters(
+                edge.getRecord(), fields, new OCommandParameters(iArgs), context);
           }
 
           edge.save(clusterName);
@@ -230,14 +235,15 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware i
 
     if (edges.isEmpty()) {
       if (fromIds.isEmpty())
-        throw new OCommandExecutionException("No edge has been created because no source vertices: " + this.toString());
+        throw new OCommandExecutionException(
+            "No edge has been created because no source vertices: " + this.toString());
       else if (toIds.isEmpty())
-        throw new OCommandExecutionException("No edge has been created because no target vertices: " + this.toString());
+        throw new OCommandExecutionException(
+            "No edge has been created because no target vertices: " + this.toString());
       throw new OCommandExecutionException(
-              "No edge has been created between " + fromIds + " and " + toIds + ": " + this.toString());
+          "No edge has been created between " + fromIds + " and " + toIds + ": " + this.toString());
     }
     return edges;
-
   }
 
   private OVertex toVertex(OIdentifiable item) {
@@ -263,7 +269,8 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware i
   @Override
   public Set<String> getInvolvedClusters() {
     if (clazz != null)
-      return Collections.singleton(getDatabase().getClusterNameById(clazz.getClusterSelection().getCluster(clazz, null)));
+      return Collections.singleton(
+          getDatabase().getClusterNameById(clazz.getClusterSelection().getCluster(clazz, null)));
     else if (clusterName != null)
       return getInvolvedClustersOfClusters(Collections.singleton(clusterName));
 
@@ -277,7 +284,8 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware i
 
   @Override
   public String getSyntax() {
-    return "CREATE EDGE [<class>] [CLUSTER <cluster>] " + "FROM <rid>|(<query>|[<rid>]*) TO <rid>|(<query>|[<rid>]*) "
+    return "CREATE EDGE [<class>] [CLUSTER <cluster>] "
+        + "FROM <rid>|(<query>|[<rid>]*) TO <rid>|(<query>|[<rid>]*) "
         + "[SET <field> = <expression>[,]*]|CONTENT {<JSON>} "
         + "[RETRY <retry> [WAIT <pauseBetweenRetriesInMs]] [BATCH <batch-size>]";
   }

@@ -5,23 +5,20 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v3.CellBTreeSingleValueBucketV3;
-
 import java.nio.ByteBuffer;
 
 public final class CellBTreeBucketSingleValueV3RemoveNonLeafEntryPO extends PageOperationRecord {
   private int index;
-  private int prevChild;
 
   private byte[] key;
-  private int    leftChild;
-  private int    rightChild;
+  private int leftChild;
+  private int rightChild;
 
-  public CellBTreeBucketSingleValueV3RemoveNonLeafEntryPO() {
-  }
+  public CellBTreeBucketSingleValueV3RemoveNonLeafEntryPO() {}
 
-  public CellBTreeBucketSingleValueV3RemoveNonLeafEntryPO(int index, int prevChild, byte[] key, int leftChild, int rightChild) {
+  public CellBTreeBucketSingleValueV3RemoveNonLeafEntryPO(
+      int index, byte[] key, int leftChild, int rightChild) {
     this.index = index;
-    this.prevChild = prevChild;
     this.key = key;
     this.leftChild = leftChild;
     this.rightChild = rightChild;
@@ -29,10 +26,6 @@ public final class CellBTreeBucketSingleValueV3RemoveNonLeafEntryPO extends Page
 
   public int getIndex() {
     return index;
-  }
-
-  public int getPrevChild() {
-    return prevChild;
   }
 
   public byte[] getKey() {
@@ -49,14 +42,14 @@ public final class CellBTreeBucketSingleValueV3RemoveNonLeafEntryPO extends Page
 
   @Override
   public void redo(OCacheEntry cacheEntry) {
-    final CellBTreeSingleValueBucketV3 bucket = new CellBTreeSingleValueBucketV3(cacheEntry);
-    bucket.removeNonLeafEntry(index, key, prevChild);
+    final CellBTreeSingleValueBucketV3<?> bucket = new CellBTreeSingleValueBucketV3<>(cacheEntry);
+    bucket.removeNonLeafEntry(index, key, false);
   }
 
   @Override
   public void undo(OCacheEntry cacheEntry) {
-    final CellBTreeSingleValueBucketV3 bucket = new CellBTreeSingleValueBucketV3(cacheEntry);
-    bucket.addNonLeafEntry(index, leftChild, rightChild, key, true);
+    final CellBTreeSingleValueBucketV3<?> bucket = new CellBTreeSingleValueBucketV3<>(cacheEntry);
+    bucket.addNonLeafEntry(index, leftChild, rightChild, key);
   }
 
   @Override
@@ -66,7 +59,7 @@ public final class CellBTreeBucketSingleValueV3RemoveNonLeafEntryPO extends Page
 
   @Override
   public int serializedSize() {
-    return super.serializedSize() + 5 * OIntegerSerializer.INT_SIZE + key.length;
+    return super.serializedSize() + 4 * OIntegerSerializer.INT_SIZE + key.length;
   }
 
   @Override
@@ -74,7 +67,6 @@ public final class CellBTreeBucketSingleValueV3RemoveNonLeafEntryPO extends Page
     super.serializeToByteBuffer(buffer);
 
     buffer.putInt(index);
-    buffer.putInt(prevChild);
 
     buffer.putInt(key.length);
     buffer.put(key);
@@ -88,7 +80,6 @@ public final class CellBTreeBucketSingleValueV3RemoveNonLeafEntryPO extends Page
     super.deserializeFromByteBuffer(buffer);
 
     index = buffer.getInt();
-    prevChild = buffer.getInt();
 
     final int keyLen = buffer.getInt();
     key = new byte[keyLen];

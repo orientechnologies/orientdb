@@ -7,7 +7,7 @@ package com.orientechnologies.orient.core.metadata.security.jwt;
  */
 public interface OJsonWebToken {
 
-  OJwtHeader getHeader();
+  OTokenHeader getHeader();
 
   OJwtPayload getPayload();
 }

@@ -5,7 +5,6 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-
 import java.util.Map;
 
 public class ONestedProjectionItem extends SimpleNode {
@@ -18,7 +17,7 @@ public class ONestedProjectionItem extends SimpleNode {
   protected boolean rightWildcard = false;
 
   protected ONestedProjection expansion;
-  protected OIdentifier       alias;
+  protected OIdentifier alias;
 
   public ONestedProjectionItem(int id) {
     super(id);
@@ -41,15 +40,16 @@ public class ONestedProjectionItem extends SimpleNode {
   }
 
   /**
-   * given a property name, calculates if this property name matches this nested projection item, eg.
+   * given a property name, calculates if this property name matches this nested projection item,
+   * eg.
+   *
    * <ul>
-   * <li>this is a *, so it matches any property name</li>
-   * <li>the field name for this projection item is the same as the input property name</li>
-   * <li>this item has a wildcard and the partial field is a prefix of the input property name</li>
+   *   <li>this is a *, so it matches any property name
+   *   <li>the field name for this projection item is the same as the input property name
+   *   <li>this item has a wildcard and the partial field is a prefix of the input property name
    * </ul>
    *
    * @param propertyName
-   *
    * @return
    */
   public boolean matches(String propertyName) {
@@ -93,19 +93,14 @@ public class ONestedProjectionItem extends SimpleNode {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     ONestedProjectionItem that = (ONestedProjectionItem) o;
 
-    if (exclude != that.exclude)
-      return false;
-    if (star != that.star)
-      return false;
-    if (rightWildcard != that.rightWildcard)
-      return false;
+    if (exclude != that.exclude) return false;
+    if (star != that.star) return false;
+    if (rightWildcard != that.rightWildcard) return false;
     if (expression != null ? !expression.equals(that.expression) : that.expression != null)
       return false;
     if (expansion != null ? !expansion.equals(that.expansion) : that.expansion != null)
@@ -124,7 +119,8 @@ public class ONestedProjectionItem extends SimpleNode {
     return result;
   }
 
-  public Object expand(OExpression expression, String name, Object value, OCommandContext ctx, int recursion) {
+  public Object expand(
+      OExpression expression, String name, Object value, OCommandContext ctx, int recursion) {
     return expansion.apply(expression, value, ctx);
   }
 

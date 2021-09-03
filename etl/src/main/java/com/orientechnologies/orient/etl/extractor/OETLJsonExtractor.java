@@ -21,7 +21,6 @@ package com.orientechnologies.orient.etl.extractor;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONReader;
 import com.orientechnologies.orient.etl.OETLExtractedItem;
-
 import java.io.IOException;
 import java.io.Reader;
 import java.text.ParseException;
@@ -39,11 +38,9 @@ public class OETLJsonExtractor extends OETLAbstractSourceExtractor {
 
   @Override
   public boolean hasNext() {
-    if (next != null)
-      return true;
+    if (next != null) return true;
 
-    if (jsonReader == null)
-      return false;
+    if (jsonReader == null) return false;
 
     try {
       next = fetchNext();
@@ -61,8 +58,7 @@ public class OETLJsonExtractor extends OETLAbstractSourceExtractor {
       return ret;
     }
 
-    if (!hasNext())
-      throw new NoSuchElementException("EOF");
+    if (!hasNext()) throw new NoSuchElementException("EOF");
 
     try {
       return fetchNext();
@@ -77,16 +73,16 @@ public class OETLJsonExtractor extends OETLAbstractSourceExtractor {
     super.extract(iReader);
     try {
       final int read = reader.read();
-      if (read == -1)
-        return;
+      if (read == -1) return;
 
       first = (char) read;
-      if (first == '[')
-        first = null;
-      else if (first == '{')
-        total = 1;
+      if (first == '[') first = null;
+      else if (first == '{') total = 1;
       else
-        throw new OETLExtractorException("[JSON extractor] found unexpected character '" + first + "' at the beginning of input");
+        throw new OETLExtractorException(
+            "[JSON extractor] found unexpected character '"
+                + first
+                + "' at the beginning of input");
 
       jsonReader = new OJSONReader(reader);
 
@@ -106,10 +102,9 @@ public class OETLJsonExtractor extends OETLAbstractSourceExtractor {
   }
 
   protected OETLExtractedItem fetchNext() throws IOException, ParseException {
-    if (!jsonReader.hasNext())
-      return null;
+    if (!jsonReader.hasNext()) return null;
 
-    String value = jsonReader.readString(new char[] { '}', ']' }, true);
+    String value = jsonReader.readString(new char[] {'}', ']'}, true);
     if (first != null) {
       // USE THE FIRST CHAR READ
       value = first + value;
@@ -119,19 +114,16 @@ public class OETLJsonExtractor extends OETLAbstractSourceExtractor {
     if (total == 1 && jsonReader.lastChar() == '}') {
       jsonReader = null;
     } else if (total != 1 && jsonReader.lastChar() == ']') {
-      if (!value.isEmpty())
-        value = value.substring(0, value.length() - 1);
+      if (!value.isEmpty()) value = value.substring(0, value.length() - 1);
       jsonReader = null;
     } else {
       jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
-      if (jsonReader.lastChar() == ']')
-        jsonReader = null;
+      if (jsonReader.lastChar() == ']') jsonReader = null;
     }
 
     value = value.trim();
 
-    if (value.isEmpty())
-      return null;
+    if (value.isEmpty()) return null;
 
     return new OETLExtractedItem(current++, new ODocument().fromJSON(value));
   }

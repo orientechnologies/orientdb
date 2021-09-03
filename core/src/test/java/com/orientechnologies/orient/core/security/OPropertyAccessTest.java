@@ -1,17 +1,21 @@
 package com.orientechnologies.orient.core.security;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OPropertyAccess;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import org.junit.Test;
-
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
-import static org.junit.Assert.*;
+import org.junit.Test;
 
 public class OPropertyAccessTest {
 
@@ -57,8 +61,8 @@ public class OPropertyAccessTest {
   public void testNotAccessiblePropertyListing() {
     ODocument doc = new ODocument();
     doc.setProperty("name", "one value");
-    assertArrayEquals(new String[] { "name" }, doc.fieldNames());
-    assertArrayEquals(new String[] { "one value" }, doc.fieldValues());
+    assertArrayEquals(new String[] {"name"}, doc.fieldNames());
+    assertArrayEquals(new String[] {"one value"}, doc.fieldValues());
     assertEquals(new HashSet<String>(Arrays.asList("name")), doc.getPropertyNames());
     for (Map.Entry<String, Object> e : doc) {
       assertEquals("name", e.getKey());
@@ -79,8 +83,8 @@ public class OPropertyAccessTest {
   public void testNotAccessiblePropertyListingSer() {
     ODocument docPre = new ODocument();
     docPre.setProperty("name", "one value");
-    assertArrayEquals(new String[] { "name" }, docPre.fieldNames());
-    assertArrayEquals(new String[] { "one value" }, docPre.fieldValues());
+    assertArrayEquals(new String[] {"name"}, docPre.fieldNames());
+    assertArrayEquals(new String[] {"one value"}, docPre.fieldValues());
     assertEquals(new HashSet<String>(Arrays.asList("name")), docPre.getPropertyNames());
     for (Map.Entry<String, Object> e : docPre) {
       assertEquals("name", e.getKey());
@@ -97,7 +101,6 @@ public class OPropertyAccessTest {
     for (Map.Entry<String, Object> e : doc) {
       assertNotEquals("name", e.getKey());
     }
-
   }
 
   @Test
@@ -110,7 +113,6 @@ public class OPropertyAccessTest {
     toHide.add("name");
     ODocumentInternal.setPropertyAccess(doc, new OPropertyAccess(toHide));
     assertFalse(doc.toJSON().contains("name"));
-
   }
 
   @Test
@@ -135,8 +137,5 @@ public class OPropertyAccessTest {
     toHide.add("name");
     ODocumentInternal.setPropertyAccess(doc, new OPropertyAccess(toHide));
     assertFalse(doc.toString().contains("name"));
-
   }
-
-
 }

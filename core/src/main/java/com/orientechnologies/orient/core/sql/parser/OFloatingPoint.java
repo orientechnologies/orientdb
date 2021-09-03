@@ -4,12 +4,11 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-
 import java.util.Map;
 
 public class OFloatingPoint extends ONumber {
 
-  protected int    sign        = 1;
+  protected int sign = 1;
   protected String stringValue = null;
   Number finalValue = null;
 
@@ -30,13 +29,13 @@ public class OFloatingPoint extends ONumber {
       try {
         finalValue = Float.parseFloat(stringValue.substring(0, stringValue.length() - 1)) * sign;
       } catch (Exception ignore) {
-        return null;//TODO NaN?
+        return null; // TODO NaN?
       }
     } else if (stringValue.endsWith("D") || stringValue.endsWith("d")) {
       try {
         finalValue = Double.parseDouble(stringValue.substring(0, stringValue.length() - 1)) * sign;
       } catch (Exception ignore) {
-        return null;//TODO NaN?
+        return null; // TODO NaN?
       }
     } else {
       try {
@@ -47,7 +46,7 @@ public class OFloatingPoint extends ONumber {
           finalValue = returnValue;
         }
       } catch (Exception ignore) {
-        return null;//TODO NaN?
+        return null; // TODO NaN?
       }
     }
     return finalValue;
@@ -86,15 +85,12 @@ public class OFloatingPoint extends ONumber {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OFloatingPoint that = (OFloatingPoint) o;
 
-    if (sign != that.sign)
-      return false;
+    if (sign != that.sign) return false;
     if (stringValue != null ? !stringValue.equals(that.stringValue) : that.stringValue != null)
       return false;
 

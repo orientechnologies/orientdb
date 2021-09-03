@@ -23,33 +23,33 @@ import org.testng.annotations.Test;
 @Test(groups = "sql-cluster-alter")
 public class SQLAlterClusterCommandTest extends DocumentDBBaseTest {
 
-    @Parameters(value = "url")
-    public SQLAlterClusterCommandTest(@Optional String url) {
-        super(url);
-    }
+  @Parameters(value = "url")
+  public SQLAlterClusterCommandTest(@Optional String url) {
+    super(url);
+  }
 
-    @Test
-    public void testCreateCluster() {
-        int expectedClusters = database.getClusters();
-        try {
-            database.command("create cluster europe");
-            Assert.assertEquals(database.getClusters(), expectedClusters + 1);
-        } finally {
-            database.command("drop cluster europe");
-        }
-        Assert.assertEquals(database.getClusters(), expectedClusters);
+  @Test
+  public void testCreateCluster() {
+    int expectedClusters = database.getClusters();
+    try {
+      database.command("create cluster europe");
+      Assert.assertEquals(database.getClusters(), expectedClusters + 1);
+    } finally {
+      database.command("drop cluster europe");
     }
+    Assert.assertEquals(database.getClusters(), expectedClusters);
+  }
 
-    @Test
-    public void testAlterClusterName() {
-        try {
-            database.command("create cluster europe");
-            database.command("ALTER CLUSTER europe NAME \"my_orient\"");
+  @Test
+  public void testAlterClusterName() {
+    try {
+      database.command("create cluster europe");
+      database.command("ALTER CLUSTER europe NAME \"my_orient\"");
 
-            int clusterId = database.getClusterIdByName("my_orient");
-            Assert.assertEquals(clusterId, 18);
-        } finally {
-            database.command("drop cluster my_orient");
-        }
+      int clusterId = database.getClusterIdByName("my_orient");
+      Assert.assertEquals(clusterId, 18);
+    } finally {
+      database.command("drop cluster my_orient");
     }
+  }
 }

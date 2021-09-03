@@ -1,7 +1,5 @@
 package com.orientechnologies.orient.client.remote.message;
 
-import java.io.IOException;
-
 import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
@@ -10,6 +8,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
+import java.io.IOException;
 
 public class OCreateDatabaseRequest implements OBinaryRequest<OCreateDatabaseResponse> {
   private String databaseName;
@@ -17,15 +16,15 @@ public class OCreateDatabaseRequest implements OBinaryRequest<OCreateDatabaseRes
   private String storageMode;
   private String backupPath;
 
-  public OCreateDatabaseRequest(String databaseName, String databaseType, String storageMode, String backupPath) {
+  public OCreateDatabaseRequest(
+      String databaseName, String databaseType, String storageMode, String backupPath) {
     this.databaseName = databaseName;
     this.databaseType = databaseType;
     this.storageMode = storageMode;
     this.backupPath = backupPath;
   }
 
-  public OCreateDatabaseRequest() {
-  }
+  public OCreateDatabaseRequest() {}
 
   @Override
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
@@ -36,12 +35,12 @@ public class OCreateDatabaseRequest implements OBinaryRequest<OCreateDatabaseRes
   }
 
   @Override
-  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
     this.databaseName = channel.readString();
     this.databaseType = channel.readString();
     this.storageMode = channel.readString();
-    if (protocolVersion > 35)
-      this.backupPath = channel.readString();
+    if (protocolVersion > 35) this.backupPath = channel.readString();
   }
 
   @Override
@@ -58,7 +57,7 @@ public class OCreateDatabaseRequest implements OBinaryRequest<OCreateDatabaseRes
   public boolean requireDatabaseSession() {
     return false;
   }
-  
+
   @Override
   public byte getCommand() {
     return OChannelBinaryProtocol.REQUEST_DB_CREATE;
@@ -94,5 +93,4 @@ public class OCreateDatabaseRequest implements OBinaryRequest<OCreateDatabaseRes
   public OBinaryResponse execute(OBinaryRequestExecutor ex) {
     return ex.executeCreateDatabase(this);
   }
-
 }

@@ -28,9 +28,9 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 
 /**
- * Local cache. it's one to one with record database instances. It is needed to avoid cases when several instances of the same
- * record will be loaded by user from the same database.
- * 
+ * Local cache. it's one to one with record database instances. It is needed to avoid cases when
+ * several instances of the same record will be loaded by user from the same database.
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OLocalRecordCache extends OAbstractRecordCache {
@@ -38,7 +38,10 @@ public class OLocalRecordCache extends OAbstractRecordCache {
   private String cacheMiss;
 
   public OLocalRecordCache() {
-    super(Orient.instance().getLocalRecordCache().newInstance(OGlobalConfiguration.CACHE_LOCAL_IMPL.getValueAsString()));
+    super(
+        Orient.instance()
+            .getLocalRecordCache()
+            .newInstance(OGlobalConfiguration.CACHE_LOCAL_IMPL.getValueAsString()));
   }
 
   @Override
@@ -56,23 +59,23 @@ public class OLocalRecordCache extends OAbstractRecordCache {
 
   /**
    * Pushes record to cache. Identifier of record used as access key
-   * 
-   * @param record
-   *          record that should be cached
+   *
+   * @param record record that should be cached
    */
   public void updateRecord(final ORecord record) {
-    if (record.getIdentity().getClusterId() != excludedCluster && record.getIdentity().isValid() && !record.isDirty()
+    if (record.getIdentity().getClusterId() != excludedCluster
+        && record.getIdentity().isValid()
+        && !record.isDirty()
         && !ORecordVersionHelper.isTombstone(record.getVersion())) {
-      if (underlying.get(record.getIdentity()) != record)
-        underlying.put(record);
+      if (underlying.get(record.getIdentity()) != record) underlying.put(record);
     }
   }
 
   /**
-   * Looks up for record in cache by it's identifier. Optionally look up in secondary cache and update primary with found record
-   * 
-   * @param rid
-   *          unique identifier of record
+   * Looks up for record in cache by it's identifier. Optionally look up in secondary cache and
+   * update primary with found record
+   *
+   * @param rid unique identifier of record
    * @return record stored in cache if any, otherwise - {@code null}
    */
   public ORecord findRecord(final ORID rid) {
@@ -80,19 +83,26 @@ public class OLocalRecordCache extends OAbstractRecordCache {
     record = underlying.get(rid);
 
     if (record != null)
-      Orient.instance().getProfiler().updateCounter(cacheHit, "Record found in Level1 Cache", 1L, "db.*.cache.level1.cache.found");
+      Orient.instance()
+          .getProfiler()
+          .updateCounter(
+              cacheHit, "Record found in Level1 Cache", 1L, "db.*.cache.level1.cache.found");
     else
-      Orient.instance().getProfiler().updateCounter(cacheMiss, "Record not found in Level1 Cache", 1L,
-          "db.*.cache.level1.cache.notFound");
+      Orient.instance()
+          .getProfiler()
+          .updateCounter(
+              cacheMiss,
+              "Record not found in Level1 Cache",
+              1L,
+              "db.*.cache.level1.cache.notFound");
 
     return record;
   }
 
   /**
    * Removes record with specified identifier from both primary and secondary caches
-   * 
-   * @param rid
-   *          unique identifier of record
+   *
+   * @param rid unique identifier of record
    */
   public void deleteRecord(final ORID rid) {
     super.deleteRecord(rid);
@@ -107,9 +117,7 @@ public class OLocalRecordCache extends OAbstractRecordCache {
     super.clear();
   }
 
-  /**
-   * Invalidates the cache emptying all the records.
-   */
+  /** Invalidates the cache emptying all the records. */
   public void invalidate() {
     underlying.clear();
   }

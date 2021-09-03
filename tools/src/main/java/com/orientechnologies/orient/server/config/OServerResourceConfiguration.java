@@ -24,16 +24,13 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlRootElement(name = "resource")
-@XmlType(propOrder = { "resources", "roles" })
+@XmlType(propOrder = {"resources", "roles"})
 public class OServerResourceConfiguration {
-  @XmlAttribute
-  public String name;
+  @XmlAttribute public String name;
 
-  @XmlAttribute
-  public String roles;
+  @XmlAttribute public String roles;
 
-  public OServerResourceConfiguration() {
-  }
+  public OServerResourceConfiguration() {}
 
   public OServerResourceConfiguration(final String iName, final String iRoles) {
     name = iName;

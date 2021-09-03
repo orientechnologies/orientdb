@@ -1,11 +1,10 @@
 package com.orientechnologies.orient.core.sql.parser;
 
-import org.junit.Test;
+import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-
-import static org.junit.Assert.fail;
+import org.junit.Test;
 
 public class OTraverseStatementTest {
 
@@ -22,12 +21,12 @@ public class OTraverseStatementTest {
     try {
       SimpleNode result = osql.parse();
       if (!isCorrect) {
-//        System.out.println(query);
-//        if(result != null ) {
-//          System.out.println("->");
-//          System.out.println(result.toString());
-//          System.out.println("............");
-//        }
+        //        System.out.println(query);
+        //        if(result != null ) {
+        //          System.out.println("->");
+        //          System.out.println(result.toString());
+        //          System.out.println("............");
+        //        }
         fail();
       }
 
@@ -57,7 +56,6 @@ public class OTraverseStatementTest {
     } catch (ParseException e) {
       e.printStackTrace();
     }
-
   }
 
   protected OrientSql getParserFor(String string) {

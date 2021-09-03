@@ -4,17 +4,13 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import java.util.Set;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.Set;
-
-/**
- * Created by luigidellaquila on 02/07/16.
- */
-
+/** Created by luigidellaquila on 02/07/16. */
 public class OElementTest {
 
   private static ODatabaseDocument db;

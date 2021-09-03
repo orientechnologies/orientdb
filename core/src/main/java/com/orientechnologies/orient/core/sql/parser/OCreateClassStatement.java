@@ -9,32 +9,23 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 public class OCreateClassStatement extends ODDLStatement {
-  /**
-   * Class name
-   */
+  /** Class name */
   public OIdentifier name;
 
   public boolean ifNotExists;
 
-  /**
-   * Direct superclasses for this class
-   */
+  /** Direct superclasses for this class */
   protected List<OIdentifier> superclasses;
 
-  /**
-   * Cluster IDs for this class
-   */
+  /** Cluster IDs for this class */
   protected List<OInteger> clusters;
 
-  /**
-   * Total number clusters for this class
-   */
+  /** Total number clusters for this class */
   protected OInteger totalClusterNo;
 
   protected boolean abstractClass = false;
@@ -47,7 +38,8 @@ public class OCreateClassStatement extends ODDLStatement {
     super(p, id);
   }
 
-  @Override public OResultSet executeDDL(OCommandContext ctx) {
+  @Override
+  public OResultSet executeDDL(OCommandContext ctx) {
 
     OSchema schema = ctx.getDatabase().getMetadata().getSchema();
     if (schema.existsClass(name.getStringValue())) {
@@ -69,7 +61,9 @@ public class OCreateClassStatement extends ODDLStatement {
       clazz = schema.createAbstractClass(name.getStringValue(), superclasses);
       result.setProperty("abstract", abstractClass);
     } else if (totalClusterNo != null) {
-      clazz = schema.createClass(name.getStringValue(), totalClusterNo.getValue().intValue(), superclasses);
+      clazz =
+          schema.createClass(
+              name.getStringValue(), totalClusterNo.getValue().intValue(), superclasses);
     } else if (clusters != null) {
       clusters.stream().map(x -> x.getValue().intValue()).collect(Collectors.toList());
       int[] clusterIds = new int[clusters.size()];
@@ -88,12 +82,14 @@ public class OCreateClassStatement extends ODDLStatement {
 
   private OClass[] getSuperClasses(OSchema schema) {
     if (superclasses == null) {
-      return new OClass[]{};
+      return new OClass[] {};
     }
-    return superclasses.stream().map(x -> schema.getClass(x.getStringValue())).filter(x -> x != null).collect(Collectors.toList())
+    return superclasses.stream()
+        .map(x -> schema.getClass(x.getStringValue()))
+        .filter(x -> x != null)
+        .collect(Collectors.toList())
         .toArray(new OClass[] {});
   }
-
 
   private void checkSuperclasses(OSchema schema, OCommandContext ctx) {
     if (superclasses != null) {
@@ -105,7 +101,8 @@ public class OCreateClassStatement extends ODDLStatement {
     }
   }
 
-  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("CREATE CLASS ");
     name.toString(params, builder);
     if (ifNotExists) {
@@ -142,35 +139,37 @@ public class OCreateClassStatement extends ODDLStatement {
     }
   }
 
-  @Override public OCreateClassStatement copy() {
+  @Override
+  public OCreateClassStatement copy() {
     OCreateClassStatement result = new OCreateClassStatement(-1);
     result.name = name == null ? null : name.copy();
-    result.superclasses = superclasses == null ? null : superclasses.stream().map(x -> x.copy()).collect(Collectors.toList());
-    result.clusters = clusters == null ? null : clusters.stream().map(x -> x.copy()).collect(Collectors.toList());
+    result.superclasses =
+        superclasses == null
+            ? null
+            : superclasses.stream().map(x -> x.copy()).collect(Collectors.toList());
+    result.clusters =
+        clusters == null ? null : clusters.stream().map(x -> x.copy()).collect(Collectors.toList());
     result.totalClusterNo = totalClusterNo == null ? null : totalClusterNo.copy();
     result.abstractClass = abstractClass;
     result.ifNotExists = ifNotExists;
     return result;
   }
 
-  @Override public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OCreateClassStatement that = (OCreateClassStatement) o;
 
-    if (abstractClass != that.abstractClass)
-      return false;
-    if (name != null ? !name.equals(that.name) : that.name != null)
-      return false;
+    if (abstractClass != that.abstractClass) return false;
+    if (name != null ? !name.equals(that.name) : that.name != null) return false;
     if (superclasses != null ? !superclasses.equals(that.superclasses) : that.superclasses != null)
       return false;
-    if (clusters != null ? !clusters.equals(that.clusters) : that.clusters != null)
-      return false;
-    if (totalClusterNo != null ? !totalClusterNo.equals(that.totalClusterNo) : that.totalClusterNo != null)
-      return false;
+    if (clusters != null ? !clusters.equals(that.clusters) : that.clusters != null) return false;
+    if (totalClusterNo != null
+        ? !totalClusterNo.equals(that.totalClusterNo)
+        : that.totalClusterNo != null) return false;
     if (ifNotExists != that.ifNotExists) {
       return false;
     }
@@ -178,7 +177,8 @@ public class OCreateClassStatement extends ODDLStatement {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = name != null ? name.hashCode() : 0;
     result = 31 * result + (superclasses != null ? superclasses.hashCode() : 0);
     result = 31 * result + (clusters != null ? clusters.hashCode() : 0);
@@ -186,6 +186,7 @@ public class OCreateClassStatement extends ODDLStatement {
     result = 31 * result + (abstractClass ? 1 : 0);
     return result;
   }
+
   public List<OIdentifier> getSuperclasses() {
     return superclasses;
   }

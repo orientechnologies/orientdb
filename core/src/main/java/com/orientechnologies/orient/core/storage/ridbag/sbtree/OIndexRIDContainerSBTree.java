@@ -32,15 +32,16 @@ import com.orientechnologies.orient.core.storage.index.sbtree.OSBTreeMapEntryIte
 import com.orientechnologies.orient.core.storage.index.sbtree.OTreeInternal;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsaiLocal;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.Set;
 
 /**
- * Persistent Set<OIdentifiable> implementation that uses the SBTree to handle entries in persistent way.
+ * Persistent Set<OIdentifiable> implementation that uses the SBTree to handle entries in persistent
+ * way.
  *
  * @author Artem Orobets (enisher-at-gmail.com)
  */
@@ -51,7 +52,6 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
    * Generates a lock name for the given index name.
    *
    * @param indexName the index name to generate the lock name for.
-   *
    * @return the generated lock name.
    */
   public static String generateLockName(String indexName) {
@@ -59,39 +59,50 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
   }
 
   private final OSBTreeBonsaiLocal<OIdentifiable, Boolean> tree;
+  private final OAtomicOperationsManager atomicOperationsManager;
 
   OIndexRIDContainerSBTree(long fileId, OAbstractPaginatedStorage storage) {
     String fileName;
 
-    final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+    atomicOperationsManager = storage.getAtomicOperationsManager();
+    final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
     if (atomicOperation == null) {
       fileName = storage.getWriteCache().fileNameById(fileId);
     } else {
       fileName = atomicOperation.fileNameById(fileId);
     }
 
-    tree = new OSBTreeBonsaiLocal<>(fileName.substring(0, fileName.length() - INDEX_FILE_EXTENSION.length()), INDEX_FILE_EXTENSION,
-        storage);
+    tree =
+        new OSBTreeBonsaiLocal<>(
+            fileName.substring(0, fileName.length() - INDEX_FILE_EXTENSION.length()),
+            INDEX_FILE_EXTENSION,
+            storage);
 
     try {
-      tree.create(OCompactedLinkSerializer.INSTANCE, OBooleanSerializer.INSTANCE);
+      tree.create(atomicOperation, OCompactedLinkSerializer.INSTANCE, OBooleanSerializer.INSTANCE);
     } catch (IOException e) {
-      throw OException.wrapException(new ODatabaseException("Error during creation of index container "), e);
+      throw OException.wrapException(
+          new ODatabaseException("Error during creation of index container "), e);
     }
   }
 
-  public OIndexRIDContainerSBTree(long fileId, OBonsaiBucketPointer rootPointer, OAbstractPaginatedStorage storage) {
+  public OIndexRIDContainerSBTree(
+      long fileId, OBonsaiBucketPointer rootPointer, OAbstractPaginatedStorage storage) {
     String fileName;
 
-    OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+    atomicOperationsManager = storage.getAtomicOperationsManager();
+    OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
     if (atomicOperation == null) {
       fileName = storage.getWriteCache().fileNameById(fileId);
     } else {
       fileName = atomicOperation.fileNameById(fileId);
     }
 
-    tree = new OSBTreeBonsaiLocal<>(fileName.substring(0, fileName.length() - INDEX_FILE_EXTENSION.length()), INDEX_FILE_EXTENSION,
-        storage);
+    tree =
+        new OSBTreeBonsaiLocal<>(
+            fileName.substring(0, fileName.length() - INDEX_FILE_EXTENSION.length()),
+            INDEX_FILE_EXTENSION,
+            storage);
     tree.load(rootPointer);
   }
 
@@ -106,7 +117,7 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
 
   @Override
   public boolean isEmpty() {
-    return tree.size() == 0L;
+    return tree.isEmpty();
   }
 
   @Override
@@ -144,11 +155,10 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
 
   @Override
   public boolean add(OIdentifiable oIdentifiable) {
-    try {
-      return this.tree.put(oIdentifiable, Boolean.TRUE);
-    } catch (IOException e) {
-      throw OException.wrapException(new ODatabaseException("Error during addition of element in index container"), e);
-    }
+    final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
+    Objects.requireNonNull(atomicOperation);
+
+    return this.tree.put(atomicOperation, oIdentifiable, Boolean.TRUE);
   }
 
   @Override
@@ -157,11 +167,10 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
   }
 
   public boolean remove(OIdentifiable o) {
-    try {
-      return tree.remove(o) != null;
-    } catch (IOException e) {
-      throw OException.wrapException(new ODatabaseException("Error during removal of element from index container"), e);
-    }
+    final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
+    Objects.requireNonNull(atomicOperation);
+
+    return tree.remove(atomicOperation, o) != null;
   }
 
   @Override
@@ -210,19 +219,16 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
 
   @Override
   public void clear() {
-    try {
-      tree.clear();
-    } catch (java.io.IOException e) {
-      e.printStackTrace();
-    }
+    final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
+    Objects.requireNonNull(atomicOperation);
+    tree.clear(atomicOperation);
   }
 
   public void delete() {
-    try {
-      tree.delete();
-    } catch (IOException e) {
-      throw OException.wrapException(new ODatabaseException("Error during deletion index container"), e);
-    }
+    final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
+    Objects.requireNonNull(atomicOperation);
+
+    tree.delete(atomicOperation);
   }
 
   public String getName() {
@@ -230,10 +236,11 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
   }
 
   private static class TreeKeyIterator implements Iterator<OIdentifiable> {
-    private final boolean                                         autoConvertToRecord;
+    private final boolean autoConvertToRecord;
     private final OSBTreeMapEntryIterator<OIdentifiable, Boolean> entryIterator;
 
-    TreeKeyIterator(OTreeInternal<OIdentifiable, Boolean> tree, boolean autoConvertToRecord) {
+    private TreeKeyIterator(
+        OTreeInternal<OIdentifiable, Boolean> tree, boolean autoConvertToRecord) {
       entryIterator = new OSBTreeMapEntryIterator<>(tree);
       this.autoConvertToRecord = autoConvertToRecord;
     }

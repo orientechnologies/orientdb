@@ -19,23 +19,22 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OLegacyResultSet;
 import com.orientechnologies.orient.core.sql.query.OLiveQuery;
 import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
-import com.orientechnologies.orient.core.sql.query.OLegacyResultSet;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.CountDownLatch;
-
 /**
- * If some of the tests start to fail then check cluster number in queries, e.g #7:1. It can be because the order of clusters could
- * be affected due to adding or removing cluster from storage.
+ * If some of the tests start to fail then check cluster number in queries, e.g #7:1. It can be
+ * because the order of clusters could be affected due to adding or removing cluster from storage.
  */
 @Test(groups = "sql-select")
 @SuppressWarnings("unchecked")
@@ -59,23 +58,23 @@ public class SQLLiveSelectTest extends AbstractSelectTest {
     int TOTAL_OPS = 6;
     final CountDownLatch latch = new CountDownLatch(TOTAL_OPS);
     final List<ORecordOperation> ops = Collections.synchronizedList(new ArrayList());
-    OLegacyResultSet<ODocument> tokens = database.query(new OLiveQuery<Object>("live select from LiveClassTx", new OLiveResultListener() {
-      @Override
-      public void onLiveResult(int iLiveToken, ORecordOperation iOp) throws OException {
-        ops.add(iOp);
-        latch.countDown();
-      }
+    OLegacyResultSet<ODocument> tokens =
+        database.query(
+            new OLiveQuery<Object>(
+                "live select from LiveClassTx",
+                new OLiveResultListener() {
+                  @Override
+                  public void onLiveResult(int iLiveToken, ORecordOperation iOp) throws OException {
+                    ops.add(iOp);
+                    latch.countDown();
+                  }
 
-      @Override
-      public void onError(int iLiveToken) {
+                  @Override
+                  public void onError(int iLiveToken) {}
 
-      }
-
-      @Override
-      public void onUnsubscribe(int iLiveToken) {
-
-      }
-    }));
+                  @Override
+                  public void onUnsubscribe(int iLiveToken) {}
+                }));
     Assert.assertEquals(tokens.size(), 1);
 
     ODocument tokenDoc = tokens.get(0);
@@ -83,8 +82,12 @@ public class SQLLiveSelectTest extends AbstractSelectTest {
     Assert.assertNotNull(token);
 
     database.begin();
-    database.command(new OCommandSQL("insert into LiveClassTx set name = 'foo', surname = 'bar'")).execute();
-    database.command(new OCommandSQL("insert into LiveClassTx set name = 'foo', surname = 'baz'")).execute();
+    database
+        .command(new OCommandSQL("insert into LiveClassTx set name = 'foo', surname = 'bar'"))
+        .execute();
+    database
+        .command(new OCommandSQL("insert into LiveClassTx set name = 'foo', surname = 'baz'"))
+        .execute();
     database.command(new OCommandSQL("insert into LiveClassTx set name = 'foo'")).execute();
     database.commit();
 
@@ -111,31 +114,35 @@ public class SQLLiveSelectTest extends AbstractSelectTest {
 
     final CountDownLatch latch = new CountDownLatch(6);
     final List<ORecordOperation> ops = Collections.synchronizedList(new ArrayList());
-    OLegacyResultSet<ODocument> tokens = database.query(new OLiveQuery<Object>("live select from LiveClass", new OLiveResultListener() {
-      @Override
-      public void onLiveResult(int iLiveToken, ORecordOperation iOp) throws OException {
-        ops.add(iOp);
-        latch.countDown();
-      }
+    OLegacyResultSet<ODocument> tokens =
+        database.query(
+            new OLiveQuery<Object>(
+                "live select from LiveClass",
+                new OLiveResultListener() {
+                  @Override
+                  public void onLiveResult(int iLiveToken, ORecordOperation iOp) throws OException {
+                    ops.add(iOp);
+                    latch.countDown();
+                  }
 
-      @Override
-      public void onError(int iLiveToken) {
+                  @Override
+                  public void onError(int iLiveToken) {}
 
-      }
-
-      @Override
-      public void onUnsubscribe(int iLiveToken) {
-
-      }
-    }));
+                  @Override
+                  public void onUnsubscribe(int iLiveToken) {}
+                }));
     Assert.assertEquals(tokens.size(), 1);
 
     ODocument tokenDoc = tokens.get(0);
     Integer token = tokenDoc.field("token");
     Assert.assertNotNull(token);
 
-    database.command(new OCommandSQL("insert into liveclass set name = 'foo', surname = 'bar'")).execute();
-    database.command(new OCommandSQL("insert into liveclass set name = 'foo', surname = 'baz'")).execute();
+    database
+        .command(new OCommandSQL("insert into liveclass set name = 'foo', surname = 'bar'"))
+        .execute();
+    database
+        .command(new OCommandSQL("insert into liveclass set name = 'foo', surname = 'baz'"))
+        .execute();
     database.command(new OCommandSQL("insert into liveclass set name = 'foo'")).execute();
 
     database.command(new OCommandSQL("update liveclass set name = 'updated'")).execute();
@@ -153,5 +160,4 @@ public class SQLLiveSelectTest extends AbstractSelectTest {
       }
     }
   }
-
 }

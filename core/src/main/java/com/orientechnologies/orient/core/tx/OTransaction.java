@@ -29,20 +29,27 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OBasicTransaction;
 import com.orientechnologies.orient.core.storage.OStorage;
-
 import java.util.List;
 
 public interface OTransaction extends OBasicTransaction {
   enum TXTYPE {
-    NOTX, OPTIMISTIC, PESSIMISTIC
+    NOTX,
+    OPTIMISTIC,
+    PESSIMISTIC
   }
 
   enum TXSTATUS {
-    INVALID, BEGUN, COMMITTING, ROLLBACKING, COMPLETED, ROLLED_BACK
+    INVALID,
+    BEGUN,
+    COMMITTING,
+    ROLLBACKING,
+    COMPLETED,
+    ROLLED_BACK
   }
 
   enum ISOLATION_LEVEL {
-    READ_COMMITTED, REPEATABLE_READ
+    READ_COMMITTED,
+    REPEATABLE_READ
   }
 
   void begin();
@@ -53,17 +60,15 @@ public interface OTransaction extends OBasicTransaction {
 
   void rollback();
 
-  /**
-   * Returns the current isolation level.
-   */
+  /** Returns the current isolation level. */
   ISOLATION_LEVEL getIsolationLevel();
 
   /**
-   * Changes the isolation level. Default is READ_COMMITTED. When REPEATABLE_READ is set, any record read from the storage is cached
-   * in memory to guarantee the repeatable reads. This affects the used RAM and speed (because JVM Garbage Collector job).
+   * Changes the isolation level. Default is READ_COMMITTED. When REPEATABLE_READ is set, any record
+   * read from the storage is cached in memory to guarantee the repeatable reads. This affects the
+   * used RAM and speed (because JVM Garbage Collector job).
    *
    * @param iIsolationLevel Isolation level to set
-   *
    * @return Current object to allow call in chain
    */
   OTransaction setIsolationLevel(ISOLATION_LEVEL iIsolationLevel);
@@ -76,20 +81,33 @@ public interface OTransaction extends OBasicTransaction {
   void clearRecordEntries();
 
   @Deprecated
-  ORecord loadRecord(ORID iRid, ORecord iRecord, String iFetchPlan, boolean ignoreCache, boolean loadTombstone,
+  ORecord loadRecord(
+      ORID iRid,
+      ORecord iRecord,
+      String iFetchPlan,
+      boolean ignoreCache,
+      boolean loadTombstone,
       final OStorage.LOCKING_STRATEGY iLockingStrategy);
 
   @Deprecated
-  ORecord loadRecord(ORID iRid, ORecord iRecord, String iFetchPlan, boolean ignoreCache, boolean iUpdateCache,
-      boolean loadTombstone, final OStorage.LOCKING_STRATEGY iLockingStrategy);
+  ORecord loadRecord(
+      ORID iRid,
+      ORecord iRecord,
+      String iFetchPlan,
+      boolean ignoreCache,
+      boolean iUpdateCache,
+      boolean loadTombstone,
+      final OStorage.LOCKING_STRATEGY iLockingStrategy);
 
   ORecord loadRecord(ORID iRid, ORecord iRecord, String iFetchPlan, boolean ignoreCache);
 
   ORecord reloadRecord(ORID iRid, ORecord iRecord, String iFetchPlan, boolean ignoreCache);
 
-  ORecord reloadRecord(ORID iRid, ORecord iRecord, String iFetchPlan, boolean ignoreCache, boolean force);
+  ORecord reloadRecord(
+      ORID iRid, ORecord iRecord, String iFetchPlan, boolean ignoreCache, boolean force);
 
-  ORecord loadRecordIfVersionIsNotLatest(ORID rid, int recordVersion, String fetchPlan, boolean ignoreCache)
+  ORecord loadRecordIfVersionIsNotLatest(
+      ORID rid, int recordVersion, String fetchPlan, boolean ignoreCache)
       throws ORecordNotFoundException;
 
   TXSTATUS getStatus();
@@ -116,12 +134,14 @@ public interface OTransaction extends OBasicTransaction {
 
   /**
    * If you set this flag to false, you are unable to
+   *
    * <ol>
-   * <li>Rollback data changes in case of exception</li>
-   * <li>Restore data in case of server crash</li>
+   *   <li>Rollback data changes in case of exception
+   *   <li>Restore data in case of server crash
    * </ol>
-   * <p>
-   * So you practically unable to work in multithreaded environment and keep data consistent.
+   *
+   * <p>So you practically unable to work in multithreaded environment and keep data consistent.
+   *
    * @deprecated This option has no effect
    */
   @Deprecated
@@ -130,8 +150,9 @@ public interface OTransaction extends OBasicTransaction {
   void close();
 
   /**
-   * When commit in transaction is performed all new records will change their identity, but index values will contain stale links,
-   * to fix them given method will be called for each entry. This update local transaction maps too.
+   * When commit in transaction is performed all new records will change their identity, but index
+   * values will contain stale links, to fix them given method will be called for each entry. This
+   * update local transaction maps too.
    *
    * @param oldRid Record identity before commit.
    * @param newRid Record identity after commit.
@@ -152,5 +173,4 @@ public interface OTransaction extends OBasicTransaction {
   OTransaction unlockRecord(OIdentifiable iRecord);
 
   int getEntryCount();
-
 }

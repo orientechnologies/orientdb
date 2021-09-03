@@ -13,7 +13,7 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.test;
@@ -24,20 +24,15 @@ import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import java.util.List;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.List;
-
-/**
- * Created by enricorisa on 03/09/14.
- */
+/** Created by enricorisa on 03/09/14. */
 public class GraphEmbeddedTest extends BaseLuceneTest {
 
-  public GraphEmbeddedTest() {
-
-  }
+  public GraphEmbeddedTest() {}
 
   @Before
   public void init() {
@@ -47,14 +42,15 @@ public class GraphEmbeddedTest extends BaseLuceneTest {
     type.createProperty("longitude", OType.DOUBLE);
     type.createProperty("name", OType.STRING);
 
-    db.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
+    db.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE"))
+        .execute();
     db.commit();
   }
 
   @Test
   public void embeddedTx() {
 
-    //THIS WON'T USE LUCENE INDEXES!!!! see #6997
+    // THIS WON'T USE LUCENE INDEXES!!!! see #6997
 
     db.begin();
     OVertex city = db.newVertex("City");
@@ -68,7 +64,8 @@ public class GraphEmbeddedTest extends BaseLuceneTest {
 
     db.begin();
 
-    List<ODocument> resultSet = db.query(new OSQLSynchQuery<ODocument>("SELECT from City where name = 'London / a' "));
+    List<ODocument> resultSet =
+        db.query(new OSQLSynchQuery<ODocument>("SELECT from City where name = 'London / a' "));
 
     Assertions.assertThat(resultSet).hasSize(1);
 
@@ -98,22 +95,23 @@ public class GraphEmbeddedTest extends BaseLuceneTest {
 
     db.commit();
 
-    List<ODocument> resultSet = db.query(new OSQLSynchQuery<ODocument>("SELECT from One where name = 'Same' "));
+    List<ODocument> resultSet =
+        db.query(new OSQLSynchQuery<ODocument>("SELECT from One where name = 'Same' "));
 
     Assertions.assertThat(resultSet).hasSize(1);
 
-//    graph.addVertex("class:Two", new Object[] { "name", "Same" });
-//
-//    graph.commit();
-//
-//    Iterable<Vertex> vertexes = graph.getVertices("One", new String[] { "name" }, new Object[] { "Same" });
-//
-//    int size = 0;
-//    for (Vertex v : vertexes) {
-//      size++;
-//      Assert.assertNotNull(v);
-//    }
-//    Assert.assertEquals(1, size);
+    //    graph.addVertex("class:Two", new Object[] { "name", "Same" });
+    //
+    //    graph.commit();
+    //
+    //    Iterable<Vertex> vertexes = graph.getVertices("One", new String[] { "name" }, new Object[]
+    // { "Same" });
+    //
+    //    int size = 0;
+    //    for (Vertex v : vertexes) {
+    //      size++;
+    //      Assert.assertNotNull(v);
+    //    }
+    //    Assert.assertEquals(1, size);
   }
-
 }

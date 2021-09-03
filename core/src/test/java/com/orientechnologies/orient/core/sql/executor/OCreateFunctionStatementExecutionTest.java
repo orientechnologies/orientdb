@@ -7,24 +7,27 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OCreateFunctionStatementExecutionTest {
   static ODatabaseDocument db;
 
-  @BeforeClass public static void beforeClass() {
+  @BeforeClass
+  public static void beforeClass() {
     db = new ODatabaseDocumentTx("memory:OCreateFunctionStatementExecutionTest");
     db.create();
   }
 
-  @AfterClass public static void afterClass() {
+  @AfterClass
+  public static void afterClass() {
     db.close();
   }
 
-  @Test public void testPlain() {
+  @Test
+  public void testPlain() {
     String name = "testPlain";
-    OResultSet result = db.command("CREATE FUNCTION " + name + " \"return a + b;\" PARAMETERS [a,b] language javascript");
+    OResultSet result =
+        db.command(
+            "CREATE FUNCTION " + name + " \"return a + b;\" PARAMETERS [a,b] language javascript");
     Assert.assertTrue(result.hasNext());
     OResult next = result.next();
     Assert.assertFalse(result.hasNext());
@@ -39,8 +42,5 @@ public class OCreateFunctionStatementExecutionTest {
     Assert.assertNotNull(next);
     Assert.assertEquals("foobar", next.getProperty("sum"));
     result.close();
-
   }
-
-
 }

@@ -19,18 +19,14 @@
  */
 package com.orientechnologies.orient.core.security.symmetrickey;
 
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.metadata.security.OUser;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.security.symmetrickey.OSymmetricKeyConfig;
 import com.orientechnologies.orient.core.exception.OSecurityException;
-
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.Map;
 
 /**
- * Implements the OSymmetricKeyConfig interface for OUser records. The constructor looks for a "properties" field on the OUser
- * document. The "properties" field should be a JSON document containing the OSymmetricKey-specific fields.
+ * Implements the OSymmetricKeyConfig interface for OUser records. The constructor looks for a
+ * "properties" field on the OUser document. The "properties" field should be a JSON document
+ * containing the OSymmetricKey-specific fields.
  *
  * @author S. Colin Leister
  */
@@ -74,7 +70,10 @@ public class OUserSymmetricKeyConfig implements OSymmetricKeyConfig {
 
   // OSymmetricKeyConfig
   public boolean usesKeyString() {
-    return keyString != null && !keyString.isEmpty() && keyAlgorithm != null && !keyAlgorithm.isEmpty();
+    return keyString != null
+        && !keyString.isEmpty()
+        && keyAlgorithm != null
+        && !keyAlgorithm.isEmpty();
   }
 
   public boolean usesKeyFile() {
@@ -82,21 +81,13 @@ public class OUserSymmetricKeyConfig implements OSymmetricKeyConfig {
   }
 
   public boolean usesKeystore() {
-    return keystoreFile != null && !keystoreFile.isEmpty() && keystoreKeyAlias != null && !keystoreKeyAlias.isEmpty();
+    return keystoreFile != null
+        && !keystoreFile.isEmpty()
+        && keystoreKeyAlias != null
+        && !keystoreKeyAlias.isEmpty();
   }
-  //////////
 
-  public OUserSymmetricKeyConfig(final OUser user) {
-    if (user == null)
-      throw new OSecurityException("OUserSymmetricKeyConfig() OUser is null");
-
-    OIdentifiable id = user.getIdentity();
-
-    if (!(id instanceof ODocument))
-      throw new OSecurityException("OUserSymmetricKeyConfig() Identity is not an ODocument");
-
-    ODocument doc = (ODocument) id;
-
+  public OUserSymmetricKeyConfig(final ODocument doc) {
     ODocument props = doc.field("properties");
 
     if (props == null)
@@ -114,21 +105,23 @@ public class OUserSymmetricKeyConfig implements OSymmetricKeyConfig {
     } else {
       this.keyFile = props.field("keyFile");
 
-      // "keyFile" has priority over "keyStore".      
+      // "keyFile" has priority over "keyStore".
 
       if (this.keyFile != null) {
         // If "keyFile" is used, "keyAlgorithm" is also required.
         this.keyAlgorithm = props.field("keyAlgorithm");
 
         if (this.keyAlgorithm == null)
-          throw new OSecurityException("OUserSymmetricKeyConfig() keyAlgorithm is required with keyFile");
+          throw new OSecurityException(
+              "OUserSymmetricKeyConfig() keyAlgorithm is required with keyFile");
       } else {
         Map<String, Object> ksMap = props.field("keyStore");
 
         ODocument ksDoc = new ODocument().fromMap(ksMap);
 
         if (ksDoc == null)
-          throw new OSecurityException("OUserSymmetricKeyConfig() key, keyFile, and keyStore cannot all be null");
+          throw new OSecurityException(
+              "OUserSymmetricKeyConfig() key, keyFile, and keyStore cannot all be null");
 
         this.keystoreFile = ksDoc.field("file");
         this.keystorePassword = ksDoc.field("passsword");

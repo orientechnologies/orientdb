@@ -23,7 +23,6 @@ import java.util.function.Consumer;
  * A striped, non-blocking, bounded buffer.
  *
  * @param <E> the type of elements maintained by this buffer
- *
  * @author ben.manes@gmail.com (Ben Manes)
  */
 public final class BoundedBuffer<E> extends StripedBuffer<E> {
@@ -46,15 +45,13 @@ public final class BoundedBuffer<E> extends StripedBuffer<E> {
    * whether it found a satisfactory buffer or if resizing is necessary.
    */
 
-  /**
-   * The maximum number of elements per buffer.
-   */
+  /** The maximum number of elements per buffer. */
   private static final int BUFFER_SIZE = 128;
 
   // Assume 4-byte references and 64-byte cache line (16 elements per line)
   private static final int SPACED_SIZE = BUFFER_SIZE << 4;
   private static final int SPACED_MASK = SPACED_SIZE - 1;
-  private static final int OFFSET      = 16;
+  private static final int OFFSET = 16;
 
   @Override
   protected Buffer<E> create(final E e) {
@@ -63,10 +60,10 @@ public final class BoundedBuffer<E> extends StripedBuffer<E> {
 
   static final class RingBuffer<E> implements Buffer<E> {
     private final AtomicReferenceArray<E> buffer;
-    private final AtomicLong              readCounter  = new AtomicLong();
-    private final AtomicLong              writeCounter = new AtomicLong();
+    private final AtomicLong readCounter = new AtomicLong();
+    private final AtomicLong writeCounter = new AtomicLong();
 
-    @SuppressWarnings({ "cast" })
+    @SuppressWarnings({"cast"})
     private RingBuffer(final E e) {
       buffer = new AtomicReferenceArray<>(SPACED_SIZE);
       buffer.lazySet(0, e);

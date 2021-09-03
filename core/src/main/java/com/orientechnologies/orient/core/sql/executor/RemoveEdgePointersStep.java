@@ -3,15 +3,14 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.record.OElement;
-
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * <p>This is intended for INSERT FROM SELECT. This step removes existing edge pointers so that the resulting graph is still
- * consistent </p>
+ * This is intended for INSERT FROM SELECT. This step removes existing edge pointers so that the
+ * resulting graph is still consistent
  *
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
@@ -39,8 +38,10 @@ public class RemoveEdgePointersStep extends AbstractExecutionStep {
         try {
 
           Set<String> propNames = elem.getPropertyNames();
-          for (String propName : propNames.stream().filter(x -> x.startsWith("in_") || x.startsWith("out_"))
-              .collect(Collectors.toList())) {
+          for (String propName :
+              propNames.stream()
+                  .filter(x -> x.startsWith("in_") || x.startsWith("out_"))
+                  .collect(Collectors.toList())) {
             Object val = elem.getProperty(propName);
             if (val instanceof OElement) {
               if (((OElement) val).getSchemaType().map(x -> x.isSubClassOf("E")).orElse(false)) {

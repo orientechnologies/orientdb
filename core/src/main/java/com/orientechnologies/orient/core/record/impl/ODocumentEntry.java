@@ -24,9 +24,6 @@ import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 
-import java.util.List;
-import java.util.Map;
-
 /**
  * Document entry. Used by ODocument.
  *
@@ -35,20 +32,18 @@ import java.util.Map;
  */
 public class ODocumentEntry {
 
-  public  Object    value;
-  public  Object    original;
-  public  OType     type;
-  public  OProperty property;
-  private boolean   changed   = false;
-  private boolean   exists    = true;
-  private boolean   created   = false;
-  private boolean   txChanged = false;
-  private boolean   txExists  = true;
-  private boolean   txCreated = false;
+  public Object value;
+  public Object original;
+  public OType type;
+  public OProperty property;
+  private boolean changed = false;
+  private boolean exists = true;
+  private boolean created = false;
+  private boolean txChanged = false;
+  private boolean txExists = true;
+  private boolean txCreated = false;
 
-  public ODocumentEntry() {
-
-  }
+  public ODocumentEntry() {}
 
   public boolean isChanged() {
     return changed;
@@ -106,9 +101,9 @@ public class ODocumentEntry {
   }
 
   public void removeTimeline() {
-    if (!(value instanceof OTrackedMultiValue))
-      return;
-    ((OTrackedMultiValue) value).disableTracking(null);
+    if (value instanceof OTrackedMultiValue) {
+      ((OTrackedMultiValue) value).disableTracking(null);
+    }
   }
 
   public void replaceListener(ODocument document, Object oldValue) {
@@ -116,23 +111,25 @@ public class ODocumentEntry {
   }
 
   public boolean enableTracking(ODocument document) {
-    if (!(value instanceof OTrackedMultiValue))
+    if (value instanceof OTrackedMultiValue) {
+      ((OTrackedMultiValue) value).enableTracking(document);
+      return true;
+    } else {
       return false;
-    ((OTrackedMultiValue) value).enableTracking(document);
-    return true;
+    }
   }
 
   public void disableTracking(ODocument document, Object fieldValue) {
-    if (!(fieldValue instanceof OTrackedMultiValue))
-      return;
-    ((OTrackedMultiValue) fieldValue).disableTracking(document);
+    if (fieldValue instanceof OTrackedMultiValue) {
+      ((OTrackedMultiValue) fieldValue).disableTracking(document);
+    }
   }
 
   public boolean isTrackedModified() {
     if (value instanceof OTrackedMultiValue) {
       return ((OTrackedMultiValue) value).isModified();
     }
-    if (value instanceof ODocument) {
+    if (value instanceof ODocument && ((ODocument) value).isEmbedded()) {
       return ((ODocument) value).isDirty();
     }
     return false;

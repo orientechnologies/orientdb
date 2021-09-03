@@ -26,25 +26,28 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.junit.*;
-
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
-/**
- * @author Sergey Sitnikov
- */
+/** @author Sergey Sitnikov */
 public class DuplicateNonUniqueIndexChangesTxTest {
 
   private static ODatabaseDocumentTx db;
-  private        OIndex              index;
+  private OIndex index;
 
   @BeforeClass
   public static void before() {
-    db = new ODatabaseDocumentTx("memory:" + DuplicateNonUniqueIndexChangesTxTest.class.getSimpleName());
+    db =
+        new ODatabaseDocumentTx(
+            "memory:" + DuplicateNonUniqueIndexChangesTxTest.class.getSimpleName());
   }
 
   @AfterClass
@@ -54,11 +57,13 @@ public class DuplicateNonUniqueIndexChangesTxTest {
 
   @Before
   public void beforeMethod() {
-    if (!db.isClosed())
-      db.drop();
+    if (!db.isClosed()) db.drop();
     db.create();
     final OClass class_ = db.getMetadata().getSchema().createClass("Person");
-    index = class_.createProperty("name", OType.STRING).createIndex(OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX);
+    index =
+        class_
+            .createProperty("name", OType.STRING)
+            .createIndex(OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX);
   }
 
   @Test
@@ -256,10 +261,11 @@ public class DuplicateNonUniqueIndexChangesTxTest {
 
     // verify index state
     try (Stream<ORID> stream = index.getInternal().getRids("Name")) {
-      stream.forEach((rid) -> {
-        final ODocument document = db.load(rid);
-        unseen.remove(document.<Integer>field("serial"));
-      });
+      stream.forEach(
+          (rid) -> {
+            final ODocument document = db.load(rid);
+            unseen.remove(document.<Integer>field("serial"));
+          });
     }
     Assert.assertTrue(unseen.isEmpty());
   }

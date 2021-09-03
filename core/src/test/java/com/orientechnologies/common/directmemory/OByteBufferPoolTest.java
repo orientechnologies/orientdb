@@ -1,12 +1,7 @@
 package com.orientechnologies.common.directmemory;
 
+import com.orientechnologies.common.directmemory.ODirectMemoryAllocator.Intention;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
-
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,6 +11,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Ignore;
+import org.junit.Test;
 
 public class OByteBufferPoolTest {
   @BeforeClass
@@ -33,13 +33,13 @@ public class OByteBufferPoolTest {
     final ODirectMemoryAllocator allocator = new ODirectMemoryAllocator();
     final OByteBufferPool byteBufferPool = new OByteBufferPool(42, allocator, 0);
 
-    final OPointer pointerOne = byteBufferPool.acquireDirect(false);
+    final OPointer pointerOne = byteBufferPool.acquireDirect(false, Intention.TEST);
     Assert.assertEquals(42, pointerOne.getNativeByteBuffer().capacity());
     Assert.assertEquals(42, allocator.getMemoryConsumption());
 
     Assert.assertEquals(0, byteBufferPool.getPoolSize());
 
-    final OPointer pointerTwo = byteBufferPool.acquireDirect(true);
+    final OPointer pointerTwo = byteBufferPool.acquireDirect(true, Intention.TEST);
     Assert.assertEquals(42, pointerTwo.getNativeByteBuffer().capacity());
     Assert.assertEquals(84, allocator.getMemoryConsumption());
 
@@ -62,20 +62,20 @@ public class OByteBufferPoolTest {
     final ODirectMemoryAllocator allocator = new ODirectMemoryAllocator();
     final OByteBufferPool byteBufferPool = new OByteBufferPool(42, allocator, 2);
 
-    OPointer pointerOne = byteBufferPool.acquireDirect(false);
+    OPointer pointerOne = byteBufferPool.acquireDirect(false, Intention.TEST);
 
     Assert.assertEquals(42, pointerOne.getNativeByteBuffer().capacity());
     Assert.assertEquals(0, byteBufferPool.getPoolSize());
     Assert.assertEquals(42, allocator.getMemoryConsumption());
 
-    OPointer pointerTwo = byteBufferPool.acquireDirect(true);
+    OPointer pointerTwo = byteBufferPool.acquireDirect(true, Intention.TEST);
     Assert.assertEquals(42, pointerTwo.getNativeByteBuffer().capacity());
     Assert.assertEquals(0, byteBufferPool.getPoolSize());
     Assert.assertEquals(84, allocator.getMemoryConsumption());
 
     assertBufferIsClear(pointerTwo.getNativeByteBuffer());
 
-    OPointer pointerThree = byteBufferPool.acquireDirect(false);
+    OPointer pointerThree = byteBufferPool.acquireDirect(false, Intention.TEST);
 
     Assert.assertEquals(42, pointerThree.getNativeByteBuffer().capacity());
     Assert.assertEquals(0, byteBufferPool.getPoolSize());
@@ -96,7 +96,7 @@ public class OByteBufferPoolTest {
     Assert.assertEquals(2, byteBufferPool.getPoolSize());
     Assert.assertEquals(84, allocator.getMemoryConsumption());
 
-    pointerOne = byteBufferPool.acquireDirect(true);
+    pointerOne = byteBufferPool.acquireDirect(true, Intention.TEST);
 
     Assert.assertEquals(42, pointerOne.getNativeByteBuffer().capacity());
     Assert.assertEquals(1, byteBufferPool.getPoolSize());
@@ -104,7 +104,7 @@ public class OByteBufferPoolTest {
 
     assertBufferIsClear(pointerOne.getNativeByteBuffer());
 
-    pointerTwo = byteBufferPool.acquireDirect(true);
+    pointerTwo = byteBufferPool.acquireDirect(true, Intention.TEST);
 
     Assert.assertEquals(42, pointerTwo.getNativeByteBuffer().capacity());
     Assert.assertEquals(0, byteBufferPool.getPoolSize());
@@ -112,7 +112,7 @@ public class OByteBufferPoolTest {
 
     assertBufferIsClear(pointerTwo.getNativeByteBuffer());
 
-    pointerThree = byteBufferPool.acquireDirect(false);
+    pointerThree = byteBufferPool.acquireDirect(false, Intention.TEST);
 
     Assert.assertEquals(42, pointerThree.getNativeByteBuffer().capacity());
     Assert.assertEquals(0, byteBufferPool.getPoolSize());
@@ -123,7 +123,7 @@ public class OByteBufferPoolTest {
     Assert.assertEquals(1, byteBufferPool.getPoolSize());
     Assert.assertEquals(126, allocator.getMemoryConsumption());
 
-    pointerThree = byteBufferPool.acquireDirect(true);
+    pointerThree = byteBufferPool.acquireDirect(true, Intention.TEST);
 
     Assert.assertEquals(42, pointerThree.getNativeByteBuffer().capacity());
     Assert.assertEquals(0, byteBufferPool.getPoolSize());
@@ -191,10 +191,10 @@ public class OByteBufferPoolTest {
   }
 
   private static final class Allocator implements Callable<Void> {
-    private final OByteBufferPool   pool;
-    private final ThreadLocalRandom random            = ThreadLocalRandom.current();
-    private final AtomicBoolean     stop;
-    private final List<OPointer>    allocatedPointers = new ArrayList<>();
+    private final OByteBufferPool pool;
+    private final ThreadLocalRandom random = ThreadLocalRandom.current();
+    private final AtomicBoolean stop;
+    private final List<OPointer> allocatedPointers = new ArrayList<>();
 
     private Allocator(OByteBufferPool pool, AtomicBoolean stop) {
       this.pool = pool;
@@ -206,11 +206,11 @@ public class OByteBufferPoolTest {
       try {
         while (!stop.get()) {
           if (allocatedPointers.size() < 500) {
-            OPointer pointer = pool.acquireDirect(false);
+            OPointer pointer = pool.acquireDirect(false, Intention.TEST);
             allocatedPointers.add(pointer);
           } else if (allocatedPointers.size() < 1000) {
             if (random.nextDouble() <= 0.5) {
-              OPointer pointer = pool.acquireDirect(false);
+              OPointer pointer = pool.acquireDirect(false, Intention.TEST);
               allocatedPointers.add(pointer);
             } else {
               final int bufferToRemove = random.nextInt(allocatedPointers.size());
@@ -219,7 +219,7 @@ public class OByteBufferPoolTest {
             }
           } else {
             if (random.nextDouble() <= 0.4) {
-              OPointer pointer = pool.acquireDirect(false);
+              OPointer pointer = pool.acquireDirect(false, Intention.TEST);
               allocatedPointers.add(pointer);
             } else {
               final int bufferToRemove = random.nextInt(allocatedPointers.size());

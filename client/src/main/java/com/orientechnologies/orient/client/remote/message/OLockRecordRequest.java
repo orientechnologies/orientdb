@@ -9,19 +9,17 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
-
 import java.io.IOException;
 
 public class OLockRecordRequest implements OBinaryRequest<OLockRecordResponse> {
-  private ORID                      identity;
+  private ORID identity;
   private OStorage.LOCKING_STRATEGY lockingStrategy;
-  private long                      timeout;
+  private long timeout;
 
-  public OLockRecordRequest() {
+  public OLockRecordRequest() {}
 
-  }
-
-  public OLockRecordRequest(ORID identity, OStorage.LOCKING_STRATEGY lockingStrategy, long timeout) {
+  public OLockRecordRequest(
+      ORID identity, OStorage.LOCKING_STRATEGY lockingStrategy, long timeout) {
     this.identity = identity;
     this.lockingStrategy = lockingStrategy;
     this.timeout = timeout;
@@ -39,7 +37,8 @@ public class OLockRecordRequest implements OBinaryRequest<OLockRecordResponse> {
   }
 
   @Override
-  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
     identity = channel.readRID();
     byte lockKind = channel.readByte();
     if (lockKind == 1) {

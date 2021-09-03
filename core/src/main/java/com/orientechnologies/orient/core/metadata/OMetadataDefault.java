@@ -21,7 +21,6 @@ package com.orientechnologies.orient.core.metadata;
 
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.cache.OCommandCache;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.index.OIndexManager;
@@ -37,60 +36,48 @@ import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibrary;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryProxy;
 import com.orientechnologies.orient.core.schedule.OScheduler;
 import com.orientechnologies.orient.core.schedule.OSchedulerProxy;
-
 import java.io.IOException;
 
 public class OMetadataDefault implements OMetadataInternal {
-  public static final String CLUSTER_INTERNAL_NAME     = "internal";
-  public static final String CLUSTER_INDEX_NAME        = "index";
+  public static final String CLUSTER_INTERNAL_NAME = "internal";
+  public static final String CLUSTER_INDEX_NAME = "index";
   public static final String CLUSTER_MANUAL_INDEX_NAME = "manindex";
 
   protected int schemaClusterId;
 
-  protected OSchemaProxy          schema;
-  protected OSecurity             security;
-  protected OIndexManagerProxy    indexManager;
+  protected OSchemaProxy schema;
+  protected OSecurity security;
+  protected OIndexManagerProxy indexManager;
   protected OFunctionLibraryProxy functionLibrary;
-  protected OSchedulerProxy       scheduler;
+  protected OSchedulerProxy scheduler;
   protected OSequenceLibraryProxy sequenceLibrary;
 
-  protected              OCommandCache commandCache;
-  protected static final OProfiler     PROFILER = Orient.instance().getProfiler();
+  protected static final OProfiler PROFILER = Orient.instance().getProfiler();
 
-  private OImmutableSchema          immutableSchema = null;
-  private int                       immutableCount  = 0;
+  private OImmutableSchema immutableSchema = null;
+  private int immutableCount = 0;
   private ODatabaseDocumentInternal database;
 
-  public OMetadataDefault() {
-  }
+  public OMetadataDefault() {}
 
   public OMetadataDefault(ODatabaseDocumentInternal databaseDocument) {
     this.database = databaseDocument;
-
   }
 
   @Deprecated
-  public void load() {
-  }
+  public void load() {}
 
   @Deprecated
-  public void create() throws IOException {
-  }
+  public void create() throws IOException {}
 
   public OSchemaProxy getSchema() {
     return schema;
   }
 
   @Override
-  public OCommandCache getCommandCache() {
-    return commandCache;
-  }
-
-  @Override
   public void makeThreadLocalSchemaSnapshot() {
     if (this.immutableCount == 0) {
-      if (schema != null)
-        this.immutableSchema = schema.makeSnapshot();
+      if (schema != null) this.immutableSchema = schema.makeSnapshot();
     }
     this.immutableCount++;
   }
@@ -106,8 +93,7 @@ public class OMetadataDefault implements OMetadataInternal {
   @Override
   public OImmutableSchema getImmutableSchemaSnapshot() {
     if (immutableSchema == null) {
-      if (schema == null)
-        return null;
+      if (schema == null) return null;
       return schema.makeSnapshot();
     }
     return immutableSchema;
@@ -117,9 +103,7 @@ public class OMetadataDefault implements OMetadataInternal {
     return security;
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Deprecated
   public OIndexManager getIndexManager() {
     return indexManager;
@@ -140,29 +124,24 @@ public class OMetadataDefault implements OMetadataInternal {
     schema = new OSchemaProxy(shared.getSchema(), database);
     indexManager = new OIndexManagerProxy(shared.getIndexManager(), database);
     security = new OSecurityProxy(shared.getSecurity(), database);
-    commandCache = shared.getCommandCache();
     functionLibrary = new OFunctionLibraryProxy(shared.getFunctionLibrary(), database);
     sequenceLibrary = new OSequenceLibraryProxy(shared.getSequenceLibrary(), database);
     scheduler = new OSchedulerProxy(shared.getScheduler(), database);
     return shared;
   }
 
-  /**
-   * Reloads the internal objects.
-   */
+  /** Reloads the internal objects. */
   public void reload() {
-    //RELOAD ALL THE SHARED CONTEXT
+    // RELOAD ALL THE SHARED CONTEXT
     database.getSharedContext().reload(database);
-    //ADD HERE THE RELOAD OF A PROXY OBJECT IF NEEDED
+    // ADD HERE THE RELOAD OF A PROXY OBJECT IF NEEDED
   }
 
-  /**
-   * Closes internal objects
-   */
+  /** Closes internal objects */
   @Deprecated
   public void close() {
-    //DO NOTHING BECAUSE THE PROXY OBJECT HAVE NO DIRECT STATE
-    //ADD HERE THE CLOSE OF A PROXY OBJECT IF NEEDED
+    // DO NOTHING BECAUSE THE PROXY OBJECT HAVE NO DIRECT STATE
+    // ADD HERE THE CLOSE OF A PROXY OBJECT IF NEEDED
   }
 
   protected ODatabaseDocumentInternal getDatabase() {

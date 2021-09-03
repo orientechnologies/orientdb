@@ -1,29 +1,31 @@
 package com.orientechnologies.orient.server.token;
 
-import com.orientechnologies.orient.core.Orient;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.OUser;
-import com.orientechnologies.orient.core.metadata.security.jwt.OJwtHeader;
 import com.orientechnologies.orient.core.metadata.security.jwt.OJwtPayload;
+import com.orientechnologies.orient.core.metadata.security.jwt.OTokenHeader;
+import com.orientechnologies.orient.core.metadata.security.jwt.OrientJwtHeader;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-
-import static org.junit.Assert.*;
+import org.junit.Test;
 
 public class OTokenHandlerImplTest {
 
   @Test
-  public void testWebTokenCreationValidation() throws InvalidKeyException, NoSuchAlgorithmException, IOException {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + OTokenHandlerImplTest.class.getSimpleName());
+  public void testWebTokenCreationValidation()
+      throws InvalidKeyException, NoSuchAlgorithmException, IOException {
+    ODatabaseDocumentTx db =
+        new ODatabaseDocumentTx("memory:" + OTokenHandlerImplTest.class.getSimpleName());
     db.create();
     try {
       OSecurityUser original = db.getUser();
@@ -60,20 +62,19 @@ public class OTokenHandlerImplTest {
 
   @Test
   public void testSerializeDeserializeWebHeader() throws Exception {
-    OJwtHeader header = new OrientJwtHeader();
+    OTokenHeader header = new OrientJwtHeader();
     header.setType("Orient");
     header.setAlgorithm("some");
     header.setKeyId("the_key");
     OTokenHandlerImpl handler = new OTokenHandlerImpl();
     byte[] headerbytes = handler.serializeWebHeader(header);
 
-    OJwtHeader des = handler.deserializeWebHeader(headerbytes);
+    OTokenHeader des = handler.deserializeWebHeader(headerbytes);
     assertNotNull(des);
     assertEquals(header.getType(), des.getType());
     assertEquals(header.getKeyId(), des.getKeyId());
     assertEquals(header.getAlgorithm(), des.getAlgorithm());
     assertEquals(header.getType(), des.getType());
-
   }
 
   @Test
@@ -101,12 +102,12 @@ public class OTokenHandlerImplTest {
     assertEquals(payload.getNotBefore(), des.getNotBefore());
     assertEquals(payload.getTokenId(), des.getTokenId());
     assertEquals(payload.getUserName(), des.getUserName());
-
   }
 
   @Test
   public void testTokenForge() throws InvalidKeyException, NoSuchAlgorithmException, IOException {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + OTokenHandlerImplTest.class.getSimpleName());
+    ODatabaseDocumentTx db =
+        new ODatabaseDocumentTx("memory:" + OTokenHandlerImplTest.class.getSimpleName());
     db.create();
     try {
       OSecurityUser original = db.getUser();
@@ -130,8 +131,10 @@ public class OTokenHandlerImplTest {
   }
 
   @Test
-  public void testBinartTokenCreationValidation() throws InvalidKeyException, NoSuchAlgorithmException, IOException {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + OTokenHandlerImplTest.class.getSimpleName());
+  public void testBinartTokenCreationValidation()
+      throws InvalidKeyException, NoSuchAlgorithmException, IOException {
+    ODatabaseDocumentTx db =
+        new ODatabaseDocumentTx("memory:" + OTokenHandlerImplTest.class.getSimpleName());
     db.create();
     try {
       OSecurityUser original = db.getUser();
@@ -162,7 +165,8 @@ public class OTokenHandlerImplTest {
 
   @Test
   public void testTokenNotRenew() {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + OTokenHandlerImplTest.class.getSimpleName());
+    ODatabaseDocumentTx db =
+        new ODatabaseDocumentTx("memory:" + OTokenHandlerImplTest.class.getSimpleName());
     db.create();
     try {
       OSecurityUser original = db.getUser();
@@ -187,7 +191,8 @@ public class OTokenHandlerImplTest {
 
   @Test
   public void testTokenRenew() {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + OTokenHandlerImplTest.class.getSimpleName());
+    ODatabaseDocumentTx db =
+        new ODatabaseDocumentTx("memory:" + OTokenHandlerImplTest.class.getSimpleName());
     db.create();
     try {
       OSecurityUser original = db.getUser();
@@ -210,5 +215,4 @@ public class OTokenHandlerImplTest {
       db.drop();
     }
   }
-
 }

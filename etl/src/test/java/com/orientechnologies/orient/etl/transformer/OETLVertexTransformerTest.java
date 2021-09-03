@@ -17,15 +17,15 @@
  */
 package com.orientechnologies.orient.etl.transformer;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
+
 import com.orientechnologies.orient.core.db.ODatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.etl.OETLBaseTest;
 import org.junit.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
 
 /**
  * Tests ETL Vertex Transformer.
@@ -45,10 +45,12 @@ public class OETLVertexTransformerTest extends OETLBaseTest {
 
   @Test
   public void testCreateVertex() {
-    configure("{source: { content: { value: 'name,\nGregor' } }, extractor : { csv: {} },"
-        + " transformers: [{vertex: {class:'Person', skipDuplicates:false}},"
-        + "], loader: { orientdb: { dbAutoCreateProperties:true, cluster: 'custom', dbURL: 'memory:" + name.getMethodName()
-        + "', dbType:'graph', useLightweightEdges:false } } }");
+    configure(
+        "{source: { content: { value: 'name,\nGregor' } }, extractor : { csv: {} },"
+            + " transformers: [{vertex: {class:'Person', skipDuplicates:false}},"
+            + "], loader: { orientdb: { dbAutoCreateProperties:true, cluster: 'custom', dbURL: 'memory:"
+            + name.getMethodName()
+            + "', dbType:'graph', useLightweightEdges:false } } }");
 
     ODatabasePool pool = proc.getLoader().getPool();
     ODatabaseDocument db = pool.acquire();
@@ -62,15 +64,17 @@ public class OETLVertexTransformerTest extends OETLBaseTest {
     assertEquals("person", 1, db.countClass("Person"));
 
     assertThat(db.countClusterElements("custom")).isEqualTo(1);
-
   }
 
   @Test
   public void testCreateTargetVertexIfNotExists() {
-    configure("{source: { content: { value: 'name,idf,parent\nParent,1,\nChild,2,1' } }, extractor : { csv: {} },"
-        + " transformers: [{merge: { joinFieldName:'idf', lookup:'V.idf'}}, {vertex: {class:'V'}},"
-        + "{edge:{ class: 'E', joinFieldName: 'parent', lookup: 'V.idf', unresolvedLinkAction: 'CREATE' }, if: '$input.parent IS NOT NULL'}"
-        + "], loader: { orientdb: { dbURL: 'memory:" + name.getMethodName() + "', dbType:'graph', useLightweightEdges:false } } }");
+    configure(
+        "{source: { content: { value: 'name,idf,parent\nParent,1,\nChild,2,1' } }, extractor : { csv: {} },"
+            + " transformers: [{merge: { joinFieldName:'idf', lookup:'V.idf'}}, {vertex: {class:'V'}},"
+            + "{edge:{ class: 'E', joinFieldName: 'parent', lookup: 'V.idf', unresolvedLinkAction: 'CREATE' }, if: '$input.parent IS NOT NULL'}"
+            + "], loader: { orientdb: { dbURL: 'memory:"
+            + name.getMethodName()
+            + "', dbType:'graph', useLightweightEdges:false } } }");
 
     ODatabasePool pool = proc.getLoader().getPool();
 
@@ -79,7 +83,7 @@ public class OETLVertexTransformerTest extends OETLBaseTest {
     db.close();
 
     proc.execute();
-    //VERIFY
+    // VERIFY
     db = pool.acquire();
 
     assertThat(db.countClass("V")).isEqualTo(2);
@@ -91,8 +95,10 @@ public class OETLVertexTransformerTest extends OETLBaseTest {
   public void testErrorOnDuplicateVertex() {
     configure(
         "{ config: { 'log': 'DEBUG' },  source: { content: { value: 'name,\nGregor\nGregor\nHans' } }, extractor : { csv: {} },"
-            + " transformers: [ {vertex: {class:'Person', skipDuplicates:false}}," + "], loader: { orientdb: { dbURL: 'memory:"
-            + name.getMethodName() + "', dbType:'graph', useLightweightEdges:false } } }");
+            + " transformers: [ {vertex: {class:'Person', skipDuplicates:false}},"
+            + "], loader: { orientdb: { dbURL: 'memory:"
+            + name.getMethodName()
+            + "', dbType:'graph', useLightweightEdges:false } } }");
 
     ODatabasePool pool = proc.getLoader().getPool();
     ODatabaseDocument db = pool.acquire();
@@ -100,7 +106,7 @@ public class OETLVertexTransformerTest extends OETLBaseTest {
     db.close();
 
     proc.execute();
-    //VERIFY
+    // VERIFY
     db = pool.acquire();
     assertThat(db.countClass("V")).isEqualTo(1);
     db.close();
@@ -108,9 +114,12 @@ public class OETLVertexTransformerTest extends OETLBaseTest {
 
   @Test
   public void testSkipDuplicateVertex() {
-    configure("{source: { content: { value: 'name,\nGregor\nGregor\nHans' } }, extractor : { csv: {} },"
-        + " transformers: [{vertex: {class:'Person', skipDuplicates:true}},]," + " loader: { orientdb: {  dbURL: 'memory:" + name
-        .getMethodName() + "', dbType:'graph', useLightweightEdges:false } } }");
+    configure(
+        "{source: { content: { value: 'name,\nGregor\nGregor\nHans' } }, extractor : { csv: {} },"
+            + " transformers: [{vertex: {class:'Person', skipDuplicates:true}},],"
+            + " loader: { orientdb: {  dbURL: 'memory:"
+            + name.getMethodName()
+            + "', dbType:'graph', useLightweightEdges:false } } }");
 
     ODatabasePool pool = proc.getLoader().getPool();
     ODatabaseDocument db = pool.acquire();
@@ -118,7 +127,7 @@ public class OETLVertexTransformerTest extends OETLBaseTest {
     db.close();
     proc.execute();
 
-    //VERIFY
+    // VERIFY
     db = pool.acquire();
     assertThat(db.countClass("Person")).isEqualTo(2);
     db.close();

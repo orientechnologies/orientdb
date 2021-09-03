@@ -1,14 +1,23 @@
 package com.orientechnologies.orient.core.sql.executor;
 
-import com.orientechnologies.orient.core.db.*;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.metadata.security.*;
-import org.junit.*;
+import com.orientechnologies.orient.core.OCreateDatabaseUtil;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.ORule;
+import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
+import com.orientechnologies.orient.core.metadata.security.OSecurityPolicyImpl;
+import com.orientechnologies.orient.core.metadata.security.OSecurityRole;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OGrantStatementExecutionTest {
   static OrientDB orient;
   private ODatabaseSession db;
@@ -25,8 +34,8 @@ public class OGrantStatementExecutionTest {
 
   @Before
   public void before() {
-    orient.create("test", ODatabaseType.MEMORY);
-    this.db = orient.open("test", "admin", "admin");
+    OCreateDatabaseUtil.createDatabase("test", orient, OCreateDatabaseUtil.TYPE_MEMORY);
+    this.db = orient.open("test", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
   }
 
   @After
@@ -36,16 +45,19 @@ public class OGrantStatementExecutionTest {
     this.db = null;
   }
 
-
-  @Test public void testSimple() {
-    ORole testRole = db.getMetadata().getSecurity().createRole("testRole", OSecurityRole.ALLOW_MODES.DENY_ALL_BUT);
-    Assert.assertFalse(testRole.allow(ORule.ResourceGeneric.SERVER, "server", ORole.PERMISSION_EXECUTE));
+  @Test
+  public void testSimple() {
+    ORole testRole =
+        db.getMetadata()
+            .getSecurity()
+            .createRole("testRole", OSecurityRole.ALLOW_MODES.DENY_ALL_BUT);
+    Assert.assertFalse(
+        testRole.allow(ORule.ResourceGeneric.SERVER, "server", ORole.PERMISSION_EXECUTE));
     db.command("GRANT execute on server.remove to testRole");
     testRole = db.getMetadata().getSecurity().getRole("testRole");
-    Assert.assertTrue(testRole.allow(ORule.ResourceGeneric.SERVER, "remove", ORole.PERMISSION_EXECUTE));
+    Assert.assertTrue(
+        testRole.allow(ORule.ResourceGeneric.SERVER, "remove", ORole.PERMISSION_EXECUTE));
   }
-
-
 
   @Test
   public void testGrantPolicy() {
@@ -53,15 +65,17 @@ public class OGrantStatementExecutionTest {
 
     db.createClass("Person");
 
-    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "testPolicy");
     policy.setActive(true);
     policy.setReadRule("name = 'foo'");
     security.saveSecurityPolicy(db, policy);
     db.command("GRANT POLICY testPolicy ON database.class.Person TO reader").close();
 
-
-    Assert.assertEquals("testPolicy", security.getSecurityPolicies(db, security.getRole(db, "reader")).get("database.class.Person").getName());
+    Assert.assertEquals(
+        "testPolicy",
+        security
+            .getSecurityPolicies(db, security.getRole(db, "reader"))
+            .get("database.class.Person")
+            .getName());
   }
-
-
 }

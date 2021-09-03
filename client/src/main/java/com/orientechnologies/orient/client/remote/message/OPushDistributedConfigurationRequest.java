@@ -5,25 +5,22 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by tglman on 11/01/17.
- */
-public class OPushDistributedConfigurationRequest implements OBinaryPushRequest<OBinaryPushResponse> {
+/** Created by tglman on 11/01/17. */
+public class OPushDistributedConfigurationRequest
+    implements OBinaryPushRequest<OBinaryPushResponse> {
 
-  public  ODocument    configuration;
+  public ODocument configuration;
   private List<String> hosts;
 
   public OPushDistributedConfigurationRequest(List<String> hosts) {
     this.hosts = hosts;
   }
 
-  public OPushDistributedConfigurationRequest() {
-  }
+  public OPushDistributedConfigurationRequest() {}
 
   @Override
   public byte getPushCommand() {

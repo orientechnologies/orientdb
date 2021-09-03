@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import org.junit.Test;
+
 public class OAlterClassStatementTest extends OParserTestAbstract {
 
   @Test
@@ -11,8 +12,6 @@ public class OAlterClassStatementTest extends OParserTestAbstract {
     checkRightSyntax("alter class Foo name Bar unsafe");
 
     checkRightSyntax("ALTER CLASS `Foo bar` NAME `Bar bar`");
-
-
 
     checkRightSyntax("ALTER CLASS Foo SHORTNAME Bar");
     checkRightSyntax("ALTER CLASS Foo shortname Bar");
@@ -79,6 +78,4 @@ public class OAlterClassStatementTest extends OParserTestAbstract {
     checkWrongSyntax("ALTER CLASS Foo oversize 1.1.1");
     checkWrongSyntax("ALTER CLASS Foo oversize bar");
   }
-
-
 }

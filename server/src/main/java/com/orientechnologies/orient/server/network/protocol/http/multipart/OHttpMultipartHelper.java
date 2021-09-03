@@ -15,23 +15,21 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.multipart;
 
-import java.io.IOException;
-
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
+import java.io.IOException;
 
-/**
- * @author Luca Molino (molino.luca--at--gmail.com)
- * 
- */
+/** @author Luca Molino (molino.luca--at--gmail.com) */
 public class OHttpMultipartHelper {
 
   protected static boolean isMultipartPartHeader(StringBuilder header) {
     final String linePart = header.toString();
-    return ((linePart.equals(OHttpUtils.MULTIPART_CONTENT_CHARSET)) || (linePart.equals(OHttpUtils.MULTIPART_CONTENT_FILENAME))
-        || (linePart.equals(OHttpUtils.MULTIPART_CONTENT_NAME)) || (linePart.equals(OHttpUtils.MULTIPART_CONTENT_TYPE))
-        || (linePart.equals(OHttpUtils.MULTIPART_CONTENT_DISPOSITION)) || (linePart
-          .equals(OHttpUtils.MULTIPART_CONTENT_TRANSFER_ENCODING)));
+    return ((linePart.equals(OHttpUtils.MULTIPART_CONTENT_CHARSET))
+        || (linePart.equals(OHttpUtils.MULTIPART_CONTENT_FILENAME))
+        || (linePart.equals(OHttpUtils.MULTIPART_CONTENT_NAME))
+        || (linePart.equals(OHttpUtils.MULTIPART_CONTENT_TYPE))
+        || (linePart.equals(OHttpUtils.MULTIPART_CONTENT_DISPOSITION))
+        || (linePart.equals(OHttpUtils.MULTIPART_CONTENT_TRANSFER_ENCODING)));
   }
 
   public static boolean isEndRequest(final OHttpRequest iRequest) throws IOException {
@@ -58,5 +56,4 @@ public class OHttpMultipartHelper {
     }
     return false;
   }
-
 }

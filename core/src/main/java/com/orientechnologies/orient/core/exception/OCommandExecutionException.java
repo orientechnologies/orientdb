@@ -30,5 +30,4 @@ public class OCommandExecutionException extends OCoreException {
   public OCommandExecutionException(String message) {
     super(message);
   }
-
 }

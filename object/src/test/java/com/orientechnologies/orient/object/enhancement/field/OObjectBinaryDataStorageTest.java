@@ -14,20 +14,16 @@
 
 package com.orientechnologies.orient.object.enhancement.field;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import java.io.IOException;
 import java.util.Random;
-
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
-
-/**
- * @author diegomtassis <a href="mailto:dta@compart.com">Diego Martin Tassis</a>
- */
+/** @author diegomtassis <a href="mailto:dta@compart.com">Diego Martin Tassis</a> */
 public class OObjectBinaryDataStorageTest {
 
   private OObjectDatabaseTx databaseTx;
@@ -130,7 +126,8 @@ public class OObjectBinaryDataStorageTest {
   }
 
   @Test
-  public void testSaveAndLoad_BinaryFieldsSimpleRecordMapping_InstantiatePojoUsingDbFactory() throws IOException {
+  public void testSaveAndLoad_BinaryFieldsSimpleRecordMapping_InstantiatePojoUsingDbFactory()
+      throws IOException {
 
     // setup
     this.createDb(ODocumentFieldHandlingStrategyFactory.SIMPLE);

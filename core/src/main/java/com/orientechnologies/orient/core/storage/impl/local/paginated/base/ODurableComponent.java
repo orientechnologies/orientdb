@@ -21,41 +21,29 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.base;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
+import com.orientechnologies.common.function.TxConsumer;
+import com.orientechnologies.common.function.TxFunction;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
-
 import java.io.IOException;
 
 /**
- * Base class for all durable data structures, that is data structures state of which can be consistently restored after system
- * crash but results of last operations in small interval before crash may be lost. This class contains methods which are used to
- * support such concepts as:
- * <ol>
- * <li>"atomic operation" - set of operations which should be either applied together or not. It includes not only changes on
- * current data structure but on all durable data structures which are used by current one during implementation of specific
- * operation.</li>
- * <li>write ahead log - log of all changes which were done with page content after loading it from cache.</li>
- * </ol>
- * To support of "atomic operation" concept following should be done:
- * <ol>
- * <li>Call {@link #startAtomicOperation(boolean)} method.</li>
- * <li>Call {@link #endAtomicOperation(boolean)} method when atomic operation completes, passed in parameter should be
- * <code>false</code> if atomic operation completes with success and <code>true</code> if there were some exceptions and it is
- * needed to rollback given operation.</li>
- * </ol>
+ * Base class for all durable data structures, that is data structures state of which can be
+ * consistently restored after system crash but results of last operations in small interval before
+ * crash may be lost.
  *
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 8/27/13
  */
 public abstract class ODurableComponent extends OSharedResourceAdaptive {
-  protected final OAtomicOperationsManager  atomicOperationsManager;
+  protected final OAtomicOperationsManager atomicOperationsManager;
   protected final OAbstractPaginatedStorage storage;
-  protected final OReadCache                readCache;
-  protected final OWriteCache               writeCache;
+  protected final OReadCache readCache;
+  protected final OWriteCache writeCache;
 
   private volatile String name;
   private volatile String fullName;
@@ -64,7 +52,10 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
 
   private final String lockName;
 
-  public ODurableComponent(final OAbstractPaginatedStorage storage, final String name, final String extension,
+  public ODurableComponent(
+      final OAbstractPaginatedStorage storage,
+      final String name,
+      final String extension,
       final String lockName) {
     super(true);
 
@@ -100,58 +91,81 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     return extension;
   }
 
-  protected void endAtomicOperation(final boolean rollback) throws IOException {
-    atomicOperationsManager.endAtomicOperation(rollback);
+  protected <T> T calculateInsideComponentOperation(
+      final OAtomicOperation atomicOperation, final TxFunction<T> function) {
+    return atomicOperationsManager.calculateInsideComponentOperation(
+        atomicOperation, this, function);
   }
 
-  /**
-   * @see OAtomicOperationsManager#startAtomicOperation(com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent,
-   * boolean)
-   */
-  protected OAtomicOperation startAtomicOperation(final boolean trackNonTxOperations) throws IOException {
-    return atomicOperationsManager.startAtomicOperation(this, trackNonTxOperations);
+  protected void executeInsideComponentOperation(
+      final OAtomicOperation operation, final TxConsumer consumer) {
+    atomicOperationsManager.executeInsideComponentOperation(operation, this, consumer);
+  }
+
+  protected boolean tryExecuteInsideComponentOperation(
+      final OAtomicOperation operation, final TxConsumer consumer) {
+    return atomicOperationsManager.tryExecuteInsideComponentOperation(operation, this, consumer);
   }
 
   protected long getFilledUpTo(final OAtomicOperation atomicOperation, final long fileId) {
     if (atomicOperation == null) {
       return writeCache.getFilledUpTo(fileId);
     }
-
     return atomicOperation.filledUpTo(fileId);
   }
 
-  protected OCacheEntry loadPageForWrite(final OAtomicOperation atomicOperation, final long fileId, final long pageIndex,
-      final boolean checkPinnedPages, final boolean verifyCheckSum) throws IOException {
-    if (atomicOperation == null) {
-      return readCache.loadForWrite(fileId, pageIndex, checkPinnedPages, writeCache, true, null);
-    }
-
+  protected static OCacheEntry loadPageForWrite(
+      final OAtomicOperation atomicOperation,
+      final long fileId,
+      final long pageIndex,
+      final boolean checkPinnedPages,
+      final boolean verifyCheckSum)
+      throws IOException {
     return atomicOperation.loadPageForWrite(fileId, pageIndex, checkPinnedPages, 1, verifyCheckSum);
   }
 
-  protected OCacheEntry loadPageForRead(final OAtomicOperation atomicOperation, final long fileId, final long pageIndex,
-      final boolean checkPinnedPages) throws IOException {
+  protected OCacheEntry loadPageForRead(
+      final OAtomicOperation atomicOperation,
+      final long fileId,
+      final long pageIndex,
+      final boolean checkPinnedPages)
+      throws IOException {
     return loadPageForRead(atomicOperation, fileId, pageIndex, checkPinnedPages, 1);
   }
 
-  protected OCacheEntry loadPageForRead(final OAtomicOperation atomicOperation, final long fileId, final long pageIndex,
-      final boolean checkPinnedPages, final int pageCount) throws IOException {
-    if (atomicOperation == null) {
-      return readCache.loadForRead(fileId, pageIndex, checkPinnedPages, writeCache, true);
-    }
+  protected OCacheEntry loadPageForRead(
+      final OAtomicOperation atomicOperation,
+      final long fileId,
+      final long pageIndex,
+      final boolean checkPinnedPages,
+      final int pageCount)
+      throws IOException {
+    try {
+      if (storage != null) {
+        storage.interruptionManager.enterCriticalPath();
+      }
 
-    return atomicOperation.loadPageForRead(fileId, pageIndex, checkPinnedPages, pageCount);
+      if (atomicOperation == null) {
+        return readCache.loadForRead(fileId, pageIndex, checkPinnedPages, writeCache, true);
+      }
+      return atomicOperation.loadPageForRead(fileId, pageIndex, checkPinnedPages, pageCount);
+    } finally {
+      if (storage != null) {
+        storage.interruptionManager.exitCriticalPath();
+      }
+    }
   }
 
-  protected OCacheEntry addPage(final OAtomicOperation atomicOperation, final long fileId) throws IOException {
+  protected OCacheEntry addPage(final OAtomicOperation atomicOperation, final long fileId)
+      throws IOException {
     if (atomicOperation == null) {
       return readCache.allocateNewPage(fileId, writeCache, null);
     }
-
     return atomicOperation.addPage(fileId);
   }
 
-  protected void releasePageFromWrite(final OAtomicOperation atomicOperation, final OCacheEntry cacheEntry) throws IOException {
+  protected void releasePageFromWrite(
+      final OAtomicOperation atomicOperation, final OCacheEntry cacheEntry) throws IOException {
     if (atomicOperation == null) {
       readCache.releaseFromWrite(cacheEntry, writeCache, true);
     } else {
@@ -159,7 +173,8 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     }
   }
 
-  protected void releasePageFromRead(final OAtomicOperation atomicOperation, final OCacheEntry cacheEntry) {
+  protected void releasePageFromRead(
+      final OAtomicOperation atomicOperation, final OCacheEntry cacheEntry) {
     if (atomicOperation == null) {
       readCache.releaseFromRead(cacheEntry, writeCache);
     } else {
@@ -167,23 +182,24 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     }
   }
 
-  protected long addFile(final OAtomicOperation atomicOperation, final String fileName) throws IOException {
+  protected long addFile(final OAtomicOperation atomicOperation, final String fileName)
+      throws IOException {
     if (atomicOperation == null) {
       return readCache.addFile(fileName, writeCache);
     }
-
     return atomicOperation.addFile(fileName);
   }
 
-  protected long openFile(final OAtomicOperation atomicOperation, final String fileName) throws IOException {
+  protected long openFile(final OAtomicOperation atomicOperation, final String fileName)
+      throws IOException {
     if (atomicOperation == null) {
       return writeCache.loadFile(fileName);
     }
-
     return atomicOperation.loadFile(fileName);
   }
 
-  protected void deleteFile(final OAtomicOperation atomicOperation, final long fileId) throws IOException {
+  protected void deleteFile(final OAtomicOperation atomicOperation, final long fileId)
+      throws IOException {
     if (atomicOperation == null) {
       readCache.deleteFile(fileId, writeCache);
     } else {
@@ -195,11 +211,11 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     if (atomicOperation == null) {
       return writeCache.exists(fileName);
     }
-
     return atomicOperation.isFileExists(fileName);
   }
 
-  protected void truncateFile(final OAtomicOperation atomicOperation, final long filedId) throws IOException {
+  protected void truncateFile(final OAtomicOperation atomicOperation, final long filedId)
+      throws IOException {
     if (atomicOperation == null) {
       readCache.truncateFile(filedId, writeCache);
     } else {

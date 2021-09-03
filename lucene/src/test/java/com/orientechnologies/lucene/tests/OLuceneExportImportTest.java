@@ -18,6 +18,9 @@
 
 package com.orientechnologies.lucene.tests;
 
+import static com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE.FULLTEXT;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.orientechnologies.lucene.OLuceneIndexFactory;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
@@ -28,20 +31,14 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.zip.GZIPInputStream;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.util.zip.GZIPInputStream;
-
-import static com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE.FULLTEXT;
-import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * Created by Enrico Risa on 07/07/15.
- */
+/** Created by Enrico Risa on 07/07/15. */
 public class OLuceneExportImportTest extends OLuceneBaseTest {
 
   @Before
@@ -71,34 +68,31 @@ public class OLuceneExportImportTest extends OLuceneBaseTest {
 
     try {
 
-      //export
-      new ODatabaseExport((ODatabaseDocumentInternal) db, file, s -> {
-      }).exportDatabase();
+      // export
+      new ODatabaseExport((ODatabaseDocumentInternal) db, file, s -> {}).exportDatabase();
 
-      //import
+      // import
       dropDatabase();
       setupDatabase();
 
       GZIPInputStream stream = new GZIPInputStream(new FileInputStream(file + ".gz"));
-      new ODatabaseImport((ODatabaseDocumentInternal) db, stream, s -> {
-      }).importDatabase();
+      new ODatabaseImport((ODatabaseDocumentInternal) db, stream, s -> {}).importDatabase();
 
     } catch (IOException e) {
       Assert.fail(e.getMessage());
     }
 
     assertThat(db.countClass("City")).isEqualTo(1);
-    OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db,"City.name");
+    OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "City.name");
 
     assertThat(index.getType()).isEqualTo(FULLTEXT.toString());
 
     assertThat(index.getAlgorithm()).isEqualTo(OLuceneIndexFactory.LUCENE_ALGORITHM);
 
-    //redo the query
+    // redo the query
     query = db.query("select from City where search_class('Rome')=true");
 
     assertThat(query).hasSize(1);
     query.close();
   }
-
 }

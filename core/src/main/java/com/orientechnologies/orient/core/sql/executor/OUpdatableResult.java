@@ -2,13 +2,10 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.util.Optional;
 import java.util.Set;
 
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OUpdatableResult extends OResultInternal {
   protected OResultInternal previousValue = null;
   private final OElement element;
@@ -33,7 +30,6 @@ public class OUpdatableResult extends OResultInternal {
     }
     return false;
   }
-
 
   @Override
   public boolean isElement() {

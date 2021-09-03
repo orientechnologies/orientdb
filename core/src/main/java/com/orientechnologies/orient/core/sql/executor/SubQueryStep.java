@@ -3,22 +3,23 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 
-/**
- * Created by luigidellaquila on 22/07/16.
- */
+/** Created by luigidellaquila on 22/07/16. */
 public class SubQueryStep extends AbstractExecutionStep {
   private final OInternalExecutionPlan subExecuitonPlan;
-  private final OCommandContext        childCtx;
-  private       boolean                sameContextAsParent = false;
+  private final OCommandContext childCtx;
+  private boolean sameContextAsParent = false;
 
   /**
    * executes a sub-query
    *
    * @param subExecutionPlan the execution plan of the sub-query
-   * @param ctx              the context of the current execution plan
-   * @param subCtx           the context of the subquery execution plan
+   * @param ctx the context of the current execution plan
+   * @param subCtx the context of the subquery execution plan
    */
-  public SubQueryStep(OInternalExecutionPlan subExecutionPlan, OCommandContext ctx, OCommandContext subCtx,
+  public SubQueryStep(
+      OInternalExecutionPlan subExecutionPlan,
+      OCommandContext ctx,
+      OCommandContext subCtx,
       boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.subExecuitonPlan = subExecutionPlan;

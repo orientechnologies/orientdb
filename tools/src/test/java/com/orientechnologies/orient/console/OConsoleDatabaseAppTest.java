@@ -1,45 +1,45 @@
 package com.orientechnologies.orient.console;
 
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.List;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.util.List;
-
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-/**
- * Created by tglman on 14/03/16.
- */
+/** Created by tglman on 14/03/16. */
 public class OConsoleDatabaseAppTest {
-  @Rule
-  public TestName testName = new TestName();
+  @Rule public TestName testName = new TestName();
 
   @Test
   public void testSelectBinaryDoc() throws IOException {
     final StringBuilder builder = new StringBuilder();
 
-    OConsoleDatabaseApp app = new OConsoleDatabaseApp(new String[] {}) {
-      @Override
-      public void message(String iMessage, Object... iArgs) {
-        builder.append(String.format(iMessage, iArgs)).append("\n");
-      }
-    };
+    OConsoleDatabaseApp app =
+        new OConsoleDatabaseApp(new String[] {}) {
+          @Override
+          public void message(String iMessage, Object... iArgs) {
+            builder.append(String.format(iMessage, iArgs)).append("\n");
+          }
+        };
     try {
-      app.createDatabase("memory:test", null, null, "memory", null, null);
+
+      app.executeServerCommand("connect env embedded:./target/ root root");
+      app.executeServerCommand(
+          "create database test memory users (admin identified by 'admin' role admin)");
+      app.open("test", "admin", "admin");
+
       ODatabaseDocument db = app.getCurrentDatabase();
       db.addBlobCluster("blobTest");
       ORecord record = db.save(new ORecordBytes("blobContent".getBytes()), "blobTest");
@@ -49,21 +49,23 @@ public class OConsoleDatabaseAppTest {
     } finally {
       app.dropDatabase("memory");
     }
-
   }
 
   @Test
   public void testWrongCommand() {
-
-    String dbUrl = "memory:OConsoleDatabaseAppTest2";
     StringBuilder builder = new StringBuilder();
-    builder.append("create database " + dbUrl + ";\n");
+
+    builder.append("connect env embedded:./target/ root root;\n");
+    builder.append(
+        "create database OConsoleDatabaseAppTest2 memory users (admin identified by 'admin' role admin);\n");
+    builder.append("open OConsoleDatabaseAppTest2 admin admin;\n");
+
     builder.append("create class foo;\n");
     builder.append("insert into foo set name = 'foo';\n");
     builder.append("insert into foo set name = 'bla';\n");
-    builder.append("blabla;\n");// <- wrong command, this should break the console
+    builder.append("blabla;\n"); // <- wrong command, this should break the console
     builder.append("update foo set surname = 'bar' where name = 'foo';\n");
-    ConsoleTest c = new ConsoleTest(new String[] { builder.toString() });
+    ConsoleTest c = new ConsoleTest(new String[] {builder.toString()});
     OConsoleDatabaseApp console = c.console();
 
     try {
@@ -71,7 +73,8 @@ public class OConsoleDatabaseAppTest {
 
       ODatabaseDocument db = console.getCurrentDatabase();
       try {
-        List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from foo where name = 'foo'"));
+        List<ODocument> result =
+            db.query(new OSQLSynchQuery<ODocument>("select from foo where name = 'foo'"));
         Assert.assertEquals(1, result.size());
         ODocument doc = result.get(0);
         Assert.assertNull(doc.field("surname"));
@@ -81,75 +84,19 @@ public class OConsoleDatabaseAppTest {
     } finally {
       console.close();
     }
-
-  }
-
-  @Test
-  public void testDisplayRawRecord() {
-    String dbUrl = "memory:OConsoleDatabaseAppTestDisplayRawRecord";
-
-    // builder.append("display raw record " + rid);
-
-    // OConsoleDatabaseApp console = new OConsoleDatabaseApp(new String[] { builder.toString() });
-    OConsoleDatabaseApp console = new OConsoleDatabaseApp(null);
-
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    PrintStream stream = new PrintStream(out);
-    console.setOutput(stream);
-    try {
-      console.createDatabase(dbUrl, null, null, null, null, null);
-      console.createClass("class foo");
-      console.insert("into foo set name = 'barbar'");
-
-      byte[] result = out.toByteArray();
-      out.close();
-      stream.close();
-      out = new ByteArrayOutputStream();
-      stream = new PrintStream(out);
-      console.setOutput(stream);
-      String resultString = new String(result);
-
-      String rid = resultString.substring(resultString.indexOf("#"), resultString.indexOf("{") ).trim();
-
-      console.set("maxBinaryDisplay", "10000");
-      try {
-        console.displayRawRecord(rid);
-      } catch (Exception e) {
-        OLogManager.instance().error(this, "testDisplayRawRecord - Result from console: " + resultString, e);
-        throw e;
-      }
-      result = out.toByteArray();
-      resultString = new String(result);
-
-//      System.out.println("RAW REC: " + resultString);
-      Assert.assertTrue(resultString.contains("Raw record content."));
-      if ("ORecordSerializerBinary".equals(((ODatabaseDocumentInternal) console.getCurrentDatabase()).getSerializer().toString())) {
-//        Assert.assertTrue(resultString.contains("class name: foo"));
-        Assert.assertTrue(resultString.contains("property value: barbar"));
-      }
-    } catch (IOException e) {
-      Assert.fail();
-    } finally {
-      try {
-        out.close();
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-      try {
-        stream.close();
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-      console.close();
-    }
-
   }
 
   @Test
   public void testDumpRecordDetails() {
     ConsoleTest c = new ConsoleTest();
     try {
-      c.console().createDatabase("memory:OConsoleDatabaseAppTestDumpRecordDetails", null, null, null, null, null);
+
+      c.console().executeServerCommand("connect env embedded:./target/ root root");
+      c.console()
+          .executeServerCommand(
+              "create database OConsoleDatabaseAppTestDumpRecordDetails memory users (admin identified by 'admin' role admin)");
+      c.console().open("OConsoleDatabaseAppTestDumpRecordDetails", "admin", "admin");
+
       c.console().createClass("class foo");
       c.console().insert("into foo set name = 'barbar'");
       c.console().select("from foo limit -1");
@@ -166,7 +113,6 @@ public class OConsoleDatabaseAppTest {
     } finally {
       c.shutdown();
     }
-
   }
 
   @Test
@@ -212,7 +158,13 @@ public class OConsoleDatabaseAppTest {
   public void testDeclareIntent() {
     ConsoleTest c = new ConsoleTest();
     try {
-      c.console().createDatabase("memory:OConsoleDatabaseAppTestDeclareIntent", null, null, null, null, null);
+
+      c.console().executeServerCommand("connect env embedded:./target/ root root");
+      c.console()
+          .executeServerCommand(
+              "create database OConsoleDatabaseAppTestDeclareIntent memory users (admin identified by 'admin' role admin)");
+      c.console().open("OConsoleDatabaseAppTestDeclareIntent", "admin", "admin");
+
       c.resetOutput();
       try {
         c.console().declareIntent("foobar");
@@ -242,9 +194,14 @@ public class OConsoleDatabaseAppTest {
 
   @Test
   public void testSimple() {
-    String dbUrl = "memory:" + testName.getMethodName();
     StringBuilder builder = new StringBuilder();
-    builder.append("create database " + dbUrl + ";\n");
+
+    builder.append("connect env embedded:./target/ root root;\n");
+    builder.append(
+        "create database "
+            + testName.getMethodName()
+            + " memory users (admin identified by 'admin' role admin);\n");
+    builder.append("open " + testName.getMethodName() + " admin admin;\n");
     builder.append("profile storage on;\n");
     builder.append("create class foo;\n");
     builder.append("config;\n");
@@ -277,21 +234,23 @@ public class OConsoleDatabaseAppTest {
 
     builder.append("traverse out() from V;\n");
 
-    builder.append("create edge from (select from V where name = 'foo') to (select from V where name = 'bar');\n");
+    builder.append(
+        "create edge from (select from V where name = 'foo') to (select from V where name = 'bar');\n");
 
     builder.append("traverse out() from V;\n");
 
     builder.append("profile storage off;\n");
 
     builder.append("repair database -v;\n");
-    ConsoleTest c = new ConsoleTest(new String[] { builder.toString() });
+    ConsoleTest c = new ConsoleTest(new String[] {builder.toString()});
     OConsoleDatabaseApp console = c.console();
 
     try {
       console.run();
 
       ODatabaseDocument db = console.getCurrentDatabase();
-      List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from foo where name = 'foo'"));
+      List<ODocument> result =
+          db.query(new OSQLSynchQuery<ODocument>("select from foo where name = 'foo'"));
       Assert.assertEquals(1, result.size());
       ODocument doc = result.get(0);
       Assert.assertEquals("bar", doc.field("surname"));
@@ -302,7 +261,6 @@ public class OConsoleDatabaseAppTest {
     } finally {
       console.close();
     }
-
   }
 
   @Test
@@ -343,18 +301,23 @@ public class OConsoleDatabaseAppTest {
 
     builder.append("traverse out() from V;\n");
 
-//    builder.append("create edge from (select from V where name = 'foo') to (select from V where name = 'bar');\n");
+    //    builder.append("create edge from (select from V where name = 'foo') to (select from V
+    // where name = 'bar');\n");
 
-    builder.append("create edge from \n" + "(select from V where name = 'foo') \n" + "to (select from V where name = 'bar');\n");
+    builder.append(
+        "create edge from \n"
+            + "(select from V where name = 'foo') \n"
+            + "to (select from V where name = 'bar');\n");
 
-    ConsoleTest c = new ConsoleTest(new String[] { builder.toString() });
+    ConsoleTest c = new ConsoleTest(new String[] {builder.toString()});
     OConsoleDatabaseApp console = c.console();
 
     try {
       console.run();
 
       ODatabaseDocument db = console.getCurrentDatabase();
-      List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from foo where name = 'foo'"));
+      List<ODocument> result =
+          db.query(new OSQLSynchQuery<ODocument>("select from foo where name = 'foo'"));
       Assert.assertEquals(1, result.size());
       ODocument doc = result.get(0);
       Assert.assertEquals("bar", doc.field("surname"));
@@ -365,33 +328,34 @@ public class OConsoleDatabaseAppTest {
     } finally {
       console.close();
     }
-
   }
 
   class ConsoleTest {
-    OConsoleDatabaseApp   console;
+    OConsoleDatabaseApp console;
     ByteArrayOutputStream out;
-    PrintStream           stream;
+    PrintStream stream;
 
     ConsoleTest() {
-      console = new OConsoleDatabaseApp(null) {
-        @Override
-        protected void onException(Throwable e) {
-          super.onException(e);
-          fail(e.getMessage());
-        }
-      };
+      console =
+          new OConsoleDatabaseApp(null) {
+            @Override
+            protected void onException(Throwable e) {
+              super.onException(e);
+              fail(e.getMessage());
+            }
+          };
       resetOutput();
     }
 
     ConsoleTest(String[] args) {
-      console = new OConsoleDatabaseApp(args) {
-        @Override
-        protected void onException(Throwable e) {
-          super.onException(e);
-          fail(e.getMessage());
-        }
-      };
+      console =
+          new OConsoleDatabaseApp(args) {
+            @Override
+            protected void onException(Throwable e) {
+              super.onException(e);
+              fail(e.getMessage());
+            }
+          };
       resetOutput();
     }
 
@@ -430,5 +394,4 @@ public class OConsoleDatabaseAppTest {
       console.close();
     }
   }
-
 }

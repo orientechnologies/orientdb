@@ -26,38 +26,33 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
-
 import java.util.stream.Stream;
 
 /**
- * Transactional wrapper for indexes. Stores changes locally to the transaction until tx.commit(). All the other operations are
- * delegated to the wrapped OIndex instance.
+ * Transactional wrapper for indexes. Stores changes locally to the transaction until tx.commit().
+ * All the other operations are delegated to the wrapped OIndex instance.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate {
-  private static final OAlwaysLessKey    ALWAYS_LESS_KEY    = new OAlwaysLessKey();
+  private static final OAlwaysLessKey ALWAYS_LESS_KEY = new OAlwaysLessKey();
   private static final OAlwaysGreaterKey ALWAYS_GREATER_KEY = new OAlwaysGreaterKey();
 
   protected ODatabaseDocumentInternal database;
 
   /**
-   * Indicates search behavior in case of {@link com.orientechnologies.orient.core.index.OCompositeKey} keys that have less amount
-   * of internal keys are used, whether lowest or highest partially matched key should be used. Such keys is allowed to use only in
+   * Indicates search behavior in case of {@link
+   * com.orientechnologies.orient.core.index.OCompositeKey} keys that have less amount of internal
+   * keys are used, whether lowest or highest partially matched key should be used. Such keys is
+   * allowed to use only in
    */
   public enum PartialSearchMode {
-    /**
-     * Any partially matched key will be used as search result.
-     */
+    /** Any partially matched key will be used as search result. */
     NONE,
-    /**
-     * The biggest partially matched key will be used as search result.
-     */
+    /** The biggest partially matched key will be used as search result. */
     HIGHEST_BOUNDARY,
 
-    /**
-     * The smallest partially matched key will be used as search result.
-     */
+    /** The smallest partially matched key will be used as search result. */
     LOWEST_BOUNDARY
   }
 
@@ -70,7 +65,8 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate {
   public long size() {
     long tot = delegate.size();
 
-    final OTransactionIndexChanges indexChanges = database.getMicroOrRegularTransaction().getIndexChanges(delegate.getName());
+    final OTransactionIndexChanges indexChanges =
+        database.getMicroOrRegularTransaction().getIndexChanges(delegate.getName());
     if (indexChanges != null) {
       try (Stream<ORawPair<Object, ORID>> stream = stream()) {
         return stream.count();
@@ -90,55 +86,63 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate {
         // EARLY SAVE IT
         ((ORecord) value).save();
       } else {
-        throw new IllegalArgumentException("Cannot store non persistent RID as index value for key '" + key + "'");
+        throw new IllegalArgumentException(
+            "Cannot store non persistent RID as index value for key '" + key + "'");
       }
 
     key = getCollatingValue(key);
 
-    database.getMicroOrRegularTransaction().addIndexEntry(delegate, super.getName(), OPERATION.PUT, key, value);
+    database
+        .getMicroOrRegularTransaction()
+        .addIndexEntry(delegate, super.getName(), OPERATION.PUT, key, value);
     return this;
   }
 
   @Override
   public boolean remove(Object key) {
     key = getCollatingValue(key);
-    database.getMicroOrRegularTransaction().addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, key, null);
+    database
+        .getMicroOrRegularTransaction()
+        .addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, key, null);
     return true;
   }
 
   @Override
   public boolean remove(Object key, final OIdentifiable rid) {
     key = getCollatingValue(key);
-    database.getMicroOrRegularTransaction().addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, key, rid);
+    database
+        .getMicroOrRegularTransaction()
+        .addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, key, rid);
     return true;
   }
 
   @SuppressWarnings("deprecation")
   @Override
   public OIndexTxAware<T> clear() {
-    database.getMicroOrRegularTransaction().addIndexEntry(delegate, super.getName(), OPERATION.CLEAR, null, null);
+    database
+        .getMicroOrRegularTransaction()
+        .addIndexEntry(delegate, super.getName(), OPERATION.CLEAR, null, null);
     return this;
   }
 
   private Object enhanceCompositeKey(Object key, PartialSearchMode partialSearchMode) {
-    if (!(key instanceof OCompositeKey))
-      return key;
+    if (!(key instanceof OCompositeKey)) return key;
 
     final OCompositeKey compositeKey = (OCompositeKey) key;
     final int keySize = getDefinition().getParamCount();
 
-    if (!(keySize == 1 || compositeKey.getKeys().size() == keySize || partialSearchMode.equals(PartialSearchMode.NONE))) {
+    if (!(keySize == 1
+        || compositeKey.getKeys().size() == keySize
+        || partialSearchMode.equals(PartialSearchMode.NONE))) {
       final OCompositeKey fullKey = new OCompositeKey(compositeKey);
       int itemsToAdd = keySize - fullKey.getKeys().size();
 
       final Comparable<?> keyItem;
       if (partialSearchMode.equals(PartialSearchMode.HIGHEST_BOUNDARY))
         keyItem = ALWAYS_GREATER_KEY;
-      else
-        keyItem = ALWAYS_LESS_KEY;
+      else keyItem = ALWAYS_LESS_KEY;
 
-      for (int i = 0; i < itemsToAdd; i++)
-        fullKey.addKey(keyItem);
+      for (int i = 0; i < itemsToAdd; i++) fullKey.addKey(keyItem);
 
       return fullKey;
     }
@@ -148,10 +152,8 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate {
 
   protected Object enhanceToCompositeKeyBetweenAsc(Object keyTo, boolean toInclusive) {
     PartialSearchMode partialSearchModeTo;
-    if (toInclusive)
-      partialSearchModeTo = PartialSearchMode.HIGHEST_BOUNDARY;
-    else
-      partialSearchModeTo = PartialSearchMode.LOWEST_BOUNDARY;
+    if (toInclusive) partialSearchModeTo = PartialSearchMode.HIGHEST_BOUNDARY;
+    else partialSearchModeTo = PartialSearchMode.LOWEST_BOUNDARY;
 
     keyTo = enhanceCompositeKey(keyTo, partialSearchModeTo);
     return keyTo;
@@ -159,10 +161,8 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate {
 
   protected Object enhanceFromCompositeKeyBetweenAsc(Object keyFrom, boolean fromInclusive) {
     PartialSearchMode partialSearchModeFrom;
-    if (fromInclusive)
-      partialSearchModeFrom = PartialSearchMode.LOWEST_BOUNDARY;
-    else
-      partialSearchModeFrom = PartialSearchMode.HIGHEST_BOUNDARY;
+    if (fromInclusive) partialSearchModeFrom = PartialSearchMode.LOWEST_BOUNDARY;
+    else partialSearchModeFrom = PartialSearchMode.HIGHEST_BOUNDARY;
 
     keyFrom = enhanceCompositeKey(keyFrom, partialSearchModeFrom);
     return keyFrom;
@@ -170,10 +170,8 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate {
 
   protected Object enhanceToCompositeKeyBetweenDesc(Object keyTo, boolean toInclusive) {
     PartialSearchMode partialSearchModeTo;
-    if (toInclusive)
-      partialSearchModeTo = PartialSearchMode.HIGHEST_BOUNDARY;
-    else
-      partialSearchModeTo = PartialSearchMode.LOWEST_BOUNDARY;
+    if (toInclusive) partialSearchModeTo = PartialSearchMode.HIGHEST_BOUNDARY;
+    else partialSearchModeTo = PartialSearchMode.LOWEST_BOUNDARY;
 
     keyTo = enhanceCompositeKey(keyTo, partialSearchModeTo);
     return keyTo;
@@ -181,10 +179,8 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate {
 
   protected Object enhanceFromCompositeKeyBetweenDesc(Object keyFrom, boolean fromInclusive) {
     PartialSearchMode partialSearchModeFrom;
-    if (fromInclusive)
-      partialSearchModeFrom = PartialSearchMode.LOWEST_BOUNDARY;
-    else
-      partialSearchModeFrom = PartialSearchMode.HIGHEST_BOUNDARY;
+    if (fromInclusive) partialSearchModeFrom = PartialSearchMode.LOWEST_BOUNDARY;
+    else partialSearchModeFrom = PartialSearchMode.HIGHEST_BOUNDARY;
 
     keyFrom = enhanceCompositeKey(keyFrom, partialSearchModeFrom);
     return keyFrom;

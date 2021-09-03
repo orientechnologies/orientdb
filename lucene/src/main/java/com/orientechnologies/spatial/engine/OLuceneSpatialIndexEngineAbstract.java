@@ -24,9 +24,12 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.spatial.factory.OSpatialStrategyFactory;
 import com.orientechnologies.spatial.shape.OShapeBuilder;
 import com.orientechnologies.spatial.strategy.SpatialQueryBuilder;
+import java.io.IOException;
+import java.util.stream.Stream;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
@@ -40,22 +43,19 @@ import org.apache.lucene.store.Directory;
 import org.locationtech.spatial4j.context.SpatialContext;
 import org.locationtech.spatial4j.shape.Shape;
 
-import java.io.IOException;
-import java.util.stream.Stream;
+/** Created by Enrico Risa on 26/09/15. */
+public abstract class OLuceneSpatialIndexEngineAbstract extends OLuceneIndexEngineAbstract
+    implements OLuceneSpatialIndexContainer {
 
-/**
- * Created by Enrico Risa on 26/09/15.
- */
-public abstract class OLuceneSpatialIndexEngineAbstract extends OLuceneIndexEngineAbstract implements OLuceneSpatialIndexContainer {
-
-  protected final OShapeBuilder   factory;
-  protected       SpatialContext  ctx;
-  protected       SpatialStrategy strategy;
+  protected final OShapeBuilder factory;
+  protected SpatialContext ctx;
+  protected SpatialStrategy strategy;
 
   protected OSpatialStrategyFactory strategyFactory;
-  protected SpatialQueryBuilder     queryStrategy;
+  protected SpatialQueryBuilder queryStrategy;
 
-  public OLuceneSpatialIndexEngineAbstract(OStorage storage, String indexName, int id, OShapeBuilder factory) {
+  public OLuceneSpatialIndexEngineAbstract(
+      OStorage storage, String indexName, int id, OShapeBuilder factory) {
     super(id, storage, indexName);
     this.ctx = factory.context();
     this.factory = factory;
@@ -64,13 +64,19 @@ public abstract class OLuceneSpatialIndexEngineAbstract extends OLuceneIndexEngi
   }
 
   @Override
-  public void init(String indexName, String indexType, OIndexDefinition indexDefinition, boolean isAutomatic, ODocument metadata) {
+  public void init(
+      String indexName,
+      String indexType,
+      OIndexDefinition indexDefinition,
+      boolean isAutomatic,
+      ODocument metadata) {
     super.init(indexName, indexType, indexDefinition, isAutomatic, metadata);
 
     strategy = createSpatialStrategy(indexDefinition, metadata);
   }
 
-  protected abstract SpatialStrategy createSpatialStrategy(OIndexDefinition indexDefinition, ODocument metadata);
+  protected abstract SpatialStrategy createSpatialStrategy(
+      OIndexDefinition indexDefinition, ODocument metadata);
 
   @Override
   public IndexWriter createIndexWriter(Directory directory) throws IOException {
@@ -82,25 +88,30 @@ public abstract class OLuceneSpatialIndexEngineAbstract extends OLuceneIndexEngi
   }
 
   @Override
-  public boolean remove(Object key) {
+  public boolean remove(OAtomicOperation atomicOperation, Object key) {
     return false;
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo,
-      boolean toInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
-    return null;
-  }
-
-  @Override
-  public Stream<ORawPair<Object, ORID>> iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
+  public Stream<ORawPair<Object, ORID>> iterateEntriesBetween(
+      Object rangeFrom,
+      boolean fromInclusive,
+      Object rangeTo,
+      boolean toInclusive,
+      boolean ascSortOrder,
       ValuesTransformer transformer) {
     return null;
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder,
-      ValuesTransformer transformer) {
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMajor(
+      Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+    return null;
+  }
+
+  @Override
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMinor(
+      Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
     return null;
   }
 
@@ -127,7 +138,8 @@ public abstract class OLuceneSpatialIndexEngineAbstract extends OLuceneIndexEngi
 
     Document doc = new Document();
 
-    doc.add(OLuceneIndexType.createField(RID, oIdentifiable.getIdentity().toString(), Field.Store.YES));
+    doc.add(
+        OLuceneIndexType.createField(RID, oIdentifiable.getIdentity().toString(), Field.Store.YES));
 
     for (IndexableField f : strategy.createIndexableFields(shape)) {
       doc.add(f);
@@ -152,5 +164,4 @@ public abstract class OLuceneSpatialIndexEngineAbstract extends OLuceneIndexEngi
   public SpatialStrategy strategy() {
     return strategy;
   }
-
 }

@@ -9,8 +9,12 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class OArraySingleValuesSelector extends SimpleNode {
@@ -61,7 +65,7 @@ public class OArraySingleValuesSelector extends SimpleNode {
         }
       }
       if (this.items.size() == 1 && result.size() == 1) {
-//      if (this.items.size() == 1) {
+        //      if (this.items.size() == 1) {
         return result.get(0);
       }
     }
@@ -93,7 +97,7 @@ public class OArraySingleValuesSelector extends SimpleNode {
         }
       }
       if (this.items.size() == 1 && result.size() == 1) {
-//      if (this.items.size() == 1) {
+        //      if (this.items.size() == 1) {
         return result.get(0);
       }
     }
@@ -136,15 +140,12 @@ public class OArraySingleValuesSelector extends SimpleNode {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OArraySingleValuesSelector that = (OArraySingleValuesSelector) o;
 
-    if (items != null ? !items.equals(that.items) : that.items != null)
-      return false;
+    if (items != null ? !items.equals(that.items) : that.items != null) return false;
 
     return true;
   }
@@ -181,11 +182,15 @@ public class OArraySingleValuesSelector extends SimpleNode {
     }
   }
 
-  public void applyRemove(Object currentValue, OResultInternal originalRecord, OCommandContext ctx) {
+  public void applyRemove(
+      Object currentValue, OResultInternal originalRecord, OCommandContext ctx) {
     if (currentValue == null) {
       return;
     }
-    List values = this.items.stream().map(x -> x.getValue(originalRecord, null, ctx)).collect(Collectors.toList());
+    List values =
+        this.items.stream()
+            .map(x -> x.getValue(originalRecord, null, ctx))
+            .collect(Collectors.toList());
     if (currentValue instanceof List) {
       List<Object> list = (List) currentValue;
       Collections.sort(values, this::compareKeysForRemoval);
@@ -216,9 +221,12 @@ public class OArraySingleValuesSelector extends SimpleNode {
       }
     } else {
       throw new OCommandExecutionException(
-          "Trying to remove elements from " + currentValue + " (" + currentValue.getClass().getSimpleName() + ")");
+          "Trying to remove elements from "
+              + currentValue
+              + " ("
+              + currentValue.getClass().getSimpleName()
+              + ")");
     }
-
   }
 
   private int compareKeysForRemoval(Object o1, Object o2) {
@@ -238,7 +246,8 @@ public class OArraySingleValuesSelector extends SimpleNode {
   public OResult serialize() {
     OResultInternal result = new OResultInternal();
     if (items != null) {
-      result.setProperty("items", items.stream().map(x -> x.serialize()).collect(Collectors.toList()));
+      result.setProperty(
+          "items", items.stream().map(x -> x.serialize()).collect(Collectors.toList()));
     }
     return result;
   }

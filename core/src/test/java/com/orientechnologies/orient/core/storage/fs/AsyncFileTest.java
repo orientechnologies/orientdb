@@ -2,11 +2,6 @@ package com.orientechnologies.orient.core.storage.fs;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.util.ORawPair;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
 import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -15,6 +10,10 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 public class AsyncFileTest {
   private static Path buildDirectoryPath;
@@ -22,8 +21,7 @@ public class AsyncFileTest {
   @BeforeClass
   public static void beforeClass() {
     String buildDirectory = System.getProperty("buildDirectory");
-    if (buildDirectory == null || buildDirectory.isEmpty())
-      buildDirectory = ".";
+    if (buildDirectory == null || buildDirectory.isEmpty()) buildDirectory = ".";
 
     buildDirectory += File.separator + "localPaginatedClusterTestV2";
     buildDirectoryPath = Paths.get(buildDirectory);
@@ -36,7 +34,7 @@ public class AsyncFileTest {
 
   @Test
   public void testWrite() throws Exception {
-    final AsyncFile file = new AsyncFile(buildDirectoryPath);
+    final AsyncFile file = new AsyncFile(buildDirectoryPath, 1);
     file.create();
 
     file.allocateSpace(128);
@@ -61,7 +59,7 @@ public class AsyncFileTest {
 
   @Test
   public void testOpenWrite() throws Exception {
-    AsyncFile file = new AsyncFile(buildDirectoryPath);
+    AsyncFile file = new AsyncFile(buildDirectoryPath, 1);
     file.create();
 
     file.allocateSpace(128);
@@ -89,7 +87,7 @@ public class AsyncFileTest {
 
   @Test
   public void testWriteSeveralChunks() throws Exception {
-    AsyncFile file = new AsyncFile(buildDirectoryPath);
+    AsyncFile file = new AsyncFile(buildDirectoryPath, 1);
     file.create();
 
     final long position1 = file.allocateSpace(128);
@@ -136,7 +134,7 @@ public class AsyncFileTest {
 
   @Test
   public void testOpenWriteSeveralChunks() throws Exception {
-    AsyncFile file = new AsyncFile(buildDirectoryPath);
+    AsyncFile file = new AsyncFile(buildDirectoryPath, 1);
     file.create();
 
     final long position1 = file.allocateSpace(128);
@@ -181,7 +179,7 @@ public class AsyncFileTest {
 
   @Test
   public void testOpenWriteSeveralChunksTwo() throws Exception {
-    AsyncFile file = new AsyncFile(buildDirectoryPath);
+    AsyncFile file = new AsyncFile(buildDirectoryPath, 1);
     file.create();
 
     final long position1 = file.allocateSpace(128);
@@ -225,7 +223,7 @@ public class AsyncFileTest {
 
   @Test
   public void testOpenWriteSeveralChunksThree() throws Exception {
-    AsyncFile file = new AsyncFile(buildDirectoryPath);
+    AsyncFile file = new AsyncFile(buildDirectoryPath, 1);
     file.create();
 
     final long position1 = file.allocateSpace(128 * 1024);
@@ -274,7 +272,7 @@ public class AsyncFileTest {
 
   @Test
   public void testOpenClose() throws Exception {
-    AsyncFile file = new AsyncFile(buildDirectoryPath);
+    AsyncFile file = new AsyncFile(buildDirectoryPath, 1);
     Assert.assertFalse(file.isOpen());
 
     file.create();

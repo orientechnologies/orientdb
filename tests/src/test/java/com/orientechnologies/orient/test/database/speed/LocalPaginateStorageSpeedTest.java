@@ -11,15 +11,14 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
-import org.testng.annotations.Test;
-
 import java.util.Date;
+import org.testng.annotations.Test;
 
 public class LocalPaginateStorageSpeedTest extends OrientMonoThreadTest {
   private ODatabaseDocumentInternal database;
-  private ODocument                 record;
-  private Date                      date = new Date();
-  private byte[]                    content;
+  private ODocument record;
+  private Date date = new Date();
+  private byte[] content;
   private OAbstractPaginatedStorage storage;
 
   public LocalPaginateStorageSpeedTest() throws InstantiationException, IllegalAccessException {
@@ -76,9 +75,7 @@ public class LocalPaginateStorageSpeedTest extends OrientMonoThreadTest {
   public void deinit() {
     System.out.println(Orient.instance().getProfiler().dump());
 
-    if (database != null)
-      database.close();
+    if (database != null) database.close();
     super.deinit();
   }
-
 }

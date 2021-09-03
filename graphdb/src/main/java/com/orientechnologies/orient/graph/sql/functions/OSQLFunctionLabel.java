@@ -35,10 +35,10 @@ import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 /**
- * Hi-level function that return the label for both edges and vertices. The label could be bound to the class name.
- * 
+ * Hi-level function that return the label for both edges and vertices. The label could be bound to
+ * the class name.
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public class OSQLFunctionLabel extends OSQLFunctionConfigurableAbstract {
   public static final String NAME = "label";
@@ -47,23 +47,30 @@ public class OSQLFunctionLabel extends OSQLFunctionConfigurableAbstract {
     super(NAME, 0, 0);
   }
 
-  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult, final Object[] iParameters,
+  public Object execute(
+      Object iThis,
+      final OIdentifiable iCurrentRecord,
+      final Object iCurrentResult,
+      final Object[] iParameters,
       final OCommandContext iContext) {
 
-    return OGraphCommandExecutorSQLFactory.runWithAnyGraph(new OGraphCommandExecutorSQLFactory.GraphCallBack<Object>() {
-      @Override
-      public Object call(final OrientBaseGraph graph) {
-        if (iCurrentResult != null) {
-          return OSQLEngine.foreachRecord(new OCallable<Object, OIdentifiable>() {
-            @Override
-            public Object call(final OIdentifiable iArgument) {
-              return getLabel(graph, iArgument);
-            }
-          }, iCurrentResult, iContext);
-        } else
-          return getLabel(graph, iCurrentRecord);
-      }
-    });
+    return OGraphCommandExecutorSQLFactory.runWithAnyGraph(
+        new OGraphCommandExecutorSQLFactory.GraphCallBack<Object>() {
+          @Override
+          public Object call(final OrientBaseGraph graph) {
+            if (iCurrentResult != null) {
+              return OSQLEngine.foreachRecord(
+                  new OCallable<Object, OIdentifiable>() {
+                    @Override
+                    public Object call(final OIdentifiable iArgument) {
+                      return getLabel(graph, iArgument);
+                    }
+                  },
+                  iCurrentResult,
+                  iContext);
+            } else return getLabel(graph, iCurrentRecord);
+          }
+        });
   }
 
   private Object getLabel(final OrientBaseGraph graph, final OIdentifiable iCurrentRecord) {
@@ -85,7 +92,8 @@ public class OSQLFunctionLabel extends OSQLFunctionConfigurableAbstract {
       return edge.getLabel();
 
     } else
-      throw new OCommandExecutionException("Invalid record: is neither a vertex nor an edge. Found class: " + klass);
+      throw new OCommandExecutionException(
+          "Invalid record: is neither a vertex nor an edge. Found class: " + klass);
   }
 
   public String getSyntax() {

@@ -8,8 +8,12 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class ORightBinaryCondition extends SimpleNode {
 
@@ -103,7 +107,8 @@ public class ORightBinaryCondition extends SimpleNode {
     return result;
   }
 
-  private boolean matchesFilters(OIdentifiable iCurrentRecord, Object element, OCommandContext ctx) {
+  private boolean matchesFilters(
+      OIdentifiable iCurrentRecord, Object element, OCommandContext ctx) {
     if (operator != null) {
       operator.execute(element, right.execute(iCurrentRecord, ctx));
     } else if (inOperator != null) {
@@ -179,7 +184,9 @@ public class ORightBinaryCondition extends SimpleNode {
 
   public void deserialize(OResult fromResult) {
     try {
-      operator = (OBinaryCompareOperator) Class.forName(String.valueOf(fromResult.getProperty("operator"))).newInstance();
+      operator =
+          (OBinaryCompareOperator)
+              Class.forName(String.valueOf(fromResult.getProperty("operator"))).newInstance();
     } catch (Exception e) {
       throw OException.wrapException(new OCommandExecutionException(""), e);
     }

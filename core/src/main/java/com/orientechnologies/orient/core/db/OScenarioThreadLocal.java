@@ -21,7 +21,6 @@ package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
-
 import java.util.concurrent.Callable;
 
 /**
@@ -33,7 +32,8 @@ public class OScenarioThreadLocal extends ThreadLocal<OScenarioThreadLocal.RunCo
   public static volatile OScenarioThreadLocal INSTANCE = new OScenarioThreadLocal();
 
   public enum RUN_MODE {
-    DEFAULT, RUNNING_DISTRIBUTED
+    DEFAULT,
+    RUNNING_DISTRIBUTED
   }
 
   public static class RunContext {
@@ -41,18 +41,19 @@ public class OScenarioThreadLocal extends ThreadLocal<OScenarioThreadLocal.RunCo
   }
 
   static {
-    Orient.instance().registerListener(new OOrientListenerAbstract() {
-      @Override
-      public void onStartup() {
-        if (INSTANCE == null)
-          INSTANCE = new OScenarioThreadLocal();
-      }
+    Orient.instance()
+        .registerListener(
+            new OOrientListenerAbstract() {
+              @Override
+              public void onStartup() {
+                if (INSTANCE == null) INSTANCE = new OScenarioThreadLocal();
+              }
 
-      @Override
-      public void onShutdown() {
-        INSTANCE = null;
-      }
-    });
+              @Override
+              public void onShutdown() {
+                INSTANCE = null;
+              }
+            });
   }
 
   public OScenarioThreadLocal() {
@@ -60,7 +61,8 @@ public class OScenarioThreadLocal extends ThreadLocal<OScenarioThreadLocal.RunCo
   }
 
   public static <T> Object executeAsDefault(final Callable<T> iCallback) {
-    final OScenarioThreadLocal.RUN_MODE currentDistributedMode = OScenarioThreadLocal.INSTANCE.getRunMode();
+    final OScenarioThreadLocal.RUN_MODE currentDistributedMode =
+        OScenarioThreadLocal.INSTANCE.getRunMode();
     if (currentDistributedMode == OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED)
       // ASSURE SCHEMA CHANGES ARE NEVER PROPAGATED ON CLUSTER
       OScenarioThreadLocal.INSTANCE.setRunMode(RUN_MODE.DEFAULT);
@@ -79,7 +81,8 @@ public class OScenarioThreadLocal extends ThreadLocal<OScenarioThreadLocal.RunCo
   }
 
   public static Object executeAsDistributed(final Callable<? extends Object> iCallback) {
-    final OScenarioThreadLocal.RUN_MODE currentDistributedMode = OScenarioThreadLocal.INSTANCE.getRunMode();
+    final OScenarioThreadLocal.RUN_MODE currentDistributedMode =
+        OScenarioThreadLocal.INSTANCE.getRunMode();
     if (currentDistributedMode != OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED)
       // ASSURE SCHEMA CHANGES ARE NEVER PROPAGATED ON CLUSTER
       OScenarioThreadLocal.INSTANCE.setRunMode(OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED);

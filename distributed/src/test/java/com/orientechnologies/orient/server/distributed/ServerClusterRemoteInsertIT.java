@@ -15,10 +15,5 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import org.junit.Test;
-
-/**
- * Insert records concurrently against the cluster using "remote" protocol.
- */
-public class ServerClusterRemoteInsertIT extends AbstractServerClusterInsertTest {
-}
+/** Insert records concurrently against the cluster using "remote" protocol. */
+public class ServerClusterRemoteInsertIT extends AbstractServerClusterInsertTest {}

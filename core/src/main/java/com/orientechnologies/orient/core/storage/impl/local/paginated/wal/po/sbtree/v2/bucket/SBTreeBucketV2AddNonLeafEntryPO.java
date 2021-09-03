@@ -6,12 +6,11 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.sbtree.local.v2.OSBTreeBucketV2;
-
 import java.nio.ByteBuffer;
 
 public final class SBTreeBucketV2AddNonLeafEntryPO extends PageOperationRecord {
-  private int     index;
-  private byte[]  key;
+  private int index;
+  private byte[] key;
   private boolean updateNeighbours;
 
   private int leftChild;
@@ -19,10 +18,14 @@ public final class SBTreeBucketV2AddNonLeafEntryPO extends PageOperationRecord {
 
   private int prevChild;
 
-  public SBTreeBucketV2AddNonLeafEntryPO() {
-  }
+  public SBTreeBucketV2AddNonLeafEntryPO() {}
 
-  public SBTreeBucketV2AddNonLeafEntryPO(int index, byte[] key, boolean updateNeighbours, int leftChild, int rightChild,
+  public SBTreeBucketV2AddNonLeafEntryPO(
+      int index,
+      byte[] key,
+      boolean updateNeighbours,
+      int leftChild,
+      int rightChild,
       int prevChild) {
     this.index = index;
     this.key = key;
@@ -59,7 +62,8 @@ public final class SBTreeBucketV2AddNonLeafEntryPO extends PageOperationRecord {
   @Override
   public void redo(OCacheEntry cacheEntry) {
     final OSBTreeBucketV2 bucket = new OSBTreeBucketV2(cacheEntry);
-    final boolean added = bucket.addNonLeafEntry(index, key, leftChild, rightChild, updateNeighbours);
+    final boolean added =
+        bucket.addNonLeafEntry(index, key, leftChild, rightChild, updateNeighbours);
     if (!added) {
       throw new IllegalStateException("Can not redo operation of addition of non leaf entry.");
     }
@@ -78,7 +82,10 @@ public final class SBTreeBucketV2AddNonLeafEntryPO extends PageOperationRecord {
 
   @Override
   public int serializedSize() {
-    return super.serializedSize() + 5 * OIntegerSerializer.INT_SIZE + key.length + OByteSerializer.BYTE_SIZE;
+    return super.serializedSize()
+        + 5 * OIntegerSerializer.INT_SIZE
+        + key.length
+        + OByteSerializer.BYTE_SIZE;
   }
 
   @Override

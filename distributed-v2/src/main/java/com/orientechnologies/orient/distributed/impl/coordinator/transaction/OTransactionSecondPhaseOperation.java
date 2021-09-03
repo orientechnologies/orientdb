@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.distributed.impl.coordinator.transaction;
 
+import static com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory.TRANSACTION_SECOND_PHASE_REQUEST;
+
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
@@ -11,7 +13,6 @@ import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedExe
 import com.orientechnologies.orient.distributed.impl.coordinator.ONodeRequest;
 import com.orientechnologies.orient.distributed.impl.coordinator.ONodeResponse;
 import com.orientechnologies.orient.distributed.impl.log.OLogId;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -20,31 +21,34 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import static com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory.TRANSACTION_SECOND_PHASE_REQUEST;
-
 public class OTransactionSecondPhaseOperation implements ONodeRequest {
-  private OSessionOperationId           operationId;
+  private OSessionOperationId operationId;
   private List<ORecordOperationRequest> operations;
-  private List<OIndexOperationRequest>  indexes;
-  private boolean                       success;
+  private List<OIndexOperationRequest> indexes;
+  private boolean success;
 
-  public OTransactionSecondPhaseOperation(OSessionOperationId operationId, List<ORecordOperationRequest> operations,
-      List<OIndexOperationRequest> indexes, boolean success) {
+  public OTransactionSecondPhaseOperation(
+      OSessionOperationId operationId,
+      List<ORecordOperationRequest> operations,
+      List<OIndexOperationRequest> indexes,
+      boolean success) {
     this.operationId = operationId;
     this.operations = operations;
     this.indexes = indexes;
     this.success = success;
   }
 
-  public OTransactionSecondPhaseOperation() {
-
-  }
+  public OTransactionSecondPhaseOperation() {}
 
   @Override
-  public ONodeResponse execute(ONodeIdentity nodeFrom, OLogId opId, ODistributedExecutor executor,
+  public ONodeResponse execute(
+      ONodeIdentity nodeFrom,
+      OLogId opId,
+      ODistributedExecutor executor,
       ODatabaseDocumentInternal session) {
-    OTransactionOptimisticDistributed tx = ((ODatabaseDocumentDistributed) session)
-        .txSecondPhase(operationId, operations, indexes, success);
+    OTransactionOptimisticDistributed tx =
+        ((ODatabaseDocumentDistributed) session)
+            .txSecondPhase(operationId, operations, indexes, success);
 
     List<OCreatedRecordResponse> createdRecords = new ArrayList<>(tx.getCreatedRecords().size());
     List<OUpdatedRecordResponse> updatedRecords = new ArrayList<>(tx.getUpdatedRecords().size());
@@ -52,11 +56,13 @@ public class OTransactionSecondPhaseOperation implements ONodeRequest {
     if (tx != null) {
       for (Map.Entry<ORID, ORecord> entry : tx.getCreatedRecords().entrySet()) {
         ORecord record = entry.getValue();
-        createdRecords.add(new OCreatedRecordResponse(entry.getKey(), record.getIdentity(), record.getVersion()));
+        createdRecords.add(
+            new OCreatedRecordResponse(entry.getKey(), record.getIdentity(), record.getVersion()));
       }
 
       for (Map.Entry<ORID, ORecord> entry : tx.getUpdatedRecords().entrySet()) {
-        updatedRecords.add(new OUpdatedRecordResponse(entry.getKey(), entry.getValue().getVersion()));
+        updatedRecords.add(
+            new OUpdatedRecordResponse(entry.getKey(), entry.getValue().getVersion()));
       }
 
       for (ORID id : tx.getDeletedRecord()) {
@@ -64,15 +70,14 @@ public class OTransactionSecondPhaseOperation implements ONodeRequest {
       }
     }
 
-    return new OTransactionSecondPhaseResponse(true, createdRecords, updatedRecords, deletedRecords);
+    return new OTransactionSecondPhaseResponse(
+        true, createdRecords, updatedRecords, deletedRecords);
   }
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
     OTransactionSecondPhaseOperation that = (OTransactionSecondPhaseOperation) o;
     return success == that.success;
   }
@@ -117,7 +122,6 @@ public class OTransactionSecondPhaseOperation implements ONodeRequest {
       change.deserialize(input);
       indexes.add(change);
     }
-
   }
 
   @Override

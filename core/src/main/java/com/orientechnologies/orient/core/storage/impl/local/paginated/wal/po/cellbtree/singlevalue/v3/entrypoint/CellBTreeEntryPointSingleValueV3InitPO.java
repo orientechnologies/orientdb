@@ -8,13 +8,13 @@ import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v3.Cel
 public final class CellBTreeEntryPointSingleValueV3InitPO extends PageOperationRecord {
   @Override
   public void redo(OCacheEntry cacheEntry) {
-    final CellBTreeSingleValueEntryPointV3 bucket = new CellBTreeSingleValueEntryPointV3(cacheEntry);
+    final CellBTreeSingleValueEntryPointV3 bucket =
+        new CellBTreeSingleValueEntryPointV3(cacheEntry);
     bucket.init();
   }
 
   @Override
-  public void undo(OCacheEntry cacheEntry) {
-  }
+  public void undo(OCacheEntry cacheEntry) {}
 
   @Override
   public int getId() {

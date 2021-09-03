@@ -1,23 +1,26 @@
 package com.orientechnologies.orient.client.remote.message.tx;
 
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.ORecord;
 
 public class ORecordOperation38Response {
-  private byte    type;
-  private byte    recordType;
-  private ORID    id;
-  private ORID    oldId;
-  private byte[]  record;
-  private byte[]  original;
-  private int     version;
+  private byte type;
+  private byte recordType;
+  private ORID id;
+  private ORID oldId;
+  private byte[] record;
+  private byte[] original;
+  private int version;
   private boolean contentChanged;
 
-  public ORecordOperation38Response() {
-  }
+  public ORecordOperation38Response() {}
 
-  public ORecordOperation38Response(byte type, byte recordType, ORID id, ORID oldId, byte[] record, int version,
+  public ORecordOperation38Response(
+      byte type,
+      byte recordType,
+      ORID id,
+      ORID oldId,
+      byte[] record,
+      int version,
       boolean contentChanged) {
     this.type = type;
     this.recordType = recordType;
@@ -91,5 +94,4 @@ public class ORecordOperation38Response {
   public boolean isContentChanged() {
     return contentChanged;
   }
-
 }

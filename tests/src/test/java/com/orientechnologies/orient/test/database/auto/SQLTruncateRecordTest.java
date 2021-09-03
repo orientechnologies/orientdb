@@ -20,13 +20,12 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import java.util.List;
+import java.util.Set;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
-
-import java.util.List;
-import java.util.Set;
 
 @Test(groups = "sql-delete")
 public class SQLTruncateRecordTest extends DocumentDBBaseTest {
@@ -41,15 +40,23 @@ public class SQLTruncateRecordTest extends DocumentDBBaseTest {
     if (!database.getMetadata().getSchema().existsClass("Profile"))
       database.command(new OCommandSQL("create class Profile")).execute();
 
-    database.command(new OCommandSQL("insert into Profile (sex, salary) values ('female', 2100)")).execute();
+    database
+        .command(new OCommandSQL("insert into Profile (sex, salary) values ('female', 2100)"))
+        .execute();
 
     final Long total = database.countClass("Profile");
 
-    final List<ODocument> resultset = database
-        .query(new OSQLSynchQuery<Object>("select from Profile where sex = 'female' and salary = 2100"));
+    final List<ODocument> resultset =
+        database.query(
+            new OSQLSynchQuery<Object>(
+                "select from Profile where sex = 'female' and salary = 2100"));
 
-    final Number records = (Number) database.command(new OCommandSQL("truncate record [" + resultset.get(0).getIdentity() + "]"))
-        .execute();
+    final Number records =
+        (Number)
+            database
+                .command(
+                    new OCommandSQL("truncate record [" + resultset.get(0).getIdentity() + "]"))
+                .execute();
 
     Assert.assertEquals(records.intValue(), 1);
 
@@ -68,8 +75,15 @@ public class SQLTruncateRecordTest extends DocumentDBBaseTest {
     if (!database.getMetadata().getSchema().existsClass("Person"))
       database.command(new OCommandSQL("create class Profile")).execute();
 
-    final Number records = (Number) database
-        .command(new OCommandSQL("truncate record [ #" + database.getClusterIdByName("Profile") + ":99999999 ]")).execute();
+    final Number records =
+        (Number)
+            database
+                .command(
+                    new OCommandSQL(
+                        "truncate record [ #"
+                            + database.getClusterIdByName("Profile")
+                            + ":99999999 ]"))
+                .execute();
 
     Assert.assertEquals(records.intValue(), 0);
   }

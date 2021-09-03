@@ -8,7 +8,6 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.sbtree.local.v1.OSBTreeBucketV1;
-
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,15 +15,18 @@ import java.util.List;
 public final class SBTreeBucketV1AddAllPO extends PageOperationRecord {
   private int prevSize;
 
-  private List<byte[]>      rawRecords;
-  private boolean           isEncrypted;
+  private List<byte[]> rawRecords;
+  private boolean isEncrypted;
   private OBinarySerializer keySerializer;
   private OBinarySerializer valueSerializer;
 
-  public SBTreeBucketV1AddAllPO() {
-  }
+  public SBTreeBucketV1AddAllPO() {}
 
-  public SBTreeBucketV1AddAllPO(int prevSize, List<byte[]> rawRecords, boolean isEncrypted, OBinarySerializer keySerializer,
+  public SBTreeBucketV1AddAllPO(
+      int prevSize,
+      List<byte[]> rawRecords,
+      boolean isEncrypted,
+      OBinarySerializer keySerializer,
       OBinarySerializer valueSerializer) {
     this.prevSize = prevSize;
     this.rawRecords = rawRecords;
@@ -75,7 +77,9 @@ public final class SBTreeBucketV1AddAllPO extends PageOperationRecord {
   @Override
   public int serializedSize() {
     int serializedSize =
-        3 * OByteSerializer.BYTE_SIZE + 2 * OIntegerSerializer.INT_SIZE + OIntegerSerializer.INT_SIZE * rawRecords.size();
+        3 * OByteSerializer.BYTE_SIZE
+            + 2 * OIntegerSerializer.INT_SIZE
+            + OIntegerSerializer.INT_SIZE * rawRecords.size();
     for (final byte[] record : rawRecords) {
       serializedSize += record.length;
     }

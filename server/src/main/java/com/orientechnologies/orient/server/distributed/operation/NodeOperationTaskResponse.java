@@ -1,13 +1,19 @@
 package com.orientechnologies.orient.server.distributed.operation;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 public class NodeOperationTaskResponse implements Externalizable {
-  private int                   messageId;
+  private int messageId;
   private NodeOperationResponse response;
 
-  public NodeOperationTaskResponse() {
-  }
+  public NodeOperationTaskResponse() {}
 
   public NodeOperationTaskResponse(int messageId, NodeOperationResponse response) {
     this.messageId = messageId;

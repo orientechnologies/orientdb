@@ -9,15 +9,12 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
-
 import java.io.IOException;
 
-/**
- * Created by tglman on 19/06/17.
- */
+/** Created by tglman on 19/06/17. */
 public class OUnsubscribeRequest implements OBinaryRequest<OUnsubscribeResponse> {
 
-  private byte                                      unsubscribeMessage;
+  private byte unsubscribeMessage;
   private OBinaryRequest<? extends OBinaryResponse> unsubscribeRequest;
 
   public OUnsubscribeRequest(OBinaryRequest<? extends OBinaryResponse> unsubscribeRequest) {
@@ -25,9 +22,7 @@ public class OUnsubscribeRequest implements OBinaryRequest<OUnsubscribeResponse>
     this.unsubscribeRequest = unsubscribeRequest;
   }
 
-  public OUnsubscribeRequest() {
-
-  }
+  public OUnsubscribeRequest() {}
 
   @Override
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
@@ -36,7 +31,8 @@ public class OUnsubscribeRequest implements OBinaryRequest<OUnsubscribeResponse>
   }
 
   @Override
-  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
     unsubscribeMessage = channel.readByte();
     unsubscribeRequest = createBinaryRequest(unsubscribeMessage);
     unsubscribeRequest.read(channel, protocolVersion, serializer);
@@ -44,8 +40,8 @@ public class OUnsubscribeRequest implements OBinaryRequest<OUnsubscribeResponse>
 
   private OBinaryRequest<? extends OBinaryResponse> createBinaryRequest(byte message) {
     switch (message) {
-    case OChannelBinaryProtocol.UNSUBSCRIBE_PUSH_LIVE_QUERY:
-      return new OUnsubscribeLiveQueryRequest();
+      case OChannelBinaryProtocol.UNSUBSCRIBE_PUSH_LIVE_QUERY:
+        return new OUnsubscribeLiveQueryRequest();
     }
 
     throw new ODatabaseException("Unknown message response for code:" + message);

@@ -26,11 +26,12 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
 public class OServerCommandPostClass extends OServerCommandAuthenticatedDbAbstract {
-  private static final String[] NAMES = { "POST|class/*" };
+  private static final String[] NAMES = {"POST|class/*"};
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    String[] urlParts = checkSyntax(iRequest.getUrl(), 3, "Syntax error: class/<database>/<class-name>");
+    String[] urlParts =
+        checkSyntax(iRequest.getUrl(), 3, "Syntax error: class/<database>/<class-name>");
 
     iRequest.getData().commandInfo = "Create class";
     iRequest.getData().commandDetail = urlParts[2];
@@ -45,12 +46,15 @@ public class OServerCommandPostClass extends OServerCommandAuthenticatedDbAbstra
 
       db.getMetadata().getSchema().createClass(urlParts[2]);
 
-      iResponse.send(OHttpUtils.STATUS_CREATED_CODE, OHttpUtils.STATUS_CREATED_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
-          db.getMetadata().getSchema().getClasses().size(), null);
+      iResponse.send(
+          OHttpUtils.STATUS_CREATED_CODE,
+          OHttpUtils.STATUS_CREATED_DESCRIPTION,
+          OHttpUtils.CONTENT_TEXT_PLAIN,
+          db.getMetadata().getSchema().getClasses().size(),
+          null);
 
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
     }
     return false;
   }

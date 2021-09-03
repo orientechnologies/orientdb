@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -37,12 +36,16 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.operator.OIndexReuseType;
 import com.orientechnologies.orient.core.sql.operator.OQueryTargetOperator;
 import com.orientechnologies.orient.core.sql.parser.ParseException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Stream;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.memory.MemoryIndex;
-
-import java.io.IOException;
-import java.util.*;
-import java.util.stream.Stream;
 
 public class OLuceneTextOperator extends OQueryTargetOperator {
 
@@ -66,16 +69,20 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
   }
 
   @Override
-  public OIndexSearchResult getOIndexSearchResult(OClass iSchemaClass, OSQLFilterCondition iCondition,
-      List<OIndexSearchResult> iIndexSearchResults, OCommandContext context) {
+  public OIndexSearchResult getOIndexSearchResult(
+      OClass iSchemaClass,
+      OSQLFilterCondition iCondition,
+      List<OIndexSearchResult> iIndexSearchResults,
+      OCommandContext context) {
 
-    //FIXME questo non trova l'indice se l'ordine e' errato
-    return OLuceneOperatorUtil.buildOIndexSearchResult(iSchemaClass, iCondition, iIndexSearchResults, context);
+    // FIXME questo non trova l'indice se l'ordine e' errato
+    return OLuceneOperatorUtil.buildOIndexSearchResult(
+        iSchemaClass, iCondition, iIndexSearchResults, context);
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> executeIndexQuery(OCommandContext iContext, OIndex index, List<Object> keyParams,
-      boolean ascSortOrder) {
+  public Stream<ORawPair<Object, ORID>> executeIndexQuery(
+      OCommandContext iContext, OIndex index, List<Object> keyParams, boolean ascSortOrder) {
     if (!index.getType().toLowerCase().contains("fulltext")) {
       return null;
     }
@@ -84,8 +91,11 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
     }
 
     //noinspection resource
-    return index.getInternal()
-        .getRids(new OLuceneKeyAndMetadata(new OLuceneCompositeKey(keyParams).setContext(iContext), new ODocument()))
+    return index
+        .getInternal()
+        .getRids(
+            new OLuceneKeyAndMetadata(
+                new OLuceneCompositeKey(keyParams).setContext(iContext), new ODocument()))
         .map((rid) -> new ORawPair<>(new OLuceneCompositeKey(keyParams), rid));
   }
 
@@ -105,12 +115,18 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
   }
 
   @Override
-  public Object evaluateRecord(OIdentifiable iRecord, ODocument iCurrentResult, OSQLFilterCondition iCondition, Object iLeft,
-      Object iRight, OCommandContext iContext, final ODocumentSerializer serializer) {
+  public Object evaluateRecord(
+      OIdentifiable iRecord,
+      ODocument iCurrentResult,
+      OSQLFilterCondition iCondition,
+      Object iLeft,
+      Object iRight,
+      OCommandContext iContext,
+      final ODocumentSerializer serializer) {
 
     OLuceneFullTextIndex index = involvedIndex(iRecord, iCurrentResult, iCondition, iLeft, iRight);
     if (index == null) {
-      throw new OCommandExecutionException("Cannot evaluate lucene condition without index configuration.");
+      return false;
     }
 
     MemoryIndex memoryIndex = (MemoryIndex) iContext.getVariable(MEMORY_INDEX);
@@ -134,12 +150,12 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
 
     } catch (IOException e) {
       OLogManager.instance().error(this, "error occurred while building memory index", e);
-
     }
     return null;
   }
 
-  private boolean matchField(Object iLeft, Object iRight, OLuceneFullTextIndex index, MemoryIndex memoryIndex)
+  private boolean matchField(
+      Object iLeft, Object iRight, OLuceneFullTextIndex index, MemoryIndex memoryIndex)
       throws IOException, ParseException {
     for (IndexableField field : index.buildDocument(iLeft).getFields()) {
       memoryIndex.addField(field, index.indexAnalyzer());
@@ -147,7 +163,8 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
     return memoryIndex.search(index.buildQuery(iRight)) > 0.0f;
   }
 
-  private boolean matchCollectionIndex(List iLeft, Object iRight, OLuceneFullTextIndex index, MemoryIndex memoryIndex)
+  private boolean matchCollectionIndex(
+      List iLeft, Object iRight, OLuceneFullTextIndex index, MemoryIndex memoryIndex)
       throws IOException, ParseException {
     boolean match = false;
     List<Object> collections = transformInput(iLeft, iRight, index, memoryIndex);
@@ -161,7 +178,8 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
     return match;
   }
 
-  private List<Object> transformInput(List iLeft, Object iRight, OLuceneFullTextIndex index, MemoryIndex memoryIndex) {
+  private List<Object> transformInput(
+      List iLeft, Object iRight, OLuceneFullTextIndex index, MemoryIndex memoryIndex) {
 
     Integer collectionIndex = getCollectionIndex(iLeft);
     if (collectionIndex == -1) {
@@ -204,35 +222,43 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
     return -1;
   }
 
-  protected OLuceneFullTextIndex involvedIndex(OIdentifiable iRecord, ODocument iCurrentResult, OSQLFilterCondition iCondition,
-      Object iLeft, Object iRight) {
+  protected OLuceneFullTextIndex involvedIndex(
+      OIdentifiable iRecord,
+      ODocument iCurrentResult,
+      OSQLFilterCondition iCondition,
+      Object iLeft,
+      Object iRight) {
 
     ODocument doc = iRecord.getRecord();
-    OClass cls = getDatabase().getMetadata().getSchema().getClass(doc.getClassName());
+    if (doc.getClassName() != null) {
+      OClass cls = getDatabase().getMetadata().getSchema().getClass(doc.getClassName());
 
-    if (isChained(iCondition.getLeft())) {
+      if (isChained(iCondition.getLeft())) {
 
-      OSQLFilterItemField chained = (OSQLFilterItemField) iCondition.getLeft();
+        OSQLFilterItemField chained = (OSQLFilterItemField) iCondition.getLeft();
 
-      OSQLFilterItemField.FieldChain fieldChain = chained.getFieldChain();
-      OClass oClass = cls;
-      for (int i = 0; i < fieldChain.getItemCount() - 1; i++) {
-        oClass = oClass.getProperty(fieldChain.getItemName(i)).getLinkedClass();
+        OSQLFilterItemField.FieldChain fieldChain = chained.getFieldChain();
+        OClass oClass = cls;
+        for (int i = 0; i < fieldChain.getItemCount() - 1; i++) {
+          oClass = oClass.getProperty(fieldChain.getItemName(i)).getLinkedClass();
+        }
+        if (oClass != null) {
+          cls = oClass;
+        }
       }
-      if (oClass != null) {
-        cls = oClass;
+      Set<OIndex> classInvolvedIndexes = cls.getInvolvedIndexes(fields(iCondition));
+      OLuceneFullTextIndex idx = null;
+      for (OIndex classInvolvedIndex : classInvolvedIndexes) {
+
+        if (classInvolvedIndex.getInternal() instanceof OLuceneFullTextIndex) {
+          idx = (OLuceneFullTextIndex) classInvolvedIndex.getInternal();
+          break;
+        }
       }
+      return idx;
+    } else {
+      return null;
     }
-    Set<OIndex> classInvolvedIndexes = cls.getInvolvedIndexes(fields(iCondition));
-    OLuceneFullTextIndex idx = null;
-    for (OIndex classInvolvedIndex : classInvolvedIndexes) {
-
-      if (classInvolvedIndex.getInternal() instanceof OLuceneFullTextIndex) {
-        idx = (OLuceneFullTextIndex) classInvolvedIndex.getInternal();
-        break;
-      }
-    }
-    return idx;
   }
 
   private boolean isChained(Object left) {
@@ -243,7 +269,7 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
     return false;
   }
 
-  //returns a list of field names
+  // returns a list of field names
   protected Collection<String> fields(OSQLFilterCondition iCondition) {
 
     Object left = iCondition.getLeft();

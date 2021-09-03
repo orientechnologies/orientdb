@@ -25,11 +25,9 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 
 /**
  * Orient wrapper class to use from scripts.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
-
 @Deprecated
 public class OScriptOrientWrapper {
   protected final ODatabase db;
@@ -38,18 +36,17 @@ public class OScriptOrientWrapper {
     this.db = null;
   }
 
-
   public OScriptOrientWrapper(final ODatabase db) {
     this.db = db;
   }
 
   public OScriptDocumentDatabaseWrapper getDatabase() {
-    if (db == null)
-      throw new OConfigurationException("No database instance found in context");
+    if (db == null) throw new OConfigurationException("No database instance found in context");
 
     if (db instanceof ODatabaseDocumentInternal)
       return new OScriptDocumentDatabaseWrapper((ODatabaseDocumentInternal) db);
 
-    throw new OConfigurationException("No valid database instance found in context: " + db + ", class: " + db.getClass());
+    throw new OConfigurationException(
+        "No valid database instance found in context: " + db + ", class: " + db.getClass());
   }
 }

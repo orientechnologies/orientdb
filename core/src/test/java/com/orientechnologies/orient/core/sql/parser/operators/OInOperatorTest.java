@@ -20,14 +20,12 @@
 package com.orientechnologies.orient.core.sql.parser.operators;
 
 import com.orientechnologies.orient.core.sql.parser.OInOperator;
-import org.junit.Assert; import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
 
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OInOperatorTest {
   @Test
   public void test() {

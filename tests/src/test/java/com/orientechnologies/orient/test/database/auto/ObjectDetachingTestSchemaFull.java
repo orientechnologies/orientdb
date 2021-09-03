@@ -15,21 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import javassist.util.proxy.Proxy;
-
-import org.testng.Assert;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -44,8 +29,22 @@ import com.orientechnologies.orient.test.domain.business.Child;
 import com.orientechnologies.orient.test.domain.business.City;
 import com.orientechnologies.orient.test.domain.business.Country;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import javassist.util.proxy.Proxy;
+import org.testng.Assert;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
-@Test(groups = { "object", "detachingSchemaFull" }, dependsOnGroups = "treeSchemaFull")
+@Test(
+    groups = {"object", "detachingSchemaFull"},
+    dependsOnGroups = "treeSchemaFull")
 public class ObjectDetachingTestSchemaFull extends ObjectDBBaseTest {
   private Account account;
   private Profile profile;
@@ -57,9 +56,15 @@ public class ObjectDetachingTestSchemaFull extends ObjectDBBaseTest {
 
   @Test
   public void createAnnotatedObjects() {
-    database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.business");
-    database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.whiz");
-    database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.base");
+    database
+        .getEntityManager()
+        .registerEntityClasses("com.orientechnologies.orient.test.domain.business");
+    database
+        .getEntityManager()
+        .registerEntityClasses("com.orientechnologies.orient.test.domain.whiz");
+    database
+        .getEntityManager()
+        .registerEntityClasses("com.orientechnologies.orient.test.domain.base");
     Country austria = new Country("Austria");
     City graz = new City(austria, "Graz");
     graz = database.save(graz);
@@ -115,7 +120,10 @@ public class ObjectDetachingTestSchemaFull extends ObjectDBBaseTest {
     database.command(new OCommandSQL("delete from Country where name = 'Austria v1'")).execute();
     // BROWSE ALL THE OBJECTS
     Assert.assertTrue(database.countClass(Country.class) > 0);
-    for (Country c : (List<Country>) database.query(new OSQLSynchQuery<Object>("select from Country where name = 'Austria'"))) {
+    for (Country c :
+        (List<Country>)
+            database.query(
+                new OSQLSynchQuery<Object>("select from Country where name = 'Austria'"))) {
       Assert.assertNotNull(c.getId());
       Assert.assertNotNull(c.getVersion());
 
@@ -128,14 +136,19 @@ public class ObjectDetachingTestSchemaFull extends ObjectDBBaseTest {
     }
 
     // BROWSE ALL THE OBJECTS
-    for (Country c : (List<Country>) database.query(new OSQLSynchQuery<Object>("select from Country where name = 'Austria v1'"))) {
+    for (Country c :
+        (List<Country>)
+            database.query(
+                new OSQLSynchQuery<Object>("select from Country where name = 'Austria v1'"))) {
       Assert.assertNotNull(c.getId());
       Assert.assertNotNull(c.getVersion());
       Assert.assertTrue(((Integer) c.getVersion()) > 0);
     }
   }
 
-  @Test(dependsOnMethods = "testOrientObjectIdPlusVersionAnnotationsNotInTx"/* , expectedExceptions = OTransactionException.class */)
+  @Test(
+      dependsOnMethods =
+          "testOrientObjectIdPlusVersionAnnotationsNotInTx" /* , expectedExceptions = OTransactionException.class */)
   public void testOrientObjectIdPlusVersionAnnotationsInTx() {
     // TODO CHECK WHY SHOULD THROW EXCEPTION
     // database.begin();
@@ -192,7 +205,8 @@ public class ObjectDetachingTestSchemaFull extends ObjectDBBaseTest {
     database.rollback();
 
     Assert.assertEquals(database.countClass(Country.class), initCount);
-    Assert.assertTrue(country.getId() == null || ((ORID) country.getId()).isNew(), "id=" + country.getId());
+    Assert.assertTrue(
+        country.getId() == null || ((ORID) country.getId()).isNew(), "id=" + country.getId());
     // Assert.assertNull(country.getVersion());
   }
 
@@ -211,7 +225,8 @@ public class ObjectDetachingTestSchemaFull extends ObjectDBBaseTest {
     Country loaded = (Country) database.load((ORecordId) country.getId());
     Assert.assertEquals(loaded.getId(), country.getId());
     Assert.assertEquals(loaded.getVersion(), country.getVersion());
-    Assert.assertEquals((Object) database.getRecordByUserObject(loaded, false),
+    Assert.assertEquals(
+        (Object) database.getRecordByUserObject(loaded, false),
         (Object) database.getRecordByUserObject(country, false));
     String newName = "ShouldBeChanged";
     loaded.setName(newName);
@@ -219,7 +234,8 @@ public class ObjectDetachingTestSchemaFull extends ObjectDBBaseTest {
     database.commit();
 
     loaded = (Country) database.load((ORecordId) country.getId());
-    Assert.assertEquals((Object) database.getRecordByUserObject(loaded, false),
+    Assert.assertEquals(
+        (Object) database.getRecordByUserObject(loaded, false),
         (Object) database.getRecordByUserObject(country, false));
     Assert.assertEquals(loaded.getId(), country.getId());
     Assert.assertEquals((int) (Integer) loaded.getVersion(), initVersion + 1);
@@ -241,15 +257,19 @@ public class ObjectDetachingTestSchemaFull extends ObjectDBBaseTest {
     Country loaded = (Country) database.load((ORecordId) country.getId());
     Assert.assertEquals(loaded.getId(), country.getId());
     Assert.assertEquals(loaded.getVersion(), country.getVersion());
-    Assert.assertEquals((Object) database.getRecordByUserObject(loaded, false), database.getRecordByUserObject(country, false));
+    Assert.assertEquals(
+        (Object) database.getRecordByUserObject(loaded, false),
+        database.getRecordByUserObject(country, false));
     String newName = "ShouldNotBeChanged";
     loaded.setName(newName);
     loaded = (Country) database.save(loaded);
     database.rollback();
 
     loaded = database.load((ORecordId) country.getId());
-    Assert.assertNotSame(database.getRecordByUserObject(loaded, false), database.getRecordByUserObject(country, false));
-    Assert.assertEquals((Integer) loaded.getVersion(), (Integer)initVersion);
+    Assert.assertNotSame(
+        database.getRecordByUserObject(loaded, false),
+        database.getRecordByUserObject(country, false));
+    Assert.assertEquals((Integer) loaded.getVersion(), (Integer) initVersion);
     Assert.assertEquals(loaded.getName(), initialCountryName);
   }
 
@@ -346,7 +366,8 @@ public class ObjectDetachingTestSchemaFull extends ObjectDBBaseTest {
     Assert.assertEquals(doc.field("enumeration"), EnumTest.ENUM1.toString());
     Assert.assertTrue(doc.field("children") instanceof Map<?, ?>);
     Assert.assertTrue(((Map<?, ?>) doc.field("children")).get("first") instanceof ODocument);
-    Assert.assertEquals(((ODocument) ((Map<?, ?>) doc.field("children")).get("first")).field("name"), "Jesus");
+    Assert.assertEquals(
+        ((ODocument) ((Map<?, ?>) doc.field("children")).get("first")).field("name"), "Jesus");
     Assert.assertEquals(((List<?>) doc.field("enumList")).size(), 2);
     Assert.assertEquals(((List<?>) doc.field("enumList")).get(0), EnumTest.ENUM1.toString());
     Assert.assertEquals(((List<?>) doc.field("enumList")).get(1), EnumTest.ENUM2.toString());
@@ -430,7 +451,8 @@ public class ObjectDetachingTestSchemaFull extends ObjectDBBaseTest {
     Assert.assertEquals(doc.field("enumeration"), EnumTest.ENUM1.toString());
     Assert.assertTrue(doc.field("children") instanceof Map<?, ?>);
     Assert.assertTrue(((Map<?, ?>) doc.field("children")).get("first") instanceof ODocument);
-    Assert.assertEquals(((ODocument) ((Map<?, ?>) doc.field("children")).get("first")).field("name"), "Jesus");
+    Assert.assertEquals(
+        ((ODocument) ((Map<?, ?>) doc.field("children")).get("first")).field("name"), "Jesus");
     Assert.assertEquals(((List<?>) doc.field("enumList")).size(), 2);
     Assert.assertEquals(((List<?>) doc.field("enumList")).get(0), EnumTest.ENUM1.toString());
     Assert.assertEquals(((List<?>) doc.field("enumList")).get(1), EnumTest.ENUM2.toString());
@@ -518,7 +540,8 @@ public class ObjectDetachingTestSchemaFull extends ObjectDBBaseTest {
     Assert.assertEquals(doc.field("enumeration"), EnumTest.ENUM1.toString());
     Assert.assertTrue(doc.field("children") instanceof Map<?, ?>);
     Assert.assertTrue(((Map<?, ?>) doc.field("children")).get("first") instanceof ODocument);
-    Assert.assertEquals(((ODocument) ((Map<?, ?>) doc.field("children")).get("first")).field("name"), "Jesus");
+    Assert.assertEquals(
+        ((ODocument) ((Map<?, ?>) doc.field("children")).get("first")).field("name"), "Jesus");
     Assert.assertEquals(((List<?>) doc.field("enumList")).size(), 2);
     Assert.assertEquals(((List<?>) doc.field("enumList")).get(0), EnumTest.ENUM1.toString());
     Assert.assertEquals(((List<?>) doc.field("enumList")).get(1), EnumTest.ENUM2.toString());
@@ -609,7 +632,8 @@ public class ObjectDetachingTestSchemaFull extends ObjectDBBaseTest {
     Assert.assertEquals(doc.field("enumeration"), EnumTest.ENUM1.toString());
     Assert.assertTrue(doc.field("children") instanceof Map<?, ?>);
     Assert.assertTrue(((Map<?, ?>) doc.field("children")).get("first") instanceof ODocument);
-    Assert.assertEquals(((ODocument) ((Map<?, ?>) doc.field("children")).get("first")).field("name"), "Jesus");
+    Assert.assertEquals(
+        ((ODocument) ((Map<?, ?>) doc.field("children")).get("first")).field("name"), "Jesus");
     Assert.assertEquals(((List<?>) doc.field("enumList")).size(), 2);
     Assert.assertEquals(((List<?>) doc.field("enumList")).get(0), EnumTest.ENUM1.toString());
     Assert.assertEquals(((List<?>) doc.field("enumList")).get(1), EnumTest.ENUM2.toString());
@@ -698,7 +722,12 @@ public class ObjectDetachingTestSchemaFull extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "testReloadAndDetachAll")
   public void testObjectSerialization() {
-    Profile profile = new Profile("NonProxiedObjectToDelete", "NonProxiedObjectToDelete", "NonProxiedObjectToDelete", null);
+    Profile profile =
+        new Profile(
+            "NonProxiedObjectToDelete",
+            "NonProxiedObjectToDelete",
+            "NonProxiedObjectToDelete",
+            null);
     profile = database.save(profile);
     ODocument originalDoc = database.getRecordByUserObject(profile, false);
     // DETACH TEST

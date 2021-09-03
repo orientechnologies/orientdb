@@ -20,15 +20,12 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-
-/**
- * Created by luigidellaquila on 02/07/15.
- */
+/** Created by luigidellaquila on 02/07/15. */
 public class OProjectionTest {
 
   @Test
@@ -44,9 +41,7 @@ public class OProjectionTest {
     OrientSql parser3 = getParserFor("select expand  from V");
     OSelectStatement stm3 = (OSelectStatement) parser3.parse();
     Assert.assertFalse(stm3.getProjection().isExpand());
-
   }
-
 
   @Test
   public void testValidate() throws ParseException {
@@ -55,14 +50,14 @@ public class OProjectionTest {
     stm.getProjection().validate();
 
     try {
-      getParserFor("select expand(foo), bar  from V").parse();;
+      getParserFor("select expand(foo), bar  from V").parse();
+      ;
       Assert.fail();
-    }catch(OCommandSQLParsingException ex){
+    } catch (OCommandSQLParsingException ex) {
 
-    }catch(Exception x){
+    } catch (Exception x) {
       Assert.fail();
     }
-
   }
 
   protected OrientSql getParserFor(String string) {
@@ -70,6 +65,4 @@ public class OProjectionTest {
     OrientSql osql = new OrientSql(is);
     return osql;
   }
-
-
 }

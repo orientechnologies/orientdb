@@ -15,18 +15,16 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
+import com.orientechnologies.orient.server.hazelcast.OHazelcastClusterMetadataManager;
+import com.orientechnologies.orient.setup.ServerRun;
 import org.junit.Assert;
 import org.junit.Test;
 
-/**
- * Distributed test on drop + recreate database.
- */
+/** Distributed test on drop + recreate database. */
 public class DistributedDbDropAndReCreateIT extends AbstractServerClusterTxTest {
-  private final static int SERVERS = 3;
+  private static final int SERVERS = 3;
 
   @Test
   public void test() throws Exception {
@@ -53,19 +51,31 @@ public class DistributedDbDropAndReCreateIT extends AbstractServerClusterTxTest 
 
       Thread.sleep(2000);
 
-      Assert.assertFalse(server.getServerInstance().getDistributedManager().getConfigurationMap()
-          .containsKey(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + getDatabaseName()));
+      Assert.assertFalse(
+          server
+              .getServerInstance()
+              .getDistributedManager()
+              .getConfigurationMap()
+              .containsKey(
+                  OHazelcastClusterMetadataManager.CONFIG_DATABASE_PREFIX + getDatabaseName()));
 
       server = serverInstance.get(s);
 
       banner("RE-CREATING DATABASE ON SERVER " + server.getServerId());
 
-      Assert.assertFalse(server.getServerInstance().getDistributedManager().getConfigurationMap()
-          .containsKey(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + getDatabaseName()));
+      Assert.assertFalse(
+          server
+              .getServerInstance()
+              .getDistributedManager()
+              .getConfigurationMap()
+              .containsKey(
+                  OHazelcastClusterMetadataManager.CONFIG_DATABASE_PREFIX + getDatabaseName()));
 
       for (int retry = 0; retry < 10; retry++) {
         try {
-          orientDB.create(getDatabaseName(), ODatabaseType.PLOCAL);
+          orientDB.execute(
+              "create database ? plocal users(admin identified by 'admin' role admin)",
+              getDatabaseName());
           break;
         } catch (ODatabaseException e) {
           System.out.println("DB STILL IN THE CLUSTER, WAIT AND RETRY (retry " + retry + ")...");
@@ -76,7 +86,10 @@ public class DistributedDbDropAndReCreateIT extends AbstractServerClusterTxTest 
     } while (++s < serverInstance.size());
 
     // DROP LAST DATABASE
-    serverInstance.get(serverInstance.size() - 1).getServerInstance().dropDatabase(getDatabaseName());
+    serverInstance
+        .get(serverInstance.size() - 1)
+        .getServerInstance()
+        .dropDatabase(getDatabaseName());
   }
 
   protected String getDatabaseURL(final ServerRun server) {

@@ -28,24 +28,24 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.parser.ODropClassStatement;
-
 import java.util.Map;
 
 /**
- * SQL DROP CLASS command: Drops a class from the database. Cluster associated are removed too if are used exclusively by the
- * deleting class.
+ * SQL DROP CLASS command: Drops a class from the database. Cluster associated are removed too if
+ * are used exclusively by the deleting class.
  *
  * @author Luca Garulli
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
-  public static final String KEYWORD_DROP   = "DROP";
-  public static final String KEYWORD_CLASS  = "CLASS";
+public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract
+    implements OCommandDistributedReplicateRequest {
+  public static final String KEYWORD_DROP = "DROP";
+  public static final String KEYWORD_CLASS = "CLASS";
   public static final String KEYWORD_UNSAFE = "UNSAFE";
 
-  private String             className;
-  private boolean            unsafe;
-  private boolean            ifExists       = false;
+  private String className;
+  private boolean unsafe;
+  private boolean ifExists = false;
 
   public OCommandExecutorSQLDropClass parse(final OCommandRequest iRequest) {
     final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
@@ -78,17 +78,20 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract im
     int oldPos = 0;
     int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_DROP)) {
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_DROP + " not found. Use " + getSyntax(), parserText, oldPos);
+      throw new OCommandSQLParsingException(
+          "Keyword " + KEYWORD_DROP + " not found. Use " + getSyntax(), parserText, oldPos);
     }
 
     pos = nextWord(parserText, parserTextUpperCase, pos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_CLASS)) {
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLASS + " not found. Use " + getSyntax(), parserText, oldPos);
+      throw new OCommandSQLParsingException(
+          "Keyword " + KEYWORD_CLASS + " not found. Use " + getSyntax(), parserText, oldPos);
     }
 
     pos = nextWord(parserText, parserTextUpperCase, pos, word, false);
     if (pos == -1) {
-      throw new OCommandSQLParsingException("Expected <class>. Use " + getSyntax(), parserText, pos);
+      throw new OCommandSQLParsingException(
+          "Expected <class>. Use " + getSyntax(), parserText, pos);
     }
 
     className = word.toString();
@@ -108,17 +111,21 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract im
   public long getDistributedTimeout() {
     final OClass cls = getDatabase().getMetadata().getSchema().getClass(className);
     if (className != null && cls != null)
-      return getDatabase().getConfiguration().getValueAsLong(OGlobalConfiguration.DISTRIBUTED_COMMAND_QUICK_TASK_SYNCH_TIMEOUT) + (2 * cls.count());
+      return getDatabase()
+              .getConfiguration()
+              .getValueAsLong(OGlobalConfiguration.DISTRIBUTED_COMMAND_QUICK_TASK_SYNCH_TIMEOUT)
+          + (2 * cls.count());
 
-    return getDatabase().getConfiguration().getValueAsLong(OGlobalConfiguration.DISTRIBUTED_COMMAND_QUICK_TASK_SYNCH_TIMEOUT);
+    return getDatabase()
+        .getConfiguration()
+        .getValueAsLong(OGlobalConfiguration.DISTRIBUTED_COMMAND_QUICK_TASK_SYNCH_TIMEOUT);
   }
 
-  /**
-   * Execute the DROP CLASS.
-   */
+  /** Execute the DROP CLASS. */
   public Object execute(final Map<Object, Object> iArgs) {
     if (className == null) {
-      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+      throw new OCommandExecutionException(
+          "Cannot execute the command because it has not been parsed yet");
     }
 
     final ODatabaseDocument database = getDatabase();
@@ -136,12 +143,16 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract im
       // NOT EMPTY, CHECK IF CLASS IS OF VERTEX OR EDGES
       if (cls.isSubClassOf("V")) {
         // FOUND VERTEX CLASS
-        throw new OCommandExecutionException("'DROP CLASS' command cannot drop class '" + className
-            + "' because it contains Vertices. Use 'DELETE VERTEX' command first to avoid broken edges in a database, or apply the 'UNSAFE' keyword to force it");
+        throw new OCommandExecutionException(
+            "'DROP CLASS' command cannot drop class '"
+                + className
+                + "' because it contains Vertices. Use 'DELETE VERTEX' command first to avoid broken edges in a database, or apply the 'UNSAFE' keyword to force it");
       } else if (cls.isSubClassOf("E")) {
         // FOUND EDGE CLASS
-        throw new OCommandExecutionException("'DROP CLASS' command cannot drop class '" + className
-            + "' because it contains Edges. Use 'DELETE EDGE' command first to avoid broken vertices in a database, or apply the 'UNSAFE' keyword to force it");
+        throw new OCommandExecutionException(
+            "'DROP CLASS' command cannot drop class '"
+                + className
+                + "' because it contains Edges. Use 'DELETE EDGE' command first to avoid broken vertices in a database, or apply the 'UNSAFE' keyword to force it");
       }
     }
 
@@ -152,13 +163,20 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract im
       if (cls.isSubClassOf("V")) {
         // FOUND VERTICES
         if (unsafe)
-          OLogManager.instance().warn(this,
-              "Dropped class '%s' containing %d vertices using UNSAFE mode. Database could contain broken edges", className,
-              records);
+          OLogManager.instance()
+              .warn(
+                  this,
+                  "Dropped class '%s' containing %d vertices using UNSAFE mode. Database could contain broken edges",
+                  className,
+                  records);
       } else if (cls.isSubClassOf("E")) {
         // FOUND EDGES
-        OLogManager.instance().warn(this,
-            "Dropped class '%s' containing %d edges using UNSAFE mode. Database could contain broken vertices", className, records);
+        OLogManager.instance()
+            .warn(
+                this,
+                "Dropped class '%s' containing %d edges using UNSAFE mode. Database could contain broken vertices",
+                className,
+                records);
       }
     }
 

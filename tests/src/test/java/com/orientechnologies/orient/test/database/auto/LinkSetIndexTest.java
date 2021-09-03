@@ -7,12 +7,19 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.testng.Assert;
-import org.testng.annotations.Optional;
-import org.testng.annotations.*;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
+import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -27,7 +34,8 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
 
   @BeforeClass
   public void setupSchema() {
-    final OClass ridBagIndexTestClass = database.getMetadata().getSchema().createClass("LinkSetIndexTestClass");
+    final OClass ridBagIndexTestClass =
+        database.getMetadata().getSchema().createClass("LinkSetIndexTestClass");
 
     ridBagIndexTestClass.createProperty("linkSet", OType.LINKSET);
 
@@ -46,13 +54,14 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
 
     database.command(new OCommandSQL("DELETE FROM LinkSetIndexTestClass")).execute();
 
-    List<ODocument> result = database.command(new OCommandSQL("select from LinkSetIndexTestClass")).execute();
+    List<ODocument> result =
+        database.command(new OCommandSQL("select from LinkSetIndexTestClass")).execute();
     Assert.assertEquals(result.size(), 0);
 
     if (database.getStorage().isRemote()) {
-      OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, "linkSetIndex");
+      OIndex index =
+          database.getMetadata().getIndexManagerInternal().getIndex(database, "linkSetIndex");
       Assert.assertEquals(index.getInternal().size(), 0);
-
     }
 
     database.close();
@@ -84,7 +93,8 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
 
       while (keysIterator.hasNext()) {
         OIdentifiable key = (OIdentifiable) keysIterator.next();
-        if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity())) {
+        if (!key.getIdentity().equals(docOne.getIdentity())
+            && !key.getIdentity().equals(docTwo.getIdentity())) {
           Assert.fail("Unknown key found: " + key);
         }
       }
@@ -124,7 +134,8 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
 
       while (keysIterator.hasNext()) {
         OIdentifiable key = (OIdentifiable) keysIterator.next();
-        if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity())) {
+        if (!key.getIdentity().equals(docOne.getIdentity())
+            && !key.getIdentity().equals(docTwo.getIdentity())) {
           Assert.fail("Unknown key found: " + key);
         }
       }
@@ -167,7 +178,8 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
 
       while (keysIterator.hasNext()) {
         OIdentifiable key = (OIdentifiable) keysIterator.next();
-        if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docThree.getIdentity())) {
+        if (!key.getIdentity().equals(docOne.getIdentity())
+            && !key.getIdentity().equals(docThree.getIdentity())) {
           Assert.fail("Unknown key found: " + key);
         }
       }
@@ -218,7 +230,8 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
 
       while (keysIterator.hasNext()) {
         OIdentifiable key = (OIdentifiable) keysIterator.next();
-        if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docThree.getIdentity())) {
+        if (!key.getIdentity().equals(docOne.getIdentity())
+            && !key.getIdentity().equals(docThree.getIdentity())) {
           Assert.fail("Unknown key found: " + key);
         }
       }
@@ -264,7 +277,8 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
 
       while (keysIterator.hasNext()) {
         OIdentifiable key = (OIdentifiable) keysIterator.next();
-        if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity())) {
+        if (!key.getIdentity().equals(docOne.getIdentity())
+            && !key.getIdentity().equals(docTwo.getIdentity())) {
           Assert.fail("Unknown key found: " + key);
         }
       }
@@ -291,7 +305,11 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
 
     document.save();
 
-    database.command(new OCommandSQL("UPDATE " + document.getIdentity() + " add linkSet = " + docThree.getIdentity())).execute();
+    database
+        .command(
+            new OCommandSQL(
+                "UPDATE " + document.getIdentity() + " add linkSet = " + docThree.getIdentity()))
+        .execute();
 
     OIndex index = getIndex("linkSetIndex");
     Assert.assertEquals(index.getInternal().size(), 3);
@@ -302,8 +320,9 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
 
       while (keysIterator.hasNext()) {
         OIdentifiable key = (OIdentifiable) keysIterator.next();
-        if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity()) && !key.getIdentity()
-            .equals(docThree.getIdentity())) {
+        if (!key.getIdentity().equals(docOne.getIdentity())
+            && !key.getIdentity().equals(docTwo.getIdentity())
+            && !key.getIdentity().equals(docThree.getIdentity())) {
           Assert.fail("Unknown key found: " + key);
         }
       }
@@ -350,8 +369,9 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
 
       while (keysIterator.hasNext()) {
         OIdentifiable key = (OIdentifiable) keysIterator.next();
-        if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity()) && !key.getIdentity()
-            .equals(docThree.getIdentity())) {
+        if (!key.getIdentity().equals(docOne.getIdentity())
+            && !key.getIdentity().equals(docTwo.getIdentity())
+            && !key.getIdentity().equals(docThree.getIdentity())) {
           Assert.fail("Unknown key found: " + key);
         }
       }
@@ -393,7 +413,8 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
 
       while (keysIterator.hasNext()) {
         OIdentifiable key = (OIdentifiable) keysIterator.next();
-        if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity())) {
+        if (!key.getIdentity().equals(docOne.getIdentity())
+            && !key.getIdentity().equals(docTwo.getIdentity())) {
           Assert.fail("Unknown key found: " + key);
         }
       }
@@ -474,7 +495,8 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
 
       while (keysIterator.hasNext()) {
         OIdentifiable key = (OIdentifiable) keysIterator.next();
-        if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity())) {
+        if (!key.getIdentity().equals(docOne.getIdentity())
+            && !key.getIdentity().equals(docTwo.getIdentity())) {
           Assert.fail("Unknown key found: " + key);
         }
       }
@@ -498,7 +520,11 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     document.field("linkSet", linkSet);
     document.save();
 
-    database.command(new OCommandSQL("UPDATE " + document.getIdentity() + " remove linkSet = " + docTwo.getIdentity())).execute();
+    database
+        .command(
+            new OCommandSQL(
+                "UPDATE " + document.getIdentity() + " remove linkSet = " + docTwo.getIdentity()))
+        .execute();
 
     OIndex index = getIndex("linkSetIndex");
     Assert.assertEquals(index.getInternal().size(), 1);
@@ -600,7 +626,8 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
 
       while (keysIterator.hasNext()) {
         OIdentifiable key = (OIdentifiable) keysIterator.next();
-        if (!key.getIdentity().equals(docOne.getIdentity()) && !key.getIdentity().equals(docTwo.getIdentity())) {
+        if (!key.getIdentity().equals(docOne.getIdentity())
+            && !key.getIdentity().equals(docTwo.getIdentity())) {
           Assert.fail("Unknown key found: " + key);
         }
       }
@@ -635,13 +662,18 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     document.field("linkSet", linkSet);
     document.save();
 
-    List<ODocument> result = database
-        .query(new OSQLSynchQuery<ODocument>("select * from LinkSetIndexTestClass where linkSet contains ?"), docOne.getIdentity());
+    List<ODocument> result =
+        database.query(
+            new OSQLSynchQuery<ODocument>(
+                "select * from LinkSetIndexTestClass where linkSet contains ?"),
+            docOne.getIdentity());
     Assert.assertNotNull(result);
     Assert.assertEquals(result.size(), 1);
 
-    List<OIdentifiable> listResult = new ArrayList<>(result.get(0).<Set<OIdentifiable>>field("linkSet"));
+    List<OIdentifiable> listResult =
+        new ArrayList<>(result.get(0).<Set<OIdentifiable>>field("linkSet"));
     Assert.assertEquals(listResult.size(), 2);
-    Assert.assertTrue(listResult.containsAll(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
+    Assert.assertTrue(
+        listResult.containsAll(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
   }
 }

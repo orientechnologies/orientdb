@@ -20,25 +20,46 @@ import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.Query;
 
 public class OLuceneFullTextIndex extends OLuceneIndexNotUnique {
 
-  public OLuceneFullTextIndex(String name, String typeId, String algorithm, int version, OAbstractPaginatedStorage storage,
-      String valueContainerAlgorithm, ODocument metadata, final int binaryFormatVersion) {
-    super(name, typeId, algorithm, version, storage, valueContainerAlgorithm, metadata, binaryFormatVersion);
+  public OLuceneFullTextIndex(
+      String name,
+      String typeId,
+      String algorithm,
+      int version,
+      OAbstractPaginatedStorage storage,
+      String valueContainerAlgorithm,
+      ODocument metadata,
+      final int binaryFormatVersion,
+      OAtomicOperationsManager atomicOperationsManager) {
+    super(
+        name,
+        typeId,
+        algorithm,
+        version,
+        storage,
+        valueContainerAlgorithm,
+        metadata,
+        binaryFormatVersion,
+        atomicOperationsManager);
   }
 
   public Document buildDocument(final Object key) {
 
     while (true)
       try {
-        return storage.callIndexEngine(false, false, indexId, engine -> {
-          OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
-          return indexEngine.buildDocument(key, null);
-        });
+        return storage.callIndexEngine(
+            false,
+            indexId,
+            engine -> {
+              OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
+              return indexEngine.buildDocument(key, null);
+            });
       } catch (OInvalidIndexEngineIdException e) {
         doReloadIndexEngine();
       }
@@ -47,24 +68,29 @@ public class OLuceneFullTextIndex extends OLuceneIndexNotUnique {
   public Query buildQuery(final Object query) {
     while (true)
       try {
-        return storage.callIndexEngine(false, false, indexId, engine -> {
-          OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
-          return indexEngine.buildQuery(query);
-        });
+        return storage.callIndexEngine(
+            false,
+            indexId,
+            engine -> {
+              OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
+              return indexEngine.buildQuery(query);
+            });
       } catch (OInvalidIndexEngineIdException e) {
         doReloadIndexEngine();
       }
-
   }
 
   public Analyzer queryAnalyzer() {
     while (true)
       try {
-        return storage.callIndexEngine(false, false, indexId, engine -> {
-          OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
-          return indexEngine.queryAnalyzer();
-        });
-      } catch (OInvalidIndexEngineIdException e) {
+        return storage.callIndexEngine(
+            false,
+            indexId,
+            engine -> {
+              OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
+              return indexEngine.queryAnalyzer();
+            });
+      } catch (final OInvalidIndexEngineIdException e) {
         doReloadIndexEngine();
       }
   }
@@ -72,10 +98,13 @@ public class OLuceneFullTextIndex extends OLuceneIndexNotUnique {
   public boolean isCollectionIndex() {
     while (true) {
       try {
-        return storage.callIndexEngine(false, false, indexId, engine -> {
-          OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
-          return indexEngine.isCollectionIndex();
-        });
+        return storage.callIndexEngine(
+            false,
+            indexId,
+            engine -> {
+              OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
+              return indexEngine.isCollectionIndex();
+            });
       } catch (OInvalidIndexEngineIdException e) {
         doReloadIndexEngine();
       }
@@ -85,10 +114,13 @@ public class OLuceneFullTextIndex extends OLuceneIndexNotUnique {
   public Analyzer indexAnalyzer() {
     while (true) {
       try {
-        return storage.callIndexEngine(false, false, indexId, engine -> {
-          OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
-          return indexEngine.indexAnalyzer();
-        });
+        return storage.callIndexEngine(
+            false,
+            indexId,
+            engine -> {
+              OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
+              return indexEngine.indexAnalyzer();
+            });
       } catch (OInvalidIndexEngineIdException e) {
         doReloadIndexEngine();
       }

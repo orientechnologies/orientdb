@@ -32,20 +32,22 @@ import com.orientechnologies.orient.core.exception.OInvalidDatabaseNameException
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TimeZone;
 import java.util.concurrent.Callable;
+import org.junit.Assert;
+import org.junit.Test;
 
-/**
- * @author Sergey Sitnikov
- */
+/** @author Sergey Sitnikov */
 public class StorageNamingTests {
 
   @Test
@@ -55,7 +57,7 @@ public class StorageNamingTests {
         orientDB.create("name%", ODatabaseType.MEMORY);
         Assert.fail();
       } catch (OInvalidDatabaseNameException e) {
-        //skip
+        // skip
       }
     }
   }
@@ -67,7 +69,7 @@ public class StorageNamingTests {
         orientDB.create("na.me", ODatabaseType.MEMORY);
         Assert.fail();
       } catch (OInvalidDatabaseNameException e) {
-        //skip
+        // skip
       }
     }
   }
@@ -102,7 +104,6 @@ public class StorageNamingTests {
   @Test(expected = IllegalArgumentException.class)
   public void name() throws Exception {
     new NamingTestStorage("/name/with,");
-
   }
 
   private static class NamingTestStorage extends OStorageAbstract {
@@ -112,14 +113,11 @@ public class StorageNamingTests {
     }
 
     @Override
-    public void open(String iUserName, String iUserPassword, OContextConfiguration contextConfiguration) {
-
-    }
+    public void open(
+        String iUserName, String iUserPassword, OContextConfiguration contextConfiguration) {}
 
     @Override
-    public void create(OContextConfiguration contextConfiguration) {
-
-    }
+    public void create(OContextConfiguration contextConfiguration) {}
 
     @Override
     public String getClusterName(final int clusterId) {
@@ -127,7 +125,8 @@ public class StorageNamingTests {
     }
 
     @Override
-    public boolean setClusterAttribute(final int id, final OCluster.ATTRIBUTES attribute, final Object value) {
+    public boolean setClusterAttribute(
+        final int id, final OCluster.ATTRIBUTES attribute, final Object value) {
       return false;
     }
 
@@ -137,30 +136,31 @@ public class StorageNamingTests {
     }
 
     @Override
-    public void reload() {
-
-    }
+    public void reload() {}
 
     @Override
-    public void delete() {
-
-    }
+    public void delete() {}
 
     @Override
-    public OStorageOperationResult<ORawBuffer> readRecord(ORecordId iRid, String iFetchPlan, boolean iIgnoreCache,
-        boolean prefetchRecords, ORecordCallback<ORawBuffer> iCallback) {
+    public OStorageOperationResult<ORawBuffer> readRecord(
+        ORecordId iRid,
+        String iFetchPlan,
+        boolean iIgnoreCache,
+        boolean prefetchRecords,
+        ORecordCallback<ORawBuffer> iCallback) {
       return null;
     }
 
     @Override
-    public OStorageOperationResult<ORawBuffer> readRecordIfVersionIsNotLatest(ORecordId rid, String fetchPlan, boolean ignoreCache,
-        int recordVersion) throws ORecordNotFoundException {
+    public OStorageOperationResult<ORawBuffer> readRecordIfVersionIsNotLatest(
+        ORecordId rid, String fetchPlan, boolean ignoreCache, int recordVersion)
+        throws ORecordNotFoundException {
       return null;
     }
 
     @Override
-    public OStorageOperationResult<Boolean> deleteRecord(ORecordId iRecordId, int iVersion, int iMode,
-        ORecordCallback<Boolean> iCallback) {
+    public OStorageOperationResult<Boolean> deleteRecord(
+        ORecordId iRecordId, int iVersion, int iMode, ORecordCallback<Boolean> iCallback) {
       return null;
     }
 
@@ -170,7 +170,8 @@ public class StorageNamingTests {
     }
 
     @Override
-    public boolean cleanOutRecord(ORecordId recordId, int recordVersion, int iMode, ORecordCallback<Boolean> callback) {
+    public boolean cleanOutRecord(
+        ORecordId recordId, int recordVersion, int iMode, ORecordCallback<Boolean> callback) {
       return false;
     }
 
@@ -180,22 +181,12 @@ public class StorageNamingTests {
     }
 
     @Override
-    public void rollback(OTransactionInternal iTx) {
-
-    }
-
-    @Override
     public int getClusters() {
       return 0;
     }
 
     @Override
     public Set<String> getClusterNames() {
-      return null;
-    }
-
-    @Override
-    public OCluster getClusterById(int iId) {
       return null;
     }
 
@@ -217,6 +208,57 @@ public class StorageNamingTests {
     @Override
     public boolean dropCluster(int iId) {
       return false;
+    }
+
+    @Override
+    public String getClusterNameById(int clusterId) {
+      return null;
+    }
+
+    @Override
+    public long getClusterRecordsSizeById(int clusterId) {
+      return 0;
+    }
+
+    @Override
+    public long getClusterRecordsSizeByName(String clusterName) {
+      return 0;
+    }
+
+    @Override
+    public boolean setClusterAttribute(
+        String clusterName, OCluster.ATTRIBUTES attribute, Object value) {
+      return false;
+    }
+
+    @Override
+    public String getClusterRecordConflictStrategy(int clusterId) {
+      return null;
+    }
+
+    @Override
+    public String getClusterEncryption(int clusterId) {
+      return null;
+    }
+
+    @Override
+    public boolean isSystemCluster(int clusterId) {
+      return false;
+    }
+
+    @Override
+    public long getLastClusterPosition(int clusterId) {
+      return 0;
+    }
+
+    @Override
+    public long getClusterNextPosition(int clusterId) {
+      return 0;
+    }
+
+    @Override
+    public OPaginatedCluster.RECORD_STATUS getRecordStatus(ORID rid) {
+      return null;
     }
 
     @Override
@@ -250,9 +292,7 @@ public class StorageNamingTests {
     }
 
     @Override
-    public void setDefaultClusterId(int defaultClusterId) {
-
-    }
+    public void setDefaultClusterId(int defaultClusterId) {}
 
     @Override
     public int getClusterIdByName(String iClusterName) {
@@ -270,9 +310,7 @@ public class StorageNamingTests {
     }
 
     @Override
-    public void synch() {
-
-    }
+    public void synch() {}
 
     @Override
     public Object command(OCommandRequestText iCommand) {
@@ -285,22 +323,26 @@ public class StorageNamingTests {
     }
 
     @Override
-    public OPhysicalPosition[] higherPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition) {
+    public OPhysicalPosition[] higherPhysicalPositions(
+        int clusterId, OPhysicalPosition physicalPosition) {
       return new OPhysicalPosition[0];
     }
 
     @Override
-    public OPhysicalPosition[] lowerPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition) {
+    public OPhysicalPosition[] lowerPhysicalPositions(
+        int clusterId, OPhysicalPosition physicalPosition) {
       return new OPhysicalPosition[0];
     }
 
     @Override
-    public OPhysicalPosition[] ceilingPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition) {
+    public OPhysicalPosition[] ceilingPhysicalPositions(
+        int clusterId, OPhysicalPosition physicalPosition) {
       return new OPhysicalPosition[0];
     }
 
     @Override
-    public OPhysicalPosition[] floorPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition) {
+    public OPhysicalPosition[] floorPhysicalPositions(
+        int clusterId, OPhysicalPosition physicalPosition) {
       return new OPhysicalPosition[0];
     }
 
@@ -320,19 +362,12 @@ public class StorageNamingTests {
     }
 
     @Override
-    public OCluster getClusterByName(String iClusterName) {
+    public ORecordConflictStrategy getRecordConflictStrategy() {
       return null;
     }
 
     @Override
-    public ORecordConflictStrategy getConflictStrategy() {
-      return null;
-    }
-
-    @Override
-    public void setConflictStrategy(ORecordConflictStrategy iResolver) {
-
-    }
+    public void setConflictStrategy(ORecordConflictStrategy iResolver) {}
 
     @Override
     public String incrementalBackup(String backupDirectory, OCallable<Void, Void> started) {
@@ -345,106 +380,79 @@ public class StorageNamingTests {
     }
 
     @Override
-    public void fullIncrementalBackup(final OutputStream stream) throws UnsupportedOperationException {
-
-    }
-
-    @Override
-    public void restoreFromIncrementalBackup(String filePath) {
-
-    }
+    public void fullIncrementalBackup(final OutputStream stream)
+        throws UnsupportedOperationException {}
 
     @Override
-    public void restoreFullIncrementalBackup(final InputStream stream) throws UnsupportedOperationException {
-
-    }
+    public void restoreFromIncrementalBackup(String filePath) {}
 
     @Override
-    public List<String> backup(OutputStream out, Map<String, Object> options, Callable<Object> callable,
-        OCommandOutputListener iListener, int compressionLevel, int bufferSize) throws IOException {
+    public void restoreFullIncrementalBackup(final InputStream stream)
+        throws UnsupportedOperationException {}
+
+    @Override
+    public List<String> backup(
+        OutputStream out,
+        Map<String, Object> options,
+        Callable<Object> callable,
+        OCommandOutputListener iListener,
+        int compressionLevel,
+        int bufferSize)
+        throws IOException {
       return null;
     }
 
     @Override
-    public void restore(InputStream in, Map<String, Object> options, Callable<Object> callable, OCommandOutputListener iListener)
-        throws IOException {
-
-    }
-
-    @Override
-    public void setSchemaRecordId(String schemaRecordId) {
-
-    }
+    public void restore(
+        InputStream in,
+        Map<String, Object> options,
+        Callable<Object> callable,
+        OCommandOutputListener iListener)
+        throws IOException {}
 
     @Override
-    public void setDateFormat(String dateFormat) {
-
-    }
+    public void setSchemaRecordId(String schemaRecordId) {}
 
     @Override
-    public void setTimeZone(TimeZone timeZoneValue) {
-
-    }
+    public void setDateFormat(String dateFormat) {}
 
     @Override
-    public void setLocaleLanguage(String locale) {
-
-    }
+    public void setTimeZone(TimeZone timeZoneValue) {}
 
     @Override
-    public void setCharset(String charset) {
-
-    }
+    public void setLocaleLanguage(String locale) {}
 
     @Override
-    public void setIndexMgrRecordId(String indexMgrRecordId) {
-
-    }
+    public void setCharset(String charset) {}
 
     @Override
-    public void setDateTimeFormat(String dateTimeFormat) {
-
-    }
+    public void setIndexMgrRecordId(String indexMgrRecordId) {}
 
     @Override
-    public void setLocaleCountry(String localeCountry) {
-
-    }
+    public void setDateTimeFormat(String dateTimeFormat) {}
 
     @Override
-    public void setClusterSelection(String clusterSelection) {
-
-    }
+    public void setLocaleCountry(String localeCountry) {}
 
     @Override
-    public void setMinimumClusters(int minimumClusters) {
-
-    }
+    public void setClusterSelection(String clusterSelection) {}
 
     @Override
-    public void setValidation(boolean validation) {
-
-    }
+    public void setMinimumClusters(int minimumClusters) {}
 
     @Override
-    public void removeProperty(String property) {
-
-    }
+    public void setValidation(boolean validation) {}
 
     @Override
-    public void setProperty(String property, String value) {
-
-    }
+    public void removeProperty(String property) {}
 
     @Override
-    public void setRecordSerializer(String recordSerializer, int version) {
-
-    }
+    public void setProperty(String property, String value) {}
 
     @Override
-    public void clearProperties() {
+    public void setRecordSerializer(String recordSerializer, int version) {}
 
-    }
+    @Override
+    public void clearProperties() {}
   }
-
 }

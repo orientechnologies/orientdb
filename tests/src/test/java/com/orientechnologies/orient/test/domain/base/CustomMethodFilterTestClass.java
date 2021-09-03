@@ -18,10 +18,7 @@ package com.orientechnologies.orient.test.domain.base;
 
 import java.util.List;
 
-/**
- * @author Luca Molino (molino.luca--at--gmail.com)
- * 
- */
+/** @author Luca Molino (molino.luca--at--gmail.com) */
 public class CustomMethodFilterTestClass {
 
   protected String standardField;
@@ -61,5 +58,4 @@ public class CustomMethodFilterTestClass {
   public List<String> getStandardFieldAsMap() {
     return null;
   }
-
 }

@@ -4,9 +4,8 @@ import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.OVertex;
-import junit.framework.Assert;
-
 import java.util.concurrent.CountDownLatch;
+import junit.framework.Assert;
 
 public class AsyncReplMode2ServersOverflowIT extends BareBoneBase2ServerTest {
 
@@ -49,8 +48,7 @@ public class AsyncReplMode2ServersOverflowIT extends BareBoneBase2ServerTest {
       }
 
     } catch (Throwable e) {
-      if (exceptionInThread == null)
-        exceptionInThread = e;
+      if (exceptionInThread == null) exceptionInThread = e;
 
     } finally {
       System.out.println("Shutting down");

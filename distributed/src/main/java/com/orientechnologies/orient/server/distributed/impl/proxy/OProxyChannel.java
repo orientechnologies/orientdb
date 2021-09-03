@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.server.distributed.impl.proxy;
 
 import com.orientechnologies.common.log.OLogManager;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -12,24 +11,28 @@ import java.net.SocketTimeoutException;
 
 public class OProxyChannel extends Thread {
   private final OProxyServerListener listener;
-  private final Socket               sourceSocket;
-  private final int                  localPort;
-  private final String               remoteHost;
-  private final int                  remotePort;
-  private final InetSocketAddress    sourceAddress;
+  private final Socket sourceSocket;
+  private final int localPort;
+  private final String remoteHost;
+  private final int remotePort;
+  private final InetSocketAddress sourceAddress;
 
-  private   Thread       responseThread;
-  private   ServerSocket localSocket;
-  private   Socket       targetSocket;
-  private   InputStream  sourceInput;
-  private   OutputStream sourceOutput;
-  private   InputStream  targetInput;
-  private   OutputStream targetOutput;
-  private   boolean      running       = true;
-  protected long         requestCount  = 0;
-  protected long         responseCount = 0;
+  private Thread responseThread;
+  private ServerSocket localSocket;
+  private Socket targetSocket;
+  private InputStream sourceInput;
+  private OutputStream sourceOutput;
+  private InputStream targetInput;
+  private OutputStream targetOutput;
+  private boolean running = true;
+  protected long requestCount = 0;
+  protected long responseCount = 0;
 
-  public OProxyChannel(final OProxyServerListener listener, final Socket sourceSocket, int localPort, int remotePort) {
+  public OProxyChannel(
+      final OProxyServerListener listener,
+      final Socket sourceSocket,
+      int localPort,
+      int remotePort) {
     this.listener = listener;
     this.sourceSocket = sourceSocket;
     this.localPort = localPort;
@@ -37,8 +40,15 @@ public class OProxyChannel extends Thread {
     this.remotePort = remotePort;
     this.sourceAddress = ((InetSocketAddress) sourceSocket.getRemoteSocketAddress());
 
-    OLogManager.instance().info(this, "Proxy server: created channel %s:%d->[localhost:%d]->%s:%d", sourceAddress.getHostName(),
-        sourceAddress.getPort(), localPort, listener.getServer().getRemoteHost(), remotePort);
+    OLogManager.instance()
+        .info(
+            this,
+            "Proxy server: created channel %s:%d->[localhost:%d]->%s:%d",
+            sourceAddress.getHostName(),
+            sourceAddress.getPort(),
+            localPort,
+            listener.getServer().getRemoteHost(),
+            remotePort);
   }
 
   @Override
@@ -61,7 +71,12 @@ public class OProxyChannel extends Thread {
 
       } catch (IOException e) {
         OLogManager.instance()
-            .error(this, "Proxy server: error on connecting to the remote server %s:%d", e, remoteHost, remotePort);
+            .error(
+                this,
+                "Proxy server: error on connecting to the remote server %s:%d",
+                e,
+                remoteHost,
+                remotePort);
         return;
       }
 
@@ -76,8 +91,7 @@ public class OProxyChannel extends Thread {
           } catch (SocketTimeoutException e) {
           }
 
-          if (bytesRead < 1)
-            continue;
+          if (bytesRead < 1) continue;
 
           requestCount++;
 
@@ -87,12 +101,22 @@ public class OProxyChannel extends Thread {
           targetOutput.flush();
 
           if (!listener.getServer().tracing.equalsIgnoreCase("none"))
-            OLogManager.instance().info(this, "Proxy channel: REQUEST(%d) %s:%d->[localhost:%d]->%s:%d = %d[%s]", requestCount,
-                sourceAddress.getHostName(), sourceAddress.getPort(), localPort, remoteHost, remotePort, bytesRead,
-                formatBytes(request, bytesRead));
+            OLogManager.instance()
+                .info(
+                    this,
+                    "Proxy channel: REQUEST(%d) %s:%d->[localhost:%d]->%s:%d = %d[%s]",
+                    requestCount,
+                    sourceAddress.getHostName(),
+                    sourceAddress.getPort(),
+                    localPort,
+                    remoteHost,
+                    remotePort,
+                    bytesRead,
+                    formatBytes(request, bytesRead));
         }
       } catch (IOException e) {
-        OLogManager.instance().error(this, "Proxy channel: error on reading request from port %d", e, localPort);
+        OLogManager.instance()
+            .error(this, "Proxy channel: error on reading request from port %d", e, localPort);
       }
 
     } finally {
@@ -159,58 +183,68 @@ public class OProxyChannel extends Thread {
   }
 
   protected void createResponseThread() {
-    responseThread = new Thread() {
-      public void run() {
+    responseThread =
+        new Thread() {
+          public void run() {
 
-        try {
-          final byte[] response = new byte[listener.getServer().bufferSize];
-          while (running) {
-            int bytesRead = 0;
             try {
-              bytesRead = targetInput.read(response);
-            } catch (SocketTimeoutException e) {
-            }
+              final byte[] response = new byte[listener.getServer().bufferSize];
+              while (running) {
+                int bytesRead = 0;
+                try {
+                  bytesRead = targetInput.read(response);
+                } catch (SocketTimeoutException e) {
+                }
 
-            if (bytesRead < 1)
-              continue;
+                if (bytesRead < 1) continue;
 
-            responseCount++;
+                responseCount++;
 
-            listener.getServer().onMessage(false, localPort, remotePort, response, bytesRead);
+                listener.getServer().onMessage(false, localPort, remotePort, response, bytesRead);
 
-            sourceOutput.write(response, 0, bytesRead);
-            sourceOutput.flush();
+                sourceOutput.write(response, 0, bytesRead);
+                sourceOutput.flush();
 
-            if (!listener.getServer().tracing.equalsIgnoreCase("none"))
+                if (!listener.getServer().tracing.equalsIgnoreCase("none"))
+                  OLogManager.instance()
+                      .info(
+                          this,
+                          "Proxy channel: RESPONSE(%d) %s:%d->[localhost:%d]->%s:%d = %d[%s]",
+                          responseCount,
+                          remoteHost,
+                          remotePort,
+                          localPort,
+                          sourceAddress.getHostName(),
+                          sourceAddress.getPort(),
+                          bytesRead,
+                          formatBytes(response, bytesRead));
+              }
+            } catch (IOException e) {
               OLogManager.instance()
-                  .info(this, "Proxy channel: RESPONSE(%d) %s:%d->[localhost:%d]->%s:%d = %d[%s]", responseCount, remoteHost,
-                      remotePort, localPort, sourceAddress.getHostName(), sourceAddress.getPort(), bytesRead,
-                      formatBytes(response, bytesRead));
+                  .error(
+                      this,
+                      "Proxy channel: error on reading request from port %s:%d",
+                      e,
+                      remoteHost,
+                      remotePort);
+              running = false;
+            }
           }
-        } catch (IOException e) {
-          OLogManager.instance().error(this, "Proxy channel: error on reading request from port %s:%d", e, remoteHost, remotePort);
-          running = false;
-        }
-      }
-    };
+        };
     responseThread.start();
   }
 
   private String formatBytes(final byte[] request, final int total) {
-    if ("none".equalsIgnoreCase(listener.getServer().tracing))
-      return "";
+    if ("none".equalsIgnoreCase(listener.getServer().tracing)) return "";
 
     final StringBuilder buffer = new StringBuilder();
     for (int i = 0; i < total; ++i) {
-      if (i > 0)
-        buffer.append(',');
+      if (i > 0) buffer.append(',');
 
-      if ("byte".equalsIgnoreCase(listener.getServer().tracing))
-        buffer.append(request[i]);
+      if ("byte".equalsIgnoreCase(listener.getServer().tracing)) buffer.append(request[i]);
       else if ("hex".equalsIgnoreCase(listener.getServer().tracing))
         buffer.append(String.format("0x%x", request[i]));
     }
     return buffer.toString();
   }
-
 }

@@ -27,18 +27,17 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.ORecordStringable;
-
 import java.io.UnsupportedEncodingException;
 
 /**
- * It's schema less. Use this if you need to store Strings at low level. The object can be reused across calls to the database by
- * using the reset() at every re-use.
+ * It's schema less. Use this if you need to store Strings at low level. The object can be reused
+ * across calls to the database by using the reset() at every re-use.
  */
-@SuppressWarnings({ "unchecked" })
+@SuppressWarnings({"unchecked"})
 @Deprecated
 public class ORecordFlat extends ORecordAbstract implements ORecordStringable {
   private static final long serialVersionUID = 1L;
-  public static final  byte RECORD_TYPE      = 'f';
+  public static final byte RECORD_TYPE = 'f';
   protected String value;
 
   public ORecordFlat(ODatabaseDocumentInternal iDatabase) {
@@ -100,8 +99,7 @@ public class ORecordFlat extends ORecordAbstract implements ORecordStringable {
   public String value() {
     if (value == null) {
       // LAZY DESERIALIZATION
-      if (source == null && getIdentity() != null && getIdentity().isValid())
-        reload();
+      if (source == null && getIdentity() != null && getIdentity().isValid()) reload();
 
       // LAZY LOADING: LOAD THE RECORD FIRST
       try {

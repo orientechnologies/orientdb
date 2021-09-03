@@ -5,9 +5,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 
-/**
- * @Internal
- */
+/** @Internal */
 public final class SimpleRecordReader implements RecordReader {
   private final boolean prefetchRecords;
 
@@ -16,7 +14,12 @@ public final class SimpleRecordReader implements RecordReader {
   }
 
   @Override
-  public ORawBuffer readRecord(OStorage storage, ORecordId rid, String fetchPlan, boolean ignoreCache, final int recordVersion)
+  public ORawBuffer readRecord(
+      OStorage storage,
+      ORecordId rid,
+      String fetchPlan,
+      boolean ignoreCache,
+      final int recordVersion)
       throws ORecordNotFoundException {
     return storage.readRecord(rid, fetchPlan, ignoreCache, prefetchRecords, null).getResult();
   }

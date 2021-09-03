@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
-
 import java.io.IOException;
 
 public class OSBTCreateTreeResponse implements OBinaryResponse {
@@ -37,20 +36,19 @@ public class OSBTCreateTreeResponse implements OBinaryResponse {
     this.collenctionPointer = collenctionPointer;
   }
 
-  public OSBTCreateTreeResponse() {
-  }
+  public OSBTCreateTreeResponse() {}
 
   @Override
   public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
     collenctionPointer = OCollectionNetworkSerializer.INSTANCE.readCollectionPointer(network);
   }
 
-  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
     OCollectionNetworkSerializer.INSTANCE.writeCollectionPointer(channel, collenctionPointer);
   }
 
   public OBonsaiCollectionPointer getCollenctionPointer() {
     return collenctionPointer;
   }
-
 }

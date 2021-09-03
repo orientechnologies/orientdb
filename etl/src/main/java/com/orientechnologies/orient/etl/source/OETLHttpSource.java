@@ -23,7 +23,6 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -32,34 +31,31 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.logging.Level;
 
-/**
- * Extracts data from HTTP endpoint.
- */
+/** Extracts data from HTTP endpoint. */
 public class OETLHttpSource extends OETLAbstractSource {
   protected BufferedReader reader;
-  protected String         url;
+  protected String url;
   protected String method = "GET";
   protected HttpURLConnection conn;
-  protected ODocument         headers;
+  protected ODocument headers;
 
   @Override
   public ODocument getConfiguration() {
-    return new ODocument().fromJSON("{parameters:[{url:{optional:false,description:'HTTP URL to fetch'}},"
-        + "{httpMethod:{optional:true,description:'HTTP method to use between GET (default), POST, PUT, DELETE, HEAD'}}],"
-        + "output:'String'}");
+    return new ODocument()
+        .fromJSON(
+            "{parameters:[{url:{optional:false,description:'HTTP URL to fetch'}},"
+                + "{httpMethod:{optional:true,description:'HTTP method to use between GET (default), POST, PUT, DELETE, HEAD'}}],"
+                + "output:'String'}");
   }
 
   @Override
   public void configure(ODocument iConfiguration, OCommandContext iContext) {
     super.configure(iConfiguration, iContext);
     url = iConfiguration.field("url");
-    if (url == null || url.isEmpty())
-      throw new OConfigurationException("HTTP Source missing URL");
-    if (iConfiguration.containsField("method"))
-      method = iConfiguration.field("method");
+    if (url == null || url.isEmpty()) throw new OConfigurationException("HTTP Source missing URL");
+    if (iConfiguration.containsField("method")) method = iConfiguration.field("method");
 
-    if (iConfiguration.containsField("headers"))
-      headers = iConfiguration.field("headers");
+    if (iConfiguration.containsField("headers")) headers = iConfiguration.field("headers");
   }
 
   @Override
@@ -80,8 +76,7 @@ public class OETLHttpSource extends OETLAbstractSource {
       conn.setRequestMethod(method);
 
       if (headers != null)
-        for (String k : headers.fieldNames())
-          conn.setRequestProperty(k, (String) headers.field(k));
+        for (String k : headers.fieldNames()) conn.setRequestProperty(k, (String) headers.field(k));
 
       log(Level.FINE, "Connecting to %s (method=%s)", url, method);
 
@@ -90,7 +85,8 @@ public class OETLHttpSource extends OETLAbstractSource {
       log(Level.FINE, "Connected: response code %d", responseCode);
 
     } catch (Exception e) {
-      throw new OETLSourceException("[HTTP source] error on opening connection in " + method + " to URL: " + url, e);
+      throw new OETLSourceException(
+          "[HTTP source] error on opening connection in " + method + " to URL: " + url, e);
     }
   }
 
@@ -103,8 +99,7 @@ public class OETLHttpSource extends OETLAbstractSource {
         OLogManager.instance().error(this, "Error during close of reader", e);
       }
 
-    if (conn != null)
-      conn.disconnect();
+    if (conn != null) conn.disconnect();
   }
 
   @Override
@@ -113,7 +108,8 @@ public class OETLHttpSource extends OETLAbstractSource {
       reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
       return reader;
     } catch (Exception e) {
-      throw new OETLSourceException("[HTTP source] Error on reading by using " + method + " from URL: " + url, e);
+      throw new OETLSourceException(
+          "[HTTP source] Error on reading by using " + method + " from URL: " + url, e);
     }
   }
 }

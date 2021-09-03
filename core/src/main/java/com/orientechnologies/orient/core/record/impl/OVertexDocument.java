@@ -15,14 +15,23 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.record.*;
-
-import java.util.*;
+import com.orientechnologies.orient.core.record.ODirection;
+import com.orientechnologies.orient.core.record.OEdge;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.OVertex;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 public class OVertexDocument extends ODocument implements OVertex {
 
   private static final String CONNECTION_OUT_PREFIX = "out_";
-  private static final String CONNECTION_IN_PREFIX  = "in_";
+  private static final String CONNECTION_IN_PREFIX = "in_";
 
   public OVertexDocument(OClass cl) {
     super(cl);
@@ -57,32 +66,36 @@ public class OVertexDocument extends ODocument implements OVertex {
   public Iterable<OEdge> getEdges(ODirection direction) {
     Set<String> prefixes = new HashSet<>();
     switch (direction) {
-    case BOTH:
-      prefixes.add("in_");
-    case OUT:
-      prefixes.add("out_");
-      break;
-    case IN:
-      prefixes.add("in_");
+      case BOTH:
+        prefixes.add("in_");
+      case OUT:
+        prefixes.add("out_");
+        break;
+      case IN:
+        prefixes.add("in_");
     }
 
     Set<String> candidateClasses = new HashSet<>();
     String[] fieldNames = fieldNames();
     for (String fieldName : fieldNames) {
-      prefixes.stream().filter(prefix -> fieldName.startsWith(prefix)).forEach(prefix -> {
-        if (fieldName.equals(prefix)) {
-          candidateClasses.add("E");
-        } else {
-          candidateClasses.add(fieldName.substring(prefix.length()));
-        }
-      });
+      prefixes.stream()
+          .filter(prefix -> fieldName.startsWith(prefix))
+          .forEach(
+              prefix -> {
+                if (fieldName.equals(prefix)) {
+                  candidateClasses.add("E");
+                } else {
+                  candidateClasses.add(fieldName.substring(prefix.length()));
+                }
+              });
     }
     return getEdges(direction, candidateClasses.toArray(new String[] {}));
   }
 
   @Override
   public Iterable<OEdge> getEdges(ODirection direction, String... labels) {
-    final OMultiCollectionIterator<OEdge> iterable = new OMultiCollectionIterator<OEdge>().setEmbedded(true);
+    final OMultiCollectionIterator<OEdge> iterable =
+        new OMultiCollectionIterator<OEdge>().setEmbedded(true);
 
     labels = resolveAliases(labels);
     Set<String> fieldNames = null;
@@ -95,8 +108,7 @@ public class OVertexDocument extends ODocument implements OVertex {
         deserializeFields(fieldNames.toArray(new String[] {}));
     }
 
-    if (fieldNames == null)
-      fieldNames = getPropertyNames();
+    if (fieldNames == null) fieldNames = getPropertyNames();
 
     for (String fieldName : fieldNames) {
 
@@ -116,14 +128,26 @@ public class OVertexDocument extends ODocument implements OVertex {
 
           // CREATE LAZY Iterable AGAINST COLLECTION FIELD
           if (coll instanceof ORecordLazyMultiValue) {
-            iterable
-                .add(new OEdgeIterator(this, coll, ((ORecordLazyMultiValue) coll).rawIterator(), connection, labels, coll.size()));
+            iterable.add(
+                new OEdgeIterator(
+                    this,
+                    coll,
+                    ((ORecordLazyMultiValue) coll).rawIterator(),
+                    connection,
+                    labels,
+                    coll.size()));
           } else
             iterable.add(new OEdgeIterator(this, coll, coll.iterator(), connection, labels, -1));
 
         } else if (fieldValue instanceof ORidBag) {
-          iterable.add(new OEdgeIterator(this, fieldValue, ((ORidBag) fieldValue).rawIterator(), connection, labels,
-              ((ORidBag) fieldValue).size()));
+          iterable.add(
+              new OEdgeIterator(
+                  this,
+                  fieldValue,
+                  ((ORidBag) fieldValue).rawIterator(),
+                  connection,
+                  labels,
+                  ((ORidBag) fieldValue).size()));
         }
       }
     }
@@ -161,7 +185,6 @@ public class OVertexDocument extends ODocument implements OVertex {
       }
     }
     return getEdges(direction, types.toArray(new String[] {}));
-
   }
 
   @Override
@@ -180,7 +203,6 @@ public class OVertexDocument extends ODocument implements OVertex {
       Iterable<OEdge> edges = getEdges(direction, type);
       return new OEdgeToVertexIterable(edges, direction);
     }
-
   }
 
   @Override
@@ -192,7 +214,6 @@ public class OVertexDocument extends ODocument implements OVertex {
       }
     }
     return getVertices(direction, types.toArray(new String[] {}));
-
   }
 
   @Override
@@ -219,12 +240,14 @@ public class OVertexDocument extends ODocument implements OVertex {
     return moveTo(iClassName, iClusterName, this, getDatabase());
   }
 
-  protected static ORID moveTo(final String iClassName, final String iClusterName, OVertex toMove, ODatabaseSession db) {
+  protected static ORID moveTo(
+      final String iClassName, final String iClusterName, OVertex toMove, ODatabaseSession db) {
     if (toMove == null) {
       throw new ORecordNotFoundException(null, "The vertex is null");
     }
     if (checkDeletedInTx(toMove.getIdentity())) {
-      throw new ORecordNotFoundException(toMove.getIdentity(), "The vertex " + toMove.getIdentity() + " has been deleted");
+      throw new ORecordNotFoundException(
+          toMove.getIdentity(), "The vertex " + toMove.getIdentity() + " has been deleted");
     }
     boolean moveTx = !db.getTransaction().isActive();
     try {
@@ -236,7 +259,8 @@ public class OVertexDocument extends ODocument implements OVertex {
 
       final ORecord oldRecord = oldIdentity.getRecord();
       if (oldRecord == null)
-        throw new ORecordNotFoundException(oldIdentity, "The vertex " + oldIdentity + " has been deleted");
+        throw new ORecordNotFoundException(
+            oldIdentity, "The vertex " + oldIdentity + " has been deleted");
 
       final ODocument doc = toMove.getRecord().copy();
 
@@ -244,7 +268,7 @@ public class OVertexDocument extends ODocument implements OVertex {
       final Iterable<OEdge> inEdges = toMove.getEdges(ODirection.IN);
 
       // DELETE THE OLD RECORD FIRST TO AVOID ISSUES WITH UNIQUE CONSTRAINTS
-      copyRidBags(oldRecord, doc);//TODO! check this!!!
+      copyRidBags(oldRecord, doc); // TODO! check this!!!
       detachRidbags(oldRecord);
       db.delete(oldRecord);
 
@@ -268,8 +292,9 @@ public class OVertexDocument extends ODocument implements OVertex {
           // REPLACE ALL REFS IN inVertex
           final OVertex inV = oe.getVertex(ODirection.IN);
 
-          final String inFieldName = getConnectionFieldName(ODirection.IN, oe.getSchemaType().map(x -> x.getName()).orElse(null),
-              true);
+          final String inFieldName =
+              getConnectionFieldName(
+                  ODirection.IN, oe.getSchemaType().map(x -> x.getName()).orElse(null), true);
 
           replaceLinks(inV.getRecord(), inFieldName, oldIdentity, newIdentity);
         } else {
@@ -284,8 +309,9 @@ public class OVertexDocument extends ODocument implements OVertex {
           // REPLACE ALL REFS IN outVertex
           final OVertex outV = oe.getVertex(ODirection.OUT);
 
-          final String outFieldName = getConnectionFieldName(ODirection.OUT, oe.getSchemaType().map(x -> x.getName()).orElse(null),
-              true);
+          final String outFieldName =
+              getConnectionFieldName(
+                  ODirection.OUT, oe.getSchemaType().map(x -> x.getName()).orElse(null), true);
 
           replaceLinks(outV.getRecord(), outFieldName, oldIdentity, newIdentity);
         } else {
@@ -312,8 +338,12 @@ public class OVertexDocument extends ODocument implements OVertex {
   private static void detachRidbags(ORecord oldRecord) {
     ODocument oldDoc = (ODocument) oldRecord;
     for (String field : oldDoc.fieldNames()) {
-      if (field.equalsIgnoreCase("out") || field.equalsIgnoreCase("in") || field.startsWith("out_") || field.startsWith("in_")
-          || field.startsWith("OUT_") || field.startsWith("IN_")) {
+      if (field.equalsIgnoreCase("out")
+          || field.equalsIgnoreCase("in")
+          || field.startsWith("out_")
+          || field.startsWith("in_")
+          || field.startsWith("OUT_")
+          || field.startsWith("IN_")) {
         Object val = oldDoc.rawField(field);
         if (val instanceof ORidBag) {
           oldDoc.removeField(field);
@@ -340,16 +370,18 @@ public class OVertexDocument extends ODocument implements OVertex {
     }
   }
 
-  public static String getConnectionFieldName(final ODirection iDirection, final String iClassName,
+  public static String getConnectionFieldName(
+      final ODirection iDirection,
+      final String iClassName,
       final boolean useVertexFieldsForEdgeLabels) {
     if (iDirection == null || iDirection == ODirection.BOTH)
       throw new IllegalArgumentException("Direction not valid");
 
     if (useVertexFieldsForEdgeLabels) {
       // PREFIX "out_" or "in_" TO THE FIELD NAME
-      final String prefix = iDirection == ODirection.OUT ? CONNECTION_OUT_PREFIX : CONNECTION_IN_PREFIX;
-      if (iClassName == null || iClassName.isEmpty() || iClassName.equals("E"))
-        return prefix;
+      final String prefix =
+          iDirection == ODirection.OUT ? CONNECTION_OUT_PREFIX : CONNECTION_IN_PREFIX;
+      if (iClassName == null || iClassName.isEmpty() || iClassName.equals("E")) return prefix;
 
       return prefix + iClassName;
     } else
@@ -391,16 +423,16 @@ public class OVertexDocument extends ODocument implements OVertex {
 
     for (String className : allClassNames) {
       switch (iDirection) {
-      case OUT:
-        result.add(CONNECTION_OUT_PREFIX + className);
-        break;
-      case IN:
-        result.add(CONNECTION_IN_PREFIX + className);
-        break;
-      case BOTH:
-        result.add(CONNECTION_OUT_PREFIX + className);
-        result.add(CONNECTION_IN_PREFIX + className);
-        break;
+        case OUT:
+          result.add(CONNECTION_OUT_PREFIX + className);
+          break;
+        case IN:
+          result.add(CONNECTION_IN_PREFIX + className);
+          break;
+        case BOTH:
+          result.add(CONNECTION_OUT_PREFIX + className);
+          result.add(CONNECTION_IN_PREFIX + className);
+          break;
       }
     }
 
@@ -410,21 +442,22 @@ public class OVertexDocument extends ODocument implements OVertex {
   protected static boolean checkDeletedInTx(ORID id) {
 
     ODatabaseDocument db = ODatabaseRecordThreadLocal.instance().get();
-    if (db == null)
-      return false;
+    if (db == null) return false;
 
     final ORecordOperation oper = db.getTransaction().getRecordEntry(id);
-    if (oper == null)
-      return id.isTemporary();
-    else
-      return oper.type == ORecordOperation.DELETED;
+    if (oper == null) return id.isTemporary();
+    else return oper.type == ORecordOperation.DELETED;
   }
 
   private static void copyRidBags(ORecord oldRecord, ODocument newDoc) {
     ODocument oldDoc = (ODocument) oldRecord;
     for (String field : oldDoc.fieldNames()) {
-      if (field.equalsIgnoreCase("out") || field.equalsIgnoreCase("in") || field.startsWith("out_") || field.startsWith("in_")
-          || field.startsWith("OUT_") || field.startsWith("IN_")) {
+      if (field.equalsIgnoreCase("out")
+          || field.equalsIgnoreCase("in")
+          || field.startsWith("out_")
+          || field.startsWith("in_")
+          || field.startsWith("OUT_")
+          || field.startsWith("IN_")) {
         Object val = oldDoc.rawField(field);
         if (val instanceof ORidBag) {
           ORidBag bag = (ORidBag) val;
@@ -441,14 +474,16 @@ public class OVertexDocument extends ODocument implements OVertex {
     }
   }
 
-  public static void replaceLinks(final ODocument iVertex, final String iFieldName, final OIdentifiable iVertexToRemove,
+  public static void replaceLinks(
+      final ODocument iVertex,
+      final String iFieldName,
+      final OIdentifiable iVertexToRemove,
       final OIdentifiable iNewVertex) {
-    if (iVertex == null)
-      return;
+    if (iVertex == null) return;
 
-    final Object fieldValue = iVertexToRemove != null ? iVertex.field(iFieldName) : iVertex.removeField(iFieldName);
-    if (fieldValue == null)
-      return;
+    final Object fieldValue =
+        iVertexToRemove != null ? iVertex.field(iFieldName) : iVertex.removeField(iFieldName);
+    if (fieldValue == null) return;
 
     if (fieldValue instanceof OIdentifiable) {
       // SINGLE RECORD
@@ -480,14 +515,14 @@ public class OVertexDocument extends ODocument implements OVertex {
     } else if (fieldValue instanceof Collection) {
       final Collection col = (Collection) fieldValue;
 
-      if (col.remove(iVertexToRemove))
-        col.add(iNewVertex);
+      if (col.remove(iVertexToRemove)) col.add(iNewVertex);
     }
 
     iVertex.save();
   }
 
-  protected OPair<ODirection, String> getConnection(final ODirection iDirection, final String iFieldName, String... iClassNames) {
+  protected OPair<ODirection, String> getConnection(
+      final ODirection iDirection, final String iFieldName, String... iClassNames) {
     if (iClassNames != null && iClassNames.length == 1 && iClassNames[0].equalsIgnoreCase("E"))
       // DEFAULT CLASS, TREAT IT AS NO CLASS/LABEL
       iClassNames = null;
@@ -498,7 +533,8 @@ public class OVertexDocument extends ODocument implements OVertex {
       // FIELDS THAT STARTS WITH "out_"
       if (iFieldName.startsWith(CONNECTION_OUT_PREFIX)) {
         if (iClassNames == null || iClassNames.length == 0)
-          return new OPair<ODirection, String>(ODirection.OUT, getConnectionClass(ODirection.OUT, iFieldName));
+          return new OPair<ODirection, String>(
+              ODirection.OUT, getConnectionClass(ODirection.OUT, iFieldName));
 
         // CHECK AGAINST ALL THE CLASS NAMES
         for (String clsName : iClassNames) {
@@ -518,14 +554,14 @@ public class OVertexDocument extends ODocument implements OVertex {
           }
         }
       }
-
     }
 
     if (iDirection == ODirection.IN || iDirection == ODirection.BOTH) {
       // FIELDS THAT STARTS WITH "in_"
       if (iFieldName.startsWith(CONNECTION_IN_PREFIX)) {
         if (iClassNames == null || iClassNames.length == 0)
-          return new OPair<ODirection, String>(ODirection.IN, getConnectionClass(ODirection.IN, iFieldName));
+          return new OPair<ODirection, String>(
+              ODirection.IN, getConnectionClass(ODirection.IN, iFieldName));
 
         // CHECK AGAINST ALL THE CLASS NAMES
         for (String clsName : iClassNames) {
@@ -545,7 +581,6 @@ public class OVertexDocument extends ODocument implements OVertex {
           }
         }
       }
-
     }
 
     // NOT FOUND
@@ -560,7 +595,7 @@ public class OVertexDocument extends ODocument implements OVertex {
       if (iFieldName.length() > CONNECTION_IN_PREFIX.length())
         return iFieldName.substring(CONNECTION_IN_PREFIX.length());
     }
-    return "E";//TODO constant
+    return "E"; // TODO constant
   }
 
   @Override

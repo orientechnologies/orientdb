@@ -11,15 +11,12 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ODirection;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/**
- * Created by luigidellaquila on 03/01/17.
- */
+/** Created by luigidellaquila on 03/01/17. */
 public class OSQLFunctionOut extends OSQLFunctionMoveFiltered {
   public static final String NAME = "out";
 
@@ -28,11 +25,15 @@ public class OSQLFunctionOut extends OSQLFunctionMoveFiltered {
   }
 
   @Override
-  protected Object move(final ODatabase graph, final OIdentifiable iRecord, final String[] iLabels) {
+  protected Object move(
+      final ODatabase graph, final OIdentifiable iRecord, final String[] iLabels) {
     return v2v(graph, iRecord, ODirection.OUT, iLabels);
   }
 
-  protected Object move(final ODatabase graph, final OIdentifiable iRecord, final String[] iLabels,
+  protected Object move(
+      final ODatabase graph,
+      final OIdentifiable iRecord,
+      final String[] iLabels,
       Iterable<OIdentifiable> iPossibleResults) {
     if (iPossibleResults == null) {
       return v2v(graph, iRecord, ODirection.OUT, iLabels);
@@ -51,13 +52,13 @@ public class OSQLFunctionOut extends OSQLFunctionMoveFiltered {
           return result;
         }
       }
-
     }
 
     return v2v(graph, iRecord, ODirection.OUT, iLabels);
   }
 
-  private Object fetchFromIndex(ODatabase graph, OIdentifiable iFrom, Iterable<OIdentifiable> iTo, String[] iEdgeTypes) {
+  private Object fetchFromIndex(
+      ODatabase graph, OIdentifiable iFrom, Iterable<OIdentifiable> iTo, String[] iEdgeTypes) {
     String edgeClassName = null;
     if (iEdgeTypes == null) {
       edgeClassName = "E";
@@ -80,11 +81,13 @@ public class OSQLFunctionOut extends OSQLFunctionMoveFiltered {
     for (OIdentifiable to : iTo) {
       final OCompositeKey key = new OCompositeKey(iFrom, to);
       try (Stream<ORID> stream = index.getInternal().getRids(key)) {
-        result.add(stream.map((rid) -> ((ODocument) rid.getRecord()).rawField("in")).collect(Collectors.toSet()));
+        result.add(
+            stream
+                .map((rid) -> ((ODocument) rid.getRecord()).rawField("in"))
+                .collect(Collectors.toSet()));
       }
     }
 
     return result;
   }
-
 }

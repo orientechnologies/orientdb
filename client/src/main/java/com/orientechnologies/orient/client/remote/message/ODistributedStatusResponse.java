@@ -19,21 +19,19 @@
  */
 package com.orientechnologies.orient.client.remote.message;
 
-import java.io.IOException;
-
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
+import java.io.IOException;
 
 public class ODistributedStatusResponse implements OBinaryResponse {
 
   private ODocument clusterConfig;
 
-  public ODistributedStatusResponse() {
-  }
+  public ODistributedStatusResponse() {}
 
   public ODistributedStatusResponse(ODocument clusterConfig) {
     this.clusterConfig = clusterConfig;
@@ -44,7 +42,8 @@ public class ODistributedStatusResponse implements OBinaryResponse {
     clusterConfig = new ODocument(network.readBytes());
   }
 
-  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
     byte[] bytes = serializer.toStream(clusterConfig);
     channel.writeBytes(bytes);
   }

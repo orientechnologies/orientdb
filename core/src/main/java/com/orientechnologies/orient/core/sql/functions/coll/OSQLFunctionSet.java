@@ -23,7 +23,6 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -33,11 +32,10 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * This operator add an item in a set. The set doesn't accept duplicates, so adding multiple times the same value has no effect: the
- * value is contained only once.
+ * This operator add an item in a set. The set doesn't accept duplicates, so adding multiple times
+ * the same value has no effect: the value is contained only once.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- *
  */
 public class OSQLFunctionSet extends OSQLFunctionMultiValueAbstract<Set<Object>> {
   public static final String NAME = "set";
@@ -46,7 +44,11 @@ public class OSQLFunctionSet extends OSQLFunctionMultiValueAbstract<Set<Object>>
     super(NAME, 1, -1);
   }
 
-  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
+  public Object execute(
+      Object iThis,
+      final OIdentifiable iCurrentRecord,
+      Object iCurrentResult,
+      final Object[] iParams,
       OCommandContext iContext) {
     if (iParams.length > 1)
       // IN LINE MODE
@@ -58,10 +60,8 @@ public class OSQLFunctionSet extends OSQLFunctionMultiValueAbstract<Set<Object>>
           // AGGREGATION MODE (STATEFULL)
           context = new HashSet<Object>();
 
-        if (value instanceof ODocument)
-          context.add(value);
-        else
-          OMultiValue.add(context, value);
+        if (value instanceof ODocument) context.add(value);
+        else OMultiValue.add(context, value);
       }
     }
 
@@ -89,14 +89,14 @@ public class OSQLFunctionSet extends OSQLFunctionMultiValueAbstract<Set<Object>>
     if (returnDistributedResult()) {
       final Collection<Object> result = new HashSet<Object>();
       for (Object iParameter : resultsToMerge) {
-        final Map<String, Object> container = (Map<String, Object>) ((Collection<?>) iParameter).iterator().next();
+        final Map<String, Object> container =
+            (Map<String, Object>) ((Collection<?>) iParameter).iterator().next();
         result.addAll((Collection<?>) container.get("context"));
       }
       return result;
     }
 
-    if (!resultsToMerge.isEmpty())
-      return resultsToMerge.get(0);
+    if (!resultsToMerge.isEmpty()) return resultsToMerge.get(0);
 
     return null;
   }

@@ -3,17 +3,14 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.orient.core.cache.OCommandCache;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
@@ -22,7 +19,7 @@ public class OTruncateClassStatement extends ODDLStatement {
 
   protected OIdentifier className;
   protected boolean polymorphic = false;
-  protected boolean unsafe      = false;
+  protected boolean unsafe = false;
 
   public OTruncateClassStatement(int id) {
     super(id);
@@ -32,7 +29,8 @@ public class OTruncateClassStatement extends ODDLStatement {
     super(p, id);
   }
 
-  @Override public OResultSet executeDDL(OCommandContext ctx) {
+  @Override
+  public OResultSet executeDDL(OCommandContext ctx) {
     ODatabase db = ctx.getDatabase();
     OSchema schema = db.getMetadata().getSchema();
     OClass clazz = schema.getClass(className.getStringValue());
@@ -51,20 +49,21 @@ public class OTruncateClassStatement extends ODDLStatement {
       }
     }
 
-
     OInternalResultSet rs = new OInternalResultSet();
     Collection<OClass> subclasses = clazz.getAllSubclasses();
-    if (polymorphic && !unsafe) {// for multiple inheritance
+    if (polymorphic && !unsafe) { // for multiple inheritance
       for (OClass subclass : subclasses) {
         long subclassRecs = clazz.count();
         if (subclassRecs > 0) {
           if (subclass.isSubClassOf("V")) {
             throw new OCommandExecutionException(
-                "'TRUNCATE CLASS' command cannot be used on not empty vertex classes (" + subclass.getName()
+                "'TRUNCATE CLASS' command cannot be used on not empty vertex classes ("
+                    + subclass.getName()
                     + "). Apply the 'UNSAFE' keyword to force it (at your own risk)");
           } else if (subclass.isSubClassOf("E")) {
             throw new OCommandExecutionException(
-                "'TRUNCATE CLASS' command cannot be used on not empty edge classes (" + subclass.getName()
+                "'TRUNCATE CLASS' command cannot be used on not empty edge classes ("
+                    + subclass.getName()
                     + "). Apply the 'UNSAFE' keyword to force it (at your own risk)");
           }
         }
@@ -77,7 +76,6 @@ public class OTruncateClassStatement extends ODDLStatement {
       result.setProperty("operation", "truncate class");
       result.setProperty("className", className.getStringValue());
       rs.add(result);
-      invalidateCommandCache(clazz, db);
       if (polymorphic) {
         for (OClass subclass : subclasses) {
           subclass.truncate();
@@ -85,36 +83,18 @@ public class OTruncateClassStatement extends ODDLStatement {
           result.setProperty("operation", "truncate class");
           result.setProperty("className", className.getStringValue());
           rs.add(result);
-          invalidateCommandCache(subclass, db);
         }
       }
     } catch (IOException e) {
-      throw OException.wrapException(new OCommandExecutionException("Error on executing command"), e);
+      throw OException.wrapException(
+          new OCommandExecutionException("Error on executing command"), e);
     }
-
 
     return rs;
   }
 
-  private void invalidateCommandCache(OClass clazz, ODatabase db) {
-    if (clazz == null) {
-      return;
-    }
-    OCommandCache commandCache = ((OMetadataInternal)db.getMetadata()).getCommandCache();
-    if (commandCache != null && commandCache.isEnabled()) {
-      int[] clusterIds = clazz.getClusterIds();
-      if (clusterIds != null) {
-        for (int i : clusterIds) {
-          String clusterName = getDatabase().getClusterNameById(i);
-          if (clusterName != null) {
-            commandCache.invalidateResultsOfCluster(clusterName);
-          }
-        }
-      }
-    }
-  }
-
-  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("TRUNCATE CLASS " + className.toString());
     if (polymorphic) {
       builder.append(" POLYMORPHIC");
@@ -124,7 +104,8 @@ public class OTruncateClassStatement extends ODDLStatement {
     }
   }
 
-  @Override public OTruncateClassStatement copy() {
+  @Override
+  public OTruncateClassStatement copy() {
     OTruncateClassStatement result = new OTruncateClassStatement(-1);
     result.className = className == null ? null : className.copy();
     result.polymorphic = polymorphic;
@@ -132,25 +113,23 @@ public class OTruncateClassStatement extends ODDLStatement {
     return result;
   }
 
-  @Override public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OTruncateClassStatement that = (OTruncateClassStatement) o;
 
-    if (polymorphic != that.polymorphic)
-      return false;
-    if (unsafe != that.unsafe)
-      return false;
+    if (polymorphic != that.polymorphic) return false;
+    if (unsafe != that.unsafe) return false;
     if (className != null ? !className.equals(that.className) : that.className != null)
       return false;
 
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = className != null ? className.hashCode() : 0;
     result = 31 * result + (polymorphic ? 1 : 0);
     result = 31 * result + (unsafe ? 1 : 0);

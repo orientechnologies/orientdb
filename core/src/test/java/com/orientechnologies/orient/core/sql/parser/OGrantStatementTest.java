@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import org.junit.Test;
+
 public class OGrantStatementTest extends OParserTestAbstract {
 
   @Test
@@ -14,12 +15,9 @@ public class OGrantStatementTest extends OParserTestAbstract {
     checkRightSyntax("grant EXECUTE on database.class.* to admin");
     checkRightSyntax("grant execute on database.class.* to admin");
 
-
     checkRightSyntax("grant policy foo on database.class.* to admin");
 
     checkWrongSyntax("grant Foo on database.class.Person to admin");
     checkWrongSyntax("grant policy on database.class.* to admin");
-
   }
-
 }

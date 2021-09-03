@@ -4,17 +4,17 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-
 import java.util.Map;
 
 public class OCluster extends SimpleNode {
-  protected String  clusterName;
+  protected String clusterName;
   protected Integer clusterNumber;
 
   public OCluster(String clusterName) {
     super(-1);
     this.clusterName = clusterName;
   }
+
   public OCluster(int id) {
     super(id);
   }
@@ -53,17 +53,17 @@ public class OCluster extends SimpleNode {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OCluster oCluster = (OCluster) o;
 
-    if (clusterName != null ? !clusterName.equals(oCluster.clusterName) : oCluster.clusterName != null)
-      return false;
-    if (clusterNumber != null ? !clusterNumber.equals(oCluster.clusterNumber) : oCluster.clusterNumber != null)
-      return false;
+    if (clusterName != null
+        ? !clusterName.equals(oCluster.clusterName)
+        : oCluster.clusterName != null) return false;
+    if (clusterNumber != null
+        ? !clusterNumber.equals(oCluster.clusterNumber)
+        : oCluster.clusterNumber != null) return false;
 
     return true;
   }

@@ -19,13 +19,16 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
-import com.hazelcast.core.*;
+import com.hazelcast.core.EntryEvent;
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.HazelcastInstanceNotActiveException;
+import com.hazelcast.core.IMap;
+import com.hazelcast.core.MapEvent;
 import com.hazelcast.map.listener.EntryAddedListener;
 import com.hazelcast.map.listener.EntryRemovedListener;
 import com.hazelcast.map.listener.EntryUpdatedListener;
 import com.hazelcast.map.listener.MapClearedListener;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
-
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -35,15 +38,18 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object>
-    implements EntryAddedListener<String, Object>, EntryRemovedListener<String, Object>, MapClearedListener,
-    EntryUpdatedListener<String, Object> {
-  private final OHazelcastPlugin     dManager;
+    implements EntryAddedListener<String, Object>,
+        EntryRemovedListener<String, Object>,
+        MapClearedListener,
+        EntryUpdatedListener<String, Object> {
+  private final OHazelcastClusterMetadataManager dManager;
   private final IMap<String, Object> hzMap;
-  private final String               membershipListenerRegistration;
+  private final String membershipListenerRegistration;
 
   public static final String ORIENTDB_MAP = "orientdb";
 
-  public OHazelcastDistributedMap(final OHazelcastPlugin manager, final HazelcastInstance hz) {
+  public OHazelcastDistributedMap(
+      final OHazelcastClusterMetadataManager manager, final HazelcastInstance hz) {
     dManager = manager;
     hzMap = hz.getMap(ORIENTDB_MAP);
     membershipListenerRegistration = hzMap.addEntryListener(this, true);
@@ -76,8 +82,7 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object>
 
   public Object getLocalCachedValue(final Object key) {
     final Object res = super.get(key);
-    if (res != null)
-      return res;
+    if (res != null) return res;
 
     try {
       return hzMap.get(key);
@@ -134,17 +139,34 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object>
   @Override
   public void entryAdded(final EntryEvent<String, Object> event) {
     if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-          "Map entry added " + event.getKey() + "=" + event.getValue() + " from server " + dManager.getNodeName(event.getMember()));
+      ODistributedServerLog.debug(
+          this,
+          dManager.getLocalNodeName(),
+          null,
+          ODistributedServerLog.DIRECTION.NONE,
+          "Map entry added "
+              + event.getKey()
+              + "="
+              + event.getValue()
+              + " from server "
+              + dManager.getNodeName(event.getMember(), true));
     super.put(event.getKey(), event.getValue());
   }
 
   @Override
   public void entryUpdated(final EntryEvent<String, Object> event) {
     if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-          "Map entry updated " + event.getKey() + "=" + event.getValue() + " from server " + dManager
-              .getNodeName(event.getMember()));
+      ODistributedServerLog.debug(
+          this,
+          dManager.getLocalNodeName(),
+          null,
+          ODistributedServerLog.DIRECTION.NONE,
+          "Map entry updated "
+              + event.getKey()
+              + "="
+              + event.getValue()
+              + " from server "
+              + dManager.getNodeName(event.getMember(), true));
 
     super.put(event.getKey(), event.getValue());
   }
@@ -152,16 +174,29 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object>
   @Override
   public void entryRemoved(final EntryEvent<String, Object> event) {
     if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-          "Map entry removed " + event.getKey() + "=" + event.getValue() + " from " + dManager.getNodeName(event.getMember()));
+      ODistributedServerLog.debug(
+          this,
+          dManager.getLocalNodeName(),
+          null,
+          ODistributedServerLog.DIRECTION.NONE,
+          "Map entry removed "
+              + event.getKey()
+              + "="
+              + event.getValue()
+              + " from "
+              + dManager.getNodeName(event.getMember(), true));
     super.remove(event.getKey());
   }
 
   @Override
   public void mapCleared(MapEvent event) {
     if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-          "Map cleared from server " + dManager.getNodeName(event.getMember()));
+      ODistributedServerLog.debug(
+          this,
+          dManager.getLocalNodeName(),
+          null,
+          ODistributedServerLog.DIRECTION.NONE,
+          "Map cleared from server " + dManager.getNodeName(event.getMember(), true));
     super.clear();
   }
 

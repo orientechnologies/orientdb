@@ -2,20 +2,20 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.atomicope
 
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
-
 import java.io.IOException;
 import java.util.Set;
 
 public interface OAtomicOperation {
-  OOperationUnitId getOperationUnitId();
+  long getOperationUnitId();
 
-  OCacheEntry loadPageForWrite(long fileId, long pageIndex, boolean checkPinnedPages, int pageCount, boolean verifyChecksum)
+  OCacheEntry loadPageForWrite(
+      long fileId, long pageIndex, boolean checkPinnedPages, int pageCount, boolean verifyChecksum)
       throws IOException;
 
-  OCacheEntry loadPageForRead(long fileId, long pageIndex, boolean checkPinnedPages, int pageCount) throws IOException;
+  OCacheEntry loadPageForRead(long fileId, long pageIndex, boolean checkPinnedPages, int pageCount)
+      throws IOException;
 
   void addMetadata(OAtomicOperationMetadata<?> metadata);
 
@@ -43,13 +43,9 @@ public interface OAtomicOperation {
 
   String fileNameById(long fileId);
 
+  long fileIdByName(String name);
+
   void truncateFile(long fileId) throws IOException;
-
-  int getCounter();
-
-  void incrementCounter();
-
-  void decrementCounter();
 
   boolean containsInLockedObjects(String lockName);
 
@@ -67,4 +63,9 @@ public interface OAtomicOperation {
 
   Set<Integer> getBookedRecordPositions(final int clusterId, final int pageIndex);
 
+  void incrementComponentOperations();
+
+  void decrementComponentOperations();
+
+  int getComponentOperations();
 }

@@ -8,11 +8,10 @@ import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
-import com.orientechnologies.orient.core.metadata.security.OSecurityPolicy;
+import com.orientechnologies.orient.core.metadata.security.OSecurityPolicyImpl;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -46,13 +45,11 @@ public class OAlterRoleStatement extends OSimpleExecStatement {
     super(p, id);
   }
 
-
   @Override
   public OResultSet executeSimple(OCommandContext ctx) {
     OInternalResultSet rs = new OInternalResultSet();
     ODatabaseSession db = (ODatabaseSession) ctx.getDatabase();
     OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
-
 
     ORole role = db.getMetadata().getSecurity().getRole(name.getStringValue());
     if (role == null) {
@@ -64,7 +61,7 @@ public class OAlterRoleStatement extends OSimpleExecStatement {
       result.setProperty("name", name.getStringValue());
       result.setProperty("resource", op.resource.toString());
       if (op.type == Op.TYPE_ADD) {
-        OSecurityPolicy policy = security.getSecurityPolicy(db, op.policyName.getStringValue());
+        OSecurityPolicyImpl policy = security.getSecurityPolicy(db, op.policyName.getStringValue());
         result.setProperty("operation", "ADD POLICY");
         result.setProperty("policyName", op.policyName.getStringValue());
         try {
@@ -104,6 +101,5 @@ public class OAlterRoleStatement extends OSimpleExecStatement {
       }
     }
   }
-
 }
 /* JavaCC - OriginalChecksum=1a221cad0dfbc01f66a720300b776def (do not edit this line) */

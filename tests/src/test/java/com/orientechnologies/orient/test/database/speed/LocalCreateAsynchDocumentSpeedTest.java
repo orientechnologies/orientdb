@@ -15,10 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.speed;
 
-import java.util.Date;
-
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
@@ -28,19 +24,22 @@ import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
+import java.util.Date;
+import org.testng.annotations.Test;
 
 @Test(enabled = false)
 public class LocalCreateAsynchDocumentSpeedTest extends OrientMonoThreadTest {
   private ODatabaseDocument database;
-  private ODocument         record;
-  private Date              date = new Date();
+  private ODocument record;
+  private Date date = new Date();
 
   public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
     LocalCreateAsynchDocumentSpeedTest test = new LocalCreateAsynchDocumentSpeedTest();
     test.data.go(test);
   }
 
-  public LocalCreateAsynchDocumentSpeedTest() throws InstantiationException, IllegalAccessException {
+  public LocalCreateAsynchDocumentSpeedTest()
+      throws InstantiationException, IllegalAccessException {
     super(1000000);
   }
 
@@ -70,16 +69,14 @@ public class LocalCreateAsynchDocumentSpeedTest extends OrientMonoThreadTest {
 
     database.save(record, OPERATION_MODE.ASYNCHRONOUS, false, null, null);
 
-    if (data.getCyclesDone() == data.getCycles() - 1)
-      database.commit();
+    if (data.getCyclesDone() == data.getCycles() - 1) database.commit();
   }
 
   @Override
   public void deinit() {
     System.out.println(Orient.instance().getProfiler().dump());
 
-    if (database != null)
-      database.close();
+    if (database != null) database.close();
     super.deinit();
   }
 }

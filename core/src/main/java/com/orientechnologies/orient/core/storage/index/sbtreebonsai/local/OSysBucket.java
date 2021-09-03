@@ -23,34 +23,30 @@ package com.orientechnologies.orient.core.storage.index.sbtreebonsai.local;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
-
 import java.io.IOException;
 
 /**
- * <p>
  * A system bucket for bonsai tree pages. Single per file.
- * </p>
- * <p>
- * Holds an information about:
- * </p>
+ *
+ * <p>Holds an information about:
+ *
  * <ul>
- * <li>head of free list</li>
- * <li>length of free list</li>
- * <li>pointer to free space</li>
+ *   <li>head of free list
+ *   <li>length of free list
+ *   <li>pointer to free space
  * </ul>
  *
  * @author Artem Orobets (enisher-at-gmail.com)
  */
 public final class OSysBucket extends OBonsaiBucketAbstract {
-  private static final int SYS_MAGIC_OFFSET        = WAL_POSITION_OFFSET + OLongSerializer.LONG_SIZE;
-  private static final int FREE_SPACE_OFFSET       = SYS_MAGIC_OFFSET + OByteSerializer.BYTE_SIZE;
-  private static final int FREE_LIST_HEAD_OFFSET   = FREE_SPACE_OFFSET + OBonsaiBucketPointer.SIZE;
-  private static final int FREE_LIST_LENGTH_OFFSET = FREE_LIST_HEAD_OFFSET + OBonsaiBucketPointer.SIZE;
-  private static final int TREES_COUNT_OFFSET      = FREE_LIST_LENGTH_OFFSET + OLongSerializer.LONG_SIZE;
+  private static final int SYS_MAGIC_OFFSET = WAL_POSITION_OFFSET + OLongSerializer.LONG_SIZE;
+  private static final int FREE_SPACE_OFFSET = SYS_MAGIC_OFFSET + OByteSerializer.BYTE_SIZE;
+  private static final int FREE_LIST_HEAD_OFFSET = FREE_SPACE_OFFSET + OBonsaiBucketPointer.SIZE;
+  private static final int FREE_LIST_LENGTH_OFFSET =
+      FREE_LIST_HEAD_OFFSET + OBonsaiBucketPointer.SIZE;
+  private static final int TREES_COUNT_OFFSET = FREE_LIST_LENGTH_OFFSET + OLongSerializer.LONG_SIZE;
 
-  /**
-   * Magic number to check if the sys bucket is initialized.
-   */
+  /** Magic number to check if the sys bucket is initialized. */
   private static final byte SYS_MAGIC = (byte) 41;
 
   public OSysBucket(OCacheEntry cacheEntry) {
@@ -59,7 +55,8 @@ public final class OSysBucket extends OBonsaiBucketAbstract {
 
   public void init() throws IOException {
     setByteValue(SYS_MAGIC_OFFSET, SYS_MAGIC);
-    setBucketPointer(FREE_SPACE_OFFSET, new OBonsaiBucketPointer(0, OSBTreeBonsaiBucket.MAX_BUCKET_SIZE_BYTES));
+    setBucketPointer(
+        FREE_SPACE_OFFSET, new OBonsaiBucketPointer(0, OSBTreeBonsaiBucket.MAX_BUCKET_SIZE_BYTES));
     setBucketPointer(FREE_LIST_HEAD_OFFSET, OBonsaiBucketPointer.NULL);
     setLongValue(FREE_LIST_LENGTH_OFFSET, 0L);
     setIntValue(TREES_COUNT_OFFSET, 0);

@@ -13,26 +13,24 @@ import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.Wait;
 
 public abstract class OSingleOrientDBServerBaseIT {
-    private static final Logger LOGGER = LoggerFactory.getLogger(OSingleOrientDBServerBaseIT.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(OSingleOrientDBServerBaseIT.class);
 
-    @ClassRule
-    public static GenericContainer container =
-            new GenericContainer("orientdb/orientdb:latest")
-                    .withEnv("ORIENTDB_ROOT_PASSWORD", "root")
-                    .withExposedPorts(2480, 2424)
-                    .waitingFor(Wait.forListeningPort());
+  @ClassRule
+  public static GenericContainer container =
+      new GenericContainer("orientdb/orientdb:latest")
+          .withEnv("ORIENTDB_ROOT_PASSWORD", "root")
+          .withExposedPorts(2480, 2424)
+          .waitingFor(Wait.forListeningPort());
 
-    @Rule
-    public TestName name = new TestName();
+  @Rule public TestName name = new TestName();
 
-    protected OrientDB orientDB;
-    protected ODatabasePool pool;
+  protected OrientDB orientDB;
+  protected ODatabasePool pool;
 
-
-    @BeforeClass
-    public static void beforeClass() throws Exception {
-        System.setProperty("java.util.logging.manager", "org.apache.logging.log4j.jul.LogManager");
-        Slf4jLogConsumer logConsumer = new Slf4jLogConsumer(LOGGER);
-        container.followOutput(logConsumer);
-    }
+  @BeforeClass
+  public static void beforeClass() throws Exception {
+    System.setProperty("java.util.logging.manager", "org.apache.logging.log4j.jul.LogManager");
+    Slf4jLogConsumer logConsumer = new Slf4jLogConsumer(LOGGER);
+    container.followOutput(logConsumer);
+  }
 }

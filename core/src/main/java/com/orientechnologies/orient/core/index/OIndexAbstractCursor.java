@@ -21,7 +21,6 @@
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-
 import java.util.HashSet;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -32,9 +31,9 @@ import java.util.Set;
  * @since 4/24/14
  */
 public abstract class OIndexAbstractCursor implements OIndexCursor {
-  protected int                            prefetchSize = -1;
+  protected int prefetchSize = -1;
   private Map.Entry<Object, OIdentifiable> nextEntry;
-  private boolean                          firstTime    = true;
+  private boolean firstTime = true;
 
   @Override
   public Set<OIdentifiable> toValues() {
@@ -51,7 +50,8 @@ public abstract class OIndexAbstractCursor implements OIndexCursor {
 
   @Override
   public Set<Map.Entry<Object, OIdentifiable>> toEntries() {
-    final HashSet<Map.Entry<Object, OIdentifiable>> result = new HashSet<Map.Entry<Object, OIdentifiable>>();
+    final HashSet<Map.Entry<Object, OIdentifiable>> result =
+        new HashSet<Map.Entry<Object, OIdentifiable>>();
 
     Map.Entry<Object, OIdentifiable> entry = nextEntry();
 
@@ -85,13 +85,11 @@ public abstract class OIndexAbstractCursor implements OIndexCursor {
     }
 
     return nextEntry != null;
-
   }
 
   @Override
   public OIdentifiable next() {
-    if (!hasNext())
-      throw new NoSuchElementException();
+    if (!hasNext()) throw new NoSuchElementException();
 
     final Map.Entry<Object, OIdentifiable> result = nextEntry;
     nextEntry = nextEntry();

@@ -3,7 +3,7 @@ package com.orientechnologies.orient.client.remote;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 
 public class OStorageClusterConfigurationRemote implements OStorageClusterConfiguration {
-  private final int    id;
+  private final int id;
   private final String name;
 
   public OStorageClusterConfigurationRemote(int id, String name) {

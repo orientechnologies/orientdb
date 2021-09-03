@@ -8,31 +8,34 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.parser.OCluster;
 
 /**
- * <p> This step is used just as a gate check to verify that a cluster belongs to a class. </p> <p> It accepts two values: a target
- * cluster (name or OCluster) and a class. If the cluster belongs to the class, then the syncPool() returns an empty result set,
- * otherwise it throws an OCommandExecutionException </p>
+ * This step is used just as a gate check to verify that a cluster belongs to a class.
+ *
+ * <p>It accepts two values: a target cluster (name or OCluster) and a class. If the cluster belongs
+ * to the class, then the syncPool() returns an empty result set, otherwise it throws an
+ * OCommandExecutionException
  *
  * @author Luigi Dell'Aquila (luigi.dellaquila - at - orientdb.com)
  */
 public class CheckClusterTypeStep extends AbstractExecutionStep {
 
   private OCluster cluster;
-  private String   clusterName;
-  private String   targetClass;
-  private long     cost  = 0;
-  private boolean  found = false;
+  private String clusterName;
+  private String targetClass;
+  private long cost = 0;
+  private boolean found = false;
 
-  public CheckClusterTypeStep(String targetClusterName, String clazz, OCommandContext ctx, boolean profilingEnabled) {
+  public CheckClusterTypeStep(
+      String targetClusterName, String clazz, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.clusterName = targetClusterName;
     this.targetClass = clazz;
   }
 
-  public CheckClusterTypeStep(OCluster targetCluster, String clazz, OCommandContext ctx, boolean profilingEnabled) {
+  public CheckClusterTypeStep(
+      OCluster targetCluster, String clazz, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.cluster = targetCluster;
     this.targetClass = clazz;
-
   }
 
   @Override
@@ -72,7 +75,8 @@ public class CheckClusterTypeStep extends AbstractExecutionStep {
         }
       }
       if (!found) {
-        throw new OCommandExecutionException("Cluster " + clusterId + " does not belong to class " + targetClass);
+        throw new OCommandExecutionException(
+            "Cluster " + clusterId + " does not belong to class " + targetClass);
       }
       return new OInternalResultSet();
     } finally {

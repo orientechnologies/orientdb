@@ -15,7 +15,7 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 
 package com.orientechnologies.orient.server.distributed;
@@ -29,11 +29,9 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import junit.framework.Assert;
 import org.junit.Test;
 
-/**
- * Check vertex and edge creation are propagated across all the nodes.
- */
+/** Check vertex and edge creation are propagated across all the nodes. */
 public class ServerClusterGraphIT extends AbstractServerClusterTest {
-  final static int SERVERS = 2;
+  static final int SERVERS = 2;
   private OVertex v1;
   private OVertex v2;
   private OVertex v3;
@@ -52,7 +50,11 @@ public class ServerClusterGraphIT extends AbstractServerClusterTest {
   @Override
   protected void executeTest() throws Exception {
     {
-      ODatabaseDocument g = serverInstance.get(0).getServerInstance().openDatabase(getDatabaseName(),"admin","admin");
+      ODatabaseDocument g =
+          serverInstance
+              .get(0)
+              .getServerInstance()
+              .openDatabase(getDatabaseName(), "admin", "admin");
 
       try {
         g.createVertexClass("Post");
@@ -61,7 +63,8 @@ public class ServerClusterGraphIT extends AbstractServerClusterTest {
 
         g.newVertex("User").save();
 
-        g.command(new OCommandSQL("insert into Post (content, timestamp) values('test', 1)")).execute();
+        g.command(new OCommandSQL("insert into Post (content, timestamp) values('test', 1)"))
+            .execute();
       } finally {
         g.close();
       }
@@ -69,7 +72,11 @@ public class ServerClusterGraphIT extends AbstractServerClusterTest {
 
     // CHECK VERTEX CREATION ON ALL THE SERVERS
     for (int s = 0; s < SERVERS; ++s) {
-      ODatabaseDocument g2 = serverInstance.get(s).getServerInstance().openDatabase(getDatabaseName(),"admin","admin");
+      ODatabaseDocument g2 =
+          serverInstance
+              .get(s)
+              .getServerInstance()
+              .openDatabase(getDatabaseName(), "admin", "admin");
 
       try {
 
@@ -83,10 +90,14 @@ public class ServerClusterGraphIT extends AbstractServerClusterTest {
     }
 
     {
-
-      ODatabaseDocument g = serverInstance.get(0).getServerInstance().openDatabase(getDatabaseName(),"admin","admin");
+      ODatabaseDocument g =
+          serverInstance
+              .get(0)
+              .getServerInstance()
+              .openDatabase(getDatabaseName(), "admin", "admin");
       try {
-        g.command(new OCommandSQL("create edge Own from (select from User) to (select from Post)")).execute();
+        g.command(new OCommandSQL("create edge Own from (select from User) to (select from Post)"))
+            .execute();
       } finally {
         g.close();
       }
@@ -94,7 +105,11 @@ public class ServerClusterGraphIT extends AbstractServerClusterTest {
 
     // CHECK VERTEX CREATION ON ALL THE SERVERS
     for (int s = 0; s < SERVERS; ++s) {
-      ODatabaseDocument g2 = serverInstance.get(s).getServerInstance().openDatabase(getDatabaseName(),"admin","admin");
+      ODatabaseDocument g2 =
+          serverInstance
+              .get(s)
+              .getServerInstance()
+              .openDatabase(getDatabaseName(), "admin", "admin");
 
       try {
 
@@ -126,6 +141,5 @@ public class ServerClusterGraphIT extends AbstractServerClusterTest {
         g2.close();
       }
     }
-
   }
 }

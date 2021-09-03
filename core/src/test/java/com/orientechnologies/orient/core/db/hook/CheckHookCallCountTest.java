@@ -1,5 +1,8 @@
 package com.orientechnologies.orient.core.db.hook;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
@@ -8,23 +11,20 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.junit.Test;
-
 import java.util.List;
 import java.util.UUID;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import org.junit.Test;
 
 public class CheckHookCallCountTest {
-  private final String CLASS_NAME   = "Data";
-  private final String FIELD_ID     = "ID";
+  private final String CLASS_NAME = "Data";
+  private final String FIELD_ID = "ID";
   private final String FIELD_STATUS = "STATUS";
-  private final String STATUS       = "processed";
+  private final String STATUS = "processed";
 
   @Test
   public void testMultipleCallHook() {
-    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + CheckHookCallCountTest.class.getSimpleName());
+    ODatabaseDocument db =
+        new ODatabaseDocumentTx("memory:" + CheckHookCallCountTest.class.getSimpleName());
     db.create();
     try {
       OClass aClass = db.getMetadata().getSchema().createClass(CLASS_NAME);
@@ -40,11 +40,15 @@ public class CheckHookCallCountTest {
       first.field(FIELD_STATUS, STATUS);
       db.save(first);
 
-      db.query(new OSQLSynchQuery<ODocument>("SELECT FROM " + CLASS_NAME + " WHERE " + FIELD_STATUS + " = '" + STATUS + "'"));
-//      assertEquals(hook.readCount, 1); //TODO
+      db.query(
+          new OSQLSynchQuery<ODocument>(
+              "SELECT FROM " + CLASS_NAME + " WHERE " + FIELD_STATUS + " = '" + STATUS + "'"));
+      //      assertEquals(hook.readCount, 1); //TODO
       hook.readCount = 0;
-      db.query(new OSQLSynchQuery<ODocument>("SELECT FROM " + CLASS_NAME + " WHERE " + FIELD_ID + " = '" + id + "'"));
-//      assertEquals(hook.readCount, 1); //TODO
+      db.query(
+          new OSQLSynchQuery<ODocument>(
+              "SELECT FROM " + CLASS_NAME + " WHERE " + FIELD_ID + " = '" + id + "'"));
+      //      assertEquals(hook.readCount, 1); //TODO
     } finally {
       db.drop();
     }
@@ -52,7 +56,8 @@ public class CheckHookCallCountTest {
 
   @Test
   public void testInHook() throws Exception {
-    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + CheckHookCallCountTest.class.getSimpleName());
+    ODatabaseDocument db =
+        new ODatabaseDocumentTx("memory:" + CheckHookCallCountTest.class.getSimpleName());
     db.create();
     try {
       OSchema schema = db.getMetadata().getSchema();
@@ -68,31 +73,32 @@ public class CheckHookCallCountTest {
       assertEquals(Integer.valueOf(2), doc.field("a"));
       assertEquals(Integer.valueOf(2), doc.field("b"));
       assertNull(doc.field("c"));
-      db.registerHook(new ODocumentHookAbstract(db) {
+      db.registerHook(
+          new ODocumentHookAbstract(db) {
 
-        {
-          setIncludeClasses("TestInHook");
-        }
+            {
+              setIncludeClasses("TestInHook");
+            }
 
-        @Override
-        public void onRecordAfterCreate(ODocument iDocument) {
-          onRecordAfterRead(iDocument);
-        }
+            @Override
+            public void onRecordAfterCreate(ODocument iDocument) {
+              onRecordAfterRead(iDocument);
+            }
 
-        @Override
-        public void onRecordAfterRead(ODocument iDocument) {
-          String script = "select sum(a, b) as value from " + iDocument.getIdentity();
-          List<ODocument> calculated = database.query(new OSQLSynchQuery<Object>(script));
-          if (calculated != null && !calculated.isEmpty()) {
-            iDocument.field("c", calculated.get(0).<Object>field("value"));
-          }
-        }
+            @Override
+            public void onRecordAfterRead(ODocument iDocument) {
+              String script = "select sum(a, b) as value from " + iDocument.getIdentity();
+              List<ODocument> calculated = database.query(new OSQLSynchQuery<Object>(script));
+              if (calculated != null && !calculated.isEmpty()) {
+                iDocument.field("c", calculated.get(0).<Object>field("value"));
+              }
+            }
 
-        @Override
-        public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
-          return DISTRIBUTED_EXECUTION_MODE.SOURCE_NODE;
-        }
-      });
+            @Override
+            public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
+              return DISTRIBUTED_EXECUTION_MODE.SOURCE_NODE;
+            }
+          });
       doc.reload();
       assertEquals(Integer.valueOf(2), doc.field("a"));
       assertEquals(Integer.valueOf(2), doc.field("b"));
@@ -124,5 +130,4 @@ public class CheckHookCallCountTest {
       readCount++;
     }
   }
-
 }

@@ -6,9 +6,8 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import org.testng.annotations.Test;
-
 import java.util.Random;
+import org.testng.annotations.Test;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -16,8 +15,8 @@ import java.util.Random;
  */
 public class HashIndexSpeedTest extends SpeedTestMonoThread {
   private ODatabaseDocumentTx databaseDocumentTx;
-  private OIndex              hashIndex;
-  private Random              random = new Random();
+  private OIndex hashIndex;
+  private Random random = new Random();
 
   public HashIndexSpeedTest() {
     super(5000000);
@@ -27,10 +26,10 @@ public class HashIndexSpeedTest extends SpeedTestMonoThread {
   @Test(enabled = false)
   public void init() throws Exception {
     String buildDirectory = System.getProperty("buildDirectory", ".");
-    if (buildDirectory == null)
-      buildDirectory = ".";
+    if (buildDirectory == null) buildDirectory = ".";
 
-    databaseDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDirectory + "/uniqueHashIndexTest");
+    databaseDocumentTx =
+        new ODatabaseDocumentTx("plocal:" + buildDirectory + "/uniqueHashIndexTest");
     if (databaseDocumentTx.exists()) {
       databaseDocumentTx.open("admin", "admin");
       databaseDocumentTx.drop();
@@ -38,9 +37,18 @@ public class HashIndexSpeedTest extends SpeedTestMonoThread {
 
     databaseDocumentTx.create();
 
-    hashIndex = databaseDocumentTx.getMetadata().getIndexManagerInternal()
-        .createIndex(databaseDocumentTx, "hashIndex", "UNIQUE_HASH_INDEX", new OSimpleKeyIndexDefinition(OType.STRING), new int[0],
-            null, null);
+    hashIndex =
+        databaseDocumentTx
+            .getMetadata()
+            .getIndexManagerInternal()
+            .createIndex(
+                databaseDocumentTx,
+                "hashIndex",
+                "UNIQUE_HASH_INDEX",
+                new OSimpleKeyIndexDefinition(OType.STRING),
+                new int[0],
+                null,
+                null);
   }
 
   @Override

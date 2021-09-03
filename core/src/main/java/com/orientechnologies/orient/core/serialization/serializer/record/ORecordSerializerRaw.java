@@ -68,7 +68,8 @@ public class ORecordSerializerRaw implements ORecordSerializer {
     try {
       return iSource.toStream();
     } catch (Exception e) {
-      final String message = "Error on unmarshalling object in binary format: " + iSource.getIdentity();
+      final String message =
+          "Error on unmarshalling object in binary format: " + iSource.getIdentity();
       OLogManager.instance().error(this, message, e);
       throw OException.wrapException(new OSerializationException(message), e);
     }
@@ -83,5 +84,4 @@ public class ORecordSerializerRaw implements ORecordSerializer {
   public String getName() {
     return NAME;
   }
-
 }

@@ -2,31 +2,30 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.sql.parser.*;
 import com.orientechnologies.orient.core.storage.OStorage;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Created by luigidellaquila on 19/06/17.
- */
+/** Created by luigidellaquila on 19/06/17. */
 public class QueryPlanningInfo {
 
+  protected OTimeout timeout;
   protected boolean distinct = false;
-  protected boolean expand   = false;
+  protected boolean expand = false;
 
   protected OProjection preAggregateProjection;
   protected OProjection aggregateProjection;
-  protected OProjection projection             = null;
+  protected OProjection projection = null;
   protected OProjection projectionAfterOrderBy = null;
 
-  protected OLetClause globalLetClause  = null;
-  protected boolean    globalLetPresent = false;
+  protected OLetClause globalLetClause = null;
+  protected boolean globalLetPresent = false;
 
   protected OLetClause perRecordLetClause = null;
 
   /**
-   * in a sharded execution plan, this maps the single server to the clusters it will be queried for to execute the query.
+   * in a sharded execution plan, this maps the single server to the clusters it will be queried for
+   * to execute the query.
    */
   protected Map<String, Set<String>> serverToClusters;
 
@@ -37,23 +36,23 @@ public class QueryPlanningInfo {
    */
   public boolean distributedPlanCreated = false;
 
-  protected OFromClause     target;
-  protected OWhereClause    whereClause;
+  protected OFromClause target;
+  protected OWhereClause whereClause;
   protected List<OAndBlock> flattenedWhereClause;
-  protected OGroupBy        groupBy;
-  protected OOrderBy        orderBy;
-  protected OUnwind         unwind;
-  protected OSkip           skip;
-  protected OLimit          limit;
+  protected OGroupBy groupBy;
+  protected OOrderBy orderBy;
+  protected OUnwind unwind;
+  protected OSkip skip;
+  protected OLimit limit;
 
-  protected boolean orderApplied          = false;
+  protected boolean orderApplied = false;
   protected boolean projectionsCalculated = false;
 
-  protected OAndBlock                 ridRangeConditions;
+  protected OAndBlock ridRangeConditions;
   protected OStorage.LOCKING_STRATEGY lockRecord;
 
   public QueryPlanningInfo copy() {
-    //TODO check what has to be copied and what can be just referenced as it is
+    // TODO check what has to be copied and what can be just referenced as it is
     QueryPlanningInfo result = new QueryPlanningInfo();
     result.distinct = this.distinct;
     result.expand = this.expand;
@@ -66,7 +65,7 @@ public class QueryPlanningInfo {
     result.perRecordLetClause = this.perRecordLetClause;
     result.serverToClusters = this.serverToClusters;
 
-//    Map<String, OSelectExecutionPlan> distributedFetchExecutionPlans;//TODO!
+    //    Map<String, OSelectExecutionPlan> distributedFetchExecutionPlans;//TODO!
 
     result.distributedPlanCreated = this.distributedPlanCreated;
     result.target = this.target;

@@ -21,13 +21,12 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.method.misc.OAbstractSQLMethod;
-
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Works against multi value objects like collections, maps and arrays.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OSQLMethodMultiValue extends OAbstractSQLMethod {
@@ -41,11 +40,15 @@ public class OSQLMethodMultiValue extends OAbstractSQLMethod {
   @Override
   public String getSyntax() {
     return "multivalue(<index>)";
-
   }
 
   @Override
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
+  public Object execute(
+      Object iThis,
+      OIdentifiable iCurrentRecord,
+      OCommandContext iContext,
+      Object ioResult,
+      Object[] iParams) {
     if (iThis == null || iParams[0] == null) {
       return null;
     }

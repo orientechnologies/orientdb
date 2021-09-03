@@ -24,7 +24,7 @@ import com.orientechnologies.orient.core.sql.method.misc.OAbstractSQLMethod;
 
 /**
  * Converts a document in JSON string.
- * 
+ *
  * @author Johann Sorel (Geomatys)
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
@@ -42,7 +42,12 @@ public class OSQLMethodFromJSON extends OAbstractSQLMethod {
   }
 
   @Override
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
+  public Object execute(
+      Object iThis,
+      OIdentifiable iCurrentRecord,
+      OCommandContext iContext,
+      Object ioResult,
+      Object[] iParams) {
     if (iThis instanceof String) {
       if (iParams.length > 0) {
         final ODocument doc = new ODocument().fromJSON(iThis.toString(), iParams[0].toString());

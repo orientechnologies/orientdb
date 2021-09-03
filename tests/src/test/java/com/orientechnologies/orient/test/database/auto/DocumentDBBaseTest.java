@@ -12,8 +12,7 @@ import org.testng.annotations.Test;
  */
 @Test
 public abstract class DocumentDBBaseTest extends BaseTest<ODatabaseDocumentInternal> {
-  protected DocumentDBBaseTest() {
-  }
+  protected DocumentDBBaseTest() {}
 
   @Parameters(value = "url")
   protected DocumentDBBaseTest(@Optional String url) {

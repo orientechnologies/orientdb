@@ -4,19 +4,17 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.util.Map;
 
 public class OHaSyncDatabaseStatement extends OSimpleExecStatement {
 
   public boolean force = false;
-  public boolean full  = false;
+  public boolean full = false;
 
   public OHaSyncDatabaseStatement(int id) {
     super(id);
@@ -38,7 +36,8 @@ public class OHaSyncDatabaseStatement extends OSimpleExecStatement {
       rs.add(r);
       return rs;
     } catch (Exception e) {
-      throw OException.wrapException(new OCommandExecutionException("Cannot execute HA SYNC DATABASE"), e);
+      throw OException.wrapException(
+          new OCommandExecutionException("Cannot execute HA SYNC DATABASE"), e);
     }
   }
 
@@ -60,6 +59,5 @@ public class OHaSyncDatabaseStatement extends OSimpleExecStatement {
   public boolean isFull() {
     return full;
   }
-
 }
 /* JavaCC - OriginalChecksum=f2c9070be78798e3093a98669129ce0d (do not edit this line) */

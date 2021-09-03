@@ -24,8 +24,11 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Johann Sorel (Geomatys)
@@ -40,10 +43,13 @@ public class OSQLMethodField extends OAbstractSQLMethod {
   }
 
   @Override
-  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, final OCommandContext iContext, Object ioResult,
+  public Object execute(
+      Object iThis,
+      final OIdentifiable iCurrentRecord,
+      final OCommandContext iContext,
+      Object ioResult,
       final Object[] iParams) {
-    if (iParams[0] == null)
-      return null;
+    if (iParams[0] == null) return null;
 
     final String paramAsString = iParams[0].toString();
 
@@ -63,7 +69,9 @@ public class OSQLMethodField extends OAbstractSQLMethod {
         }
       } else if (ioResult instanceof OIdentifiable) {
         ioResult = ((OIdentifiable) ioResult).getRecord();
-      } else if (ioResult instanceof Collection<?> || ioResult instanceof Iterator<?> || ioResult.getClass().isArray()) {
+      } else if (ioResult instanceof Collection<?>
+          || ioResult instanceof Iterator<?>
+          || ioResult.getClass().isArray()) {
         final List<Object> result = new ArrayList<Object>(OMultiValue.getSize(ioResult));
         for (Object o : OMultiValue.getMultiValueIterable(ioResult, false)) {
           Object newlyAdded = ODocumentHelper.getFieldValue(o, paramAsString);

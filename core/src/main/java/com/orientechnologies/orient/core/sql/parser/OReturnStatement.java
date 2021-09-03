@@ -8,7 +8,6 @@ import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.util.Map;
 
 public class OReturnStatement extends OSimpleExecStatement {
@@ -38,10 +37,12 @@ public class OReturnStatement extends OSimpleExecStatement {
         try {
           ((OResultSet) result).reset();
         } catch (UnsupportedOperationException ignore) {
-          // just try to reset the RS, in case it was already used during the script execution already
+          // just try to reset the RS, in case it was already used during the script execution
+          // already
           // You can have two cases here:
           // - a result stored in a LET, that is always resettable, as it's copied
-          // - a result from a direct query (eg. RETURN SELECT...), that is new or just empty, so this operation does not hurt
+          // - a result from a direct query (eg. RETURN SELECT...), that is new or just empty, so
+          // this operation does not hurt
         }
       }
       return (OResultSet) result;
@@ -71,10 +72,8 @@ public class OReturnStatement extends OSimpleExecStatement {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OReturnStatement that = (OReturnStatement) o;
 

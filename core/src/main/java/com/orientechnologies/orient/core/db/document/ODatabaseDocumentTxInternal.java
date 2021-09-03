@@ -1,21 +1,16 @@
 package com.orientechnologies.orient.core.db.document;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.OrientDBEmbedded;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 
-/**
- * Created by tglman on 31/03/16.
- */
+/** Created by tglman on 31/03/16. */
 public class ODatabaseDocumentTxInternal {
 
-  private ODatabaseDocumentTxInternal() {
-  }
+  private ODatabaseDocumentTxInternal() {}
 
   public static ODatabaseDocumentInternal getInternal(ODatabaseDocumentInternal db) {
-    if (db instanceof ODatabaseDocumentTx)
-      db = ((ODatabaseDocumentTx) db).internal;
+    if (db instanceof ODatabaseDocumentTx) db = ((ODatabaseDocumentTx) db).internal;
     return db;
   }
 
@@ -23,7 +18,8 @@ public class ODatabaseDocumentTxInternal {
     return new ODatabaseDocumentTx(database, null);
   }
 
-  public static OrientDBInternal getOrCreateEmbeddedFactory(String databaseDirectory, OrientDBConfig config) {
+  public static OrientDBInternal getOrCreateEmbeddedFactory(
+      String databaseDirectory, OrientDBConfig config) {
     return ODatabaseDocumentTx.getOrCreateEmbeddedFactory(databaseDirectory, config);
   }
 
@@ -45,5 +41,4 @@ public class ODatabaseDocumentTxInternal {
       ODatabaseDocumentTx.remote.clear();
     }
   }
-
 }

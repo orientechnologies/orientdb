@@ -4,17 +4,14 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.sql.parser.OBatch;
-
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * Created by luigidellaquila on 14/02/17.
- */
+/** Created by luigidellaquila on 14/02/17. */
 public class BatchStep extends AbstractExecutionStep {
 
   private Integer batchSize;
-  private int     count = 0;
+  private int count = 0;
 
   public BatchStep(OBatch batch, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);

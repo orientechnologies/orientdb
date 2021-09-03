@@ -7,11 +7,14 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class OMatchPathItem extends SimpleNode {
-  protected OMethodCall  method;
+  protected OMethodCall method;
   protected OMatchFilter filter;
 
   public OMatchPathItem(int id) {
@@ -42,8 +45,11 @@ public class OMatchPathItem extends SimpleNode {
     }
   }
 
-  public Iterable<OIdentifiable> executeTraversal(OMatchStatement.MatchContext matchContext, OCommandContext iCommandContext,
-      OIdentifiable startingPoint, int depth) {
+  public Iterable<OIdentifiable> executeTraversal(
+      OMatchStatement.MatchContext matchContext,
+      OCommandContext iCommandContext,
+      OIdentifiable startingPoint,
+      int depth) {
 
     OWhereClause filter = null;
     OWhereClause whileCondition = null;
@@ -59,39 +65,47 @@ public class OMatchPathItem extends SimpleNode {
 
     Set<OIdentifiable> result = new HashSet<OIdentifiable>();
 
-    if (whileCondition == null && maxDepth == null) {// in this case starting point is not returned and only one level depth is
+    if (whileCondition == null
+        && maxDepth
+            == null) { // in this case starting point is not returned and only one level depth is
       // evaluated
-      Iterable<OIdentifiable> queryResult = traversePatternEdge(matchContext, startingPoint, iCommandContext);
+      Iterable<OIdentifiable> queryResult =
+          traversePatternEdge(matchContext, startingPoint, iCommandContext);
 
       if (this.filter == null || this.filter.getFilter() == null) {
         return queryResult;
       }
 
-
       for (OIdentifiable origin : queryResult) {
         Object previousMatch = iCommandContext.getVariable("$currentMatch");
         iCommandContext.setVariable("$currentMatch", origin);
-        if ((oClass==null || matchesClass(origin, oClass)) && (filter == null || filter.matchesFilters(origin, iCommandContext))) {
+        if ((oClass == null || matchesClass(origin, oClass))
+            && (filter == null || filter.matchesFilters(origin, iCommandContext))) {
           result.add(origin);
         }
         iCommandContext.setVariable("$currentMatch", previousMatch);
       }
-    } else {// in this case also zero level (starting point) is considered and traversal depth is given by the while condition
+    } else { // in this case also zero level (starting point) is considered and traversal depth is
+      // given by the while condition
       iCommandContext.setVariable("$depth", depth);
       Object previousMatch = iCommandContext.getVariable("$currentMatch");
       iCommandContext.setVariable("$currentMatch", startingPoint);
-      if ((oClass==null || matchesClass(startingPoint, oClass)) && (filter == null || filter.matchesFilters(startingPoint, iCommandContext))) {
+      if ((oClass == null || matchesClass(startingPoint, oClass))
+          && (filter == null || filter.matchesFilters(startingPoint, iCommandContext))) {
         result.add(startingPoint);
       }
 
-      if ((maxDepth == null || depth < maxDepth) && (whileCondition == null || whileCondition
-          .matchesFilters(startingPoint, iCommandContext))) {
+      if ((maxDepth == null || depth < maxDepth)
+          && (whileCondition == null
+              || whileCondition.matchesFilters(startingPoint, iCommandContext))) {
 
-        Iterable<OIdentifiable> queryResult = traversePatternEdge(matchContext, startingPoint, iCommandContext);
+        Iterable<OIdentifiable> queryResult =
+            traversePatternEdge(matchContext, startingPoint, iCommandContext);
 
         for (OIdentifiable origin : queryResult) {
           // TODO consider break strategies (eg. re-traverse nodes)
-          Iterable<OIdentifiable> subResult = executeTraversal(matchContext, iCommandContext, origin, depth + 1);
+          Iterable<OIdentifiable> subResult =
+              executeTraversal(matchContext, iCommandContext, origin, depth + 1);
           if (subResult instanceof Collection) {
             result.addAll((Collection<? extends OIdentifiable>) subResult);
           } else {
@@ -120,8 +134,9 @@ public class OMatchPathItem extends SimpleNode {
     return false;
   }
 
-
-  protected Iterable<OIdentifiable> traversePatternEdge(OMatchStatement.MatchContext matchContext, OIdentifiable startingPoint,
+  protected Iterable<OIdentifiable> traversePatternEdge(
+      OMatchStatement.MatchContext matchContext,
+      OIdentifiable startingPoint,
       OCommandContext iCommandContext) {
 
     Iterable possibleResults = null;
@@ -130,39 +145,42 @@ public class OMatchPathItem extends SimpleNode {
       if (matchedNode != null) {
         possibleResults = Collections.singleton(matchedNode);
       } else if (matchContext.matched.containsKey(filter.getAlias())) {
-        possibleResults = Collections.emptySet();//optional node, the matched element is a null value
+        possibleResults =
+            Collections.emptySet(); // optional node, the matched element is a null value
       } else {
-        possibleResults = matchContext.candidates == null ? null : matchContext.candidates.get(filter.getAlias());
+        possibleResults =
+            matchContext.candidates == null ? null : matchContext.candidates.get(filter.getAlias());
       }
     }
 
     Object qR = this.method.execute(startingPoint, possibleResults, iCommandContext);
-    return (qR instanceof Iterable && !(qR instanceof ODocument)) ? (Iterable) qR : Collections.singleton((OIdentifiable) qR);
+    return (qR instanceof Iterable && !(qR instanceof ODocument))
+        ? (Iterable) qR
+        : Collections.singleton((OIdentifiable) qR);
   }
 
-  @Override public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OMatchPathItem that = (OMatchPathItem) o;
 
-    if (method != null ? !method.equals(that.method) : that.method != null)
-      return false;
-    if (filter != null ? !filter.equals(that.filter) : that.filter != null)
-      return false;
+    if (method != null ? !method.equals(that.method) : that.method != null) return false;
+    if (filter != null ? !filter.equals(that.filter) : that.filter != null) return false;
 
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = method != null ? method.hashCode() : 0;
     result = 31 * result + (filter != null ? filter.hashCode() : 0);
     return result;
   }
 
-  @Override public OMatchPathItem copy() {
+  @Override
+  public OMatchPathItem copy() {
     OMatchPathItem result = null;
     try {
       result = getClass().getConstructor(Integer.TYPE).newInstance(-1);

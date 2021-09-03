@@ -30,5 +30,4 @@ public class OTransactionBlockedException extends OTransactionException {
   public OTransactionBlockedException(String message) {
     super(message);
   }
-
 }

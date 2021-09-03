@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.OServerMain;
 import com.tinkerpop.blueprints.Graph;
 import com.tinkerpop.blueprints.GraphQueryTestSuite;
 import com.tinkerpop.blueprints.KeyIndexableGraphTestSuite;
@@ -16,6 +15,12 @@ import com.tinkerpop.blueprints.impls.GraphTest;
 import com.tinkerpop.blueprints.util.io.gml.GMLReaderTestSuite;
 import com.tinkerpop.blueprints.util.io.graphml.GraphMLReaderTestSuite;
 import com.tinkerpop.blueprints.util.io.graphson.GraphSONReaderTestSuite;
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
 import org.hamcrest.core.IsEqual;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -26,13 +31,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
-
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 2/6/14
@@ -41,13 +39,14 @@ import java.util.Map;
 public class OrientGraphNoTxRemoteTest extends GraphTest {
   private static final String serverPort = System.getProperty("orient.server.port", "3080");
   private static OServer server;
-  private static String  oldOrientDBHome;
+  private static String oldOrientDBHome;
 
   private static String serverHome;
 
   private Map<String, OrientGraphNoTx> currentGraphs = new HashMap<String, OrientGraphNoTx>();
 
-  private Map<String, OrientGraphFactory> graphFactories = new HashMap<String, OrientGraphFactory>();
+  private Map<String, OrientGraphFactory> graphFactories =
+      new HashMap<String, OrientGraphFactory>();
 
   @BeforeClass
   public static void startEmbeddedServer() throws Exception {
@@ -77,10 +76,8 @@ public class OrientGraphNoTxRemoteTest extends GraphTest {
     Orient.instance().shutdown();
     Orient.instance().startup();
 
-    if (oldOrientDBHome != null)
-      System.setProperty("ORIENTDB_HOME", oldOrientDBHome);
-    else
-      System.clearProperty("ORIENTDB_HOME");
+    if (oldOrientDBHome != null) System.setProperty("ORIENTDB_HOME", oldOrientDBHome);
+    else System.clearProperty("ORIENTDB_HOME");
 
     final File file = new File(serverHome);
     deleteDirectory(file);
@@ -89,7 +86,9 @@ public class OrientGraphNoTxRemoteTest extends GraphTest {
 
   @Before
   public void setUp() throws Exception {
-    Assume.assumeThat(System.getProperty("orientdb.test.env", "dev").toUpperCase(Locale.ENGLISH), IsEqual.equalTo("RELEASE"));
+    Assume.assumeThat(
+        System.getProperty("orientdb.test.env", "dev").toUpperCase(Locale.ENGLISH),
+        IsEqual.equalTo("RELEASE"));
     super.setUp();
   }
 
@@ -146,8 +145,7 @@ public class OrientGraphNoTxRemoteTest extends GraphTest {
     OrientGraphNoTx graph = currentGraphs.get(url);
 
     if (graph != null) {
-      if (graph.isClosed())
-        currentGraphs.remove(url);
+      if (graph.isClosed()) currentGraphs.remove(url);
       else {
         ODatabaseRecordThreadLocal.instance().set(graph.getRawGraph());
         return graph;
@@ -189,12 +187,10 @@ public class OrientGraphNoTxRemoteTest extends GraphTest {
     try {
       final String url = "remote:localhost:" + serverPort + "/" + graphDirectoryName;
       final OrientGraphNoTx graph = currentGraphs.get(url);
-      if (graph != null)
-        graph.shutdown();
+      if (graph != null) graph.shutdown();
 
       final OrientGraphFactory factory = graphFactories.remove(url);
-      if (factory != null)
-        factory.close();
+      if (factory != null) factory.close();
 
       final OServerAdmin serverAdmin = new OServerAdmin(url);
       serverAdmin.connect("root", "root");

@@ -23,7 +23,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.util.Set;
 
 /**
@@ -34,14 +33,30 @@ import java.util.Set;
 public class OIndexRemoteOneValue extends OIndexRemote {
   private static final String QUERY_GET = "select rid from index:`%s` where key = ?";
 
-  public OIndexRemoteOneValue(final String iName, final String iWrappedType, final String algorithm, final ORID iRid,
-      final OIndexDefinition iIndexDefinition, final ODocument iConfiguration, final Set<String> clustersToIndex, String database) {
-    super(iName, iWrappedType, algorithm, iRid, iIndexDefinition, iConfiguration, clustersToIndex, database);
+  public OIndexRemoteOneValue(
+      final String iName,
+      final String iWrappedType,
+      final String algorithm,
+      final ORID iRid,
+      final OIndexDefinition iIndexDefinition,
+      final ODocument iConfiguration,
+      final Set<String> clustersToIndex,
+      String database) {
+    super(
+        iName,
+        iWrappedType,
+        algorithm,
+        iRid,
+        iIndexDefinition,
+        iConfiguration,
+        clustersToIndex,
+        database);
   }
 
   @Deprecated
   public OIdentifiable get(final Object key) {
-    try (final OResultSet result = getDatabase().indexQuery(getName(), String.format(QUERY_GET, name), key)) {
+    try (final OResultSet result =
+        getDatabase().indexQuery(getName(), String.format(QUERY_GET, name), key)) {
       if (result != null && result.hasNext())
         return ((OIdentifiable) result.next().getProperty("rid"));
       return null;
@@ -57,5 +72,4 @@ public class OIndexRemoteOneValue extends OIndexRemote {
   public boolean supportsOrderedIterations() {
     return false;
   }
-
 }

@@ -15,14 +15,13 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 package com.orientechnologies.orient.core.sql.functions.misc;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
-
 import java.util.UUID;
 
 /**
@@ -34,14 +33,16 @@ import java.util.UUID;
 public class OSQLFunctionUUID extends OSQLFunctionAbstract {
   public static final String NAME = "uuid";
 
-  /**
-   * Get the date at construction to have the same date for all the iteration.
-   */
+  /** Get the date at construction to have the same date for all the iteration. */
   public OSQLFunctionUUID() {
     super(NAME, 0, 0);
   }
 
-  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult, final Object[] iParams,
+  public Object execute(
+      Object iThis,
+      final OIdentifiable iCurrentRecord,
+      final Object iCurrentResult,
+      final Object[] iParams,
       OCommandContext iContext) {
     return UUID.randomUUID().toString();
   }

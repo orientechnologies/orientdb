@@ -16,24 +16,33 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.parser.OCluster;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-/**
- * Created by luigidellaquila on 07/09/16.
- */
+/** Created by luigidellaquila on 07/09/16. */
 public class FindReferencesStep extends AbstractExecutionStep {
   private final List<OIdentifier> classes;
-  private final List<OCluster>    clusters;
+  private final List<OCluster> clusters;
 
-  private boolean                          inited = false;
-  private Set<ORID>                        ridsToFind;
-  private ORecordIteratorCluster           currentIterator;
+  private boolean inited = false;
+  private Set<ORID> ridsToFind;
+  private ORecordIteratorCluster currentIterator;
   private Iterator<ORecordIteratorCluster> clusterIterators;
-  private OResultInternal                  nextResult;
+  private OResultInternal nextResult;
 
-  public FindReferencesStep(List<OIdentifier> classes, List<OCluster> clusters, OCommandContext ctx, boolean profilingEnabled) {
+  public FindReferencesStep(
+      List<OIdentifier> classes,
+      List<OCluster> clusters,
+      OCommandContext ctx,
+      boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.classes = classes;
     this.clusters = clusters;
@@ -62,9 +71,7 @@ public class FindReferencesStep extends AbstractExecutionStep {
       }
 
       @Override
-      public void close() {
-
-      }
+      public void close() {}
 
       @Override
       public Optional<OExecutionPlan> getExecutionPlan() {
@@ -118,7 +125,8 @@ public class FindReferencesStep extends AbstractExecutionStep {
     ODatabaseInternal db = (ODatabaseInternal) ctx.getDatabase();
     Collection<String> targetClusterNames = new HashSet<>();
 
-    if ((this.classes == null || this.classes.size() == 0) && (this.clusters == null || this.clusters.size() == 0)) {
+    if ((this.classes == null || this.classes.size() == 0)
+        && (this.clusters == null || this.clusters.size() == 0)) {
       targetClusterNames.addAll(ctx.getDatabase().getClusterNames());
     } else {
       if (this.clusters != null) {
@@ -146,9 +154,13 @@ public class FindReferencesStep extends AbstractExecutionStep {
       }
     }
 
-    List<ORecordIteratorCluster> iterators = targetClusterNames.stream()
-        .map(clusterName -> new ORecordIteratorCluster((ODatabaseDocumentInternal) db, db.getClusterIdByName(clusterName)))
-        .collect(Collectors.toList());
+    List<ORecordIteratorCluster> iterators =
+        targetClusterNames.stream()
+            .map(
+                clusterName ->
+                    new ORecordIteratorCluster(
+                        (ODatabaseDocumentInternal) db, db.getClusterIdByName(clusterName)))
+            .collect(Collectors.toList());
     this.clusterIterators = iterators.iterator();
   }
 
@@ -168,26 +180,33 @@ public class FindReferencesStep extends AbstractExecutionStep {
     }
   }
 
-  private static List<String> checkObject(final Set<ORID> iSourceRIDs, final Object value, final ORecord iRootObject,
-      String prefix) {
+  private static List<String> checkObject(
+      final Set<ORID> iSourceRIDs, final Object value, final ORecord iRootObject, String prefix) {
     if (value instanceof OResult) {
-      return checkRoot(iSourceRIDs, (OResult) value, iRootObject, prefix).stream().map(y -> value + "." + y)
+      return checkRoot(iSourceRIDs, (OResult) value, iRootObject, prefix).stream()
+          .map(y -> value + "." + y)
           .collect(Collectors.toList());
     } else if (value instanceof OIdentifiable) {
-      return checkRecord(iSourceRIDs, (OIdentifiable) value, iRootObject, prefix).stream().map(y -> value + "." + y)
+      return checkRecord(iSourceRIDs, (OIdentifiable) value, iRootObject, prefix).stream()
+          .map(y -> value + "." + y)
           .collect(Collectors.toList());
     } else if (value instanceof Collection<?>) {
-      return checkCollection(iSourceRIDs, (Collection<?>) value, iRootObject, prefix).stream().map(y -> value + "." + y)
+      return checkCollection(iSourceRIDs, (Collection<?>) value, iRootObject, prefix).stream()
+          .map(y -> value + "." + y)
           .collect(Collectors.toList());
     } else if (value instanceof Map<?, ?>) {
-      return checkMap(iSourceRIDs, (Map<?, ?>) value, iRootObject, prefix).stream().map(y -> value + "." + y)
+      return checkMap(iSourceRIDs, (Map<?, ?>) value, iRootObject, prefix).stream()
+          .map(y -> value + "." + y)
           .collect(Collectors.toList());
     } else {
       return new ArrayList<>();
     }
   }
 
-  private static List<String> checkCollection(final Set<ORID> iSourceRIDs, final Collection<?> values, final ORecord iRootObject,
+  private static List<String> checkCollection(
+      final Set<ORID> iSourceRIDs,
+      final Collection<?> values,
+      final ORecord iRootObject,
       String prefix) {
     final Iterator<?> it;
     if (values instanceof ORecordLazyMultiValue) {
@@ -202,7 +221,10 @@ public class FindReferencesStep extends AbstractExecutionStep {
     return result;
   }
 
-  private static List<String> checkMap(final Set<ORID> iSourceRIDs, final Map<?, ?> values, final ORecord iRootObject,
+  private static List<String> checkMap(
+      final Set<ORID> iSourceRIDs,
+      final Map<?, ?> values,
+      final ORecord iRootObject,
       String prefix) {
     final Iterator<?> it;
     if (values instanceof ORecordLazyMap) {
@@ -217,13 +239,16 @@ public class FindReferencesStep extends AbstractExecutionStep {
     return result;
   }
 
-  private static List<String> checkRecord(final Set<ORID> iSourceRIDs, final OIdentifiable value, final ORecord iRootObject,
+  private static List<String> checkRecord(
+      final Set<ORID> iSourceRIDs,
+      final OIdentifiable value,
+      final ORecord iRootObject,
       String prefix) {
     List<String> result = new ArrayList<>();
     if (iSourceRIDs.contains(value.getIdentity())) {
       result.add(prefix);
     } else if (!value.getIdentity().isValid() && value.getRecord() instanceof ODocument) {
-      //embedded document
+      // embedded document
       ODocument doc = value.getRecord();
       for (String fieldName : doc.fieldNames()) {
         Object fieldValue = doc.field(fieldName);
@@ -233,8 +258,8 @@ public class FindReferencesStep extends AbstractExecutionStep {
     return result;
   }
 
-  private static List<String> checkRoot(final Set<ORID> iSourceRIDs, final OResult value, final ORecord iRootObject,
-      String prefix) {
+  private static List<String> checkRoot(
+      final Set<ORID> iSourceRIDs, final OResult value, final ORecord iRootObject, String prefix) {
     List<String> result = new ArrayList<>();
     for (String fieldName : value.getPropertyNames()) {
       Object fieldValue = value.getProperty(fieldName);
@@ -251,7 +276,8 @@ public class FindReferencesStep extends AbstractExecutionStep {
     result.append("+ FIND REFERENCES\n");
     result.append(spaces);
 
-    if ((this.classes == null || this.classes.isEmpty()) && (this.clusters == null || this.clusters.isEmpty())) {
+    if ((this.classes == null || this.classes.isEmpty())
+        && (this.clusters == null || this.clusters.isEmpty())) {
       result.append("  (all db)");
     } else {
       if (this.classes != null && this.classes.size() > 0) {

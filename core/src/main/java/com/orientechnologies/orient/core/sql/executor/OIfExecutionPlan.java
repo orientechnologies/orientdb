@@ -1,17 +1,11 @@
 package com.orientechnologies.orient.core.sql.executor;
 
-/**
- * Created by luigidellaquila on 08/08/16.
- */
-
+/** Created by luigidellaquila on 08/08/16. */
 import com.orientechnologies.orient.core.command.OCommandContext;
-
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OIfExecutionPlan implements OInternalExecutionPlan {
 
   private String location;
@@ -26,7 +20,7 @@ public class OIfExecutionPlan implements OInternalExecutionPlan {
 
   @Override
   public void reset(OCommandContext ctx) {
-    //TODO
+    // TODO
     throw new UnsupportedOperationException();
   }
 
@@ -53,7 +47,7 @@ public class OIfExecutionPlan implements OInternalExecutionPlan {
 
   @Override
   public List<OExecutionStep> getSteps() {
-    //TODO do a copy of the steps
+    // TODO do a copy of the steps
     return Collections.singletonList(step);
   }
 
@@ -84,7 +78,8 @@ public class OIfExecutionPlan implements OInternalExecutionPlan {
 
   public boolean containsReturn() {
     step.init(ctx);
-    return step.getPositivePlan().containsReturn() || step.getNegativePlan() != null && step.getPositivePlan().containsReturn();
+    return step.getPositivePlan().containsReturn()
+        || step.getNegativePlan() != null && step.getPositivePlan().containsReturn();
   }
 
   public OExecutionStepInternal executeUntilReturn() {
@@ -101,4 +96,3 @@ public class OIfExecutionPlan implements OInternalExecutionPlan {
     return null;
   }
 }
-

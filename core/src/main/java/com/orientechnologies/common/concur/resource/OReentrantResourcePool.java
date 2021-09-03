@@ -23,33 +23,35 @@ import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.orient.core.OOrientShutdownListener;
 import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Reentrant implementation of Resource Pool. It manages multiple resource acquisition on thread local map. If you're looking for a
- * Reentrant implementation look at #OReentrantResourcePool.
- * 
+ * Reentrant implementation of Resource Pool. It manages multiple resource acquisition on thread
+ * local map. If you're looking for a Reentrant implementation look at #OReentrantResourcePool.
+ *
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com) (a.lomakin--at--orientdb.com)
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  * @see OResourcePool
  */
-public class OReentrantResourcePool<K, V> extends OResourcePool<K, V> implements OOrientStartupListener, OOrientShutdownListener {
-  private volatile ThreadLocal<Map<K, ResourceHolder<V>>> activeResources = new ThreadLocal<Map<K, ResourceHolder<V>>>();
+public class OReentrantResourcePool<K, V> extends OResourcePool<K, V>
+    implements OOrientStartupListener, OOrientShutdownListener {
+  private volatile ThreadLocal<Map<K, ResourceHolder<V>>> activeResources =
+      new ThreadLocal<Map<K, ResourceHolder<V>>>();
 
   private static final class ResourceHolder<V> {
     private final V resource;
-    private int     counter = 1;
+    private int counter = 1;
 
     private ResourceHolder(V resource) {
       this.resource = resource;
     }
   }
 
-  public OReentrantResourcePool(final int maxResources, final OResourcePoolListener<K, V> listener) {
+  public OReentrantResourcePool(
+      final int maxResources, final OResourcePoolListener<K, V> listener) {
     super(maxResources, listener);
 
     Orient.instance().registerWeakOrientShutdownListener(this);
@@ -63,11 +65,11 @@ public class OReentrantResourcePool<K, V> extends OResourcePool<K, V> implements
 
   @Override
   public void onStartup() {
-    if (activeResources == null)
-      activeResources = new ThreadLocal<Map<K, ResourceHolder<V>>>();
+    if (activeResources == null) activeResources = new ThreadLocal<Map<K, ResourceHolder<V>>>();
   }
 
-  public V getResource(K key, final long maxWaitMillis, Object... additionalArgs) throws OLockException {
+  public V getResource(K key, final long maxWaitMillis, Object... additionalArgs)
+      throws OLockException {
     Map<K, ResourceHolder<V>> resourceHolderMap = activeResources.get();
 
     if (resourceHolderMap == null) {
@@ -102,8 +104,7 @@ public class OReentrantResourcePool<K, V> extends OResourcePool<K, V> implements
         if (holder.resource.equals(res)) {
           holder.counter--;
           assert holder.counter >= 0;
-          if (holder.counter > 0)
-            return false;
+          if (holder.counter > 0) return false;
 
           keyToRemove = entry.getKey();
           break;
@@ -118,12 +119,10 @@ public class OReentrantResourcePool<K, V> extends OResourcePool<K, V> implements
 
   public int getConnectionsInCurrentThread(final K key) {
     final Map<K, ResourceHolder<V>> resourceHolderMap = activeResources.get();
-    if (resourceHolderMap == null)
-      return 0;
+    if (resourceHolderMap == null) return 0;
 
     final ResourceHolder<V> holder = resourceHolderMap.get(key);
-    if (holder == null)
-      return 0;
+    if (holder == null) return 0;
 
     return holder.counter;
   }
@@ -137,8 +136,7 @@ public class OReentrantResourcePool<K, V> extends OResourcePool<K, V> implements
     if (activeResourcesMap != null) {
       for (Map.Entry<K, ResourceHolder<V>> entry : activeResourcesMap.entrySet()) {
         final ResourceHolder<V> holder = entry.getValue();
-        if (holder.resource.equals(res))
-          activeResourcesToRemove.add(entry.getKey());
+        if (holder.resource.equals(res)) activeResourcesToRemove.add(entry.getKey());
       }
 
       for (K resourceKey : activeResourcesToRemove) {

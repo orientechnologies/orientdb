@@ -14,5 +14,4 @@ public class ValidationCollectionComparable implements Comparable<Object> {
   public int compareTo(Object o) {
     return size - ((Collection<Object>) o).size();
   }
-
 }

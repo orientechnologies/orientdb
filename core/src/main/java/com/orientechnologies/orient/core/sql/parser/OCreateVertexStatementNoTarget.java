@@ -2,8 +2,7 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-public
-class OCreateVertexStatementNoTarget extends OCreateVertexStatement {
+public class OCreateVertexStatementNoTarget extends OCreateVertexStatement {
   public OCreateVertexStatementNoTarget(int id) {
     super(id);
   }
@@ -12,7 +11,8 @@ class OCreateVertexStatementNoTarget extends OCreateVertexStatement {
     super(p, id);
   }
 
-  @Override public OCreateVertexStatement copy() {
+  @Override
+  public OCreateVertexStatement copy() {
     return super.copy();
   }
 }

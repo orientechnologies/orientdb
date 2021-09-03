@@ -1,23 +1,32 @@
 package com.orientechnologies.orient.core.metadata.security;
 
-import com.orientechnologies.orient.core.db.*;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.OCreateDatabaseUtil;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.record.OElement;
-import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import org.junit.*;
-
-import java.util.Map;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 public class OClassSecurityTest {
-  private static String DB_NAME = PredicateSecurityTest.class.getSimpleName();
+  private static String DB_NAME = OClassSecurityTest.class.getSimpleName();
   private static OrientDB orient;
   private ODatabaseSession db;
 
   @BeforeClass
   public static void beforeClass() {
-    orient = new OrientDB("plocal:.", OrientDBConfig.defaultConfig());
+    orient =
+        new OrientDB(
+            "plocal:.",
+            OrientDBConfig.builder()
+                .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
+                .build());
   }
 
   @AfterClass
@@ -27,8 +36,19 @@ public class OClassSecurityTest {
 
   @Before
   public void before() {
-    orient.create(DB_NAME, ODatabaseType.MEMORY);
-    this.db = orient.open(DB_NAME, "admin", "admin");
+    orient.execute(
+        "create database "
+            + DB_NAME
+            + " "
+            + "memory"
+            + " users ( admin identified by '"
+            + OCreateDatabaseUtil.NEW_ADMIN_PASSWORD
+            + "' role admin, reader identified by '"
+            + OCreateDatabaseUtil.NEW_ADMIN_PASSWORD
+            + "' role reader, writer identified by '"
+            + OCreateDatabaseUtil.NEW_ADMIN_PASSWORD
+            + "' role writer)");
+    this.db = orient.open(DB_NAME, "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
   }
 
   @After
@@ -53,11 +73,9 @@ public class OClassSecurityTest {
 
     db.close();
 
-    db = orient.open(DB_NAME, "reader", "reader");
+    db = orient.open(DB_NAME, "reader", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD); // "reader"
     try (final OResultSet resultSet = db.query("SELECT from Person")) {
       Assert.assertFalse(resultSet.hasNext());
     }
   }
-
 }
-

@@ -1,19 +1,16 @@
 package com.orientechnologies.lucene.tests;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import java.util.Date;
 import org.junit.Test;
 
-import java.util.Date;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * Created by Enrico Risa on 27/10/16.
- */
+/** Created by Enrico Risa on 27/10/16. */
 public class OLuceneReuseTest extends OLuceneBaseTest {
 
   @Test
@@ -31,16 +28,21 @@ public class OLuceneReuseTest extends OLuceneBaseTest {
     db.command("create index Reuse.surname on Reuse (surname) FULLTEXT ENGINE LUCENE");
 
     for (int i = 0; i < 10; i++) {
-      db.save(new ODocument("Reuse").field("name", "John").field("date", new Date()).field("surname", "Reese").field("age", i));
+      db.save(
+          new ODocument("Reuse")
+              .field("name", "John")
+              .field("date", new Date())
+              .field("surname", "Reese")
+              .field("age", i));
     }
-    OResultSet results = db.command("SELECT FROM Reuse WHERE name='John' and search_class('Reese') =true");
+    OResultSet results =
+        db.command("SELECT FROM Reuse WHERE name='John' and search_class('Reese') =true");
 
     assertThat(results).hasSize(10);
 
     results = db.command("SELECT FROM Reuse WHERE search_class('Reese')=true  and name='John'");
 
     assertThat(results).hasSize(10);
-
   }
 
   @Test
@@ -56,27 +58,29 @@ public class OLuceneReuseTest extends OLuceneBaseTest {
 
     db.command("create index Reuse.composite on Reuse (name,surname,date,age) UNIQUE");
 
-    //lucene on name and surname
+    // lucene on name and surname
     db.command("create index Reuse.name_surname on Reuse (name,surname) FULLTEXT ENGINE LUCENE");
 
     for (int i = 0; i < 10; i++) {
-      db.save(new ODocument("Reuse")
-          .field("name", "John")
-          .field("date", new Date())
-          .field("surname", "Reese")
-          .field("age", i));
+      db.save(
+          new ODocument("Reuse")
+              .field("name", "John")
+              .field("date", new Date())
+              .field("surname", "Reese")
+              .field("age", i));
     }
 
-    //additional record
-    db.save(new ODocument("Reuse")
-        .field("name", "John")
-        .field("date", new Date())
-        .field("surname", "Franklin")
-        .field("age", 11));
+    // additional record
+    db.save(
+        new ODocument("Reuse")
+            .field("name", "John")
+            .field("date", new Date())
+            .field("surname", "Franklin")
+            .field("age", 11));
 
-    //exact query on name uses Reuse.conposite
-    OResultSet results = db
-        .command("SELECT FROM Reuse WHERE name='John' and search_class('Reese')=true");
+    // exact query on name uses Reuse.conposite
+    OResultSet results =
+        db.command("SELECT FROM Reuse WHERE name='John' and search_class('Reese')=true");
 
     assertThat(results).hasSize(10);
 
@@ -84,11 +88,10 @@ public class OLuceneReuseTest extends OLuceneBaseTest {
 
     assertThat(results).hasSize(10);
 
-    results = db.command("SELECT FROM Reuse WHERE name='John' AND search_class('surname:Franklin') =true");
+    results =
+        db.command(
+            "SELECT FROM Reuse WHERE name='John' AND search_class('surname:Franklin') =true");
 
     assertThat(results).hasSize(1);
-
   }
-
 }
-

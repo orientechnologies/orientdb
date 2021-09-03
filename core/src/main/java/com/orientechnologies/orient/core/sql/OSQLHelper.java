@@ -36,24 +36,31 @@ import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerCSVAbstract;
-import com.orientechnologies.orient.core.sql.filter.*;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemAbstract;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
+import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
-
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * SQL Helper class
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public class OSQLHelper {
   public static final String NAME = "sql";
 
   public static final String VALUE_NOT_PARSED = "_NOT_PARSED_";
-  public static final String NOT_NULL         = "_NOT_NULL_";
-  public static final String DEFINED          = "_DEFINED_";
+  public static final String NOT_NULL = "_NOT_NULL_";
+  public static final String DEFINED = "_DEFINED_";
 
   private static ClassLoader orientClassLoader = OSQLFilterItemAbstract.class.getClassLoader();
 
@@ -75,20 +82,20 @@ public class OSQLHelper {
   }
 
   /**
-   * Convert fields from text to real value. Supports: String, RID, Boolean, Float, Integer and NULL.
+   * Convert fields from text to real value. Supports: String, RID, Boolean, Float, Integer and
+   * NULL.
    *
    * @param iValue Value to convert.
-   *
    * @return The value converted if recognized, otherwise VALUE_NOT_PARSED
    */
   public static Object parseValue(String iValue, final OCommandContext iContext) {
     return parseValue(iValue, iContext, false);
   }
 
-  public static Object parseValue(String iValue, final OCommandContext iContext, boolean resolveContextVariables) {
+  public static Object parseValue(
+      String iValue, final OCommandContext iContext, boolean resolveContextVariables) {
 
-    if (iValue == null)
-      return null;
+    if (iValue == null) return null;
 
     iValue = iValue.trim();
 
@@ -97,14 +104,16 @@ public class OSQLHelper {
     if (iValue.length() == 0) {
       return iValue;
     }
-    if (iValue.startsWith("'") && iValue.endsWith("'") || iValue.startsWith("\"") && iValue.endsWith("\""))
+    if (iValue.startsWith("'") && iValue.endsWith("'")
+        || iValue.startsWith("\"") && iValue.endsWith("\""))
       // STRING
       fieldValue = OIOUtils.getStringContent(iValue);
     else if (iValue.charAt(0) == OStringSerializerHelper.LIST_BEGIN
         && iValue.charAt(iValue.length() - 1) == OStringSerializerHelper.LIST_END) {
       // COLLECTION/ARRAY
-      final List<String> items = OStringSerializerHelper
-          .smartSplit(iValue.substring(1, iValue.length() - 1), OStringSerializerHelper.RECORD_SEPARATOR);
+      final List<String> items =
+          OStringSerializerHelper.smartSplit(
+              iValue.substring(1, iValue.length() - 1), OStringSerializerHelper.RECORD_SEPARATOR);
 
       final List<Object> coll = new ArrayList<Object>();
       for (String item : items) {
@@ -115,15 +124,18 @@ public class OSQLHelper {
     } else if (iValue.charAt(0) == OStringSerializerHelper.MAP_BEGIN
         && iValue.charAt(iValue.length() - 1) == OStringSerializerHelper.MAP_END) {
       // MAP
-      final List<String> items = OStringSerializerHelper
-          .smartSplit(iValue.substring(1, iValue.length() - 1), OStringSerializerHelper.RECORD_SEPARATOR);
+      final List<String> items =
+          OStringSerializerHelper.smartSplit(
+              iValue.substring(1, iValue.length() - 1), OStringSerializerHelper.RECORD_SEPARATOR);
 
       final Map<Object, Object> map = new HashMap<Object, Object>();
       for (String item : items) {
-        final List<String> parts = OStringSerializerHelper.smartSplit(item, OStringSerializerHelper.ENTRY_SEPARATOR);
+        final List<String> parts =
+            OStringSerializerHelper.smartSplit(item, OStringSerializerHelper.ENTRY_SEPARATOR);
 
         if (parts == null || parts.size() != 2)
-          throw new OCommandSQLParsingException("Map found but entries are not defined as <key>:<value>");
+          throw new OCommandSQLParsingException(
+              "Map found but entries are not defined as <key>:<value>");
 
         Object key = OStringSerializerHelper.decode(parseValue(parts.get(0), iContext).toString());
         Object value = parseValue(parts.get(1), iContext);
@@ -140,8 +152,7 @@ public class OSQLHelper {
         // IT'S A DOCUMENT
         // TODO: IMPROVE THIS CASE AVOIDING DOUBLE PARSING
         fieldValue = new ODocument().fromJSON(iValue);
-      else
-        fieldValue = map;
+      else fieldValue = map;
 
     } else if (iValue.charAt(0) == OStringSerializerHelper.EMBEDDED_BEGIN
         && iValue.charAt(iValue.length() - 1) == OStringSerializerHelper.EMBEDDED_END) {
@@ -178,8 +189,7 @@ public class OSQLHelper {
         fieldValue = iContext.getVariable(iValue);
       } else {
         final Object v = parseStringNumber(iValue);
-        if (v != null)
-          fieldValue = v;
+        if (v != null) fieldValue = v;
       }
     }
 
@@ -189,57 +199,50 @@ public class OSQLHelper {
   public static Object parseStringNumber(final String iValue) {
     final OType t = ORecordSerializerCSVAbstract.getType(iValue);
 
-    if (t == OType.INTEGER)
-      return Integer.parseInt(iValue);
-    else if (t == OType.LONG)
-      return Long.parseLong(iValue);
-    else if (t == OType.FLOAT)
-      return Float.parseFloat(iValue);
-    else if (t == OType.SHORT)
-      return Short.parseShort(iValue);
-    else if (t == OType.BYTE)
-      return Byte.parseByte(iValue);
-    else if (t == OType.DOUBLE)
-      return Double.parseDouble(iValue);
-    else if (t == OType.DECIMAL)
-      return new BigDecimal(iValue);
-    else if (t == OType.DATE || t == OType.DATETIME)
-      return new Date(Long.parseLong(iValue));
+    if (t == OType.INTEGER) return Integer.parseInt(iValue);
+    else if (t == OType.LONG) return Long.parseLong(iValue);
+    else if (t == OType.FLOAT) return Float.parseFloat(iValue);
+    else if (t == OType.SHORT) return Short.parseShort(iValue);
+    else if (t == OType.BYTE) return Byte.parseByte(iValue);
+    else if (t == OType.DOUBLE) return Double.parseDouble(iValue);
+    else if (t == OType.DECIMAL) return new BigDecimal(iValue);
+    else if (t == OType.DATE || t == OType.DATETIME) return new Date(Long.parseLong(iValue));
 
     return null;
   }
 
-  public static Object parseValue(final OSQLPredicate iSQLFilter, final OBaseParser iCommand, final String iWord,
+  public static Object parseValue(
+      final OSQLPredicate iSQLFilter,
+      final OBaseParser iCommand,
+      final String iWord,
       final OCommandContext iContext) {
     if (iWord.charAt(0) == OStringSerializerHelper.PARAMETER_POSITIONAL
         || iWord.charAt(0) == OStringSerializerHelper.PARAMETER_NAMED) {
-      if (iSQLFilter != null)
-        return iSQLFilter.addParameter(iWord);
-      else
-        return new OSQLFilterItemParameter(iWord);
-    } else
-      return parseValue(iCommand, iWord, iContext);
+      if (iSQLFilter != null) return iSQLFilter.addParameter(iWord);
+      else return new OSQLFilterItemParameter(iWord);
+    } else return parseValue(iCommand, iWord, iContext);
   }
 
-  public static Object parseValue(final OBaseParser iCommand, final String iWord, final OCommandContext iContext) {
+  public static Object parseValue(
+      final OBaseParser iCommand, final String iWord, final OCommandContext iContext) {
     return parseValue(iCommand, iWord, iContext, false);
   }
 
-  public static Object parseValue(final OBaseParser iCommand, final String iWord, final OCommandContext iContext,
+  public static Object parseValue(
+      final OBaseParser iCommand,
+      final String iWord,
+      final OCommandContext iContext,
       boolean resolveContextVariables) {
-    if (iWord.equals("*"))
-      return "*";
+    if (iWord.equals("*")) return "*";
 
     // TRY TO PARSE AS RAW VALUE
     final Object v = parseValue(iWord, iContext, resolveContextVariables);
-    if (v != VALUE_NOT_PARSED)
-      return v;
+    if (v != VALUE_NOT_PARSED) return v;
 
     if (!iWord.equalsIgnoreCase("any()") && !iWord.equalsIgnoreCase("all()")) {
       // TRY TO PARSE AS FUNCTION
       final Object func = OSQLHelper.getFunction(iCommand, iWord);
-      if (func != null)
-        return func;
+      if (func != null) return func;
     }
 
     if (iWord.startsWith("$"))
@@ -254,7 +257,8 @@ public class OSQLHelper {
     final int separator = iWord.indexOf('.');
     final int beginParenthesis = iWord.indexOf(OStringSerializerHelper.EMBEDDED_BEGIN);
     if (beginParenthesis > -1 && (separator == -1 || separator > beginParenthesis)) {
-      final int endParenthesis = iWord.indexOf(OStringSerializerHelper.EMBEDDED_END, beginParenthesis);
+      final int endParenthesis =
+          iWord.indexOf(OStringSerializerHelper.EMBEDDED_END, beginParenthesis);
 
       final char firstChar = iWord.charAt(0);
       if (endParenthesis > -1 && (firstChar == '_' || Character.isLetter(firstChar)))
@@ -266,8 +270,7 @@ public class OSQLHelper {
   }
 
   public static Object getValue(final Object iObject) {
-    if (iObject == null)
-      return null;
+    if (iObject == null) return null;
 
     if (iObject instanceof OSQLFilterItem)
       return ((OSQLFilterItem) iObject).getValue(null, null, null);
@@ -275,15 +278,17 @@ public class OSQLHelper {
     return iObject;
   }
 
-  public static Object getValue(final Object iObject, final ORecord iRecord, final OCommandContext iContext) {
-    if (iObject == null)
-      return null;
+  public static Object getValue(
+      final Object iObject, final ORecord iRecord, final OCommandContext iContext) {
+    if (iObject == null) return null;
 
     if (iObject instanceof OSQLFilterItem)
       return ((OSQLFilterItem) iObject).getValue(iRecord, null, iContext);
     else if (iObject instanceof String) {
       final String s = ((String) iObject).trim();
-      if (iRecord != null & !s.isEmpty() && !OIOUtils.isStringContent(iObject) && !Character.isDigit(s.charAt(0)))
+      if (iRecord != null & !s.isEmpty()
+          && !OIOUtils.isStringContent(iObject)
+          && !Character.isDigit(s.charAt(0)))
         // INTERPRETS IT
         return ODocumentHelper.getFieldValue(iRecord, s, iContext);
     }
@@ -291,8 +296,12 @@ public class OSQLHelper {
     return iObject;
   }
 
-  public static Object resolveFieldValue(final ODocument iDocument, final String iFieldName, final Object iFieldValue,
-      final OCommandParameters iArguments, final OCommandContext iContext) {
+  public static Object resolveFieldValue(
+      final ODocument iDocument,
+      final String iFieldName,
+      final Object iFieldValue,
+      final OCommandParameters iArguments,
+      final OCommandContext iContext) {
     if (iFieldValue instanceof OSQLFilterItemField) {
       final OSQLFilterItemField f = (OSQLFilterItemField) iFieldValue;
       if (f.getRoot().equals("?"))
@@ -308,18 +317,19 @@ public class OSQLHelper {
       ODocumentInternal.addOwner((ODocument) iFieldValue, iDocument);
 
     // can't use existing getValue with iContext
-    if (iFieldValue == null)
-      return null;
+    if (iFieldValue == null) return null;
     if (iFieldValue instanceof OSQLFilterItem)
       return ((OSQLFilterItem) iFieldValue).getValue(iDocument, null, iContext);
 
     return iFieldValue;
   }
 
-  public static ODocument bindParameters(final ODocument iDocument, final Map<String, Object> iFields,
-      final OCommandParameters iArguments, final OCommandContext iContext) {
-    if (iFields == null)
-      return null;
+  public static ODocument bindParameters(
+      final ODocument iDocument,
+      final Map<String, Object> iFields,
+      final OCommandParameters iArguments,
+      final OCommandContext iContext) {
+    if (iFields == null) return null;
 
     final List<OPair<String, Object>> fields = new ArrayList<OPair<String, Object>>(iFields.size());
 
@@ -329,10 +339,12 @@ public class OSQLHelper {
     return bindParameters(iDocument, fields, iArguments, iContext);
   }
 
-  public static ODocument bindParameters(final ODocument iDocument, final List<OPair<String, Object>> iFields,
-      final OCommandParameters iArguments, final OCommandContext iContext) {
-    if (iFields == null)
-      return null;
+  public static ODocument bindParameters(
+      final ODocument iDocument,
+      final List<OPair<String, Object>> iFields,
+      final OCommandParameters iArguments,
+      final OCommandContext iContext) {
+    if (iFields == null) return null;
 
     // BIND VALUES
     for (OPair<String, Object> field : iFields) {
@@ -361,14 +373,14 @@ public class OSQLHelper {
                     fieldValue = null;
                 }
               }
-            } else if (immutableClass.isEdgeType() && ("out".equals(fieldName) || "in".equals(fieldName))
+            } else if (immutableClass.isEdgeType()
+                && ("out".equals(fieldName) || "in".equals(fieldName))
                 && (fieldValue instanceof List)) {
               List lst = (List) fieldValue;
               if (lst.size() == 1) {
                 fieldValue = lst.get(0);
               }
             }
-
           }
 
           if (OMultiValue.isMultiValue(fieldValue)) {
@@ -393,8 +405,7 @@ public class OSQLHelper {
                     tempColl.add(doc);
                   }
                 }
-              } else
-                tempColl.add(o);
+              } else tempColl.add(o);
             }
 
             fieldValue = tempColl;
@@ -402,7 +413,8 @@ public class OSQLHelper {
         }
       }
 
-      iDocument.field(fieldName, resolveFieldValue(iDocument, fieldName, fieldValue, iArguments, iContext));
+      iDocument.field(
+          fieldName, resolveFieldValue(iDocument, fieldName, fieldValue, iArguments, iContext));
     }
     return iDocument;
   }

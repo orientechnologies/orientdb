@@ -38,9 +38,13 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.method.OSQLMethodRuntime;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodField;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * Handles runtime results.
@@ -48,12 +52,16 @@ import java.util.Map.Entry;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class ORuntimeResult {
-  private final Object              fieldValue;
+  private final Object fieldValue;
   private final Map<String, Object> projections;
-  private final ODocument           value;
-  private       OCommandContext     context;
+  private final ODocument value;
+  private OCommandContext context;
 
-  public ORuntimeResult(final Object iFieldValue, final Map<String, Object> iProjections, final int iProgressive, final OCommandContext iContext) {
+  public ORuntimeResult(
+      final Object iFieldValue,
+      final Map<String, Object> iProjections,
+      final int iProgressive,
+      final OCommandContext iContext) {
     fieldValue = iFieldValue;
     projections = iProjections;
     context = iContext;
@@ -69,11 +77,15 @@ public class ORuntimeResult {
   }
 
   @SuppressWarnings("unchecked")
-  public static ODocument applyRecord(final ODocument iValue, final Map<String, Object> iProjections, final OCommandContext iContext, final OIdentifiable iRecord) {
+  public static ODocument applyRecord(
+      final ODocument iValue,
+      final Map<String, Object> iProjections,
+      final OCommandContext iContext,
+      final OIdentifiable iRecord) {
     // APPLY PROJECTIONS
 
     ORecord record = (iRecord != null ? iRecord.getRecord() : null);
-    //MANAGE SPECIFIC CASES FOR RECORD BYTES
+    // MANAGE SPECIFIC CASES FOR RECORD BYTES
     if (ORecordBytes.RECORD_TYPE == ORecordInternal.getRecordType(record)) {
       for (Entry<String, Object> projection : iProjections.entrySet()) {
         if ("rid".equalsIgnoreCase(projection.getKey())) {
@@ -109,9 +121,17 @@ public class ORuntimeResult {
         } else if (v instanceof OSQLFilterItemVariable || v instanceof OSQLFilterItemField) {
           final OSQLFilterItemAbstract var = (OSQLFilterItemAbstract) v;
           final OPair<OSQLMethodRuntime, Object[]> last = var.getLastChainOperator();
-          if (last != null && last.getKey().getMethod() instanceof OSQLMethodField && last.getValue() != null && last.getValue().length == 1 && last.getValue()[0].equals("*")) {
-            final Object value = ((OSQLFilterItemAbstract) v).getValue(inputDocument, iValue, iContext);
-            if (inputDocument != null && value != null && inputDocument instanceof ODocument && value instanceof ODocument) {
+          if (last != null
+              && last.getKey().getMethod() instanceof OSQLMethodField
+              && last.getValue() != null
+              && last.getValue().length == 1
+              && last.getValue()[0].equals("*")) {
+            final Object value =
+                ((OSQLFilterItemAbstract) v).getValue(inputDocument, iValue, iContext);
+            if (inputDocument != null
+                && value != null
+                && inputDocument instanceof ODocument
+                && value instanceof ODocument) {
               // COPY FIELDS WITH PROJECTION NAME AS PREFIX
               for (String fieldName : ((ODocument) value).fieldNames()) {
                 iValue.field(prjName + fieldName, ((ODocument) value).<Object>field(fieldName));
@@ -120,7 +140,8 @@ public class ORuntimeResult {
             projectionValue = null;
           } else
             // RETURN A VARIABLE FROM THE CONTEXT
-            projectionValue = ((OSQLFilterItemAbstract) v).getValue(inputDocument, iValue, iContext);
+            projectionValue =
+                ((OSQLFilterItemAbstract) v).getValue(inputDocument, iValue, iContext);
 
         } else if (v instanceof OSQLFunctionRuntime) {
           final OSQLFunctionRuntime f = (OSQLFunctionRuntime) v;
@@ -137,13 +158,14 @@ public class ORuntimeResult {
         if (projectionValue != null)
           if (projectionValue instanceof ORidBag)
             iValue.field(prjName, new ORidBag((ORidBag) projectionValue));
-          else if (projectionValue instanceof OIdentifiable && !(projectionValue instanceof ORID) && !(projectionValue instanceof ORecord))
+          else if (projectionValue instanceof OIdentifiable
+              && !(projectionValue instanceof ORID)
+              && !(projectionValue instanceof ORecord))
             iValue.field(prjName, ((OIdentifiable) projectionValue).<ORecord>getRecord());
           else if (projectionValue instanceof Iterator) {
             boolean link = true;
             // make temporary value typical case graph database elemenet's iterator edges
-            if (projectionValue instanceof OResettable)
-              ((OResettable) projectionValue).reset();
+            if (projectionValue instanceof OResettable) ((OResettable) projectionValue).reset();
 
             final List<Object> iteratorValues = new ArrayList<Object>();
             final Iterator projectionValueIterator = (Iterator) projectionValue;
@@ -155,30 +177,34 @@ public class ORuntimeResult {
                   link = false;
               }
 
-              if (value != null)
-                iteratorValues.add(value);
+              if (value != null) iteratorValues.add(value);
             }
 
             iValue.field(prjName, iteratorValues, link ? OType.LINKLIST : OType.EMBEDDEDLIST);
-          } else if (projectionValue instanceof ODocument && ((ODocument) projectionValue).getIdentity().getClusterId() < 0) {
+          } else if (projectionValue instanceof ODocument
+              && ((ODocument) projectionValue).getIdentity().getClusterId() < 0) {
             iValue.field(prjName, projectionValue, OType.EMBEDDED);
           } else if (projectionValue instanceof Set<?>) {
             OType type = OType.getTypeByValue(projectionValue);
-            if (type == OType.LINKSET && !entriesPersistent((Collection<OIdentifiable>) projectionValue))
+            if (type == OType.LINKSET
+                && !entriesPersistent((Collection<OIdentifiable>) projectionValue))
               type = OType.EMBEDDEDSET;
             iValue.field(prjName, projectionValue, type);
           } else if (projectionValue instanceof Map<?, ?>) {
             OType type = OType.getTypeByValue(projectionValue);
-            if (type == OType.LINKMAP && !entriesPersistent(((Map<?, OIdentifiable>) projectionValue).values()))
+            if (type == OType.LINKMAP
+                && !entriesPersistent(((Map<?, OIdentifiable>) projectionValue).values()))
               type = OType.EMBEDDEDMAP;
             iValue.field(prjName, projectionValue, type);
           } else if (projectionValue instanceof List<?>) {
             OType type = OType.getTypeByValue(projectionValue);
-            if (type == OType.LINKLIST && !entriesPersistent((Collection<OIdentifiable>) projectionValue))
+            if (type == OType.LINKLIST
+                && !entriesPersistent((Collection<OIdentifiable>) projectionValue))
               type = OType.EMBEDDEDLIST;
             iValue.field(prjName, projectionValue, type);
 
-          } else if (projectionValue instanceof Iterable && !(projectionValue instanceof OIdentifiable)) {
+          } else if (projectionValue instanceof Iterable
+              && !(projectionValue instanceof OIdentifiable)) {
             Iterator iterator = ((Iterable) projectionValue).iterator();
             boolean link = true;
             // make temporary value typical case graph database elemenet's iterator edges
@@ -223,14 +249,14 @@ public class ORuntimeResult {
       }
     } else {
       for (OIdentifiable rec : projectionValue) {
-        if (rec != null && !rec.getIdentity().isPersistent())
-          return false;
+        if (rec != null && !rec.getIdentity().isPersistent()) return false;
       }
     }
     return true;
   }
 
-  public static ODocument getResult(final ODocument iValue, final Map<String, Object> iProjections) {
+  public static ODocument getResult(
+      final ODocument iValue, final Map<String, Object> iProjections) {
     if (iValue != null) {
 
       boolean canExcludeResult = false;
@@ -245,8 +271,7 @@ public class ORuntimeResult {
 
             Object fieldValue = f.getResult();
 
-            if (fieldValue != null)
-              iValue.field(projection.getKey(), fieldValue);
+            if (fieldValue != null) iValue.field(projection.getKey(), fieldValue);
           }
         }
       }
@@ -261,8 +286,15 @@ public class ORuntimeResult {
     return iValue;
   }
 
-  public static ODocument getProjectionResult(final int iId, final Map<String, Object> iProjections, final OCommandContext iContext, final OIdentifiable iRecord) {
-    return ORuntimeResult.getResult(ORuntimeResult.applyRecord(ORuntimeResult.createProjectionDocument(iId), iProjections, iContext, iRecord), iProjections);
+  public static ODocument getProjectionResult(
+      final int iId,
+      final Map<String, Object> iProjections,
+      final OCommandContext iContext,
+      final OIdentifiable iRecord) {
+    return ORuntimeResult.getResult(
+        ORuntimeResult.applyRecord(
+            ORuntimeResult.createProjectionDocument(iId), iProjections, iContext, iRecord),
+        iProjections);
   }
 
   public ODocument applyRecord(final OIdentifiable iRecord) {
@@ -275,7 +307,7 @@ public class ORuntimeResult {
   /**
    * Set a single value. This is useful in case of query optimization like with indexes
    *
-   * @param iName  Field name
+   * @param iName Field name
    * @param iValue Field value
    */
   public void applyValue(final String iName, final Object iValue) {

@@ -9,10 +9,9 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionFiltered;
 
-/**
- * Created by luigidellaquila on 03/01/17.
- */
-public abstract class OSQLFunctionMoveFiltered extends OSQLFunctionMove implements OSQLFunctionFiltered {
+/** Created by luigidellaquila on 03/01/17. */
+public abstract class OSQLFunctionMoveFiltered extends OSQLFunctionMove
+    implements OSQLFunctionFiltered {
 
   protected static int supernodeThreshold = 1000; // move to some configuration
 
@@ -25,30 +24,42 @@ public abstract class OSQLFunctionMoveFiltered extends OSQLFunctionMove implemen
   }
 
   @Override
-  public Object execute(final Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult,
-      final Object[] iParameters, final Iterable<OIdentifiable> iPossibleResults, final OCommandContext iContext) {
+  public Object execute(
+      final Object iThis,
+      final OIdentifiable iCurrentRecord,
+      final Object iCurrentResult,
+      final Object[] iParameters,
+      final Iterable<OIdentifiable> iPossibleResults,
+      final OCommandContext iContext) {
     final String[] labels;
     if (iParameters != null && iParameters.length > 0 && iParameters[0] != null)
-      labels = OMultiValue.array(iParameters, String.class, new OCallable<Object, Object>() {
+      labels =
+          OMultiValue.array(
+              iParameters,
+              String.class,
+              new OCallable<Object, Object>() {
 
-        @Override
-        public Object call(final Object iArgument) {
-          return OIOUtils.getStringContent(iArgument);
-        }
-      });
-    else
-      labels = null;
+                @Override
+                public Object call(final Object iArgument) {
+                  return OIOUtils.getStringContent(iArgument);
+                }
+              });
+    else labels = null;
 
-    return OSQLEngine.foreachRecord(new OCallable<Object, OIdentifiable>() {
-      @Override
-      public Object call(final OIdentifiable iArgument) {
-        return move(iContext.getDatabase(), iArgument, labels, iPossibleResults);
-      }
-    }, iThis, iContext);
-
+    return OSQLEngine.foreachRecord(
+        new OCallable<Object, OIdentifiable>() {
+          @Override
+          public Object call(final OIdentifiable iArgument) {
+            return move(iContext.getDatabase(), iArgument, labels, iPossibleResults);
+          }
+        },
+        iThis,
+        iContext);
   }
 
-  protected abstract Object move(ODatabase graph, OIdentifiable iArgument, String[] labels,
+  protected abstract Object move(
+      ODatabase graph,
+      OIdentifiable iArgument,
+      String[] labels,
       Iterable<OIdentifiable> iPossibleResults);
-
 }

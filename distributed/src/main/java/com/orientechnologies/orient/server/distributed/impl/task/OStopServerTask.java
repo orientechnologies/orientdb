@@ -32,33 +32,48 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
  * Distributed task to stop a server.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- *
  */
 public class OStopServerTask extends OAbstractRemoteTask {
   private static final long serialVersionUID = 1L;
-  public static final int   FACTORYID        = 9;
+  public static final int FACTORYID = 9;
 
-  public OStopServerTask() {
-  }
+  public OStopServerTask() {}
 
   @Override
-  public Object execute(ODistributedRequestId requestId, final OServer iServer, final ODistributedServerManager iManager,
-      final ODatabaseDocumentInternal database) throws Exception {
+  public Object execute(
+      ODistributedRequestId requestId,
+      final OServer iServer,
+      final ODistributedServerManager iManager,
+      final ODatabaseDocumentInternal database)
+      throws Exception {
 
-    ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.IN,
+    ODistributedServerLog.warn(
+        this,
+        iManager.getLocalNodeName(),
+        getNodeSource(),
+        ODistributedServerLog.DIRECTION.IN,
         "Stopping current server...");
 
-    Orient.instance().scheduleTask(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          iServer.shutdown();
-        } catch (Exception e) {
-          ODistributedServerLog.error(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.IN,
-              "Error on stopping current server", e);
-        }
-      }
-    }, 1, 0);
+    Orient.instance()
+        .scheduleTask(
+            new Runnable() {
+              @Override
+              public void run() {
+                try {
+                  iServer.shutdown();
+                } catch (Exception e) {
+                  ODistributedServerLog.error(
+                      this,
+                      iManager.getLocalNodeName(),
+                      getNodeSource(),
+                      ODistributedServerLog.DIRECTION.IN,
+                      "Error on stopping current server",
+                      e);
+                }
+              }
+            },
+            1,
+            0);
 
     return true;
   }

@@ -24,18 +24,19 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Container that contains information about all operations that were performed on collection starting from the time when it was
- * loaded from DB.
+ * Container that contains information about all operations that were performed on collection
+ * starting from the time when it was loaded from DB.
  *
  * @param <K> Value that uniquely identifies position of element inside collection.
  * @param <V> Value that is hold by collection.
  */
 public class OMultiValueChangeTimeLine<K, V> {
-  private final List<OMultiValueChangeEvent<K, V>> multiValueChangeEvents = new ArrayList<OMultiValueChangeEvent<K, V>>();
+  private final List<OMultiValueChangeEvent<K, V>> multiValueChangeEvents =
+      new ArrayList<OMultiValueChangeEvent<K, V>>();
 
   /**
-   * @return <code>List</code> of all operations that were performed on collection starting from
-   * the time when it was loaded from DB.
+   * @return <code>List</code> of all operations that were performed on collection starting from the
+   *     time when it was loaded from DB.
    */
   public List<OMultiValueChangeEvent<K, V>> getMultiValueChangeEvents() {
     return Collections.unmodifiableList(multiValueChangeEvents);

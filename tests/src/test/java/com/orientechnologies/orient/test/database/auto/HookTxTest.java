@@ -21,32 +21,31 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
+import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 @Test(groups = "hook")
 public class HookTxTest extends ORecordHookAbstract {
-  public static final int   RECORD_BEFORE_CREATE = 3;
-  public static final int   RECORD_AFTER_CREATE  = 5;
-  public static final int   RECORD_BEFORE_READ   = 7;
-  public static final int   RECORD_AFTER_READ    = 11;
-  public static final int   RECORD_BEFORE_UPDATE = 13;
-  public static final int   RECORD_AFTER_UPDATE  = 17;
-  public static final int   RECORD_BEFORE_DELETE = 19;
-  public static final int   RECORD_AFTER_DELETE  = 23;
+  public static final int RECORD_BEFORE_CREATE = 3;
+  public static final int RECORD_AFTER_CREATE = 5;
+  public static final int RECORD_BEFORE_READ = 7;
+  public static final int RECORD_AFTER_READ = 11;
+  public static final int RECORD_BEFORE_UPDATE = 13;
+  public static final int RECORD_AFTER_UPDATE = 17;
+  public static final int RECORD_BEFORE_DELETE = 19;
+  public static final int RECORD_AFTER_DELETE = 23;
 
   private OObjectDatabaseTx database;
-  private int               callbackCount        = 0;
-  private Profile           p;
-  private int               expectedHookState;
-  private String            url;
+  private int callbackCount = 0;
+  private Profile p;
+  private int expectedHookState;
+  private String url;
 
   @Parameters(value = "url")
   public HookTxTest(@Optional String url) {
@@ -71,9 +70,15 @@ public class HookTxTest extends ORecordHookAbstract {
   public void testRegisterHook() throws IOException {
     database.open("admin", "admin");
     database.registerHook(this);
-    database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.business");
-    database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.whiz");
-    database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.base");
+    database
+        .getEntityManager()
+        .registerEntityClasses("com.orientechnologies.orient.test.domain.business");
+    database
+        .getEntityManager()
+        .registerEntityClasses("com.orientechnologies.orient.test.domain.whiz");
+    database
+        .getEntityManager()
+        .registerEntityClasses("com.orientechnologies.orient.test.domain.base");
   }
 
   @Test(dependsOnMethods = "testRegisterHook")
@@ -96,7 +101,9 @@ public class HookTxTest extends ORecordHookAbstract {
   public void testHookCallsRead() {
     // TEST HOOKS ON READ
     database.begin();
-    List<Profile> result = database.query(new OSQLSynchQuery<Profile>("select * from Profile where nick = 'HookTxTest'"));
+    List<Profile> result =
+        database.query(
+            new OSQLSynchQuery<Profile>("select * from Profile where nick = 'HookTxTest'"));
     expectedHookState += RECORD_BEFORE_READ + RECORD_AFTER_READ;
 
     Assert.assertFalse(result.size() == 0);
@@ -140,26 +147,29 @@ public class HookTxTest extends ORecordHookAbstract {
   public void testHookCannotBeginTx() throws IOException {
     final AtomicBoolean exc = new AtomicBoolean(false);
     database.activateOnCurrentThread();
-    database.registerHook(new ORecordHookAbstract() {
-      @Override
-      public RESULT onRecordBeforeCreate(ORecord iRecord) {
-        try {
-          database.activateOnCurrentThread();
-          database.begin();
-        } catch (IllegalStateException e) {
-          exc.set(true);
-        }
-        return null;
-      }
+    database.registerHook(
+        new ORecordHookAbstract() {
+          @Override
+          public RESULT onRecordBeforeCreate(ORecord iRecord) {
+            try {
+              database.activateOnCurrentThread();
+              database.begin();
+            } catch (IllegalStateException e) {
+              exc.set(true);
+            }
+            return null;
+          }
 
-      @Override
-      public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
-        return DISTRIBUTED_EXECUTION_MODE.BOTH;
-      }
-    });
+          @Override
+          public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
+            return DISTRIBUTED_EXECUTION_MODE.BOTH;
+          }
+        });
 
     Assert.assertFalse(exc.get());
-    new ODocument().field("test-hook", true).save(database.getClusterNameById(database.getDefaultClusterId()));
+    new ODocument()
+        .field("test-hook", true)
+        .save(database.getClusterNameById(database.getDefaultClusterId()));
     Assert.assertTrue(exc.get());
 
     database.activateOnCurrentThread();
@@ -169,7 +179,8 @@ public class HookTxTest extends ORecordHookAbstract {
   @Override
   @Test(enabled = false)
   public RESULT onRecordBeforeCreate(ORecord iRecord) {
-    if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName() != null
+    if (iRecord instanceof ODocument
+        && ((ODocument) iRecord).getClassName() != null
         && ((ODocument) iRecord).getClassName().equals("Profile"))
       callbackCount += RECORD_BEFORE_CREATE;
     return RESULT.RECORD_NOT_CHANGED;
@@ -178,7 +189,8 @@ public class HookTxTest extends ORecordHookAbstract {
   @Override
   @Test(enabled = false)
   public void onRecordAfterCreate(ORecord iRecord) {
-    if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName() != null
+    if (iRecord instanceof ODocument
+        && ((ODocument) iRecord).getClassName() != null
         && ((ODocument) iRecord).getClassName().equals("Profile"))
       callbackCount += RECORD_AFTER_CREATE;
   }
@@ -186,7 +198,8 @@ public class HookTxTest extends ORecordHookAbstract {
   @Override
   @Test(enabled = false)
   public RESULT onRecordBeforeRead(ORecord iRecord) {
-    if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName() != null
+    if (iRecord instanceof ODocument
+        && ((ODocument) iRecord).getClassName() != null
         && ((ODocument) iRecord).getClassName().equals("Profile"))
       callbackCount += RECORD_BEFORE_READ;
     return RESULT.RECORD_NOT_CHANGED;
@@ -195,7 +208,8 @@ public class HookTxTest extends ORecordHookAbstract {
   @Override
   @Test(enabled = false)
   public void onRecordAfterRead(ORecord iRecord) {
-    if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName() != null
+    if (iRecord instanceof ODocument
+        && ((ODocument) iRecord).getClassName() != null
         && ((ODocument) iRecord).getClassName().equals("Profile"))
       callbackCount += RECORD_AFTER_READ;
   }
@@ -203,7 +217,8 @@ public class HookTxTest extends ORecordHookAbstract {
   @Override
   @Test(enabled = false)
   public RESULT onRecordBeforeUpdate(ORecord iRecord) {
-    if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName() != null
+    if (iRecord instanceof ODocument
+        && ((ODocument) iRecord).getClassName() != null
         && ((ODocument) iRecord).getClassName().equals("Profile"))
       callbackCount += RECORD_BEFORE_UPDATE;
     return RESULT.RECORD_NOT_CHANGED;
@@ -212,7 +227,8 @@ public class HookTxTest extends ORecordHookAbstract {
   @Override
   @Test(enabled = false)
   public void onRecordAfterUpdate(ORecord iRecord) {
-    if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName() != null
+    if (iRecord instanceof ODocument
+        && ((ODocument) iRecord).getClassName() != null
         && ((ODocument) iRecord).getClassName().equals("Profile"))
       callbackCount += RECORD_AFTER_UPDATE;
   }
@@ -220,7 +236,8 @@ public class HookTxTest extends ORecordHookAbstract {
   @Override
   @Test(enabled = false)
   public RESULT onRecordBeforeDelete(ORecord iRecord) {
-    if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName() != null
+    if (iRecord instanceof ODocument
+        && ((ODocument) iRecord).getClassName() != null
         && ((ODocument) iRecord).getClassName().equals("Profile"))
       callbackCount += RECORD_BEFORE_DELETE;
     return RESULT.RECORD_NOT_CHANGED;
@@ -229,7 +246,8 @@ public class HookTxTest extends ORecordHookAbstract {
   @Override
   @Test(enabled = false)
   public void onRecordAfterDelete(ORecord iRecord) {
-    if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName() != null
+    if (iRecord instanceof ODocument
+        && ((ODocument) iRecord).getClassName() != null
         && ((ODocument) iRecord).getClassName().equals("Profile"))
       callbackCount += RECORD_AFTER_DELETE;
   }

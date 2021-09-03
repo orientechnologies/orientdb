@@ -34,9 +34,9 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.clu
  */
 public final class OPaginatedClusterStateV1 extends ODurablePage {
   private static final int RECORDS_SIZE_OFFSET = NEXT_FREE_POSITION;
-  private static final int SIZE_OFFSET         = RECORDS_SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
-  private static final int FILE_SIZE_OFFSET    = SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
-  private static final int FREE_LIST_OFFSET    = FILE_SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
+  private static final int SIZE_OFFSET = RECORDS_SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
+  private static final int FILE_SIZE_OFFSET = SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
+  private static final int FREE_LIST_OFFSET = FILE_SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
 
   public OPaginatedClusterStateV1(OCacheEntry cacheEntry) {
     super(cacheEntry);

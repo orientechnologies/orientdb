@@ -2,20 +2,21 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.parser.OWhereClause;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * Created by luigidellaquila on 13/10/16.
- */
+/** Created by luigidellaquila on 13/10/16. */
 public class WhileMatchStep extends AbstractUnrollStep {
 
   private final OInternalExecutionPlan body;
-  private final OWhereClause           condition;
+  private final OWhereClause condition;
 
-  public WhileMatchStep(OCommandContext ctx, OWhereClause condition, OInternalExecutionPlan body, boolean profilingEnabled) {
+  public WhileMatchStep(
+      OCommandContext ctx,
+      OWhereClause condition,
+      OInternalExecutionPlan body,
+      boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.body = body;
     this.condition = condition;
@@ -59,5 +60,4 @@ public class WhileMatchStep extends AbstractUnrollStep {
 
     return result.toString();
   }
-
 }

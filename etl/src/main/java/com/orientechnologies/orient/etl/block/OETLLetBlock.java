@@ -23,15 +23,18 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 
 public class OETLLetBlock extends OETLAbstractBlock {
-  protected String     name;
+  protected String name;
   protected OSQLFilter expression;
-  protected Object     value;
+  protected Object value;
 
   @Override
   public ODocument getConfiguration() {
-    return new ODocument().fromJSON(
-        "{parameters:[{name:{optional:false,description:'Variable name'}}," + "{value:{optional:true,description:'Variable value'}}"
-            + "{expression:{optional:true,description:'Expression to evaluate'}}" + "]}");
+    return new ODocument()
+        .fromJSON(
+            "{parameters:[{name:{optional:false,description:'Variable name'}},"
+                + "{value:{optional:true,description:'Variable value'}}"
+                + "{expression:{optional:true,description:'Expression to evaluate'}}"
+                + "]}");
   }
 
   @Override
@@ -41,11 +44,11 @@ public class OETLLetBlock extends OETLAbstractBlock {
     name = iConfiguration.field("name");
     if (iConfiguration.containsField("value")) {
       value = iConfiguration.field("value");
-    } else
-      expression = new OSQLFilter((String) iConfiguration.field("expression"), iContext, null);
+    } else expression = new OSQLFilter((String) iConfiguration.field("expression"), iContext, null);
 
     if (value == null && expression == null)
-      throw new IllegalArgumentException("'value' or 'expression' parameter are mandatory in Let Transformer");
+      throw new IllegalArgumentException(
+          "'value' or 'expression' parameter are mandatory in Let Transformer");
   }
 
   @Override

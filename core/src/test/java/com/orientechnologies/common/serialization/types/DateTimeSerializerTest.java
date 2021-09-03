@@ -18,18 +18,19 @@ package com.orientechnologies.common.serialization.types;
 
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
-import org.junit.Assert;import org.junit.Before; import org.junit.Test;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Date;
+import org.junit.Assert;
+import org.junit.Before;
 
 /**
  * @author Ilya Bershadskiy (ibersh20-at-gmail.com)
  * @since 20.01.12
  */
 public class DateTimeSerializerTest {
-  private final static int  FIELD_SIZE = 8;
-  private static final Date OBJECT     = new Date();
+  private static final int FIELD_SIZE = 8;
+  private static final Date OBJECT = new Date();
   private ODateTimeSerializer dateTimeSerializer;
   private static final byte[] stream = new byte[FIELD_SIZE];
 
@@ -84,13 +85,18 @@ public class DateTimeSerializerTest {
   public void testSerializeWALChanges() {
     final int serializationOffset = 5;
 
-    final ByteBuffer buffer = ByteBuffer.allocateDirect(FIELD_SIZE + serializationOffset).order(ByteOrder.nativeOrder());
+    final ByteBuffer buffer =
+        ByteBuffer.allocateDirect(FIELD_SIZE + serializationOffset).order(ByteOrder.nativeOrder());
     final byte[] data = new byte[FIELD_SIZE];
     dateTimeSerializer.serializeNativeObject(OBJECT, data, 0);
     final OWALChanges walChanges = new OWALChangesTree();
     walChanges.setBinaryValue(buffer, data, serializationOffset);
 
-    Assert.assertEquals(dateTimeSerializer.getObjectSizeInByteBuffer(buffer, walChanges, serializationOffset), FIELD_SIZE);
-    Assert.assertEquals(dateTimeSerializer.deserializeFromByteBufferObject(buffer, walChanges, serializationOffset), OBJECT);
+    Assert.assertEquals(
+        dateTimeSerializer.getObjectSizeInByteBuffer(buffer, walChanges, serializationOffset),
+        FIELD_SIZE);
+    Assert.assertEquals(
+        dateTimeSerializer.deserializeFromByteBufferObject(buffer, walChanges, serializationOffset),
+        OBJECT);
   }
 }

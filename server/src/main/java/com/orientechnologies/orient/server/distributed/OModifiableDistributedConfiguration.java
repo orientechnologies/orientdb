@@ -22,15 +22,14 @@ package com.orientechnologies.orient.server.distributed;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
 /**
- * Modifiable Distributed configuration. It's created starting from a ODistributedConfiguration object. Every changes increment the
- * field "version".
+ * Modifiable Distributed configuration. It's created starting from a ODistributedConfiguration
+ * object. Every changes increment the field "version".
  *
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
@@ -43,9 +42,7 @@ public class OModifiableDistributedConfiguration extends ODistributedConfigurati
     return this;
   }
 
-  /**
-   * Sets the server role between MASTER (default) and REPLICA.
-   */
+  /** Sets the server role between MASTER (default) and REPLICA. */
   public void setServerRole(final String iServerName, final ROLES role) {
     synchronized (configuration) {
       ODocument servers = configuration.field(SERVERS);
@@ -60,11 +57,11 @@ public class OModifiableDistributedConfiguration extends ODistributedConfigurati
   }
 
   /**
-   * Adds a server in the configuration. It replaces all the tags &lt;NEW_NODE&gt; with the new server name<br>
+   * Adds a server in the configuration. It replaces all the tags &lt;NEW_NODE&gt; with the new
+   * server name<br>
    * NOTE: It must be executed in distributed database lock.
    *
-   * @param iNode
-   *          Server name
+   * @param iNode Server name
    * @return the list of changed partitions or null if no changes have applied
    */
   public List<String> addNewNodeInServerList(final String iNode) {
@@ -74,7 +71,8 @@ public class OModifiableDistributedConfiguration extends ODistributedConfigurati
       for (String clusterName : getClusterNames()) {
         final List<String> partitions = getClusterConfiguration(clusterName).field(SERVERS);
         if (partitions != null) {
-          final int newNodePos = partitions.indexOf(OModifiableDistributedConfiguration.NEW_NODE_TAG);
+          final int newNodePos =
+              partitions.indexOf(OModifiableDistributedConfiguration.NEW_NODE_TAG);
           if (newNodePos > -1 && !partitions.contains(iNode)) {
             partitions.add(newNodePos, iNode);
             changedPartitions.add(clusterName);
@@ -99,15 +97,14 @@ public class OModifiableDistributedConfiguration extends ODistributedConfigurati
   }
 
   /**
-   * Sets the server as owner for the given cluster. The owner server is the first in server list.<br>
+   * Sets the server as owner for the given cluster. The owner server is the first in server list.
+   * <br>
    * NOTE: It must be executed in distributed database lock.
    *
-   * @param iClusterName
-   *          Cluster name or *. Does not accept null.
+   * @param iClusterName Cluster name or *. Does not accept null.
    */
   public void setServerOwner(final String iClusterName, final String iServerName) {
-    if (iClusterName == null)
-      throw new IllegalArgumentException("cluster name cannot be null");
+    if (iClusterName == null) throw new IllegalArgumentException("cluster name cannot be null");
 
     synchronized (configuration) {
       final ODocument clusters = configuration.field(CLUSTERS);
@@ -120,8 +117,14 @@ public class OModifiableDistributedConfiguration extends ODistributedConfigurati
         // CHECK IF THE OWNER IS ALREADY CONFIGURED
         final String owner = cluster.field(OWNER);
         if (owner != null && !iServerName.equalsIgnoreCase(owner))
-          throw new ODistributedException("Cannot overwrite ownership of cluster '" + iClusterName + "' to the server '"
-              + iServerName + "', because server '" + owner + "' was already configured as owner");
+          throw new ODistributedException(
+              "Cannot overwrite ownership of cluster '"
+                  + iClusterName
+                  + "' to the server '"
+                  + iServerName
+                  + "', because server '"
+                  + owner
+                  + "' was already configured as owner");
       }
 
       List<String> serverList = getClusterConfiguration(iClusterName).field(SERVERS);
@@ -135,7 +138,7 @@ public class OModifiableDistributedConfiguration extends ODistributedConfigurati
 
       // REMOVE THE NODE IF ANY
       boolean removed = false;
-      for (Iterator<String> it = serverList.iterator(); it.hasNext();) {
+      for (Iterator<String> it = serverList.iterator(); it.hasNext(); ) {
         if (it.next().equals(iServerName)) {
           it.remove();
           removed = true;
@@ -143,9 +146,13 @@ public class OModifiableDistributedConfiguration extends ODistributedConfigurati
         }
       }
 
-      if ( !removed )
-        throw new ODistributedException("Cannot set ownership of cluster '" + iClusterName + "' to the server '"
-            + iServerName + "', because the server has no that cluster (sharding)");
+      if (!removed)
+        throw new ODistributedException(
+            "Cannot set ownership of cluster '"
+                + iClusterName
+                + "' to the server '"
+                + iServerName
+                + "', because the server has no that cluster (sharding)");
 
       // ADD THE NODE AS FIRST OF THE LIST = MASTER
       serverList.add(0, iServerName);
@@ -158,8 +165,7 @@ public class OModifiableDistributedConfiguration extends ODistributedConfigurati
    * Removes a server from the list.<br>
    * NOTE: It must be executed in distributed database lock.
    *
-   * @param iNode
-   *          Server name
+   * @param iNode Server name
    * @return
    */
   public List<String> removeServer(final String iNode) {
@@ -192,10 +198,8 @@ public class OModifiableDistributedConfiguration extends ODistributedConfigurati
    * Set a server offline. It assures the offline server is never on top of the list.<br>
    * NOTE: It must be executed in distributed database lock.
    *
-   * @param iNode
-   *          Server name
-   * @param newLockManagerServer
-   *          New Lock Manager server name
+   * @param iNode Server name
+   * @param newLockManagerServer New Lock Manager server name
    * @return
    */
   public List<String> setServerOffline(final String iNode, final String newLockManagerServer) {
@@ -221,8 +225,7 @@ public class OModifiableDistributedConfiguration extends ODistributedConfigurati
 
               if (newLockManagerServer != null) {
                 // ASSURE THE NEW LOCK MANAGER IS THE FIRST IN THE LIST
-                if (nodes.remove(newLockManagerServer))
-                  nodes.add(0, newLockManagerServer);
+                if (nodes.remove(newLockManagerServer)) nodes.add(0, newLockManagerServer);
               }
 
               changedPartitions.add(clusterName);
@@ -243,8 +246,7 @@ public class OModifiableDistributedConfiguration extends ODistributedConfigurati
   private void incrementVersion() {
     // INCREMENT VERSION
     Integer oldVersion = configuration.field(VERSION);
-    if (oldVersion == null)
-      oldVersion = 0;
+    if (oldVersion == null) oldVersion = 0;
     configuration.field(VERSION, oldVersion.intValue() + 1);
   }
 

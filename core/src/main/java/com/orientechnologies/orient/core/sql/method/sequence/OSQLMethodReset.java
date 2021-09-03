@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.metadata.sequence.OSequence;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.method.misc.OAbstractSQLMethod;
 
-
 /**
  * Reset a sequence. It returns the first sequence number after reset.
  *
@@ -45,13 +44,21 @@ public class OSQLMethodReset extends OAbstractSQLMethod {
   }
 
   @Override
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
+  public Object execute(
+      Object iThis,
+      OIdentifiable iCurrentRecord,
+      OCommandContext iContext,
+      Object ioResult,
+      Object[] iParams) {
     if (iThis == null)
-      throw new OCommandSQLParsingException("Method 'reset()' can be invoked only on OSequence instances, while NULL was found");
+      throw new OCommandSQLParsingException(
+          "Method 'reset()' can be invoked only on OSequence instances, while NULL was found");
 
     if (!(iThis instanceof OSequence))
       throw new OCommandSQLParsingException(
-          "Method 'reset()' can be invoked only on OSequence instances, while '" + iThis.getClass() + "' was found");
+          "Method 'reset()' can be invoked only on OSequence instances, while '"
+              + iThis.getClass()
+              + "' was found");
 
     try {
       return ((OSequence) iThis).reset();

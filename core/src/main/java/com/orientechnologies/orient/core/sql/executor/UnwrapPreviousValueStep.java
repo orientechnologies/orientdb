@@ -3,7 +3,6 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-
 import java.util.Map;
 import java.util.Optional;
 
@@ -38,11 +37,13 @@ public class UnwrapPreviousValueStep extends AbstractExecutionStep {
           if (prevResult instanceof OUpdatableResult) {
             prevResult = ((OUpdatableResult) prevResult).previousValue;
             if (prevResult == null) {
-              throw new OCommandExecutionException("Invalid status of record: no previous value available");
+              throw new OCommandExecutionException(
+                  "Invalid status of record: no previous value available");
             }
             return prevResult;
           } else {
-            throw new OCommandExecutionException("Invalid status of record: no previous value available");
+            throw new OCommandExecutionException(
+                "Invalid status of record: no previous value available");
           }
         } finally {
           if (profilingEnabled) {

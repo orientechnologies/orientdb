@@ -1,15 +1,13 @@
 package com.orientechnologies.orient.core.db.document;
 
+import static org.junit.Assert.assertEquals;
+
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-
-/**
- * Created by tglman on 26/10/15.
- */
+/** Created by tglman on 26/10/15. */
 public class RecursiveLinkedSaveTest {
 
   private ODatabaseDocument db;
@@ -60,5 +58,4 @@ public class RecursiveLinkedSaveTest {
   public void after() {
     db.drop();
   }
-
 }

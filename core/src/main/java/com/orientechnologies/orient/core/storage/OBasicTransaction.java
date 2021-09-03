@@ -43,32 +43,36 @@ public interface OBasicTransaction {
    */
   ORecord DELETED_RECORD = new ORecordBytes();
 
-  /**
-   * @return {@code true} if this transaction is active, {@code false} otherwise.
-   */
+  /** @return {@code true} if this transaction is active, {@code false} otherwise. */
   boolean isActive();
 
   /**
    * Saves the given record in this transaction.
    *
-   * @param record          the record to save.
-   * @param clusterName     record's cluster name.
-   * @param operationMode   the operation mode.
-   * @param forceCreate     the force creation flag, {@code true} to force the creation of the record, {@code false} to allow
-   *                        updates.
-   * @param createdCallback the callback to invoke when the record save operation triggered the creation of the record.
-   * @param updatedCallback the callback to invoke when the record save operation triggered the update of the record.
-   *
+   * @param record the record to save.
+   * @param clusterName record's cluster name.
+   * @param operationMode the operation mode.
+   * @param forceCreate the force creation flag, {@code true} to force the creation of the record,
+   *     {@code false} to allow updates.
+   * @param createdCallback the callback to invoke when the record save operation triggered the
+   *     creation of the record.
+   * @param updatedCallback the callback to invoke when the record save operation triggered the
+   *     update of the record.
    * @return the record saved.
    */
-  ORecord saveRecord(ORecord record, String clusterName, ODatabase.OPERATION_MODE operationMode, boolean forceCreate,
-      ORecordCallback<? extends Number> createdCallback, ORecordCallback<Integer> updatedCallback);
+  ORecord saveRecord(
+      ORecord record,
+      String clusterName,
+      ODatabase.OPERATION_MODE operationMode,
+      boolean forceCreate,
+      ORecordCallback<? extends Number> createdCallback,
+      ORecordCallback<Integer> updatedCallback);
 
   /**
    * Deletes the given record in this transaction.
    *
    * @param record the record to delete.
-   * @param mode   the operation mode.
+   * @param mode the operation mode.
    */
   void deleteRecord(ORecord record, ODatabase.OPERATION_MODE mode);
 
@@ -76,22 +80,25 @@ public interface OBasicTransaction {
    * Resolves a record with the given RID in the context of this transaction.
    *
    * @param rid the record RID.
-   *
-   * @return the resolved record, or {@code null} if no record is found, or {@link #DELETED_RECORD} if the record was deleted in
-   * this transaction.
+   * @return the resolved record, or {@code null} if no record is found, or {@link #DELETED_RECORD}
+   *     if the record was deleted in this transaction.
    */
   ORecord getRecord(ORID rid);
 
   /**
    * Adds the transactional index entry in this transaction.
    *
-   * @param index     the index.
+   * @param index the index.
    * @param indexName the index name.
    * @param operation the index operation to register.
-   * @param key       the index key.
-   * @param value     the index key value.
+   * @param key the index key.
+   * @param value the index key value.
    */
-  void addIndexEntry(OIndex index, String indexName, OTransactionIndexChanges.OPERATION operation, Object key,
+  void addIndexEntry(
+      OIndex index,
+      String indexName,
+      OTransactionIndexChanges.OPERATION operation,
+      Object key,
       OIdentifiable value);
 
   /**
@@ -105,17 +112,17 @@ public interface OBasicTransaction {
    * Obtains the index changes done in the context of this transaction.
    *
    * @param indexName the index name.
-   *
    * @return the index changes in question or {@code null} if index is not found.
    */
   OTransactionIndexChanges getIndexChanges(String indexName);
 
   /**
-   * Does the same thing as {@link #getIndexChanges(String)}, but handles remote storages in a special way.
+   * Does the same thing as {@link #getIndexChanges(String)}, but handles remote storages in a
+   * special way.
    *
    * @param indexName the index name.
-   *
-   * @return the index changes in question or {@code null} if index is not found or storage is remote.
+   * @return the index changes in question or {@code null} if index is not found or storage is
+   *     remote.
    */
   OTransactionIndexChanges getIndexChangesInternal(String indexName);
 
@@ -123,7 +130,6 @@ public interface OBasicTransaction {
    * Obtains the custom value by its name stored in the context of this transaction.
    *
    * @param name the value name.
-   *
    * @return the obtained value or {@code null} if no value found.
    */
   Object getCustomData(String name);
@@ -131,18 +137,15 @@ public interface OBasicTransaction {
   /**
    * Sets the custom value by its name stored in the context of this transaction.
    *
-   * @param name  the value name.
+   * @param name the value name.
    * @param value the value to store.
    */
   void setCustomData(String name, Object value);
 
-  /**
-   * @return this transaction ID as seen by the client of this transaction.
-   */
+  /** @return this transaction ID as seen by the client of this transaction. */
   default int getClientTransactionId() {
     return getId();
   }
 
   int getId();
-
 }

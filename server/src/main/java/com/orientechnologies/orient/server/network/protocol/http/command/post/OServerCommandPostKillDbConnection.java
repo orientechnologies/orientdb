@@ -13,7 +13,7 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.orient.server.network.protocol.http.command.post;
@@ -24,28 +24,31 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
-
 import java.io.IOException;
 import java.util.List;
 
 public class OServerCommandPostKillDbConnection extends OServerCommandAuthenticatedDbAbstract {
-  private static final String[] NAMES = { "POST|dbconnection/*" };
+  private static final String[] NAMES = {"POST|dbconnection/*"};
 
   @Override
   public boolean execute(OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    final String[] urlParts = checkSyntax(iRequest.getUrl(), 2, "Syntax error: dbconnection/<database>");
+    final String[] urlParts =
+        checkSyntax(iRequest.getUrl(), 2, "Syntax error: dbconnection/<database>");
 
     doPost(iRequest, iResponse, urlParts[1], iRequest.getContent());
 
     return false;
   }
 
-  private void doPost(OHttpRequest iRequest, OHttpResponse iResponse, String db, String command) throws IOException {
+  private void doPost(OHttpRequest iRequest, OHttpResponse iResponse, String db, String command)
+      throws IOException {
 
-    final List<OClientConnection> connections = server.getClientConnectionManager().getConnections();
+    final List<OClientConnection> connections =
+        server.getClientConnectionManager().getConnections();
     for (OClientConnection connection : connections) {
       if (connection.getProtocol() instanceof ONetworkProtocolHttpAbstract) {
-        final ONetworkProtocolHttpAbstract http = (ONetworkProtocolHttpAbstract) connection.getProtocol();
+        final ONetworkProtocolHttpAbstract http =
+            (ONetworkProtocolHttpAbstract) connection.getProtocol();
         final OHttpRequest req = http.getRequest();
 
         if (req != null && req != iRequest && req.getSessionId().equals(iRequest.getSessionId())) {
@@ -53,8 +56,12 @@ public class OServerCommandPostKillDbConnection extends OServerCommandAuthentica
         }
       }
     }
-    iResponse.send(OHttpUtils.STATUS_OK_NOCONTENT_CODE, OHttpUtils.STATUS_OK_NOCONTENT_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
-        null, null);
+    iResponse.send(
+        OHttpUtils.STATUS_OK_NOCONTENT_CODE,
+        OHttpUtils.STATUS_OK_NOCONTENT_DESCRIPTION,
+        OHttpUtils.CONTENT_TEXT_PLAIN,
+        null,
+        null);
   }
 
   @Override

@@ -16,9 +16,13 @@
 
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -29,27 +33,24 @@ import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
-import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
+import java.util.LinkedList;
+import java.util.List;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.util.LinkedList;
-import java.util.List;
-
-import static org.junit.Assert.*;
-
 /**
- * It checks the consistency in the cluster with the following scenario: - 3 server (europe, usa, asia) - 3 shards, one for each
- * server (client_europe, client_usa, client_asia) - writes on each node (5 threads for each running server write 100 records) -
- * check availability no-replica (you can retry records of all the shards) - shutdown server3 - check availability no-replica (you
- * can retry only records in shard1 and shard2) - restart server3 - check availability no-replica (you can retry records of all the
- * shards) - this test checks also the full restore of database that doesn't overwrite the client_asia cluster because owned only by
- * asia server
+ * It checks the consistency in the cluster with the following scenario: - 3 server (europe, usa,
+ * asia) - 3 shards, one for each server (client_europe, client_usa, client_asia) - writes on each
+ * node (5 threads for each running server write 100 records) - check availability no-replica (you
+ * can retry records of all the shards) - shutdown server3 - check availability no-replica (you can
+ * retry only records in shard1 and shard2) - restart server3 - check availability no-replica (you
+ * can retry records of all the shards) - this test checks also the full restore of database that
+ * doesn't overwrite the client_asia cluster because owned only by asia server
  *
  * @author Gabriele Ponzi
  * @email <gabriele.ponzi--at--gmail.com>
  */
-
 public class BasicShardingNoReplicaScenarioIT extends AbstractShardingScenarioTest {
 
   @Test
@@ -63,17 +64,20 @@ public class BasicShardingNoReplicaScenarioIT extends AbstractShardingScenarioTe
   @Override
   public void executeTest() throws Exception {
 
-    OHazelcastPlugin manager1 = (OHazelcastPlugin) serverInstance.get(0).getServerInstance().getDistributedManager();
+    ODistributedPlugin manager1 =
+        (ODistributedPlugin) serverInstance.get(0).getServerInstance().getDistributedManager();
 
-    final OModifiableDistributedConfiguration databaseConfiguration = manager1.getDatabaseConfiguration(this.getDatabaseName())
-        .modify();
+    final OModifiableDistributedConfiguration databaseConfiguration =
+        manager1.getDatabaseConfiguration(this.getDatabaseName()).modify();
     ODocument cfg = databaseConfiguration.getDocument();
 
     ODatabaseDocumentInternal graphNoTx = null;
     try {
       OrientDB orientDB = serverInstance.get(0).getServerInstance().getContext();
       if (!orientDB.exists(getDatabaseName())) {
-        orientDB.create(getDatabaseName(), ODatabaseType.PLOCAL);
+        orientDB.execute(
+            "create database ? plocal users(admin identified by 'admin' role admin)",
+            getDatabaseName());
       }
       graphNoTx = (ODatabaseDocumentInternal) orientDB.open(getDatabaseName(), "admin", "admin");
 
@@ -85,7 +89,8 @@ public class BasicShardingNoReplicaScenarioIT extends AbstractShardingScenarioTe
 
       OModifiableDistributedConfiguration dCfg = new OModifiableDistributedConfiguration(cfg);
       for (int i = 0; i < serverInstance.size(); ++i) {
-        final String serverName = serverInstance.get(i).getServerInstance().getDistributedManager().getLocalNodeName();
+        final String serverName =
+            serverInstance.get(i).getServerInstance().getDistributedManager().getLocalNodeName();
         clientType.addCluster("client_" + serverName);
 
         dCfg.setServerOwner("client_" + serverName, serverName);
@@ -112,8 +117,14 @@ public class BasicShardingNoReplicaScenarioIT extends AbstractShardingScenarioTe
       simulateServerFault(serverInstance.get(2), "shutdown");
       assertFalse(serverInstance.get(2).isActive());
 
-      waitForDatabaseIsOffline(executeTestsOnServers.get(2).getServerInstance().getDistributedManager().getLocalNodeName(),
-          getDatabaseName(), 10000);
+      waitForDatabaseIsOffline(
+          executeTestsOnServers
+              .get(2)
+              .getServerInstance()
+              .getDistributedManager()
+              .getLocalNodeName(),
+          getDatabaseName(),
+          10000);
 
       // check consistency (no-replica)
       executeTestsOnServers.remove(2);
@@ -127,7 +138,10 @@ public class BasicShardingNoReplicaScenarioIT extends AbstractShardingScenarioTe
 
         graphNoTx.activateOnCurrentThread();
         final String uniqueId = "client_asia-s2-t10-v0";
-        Iterable<OElement> it = graphNoTx.command(new OCommandSQL("select from Client where name = '" + uniqueId + "'")).execute();
+        Iterable<OElement> it =
+            graphNoTx
+                .command(new OCommandSQL("select from Client where name = '" + uniqueId + "'"))
+                .execute();
         List<OVertex> result = new LinkedList<OVertex>();
         for (OElement v : it) {
           if (v.isVertex()) {
@@ -144,12 +158,17 @@ public class BasicShardingNoReplicaScenarioIT extends AbstractShardingScenarioTe
       }
 
       // restarting server3
-      serverInstance.get(2).startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
+      serverInstance
+          .get(2)
+          .startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
       System.out.println("Server 3 restarted.");
       assertTrue(serverInstance.get(2).isActive());
 
-      waitForDatabaseIsOnline(0, serverInstance.get(2).getServerInstance().getDistributedManager().getLocalNodeName(),
-          getDatabaseName(), 10000);
+      waitForDatabaseIsOnline(
+          0,
+          serverInstance.get(2).getServerInstance().getDistributedManager().getLocalNodeName(),
+          getDatabaseName(),
+          10000);
 
       // checking server3 status by querying a record inserted on it
       try {
@@ -157,12 +176,17 @@ public class BasicShardingNoReplicaScenarioIT extends AbstractShardingScenarioTe
 
         OrientDB orientDB1 = serverInstance.get(2).getServerInstance().getContext();
         if (!orientDB1.exists(getDatabaseName())) {
-          orientDB1.create(getDatabaseName(), ODatabaseType.PLOCAL);
+          orientDB1.execute(
+              "create database ? plocal users(admin identified by 'admin' role admin)",
+              getDatabaseName());
         }
         graphNoTx = (ODatabaseDocumentInternal) orientDB1.open(getDatabaseName(), "admin", "admin");
         graphNoTx.activateOnCurrentThread();
         final String uniqueId = "client_asia-s2-t10-v0";
-        Iterable<OElement> it = graphNoTx.command(new OCommandSQL("select from Client where name = '" + uniqueId + "'")).execute();
+        Iterable<OElement> it =
+            graphNoTx
+                .command(new OCommandSQL("select from Client where name = '" + uniqueId + "'"))
+                .execute();
         List<OVertex> result = new LinkedList<OVertex>();
         for (OElement v : it) {
           if (v.isVertex()) {
@@ -191,14 +215,11 @@ public class BasicShardingNoReplicaScenarioIT extends AbstractShardingScenarioTe
         graphNoTx.close();
         ODatabaseRecordThreadLocal.instance().set(null);
       }
-
     }
-
   }
 
   @Override
   public String getDatabaseName() {
     return "distributed-basic-sharding";
   }
-
 }

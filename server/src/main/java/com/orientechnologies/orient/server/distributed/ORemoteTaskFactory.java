@@ -23,7 +23,7 @@ import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 /**
  * Factory for remote tasks.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public interface ORemoteTaskFactory {

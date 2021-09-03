@@ -20,21 +20,18 @@
 package com.orientechnologies.orient.core.record.impl;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.Set;
 
-import java.util.*;
-import java.util.Map.Entry;
-
-/**
- * @author Emanuele Tagliafetti
- */
+/** @author Emanuele Tagliafetti */
 public class ODirtyManager {
 
-  private ODirtyManager                       overrider;
-  private Set<ORecord>                        newRecords;
-  private Set<ORecord>                        updateRecords;
+  private ODirtyManager overrider;
+  private Set<ORecord> newRecords;
+  private Set<ORecord> updateRecords;
 
   public void setDirty(ORecord record) {
     ODirtyManager real = getReal();
@@ -54,8 +51,7 @@ public class ODirtyManager {
     while (real.overrider != null) {
       real = real.overrider;
     }
-    if (this.overrider != null && this.overrider != real)
-      this.overrider = real;
+    if (this.overrider != null && this.overrider != real) this.overrider = real;
     return real;
   }
 
@@ -72,8 +68,7 @@ public class ODirtyManager {
   }
 
   public void merge(ODirtyManager toMerge) {
-    if (isSame(toMerge))
-      return;
+    if (isSame(toMerge)) return;
     this.newRecords = mergeSet(this.newRecords, toMerge.getNewRecords());
     this.updateRecords = mergeSet(this.updateRecords, toMerge.getUpdateRecords());
     toMerge.override(this);
@@ -84,7 +79,6 @@ public class ODirtyManager {
    *
    * @param target
    * @param source
-   *
    * @return
    */
   private static Set<ORecord> mergeSet(Set<ORecord> target, Set<ORecord> source) {
@@ -113,8 +107,7 @@ public class ODirtyManager {
     getReal().internalUnTrack(pointing, pointed);
   }
 
-  private void internalUnTrack(ORecord pointing, OIdentifiable pointed) {
-  }
+  private void internalUnTrack(ORecord pointing, OIdentifiable pointed) {}
 
   private void internalTrack(ORecord pointing, OIdentifiable pointed) {
     if (pointed instanceof ORecord) {
@@ -125,8 +118,7 @@ public class ODirtyManager {
   private void override(ODirtyManager oDirtyManager) {
     ODirtyManager real = getReal();
     oDirtyManager = oDirtyManager.getReal();
-    if (real == oDirtyManager)
-      return;
+    if (real == oDirtyManager) return;
     real.overrider = oDirtyManager;
     real.newRecords = null;
     real.updateRecords = null;
@@ -140,8 +132,7 @@ public class ODirtyManager {
 
   public void removeNew(ORecord record) {
     ODirtyManager real = getReal();
-    if (real.newRecords != null)
-      real.newRecords.remove(record);
+    if (real.newRecords != null) real.newRecords.remove(record);
   }
 
   public void clear() {

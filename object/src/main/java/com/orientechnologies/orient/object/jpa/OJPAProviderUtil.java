@@ -36,5 +36,4 @@ public class OJPAProviderUtil implements ProviderUtil {
   public LoadState isLoaded(Object entity) {
     return LoadState.UNKNOWN;
   }
-
 }

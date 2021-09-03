@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import org.junit.Test;
+
 public class OCreateClassStatementTest extends OParserTestAbstract {
 
   @Test
@@ -26,5 +27,4 @@ public class OCreateClassStatementTest extends OParserTestAbstract {
     checkWrongSyntax("CREATE CLASS Foo if");
     checkWrongSyntax("CREATE CLASS Foo if not");
   }
-
 }

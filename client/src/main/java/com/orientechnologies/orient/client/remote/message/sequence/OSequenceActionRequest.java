@@ -18,22 +18,17 @@ package com.orientechnologies.orient.client.remote.message.sequence;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceAction;
 import com.orientechnologies.orient.core.metadata.sequence.SequenceOrderType;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-/**
- * @author marko
- */
+/** @author marko */
 public class OSequenceActionRequest {
 
   private OSequenceAction action = null;
 
-  public OSequenceActionRequest() {
-
-  }
+  public OSequenceActionRequest() {}
 
   public OSequenceActionRequest(OSequenceAction action) {
     this.action = action;
@@ -41,11 +36,11 @@ public class OSequenceActionRequest {
 
   private void serializeInt(Integer val, DataOutput out) throws IOException {
     if (val != null) {
-      //determines that value is not null
+      // determines that value is not null
       out.writeByte(1);
       out.writeInt(val);
     } else {
-      //determines that value is null
+      // determines that value is null
       out.writeByte(0);
     }
   }
@@ -61,11 +56,11 @@ public class OSequenceActionRequest {
 
   private void serializeLong(Long val, DataOutput out) throws IOException {
     if (val != null) {
-      //determines that value is not null
+      // determines that value is not null
       out.writeByte(1);
       out.writeLong(val);
     } else {
-      //determines that value is null
+      // determines that value is null
       out.writeByte(0);
     }
   }
@@ -81,11 +76,11 @@ public class OSequenceActionRequest {
 
   private void serializeOrderType(SequenceOrderType val, DataOutput out) throws IOException {
     if (val != null) {
-      //determines that value is not null
+      // determines that value is not null
       out.writeByte(1);
       out.writeByte(val.getValue());
     } else {
-      //determines that value is null
+      // determines that value is null
       out.writeByte(0);
     }
   }
@@ -101,11 +96,11 @@ public class OSequenceActionRequest {
 
   private void serializeBoolean(Boolean val, DataOutput out) throws IOException {
     if (val != null) {
-      //determines that value is not null
+      // determines that value is not null
       out.writeByte(1);
       out.writeBoolean(val);
     } else {
-      //determines that value is null
+      // determines that value is null
       out.writeByte(0);
     }
   }
@@ -188,5 +183,4 @@ public class OSequenceActionRequest {
   public OSequenceAction getAction() {
     return action;
   }
-
 }

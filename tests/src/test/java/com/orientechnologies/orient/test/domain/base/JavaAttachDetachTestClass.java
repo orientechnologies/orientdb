@@ -16,51 +16,43 @@
  */
 package com.orientechnologies.orient.test.domain.base;
 
+import com.orientechnologies.orient.core.record.impl.OBlob;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.test.domain.business.Child;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import javax.persistence.Id;
 import javax.persistence.Transient;
 import javax.persistence.Version;
 
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.OBlob;
-import com.orientechnologies.orient.test.domain.business.Child;
-
-/**
- * @author Luca Molino (molino.luca--at--gmail.com)
- * 
- */
+/** @author Luca Molino (molino.luca--at--gmail.com) */
 public class JavaAttachDetachTestClass {
-  public static final String   testStatic   = "10";
-  @Transient
-  public String                testTransient;
-  @Id
-  public Object                id;
-  @Version
-  public Object                version;
-  public ODocument             embeddedDocument;
-  public ODocument             document;
-  public OBlob                 byteArray;
-  public String                name;
-  public Child                 specialChild;
-  public Child                 specialChild2;
-  public Map<String, Child>    children     = new HashMap<String, Child>();
-  public List<EnumTest>        enumList     = new ArrayList<EnumTest>();
-  public Set<EnumTest>         enumSet      = new HashSet<EnumTest>();
-  public Map<String, EnumTest> enumMap      = new HashMap<String, EnumTest>();
-  public String                text         = "initTest";
-  public EnumTest              enumeration;
-  public int                   numberSimple = 0;
-  public long                  longSimple   = 0l;
-  public double                doubleSimple = 0d;
-  public float                 floatSimple  = 0f;
-  public byte                  byteSimple   = 0;
-  public boolean               flagSimple   = false;
+  public static final String testStatic = "10";
+  @Transient public String testTransient;
+  @Id public Object id;
+  @Version public Object version;
+  public ODocument embeddedDocument;
+  public ODocument document;
+  public OBlob byteArray;
+  public String name;
+  public Child specialChild;
+  public Child specialChild2;
+  public Map<String, Child> children = new HashMap<String, Child>();
+  public List<EnumTest> enumList = new ArrayList<EnumTest>();
+  public Set<EnumTest> enumSet = new HashSet<EnumTest>();
+  public Map<String, EnumTest> enumMap = new HashMap<String, EnumTest>();
+  public String text = "initTest";
+  public EnumTest enumeration;
+  public int numberSimple = 0;
+  public long longSimple = 0l;
+  public double doubleSimple = 0d;
+  public float floatSimple = 0f;
+  public byte byteSimple = 0;
+  public boolean flagSimple = false;
 
   public String getTestTransient() {
     return testTransient;
@@ -127,8 +119,8 @@ public class JavaAttachDetachTestClass {
   }
 
   public Child getSpecialChild2() {
-      return specialChild;
-    }
+    return specialChild;
+  }
 
   public void setSpecialChild2(Child specialChild2) {
     this.specialChild2 = specialChild2;
@@ -229,5 +221,4 @@ public class JavaAttachDetachTestClass {
   public void setFlagSimple(boolean flagSimple) {
     this.flagSimple = flagSimple;
   }
-
 }

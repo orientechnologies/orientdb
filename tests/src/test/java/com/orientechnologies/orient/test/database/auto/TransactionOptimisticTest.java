@@ -15,6 +15,15 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.record.impl.OBlob;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+import com.orientechnologies.orient.core.tx.ORollbackException;
+import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
@@ -22,21 +31,10 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-
-import com.orientechnologies.orient.core.record.impl.OBlob;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
-
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-import com.orientechnologies.orient.core.tx.ORollbackException;
-import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 
 @Test(groups = "dictionary")
 public class TransactionOptimisticTest extends DocumentDBBaseTest {
@@ -47,8 +45,7 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
 
   @Test
   public void testTransactionOptimisticRollback() throws IOException {
-    if (database.getClusterIdByName("binary") == -1)
-      database.addBlobCluster("binary");
+    if (database.getClusterIdByName("binary") == -1) database.addBlobCluster("binary");
 
     long rec = database.countClusterElements("binary");
 
@@ -64,8 +61,7 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
 
   @Test(dependsOnMethods = "testTransactionOptimisticRollback")
   public void testTransactionOptimisticCommit() throws IOException {
-    if (database.getClusterIdByName("binary") == -1)
-      database.addBlobCluster("binary");
+    if (database.getClusterIdByName("binary") == -1) database.addBlobCluster("binary");
 
     long tot = database.countClusterElements("binary");
 
@@ -81,8 +77,7 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
 
   @Test(dependsOnMethods = "testTransactionOptimisticCommit")
   public void testTransactionOptimisticConcurrentException() throws IOException {
-    if (database.getClusterIdByName("binary") == -1)
-      database.addBlobCluster("binary");
+    if (database.getClusterIdByName("binary") == -1) database.addBlobCluster("binary");
 
     ODatabaseDocumentTx db2 = new ODatabaseDocumentTx(database.getURL());
     db2.open("admin", "admin");
@@ -128,8 +123,7 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
 
   @Test(dependsOnMethods = "testTransactionOptimisticConcurrentException")
   public void testTransactionOptimisticCacheMgmt1Db() throws IOException {
-    if (database.getClusterIdByName("binary") == -1)
-      database.addBlobCluster("binary");
+    if (database.getClusterIdByName("binary") == -1) database.addBlobCluster("binary");
 
     OBlob record = new ORecordBytes("This is the first version".getBytes());
     record.save();
@@ -155,8 +149,7 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
 
   @Test(dependsOnMethods = "testTransactionOptimisticCacheMgmt1Db")
   public void testTransactionOptimisticCacheMgmt2Db() throws IOException {
-    if (database.getClusterIdByName("binary") == -1)
-      database.addBlobCluster("binary");
+    if (database.getClusterIdByName("binary") == -1) database.addBlobCluster("binary");
 
     ODatabaseDocumentTx db2 = new ODatabaseDocumentTx(database.getURL());
     db2.open("admin", "admin");
@@ -197,12 +190,12 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
   public void testTransactionMultipleRecords() throws IOException {
     final OSchema schema = database.getMetadata().getSchema();
 
-    if (!schema.existsClass("Account"))
-      schema.createClass("Account");
+    if (!schema.existsClass("Account")) schema.createClass("Account");
 
     long totalAccounts = database.countClusterElements("Account");
 
-    String json = "{ \"@class\": \"Account\", \"type\": \"Residence\", \"street\": \"Piazza di Spagna\"}";
+    String json =
+        "{ \"@class\": \"Account\", \"type\": \"Residence\", \"street\": \"Piazza di Spagna\"}";
 
     database.begin(TXTYPE.OPTIMISTIC);
     for (int g = 0; g < 1000; g++) {
@@ -223,8 +216,7 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
   public void createGraphInTx() {
     final OSchema schema = database.getMetadata().getSchema();
 
-    if (!schema.existsClass("Profile"))
-      schema.createClass("Profile");
+    if (!schema.existsClass("Profile")) schema.createClass("Profile");
 
     database.begin();
 
@@ -232,9 +224,12 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
     ODocument teri = new ODocument("Profile").field("name", "Teri").field("surname", "Bauer");
     ODocument jack = new ODocument("Profile").field("name", "Jack").field("surname", "Bauer");
 
-    ((HashSet<ODocument>) jack.field("following", new HashSet<ODocument>()).field("following")).add(kim);
-    ((HashSet<ODocument>) kim.field("following", new HashSet<ODocument>()).field("following")).add(teri);
-    ((HashSet<ODocument>) teri.field("following", new HashSet<ODocument>()).field("following")).add(jack);
+    ((HashSet<ODocument>) jack.field("following", new HashSet<ODocument>()).field("following"))
+        .add(kim);
+    ((HashSet<ODocument>) kim.field("following", new HashSet<ODocument>()).field("following"))
+        .add(teri);
+    ((HashSet<ODocument>) teri.field("following", new HashSet<ODocument>()).field("following"))
+        .add(jack);
 
     jack.save();
 
@@ -269,24 +264,24 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
   public void testNestedTx() throws Exception {
     final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
-    final Callable<Void> assertEmptyRecord = new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        final ODatabaseDocumentTx db = new ODatabaseDocumentTx(database.getURL());
-        db.open("admin", "admin");
-        try {
-          Assert.assertEquals(db.countClass("NestedTxClass"), 0);
-        } finally {
-          db.close();
-        }
+    final Callable<Void> assertEmptyRecord =
+        new Callable<Void>() {
+          @Override
+          public Void call() throws Exception {
+            final ODatabaseDocumentTx db = new ODatabaseDocumentTx(database.getURL());
+            db.open("admin", "admin");
+            try {
+              Assert.assertEquals(db.countClass("NestedTxClass"), 0);
+            } finally {
+              db.close();
+            }
 
-        return null;
-      }
-    };
+            return null;
+          }
+        };
 
     final OSchema schema = database.getMetadata().getSchema();
-    if (!schema.existsClass("NestedTxClass"))
-      schema.createClass("NestedTxClass");
+    if (!schema.existsClass("NestedTxClass")) schema.createClass("NestedTxClass");
 
     database.begin();
 
@@ -324,24 +319,24 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
   public void testNestedTxRollbackOne() throws Exception {
     final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
-    final Callable<Void> assertEmptyRecord = new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        final ODatabaseDocumentTx db = new ODatabaseDocumentTx(database.getURL());
-        db.open("admin", "admin");
-        try {
-          Assert.assertEquals(db.countClass("NestedTxRollbackOne"), 1);
-        } finally {
-          db.close();
-        }
+    final Callable<Void> assertEmptyRecord =
+        new Callable<Void>() {
+          @Override
+          public Void call() throws Exception {
+            final ODatabaseDocumentTx db = new ODatabaseDocumentTx(database.getURL());
+            db.open("admin", "admin");
+            try {
+              Assert.assertEquals(db.countClass("NestedTxRollbackOne"), 1);
+            } finally {
+              db.close();
+            }
 
-        return null;
-      }
-    };
+            return null;
+          }
+        };
 
     final OSchema schema = database.getMetadata().getSchema();
-    if (!schema.existsClass("NestedTxRollbackOne"))
-      schema.createClass("NestedTxRollbackOne");
+    if (!schema.existsClass("NestedTxRollbackOne")) schema.createClass("NestedTxRollbackOne");
 
     ODocument brokenDocOne = new ODocument("NestedTxRollbackOne");
     brokenDocOne.save();
@@ -395,8 +390,7 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
 
   public void testNestedTxRollbackTwo() {
     final OSchema schema = database.getMetadata().getSchema();
-    if (!schema.existsClass("NestedTxRollbackTwo"))
-      schema.createClass("NestedTxRollbackTwo");
+    if (!schema.existsClass("NestedTxRollbackTwo")) schema.createClass("NestedTxRollbackTwo");
 
     database.begin();
     try {

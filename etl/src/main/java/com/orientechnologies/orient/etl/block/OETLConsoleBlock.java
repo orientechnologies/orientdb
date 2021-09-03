@@ -22,40 +22,37 @@ import com.orientechnologies.orient.console.OConsoleDatabaseApp;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.util.List;
 
-/**
- * Executes the OrientDB console. Useful to execute batches.
- */
+/** Executes the OrientDB console. Useful to execute batches. */
 public class OETLConsoleBlock extends OETLAbstractBlock {
-  protected String              file;
-  protected List<String>        commands;
+  protected String file;
+  protected List<String> commands;
   protected OConsoleDatabaseApp console;
 
   @Override
   public ODocument getConfiguration() {
-    return new ODocument().fromJSON("{parameters:[" + getCommonConfigurationParameters()
-        + "{file:{optional:true,description:'Input filename with commands.sh to execute'}}"
-        + "{commands.sh:{optional:true,description:'Commands to execute in sequence as an array of strings'}}" + "]}");
+    return new ODocument()
+        .fromJSON(
+            "{parameters:["
+                + getCommonConfigurationParameters()
+                + "{file:{optional:true,description:'Input filename with commands.sh to execute'}}"
+                + "{commands.sh:{optional:true,description:'Commands to execute in sequence as an array of strings'}}"
+                + "]}");
   }
 
   @Override
   public void configure(final ODocument iConfiguration, OCommandContext iContext) {
     super.configure(iConfiguration, iContext);
-    if (iConfiguration.containsField("file"))
-      file = iConfiguration.field("file");
+    if (iConfiguration.containsField("file")) file = iConfiguration.field("file");
 
-    if (iConfiguration.containsField("commands.sh"))
-      commands = iConfiguration.field("commands.sh");
+    if (iConfiguration.containsField("commands.sh")) commands = iConfiguration.field("commands.sh");
 
     if (file == null && commands == null)
       throw new OConfigurationException("file or commands.sh are mandatory");
 
-    if (file != null)
-      console = new OConsoleDatabaseApp(new String[] { file });
-    else
-      console = new OConsoleDatabaseApp(commands.toArray(new String[commands.size()]));
+    if (file != null) console = new OConsoleDatabaseApp(new String[] {file});
+    else console = new OConsoleDatabaseApp(commands.toArray(new String[commands.size()]));
   }
 
   @Override

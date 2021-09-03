@@ -10,7 +10,8 @@ public class ODatabaseCreateDropClusterTest {
 
   @Test
   public void createDropCluster() {
-    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + ODatabaseCreateDropClusterTest.class.getSimpleName());
+    ODatabaseDocument db =
+        new ODatabaseDocumentTx("memory:" + ODatabaseCreateDropClusterTest.class.getSimpleName());
     db.create();
     try {
       db.addCluster("test");
@@ -24,7 +25,8 @@ public class ODatabaseCreateDropClusterTest {
 
   @Test
   public void createDropClusterOnClass() {
-    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + ODatabaseCreateDropClusterTest.class.getSimpleName());
+    ODatabaseDocument db =
+        new ODatabaseDocumentTx("memory:" + ODatabaseCreateDropClusterTest.class.getSimpleName());
     db.create();
     try {
       OClass test = db.getMetadata().getSchema().createClass("test", 1, null);
@@ -39,5 +41,4 @@ public class ODatabaseCreateDropClusterTest {
       db.drop();
     }
   }
-
 }

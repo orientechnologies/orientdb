@@ -20,23 +20,18 @@
 package com.orientechnologies.orient.core.record;
 
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
-/**
- * @author Luigi Dell'Aquila
- */
+/** @author Luigi Dell'Aquila */
 public interface OEdge extends OElement {
   public static final String DIRECTION_OUT = "out";
-  public static final String DIRECTION_IN  = "in";
+  public static final String DIRECTION_IN = "in";
 
-  //typo!
-  @Deprecated
-  public static final String DIRECITON_OUT = DIRECTION_OUT;
-  @Deprecated
-  public static final String DIRECITON_IN  = DIRECTION_IN;
+  // typo!
+  @Deprecated public static final String DIRECITON_OUT = DIRECTION_OUT;
+  @Deprecated public static final String DIRECITON_IN = DIRECTION_IN;
 
   public OVertex getFrom();
 
@@ -65,7 +60,9 @@ public interface OEdge extends OElement {
     Optional<OClass> typeClass = getSchemaType();
     if (typeClass.isPresent()) {
       types.add(typeClass.get().getName());
-      typeClass.get().getAllSuperClasses().stream().map(x -> x.getName()).forEach(name -> types.add(name));
+      typeClass.get().getAllSuperClasses().stream()
+          .map(x -> x.getName())
+          .forEach(name -> types.add(name));
     } else {
       types.add("E");
     }

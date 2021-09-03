@@ -2,13 +2,10 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
-
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * Created by luigidellaquila on 12/10/16.
- */
+/** Created by luigidellaquila on 12/10/16. */
 public class ReturnMatchPathsStep extends AbstractExecutionStep {
 
   public ReturnMatchPathsStep(OCommandContext context, boolean profilingEnabled) {
@@ -30,9 +27,7 @@ public class ReturnMatchPathsStep extends AbstractExecutionStep {
       }
 
       @Override
-      public void close() {
-
-      }
+      public void close() {}
 
       @Override
       public Optional<OExecutionPlan> getExecutionPlan() {
@@ -51,5 +46,4 @@ public class ReturnMatchPathsStep extends AbstractExecutionStep {
     String spaces = OExecutionStepInternal.getIndent(depth, indent);
     return spaces + "+ RETURN $paths";
   }
-
 }

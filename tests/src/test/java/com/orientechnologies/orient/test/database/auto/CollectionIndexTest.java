@@ -22,16 +22,19 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.test.domain.whiz.Collector;
-import org.testng.Assert;
-import org.testng.annotations.*;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Stream;
+import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
-@Test(groups = { "index" })
+@Test(groups = {"index"})
 public class CollectionIndexTest extends ObjectDBBaseTest {
 
   @Parameters(value = "url")
@@ -41,12 +44,15 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
 
   @BeforeClass
   public void setupSchema() {
-    database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.whiz");
+    database
+        .getEntityManager()
+        .registerEntityClasses("com.orientechnologies.orient.test.domain.whiz");
 
     final OClass collector = database.getMetadata().getSchema().getClass("Collector");
     collector.createProperty("id", OType.STRING);
-    collector.createProperty("stringCollection", OType.EMBEDDEDLIST, OType.STRING).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
-
+    collector
+        .createProperty("stringCollection", OType.EMBEDDEDLIST, OType.STRING)
+        .createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
   }
 
   @AfterMethod
@@ -200,7 +206,10 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
     collector.setStringCollection(Arrays.asList("spam", "eggs"));
     collector = database.save(collector);
 
-    database.command(new OCommandSQL("UPDATE " + collector.getId() + " add stringCollection = 'cookies'")).execute();
+    database
+        .command(
+            new OCommandSQL("UPDATE " + collector.getId() + " add stringCollection = 'cookies'"))
+        .execute();
 
     final OIndex index = getIndex("Collector.stringCollection");
     Assert.assertEquals(index.getInternal().size(), 3);
@@ -352,7 +361,10 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
     collector.setStringCollection(Arrays.asList("spam", "eggs"));
     collector = database.save(collector);
 
-    database.command(new OCommandSQL("UPDATE " + collector.getId() + " remove stringCollection = 'spam'")).execute();
+    database
+        .command(
+            new OCommandSQL("UPDATE " + collector.getId() + " remove stringCollection = 'spam'"))
+        .execute();
 
     final OIndex index = getIndex("Collector.stringCollection");
 
@@ -433,8 +445,11 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
     collector.setStringCollection(Arrays.asList("spam", "eggs"));
     database.save(collector);
 
-    List<Collector> result = database
-        .query(new OSQLSynchQuery<Collector>("select * from Collector where stringCollection contains ?"), "eggs");
+    List<Collector> result =
+        database.query(
+            new OSQLSynchQuery<Collector>(
+                "select * from Collector where stringCollection contains ?"),
+            "eggs");
     Assert.assertNotNull(result);
     Assert.assertEquals(result.size(), 1);
     Assert.assertEquals(Arrays.asList("spam", "eggs"), result.get(0).getStringCollection());

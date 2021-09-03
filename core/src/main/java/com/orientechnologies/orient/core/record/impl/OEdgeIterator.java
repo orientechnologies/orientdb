@@ -26,28 +26,39 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.iterator.OLazyWrapperIterator;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.record.*;
-
+import com.orientechnologies.orient.core.record.ODirection;
+import com.orientechnologies.orient.core.record.OEdge;
+import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.OVertex;
 import java.util.Iterator;
 
-/**
- * @author Luigi Dell'Aquila
- */
+/** @author Luigi Dell'Aquila */
 public class OEdgeIterator extends OLazyWrapperIterator<OEdge> {
 
-  private final OVertex                   sourceVertex;
-  private final OVertex                   targetVertex;
+  private final OVertex sourceVertex;
+  private final OVertex targetVertex;
   private final OPair<ODirection, String> connection;
-  private final String[]                  labels;
+  private final String[] labels;
 
-
-  public OEdgeIterator(final OVertex iSourceVertex, final Object iMultiValue,
-      final Iterator<?> iterator, final OPair<ODirection, String> connection, final String[] iLabels, final int iSize) {
+  public OEdgeIterator(
+      final OVertex iSourceVertex,
+      final Object iMultiValue,
+      final Iterator<?> iterator,
+      final OPair<ODirection, String> connection,
+      final String[] iLabels,
+      final int iSize) {
     this(iSourceVertex, null, iMultiValue, iterator, connection, iLabels, iSize);
   }
 
-  public OEdgeIterator(final OVertex iSourceVertex, final OVertex iTargetVertex, final Object iMultiValue,
-      final Iterator<?> iterator, final OPair<ODirection, String> connection, final String[] iLabels, final int iSize) {
+  public OEdgeIterator(
+      final OVertex iSourceVertex,
+      final OVertex iTargetVertex,
+      final Object iMultiValue,
+      final Iterator<?> iterator,
+      final OPair<ODirection, String> connection,
+      final String[] iLabels,
+      final int iSize) {
     super(iterator, iSize, iMultiValue);
     this.sourceVertex = iSourceVertex;
     this.targetVertex = iTargetVertex;
@@ -77,15 +88,17 @@ public class OEdgeIterator extends OLazyWrapperIterator<OEdge> {
     if (!(record instanceof OElement)) {
       // SKIP IT
       OLogManager.instance()
-          .warn(this, "Found a record (%s) that is not an edge. Source vertex : %s, Target vertex : %s, Database : %s", rec,
-              sourceVertex != null ? sourceVertex.getIdentity() : null, targetVertex != null ? targetVertex.getIdentity() : null,
+          .warn(
+              this,
+              "Found a record (%s) that is not an edge. Source vertex : %s, Target vertex : %s, Database : %s",
+              rec,
+              sourceVertex != null ? sourceVertex.getIdentity() : null,
+              targetVertex != null ? targetVertex.getIdentity() : null,
               record.getDatabase().getURL());
       return null;
     }
 
-    final OElement value = (OElement)record;
-
-
+    final OElement value = (OElement) record;
 
     final OEdge edge;
     if (value.isVertex()) {
@@ -96,22 +109,27 @@ public class OEdgeIterator extends OLazyWrapperIterator<OEdge> {
         clazz = db.getMetadata().getSchema().getClass(connection.getValue());
       }
       if (connection.getKey() == ODirection.OUT) {
-        edge = new OEdgeDelegate(this.sourceVertex, value.asVertex().get(), clazz, connection.getValue());
+        edge =
+            new OEdgeDelegate(
+                this.sourceVertex, value.asVertex().get(), clazz, connection.getValue());
       } else {
-        edge = new OEdgeDelegate(value.asVertex().get(), this.sourceVertex, clazz, connection.getValue());
+        edge =
+            new OEdgeDelegate(
+                value.asVertex().get(), this.sourceVertex, clazz, connection.getValue());
       }
     } else if (value.isEdge()) {
       // EDGE
       edge = value.asEdge().get();
     } else
-      throw new IllegalStateException("Invalid content found while iterating edges, value '" + value + "' is not an edge");
+      throw new IllegalStateException(
+          "Invalid content found while iterating edges, value '" + value + "' is not an edge");
 
     return edge;
   }
 
   public boolean filter(final OEdge iObject) {
-    if (targetVertex != null && !targetVertex.equals(iObject.getVertex(connection.getKey().opposite())))
-      return false;
+    if (targetVertex != null
+        && !targetVertex.equals(iObject.getVertex(connection.getKey().opposite()))) return false;
 
     return iObject.isLabeled(labels);
   }

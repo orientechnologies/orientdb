@@ -28,7 +28,6 @@ import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OPropertyAccess;
 import com.orientechnologies.orient.core.metadata.security.OPropertyEncryption;
-
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -47,7 +46,10 @@ public class ODocumentInternal {
     oDocument.removeOwner(iOwner);
   }
 
-  public static void rawField(final ODocument oDocument, final String iFieldName, final Object iFieldValue,
+  public static void rawField(
+      final ODocument oDocument,
+      final String iFieldName,
+      final Object iFieldValue,
       final OType iFieldType) {
     oDocument.rawField(iFieldName, iFieldValue, iFieldType);
   }
@@ -56,7 +58,8 @@ public class ODocumentInternal {
     return oDocument.rawContainsField(iFiledName);
   }
 
-  public static OImmutableClass getImmutableSchemaClass(final ODatabaseDocumentInternal database, final ODocument oDocument) {
+  public static OImmutableClass getImmutableSchemaClass(
+      final ODatabaseDocumentInternal database, final ODocument oDocument) {
     if (oDocument == null) {
       return null;
     }
@@ -87,6 +90,10 @@ public class ODocumentInternal {
 
   public static Set<Entry<String, ODocumentEntry>> rawEntries(final ODocument document) {
     return document.getRawEntries();
+  }
+
+  public static ODocumentEntry rawEntry(final ODocument document, String propertyName) {
+    return document.fields.get(propertyName);
   }
 
   public static List<Entry<String, ODocumentEntry>> filteredEntries(final ODocument document) {

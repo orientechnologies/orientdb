@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.encryption.OEncryption;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class ONothingEncryption implements OEncryption {
-  public static final String             NAME     = "nothing";
+  public static final String NAME = "nothing";
 
   public static final ONothingEncryption INSTANCE = new ONothingEncryption();
 
@@ -44,8 +44,7 @@ public class ONothingEncryption implements OEncryption {
 
   @Override
   public byte[] encrypt(final byte[] content, final int offset, final int length) {
-    if (offset == 0 && length == content.length)
-      return content;
+    if (offset == 0 && length == content.length) return content;
 
     byte[] result = new byte[length];
     System.arraycopy(content, offset, result, 0, length);
@@ -55,8 +54,7 @@ public class ONothingEncryption implements OEncryption {
 
   @Override
   public byte[] decrypt(final byte[] content, final int offset, final int length) {
-    if (offset == 0 && length == content.length)
-      return content;
+    if (offset == 0 && length == content.length) return content;
 
     byte[] result = new byte[length];
     System.arraycopy(content, offset, result, 0, length);

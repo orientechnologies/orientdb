@@ -31,24 +31,16 @@ import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public interface OServerPlugin extends OService {
-  /**
-   * Callback invoked when a client connection begins.
-   */
+  /** Callback invoked when a client connection begins. */
   void onClientConnection(OClientConnection iConnection);
 
-  /**
-   * Callback invoked when a client connection ends.
-   */
+  /** Callback invoked when a client connection ends. */
   void onClientDisconnection(OClientConnection iConnection);
 
-  /**
-   * Callback invoked before a client request is processed.
-   */
+  /** Callback invoked before a client request is processed. */
   void onBeforeClientRequest(OClientConnection iConnection, byte iRequestType);
 
-  /**
-   * Callback invoked after a client request is processed.
-   */
+  /** Callback invoked after a client request is processed. */
   void onAfterClientRequest(OClientConnection iConnection, byte iRequestType);
 
   /**
@@ -58,18 +50,12 @@ public interface OServerPlugin extends OService {
    */
   void onClientError(OClientConnection iConnection, Throwable iThrowable);
 
-  /**
-   * Configures the handler. Called at startup.
-   */
+  /** Configures the handler. Called at startup. */
   void config(OServer oServer, OServerParameterConfiguration[] iParams);
 
-  default void onSocketAccepted(ONetworkProtocol protocol) {
+  default void onSocketAccepted(ONetworkProtocol protocol) {}
 
-  }
-
-  default void onSocketDestroyed(ONetworkProtocol protocol) {
-
-  }
+  default void onSocketDestroyed(ONetworkProtocol protocol) {}
 
   void sendShutdown();
 

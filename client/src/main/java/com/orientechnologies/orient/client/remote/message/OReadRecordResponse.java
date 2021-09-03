@@ -30,29 +30,29 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
-
 import java.io.IOException;
 import java.util.Set;
 
 public final class OReadRecordResponse implements OBinaryResponse {
 
-  private byte         recordType;
-  private int          version;
-  private byte[]       record;
+  private byte recordType;
+  private int version;
+  private byte[] record;
   private Set<ORecord> recordsToSend;
-  private ORawBuffer   result;
+  private ORawBuffer result;
 
-  public OReadRecordResponse() {
-  }
+  public OReadRecordResponse() {}
 
-  public OReadRecordResponse(byte recordType, int version, byte[] record, Set<ORecord> recordsToSend) {
+  public OReadRecordResponse(
+      byte recordType, int version, byte[] record, Set<ORecord> recordsToSend) {
     this.recordType = recordType;
     this.version = version;
     this.record = record;
     this.recordsToSend = recordsToSend;
   }
 
-  public void write(OChannelDataOutput network, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void write(OChannelDataOutput network, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
     if (record != null) {
       network.writeByte((byte) 1);
       if (protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_27) {
@@ -79,8 +79,7 @@ public final class OReadRecordResponse implements OBinaryResponse {
   @Override
   public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
     ORecordSerializerNetworkV37Client serializer = ORecordSerializerNetworkV37Client.INSTANCE;
-    if (network.readByte() == 0)
-      return;
+    if (network.readByte() == 0) return;
 
     final ORawBuffer buffer;
     final byte type = network.readByte();

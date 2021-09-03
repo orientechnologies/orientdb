@@ -8,7 +8,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-
 import java.util.Map;
 
 public class ORid extends SimpleNode {
@@ -16,7 +15,7 @@ public class ORid extends SimpleNode {
   protected OInteger position;
 
   protected OExpression expression;
-  protected boolean     legacy;
+  protected boolean legacy;
 
   public ORid(int id) {
     super(id);
@@ -88,21 +87,16 @@ public class ORid extends SimpleNode {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     ORid oRid = (ORid) o;
 
-    if (cluster != null ? !cluster.equals(oRid.cluster) : oRid.cluster != null)
-      return false;
-    if (position != null ? !position.equals(oRid.position) : oRid.position != null)
-      return false;
+    if (cluster != null ? !cluster.equals(oRid.cluster) : oRid.cluster != null) return false;
+    if (position != null ? !position.equals(oRid.position) : oRid.position != null) return false;
     if (expression != null ? !expression.equals(oRid.expression) : oRid.expression != null)
       return false;
-    if (legacy != oRid.legacy)
-      return false;
+    if (legacy != oRid.legacy) return false;
 
     return true;
   }

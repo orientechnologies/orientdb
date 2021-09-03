@@ -29,22 +29,20 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
 public abstract class OTransactionAbstract implements OTransaction {
-  protected ODatabaseDocumentInternal           database;
-  protected TXSTATUS                            status         = TXSTATUS.INVALID;
-  protected ISOLATION_LEVEL                     isolationLevel = ISOLATION_LEVEL.READ_COMMITTED;
-  protected Map<ORID, LockedRecordMetadata> locks          = new HashMap<ORID, LockedRecordMetadata>();
+  protected ODatabaseDocumentInternal database;
+  protected TXSTATUS status = TXSTATUS.INVALID;
+  protected ISOLATION_LEVEL isolationLevel = ISOLATION_LEVEL.READ_COMMITTED;
+  protected Map<ORID, LockedRecordMetadata> locks = new HashMap<ORID, LockedRecordMetadata>();
 
   public static final class LockedRecordMetadata {
     private final OStorage.LOCKING_STRATEGY strategy;
-    private       int                       locksCount;
+    private int locksCount;
 
     public LockedRecordMetadata(OStorage.LOCKING_STRATEGY strategy) {
       this.strategy = strategy;
@@ -55,8 +53,10 @@ public abstract class OTransactionAbstract implements OTransaction {
     database = iDatabase;
   }
 
-  public static void updateCacheFromEntries(final ODatabaseDocumentInternal database,
-      final Iterable<? extends ORecordOperation> entries, final boolean updateStrategy) {
+  public static void updateCacheFromEntries(
+      final ODatabaseDocumentInternal database,
+      final Iterable<? extends ORecordOperation> entries,
+      final boolean updateStrategy) {
     final OLocalRecordCache dbCache = database.getLocalCache();
 
     for (ORecordOperation txEntry : entries) {
@@ -66,8 +66,9 @@ public abstract class OTransactionAbstract implements OTransaction {
       } else if (txEntry.type == ORecordOperation.DELETED) {
         // DELETION
         dbCache.deleteRecord(txEntry.getRecord().getIdentity());
-      } else if (txEntry.type == ORecordOperation.UPDATED || txEntry.type == ORecordOperation.CREATED) {
-        // UDPATE OR CREATE
+      } else if (txEntry.type == ORecordOperation.UPDATED
+          || txEntry.type == ORecordOperation.CREATED) {
+        // UPDATE OR CREATE
         dbCache.updateRecord(txEntry.getRecord());
       }
       if (txEntry.getRecord() instanceof ODocument) {
@@ -83,15 +84,18 @@ public abstract class OTransactionAbstract implements OTransaction {
 
   @Override
   public OTransaction setIsolationLevel(final ISOLATION_LEVEL isolationLevel) {
-    if (isolationLevel == ISOLATION_LEVEL.REPEATABLE_READ && getDatabase().getStorage() instanceof OStorageProxy)
-      throw new IllegalArgumentException("Remote storage does not support isolation level '" + isolationLevel + "'");
+    if (isolationLevel == ISOLATION_LEVEL.REPEATABLE_READ && getDatabase().isRemote())
+      throw new IllegalArgumentException(
+          "Remote storage does not support isolation level '" + isolationLevel + "'");
 
     this.isolationLevel = isolationLevel;
     return this;
   }
 
   public boolean isActive() {
-    return status != TXSTATUS.INVALID && status != TXSTATUS.COMPLETED && status != TXSTATUS.ROLLED_BACK;
+    return status != TXSTATUS.INVALID
+        && status != TXSTATUS.COMPLETED
+        && status != TXSTATUS.ROLLED_BACK;
   }
 
   public TXSTATUS getStatus() {
@@ -102,9 +106,7 @@ public abstract class OTransactionAbstract implements OTransaction {
     return database;
   }
 
-  /**
-   * Closes the transaction and releases all the acquired locks.
-   */
+  /** Closes the transaction and releases all the acquired locks. */
   @Override
   public void close() {
     for (Map.Entry<ORID, LockedRecordMetadata> lock : locks.entrySet()) {
@@ -112,19 +114,21 @@ public abstract class OTransactionAbstract implements OTransaction {
         final LockedRecordMetadata lockedRecordMetadata = lock.getValue();
 
         if (lockedRecordMetadata.strategy.equals(OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK)) {
-          ((OAbstractPaginatedStorage) getDatabase().getStorage().getUnderlying()).releaseWriteLock(lock.getKey());
+          ((OAbstractPaginatedStorage) getDatabase().getStorage()).releaseWriteLock(lock.getKey());
         } else if (lockedRecordMetadata.strategy.equals(OStorage.LOCKING_STRATEGY.SHARED_LOCK)) {
-          ((OAbstractPaginatedStorage) getDatabase().getStorage().getUnderlying()).releaseReadLock(lock.getKey());
+          ((OAbstractPaginatedStorage) getDatabase().getStorage()).releaseReadLock(lock.getKey());
         }
       } catch (Exception e) {
-        OLogManager.instance().debug(this, "Error on releasing lock against record " + lock.getKey(), e);
+        OLogManager.instance()
+            .debug(this, "Error on releasing lock against record " + lock.getKey(), e);
       }
     }
     locks.clear();
   }
 
   @Override
-  public OTransaction lockRecord(final OIdentifiable iRecord, final OStorage.LOCKING_STRATEGY lockingStrategy) {
+  public OTransaction lockRecord(
+      final OIdentifiable iRecord, final OStorage.LOCKING_STRATEGY lockingStrategy) {
     database.internalLockRecord(iRecord, lockingStrategy);
     return this;
   }
@@ -134,10 +138,8 @@ public abstract class OTransactionAbstract implements OTransaction {
     final ORID rid = iRecord.getIdentity();
     final LockedRecordMetadata lockedRecordMetadata = locks.get(rid);
 
-    if (lockedRecordMetadata == null || lockedRecordMetadata.locksCount == 0)
-      return false;
-    else
-      return true;
+    if (lockedRecordMetadata == null || lockedRecordMetadata.locksCount == 0) return false;
+    else return true;
   }
 
   @Override
@@ -145,8 +147,7 @@ public abstract class OTransactionAbstract implements OTransaction {
     final ORID rid = record.getIdentity();
     final LockedRecordMetadata lockedRecordMetadata = locks.get(rid);
 
-    if (lockedRecordMetadata == null || lockedRecordMetadata.locksCount == 0)
-      return null;
+    if (lockedRecordMetadata == null || lockedRecordMetadata.locksCount == 0) return null;
 
     return lockedRecordMetadata.strategy;
   }

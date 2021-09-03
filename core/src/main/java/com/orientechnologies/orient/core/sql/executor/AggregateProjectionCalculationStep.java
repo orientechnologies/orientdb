@@ -7,27 +7,37 @@ import com.orientechnologies.orient.core.sql.parser.OExpression;
 import com.orientechnologies.orient.core.sql.parser.OGroupBy;
 import com.orientechnologies.orient.core.sql.parser.OProjection;
 import com.orientechnologies.orient.core.sql.parser.OProjectionItem;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
-import java.util.*;
-
-/**
- * Created by luigidellaquila on 12/07/16.
- */
+/** Created by luigidellaquila on 12/07/16. */
 public class AggregateProjectionCalculationStep extends ProjectionCalculationStep {
 
   private final OGroupBy groupBy;
+  private final long timeoutMillis;
+  private final long limit;
 
-  //the key is the GROUP BY key, the value is the (partially) aggregated value
+  // the key is the GROUP BY key, the value is the (partially) aggregated value
   private Map<List, OResultInternal> aggregateResults = new LinkedHashMap<>();
-  private List<OResultInternal>      finalResults     = null;
+  private List<OResultInternal> finalResults = null;
 
-  private int  nextItem = 0;
-  private long cost     = 0;
+  private int nextItem = 0;
+  private long cost = 0;
 
-  public AggregateProjectionCalculationStep(OProjection projection, OGroupBy groupBy, OCommandContext ctx,
+  public AggregateProjectionCalculationStep(
+      OProjection projection,
+      OGroupBy groupBy,
+      long limit,
+      OCommandContext ctx,
+      long timeoutMillis,
       boolean profilingEnabled) {
     super(projection, ctx, profilingEnabled);
     this.groupBy = groupBy;
+    this.timeoutMillis = timeoutMillis;
+    this.limit = limit;
   }
 
   @Override
@@ -59,9 +69,7 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
       }
 
       @Override
-      public void close() {
-
-      }
+      public void close() {}
 
       @Override
       public Optional<OExecutionPlan> getExecutionPlan() {
@@ -76,12 +84,17 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
   }
 
   private void executeAggregation(OCommandContext ctx, int nRecords) {
+    long timeoutBegin = System.currentTimeMillis();
     if (!prev.isPresent()) {
-      throw new OCommandExecutionException("Cannot execute an aggregation or a GROUP BY without a previous result");
+      throw new OCommandExecutionException(
+          "Cannot execute an aggregation or a GROUP BY without a previous result");
     }
     OExecutionStepInternal prevStep = prev.get();
     OResultSet lastRs = prevStep.syncPull(ctx, nRecords);
     while (lastRs.hasNext()) {
+      if (timeoutMillis > 0 && timeoutBegin + timeoutMillis < System.currentTimeMillis()) {
+        sendTimeout();
+      }
       aggregate(lastRs.next(), ctx);
       if (!lastRs.hasNext()) {
         lastRs = prevStep.syncPull(ctx, nRecords);
@@ -91,6 +104,9 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
     finalResults.addAll(aggregateResults.values());
     aggregateResults.clear();
     for (OResultInternal item : finalResults) {
+      if (timeoutMillis > 0 && timeoutBegin + timeoutMillis < System.currentTimeMillis()) {
+        sendTimeout();
+      }
       for (String name : item.getTemporaryProperties()) {
         Object prevVal = item.getTemporaryProperty(name);
         if (prevVal instanceof AggregationContext) {
@@ -112,7 +128,17 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
       }
       OResultInternal preAggr = aggregateResults.get(key);
       if (preAggr == null) {
+        if (limit > 0 && aggregateResults.size() > limit) {
+          return;
+        }
         preAggr = new OResultInternal();
+
+        for (OProjectionItem proj : this.projection.getItems()) {
+          String alias = proj.getProjectionAlias().getStringValue();
+          if (!proj.isAggregate()) {
+            preAggr.setProperty(alias, proj.execute(next, ctx));
+          }
+        }
         aggregateResults.put(key, preAggr);
       }
 
@@ -125,8 +151,6 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
             preAggr.setTemporaryProperty(alias, aggrCtx);
           }
           aggrCtx.apply(next, ctx);
-        } else {
-          preAggr.setProperty(alias, proj.execute(next, ctx));
         }
       }
     } finally {
@@ -144,8 +168,24 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
       result += " (" + getCostFormatted() + ")";
     }
     result +=
-        "\n" + spaces + "      " + projection.toString() + "" + (groupBy == null ? "" : (spaces + "\n  " + groupBy.toString()));
+        "\n"
+            + spaces
+            + "      "
+            + projection.toString()
+            + ""
+            + (groupBy == null ? "" : (spaces + "\n  " + groupBy.toString()));
     return result;
+  }
+
+  @Override
+  public OExecutionStep copy(OCommandContext ctx) {
+    return new AggregateProjectionCalculationStep(
+        projection.copy(),
+        groupBy == null ? null : groupBy.copy(),
+        limit,
+        ctx,
+        timeoutMillis,
+        profilingEnabled);
   }
 
   @Override

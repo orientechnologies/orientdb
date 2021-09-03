@@ -15,5 +15,4 @@
  */
 package com.orientechnologies.orient.server.network;
 
-public class OServerTLSSocketFactory extends OServerSSLSocketFactory {
-}
+public class OServerTLSSocketFactory extends OServerSSLSocketFactory {}

@@ -32,8 +32,11 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ODocumentSerializer;
 import com.orientechnologies.orient.core.sql.OIndexSearchResult;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
-import com.orientechnologies.orient.core.sql.operator.math.*;
-
+import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorDivide;
+import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorMinus;
+import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorMod;
+import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorMultiply;
+import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorPlus;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -45,53 +48,76 @@ import java.util.stream.Stream;
 public abstract class OQueryOperator {
 
   public static enum ORDER {
-    /**
-     * Used when order compared to other operator cannot be evaluated or has no consequences.
-     */
+    /** Used when order compared to other operator cannot be evaluated or has no consequences. */
     UNKNOWNED,
-    /**
-     * Used when this operator must be before the other one
-     */
+    /** Used when this operator must be before the other one */
     BEFORE,
-    /**
-     * Used when this operator must be after the other one
-     */
+    /** Used when this operator must be after the other one */
     AFTER,
-    /**
-     * Used when this operator is equal the other one
-     */
+    /** Used when this operator is equal the other one */
     EQUAL
   }
 
   /**
-   * Default operator order. can be used by additional operator to locate themself relatively to default ones.
-   * <p/>
-   * WARNING: ORDER IS IMPORTANT TO AVOID SUB-STRING LIKE "IS" and AND "INSTANCEOF": INSTANCEOF MUST BE PLACED BEFORE! AND ALSO FOR
-   * PERFORMANCE (MOST USED BEFORE)
+   * Default operator order. can be used by additional operator to locate themself relatively to
+   * default ones.
+   *
+   * <p>WARNING: ORDER IS IMPORTANT TO AVOID SUB-STRING LIKE "IS" and AND "INSTANCEOF": INSTANCEOF
+   * MUST BE PLACED BEFORE! AND ALSO FOR PERFORMANCE (MOST USED BEFORE)
    */
-  protected static final Class<?>[] DEFAULT_OPERATORS_ORDER = { OQueryOperatorEquals.class, OQueryOperatorAnd.class,
-      OQueryOperatorOr.class, OQueryOperatorNotEquals.class, OQueryOperatorNotEquals2.class, OQueryOperatorNot.class, OQueryOperatorMinorEquals.class,
-      OQueryOperatorMinor.class, OQueryOperatorMajorEquals.class, OQueryOperatorContainsAll.class, OQueryOperatorMajor.class,
-      OQueryOperatorLike.class, OQueryOperatorMatches.class, OQueryOperatorInstanceof.class, OQueryOperatorIs.class,
-      OQueryOperatorIn.class, OQueryOperatorContainsKey.class, OQueryOperatorContainsValue.class, OQueryOperatorContainsText.class,
-      OQueryOperatorContains.class, OQueryOperatorTraverse.class, OQueryOperatorBetween.class, OQueryOperatorPlus.class,
-      OQueryOperatorMinus.class, OQueryOperatorMultiply.class, OQueryOperatorDivide.class, OQueryOperatorMod.class };
+  protected static final Class<?>[] DEFAULT_OPERATORS_ORDER = {
+    OQueryOperatorEquals.class,
+    OQueryOperatorAnd.class,
+    OQueryOperatorOr.class,
+    OQueryOperatorNotEquals.class,
+    OQueryOperatorNotEquals2.class,
+    OQueryOperatorNot.class,
+    OQueryOperatorMinorEquals.class,
+    OQueryOperatorMinor.class,
+    OQueryOperatorMajorEquals.class,
+    OQueryOperatorContainsAll.class,
+    OQueryOperatorMajor.class,
+    OQueryOperatorLike.class,
+    OQueryOperatorMatches.class,
+    OQueryOperatorInstanceof.class,
+    OQueryOperatorIs.class,
+    OQueryOperatorIn.class,
+    OQueryOperatorContainsKey.class,
+    OQueryOperatorContainsValue.class,
+    OQueryOperatorContainsText.class,
+    OQueryOperatorContains.class,
+    OQueryOperatorTraverse.class,
+    OQueryOperatorBetween.class,
+    OQueryOperatorPlus.class,
+    OQueryOperatorMinus.class,
+    OQueryOperatorMultiply.class,
+    OQueryOperatorDivide.class,
+    OQueryOperatorMod.class
+  };
 
-  public final String               keyword;
-  public final int                  precedence;
-  public final int                  expectedRightWords;
-  public final boolean              unary;
-  public final boolean              expectsParameters;
+  public final String keyword;
+  public final int precedence;
+  public final int expectedRightWords;
+  public final boolean unary;
+  public final boolean expectsParameters;
 
   protected OQueryOperator(final String iKeyword, final int iPrecedence, final boolean iUnary) {
     this(iKeyword, iPrecedence, iUnary, 1, false);
   }
 
-  protected OQueryOperator(final String iKeyword, final int iPrecedence, final boolean iUnary, final int iExpectedRightWords) {
+  protected OQueryOperator(
+      final String iKeyword,
+      final int iPrecedence,
+      final boolean iUnary,
+      final int iExpectedRightWords) {
     this(iKeyword, iPrecedence, iUnary, iExpectedRightWords, false);
   }
 
-  protected OQueryOperator(final String iKeyword, final int iPrecedence, final boolean iUnary, final int iExpectedRightWords,
+  protected OQueryOperator(
+      final String iKeyword,
+      final int iPrecedence,
+      final boolean iUnary,
+      final int iExpectedRightWords,
       final boolean iExpectsParameters) {
     keyword = iKeyword;
     precedence = iPrecedence;
@@ -100,52 +126,54 @@ public abstract class OQueryOperator {
     expectsParameters = iExpectsParameters;
   }
 
-  public abstract Object evaluateRecord(final OIdentifiable iRecord, ODocument iCurrentResult,
-      final OSQLFilterCondition iCondition, final Object iLeft, final Object iRight,
-      OCommandContext iContext, final ODocumentSerializer serializer);
+  public abstract Object evaluateRecord(
+      final OIdentifiable iRecord,
+      ODocument iCurrentResult,
+      final OSQLFilterCondition iCondition,
+      final Object iLeft,
+      final Object iRight,
+      OCommandContext iContext,
+      final ODocumentSerializer serializer);
 
   /**
    * Returns hint how index can be used to calculate result of operator execution.
    *
-   * @param iLeft
-   *          Value of left query parameter.
-   * @param iRight
-   *          Value of right query parameter.
+   * @param iLeft Value of left query parameter.
+   * @param iRight Value of right query parameter.
    * @return Hint how index can be used to calculate result of operator execution.
    */
   public abstract OIndexReuseType getIndexReuseType(Object iLeft, Object iRight);
 
-  public OIndexSearchResult getOIndexSearchResult(OClass iSchemaClass, OSQLFilterCondition iCondition,
-      List<OIndexSearchResult> iIndexSearchResults, OCommandContext context) {
+  public OIndexSearchResult getOIndexSearchResult(
+      OClass iSchemaClass,
+      OSQLFilterCondition iCondition,
+      List<OIndexSearchResult> iIndexSearchResults,
+      OCommandContext context) {
 
     return null;
   }
 
   /**
-   * Performs index query and returns index stream which presents subset of index data which corresponds to result of execution of
-   * given operator.
+   * Performs index query and returns index stream which presents subset of index data which
+   * corresponds to result of execution of given operator.
    *
-   * <p/>
-   * Query that should be executed can be presented like: [[property0 = keyParam0] and [property1 = keyParam1] and] propertyN
-   * operator keyParamN.
-   * <p/>
-   * It is supped that index which passed in as parameter is used to index properties listed above and responsibility of given
-   * method execute query using given parameters.
-   * <p/>
-   * Multiple parameters are passed in to implement composite indexes support.
+   * <p>Query that should be executed can be presented like: [[property0 = keyParam0] and [property1
+   * = keyParam1] and] propertyN operator keyParamN.
    *
+   * <p>It is supped that index which passed in as parameter is used to index properties listed
+   * above and responsibility of given method execute query using given parameters.
+   *
+   * <p>Multiple parameters are passed in to implement composite indexes support.
    *
    * @param iContext
-   * @param index
-   *          Instance of index that will be used to calculate result of operator execution.
-   * @param keyParams
-   *          Parameters of query is used to calculate query result.
-   * @param ascSortOrder
-   *          Data returned by cursors should be sorted in ascending or descending order.
-   * @return Cursor instance if index can be used to evaluate result of execution of given operator and <code>null</code> otherwise.
+   * @param index Instance of index that will be used to calculate result of operator execution.
+   * @param keyParams Parameters of query is used to calculate query result.
+   * @param ascSortOrder Data returned by cursors should be sorted in ascending or descending order.
+   * @return Cursor instance if index can be used to evaluate result of execution of given operator
+   *     and <code>null</code> otherwise.
    */
-  public Stream<ORawPair<Object, ORID>> executeIndexQuery(OCommandContext iContext, OIndex index, final List<Object> keyParams,
-      boolean ascSortOrder) {
+  public Stream<ORawPair<Object, ORID>> executeIndexQuery(
+      OCommandContext iContext, OIndex index, final List<Object> keyParams, boolean ascSortOrder) {
     return Stream.empty();
   }
 
@@ -213,23 +241,38 @@ public abstract class OQueryOperator {
     return ORDER.EQUAL;
   }
 
-  protected void updateProfiler(final OCommandContext iContext, final OIndex index, final List<Object> keyParams,
+  protected void updateProfiler(
+      final OCommandContext iContext,
+      final OIndex index,
+      final List<Object> keyParams,
       final OIndexDefinition indexDefinition) {
-    if (iContext.isRecordingMetrics())
-      iContext.updateMetric("compositeIndexUsed", +1);
+    if (iContext.isRecordingMetrics()) iContext.updateMetric("compositeIndexUsed", +1);
 
     final OProfiler profiler = Orient.instance().getProfiler();
     if (profiler.isRecording()) {
-      profiler.updateCounter(profiler.getDatabaseMetric(index.getDatabaseName(), "query.indexUsed"), "Used index in query", +1);
+      profiler.updateCounter(
+          profiler.getDatabaseMetric(index.getDatabaseName(), "query.indexUsed"),
+          "Used index in query",
+          +1);
 
       int params = indexDefinition.getParamCount();
       if (params > 1) {
-        final String profiler_prefix = profiler.getDatabaseMetric(index.getDatabaseName(), "query.compositeIndexUsed");
+        final String profiler_prefix =
+            profiler.getDatabaseMetric(index.getDatabaseName(), "query.compositeIndexUsed");
 
         profiler.updateCounter(profiler_prefix, "Used composite index in query", +1);
-        profiler.updateCounter(profiler_prefix + "." + params, "Used composite index in query with " + params + " params", +1);
-        profiler.updateCounter(profiler_prefix + "." + params + '.' + keyParams.size(), "Used composite index in query with "
-            + params + " params and " + keyParams.size() + " keys", +1);
+        profiler.updateCounter(
+            profiler_prefix + "." + params,
+            "Used composite index in query with " + params + " params",
+            +1);
+        profiler.updateCounter(
+            profiler_prefix + "." + params + '.' + keyParams.size(),
+            "Used composite index in query with "
+                + params
+                + " params and "
+                + keyParams.size()
+                + " keys",
+            +1);
       }
     }
   }

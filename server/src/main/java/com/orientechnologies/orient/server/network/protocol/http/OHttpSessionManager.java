@@ -24,7 +24,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.server.OServer;
-
 import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -39,21 +38,28 @@ import java.util.Random;
  */
 public class OHttpSessionManager extends OSharedResourceAbstract {
   private Map<String, OHttpSession> sessions = new HashMap<String, OHttpSession>();
-  private int                       expirationTime;
-  private Random                    random   = new SecureRandom();
+  private int expirationTime;
+  private Random random = new SecureRandom();
 
   public OHttpSessionManager(OServer server) {
     expirationTime =
-        server.getContextConfiguration().getValueAsInteger(OGlobalConfiguration.NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT) * 1000;
+        server
+                .getContextConfiguration()
+                .getValueAsInteger(OGlobalConfiguration.NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT)
+            * 1000;
 
-    Orient.instance().scheduleTask(new Runnable() {
-      @Override
-      public void run() {
-        final int expired = checkSessionsValidity();
-        if (expired > 0)
-          OLogManager.instance().debug(this, "Removed %d session because expired", expired);
-      }
-    }, expirationTime, expirationTime);
+    Orient.instance()
+        .scheduleTask(
+            new Runnable() {
+              @Override
+              public void run() {
+                final int expired = checkSessionsValidity();
+                if (expired > 0)
+                  OLogManager.instance().debug(this, "Removed %d session because expired", expired);
+              }
+            },
+            expirationTime,
+            expirationTime);
   }
 
   public int checkSessionsValidity() {
@@ -64,7 +70,8 @@ public class OHttpSessionManager extends OSharedResourceAbstract {
       final long now = System.currentTimeMillis();
 
       Entry<String, OHttpSession> s;
-      for (Iterator<Map.Entry<String, OHttpSession>> it = sessions.entrySet().iterator(); it.hasNext(); ) {
+      for (Iterator<Map.Entry<String, OHttpSession>> it = sessions.entrySet().iterator();
+          it.hasNext(); ) {
         s = it.next();
 
         if (now - s.getValue().getUpdatedOn() > expirationTime) {
@@ -97,8 +104,7 @@ public class OHttpSessionManager extends OSharedResourceAbstract {
     try {
 
       final OHttpSession sess = sessions.get(iId);
-      if (sess != null)
-        sess.updateLastUpdatedOn();
+      if (sess != null) sess.updateLastUpdatedOn();
       return sess;
 
     } finally {
@@ -106,7 +112,8 @@ public class OHttpSessionManager extends OSharedResourceAbstract {
     }
   }
 
-  public String createSession(final String iDatabaseName, final String iUserName, final String iUserPassword) {
+  public String createSession(
+      final String iDatabaseName, final String iUserName, final String iUserPassword) {
     acquireExclusiveLock();
     try {
       final String id = "OS" + System.currentTimeMillis() + random.nextLong();

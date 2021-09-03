@@ -18,20 +18,19 @@ package com.orientechnologies.common.serialization.types;
 
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 
 /**
  * @author Ilya Bershadskiy (ibersh20-at-gmail.com)
  * @since 18.01.12
  */
 public class FloatSerializerTest {
-  private static final int   FIELD_SIZE = 4;
-  private static final Float OBJECT     = 3.14f;
+  private static final int FIELD_SIZE = 4;
+  private static final Float OBJECT = 3.14f;
   byte[] stream = new byte[FIELD_SIZE];
   private OFloatSerializer floatSerializer;
 
@@ -94,14 +93,19 @@ public class FloatSerializerTest {
   public void testSerializeWALChanges() {
     final int serializationOffset = 5;
 
-    ByteBuffer buffer = ByteBuffer.allocateDirect(FIELD_SIZE + serializationOffset).order(ByteOrder.nativeOrder());
+    ByteBuffer buffer =
+        ByteBuffer.allocateDirect(FIELD_SIZE + serializationOffset).order(ByteOrder.nativeOrder());
     byte[] data = new byte[FIELD_SIZE];
     floatSerializer.serializeNative(OBJECT, data, 0);
 
     OWALChanges walChanges = new OWALChangesTree();
     walChanges.setBinaryValue(buffer, data, serializationOffset);
 
-    Assert.assertEquals(floatSerializer.getObjectSizeInByteBuffer(buffer, walChanges, serializationOffset), FIELD_SIZE);
-    Assert.assertEquals(floatSerializer.deserializeFromByteBufferObject(buffer, walChanges, serializationOffset), OBJECT);
+    Assert.assertEquals(
+        floatSerializer.getObjectSizeInByteBuffer(buffer, walChanges, serializationOffset),
+        FIELD_SIZE);
+    Assert.assertEquals(
+        floatSerializer.deserializeFromByteBufferObject(buffer, walChanges, serializationOffset),
+        OBJECT);
   }
 }

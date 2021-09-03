@@ -11,9 +11,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class ODropIndexStatementExecutionTest {
   static ODatabaseDocumentInternal db;
 
@@ -30,11 +28,16 @@ public class ODropIndexStatementExecutionTest {
 
   @Test
   public void testPlain() {
-    OIndex index = db.getMetadata().getSchema().createClass("testPlain").createProperty("bar", OType.STRING)
-        .createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+    OIndex index =
+        db.getMetadata()
+            .getSchema()
+            .createClass("testPlain")
+            .createProperty("bar", OType.STRING)
+            .createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
     String indexName = index.getName();
 
-    Assert.assertNotNull((db.getMetadata().getIndexManagerInternal().reload()).getIndex(db, indexName));
+    Assert.assertNotNull(
+        (db.getMetadata().getIndexManagerInternal().reload()).getIndex(db, indexName));
 
     OResultSet result = db.command("drop index " + indexName);
     Assert.assertTrue(result.hasNext());
@@ -48,11 +51,16 @@ public class ODropIndexStatementExecutionTest {
 
   @Test
   public void testAll() {
-    OIndex index = db.getMetadata().getSchema().createClass("testAll").createProperty("baz", OType.STRING)
-        .createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+    OIndex index =
+        db.getMetadata()
+            .getSchema()
+            .createClass("testAll")
+            .createProperty("baz", OType.STRING)
+            .createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
     String indexName = index.getName();
 
-    Assert.assertNotNull(db.getMetadata().getIndexManagerInternal().reload().getIndex(db, indexName));
+    Assert.assertNotNull(
+        db.getMetadata().getIndexManagerInternal().reload().getIndex(db, indexName));
 
     OResultSet result = db.command("drop index *");
     Assert.assertTrue(result.hasNext());

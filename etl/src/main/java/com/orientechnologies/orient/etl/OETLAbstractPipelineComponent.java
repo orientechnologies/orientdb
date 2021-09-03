@@ -20,10 +20,9 @@ package com.orientechnologies.orient.etl;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 
-/**
- * ETL Pipeline abstract component.
- */
-public abstract class OETLAbstractPipelineComponent extends OETLAbstractComponent implements OETLPipelineComponent {
+/** ETL Pipeline abstract component. */
+public abstract class OETLAbstractPipelineComponent extends OETLAbstractComponent
+    implements OETLPipelineComponent {
 
   @Override
   public void setContext(OCommandContext context) {

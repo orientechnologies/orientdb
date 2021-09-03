@@ -4,13 +4,10 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.OEdge;
-
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * Created by luigidellaquila on 20/02/17.
- */
+/** Created by luigidellaquila on 20/02/17. */
 public class CastToEdgeStep extends AbstractExecutionStep {
 
   private long cost = 0;

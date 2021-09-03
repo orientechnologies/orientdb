@@ -10,7 +10,8 @@ import com.orientechnologies.orient.distributed.impl.structural.submit.OStructur
 public interface ODistributedChannel {
   /**
    * Send submit request, that should go only to coordinator.
-   *  @param database
+   *
+   * @param database
    * @param operationId
    * @param request the request
    */
@@ -18,14 +19,16 @@ public interface ODistributedChannel {
 
   /**
    * Send submit response, this is sent from the coordinator to the node that sent a submit request.
-   *  @param database
+   *
+   * @param database
    * @param operationId
    * @param response
    */
   void reply(String database, OSessionOperationId operationId, OSubmitResponse response);
 
   /**
-   * Send an operation to the node this is used by the coordinator to send operations of the distributed flow.
+   * Send an operation to the node this is used by the coordinator to send operations of the
+   * distributed flow.
    *
    * @param database
    * @param id
@@ -34,7 +37,8 @@ public interface ODistributedChannel {
   void sendRequest(String database, OLogId id, ONodeRequest nodeRequest);
 
   /**
-   * Send the response back to the coordinator, this is used by nodes to send a reply to a node request.
+   * Send the response back to the coordinator, this is used by nodes to send a reply to a node
+   * request.
    *
    * @param database
    * @param id

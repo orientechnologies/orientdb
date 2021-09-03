@@ -3,13 +3,12 @@ package com.orientechnologies.orient.graph.blueprints;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class GetPropertiesTest {
 
@@ -47,7 +46,6 @@ public class GetPropertiesTest {
     map = (Map<String, Object>) props.get("testMap");
     Assert.assertEquals(111, map.get("aa"));
     Assert.assertEquals("test", map.get("bb"));
-
   }
 
   @Test
@@ -62,5 +60,4 @@ public class GetPropertiesTest {
     Assert.assertEquals("test", props.get("test"));
     Assert.assertEquals("test1", props.get("test1"));
   }
-
 }

@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
-import java.util.Iterator;
-
 import com.orientechnologies.common.collection.OLazyIterator;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OResettable;
@@ -28,27 +26,31 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import java.util.Iterator;
 
 /**
- * Lazy implementation of Iterator that load the records only when accessed. It keep also track of changes to the source record
- * avoiding to call setDirty() by hand.
+ * Lazy implementation of Iterator that load the records only when accessed. It keep also track of
+ * changes to the source record avoiding to call setDirty() by hand.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OLazyRecordIterator implements OLazyIterator<OIdentifiable>, OResettable {
-  private final ORecordElement                    sourceRecord;
+  private final ORecordElement sourceRecord;
   private final Iterable<? extends OIdentifiable> source;
-  private       Iterator<? extends OIdentifiable> underlying;
-  private final boolean                           autoConvert2Record;
+  private Iterator<? extends OIdentifiable> underlying;
+  private final boolean autoConvert2Record;
 
-  public OLazyRecordIterator(final Iterator<? extends OIdentifiable> iIterator, final boolean iConvertToRecord) {
+  public OLazyRecordIterator(
+      final Iterator<? extends OIdentifiable> iIterator, final boolean iConvertToRecord) {
     this.sourceRecord = null;
     this.underlying = iIterator;
     this.autoConvert2Record = iConvertToRecord;
     this.source = null;
   }
 
-  public OLazyRecordIterator(final ORecordElement iSourceRecord, final Iterator<? extends OIdentifiable> iIterator,
+  public OLazyRecordIterator(
+      final ORecordElement iSourceRecord,
+      final Iterator<? extends OIdentifiable> iIterator,
       final boolean iConvertToRecord) {
     this.sourceRecord = iSourceRecord;
     this.underlying = iIterator;
@@ -56,7 +58,8 @@ public class OLazyRecordIterator implements OLazyIterator<OIdentifiable>, OReset
     this.source = null;
   }
 
-  public OLazyRecordIterator(final Iterable<? extends OIdentifiable> iSource, final boolean iConvertToRecord) {
+  public OLazyRecordIterator(
+      final Iterable<? extends OIdentifiable> iSource, final boolean iConvertToRecord) {
     this.sourceRecord = null;
     this.autoConvert2Record = iConvertToRecord;
     this.source = iSource;
@@ -67,14 +70,14 @@ public class OLazyRecordIterator implements OLazyIterator<OIdentifiable>, OReset
   public OIdentifiable next() {
     OIdentifiable value = underlying.next();
 
-    if (value == null)
-      return null;
+    if (value == null) return null;
 
-    if (value instanceof ORecordId && autoConvert2Record && ODatabaseRecordThreadLocal.instance().isDefined()) {
+    if (value instanceof ORecordId
+        && autoConvert2Record
+        && ODatabaseRecordThreadLocal.instance().isDefined()) {
       try {
         final ORecord rec = ((ORecordId) value).getRecord();
-        if (sourceRecord != null && rec != null)
-          ORecordInternal.track(sourceRecord, rec);
+        if (sourceRecord != null && rec != null) ORecordInternal.track(sourceRecord, rec);
         if (underlying instanceof OLazyIterator<?>)
           ((OLazyIterator<OIdentifiable>) underlying).update(rec);
         value = rec;
@@ -82,7 +85,6 @@ public class OLazyRecordIterator implements OLazyIterator<OIdentifiable>, OReset
         OLogManager.instance().error(this, "Error on iterating record collection", e);
         value = null;
       }
-
     }
 
     return value;
@@ -96,23 +98,21 @@ public class OLazyRecordIterator implements OLazyIterator<OIdentifiable>, OReset
   public OIdentifiable update(final OIdentifiable iValue) {
     if (underlying instanceof OLazyIterator) {
       final OIdentifiable old = ((OLazyIterator<OIdentifiable>) underlying).update(iValue);
-      if (sourceRecord != null && !old.equals(iValue))
-        sourceRecord.setDirty();
+      if (sourceRecord != null && !old.equals(iValue)) sourceRecord.setDirty();
       return old;
     } else
-      throw new UnsupportedOperationException("Underlying iterator not supports lazy updates (Interface OLazyIterator");
+      throw new UnsupportedOperationException(
+          "Underlying iterator not supports lazy updates (Interface OLazyIterator");
   }
 
   public void remove() {
     underlying.remove();
-    if (sourceRecord != null)
-      sourceRecord.setDirty();
+    if (sourceRecord != null) sourceRecord.setDirty();
   }
 
   @Override
   public void reset() {
-    if (underlying instanceof OResettable)
-      ((OResettable) underlying).reset();
+    if (underlying instanceof OResettable) ((OResettable) underlying).reset();
     else if (source != null) {
       underlying = source.iterator();
     }

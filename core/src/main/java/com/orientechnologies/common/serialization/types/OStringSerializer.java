@@ -21,7 +21,6 @@
 package com.orientechnologies.common.serialization.types;
 
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
-
 import java.nio.ByteBuffer;
 
 /**
@@ -32,13 +31,14 @@ import java.nio.ByteBuffer;
  */
 public class OStringSerializer implements OBinarySerializer<String> {
   public static final OStringSerializer INSTANCE = new OStringSerializer();
-  public static final byte              ID       = 13;
+  public static final byte ID = 13;
 
   public int getObjectSize(final String object, Object... hints) {
     return object.length() * 2 + OIntegerSerializer.INT_SIZE;
   }
 
-  public void serialize(final String object, final byte[] stream, int startPosition, Object... hints) {
+  public void serialize(
+      final String object, final byte[] stream, int startPosition, Object... hints) {
     final int length = object.length();
     OIntegerSerializer.INSTANCE.serializeLiteral(length, stream, startPosition);
 
@@ -63,7 +63,8 @@ public class OStringSerializer implements OBinarySerializer<String> {
     startPosition += OIntegerSerializer.INT_SIZE;
 
     for (int i = 0; i < len; i++) {
-      buffer[i] = (char) ((0xFF & stream[startPosition]) | ((0xFF & stream[startPosition + 1]) << 8));
+      buffer[i] =
+          (char) ((0xFF & stream[startPosition]) | ((0xFF & stream[startPosition + 1]) << 8));
       startPosition += 2;
     }
 
@@ -71,7 +72,8 @@ public class OStringSerializer implements OBinarySerializer<String> {
   }
 
   public int getObjectSize(final byte[] stream, final int startPosition) {
-    return OIntegerSerializer.INSTANCE.deserializeLiteral(stream, startPosition) * 2 + OIntegerSerializer.INT_SIZE;
+    return OIntegerSerializer.INSTANCE.deserializeLiteral(stream, startPosition) * 2
+        + OIntegerSerializer.INT_SIZE;
   }
 
   public byte getId() {
@@ -79,11 +81,13 @@ public class OStringSerializer implements OBinarySerializer<String> {
   }
 
   public int getObjectSizeNative(byte[] stream, int startPosition) {
-    return OIntegerSerializer.INSTANCE.deserializeNative(stream, startPosition) * 2 + OIntegerSerializer.INT_SIZE;
+    return OIntegerSerializer.INSTANCE.deserializeNative(stream, startPosition) * 2
+        + OIntegerSerializer.INT_SIZE;
   }
 
   @Override
-  public void serializeNativeObject(String object, byte[] stream, int startPosition, Object... hints) {
+  public void serializeNativeObject(
+      String object, byte[] stream, int startPosition, Object... hints) {
     int length = object.length();
     OIntegerSerializer.INSTANCE.serializeNative(length, stream, startPosition);
 
@@ -108,7 +112,8 @@ public class OStringSerializer implements OBinarySerializer<String> {
     startPosition += OIntegerSerializer.INT_SIZE;
 
     for (int i = 0; i < len; i++) {
-      buffer[i] = (char) ((0xFF & stream[startPosition]) | ((0xFF & stream[startPosition + 1]) << 8));
+      buffer[i] =
+          (char) ((0xFF & stream[startPosition]) | ((0xFF & stream[startPosition + 1]) << 8));
       startPosition += 2;
     }
 
@@ -128,9 +133,7 @@ public class OStringSerializer implements OBinarySerializer<String> {
     return value;
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public void serializeInByteBufferObject(String object, ByteBuffer buffer, Object... hints) {
     int length = object.length();
@@ -153,9 +156,7 @@ public class OStringSerializer implements OBinarySerializer<String> {
     buffer.put(binaryData);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public String deserializeFromByteBufferObject(ByteBuffer buffer) {
     int len = buffer.getInt();
@@ -170,19 +171,16 @@ public class OStringSerializer implements OBinarySerializer<String> {
     return new String(chars);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
     return buffer.getInt() * 2 + OIntegerSerializer.INT_SIZE;
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
-  public String deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+  public String deserializeFromByteBufferObject(
+      ByteBuffer buffer, OWALChanges walChanges, int offset) {
     int len = walChanges.getIntValue(buffer, offset);
 
     final char[] chars = new char[len];
@@ -196,9 +194,7 @@ public class OStringSerializer implements OBinarySerializer<String> {
     return new String(chars);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return walChanges.getIntValue(buffer, offset) * 2 + OIntegerSerializer.INT_SIZE;

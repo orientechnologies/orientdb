@@ -4,20 +4,16 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class Agenda {
-  public Agenda() {
-  }
+  public Agenda() {}
 
-  @javax.persistence.Id
-  private String id;
-  @javax.persistence.Version
-  private Long   version;
+  @javax.persistence.Id private String id;
+  @javax.persistence.Version private Long version;
 
   public String getId() {
     return id;
   }
 
-  @javax.persistence.Embedded
-  private List<Event> events = new LinkedList<Event>();
+  @javax.persistence.Embedded private List<Event> events = new LinkedList<Event>();
 
   public List<Event> getEvents() {
     return events;
@@ -26,5 +22,4 @@ public class Agenda {
   public void setEvents(List<Event> events) {
     this.events = events;
   }
-
 }

@@ -24,15 +24,18 @@ import com.orientechnologies.common.exception.OHighLevelException;
 import com.orientechnologies.orient.core.exception.OCoreException;
 
 /**
- * Exception is thrown in case DB is locked for modifications but modification request ist trying to be acquired.
- * 
+ * Exception is thrown in case DB is locked for modifications but modification request ist trying to
+ * be acquired.
+ *
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 03.07.12
  */
-public class OModificationOperationProhibitedException extends OCoreException implements OHighLevelException {
+public class OModificationOperationProhibitedException extends OCoreException
+    implements OHighLevelException {
   private static final long serialVersionUID = 1L;
 
-  public OModificationOperationProhibitedException(OModificationOperationProhibitedException exception) {
+  public OModificationOperationProhibitedException(
+      OModificationOperationProhibitedException exception) {
     super(exception);
   }
 

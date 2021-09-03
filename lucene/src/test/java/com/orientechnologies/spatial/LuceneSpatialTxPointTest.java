@@ -25,17 +25,13 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.List;
-
-/**
- * Created by Enrico Risa on 07/08/15.
- */
-
+/** Created by Enrico Risa on 07/08/15. */
 public class LuceneSpatialTxPointTest extends BaseSpatialLuceneTest {
 
   @Before
@@ -54,8 +50,9 @@ public class LuceneSpatialTxPointTest extends BaseSpatialLuceneTest {
     place.createProperty("longitude", OType.DOUBLE);
     place.createProperty("name", OType.STRING);
 
-    db.command(new OCommandSQL("CREATE INDEX City.location ON City(location) SPATIAL ENGINE LUCENE")).execute();
-
+    db.command(
+            new OCommandSQL("CREATE INDEX City.location ON City(location) SPATIAL ENGINE LUCENE"))
+        .execute();
   }
 
   protected ODocument newCity(String name, final Double longitude, final Double latitude) {
@@ -70,12 +67,14 @@ public class LuceneSpatialTxPointTest extends BaseSpatialLuceneTest {
 
   private ODocument newPoint(final Double longitude, final Double latitude) {
     ODocument location = new ODocument("OPoint");
-    location.field("coordinates", new ArrayList<Double>() {
-      {
-        add(longitude);
-        add(latitude);
-      }
-    });
+    location.field(
+        "coordinates",
+        new ArrayList<Double>() {
+          {
+            add(longitude);
+            add(latitude);
+          }
+        });
     return location;
   }
 
@@ -130,7 +129,6 @@ public class LuceneSpatialTxPointTest extends BaseSpatialLuceneTest {
     OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "City.location");
 
     Assert.assertEquals(1, index.getInternal().size());
-
   }
 
   @Test
@@ -157,7 +155,5 @@ public class LuceneSpatialTxPointTest extends BaseSpatialLuceneTest {
     OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "City.location");
 
     Assert.assertEquals(2, index.getInternal().size());
-
   }
-
 }

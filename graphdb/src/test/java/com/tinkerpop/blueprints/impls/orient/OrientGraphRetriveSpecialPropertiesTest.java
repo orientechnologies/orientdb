@@ -1,15 +1,11 @@
 package com.tinkerpop.blueprints.impls.orient;
 
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.tinkerpop.blueprints.Vertex;
 import java.util.Arrays;
 import java.util.HashSet;
-
 import org.junit.Assert;
 import org.junit.Test;
-
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.tinkerpop.blueprints.Vertex;
 
 public class OrientGraphRetriveSpecialPropertiesTest {
 
@@ -31,9 +27,9 @@ public class OrientGraphRetriveSpecialPropertiesTest {
     Assert.assertEquals("V", vertb.getProperty("@class"));
     Assert.assertTrue(vertb.getProperty("@rid") instanceof OIdentifiable);
 
-    Assert.assertEquals(vertb.getPropertyKeys(), new HashSet<String>(Arrays.asList("test", "test1")));
+    Assert.assertEquals(
+        vertb.getPropertyKeys(), new HashSet<String>(Arrays.asList("test", "test1")));
 
     graph.drop();
   }
-
 }

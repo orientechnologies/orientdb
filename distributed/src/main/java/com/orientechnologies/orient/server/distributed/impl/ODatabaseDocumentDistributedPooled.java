@@ -4,24 +4,21 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabasePoolInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
-/**
- * Created by tglman on 30/03/17.
- */
+/** Created by tglman on 30/03/17. */
 public class ODatabaseDocumentDistributedPooled extends ODatabaseDocumentDistributed {
 
   private ODatabasePoolInternal pool;
 
-  public ODatabaseDocumentDistributedPooled(ODatabasePoolInternal pool, OStorage storage, OHazelcastPlugin hazelcastPlugin) {
-    super(storage, hazelcastPlugin);
+  public ODatabaseDocumentDistributedPooled(
+      ODatabasePoolInternal pool, OStorage storage, ODistributedPlugin distributedPlugin) {
+    super(storage, distributedPlugin);
     this.pool = pool;
   }
 
   @Override
   public void close() {
-    if (isClosed())
-      return;
+    if (isClosed()) return;
     internalClose(true);
     pool.release(this);
   }

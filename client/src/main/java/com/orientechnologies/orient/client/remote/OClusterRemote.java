@@ -27,8 +27,7 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterBrowsePage;
-
-import java.io.IOException;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 
 /**
  * Remote cluster implementation
@@ -37,7 +36,7 @@ import java.io.IOException;
  */
 public class OClusterRemote implements OCluster {
   private String name;
-  private int    id;
+  private int id;
 
   /*
    * (non-Javadoc)
@@ -56,7 +55,7 @@ public class OClusterRemote implements OCluster {
    * @see com.orientechnologies.orient.core.storage.OCluster#configure(com.orientechnologies.orient.core.storage.OStorage,
    * com.orientechnologies.orient.core.config.OStorageClusterConfiguration)
    */
-  public void configure(OStorage iStorage, OStorageClusterConfiguration iConfig) throws IOException {
+  public void configure(OStorage iStorage, OStorageClusterConfiguration iConfig) {
     id = iConfig.getId();
     name = iConfig.getName();
   }
@@ -66,54 +65,58 @@ public class OClusterRemote implements OCluster {
    *
    * @see com.orientechnologies.orient.core.storage.OCluster#create(int)
    */
-  public void create() throws IOException {
-
-  }
+  public void create(OAtomicOperation atomicOperation) {}
 
   /*
    * (non-Javadoc)
    *
    * @see com.orientechnologies.orient.core.storage.OCluster#open()
    */
-  public void open() throws IOException {
-  }
+  public void open(OAtomicOperation atomicOperation) {}
 
-  public void close() throws IOException {
-  }
+  public void close() {}
 
   @Override
-  public void close(boolean flush) throws IOException {
-  }
+  public void close(boolean flush) {}
 
   @Override
-  public OPhysicalPosition allocatePosition(byte recordType) throws IOException {
+  public OPhysicalPosition allocatePosition(byte recordType, OAtomicOperation atomicOperation) {
     throw new UnsupportedOperationException("allocatePosition");
   }
 
   @Override
-  public OPhysicalPosition createRecord(byte[] content, int recordVersion, byte recordType, OPhysicalPosition allocatedPosition)
-      throws IOException {
+  public OPhysicalPosition createRecord(
+      byte[] content,
+      int recordVersion,
+      byte recordType,
+      OPhysicalPosition allocatedPosition,
+      OAtomicOperation atomicOperation) {
     throw new UnsupportedOperationException("createRecord");
   }
 
   @Override
-  public boolean deleteRecord(long clusterPosition) throws IOException {
+  public boolean deleteRecord(OAtomicOperation atomicOperation, long clusterPosition) {
     throw new UnsupportedOperationException("deleteRecord");
   }
 
   @Override
-  public void updateRecord(long clusterPosition, byte[] content, int recordVersion, byte recordType) throws IOException {
+  public void updateRecord(
+      long clusterPosition,
+      byte[] content,
+      int recordVersion,
+      byte recordType,
+      OAtomicOperation atomicOperation) {
     throw new UnsupportedOperationException("updateRecord");
   }
 
   @Override
-  public ORawBuffer readRecord(long clusterPosition, boolean prefetchRecords) throws IOException {
+  public ORawBuffer readRecord(long clusterPosition, boolean prefetchRecords) {
     throw new UnsupportedOperationException("readRecord");
   }
 
   @Override
   public ORawBuffer readRecordIfVersionIsNotLatest(long clusterPosition, int recordVersion)
-      throws IOException, ORecordNotFoundException {
+      throws ORecordNotFoundException {
     throw new UnsupportedOperationException("readRecordIfVersionIsNotLatest");
   }
 
@@ -137,10 +140,9 @@ public class OClusterRemote implements OCluster {
     throw new UnsupportedOperationException("exists");
   }
 
-  public void delete() throws IOException {
-  }
+  public void delete(OAtomicOperation atomicOperation) {}
 
-  public Object set(ATTRIBUTES iAttribute, Object iValue) throws IOException {
+  public Object set(ATTRIBUTES iAttribute, Object iValue) {
     return null;
   }
 
@@ -149,7 +151,7 @@ public class OClusterRemote implements OCluster {
     throw new UnsupportedOperationException("encryption");
   }
 
-  public OPhysicalPosition getPhysicalPosition(OPhysicalPosition iPPosition) throws IOException {
+  public OPhysicalPosition getPhysicalPosition(OPhysicalPosition iPPosition) {
     return null;
   }
 
@@ -173,7 +175,7 @@ public class OClusterRemote implements OCluster {
   }
 
   @Override
-  public long getNextPosition() throws IOException {
+  public long getNextPosition() {
     return 0;
   }
 
@@ -186,8 +188,7 @@ public class OClusterRemote implements OCluster {
     return id;
   }
 
-  public void synch() throws IOException {
-  }
+  public void synch() {}
 
   public String getName() {
     return name;
@@ -213,17 +214,17 @@ public class OClusterRemote implements OCluster {
   }
 
   @Override
-  public OPhysicalPosition[] ceilingPositions(OPhysicalPosition position) throws IOException {
+  public OPhysicalPosition[] ceilingPositions(OPhysicalPosition position) {
     throw new UnsupportedOperationException("ceilingPositions()");
   }
 
   @Override
-  public OPhysicalPosition[] floorPositions(OPhysicalPosition position) throws IOException {
+  public OPhysicalPosition[] floorPositions(OPhysicalPosition position) {
     throw new UnsupportedOperationException("floorPositions()");
   }
 
   @Override
-  public boolean isDeleted(OPhysicalPosition iPPosition) throws IOException {
+  public boolean isDeleted(OPhysicalPosition iPPosition) {
     throw new UnsupportedOperationException("isDeleted()");
   }
 
@@ -249,7 +250,7 @@ public class OClusterRemote implements OCluster {
 
   @Override
   public int getBinaryVersion() {
-    throw new UnsupportedOperationException("Operation is not supported for given cluster implementation");
+    throw new UnsupportedOperationException(
+        "Operation is not supported for given cluster implementation");
   }
 }
-

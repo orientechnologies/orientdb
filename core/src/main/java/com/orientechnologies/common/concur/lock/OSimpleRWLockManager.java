@@ -9,5 +9,4 @@ public interface OSimpleRWLockManager<T> {
   void releaseReadLock(T key);
 
   void releaseWriteLock(T key);
-
 }

@@ -33,30 +33,38 @@ import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.core.sql.functions.coll.OSQLMethodMultiValue;
 import com.orientechnologies.orient.core.sql.method.OSQLMethod;
+import com.orientechnologies.orient.core.sql.method.OSQLMethodRuntime;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodField;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodFunctionDelegate;
-import com.orientechnologies.orient.core.sql.method.OSQLMethodRuntime;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
 /**
  * Represents an object field as value in the query condition.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 
   protected List<OPair<OSQLMethodRuntime, Object[]>> operationsChain = null;
 
-  protected OSQLFilterItemAbstract() {
-  }
+  protected OSQLFilterItemAbstract() {}
 
   public OSQLFilterItemAbstract(final OBaseParser iQueryToParse, final String iText) {
-    final List<String> parts = OStringSerializerHelper.smartSplit(iText, new char[] { '.', '[', ']' }, new boolean[] { false,
-        false, true }, new boolean[] { false, true, false }, 0, -1, false, true, false, false, OCommonConst.EMPTY_CHAR_ARRAY);
+    final List<String> parts =
+        OStringSerializerHelper.smartSplit(
+            iText,
+            new char[] {'.', '[', ']'},
+            new boolean[] {false, false, true},
+            new boolean[] {false, true, false},
+            0,
+            -1,
+            false,
+            true,
+            false,
+            false,
+            OCommonConst.EMPTY_CHAR_ARRAY);
 
     setRoot(iQueryToParse, parts.get(0));
 
@@ -69,8 +77,10 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 
         final int pindex = part.indexOf('(');
         if (part.charAt(0) == '[')
-          operationsChain.add(new OPair<OSQLMethodRuntime, Object[]>(new OSQLMethodRuntime(OSQLEngine
-              .getMethod(OSQLMethodMultiValue.NAME)), new Object[] { part }));
+          operationsChain.add(
+              new OPair<OSQLMethodRuntime, Object[]>(
+                  new OSQLMethodRuntime(OSQLEngine.getMethod(OSQLMethodMultiValue.NAME)),
+                  new Object[] {part}));
         else if (pindex > -1) {
           final String methodName = part.substring(0, pindex).trim().toLowerCase(Locale.ENGLISH);
 
@@ -80,14 +90,24 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
             if (method.getMaxParams() == -1 || method.getMaxParams() > 0) {
               arguments = OStringSerializerHelper.getParameters(part).toArray();
               if (arguments.length < method.getMinParams()
-                  || (method.getMaxParams() > -1 && arguments.length > method.getMaxParams()))
-                throw new OQueryParsingException(iQueryToParse.parserText, "Syntax error: field operator '"
-                    + method.getName()
-                    + "' needs "
-                    + (method.getMinParams() == method.getMaxParams() ? method.getMinParams() : method.getMinParams() + "-"
-                        + method.getMaxParams()) + " argument(s) while has been received " + arguments.length, 0);
-            } else
-              arguments = null;
+                  || (method.getMaxParams() > -1 && arguments.length > method.getMaxParams())) {
+                String params;
+                if (method.getMinParams() == method.getMaxParams()) {
+                  params = "" + method.getMinParams();
+                } else {
+                  params = method.getMinParams() + "-" + method.getMaxParams();
+                }
+                throw new OQueryParsingException(
+                    iQueryToParse.parserText,
+                    "Syntax error: field operator '"
+                        + method.getName()
+                        + "' needs "
+                        + params
+                        + " argument(s) while has been received "
+                        + arguments.length,
+                    0);
+              }
+            } else arguments = null;
 
           } else {
             // LOOK FOR FUNCTION
@@ -95,18 +115,33 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 
             if (f == null)
               // ERROR: METHOD/FUNCTION NOT FOUND OR MISPELLED
-              throw new OQueryParsingException(iQueryToParse.parserText,
+              throw new OQueryParsingException(
+                  iQueryToParse.parserText,
                   "Syntax error: function or field operator not recognized between the supported ones: "
-                      + OSQLEngine.getMethodNames(), 0);
+                      + OSQLEngine.getMethodNames(),
+                  0);
 
             if (f.getMaxParams() == -1 || f.getMaxParams() > 0) {
               arguments = OStringSerializerHelper.getParameters(part).toArray();
-              if (arguments.length + 1 < f.getMinParams() || (f.getMaxParams() > -1 && arguments.length + 1 > f.getMaxParams()))
-                throw new OQueryParsingException(iQueryToParse.parserText, "Syntax error: function '" + f.getName() + "' needs "
-                    + (f.getMinParams() == f.getMaxParams() ? f.getMinParams() : f.getMinParams() + "-" + f.getMaxParams())
-                    + " argument(s) while has been received " + arguments.length, 0);
-            } else
-              arguments = null;
+              if (arguments.length + 1 < f.getMinParams()
+                  || (f.getMaxParams() > -1 && arguments.length + 1 > f.getMaxParams())) {
+                String params;
+                if (f.getMinParams() == f.getMaxParams()) {
+                  params = "" + f.getMinParams();
+                } else {
+                  params = f.getMinParams() + "-" + f.getMaxParams();
+                }
+                throw new OQueryParsingException(
+                    iQueryToParse.parserText,
+                    "Syntax error: function '"
+                        + f.getName()
+                        + "' needs "
+                        + params
+                        + " argument(s) while has been received "
+                        + arguments.length,
+                    0);
+              }
+            } else arguments = null;
 
             method = new OSQLMethodFunctionDelegate(f);
           }
@@ -117,8 +152,10 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
           operationsChain.add(new OPair<OSQLMethodRuntime, Object[]>(runtimeMethod, arguments));
 
         } else {
-          operationsChain.add(new OPair<OSQLMethodRuntime, Object[]>(new OSQLMethodRuntime(OSQLEngine
-              .getMethod(OSQLMethodField.NAME)), new Object[] { part }));
+          operationsChain.add(
+              new OPair<OSQLMethodRuntime, Object[]>(
+                  new OSQLMethodRuntime(OSQLEngine.getMethod(OSQLMethodField.NAME)),
+                  new Object[] {part}));
         }
       }
     }
@@ -126,7 +163,8 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 
   public abstract String getRoot();
 
-  public Object transformValue(final OIdentifiable iRecord, final OCommandContext iContext, Object ioResult) {
+  public Object transformValue(
+      final OIdentifiable iRecord, final OCommandContext iContext, Object ioResult) {
     if (ioResult != null && operationsChain != null) {
       // APPLY OPERATIONS FOLLOWING THE STACK ORDER
       OSQLMethodRuntime method = null;
@@ -149,8 +187,7 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
   }
 
   public OPair<OSQLMethodRuntime, Object[]> getLastChainOperator() {
-    if (operationsChain != null)
-      return operationsChain.get(operationsChain.size() - 1);
+    if (operationsChain != null) return operationsChain.get(operationsChain.size() - 1);
 
     return null;
   }
@@ -159,8 +196,7 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
   public String toString() {
     final StringBuilder buffer = new StringBuilder(128);
     final String root = getRoot();
-    if (root != null)
-      buffer.append(root);
+    if (root != null) buffer.append(root);
     if (operationsChain != null) {
       for (OPair<OSQLMethodRuntime, Object[]> op : operationsChain) {
         buffer.append('.');
@@ -170,8 +206,7 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
           buffer.append('(');
           int i = 0;
           for (Object v : values) {
-            if (i++ > 0)
-              buffer.append(',');
+            if (i++ > 0) buffer.append(',');
             buffer.append(v);
           }
           buffer.append(')');
@@ -186,10 +221,8 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
   protected OCollate getCollateForField(final OClass iClass, final String iFieldName) {
     if (iClass != null) {
       final OProperty p = iClass.getProperty(iFieldName);
-      if (p != null)
-        return p.getCollate();
+      if (p != null) return p.getCollate();
     }
     return null;
   }
-
 }

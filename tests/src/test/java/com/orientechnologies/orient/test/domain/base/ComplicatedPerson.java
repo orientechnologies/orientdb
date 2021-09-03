@@ -1,11 +1,11 @@
 package com.orientechnologies.orient.test.domain.base;
 
 import java.util.Set;
-
 import javax.persistence.OneToMany;
 
 public class ComplicatedPerson {
-  private String      name;
+  private String name;
+
   @OneToMany(orphanRemoval = true)
   private Set<Animal> animals;
 
@@ -14,8 +14,7 @@ public class ComplicatedPerson {
     this.setAnimals(animals);
   }
 
-  public ComplicatedPerson() {
-  }
+  public ComplicatedPerson() {}
 
   public String getName() {
     return name;
@@ -35,17 +34,13 @@ public class ComplicatedPerson {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (!(o instanceof ComplicatedPerson))
-      return false;
+    if (this == o) return true;
+    if (!(o instanceof ComplicatedPerson)) return false;
 
     ComplicatedPerson that = (ComplicatedPerson) o;
 
-    if (!getAnimals().equals(that.getAnimals()))
-      return false;
-    if (!getName().equals(that.getName()))
-      return false;
+    if (!getAnimals().equals(that.getAnimals())) return false;
+    if (!getName().equals(that.getName())) return false;
 
     return true;
   }

@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.graph.blueprints;
 
+import static junit.framework.TestCase.assertEquals;
+
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
@@ -8,14 +10,11 @@ import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
+import java.util.List;
 import org.junit.Test;
 
-import java.util.List;
-
-import static junit.framework.TestCase.assertEquals;
-
 public class OrderedEdgesGraphTest {
-  private static String      DB_URL = "memory:" + OrderedEdgesGraphTest.class.getSimpleName();
+  private static String DB_URL = "memory:" + OrderedEdgesGraphTest.class.getSimpleName();
   private static OrientGraph graph;
   private final OrientVertex mainPerson;
 
@@ -34,10 +33,10 @@ public class OrderedEdgesGraphTest {
 
     graph.setAutoStartTx(true);
 
-    mainPerson = graph.addVertex("class:Person", new Object[] { "index", 0 });
+    mainPerson = graph.addVertex("class:Person", new Object[] {"index", 0});
 
     for (int i = 1; i < 101; ++i) {
-      final Vertex newVertex = graph.addVertex("class:Person", new Object[] { "index", i });
+      final Vertex newVertex = graph.addVertex("class:Person", new Object[] {"index", i});
       mainPerson.addEdge("Knows", newVertex);
     }
   }
@@ -54,7 +53,6 @@ public class OrderedEdgesGraphTest {
     } finally {
       graph.shutdown();
     }
-
   }
 
   @Test

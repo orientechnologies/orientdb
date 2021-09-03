@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.object.serialization;
 
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -23,20 +25,20 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
+@SuppressWarnings({"unchecked"})
+public class OObjectCustomSerializerList<TYPE>
+    implements List<TYPE>, OObjectLazyCustomSerializer<List<TYPE>>, Serializable {
+  private static final long serialVersionUID = -8541477416577361792L;
 
-@SuppressWarnings({ "unchecked" })
-public class OObjectCustomSerializerList<TYPE> implements List<TYPE>, OObjectLazyCustomSerializer<List<TYPE>>, Serializable {
-  private static final long       serialVersionUID = -8541477416577361792L;
+  private ORecord sourceRecord;
+  private final List<Object> serializedList;
+  private final ArrayList<Object> list = new ArrayList<Object>();
+  private boolean converted = false;
+  private final Class<?> deserializeClass;
 
-  private ORecord              sourceRecord;
-  private final List<Object>      serializedList;
-  private final ArrayList<Object> list             = new ArrayList<Object>();
-  private boolean                 converted        = false;
-  private final Class<?>          deserializeClass;
-
-  public OObjectCustomSerializerList(final Class<?> iDeserializeClass, final ORecord iSourceRecord,
+  public OObjectCustomSerializerList(
+      final Class<?> iDeserializeClass,
+      final ORecord iSourceRecord,
       final List<Object> iRecordList) {
     this.sourceRecord = iSourceRecord;
     this.serializedList = iRecordList;
@@ -46,8 +48,11 @@ public class OObjectCustomSerializerList<TYPE> implements List<TYPE>, OObjectLaz
     }
   }
 
-  public OObjectCustomSerializerList(final Class<?> iDeserializeClass, final ORecord iSourceRecord,
-      final List<Object> iRecordList, final Collection<? extends TYPE> iSourceList) {
+  public OObjectCustomSerializerList(
+      final Class<?> iDeserializeClass,
+      final ORecord iSourceRecord,
+      final List<Object> iRecordList,
+      final Collection<? extends TYPE> iSourceList) {
     this.sourceRecord = iSourceRecord;
     this.serializedList = iRecordList;
     this.deserializeClass = iDeserializeClass;
@@ -58,11 +63,13 @@ public class OObjectCustomSerializerList<TYPE> implements List<TYPE>, OObjectLaz
   }
 
   public Iterator<TYPE> iterator() {
-    return new OObjectCustomSerializerIterator<TYPE>(deserializeClass, sourceRecord, serializedList.iterator());
+    return new OObjectCustomSerializerIterator<TYPE>(
+        deserializeClass, sourceRecord, serializedList.iterator());
   }
 
   public boolean contains(final Object o) {
-    boolean underlyingContains = serializedList.contains(OObjectEntitySerializer.serializeFieldValue(deserializeClass, o));
+    boolean underlyingContains =
+        serializedList.contains(OObjectEntitySerializer.serializeFieldValue(deserializeClass, o));
     return underlyingContains || list.contains(o);
   }
 
@@ -73,7 +80,8 @@ public class OObjectCustomSerializerList<TYPE> implements List<TYPE>, OObjectLaz
 
   public void add(int index, TYPE element) {
     setDirty();
-    serializedList.add(index, OObjectEntitySerializer.serializeFieldValue(deserializeClass, element));
+    serializedList.add(
+        index, OObjectEntitySerializer.serializeFieldValue(deserializeClass, element));
     list.add(index, element);
   }
 
@@ -122,8 +130,7 @@ public class OObjectCustomSerializerList<TYPE> implements List<TYPE>, OObjectLaz
 
   public boolean containsAll(Collection<?> c) {
     for (Object o : c) {
-      if (!contains(o))
-        return false;
+      if (!contains(o)) return false;
     }
     return true;
   }
@@ -133,8 +140,7 @@ public class OObjectCustomSerializerList<TYPE> implements List<TYPE>, OObjectLaz
     for (TYPE element : c) {
       dirty = add(element) || dirty;
     }
-    if (dirty)
-      setDirty();
+    if (dirty) setDirty();
     return dirty;
   }
 
@@ -143,8 +149,7 @@ public class OObjectCustomSerializerList<TYPE> implements List<TYPE>, OObjectLaz
       add(index, element);
       index++;
     }
-    if (c.size() > 0)
-      setDirty();
+    if (c.size() > 0) setDirty();
     return c.size() > 0;
   }
 
@@ -153,8 +158,7 @@ public class OObjectCustomSerializerList<TYPE> implements List<TYPE>, OObjectLaz
     for (Object o : c) {
       dirty = dirty || remove(o);
     }
-    if (dirty)
-      setDirty();
+    if (dirty) setDirty();
     return dirty;
   }
 
@@ -177,7 +181,8 @@ public class OObjectCustomSerializerList<TYPE> implements List<TYPE>, OObjectLaz
   }
 
   public TYPE set(int index, TYPE element) {
-    serializedList.set(index, OObjectEntitySerializer.serializeFieldValue(deserializeClass, element));
+    serializedList.set(
+        index, OObjectEntitySerializer.serializeFieldValue(deserializeClass, element));
     return (TYPE) list.set(index, element);
   }
 
@@ -210,23 +215,23 @@ public class OObjectCustomSerializerList<TYPE> implements List<TYPE>, OObjectLaz
     convertAll();
   }
 
-  public void detachAll(boolean nonProxiedInstance, Map<Object, Object> alreadyDetached, Map<Object, Object> lazyObjects) {
+  public void detachAll(
+      boolean nonProxiedInstance,
+      Map<Object, Object> alreadyDetached,
+      Map<Object, Object> lazyObjects) {
     convertAll();
   }
 
   protected void convertAll() {
-    if (converted)
-      return;
+    if (converted) return;
 
-    for (int i = 0; i < size(); ++i)
-      convert(i);
+    for (int i = 0; i < size(); ++i) convert(i);
 
     converted = true;
   }
 
   public void setDirty() {
-    if (sourceRecord != null)
-      sourceRecord.setDirty();
+    if (sourceRecord != null) sourceRecord.setDirty();
   }
 
   @Override
@@ -238,13 +243,11 @@ public class OObjectCustomSerializerList<TYPE> implements List<TYPE>, OObjectLaz
 
   /**
    * Convert the item requested.
-   * 
-   * @param iIndex
-   *          Position of the item to convert
+   *
+   * @param iIndex Position of the item to convert
    */
   private void convert(final int iIndex) {
-    if (converted)
-      return;
+    if (converted) return;
 
     Object o = list.get(iIndex);
     if (o == null) {

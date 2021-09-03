@@ -15,19 +15,17 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 
 package com.orientechnologies.orient.etl;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabasePool;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.loader.OETLAbstractLoader;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,17 +37,17 @@ import java.util.List;
 public class OETLStubLoader extends OETLAbstractLoader {
   public final List<ODocument> loadedRecords = new ArrayList<ODocument>();
   private ODatabasePool pool;
-  private OrientDB      orient;
+  private OrientDB orient;
 
-  public OETLStubLoader() {
-  }
+  public OETLStubLoader() {}
 
   @Override
   public void beginLoader(OETLPipeline pipeline) {
 
     orient = new OrientDB("embedded:", null);
 
-    orient.create("testDatabase", ODatabaseType.MEMORY);
+    orient.execute(
+        "create database testDatabase memory users (admin identified by 'admin' role admin)");
 
     pool = new ODatabasePool(orient, "testDatabase", "admin", "admin");
     pipeline.setPool(pool);
@@ -69,8 +67,7 @@ public class OETLStubLoader extends OETLAbstractLoader {
   }
 
   @Override
-  public void rollback(ODatabaseDocument db) {
-  }
+  public void rollback(ODatabaseDocument db) {}
 
   @Override
   public ODatabasePool getPool() {

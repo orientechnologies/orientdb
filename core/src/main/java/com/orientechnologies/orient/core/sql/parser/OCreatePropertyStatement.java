@@ -5,11 +5,13 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.metadata.schema.*;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OClassEmbedded;
+import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -22,8 +24,9 @@ public class OCreatePropertyStatement extends ODDLStatement {
   boolean ifNotExists = false;
   public OIdentifier propertyType;
   public OIdentifier linkedType;
-  public boolean                                 unsafe     = false;
-  public List<OCreatePropertyAttributeStatement> attributes = new ArrayList<OCreatePropertyAttributeStatement>();
+  public boolean unsafe = false;
+  public List<OCreatePropertyAttributeStatement> attributes =
+      new ArrayList<OCreatePropertyAttributeStatement>();
 
   public OCreatePropertyStatement(int id) {
     super(id);
@@ -33,7 +36,8 @@ public class OCreatePropertyStatement extends ODDLStatement {
     super(p, id);
   }
 
-  @Override public OResultSet executeDDL(OCommandContext ctx) {
+  @Override
+  public OResultSet executeDDL(OCommandContext ctx) {
     OResultInternal result = new OResultInternal();
     result.setProperty("operation", "create property");
     result.setProperty("className", className.getStringValue());
@@ -46,7 +50,8 @@ public class OCreatePropertyStatement extends ODDLStatement {
 
   private void executeInternal(OCommandContext ctx, OResultInternal result) {
     ODatabase db = ctx.getDatabase();
-    OClassEmbedded clazz = (OClassEmbedded) db.getMetadata().getSchema().getClass(className.getStringValue());
+    OClassEmbedded clazz =
+        (OClassEmbedded) db.getMetadata().getSchema().getClass(className.getStringValue());
     if (clazz == null) {
       throw new OCommandExecutionException("Class not found: " + className.getStringValue());
     }
@@ -55,11 +60,16 @@ public class OCreatePropertyStatement extends ODDLStatement {
         return;
       }
       throw new OCommandExecutionException(
-          "Property " + className.getStringValue() + "." + propertyName.getStringValue() + " already exists");
+          "Property "
+              + className.getStringValue()
+              + "."
+              + propertyName.getStringValue()
+              + " already exists");
     }
     OType type = OType.valueOf(propertyType.getStringValue().toUpperCase(Locale.ENGLISH));
     if (type == null) {
-      throw new OCommandExecutionException("Invalid property type: " + propertyType.getStringValue());
+      throw new OCommandExecutionException(
+          "Invalid property type: " + propertyType.getStringValue());
     }
     OClass linkedClass = null;
     OType linkedType = null;
@@ -72,14 +82,17 @@ public class OCreatePropertyStatement extends ODDLStatement {
         linkedType = OType.valueOf(linked.toUpperCase(Locale.ENGLISH));
     }
     // CREATE IT LOCALLY
-    OPropertyImpl internalProp = (OPropertyImpl) clazz.addProperty(propertyName.getStringValue(), type, linkedType, linkedClass, unsafe);
+    OPropertyImpl internalProp =
+        (OPropertyImpl)
+            clazz.addProperty(propertyName.getStringValue(), type, linkedType, linkedClass, unsafe);
     for (OCreatePropertyAttributeStatement attr : attributes) {
       Object val = attr.setOnProperty(internalProp, ctx);
       result.setProperty(attr.settingName.getStringValue(), val);
     }
   }
 
-  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("CREATE PROPERTY ");
     className.toString(params, builder);
     builder.append(".");
@@ -112,7 +125,8 @@ public class OCreatePropertyStatement extends ODDLStatement {
     }
   }
 
-  @Override public OCreatePropertyStatement copy() {
+  @Override
+  public OCreatePropertyStatement copy() {
     OCreatePropertyStatement result = new OCreatePropertyStatement(-1);
     result.className = className == null ? null : className.copy();
     result.propertyName = propertyName == null ? null : propertyName.copy();
@@ -120,20 +134,21 @@ public class OCreatePropertyStatement extends ODDLStatement {
     result.linkedType = linkedType == null ? null : linkedType.copy();
     result.unsafe = unsafe;
     result.ifNotExists = ifNotExists;
-    result.attributes = attributes == null ? null : attributes.stream().map(x -> x.copy()).collect(Collectors.toList());
+    result.attributes =
+        attributes == null
+            ? null
+            : attributes.stream().map(x -> x.copy()).collect(Collectors.toList());
     return result;
   }
 
-  @Override public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OCreatePropertyStatement that = (OCreatePropertyStatement) o;
 
-    if (unsafe != that.unsafe)
-      return false;
+    if (unsafe != that.unsafe) return false;
     if (className != null ? !className.equals(that.className) : that.className != null)
       return false;
     if (propertyName != null ? !propertyName.equals(that.propertyName) : that.propertyName != null)
@@ -151,7 +166,8 @@ public class OCreatePropertyStatement extends ODDLStatement {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = className != null ? className.hashCode() : 0;
     result = 31 * result + (propertyName != null ? propertyName.hashCode() : 0);
     result = 31 * result + (propertyType != null ? propertyType.hashCode() : 0);

@@ -1,19 +1,18 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpage;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
+import com.orientechnologies.common.directmemory.ODirectMemoryAllocator.Intention;
 import com.orientechnologies.common.directmemory.OPointer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.cluster.OClusterPage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class ClusterPageDeleteRecordPOTest {
   @Test
@@ -21,22 +20,23 @@ public class ClusterPageDeleteRecordPOTest {
     final int pageSize = OClusterPage.PAGE_SIZE;
     final OByteBufferPool byteBufferPool = new OByteBufferPool(pageSize);
     try {
-      final OPointer pointer = byteBufferPool.acquireDirect(false);
+      final OPointer pointer = byteBufferPool.acquireDirect(false, Intention.TEST);
       final OCachePointer cachePointer = new OCachePointer(pointer, byteBufferPool, 0, 0);
-      final OCacheEntry entry = new OCacheEntryImpl(0, 0, cachePointer);
+      final OCacheEntry entry = new OCacheEntryImpl(0, 0, cachePointer, false);
 
       OClusterPage clusterPage = new OClusterPage(entry);
       clusterPage.init();
 
-      clusterPage.appendRecord(1, new byte[] { 1 }, -1, Collections.emptySet());
-      clusterPage.appendRecord(2, new byte[] { 2 }, -1, Collections.emptySet());
-      clusterPage.appendRecord(3, new byte[] { 3 }, -1, Collections.emptySet());
+      clusterPage.appendRecord(1, new byte[] {1}, -1, Collections.emptySet());
+      clusterPage.appendRecord(2, new byte[] {2}, -1, Collections.emptySet());
+      clusterPage.appendRecord(3, new byte[] {3}, -1, Collections.emptySet());
 
       entry.clearPageOperations();
 
-      final OPointer restoredPointer = byteBufferPool.acquireDirect(false);
-      final OCachePointer restoredCachePointer = new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
-      final OCacheEntry restoredCacheEntry = new OCacheEntryImpl(0, 0, restoredCachePointer);
+      final OPointer restoredPointer = byteBufferPool.acquireDirect(false, Intention.TEST);
+      final OCachePointer restoredCachePointer =
+          new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
+      final OCacheEntry restoredCacheEntry = new OCacheEntryImpl(0, 0, restoredCachePointer, false);
 
       final ByteBuffer originalBuffer = cachePointer.getBufferDuplicate();
       final ByteBuffer restoredBuffer = restoredCachePointer.getBufferDuplicate();
@@ -63,9 +63,9 @@ public class ClusterPageDeleteRecordPOTest {
       Assert.assertEquals(2, restoredPage.getRecordVersion(1));
       Assert.assertEquals(3, restoredPage.getRecordVersion(2));
 
-      Assert.assertArrayEquals(new byte[] { 1 }, restoredPage.getRecordBinaryValue(0, 0, 1));
-      Assert.assertArrayEquals(new byte[] { 2 }, restoredPage.getRecordBinaryValue(1, 0, 1));
-      Assert.assertArrayEquals(new byte[] { 3 }, restoredPage.getRecordBinaryValue(2, 0, 1));
+      Assert.assertArrayEquals(new byte[] {1}, restoredPage.getRecordBinaryValue(0, 0, 1));
+      Assert.assertArrayEquals(new byte[] {2}, restoredPage.getRecordBinaryValue(1, 0, 1));
+      Assert.assertArrayEquals(new byte[] {3}, restoredPage.getRecordBinaryValue(2, 0, 1));
 
       pageOperation.redo(restoredCacheEntry);
 
@@ -75,9 +75,9 @@ public class ClusterPageDeleteRecordPOTest {
       Assert.assertEquals(-1, restoredPage.getRecordVersion(1));
       Assert.assertEquals(3, restoredPage.getRecordVersion(2));
 
-      Assert.assertArrayEquals(new byte[] { 1 }, restoredPage.getRecordBinaryValue(0, 0, 1));
+      Assert.assertArrayEquals(new byte[] {1}, restoredPage.getRecordBinaryValue(0, 0, 1));
       Assert.assertNull(restoredPage.getRecordBinaryValue(1, 0, 1));
-      Assert.assertArrayEquals(new byte[] { 3 }, restoredPage.getRecordBinaryValue(2, 0, 1));
+      Assert.assertArrayEquals(new byte[] {3}, restoredPage.getRecordBinaryValue(2, 0, 1));
 
       byteBufferPool.release(pointer);
       byteBufferPool.release(restoredPointer);
@@ -92,16 +92,16 @@ public class ClusterPageDeleteRecordPOTest {
 
     final OByteBufferPool byteBufferPool = new OByteBufferPool(pageSize);
     try {
-      final OPointer pointer = byteBufferPool.acquireDirect(false);
+      final OPointer pointer = byteBufferPool.acquireDirect(false, Intention.TEST);
       final OCachePointer cachePointer = new OCachePointer(pointer, byteBufferPool, 0, 0);
-      final OCacheEntry entry = new OCacheEntryImpl(0, 0, cachePointer);
+      final OCacheEntry entry = new OCacheEntryImpl(0, 0, cachePointer, false);
 
       OClusterPage clusterPage = new OClusterPage(entry);
       clusterPage.init();
 
-      clusterPage.appendRecord(1, new byte[] { 1 }, -1, Collections.emptySet());
-      clusterPage.appendRecord(2, new byte[] { 2 }, -1, Collections.emptySet());
-      clusterPage.appendRecord(3, new byte[] { 3 }, -1, Collections.emptySet());
+      clusterPage.appendRecord(1, new byte[] {1}, -1, Collections.emptySet());
+      clusterPage.appendRecord(2, new byte[] {2}, -1, Collections.emptySet());
+      clusterPage.appendRecord(3, new byte[] {3}, -1, Collections.emptySet());
 
       entry.clearPageOperations();
 
@@ -122,9 +122,9 @@ public class ClusterPageDeleteRecordPOTest {
       Assert.assertEquals(-1, restoredPage.getRecordVersion(1));
       Assert.assertEquals(3, restoredPage.getRecordVersion(2));
 
-      Assert.assertArrayEquals(new byte[] { 1 }, restoredPage.getRecordBinaryValue(0, 0, 1));
+      Assert.assertArrayEquals(new byte[] {1}, restoredPage.getRecordBinaryValue(0, 0, 1));
       Assert.assertNull(restoredPage.getRecordBinaryValue(1, 0, 1));
-      Assert.assertArrayEquals(new byte[] { 3 }, restoredPage.getRecordBinaryValue(2, 0, 1));
+      Assert.assertArrayEquals(new byte[] {3}, restoredPage.getRecordBinaryValue(2, 0, 1));
 
       pageOperation.undo(entry);
 
@@ -134,9 +134,9 @@ public class ClusterPageDeleteRecordPOTest {
       Assert.assertEquals(2, restoredPage.getRecordVersion(1));
       Assert.assertEquals(3, restoredPage.getRecordVersion(2));
 
-      Assert.assertArrayEquals(new byte[] { 1 }, restoredPage.getRecordBinaryValue(0, 0, 1));
-      Assert.assertArrayEquals(new byte[] { 2 }, restoredPage.getRecordBinaryValue(1, 0, 1));
-      Assert.assertArrayEquals(new byte[] { 3 }, restoredPage.getRecordBinaryValue(2, 0, 1));
+      Assert.assertArrayEquals(new byte[] {1}, restoredPage.getRecordBinaryValue(0, 0, 1));
+      Assert.assertArrayEquals(new byte[] {2}, restoredPage.getRecordBinaryValue(1, 0, 1));
+      Assert.assertArrayEquals(new byte[] {3}, restoredPage.getRecordBinaryValue(2, 0, 1));
 
       byteBufferPool.release(pointer);
     } finally {
@@ -146,13 +146,12 @@ public class ClusterPageDeleteRecordPOTest {
 
   @Test
   public void testSerialization() {
-    OOperationUnitId operationUnitId = OOperationUnitId.generateId();
-
-    ClusterPageDeleteRecordPO operation = new ClusterPageDeleteRecordPO(34, 12, new byte[] { 4, 2 }, true);
+    ClusterPageDeleteRecordPO operation =
+        new ClusterPageDeleteRecordPO(34, 12, new byte[] {4, 2}, true);
 
     operation.setFileId(42);
     operation.setPageIndex(24);
-    operation.setOperationUnitId(operationUnitId);
+    operation.setOperationUnitId(1);
 
     final int serializedSize = operation.serializedSize();
     final byte[] stream = new byte[serializedSize + 1];
@@ -165,12 +164,11 @@ public class ClusterPageDeleteRecordPOTest {
 
     Assert.assertEquals(42, restoredOperation.getFileId());
     Assert.assertEquals(24, restoredOperation.getPageIndex());
-    Assert.assertEquals(operationUnitId, restoredOperation.getOperationUnitId());
+    Assert.assertEquals(1, restoredOperation.getOperationUnitId());
 
     Assert.assertTrue(restoredOperation.isPreserveFreeListPointer());
     Assert.assertEquals(34, restoredOperation.getRecordPosition());
     Assert.assertEquals(12, restoredOperation.getRecordVersion());
-    Assert.assertArrayEquals(new byte[] { 4, 2 }, restoredOperation.getRecord());
+    Assert.assertArrayEquals(new byte[] {4, 2}, restoredOperation.getRecord());
   }
-
 }

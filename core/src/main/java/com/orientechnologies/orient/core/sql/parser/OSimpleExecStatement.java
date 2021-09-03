@@ -6,13 +6,12 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.executor.OSingleOpExecutionPlan;
-
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Superclass for SQL statements that are too simple to deserve an execution planner.
- * All the execution is delegated to the statement itself, with the execute(ctx) method.
+ * Superclass for SQL statements that are too simple to deserve an execution planner. All the
+ * execution is delegated to the statement itself, with the execute(ctx) method.
  *
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
@@ -28,7 +27,8 @@ public abstract class OSimpleExecStatement extends OStatement {
 
   public abstract OResultSet executeSimple(OCommandContext ctx);
 
-  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentContext, boolean usePlanCache) {
+  public OResultSet execute(
+      ODatabase db, Object[] args, OCommandContext parentContext, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentContext != null) {
       ctx.setParentWithoutOverridingChild(parentContext);
@@ -45,7 +45,8 @@ public abstract class OSimpleExecStatement extends OStatement {
     return executionPlan.executeInternal(ctx);
   }
 
-  public OResultSet execute(ODatabase db, Map params, OCommandContext parentContext, boolean usePlanCache) {
+  public OResultSet execute(
+      ODatabase db, Map params, OCommandContext parentContext, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentContext != null) {
       ctx.setParentWithoutOverridingChild(parentContext);
@@ -59,5 +60,4 @@ public abstract class OSimpleExecStatement extends OStatement {
   public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
     return new OSingleOpExecutionPlan(ctx, this);
   }
-
 }

@@ -4,7 +4,8 @@ import java.util.Objects;
 
 public class OSecurityResourceClass extends OSecurityResource {
 
-  public static final OSecurityResourceClass ALL_CLASSES = new OSecurityResourceClass("database.class.*", "*");
+  public static final OSecurityResourceClass ALL_CLASSES =
+      new OSecurityResourceClass("database.class.*", "*");
 
   private final String className;
 

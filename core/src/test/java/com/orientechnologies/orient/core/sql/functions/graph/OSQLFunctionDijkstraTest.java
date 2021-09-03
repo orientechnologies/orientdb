@@ -1,29 +1,27 @@
 package com.orientechnologies.orient.core.sql.functions.graph;
 
+import static org.junit.Assert.assertEquals;
+
+import com.orientechnologies.orient.core.OCreateDatabaseUtil;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OVertex;
+import java.util.List;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-
 public class OSQLFunctionDijkstraTest {
 
-  private OrientDB          orientDB;
+  private OrientDB orientDB;
   private ODatabaseDocument graph;
 
-  private OVertex              v1;
-  private OVertex              v2;
-  private OVertex              v3;
-  private OVertex              v4;
+  private OVertex v1;
+  private OVertex v2;
+  private OVertex v3;
+  private OVertex v4;
   private OSQLFunctionDijkstra functionDijkstra;
 
   @Before
@@ -40,9 +38,11 @@ public class OSQLFunctionDijkstraTest {
   }
 
   private void setUpDatabase() {
-    orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
-    orientDB.createIfNotExists("OSQLFunctionDijkstraTest", ODatabaseType.MEMORY);
-    graph = orientDB.open("OSQLFunctionDijkstraTest", "admin", "admin");
+    orientDB =
+        OCreateDatabaseUtil.createDatabase(
+            "OSQLFunctionDijkstraTest", "embedded:", OCreateDatabaseUtil.TYPE_MEMORY);
+    graph =
+        orientDB.open("OSQLFunctionDijkstraTest", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
 
     graph.createEdgeClass("weight");
 
@@ -75,8 +75,9 @@ public class OSQLFunctionDijkstraTest {
 
   @Test
   public void testExecute() throws Exception {
-    final List<OVertex> result = functionDijkstra
-        .execute(null, null, null, new Object[] { v1, v4, "'weight'" }, new OBasicCommandContext());
+    final List<OVertex> result =
+        functionDijkstra.execute(
+            null, null, null, new Object[] {v1, v4, "'weight'"}, new OBasicCommandContext());
 
     assertEquals(4, result.size());
     assertEquals(v1, result.get(0));

@@ -1,28 +1,27 @@
 package com.orientechnologies.orient.core.sql;
 
+import static org.junit.Assert.assertTrue;
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static org.junit.Assert.assertTrue;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 public class DateBinaryComparatorTest {
 
   private final String dateFormat = "yyyy-MM-dd";
-  private final String dbUrl      = "memory:DateBinaryComparatorTest";
-  private final String dateValue  = "2017-07-18";
+  private final String dbUrl = "memory:DateBinaryComparatorTest";
+  private final String dateValue = "2017-07-18";
 
   private ODatabaseDocument db;
 

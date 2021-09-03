@@ -23,12 +23,11 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 
 /**
  * Generic proxy abstratc class.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public abstract class OProxedResource<T> {
-  protected final T                         delegate;
+  protected final T delegate;
   protected final ODatabaseDocumentInternal database;
 
   protected OProxedResource(final T iDelegate, final ODatabaseDocumentInternal iDatabase) {

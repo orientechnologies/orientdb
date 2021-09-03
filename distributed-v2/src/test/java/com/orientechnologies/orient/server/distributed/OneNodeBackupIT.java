@@ -16,27 +16,26 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
 
 /**
- * Starts 3 servers, backup on node3, check other nodes can work in the meanwhile and node3 is realigned once backup is finished. No
- * automatic restart must be executed.
+ * Starts 3 servers, backup on node3, check other nodes can work in the meanwhile and node3 is
+ * realigned once backup is finished. No automatic restart must be executed.
  */
 public class OneNodeBackupIT extends AbstractServerClusterTxTest {
-  final static int    SERVERS          = 3;
-  volatile boolean    inserting        = true;
-  volatile int        serverStarted    = 0;
-  volatile boolean    backupInProgress = false;
-  final AtomicInteger nodeLefts        = new AtomicInteger();
+  static final int SERVERS = 3;
+  volatile boolean inserting = true;
+  volatile int serverStarted = 0;
+  volatile boolean backupInProgress = false;
+  final AtomicInteger nodeLefts = new AtomicInteger();
 
   @Test
   @Ignore
@@ -62,99 +61,111 @@ public class OneNodeBackupIT extends AbstractServerClusterTxTest {
 
     if (serverStarted == 0) {
       // INSTALL ON FIRST SERVER ONLY THE SERVER MONITOR TO CHECK IF HAS BEEN RESTARTED
-      server.server.getDistributedManager().registerLifecycleListener(new ODistributedLifecycleListener() {
-        @Override
-        public boolean onNodeJoining(String iNode) {
-          return true;
-        }
+      server
+          .server
+          .getDistributedManager()
+          .registerLifecycleListener(
+              new ODistributedLifecycleListener() {
+                @Override
+                public boolean onNodeJoining(String iNode) {
+                  return true;
+                }
 
-        @Override
-        public void onNodeJoined(String iNode) {
-        }
+                @Override
+                public void onNodeJoined(String iNode) {}
 
-        @Override
-        public void onNodeLeft(String iNode) {
-          nodeLefts.incrementAndGet();
-        }
+                @Override
+                public void onNodeLeft(String iNode) {
+                  nodeLefts.incrementAndGet();
+                }
 
-        @Override
-        public void onDatabaseChangeStatus(String iNode, String iDatabaseName, ODistributedServerManager.DB_STATUS iNewStatus) {
-        }
-      });
+                @Override
+                public void onDatabaseChangeStatus(
+                    String iNode,
+                    String iDatabaseName,
+                    ODistributedServerManager.DB_STATUS iNewStatus) {}
+              });
     }
 
     if (serverStarted++ == (SERVERS - 1)) {
       // BACKUP LAST SERVER, RUN ASYNCHRONOUSLY
-      new Thread(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            // CRASH LAST SERVER try {
-            executeWhen(new Callable<Boolean>() {
-              // CONDITION
-              @Override
-              public Boolean call() throws Exception {
-                final ODatabaseDocument database = getDatabase(0);
-                try {
-                  return database.countClass("Person") > (count * SERVERS) * 1 / 3;
-                } finally {
-                  database.close();
+      new Thread(
+              new Runnable() {
+                @Override
+                public void run() {
+                  try {
+                    // CRASH LAST SERVER try {
+                    executeWhen(
+                        new Callable<Boolean>() {
+                          // CONDITION
+                          @Override
+                          public Boolean call() throws Exception {
+                            final ODatabaseDocument database = getDatabase(0);
+                            try {
+                              return database.countClass("Person") > (count * SERVERS) * 1 / 3;
+                            } finally {
+                              database.close();
+                            }
+                          }
+                        }, // ACTION
+                        new Callable() {
+                          @Override
+                          public Object call() throws Exception {
+                            Assert.assertTrue("Insert was too fast", inserting);
+
+                            banner("STARTING BACKUP SERVER " + (SERVERS - 1));
+
+                            ODatabaseDocument g = getDatabase(SERVERS - 1);
+                            if (databaseExists(SERVERS - 1)) {
+                              g = getDatabase(SERVERS - 1);
+                            } else {
+                              createDatabase(SERVERS - 1);
+                            }
+
+                            backupInProgress = true;
+                            File file = null;
+                            try {
+                              file = File.createTempFile("orientdb_test_backup", ".zip");
+                              if (file.exists()) Assert.assertTrue(file.delete());
+
+                              g.backup(
+                                  new FileOutputStream(file),
+                                  null,
+                                  new Callable<Object>() {
+                                    @Override
+                                    public Object call() throws Exception {
+
+                                      // SIMULATE LONG BACKUP
+                                      Thread.sleep(10000);
+
+                                      return null;
+                                    }
+                                  },
+                                  null,
+                                  9,
+                                  1000000);
+
+                            } catch (IOException e) {
+                              e.printStackTrace();
+                            } finally {
+                              banner("COMPLETED BACKUP SERVER " + (SERVERS - 1));
+                              backupInProgress = false;
+
+                              if (file != null) file.delete();
+
+                              g.close();
+                            }
+                            return null;
+                          }
+                        });
+
+                  } catch (Exception e) {
+                    e.printStackTrace();
+                    Assert.fail("Error on execution flow");
+                  }
                 }
-              }
-            }, // ACTION
-                new Callable() {
-              @Override
-              public Object call() throws Exception {
-                Assert.assertTrue("Insert was too fast", inserting);
-
-                banner("STARTING BACKUP SERVER " + (SERVERS - 1));
-
-                ODatabaseDocument g = getDatabase(SERVERS - 1);
-                if(databaseExists(SERVERS - 1)){
-                  g = getDatabase(SERVERS - 1);
-                }else{
-                  createDatabase(SERVERS - 1);
-                }
-
-                backupInProgress = true;
-                File file = null;
-                try {
-                  file = File.createTempFile("orientdb_test_backup", ".zip");
-                  if (file.exists())
-                    Assert.assertTrue(file.delete());
-
-                  g.backup(new FileOutputStream(file), null, new Callable<Object>() {
-                    @Override
-                    public Object call() throws Exception {
-
-                      // SIMULATE LONG BACKUP
-                      Thread.sleep(10000);
-
-                      return null;
-                    }
-                  }, null, 9, 1000000);
-
-                } catch (IOException e) {
-                  e.printStackTrace();
-                } finally {
-                  banner("COMPLETED BACKUP SERVER " + (SERVERS - 1));
-                  backupInProgress = false;
-
-                  if (file != null)
-                    file.delete();
-
-                  g.close();
-                }
-                return null;
-              }
-            });
-
-          } catch (Exception e) {
-            e.printStackTrace();
-            Assert.fail("Error on execution flow");
-          }
-        }
-      }).start();
+              })
+          .start();
     }
   }
 

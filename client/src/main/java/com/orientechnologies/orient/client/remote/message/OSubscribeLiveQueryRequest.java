@@ -11,18 +11,15 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
-
 import java.io.IOException;
 import java.util.Map;
 
-/**
- * Created by tglman on 17/05/17.
- */
+/** Created by tglman on 17/05/17. */
 public class OSubscribeLiveQueryRequest implements OBinaryRequest<OSubscribeLiveQueryResponse> {
 
-  private String              query;
+  private String query;
   private Map<String, Object> params;
-  private boolean             namedParams;
+  private boolean namedParams;
 
   public OSubscribeLiveQueryRequest(String query, Map<String, Object> params) {
     this.query = query;
@@ -36,8 +33,7 @@ public class OSubscribeLiveQueryRequest implements OBinaryRequest<OSubscribeLive
     this.namedParams = false;
   }
 
-  public OSubscribeLiveQueryRequest() {
-  }
+  public OSubscribeLiveQueryRequest() {}
 
   @Override
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
@@ -53,7 +49,8 @@ public class OSubscribeLiveQueryRequest implements OBinaryRequest<OSubscribeLive
   }
 
   @Override
-  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
     this.query = channel.readString();
     ODocument paramsDoc = new ODocument();
     byte[] bytes = channel.readBytes();

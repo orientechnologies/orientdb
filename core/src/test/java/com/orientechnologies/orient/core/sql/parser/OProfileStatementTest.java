@@ -2,8 +2,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import org.junit.Test;
 
-public class OProfileStatementTest extends OParserTestAbstract{
-
+public class OProfileStatementTest extends OParserTestAbstract {
 
   @Test
   public void test() {
@@ -13,6 +12,4 @@ public class OProfileStatementTest extends OParserTestAbstract{
     checkRightSyntax("profile INSERT INTO V SET name = 'foo'");
     checkRightSyntax("profile DELETE FROM Foo");
   }
-
-
 }

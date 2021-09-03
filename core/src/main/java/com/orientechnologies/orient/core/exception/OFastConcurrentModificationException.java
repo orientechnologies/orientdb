@@ -22,21 +22,23 @@ package com.orientechnologies.orient.core.exception;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 /**
- * Exception thrown when MVCC is enabled and a record cannot be updated or deleted because versions don't match.
- * 
+ * Exception thrown when MVCC is enabled and a record cannot be updated or deleted because versions
+ * don't match.
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public class OFastConcurrentModificationException extends OConcurrentModificationException {
-  private static final long                                 serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-  private static final OGlobalConfiguration                 CONFIG           = OGlobalConfiguration.DB_MVCC_THROWFAST;
-  private static final boolean                              ENABLED          = CONFIG.getValueAsBoolean();
-  private static final String                               MESSAGE          = "This is a fast-thrown exception. Disable "
-                                                                                 + CONFIG.getKey()
-                                                                                 + " to see full exception stacktrace and message.";
+  private static final OGlobalConfiguration CONFIG = OGlobalConfiguration.DB_MVCC_THROWFAST;
+  private static final boolean ENABLED = CONFIG.getValueAsBoolean();
+  private static final String MESSAGE =
+      "This is a fast-thrown exception. Disable "
+          + CONFIG.getKey()
+          + " to see full exception stacktrace and message.";
 
-  private static final OFastConcurrentModificationException INSTANCE         = new OFastConcurrentModificationException();
+  private static final OFastConcurrentModificationException INSTANCE =
+      new OFastConcurrentModificationException();
 
   public OFastConcurrentModificationException(OFastConcurrentModificationException exception) {
     super(exception);

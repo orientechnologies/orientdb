@@ -29,8 +29,15 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionFactory;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -38,20 +45,21 @@ import java.util.*;
  */
 public class OImmutableSchema implements OSchema {
   private final Map<Integer, OClass> clustersToClasses;
-  private final Map<String, OClass>  classes;
-  private final Set<Integer>         blogClusters;
+  private final Map<String, OClass> classes;
+  private final Set<Integer> blogClusters;
 
   private final Map<Integer, OView> clustersToViews;
-  private final Map<String, OView>  views;
+  private final Map<String, OView> views;
 
-  public final  int                      version;
-  private final ORID                     identity;
-  private final List<OGlobalProperty>    properties;
+  public final int version;
+  private final ORID identity;
+  private final List<OGlobalProperty> properties;
   private final OClusterSelectionFactory clusterSelectionFactory;
 
   public OImmutableSchema(OSchemaShared schemaShared, ODatabaseDocumentInternal database) {
     assert schemaShared.getDocument().getInternalStatus() == ORecordElement.STATUS.LOADED;
-    assert database.getSharedContext().getIndexManager().getDocument().getInternalStatus() == ORecordElement.STATUS.LOADED;
+    assert database.getSharedContext().getIndexManager().getDocument().getInternalStatus()
+        == ORecordElement.STATUS.LOADED;
 
     version = schemaShared.getVersion();
     identity = schemaShared.getIdentity();
@@ -78,7 +86,8 @@ public class OImmutableSchema implements OSchema {
     for (OClass cl : classes.values()) {
       ((OImmutableClass) cl).init();
     }
-    this.blogClusters = Collections.unmodifiableSet(new HashSet<Integer>(schemaShared.getBlobClusters()));
+    this.blogClusters =
+        Collections.unmodifiableSet(new HashSet<Integer>(schemaShared.getBlobClusters()));
 
     clustersToViews = new HashMap<Integer, OView>(schemaShared.getViews(database).size() * 3);
     views = new HashMap<String, OView>(schemaShared.getViews(database).size());
@@ -93,7 +102,6 @@ public class OImmutableSchema implements OSchema {
       for (int clusterId : immutableClass.getClusterIds())
         clustersToViews.put(clusterId, immutableClass);
     }
-
   }
 
   @Override
@@ -173,20 +181,17 @@ public class OImmutableSchema implements OSchema {
 
   @Override
   public OClass getClass(Class<?> iClass) {
-    if (iClass == null)
-      return null;
+    if (iClass == null) return null;
 
     return getClass(iClass.getSimpleName());
   }
 
   @Override
   public OClass getClass(String iClassName) {
-    if (iClassName == null)
-      return null;
+    if (iClassName == null) return null;
 
     OClass cls = classes.get(iClassName.toLowerCase(Locale.ENGLISH));
-    if (cls != null)
-      return cls;
+    if (cls != null) return cls;
 
     return null;
   }
@@ -240,8 +245,7 @@ public class OImmutableSchema implements OSchema {
     final int clusterId = getDatabase().getClusterIdByName(clusterName);
     final Set<OClass> result = new HashSet<OClass>();
     for (OClass c : classes.values()) {
-      if (OArrays.contains(c.getPolymorphicClusterIds(), clusterId))
-        result.add(c);
+      if (OArrays.contains(c.getPolymorphicClusterIds(), clusterId)) result.add(c);
     }
 
     return result;
@@ -250,7 +254,6 @@ public class OImmutableSchema implements OSchema {
   @Override
   public OClass getClassByClusterId(int clusterId) {
     return clustersToClasses.get(clusterId);
-
   }
 
   @Override
@@ -260,8 +263,7 @@ public class OImmutableSchema implements OSchema {
 
   @Override
   public OGlobalProperty getGlobalPropertyById(int id) {
-    if (id >= properties.size())
-      return null;
+    if (id >= properties.size()) return null;
     return properties.get(id);
   }
 
@@ -290,12 +292,10 @@ public class OImmutableSchema implements OSchema {
 
   @Override
   public OView getView(String name) {
-    if (name == null)
-      return null;
+    if (name == null) return null;
 
     OView cls = views.get(name.toLowerCase(Locale.ENGLISH));
-    if (cls != null)
-      return cls;
+    if (cls != null) return cls;
 
     return null;
   }
@@ -305,7 +305,11 @@ public class OImmutableSchema implements OSchema {
     throw new UnsupportedOperationException();
   }
 
-  public OView createView(ODatabaseDocumentInternal database, final String viewName, String statement, Map<String, Object> metadata) {
+  public OView createView(
+      ODatabaseDocumentInternal database,
+      final String viewName,
+      String statement,
+      Map<String, Object> metadata) {
     throw new UnsupportedOperationException();
   }
 
@@ -328,5 +332,4 @@ public class OImmutableSchema implements OSchema {
   public void dropView(String name) {
     throw new UnsupportedOperationException();
   }
-
 }

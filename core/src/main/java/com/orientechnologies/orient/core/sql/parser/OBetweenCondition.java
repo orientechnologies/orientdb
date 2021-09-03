@@ -6,8 +6,11 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class OBetweenCondition extends OBooleanExpression {
 
@@ -51,19 +54,33 @@ public class OBetweenCondition extends OBooleanExpression {
 
   @Override
   public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+
+    if (first.isFunctionAny()) {
+      return evaluateAny(currentRecord, ctx);
+    }
+
+    if (first.isFunctionAll()) {
+      return evaluateAllFunction(currentRecord, ctx);
+    }
+
     Object firstValue = first.execute(currentRecord, ctx);
+    Object secondValue = second.execute(currentRecord, ctx);
+    Object thirdValue = third.execute(currentRecord, ctx);
+
+    return evaluate(firstValue, secondValue, thirdValue);
+  }
+
+  private boolean evaluate(Object firstValue, Object secondValue, Object thirdValue) {
     if (firstValue == null) {
       return false;
     }
 
-    Object secondValue = second.execute(currentRecord, ctx);
     if (secondValue == null) {
       return false;
     }
 
     secondValue = OType.convert(secondValue, firstValue.getClass());
 
-    Object thirdValue = third.execute(currentRecord, ctx);
     if (thirdValue == null) {
       return false;
     }
@@ -73,6 +90,32 @@ public class OBetweenCondition extends OBooleanExpression {
     final int rightResult = ((Comparable<Object>) firstValue).compareTo(thirdValue);
 
     return leftResult >= 0 && rightResult <= 0;
+  }
+
+  private boolean evaluateAny(OResult currentRecord, OCommandContext ctx) {
+    Object secondValue = second.execute(currentRecord, ctx);
+    Object thirdValue = third.execute(currentRecord, ctx);
+
+    for (String s : currentRecord.getPropertyNames()) {
+      Object firstValue = currentRecord.getProperty(s);
+      if (evaluate(firstValue, secondValue, thirdValue)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private boolean evaluateAllFunction(OResult currentRecord, OCommandContext ctx) {
+    Object secondValue = second.execute(currentRecord, ctx);
+    Object thirdValue = third.execute(currentRecord, ctx);
+
+    for (String s : currentRecord.getPropertyNames()) {
+      Object firstValue = currentRecord.getProperty(s);
+      if (!evaluate(firstValue, secondValue, thirdValue)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   public OExpression getFirst() {
@@ -159,19 +202,14 @@ public class OBetweenCondition extends OBooleanExpression {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OBetweenCondition that = (OBetweenCondition) o;
 
-    if (first != null ? !first.equals(that.first) : that.first != null)
-      return false;
-    if (second != null ? !second.equals(that.second) : that.second != null)
-      return false;
-    if (third != null ? !third.equals(that.third) : that.third != null)
-      return false;
+    if (first != null ? !first.equals(that.first) : that.first != null) return false;
+    if (second != null ? !second.equals(that.second) : that.second != null) return false;
+    if (third != null ? !third.equals(that.third) : that.third != null) return false;
 
     return true;
   }
@@ -207,8 +245,7 @@ public class OBetweenCondition extends OBooleanExpression {
   }
 
   @Override
-  public void translateLuceneOperator() {
-  }
+  public void translateLuceneOperator() {}
 
   @Override
   public boolean isCacheable() {

@@ -24,51 +24,50 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Fetch context for {@class ONetworkBinaryProtocol} class
- * 
+ *
  * @author Luca Molino (molino.luca--at--gmail.com)
- * 
  */
 public class ORemoteFetchContext implements OFetchContext {
-  public void onBeforeStandardField(Object iFieldValue, String iFieldName, Object iUserObject, OType fieldType) {
-  }
+  public void onBeforeStandardField(
+      Object iFieldValue, String iFieldName, Object iUserObject, OType fieldType) {}
 
-  public void onAfterStandardField(Object iFieldValue, String iFieldName, Object iUserObject, OType fieldType) {
-  }
+  public void onAfterStandardField(
+      Object iFieldValue, String iFieldName, Object iUserObject, OType fieldType) {}
 
-  public void onBeforeMap(ODocument iRootRecord, String iFieldName, final Object iUserObject) throws OFetchException {
-  }
+  public void onBeforeMap(ODocument iRootRecord, String iFieldName, final Object iUserObject)
+      throws OFetchException {}
 
-  public void onBeforeFetch(ODocument iRootRecord) throws OFetchException {
-  }
+  public void onBeforeFetch(ODocument iRootRecord) throws OFetchException {}
 
-  public void onBeforeArray(ODocument iRootRecord, String iFieldName, Object iUserObject, OIdentifiable[] iArray)
-      throws OFetchException {
-  }
+  public void onBeforeArray(
+      ODocument iRootRecord, String iFieldName, Object iUserObject, OIdentifiable[] iArray)
+      throws OFetchException {}
 
-  public void onAfterArray(ODocument iRootRecord, String iFieldName, Object iUserObject) throws OFetchException {
-  }
+  public void onAfterArray(ODocument iRootRecord, String iFieldName, Object iUserObject)
+      throws OFetchException {}
 
-  public void onBeforeDocument(ODocument iRecord, final ODocument iDocument, String iFieldName,
-      final Object iUserObject) throws OFetchException {
-  }
+  public void onBeforeDocument(
+      ODocument iRecord, final ODocument iDocument, String iFieldName, final Object iUserObject)
+      throws OFetchException {}
 
-  public void onBeforeCollection(ODocument iRootRecord, String iFieldName, final Object iUserObject,
-      final Iterable<?> iterable) throws OFetchException {
-  }
+  public void onBeforeCollection(
+      ODocument iRootRecord,
+      String iFieldName,
+      final Object iUserObject,
+      final Iterable<?> iterable)
+      throws OFetchException {}
 
-  public void onAfterMap(ODocument iRootRecord, String iFieldName, final Object iUserObject) throws OFetchException {
-  }
+  public void onAfterMap(ODocument iRootRecord, String iFieldName, final Object iUserObject)
+      throws OFetchException {}
 
-  public void onAfterFetch(ODocument iRootRecord) throws OFetchException {
-  }
+  public void onAfterFetch(ODocument iRootRecord) throws OFetchException {}
 
-  public void onAfterDocument(ODocument iRootRecord, final ODocument iDocument, String iFieldName,
-      final Object iUserObject) throws OFetchException {
-  }
+  public void onAfterDocument(
+      ODocument iRootRecord, final ODocument iDocument, String iFieldName, final Object iUserObject)
+      throws OFetchException {}
 
   public void onAfterCollection(ODocument iRootRecord, String iFieldName, final Object iUserObject)
-      throws OFetchException {
-  }
+      throws OFetchException {}
 
   public boolean fetchEmbeddedDocuments() {
     return false;

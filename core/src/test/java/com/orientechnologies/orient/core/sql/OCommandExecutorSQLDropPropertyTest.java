@@ -30,14 +30,13 @@ import org.junit.Test;
 public class OCommandExecutorSQLDropPropertyTest {
   static ODatabaseDocumentTx db;
   private static String DB_STORAGE = "memory";
-  private static String DB_NAME    = "OCommandExecutorSQLDropPropertyTest";
+  private static String DB_NAME = "OCommandExecutorSQLDropPropertyTest";
   private int ORDER_SKIP_LIMIT_ITEMS = 100 * 1000;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
     db = new ODatabaseDocumentTx(DB_STORAGE + ":" + DB_NAME);
     db.create();
-
   }
 
   @Test
@@ -70,7 +69,8 @@ public class OCommandExecutorSQLDropPropertyTest {
     Assert.assertFalse(schema.getClass("Foo").existsProperty("name"));
   }
 
-  @Test public void testIfExists() {
+  @Test
+  public void testIfExists() {
     OSchema schema = db.getMetadata().getSchema();
     OClass testIfExistsClass = schema.createClass("testIfExists");
 
@@ -83,7 +83,5 @@ public class OCommandExecutorSQLDropPropertyTest {
     db.command(new OCommandSQL("DROP PROPERTY testIfExists.name if exists")).execute();
     schema.reload();
     Assert.assertFalse(schema.getClass("testIfExists").existsProperty("name"));
-
   }
-
 }

@@ -26,20 +26,22 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostCommand;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class OServerCommandGetQuery extends OServerCommandAuthenticatedDbAbstract {
-  private static final String[] NAMES = { "GET|query/*" };
+  private static final String[] NAMES = {"GET|query/*"};
 
   @Override
   @SuppressWarnings("unchecked")
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    String[] urlParts = checkSyntax(iRequest.getUrl(), 4,
-        "Syntax error: query/<database>/sql/<query-text>[/<limit>][/<fetchPlan>].<br>Limit is optional and is set to 20 by default. Set to 0 to have no limits.");
+    String[] urlParts =
+        checkSyntax(
+            iRequest.getUrl(),
+            4,
+            "Syntax error: query/<database>/sql/<query-text>[/<limit>][/<fetchPlan>].<br>Limit is optional and is set to 20 by default. Set to 0 to have no limits.");
 
     int limit = urlParts.length > 4 ? Integer.parseInt(urlParts[4]) : 20;
     String fetchPlan = urlParts.length > 5 ? urlParts[5] : null;
@@ -73,7 +75,9 @@ public class OServerCommandGetQuery extends OServerCommandAuthenticatedDbAbstrac
 
       Map<String, Object> additionalContent = new HashMap<>();
 
-      result.getExecutionPlan().ifPresent(x -> additionalContent.put("executionPlan", x.toResult().toElement()));
+      result
+          .getExecutionPlan()
+          .ifPresent(x -> additionalContent.put("executionPlan", x.toResult().toElement()));
 
       result.close();
 
@@ -85,8 +89,7 @@ public class OServerCommandGetQuery extends OServerCommandAuthenticatedDbAbstrac
       iResponse.writeRecords(response, fetchPlan, null, accept, additionalContent);
 
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
     }
 
     return false;

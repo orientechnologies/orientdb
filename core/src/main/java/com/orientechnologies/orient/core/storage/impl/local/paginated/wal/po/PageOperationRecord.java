@@ -4,20 +4,13 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitBodyRecord;
-
 import java.nio.ByteBuffer;
 
 public abstract class PageOperationRecord extends OOperationUnitBodyRecord {
   private long fileId;
-  private int  pageIndex;
+  private int pageIndex;
 
-  public PageOperationRecord() {
-  }
-
-  @Override
-  public boolean isUpdateMasterRecord() {
-    return false;
-  }
+  public PageOperationRecord() {}
 
   public abstract void redo(OCacheEntry cacheEntry);
 
@@ -37,6 +30,11 @@ public abstract class PageOperationRecord extends OOperationUnitBodyRecord {
 
   public int getPageIndex() {
     return pageIndex;
+  }
+
+  @Override
+  public boolean trackOperationId() {
+    return true;
   }
 
   @Override

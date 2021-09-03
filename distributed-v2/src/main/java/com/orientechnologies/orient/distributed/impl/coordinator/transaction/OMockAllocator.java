@@ -1,13 +1,12 @@
 package com.orientechnologies.orient.distributed.impl.coordinator.transaction;
 
 import com.orientechnologies.orient.distributed.impl.coordinator.OClusterPositionAllocator;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class OMockAllocator implements OClusterPositionAllocator {
-  //Just Test not really need to be concurrent.
+  // Just Test not really need to be concurrent.
   private Map<Integer, AtomicLong> allocator = new HashMap<>();
 
   @Override

@@ -2,17 +2,22 @@ package com.orientechnologies.orient.core.storage.cache.chm;
 
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.directmemory.OByteBufferPool;
+import com.orientechnologies.common.directmemory.ODirectMemoryAllocator.Intention;
 import com.orientechnologies.common.directmemory.OPointer;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.storage.cache.*;
+import com.orientechnologies.orient.core.storage.cache.OAbstractWriteCache;
+import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
+import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
+import com.orientechnologies.orient.core.storage.cache.OCachePointer;
+import com.orientechnologies.orient.core.storage.cache.OReadCache;
+import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.cache.chm.readbuffer.BoundedBuffer;
 import com.orientechnologies.orient.core.storage.cache.chm.readbuffer.Buffer;
 import com.orientechnologies.orient.core.storage.cache.chm.writequeue.MPSCLinkedQueue;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -25,43 +30,47 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * Disk cache based on ConcurrentHashMap and eviction policy which is asynchronously processed by handling set of events logged in
- * lock free event buffer. This feature first was introduced in Caffeine framework https://github.com/ben-manes/caffeine and in
- * ConcurrentLinkedHashMap library https://github.com/ben-manes/concurrentlinkedhashmap . The difference is that if consumption of
- * memory in cache is bigger than 1% disk cache is switched from asynchronous processing of stream of events to synchronous
- * processing. But that is true only for threads which cause loading of additional pages from write cache to disk cache. Window
- * TinyLFU policy is used as cache eviction policy because it prevents usage of ghost entries and as result considerably decrease
- * usage of heap memory.
+ * Disk cache based on ConcurrentHashMap and eviction policy which is asynchronously processed by
+ * handling set of events logged in lock free event buffer. This feature first was introduced in
+ * Caffeine framework https://github.com/ben-manes/caffeine and in ConcurrentLinkedHashMap library
+ * https://github.com/ben-manes/concurrentlinkedhashmap . The difference is that if consumption of
+ * memory in cache is bigger than 1% disk cache is switched from asynchronous processing of stream
+ * of events to synchronous processing. But that is true only for threads which cause loading of
+ * additional pages from write cache to disk cache. Window TinyLFU policy is used as cache eviction
+ * policy because it prevents usage of ghost entries and as result considerably decrease usage of
+ * heap memory.
  */
 public final class AsyncReadCache implements OReadCache {
-  private static final int NCPU                   = Runtime.getRuntime().availableProcessors();
-  private static final int WRITE_BUFFER_MAX_BATCH = 128 * ceilingPowerOfTwo(NCPU);
+
+  private static final int N_CPU = Runtime.getRuntime().availableProcessors();
+  private static final int WRITE_BUFFER_MAX_BATCH = 128 * ceilingPowerOfTwo(N_CPU);
 
   private final ConcurrentHashMap<PageKey, OCacheEntry> data;
-  private final Lock                                    evictionLock = new ReentrantLock();
+  private final Lock evictionLock = new ReentrantLock();
 
   private final WTinyLFUPolicy policy;
 
-  private final Buffer<OCacheEntry>       readBuffer  = new BoundedBuffer<>();
+  private final Buffer<OCacheEntry> readBuffer = new BoundedBuffer<>();
   private final MPSCLinkedQueue<Runnable> writeBuffer = new MPSCLinkedQueue<>();
-  private final AtomicInteger             cacheSize   = new AtomicInteger();
-  private final int                       maxCacheSize;
+  private final AtomicInteger cacheSize = new AtomicInteger();
+  private final int maxCacheSize;
 
   private final boolean trackHitRate;
 
   private final LongAdder requests = new LongAdder();
-  private final LongAdder hits     = new LongAdder();
+  private final LongAdder hits = new LongAdder();
 
-  /**
-   * Status which indicates whether flush of buffers should be performed or may be delayed.
-   */
+  /** Status which indicates whether flush of buffers should be performed or may be delayed. */
   private final AtomicReference<DrainStatus> drainStatus = new AtomicReference<>(DrainStatus.IDLE);
 
   private final int pageSize;
 
   private final OByteBufferPool bufferPool;
 
-  public AsyncReadCache(final OByteBufferPool bufferPool, final long maxCacheSizeInBytes, final int pageSize,
+  public AsyncReadCache(
+      final OByteBufferPool bufferPool,
+      final long maxCacheSizeInBytes,
+      final int pageSize,
       final boolean trackHitRate) {
     evictionLock.lock();
     try {
@@ -79,19 +88,26 @@ public final class AsyncReadCache implements OReadCache {
   }
 
   @Override
-  public final long addFile(final String fileName, final OWriteCache writeCache) throws IOException {
+  public final long addFile(final String fileName, final OWriteCache writeCache)
+      throws IOException {
     return writeCache.addFile(fileName);
   }
 
   @Override
-  public final long addFile(final String fileName, long fileId, final OWriteCache writeCache) throws IOException {
+  public final long addFile(final String fileName, long fileId, final OWriteCache writeCache)
+      throws IOException {
     fileId = OAbstractWriteCache.checkFileIdCompatibility(writeCache.getId(), fileId);
     return writeCache.addFile(fileName, fileId);
   }
 
   @Override
-  public final OCacheEntry loadForWrite(final long fileId, final long pageIndex, final boolean checkPinnedPages,
-      final OWriteCache writeCache, final boolean verifyChecksums, final OLogSequenceNumber startLSN) {
+  public final OCacheEntry loadForWrite(
+      final long fileId,
+      final long pageIndex,
+      final boolean checkPinnedPages,
+      final OWriteCache writeCache,
+      final boolean verifyChecksums,
+      final OLogSequenceNumber startLSN) {
     final OCacheEntry cacheEntry = doLoad(fileId, (int) pageIndex, writeCache, verifyChecksums);
 
     if (cacheEntry != null) {
@@ -103,12 +119,77 @@ public final class AsyncReadCache implements OReadCache {
   }
 
   @Override
-  public final OCacheEntry loadForRead(final long fileId, final long pageIndex, final boolean checkPinnedPages,
-      final OWriteCache writeCache, final boolean verifyChecksums) {
+  public final OCacheEntry loadForRead(
+      final long fileId,
+      final long pageIndex,
+      final boolean checkPinnedPages,
+      final OWriteCache writeCache,
+      final boolean verifyChecksums) {
     return doLoad(fileId, (int) pageIndex, writeCache, verifyChecksums);
   }
 
-  private OCacheEntry doLoad(final long extFileId, final int pageIndex, final OWriteCache writeCache,
+  @Override
+  public final OCacheEntry silentLoadForRead(
+      final long extFileId,
+      final int pageIndex,
+      final OWriteCache writeCache,
+      final boolean verifyChecksums) {
+    final long fileId = OAbstractWriteCache.checkFileIdCompatibility(writeCache.getId(), extFileId);
+    final PageKey pageKey = new PageKey(fileId, pageIndex);
+
+    for (; ; ) {
+      OCacheEntry cacheEntry = data.get(pageKey);
+
+      if (cacheEntry == null) {
+        final OCacheEntry[] updatedEntry = new OCacheEntry[1];
+
+        cacheEntry =
+            data.compute(
+                pageKey,
+                (page, entry) -> {
+                  if (entry == null) {
+                    try {
+                      final OCachePointer pointer =
+                          writeCache.load(
+                              fileId, pageIndex, new OModifiableBoolean(), verifyChecksums);
+                      if (pointer == null) {
+                        return null;
+                      }
+
+                      updatedEntry[0] =
+                          new OCacheEntryImpl(
+                              page.getFileId(), page.getPageIndex(), pointer, false);
+                      return null;
+                    } catch (final IOException e) {
+                      throw OException.wrapException(
+                          new OStorageException(
+                              "Error during loading of page " + pageIndex + " for file " + fileId),
+                          e);
+                    }
+
+                  } else {
+                    return entry;
+                  }
+                });
+
+        if (cacheEntry == null) {
+          cacheEntry = updatedEntry[0];
+        }
+
+        if (cacheEntry == null) {
+          return null;
+        }
+      }
+      if (cacheEntry.acquireEntry()) {
+        return cacheEntry;
+      }
+    }
+  }
+
+  private OCacheEntry doLoad(
+      final long extFileId,
+      final int pageIndex,
+      final OWriteCache writeCache,
       final boolean verifyChecksums) {
     final long fileId = OAbstractWriteCache.checkFileIdCompatibility(writeCache.getId(), extFileId);
     final PageKey pageKey = new PageKey(fileId, pageIndex);
@@ -137,25 +218,33 @@ public final class AsyncReadCache implements OReadCache {
       } else {
         final boolean[] read = new boolean[1];
 
-        cacheEntry = data.compute(pageKey, (page, entry) -> {
-          if (entry == null) {
-            try {
-              final OCachePointer pointer = writeCache.load(fileId, pageIndex, new OModifiableBoolean(), verifyChecksums);
-              if (pointer == null) {
-                return null;
-              }
+        cacheEntry =
+            data.compute(
+                pageKey,
+                (page, entry) -> {
+                  if (entry == null) {
+                    try {
+                      final OCachePointer pointer =
+                          writeCache.load(
+                              fileId, pageIndex, new OModifiableBoolean(), verifyChecksums);
+                      if (pointer == null) {
+                        return null;
+                      }
 
-              cacheSize.incrementAndGet();
-              return new OCacheEntryImpl(page.getFileId(), page.getPageIndex(), pointer);
-            } catch (final IOException e) {
-              throw OException
-                  .wrapException(new OStorageException("Error during loading of page " + pageIndex + " for file " + fileId), e);
-            }
-          } else {
-            read[0] = true;
-            return entry;
-          }
-        });
+                      cacheSize.incrementAndGet();
+                      return new OCacheEntryImpl(
+                          page.getFileId(), page.getPageIndex(), pointer, true);
+                    } catch (final IOException e) {
+                      throw OException.wrapException(
+                          new OStorageException(
+                              "Error during loading of page " + pageIndex + " for file " + fileId),
+                          e);
+                    }
+                  } else {
+                    read[0] = true;
+                    return entry;
+                  }
+                });
 
         if (cacheEntry == null) {
           return null;
@@ -174,7 +263,8 @@ public final class AsyncReadCache implements OReadCache {
             try {
               writeCache.checkCacheOverflow();
             } catch (final InterruptedException e) {
-              throw OException.wrapException(new OInterruptedException("Check of write cache overflow was interrupted"), e);
+              throw OException.wrapException(
+                  new OInterruptedException("Check of write cache overflow was interrupted"), e);
             }
           }
 
@@ -187,16 +277,17 @@ public final class AsyncReadCache implements OReadCache {
   private OCacheEntry addNewPagePointerToTheCache(final long fileId, final int pageIndex) {
     final PageKey pageKey = new PageKey(fileId, pageIndex);
 
-    final OPointer pointer = bufferPool.acquireDirect(true);
+    final OPointer pointer = bufferPool.acquireDirect(true, Intention.ADD_NEW_PAGE_IN_DISK_CACHE);
     final OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, fileId, pageIndex);
     cachePointer.incrementReadersReferrer();
 
-    final OCacheEntry cacheEntry = new OCacheEntryImpl(fileId, pageIndex, cachePointer);
+    final OCacheEntry cacheEntry = new OCacheEntryImpl(fileId, pageIndex, cachePointer, true);
     cacheEntry.acquireEntry();
 
     final OCacheEntry oldCacheEntry = data.putIfAbsent(pageKey, cacheEntry);
     if (oldCacheEntry != null) {
-      throw new IllegalStateException("Page  " + fileId + ":" + pageIndex + " was allocated in other thread");
+      throw new IllegalStateException(
+          "Page  " + fileId + ":" + pageIndex + " was allocated in other thread");
     }
 
     afterAdd(cacheEntry);
@@ -217,46 +308,61 @@ public final class AsyncReadCache implements OReadCache {
   @Override
   public final void releaseFromRead(final OCacheEntry cacheEntry, final OWriteCache writeCache) {
     cacheEntry.releaseEntry();
+
+    if (!cacheEntry.insideCache()) {
+      cacheEntry.getCachePointer().decrementReadersReferrer();
+    }
   }
 
   @Override
-  public final void releaseFromWrite(final OCacheEntry cacheEntry, final OWriteCache writeCache, final boolean changed) {
+  public final void releaseFromWrite(
+      final OCacheEntry cacheEntry, final OWriteCache writeCache, final boolean changed) {
     final OCachePointer cachePointer = cacheEntry.getCachePointer();
     assert cachePointer != null;
 
-    final PageKey pageKey = new PageKey(cacheEntry.getFileId(), (int) cacheEntry.getPageIndex());
+    final PageKey pageKey = new PageKey(cacheEntry.getFileId(), cacheEntry.getPageIndex());
     if (cacheEntry.isNewlyAllocatedPage() || changed) {
       if (cacheEntry.isNewlyAllocatedPage()) {
         cacheEntry.clearAllocationFlag();
       }
 
-      data.compute(pageKey, (page, entry) -> {
-        writeCache.store(cacheEntry.getFileId(), cacheEntry.getPageIndex(), cacheEntry.getCachePointer());
-        return entry;//may be absent if page in pinned pages, in such case we use map as virtual lock
-      });
+      data.compute(
+          pageKey,
+          (page, entry) -> {
+            writeCache.store(
+                cacheEntry.getFileId(), cacheEntry.getPageIndex(), cacheEntry.getCachePointer());
+            return entry; // may be absent if page in pinned pages, in such case we use map as
+            // virtual lock
+          });
 
       cacheEntry.clearPageOperations();
     }
 
-    //We need to release exclusive lock from cache pointer after we put it into the write cache so both "dirty pages" of write
-    //cache and write cache itself will contain actual values simultaneously. But because cache entry can be cleared after we put it back to the
-    //read cache we make copy of cache pointer before head.
+    // We need to release exclusive lock from cache pointer after we put it into the write cache so
+    // both "dirty pages" of write
+    // cache and write cache itself will contain actual values simultaneously. But because cache
+    // entry can be cleared after we put it back to the
+    // read cache we make copy of cache pointer before head.
     //
-    //Following situation can happen, if we release exclusive lock before we put entry to the write cache.
-    //1. Page is loaded for write, locked and related LSN is written to the "dirty pages" table.
-    //2. Page lock is released.
-    //3. Page is chosen to be flushed on disk and its entry removed from "dirty pages" table
-    //4. Page is added to write cache as dirty
+    // Following situation can happen, if we release exclusive lock before we put entry to the write
+    // cache.
+    // 1. Page is loaded for write, locked and related LSN is written to the "dirty pages" table.
+    // 2. Page lock is released.
+    // 3. Page is chosen to be flushed on disk and its entry removed from "dirty pages" table
+    // 4. Page is added to write cache as dirty
     //
-    //So we have situation when page is added as dirty into the write cache but its related entry in "dirty pages" table is removed
-    //it is treated as flushed during fuzzy checkpoint and portion of write ahead log which contains not flushed changes is removed.
-    //This can lead to the data loss after restore and corruption of data structures
+    // So we have situation when page is added as dirty into the write cache but its related entry
+    // in "dirty pages" table is removed
+    // it is treated as flushed during fuzzy checkpoint and portion of write ahead log which
+    // contains not flushed changes is removed.
+    // This can lead to the data loss after restore and corruption of data structures
     cachePointer.releaseExclusiveLock();
     cacheEntry.releaseEntry();
   }
 
   @Override
-  public final OCacheEntry allocateNewPage(long fileId, final OWriteCache writeCache, final OLogSequenceNumber startLSN)
+  public final OCacheEntry allocateNewPage(
+      long fileId, final OWriteCache writeCache, final OLogSequenceNumber startLSN)
       throws IOException {
     fileId = OAbstractWriteCache.checkFileIdCompatibility(writeCache.getId(), fileId);
     final int newPageIndex = writeCache.allocateNewPage(fileId);
@@ -265,9 +371,7 @@ public final class AsyncReadCache implements OReadCache {
     cacheEntry.acquireExclusiveLock();
     cacheEntry.markAllocated();
     cacheEntry.clearPageOperations();
-
     writeCache.updateDirtyPagesTable(cacheEntry.getCachePointer(), startLSN);
-
     return cacheEntry;
   }
 
@@ -297,12 +401,13 @@ public final class AsyncReadCache implements OReadCache {
   private void forceDrainBuffers() {
     evictionLock.lock();
     try {
-      //optimization to avoid to call tryLock if it is not needed
+      // optimization to avoid to call tryLock if it is not needed
       drainStatus.lazySet(DrainStatus.IN_PROGRESS);
       emptyBuffers();
     } finally {
-      //cas operation because we do not want to overwrite REQUIRED status and to avoid false optimization of
-      //drain buffer by IN_PROGRESS status
+      // cas operation because we do not want to overwrite REQUIRED status and to avoid false
+      // optimization of
+      // drain buffer by IN_PROGRESS status
       try {
         drainStatus.compareAndSet(DrainStatus.IN_PROGRESS, DrainStatus.IDLE);
       } finally {
@@ -326,12 +431,13 @@ public final class AsyncReadCache implements OReadCache {
 
     if (evictionLock.tryLock()) {
       try {
-        //optimization to avoid to call tryLock if it is not needed
+        // optimization to avoid to call tryLock if it is not needed
         drainStatus.lazySet(DrainStatus.IN_PROGRESS);
         drainBuffers();
       } finally {
-        //cas operation because we do not want to overwrite REQUIRED status and to avoid false optimization of
-        //drain buffer by IN_PROGRESS status
+        // cas operation because we do not want to overwrite REQUIRED status and to avoid false
+        // optimization of
+        // drain buffer by IN_PROGRESS status
         drainStatus.compareAndSet(DrainStatus.IN_PROGRESS, DrainStatus.IDLE);
         evictionLock.unlock();
       }
@@ -392,7 +498,11 @@ public final class AsyncReadCache implements OReadCache {
           policy.onRemove(entry);
         } else {
           throw new OStorageException(
-              "Page with index " + entry.getPageIndex() + " for file id " + entry.getFileId() + " is used and cannot be removed");
+              "Page with index "
+                  + entry.getPageIndex()
+                  + " for file id "
+                  + entry.getFileId()
+                  + " is used and cannot be removed");
         }
       }
 
@@ -476,11 +586,16 @@ public final class AsyncReadCache implements OReadCache {
             try {
               writeCache.checkCacheOverflow();
             } catch (final InterruptedException e) {
-              throw OException.wrapException(new OInterruptedException("Check of write cache overflow was interrupted"), e);
+              throw OException.wrapException(
+                  new OInterruptedException("Check of write cache overflow was interrupted"), e);
             }
           } else {
-            throw new OStorageException("Page with index " + cacheEntry.getPageIndex() + " for file id " + cacheEntry.getFileId()
-                + " is used and cannot be removed");
+            throw new OStorageException(
+                "Page with index "
+                    + cacheEntry.getPageIndex()
+                    + " for file id "
+                    + cacheEntry.getFileId()
+                    + " is used and cannot be removed");
           }
         }
       }
@@ -524,12 +639,14 @@ public final class AsyncReadCache implements OReadCache {
       boolean shouldBeDrained(final boolean readBufferOverflow) {
         return readBufferOverflow;
       }
-    }, IN_PROGRESS {
+    },
+    IN_PROGRESS {
       @Override
       boolean shouldBeDrained(final boolean readBufferOverflow) {
         return false;
       }
-    }, REQUIRED {
+    },
+    REQUIRED {
       @Override
       boolean shouldBeDrained(final boolean readBufferOverflow) {
         return true;

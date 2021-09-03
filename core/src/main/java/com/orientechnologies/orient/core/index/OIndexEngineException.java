@@ -13,14 +13,12 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.orient.core.index;
 
-import com.orientechnologies.common.exception.OErrorCode;
 import com.orientechnologies.orient.core.exception.OCoreException;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 
 public class OIndexEngineException extends OCoreException {
 

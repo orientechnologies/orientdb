@@ -26,10 +26,10 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OBalancedClusterSelectionStrategy implements OClusterSelectionStrategy {
-  public static final    String NAME             = "balanced";
-  protected static final long   REFRESH_TIMEOUT  = 5000;
-  protected              long   lastCount        = -1;
-  protected              int    smallerClusterId = -1;
+  public static final String NAME = "balanced";
+  protected static final long REFRESH_TIMEOUT = 5000;
+  protected long lastCount = -1;
+  protected int smallerClusterId = -1;
 
   public int getCluster(final OClass iClass, final ODocument doc) {
     return getCluster(iClass, iClass.getClusterIds(), doc);
@@ -42,8 +42,7 @@ public class OBalancedClusterSelectionStrategy implements OClusterSelectionStrat
       return clusters[0];
 
     final ODatabaseDocument db = ODatabaseRecordThreadLocal.instance().getIfDefined();
-    if (db == null)
-      return clusters[0];
+    if (db == null) return clusters[0];
 
     if (lastCount < 0 || System.currentTimeMillis() - lastCount > REFRESH_TIMEOUT) {
       // REFRESH COUNTERS

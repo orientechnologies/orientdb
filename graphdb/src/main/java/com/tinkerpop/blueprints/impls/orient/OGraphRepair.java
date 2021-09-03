@@ -16,34 +16,36 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageRecoverEventListener;
 import com.tinkerpop.blueprints.Direction;
-
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Repairs a graph. Current implementation scan the entire graph. In the future the WAL will be used to make this repair task much
- * faster.
+ * Repairs a graph. Current implementation scan the entire graph. In the future the WAL will be used
+ * to make this repair task much faster.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OGraphRepair {
 
   private class ORepairStats {
-    protected long scannedEdges     = 0;
-    protected long removedEdges     = 0;
-    protected long scannedVertices  = 0;
-    protected long scannedLinks     = 0;
-    protected long removedLinks     = 0;
+    protected long scannedEdges = 0;
+    protected long removedEdges = 0;
+    protected long scannedVertices = 0;
+    protected long scannedLinks = 0;
+    protected long removedLinks = 0;
     protected long repairedVertices = 0;
   }
 
   private OStorageRecoverEventListener eventListener;
 
-  public void repair(final OrientBaseGraph graph, final OCommandOutputListener outputListener,
+  public void repair(
+      final OrientBaseGraph graph,
+      final OCommandOutputListener outputListener,
       final Map<String, List<String>> options) {
-    message(outputListener, "Repair of graph '" + graph.getRawGraph().getURL() + "' is started ...\n");
+    message(
+        outputListener, "Repair of graph '" + graph.getRawGraph().getURL() + "' is started ...\n");
 
     final long beginTime = System.currentTimeMillis();
 
@@ -55,8 +57,12 @@ public class OGraphRepair {
     // SCAN ALL THE VERTICES
     repairVertices(graph, stats, outputListener, options, false);
 
-    message(outputListener,
-        "Repair of graph '" + graph.getRawGraph().getURL() + "' completed in " + ((System.currentTimeMillis() - beginTime) / 1000)
+    message(
+        outputListener,
+        "Repair of graph '"
+            + graph.getRawGraph().getURL()
+            + "' completed in "
+            + ((System.currentTimeMillis() - beginTime) / 1000)
             + " secs\n");
 
     message(outputListener, " scannedEdges.....: " + stats.scannedEdges + "\n");
@@ -67,9 +73,12 @@ public class OGraphRepair {
     message(outputListener, " repairedVertices.: " + stats.repairedVertices + "\n");
   }
 
-  public void check(final OrientBaseGraph graph, final OCommandOutputListener outputListener,
+  public void check(
+      final OrientBaseGraph graph,
+      final OCommandOutputListener outputListener,
       final Map<String, List<String>> options) {
-    message(outputListener, "Check of graph '" + graph.getRawGraph().getURL() + "' is started...\n");
+    message(
+        outputListener, "Check of graph '" + graph.getRawGraph().getURL() + "' is started...\n");
 
     final long beginTime = System.currentTimeMillis();
 
@@ -81,8 +90,12 @@ public class OGraphRepair {
     // SCAN ALL THE VERTICES
     repairVertices(graph, stats, outputListener, options, true);
 
-    message(outputListener,
-        "Check of graph '" + graph.getRawGraph().getURL() + "' completed in " + ((System.currentTimeMillis() - beginTime) / 1000)
+    message(
+        outputListener,
+        "Check of graph '"
+            + graph.getRawGraph().getURL()
+            + "' completed in "
+            + ((System.currentTimeMillis() - beginTime) / 1000)
             + " secs\n");
 
     message(outputListener, " scannedEdges.....: " + stats.scannedEdges + "\n");
@@ -93,8 +106,12 @@ public class OGraphRepair {
     message(outputListener, " verticesToRepair.: " + stats.repairedVertices + "\n");
   }
 
-  protected void repairEdges(final OrientBaseGraph graph, final ORepairStats stats, final OCommandOutputListener outputListener,
-      final Map<String, List<String>> options, final boolean checkOnly) {
+  protected void repairEdges(
+      final OrientBaseGraph graph,
+      final ORepairStats stats,
+      final OCommandOutputListener outputListener,
+      final Map<String, List<String>> options,
+      final boolean checkOnly) {
     final ODatabaseDocument db = graph.getRawGraph();
     final OMetadata metadata = db.getMetadata();
     final OSchema schema = metadata.getSchema();
@@ -111,7 +128,8 @@ public class OGraphRepair {
         skipEdges = Long.parseLong(options.get("-skipEdges").get(0));
       }
 
-      message(outputListener, "Scanning " + countEdges + " edges (skipEdges=" + skipEdges + ")...\n");
+      message(
+          outputListener, "Scanning " + countEdges + " edges (skipEdges=" + skipEdges + ")...\n");
 
       long parsedEdges = 0l;
       final long beginTime = System.currentTimeMillis();
@@ -120,23 +138,27 @@ public class OGraphRepair {
         final ORID edgeId = edge.getIdentity();
 
         parsedEdges++;
-        if (skipEdges > 0 && parsedEdges <= skipEdges)
-          continue;
+        if (skipEdges > 0 && parsedEdges <= skipEdges) continue;
 
         stats.scannedEdges++;
 
-        if (eventListener != null)
-          eventListener.onScannedEdge(edge);
+        if (eventListener != null) eventListener.onScannedEdge(edge);
 
         if (outputListener != null && stats.scannedEdges % 100000 == 0) {
-          long speedPerSecond = (long) (parsedEdges / ((System.currentTimeMillis() - beginTime) / 1000.0));
-          if (speedPerSecond < 1)
-            speedPerSecond = 1;
+          long speedPerSecond =
+              (long) (parsedEdges / ((System.currentTimeMillis() - beginTime) / 1000.0));
+          if (speedPerSecond < 1) speedPerSecond = 1;
           final long remaining = (countEdges - parsedEdges) / speedPerSecond;
 
-          message(outputListener,
-              "+ edges: scanned " + stats.scannedEdges + ", removed " + stats.removedEdges + " (estimated remaining time "
-                  + remaining + " secs)\n");
+          message(
+              outputListener,
+              "+ edges: scanned "
+                  + stats.scannedEdges
+                  + ", removed "
+                  + stats.removedEdges
+                  + " (estimated remaining time "
+                  + remaining
+                  + " secs)\n");
         }
 
         boolean outVertexMissing = false;
@@ -144,8 +166,7 @@ public class OGraphRepair {
         String removalReason = "";
 
         final OIdentifiable out = OrientEdge.getConnection(edge, Direction.OUT);
-        if (out == null)
-          outVertexMissing = true;
+        if (out == null) outVertexMissing = true;
         else {
           ODocument outVertex;
           try {
@@ -154,24 +175,20 @@ public class OGraphRepair {
             outVertex = null;
           }
 
-          if (outVertex == null)
-            outVertexMissing = true;
+          if (outVertex == null) outVertexMissing = true;
           else {
-            final String outFieldName = OrientVertex
-                .getConnectionFieldName(Direction.OUT, edge.getClassName(), useVertexFieldsForEdgeLabels);
+            final String outFieldName =
+                OrientVertex.getConnectionFieldName(
+                    Direction.OUT, edge.getClassName(), useVertexFieldsForEdgeLabels);
 
             final Object outEdges = outVertex.field(outFieldName);
-            if (outEdges == null)
-              outVertexMissing = true;
+            if (outEdges == null) outVertexMissing = true;
             else if (outEdges instanceof ORidBag) {
-              if (!((ORidBag) outEdges).contains(edgeId))
-                outVertexMissing = true;
+              if (!((ORidBag) outEdges).contains(edgeId)) outVertexMissing = true;
             } else if (outEdges instanceof Collection) {
-              if (!((Collection) outEdges).contains(edgeId))
-                outVertexMissing = true;
+              if (!((Collection) outEdges).contains(edgeId)) outVertexMissing = true;
             } else if (outEdges instanceof OIdentifiable) {
-              if (((OIdentifiable) outEdges).getIdentity().equals(edgeId))
-                outVertexMissing = true;
+              if (((OIdentifiable) outEdges).getIdentity().equals(edgeId)) outVertexMissing = true;
             }
           }
         }
@@ -182,8 +199,7 @@ public class OGraphRepair {
         boolean inVertexMissing = false;
 
         final OIdentifiable in = OrientEdge.getConnection(edge, Direction.IN);
-        if (in == null)
-          inVertexMissing = true;
+        if (in == null) inVertexMissing = true;
         else {
 
           ODocument inVertex;
@@ -193,48 +209,48 @@ public class OGraphRepair {
             inVertex = null;
           }
 
-          if (inVertex == null)
-            inVertexMissing = true;
+          if (inVertex == null) inVertexMissing = true;
           else {
-            final String inFieldName = OrientVertex
-                .getConnectionFieldName(Direction.IN, edge.getClassName(), useVertexFieldsForEdgeLabels);
+            final String inFieldName =
+                OrientVertex.getConnectionFieldName(
+                    Direction.IN, edge.getClassName(), useVertexFieldsForEdgeLabels);
 
             final Object inEdges = inVertex.field(inFieldName);
-            if (inEdges == null)
-              inVertexMissing = true;
+            if (inEdges == null) inVertexMissing = true;
             else if (inEdges instanceof ORidBag) {
-              if (!((ORidBag) inEdges).contains(edgeId))
-                inVertexMissing = true;
+              if (!((ORidBag) inEdges).contains(edgeId)) inVertexMissing = true;
             } else if (inEdges instanceof Collection) {
-              if (!((Collection) inEdges).contains(edgeId))
-                inVertexMissing = true;
+              if (!((Collection) inEdges).contains(edgeId)) inVertexMissing = true;
             } else if (inEdges instanceof OIdentifiable) {
-              if (((OIdentifiable) inEdges).getIdentity().equals(edgeId))
-                inVertexMissing = true;
+              if (((OIdentifiable) inEdges).getIdentity().equals(edgeId)) inVertexMissing = true;
             }
           }
         }
 
         if (inVertexMissing) {
-          if (!removalReason.isEmpty())
-            removalReason += ", ";
+          if (!removalReason.isEmpty()) removalReason += ", ";
           removalReason += "incoming vertex (" + in + ") does not contain the edge";
         }
 
         if (outVertexMissing || inVertexMissing) {
           try {
             if (!checkOnly) {
-              message(outputListener, "+ deleting corrupted edge " + edge + " because " + removalReason + "\n");
+              message(
+                  outputListener,
+                  "+ deleting corrupted edge " + edge + " because " + removalReason + "\n");
               edge.delete();
             } else
-              message(outputListener, "+ found corrupted edge " + edge + " because " + removalReason + "\n");
+              message(
+                  outputListener,
+                  "+ found corrupted edge " + edge + " because " + removalReason + "\n");
 
             stats.removedEdges++;
-            if (eventListener != null)
-              eventListener.onRemovedEdge(edge);
+            if (eventListener != null) eventListener.onRemovedEdge(edge);
 
           } catch (Exception e) {
-            message(outputListener, "Error on deleting edge " + edge.getIdentity() + " (" + e.getMessage() + ")");
+            message(
+                outputListener,
+                "Error on deleting edge " + edge.getIdentity() + " (" + e.getMessage() + ")");
           }
         }
       }
@@ -242,8 +258,12 @@ public class OGraphRepair {
     }
   }
 
-  protected void repairVertices(final OrientBaseGraph graph, final ORepairStats stats, final OCommandOutputListener outputListener,
-      final Map<String, List<String>> options, final boolean checkOnly) {
+  protected void repairVertices(
+      final OrientBaseGraph graph,
+      final ORepairStats stats,
+      final OCommandOutputListener outputListener,
+      final Map<String, List<String>> options,
+      final boolean checkOnly) {
     final ODatabaseDocument db = graph.getRawGraph();
     final OMetadata metadata = db.getMetadata();
     final OSchema schema = metadata.getSchema();
@@ -264,28 +284,34 @@ public class OGraphRepair {
 
       for (ODocument vertex : db.browseClass(vertexClass.getName())) {
         parsedVertices++;
-        if (skipVertices > 0 && parsedVertices <= skipVertices)
-          continue;
+        if (skipVertices > 0 && parsedVertices <= skipVertices) continue;
 
         stats.scannedVertices++;
-        if (eventListener != null)
-          eventListener.onScannedVertex(vertex);
+        if (eventListener != null) eventListener.onScannedVertex(vertex);
 
         if (outputListener != null && stats.scannedVertices % 100000 == 0) {
-          long speedPerSecond = (long) (parsedVertices / ((System.currentTimeMillis() - beginTime) / 1000.0));
-          if (speedPerSecond < 1)
-            speedPerSecond = 1;
+          long speedPerSecond =
+              (long) (parsedVertices / ((System.currentTimeMillis() - beginTime) / 1000.0));
+          if (speedPerSecond < 1) speedPerSecond = 1;
           final long remaining = (countVertices - parsedVertices) / speedPerSecond;
 
-          message(outputListener, "+ vertices: scanned " + stats.scannedVertices + ", repaired " + stats.repairedVertices
-              + " (estimated remaining time " + remaining + " secs)\n");
+          message(
+              outputListener,
+              "+ vertices: scanned "
+                  + stats.scannedVertices
+                  + ", repaired "
+                  + stats.repairedVertices
+                  + " (estimated remaining time "
+                  + remaining
+                  + " secs)\n");
         }
 
         final OrientVertex v = graph.getVertex(vertex);
 
         boolean vertexCorrupted = false;
         for (String fieldName : vertex.fieldNames()) {
-          final OPair<Direction, String> connection = v.getConnection(Direction.BOTH, fieldName, null);
+          final OPair<Direction, String> connection =
+              v.getConnection(Direction.BOTH, fieldName, null);
           if (connection == null)
             // SKIP THIS FIELD
             continue;
@@ -294,14 +320,24 @@ public class OGraphRepair {
           if (fieldValue != null) {
             if (fieldValue instanceof OIdentifiable) {
 
-              if (isEdgeBroken(vertex, fieldName, connection.getKey(), (OIdentifiable) fieldValue, stats,
+              if (isEdgeBroken(
+                  vertex,
+                  fieldName,
+                  connection.getKey(),
+                  (OIdentifiable) fieldValue,
+                  stats,
                   graph.settings.isUseVertexFieldsForEdgeLabels())) {
                 vertexCorrupted = true;
                 if (!checkOnly) {
                   vertex.field(fieldName, (Object) null);
                 } else
-                  message(outputListener,
-                      "+ found corrupted vertex " + vertex + " the property " + fieldName + " could be removed\n");
+                  message(
+                      outputListener,
+                      "+ found corrupted vertex "
+                          + vertex
+                          + " the property "
+                          + fieldName
+                          + " could be removed\n");
               }
 
             } else if (fieldValue instanceof Collection<?>) {
@@ -310,49 +346,67 @@ public class OGraphRepair {
               for (Iterator<?> it = coll.iterator(); it.hasNext(); ) {
                 final Object o = it.next();
 
-                if (isEdgeBroken(vertex, fieldName, connection.getKey(), (OIdentifiable) o, stats,
+                if (isEdgeBroken(
+                    vertex,
+                    fieldName,
+                    connection.getKey(),
+                    (OIdentifiable) o,
+                    stats,
                     graph.settings.isUseVertexFieldsForEdgeLabels())) {
                   vertexCorrupted = true;
                   if (!checkOnly) {
                     it.remove();
                   } else
-                    message(outputListener,
-                        "+ found corrupted vertex " + vertex + " the edge should be removed from property " + fieldName
+                    message(
+                        outputListener,
+                        "+ found corrupted vertex "
+                            + vertex
+                            + " the edge should be removed from property "
+                            + fieldName
                             + " (collection)\n");
                 }
               }
 
             } else if (fieldValue instanceof ORidBag) {
-              //In case of ridbags force save for trigger eventual conversions
+              // In case of ridbags force save for trigger eventual conversions
               final ORidBag ridbag = ((ORidBag) fieldValue);
               if (ridbag.size() == 0) {
                 vertex.removeField(fieldName);
-              } else if (!ridbag.isEmbedded() && ridbag.size() < OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD
-                  .getValueAsInteger()) {
+              } else if (!ridbag.isEmbedded()
+                  && ridbag.size()
+                      < OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD
+                          .getValueAsInteger()) {
                 vertex.setDirty();
               }
               for (Iterator<?> it = ridbag.rawIterator(); it.hasNext(); ) {
                 final Object o = it.next();
-                if (isEdgeBroken(vertex, fieldName, connection.getKey(), (OIdentifiable) o, stats,
+                if (isEdgeBroken(
+                    vertex,
+                    fieldName,
+                    connection.getKey(),
+                    (OIdentifiable) o,
+                    stats,
                     graph.settings.isUseVertexFieldsForEdgeLabels())) {
                   vertexCorrupted = true;
                   if (!checkOnly) {
                     it.remove();
                   } else
-                    message(outputListener,
-                        "+ found corrupted vertex " + vertex + " the edge should be removed from property " + fieldName
+                    message(
+                        outputListener,
+                        "+ found corrupted vertex "
+                            + vertex
+                            + " the edge should be removed from property "
+                            + fieldName
                             + " (ridbag)\n");
                 }
               }
             }
-
           }
         }
 
         if (vertexCorrupted) {
           stats.repairedVertices++;
-          if (eventListener != null)
-            eventListener.onRepairedVertex(vertex);
+          if (eventListener != null) eventListener.onRepairedVertex(vertex);
 
           message(outputListener, "+ repaired corrupted vertex " + vertex + "\n");
           if (!checkOnly) {
@@ -366,19 +420,16 @@ public class OGraphRepair {
 
       message(outputListener, "Scanning vertices completed\n");
     }
-
   }
 
   private void onScannedLink(final ORepairStats stats, final OIdentifiable fieldValue) {
     stats.scannedLinks++;
-    if (eventListener != null)
-      eventListener.onScannedLink(fieldValue);
+    if (eventListener != null) eventListener.onScannedLink(fieldValue);
   }
 
   private void onRemovedLink(final ORepairStats stats, final OIdentifiable fieldValue) {
     stats.removedLinks++;
-    if (eventListener != null)
-      eventListener.onRemovedLink(fieldValue);
+    if (eventListener != null) eventListener.onRemovedLink(fieldValue);
   }
 
   public OStorageRecoverEventListener getEventListener() {
@@ -391,12 +442,16 @@ public class OGraphRepair {
   }
 
   private void message(final OCommandOutputListener outputListener, final String message) {
-    if (outputListener != null)
-      outputListener.onMessage(message);
+    if (outputListener != null) outputListener.onMessage(message);
   }
 
-  private boolean isEdgeBroken(final OIdentifiable vertex, final String fieldName, final Direction direction,
-      final OIdentifiable edgeRID, final ORepairStats stats, final boolean useVertexFieldsForEdgeLabels) {
+  private boolean isEdgeBroken(
+      final OIdentifiable vertex,
+      final String fieldName,
+      final Direction direction,
+      final OIdentifiable edgeRID,
+      final ORepairStats stats,
+      final boolean useVertexFieldsForEdgeLabels) {
     onScannedLink(stats, edgeRID);
 
     boolean broken = false;
@@ -417,13 +472,15 @@ public class OGraphRepair {
         broken = true;
       else {
         final OImmutableClass immutableClass = ODocumentInternal.getImmutableSchemaClass(record);
-        if (immutableClass == null || (!immutableClass.isVertexType() && !immutableClass.isEdgeType()))
+        if (immutableClass == null
+            || (!immutableClass.isVertexType() && !immutableClass.isEdgeType()))
           // INVALID RECORD TYPE: NULL OR NOT GRAPH TYPE
           broken = true;
         else {
           if (immutableClass.isVertexType()) {
             // VERTEX -> LIGHTWEIGHT EDGE
-            final String inverseFieldName = OrientVertex.getInverseConnectionFieldName(fieldName, useVertexFieldsForEdgeLabels);
+            final String inverseFieldName =
+                OrientVertex.getInverseConnectionFieldName(fieldName, useVertexFieldsForEdgeLabels);
 
             // CHECK THE VERTEX IS IN INVERSE EDGE CONTAINS
             final Object inverseEdgeContainer = record.field(inverseFieldName);

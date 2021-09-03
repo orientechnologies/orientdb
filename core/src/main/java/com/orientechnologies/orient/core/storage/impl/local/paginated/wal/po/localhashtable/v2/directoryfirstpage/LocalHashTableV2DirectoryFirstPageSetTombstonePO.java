@@ -5,15 +5,13 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.v2.DirectoryFirstPageV2;
-
 import java.nio.ByteBuffer;
 
 public final class LocalHashTableV2DirectoryFirstPageSetTombstonePO extends PageOperationRecord {
   private int tombstone;
   private int pastTombstone;
 
-  public LocalHashTableV2DirectoryFirstPageSetTombstonePO() {
-  }
+  public LocalHashTableV2DirectoryFirstPageSetTombstonePO() {}
 
   public LocalHashTableV2DirectoryFirstPageSetTombstonePO(int tombstone, int pastTombstone) {
     this.tombstone = tombstone;

@@ -15,11 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.speed;
 
-import java.io.UnsupportedEncodingException;
-import java.util.List;
-
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.test.SpeedTestMonoThread;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -27,10 +22,13 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.test.database.base.OrientTest;
+import java.io.UnsupportedEncodingException;
+import java.util.List;
+import org.testng.annotations.Test;
 
 @Test(enabled = false)
 public class SQLAsynchQuerySpeedTest extends SpeedTestMonoThread {
-  protected int               resultCount = 0;
+  protected int resultCount = 0;
   private ODatabaseDocumentTx database;
 
   public SQLAsynchQuerySpeedTest(String iURL) {
@@ -42,23 +40,27 @@ public class SQLAsynchQuerySpeedTest extends SpeedTestMonoThread {
   @SuppressWarnings("unchecked")
   public void cycle() throws UnsupportedEncodingException {
     System.out.println("1 -----------------------");
-    OrientTest.printRecords((List<? extends ORecord>) database.command(
-        new OSQLAsynchQuery<ODocument>("select * from animal where column(0) < 5 or column(0) >= 3 and column(5) < 7",
-            new OCommandResultListener() {
-              @Override
-              public boolean result(Object iRecord) {
-                OrientTest.printRecord(resultCount++, iRecord);
-                return true;
-              }
+    OrientTest.printRecords(
+        (List<? extends ORecord>)
+            database
+                .command(
+                    new OSQLAsynchQuery<ODocument>(
+                        "select * from animal where column(0) < 5 or column(0) >= 3 and column(5) < 7",
+                        new OCommandResultListener() {
+                          @Override
+                          public boolean result(Object iRecord) {
+                            OrientTest.printRecord(resultCount++, iRecord);
+                            return true;
+                          }
 
-              @Override
-              public void end() {
-              }
+                          @Override
+                          public void end() {}
 
-              @Override
-              public Object getResult() {
-                return null;
-              }
-            })).execute());
+                          @Override
+                          public Object getResult() {
+                            return null;
+                          }
+                        }))
+                .execute());
   }
 }

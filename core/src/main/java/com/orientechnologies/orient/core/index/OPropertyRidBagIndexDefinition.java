@@ -25,22 +25,20 @@ import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 /**
  * Index definition for index which is bound to field with type {@link OType#LINKBAG} .
- * 
+ *
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 1/30/14
  */
 public class OPropertyRidBagIndexDefinition extends OAbstractIndexDefinitionMultiValue {
   private static final long serialVersionUID = -8315498456603024776L;
 
-  public OPropertyRidBagIndexDefinition() {
-  }
+  public OPropertyRidBagIndexDefinition() {}
 
   public OPropertyRidBagIndexDefinition(String className, String field) {
     super(className, field, OType.LINK);
@@ -51,19 +49,23 @@ public class OPropertyRidBagIndexDefinition extends OAbstractIndexDefinitionMult
     return OType.convert(param[0], keyType.getDefaultJavaType());
   }
 
-  public void processChangeEvent(final OMultiValueChangeEvent<?, ?> changeEvent, final Map<Object, Integer> keysToAdd,
+  public void processChangeEvent(
+      final OMultiValueChangeEvent<?, ?> changeEvent,
+      final Map<Object, Integer> keysToAdd,
       final Map<Object, Integer> keysToRemove) {
     switch (changeEvent.getChangeType()) {
-    case ADD: {
-      processAdd(createSingleValue(changeEvent.getValue()), keysToAdd, keysToRemove);
-      break;
-    }
-    case REMOVE: {
-      processRemoval(createSingleValue(changeEvent.getOldValue()), keysToAdd, keysToRemove);
-      break;
-    }
-    default:
-      throw new IllegalArgumentException("Invalid change type : " + changeEvent.getChangeType());
+      case ADD:
+        {
+          processAdd(createSingleValue(changeEvent.getValue()), keysToAdd, keysToRemove);
+          break;
+        }
+      case REMOVE:
+        {
+          processRemoval(createSingleValue(changeEvent.getOldValue()), keysToAdd, keysToRemove);
+          break;
+        }
+      default:
+        throw new IllegalArgumentException("Invalid change type : " + changeEvent.getChangeType());
     }
   }
 
@@ -74,8 +76,7 @@ public class OPropertyRidBagIndexDefinition extends OAbstractIndexDefinitionMult
 
   @Override
   public Object createValue(final List<?> params) {
-    if (!(params.get(0) instanceof ORidBag))
-      return null;
+    if (!(params.get(0) instanceof ORidBag)) return null;
 
     final ORidBag ridBag = (ORidBag) params.get(0);
     final List<Object> values = new ArrayList<Object>();
@@ -88,8 +89,7 @@ public class OPropertyRidBagIndexDefinition extends OAbstractIndexDefinitionMult
 
   @Override
   public Object createValue(final Object... params) {
-    if (!(params[0] instanceof ORidBag))
-      return null;
+    if (!(params[0] instanceof ORidBag)) return null;
 
     final ORidBag ridBag = (ORidBag) params[0];
     final List<Object> values = new ArrayList<Object>();
@@ -101,7 +101,7 @@ public class OPropertyRidBagIndexDefinition extends OAbstractIndexDefinitionMult
   }
 
   @Override
-  public String toCreateIndexDDL(String indexName, String indexType,String engine) {
-    return createIndexDDLWithoutFieldType(indexName, indexType,engine).toString();
+  public String toCreateIndexDDL(String indexName, String indexType, String engine) {
+    return createIndexDDLWithoutFieldType(indexName, indexType, engine).toString();
   }
 }

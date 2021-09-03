@@ -1,16 +1,17 @@
 /**
  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
- * <p>
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
- * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS"
- * BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language
- * governing permissions and limitations under the License.
- * <p>
- * For more information: http://orientdb.com
+ *
+ * <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ * except in compliance with the License. You may obtain a copy of the License at
+ *
+ * <p>http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * <p>Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * <p>For more information: http://orientdb.com
  */
 package com.orientechnologies.orient.jdbc;
 
@@ -29,7 +30,6 @@ import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.parser.OSelectStatement;
 import com.orientechnologies.orient.core.sql.parser.OrientSql;
 import com.orientechnologies.orient.core.sql.parser.ParseException;
-
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.Reader;
@@ -66,12 +66,12 @@ import java.util.stream.Collectors;
  */
 public class OrientJdbcResultSet implements ResultSet {
   private final OrientJdbcResultSetMetaData resultSetMetaData;
-  private final List<String>                fieldNames;
-  private       List<OResult>               records;
-  private       OrientJdbcStatement         statement;
-  private       OResult                     result;
+  private final List<String> fieldNames;
+  private List<OResult> records;
+  private OrientJdbcStatement statement;
+  private OResult result;
 
-  private int cursor   = -1;
+  private int cursor = -1;
   private int rowCount = 0;
   private int type;
   private int concurrency;
@@ -79,8 +79,13 @@ public class OrientJdbcResultSet implements ResultSet {
 
   private boolean lastReadWasNull = true;
 
-  protected OrientJdbcResultSet(final OrientJdbcStatement statement, final OResultSet oResultSet, final int type,
-      final int concurrency, int holdability) throws SQLException {
+  protected OrientJdbcResultSet(
+      final OrientJdbcStatement statement,
+      final OResultSet oResultSet,
+      final int type,
+      final int concurrency,
+      int holdability)
+      throws SQLException {
 
     this.statement = statement;
     try {
@@ -100,25 +105,41 @@ public class OrientJdbcResultSet implements ResultSet {
     fieldNames = extractFieldNames(statement);
 
     activateDatabaseOnCurrentThread();
-    if (type == TYPE_FORWARD_ONLY || type == TYPE_SCROLL_INSENSITIVE || type == TYPE_SCROLL_SENSITIVE)
-      this.type = type;
+    if (type == TYPE_FORWARD_ONLY
+        || type == TYPE_SCROLL_INSENSITIVE
+        || type == TYPE_SCROLL_SENSITIVE) this.type = type;
     else
-      throw new SQLException("Bad ResultSet type: " + type + " instead of one of the following values: " + TYPE_FORWARD_ONLY + ", "
-          + TYPE_SCROLL_INSENSITIVE + " or" + TYPE_SCROLL_SENSITIVE);
+      throw new SQLException(
+          "Bad ResultSet type: "
+              + type
+              + " instead of one of the following values: "
+              + TYPE_FORWARD_ONLY
+              + ", "
+              + TYPE_SCROLL_INSENSITIVE
+              + " or"
+              + TYPE_SCROLL_SENSITIVE);
 
     if (concurrency == CONCUR_READ_ONLY || concurrency == CONCUR_UPDATABLE)
       this.concurrency = concurrency;
     else
       throw new SQLException(
-          "Bad ResultSet Concurrency type: " + concurrency + " instead of one of the following values: " + CONCUR_READ_ONLY + " or"
+          "Bad ResultSet Concurrency type: "
+              + concurrency
+              + " instead of one of the following values: "
+              + CONCUR_READ_ONLY
+              + " or"
               + CONCUR_UPDATABLE);
 
     if (holdability == HOLD_CURSORS_OVER_COMMIT || holdability == CLOSE_CURSORS_AT_COMMIT)
       this.holdability = holdability;
     else
       throw new SQLException(
-          "Bad ResultSet Holdability type: " + holdability + " instead of one of the following values: " + HOLD_CURSORS_OVER_COMMIT
-              + " or" + CLOSE_CURSORS_AT_COMMIT);
+          "Bad ResultSet Holdability type: "
+              + holdability
+              + " instead of one of the following values: "
+              + HOLD_CURSORS_OVER_COMMIT
+              + " or"
+              + CLOSE_CURSORS_AT_COMMIT);
 
     resultSetMetaData = new OrientJdbcResultSetMetaData(this, fieldNames);
   }
@@ -131,16 +152,25 @@ public class OrientJdbcResultSet implements ResultSet {
         OrientSql osql = null;
         ODatabaseDocumentInternal db = null;
         try {
-          db = (ODatabaseDocumentInternal) ((OrientJdbcConnection) statement.getConnection()).getDatabase();
+          db =
+              (ODatabaseDocumentInternal)
+                  ((OrientJdbcConnection) statement.getConnection()).getDatabase();
           if (db == null) {
             osql = new OrientSql(new ByteArrayInputStream(statement.sql.getBytes()));
           } else {
-            osql = new OrientSql(new ByteArrayInputStream(statement.sql.getBytes()),
-                db.getStorage().getConfiguration().getCharset());
+            osql =
+                new OrientSql(
+                    new ByteArrayInputStream(statement.sql.getBytes()),
+                    db.getStorage().getConfiguration().getCharset());
           }
         } catch (UnsupportedEncodingException e) {
           OLogManager.instance()
-              .warn(this, "Invalid charset for database " + db + " " + db.getStorage().getConfiguration().getCharset());
+              .warn(
+                  this,
+                  "Invalid charset for database "
+                      + db
+                      + " "
+                      + db.getStorage().getConfiguration().getCharset());
           osql = new OrientSql(new ByteArrayInputStream(statement.sql.getBytes()));
         } catch (Exception e) {
           throw new RuntimeException(e);
@@ -148,14 +178,15 @@ public class OrientJdbcResultSet implements ResultSet {
 
         final OSelectStatement select = osql.SelectStatement();
         if (select.getProjection() != null) {
-          boolean isMappable = select.getProjection().getItems().stream().peek(i -> fields.add(i.getProjectionAliasAsString()))
-              .allMatch(i -> i.getExpression().isBaseIdentifier());
-          if (!isMappable)
-            fields.clear();
+          boolean isMappable =
+              select.getProjection().getItems().stream()
+                  .peek(i -> fields.add(i.getProjectionAliasAsString()))
+                  .allMatch(i -> i.getExpression().isBaseIdentifier());
+          if (!isMappable) fields.clear();
         }
 
       } catch (ParseException e) {
-        //NOOP
+        // NOOP
       }
     }
     if (fields.isEmpty()) {
@@ -256,30 +287,36 @@ public class OrientJdbcResultSet implements ResultSet {
     int column = 0;
     int i = 0;
     while (i < (fieldNames.size() - 1) && column == 0) {
-      if (fieldNames.get(i).equals(columnLabel))
-        column = i + 1;
-      else
-        i++;
+      if (fieldNames.get(i).equals(columnLabel)) column = i + 1;
+      else i++;
     }
     if (column == 0)
-      throw new SQLException("The column '" + columnLabel + "' does not exists (Result Set element: " + rowCount + ")");
+      throw new SQLException(
+          "The column '"
+              + columnLabel
+              + "' does not exists (Result Set element: "
+              + rowCount
+              + ")");
     return column;
   }
 
   private int getFieldIndex(final int columnIndex) throws SQLException {
-    if (columnIndex < 1)
-      throw new SQLException("The column index cannot be less than 1");
+    if (columnIndex < 1) throw new SQLException("The column index cannot be less than 1");
     return columnIndex - 1;
   }
 
   public Array getArray(int columnIndex) throws SQLException {
     return getArray(fieldNames.get(getFieldIndex(columnIndex)));
-
   }
 
   public Array getArray(String columnLabel) throws SQLException {
 
-    OType columnType = result.toElement().getSchemaType().map(t -> t.getProperty(columnLabel).getType()).orElse(OType.EMBEDDEDLIST);
+    OType columnType =
+        result
+            .toElement()
+            .getSchemaType()
+            .map(t -> t.getProperty(columnLabel).getType())
+            .orElse(OType.EMBEDDEDLIST);
 
     assert columnType.isEmbedded() && columnType.isMultiValue();
 
@@ -310,7 +347,11 @@ public class OrientJdbcResultSet implements ResultSet {
       lastReadWasNull = r == null;
       return r;
     } catch (Exception e) {
-      throw new SQLException("An error occurred during the retrieval of the double value at column '" + columnLabel + "'", e);
+      throw new SQLException(
+          "An error occurred during the retrieval of the double value at column '"
+              + columnLabel
+              + "'",
+          e);
     }
   }
 
@@ -326,7 +367,11 @@ public class OrientJdbcResultSet implements ResultSet {
       lastReadWasNull = r == null;
       return r;
     } catch (Exception e) {
-      throw new SQLException("An error occurred during the retrieval of the double value at column '" + columnLabel + "'", e);
+      throw new SQLException(
+          "An error occurred during the retrieval of the double value at column '"
+              + columnLabel
+              + "'",
+          e);
     }
   }
 
@@ -340,7 +385,11 @@ public class OrientJdbcResultSet implements ResultSet {
       lastReadWasNull = blob == null;
       return blob != null ? blob.getBinaryStream() : null;
     } catch (Exception e) {
-      throw new SQLException("An error occurred during the retrieval of the binary stream at column '" + columnLabel + "'", e);
+      throw new SQLException(
+          "An error occurred during the retrieval of the binary stream at column '"
+              + columnLabel
+              + "'",
+          e);
     }
   }
 
@@ -371,7 +420,6 @@ public class OrientJdbcResultSet implements ResultSet {
           OBlob ob = statement.database.load(listElement.getIdentity());
 
           binaryRecordList.add(ob);
-
         }
         lastReadWasNull = false;
         return new OrientBlob(binaryRecordList);
@@ -380,9 +428,9 @@ public class OrientJdbcResultSet implements ResultSet {
       lastReadWasNull = true;
       return null;
     } catch (Exception e) {
-      throw new SQLException("An error occurred during the retrieval of the BLOB at column '" + columnLabel + "'", e);
+      throw new SQLException(
+          "An error occurred during the retrieval of the BLOB at column '" + columnLabel + "'", e);
     }
-
   }
 
   public boolean getBoolean(int columnIndex) throws SQLException {
@@ -397,10 +445,12 @@ public class OrientJdbcResultSet implements ResultSet {
       return Boolean.TRUE.equals(r);
     } catch (Exception e) {
       throw new SQLException(
-          "An error occurred during the retrieval of the boolean value at column '" + columnLabel + "' ---> " + result.toElement()
-              .toJSON(), e);
+          "An error occurred during the retrieval of the boolean value at column '"
+              + columnLabel
+              + "' ---> "
+              + result.toElement().toJSON(),
+          e);
     }
-
   }
 
   @SuppressWarnings("boxing")
@@ -414,7 +464,11 @@ public class OrientJdbcResultSet implements ResultSet {
       lastReadWasNull = r == null;
       return r == null ? 0 : r;
     } catch (Exception e) {
-      throw new SQLException("An error occurred during the retrieval of the byte value at column '" + columnLabel + "'", e);
+      throw new SQLException(
+          "An error occurred during the retrieval of the byte value at column '"
+              + columnLabel
+              + "'",
+          e);
     }
   }
 
@@ -439,7 +493,11 @@ public class OrientJdbcResultSet implements ResultSet {
         return r;
       }
     } catch (Exception e) {
-      throw new SQLException("An error occurred during the retrieval of the bytes value at column '" + columnLabel + "'", e);
+      throw new SQLException(
+          "An error occurred during the retrieval of the bytes value at column '"
+              + columnLabel
+              + "'",
+          e);
     }
   }
 
@@ -483,7 +541,11 @@ public class OrientJdbcResultSet implements ResultSet {
       lastReadWasNull = date == null;
       return date != null ? new Date(date.getTime()) : null;
     } catch (Exception e) {
-      throw new SQLException("An error occurred during the retrieval of the date value at column '" + columnLabel + "'", e);
+      throw new SQLException(
+          "An error occurred during the retrieval of the date value at column '"
+              + columnLabel
+              + "'",
+          e);
     }
   }
 
@@ -492,8 +554,7 @@ public class OrientJdbcResultSet implements ResultSet {
   }
 
   public Date getDate(String columnLabel, Calendar cal) throws SQLException {
-    if (cal == null)
-      throw new SQLException();
+    if (cal == null) throw new SQLException();
     try {
       activateDatabaseOnCurrentThread();
 
@@ -508,7 +569,11 @@ public class OrientJdbcResultSet implements ResultSet {
       return new Date(cal.getTimeInMillis());
     } catch (Exception e) {
       throw new SQLException(
-          "An error occurred during the retrieval of the date value (calendar) " + "at column '" + columnLabel + "'", e);
+          "An error occurred during the retrieval of the date value (calendar) "
+              + "at column '"
+              + columnLabel
+              + "'",
+          e);
     }
   }
 
@@ -523,7 +588,11 @@ public class OrientJdbcResultSet implements ResultSet {
       lastReadWasNull = r == null;
       return r != null ? r : 0;
     } catch (Exception e) {
-      throw new SQLException("An error occurred during the retrieval of the double value at column '" + columnLabel + "'", e);
+      throw new SQLException(
+          "An error occurred during the retrieval of the double value at column '"
+              + columnLabel
+              + "'",
+          e);
     }
   }
 
@@ -531,17 +600,13 @@ public class OrientJdbcResultSet implements ResultSet {
     return 0;
   }
 
-  public void setFetchDirection(int direction) throws SQLException {
-
-  }
+  public void setFetchDirection(int direction) throws SQLException {}
 
   public int getFetchSize() throws SQLException {
     return rowCount;
   }
 
-  public void setFetchSize(int rows) throws SQLException {
-
-  }
+  public void setFetchSize(int rows) throws SQLException {}
 
   public float getFloat(int columnIndex) throws SQLException {
 
@@ -554,7 +619,11 @@ public class OrientJdbcResultSet implements ResultSet {
       lastReadWasNull = r == null;
       return r != null ? r : 0;
     } catch (Exception e) {
-      throw new SQLException("An error occurred during the retrieval of the float value at column '" + columnLabel + "'", e);
+      throw new SQLException(
+          "An error occurred during the retrieval of the float value at column '"
+              + columnLabel
+              + "'",
+          e);
     }
   }
 
@@ -567,8 +636,7 @@ public class OrientJdbcResultSet implements ResultSet {
   }
 
   public int getInt(String columnLabel) throws SQLException {
-    if ("@version".equals(columnLabel))
-      return result.toElement().getVersion();
+    if ("@version".equals(columnLabel)) return result.toElement().getVersion();
 
     try {
       final Integer r = result.getProperty(columnLabel);
@@ -576,7 +644,11 @@ public class OrientJdbcResultSet implements ResultSet {
       return r != null ? r : 0;
 
     } catch (Exception e) {
-      throw new SQLException("An error occurred during the retrieval of the integer value at column '" + columnLabel + "'", e);
+      throw new SQLException(
+          "An error occurred during the retrieval of the integer value at column '"
+              + columnLabel
+              + "'",
+          e);
     }
   }
 
@@ -591,7 +663,11 @@ public class OrientJdbcResultSet implements ResultSet {
       lastReadWasNull = r == null;
       return r != null ? r : 0;
     } catch (Exception e) {
-      throw new SQLException("An error occurred during the retrieval of the long value at column '" + columnLabel + "'", e);
+      throw new SQLException(
+          "An error occurred during the retrieval of the long value at column '"
+              + columnLabel
+              + "'",
+          e);
     }
   }
 
@@ -625,7 +701,11 @@ public class OrientJdbcResultSet implements ResultSet {
       lastReadWasNull = r == null;
       return r;
     } catch (Exception e) {
-      throw new SQLException("An error occurred during the retrieval of the string value at column '" + columnLabel + "'", e);
+      throw new SQLException(
+          "An error occurred during the retrieval of the string value at column '"
+              + columnLabel
+              + "'",
+          e);
     }
   }
 
@@ -666,7 +746,11 @@ public class OrientJdbcResultSet implements ResultSet {
         }
       }
     } catch (Exception e) {
-      throw new SQLException("An error occurred during the retrieval of the Java Object at column '" + columnLabel + "'", e);
+      throw new SQLException(
+          "An error occurred during the retrieval of the Java Object at column '"
+              + columnLabel
+              + "'",
+          e);
     }
   }
 
@@ -697,7 +781,8 @@ public class OrientJdbcResultSet implements ResultSet {
       lastReadWasNull = false;
       return new OrientRowId(result.toElement().getIdentity());
     } catch (Exception e) {
-      throw new SQLException("An error occurred during the retrieval of the rowid for record '" + result + "'", e);
+      throw new SQLException(
+          "An error occurred during the retrieval of the rowid for record '" + result + "'", e);
     }
   }
 
@@ -728,7 +813,11 @@ public class OrientJdbcResultSet implements ResultSet {
       return r != null ? r : 0;
 
     } catch (Exception e) {
-      throw new SQLException("An error occurred during the retrieval of the short value at column '" + columnLabel + "'", e);
+      throw new SQLException(
+          "An error occurred during the retrieval of the short value at column '"
+              + columnLabel
+              + "'",
+          e);
     }
   }
 
@@ -754,9 +843,12 @@ public class OrientJdbcResultSet implements ResultSet {
       lastReadWasNull = r == null;
       return r;
     } catch (Exception e) {
-      throw new SQLException("An error occurred during the retrieval of the string value at column '" + columnLabel + "'", e);
+      throw new SQLException(
+          "An error occurred during the retrieval of the string value at column '"
+              + columnLabel
+              + "'",
+          e);
     }
-
   }
 
   public Time getTime(int columnIndex) throws SQLException {
@@ -769,7 +861,11 @@ public class OrientJdbcResultSet implements ResultSet {
       lastReadWasNull = date == null;
       return getTime(date);
     } catch (Exception e) {
-      throw new SQLException("An error occurred during the retrieval of the time value at column '" + columnLabel + "'", e);
+      throw new SQLException(
+          "An error occurred during the retrieval of the time value at column '"
+              + columnLabel
+              + "'",
+          e);
     }
   }
 
@@ -846,21 +942,13 @@ public class OrientJdbcResultSet implements ResultSet {
     return null;
   }
 
-  public void insertRow() throws SQLException {
+  public void insertRow() throws SQLException {}
 
-  }
+  public void moveToCurrentRow() throws SQLException {}
 
-  public void moveToCurrentRow() throws SQLException {
+  public void moveToInsertRow() throws SQLException {}
 
-  }
-
-  public void moveToInsertRow() throws SQLException {
-
-  }
-
-  public void refreshRow() throws SQLException {
-
-  }
+  public void refreshRow() throws SQLException {}
 
   public boolean rowDeleted() throws SQLException {
 
@@ -877,337 +965,180 @@ public class OrientJdbcResultSet implements ResultSet {
     return false;
   }
 
-  public void updateArray(int columnIndex, Array x) throws SQLException {
+  public void updateArray(int columnIndex, Array x) throws SQLException {}
 
-  }
+  public void updateArray(String columnLabel, Array x) throws SQLException {}
 
-  public void updateArray(String columnLabel, Array x) throws SQLException {
+  public void updateAsciiStream(int columnIndex, InputStream x) throws SQLException {}
 
-  }
+  public void updateAsciiStream(String columnLabel, InputStream x) throws SQLException {}
 
-  public void updateAsciiStream(int columnIndex, InputStream x) throws SQLException {
+  public void updateAsciiStream(int columnIndex, InputStream x, int length) throws SQLException {}
 
-  }
+  public void updateAsciiStream(String columnLabel, InputStream x, int length)
+      throws SQLException {}
 
-  public void updateAsciiStream(String columnLabel, InputStream x) throws SQLException {
+  public void updateAsciiStream(int columnIndex, InputStream x, long length) throws SQLException {}
 
-  }
+  public void updateAsciiStream(String columnLabel, InputStream x, long length)
+      throws SQLException {}
 
-  public void updateAsciiStream(int columnIndex, InputStream x, int length) throws SQLException {
+  public void updateBigDecimal(int columnIndex, BigDecimal x) throws SQLException {}
 
-  }
+  public void updateBigDecimal(String columnLabel, BigDecimal x) throws SQLException {}
 
-  public void updateAsciiStream(String columnLabel, InputStream x, int length) throws SQLException {
+  public void updateBinaryStream(int columnIndex, InputStream x) throws SQLException {}
 
-  }
+  public void updateBinaryStream(String columnLabel, InputStream x) throws SQLException {}
 
-  public void updateAsciiStream(int columnIndex, InputStream x, long length) throws SQLException {
+  public void updateBinaryStream(int columnIndex, InputStream x, int length) throws SQLException {}
 
-  }
+  public void updateBinaryStream(String columnLabel, InputStream x, int length)
+      throws SQLException {}
 
-  public void updateAsciiStream(String columnLabel, InputStream x, long length) throws SQLException {
+  public void updateBinaryStream(int columnIndex, InputStream x, long length) throws SQLException {}
 
-  }
+  public void updateBinaryStream(String columnLabel, InputStream x, long length)
+      throws SQLException {}
 
-  public void updateBigDecimal(int columnIndex, BigDecimal x) throws SQLException {
+  public void updateBlob(int columnIndex, Blob x) throws SQLException {}
 
-  }
+  public void updateBlob(String columnLabel, Blob x) throws SQLException {}
 
-  public void updateBigDecimal(String columnLabel, BigDecimal x) throws SQLException {
+  public void updateBlob(int columnIndex, InputStream inputStream) throws SQLException {}
 
-  }
+  public void updateBlob(String columnLabel, InputStream inputStream) throws SQLException {}
 
-  public void updateBinaryStream(int columnIndex, InputStream x) throws SQLException {
+  public void updateBlob(int columnIndex, InputStream inputStream, long length)
+      throws SQLException {}
 
-  }
+  public void updateBlob(String columnLabel, InputStream inputStream, long length)
+      throws SQLException {}
 
-  public void updateBinaryStream(String columnLabel, InputStream x) throws SQLException {
+  public void updateBoolean(int columnIndex, boolean x) throws SQLException {}
 
-  }
+  public void updateBoolean(String columnLabel, boolean x) throws SQLException {}
 
-  public void updateBinaryStream(int columnIndex, InputStream x, int length) throws SQLException {
+  public void updateByte(int columnIndex, byte x) throws SQLException {}
 
-  }
+  public void updateByte(String columnLabel, byte x) throws SQLException {}
 
-  public void updateBinaryStream(String columnLabel, InputStream x, int length) throws SQLException {
+  public void updateBytes(int columnIndex, byte[] x) throws SQLException {}
 
-  }
+  public void updateBytes(String columnLabel, byte[] x) throws SQLException {}
 
-  public void updateBinaryStream(int columnIndex, InputStream x, long length) throws SQLException {
+  public void updateCharacterStream(int columnIndex, Reader x) throws SQLException {}
 
-  }
+  public void updateCharacterStream(String columnLabel, Reader reader) throws SQLException {}
 
-  public void updateBinaryStream(String columnLabel, InputStream x, long length) throws SQLException {
+  public void updateCharacterStream(int columnIndex, Reader x, int length) throws SQLException {}
 
-  }
+  public void updateCharacterStream(String columnLabel, Reader reader, int length)
+      throws SQLException {}
 
-  public void updateBlob(int columnIndex, Blob x) throws SQLException {
+  public void updateCharacterStream(int columnIndex, Reader x, long length) throws SQLException {}
 
-  }
+  public void updateCharacterStream(String columnLabel, Reader reader, long length)
+      throws SQLException {}
 
-  public void updateBlob(String columnLabel, Blob x) throws SQLException {
+  public void updateClob(int columnIndex, Clob x) throws SQLException {}
 
-  }
+  public void updateClob(String columnLabel, Clob x) throws SQLException {}
 
-  public void updateBlob(int columnIndex, InputStream inputStream) throws SQLException {
+  public void updateClob(int columnIndex, Reader reader) throws SQLException {}
 
-  }
+  public void updateClob(String columnLabel, Reader reader) throws SQLException {}
 
-  public void updateBlob(String columnLabel, InputStream inputStream) throws SQLException {
+  public void updateClob(int columnIndex, Reader reader, long length) throws SQLException {}
 
-  }
+  public void updateClob(String columnLabel, Reader reader, long length) throws SQLException {}
 
-  public void updateBlob(int columnIndex, InputStream inputStream, long length) throws SQLException {
+  public void updateDate(int columnIndex, Date x) throws SQLException {}
 
-  }
+  public void updateDate(String columnLabel, Date x) throws SQLException {}
 
-  public void updateBlob(String columnLabel, InputStream inputStream, long length) throws SQLException {
+  public void updateDouble(int columnIndex, double x) throws SQLException {}
 
-  }
+  public void updateDouble(String columnLabel, double x) throws SQLException {}
 
-  public void updateBoolean(int columnIndex, boolean x) throws SQLException {
+  public void updateFloat(int columnIndex, float x) throws SQLException {}
 
-  }
+  public void updateFloat(String columnLabel, float x) throws SQLException {}
 
-  public void updateBoolean(String columnLabel, boolean x) throws SQLException {
+  public void updateInt(int columnIndex, int x) throws SQLException {}
 
-  }
+  public void updateInt(String columnLabel, int x) throws SQLException {}
 
-  public void updateByte(int columnIndex, byte x) throws SQLException {
+  public void updateLong(int columnIndex, long x) throws SQLException {}
 
-  }
+  public void updateLong(String columnLabel, long x) throws SQLException {}
 
-  public void updateByte(String columnLabel, byte x) throws SQLException {
+  public void updateNCharacterStream(int columnIndex, Reader x) throws SQLException {}
 
-  }
+  public void updateNCharacterStream(String columnLabel, Reader reader) throws SQLException {}
 
-  public void updateBytes(int columnIndex, byte[] x) throws SQLException {
+  public void updateNCharacterStream(int columnIndex, Reader x, long length) throws SQLException {}
 
-  }
+  public void updateNCharacterStream(String columnLabel, Reader reader, long length)
+      throws SQLException {}
 
-  public void updateBytes(String columnLabel, byte[] x) throws SQLException {
+  public void updateNClob(int columnIndex, NClob nClob) throws SQLException {}
 
-  }
+  public void updateNClob(String columnLabel, NClob nClob) throws SQLException {}
 
-  public void updateCharacterStream(int columnIndex, Reader x) throws SQLException {
+  public void updateNClob(int columnIndex, Reader reader) throws SQLException {}
 
-  }
+  public void updateNClob(String columnLabel, Reader reader) throws SQLException {}
 
-  public void updateCharacterStream(String columnLabel, Reader reader) throws SQLException {
+  public void updateNClob(int columnIndex, Reader reader, long length) throws SQLException {}
 
-  }
+  public void updateNClob(String columnLabel, Reader reader, long length) throws SQLException {}
 
-  public void updateCharacterStream(int columnIndex, Reader x, int length) throws SQLException {
+  public void updateNString(int columnIndex, String nString) throws SQLException {}
 
-  }
+  public void updateNString(String columnLabel, String nString) throws SQLException {}
 
-  public void updateCharacterStream(String columnLabel, Reader reader, int length) throws SQLException {
+  public void updateNull(int columnIndex) throws SQLException {}
 
-  }
+  public void updateNull(String columnLabel) throws SQLException {}
 
-  public void updateCharacterStream(int columnIndex, Reader x, long length) throws SQLException {
+  public void updateObject(int columnIndex, Object x) throws SQLException {}
 
-  }
+  public void updateObject(String columnLabel, Object x) throws SQLException {}
 
-  public void updateCharacterStream(String columnLabel, Reader reader, long length) throws SQLException {
+  public void updateObject(int columnIndex, Object x, int scaleOrLength) throws SQLException {}
 
-  }
+  public void updateObject(String columnLabel, Object x, int scaleOrLength) throws SQLException {}
 
-  public void updateClob(int columnIndex, Clob x) throws SQLException {
+  public void updateRef(int columnIndex, Ref x) throws SQLException {}
 
-  }
+  public void updateRef(String columnLabel, Ref x) throws SQLException {}
 
-  public void updateClob(String columnLabel, Clob x) throws SQLException {
+  public void updateRow() throws SQLException {}
 
-  }
+  public void updateRowId(int columnIndex, RowId x) throws SQLException {}
 
-  public void updateClob(int columnIndex, Reader reader) throws SQLException {
+  public void updateRowId(String columnLabel, RowId x) throws SQLException {}
 
-  }
+  public void updateSQLXML(int columnIndex, SQLXML xmlObject) throws SQLException {}
 
-  public void updateClob(String columnLabel, Reader reader) throws SQLException {
+  public void updateSQLXML(String columnLabel, SQLXML xmlObject) throws SQLException {}
 
-  }
+  public void updateShort(int columnIndex, short x) throws SQLException {}
 
-  public void updateClob(int columnIndex, Reader reader, long length) throws SQLException {
+  public void updateShort(String columnLabel, short x) throws SQLException {}
 
-  }
+  public void updateString(int columnIndex, String x) throws SQLException {}
 
-  public void updateClob(String columnLabel, Reader reader, long length) throws SQLException {
+  public void updateString(String columnLabel, String x) throws SQLException {}
 
-  }
+  public void updateTime(int columnIndex, Time x) throws SQLException {}
 
-  public void updateDate(int columnIndex, Date x) throws SQLException {
+  public void updateTime(String columnLabel, Time x) throws SQLException {}
 
-  }
+  public void updateTimestamp(int columnIndex, Timestamp x) throws SQLException {}
 
-  public void updateDate(String columnLabel, Date x) throws SQLException {
-
-  }
-
-  public void updateDouble(int columnIndex, double x) throws SQLException {
-
-  }
-
-  public void updateDouble(String columnLabel, double x) throws SQLException {
-
-  }
-
-  public void updateFloat(int columnIndex, float x) throws SQLException {
-
-  }
-
-  public void updateFloat(String columnLabel, float x) throws SQLException {
-
-  }
-
-  public void updateInt(int columnIndex, int x) throws SQLException {
-
-  }
-
-  public void updateInt(String columnLabel, int x) throws SQLException {
-
-  }
-
-  public void updateLong(int columnIndex, long x) throws SQLException {
-
-  }
-
-  public void updateLong(String columnLabel, long x) throws SQLException {
-
-  }
-
-  public void updateNCharacterStream(int columnIndex, Reader x) throws SQLException {
-
-  }
-
-  public void updateNCharacterStream(String columnLabel, Reader reader) throws SQLException {
-
-  }
-
-  public void updateNCharacterStream(int columnIndex, Reader x, long length) throws SQLException {
-
-  }
-
-  public void updateNCharacterStream(String columnLabel, Reader reader, long length) throws SQLException {
-
-  }
-
-  public void updateNClob(int columnIndex, NClob nClob) throws SQLException {
-
-  }
-
-  public void updateNClob(String columnLabel, NClob nClob) throws SQLException {
-
-  }
-
-  public void updateNClob(int columnIndex, Reader reader) throws SQLException {
-
-  }
-
-  public void updateNClob(String columnLabel, Reader reader) throws SQLException {
-
-  }
-
-  public void updateNClob(int columnIndex, Reader reader, long length) throws SQLException {
-
-  }
-
-  public void updateNClob(String columnLabel, Reader reader, long length) throws SQLException {
-
-  }
-
-  public void updateNString(int columnIndex, String nString) throws SQLException {
-
-  }
-
-  public void updateNString(String columnLabel, String nString) throws SQLException {
-
-  }
-
-  public void updateNull(int columnIndex) throws SQLException {
-
-  }
-
-  public void updateNull(String columnLabel) throws SQLException {
-
-  }
-
-  public void updateObject(int columnIndex, Object x) throws SQLException {
-
-  }
-
-  public void updateObject(String columnLabel, Object x) throws SQLException {
-
-  }
-
-  public void updateObject(int columnIndex, Object x, int scaleOrLength) throws SQLException {
-
-  }
-
-  public void updateObject(String columnLabel, Object x, int scaleOrLength) throws SQLException {
-
-  }
-
-  public void updateRef(int columnIndex, Ref x) throws SQLException {
-
-  }
-
-  public void updateRef(String columnLabel, Ref x) throws SQLException {
-
-  }
-
-  public void updateRow() throws SQLException {
-
-  }
-
-  public void updateRowId(int columnIndex, RowId x) throws SQLException {
-
-  }
-
-  public void updateRowId(String columnLabel, RowId x) throws SQLException {
-
-  }
-
-  public void updateSQLXML(int columnIndex, SQLXML xmlObject) throws SQLException {
-
-  }
-
-  public void updateSQLXML(String columnLabel, SQLXML xmlObject) throws SQLException {
-
-  }
-
-  public void updateShort(int columnIndex, short x) throws SQLException {
-
-  }
-
-  public void updateShort(String columnLabel, short x) throws SQLException {
-
-  }
-
-  public void updateString(int columnIndex, String x) throws SQLException {
-
-  }
-
-  public void updateString(String columnLabel, String x) throws SQLException {
-
-  }
-
-  public void updateTime(int columnIndex, Time x) throws SQLException {
-
-  }
-
-  public void updateTime(String columnLabel, Time x) throws SQLException {
-
-  }
-
-  public void updateTimestamp(int columnIndex, Timestamp x) throws SQLException {
-
-  }
-
-  public void updateTimestamp(String columnLabel, Timestamp x) throws SQLException {
-
-  }
+  public void updateTimestamp(String columnLabel, Timestamp x) throws SQLException {}
 
   public boolean wasNull() throws SQLException {
     return lastReadWasNull;
@@ -1225,11 +1156,9 @@ public class OrientJdbcResultSet implements ResultSet {
     }
   }
 
-  public void cancelRowUpdates() throws SQLException {
-  }
+  public void cancelRowUpdates() throws SQLException {}
 
-  public void clearWarnings() throws SQLException {
-  }
+  public void clearWarnings() throws SQLException {}
 
   public <T> T getObject(int arg0, Class<T> arg1) throws SQLException {
     return null;

@@ -17,12 +17,10 @@ package com.orientechnologies.lucene.engine;
 
 import org.apache.lucene.store.Directory;
 
-/**
- * @author mdjurovi
- */
+/** @author mdjurovi */
 public class OLuceneDirectory {
   private final Directory dir;
-  private final String    path;
+  private final String path;
 
   public OLuceneDirectory(final Directory dir, final String path) {
     this.dir = dir;

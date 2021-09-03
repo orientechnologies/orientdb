@@ -18,19 +18,21 @@ public class CustomDatatypeTest {
       // WrappedString custom datatype registration (storing it as
       // OType.STRING)
       OObjectSerializerContext serializerContext = new OObjectSerializerContext();
-      serializerContext.bind(new OObjectSerializer<WrappedString, String>() {
-        @Override
-        public String serializeFieldValue(Class<?> iClass, WrappedString iFieldValue) {
-          return iFieldValue.getValue();
-        }
+      serializerContext.bind(
+          new OObjectSerializer<WrappedString, String>() {
+            @Override
+            public String serializeFieldValue(Class<?> iClass, WrappedString iFieldValue) {
+              return iFieldValue.getValue();
+            }
 
-        @Override
-        public WrappedString unserializeFieldValue(Class<?> iClass, String iFieldValue) {
-          final WrappedString result = new WrappedString();
-          result.setValue(iFieldValue);
-          return result;
-        }
-      }, db);
+            @Override
+            public WrappedString unserializeFieldValue(Class<?> iClass, String iFieldValue) {
+              final WrappedString result = new WrappedString();
+              result.setValue(iFieldValue);
+              return result;
+            }
+          },
+          db);
       OObjectSerializerHelper.bindSerializerContext(WrappedString.class, serializerContext);
 
       // we want schema to be generated
@@ -40,7 +42,9 @@ public class CustomDatatypeTest {
       db.getEntityManager().registerEntityClass(Entity.class);
 
       // Validate DB did figure out schema properly
-      Assert.assertEquals(db.getMetadata().getSchema().getClass(Entity.class).getProperty("data").getType(), OType.STRING);
+      Assert.assertEquals(
+          db.getMetadata().getSchema().getClass(Entity.class).getProperty("data").getType(),
+          OType.STRING);
     } finally {
       db.drop();
     }
@@ -64,7 +68,7 @@ public class CustomDatatypeTest {
   }
 
   public static class Entity {
-    private String        name;
+    private String name;
 
     private WrappedString data;
 

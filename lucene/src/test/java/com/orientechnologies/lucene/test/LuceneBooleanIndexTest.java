@@ -13,7 +13,7 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.test;
@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import java.util.List;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -36,11 +37,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.List;
-
-/**
- * Created by Enrico Risa on 29/04/15.
- */
+/** Created by Enrico Risa on 29/04/15. */
 public class LuceneBooleanIndexTest extends BaseLuceneTest {
 
   @Before
@@ -51,8 +48,10 @@ public class LuceneBooleanIndexTest extends BaseLuceneTest {
     song.setSuperClass(v);
     song.createProperty("isDeleted", OType.BOOLEAN);
 
-    db.command(new OCommandSQL("create index Person.isDeleted on Person (isDeleted) FULLTEXT ENGINE LUCENE")).execute();
-
+    db.command(
+            new OCommandSQL(
+                "create index Person.isDeleted on Person (isDeleted) FULLTEXT ENGINE LUCENE"))
+        .execute();
   }
 
   @Test
@@ -64,11 +63,13 @@ public class LuceneBooleanIndexTest extends BaseLuceneTest {
       db.save(doc);
     }
 
-    List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>("select from Person where isDeleted lucene false"));
+    List<ODocument> docs =
+        db.query(new OSQLSynchQuery<ODocument>("select from Person where isDeleted lucene false"));
 
     Assert.assertEquals(500, docs.size());
     Assert.assertEquals(false, docs.get(0).field("isDeleted"));
-    docs = db.query(new OSQLSynchQuery<ODocument>("select from Person where isDeleted lucene true"));
+    docs =
+        db.query(new OSQLSynchQuery<ODocument>("select from Person where isDeleted lucene true"));
 
     Assert.assertEquals(500, docs.size());
     Assert.assertEquals(true, docs.get(0).field("isDeleted"));
@@ -89,7 +90,5 @@ public class LuceneBooleanIndexTest extends BaseLuceneTest {
 
     QueryParser parser = new QueryParser("text", analyzer);
     float score = index.search(parser.parse("+text:my"));
-
   }
-
 }

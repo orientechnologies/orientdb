@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -9,12 +8,11 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.server.distributed.ServerRun;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
+import com.orientechnologies.orient.setup.ServerRun;
+import java.util.concurrent.Callable;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.concurrent.Callable;
 
 public class ConcurrentDistributedUpdateIT extends AbstractScenarioTest {
 
@@ -41,7 +39,9 @@ public class ConcurrentDistributedUpdateIT extends AbstractScenarioTest {
     OrientDB orientDB = serverInstance.get(0).getServerInstance().getContext();
 
     if (!orientDB.exists(getDatabaseName())) {
-      orientDB.create(getDatabaseName(), ODatabaseType.PLOCAL);
+      orientDB.execute(
+          "create database ? plocal users(admin identified by 'admin' role admin)",
+          getDatabaseName());
     }
     ODatabaseDocument orientGraph = orientDB.open(getDatabaseName(), "admin", "admin");
     OClass clazz = orientGraph.getClass("Test");
@@ -53,7 +53,9 @@ public class ConcurrentDistributedUpdateIT extends AbstractScenarioTest {
     orientGraph.close();
 
     if (!orientDB.exists(getDatabaseName())) {
-      orientDB.create(getDatabaseName(), ODatabaseType.PLOCAL);
+      orientDB.execute(
+          "create database ? plocal users(admin identified by 'admin' role admin)",
+          getDatabaseName());
     }
     ODatabaseDocument graph = orientDB.open(getDatabaseName(), "admin", "admin");
     for (int i = 0; i < 2; i++) {
@@ -71,7 +73,8 @@ public class ConcurrentDistributedUpdateIT extends AbstractScenarioTest {
     executeMultipleTest();
   }
 
-  protected Callable<Void> createWriter(final int serverId, final int threadId, final ServerRun server) {
+  protected Callable<Void> createWriter(
+      final int serverId, final int threadId, final ServerRun server) {
     return new Callable<Void>() {
       @Override
       public Void call() throws Exception {
@@ -80,9 +83,15 @@ public class ConcurrentDistributedUpdateIT extends AbstractScenarioTest {
         boolean isRunning = true;
 
         if (!server.getServerInstance().existsDatabase(getDatabaseName())) {
-          server.getServerInstance().createDatabase(getDatabaseName(), ODatabaseType.PLOCAL, null);
+          server
+              .getServerInstance()
+              .getContext()
+              .execute(
+                  "create database ? plocal users(admin identified by 'admin' role admin)",
+                  getDatabaseName());
         }
-        ODatabaseDocument graph = server.getServerInstance().openDatabase(getDatabaseName(), "admin", "admin");
+        ODatabaseDocument graph =
+            server.getServerInstance().openDatabase(getDatabaseName(), "admin", "admin");
         graph.begin();
 
         try {
@@ -108,21 +117,42 @@ public class ConcurrentDistributedUpdateIT extends AbstractScenarioTest {
                   } catch (OConcurrentModificationException ex) {
                     vtx1.reload();
                   } catch (ODistributedRecordLockedException ex) {
-                    log("[" + id + "/" + i + "/" + k + "] Distributed lock Exception " + ex + " for vertex " + vtx1 + " \n");
-//                    ex.printStackTrace();
+                    log(
+                        "["
+                            + id
+                            + "/"
+                            + i
+                            + "/"
+                            + k
+                            + "] Distributed lock Exception "
+                            + ex
+                            + " for vertex "
+                            + vtx1
+                            + " \n");
+                    //                    ex.printStackTrace();
                     update = false;
                     //                    isRunning = false;
                     break;
                   } catch (Exception ex) {
-                    log("[" + id + "/" + i + "/" + k + "] Exception " + ex + " for vertex " + vtx1 + "\n\n");
+                    log(
+                        "["
+                            + id
+                            + "/"
+                            + i
+                            + "/"
+                            + k
+                            + "] Exception "
+                            + ex
+                            + " for vertex "
+                            + vtx1
+                            + "\n\n");
                     ex.printStackTrace();
                     isRunning = false;
                     break;
                   }
                 }
 
-                if (!isRunning)
-                  break;
+                if (!isRunning) break;
               }
             }
           }

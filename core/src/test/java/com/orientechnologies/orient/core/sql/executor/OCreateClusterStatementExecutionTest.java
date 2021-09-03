@@ -4,35 +4,36 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.storage.OCluster;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OCreateClusterStatementExecutionTest {
   static ODatabaseDocument db;
 
-  @BeforeClass public static void beforeClass() {
+  @BeforeClass
+  public static void beforeClass() {
     db = new ODatabaseDocumentTx("memory:OCreateClusterStatementExecutionTest");
     db.create();
   }
 
-  @AfterClass public static void afterClass() {
+  @AfterClass
+  public static void afterClass() {
     db.close();
   }
 
-  @Test public void testPlain() {
+  @Test
+  public void testPlain() {
     String clusterName = "testPlain";
     OResultSet result = db.command("create cluster " + clusterName);
     Assert.assertTrue(db.getClusterIdByName(clusterName) > 0);
     result.close();
   }
 
-  @Test public void testExisting() {
+  @Test
+  public void testExisting() {
     OClass clazz = db.getMetadata().getSchema().createClass("testExisting");
     String clusterName = db.getClusterNameById(clazz.getClusterIds()[0]);
     try {
@@ -45,7 +46,8 @@ public class OCreateClusterStatementExecutionTest {
     }
   }
 
-  @Test public void testWithNumber() {
+  @Test
+  public void testWithNumber() {
     String clusterName = "testWithNumber";
     OResultSet result = db.command("create cluster " + clusterName + " id 1000");
     Assert.assertTrue(db.getClusterIdByName(clusterName) > 0);
@@ -59,16 +61,18 @@ public class OCreateClusterStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testBlob() {
+  @Test
+  public void testBlob() {
     String clusterName = "testBlob";
     OResultSet result = db.command("create blob cluster " + clusterName);
     Assert.assertTrue(db.getClusterIdByName(clusterName) > 0);
-    OCluster cluster = ((ODatabaseDocumentTx) db).getStorage().getClusterByName(clusterName);
-    //TODO test that it's a blob cluster
+    Assert.assertTrue(((ODatabaseDocumentTx) db).getStorage().getClusterIdByName(clusterName) >= 0);
+    // TODO test that it's a blob cluster
     result.close();
   }
 
-  @Test public void testIfNotExists() {
+  @Test
+  public void testIfNotExists() {
     String clusterName = "testIfNotExists";
     OResultSet result = db.command("create cluster " + clusterName + " IF NOT EXISTS id 2000");
     Assert.assertTrue(db.getClusterIdByName(clusterName) > 0);
@@ -85,7 +89,4 @@ public class OCreateClusterStatementExecutionTest {
     Assert.assertFalse(result.hasNext());
     result.close();
   }
-
-
-
 }

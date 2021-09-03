@@ -11,31 +11,30 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class OAlterClassStatement extends ODDLStatement {
 
-  /**
-   * the name of the class
-   */
-  protected OIdentifier       name;
-  /**
-   * the class property to be altered
-   */
-  public    OClass.ATTRIBUTES property;
+  /** the name of the class */
+  protected OIdentifier name;
+  /** the class property to be altered */
+  public OClass.ATTRIBUTES property;
 
-  protected OIdentifier       identifierValue;
+  protected OIdentifier identifierValue;
   protected List<OIdentifier> identifierListValue;
-  protected Boolean           add;
-  protected Boolean           remove;
-  protected ONumber           numberValue;
-  protected Boolean           booleanValue;
-  public    OIdentifier       customKey;
-  public    OExpression       customValue;
+  protected Boolean add;
+  protected Boolean remove;
+  protected ONumber numberValue;
+  protected Boolean booleanValue;
+  public OIdentifier customKey;
+  public OExpression customValue;
 
-  protected OInteger    defaultClusterId;
+  protected OInteger defaultClusterId;
   protected OIdentifier defaultClusterName;
 
   // only to manage 'round-robin' as a cluster selection strategy (not a valid identifier)
@@ -58,71 +57,71 @@ public class OAlterClassStatement extends ODDLStatement {
     if (property != null) {
       builder.append(" " + property.name() + " ");
       switch (property) {
-      case NAME:
-      case SHORTNAME:
-      case ADDCLUSTER:
-      case REMOVECLUSTER:
-      case DESCRIPTION:
-      case ENCRYPTION:
-        if (numberValue != null) {
-          numberValue.toString(params, builder);//clusters only
-        } else if (identifierValue != null) {
-          identifierValue.toString(params, builder);
-        } else {
-          builder.append("null");
-        }
-        break;
-      case CLUSTERSELECTION:
-        if (identifierValue != null) {
-          identifierValue.toString(params, builder);
-        } else if (customString != null) {
-          builder.append('\'').append(customString).append('\'');
-        } else {
-          builder.append("null");
-        }
-        break;
-      case SUPERCLASS:
-        if (Boolean.TRUE.equals(add)) {
-          builder.append("+");
-        } else if (Boolean.TRUE.equals(remove)) {
-          builder.append("-");
-        }
-        if (identifierValue == null) {
-          builder.append("null");
-        } else {
-          identifierValue.toString(params, builder);
-        }
-        break;
-      case SUPERCLASSES:
-        if (identifierListValue == null) {
-          builder.append("null");
-        } else {
-          boolean first = true;
-          for (OIdentifier ident : identifierListValue) {
-            if (!first) {
-              builder.append(", ");
-            }
-            ident.toString(params, builder);
-            first = false;
+        case NAME:
+        case SHORTNAME:
+        case ADDCLUSTER:
+        case REMOVECLUSTER:
+        case DESCRIPTION:
+        case ENCRYPTION:
+          if (numberValue != null) {
+            numberValue.toString(params, builder); // clusters only
+          } else if (identifierValue != null) {
+            identifierValue.toString(params, builder);
+          } else {
+            builder.append("null");
           }
-        }
-        break;
-      case OVERSIZE:
-        numberValue.toString(params, builder);
-        break;
-      case STRICTMODE:
-      case ABSTRACT:
-        builder.append(booleanValue.booleanValue());
-        break;
-      case CUSTOM:
-        customKey.toString(params, builder);
-        builder.append("=");
-        if (customValue == null) {
-          builder.append("null");
-        } else {
-          customValue.toString(params, builder);
-        }
-        break;
+          break;
+        case CLUSTERSELECTION:
+          if (identifierValue != null) {
+            identifierValue.toString(params, builder);
+          } else if (customString != null) {
+            builder.append('\'').append(customString).append('\'');
+          } else {
+            builder.append("null");
+          }
+          break;
+        case SUPERCLASS:
+          if (Boolean.TRUE.equals(add)) {
+            builder.append("+");
+          } else if (Boolean.TRUE.equals(remove)) {
+            builder.append("-");
+          }
+          if (identifierValue == null) {
+            builder.append("null");
+          } else {
+            identifierValue.toString(params, builder);
+          }
+          break;
+        case SUPERCLASSES:
+          if (identifierListValue == null) {
+            builder.append("null");
+          } else {
+            boolean first = true;
+            for (OIdentifier ident : identifierListValue) {
+              if (!first) {
+                builder.append(", ");
+              }
+              ident.toString(params, builder);
+              first = false;
+            }
+          }
+          break;
+        case OVERSIZE:
+          numberValue.toString(params, builder);
+          break;
+        case STRICTMODE:
+        case ABSTRACT:
+          builder.append(booleanValue.booleanValue());
+          break;
+        case CUSTOM:
+          customKey.toString(params, builder);
+          builder.append("=");
+          if (customValue == null) {
+            builder.append("null");
+          } else {
+            customValue.toString(params, builder);
+          }
+          break;
       }
     } else if (defaultClusterId != null) {
       builder.append(" DEFAULTCLUSTER ");
@@ -142,7 +141,9 @@ public class OAlterClassStatement extends ODDLStatement {
     result.property = property;
     result.identifierValue = identifierValue == null ? null : identifierValue.copy();
     result.identifierListValue =
-        identifierListValue == null ? null : identifierListValue.stream().map(x -> x.copy()).collect(Collectors.toList());
+        identifierListValue == null
+            ? null
+            : identifierListValue.stream().map(x -> x.copy()).collect(Collectors.toList());
     result.add = add;
     result.remove = remove;
     result.numberValue = numberValue == null ? null : numberValue.copy();
@@ -158,27 +159,22 @@ public class OAlterClassStatement extends ODDLStatement {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OAlterClassStatement that = (OAlterClassStatement) o;
 
-    if (unsafe != that.unsafe)
-      return false;
-    if (name != null ? !name.equals(that.name) : that.name != null)
-      return false;
-    if (property != that.property)
-      return false;
-    if (identifierValue != null ? !identifierValue.equals(that.identifierValue) : that.identifierValue != null)
-      return false;
-    if (identifierListValue != null ? !identifierListValue.equals(that.identifierListValue) : that.identifierListValue != null)
-      return false;
-    if (add != null ? !add.equals(that.add) : that.add != null)
-      return false;
-    if (remove != null ? !remove.equals(that.remove) : that.remove != null)
-      return false;
+    if (unsafe != that.unsafe) return false;
+    if (name != null ? !name.equals(that.name) : that.name != null) return false;
+    if (property != that.property) return false;
+    if (identifierValue != null
+        ? !identifierValue.equals(that.identifierValue)
+        : that.identifierValue != null) return false;
+    if (identifierListValue != null
+        ? !identifierListValue.equals(that.identifierListValue)
+        : that.identifierListValue != null) return false;
+    if (add != null ? !add.equals(that.add) : that.add != null) return false;
+    if (remove != null ? !remove.equals(that.remove) : that.remove != null) return false;
     if (numberValue != null ? !numberValue.equals(that.numberValue) : that.numberValue != null)
       return false;
     if (booleanValue != null ? !booleanValue.equals(that.booleanValue) : that.booleanValue != null)
@@ -187,11 +183,15 @@ public class OAlterClassStatement extends ODDLStatement {
       return false;
     if (customValue != null ? !customValue.equals(that.customValue) : that.customValue != null)
       return false;
-    if (defaultClusterId != null ? !defaultClusterId.equals(that.defaultClusterId) : that.defaultClusterId != null)
-      return false;
-    if (defaultClusterName != null ? !defaultClusterName.equals(that.defaultClusterName) : that.defaultClusterName != null)
-      return false;
-    return customString != null ? customString.equals(that.customString) : that.customString == null;
+    if (defaultClusterId != null
+        ? !defaultClusterId.equals(that.defaultClusterId)
+        : that.defaultClusterId != null) return false;
+    if (defaultClusterName != null
+        ? !defaultClusterName.equals(that.defaultClusterName)
+        : that.defaultClusterName != null) return false;
+    return customString != null
+        ? customString.equals(that.customString)
+        : that.customString == null;
   }
 
   @Override
@@ -221,102 +221,106 @@ public class OAlterClassStatement extends ODDLStatement {
     }
     if (property != null) {
       switch (property) {
-      case NAME:
-        if (!unsafe) {
-          checkNotEdge(oClass);
-          checkNotIndexed(oClass);
-        }
-        try {
-          oClass.setName(identifierValue.getStringValue());
-        } catch (Exception e) {
-          OException x = OException.wrapException(new OCommandExecutionException("Invalid class name: " + toString()), e);
-          throw x;
-        }
-        break;
-      case SHORTNAME:
-        if (identifierValue != null) {
+        case NAME:
+          if (!unsafe) {
+            checkNotEdge(oClass);
+            checkNotIndexed(oClass);
+          }
           try {
-            oClass.setShortName(identifierValue.getStringValue());
+            oClass.setName(identifierValue.getStringValue());
           } catch (Exception e) {
-            OException x = OException.wrapException(new OCommandExecutionException("Invalid class name: " + toString()), e);
+            OException x =
+                OException.wrapException(
+                    new OCommandExecutionException("Invalid class name: " + toString()), e);
             throw x;
           }
-        } else {
-          throw new OCommandExecutionException("Invalid class name: " + toString());
-        }
-        break;
-      case ADDCLUSTER:
-        if (identifierValue != null) {
-          oClass.addCluster(identifierValue.getStringValue());
-        } else if (numberValue != null) {
-          oClass.addClusterId(numberValue.getValue().intValue());
-        } else {
-          throw new OCommandExecutionException("Invalid cluster value: " + toString());
-        }
-        break;
-      case REMOVECLUSTER:
-        int clusterId = -1;
-        if (identifierValue != null) {
-          clusterId = ctx.getDatabase().getClusterIdByName(identifierValue.getStringValue());
-          if (clusterId < 0) {
-            throw new OCommandExecutionException("Cluster not found: " + toString());
+          break;
+        case SHORTNAME:
+          if (identifierValue != null) {
+            try {
+              oClass.setShortName(identifierValue.getStringValue());
+            } catch (Exception e) {
+              OException x =
+                  OException.wrapException(
+                      new OCommandExecutionException("Invalid class name: " + toString()), e);
+              throw x;
+            }
+          } else {
+            throw new OCommandExecutionException("Invalid class name: " + toString());
           }
-        } else if (numberValue != null) {
-          clusterId = numberValue.getValue().intValue();
-        } else {
-          throw new OCommandExecutionException("Invalid cluster value: " + toString());
-        }
-        oClass.removeClusterId(clusterId);
-        break;
-      case DESCRIPTION:
-        if (identifierValue != null) {
-          oClass.setDescription(identifierValue.getStringValue());
-        } else {
-          throw new OCommandExecutionException("Invalid class name: " + toString());
-        }
-        break;
-      case ENCRYPTION:
-        //TODO
+          break;
+        case ADDCLUSTER:
+          if (identifierValue != null) {
+            oClass.addCluster(identifierValue.getStringValue());
+          } else if (numberValue != null) {
+            oClass.addClusterId(numberValue.getValue().intValue());
+          } else {
+            throw new OCommandExecutionException("Invalid cluster value: " + toString());
+          }
+          break;
+        case REMOVECLUSTER:
+          int clusterId = -1;
+          if (identifierValue != null) {
+            clusterId = ctx.getDatabase().getClusterIdByName(identifierValue.getStringValue());
+            if (clusterId < 0) {
+              throw new OCommandExecutionException("Cluster not found: " + toString());
+            }
+          } else if (numberValue != null) {
+            clusterId = numberValue.getValue().intValue();
+          } else {
+            throw new OCommandExecutionException("Invalid cluster value: " + toString());
+          }
+          oClass.removeClusterId(clusterId);
+          break;
+        case DESCRIPTION:
+          if (identifierValue != null) {
+            oClass.setDescription(identifierValue.getStringValue());
+          } else {
+            throw new OCommandExecutionException("Invalid class name: " + toString());
+          }
+          break;
+        case ENCRYPTION:
+          // TODO
 
-        break;
-      case CLUSTERSELECTION:
-        if (identifierValue != null) {
-          oClass.setClusterSelection(identifierValue.getStringValue());
-        } else if (customString != null) {
-          oClass.setClusterSelection(customString);
-        } else {
-          oClass.setClusterSelection("null");
-        }
-        break;
-      case SUPERCLASS:
-        doSetSuperclass(ctx, oClass, identifierValue);
-        break;
-      case SUPERCLASSES:
-        if (identifierListValue == null) {
-          oClass.setSuperClasses(Collections.EMPTY_LIST);
-        } else {
-          doSetSuperclasses(ctx, oClass, identifierListValue);
-        }
-        break;
-      case OVERSIZE:
-        oClass.setOverSize(numberValue.getValue().floatValue());
-        break;
-      case STRICTMODE:
-        oClass.setStrictMode(booleanValue.booleanValue());
-        break;
-      case ABSTRACT:
-        oClass.setAbstract(booleanValue.booleanValue());
-        break;
-      case CUSTOM:
-        Object value = null;
-        if (customValue != null) {
-          value = customValue.execute((OIdentifiable) null, ctx);
-        }
-        if (value != null) {
-          value = "" + value;
-        }
-        oClass.setCustom(customKey.getStringValue(), (String) value);
-        break;
+          break;
+        case CLUSTERSELECTION:
+          if (identifierValue != null) {
+            oClass.setClusterSelection(identifierValue.getStringValue());
+          } else if (customString != null) {
+            oClass.setClusterSelection(customString);
+          } else {
+            oClass.setClusterSelection("null");
+          }
+          break;
+        case SUPERCLASS:
+          doSetSuperclass(ctx, oClass, identifierValue);
+          break;
+        case SUPERCLASSES:
+          if (identifierListValue == null) {
+            oClass.setSuperClasses(Collections.EMPTY_LIST);
+          } else {
+            doSetSuperclasses(ctx, oClass, identifierListValue);
+          }
+          break;
+        case OVERSIZE:
+          oClass.setOverSize(numberValue.getValue().floatValue());
+          break;
+        case STRICTMODE:
+          oClass.setStrictMode(booleanValue.booleanValue());
+          break;
+        case ABSTRACT:
+          oClass.setAbstract(booleanValue.booleanValue());
+          break;
+        case CUSTOM:
+          Object value = null;
+          if (customValue != null) {
+            value = customValue.execute((OIdentifiable) null, ctx);
+          }
+          if (value != null) {
+            value = "" + value;
+          }
+          oClass.setCustom(customKey.getStringValue(), (String) value);
+          break;
       }
     } else if (defaultClusterId != null) {
       oClass.setDefaultClusterId(defaultClusterId.getValue().intValue());
@@ -335,15 +339,19 @@ public class OAlterClassStatement extends ODDLStatement {
   private void checkNotIndexed(OClass oClass) {
     Set<OIndex> indexes = oClass.getIndexes();
     if (indexes != null && indexes.size() > 0) {
-      throw new OCommandExecutionException("Cannot rename class '" + oClass.getName()
-          + "' because it has indexes defined on it. Drop indexes before or use UNSAFE (at your won risk)");
+      throw new OCommandExecutionException(
+          "Cannot rename class '"
+              + oClass.getName()
+              + "' because it has indexes defined on it. Drop indexes before or use UNSAFE (at your won risk)");
     }
   }
 
   private void checkNotEdge(OClass oClass) {
     if (oClass.isSubClassOf("E")) {
-      throw new OCommandExecutionException("Cannot alter class '" + oClass
-          + "' because is an Edge class and could break vertices. Use UNSAFE if you want to force it");
+      throw new OCommandExecutionException(
+          "Cannot alter class '"
+              + oClass
+              + "' because is an Edge class and could break vertices. Use UNSAFE if you want to force it");
     }
   }
 
@@ -351,7 +359,8 @@ public class OAlterClassStatement extends ODDLStatement {
     if (superclassName == null) {
       throw new OCommandExecutionException("Invalid superclass name: " + toString());
     }
-    OClass superclass = ctx.getDatabase().getMetadata().getSchema().getClass(superclassName.getStringValue());
+    OClass superclass =
+        ctx.getDatabase().getMetadata().getSchema().getClass(superclassName.getStringValue());
     if (superclass == null) {
       throw new OCommandExecutionException("superclass not found: " + toString());
     }
@@ -364,13 +373,15 @@ public class OAlterClassStatement extends ODDLStatement {
     }
   }
 
-  private void doSetSuperclasses(OCommandContext ctx, OClass oClass, List<OIdentifier> superclassNames) {
+  private void doSetSuperclasses(
+      OCommandContext ctx, OClass oClass, List<OIdentifier> superclassNames) {
     if (superclassNames == null) {
       throw new OCommandExecutionException("Invalid superclass name: " + toString());
     }
     List<OClass> superclasses = new ArrayList<>();
     for (OIdentifier superclassName : superclassNames) {
-      OClass superclass = ctx.getDatabase().getMetadata().getSchema().getClass(superclassName.getStringValue());
+      OClass superclass =
+          ctx.getDatabase().getMetadata().getSchema().getClass(superclassName.getStringValue());
       if (superclass == null) {
         throw new OCommandExecutionException("superclass not found: " + toString());
       }

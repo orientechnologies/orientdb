@@ -1,10 +1,13 @@
 package com.orientechnologies.orient.server;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.message.OBatchOperationsRequest;
 import com.orientechnologies.orient.client.remote.message.OBatchOperationsResponse;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -13,6 +16,13 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
+import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -20,36 +30,31 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
-/**
- * Created by tglman on 29/12/16.
- */
+/** Created by tglman on 29/12/16. */
 public class OConnetionExecutorTest {
 
-  @Mock
-  private OServer           server;
-  @Mock
-  private OClientConnection connection;
+  @Mock private OServer server;
+  @Mock private OClientConnection connection;
 
-  @Mock
-  private ONetworkProtocolData data;
+  @Mock private ONetworkProtocolData data;
 
-  private OrientDB                  orientDb;
+  private OrientDB orientDb;
   private ODatabaseDocumentInternal database;
 
   @Before
-  public void before() {
+  public void before() throws IOException {
     MockitoAnnotations.initMocks(this);
-    orientDb = new OrientDB("embedded:./", OrientDBConfig.defaultConfig());
-    orientDb.create(OConnetionExecutorTest.class.getSimpleName(), ODatabaseType.MEMORY);
-    database = (ODatabaseDocumentInternal) orientDb.open(OConnetionExecutorTest.class.getSimpleName(), "admin", "admin");
+    Path path =
+        FileSystems.getDefault()
+            .getPath("./target/" + OConnetionExecutorTest.class.getSimpleName());
+    Files.createDirectories(path);
+    orientDb = new OrientDB("embedded:" + path.toString(), OrientDBConfig.defaultConfig());
+    orientDb.execute(
+        "create database ? memory users (admin identified by 'admin' role admin)",
+        OConnetionExecutorTest.class.getSimpleName());
+    database =
+        (ODatabaseDocumentInternal)
+            orientDb.open(OConnetionExecutorTest.class.getSimpleName(), "admin", "admin");
     database.createClass("test");
     Mockito.when(connection.getDatabase()).thenReturn(database);
     Mockito.when(connection.getData()).thenReturn(data);

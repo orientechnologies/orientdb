@@ -23,18 +23,17 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentComparator;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.testng.Assert;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import org.testng.Assert;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
-@Test(groups = { "crud", "record-document" })
+@Test(groups = {"crud", "record-document"})
 public class CRUDDocumentValidationTest extends DocumentDBBaseTest {
   private ODocument record;
   private ODocument account;
@@ -68,19 +67,24 @@ public class CRUDDocumentValidationTest extends DocumentDBBaseTest {
     record.save();
   }
 
-  @Test(dependsOnMethods = "validationMinString", expectedExceptions = OValidationException.class, expectedExceptionsMessageRegExp = "(?s).*more.*than.*")
+  @Test(
+      dependsOnMethods = "validationMinString",
+      expectedExceptions = OValidationException.class,
+      expectedExceptionsMessageRegExp = "(?s).*more.*than.*")
   public void validationMaxString() {
     record.clear();
     record.field("account", account);
     record.field("id", 23723);
-    record
-        .field(
-            "text",
-            "clfdkkjsd hfsdkjhf fjdkghjkfdhgjdfh gfdgjfdkhgfd skdjaksdjf skdjf sdkjfsd jfkldjfkjsdf kljdk fsdjf kldjgjdhjg khfdjgk hfjdg hjdfhgjkfhdgj kfhdjghrjg");
+    record.field(
+        "text",
+        "clfdkkjsd hfsdkjhf fjdkghjkfdhgjdfh gfdgjfdkhgfd skdjaksdjf skdjf sdkjfsd jfkldjfkjsdf kljdk fsdjf kldjgjdhjg khfdjgk hfjdg hjdfhgjkfhdgj kfhdjghrjg");
     record.save();
   }
 
-  @Test(dependsOnMethods = "validationMaxString", expectedExceptions = OValidationException.class, expectedExceptionsMessageRegExp = "(?s).*precedes.*")
+  @Test(
+      dependsOnMethods = "validationMaxString",
+      expectedExceptions = OValidationException.class,
+      expectedExceptionsMessageRegExp = "(?s).*precedes.*")
   public void validationMinDate() throws ParseException {
     record.clear();
     record.field("account", account);
@@ -96,7 +100,9 @@ public class CRUDDocumentValidationTest extends DocumentDBBaseTest {
     record.save();
   }
 
-  @Test(dependsOnMethods = "validationEmbeddedType", expectedExceptions = OValidationException.class)
+  @Test(
+      dependsOnMethods = "validationEmbeddedType",
+      expectedExceptions = OValidationException.class)
   public void validationStrictClass() throws ParseException {
     ODocument doc = new ODocument("StrictTest");
     doc.field("id", 122112);
@@ -118,21 +124,37 @@ public class CRUDDocumentValidationTest extends DocumentDBBaseTest {
 
     database.command(new OCommandSQL("CREATE CLASS MyTestClass")).execute();
     database.command(new OCommandSQL("CREATE PROPERTY MyTestClass.keyField STRING")).execute();
-    database.command(new OCommandSQL("ALTER PROPERTY MyTestClass.keyField MANDATORY true")).execute();
+    database
+        .command(new OCommandSQL("ALTER PROPERTY MyTestClass.keyField MANDATORY true"))
+        .execute();
     database.command(new OCommandSQL("ALTER PROPERTY MyTestClass.keyField NOTNULL true")).execute();
-    database.command(new OCommandSQL("CREATE PROPERTY MyTestClass.dateTimeField DATETIME")).execute();
-    database.command(new OCommandSQL("ALTER PROPERTY MyTestClass.dateTimeField MANDATORY true")).execute();
-    database.command(new OCommandSQL("ALTER PROPERTY MyTestClass.dateTimeField NOTNULL false")).execute();
+    database
+        .command(new OCommandSQL("CREATE PROPERTY MyTestClass.dateTimeField DATETIME"))
+        .execute();
+    database
+        .command(new OCommandSQL("ALTER PROPERTY MyTestClass.dateTimeField MANDATORY true"))
+        .execute();
+    database
+        .command(new OCommandSQL("ALTER PROPERTY MyTestClass.dateTimeField NOTNULL false"))
+        .execute();
     database.command(new OCommandSQL("CREATE PROPERTY MyTestClass.stringField STRING")).execute();
-    database.command(new OCommandSQL("ALTER PROPERTY MyTestClass.stringField MANDATORY true")).execute();
-    database.command(new OCommandSQL("ALTER PROPERTY MyTestClass.stringField NOTNULL false")).execute();
-    database.command(new OCommandSQL("INSERT INTO MyTestClass (keyField,dateTimeField,stringField) VALUES (\"K1\",null,null)"))
+    database
+        .command(new OCommandSQL("ALTER PROPERTY MyTestClass.stringField MANDATORY true"))
+        .execute();
+    database
+        .command(new OCommandSQL("ALTER PROPERTY MyTestClass.stringField NOTNULL false"))
+        .execute();
+    database
+        .command(
+            new OCommandSQL(
+                "INSERT INTO MyTestClass (keyField,dateTimeField,stringField) VALUES (\"K1\",null,null)"))
         .execute();
     database.reload();
     database.getMetadata().reload();
     database.close();
     database.open("admin", "admin");
-    OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("SELECT FROM MyTestClass WHERE keyField = ?");
+    OSQLSynchQuery<ODocument> query =
+        new OSQLSynchQuery<ODocument>("SELECT FROM MyTestClass WHERE keyField = ?");
     List<ODocument> result = database.query(query, "K1");
     Assert.assertEquals(1, result.size());
     ODocument doc = result.get(0);
@@ -143,7 +165,8 @@ public class CRUDDocumentValidationTest extends DocumentDBBaseTest {
 
   @Test(dependsOnMethods = "createSchemaForMandatoryNullableTest")
   public void testUpdateDocDefined() {
-    OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("SELECT FROM MyTestClass WHERE keyField = ?");
+    OSQLSynchQuery<ODocument> query =
+        new OSQLSynchQuery<ODocument>("SELECT FROM MyTestClass WHERE keyField = ?");
     List<ODocument> result = database.query(query, "K1");
     Assert.assertEquals(1, result.size());
     ODocument doc = result.get(0);
@@ -162,7 +185,8 @@ public class CRUDDocumentValidationTest extends DocumentDBBaseTest {
     database.close();
     database.open("admin", "admin");
 
-    OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("SELECT FROM MyTestClass WHERE keyField = ?");
+    OSQLSynchQuery<ODocument> query =
+        new OSQLSynchQuery<ODocument>("SELECT FROM MyTestClass WHERE keyField = ?");
     List<ODocument> result = database.query(query, "K2");
     Assert.assertEquals(1, result.size());
     doc = result.get(0);
@@ -178,7 +202,8 @@ public class CRUDDocumentValidationTest extends DocumentDBBaseTest {
     doc.field("stringField", (String) null);
     doc.save();
 
-    OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("SELECT FROM MyTestClass WHERE keyField = ?");
+    OSQLSynchQuery<ODocument> query =
+        new OSQLSynchQuery<ODocument>("SELECT FROM MyTestClass WHERE keyField = ?");
     List<ODocument> result = database.query(query, "K3");
     Assert.assertEquals(1, result.size());
     doc = result.get(0);
@@ -196,7 +221,10 @@ public class CRUDDocumentValidationTest extends DocumentDBBaseTest {
     } catch (OValidationException e) {
     }
 
-    database.command(new OCommandSQL("ALTER DATABASE " + ODatabase.ATTRIBUTES.VALIDATION.name() + " FALSE")).execute();
+    database
+        .command(
+            new OCommandSQL("ALTER DATABASE " + ODatabase.ATTRIBUTES.VALIDATION.name() + " FALSE"))
+        .execute();
     database.setValidationEnabled(false);
     try {
 
@@ -206,7 +234,10 @@ public class CRUDDocumentValidationTest extends DocumentDBBaseTest {
       doc.delete();
     } finally {
       database.setValidationEnabled(true);
-      database.command(new OCommandSQL("ALTER DATABASE " + ODatabase.ATTRIBUTES.VALIDATION.name() + " TRUE")).execute();
+      database
+          .command(
+              new OCommandSQL("ALTER DATABASE " + ODatabase.ATTRIBUTES.VALIDATION.name() + " TRUE"))
+          .execute();
     }
   }
 
@@ -222,8 +253,10 @@ public class CRUDDocumentValidationTest extends DocumentDBBaseTest {
     ODocument doc1 = new ODocument().field("testField", (Object) null);
     ODocument doc2 = new ODocument().field("testField", (Object) null);
 
-    ODocumentComparator comparator = new ODocumentComparator(
-        Collections.singletonList(new OPair<String, String>("testField", "asc")), new OBasicCommandContext());
+    ODocumentComparator comparator =
+        new ODocumentComparator(
+            Collections.singletonList(new OPair<String, String>("testField", "asc")),
+            new OBasicCommandContext());
 
     Assert.assertEquals(comparator.compare(doc1, doc2), 0);
   }

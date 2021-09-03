@@ -9,7 +9,6 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -20,8 +19,8 @@ import java.util.stream.Collectors;
 public class ONestedProjection extends SimpleNode {
   protected List<ONestedProjectionItem> includeItems = new ArrayList<>();
   protected List<ONestedProjectionItem> excludeItems = new ArrayList<>();
-  protected ONestedProjectionItem       starItem;
-  private   OInteger                    recursion; //not used for now
+  protected ONestedProjectionItem starItem;
+  private OInteger recursion; // not used for now
 
   public ONestedProjection(int id) {
     super(id);
@@ -38,16 +37,26 @@ public class ONestedProjection extends SimpleNode {
    */
   public Object apply(OExpression expression, Object input, OCommandContext ctx) {
     if (input instanceof OResult) {
-      return apply(expression, (OResult) input, ctx, recursion == null ? 0 : recursion.getValue().intValue());
+      return apply(
+          expression,
+          (OResult) input,
+          ctx,
+          recursion == null ? 0 : recursion.getValue().intValue());
     }
     if (input instanceof OIdentifiable) {
-      return apply(expression, (OIdentifiable) input, ctx, recursion == null ? 0 : recursion.getValue().intValue());
+      return apply(
+          expression,
+          (OIdentifiable) input,
+          ctx,
+          recursion == null ? 0 : recursion.getValue().intValue());
     }
     if (input instanceof Map) {
-      return apply(expression, (Map) input, ctx, recursion == null ? 0 : recursion.getValue().intValue());
+      return apply(
+          expression, (Map) input, ctx, recursion == null ? 0 : recursion.getValue().intValue());
     }
     if (input instanceof Collection) {
-      return ((Collection) input).stream().map(x -> apply(expression, x, ctx)).collect(Collectors.toList());
+      return ((Collection) input)
+          .stream().map(x -> apply(expression, x, ctx)).collect(Collectors.toList());
     }
     Iterator iter = null;
     if (input instanceof Iterable) {
@@ -73,13 +82,18 @@ public class ONestedProjection extends SimpleNode {
         if (isExclude(property)) {
           continue;
         }
-        result.setProperty(property, convert(tryExpand(expression, property, elem.getProperty(property), ctx, recursion)));
+        result.setProperty(
+            property,
+            convert(tryExpand(expression, property, elem.getProperty(property), ctx, recursion)));
       }
     }
     if (includeItems.size() > 0) {
-      //TODO manage wildcards!
+      // TODO manage wildcards!
       for (ONestedProjectionItem item : includeItems) {
-        String alias = item.alias != null ? item.alias.getStringValue() : item.expression.getDefaultAlias().getStringValue();
+        String alias =
+            item.alias != null
+                ? item.alias.getStringValue()
+                : item.expression.getDefaultAlias().getStringValue();
         Object value = item.expression.execute(elem, ctx);
         if (item.expansion != null) {
           value = item.expand(expression, alias, value, ctx, recursion - 1);
@@ -99,7 +113,8 @@ public class ONestedProjection extends SimpleNode {
     return false;
   }
 
-  private Object tryExpand(OExpression rootExpr, String propName, Object propValue, OCommandContext ctx, int recursion) {
+  private Object tryExpand(
+      OExpression rootExpr, String propName, Object propValue, OCommandContext ctx, int recursion) {
     if (this.starItem != null && starItem.expansion != null) {
       return starItem.expand(rootExpr, propName, propValue, ctx, recursion);
     }
@@ -111,7 +126,8 @@ public class ONestedProjection extends SimpleNode {
     return propValue;
   }
 
-  private Object apply(OExpression expression, OIdentifiable input, OCommandContext ctx, int recursion) {
+  private Object apply(
+      OExpression expression, OIdentifiable input, OCommandContext ctx, int recursion) {
     OElement elem;
     if (input instanceof OElement) {
       elem = (OElement) input;
@@ -129,13 +145,18 @@ public class ONestedProjection extends SimpleNode {
         if (isExclude(property)) {
           continue;
         }
-        result.setProperty(property, convert(tryExpand(expression, property, elem.getProperty(property), ctx, recursion)));
+        result.setProperty(
+            property,
+            convert(tryExpand(expression, property, elem.getProperty(property), ctx, recursion)));
       }
     }
     if (includeItems.size() > 0) {
-      //TODO manage wildcards!
+      // TODO manage wildcards!
       for (ONestedProjectionItem item : includeItems) {
-        String alias = item.alias != null ? item.alias.getStringValue() : item.expression.getDefaultAlias().getStringValue();
+        String alias =
+            item.alias != null
+                ? item.alias.getStringValue()
+                : item.expression.getDefaultAlias().getStringValue();
         Object value = item.expression.execute(elem, ctx);
         if (item.expansion != null) {
           value = item.expand(expression, alias, value, ctx, recursion - 1);
@@ -146,7 +167,8 @@ public class ONestedProjection extends SimpleNode {
     return result;
   }
 
-  private Object apply(OExpression expression, Map<String, Object> input, OCommandContext ctx, int recursion) {
+  private Object apply(
+      OExpression expression, Map<String, Object> input, OCommandContext ctx, int recursion) {
     OResultInternal result = new OResultInternal();
 
     if (starItem != null || includeItems.size() == 0) {
@@ -154,13 +176,18 @@ public class ONestedProjection extends SimpleNode {
         if (isExclude(property)) {
           continue;
         }
-        result.setProperty(property, convert(tryExpand(expression, property, input.get(property), ctx, recursion)));
+        result.setProperty(
+            property,
+            convert(tryExpand(expression, property, input.get(property), ctx, recursion)));
       }
     }
     if (includeItems.size() > 0) {
-      //TODO manage wildcards!
+      // TODO manage wildcards!
       for (ONestedProjectionItem item : includeItems) {
-        String alias = item.alias != null ? item.alias.getStringValue() : item.expression.getDefaultAlias().getStringValue();
+        String alias =
+            item.alias != null
+                ? item.alias.getStringValue()
+                : item.expression.getDefaultAlias().getStringValue();
         OResultInternal elem = new OResultInternal();
         input.entrySet().forEach(x -> elem.setProperty(x.getKey(), x.getValue()));
         Object value = item.expression.execute(elem, ctx);
@@ -215,10 +242,8 @@ public class ONestedProjection extends SimpleNode {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     ONestedProjection that = (ONestedProjection) o;
 
@@ -226,8 +251,7 @@ public class ONestedProjection extends SimpleNode {
       return false;
     if (excludeItems != null ? !excludeItems.equals(that.excludeItems) : that.excludeItems != null)
       return false;
-    if (starItem != null ? !starItem.equals(that.starItem) : that.starItem != null)
-      return false;
+    if (starItem != null ? !starItem.equals(that.starItem) : that.starItem != null) return false;
     return recursion != null ? recursion.equals(that.recursion) : that.recursion == null;
   }
 
@@ -252,10 +276,14 @@ public class ONestedProjection extends SimpleNode {
   public OResult serialize() {
     OResultInternal result = new OResultInternal();
     if (includeItems != null) {
-      result.setProperty("includeItems", includeItems.stream().map(x -> x.serialize()).collect(Collectors.toList()));
+      result.setProperty(
+          "includeItems",
+          includeItems.stream().map(x -> x.serialize()).collect(Collectors.toList()));
     }
     if (excludeItems != null) {
-      result.setProperty("excludeItems", excludeItems.stream().map(x -> x.serialize()).collect(Collectors.toList()));
+      result.setProperty(
+          "excludeItems",
+          excludeItems.stream().map(x -> x.serialize()).collect(Collectors.toList()));
     }
     if (starItem != null) {
       result.setProperty("starItem", starItem.serialize());
@@ -288,7 +316,6 @@ public class ONestedProjection extends SimpleNode {
       starItem.deserialize(fromResult.getProperty("starItem"));
     }
     recursion = fromResult.getProperty("recursion");
-
   }
 }
 /* JavaCC - OriginalChecksum=a7faf9beb3c058e28999b17cb43b26f6 (do not edit this line) */

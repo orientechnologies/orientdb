@@ -26,22 +26,23 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.query.OQueryRuntimeValueMulti;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
-
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Represents one or more object fields as value in the query condition.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public abstract class OSQLFilterItemFieldMultiAbstract extends OSQLFilterItemAbstract {
-  private List<String>         names;
-  private final OClass         clazz;
+  private List<String> names;
+  private final OClass clazz;
   private final List<OCollate> collates = new ArrayList<OCollate>();
 
-  public OSQLFilterItemFieldMultiAbstract(final OSQLPredicate iQueryCompiled, final String iName, final OClass iClass,
+  public OSQLFilterItemFieldMultiAbstract(
+      final OSQLPredicate iQueryCompiled,
+      final String iName,
+      final OClass iClass,
       final List<String> iNames) {
     super(iQueryCompiled, iName);
     names = iNames;
@@ -52,11 +53,13 @@ public abstract class OSQLFilterItemFieldMultiAbstract extends OSQLFilterItemAbs
     }
   }
 
-  public Object getValue(final OIdentifiable iRecord, Object iCurrentResult, OCommandContext iContext) {
+  public Object getValue(
+      final OIdentifiable iRecord, Object iCurrentResult, OCommandContext iContext) {
     final ODocument doc = ((ODocument) iRecord);
 
     if (names.size() == 1)
-      return transformValue(iRecord, iContext, ODocumentHelper.getIdentifiableValue(iRecord, names.get(0)));
+      return transformValue(
+          iRecord, iContext, ODocumentHelper.getIdentifiableValue(iRecord, names.get(0)));
 
     final String[] fieldNames = doc.fieldNames();
     final Object[] values = new Object[fieldNames.length];

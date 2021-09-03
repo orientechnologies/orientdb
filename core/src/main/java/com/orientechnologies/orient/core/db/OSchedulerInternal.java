@@ -7,5 +7,4 @@ public interface OSchedulerInternal {
   void schedule(TimerTask task, long delay, long period);
 
   void scheduleOnce(TimerTask task, long delay);
-
 }

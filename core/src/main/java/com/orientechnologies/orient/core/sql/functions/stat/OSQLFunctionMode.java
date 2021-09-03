@@ -23,7 +23,6 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -31,25 +30,29 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 /**
- * Compute the mode (or multimodal) value for a field. The scores in the field's distribution that occurs more frequently. Nulls are
- * ignored in the calculation.
- * 
+ * Compute the mode (or multimodal) value for a field. The scores in the field's distribution that
+ * occurs more frequently. Nulls are ignored in the calculation.
+ *
  * @author Fabrizio Fortino
  */
 public class OSQLFunctionMode extends OSQLFunctionAbstract {
 
-  public static final String   NAME     = "mode";
+  public static final String NAME = "mode";
 
-  private Map<Object, Integer> seen     = new HashMap<Object, Integer>();
-  private int                  max      = 0;
-  private List<Object>         maxElems = new ArrayList<Object>();
+  private Map<Object, Integer> seen = new HashMap<Object, Integer>();
+  private int max = 0;
+  private List<Object> maxElems = new ArrayList<Object>();
 
   public OSQLFunctionMode() {
     super(NAME, 1, 1);
   }
 
   @Override
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iParams,
+  public Object execute(
+      Object iThis,
+      OIdentifiable iCurrentRecord,
+      Object iCurrentResult,
+      Object[] iParams,
       OCommandContext iContext) {
 
     if (OMultiValue.isMultiValue(iParams[0])) {
@@ -97,13 +100,13 @@ public class OSQLFunctionMode extends OSQLFunctionAbstract {
       return dMaxElems;
     }
 
-    if (!resultsToMerge.isEmpty())
-      return resultsToMerge.get(0);
+    if (!resultsToMerge.isEmpty()) return resultsToMerge.get(0);
 
     return null;
   }
 
-  private int evaluate(Object value, int times, Map<Object, Integer> iSeen, List<Object> iMaxElems, int iMax) {
+  private int evaluate(
+      Object value, int times, Map<Object, Integer> iSeen, List<Object> iMaxElems, int iMax) {
     if (value != null) {
       if (iSeen.containsKey(value)) {
         iSeen.put(value, iSeen.get(value) + times);
@@ -120,5 +123,4 @@ public class OSQLFunctionMode extends OSQLFunctionAbstract {
     }
     return iMax;
   }
-
 }

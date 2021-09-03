@@ -8,13 +8,12 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class ODropClusterStatementExecutionTest {
   static ODatabaseDocument db;
 
-  @BeforeClass public static void beforeClass() {
+  @BeforeClass
+  public static void beforeClass() {
     db = new ODatabaseDocumentTx("memory:ODropClusterStatementExecutionTest");
     db.create();
     OClass v = db.getMetadata().getSchema().getClass("V");
@@ -23,11 +22,13 @@ public class ODropClusterStatementExecutionTest {
     }
   }
 
-  @AfterClass public static void afterClass() {
+  @AfterClass
+  public static void afterClass() {
     db.close();
   }
 
-  @Test public void testPlain() {
+  @Test
+  public void testPlain() {
     String cluster = "testPlain";
     ((ODatabaseDocumentTx) db).getStorage().addCluster(cluster);
 
@@ -42,13 +43,13 @@ public class ODropClusterStatementExecutionTest {
     Assert.assertTrue(db.getClusterIdByName(cluster) < 0);
   }
 
-
-  @Test public void testDropClusterIfExists() {
+  @Test
+  public void testDropClusterIfExists() {
     String cluster = "testDropClusterIfExists";
     ((ODatabaseDocumentTx) db).getStorage().addCluster(cluster);
 
     Assert.assertTrue(db.getClusterIdByName(cluster) > 0);
-    OResultSet result = db.command("drop cluster " + cluster+" IF EXISTS");
+    OResultSet result = db.command("drop cluster " + cluster + " IF EXISTS");
     Assert.assertTrue(result.hasNext());
     OResult next = result.next();
     Assert.assertEquals("drop cluster", next.getProperty("operation"));
@@ -56,11 +57,9 @@ public class ODropClusterStatementExecutionTest {
     result.close();
 
     Assert.assertTrue(db.getClusterIdByName(cluster) < 0);
-    
-    result = db.command("drop cluster " + cluster+" IF EXISTS");
+
+    result = db.command("drop cluster " + cluster + " IF EXISTS");
     Assert.assertFalse(result.hasNext());
     result.close();
-
   }
-
 }

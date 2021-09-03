@@ -6,18 +6,16 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.parser.OExpression;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
-
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * Created by luigidellaquila on 03/08/16.
- */
+/** Created by luigidellaquila on 03/08/16. */
 public class LetExpressionStep extends AbstractExecutionStep {
   private OIdentifier varname;
   private OExpression expression;
 
-  public LetExpressionStep(OIdentifier varName, OExpression expression, OCommandContext ctx, boolean profilingEnabled) {
+  public LetExpressionStep(
+      OIdentifier varName, OExpression expression, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.varname = varName;
     this.expression = expression;
@@ -26,7 +24,8 @@ public class LetExpressionStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     if (!getPrev().isPresent()) {
-      throw new OCommandExecutionException("Cannot execute a local LET on a query without a target");
+      throw new OCommandExecutionException(
+          "Cannot execute a local LET on a query without a target");
     }
     return new OResultSet() {
       private OResultSet source = getPrev().get().syncPull(ctx, nRecords);

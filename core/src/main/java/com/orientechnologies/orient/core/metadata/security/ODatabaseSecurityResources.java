@@ -27,19 +27,19 @@ package com.orientechnologies.orient.core.metadata.security;
  */
 public class ODatabaseSecurityResources {
 
-  public static final String ALL               = "*";
-  public static final String DATABASE          = "database";
-  public static final String SCHEMA            = "database.schema";
-  public static final String CLASS             = "database.class";
-  public static final String ALL_CLASSES       = "database.class.*";
-  public static final String CLUSTER           = "database.cluster";
-  public static final String ALL_CLUSTERS      = "database.cluster.*";
-  public static final String SYSTEMCLUSTERS    = "database.systemclusters";
-  public static final String COMMAND           = "database.command";
-  public static final String COMMAND_GREMLIN   = "database.command.gremlin";
-  public static final String FUNCTION          = "database.function";
-  public static final String DATABASE_CONFIG   = "database.config";
+  public static final String ALL = "*";
+  public static final String DATABASE = "database";
+  public static final String SCHEMA = "database.schema";
+  public static final String CLASS = "database.class";
+  public static final String ALL_CLASSES = "database.class.*";
+  public static final String CLUSTER = "database.cluster";
+  public static final String ALL_CLUSTERS = "database.cluster.*";
+  public static final String SYSTEMCLUSTERS = "database.systemclusters";
+  public static final String COMMAND = "database.command";
+  public static final String COMMAND_GREMLIN = "database.command.gremlin";
+  public static final String FUNCTION = "database.function";
+  public static final String DATABASE_CONFIG = "database.config";
   public static final String BYPASS_RESTRICTED = "database.bypassRestricted";
-  public static final String RECORD_HOOK       = "database.hook.record";
-  public static final String SERVER_ADMIN      = "server.admin";
+  public static final String RECORD_HOOK = "database.hook.record";
+  public static final String SERVER_ADMIN = "server.admin";
 }

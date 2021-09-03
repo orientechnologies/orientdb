@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-
 import java.util.Map;
 import java.util.Set;
 
@@ -89,17 +88,16 @@ public class OArrayNumberSelector extends SimpleNode {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OArrayNumberSelector that = (OArrayNumberSelector) o;
 
     if (inputValue != null ? !inputValue.equals(that.inputValue) : that.inputValue != null)
       return false;
-    if (expressionValue != null ? !expressionValue.equals(that.expressionValue) : that.expressionValue != null)
-      return false;
+    if (expressionValue != null
+        ? !expressionValue.equals(that.expressionValue)
+        : that.expressionValue != null) return false;
     return integer != null ? integer.equals(that.integer) : that.integer == null;
   }
 

@@ -5,7 +5,6 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +39,13 @@ public class OContainsTextCondition extends OBooleanExpression {
 
   @Override
   public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+    if (left.isFunctionAny()) {
+      return evaluateAny(currentRecord, ctx);
+    }
+
+    if (left.isFunctionAll()) {
+      return evaluateAllFunction(currentRecord, ctx);
+    }
     Object leftValue = left.execute(currentRecord, ctx);
     if (leftValue == null || !(leftValue instanceof String)) {
       return false;
@@ -50,6 +56,44 @@ public class OContainsTextCondition extends OBooleanExpression {
     }
 
     return ((String) leftValue).indexOf((String) rightValue) > -1;
+  }
+
+  private boolean evaluateAny(OResult currentRecord, OCommandContext ctx) {
+    Object rightValue = right.execute(currentRecord, ctx);
+    if (rightValue == null || !(rightValue instanceof String)) {
+      return false;
+    }
+
+    for (String s : currentRecord.getPropertyNames()) {
+      Object leftValue = currentRecord.getProperty(s);
+      if (leftValue == null || !(leftValue instanceof String)) {
+        continue;
+      }
+
+      if (((String) leftValue).indexOf((String) rightValue) > -1) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private boolean evaluateAllFunction(OResult currentRecord, OCommandContext ctx) {
+    Object rightValue = right.execute(currentRecord, ctx);
+    if (rightValue == null || !(rightValue instanceof String)) {
+      return false;
+    }
+
+    for (String s : currentRecord.getPropertyNames()) {
+      Object leftValue = currentRecord.getProperty(s);
+      if (leftValue == null || !(leftValue instanceof String)) {
+        return false;
+      }
+
+      if (!(((String) leftValue).indexOf((String) rightValue) > -1)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
@@ -119,17 +163,13 @@ public class OContainsTextCondition extends OBooleanExpression {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OContainsTextCondition that = (OContainsTextCondition) o;
 
-    if (left != null ? !left.equals(that.left) : that.left != null)
-      return false;
-    if (right != null ? !right.equals(that.right) : that.right != null)
-      return false;
+    if (left != null ? !left.equals(that.left) : that.left != null) return false;
+    if (right != null ? !right.equals(that.right) : that.right != null) return false;
 
     return true;
   }

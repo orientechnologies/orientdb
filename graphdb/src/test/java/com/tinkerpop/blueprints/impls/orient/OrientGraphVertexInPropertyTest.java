@@ -1,12 +1,11 @@
 package com.tinkerpop.blueprints.impls.orient;
 
-import org.junit.Assert;
-import org.junit.Test;
-
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.tinkerpop.blueprints.Vertex;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class OrientGraphVertexInPropertyTest {
 
@@ -46,7 +45,5 @@ public class OrientGraphVertexInPropertyTest {
 
     Assert.assertEquals(OType.LINK, OType.getTypeByValue(new OrientVertex()));
     Assert.assertEquals(OType.LINK, OType.getTypeByValue(new OrientEdge()));
-
   }
-
 }

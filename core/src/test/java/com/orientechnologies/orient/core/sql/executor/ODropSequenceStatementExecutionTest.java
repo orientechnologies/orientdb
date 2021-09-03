@@ -6,15 +6,12 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibrary;
-
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class ODropSequenceStatementExecutionTest {
   static ODatabaseDocument db;
 
@@ -33,7 +30,9 @@ public class ODropSequenceStatementExecutionTest {
   public void testPlain() {
     String name = "testPlain";
     try {
-      db.getMetadata().getSequenceLibrary().createSequence(name, OSequence.SEQUENCE_TYPE.CACHED, new OSequence.CreateParams());
+      db.getMetadata()
+          .getSequenceLibrary()
+          .createSequence(name, OSequence.SEQUENCE_TYPE.CACHED, new OSequence.CreateParams());
     } catch (ODatabaseException exc) {
       Assert.assertTrue("Creating sequence failed", false);
     }
@@ -74,7 +73,9 @@ public class ODropSequenceStatementExecutionTest {
     Assert.assertFalse(result.hasNext());
 
     try {
-      db.getMetadata().getSequenceLibrary().createSequence(name, OSequence.SEQUENCE_TYPE.CACHED, new OSequence.CreateParams());
+      db.getMetadata()
+          .getSequenceLibrary()
+          .createSequence(name, OSequence.SEQUENCE_TYPE.CACHED, new OSequence.CreateParams());
     } catch (ODatabaseException exc) {
       Assert.assertTrue("Creating sequence failed", false);
     }
@@ -89,5 +90,4 @@ public class ODropSequenceStatementExecutionTest {
 
     Assert.assertNull(db.getMetadata().getSequenceLibrary().getSequence(name));
   }
-
 }

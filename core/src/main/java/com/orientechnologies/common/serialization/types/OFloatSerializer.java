@@ -23,7 +23,6 @@ package com.orientechnologies.common.serialization.types;
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
-
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
@@ -34,24 +33,25 @@ import java.nio.ByteOrder;
  * @since 18.01.12
  */
 public class OFloatSerializer implements OBinarySerializer<Float> {
-  public static final  byte             ID         = 7;
-  /**
-   * size of float value in bytes
-   */
-  public static final  int              FLOAT_SIZE = 4;
-  private static final OBinaryConverter CONVERTER  = OBinaryConverterFactory.getConverter();
-  public static final  OFloatSerializer INSTANCE   = new OFloatSerializer();
+  public static final byte ID = 7;
+  /** size of float value in bytes */
+  public static final int FLOAT_SIZE = 4;
+
+  private static final OBinaryConverter CONVERTER = OBinaryConverterFactory.getConverter();
+  public static final OFloatSerializer INSTANCE = new OFloatSerializer();
 
   public int getObjectSize(Float object, Object... hints) {
     return FLOAT_SIZE;
   }
 
   public void serialize(Float object, byte[] stream, int startPosition, Object... hints) {
-    OIntegerSerializer.INSTANCE.serializeLiteral(Float.floatToIntBits(object), stream, startPosition);
+    OIntegerSerializer.INSTANCE.serializeLiteral(
+        Float.floatToIntBits(object), stream, startPosition);
   }
 
   public Float deserialize(final byte[] stream, final int startPosition) {
-    return Float.intBitsToFloat(OIntegerSerializer.INSTANCE.deserializeLiteral(stream, startPosition));
+    return Float.intBitsToFloat(
+        OIntegerSerializer.INSTANCE.deserializeLiteral(stream, startPosition));
   }
 
   public int getObjectSize(final byte[] stream, final int startPosition) {
@@ -67,7 +67,8 @@ public class OFloatSerializer implements OBinarySerializer<Float> {
   }
 
   @Override
-  public void serializeNativeObject(Float object, byte[] stream, int startPosition, Object... hints) {
+  public void serializeNativeObject(
+      Float object, byte[] stream, int startPosition, Object... hints) {
     checkBoundaries(stream, startPosition);
 
     CONVERTER.putInt(stream, startPosition, Float.floatToIntBits(object), ByteOrder.nativeOrder());
@@ -80,7 +81,8 @@ public class OFloatSerializer implements OBinarySerializer<Float> {
     return Float.intBitsToFloat(CONVERTER.getInt(stream, startPosition, ByteOrder.nativeOrder()));
   }
 
-  public void serializeNative(final float object, final byte[] stream, final int startPosition, final Object... hints) {
+  public void serializeNative(
+      final float object, final byte[] stream, final int startPosition, final Object... hints) {
     checkBoundaries(stream, startPosition);
 
     CONVERTER.putInt(stream, startPosition, Float.floatToIntBits(object), ByteOrder.nativeOrder());
@@ -105,41 +107,32 @@ public class OFloatSerializer implements OBinarySerializer<Float> {
     return value;
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public void serializeInByteBufferObject(Float object, ByteBuffer buffer, Object... hints) {
     buffer.putInt(Float.floatToIntBits(object));
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public Float deserializeFromByteBufferObject(ByteBuffer buffer) {
     return Float.intBitsToFloat(buffer.getInt());
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
     return FLOAT_SIZE;
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
-  public Float deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+  public Float deserializeFromByteBufferObject(
+      ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return Float.intBitsToFloat(walChanges.getIntValue(buffer, offset));
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return FLOAT_SIZE;
@@ -148,7 +141,10 @@ public class OFloatSerializer implements OBinarySerializer<Float> {
   private static void checkBoundaries(byte[] stream, int startPosition) {
     if (startPosition + FLOAT_SIZE > stream.length) {
       throw new IllegalStateException(
-          "Requested stream size is " + (startPosition + FLOAT_SIZE) + " but provided stream has size " + stream.length);
+          "Requested stream size is "
+              + (startPosition + FLOAT_SIZE)
+              + " but provided stream has size "
+              + stream.length);
     }
   }
 }

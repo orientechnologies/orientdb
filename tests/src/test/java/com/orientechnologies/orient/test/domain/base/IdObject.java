@@ -5,47 +5,44 @@ import javax.persistence.Version;
 
 public class IdObject implements Comparable<IdObject> {
 
-	public IdObject() {
-		super();
-	}
+  public IdObject() {
+    super();
+  }
 
-	@Id
-	private String	id;
-	@Version
-	private Integer	version;
+  @Id private String id;
+  @Version private Integer version;
 
-	public static boolean isUnidentified(IdObject anObject) {
-		boolean response = (anObject.id == null);
-		return response;
-	}
+  public static boolean isUnidentified(IdObject anObject) {
+    boolean response = (anObject.id == null);
+    return response;
+  }
 
-	public int compareTo(IdObject another) {
-		return this.id.compareTo(another.id);
-	}
+  public int compareTo(IdObject another) {
+    return this.id.compareTo(another.id);
+  }
 
-	@Override
-	public boolean equals(Object another) {
-		return this.id.equals(((IdObject) another).id);
-	}
+  @Override
+  public boolean equals(Object another) {
+    return this.id.equals(((IdObject) another).id);
+  }
 
-	public String getId() {
-		return id;
-	}
+  public String getId() {
+    return id;
+  }
 
-	public String getKey() {
-		return this.getId();
-	}
+  public String getKey() {
+    return this.getId();
+  }
 
-	public void setId(String anId) {
-		this.id = anId;
-	}
+  public void setId(String anId) {
+    this.id = anId;
+  }
 
-	public Integer getVersion() {
-		return version;
-	}
+  public Integer getVersion() {
+    return version;
+  }
 
-	public void setVersion(Integer version) {
-		this.version = version;
-	}
-
+  public void setVersion(Integer version) {
+    this.version = version;
+  }
 }

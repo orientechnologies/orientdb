@@ -1,13 +1,11 @@
 package com.tinkerpop.blueprints.impls.orient;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.junit.Assert;
-import org.junit.Test;
-
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.Vertex;
+import java.util.ArrayList;
+import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class OrientVertexWithEmbeddedListTest {
 
@@ -40,7 +38,7 @@ public class OrientVertexWithEmbeddedListTest {
       Assert.assertEquals(v.getProperty("name"), "test");
 
       Iterable<ODocument> ds = v.getProperty("docs");
-      
+
       int counter = 0;
       for (ODocument d : ds) {
         Assert.assertNotNull(d.field("f"));
@@ -51,5 +49,4 @@ public class OrientVertexWithEmbeddedListTest {
       g.drop();
     }
   }
-
 }

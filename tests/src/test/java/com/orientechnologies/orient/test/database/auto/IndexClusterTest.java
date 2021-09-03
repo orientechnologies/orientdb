@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
+import static org.testng.Assert.assertEquals;
+
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -10,16 +12,13 @@ import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.assertEquals;
-
-@Test(groups = { "index" })
+@Test(groups = {"index"})
 public class IndexClusterTest extends DocumentDBBaseTest {
 
-	@Parameters(value = "url")
-	public IndexClusterTest(@Optional String url) {
-		super(url);
-	}
-
+  @Parameters(value = "url")
+  public IndexClusterTest(@Optional String url) {
+    super(url);
+  }
 
   @Test
   public void indexAfterRebuildShouldIncludeAllClusters() {
@@ -37,12 +36,18 @@ public class IndexClusterTest extends DocumentDBBaseTest {
     int clId = database.addCluster(className + "secondCluster");
     oclass.addClusterId(clId);
 
-    database.<ODocument>newInstance(className).field("key", "a").field("value", 2).save(className + "secondCluster");
+    database
+        .<ODocument>newInstance(className)
+        .field("key", "a")
+        .field("value", 2)
+        .save(className + "secondCluster");
 
     // when
     database.command(new OCommandSQL("rebuild index " + className + "index1")).execute();
-    assertEquals(database.query(new OSQLSynchQuery<Object>("select from " + className + " where key = 'a'")).size(), 2);
-
+    assertEquals(
+        database
+            .query(new OSQLSynchQuery<Object>("select from " + className + " where key = 'a'"))
+            .size(),
+        2);
   }
-
 }

@@ -1,18 +1,13 @@
 package com.orientechnologies.orient.test.server.network.http;
 
+import java.io.IOException;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.message.BasicHeader;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.IOException;
-
-/**
- *
- * @author Enrico Risa
- */
-
+/** @author Enrico Risa */
 public class HttpXRequestedWithXMLHttpRequestTest extends BaseHttpDatabaseTest {
   protected void onAfterDatabaseCreated() throws Exception {
     setUserPassword("123456");
@@ -20,9 +15,7 @@ public class HttpXRequestedWithXMLHttpRequestTest extends BaseHttpDatabaseTest {
 
   @Test
   public void sendXMLHttpRequest() throws IOException {
-    Header[] headers = {
-        new BasicHeader("X-Requested-With", "XMLHttpRequest")
-    };
+    Header[] headers = {new BasicHeader("X-Requested-With", "XMLHttpRequest")};
 
     HttpResponse response = get("class/" + getDatabaseName() + "/OUser", headers).getResponse();
 

@@ -15,31 +15,32 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionFactory;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorFactory;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Dynamic sql elements factory.
- * 
+ *
  * @author Johann Sorel (Geomatys)
  */
-public class ODynamicSQLElementFactory implements OCommandExecutorSQLFactory, OQueryOperatorFactory, OSQLFunctionFactory {
+public class ODynamicSQLElementFactory
+    implements OCommandExecutorSQLFactory, OQueryOperatorFactory, OSQLFunctionFactory {
 
   // Used by SQLEngine to register on the fly new elements
-  static final Map<String, Object>                                       FUNCTIONS = new ConcurrentHashMap<String, Object>();
-  static final Map<String, Class<? extends OCommandExecutorSQLAbstract>> COMMANDS  = new ConcurrentHashMap<String, Class<? extends OCommandExecutorSQLAbstract>>();
-  static final Set<OQueryOperator>                                       OPERATORS = Collections
-                                                                                       .synchronizedSet(new HashSet<OQueryOperator>());
+  static final Map<String, Object> FUNCTIONS = new ConcurrentHashMap<String, Object>();
+  static final Map<String, Class<? extends OCommandExecutorSQLAbstract>> COMMANDS =
+      new ConcurrentHashMap<String, Class<? extends OCommandExecutorSQLAbstract>>();
+  static final Set<OQueryOperator> OPERATORS =
+      Collections.synchronizedSet(new HashSet<OQueryOperator>());
 
   public Set<String> getFunctionNames() {
     return FUNCTIONS.keySet();
@@ -64,8 +65,12 @@ public class ODynamicSQLElementFactory implements OCommandExecutorSQLFactory, OQ
       try {
         return (OSQLFunction) clazz.newInstance();
       } catch (Exception e) {
-        throw OException.wrapException(new OCommandExecutionException("Error in creation of function " + name
-            + "(). Probably there is not an empty constructor or the constructor generates errors"), e);
+        throw OException.wrapException(
+            new OCommandExecutionException(
+                "Error in creation of function "
+                    + name
+                    + "(). Probably there is not an empty constructor or the constructor generates errors"),
+            e);
       }
     }
   }
@@ -74,17 +79,21 @@ public class ODynamicSQLElementFactory implements OCommandExecutorSQLFactory, OQ
     return COMMANDS.keySet();
   }
 
-  public OCommandExecutorSQLAbstract createCommand(final String name) throws OCommandExecutionException {
+  public OCommandExecutorSQLAbstract createCommand(final String name)
+      throws OCommandExecutionException {
     final Class<? extends OCommandExecutorSQLAbstract> clazz = COMMANDS.get(name);
 
-    if (clazz == null)
-      throw new OCommandExecutionException("Unknown command name :" + name);
+    if (clazz == null) throw new OCommandExecutionException("Unknown command name :" + name);
 
     try {
       return clazz.newInstance();
     } catch (Exception e) {
-      throw OException.wrapException(new OCommandExecutionException("Error in creation of command " + name
-          + "(). Probably there is not an empty constructor or the constructor generates errors"), e);
+      throw OException.wrapException(
+          new OCommandExecutionException(
+              "Error in creation of command "
+                  + name
+                  + "(). Probably there is not an empty constructor or the constructor generates errors"),
+          e);
     }
   }
 

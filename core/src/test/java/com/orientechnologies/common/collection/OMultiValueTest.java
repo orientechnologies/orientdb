@@ -1,15 +1,11 @@
 package com.orientechnologies.common.collection;
 
-
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.List;
-
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OMultiValueTest {
 
   @Test
@@ -24,7 +20,7 @@ public class OMultiValueTest {
 
   @Test
   public void testArraySize() {
-    String[] collection = new String[] { "foo", "bar", "baz" };
+    String[] collection = new String[] {"foo", "bar", "baz"};
     Assert.assertEquals(OMultiValue.getSize(collection), 3);
   }
 
@@ -41,7 +37,7 @@ public class OMultiValueTest {
 
   @Test
   public void testArrayFirstLast() {
-    String[] collection = new String[] { "foo", "bar", "baz" };
+    String[] collection = new String[] {"foo", "bar", "baz"};
     Assert.assertEquals(OMultiValue.getFirstValue(collection), "foo");
     Assert.assertEquals(OMultiValue.getLastValue(collection), "baz");
   }
@@ -59,7 +55,6 @@ public class OMultiValueTest {
     Assert.assertEquals(OMultiValue.getValue(collection, 0), "foo");
     Assert.assertEquals(OMultiValue.getValue(collection, 2), "baz");
     Assert.assertNull(OMultiValue.getValue(new Object(), 3));
-
   }
 
   @Test
@@ -72,8 +67,6 @@ public class OMultiValueTest {
 
     OMultiValue.remove(collection, "bar", true);
     Assert.assertEquals(collection.size(), 2);
-
-
   }
 
   public void testToString() {

@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.object.serialization;
 
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashSet;
@@ -22,32 +24,31 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
-
-/**
- * 
- * @author Luca Molino (molino.luca--at--gmail.com)
- * 
- */
+/** @author Luca Molino (molino.luca--at--gmail.com) */
 @SuppressWarnings("unchecked")
-public class OObjectCustomSerializerSet<TYPE> extends HashSet<TYPE> implements OObjectLazyCustomSerializer<Set<TYPE>>, Serializable {
+public class OObjectCustomSerializerSet<TYPE> extends HashSet<TYPE>
+    implements OObjectLazyCustomSerializer<Set<TYPE>>, Serializable {
   private static final long serialVersionUID = -7698875159671927472L;
 
-  private final ORecord  sourceRecord;
+  private final ORecord sourceRecord;
   private final Set<Object> underlying;
-  private boolean           converted        = false;
-  private final Class<?>    deserializeClass;
+  private boolean converted = false;
+  private final Class<?> deserializeClass;
 
-  public OObjectCustomSerializerSet(final Class<?> iDeserializeClass, final ORecord iSourceRecord,
+  public OObjectCustomSerializerSet(
+      final Class<?> iDeserializeClass,
+      final ORecord iSourceRecord,
       final Set<Object> iRecordSource) {
     this.sourceRecord = iSourceRecord;
     this.underlying = iRecordSource;
     this.deserializeClass = iDeserializeClass;
   }
 
-  public OObjectCustomSerializerSet(final Class<?> iDeserializeClass, final ORecord iSourceRecord,
-      final Set<Object> iRecordSource, final Set<? extends TYPE> iSourceCollection) {
+  public OObjectCustomSerializerSet(
+      final Class<?> iDeserializeClass,
+      final ORecord iSourceRecord,
+      final Set<Object> iRecordSource,
+      final Set<? extends TYPE> iSourceCollection) {
     this.sourceRecord = iSourceRecord;
     this.underlying = iRecordSource;
     this.deserializeClass = iDeserializeClass;
@@ -56,7 +57,9 @@ public class OObjectCustomSerializerSet<TYPE> extends HashSet<TYPE> implements O
   }
 
   public Iterator<TYPE> iterator() {
-    return (Iterator<TYPE>) new OObjectCustomSerializerIterator<TYPE>(deserializeClass, sourceRecord, underlying.iterator());
+    return (Iterator<TYPE>)
+        new OObjectCustomSerializerIterator<TYPE>(
+            deserializeClass, sourceRecord, underlying.iterator());
   }
 
   public int size() {
@@ -68,7 +71,8 @@ public class OObjectCustomSerializerSet<TYPE> extends HashSet<TYPE> implements O
   }
 
   public boolean contains(final Object o) {
-    boolean underlyingContains = underlying.contains(OObjectEntitySerializer.serializeFieldValue(deserializeClass, o));
+    boolean underlyingContains =
+        underlying.contains(OObjectEntitySerializer.serializeFieldValue(deserializeClass, o));
     return underlyingContains || super.contains(o);
   }
 
@@ -93,7 +97,8 @@ public class OObjectCustomSerializerSet<TYPE> extends HashSet<TYPE> implements O
 
   public boolean containsAll(final Collection<?> c) {
     for (Object o : c)
-      if (!super.contains(o) && !underlying.contains(OObjectEntitySerializer.serializeFieldValue(deserializeClass, o)))
+      if (!super.contains(o)
+          && !underlying.contains(OObjectEntitySerializer.serializeFieldValue(deserializeClass, o)))
         return false;
 
     return true;
@@ -102,8 +107,7 @@ public class OObjectCustomSerializerSet<TYPE> extends HashSet<TYPE> implements O
   public boolean addAll(final Collection<? extends TYPE> c) {
     boolean modified = false;
     setDirty();
-    for (Object o : c)
-      modified = add((TYPE) o) || modified;
+    for (Object o : c) modified = add((TYPE) o) || modified;
     return modified;
   }
 
@@ -128,7 +132,10 @@ public class OObjectCustomSerializerSet<TYPE> extends HashSet<TYPE> implements O
     setDirty();
     boolean modified = super.removeAll(c);
     for (Object o : c) {
-      modified = modified || underlying.remove(OObjectEntitySerializer.serializeFieldValue(deserializeClass, o));
+      modified =
+          modified
+              || underlying.remove(
+                  OObjectEntitySerializer.serializeFieldValue(deserializeClass, o));
     }
     return modified;
   }
@@ -143,8 +150,7 @@ public class OObjectCustomSerializerSet<TYPE> extends HashSet<TYPE> implements O
   }
 
   public void setDirty() {
-    if (sourceRecord != null)
-      sourceRecord.setDirty();
+    if (sourceRecord != null) sourceRecord.setDirty();
   }
 
   public void detach() {
@@ -155,7 +161,10 @@ public class OObjectCustomSerializerSet<TYPE> extends HashSet<TYPE> implements O
     convertAll();
   }
 
-  public void detachAll(boolean nonProxiedInstance, Map<Object, Object> alreadyDetached, Map<Object, Object> lazyObjects) {
+  public void detachAll(
+      boolean nonProxiedInstance,
+      Map<Object, Object> alreadyDetached,
+      Map<Object, Object> lazyObjects) {
     convertAll();
   }
 
@@ -172,8 +181,7 @@ public class OObjectCustomSerializerSet<TYPE> extends HashSet<TYPE> implements O
   }
 
   protected void convertAll() {
-    if (converted)
-      return;
+    if (converted) return;
 
     super.clear();
     for (Object o : underlying) {
@@ -182,5 +190,4 @@ public class OObjectCustomSerializerSet<TYPE> extends HashSet<TYPE> implements O
 
     converted = true;
   }
-
 }

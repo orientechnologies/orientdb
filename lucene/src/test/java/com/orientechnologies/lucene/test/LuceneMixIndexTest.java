@@ -22,17 +22,13 @@ import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-
 import java.io.InputStream;
 import java.util.List;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
-/**
- * Created by Enrico Risa on 02/09/15.
- */
+/** Created by Enrico Risa on 02/09/15. */
 public class LuceneMixIndexTest extends BaseLuceneTest {
 
   @Before
@@ -44,44 +40,57 @@ public class LuceneMixIndexTest extends BaseLuceneTest {
 
     db.command(new OCommandSQL("create index Song.author on Song (author) NOTUNIQUE")).execute();
 
-    db.command(new OCommandSQL("create index Song.composite on Song (title,lyrics) FULLTEXT ENGINE LUCENE")).execute();
-
+    db.command(
+            new OCommandSQL(
+                "create index Song.composite on Song (title,lyrics) FULLTEXT ENGINE LUCENE"))
+        .execute();
   }
 
   @Test
   public void testMixQuery() {
 
-    List<ODocument> docs = db.query(
-        new OSQLSynchQuery<ODocument>("select * from Song where  author = 'Hornsby' and [title,lyrics]  LUCENE \"(title:mountain)\" "));
+    List<ODocument> docs =
+        db.query(
+            new OSQLSynchQuery<ODocument>(
+                "select * from Song where  author = 'Hornsby' and [title,lyrics]  LUCENE \"(title:mountain)\" "));
 
     Assert.assertEquals(1, docs.size());
 
-    docs = db.query(
-        new OSQLSynchQuery<ODocument>("select * from Song where  author = 'Hornsby' and [title,lyrics] LUCENE \"(title:mountain)\" "));
+    docs =
+        db.query(
+            new OSQLSynchQuery<ODocument>(
+                "select * from Song where  author = 'Hornsby' and [title,lyrics] LUCENE \"(title:mountain)\" "));
 
     Assert.assertEquals(1, docs.size());
 
-    docs = db.query(
-        new OSQLSynchQuery<ODocument>("select * from Song where  author = 'Hornsby' and [title,lyrics] LUCENE \"(title:ballad)\" "));
+    docs =
+        db.query(
+            new OSQLSynchQuery<ODocument>(
+                "select * from Song where  author = 'Hornsby' and [title,lyrics] LUCENE \"(title:ballad)\" "));
     Assert.assertEquals(0, docs.size());
 
-    docs = db
-        .query(new OSQLSynchQuery<ODocument>("select * from Song where  author = 'Hornsby' and [title,lyrics] LUCENE \"(title:ballad)\" "));
+    docs =
+        db.query(
+            new OSQLSynchQuery<ODocument>(
+                "select * from Song where  author = 'Hornsby' and [title,lyrics] LUCENE \"(title:ballad)\" "));
     Assert.assertEquals(0, docs.size());
-
   }
 
   @Test
-//  @Ignore
+  //  @Ignore
   public void testMixCompositeQuery() {
 
-    List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>(
-        "select * from Song where  author = 'Hornsby' and [title,lyrics] LUCENE \"title:mountain\" "));
+    List<ODocument> docs =
+        db.query(
+            new OSQLSynchQuery<ODocument>(
+                "select * from Song where  author = 'Hornsby' and [title,lyrics] LUCENE \"title:mountain\" "));
 
     Assert.assertEquals(1, docs.size());
 
-    docs = db
-        .query(new OSQLSynchQuery<ODocument>("select * from Song where author = 'Hornsby' and [title,lyrics] LUCENE \"lyrics:happy\" "));
+    docs =
+        db.query(
+            new OSQLSynchQuery<ODocument>(
+                "select * from Song where author = 'Hornsby' and [title,lyrics] LUCENE \"lyrics:happy\" "));
 
     Assert.assertEquals(1, docs.size());
 
@@ -94,5 +103,4 @@ public class LuceneMixIndexTest extends BaseLuceneTest {
     // Assert.assertEquals(docs.size(), 0);
 
   }
-
 }

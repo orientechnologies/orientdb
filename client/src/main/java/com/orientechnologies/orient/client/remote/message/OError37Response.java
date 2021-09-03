@@ -6,30 +6,27 @@ import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Created by tglman on 25/05/17.
- */
+/** Created by tglman on 25/05/17. */
 public class OError37Response implements OBinaryResponse {
 
-  private OErrorCode          code;
-  private int                 errorIdentifier;
+  private OErrorCode code;
+  private int errorIdentifier;
   private Map<String, String> messages;
-  private byte[]              verbose;
+  private byte[] verbose;
 
-  public OError37Response(OErrorCode code, int errorIdentifier, Map<String, String> messages, byte[] verbose) {
+  public OError37Response(
+      OErrorCode code, int errorIdentifier, Map<String, String> messages, byte[] verbose) {
     this.code = code;
     this.errorIdentifier = errorIdentifier;
     this.messages = messages;
     this.verbose = verbose;
   }
 
-  public OError37Response() {
-  }
+  public OError37Response() {}
 
   @Override
   public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
@@ -46,7 +43,8 @@ public class OError37Response implements OBinaryResponse {
   }
 
   @Override
-  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
     channel.writeInt(code.getCode());
     channel.writeInt(errorIdentifier);
     for (Map.Entry<String, String> entry : messages.entrySet()) {

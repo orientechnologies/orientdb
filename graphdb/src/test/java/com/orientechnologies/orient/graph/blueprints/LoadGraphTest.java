@@ -1,18 +1,16 @@
 package com.orientechnologies.orient.graph.blueprints;
 
+import com.orientechnologies.orient.graph.console.OInternalGraphImporter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-
 import org.junit.Test;
-
-import com.orientechnologies.orient.graph.console.OInternalGraphImporter;
 
 public class LoadGraphTest {
 
   private static final String INPUT_FILE = "src/test/resources/graph-example-2.xml";
 
-  private String              inputFile  = INPUT_FILE;
-  private String              dbURL;
+  private String inputFile = INPUT_FILE;
+  private String dbURL;
 
   @Test
   public void testImport() throws IOException, FileNotFoundException {
@@ -20,11 +18,9 @@ public class LoadGraphTest {
 
     String storageType = System.getProperty("storageType");
 
-    if (storageType == null)
-      storageType = "memory";
+    if (storageType == null) storageType = "memory";
 
-    if (dbURL == null)
-      dbURL = storageType + ":" + "target/databases/GratefulDeadConcerts";
+    if (dbURL == null) dbURL = storageType + ":" + "target/databases/GratefulDeadConcerts";
 
     loadGraph.runImport(inputFile, dbURL);
   }

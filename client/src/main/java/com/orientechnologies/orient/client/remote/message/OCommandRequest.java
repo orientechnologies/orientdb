@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.client.remote.message;
 
-import java.io.IOException;
-
 import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
@@ -28,27 +26,30 @@ import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
-import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
+import java.io.IOException;
 
 public final class OCommandRequest implements OBinaryRequest<OCommandResponse> {
   private ODatabaseDocumentInternal database;
-  private boolean                   asynch;
-  private OCommandRequestText       query;
-  private boolean                   live;
+  private boolean asynch;
+  private OCommandRequestText query;
+  private boolean live;
 
-  public OCommandRequest(ODatabaseDocumentInternal database, boolean asynch, OCommandRequestText iCommand, boolean live) {
+  public OCommandRequest(
+      ODatabaseDocumentInternal database,
+      boolean asynch,
+      OCommandRequestText iCommand,
+      boolean live) {
     this.database = database;
     this.asynch = asynch;
     this.query = iCommand;
     this.live = live;
   }
 
-  public OCommandRequest() {
-  }
+  public OCommandRequest() {}
 
   @Override
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
@@ -58,16 +59,14 @@ public final class OCommandRequest implements OBinaryRequest<OCommandResponse> {
       network.writeByte((byte) (asynch ? 'a' : 's')); // ASYNC / SYNC
     }
     network.writeBytes(OStreamSerializerAnyStreamable.INSTANCE.toStream(query));
-
   }
 
-  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
 
     byte type = channel.readByte();
-    if (type == (byte) 'l')
-      live = true;
-    if (type == (byte) 'a')
-      asynch = true;
+    if (type == (byte) 'l') live = true;
+    if (type == (byte) 'a') asynch = true;
     query = OStreamSerializerAnyStreamable.INSTANCE.fromStream(channel.readBytes(), serializer);
   }
 
@@ -75,7 +74,7 @@ public final class OCommandRequest implements OBinaryRequest<OCommandResponse> {
   public byte getCommand() {
     return OChannelBinaryProtocol.REQUEST_COMMAND;
   }
-  
+
   @Override
   public String getDescription() {
     return "Execute remote command";
@@ -102,5 +101,4 @@ public final class OCommandRequest implements OBinaryRequest<OCommandResponse> {
   public OBinaryResponse execute(OBinaryRequestExecutor executor) {
     return executor.executeCommand(this);
   }
-
 }

@@ -15,7 +15,7 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 
 package com.orientechnologies.orient.graph.sql;
@@ -25,11 +25,10 @@ import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.graph.GraphNoTxAbstractTest;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import java.util.Collection;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.util.Collection;
 
 public class GraphIntersectLightweightEdges extends GraphNoTxAbstractTest {
   private final int TOT = 1000;
@@ -40,8 +39,12 @@ public class GraphIntersectLightweightEdges extends GraphNoTxAbstractTest {
     graph.setUseLightweightEdges(true);
 
     graph.setAutoStartTx(false);
-    graph.declareIntent(new OIntentMassiveInsert().setDisableSecurity(true).setDisableHooks(true).setDisableValidation(true)
-        .setEnableCache(false));
+    graph.declareIntent(
+        new OIntentMassiveInsert()
+            .setDisableSecurity(true)
+            .setDisableHooks(true)
+            .setDisableValidation(true)
+            .setEnableCache(false));
 
     // graph.begin();
 
@@ -85,8 +88,10 @@ public class GraphIntersectLightweightEdges extends GraphNoTxAbstractTest {
 
     OLogManager.instance().info(this, "Intersecting...");
 
-    Iterable<OrientVertex> result = graph.command(new OCommandSQL("select intersect( out() ) from [?,?]")).execute(
-        root1.getIdentity(), root2.getIdentity());
+    Iterable<OrientVertex> result =
+        graph
+            .command(new OCommandSQL("select intersect( out() ) from [?,?]"))
+            .execute(root1.getIdentity(), root2.getIdentity());
 
     OLogManager.instance().info(this, "Intersecting done");
 
@@ -97,10 +102,12 @@ public class GraphIntersectLightweightEdges extends GraphNoTxAbstractTest {
 
     Assert.assertEquals(set.iterator().next(), common);
 
-    result = graph.command(
-        new OCommandSQL(
-            "select expand($c) let $a=(select from V limit 20), $b=(select from V skip 10 limit 10), $c=intersect( $a, $b )"))
-        .execute();
+    result =
+        graph
+            .command(
+                new OCommandSQL(
+                    "select expand($c) let $a=(select from V limit 20), $b=(select from V skip 10 limit 10), $c=intersect( $a, $b )"))
+            .execute();
 
     Assert.assertTrue(result.iterator().hasNext());
   }

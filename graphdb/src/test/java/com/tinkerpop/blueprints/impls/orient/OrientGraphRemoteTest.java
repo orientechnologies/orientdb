@@ -1,17 +1,26 @@
 package com.tinkerpop.blueprints.impls.orient;
 
-import com.orientechnologies.orient.client.remote.OServerAdmin;
-import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.OServerMain;
-import com.tinkerpop.blueprints.*;
-import org.junit.*;
-
-import java.io.*;
+import com.tinkerpop.blueprints.Direction;
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Graph;
+import com.tinkerpop.blueprints.IndexTestSuite;
+import com.tinkerpop.blueprints.IndexableGraphTestSuite;
+import com.tinkerpop.blueprints.KeyIndexableGraphTestSuite;
+import com.tinkerpop.blueprints.TestSuite;
+import java.io.File;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Ignore;
+import org.junit.Test;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -20,11 +29,13 @@ import java.util.Map;
 public abstract class OrientGraphRemoteTest extends OrientGraphTest {
   private static final String serverPort = System.getProperty("orient.server.port", "3080");
   private static OServer server;
-  private static String  oldOrientDBHome;
+  private static String oldOrientDBHome;
 
   private static String serverHome;
 
-  private Map<String, OrientGraphFactory> graphFactories = new HashMap<String, OrientGraphFactory>();
+  private static OrientDB clientContext;
+
+  private final Map<String, OrientGraphFactory> graphFactories = new HashMap<>();
 
   @BeforeClass
   public static void startEmbeddedServer() throws Exception {
@@ -43,21 +54,20 @@ public abstract class OrientGraphRemoteTest extends OrientGraphTest {
     server = new OServer(false);
     server.startup(OrientGraphRemoteTest.class.getResourceAsStream("/embedded-server-config.xml"));
     server.activate();
+
+    clientContext =
+        new OrientDB(
+            "remote:localhost:" + serverPort, "root", "root", OrientDBConfig.defaultConfig());
   }
 
   @AfterClass
   public static void stopEmbeddedServer() throws Exception {
     server.shutdown();
     Thread.sleep(1000);
-    ODatabaseDocumentTx.closeAll();
+    clientContext.close();
 
-    Orient.instance().shutdown();
-    Orient.instance().startup();
-
-    if (oldOrientDBHome != null)
-      System.setProperty("ORIENTDB_HOME", oldOrientDBHome);
-    else
-      System.clearProperty("ORIENTDB_HOME");
+    if (oldOrientDBHome != null) System.setProperty("ORIENTDB_HOME", oldOrientDBHome);
+    else System.clearProperty("ORIENTDB_HOME");
 
     final File file = new File(serverHome);
     deleteDirectory(file);
@@ -68,22 +78,17 @@ public abstract class OrientGraphRemoteTest extends OrientGraphTest {
     OrientGraph graph = currentGraphs.get(url);
 
     if (graph != null) {
-      if (graph.isClosed())
-        currentGraphs.remove(url);
-      else
-        return graph;
+      if (graph.isClosed()) currentGraphs.remove(url);
+      else return graph;
     }
 
-    try {
-      final OServerAdmin serverAdmin = new OServerAdmin(url);
-      serverAdmin.connect("root", "root");
-      if (!serverAdmin.existsDatabase(OrientGraphTest.getStorageType()))
-        serverAdmin.createDatabase("graph", OrientGraphTest.getStorageType());
-
-      serverAdmin.close();
-
-    } catch (IOException e) {
-      throw new IllegalStateException(e);
+    if (!clientContext.exists(graphDirectoryName)) {
+      clientContext.execute(
+          "create database "
+              + graphDirectoryName
+              + " "
+              + ODatabaseType.valueOf(OrientGraphTest.getStorageType().toUpperCase())
+              + " users ( admin identified by 'admin' role admin)");
     }
 
     OrientGraphFactory factory = graphFactories.get(url);
@@ -100,19 +105,6 @@ public abstract class OrientGraphRemoteTest extends OrientGraphTest {
 
     currentGraphs.put(url, graph);
 
-//    StringWriter sw = new StringWriter();
-//
-//    Throwable th = new Throwable();
-//    PrintWriter pw = new PrintWriter(sw);
-//
-//    th.printStackTrace(pw);
-//    pw.append("\n");
-//    pw.append("Vertex count ").append(String.valueOf(count(graph.getVertices())) + " graph name " + graphDirectoryName);
-//
-//    pw.flush();
-//
-//    System.out.println(sw.toString());
-
     return graph;
   }
 
@@ -123,20 +115,16 @@ public abstract class OrientGraphRemoteTest extends OrientGraphTest {
     try {
       final String url = "remote:localhost:" + serverPort + "/" + graphDirectoryName;
       final OrientGraph graph = currentGraphs.get(url);
-      if (graph != null && !graph.isClosed())
-        graph.shutdown();
+      if (graph != null && !graph.isClosed()) graph.shutdown();
 
       final OrientGraphFactory factory = graphFactories.remove(url);
-      if (factory != null)
-        factory.close();
+      if (factory != null) factory.close();
 
-      final OServerAdmin serverAdmin = new OServerAdmin(url);
-      serverAdmin.connect("root", "root");
+      if (clientContext.exists(graphDirectoryName)) {
+        clientContext.drop(graphDirectoryName);
+      }
+      ODatabaseDocumentTx.closeAll();
 
-      if (serverAdmin.existsDatabase(OrientGraphTest.getStorageType()))
-        serverAdmin.dropDatabase(OrientGraphTest.getStorageType());
-
-      serverAdmin.close();
     } catch (Exception e) {
       throw new IllegalStateException(e);
     }
@@ -209,8 +197,10 @@ public abstract class OrientGraphRemoteTest extends OrientGraphTest {
 
         graph.commit();
 
-        Assert.assertEquals(v2.getId(), v1.getVertices(Direction.OUT, "TestE").iterator().next().getId());
-        Assert.assertEquals(v1.getId(), v2.getVertices(Direction.IN, "TestE").iterator().next().getId());
+        Assert.assertEquals(
+            v2.getId(), v1.getVertices(Direction.OUT, "TestE").iterator().next().getId());
+        Assert.assertEquals(
+            v1.getId(), v2.getVertices(Direction.IN, "TestE").iterator().next().getId());
       }
 
       graph.shutdown();
@@ -218,6 +208,4 @@ public abstract class OrientGraphRemoteTest extends OrientGraphTest {
       dropGraph("graph");
     }
   }
-
-
 }

@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.core.storage.cache.chm;
 
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
-
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -157,5 +156,4 @@ public final class LRUList implements Iterable<OCacheEntry> {
       }
     };
   }
-
 }

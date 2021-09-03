@@ -19,11 +19,12 @@
  */
 package com.orientechnologies.orient.core.storage;
 
+import com.orientechnologies.orient.core.tx.OTransactionInternal;
+
 /**
  * Tagged interface for proxy storage implementation
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public interface OStorageProxy extends OStorage {
   String getUserName();
@@ -34,4 +35,5 @@ public interface OStorageProxy extends OStorage {
 
   int removeUser();
 
+  void rollback(OTransactionInternal iTx);
 }

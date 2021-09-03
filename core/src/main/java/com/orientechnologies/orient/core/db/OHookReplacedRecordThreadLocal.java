@@ -15,37 +15,34 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
-import com.orientechnologies.orient.core.OOrientShutdownListener;
-import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.record.ORecord;
 
-/**
- * Uses Thread Local to store information used by hooks.
- *
- */
+/** Uses Thread Local to store information used by hooks. */
 public class OHookReplacedRecordThreadLocal extends ThreadLocal<ORecord> {
 
-  public static volatile OHookReplacedRecordThreadLocal INSTANCE = new OHookReplacedRecordThreadLocal();
+  public static volatile OHookReplacedRecordThreadLocal INSTANCE =
+      new OHookReplacedRecordThreadLocal();
 
   static {
-    Orient.instance().registerListener(new OOrientListenerAbstract() {
-      @Override
-      public void onStartup() {
-        if (INSTANCE == null)
-          INSTANCE = new OHookReplacedRecordThreadLocal();
-      }
+    Orient.instance()
+        .registerListener(
+            new OOrientListenerAbstract() {
+              @Override
+              public void onStartup() {
+                if (INSTANCE == null) INSTANCE = new OHookReplacedRecordThreadLocal();
+              }
 
-      @Override
-      public void onShutdown() {
-        INSTANCE = null;
-      }
-    });
+              @Override
+              public void onShutdown() {
+                INSTANCE = null;
+              }
+            });
   }
 
   public ORecord getIfDefined() {
@@ -55,5 +52,4 @@ public class OHookReplacedRecordThreadLocal extends ThreadLocal<ORecord> {
   public boolean isDefined() {
     return super.get() != null;
   }
-
 }

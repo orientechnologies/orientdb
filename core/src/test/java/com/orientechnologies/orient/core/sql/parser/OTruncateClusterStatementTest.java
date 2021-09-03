@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import org.junit.Test;
+
 public class OTruncateClusterStatementTest extends OParserTestAbstract {
 
   @Test
@@ -17,7 +18,5 @@ public class OTruncateClusterStatementTest extends OParserTestAbstract {
 
     checkWrongSyntax("TRUNCATE CsUSTER Foo");
     checkWrongSyntax("truncate cluster Foo bar");
-
   }
-
 }

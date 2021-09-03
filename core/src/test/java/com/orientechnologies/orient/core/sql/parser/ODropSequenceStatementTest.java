@@ -15,5 +15,4 @@ public class ODropSequenceStatementTest extends OParserTestAbstract {
     checkWrongSyntax("drop SEQUENCE Foo IF NOT EXISTS");
     checkWrongSyntax("drop SEQUENCE Foo TYPE cached");
   }
-
 }

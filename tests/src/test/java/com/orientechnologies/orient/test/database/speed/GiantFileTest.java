@@ -11,7 +11,6 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -26,12 +25,12 @@ import java.util.Random;
  * @since 16.05.13
  */
 public class GiantFileTest {
-  private static final boolean       RECREATE_DATABASE = true;
-  private static final String        DATABASE_NAME     = "GiantFileTest";
-  private static ODatabaseDocumentTx db                = null;
+  private static final boolean RECREATE_DATABASE = true;
+  private static final String DATABASE_NAME = "GiantFileTest";
+  private static ODatabaseDocumentTx db = null;
 
   public static void main(final String[] args) throws Exception {
-  OGlobalConfiguration.DISK_CACHE_SIZE.setValue(1024);
+    OGlobalConfiguration.DISK_CACHE_SIZE.setValue(1024);
     try {
       db = new ODatabaseDocumentTx("plocal:" + DATABASE_NAME);
       if (db.exists() && RECREATE_DATABASE) {
@@ -46,10 +45,21 @@ public class GiantFileTest {
         final OSchema schema = db.getMetadata().getSchema();
         // Create class for storing files.
         final OClass fileClass = schema.createClass("File");
-        fileClass.createProperty("FileName", OType.STRING).setMandatory(true).setNotNull(true).setMin("1");
-        fileClass.createProperty("FileSize", OType.LONG).setMandatory(true).setNotNull(true).setMin("0");
-        // ORecordBytes is a special low-level class defined by OrientDB for efficient storage of raw data.
-        fileClass.createProperty("DataChunks", OType.LINKLIST, OType.getTypeByClass(ORecordBytes.class)).setMandatory(true)
+        fileClass
+            .createProperty("FileName", OType.STRING)
+            .setMandatory(true)
+            .setNotNull(true)
+            .setMin("1");
+        fileClass
+            .createProperty("FileSize", OType.LONG)
+            .setMandatory(true)
+            .setNotNull(true)
+            .setMin("0");
+        // ORecordBytes is a special low-level class defined by OrientDB for efficient storage of
+        // raw data.
+        fileClass
+            .createProperty("DataChunks", OType.LINKLIST, OType.getTypeByClass(ORecordBytes.class))
+            .setMandatory(true)
             .setNotNull(false);
         System.out.println("Created schema.");
       } else {
@@ -65,7 +75,8 @@ public class GiantFileTest {
         final long createFileStartTime = System.currentTimeMillis();
         createGiantFile(giantFile, fileSize);
         final long createFileMs = System.currentTimeMillis() - createFileStartTime;
-        System.out.printf("Finished creating giant file in %f seconds.\n", (float) createFileMs / 1000);
+        System.out.printf(
+            "Finished creating giant file in %f seconds.\n", (float) createFileMs / 1000);
       }
 
       // Save the metadata about the file.
@@ -142,7 +153,8 @@ public class GiantFileTest {
     final List<ORID> existingChunks = fileDoc.field("DataChunks");
     if (existingChunks != null) {
       final String fileName = fileDoc.field("FileName");
-      throw new RuntimeException("File record already has data; overwrite not allowed! fileName: " + fileName);
+      throw new RuntimeException(
+          "File record already has data; overwrite not allowed! fileName: " + fileName);
     }
 
     // TODO: is this assumption ok?
@@ -179,7 +191,9 @@ public class GiantFileTest {
         while (bufferedBytes < buffer.length) {
           final int bytesRead = in.read(buffer, bufferedBytes, buffer.length - bufferedBytes);
           if (bytesRead == -1) {
-            throw new Exception("Reached end of file prematurely. (File changed while reading?) fileName=" + file.getAbsolutePath());
+            throw new Exception(
+                "Reached end of file prematurely. (File changed while reading?) fileName="
+                    + file.getAbsolutePath());
           }
           bufferedBytes += bytesRead;
         }
@@ -214,7 +228,9 @@ public class GiantFileTest {
         while (bufferedBytes < remainder) {
           final int bytesRead = in.read(buffer, bufferedBytes, remainder - bufferedBytes);
           if (bytesRead == -1) {
-            throw new Exception("Reached end of file prematurely. (File changed while reading?) fileName=" + file.getAbsolutePath());
+            throw new Exception(
+                "Reached end of file prematurely. (File changed while reading?) fileName="
+                    + file.getAbsolutePath());
           }
           bufferedBytes += bytesRead;
         }
@@ -235,7 +251,8 @@ public class GiantFileTest {
       // Should be no more data, so validate this.
       final int b = in.read();
       if (b != -1) {
-        throw new Exception("File changed while saving to database! fileName=" + file.getAbsolutePath());
+        throw new Exception(
+            "File changed while saving to database! fileName=" + file.getAbsolutePath());
       }
 
       // Report 100% progress if we haven't already.
@@ -250,7 +267,8 @@ public class GiantFileTest {
       final long saveChunkListMs = System.currentTimeMillis() - saveChunkListStartTime;
 
       // Log the amount of time taken to save the list of chunk RIDs.
-      System.out.printf("Saved list of %d chunk RIDs in %d ms.\n", chunkRids.size(), saveChunkListMs);
+      System.out.printf(
+          "Saved list of %d chunk RIDs in %d ms.\n", chunkRids.size(), saveChunkListMs);
     } finally {
       database.declareIntent(null);
       in.close();

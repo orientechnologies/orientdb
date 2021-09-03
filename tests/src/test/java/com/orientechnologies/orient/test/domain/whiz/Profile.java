@@ -15,137 +15,133 @@
  */
 package com.orientechnologies.orient.test.domain.whiz;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.annotation.OId;
 import com.orientechnologies.orient.core.annotation.OVersion;
 import com.orientechnologies.orient.test.domain.business.Address;
+import java.util.HashSet;
+import java.util.Set;
 
 public class Profile {
-	@OId
-	private String				id;
-	@OVersion
-	private Integer				version;
-	private String				nick;
-	private Set<Profile>	followings	= new HashSet<Profile>();
-	private Set<Profile>	followers		= new HashSet<Profile>();
-	private String				name;
-	private String				surname;
-	private Address				location;
-	private Long					hash;
-	private Profile				invitedBy;
-	private String				value;
+  @OId private String id;
+  @OVersion private Integer version;
+  private String nick;
+  private Set<Profile> followings = new HashSet<Profile>();
+  private Set<Profile> followers = new HashSet<Profile>();
+  private String name;
+  private String surname;
+  private Address location;
+  private Long hash;
+  private Profile invitedBy;
+  private String value;
 
-	public Profile() {
-	}
+  public Profile() {}
 
-	public Profile(String iNick) {
-		nick = iNick;
-	}
+  public Profile(String iNick) {
+    nick = iNick;
+  }
 
-	public Profile(String iNick, String iName, String iSurname, Profile iInvitedBy) {
-		this.nick = iNick;
-		this.name = iName;
-		this.surname = iSurname;
-		this.invitedBy = iInvitedBy;
-	}
+  public Profile(String iNick, String iName, String iSurname, Profile iInvitedBy) {
+    this.nick = iNick;
+    this.name = iName;
+    this.surname = iSurname;
+    this.invitedBy = iInvitedBy;
+  }
 
-	public Set<Profile> getFollowings() {
-		return followings;
-	}
+  public Set<Profile> getFollowings() {
+    return followings;
+  }
 
-	public Set<Profile> getFollowers() {
-		return followers;
-	}
+  public Set<Profile> getFollowers() {
+    return followers;
+  }
 
-	public Profile addFollower(Profile iFollower) {
-		getFollowers().add(iFollower);
-		iFollower.getFollowings().add(this);
-		return this;
-	}
+  public Profile addFollower(Profile iFollower) {
+    getFollowers().add(iFollower);
+    iFollower.getFollowings().add(this);
+    return this;
+  }
 
-	public Profile removeFollower(Profile iFollower) {
-		getFollowers().remove(iFollower);
-		iFollower.getFollowings().remove(this);
-		return this;
-	}
+  public Profile removeFollower(Profile iFollower) {
+    getFollowers().remove(iFollower);
+    iFollower.getFollowings().remove(this);
+    return this;
+  }
 
-	public Profile addFollowing(Profile iFollowing) {
-		getFollowings().add(iFollowing);
-		iFollowing.getFollowers().add(this);
-		return this;
-	}
+  public Profile addFollowing(Profile iFollowing) {
+    getFollowings().add(iFollowing);
+    iFollowing.getFollowers().add(this);
+    return this;
+  }
 
-	public Profile removeFollowing(Profile iFollowing) {
-		getFollowings().remove(iFollowing);
-		iFollowing.getFollowers().remove(this);
-		return this;
-	}
+  public Profile removeFollowing(Profile iFollowing) {
+    getFollowings().remove(iFollowing);
+    iFollowing.getFollowers().remove(this);
+    return this;
+  }
 
-	public Profile getInvitedBy() {
-		return invitedBy;
-	}
+  public Profile getInvitedBy() {
+    return invitedBy;
+  }
 
-	public String getName() {
-		return name;
-	}
+  public String getName() {
+    return name;
+  }
 
-	public Profile setName(String name) {
-		this.name = name;
-		return this;
-	}
+  public Profile setName(String name) {
+    this.name = name;
+    return this;
+  }
 
-	public String getSurname() {
-		return surname;
-	}
+  public String getSurname() {
+    return surname;
+  }
 
-	public Profile setSurname(String surname) {
-		this.surname = surname;
-		return this;
-	}
+  public Profile setSurname(String surname) {
+    this.surname = surname;
+    return this;
+  }
 
-	public Address getLocation() {
-		return location;
-	}
+  public Address getLocation() {
+    return location;
+  }
 
-	public Profile setLocation(Address location) {
-		this.location = location;
-		return this;
-	}
+  public Profile setLocation(Address location) {
+    this.location = location;
+    return this;
+  }
 
-	public Profile setInvitedBy(Profile invitedBy) {
-		this.invitedBy = invitedBy;
-		return this;
-	}
+  public Profile setInvitedBy(Profile invitedBy) {
+    this.invitedBy = invitedBy;
+    return this;
+  }
 
-	public String getNick() {
-		return nick;
-	}
+  public String getNick() {
+    return nick;
+  }
 
-	public void setNick(String nick) {
-		this.nick = nick;
-	}
+  public void setNick(String nick) {
+    this.nick = nick;
+  }
 
-	public String getValue() {
-		return value;
-	}
+  public String getValue() {
+    return value;
+  }
 
-	public Profile setValue(String value) {
-		this.value = value;
-		return this;
-	}
+  public Profile setValue(String value) {
+    this.value = value;
+    return this;
+  }
 
-	public String getId() {
-		return id;
-	}
+  public String getId() {
+    return id;
+  }
 
-	public Long getHash() {
-		return hash;
-	}
+  public Long getHash() {
+    return hash;
+  }
 
-	public Profile setHash(Long hash) {
-		this.hash = hash;
-		return this;
-	}
+  public Profile setHash(Long hash) {
+    this.hash = hash;
+    return this;
+  }
 }

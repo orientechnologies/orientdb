@@ -21,7 +21,6 @@ package com.orientechnologies.orient.core.sql.functions.coll;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -31,16 +30,16 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * This operator can work as aggregate or inline. If only one argument is passed than aggregates, otherwise executes, and returns,
- * the SYMMETRIC DIFFERENCE between the collections received as parameters. Works also with no collection values.
+ * This operator can work as aggregate or inline. If only one argument is passed than aggregates,
+ * otherwise executes, and returns, the SYMMETRIC DIFFERENCE between the collections received as
+ * parameters. Works also with no collection values.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- *
  */
 public class OSQLFunctionSymmetricDifference extends OSQLFunctionMultiValueAbstract<Set<Object>> {
   public static final String NAME = "symmetricDifference";
 
-  private Set<Object>        rejected;
+  private Set<Object> rejected;
 
   public OSQLFunctionSymmetricDifference() {
     super(NAME, 1, -1);
@@ -55,17 +54,21 @@ public class OSQLFunctionSymmetricDifference extends OSQLFunctionMultiValueAbstr
     }
   }
 
-  private static void addItemsToResult(Collection<Object> co, Set<Object> accepted, Set<Object> rejected) {
+  private static void addItemsToResult(
+      Collection<Object> co, Set<Object> accepted, Set<Object> rejected) {
     for (Object o : co) {
       addItemToResult(o, accepted, rejected);
     }
   }
 
   @SuppressWarnings("unchecked")
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
+  public Object execute(
+      Object iThis,
+      OIdentifiable iCurrentRecord,
+      Object iCurrentResult,
+      final Object[] iParams,
       OCommandContext iContext) {
-    if (iParams[0] == null)
-      return null;
+    if (iParams[0] == null) return null;
 
     Object value = iParams[0];
 
@@ -129,8 +132,7 @@ public class OSQLFunctionSymmetricDifference extends OSQLFunctionMultiValueAbstr
       return result;
     }
 
-    if (!resultsToMerge.isEmpty())
-      return resultsToMerge.get(0);
+    if (!resultsToMerge.isEmpty()) return resultsToMerge.get(0);
 
     return null;
   }

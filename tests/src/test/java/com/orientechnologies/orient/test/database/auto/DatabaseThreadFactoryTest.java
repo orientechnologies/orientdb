@@ -16,24 +16,24 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory;
-import org.testng.Assert;
-import org.testng.annotations.*;
-
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.ODatabaseThreadLocalFactory;
+import com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
-/**
- * @author Luca Molino (molino.luca--at--gmail.com)
- * 
- */
+/** @author Luca Molino (molino.luca--at--gmail.com) */
 @Test
 public class DatabaseThreadFactoryTest extends DocumentDBBaseTest {
-	private final OPartitionedDatabasePoolFactory poolFactory = new OPartitionedDatabasePoolFactory();
+  private final OPartitionedDatabasePoolFactory poolFactory = new OPartitionedDatabasePoolFactory();
 
   @Parameters(value = "url")
   public DatabaseThreadFactoryTest(@Optional String url) {
@@ -42,8 +42,7 @@ public class DatabaseThreadFactoryTest extends DocumentDBBaseTest {
 
   @BeforeMethod
   @Override
-  public void beforeMethod() throws Exception {
-  }
+  public void beforeMethod() throws Exception {}
 
   @BeforeClass
   public void init() {
@@ -55,7 +54,7 @@ public class DatabaseThreadFactoryTest extends DocumentDBBaseTest {
     }
   }
 
-  @Test(expectedExceptions = { ODatabaseException.class })
+  @Test(expectedExceptions = {ODatabaseException.class})
   public void testNoFactory() {
     ODatabaseRecordThreadLocal.instance().get();
     Assert.fail("Database Should not be set in Current Thread");
@@ -63,13 +62,15 @@ public class DatabaseThreadFactoryTest extends DocumentDBBaseTest {
 
   @Test(dependsOnMethods = "testNoFactory")
   public void testFactory() {
-    Orient.instance().registerThreadDatabaseFactory(new ODatabaseThreadLocalFactory() {
+    Orient.instance()
+        .registerThreadDatabaseFactory(
+            new ODatabaseThreadLocalFactory() {
 
-      @Override
-      public ODatabaseDocumentInternal getThreadDatabase() {
-        return poolFactory.get(url, "admin", "admin").acquire();
-      }
-    });
+              @Override
+              public ODatabaseDocumentInternal getThreadDatabase() {
+                return poolFactory.get(url, "admin", "admin").acquire();
+              }
+            });
     ODatabaseDocument db = ODatabaseRecordThreadLocal.instance().get();
     Assert.assertNotNull(db);
     db.close();

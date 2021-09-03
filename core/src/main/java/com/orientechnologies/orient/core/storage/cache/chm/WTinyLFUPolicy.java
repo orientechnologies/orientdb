@@ -2,33 +2,33 @@ package com.orientechnologies.orient.core.storage.cache.chm;
 
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
-
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * Window TinyLFU eviction policy https://arxiv.org/pdf/1512.00727.pdf.
- */
+/** Window TinyLFU eviction policy https://arxiv.org/pdf/1512.00727.pdf. */
 final class WTinyLFUPolicy {
-  private static final int EDEN_PERCENT         = 20;
+  private static final int EDEN_PERCENT = 20;
   private static final int PROBATIONARY_PERCENT = 20;
 
-  private volatile int                                     maxSize;
-  private final    ConcurrentHashMap<PageKey, OCacheEntry> data;
-  private final    Admittor                                admittor;
+  private volatile int maxSize;
+  private final ConcurrentHashMap<PageKey, OCacheEntry> data;
+  private final Admittor admittor;
 
   private final AtomicInteger cacheSize;
 
-  private final LRUList eden       = new LRUList();
-  private final LRUList probation  = new LRUList();
+  private final LRUList eden = new LRUList();
+  private final LRUList probation = new LRUList();
   private final LRUList protection = new LRUList();
 
   private int maxEdenSize;
   private int maxProtectedSize;
   private int maxSecondLevelSize;
 
-  WTinyLFUPolicy(final ConcurrentHashMap<PageKey, OCacheEntry> data, final Admittor admittor, final AtomicInteger cacheSize) {
+  WTinyLFUPolicy(
+      final ConcurrentHashMap<PageKey, OCacheEntry> data,
+      final Admittor admittor,
+      final AtomicInteger cacheSize) {
     this.data = data;
     this.admittor = admittor;
     this.cacheSize = cacheSize;
@@ -37,7 +37,9 @@ final class WTinyLFUPolicy {
   public void setMaxSize(final int maxSize) {
     if (eden.size() + protection.size() + probation.size() > maxSize) {
       throw new IllegalStateException(
-          "Can set maximum cache size to " + maxSize + " because current cache size is bigger than requested");
+          "Can set maximum cache size to "
+              + maxSize
+              + " because current cache size is bigger than requested");
     }
 
     this.maxSize = maxSize;
@@ -103,8 +105,10 @@ final class WTinyLFUPolicy {
       } else {
         final OCacheEntry victim = probation.peek();
 
-        final int candidateKeyHashCode = PageKey.hashCode(candidate.getFileId(), (int) candidate.getPageIndex());
-        final int victimKeyHashCode = PageKey.hashCode(victim.getFileId(), (int) victim.getPageIndex());
+        final int candidateKeyHashCode =
+            PageKey.hashCode(candidate.getFileId(), (int) candidate.getPageIndex());
+        final int victimKeyHashCode =
+            PageKey.hashCode(victim.getFileId(), (int) victim.getPageIndex());
 
         final int candidateFrequency = admittor.frequency(candidateKeyHashCode);
         final int victimFrequency = admittor.frequency(victimKeyHashCode);
@@ -114,7 +118,8 @@ final class WTinyLFUPolicy {
           probation.moveToTheTail(candidate);
 
           if (victim.freeze()) {
-            final boolean removed = data.remove(new PageKey(victim.getFileId(), (int) victim.getPageIndex()), victim);
+            final boolean removed =
+                data.remove(new PageKey(victim.getFileId(), (int) victim.getPageIndex()), victim);
             victim.makeDead();
 
             if (removed) {
@@ -130,7 +135,9 @@ final class WTinyLFUPolicy {
           }
         } else {
           if (candidate.freeze()) {
-            final boolean removed = data.remove(new PageKey(candidate.getFileId(), (int) candidate.getPageIndex()), candidate);
+            final boolean removed =
+                data.remove(
+                    new PageKey(candidate.getFileId(), (int) candidate.getPageIndex()), candidate);
             candidate.makeDead();
 
             if (removed) {
@@ -188,28 +195,34 @@ final class WTinyLFUPolicy {
   }
 
   void assertSize() {
-    assert eden.size() + probation.size() + protection.size() == cacheSize.get() && data.size() == cacheSize.get()
+    assert eden.size() + probation.size() + protection.size() == cacheSize.get()
+        && data.size() == cacheSize.get()
         && cacheSize.get() <= maxSize;
   }
 
   void assertConsistency() {
     for (final OCacheEntry cacheEntry : data.values()) {
-      assert eden.contains(cacheEntry) || protection.contains(cacheEntry) || probation.contains(cacheEntry);
+      assert eden.contains(cacheEntry)
+          || protection.contains(cacheEntry)
+          || probation.contains(cacheEntry);
     }
 
     int counter = 0;
     for (final OCacheEntry cacheEntry : eden) {
-      assert data.get(new PageKey(cacheEntry.getFileId(), (int) cacheEntry.getPageIndex())) == cacheEntry;
+      assert data.get(new PageKey(cacheEntry.getFileId(), (int) cacheEntry.getPageIndex()))
+          == cacheEntry;
       counter++;
     }
 
     for (final OCacheEntry cacheEntry : probation) {
-      assert data.get(new PageKey(cacheEntry.getFileId(), (int) cacheEntry.getPageIndex())) == cacheEntry;
+      assert data.get(new PageKey(cacheEntry.getFileId(), (int) cacheEntry.getPageIndex()))
+          == cacheEntry;
       counter++;
     }
 
     for (final OCacheEntry cacheEntry : protection) {
-      assert data.get(new PageKey(cacheEntry.getFileId(), (int) cacheEntry.getPageIndex())) == cacheEntry;
+      assert data.get(new PageKey(cacheEntry.getFileId(), (int) cacheEntry.getPageIndex()))
+          == cacheEntry;
       counter++;
     }
 

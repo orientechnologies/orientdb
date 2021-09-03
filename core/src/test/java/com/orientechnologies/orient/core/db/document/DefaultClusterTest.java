@@ -1,9 +1,8 @@
 package com.orientechnologies.orient.core.db.document;
 
+import com.orientechnologies.orient.core.OCreateDatabaseUtil;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.junit.Assert;
@@ -12,21 +11,16 @@ import org.junit.Test;
 public class DefaultClusterTest {
   @Test
   public void defaultClusterTest() {
-    OrientDB context = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
+    final OrientDB context =
+        OCreateDatabaseUtil.createDatabase("test", "embedded:", OCreateDatabaseUtil.TYPE_MEMORY);
+    try (final ODatabaseSession db =
+        context.open("test", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD)) {
+      final OVertex vertex = db.newVertex("V");
+      vertex.setProperty("embedded", new ODocument());
+      db.save(vertex);
 
-    context.create("test", ODatabaseType.MEMORY);
-
-    try (ODatabaseSession db = context.open("test", "admin", "admin")) {
-
-      OVertex v = db.newVertex("V");
-
-      v.setProperty("embedded", new ODocument());
-
-      db.save(v);
-
-      ODocument embedded = v.getProperty("embedded");
+      final ODocument embedded = vertex.getProperty("embedded");
       Assert.assertFalse("Found: " + embedded.getIdentity(), embedded.getIdentity().isValid());
-
     }
   }
 }

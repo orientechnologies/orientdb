@@ -1,22 +1,16 @@
 package com.orientechnologies.orient.core.sql.executor;
 
-/**
- * Created by luigidellaquila on 08/08/16.
- */
-
+/** Created by luigidellaquila on 08/08/16. */
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OInsertExecutionPlan extends OSelectExecutionPlan {
 
   private List<OResult> result = new ArrayList<>();
-  private int           next   = 0;
+  private int next = 0;
 
   public OInsertExecutionPlan(OCommandContext ctx) {
     super(ctx);
@@ -25,10 +19,11 @@ public class OInsertExecutionPlan extends OSelectExecutionPlan {
   @Override
   public OResultSet fetchNext(int n) {
     if (next >= result.size()) {
-      return new OInternalResultSet();//empty
+      return new OInternalResultSet(); // empty
     }
 
-    OIteratorResultSet nextBlock = new OIteratorResultSet(result.subList(next, Math.min(next + n, result.size())).iterator());
+    OIteratorResultSet nextBlock =
+        new OIteratorResultSet(result.subList(next, Math.min(next + n, result.size())).iterator());
     next += n;
     return nextBlock;
   }
@@ -72,4 +67,3 @@ public class OInsertExecutionPlan extends OSelectExecutionPlan {
     return super.canBeCached();
   }
 }
-

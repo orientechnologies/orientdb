@@ -15,48 +15,52 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.List;
-
-import org.testng.Assert;
-import org.testng.annotations.*;
-
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
+import java.util.List;
+import org.testng.Assert;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
-/**
- * SQL test against metadata.
- */
+/** SQL test against metadata. */
 @Test(groups = "sql-select")
 public class SQLMetadataTest extends DocumentDBBaseTest {
-	@Parameters(value = "url")
-	public SQLMetadataTest(@Optional String url) {
-		super(url);
-	}
+  @Parameters(value = "url")
+  public SQLMetadataTest(@Optional String url) {
+    super(url);
+  }
+
   @Test
   public void querySchemaClasses() {
-    List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select expand(classes) from metadata:schema"))
-        .execute();
+    List<ODocument> result =
+        database
+            .command(new OSQLSynchQuery<ODocument>("select expand(classes) from metadata:schema"))
+            .execute();
 
     Assert.assertTrue(result.size() != 0);
   }
 
   @Test
   public void querySchemaProperties() {
-    List<ODocument> result = database.command(
-        new OSQLSynchQuery<ODocument>(
-            "select expand(properties) from (select expand(classes) from metadata:schema) where name = 'OUser'")).execute();
+    List<ODocument> result =
+        database
+            .command(
+                new OSQLSynchQuery<ODocument>(
+                    "select expand(properties) from (select expand(classes) from metadata:schema) where name = 'OUser'"))
+            .execute();
 
     Assert.assertTrue(result.size() != 0);
   }
 
   @Test
   public void queryIndexes() {
-    List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select expand(indexes) from metadata:indexmanager"))
-        .execute();
+    List<ODocument> result =
+        database
+            .command(
+                new OSQLSynchQuery<ODocument>("select expand(indexes) from metadata:indexmanager"))
+            .execute();
 
     Assert.assertTrue(result.size() != 0);
   }
@@ -64,10 +68,11 @@ public class SQLMetadataTest extends DocumentDBBaseTest {
   @Test
   public void queryMetadataNotSupported() {
     try {
-      database.command(new OSQLSynchQuery<ODocument>("select expand(indexes) from metadata:blaaa")).execute();
+      database
+          .command(new OSQLSynchQuery<ODocument>("select expand(indexes) from metadata:blaaa"))
+          .execute();
       Assert.fail();
     } catch (OQueryParsingException e) {
     }
-
   }
 }

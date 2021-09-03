@@ -2,22 +2,22 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class ParallelExecStep extends AbstractExecutionStep {
   private final List<OInternalExecutionPlan> subExecutionPlans;
 
-  private int        current          = 0;
+  private int current = 0;
   private OResultSet currentResultSet = null;
 
-  public ParallelExecStep(List<OInternalExecutionPlan> subExecuitonPlans, OCommandContext ctx, boolean profilingEnabled) {
+  public ParallelExecStep(
+      List<OInternalExecutionPlan> subExecuitonPlans,
+      OCommandContext ctx,
+      boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.subExecutionPlans = subExecuitonPlans;
   }
@@ -58,9 +58,7 @@ public class ParallelExecStep extends AbstractExecutionStep {
       }
 
       @Override
-      public void close() {
-
-      }
+      public void close() {}
 
       @Override
       public Optional<OExecutionPlan> getExecutionPlan() {
@@ -218,7 +216,9 @@ public class ParallelExecStep extends AbstractExecutionStep {
 
   @Override
   public OExecutionStep copy(OCommandContext ctx) {
-    return new ParallelExecStep(subExecutionPlans.stream().map(x -> x.copy(ctx)).collect(Collectors.toList()), ctx,
+    return new ParallelExecStep(
+        subExecutionPlans.stream().map(x -> x.copy(ctx)).collect(Collectors.toList()),
+        ctx,
         profilingEnabled);
   }
 }

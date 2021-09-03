@@ -5,15 +5,13 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.CellBTreeSingleValueEntryPointV1;
-
 import java.nio.ByteBuffer;
 
 public final class CellBTreeEntryPointSingleValueV1SetPagesSizePO extends PageOperationRecord {
   private int prevPagesSize;
   private int pagesSize;
 
-  public CellBTreeEntryPointSingleValueV1SetPagesSizePO() {
-  }
+  public CellBTreeEntryPointSingleValueV1SetPagesSizePO() {}
 
   public CellBTreeEntryPointSingleValueV1SetPagesSizePO(int prevPagesSize, int pagesSize) {
     this.prevPagesSize = prevPagesSize;
@@ -30,13 +28,15 @@ public final class CellBTreeEntryPointSingleValueV1SetPagesSizePO extends PageOp
 
   @Override
   public void redo(OCacheEntry cacheEntry) {
-    final CellBTreeSingleValueEntryPointV1 bucket = new CellBTreeSingleValueEntryPointV1(cacheEntry);
+    final CellBTreeSingleValueEntryPointV1 bucket =
+        new CellBTreeSingleValueEntryPointV1(cacheEntry);
     bucket.setPagesSize(pagesSize);
   }
 
   @Override
   public void undo(OCacheEntry cacheEntry) {
-    final CellBTreeSingleValueEntryPointV1 bucket = new CellBTreeSingleValueEntryPointV1(cacheEntry);
+    final CellBTreeSingleValueEntryPointV1 bucket =
+        new CellBTreeSingleValueEntryPointV1(cacheEntry);
     bucket.setPagesSize(prevPagesSize);
   }
 

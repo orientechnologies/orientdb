@@ -21,7 +21,6 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -30,25 +29,22 @@ import com.orientechnologies.orient.core.hook.ORecordHookAbstract;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import java.util.concurrent.atomic.AtomicLong;
 import junit.framework.Assert;
 import org.junit.Test;
 
-import java.util.concurrent.atomic.AtomicLong;
-
-/**
- * Tests the behavior of hooks in distributed configuration.
- */
+/** Tests the behavior of hooks in distributed configuration. */
 public class DistributedHookIT extends AbstractServerClusterTest {
-  private final static int SERVERS = 2;
+  private static final int SERVERS = 2;
 
   private final AtomicLong beforeCreate = new AtomicLong();
-  private final AtomicLong afterCreate  = new AtomicLong();
-  private final AtomicLong beforeRead   = new AtomicLong();
-  private final AtomicLong afterRead    = new AtomicLong();
+  private final AtomicLong afterCreate = new AtomicLong();
+  private final AtomicLong beforeRead = new AtomicLong();
+  private final AtomicLong afterRead = new AtomicLong();
   private final AtomicLong beforeUpdate = new AtomicLong();
-  private final AtomicLong afterUpdate  = new AtomicLong();
+  private final AtomicLong afterUpdate = new AtomicLong();
   private final AtomicLong beforeDelete = new AtomicLong();
-  private final AtomicLong afterDelete  = new AtomicLong();
+  private final AtomicLong afterDelete = new AtomicLong();
 
   public class TestHookSourceNode extends ORecordHookAbstract {
 
@@ -127,16 +123,22 @@ public class DistributedHookIT extends AbstractServerClusterTest {
 
       OrientDB orientDB = serverInstance.get(s - 1).getServerInstance().getContext();
       if (!orientDB.exists(getDatabaseName())) {
-        orientDB.create(getDatabaseName(), ODatabaseType.PLOCAL);
+        orientDB.execute(
+            "create database ? plocal users(admin identified by 'admin' role admin)",
+            getDatabaseName());
       }
       ODatabaseDocument g = orientDB.open(getDatabaseName(), "admin", "admin");
       g.registerHook(new TestHookSourceNode(), ORecordHook.HOOK_POSITION.REGULAR);
 
       try {
         // CREATE (VIA COMMAND)
-        OIdentifiable inserted = g.command(
-            new OCommandSQL("insert into OUser (name, password, status) values ('novo" + s + "','teste','ACTIVE') RETURN @rid"))
-            .execute();
+        OIdentifiable inserted =
+            g.command(
+                    new OCommandSQL(
+                        "insert into OUser (name, password, status) values ('novo"
+                            + s
+                            + "','teste','ACTIVE') RETURN @rid"))
+                .execute();
         Assert.assertNotNull(inserted);
         Assert.assertEquals(beforeCreate.get(), s);
         Assert.assertEquals(afterCreate.get(), s);

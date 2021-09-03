@@ -1,16 +1,13 @@
 package com.orientechnologies.orient.core.query.live;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OLiveQueryMonitor;
 
-/**
- * Created by luigidellaquila on 15/06/17.
- */
+/** Created by luigidellaquila on 15/06/17. */
 public class OLiveQueryMonitorEmbedded implements OLiveQueryMonitor {
 
-  private final int                       token;
+  private final int token;
   private final ODatabaseDocumentInternal db;
 
   public OLiveQueryMonitorEmbedded(int token, ODatabaseDocumentInternal dbCopy) {

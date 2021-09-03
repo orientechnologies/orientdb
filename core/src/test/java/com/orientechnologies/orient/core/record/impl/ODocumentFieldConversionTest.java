@@ -1,24 +1,30 @@
 package com.orientechnologies.orient.core.record.impl;
 
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.math.BigDecimal;
-import java.util.*;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
 public class ODocumentFieldConversionTest {
 
   private ODatabaseDocumentTx db;
-  private OClass              clazz;
+  private OClass clazz;
 
   @Before
   public void before() {
@@ -63,7 +69,6 @@ public class ODocumentFieldConversionTest {
     clazz.createProperty("decimalMap", OType.EMBEDDEDMAP, OType.DECIMAL);
     clazz.createProperty("booleanMap", OType.EMBEDDEDMAP, OType.BOOLEAN);
     clazz.createProperty("dateMap", OType.EMBEDDEDMAP, OType.DATE);
-
   }
 
   @Test
@@ -135,7 +140,6 @@ public class ODocumentFieldConversionTest {
     // assertTrue(doc.field("integer") instanceof Integer);
     // assertEquals(1, doc.field("integer"));
     ODatabaseRecordThreadLocal.instance().remove();
-
   }
 
   @Test
@@ -430,7 +434,7 @@ public class ODocumentFieldConversionTest {
     ODatabaseRecordThreadLocal.instance().remove();
   }
 
-  @SuppressWarnings({ "rawtypes" })
+  @SuppressWarnings({"rawtypes"})
   @Test
   public void testListByteCoversion() {
     ODatabaseRecordThreadLocal.instance().set(db);
@@ -460,7 +464,7 @@ public class ODocumentFieldConversionTest {
   }
 
   @Test
-  @SuppressWarnings({ "rawtypes" })
+  @SuppressWarnings({"rawtypes"})
   public void testCollectionIntegerCoversion() {
     ODatabaseRecordThreadLocal.instance().set(db);
     List values = new ArrayList();
@@ -490,7 +494,7 @@ public class ODocumentFieldConversionTest {
   }
 
   @Test
-  @SuppressWarnings({ "rawtypes" })
+  @SuppressWarnings({"rawtypes"})
   public void testCollectionLongCoversion() {
     ODatabaseRecordThreadLocal.instance().set(db);
     List values = new ArrayList();
@@ -520,7 +524,7 @@ public class ODocumentFieldConversionTest {
   }
 
   @Test
-  @SuppressWarnings({ "rawtypes", "unchecked" })
+  @SuppressWarnings({"rawtypes", "unchecked"})
   public void testCollectionBooleanCoversion() {
     ODatabaseRecordThreadLocal.instance().set(db);
     List values = new ArrayList();
@@ -563,7 +567,7 @@ public class ODocumentFieldConversionTest {
   }
 
   @Test
-  @SuppressWarnings({ "rawtypes", "unchecked" })
+  @SuppressWarnings({"rawtypes", "unchecked"})
   public void testCollectionStringCoversion() {
     ODatabaseRecordThreadLocal.instance().set(db);
     List values = new ArrayList();
@@ -595,15 +599,14 @@ public class ODocumentFieldConversionTest {
     for (int i = 1; i < 7; i++) {
       boolean contain = false;
       for (Object object : set) {
-        if (object.toString().contains(((Integer) i).toString()))
-          contain = true;
+        if (object.toString().contains(((Integer) i).toString())) contain = true;
       }
       assertTrue(contain);
     }
     ODatabaseRecordThreadLocal.instance().remove();
   }
 
-  @SuppressWarnings({ "rawtypes", "unchecked" })
+  @SuppressWarnings({"rawtypes", "unchecked"})
   private void fillSet(Set set) {
     set.add((byte) 1);
     set.add(2L);
@@ -616,7 +619,7 @@ public class ODocumentFieldConversionTest {
   }
 
   @Test
-  @SuppressWarnings({ "rawtypes" })
+  @SuppressWarnings({"rawtypes"})
   public void testCollectionFloatCoversion() {
     ODatabaseRecordThreadLocal.instance().set(db);
     List values = new ArrayList();
@@ -646,7 +649,7 @@ public class ODocumentFieldConversionTest {
     ODatabaseRecordThreadLocal.instance().remove();
   }
 
-  @SuppressWarnings({ "rawtypes", "unchecked" })
+  @SuppressWarnings({"rawtypes", "unchecked"})
   private void fillList(List values) {
     values.add((byte) 1);
     values.add(1L);
@@ -656,11 +659,10 @@ public class ODocumentFieldConversionTest {
     values.add(1f);
     values.add(1d);
     values.add(BigDecimal.ONE);
-
   }
 
   @Test
-  @SuppressWarnings({ "rawtypes" })
+  @SuppressWarnings({"rawtypes"})
   public void testCollectionDoubleCoversion() {
     ODatabaseRecordThreadLocal.instance().set(db);
     List values = new ArrayList();
@@ -691,7 +693,7 @@ public class ODocumentFieldConversionTest {
   }
 
   @Test
-  @SuppressWarnings({ "rawtypes" })
+  @SuppressWarnings({"rawtypes"})
   public void testCollectionDecimalCoversion() {
     ODatabaseRecordThreadLocal.instance().set(db);
     List values = new ArrayList();
@@ -717,8 +719,7 @@ public class ODocumentFieldConversionTest {
     for (int i = 1; i < 7; i++) {
       boolean contain = false;
       for (Object object : set) {
-        if (object.toString().contains(((Integer) i).toString()))
-          contain = true;
+        if (object.toString().contains(((Integer) i).toString())) contain = true;
       }
       assertTrue(contain);
     }
@@ -727,7 +728,7 @@ public class ODocumentFieldConversionTest {
   }
 
   @Test
-  @SuppressWarnings({ "rawtypes", "unchecked" })
+  @SuppressWarnings({"rawtypes", "unchecked"})
   public void testCollectionDateCoversion() {
     ODatabaseRecordThreadLocal.instance().set(db);
     List values = new ArrayList();
@@ -916,5 +917,4 @@ public class ODocumentFieldConversionTest {
     db.activateOnCurrentThread();
     db.drop();
   }
-
 }

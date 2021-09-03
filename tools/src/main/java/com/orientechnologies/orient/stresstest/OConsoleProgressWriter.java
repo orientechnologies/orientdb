@@ -23,15 +23,15 @@ import com.orientechnologies.common.thread.OSoftThread;
 import com.orientechnologies.orient.stresstest.workload.OWorkload;
 
 /**
- * Takes care of updating the console with a completion percentage while the stress test is working; it takes the data to show from
- * the OStressTestResults class.
+ * Takes care of updating the console with a completion percentage while the stress test is working;
+ * it takes the data to show from the OStressTestResults class.
  *
  * @author Andrea Iacono
  */
 public class OConsoleProgressWriter extends OSoftThread {
 
   private final OWorkload workload;
-  private String          lastResult = null;
+  private String lastResult = null;
 
   public OConsoleProgressWriter(final OWorkload workload) {
     this.workload = workload;

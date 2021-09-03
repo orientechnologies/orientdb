@@ -26,30 +26,31 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetwork;
 
 /**
- * Saves all the important information about the network connection. Useful for monitoring and statistics.
+ * Saves all the important information about the network connection. Useful for monitoring and
+ * statistics.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class ONetworkProtocolData {
-  public  String              commandInfo                = null;
-  public  String              commandDetail              = null;
-  public  String              lastDatabase               = null;
-  public  String              lastUser                   = null;
-  public  String              serverInfo                 = null;
-  public  String              caller                     = null;
-  public  String              driverName                 = null;
-  public  String              driverVersion              = null;
-  public  short               protocolVersion            = -1;
-  public  int                 sessionId                  = -1;
-  public  String              clientId                   = null;
-  public  String              currentUserId              = null;
-  private String              serializationImpl          = null;
-  public  boolean             serverUser                 = false;
-  public  String              serverUsername             = null;
-  public  OCommandRequestText command                    = null;
-  public  boolean             supportsLegacyPushMessages = true;
-  public  boolean             collectStats               = true;
-  private ORecordSerializer   serializer;
+  public String commandInfo = null;
+  public String commandDetail = null;
+  public String lastDatabase = null;
+  public String lastUser = null;
+  public String serverInfo = null;
+  public String caller = null;
+  public String driverName = null;
+  public String driverVersion = null;
+  public short protocolVersion = -1;
+  public int sessionId = -1;
+  public String clientId = null;
+  public String currentUserId = null;
+  private String serializationImpl = null;
+  public boolean serverUser = false;
+  public String serverUsername = null;
+  public OCommandRequestText command = null;
+  public boolean supportsLegacyPushMessages = true;
+  public boolean collectStats = true;
+  private ORecordSerializer serializer;
 
   public String getSerializationImpl() {
     return serializationImpl;

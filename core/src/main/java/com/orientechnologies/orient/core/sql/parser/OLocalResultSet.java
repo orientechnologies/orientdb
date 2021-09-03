@@ -8,14 +8,11 @@ import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * Created by luigidellaquila on 07/07/16.
- */
+/** Created by luigidellaquila on 07/07/16. */
 public class OLocalResultSet implements OResultSet {
 
   private OResultSet lastFetch = null;
@@ -25,8 +22,6 @@ public class OLocalResultSet implements OResultSet {
   long totalExecutionTime = 0;
   long startTime = 0;
 
-
-
   public OLocalResultSet(OInternalExecutionPlan executionPlan) {
     this.executionPlan = executionPlan;
     fetchNext();
@@ -35,7 +30,7 @@ public class OLocalResultSet implements OResultSet {
   private boolean fetchNext() {
     long begin = System.currentTimeMillis();
     try {
-      if(lastFetch == null) {
+      if (lastFetch == null) {
         startTime = begin;
       }
       lastFetch = executionPlan.fetchNext(100);
@@ -81,9 +76,17 @@ public class OLocalResultSet implements OResultSet {
       if (db != null) {
         final OSecurityUser user = db.getUser();
         final String userString = user != null ? user.toString() : null;
-        Orient.instance().getProfiler()
-            .stopChrono("db." + ODatabaseRecordThreadLocal.instance().get().getName() + ".command.sql." + executionPlan.getStatement(),
-                "Command executed against the database", System.currentTimeMillis() - totalExecutionTime, "db.*.command.*", null,
+        Orient.instance()
+            .getProfiler()
+            .stopChrono(
+                "db."
+                    + ODatabaseRecordThreadLocal.instance().get().getName()
+                    + ".command.sql."
+                    + executionPlan.getStatement(),
+                "Command executed against the database",
+                System.currentTimeMillis() - totalExecutionTime,
+                "db.*.command.*",
+                null,
                 userString);
       }
     }
@@ -109,7 +112,6 @@ public class OLocalResultSet implements OResultSet {
 
   @Override
   public Map<String, Long> getQueryStats() {
-    return new HashMap<>();//TODO
+    return new HashMap<>(); // TODO
   }
-
 }

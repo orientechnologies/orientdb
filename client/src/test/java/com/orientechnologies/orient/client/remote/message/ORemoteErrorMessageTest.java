@@ -1,19 +1,15 @@
 package com.orientechnologies.orient.client.remote.message;
 
-import com.orientechnologies.common.exception.OErrorCode;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.junit.Test;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-/**
- * Created by tglman on 13/06/17.
- */
+import com.orientechnologies.common.exception.OErrorCode;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import org.junit.Test;
+
+/** Created by tglman on 13/06/17. */
 public class ORemoteErrorMessageTest {
 
   @Test
@@ -21,7 +17,8 @@ public class ORemoteErrorMessageTest {
     MockChannel channel = new MockChannel();
     Map<String, String> messages = new HashMap<>();
     messages.put("one", "two");
-    OError37Response response = new OError37Response(OErrorCode.GENERIC_ERROR, 10, messages, "some".getBytes());
+    OError37Response response =
+        new OError37Response(OErrorCode.GENERIC_ERROR, 10, messages, "some".getBytes());
     response.write(channel, 0, null);
     channel.close();
     OError37Response readResponse = new OError37Response();
@@ -33,6 +30,4 @@ public class ORemoteErrorMessageTest {
     assertEquals(readResponse.getMessages().get("one"), "two");
     assertEquals(new String(readResponse.getVerbose()), "some");
   }
-
 }
-

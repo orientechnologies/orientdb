@@ -13,31 +13,25 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.test;
 
 import com.orientechnologies.orient.core.command.script.OCommandScript;
-import com.orientechnologies.orient.core.index.OIndexEngineException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import java.io.InputStream;
+import java.util.List;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.InputStream;
-import java.util.List;
-
-/**
- * Created by enricorisa on 02/10/14.
- */
-
+/** Created by enricorisa on 02/10/14. */
 public class LuceneQueryErrorTest extends BaseLuceneTest {
 
-  public LuceneQueryErrorTest() {
-  }
+  public LuceneQueryErrorTest() {}
 
   @Before
   public void init() {
@@ -45,8 +39,8 @@ public class LuceneQueryErrorTest extends BaseLuceneTest {
 
     db.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
 
-    db.command(new OCommandSQL("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE")).execute();
-
+    db.command(new OCommandSQL("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE"))
+        .execute();
   }
 
   @Test

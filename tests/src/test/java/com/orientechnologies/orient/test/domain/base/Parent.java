@@ -18,44 +18,40 @@ package com.orientechnologies.orient.test.domain.base;
 
 import javax.persistence.Embedded;
 
-/**
- * @author Luca Molino (molino.luca--at--gmail.com)
- * 
- */
+/** @author Luca Molino (molino.luca--at--gmail.com) */
 public class Parent {
-	private String				name;
+  private String name;
 
-	@Embedded
-	private EmbeddedChild	embeddedChild;
+  @Embedded private EmbeddedChild embeddedChild;
 
-	private EmbeddedChild	child;
+  private EmbeddedChild child;
 
-	public String getName() {
-		return name;
-	}
+  public String getName() {
+    return name;
+  }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+  public void setName(String name) {
+    this.name = name;
+  }
 
-	public EmbeddedChild getChild() {
-		return child;
-	}
+  public EmbeddedChild getChild() {
+    return child;
+  }
 
-	public void setChild(EmbeddedChild child) {
-		this.child = child;
-	}
+  public void setChild(EmbeddedChild child) {
+    this.child = child;
+  }
 
-	public EmbeddedChild getEmbeddedChild() {
-		return embeddedChild;
-	}
+  public EmbeddedChild getEmbeddedChild() {
+    return embeddedChild;
+  }
 
-	public void setEmbeddedChild(EmbeddedChild embeddedChild) {
-		this.embeddedChild = embeddedChild;
-	}
+  public void setEmbeddedChild(EmbeddedChild embeddedChild) {
+    this.embeddedChild = embeddedChild;
+  }
 
-	@Override
-	public String toString() {
-		return "Parent [getName()=" + getName() + "]";
-	}
+  @Override
+  public String toString() {
+    return "Parent [getName()=" + getName() + "]";
+  }
 }

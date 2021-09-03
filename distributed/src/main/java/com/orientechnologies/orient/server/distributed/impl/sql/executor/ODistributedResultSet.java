@@ -7,22 +7,19 @@ import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.impl.task.OCloseQueryTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OFetchQueryPageTask;
-
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
-/**
- * Created by luigidellaquila on 21/06/17.
- */
+/** Created by luigidellaquila on 21/06/17. */
 public class ODistributedResultSet implements OResultSet {
-  private String                       queryId;
-  private List<OResult>                data;
+  private String queryId;
+  private List<OResult> data;
   private ODatabaseDocumentDistributed database;
-  private String                       nodeName;
+  private String nodeName;
 
-  private int     nextItem = -1;
+  private int nextItem = -1;
   private boolean finished = false;
 
   @Override

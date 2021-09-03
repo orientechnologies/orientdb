@@ -20,34 +20,33 @@
 package com.orientechnologies.common.profiler;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 
 /**
  * Contains the profiling data abount timing.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OProfilerEntry {
-  public String      name    = null;
-  public long        entries = 0;
-  public long        last    = 0;
-  public long        min     = 999999999;
-  public long        max     = 0;
-  public float       average = 0;
-  public long        total   = 0;
-  public final long  firstExecution;
-  public long        lastExecution;
+  public String name = null;
+  public long entries = 0;
+  public long last = 0;
+  public long min = 999999999;
+  public long max = 0;
+  public float average = 0;
+  public long total = 0;
+  public final long firstExecution;
+  public long lastExecution;
 
-  public String      payLoad;
-  public String      description;
+  public String payLoad;
+  public String description;
 
-  public long        lastResetEntries = 0;
-  public long        lastReset;
+  public long lastResetEntries = 0;
+  public long lastReset;
 
-  public Set<String> users   = new HashSet<String>();
+  public Set<String> users = new HashSet<String>();
 
   public OProfilerEntry() {
     firstExecution = System.currentTimeMillis();
@@ -70,8 +69,7 @@ public class OProfilerEntry {
     doc.field("lastExecution", lastExecution);
     doc.field("lastReset", lastReset);
     doc.field("lastResetEntries", lastResetEntries);
-    if (payLoad != null)
-      doc.field("payload", payLoad);
+    if (payLoad != null) doc.field("payload", payLoad);
     return doc;
   }
 
@@ -92,7 +90,8 @@ public class OProfilerEntry {
     buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d,", "firstExecution", firstExecution));
     buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d,", "lastExecution", lastExecution));
     buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d,", "lastReset", lastReset));
-    buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d,", "lastResetEntries,", lastResetEntries));
+    buffer.append(
+        String.format(Locale.ENGLISH, "\"%s\":%d,", "lastResetEntries,", lastResetEntries));
     if (payLoad != null)
       buffer.append(String.format(Locale.ENGLISH, "\"%s\":\"%s\"", "payload,", payLoad));
     buffer.append(String.format(Locale.ENGLISH, "\"%s\": [", "users"));
@@ -111,7 +110,8 @@ public class OProfilerEntry {
 
   @Override
   public String toString() {
-    return String.format("Profiler entry [%s]: total=%d, average=%.2f, items=%d, last=%d, max=%d, min=%d", name, total, average,
-        entries, last, max, min);
+    return String.format(
+        "Profiler entry [%s]: total=%d, average=%.2f, items=%d, last=%d, max=%d, min=%d",
+        name, total, average, entries, last, max, min);
   }
 }

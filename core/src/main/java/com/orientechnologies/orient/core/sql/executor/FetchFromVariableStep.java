@@ -5,20 +5,17 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.OElement;
-
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * Created by luigidellaquila on 22/07/16.
- */
+/** Created by luigidellaquila on 22/07/16. */
 public class FetchFromVariableStep extends AbstractExecutionStep {
 
-  private String     variableName;
+  private String variableName;
   private OResultSet source;
-  private OResult    nextResult = null;
-  private boolean    inited     = false;
+  private OResult nextResult = null;
+  private boolean inited = false;
 
   public FetchFromVariableStep(String variableName, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
@@ -26,9 +23,7 @@ public class FetchFromVariableStep extends AbstractExecutionStep {
     reset();
   }
 
-  public void reset() {
-
-  }
+  public void reset() {}
 
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
@@ -70,9 +65,7 @@ public class FetchFromVariableStep extends AbstractExecutionStep {
       }
 
       @Override
-      public void close() {
-
-      }
+      public void close() {}
 
       @Override
       public Optional<OExecutionPlan> getExecutionPlan() {
@@ -93,7 +86,7 @@ public class FetchFromVariableStep extends AbstractExecutionStep {
     inited = true;
     Object src = ctx.getVariable(variableName);
     if (src instanceof OInternalResultSet) {
-      source = ((OInternalResultSet)src).copy();
+      source = ((OInternalResultSet) src).copy();
     } else if (src instanceof OResultSet) {
       source = (OResultSet) src;
       source.reset();
@@ -127,8 +120,11 @@ public class FetchFromVariableStep extends AbstractExecutionStep {
 
   @Override
   public String prettyPrint(int depth, int indent) {
-    return OExecutionStepInternal.getIndent(depth, indent) + "+ FETCH FROM VARIABLE\n" + OExecutionStepInternal
-        .getIndent(depth, indent) + "  " + variableName;
+    return OExecutionStepInternal.getIndent(depth, indent)
+        + "+ FETCH FROM VARIABLE\n"
+        + OExecutionStepInternal.getIndent(depth, indent)
+        + "  "
+        + variableName;
   }
 
   @Override

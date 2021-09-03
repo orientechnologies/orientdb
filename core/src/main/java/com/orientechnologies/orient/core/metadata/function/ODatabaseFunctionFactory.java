@@ -19,19 +19,17 @@
  */
 package com.orientechnologies.orient.core.metadata.function;
 
-import java.util.Set;
-
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionFactory;
+import java.util.Set;
 
 /**
  * Dynamic function factory bound to the database's functions
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public class ODatabaseFunctionFactory implements OSQLFunctionFactory {
   @Override

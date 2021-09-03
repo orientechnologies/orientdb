@@ -1,31 +1,34 @@
 package com.orientechnologies.orient.server.network.protocol.http;
 
 import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.metadata.security.OToken;
+import com.orientechnologies.orient.core.security.OParsedToken;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
 import com.orientechnologies.orient.server.network.protocol.http.multipart.OHttpMultipartBaseInputStream;
-
 import java.io.InputStream;
 import java.util.Map;
 
 public class OHttpRequestImpl extends OHttpRequest {
 
-  private String                        url;
-  private String                        httpMethod;
-  private String                        httpVersion;
-  private String                        contentType;
-  private String                        contentEncoding;
+  private String url;
+  private String httpMethod;
+  private String httpVersion;
+  private String contentType;
+  private String contentEncoding;
+  private String acceptEncoding;
   private OHttpMultipartBaseInputStream multipartStream;
-  private String                        boundary;
-  private boolean                       isMultipart;
-  private String                        ifMatch;
-  private String                        authentication;
-  private boolean                       keepAlive = true;
-  private Map<String, String>           headers;
-  private String                        bearerTokenRaw;
-  private OToken                        bearerToken;
+  private String boundary;
+  private boolean isMultipart;
+  private String ifMatch;
+  private String authentication;
+  private boolean keepAlive = true;
+  private Map<String, String> headers;
+  private String bearerTokenRaw;
+  private OParsedToken bearerToken;
 
-  public OHttpRequestImpl(ONetworkProtocolHttpAbstract iExecutor, InputStream iInStream, ONetworkProtocolData iData,
+  public OHttpRequestImpl(
+      ONetworkProtocolHttpAbstract iExecutor,
+      InputStream iInStream,
+      ONetworkProtocolData iData,
       OContextConfiguration iConfiguration) {
     super(iExecutor, iInStream, iData, iConfiguration);
   }
@@ -73,6 +76,16 @@ public class OHttpRequestImpl extends OHttpRequest {
   @Override
   public void setContentEncoding(String contentEncoding) {
     this.contentEncoding = contentEncoding;
+  }
+
+  @Override
+  public String getAcceptEncoding() {
+    return acceptEncoding;
+  }
+
+  @Override
+  public void setAcceptEncoding(String acceptEncoding) {
+    this.acceptEncoding = acceptEncoding;
   }
 
   @Override
@@ -151,12 +164,12 @@ public class OHttpRequestImpl extends OHttpRequest {
   }
 
   @Override
-  public OToken getBearerToken() {
+  public OParsedToken getBearerToken() {
     return bearerToken;
   }
 
   @Override
-  public void setBearerToken(OToken bearerToken) {
+  public void setBearerToken(OParsedToken bearerToken) {
     this.bearerToken = bearerToken;
   }
 

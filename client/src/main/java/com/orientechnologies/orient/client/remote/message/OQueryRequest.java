@@ -29,27 +29,31 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
-
 import java.io.IOException;
 import java.util.Map;
 
 public final class OQueryRequest implements OBinaryRequest<OQueryResponse> {
 
   public static byte COMMAND = 0;
-  public static byte QUERY   = 1;
+  public static byte QUERY = 1;
   public static byte EXECUTE = 2;
 
-  private int                 recordsPerPage = 100;
-  private ORecordSerializer   serializer;
-  private String              language;
-  private String              statement;
-  private byte                operationType;
+  private int recordsPerPage = 100;
+  private ORecordSerializer serializer;
+  private String language;
+  private String statement;
+  private byte operationType;
   private Map<String, Object> params;
-  private byte[]              paramsBytes;
-  private boolean             namedParams;
+  private byte[] paramsBytes;
+  private boolean namedParams;
 
-  public OQueryRequest(String language, String iCommand, Object[] positionalParams, byte operationType,
-      ORecordSerializer serializer, int recordsPerPage) {
+  public OQueryRequest(
+      String language,
+      String iCommand,
+      Object[] positionalParams,
+      byte operationType,
+      ORecordSerializer serializer,
+      int recordsPerPage) {
     this.language = language;
     this.statement = iCommand;
     params = OStorageRemote.paramsArrayToParamsMap(positionalParams);
@@ -64,11 +68,15 @@ public final class OQueryRequest implements OBinaryRequest<OQueryResponse> {
     parms.field("params", this.params);
 
     paramsBytes = OMessageHelper.getRecordBytes(parms, serializer);
-
   }
 
-  public OQueryRequest(String language, String iCommand, Map<String, Object> namedParams, byte operationType,
-      ORecordSerializer serializer, int recordsPerPage) {
+  public OQueryRequest(
+      String language,
+      String iCommand,
+      Map<String, Object> namedParams,
+      byte operationType,
+      ORecordSerializer serializer,
+      int recordsPerPage) {
     this.language = language;
     this.statement = iCommand;
     this.params = (Map) namedParams;
@@ -85,8 +93,7 @@ public final class OQueryRequest implements OBinaryRequest<OQueryResponse> {
     this.operationType = operationType;
   }
 
-  public OQueryRequest() {
-  }
+  public OQueryRequest() {}
 
   @Override
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
@@ -94,7 +101,7 @@ public final class OQueryRequest implements OBinaryRequest<OQueryResponse> {
     network.writeString(statement);
     network.writeByte(operationType);
     network.writeInt(recordsPerPage);
-    //THIS IS FOR POSSIBLE FUTURE FETCH PLAN
+    // THIS IS FOR POSSIBLE FUTURE FETCH PLAN
     network.writeString(null);
 
     // params
@@ -102,12 +109,13 @@ public final class OQueryRequest implements OBinaryRequest<OQueryResponse> {
     network.writeBoolean(namedParams);
   }
 
-  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
     this.language = channel.readString();
     this.statement = channel.readString();
     this.operationType = channel.readByte();
     this.recordsPerPage = channel.readInt();
-    //THIS IS FOR POSSIBLE FUTURE FETCH PLAN
+    // THIS IS FOR POSSIBLE FUTURE FETCH PLAN
     channel.readString();
 
     this.paramsBytes = channel.readBytes();
@@ -131,7 +139,6 @@ public final class OQueryRequest implements OBinaryRequest<OQueryResponse> {
   }
 
   @Override
-
   public OBinaryResponse execute(OBinaryRequestExecutor executor) {
     return executor.executeQuery(this);
   }
@@ -165,12 +172,14 @@ public final class OQueryRequest implements OBinaryRequest<OQueryResponse> {
 
   public Object[] getPositionalParameters() {
     Map<String, Object> params = getParams();
-    if (params == null)
-      return null;
+    if (params == null) return null;
     Object[] result = new Object[params.size()];
-    params.entrySet().forEach(e -> {
-      result[Integer.parseInt(e.getKey())] = e.getValue();
-    });
+    params
+        .entrySet()
+        .forEach(
+            e -> {
+              result[Integer.parseInt(e.getKey())] = e.getValue();
+            });
     return result;
   }
 

@@ -40,7 +40,6 @@ public class Car {
 
     if (year != car.year) return false;
     return name.equals(car.name);
-
   }
 
   @Override
@@ -52,9 +51,6 @@ public class Car {
 
   @Override
   public String toString() {
-    return "Car{" +
-             "name='" + name + '\'' +
-             ", year=" + year +
-             '}';
+    return "Car{" + "name='" + name + '\'' + ", year=" + year + '}';
   }
 }

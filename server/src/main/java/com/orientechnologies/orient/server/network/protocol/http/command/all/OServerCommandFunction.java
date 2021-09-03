@@ -22,27 +22,26 @@ package com.orientechnologies.orient.server.network.protocol.http.command.all;
 import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
-
 import java.io.IOException;
 
 public class OServerCommandFunction extends OServerCommandAbstractLogic {
-  private static final String[] NAMES = { "GET|function/*", "POST|function/*" };
+  private static final String[] NAMES = {"GET|function/*", "POST|function/*"};
 
-  public OServerCommandFunction() {
-  }
+  public OServerCommandFunction() {}
 
-  public OServerCommandFunction(final OServerCommandConfiguration iConfig) {
-  }
+  public OServerCommandFunction(final OServerCommandConfiguration iConfig) {}
 
   @Override
   public String[] init(final OHttpRequest iRequest, final OHttpResponse iResponse) {
-    final String[] parts = checkSyntax(iRequest.getUrl(), 3, "Syntax error: function/<database>/<name>[/param]*");
+    final String[] parts =
+        checkSyntax(iRequest.getUrl(), 3, "Syntax error: function/<database>/<name>[/param]*");
     iRequest.getData().commandInfo = "Execute a function";
     return parts;
   }
 
   @Override
-  protected void handleResult(final OHttpRequest iRequest, final OHttpResponse iResponse, final Object iResult)
+  protected void handleResult(
+      final OHttpRequest iRequest, final OHttpResponse iResponse, final Object iResult)
       throws InterruptedException, IOException {
     iResponse.writeResult(iResult);
   }

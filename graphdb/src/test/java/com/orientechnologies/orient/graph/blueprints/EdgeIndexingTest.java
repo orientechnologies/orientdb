@@ -15,7 +15,8 @@ import org.junit.Test;
 public class EdgeIndexingTest {
 
   /**
-   * Test that "in_vertex" has edges to only single "out_vertex" but we may have several edges to single "out_vertex".
+   * Test that "in_vertex" has edges to only single "out_vertex" but we may have several edges to
+   * single "out_vertex".
    */
   @Test
   public void testOutLinksUniqueness() {
@@ -58,7 +59,8 @@ public class EdgeIndexingTest {
   }
 
   /**
-   * Test that "in_vertex" has edges to only single "out_vertex" but we may have several edges to single "out_vertex".
+   * Test that "in_vertex" has edges to only single "out_vertex" but we may have several edges to
+   * single "out_vertex".
    */
   @Test
   public void testOutLinksUniquenessTwo() {
@@ -100,7 +102,8 @@ public class EdgeIndexingTest {
   }
 
   /**
-   * Test that "out_vertex" has edges to only single "in_vertex" but we may have several edges to single "in_vertex".
+   * Test that "out_vertex" has edges to only single "in_vertex" but we may have several edges to
+   * single "in_vertex".
    */
   @Test
   public void testOutLinksUniquenessThree() {
@@ -139,7 +142,8 @@ public class EdgeIndexingTest {
   }
 
   /**
-   * Test that "out_vertex" has singe and only single edge to "in_vertex". This only possible if edges are not lightweight edges.
+   * Test that "out_vertex" has singe and only single edge to "in_vertex". This only possible if
+   * edges are not lightweight edges.
    */
   @Test
   public void testOutLinksUniquenessFour() {

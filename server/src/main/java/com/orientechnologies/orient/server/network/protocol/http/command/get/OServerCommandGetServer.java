@@ -25,7 +25,7 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 
 public class OServerCommandGetServer extends OServerCommandGetConnections {
-  private static final String[] NAMES = { "GET|server" };
+  private static final String[] NAMES = {"GET|server"};
 
   public OServerCommandGetServer() {
     super("server.info");
@@ -44,7 +44,12 @@ public class OServerCommandGetServer extends OServerCommandGetConnections {
 
     final String result = OServerInfo.getServerInfo(server);
 
-    iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, result, null);
+    iResponse.send(
+        OHttpUtils.STATUS_OK_CODE,
+        OHttpUtils.STATUS_OK_DESCRIPTION,
+        OHttpUtils.CONTENT_JSON,
+        result,
+        null);
 
     return false;
   }

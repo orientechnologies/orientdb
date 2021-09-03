@@ -16,20 +16,19 @@
  */
 package com.orientechnologies.orient.core.sql.method.misc;
 
+import com.orientechnologies.common.util.OSizeable;
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-import com.orientechnologies.common.util.OSizeable;
-import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-
 /**
  * Transforms current value in a Set.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OSQLMethodAsSet extends OAbstractSQLMethod {
@@ -42,7 +41,12 @@ public class OSQLMethodAsSet extends OAbstractSQLMethod {
 
   @SuppressWarnings("unchecked")
   @Override
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
+  public Object execute(
+      Object iThis,
+      OIdentifiable iCurrentRecord,
+      OCommandContext iContext,
+      Object ioResult,
+      Object[] iParams) {
     if (ioResult instanceof Set)
     // ALREADY A SET
     {
@@ -62,8 +66,12 @@ public class OSQLMethodAsSet extends OAbstractSQLMethod {
     }
 
     if (ioResult instanceof Iterator<?>) {
-      final Set<Object> set = ioResult instanceof OSizeable ? new HashSet<Object>(((OSizeable) ioResult).size())
-          : new HashSet<Object>();
+      final Set<Object> set;
+      if (ioResult instanceof OSizeable) {
+        set = new HashSet<Object>(((OSizeable) ioResult).size());
+      } else {
+        set = new HashSet<Object>();
+      }
 
       for (Iterator<Object> iter = (Iterator<Object>) ioResult; iter.hasNext(); ) {
         set.add(iter.next());

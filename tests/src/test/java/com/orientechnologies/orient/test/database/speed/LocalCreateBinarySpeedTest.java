@@ -15,23 +15,21 @@
  */
 package com.orientechnologies.orient.test.database.speed;
 
-import java.util.Random;
-
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
+import java.util.Random;
+import org.testng.annotations.Test;
 
 @Test(enabled = false)
 public class LocalCreateBinarySpeedTest extends OrientMonoThreadTest {
   private ODatabaseDocumentTx database;
-  private ORecordBytes     record;
-  private final static int RECORD_SIZE = 512;
-  private byte[]           recordContent;
+  private ORecordBytes record;
+  private static final int RECORD_SIZE = 512;
+  private byte[] recordContent;
 
   public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
     LocalCreateBinarySpeedTest test = new LocalCreateBinarySpeedTest();
@@ -53,22 +51,19 @@ public class LocalCreateBinarySpeedTest extends OrientMonoThreadTest {
     database.begin(TXTYPE.NOTX);
     Random rnd = new Random();
     recordContent = new byte[RECORD_SIZE];
-    for (int i = 0; i < RECORD_SIZE; ++i)
-      recordContent[i] = (byte) rnd.nextInt(256);
+    for (int i = 0; i < RECORD_SIZE; ++i) recordContent[i] = (byte) rnd.nextInt(256);
   }
 
   @Override
   public void cycle() {
     record.reset(recordContent).save("binary");
 
-    if (data.getCyclesDone() == data.getCycles() - 1)
-      database.commit();
+    if (data.getCyclesDone() == data.getCycles() - 1) database.commit();
   }
 
   @Override
   public void deinit() {
-    if (database != null)
-      database.close();
+    if (database != null) database.close();
     super.deinit();
   }
 }

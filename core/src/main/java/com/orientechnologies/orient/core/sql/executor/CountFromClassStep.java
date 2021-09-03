@@ -5,31 +5,31 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
-
 import java.util.Map;
 import java.util.Optional;
 
 /**
- * Returns the number of records contained in a class (including subclasses) Executes a count(*) on a class and returns a single
- * record that contains that value (with a specific alias).
+ * Returns the number of records contained in a class (including subclasses) Executes a count(*) on
+ * a class and returns a single record that contains that value (with a specific alias).
  *
  * @author Luigi Dell'Aquila (luigi.dellaquila - at - gmail.com)
  */
 public class CountFromClassStep extends AbstractExecutionStep {
   private final OIdentifier target;
-  private final String      alias;
+  private final String alias;
 
   private long cost = 0;
 
   private boolean executed = false;
 
   /**
-   * @param targetClass      An identifier containing the name of the class to count
-   * @param alias            the name of the property returned in the result-set
-   * @param ctx              the query context
+   * @param targetClass An identifier containing the name of the class to count
+   * @param alias the name of the property returned in the result-set
+   * @param ctx the query context
    * @param profilingEnabled true to enable the profiling of the execution (for SQL PROFILE)
    */
-  public CountFromClassStep(OIdentifier targetClass, String alias, OCommandContext ctx, boolean profilingEnabled) {
+  public CountFromClassStep(
+      OIdentifier targetClass, String alias, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.target = targetClass;
     this.alias = alias;
@@ -56,7 +56,8 @@ public class CountFromClassStep extends AbstractExecutionStep {
             clazz = ctx.getDatabase().getMetadata().getSchema().getView(target.getStringValue());
           }
           if (clazz == null) {
-            throw new OCommandExecutionException("Class " + target.getStringValue() + " does not exist in the database schema");
+            throw new OCommandExecutionException(
+                "Class " + target.getStringValue() + " does not exist in the database schema");
           }
           long size = clazz.count();
           executed = true;
@@ -71,9 +72,7 @@ public class CountFromClassStep extends AbstractExecutionStep {
       }
 
       @Override
-      public void close() {
-
-      }
+      public void close() {}
 
       @Override
       public Optional<OExecutionPlan> getExecutionPlan() {
@@ -114,6 +113,6 @@ public class CountFromClassStep extends AbstractExecutionStep {
 
   @Override
   public boolean canBeCached() {
-    return false; //explicit: in case of active security policies, the COUNT has to be manual
+    return false; // explicit: in case of active security policies, the COUNT has to be manual
   }
 }

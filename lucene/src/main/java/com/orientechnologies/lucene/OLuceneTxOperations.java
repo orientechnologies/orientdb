@@ -13,21 +13,18 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * Created by Enrico Risa on 09/12/14.
- */
+/** Created by Enrico Risa on 09/12/14. */
 public class OLuceneTxOperations {
 
   public final Set<OIdentifiable> removed = new HashSet<OIdentifiable>();
-  public final Set<OIdentifiable> added   = new HashSet<OIdentifiable>();
+  public final Set<OIdentifiable> added = new HashSet<OIdentifiable>();
 }

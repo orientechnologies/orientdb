@@ -30,7 +30,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.tinkerpop.blueprints.Direction;
-
 import java.util.Iterator;
 
 /**
@@ -39,13 +38,19 @@ import java.util.Iterator;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com) (http://orientdb.com)
  */
 public class OrientEdgeIterator extends OLazyWrapperIterator<OrientEdge> {
-  private final OrientVertex             sourceVertex;
-  private final OrientVertex             targetVertex;
+  private final OrientVertex sourceVertex;
+  private final OrientVertex targetVertex;
   private final OPair<Direction, String> connection;
-  private final String[]                 labels;
+  private final String[] labels;
 
-  public OrientEdgeIterator(final OrientVertex iSourceVertex, final OrientVertex iTargetVertex, final Object iMultiValue, final Iterator<?> iterator,
-      final OPair<Direction, String> connection, final String[] iLabels, final int iSize) {
+  public OrientEdgeIterator(
+      final OrientVertex iSourceVertex,
+      final OrientVertex iTargetVertex,
+      final Object iMultiValue,
+      final Iterator<?> iterator,
+      final OPair<Direction, String> connection,
+      final String[] iLabels,
+      final int iSize) {
     super(iterator, iSize, iMultiValue);
     this.sourceVertex = iSourceVertex;
     this.targetVertex = iTargetVertex;
@@ -55,8 +60,7 @@ public class OrientEdgeIterator extends OLazyWrapperIterator<OrientEdge> {
 
   @Override
   public OrientEdge createGraphElement(final Object iObject) {
-    if (iObject instanceof OrientEdge)
-      return (OrientEdge) iObject;
+    if (iObject instanceof OrientEdge) return (OrientEdge) iObject;
 
     final OIdentifiable rec = (OIdentifiable) iObject;
 
@@ -75,10 +79,14 @@ public class OrientEdgeIterator extends OLazyWrapperIterator<OrientEdge> {
 
     if (!(record instanceof ODocument)) {
       // SKIP IT
-      OLogManager.instance().warn(this,
-          "Found a record (%s) that is not an edge. Source vertex : %s, Target vertex : %s, Database : %s", rec,
-          sourceVertex != null ? sourceVertex.getIdentity() : null, targetVertex != null ? targetVertex.getIdentity() : null,
-          record.getDatabase().getURL());
+      OLogManager.instance()
+          .warn(
+              this,
+              "Found a record (%s) that is not an edge. Source vertex : %s, Target vertex : %s, Database : %s",
+              rec,
+              sourceVertex != null ? sourceVertex.getIdentity() : null,
+              targetVertex != null ? targetVertex.getIdentity() : null,
+              record.getDatabase().getURL());
       return null;
     }
 
@@ -106,16 +114,23 @@ public class OrientEdgeIterator extends OLazyWrapperIterator<OrientEdge> {
     if (immutableSchema.isVertexType()) {
       // DIRECT VERTEX, CREATE DUMMY EDGE
       if (connection.getKey() == Direction.OUT)
-        edge = this.sourceVertex.getGraph().getEdgeInstance( this.sourceVertex.getIdentity(), rec.getIdentity(),
-            connection.getValue());
+        edge =
+            this.sourceVertex
+                .getGraph()
+                .getEdgeInstance(
+                    this.sourceVertex.getIdentity(), rec.getIdentity(), connection.getValue());
       else
-        edge = this.sourceVertex.getGraph().getEdgeInstance( rec.getIdentity(), this.sourceVertex.getIdentity(),
-            connection.getValue());
+        edge =
+            this.sourceVertex
+                .getGraph()
+                .getEdgeInstance(
+                    rec.getIdentity(), this.sourceVertex.getIdentity(), connection.getValue());
     } else if (immutableSchema.isEdgeType()) {
       // EDGE
       edge = new OrientEdge(this.sourceVertex.getGraph(), rec.getIdentity(), connection.getValue());
     } else
-      throw new IllegalStateException("Invalid content found while iterating edges, value '" + value + "' is not an edge");
+      throw new IllegalStateException(
+          "Invalid content found while iterating edges, value '" + value + "' is not an edge");
 
     if (this.sourceVertex.settings.isUseVertexFieldsForEdgeLabels() || edge.isLabeled(labels))
       return edge;
@@ -124,8 +139,8 @@ public class OrientEdgeIterator extends OLazyWrapperIterator<OrientEdge> {
   }
 
   public boolean filter(final OrientEdge iObject) {
-    if (targetVertex != null && !targetVertex.equals(iObject.getVertex(connection.getKey().opposite())))
-      return false;
+    if (targetVertex != null
+        && !targetVertex.equals(iObject.getVertex(connection.getKey().opposite()))) return false;
 
     return this.sourceVertex.settings.isUseVertexFieldsForEdgeLabels() || iObject.isLabeled(labels);
   }

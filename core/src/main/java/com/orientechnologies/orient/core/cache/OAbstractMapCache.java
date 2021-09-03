@@ -21,16 +21,13 @@
 package com.orientechnologies.orient.core.cache;
 
 import com.orientechnologies.orient.core.id.ORID;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 
-/**
- * @author Artem Orobets (enisher-at-gmail.com)
- */
+/** @author Artem Orobets (enisher-at-gmail.com) */
 public abstract class OAbstractMapCache<T extends Map<ORID, ?>> implements ORecordCache {
-  protected T     cache;
+  protected T cache;
 
   private boolean enabled = true;
 
@@ -39,8 +36,7 @@ public abstract class OAbstractMapCache<T extends Map<ORID, ?>> implements OReco
   }
 
   @Override
-  public void startup() {
-  }
+  public void startup() {}
 
   @Override
   public void shutdown() {

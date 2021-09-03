@@ -1,31 +1,31 @@
 package com.tinkerpop.blueprints.impls.orient;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import com.tinkerpop.blueprints.Vertex;
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 
 @RunWith(JUnit4.class)
 public class BlueprintsKeyIndexTest {
 
   private static final String ROOT_NODE_NAME = "rootNode";
-  private static final String KEY_NAME       = "name";
+  private static final String KEY_NAME = "name";
 
   @Test
   public void test_with_createKeyIndex() throws Exception {
-    final OrientGraph graph = new OrientGraph("memory:" + BlueprintsKeyIndexTest.class.getSimpleName());
+    final OrientGraph graph =
+        new OrientGraph("memory:" + BlueprintsKeyIndexTest.class.getSimpleName());
     graph.setWarnOnForceClosingTx(false);
     try {
       /* create key index */
       graph.createKeyIndex(KEY_NAME, Vertex.class);
 
-      /* create the root vertex */{
+      /* create the root vertex */ {
         final Vertex v = graph.addVertex(null);
         v.setProperty(KEY_NAME, ROOT_NODE_NAME); /* as key index */
         graph.commit();
@@ -46,13 +46,14 @@ public class BlueprintsKeyIndexTest {
 
   @Test
   public void test_without_createKeyIndex() throws Exception {
-    final OrientGraph graph = new OrientGraph("memory:" + BlueprintsKeyIndexTest.class.getSimpleName());
+    final OrientGraph graph =
+        new OrientGraph("memory:" + BlueprintsKeyIndexTest.class.getSimpleName());
     graph.setWarnOnForceClosingTx(false);
     try {
       /* create key index */
       // graph.createKeyIndex("name", Vertex.class);
 
-      /* create the root vertex */{
+      /* create the root vertex */ {
         final Vertex v = graph.addVertex(null);
         v.setProperty(KEY_NAME, ROOT_NODE_NAME); /* as key index */
         graph.commit();
@@ -71,7 +72,8 @@ public class BlueprintsKeyIndexTest {
 
   @Test
   public void test_without_createKeyIndexVertexType() throws Exception {
-    final OrientGraph graph = new OrientGraph("memory:" + BlueprintsKeyIndexTest.class.getSimpleName());
+    final OrientGraph graph =
+        new OrientGraph("memory:" + BlueprintsKeyIndexTest.class.getSimpleName());
     graph.setWarnOnForceClosingTx(false);
     graph.createVertexType("Test");
 
@@ -80,7 +82,7 @@ public class BlueprintsKeyIndexTest {
       /* create key index */
       // graph.createKeyIndex("name", Vertex.class);
 
-      /* create the root vertex */{
+      /* create the root vertex */ {
         Vertex v = graph.addVertex("class:Test");
         v.setProperty(KEY_NAME, ROOT_NODE_NAME); /* as key index */
 
@@ -97,7 +99,8 @@ public class BlueprintsKeyIndexTest {
       }
 
       /* get rootNode */
-      final List<Vertex> rootNodes = toArrayList(graph.getVertices("Test." + KEY_NAME, ROOT_NODE_NAME));
+      final List<Vertex> rootNodes =
+          toArrayList(graph.getVertices("Test." + KEY_NAME, ROOT_NODE_NAME));
       assertEquals(1, rootNodes.size()); // ########## no problem
     } finally {
       graph.drop();

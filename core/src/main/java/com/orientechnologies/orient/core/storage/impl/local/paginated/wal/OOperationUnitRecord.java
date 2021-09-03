@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
+import com.orientechnologies.common.serialization.types.OLongSerializer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
@@ -23,20 +24,19 @@ import java.nio.ByteOrder;
  * @since 30.05.13
  */
 public abstract class OOperationUnitRecord extends OAbstractWALRecord {
-  private OOperationUnitId operationUnitId;
+  private long operationUnitId;
 
-  protected OOperationUnitRecord() {
-  }
+  protected OOperationUnitRecord() {}
 
-  protected OOperationUnitRecord(OOperationUnitId operationUnitId) {
+  protected OOperationUnitRecord(long operationUnitId) {
     this.operationUnitId = operationUnitId;
   }
 
-  public OOperationUnitId getOperationUnitId() {
+  public long getOperationUnitId() {
     return operationUnitId;
   }
 
-  public void setOperationUnitId(final OOperationUnitId operationUnitId) {
+  public void setOperationUnitId(final long operationUnitId) {
     this.operationUnitId = operationUnitId;
   }
 
@@ -45,7 +45,7 @@ public abstract class OOperationUnitRecord extends OAbstractWALRecord {
     final ByteBuffer buffer = ByteBuffer.wrap(content).order(ByteOrder.nativeOrder());
     buffer.position(offset);
 
-    operationUnitId.toStream(buffer);
+    buffer.putLong(operationUnitId);
 
     serializeToByteBuffer(buffer);
 
@@ -54,7 +54,7 @@ public abstract class OOperationUnitRecord extends OAbstractWALRecord {
 
   @Override
   public final void toStream(ByteBuffer buffer) {
-    operationUnitId.toStream(buffer);
+    buffer.putLong(operationUnitId);
 
     serializeToByteBuffer(buffer);
   }
@@ -64,8 +64,7 @@ public abstract class OOperationUnitRecord extends OAbstractWALRecord {
     final ByteBuffer buffer = ByteBuffer.wrap(content).order(ByteOrder.nativeOrder());
     buffer.position(offset);
 
-    operationUnitId = new OOperationUnitId();
-    operationUnitId.fromStream(buffer);
+    operationUnitId = buffer.getLong();
 
     deserializeFromByteBuffer(buffer);
 
@@ -74,7 +73,7 @@ public abstract class OOperationUnitRecord extends OAbstractWALRecord {
 
   @Override
   public int serializedSize() {
-    return OOperationUnitId.SERIALIZED_SIZE;
+    return OLongSerializer.LONG_SIZE;
   }
 
   protected abstract void serializeToByteBuffer(final ByteBuffer buffer);
@@ -83,22 +82,17 @@ public abstract class OOperationUnitRecord extends OAbstractWALRecord {
 
   @Override
   public boolean equals(final Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     final OOperationUnitRecord that = (OOperationUnitRecord) o;
 
-    if (!operationUnitId.equals(that.operationUnitId))
-      return false;
-
-    return true;
+    return operationUnitId == that.operationUnitId;
   }
 
   @Override
   public int hashCode() {
-    return operationUnitId.hashCode();
+    return Long.hashCode(operationUnitId);
   }
 
   @Override

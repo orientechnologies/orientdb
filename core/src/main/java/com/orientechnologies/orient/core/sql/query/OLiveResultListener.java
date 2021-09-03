@@ -35,6 +35,4 @@ public interface OLiveResultListener {
   void onError(int iLiveToken);
 
   void onUnsubscribe(int iLiveToken);
-
-
 }

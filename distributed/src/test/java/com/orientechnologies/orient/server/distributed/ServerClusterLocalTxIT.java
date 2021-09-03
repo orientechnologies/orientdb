@@ -15,11 +15,10 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.orient.setup.ServerRun;
 import org.junit.Test;
 
-/**
- * Distributed TX test against "plocal" protocol.
- */
+/** Distributed TX test against "plocal" protocol. */
 public class ServerClusterLocalTxIT extends AbstractServerClusterTxTest {
   @Test
   public void test() throws Exception {
@@ -31,7 +30,6 @@ public class ServerClusterLocalTxIT extends AbstractServerClusterTxTest {
   protected String getDatabaseURL(final ServerRun server) {
     return "plocal:" + server.getDatabasePath(getDatabaseName());
   }
-
 
   @Override
   public String getDatabaseName() {

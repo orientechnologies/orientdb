@@ -1,15 +1,12 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * Created by luigidellaquila on 07/07/16.
- */
+/** Created by luigidellaquila on 07/07/16. */
 public class OIteratorResultSet implements OResultSet {
   protected final Iterator iterator;
 
@@ -39,9 +36,7 @@ public class OIteratorResultSet implements OResultSet {
   }
 
   @Override
-  public void close() {
-
-  }
+  public void close() {}
 
   @Override
   public Optional<OExecutionPlan> getExecutionPlan() {
@@ -52,5 +47,4 @@ public class OIteratorResultSet implements OResultSet {
   public Map<String, Long> getQueryStats() {
     return new HashMap<>();
   }
-
 }

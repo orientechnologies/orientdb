@@ -28,15 +28,16 @@ import java.util.Map;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OHttpSession {
-  private final long                createdOn;
-  private final String              databaseName;
-  private final String              userName;
-  private final String              userPassword;
-  private       String              id;
-  private       long                lastUpdatedOn;
-  private       Map<Object, Object> parameters;
+  private final long createdOn;
+  private final String databaseName;
+  private final String userName;
+  private final String userPassword;
+  private String id;
+  private long lastUpdatedOn;
+  private Map<Object, Object> parameters;
 
-  protected OHttpSession(final String iId, final String iDatabaseName, final String iUserName, String iUserPassword) {
+  protected OHttpSession(
+      final String iId, final String iDatabaseName, final String iUserName, String iUserPassword) {
     id = iId;
     createdOn = System.currentTimeMillis();
     lastUpdatedOn = createdOn;
@@ -60,27 +61,22 @@ public class OHttpSession {
   }
 
   public Object getParameters(final Object iKey) {
-    if (this.parameters == null)
-      return null;
+    if (this.parameters == null) return null;
 
     return parameters.entrySet();
   }
 
   public Object getParameter(final Object iKey) {
-    if (this.parameters == null)
-      return null;
+    if (this.parameters == null) return null;
 
     return parameters.get(iKey);
   }
 
   public OHttpSession setParameter(final Object iKey, final Object iValue) {
-    if (this.parameters == null)
-      this.parameters = new HashMap<Object, Object>();
+    if (this.parameters == null) this.parameters = new HashMap<Object, Object>();
 
-    if (iValue == null)
-      this.parameters.remove(iKey);
-    else
-      this.parameters.put(iKey, iValue);
+    if (iValue == null) this.parameters.remove(iKey);
+    else this.parameters.put(iKey, iValue);
     return this;
   }
 

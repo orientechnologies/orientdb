@@ -17,5 +17,4 @@ public class OAlterSequenceStatementTest extends OParserTestAbstract {
 
     checkWrongSyntax("alter SEQUENCE Foo TYPE cached");
   }
-
 }

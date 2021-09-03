@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37Client;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
-
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -38,8 +37,8 @@ import java.util.Map;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class ORecordSerializerFactory {
-  private static final ORecordSerializerFactory       instance        = new ORecordSerializerFactory();
-  private              Map<String, ORecordSerializer> implementations = new HashMap<String, ORecordSerializer>();
+  private static final ORecordSerializerFactory instance = new ORecordSerializerFactory();
+  private Map<String, ORecordSerializer> implementations = new HashMap<String, ORecordSerializer>();
 
   private ORecordSerializer defaultRecordSerializer;
 
@@ -52,16 +51,18 @@ public class ORecordSerializerFactory {
     register(ORecordSerializerNetworkV37.NAME, ORecordSerializerNetworkV37.INSTANCE);
     register(ORecordSerializerNetworkV37Client.NAME, ORecordSerializerNetworkV37Client.INSTANCE);
 
-    defaultRecordSerializer = getFormat(OGlobalConfiguration.DB_DOCUMENT_SERIALIZER.getValueAsString());
+    defaultRecordSerializer =
+        getFormat(OGlobalConfiguration.DB_DOCUMENT_SERIALIZER.getValueAsString());
     if (defaultRecordSerializer == null)
       throw new ODatabaseException(
-          "Impossible to find serializer with name " + OGlobalConfiguration.DB_DOCUMENT_SERIALIZER.getValueAsString());
+          "Impossible to find serializer with name "
+              + OGlobalConfiguration.DB_DOCUMENT_SERIALIZER.getValueAsString());
   }
 
   /**
    * Registers record serializer implementation.
    *
-   * @param iName     Name to register, use JSON to overwrite default JSON serializer
+   * @param iName Name to register, use JSON to overwrite default JSON serializer
    * @param iInstance Serializer implementation
    */
   public void register(final String iName, final ORecordSerializer iInstance) {
@@ -73,8 +74,7 @@ public class ORecordSerializerFactory {
   }
 
   public ORecordSerializer getFormat(final String iFormatName) {
-    if (iFormatName == null)
-      return null;
+    if (iFormatName == null) return null;
 
     return implementations.get(iFormatName);
   }

@@ -6,9 +6,8 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import org.testng.annotations.Test;
-
 import java.util.Random;
+import org.testng.annotations.Test;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -16,8 +15,8 @@ import java.util.Random;
  */
 public class SBTreeInsertionSpeedTest extends SpeedTestMonoThread {
   private ODatabaseDocumentTx databaseDocumentTx;
-  private OIndex              index;
-  private Random              random = new Random();
+  private OIndex index;
+  private Random random = new Random();
 
   public SBTreeInsertionSpeedTest() {
     super(5000000);
@@ -30,19 +29,25 @@ public class SBTreeInsertionSpeedTest extends SpeedTestMonoThread {
     OGlobalConfiguration.INDEX_MANUAL_LAZY_UPDATES.setValue(10000);
 
     String buildDirectory = System.getProperty("buildDirectory", ".");
-    if (buildDirectory == null)
-      buildDirectory = ".";
+    if (buildDirectory == null) buildDirectory = ".";
 
-    databaseDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDirectory + "/SBTreeInsertionSpeedTTest");
+    databaseDocumentTx =
+        new ODatabaseDocumentTx("plocal:" + buildDirectory + "/SBTreeInsertionSpeedTTest");
     if (databaseDocumentTx.exists()) {
       databaseDocumentTx.open("admin", "admin");
       databaseDocumentTx.drop();
     }
 
     databaseDocumentTx.create();
-    databaseDocumentTx.command(new OCommandSQL("create index  sbtree_index unique String")).execute();
+    databaseDocumentTx
+        .command(new OCommandSQL("create index  sbtree_index unique String"))
+        .execute();
 
-    index = databaseDocumentTx.getMetadata().getIndexManagerInternal().getIndex(databaseDocumentTx, "sbtree_index");
+    index =
+        databaseDocumentTx
+            .getMetadata()
+            .getIndexManagerInternal()
+            .getIndex(databaseDocumentTx, "sbtree_index");
   }
 
   @Override

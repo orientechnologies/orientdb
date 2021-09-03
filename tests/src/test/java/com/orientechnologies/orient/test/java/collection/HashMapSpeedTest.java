@@ -16,28 +16,27 @@
 package com.orientechnologies.orient.test.java.collection;
 
 import java.util.HashMap;
-
 import org.testng.annotations.Test;
 
 @Test(enabled = false)
 public class HashMapSpeedTest extends CollectionBaseAbstractSpeedTest {
-	private HashMap<String, String>	map;
+  private HashMap<String, String> map;
 
-	@Override
-	public void cycle() {
-		map.get(searchedValue);
-	}
+  @Override
+  public void cycle() {
+    map.get(searchedValue);
+  }
 
-	@Override
-	public void init() {
-		map = new HashMap<String, String>();
-		for (int i = 0; i < collectionSize; ++i) {
-			map.put(String.valueOf(i), "");
-		}
-	}
+  @Override
+  public void init() {
+    map = new HashMap<String, String>();
+    for (int i = 0; i < collectionSize; ++i) {
+      map.put(String.valueOf(i), "");
+    }
+  }
 
-	public void deInit() {
-		map.clear();
-		map = null;
-	}
+  public void deInit() {
+    map.clear();
+    map = null;
+  }
 }

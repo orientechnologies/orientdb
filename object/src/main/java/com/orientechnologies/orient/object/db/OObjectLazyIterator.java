@@ -27,31 +27,34 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 import com.orientechnologies.orient.object.enhancement.OObjectProxyMethodHandler;
-import javassist.util.proxy.ProxyObject;
-
 import java.io.Serializable;
 import java.util.Iterator;
+import javassist.util.proxy.ProxyObject;
 
 /**
- * Lazy implementation of Iterator that load the records only when accessed. It keep also track of changes to the source record
- * avoiding to call setDirty() by hand.
+ * Lazy implementation of Iterator that load the records only when accessed. It keep also track of
+ * changes to the source record avoiding to call setDirty() by hand.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-@SuppressWarnings({ "unchecked" })
+@SuppressWarnings({"unchecked"})
 public class OObjectLazyIterator<TYPE> implements Iterator<TYPE>, Serializable {
   private static final long serialVersionUID = -4012483076050044405L;
 
-  private final ProxyObject                sourceRecord;
-  private final OObjectDatabaseTx          database;
+  private final ProxyObject sourceRecord;
+  private final OObjectDatabaseTx database;
   private final Iterator<? extends Object> underlying;
-  private       String                     fetchPlan;
-  private final boolean                    autoConvert2Object;
-  private       OIdentifiable              currentElement;
+  private String fetchPlan;
+  private final boolean autoConvert2Object;
+  private OIdentifiable currentElement;
   private boolean orphanRemoval = false;
 
-  public OObjectLazyIterator(final OObjectDatabaseTx database, final ProxyObject iSourceRecord,
-      final Iterator<? extends Object> iIterator, final boolean iConvertToRecord, boolean iOrphanRemoval) {
+  public OObjectLazyIterator(
+      final OObjectDatabaseTx database,
+      final ProxyObject iSourceRecord,
+      final Iterator<? extends Object> iIterator,
+      final boolean iConvertToRecord,
+      boolean iOrphanRemoval) {
     this.database = database;
     this.sourceRecord = iSourceRecord;
     this.underlying = iIterator;
@@ -66,15 +69,19 @@ public class OObjectLazyIterator<TYPE> implements Iterator<TYPE>, Serializable {
   public TYPE next(final String iFetchPlan) {
     final Object value = underlying.next();
 
-    if (value == null)
-      return null;
+    if (value == null) return null;
 
     if (value instanceof ORID && autoConvert2Object) {
       currentElement = (OIdentifiable) value;
-      ORecord record = ((ODatabaseDocument) database.getUnderlying()).load((ORID) value, iFetchPlan);
+      ORecord record =
+          ((ODatabaseDocument) database.getUnderlying()).load((ORID) value, iFetchPlan);
       if (record == null) {
-        OLogManager.instance().warn(this, "Record " + ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getDoc().getIdentity()
-            + " references a deleted instance");
+        OLogManager.instance()
+            .warn(
+                this,
+                "Record "
+                    + ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getDoc().getIdentity()
+                    + " references a deleted instance");
         return null;
       }
       TYPE o = (TYPE) database.getUserObjectByRecord(record, iFetchPlan);
@@ -102,7 +109,9 @@ public class OObjectLazyIterator<TYPE> implements Iterator<TYPE>, Serializable {
     underlying.remove();
     if (sourceRecord != null) {
       if (orphanRemoval)
-        ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().add(currentElement.getIdentity());
+        ((OObjectProxyMethodHandler) sourceRecord.getHandler())
+            .getOrphans()
+            .add(currentElement.getIdentity());
       ((OObjectProxyMethodHandler) sourceRecord.getHandler()).setDirty();
     }
   }

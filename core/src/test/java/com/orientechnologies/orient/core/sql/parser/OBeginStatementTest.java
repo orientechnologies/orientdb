@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import org.junit.Test;
+
 public class OBeginStatementTest extends OParserTestAbstract {
 
   @Test
@@ -10,6 +11,4 @@ public class OBeginStatementTest extends OParserTestAbstract {
 
     checkWrongSyntax("BEGIN foo ");
   }
-
-
 }

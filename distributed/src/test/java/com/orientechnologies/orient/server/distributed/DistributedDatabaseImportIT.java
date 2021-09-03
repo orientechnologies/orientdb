@@ -1,74 +1,79 @@
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.orient.core.db.*;
+import static org.junit.Assert.assertTrue;
+
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.OElement;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.setup.LocalTestSetup;
+import com.orientechnologies.orient.setup.SetupConfig;
+import com.orientechnologies.orient.setup.configs.SimpleDServerConfig;
+import java.io.File;
+import java.io.IOException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.IOException;
-
-import static org.junit.Assert.assertTrue;
-
 public class DistributedDatabaseImportIT {
 
-  private OServer server0;
-  private OServer server1;
-  private OServer server2;
+  // Relies on direct access to OServer to import DB and can run only on local setup.
+  private LocalTestSetup setup;
+  private SetupConfig config;
+  private String server0, server1, server2;
+  private String exportFileName;
 
   @Before
   public void before() throws Exception {
-    server0 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-0.xml");
-    server1 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-1.xml");
-    server2 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-2.xml");
+    exportFileName = String.format("target/export-%d.tar.gz", System.currentTimeMillis());
+    config = new SimpleDServerConfig();
+    server0 = SimpleDServerConfig.SERVER0;
+    server1 = SimpleDServerConfig.SERVER1;
+    server2 = SimpleDServerConfig.SERVER2;
+    setup = new LocalTestSetup(config);
+    setup.setup();
   }
 
   @Test
   public void test() throws IOException {
-    OrientDB ctx1 = server0.getContext();
-    ctx1.create("import-test", ODatabaseType.PLOCAL);
-    ODatabaseSession session = ctx1.open("import-test", "admin", "admin");
+    final OrientDB ctx1 = setup.getServer(server0).getServerInstance().getContext();
+    ctx1.execute(
+        "create database ? plocal users(admin identified by 'admin' role admin)", "db-to-export");
+    final ODatabaseSession session = ctx1.open("db-to-export", "admin", "admin");
     session.createClass("testa");
-    ODatabaseExport export = new ODatabaseExport((ODatabaseDocumentInternal) session, "target/export.tar.gz", iText -> {
-    });
+    final ODatabaseExport export =
+        new ODatabaseExport((ODatabaseDocumentInternal) session, exportFileName, iText -> {});
     export.exportDatabase();
     export.close();
     session.close();
 
-    ctx1.create("imported-test", ODatabaseType.PLOCAL);
-    ODatabaseSession session1 = ctx1.open("imported-test", "admin", "admin");
-    ODatabaseImport imp = new ODatabaseImport((ODatabaseDocumentInternal) session1, "target/export.tar.gz", iText -> {
-    });
+    ctx1.execute(
+        "create database ? plocal users(admin identified by 'admin' role admin)", "imported-db");
+    final ODatabaseSession session1 = ctx1.open("imported-db", "admin", "admin");
+    final ODatabaseImport imp =
+        new ODatabaseImport((ODatabaseDocumentInternal) session1, exportFileName, iText -> {});
     imp.importDatabase();
     imp.close();
     session1.close();
 
-    OrientDB ctx2 = server1.getContext();
-    ODatabaseSession session2 = ctx2.open("imported-test", "admin", "admin");
+    final OrientDB ctx2 = setup.getServer(server1).getServerInstance().getContext();
+    final ODatabaseSession session2 = ctx2.open("imported-db", "admin", "admin");
     assertTrue(session2.getMetadata().getSchema().existsClass("testa"));
     session2.close();
   }
 
   @After
-  public void after() throws InterruptedException {
-    server0.dropDatabase("import-test");
-    server0.dropDatabase("imported-test");
-    server0.shutdown();
-    server1.shutdown();
-    server2.shutdown();
-    File file = new File("target/export.tar.gz");
-    if (file.exists())
-      file.delete();
-    ODatabaseDocumentTx.closeAll();
+  public void after() {
+    try {
+      setup.getServer(server0).getServerInstance().dropDatabase("db-to-export");
+      setup.getServer(server0).getServerInstance().dropDatabase("imported-db");
+    } finally {
+      setup.teardown();
+      File file = new File(exportFileName);
+      if (file.exists()) file.delete();
+      ODatabaseDocumentTx.closeAll();
+    }
   }
-
 }

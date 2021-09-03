@@ -5,15 +5,13 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cluster.v2.OPaginatedClusterStateV2;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
-
 import java.nio.ByteBuffer;
 
 public final class PaginatedClusterStateV2SetSizePO extends PageOperationRecord {
   private int oldSize;
   private int newSize;
 
-  public PaginatedClusterStateV2SetSizePO() {
-  }
+  public PaginatedClusterStateV2SetSizePO() {}
 
   public PaginatedClusterStateV2SetSizePO(int oldSize, int newSize) {
     this.oldSize = oldSize;
@@ -30,13 +28,15 @@ public final class PaginatedClusterStateV2SetSizePO extends PageOperationRecord 
 
   @Override
   public void redo(OCacheEntry cacheEntry) {
-    final OPaginatedClusterStateV2 paginatedClusterStateV2 = new OPaginatedClusterStateV2(cacheEntry);
+    final OPaginatedClusterStateV2 paginatedClusterStateV2 =
+        new OPaginatedClusterStateV2(cacheEntry);
     paginatedClusterStateV2.setSize(newSize);
   }
 
   @Override
   public void undo(OCacheEntry cacheEntry) {
-    final OPaginatedClusterStateV2 paginatedClusterStateV2 = new OPaginatedClusterStateV2(cacheEntry);
+    final OPaginatedClusterStateV2 paginatedClusterStateV2 =
+        new OPaginatedClusterStateV2(cacheEntry);
     paginatedClusterStateV2.setSize(oldSize);
   }
 

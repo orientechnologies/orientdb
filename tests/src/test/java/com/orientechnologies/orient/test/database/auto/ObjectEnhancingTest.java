@@ -15,49 +15,47 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.object.db.OObjectDatabasePool;
+import com.orientechnologies.orient.object.enhancement.OObjectEntityEnhancer;
+import com.orientechnologies.orient.object.enhancement.OObjectMethodFilter;
+import com.orientechnologies.orient.test.domain.base.CustomMethodFilterTestClass;
 import java.lang.reflect.Method;
-
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.object.db.OObjectDatabasePool;
-import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
-import com.orientechnologies.orient.object.enhancement.OObjectEntityEnhancer;
-import com.orientechnologies.orient.object.enhancement.OObjectMethodFilter;
-import com.orientechnologies.orient.test.domain.base.CustomMethodFilterTestClass;
-
-@Test(groups = { "object" })
+@Test(groups = {"object"})
 public class ObjectEnhancingTest extends ObjectDBBaseTest {
 
-	@Parameters(value = "url")
-	public ObjectEnhancingTest(@Optional String url) {
-		super(url);
-	}
+  @Parameters(value = "url")
+  public ObjectEnhancingTest(@Optional String url) {
+    super(url);
+  }
 
   @Test()
   public void testCustomMethodFilter() {
-      OObjectEntityEnhancer.getInstance().registerClassMethodFilter(CustomMethodFilterTestClass.class, new CustomMethodFilter());
-      CustomMethodFilterTestClass testClass = database.newInstance(CustomMethodFilterTestClass.class);
-      testClass.setStandardField("testStandard");
-      testClass.setUPPERCASEFIELD("testUpperCase");
-      testClass.setTransientNotDefinedField("testTransient");
-      Assert.assertNull(testClass.getStandardFieldAsList());
-      Assert.assertNull(testClass.getStandardFieldAsMap());
-      database.save(testClass);
-      ORID rid = database.getIdentity(testClass);
-      database.close();
-      database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
-      testClass = database.load(rid);
-      Assert.assertEquals(testClass.getStandardField(), "testStandard");
-      Assert.assertEquals(testClass.getUPPERCASEFIELD(), "testUpperCase");
-      Assert.assertNull(testClass.getStandardFieldAsList());
-      Assert.assertNull(testClass.getStandardFieldAsMap());
-      ODocument doc = database.getRecordByUserObject(testClass, false);
-      Assert.assertTrue(!doc.containsField("transientNotDefinedField"));
+    OObjectEntityEnhancer.getInstance()
+        .registerClassMethodFilter(CustomMethodFilterTestClass.class, new CustomMethodFilter());
+    CustomMethodFilterTestClass testClass = database.newInstance(CustomMethodFilterTestClass.class);
+    testClass.setStandardField("testStandard");
+    testClass.setUPPERCASEFIELD("testUpperCase");
+    testClass.setTransientNotDefinedField("testTransient");
+    Assert.assertNull(testClass.getStandardFieldAsList());
+    Assert.assertNull(testClass.getStandardFieldAsMap());
+    database.save(testClass);
+    ORID rid = database.getIdentity(testClass);
+    database.close();
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    testClass = database.load(rid);
+    Assert.assertEquals(testClass.getStandardField(), "testStandard");
+    Assert.assertEquals(testClass.getUPPERCASEFIELD(), "testUpperCase");
+    Assert.assertNull(testClass.getStandardFieldAsList());
+    Assert.assertNull(testClass.getStandardFieldAsMap());
+    ODocument doc = database.getRecordByUserObject(testClass, false);
+    Assert.assertTrue(!doc.containsField("transientNotDefinedField"));
   }
 
   public class CustomMethodFilter extends OObjectMethodFilter {
@@ -83,8 +81,7 @@ public class ObjectEnhancingTest extends ObjectDBBaseTest {
           return "UPPERCASEFIELD";
         }
         return getFieldName(m.getName(), "set");
-      } else
-        return getFieldName(m.getName(), "is");
+      } else return getFieldName(m.getName(), "is");
     }
 
     @Override
@@ -97,5 +94,4 @@ public class ObjectEnhancingTest extends ObjectDBBaseTest {
       return fieldName.toString();
     }
   }
-
 }

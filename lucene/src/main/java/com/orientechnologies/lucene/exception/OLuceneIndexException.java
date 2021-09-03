@@ -23,5 +23,4 @@ public class OLuceneIndexException extends OException {
   public OLuceneIndexException(String message) {
     super(message);
   }
-
 }

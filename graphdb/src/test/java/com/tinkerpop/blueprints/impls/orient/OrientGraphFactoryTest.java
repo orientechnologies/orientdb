@@ -1,5 +1,10 @@
 package com.tinkerpop.blueprints.impls.orient;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
@@ -8,11 +13,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import static org.junit.Assert.*;
-
-/**
- * @author Luca Garulli (l.garulli--(at)--orientdb.com) (http://orientdb.com)
- */
+/** @author Luca Garulli (l.garulli--(at)--orientdb.com) (http://orientdb.com) */
 @RunWith(JUnit4.class)
 public class OrientGraphFactoryTest {
 

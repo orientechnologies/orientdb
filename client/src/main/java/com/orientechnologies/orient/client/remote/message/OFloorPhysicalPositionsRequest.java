@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.client.remote.message;
 
-import java.io.IOException;
-
 import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
@@ -30,18 +28,19 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
+import java.io.IOException;
 
-public class OFloorPhysicalPositionsRequest implements OBinaryRequest<OFloorPhysicalPositionsResponse> {
+public class OFloorPhysicalPositionsRequest
+    implements OBinaryRequest<OFloorPhysicalPositionsResponse> {
   private OPhysicalPosition physicalPosition;
-  private int               clusterId;
+  private int clusterId;
 
   public OFloorPhysicalPositionsRequest(OPhysicalPosition physicalPosition, int clusterId) {
     this.physicalPosition = physicalPosition;
     this.clusterId = clusterId;
   }
 
-  public OFloorPhysicalPositionsRequest() {
-  }
+  public OFloorPhysicalPositionsRequest() {}
 
   @Override
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
@@ -49,7 +48,8 @@ public class OFloorPhysicalPositionsRequest implements OBinaryRequest<OFloorPhys
     network.writeLong(physicalPosition.clusterPosition);
   }
 
-  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
     this.clusterId = channel.readInt();
     this.physicalPosition = new OPhysicalPosition(channel.readLong());
   }
@@ -80,5 +80,4 @@ public class OFloorPhysicalPositionsRequest implements OBinaryRequest<OFloorPhys
   public OBinaryResponse execute(OBinaryRequestExecutor executor) {
     return executor.executeFloorPosition(this);
   }
-
 }

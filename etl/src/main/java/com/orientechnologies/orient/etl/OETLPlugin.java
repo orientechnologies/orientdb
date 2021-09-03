@@ -37,26 +37,32 @@ import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
  * @author Gabriele Ponzi
  * @email gabriele.ponzi--at--gmail.com
  */
-
 public class OETLPlugin extends OServerPluginAbstract {
 
   private OServer server;
 
-  public OETLPlugin() {
+  public OETLPlugin() {}
+
+  public OETLPlugin(OServer server) {
+    this.server = server;
   }
 
-  public void executeJob(String jsonConfig, String outDBConfigPath, OPluginMessageHandler messageHandler) {
+  public void executeJob(
+      String jsonConfig, String outDBConfigPath, OPluginMessageHandler messageHandler) {
     System.out.println("OrientDB etl v." + OConstants.getVersion() + " " + OConstants.ORIENT_URL);
     if (jsonConfig == null) {
       System.out.println("Syntax error, missing configuration file.");
     } else {
-      String[] args = { outDBConfigPath };
-      final OETLProcessor processor = new OETLProcessorConfigurator().parseConfigAndParameters(args);
+      String[] args = {outDBConfigPath};
+      final OETLProcessor processor =
+          new OETLProcessorConfigurator()
+              .parseConfigAndParametersWithContext(server.getContext(), args);
 
       try {
-        // overriding default message handler if the chosen verbosity level is different from the default one
-        if (messageHandler.getOutputManagerLevel() != OETLContextWrapper.getInstance().getMessageHandler()
-            .getOutputManagerLevel()) {
+        // overriding default message handler if the chosen verbosity level is different from the
+        // default one
+        if (messageHandler.getOutputManagerLevel()
+            != OETLContextWrapper.getInstance().getMessageHandler().getOutputManagerLevel()) {
           OETLContextWrapper.getInstance().setMessageHandler(messageHandler);
         }
 
@@ -76,9 +82,9 @@ public class OETLPlugin extends OServerPluginAbstract {
   @Override
   public void startup() {
 
-    final OServerNetworkListener listener = server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
-    if (listener == null)
-      throw new OConfigurationException("HTTP listener not found");
+    final OServerNetworkListener listener =
+        server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
+    if (listener == null) throw new OConfigurationException("HTTP listener not found");
 
     listener.registerStatelessCommand(new OServerCommandETL());
   }

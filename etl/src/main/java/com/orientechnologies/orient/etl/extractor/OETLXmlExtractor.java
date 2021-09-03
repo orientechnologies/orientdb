@@ -22,26 +22,33 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLExtractedItem;
-import org.w3c.dom.*;
-import org.xml.sax.InputSource;
-
+import java.io.Reader;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.NoSuchElementException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import java.io.Reader;
-import java.util.*;
+import org.w3c.dom.Attr;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
 
 public class OETLXmlExtractor extends OETLAbstractSourceExtractor {
-  protected List               items           = new ArrayList();
-  private   Collection<String> tagsAsAttribute = new HashSet<String>();
+  protected List items = new ArrayList();
+  private Collection<String> tagsAsAttribute = new HashSet<String>();
   private String rootNode;
 
   @Override
   public void configure(ODocument iConfiguration, OCommandContext iContext) {
     super.configure(iConfiguration, iContext);
 
-    if (iConfiguration.containsField("rootNode"))
-      rootNode = iConfiguration.field("rootNode");
+    if (iConfiguration.containsField("rootNode")) rootNode = iConfiguration.field("rootNode");
 
     if (iConfiguration.containsField("tagsAsAttribute"))
       tagsAsAttribute = iConfiguration.<Collection<String>>field("tagsAsAttribute");
@@ -54,8 +61,7 @@ public class OETLXmlExtractor extends OETLAbstractSourceExtractor {
 
   @Override
   public OETLExtractedItem next() {
-    if (!hasNext())
-      throw new NoSuchElementException("EOF");
+    if (!hasNext()) throw new NoSuchElementException("EOF");
 
     return new OETLExtractedItem(current, items.get((int) current++));
   }
@@ -74,17 +80,14 @@ public class OETLXmlExtractor extends OETLAbstractSourceExtractor {
       xmlDocument.getDocumentElement().normalize();
 
       final Object res = xml2doc(xmlDocument);
-      if (res instanceof Collection)
-        items.addAll((Collection) res);
-      else
-        items.add(res);
+      if (res instanceof Collection) items.addAll((Collection) res);
+      else items.add(res);
 
     } catch (ParserConfigurationException e) {
       throw new OETLExtractorException("[XML extractor] error on creating XML parser", e);
     } catch (Exception e) {
       throw new OETLExtractorException("[XML extractor] error on parsing XML", e);
     }
-
   }
 
   private Object xml2doc(final Node xmlDocument) {
@@ -100,11 +103,12 @@ public class OETLXmlExtractor extends OETLAbstractSourceExtractor {
       for (int i = 0; i < attrs.getLength(); ++i) {
         final Node item = attrs.item(i);
         switch (item.getNodeType()) {
-        case Node.ATTRIBUTE_NODE: {
-          final Attr attr = (Attr) item;
-          doc.field(attr.getName(), attr.getValue());
-          break;
-        }
+          case Node.ATTRIBUTE_NODE:
+            {
+              final Attr attr = (Attr) item;
+              doc.field(attr.getName(), attr.getValue());
+              break;
+            }
         }
       }
 
@@ -113,45 +117,46 @@ public class OETLXmlExtractor extends OETLAbstractSourceExtractor {
       for (int i = 0; i < children.getLength(); ++i) {
         final Node child = children.item(i);
         switch (child.getNodeType()) {
-        case Node.ELEMENT_NODE: {
-          final Element element = (Element) child;
+          case Node.ELEMENT_NODE:
+            {
+              final Element element = (Element) child;
 
-          final String path = iPath.isEmpty() ? element.getNodeName() : iPath + "." + element.getNodeName();
+              final String path =
+                  iPath.isEmpty() ? element.getNodeName() : iPath + "." + element.getNodeName();
 
-          if (tagsAsAttribute.contains(iPath)) {
+              if (tagsAsAttribute.contains(iPath)) {
 
-            final NodeList subChildren = element.getChildNodes();
-            if (subChildren.getLength() > 0) {
-              final Node fieldContent = subChildren.item(0);
-              doc.field(element.getNodeName(), fieldContent.getTextContent());
-            }
+                final NodeList subChildren = element.getChildNodes();
+                if (subChildren.getLength() > 0) {
+                  final Node fieldContent = subChildren.item(0);
+                  doc.field(element.getNodeName(), fieldContent.getTextContent());
+                }
 
-          } else {
-
-            final Object sub = xml2doc(element, path, iLevel + 1);
-
-            final Object previous = doc.field(element.getNodeName());
-            if (previous != null) {
-              List list;
-              if (previous instanceof List) {
-                list = (List) previous;
               } else {
-                // TRANSFORM IN A LIST
-                list = new ArrayList();
-                list.add(previous);
-                doc.field(element.getNodeName(), list, OType.EMBEDDEDLIST);
+
+                final Object sub = xml2doc(element, path, iLevel + 1);
+
+                final Object previous = doc.field(element.getNodeName());
+                if (previous != null) {
+                  List list;
+                  if (previous instanceof List) {
+                    list = (List) previous;
+                  } else {
+                    // TRANSFORM IN A LIST
+                    list = new ArrayList();
+                    list.add(previous);
+                    doc.field(element.getNodeName(), list, OType.EMBEDDEDLIST);
+                  }
+                  list.add(sub);
+                } else doc.field(element.getNodeName(), sub, OType.EMBEDDED);
+
+                if (rootNode != null && rootNode.startsWith(path))
+                  // SKIP
+                  result = doc.field(element.getNodeName());
               }
-              list.add(sub);
-            } else
-              doc.field(element.getNodeName(), sub, OType.EMBEDDED);
 
-            if (rootNode != null && rootNode.startsWith(path))
-              // SKIP
-              result = doc.field(element.getNodeName());
-          }
-
-          break;
-        }
+              break;
+            }
         }
       }
     }
@@ -173,5 +178,4 @@ public class OETLXmlExtractor extends OETLAbstractSourceExtractor {
   public String getName() {
     return "xml";
   }
-
 }

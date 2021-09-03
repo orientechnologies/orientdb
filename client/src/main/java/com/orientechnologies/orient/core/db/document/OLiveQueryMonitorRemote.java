@@ -2,13 +2,11 @@ package com.orientechnologies.orient.core.db.document;
 
 import com.orientechnologies.orient.core.db.OLiveQueryMonitor;
 
-/**
- * Created by tglman on 16/05/17.
- */
+/** Created by tglman on 16/05/17. */
 public class OLiveQueryMonitorRemote implements OLiveQueryMonitor {
 
   private ODatabaseDocumentRemote database;
-  private int                     monitorId;
+  private int monitorId;
 
   public OLiveQueryMonitorRemote(ODatabaseDocumentRemote database, int monitorId) {
     this.database = database;

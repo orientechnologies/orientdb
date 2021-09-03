@@ -4,7 +4,8 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 
-public class BlueprintsConcurrentGraphChangesTxTest extends BlueprintsConcurrentGraphChangesNoTxTest {
+public class BlueprintsConcurrentGraphChangesTxTest
+    extends BlueprintsConcurrentGraphChangesNoTxTest {
   protected OrientBaseGraph getGraph() {
     OGlobalConfiguration.SQL_GRAPH_CONSISTENCY_MODE.setValue("tx");
     return new OrientGraph(URL);

@@ -20,12 +20,10 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import junit.framework.Assert;
 import org.junit.Test;
 
-/**
- * Distributed test on drop database and further resync.
- */
+/** Distributed test on drop database and further resync. */
 public class DistributedDbDropAndResyncIT extends AbstractServerClusterTxTest {
-  final static int  SERVERS = 2;
-  final        long TIMEOUT = 15000;
+  static final int SERVERS = 2;
+  final long TIMEOUT = 15000;
 
   @Test
   public void test() throws Exception {
@@ -39,7 +37,8 @@ public class DistributedDbDropAndResyncIT extends AbstractServerClusterTxTest {
   protected void onAfterExecution() throws Exception {
     for (ServerRun s : serverInstance) {
 
-      final ODatabaseDocument db = s.getServerInstance().getContext().open(getDatabaseName(), "admin", "admin");
+      final ODatabaseDocument db =
+          s.getServerInstance().getContext().open(getDatabaseName(), "admin", "admin");
 
       banner("RE-SYNC DATABASE ON SERVER " + s.getServerId());
       db.command(new OCommandSQL("ha sync database")).execute();
@@ -47,10 +46,14 @@ public class DistributedDbDropAndResyncIT extends AbstractServerClusterTxTest {
       ODistributedServerManager.DB_STATUS currentStatus = null;
 
       // WAIT FOR ONLINE
-      for (long chrono = System.currentTimeMillis(); System.currentTimeMillis() - chrono < TIMEOUT; ) {
+      for (long chrono = System.currentTimeMillis();
+          System.currentTimeMillis() - chrono < TIMEOUT; ) {
 
-        final ODistributedServerManager.DB_STATUS status = s.getServerInstance().getDistributedManager()
-            .getDatabaseStatus(s.getServerInstance().getDistributedManager().getLocalNodeName(), db.getName());
+        final ODistributedServerManager.DB_STATUS status =
+            s.getServerInstance()
+                .getDistributedManager()
+                .getDatabaseStatus(
+                    s.getServerInstance().getDistributedManager().getLocalNodeName(), db.getName());
 
         if (status == ODistributedServerManager.DB_STATUS.ONLINE) {
           currentStatus = status;

@@ -33,7 +33,7 @@ public interface OSymmetricKeyConfig {
   String getKeystoreKeyAlias();
 
   String getKeystoreKeyPassword();
-  
+
   boolean usesKeyString();
 
   boolean usesKeyFile();

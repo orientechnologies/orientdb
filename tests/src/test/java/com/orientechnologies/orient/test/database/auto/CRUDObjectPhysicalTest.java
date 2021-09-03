@@ -17,7 +17,12 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.object.OLazyObjectSetInterface;
-import com.orientechnologies.orient.core.db.record.*;
+import com.orientechnologies.orient.core.db.record.ORecordLazyList;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
+import com.orientechnologies.orient.core.db.record.OTrackedList;
+import com.orientechnologies.orient.core.db.record.OTrackedMap;
+import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -32,18 +37,46 @@ import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.object.db.OObjectDatabasePool;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.object.iterator.OObjectIteratorClass;
-import com.orientechnologies.orient.test.domain.base.*;
-import com.orientechnologies.orient.test.domain.business.*;
+import com.orientechnologies.orient.test.domain.base.Agenda;
+import com.orientechnologies.orient.test.domain.base.EmbeddedChild;
+import com.orientechnologies.orient.test.domain.base.EnumTest;
+import com.orientechnologies.orient.test.domain.base.Event;
+import com.orientechnologies.orient.test.domain.base.JavaBinaryDataTestClass;
+import com.orientechnologies.orient.test.domain.base.JavaComplexTestClass;
+import com.orientechnologies.orient.test.domain.base.JavaNoGenericCollectionsTestClass;
+import com.orientechnologies.orient.test.domain.base.JavaSimpleArraysTestClass;
+import com.orientechnologies.orient.test.domain.base.JavaSimpleTestClass;
+import com.orientechnologies.orient.test.domain.base.JavaTestInterface;
+import com.orientechnologies.orient.test.domain.base.Media;
+import com.orientechnologies.orient.test.domain.base.Parent;
+import com.orientechnologies.orient.test.domain.base.PersonTest;
+import com.orientechnologies.orient.test.domain.business.Account;
+import com.orientechnologies.orient.test.domain.business.Address;
+import com.orientechnologies.orient.test.domain.business.Child;
+import com.orientechnologies.orient.test.domain.business.City;
+import com.orientechnologies.orient.test.domain.business.Country;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
-import org.testng.Assert;
-import org.testng.annotations.*;
-import org.testng.annotations.Optional;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.ConcurrentModificationException;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
-@Test(groups = { "crud", "object" })
+@Test(groups = {"crud", "object"})
 public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
   protected static final int TOT_RECORDS = 100;
   protected long startRecordNumber;
@@ -72,9 +105,15 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
 
   @Test
   public void create() {
-    database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.business");
-    database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.whiz");
-    database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.base");
+    database
+        .getEntityManager()
+        .registerEntityClasses("com.orientechnologies.orient.test.domain.business");
+    database
+        .getEntityManager()
+        .registerEntityClasses("com.orientechnologies.orient.test.domain.whiz");
+    database
+        .getEntityManager()
+        .registerEntityClasses("com.orientechnologies.orient.test.domain.base");
 
     startRecordNumber = database.countClass("Account");
 
@@ -112,7 +151,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
 
   @Test
   public void testDeletionClassFromSchemaShouldNotLockDatabase() {
-    Assert.assertNull(database.getMetadata().getSchema().getClass(DummyForTestFreeze.class.getSimpleName()));
+    Assert.assertNull(
+        database.getMetadata().getSchema().getClass(DummyForTestFreeze.class.getSimpleName()));
 
     database.getEntityManager().registerEntityClass(DummyForTestFreeze.class);
 
@@ -120,7 +160,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
 
     database.getMetadata().getSchema().dropClass(DummyForTestFreeze.class.getSimpleName());
 
-    Assert.assertNull(database.getMetadata().getSchema().getClass(DummyForTestFreeze.class.getSimpleName()));
+    Assert.assertNull(
+        database.getMetadata().getSchema().getClass(DummyForTestFreeze.class.getSimpleName()));
   }
 
   @Test
@@ -156,13 +197,14 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     Assert.assertTrue(loadedJavaObj.getTestAnonymous() instanceof JavaTestInterface);
     Assert.assertEquals(loadedJavaObj.getTestAnonymous().getNumber(), -1);
     loadedJavaObj.setEnumeration(EnumTest.ENUM2);
-    loadedJavaObj.setTestAnonymous(new JavaTestInterface() {
+    loadedJavaObj.setTestAnonymous(
+        new JavaTestInterface() {
 
-      @Override
-      public int getNumber() {
-        return 0;
-      }
-    });
+          @Override
+          public int getNumber() {
+            return 0;
+          }
+        });
     database.save(loadedJavaObj);
 
     database.close();
@@ -200,7 +242,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
       doubleArray[i] = i;
       floatArray[i] = i;
       booleanArray[i] = (i % 2 == 0);
-      enumerationArray[i] = (i % 2 == 0) ? EnumTest.ENUM2 : ((i % 3 == 0) ? EnumTest.ENUM3 : EnumTest.ENUM1);
+      enumerationArray[i] =
+          (i % 2 == 0) ? EnumTest.ENUM2 : ((i % 3 == 0) ? EnumTest.ENUM3 : EnumTest.ENUM1);
       cal.set(Calendar.DAY_OF_MONTH, (i + 1));
       dateArray[i] = cal.getTime();
     }
@@ -255,7 +298,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
       Assert.assertEquals(loadedJavaObj.getDoubleSimple()[i], (double) i);
       Assert.assertEquals(loadedJavaObj.getFloatSimple()[i], (float) i);
       Assert.assertEquals(loadedJavaObj.getFlagSimple()[i], (i % 2 == 0));
-      EnumTest enumCheck = (i % 2 == 0) ? EnumTest.ENUM2 : ((i % 3 == 0) ? EnumTest.ENUM3 : EnumTest.ENUM1);
+      EnumTest enumCheck =
+          (i % 2 == 0) ? EnumTest.ENUM2 : ((i % 3 == 0) ? EnumTest.ENUM3 : EnumTest.ENUM1);
       Assert.assertEquals(loadedJavaObj.getEnumeration()[i], enumCheck);
       cal.set(Calendar.DAY_OF_MONTH, (i + 1));
       Assert.assertEquals(loadedJavaObj.getDateField()[i], cal.getTime());
@@ -269,7 +313,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
       doubleArray[i] = j;
       floatArray[i] = j;
       booleanArray[i] = (j % 2 == 0);
-      enumerationArray[i] = (j % 2 == 0) ? EnumTest.ENUM2 : ((j % 3 == 0) ? EnumTest.ENUM3 : EnumTest.ENUM1);
+      enumerationArray[i] =
+          (j % 2 == 0) ? EnumTest.ENUM2 : ((j % 3 == 0) ? EnumTest.ENUM3 : EnumTest.ENUM1);
       cal.set(Calendar.DAY_OF_MONTH, (j + 1));
       dateArray[i] = cal.getTime();
     }
@@ -324,7 +369,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
       Assert.assertEquals(loadedJavaObj.getDoubleSimple()[i], (double) j);
       Assert.assertEquals(loadedJavaObj.getFloatSimple()[i], (float) j);
       Assert.assertEquals(loadedJavaObj.getFlagSimple()[i], (j % 2 == 0));
-      EnumTest enumCheck = (j % 2 == 0) ? EnumTest.ENUM2 : ((j % 3 == 0) ? EnumTest.ENUM3 : EnumTest.ENUM1);
+      EnumTest enumCheck =
+          (j % 2 == 0) ? EnumTest.ENUM2 : ((j % 3 == 0) ? EnumTest.ENUM3 : EnumTest.ENUM1);
       Assert.assertEquals(loadedJavaObj.getEnumeration()[i], enumCheck);
       cal.set(Calendar.DAY_OF_MONTH, (j + 1));
       Assert.assertEquals(loadedJavaObj.getDateField()[i], cal.getTime());
@@ -337,12 +383,17 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     doc = database.getRecordByUserObject(loadedJavaObj, false);
 
     Assert.assertTrue(((Collection<?>) doc.field("text")).iterator().next() instanceof String);
-    Assert.assertTrue(((Collection<?>) doc.field("enumeration")).iterator().next() instanceof String);
-    Assert.assertTrue(((Collection<?>) doc.field("numberSimple")).iterator().next() instanceof Integer);
+    Assert.assertTrue(
+        ((Collection<?>) doc.field("enumeration")).iterator().next() instanceof String);
+    Assert.assertTrue(
+        ((Collection<?>) doc.field("numberSimple")).iterator().next() instanceof Integer);
     Assert.assertTrue(((Collection<?>) doc.field("longSimple")).iterator().next() instanceof Long);
-    Assert.assertTrue(((Collection<?>) doc.field("doubleSimple")).iterator().next() instanceof Double);
-    Assert.assertTrue(((Collection<?>) doc.field("floatSimple")).iterator().next() instanceof Float);
-    Assert.assertTrue(((Collection<?>) doc.field("flagSimple")).iterator().next() instanceof Boolean);
+    Assert.assertTrue(
+        ((Collection<?>) doc.field("doubleSimple")).iterator().next() instanceof Double);
+    Assert.assertTrue(
+        ((Collection<?>) doc.field("floatSimple")).iterator().next() instanceof Float);
+    Assert.assertTrue(
+        ((Collection<?>) doc.field("flagSimple")).iterator().next() instanceof Boolean);
     Assert.assertTrue(((Collection<?>) doc.field("dateField")).iterator().next() instanceof Date);
 
     // TODO - remove this delete to test simple type collections JSON import/export
@@ -419,7 +470,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     database.close();
 
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
-    List<JavaComplexTestClass> agendas = database.query(new OSQLSynchQuery<JavaComplexTestClass>("SELECT FROM " + rid));
+    List<JavaComplexTestClass> agendas =
+        database.query(new OSQLSynchQuery<JavaComplexTestClass>("SELECT FROM " + rid));
     JavaComplexTestClass testLoadedEntity = agendas.get(0);
 
     ODocument doc = database.getRecordByUserObject(testLoadedEntity, false);
@@ -453,7 +505,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     database.close();
 
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
-    List<JavaComplexTestClass> agendas = database.query(new OSQLSynchQuery<JavaComplexTestClass>("SELECT FROM " + rid));
+    List<JavaComplexTestClass> agendas =
+        database.query(new OSQLSynchQuery<JavaComplexTestClass>("SELECT FROM " + rid));
     JavaComplexTestClass testLoadedEntity = agendas.get(0);
 
     ODocument doc = database.getRecordByUserObject(testLoadedEntity, false);
@@ -486,7 +539,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     database.close();
 
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
-    List<JavaComplexTestClass> agendas = database.query(new OSQLSynchQuery<JavaComplexTestClass>("SELECT FROM " + rid));
+    List<JavaComplexTestClass> agendas =
+        database.query(new OSQLSynchQuery<JavaComplexTestClass>("SELECT FROM " + rid));
     JavaComplexTestClass testLoadedEntity = agendas.get(0);
 
     ODocument doc = database.getRecordByUserObject(testLoadedEntity, false);
@@ -506,22 +560,32 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
 
   protected boolean checkCollectionImplementations(ODocument doc) {
     Object collectionObj = doc.field("list");
-    boolean validImplementation = (collectionObj instanceof OTrackedList<?>) || (doc.field("list") instanceof ORecordLazyList);
+    boolean validImplementation =
+        (collectionObj instanceof OTrackedList<?>)
+            || (doc.field("list") instanceof ORecordLazyList);
     if (!validImplementation) {
-      Assert.fail("Document list implementation " + collectionObj.getClass().getName()
-          + " not compatible with current Object Database loading management");
+      Assert.fail(
+          "Document list implementation "
+              + collectionObj.getClass().getName()
+              + " not compatible with current Object Database loading management");
     }
     collectionObj = doc.field("set");
-    validImplementation = (collectionObj instanceof OTrackedSet<?>) || (collectionObj instanceof ORecordLazySet);
+    validImplementation =
+        (collectionObj instanceof OTrackedSet<?>) || (collectionObj instanceof ORecordLazySet);
     if (!validImplementation) {
-      Assert.fail("Document set implementation " + collectionObj.getClass().getName()
-          + " not compatible with current Object Database management");
+      Assert.fail(
+          "Document set implementation "
+              + collectionObj.getClass().getName()
+              + " not compatible with current Object Database management");
     }
     collectionObj = doc.field("children");
-    validImplementation = (collectionObj instanceof OTrackedMap<?>) || (collectionObj instanceof ORecordLazyMap);
+    validImplementation =
+        (collectionObj instanceof OTrackedMap<?>) || (collectionObj instanceof ORecordLazyMap);
     if (!validImplementation) {
-      Assert.fail("Document map implementation " + collectionObj.getClass().getName()
-          + " not compatible with current Object Database management");
+      Assert.fail(
+          "Document map implementation "
+              + collectionObj.getClass().getName()
+              + " not compatible with current Object Database management");
     }
     return validImplementation;
   }
@@ -545,8 +609,7 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     // BROWSE ALL THE OBJECTS
 
     Set<Integer> ids = new HashSet<Integer>(TOT_RECORDS);
-    for (int i = 0; i < TOT_RECORDS; i++)
-      ids.add(i);
+    for (int i = 0; i < TOT_RECORDS; i++) ids.add(i);
 
     for (Account a : database.browseClass(Account.class)) {
       int id = a.getId();
@@ -558,7 +621,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
       Assert.assertEquals(a.getSalary(), id + 300.1f);
       Assert.assertEquals(a.getAddresses().size(), 1);
       Assert.assertEquals(a.getAddresses().get(0).getCity().getName(), rome.getName());
-      Assert.assertEquals(a.getAddresses().get(0).getCity().getCountry().getName(), rome.getCountry().getName());
+      Assert.assertEquals(
+          a.getAddresses().get(0).getCity().getCountry().getName(), rome.getCountry().getName());
     }
 
     Assert.assertTrue(ids.isEmpty());
@@ -570,10 +634,10 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
 
     // BROWSE ALL THE OBJECTS
     Set<Integer> ids = new HashSet<Integer>(TOT_RECORDS);
-    for (int i = 0; i < TOT_RECORDS; i++)
-      ids.add(i);
+    for (int i = 0; i < TOT_RECORDS; i++) ids.add(i);
 
-    List<Account> result = database.query(new OSQLSynchQuery<Account>("select from Account").setFetchPlan("*:-1"));
+    List<Account> result =
+        database.query(new OSQLSynchQuery<Account>("select from Account").setFetchPlan("*:-1"));
     for (Account a : result) {
       int id = a.getId();
       Assert.assertTrue(ids.remove(id));
@@ -584,7 +648,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
       Assert.assertEquals(a.getSalary(), id + 300.1f);
       Assert.assertEquals(a.getAddresses().size(), 1);
       Assert.assertEquals(a.getAddresses().get(0).getCity().getName(), rome.getName());
-      Assert.assertEquals(a.getAddresses().get(0).getCity().getCountry().getName(), rome.getCountry().getName());
+      Assert.assertEquals(
+          a.getAddresses().get(0).getCity().getCountry().getName(), rome.getCountry().getName());
     }
 
     Assert.assertTrue(ids.isEmpty());
@@ -597,10 +662,10 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
 
     // BROWSE ALL THE OBJECTS
     Set<Integer> ids = new HashSet<Integer>(TOT_RECORDS);
-    for (int i = 0; i < TOT_RECORDS; i++)
-      ids.add(i);
+    for (int i = 0; i < TOT_RECORDS; i++) ids.add(i);
 
-    List<Account> result = database.query(new OSQLSynchQuery<Account>("select from Account").setFetchPlan("*:2"));
+    List<Account> result =
+        database.query(new OSQLSynchQuery<Account>("select from Account").setFetchPlan("*:2"));
     for (Account a : result) {
       int id = a.getId();
       Assert.assertTrue(ids.remove(id));
@@ -611,7 +676,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
       Assert.assertEquals(a.getSalary(), id + 300.1f);
       Assert.assertEquals(a.getAddresses().size(), 1);
       Assert.assertEquals(a.getAddresses().get(0).getCity().getName(), rome.getName());
-      Assert.assertEquals(a.getAddresses().get(0).getCity().getCountry().getName(), rome.getCountry().getName());
+      Assert.assertEquals(
+          a.getAddresses().get(0).getCity().getCountry().getName(), rome.getCountry().getName());
     }
 
     Assert.assertTrue(ids.isEmpty());
@@ -810,10 +876,14 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     JavaComplexTestClass loaded = database.load(rid);
 
     Assert.assertEquals(loaded.getEmbeddedList().size(), 4);
-    Assert.assertTrue(database.getRecordByUserObject(loaded.getEmbeddedList().get(0), false).isEmbedded());
-    Assert.assertTrue(database.getRecordByUserObject(loaded.getEmbeddedList().get(1), false).isEmbedded());
-    Assert.assertTrue(database.getRecordByUserObject(loaded.getEmbeddedList().get(2), false).isEmbedded());
-    Assert.assertTrue(database.getRecordByUserObject(loaded.getEmbeddedList().get(3), false).isEmbedded());
+    Assert.assertTrue(
+        database.getRecordByUserObject(loaded.getEmbeddedList().get(0), false).isEmbedded());
+    Assert.assertTrue(
+        database.getRecordByUserObject(loaded.getEmbeddedList().get(1), false).isEmbedded());
+    Assert.assertTrue(
+        database.getRecordByUserObject(loaded.getEmbeddedList().get(2), false).isEmbedded());
+    Assert.assertTrue(
+        database.getRecordByUserObject(loaded.getEmbeddedList().get(3), false).isEmbedded());
     Assert.assertTrue(loaded.getEmbeddedList().get(0) instanceof Child);
     Assert.assertTrue(loaded.getEmbeddedList().get(1) instanceof Child);
     Assert.assertTrue(loaded.getEmbeddedList().get(2) instanceof Child);
@@ -874,8 +944,11 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
       Assert.assertTrue(database.getRecordByUserObject(loadedC, false).isEmbedded());
       Assert.assertTrue(loadedC instanceof Child);
       Assert.assertTrue(
-          loadedC.getName().equals("John") || loadedC.getName().equals("Jack") || loadedC.getName().equals("Bob") || loadedC
-              .getName().equals("Sam") || loadedC.getName().equals("Dean"));
+          loadedC.getName().equals("John")
+              || loadedC.getName().equals("Jack")
+              || loadedC.getName().equals("Bob")
+              || loadedC.getName().equals("Sam")
+              || loadedC.getName().equals("Dean"));
     }
   }
 
@@ -928,8 +1001,11 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
       Assert.assertTrue(database.getRecordByUserObject(loadedC, false).isEmbedded());
       Assert.assertTrue(loadedC instanceof Child);
       Assert.assertTrue(
-          loadedC.getName().equals("John") || loadedC.getName().equals("Jack") || loadedC.getName().equals("Bob") || loadedC
-              .getName().equals("Sam") || loadedC.getName().equals("Dean"));
+          loadedC.getName().equals("John")
+              || loadedC.getName().equals("Jack")
+              || loadedC.getName().equals("Bob")
+              || loadedC.getName().equals("Sam")
+              || loadedC.getName().equals("Dean"));
     }
   }
 
@@ -1057,8 +1133,9 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     ORID enum1Rid = database.getIdentity(testEnum1);
     ORID enum2Rid = database.getIdentity(testEnum2);
 
-    OSQLSynchQuery<JavaComplexTestClass> enumFieldQuery = new OSQLSynchQuery<JavaComplexTestClass>(
-        "select from JavaComplexTestClass where enumField = :enumField");
+    OSQLSynchQuery<JavaComplexTestClass> enumFieldQuery =
+        new OSQLSynchQuery<JavaComplexTestClass>(
+            "select from JavaComplexTestClass where enumField = :enumField");
 
     Map<String, Object> enum1Config = new HashMap<String, Object>();
     Map<String, Object> enum2Config = new HashMap<String, Object>();
@@ -1097,8 +1174,9 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     ORID testObjectRid = database.getIdentity(testObject);
     ORID childRid = database.getIdentity(child);
 
-    OSQLSynchQuery<JavaComplexTestClass> enumFieldQuery = new OSQLSynchQuery<JavaComplexTestClass>(
-        "select from JavaComplexTestClass where enumField = :enumField and child = :child");
+    OSQLSynchQuery<JavaComplexTestClass> enumFieldQuery =
+        new OSQLSynchQuery<JavaComplexTestClass>(
+            "select from JavaComplexTestClass where enumField = :enumField and child = :child");
 
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("child", childRid);
@@ -1110,8 +1188,9 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     database.close();
 
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
-    enumFieldQuery = new OSQLSynchQuery<JavaComplexTestClass>(
-        "select from JavaComplexTestClass where enumField = :enumField and child = :child");
+    enumFieldQuery =
+        new OSQLSynchQuery<JavaComplexTestClass>(
+            "select from JavaComplexTestClass where enumField = :enumField and child = :child");
     result = database.query(enumFieldQuery, params);
     Assert.assertEquals(result.size(), 1);
     Assert.assertEquals(database.getIdentity(result.get(0)).getIdentity(), testObjectRid);
@@ -1148,7 +1227,11 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     JavaComplexTestClass loaded = database.load(rid);
 
     for (String key : loaded.getChildren().keySet()) {
-      Assert.assertTrue(key.equals("Peter") || key.equals("Walter") || key.equals("Olivia") || key.equals("Astrid"));
+      Assert.assertTrue(
+          key.equals("Peter")
+              || key.equals("Walter")
+              || key.equals("Olivia")
+              || key.equals("Astrid"));
       Assert.assertTrue(loaded.getChildren().get(key) instanceof Child);
       Assert.assertTrue(loaded.getChildren().get(key).getName().equals(key));
       if (key.equals("Peter")) {
@@ -1163,7 +1246,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     }
 
     database.setLazyLoading(false);
-    for (JavaComplexTestClass reloaded : database.browseClass(JavaComplexTestClass.class).setFetchPlan("*:-1")) {
+    for (JavaComplexTestClass reloaded :
+        database.browseClass(JavaComplexTestClass.class).setFetchPlan("*:-1")) {
       database.reload(reloaded);
 
       Child c4 = database.newInstance(Child.class);
@@ -1174,13 +1258,15 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     }
     database.close();
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
-    for (JavaComplexTestClass reloaded : database.browseClass(JavaComplexTestClass.class).setFetchPlan("*:-1")) {
+    for (JavaComplexTestClass reloaded :
+        database.browseClass(JavaComplexTestClass.class).setFetchPlan("*:-1")) {
       database.reload(reloaded);
       Assert.assertTrue(reloaded.getChildren().containsKey("The Observer"));
       Assert.assertTrue(reloaded.getChildren().get("The Observer") != null);
       Assert.assertEquals(reloaded.getChildren().get("The Observer").getName(), "The Observer");
-      Assert.assertTrue(database.getIdentity(reloaded.getChildren().get("The Observer")).isPersistent() && database
-          .getIdentity(reloaded.getChildren().get("The Observer")).isValid());
+      Assert.assertTrue(
+          database.getIdentity(reloaded.getChildren().get("The Observer")).isPersistent()
+              && database.getIdentity(reloaded.getChildren().get("The Observer")).isValid());
     }
   }
 
@@ -1213,7 +1299,11 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     JavaComplexTestClass loaded = database.load(rid);
 
     for (String key : loaded.getChildren().keySet()) {
-      Assert.assertTrue(key.equals("Peter") || key.equals("Walter") || key.equals("Olivia") || key.equals("Astrid"));
+      Assert.assertTrue(
+          key.equals("Peter")
+              || key.equals("Walter")
+              || key.equals("Olivia")
+              || key.equals("Astrid"));
       Assert.assertTrue(loaded.getChildren().get(key) instanceof Child);
       Assert.assertTrue(loaded.getChildren().get(key).getName().equals(key));
       if (key.equals("Peter")) {
@@ -1228,7 +1318,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     }
 
     database.setLazyLoading(false);
-    for (JavaComplexTestClass reloaded : database.browseClass(JavaComplexTestClass.class).setFetchPlan("*:-1")) {
+    for (JavaComplexTestClass reloaded :
+        database.browseClass(JavaComplexTestClass.class).setFetchPlan("*:-1")) {
       database.reload(reloaded);
 
       Child c4 = new Child();
@@ -1239,13 +1330,15 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     }
     database.close();
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
-    for (JavaComplexTestClass reloaded : database.browseClass(JavaComplexTestClass.class).setFetchPlan("*:-1")) {
+    for (JavaComplexTestClass reloaded :
+        database.browseClass(JavaComplexTestClass.class).setFetchPlan("*:-1")) {
       database.reload(reloaded);
       Assert.assertTrue(reloaded.getChildren().containsKey("The Observer"));
       Assert.assertTrue(reloaded.getChildren().get("The Observer") != null);
       Assert.assertEquals(reloaded.getChildren().get("The Observer").getName(), "The Observer");
-      Assert.assertTrue(database.getIdentity(reloaded.getChildren().get("The Observer")).isPersistent() && database
-          .getIdentity(reloaded.getChildren().get("The Observer")).isValid());
+      Assert.assertTrue(
+          database.getIdentity(reloaded.getChildren().get("The Observer")).isPersistent()
+              && database.getIdentity(reloaded.getChildren().get("The Observer")).isValid());
     }
   }
 
@@ -1272,20 +1365,23 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     JavaComplexTestClass loaded = database.load(rid);
     Assert.assertNotNull(loaded.getStringMap());
     for (String referenceRelativ : relatives.keySet()) {
-      Assert.assertEquals(relatives.get(referenceRelativ), loaded.getStringMap().get(referenceRelativ));
+      Assert.assertEquals(
+          relatives.get(referenceRelativ), loaded.getStringMap().get(referenceRelativ));
     }
     loaded.getStringMap().put("brother", "Nike");
     relatives.put("brother", "Nike");
     database.save(loaded);
     for (String referenceRelativ : relatives.keySet()) {
-      Assert.assertEquals(relatives.get(referenceRelativ), loaded.getStringMap().get(referenceRelativ));
+      Assert.assertEquals(
+          relatives.get(referenceRelativ), loaded.getStringMap().get(referenceRelativ));
     }
     database.close();
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     loaded = database.load(rid);
     Assert.assertNotNull(loaded.getStringMap());
     for (String referenceRelativ : relatives.keySet()) {
-      Assert.assertEquals(relatives.get(referenceRelativ), loaded.getStringMap().get(referenceRelativ));
+      Assert.assertEquals(
+          relatives.get(referenceRelativ), loaded.getStringMap().get(referenceRelativ));
     }
     database.delete(loaded);
 
@@ -1305,20 +1401,23 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     loaded = database.load(rid);
     Assert.assertNotNull(loaded.getStringMap());
     for (String referenceRelativ : relatives.keySet()) {
-      Assert.assertEquals(relatives.get(referenceRelativ), loaded.getStringMap().get(referenceRelativ));
+      Assert.assertEquals(
+          relatives.get(referenceRelativ), loaded.getStringMap().get(referenceRelativ));
     }
     loaded.getStringMap().put("brother", "Nike");
     relatives.put("brother", "Nike");
     database.save(loaded);
     for (String referenceRelativ : relatives.keySet()) {
-      Assert.assertEquals(relatives.get(referenceRelativ), loaded.getStringMap().get(referenceRelativ));
+      Assert.assertEquals(
+          relatives.get(referenceRelativ), loaded.getStringMap().get(referenceRelativ));
     }
     database.close();
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     loaded = database.load(rid);
     Assert.assertNotNull(loaded.getStringMap());
     for (String referenceRelativ : relatives.keySet()) {
-      Assert.assertEquals(relatives.get(referenceRelativ), loaded.getStringMap().get(referenceRelativ));
+      Assert.assertEquals(
+          relatives.get(referenceRelativ), loaded.getStringMap().get(referenceRelativ));
     }
     database.delete(loaded);
 
@@ -1338,20 +1437,23 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     loaded = database.load(rid);
     Assert.assertNotNull(loaded.getStringMap());
     for (String referenceRelativ : relatives.keySet()) {
-      Assert.assertEquals(relatives.get(referenceRelativ), loaded.getStringMap().get(referenceRelativ));
+      Assert.assertEquals(
+          relatives.get(referenceRelativ), loaded.getStringMap().get(referenceRelativ));
     }
     loaded.getStringMap().put("brother", "Nike");
     relatives.put("brother", "Nike");
     database.save(loaded);
     for (String referenceRelativ : relatives.keySet()) {
-      Assert.assertEquals(relatives.get(referenceRelativ), loaded.getStringMap().get(referenceRelativ));
+      Assert.assertEquals(
+          relatives.get(referenceRelativ), loaded.getStringMap().get(referenceRelativ));
     }
     database.close();
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     loaded = database.load(rid);
     Assert.assertNotNull(loaded.getStringMap());
     for (String referenceRelativ : relatives.keySet()) {
-      Assert.assertEquals(relatives.get(referenceRelativ), loaded.getStringMap().get(referenceRelativ));
+      Assert.assertEquals(
+          relatives.get(referenceRelativ), loaded.getStringMap().get(referenceRelativ));
     }
     database.delete(loaded);
   }
@@ -1426,7 +1528,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     p.getStringListMap().put("songs", songs);
 
     for (String referenceRelativ : songAndMovies.keySet()) {
-      Assert.assertEquals(songAndMovies.get(referenceRelativ), p.getStringListMap().get(referenceRelativ));
+      Assert.assertEquals(
+          songAndMovies.get(referenceRelativ), p.getStringListMap().get(referenceRelativ));
     }
 
     database.save(p);
@@ -1446,7 +1549,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     p.setStringListMap(songAndMovies);
 
     for (String referenceRelativ : songAndMovies.keySet()) {
-      Assert.assertEquals(songAndMovies.get(referenceRelativ), p.getStringListMap().get(referenceRelativ));
+      Assert.assertEquals(
+          songAndMovies.get(referenceRelativ), p.getStringListMap().get(referenceRelativ));
     }
 
     database.save(p);
@@ -1456,7 +1560,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     loaded = database.load(rid);
     Assert.assertNotNull(loaded.getStringListMap());
     for (String referenceRelativ : songAndMovies.keySet()) {
-      Assert.assertEquals(songAndMovies.get(referenceRelativ), loaded.getStringListMap().get(referenceRelativ));
+      Assert.assertEquals(
+          songAndMovies.get(referenceRelativ), loaded.getStringListMap().get(referenceRelativ));
     }
     database.delete(loaded);
 
@@ -1474,7 +1579,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     p.getStringListMap().get("movies").add("Star Wars: The return of the Jedi");
 
     for (String referenceRelativ : songAndMovies.keySet()) {
-      Assert.assertEquals(songAndMovies.get(referenceRelativ), p.getStringListMap().get(referenceRelativ));
+      Assert.assertEquals(
+          songAndMovies.get(referenceRelativ), p.getStringListMap().get(referenceRelativ));
     }
 
     database.save(p);
@@ -1484,7 +1590,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     loaded = database.load(rid);
     Assert.assertNotNull(loaded.getStringListMap());
     for (String referenceRelativ : songAndMovies.keySet()) {
-      Assert.assertEquals(songAndMovies.get(referenceRelativ), loaded.getStringListMap().get(referenceRelativ));
+      Assert.assertEquals(
+          songAndMovies.get(referenceRelativ), loaded.getStringListMap().get(referenceRelativ));
     }
     database.delete(loaded);
 
@@ -1494,7 +1601,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     p.setStringListMap(songAndMovies);
 
     for (String referenceRelativ : songAndMovies.keySet()) {
-      Assert.assertEquals(songAndMovies.get(referenceRelativ), p.getStringListMap().get(referenceRelativ));
+      Assert.assertEquals(
+          songAndMovies.get(referenceRelativ), p.getStringListMap().get(referenceRelativ));
     }
 
     p = database.save(p);
@@ -1504,7 +1612,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     loaded = database.load(rid);
     Assert.assertNotNull(loaded.getStringListMap());
     for (String referenceRelativ : songAndMovies.keySet()) {
-      Assert.assertEquals(songAndMovies.get(referenceRelativ), loaded.getStringListMap().get(referenceRelativ));
+      Assert.assertEquals(
+          songAndMovies.get(referenceRelativ), loaded.getStringListMap().get(referenceRelativ));
     }
     database.delete(loaded);
   }
@@ -1534,14 +1643,16 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     JavaComplexTestClass loaded = database.load(rid);
     Assert.assertNotNull(loaded.getMapObject());
     for (String referenceRelativ : relatives.keySet()) {
-      Assert.assertEquals(relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
+      Assert.assertEquals(
+          relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
     }
     loaded.getMapObject().keySet().size();
     loaded.getMapObject().put("brother", "Nike");
     relatives.put("brother", "Nike");
     database.save(loaded);
     for (String referenceRelativ : relatives.keySet()) {
-      Assert.assertEquals(relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
+      Assert.assertEquals(
+          relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
     }
     loaded.getMapObject().keySet().size();
     database.close();
@@ -1549,7 +1660,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     loaded = database.load(rid);
     Assert.assertNotNull(loaded.getMapObject());
     for (String referenceRelativ : relatives.keySet()) {
-      Assert.assertEquals(relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
+      Assert.assertEquals(
+          relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
     }
     database.delete(loaded);
 
@@ -1570,14 +1682,16 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     loaded = database.load(rid);
     Assert.assertNotNull(loaded.getMapObject());
     for (String referenceRelativ : relatives.keySet()) {
-      Assert.assertEquals(relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
+      Assert.assertEquals(
+          relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
     }
     loaded.getMapObject().keySet().size();
     loaded.getMapObject().put("brother", "Nike");
     relatives.put("brother", "Nike");
     database.save(loaded);
     for (String referenceRelativ : relatives.keySet()) {
-      Assert.assertEquals(relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
+      Assert.assertEquals(
+          relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
     }
     loaded.getMapObject().keySet().size();
     database.close();
@@ -1585,7 +1699,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     loaded = database.load(rid);
     Assert.assertNotNull(loaded.getMapObject());
     for (String referenceRelativ : relatives.keySet()) {
-      Assert.assertEquals(relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
+      Assert.assertEquals(
+          relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
     }
     loaded.getMapObject().keySet().size();
     database.delete(loaded);
@@ -1607,14 +1722,16 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     loaded = database.load(rid);
     Assert.assertNotNull(loaded.getMapObject());
     for (String referenceRelativ : relatives.keySet()) {
-      Assert.assertEquals(relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
+      Assert.assertEquals(
+          relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
     }
     loaded.getMapObject().keySet().size();
     loaded.getMapObject().put("brother", "Nike");
     relatives.put("brother", "Nike");
     database.save(loaded);
     for (String referenceRelativ : relatives.keySet()) {
-      Assert.assertEquals(relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
+      Assert.assertEquals(
+          relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
     }
     database.close();
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
@@ -1622,7 +1739,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     loaded.getMapObject().keySet().size();
     Assert.assertNotNull(loaded.getMapObject());
     for (String referenceRelativ : relatives.keySet()) {
-      Assert.assertEquals(relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
+      Assert.assertEquals(
+          relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
     }
     database.delete(loaded);
   }
@@ -1661,14 +1779,16 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     JavaComplexTestClass loaded = database.load(rid);
     Assert.assertNotNull(loaded.getMapObject());
     for (String referenceRelativ : relatives.keySet()) {
-      Assert.assertEquals(relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
+      Assert.assertEquals(
+          relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
     }
     loaded.getMapObject().keySet().size();
     loaded.getMapObject().put("brother", "Nike");
     relatives.put("brother", "Nike");
     database.save(loaded);
     for (String referenceRelativ : relatives.keySet()) {
-      Assert.assertEquals(relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
+      Assert.assertEquals(
+          relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
     }
     loaded.getMapObject().keySet().size();
     database.close();
@@ -1676,7 +1796,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     loaded = database.load(rid);
     Assert.assertNotNull(loaded.getMapObject());
     for (String referenceRelativ : relatives.keySet()) {
-      Assert.assertEquals(relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
+      Assert.assertEquals(
+          relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
     }
     database.delete(loaded);
 
@@ -1697,14 +1818,16 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     loaded = database.load(rid);
     Assert.assertNotNull(loaded.getMapObject());
     for (String referenceRelativ : relatives.keySet()) {
-      Assert.assertEquals(relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
+      Assert.assertEquals(
+          relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
     }
     loaded.getMapObject().keySet().size();
     loaded.getMapObject().put("brother", "Nike");
     relatives.put("brother", "Nike");
     database.save(loaded);
     for (String referenceRelativ : relatives.keySet()) {
-      Assert.assertEquals(relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
+      Assert.assertEquals(
+          relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
     }
     loaded.getMapObject().keySet().size();
     database.close();
@@ -1712,7 +1835,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     loaded = database.load(rid);
     Assert.assertNotNull(loaded.getMapObject());
     for (String referenceRelativ : relatives.keySet()) {
-      Assert.assertEquals(relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
+      Assert.assertEquals(
+          relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
     }
     loaded.getMapObject().keySet().size();
     database.delete(loaded);
@@ -1734,14 +1858,16 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     loaded = database.load(rid);
     Assert.assertNotNull(loaded.getMapObject());
     for (String referenceRelativ : relatives.keySet()) {
-      Assert.assertEquals(relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
+      Assert.assertEquals(
+          relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
     }
     loaded.getMapObject().keySet().size();
     loaded.getMapObject().put("brother", "Nike");
     relatives.put("brother", "Nike");
     database.save(loaded);
     for (String referenceRelativ : relatives.keySet()) {
-      Assert.assertEquals(relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
+      Assert.assertEquals(
+          relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
     }
     database.close();
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
@@ -1749,7 +1875,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     loaded.getMapObject().keySet().size();
     Assert.assertNotNull(loaded.getMapObject());
     for (String referenceRelativ : relatives.keySet()) {
-      Assert.assertEquals(relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
+      Assert.assertEquals(
+          relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
     }
     database.delete(loaded);
   }
@@ -1757,7 +1884,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
   @SuppressWarnings("unchecked")
   @Test(dependsOnMethods = "embeddedMapObjectTest")
   public void testNoGenericCollections() {
-    JavaNoGenericCollectionsTestClass p = database.newInstance(JavaNoGenericCollectionsTestClass.class);
+    JavaNoGenericCollectionsTestClass p =
+        database.newInstance(JavaNoGenericCollectionsTestClass.class);
     Child c1 = new Child();
     c1.setName("1");
     Child c2 = new Child();
@@ -1823,14 +1951,15 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
   @Test(dependsOnMethods = "testNoGenericCollections")
   public void testNoGenericCollectionsWrongAdding() {
     OLogManager.instance().setErrorEnabled(false);
-    JavaNoGenericCollectionsTestClass p = database.newInstance(JavaNoGenericCollectionsTestClass.class);
+    JavaNoGenericCollectionsTestClass p =
+        database.newInstance(JavaNoGenericCollectionsTestClass.class);
     // OBJECT ADDING
     boolean throwedEx = false;
     try {
       p.getList().add(new Object());
     } catch (Exception ose) {
-      if (ose instanceof OSerializationException || ose.getCause() instanceof OSerializationException)
-        throwedEx = true;
+      if (ose instanceof OSerializationException
+          || ose.getCause() instanceof OSerializationException) throwedEx = true;
     }
     Assert.assertTrue(throwedEx);
     throwedEx = false;
@@ -1919,8 +2048,10 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
 
     p.setDocument(testDocument);
 
-    OBlob testRecordBytes = new ORecordBytes(
-        "this is a bytearray test. if you read this Object database has stored it correctly".getBytes());
+    OBlob testRecordBytes =
+        new ORecordBytes(
+            "this is a bytearray test. if you read this Object database has stored it correctly"
+                .getBytes());
 
     p.setByteArray(testRecordBytes);
 
@@ -1938,9 +2069,12 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       try {
         loaded.getByteArray().toOutputStream(out);
-        Assert.assertEquals("this is a bytearray test. if you read this Object database has stored it correctly".getBytes(),
+        Assert.assertEquals(
+            "this is a bytearray test. if you read this Object database has stored it correctly"
+                .getBytes(),
             out.toByteArray());
-        Assert.assertEquals("this is a bytearray test. if you read this Object database has stored it correctly",
+        Assert.assertEquals(
+            "this is a bytearray test. if you read this Object database has stored it correctly",
             new String(out.toByteArray()));
       } finally {
         out.close();
@@ -1954,14 +2088,16 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     Assert.assertTrue(loaded.getDocument().getIdentity().isPersistent());
 
     Assert.assertTrue(loaded.getEmbeddedDocument() instanceof ODocument);
-    Assert.assertEquals("testEmbeddedValue", loaded.getEmbeddedDocument().field("testEmbeddedField"));
+    Assert.assertEquals(
+        "testEmbeddedValue", loaded.getEmbeddedDocument().field("testEmbeddedField"));
     Assert.assertFalse(loaded.getEmbeddedDocument().getIdentity().isValid());
 
     database.close();
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     p = database.newInstance(JavaComplexTestClass.class);
-    byte[] thumbnailImageBytes = "this is a bytearray test. if you read this Object database has stored it correctlyVERSION2"
-        .getBytes();
+    byte[] thumbnailImageBytes =
+        "this is a bytearray test. if you read this Object database has stored it correctlyVERSION2"
+            .getBytes();
     OBlob oRecordBytes = new ORecordBytes(database.getUnderlying(), thumbnailImageBytes);
     oRecordBytes.save();
     p.setByteArray(oRecordBytes);
@@ -1971,9 +2107,12 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       try {
         p.getByteArray().toOutputStream(out);
-        Assert.assertEquals("this is a bytearray test. if you read this Object database has stored it correctlyVERSION2".getBytes(),
+        Assert.assertEquals(
+            "this is a bytearray test. if you read this Object database has stored it correctlyVERSION2"
+                .getBytes(),
             out.toByteArray());
-        Assert.assertEquals("this is a bytearray test. if you read this Object database has stored it correctlyVERSION2",
+        Assert.assertEquals(
+            "this is a bytearray test. if you read this Object database has stored it correctlyVERSION2",
             new String(out.toByteArray()));
       } finally {
         out.close();
@@ -1994,9 +2133,12 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       try {
         loaded.getByteArray().toOutputStream(out);
-        Assert.assertEquals("this is a bytearray test. if you read this Object database has stored it correctlyVERSION2".getBytes(),
+        Assert.assertEquals(
+            "this is a bytearray test. if you read this Object database has stored it correctlyVERSION2"
+                .getBytes(),
             out.toByteArray());
-        Assert.assertEquals("this is a bytearray test. if you read this Object database has stored it correctlyVERSION2",
+        Assert.assertEquals(
+            "this is a bytearray test. if you read this Object database has stored it correctlyVERSION2",
             new String(out.toByteArray()));
       } finally {
         out.close();
@@ -2008,7 +2150,9 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     database.close();
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     p = new JavaComplexTestClass();
-    thumbnailImageBytes = "this is a bytearray test. if you read this Object database has stored it correctlyVERSION2".getBytes();
+    thumbnailImageBytes =
+        "this is a bytearray test. if you read this Object database has stored it correctlyVERSION2"
+            .getBytes();
     oRecordBytes = new ORecordBytes(database.getUnderlying(), thumbnailImageBytes);
     oRecordBytes.save();
     p.setByteArray(oRecordBytes);
@@ -2018,9 +2162,12 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       try {
         p.getByteArray().toOutputStream(out);
-        Assert.assertEquals("this is a bytearray test. if you read this Object database has stored it correctlyVERSION2".getBytes(),
+        Assert.assertEquals(
+            "this is a bytearray test. if you read this Object database has stored it correctlyVERSION2"
+                .getBytes(),
             out.toByteArray());
-        Assert.assertEquals("this is a bytearray test. if you read this Object database has stored it correctlyVERSION2",
+        Assert.assertEquals(
+            "this is a bytearray test. if you read this Object database has stored it correctlyVERSION2",
             new String(out.toByteArray()));
       } finally {
         out.close();
@@ -2041,9 +2188,12 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       try {
         loaded.getByteArray().toOutputStream(out);
-        Assert.assertEquals("this is a bytearray test. if you read this Object database has stored it correctlyVERSION2".getBytes(),
+        Assert.assertEquals(
+            "this is a bytearray test. if you read this Object database has stored it correctlyVERSION2"
+                .getBytes(),
             out.toByteArray());
-        Assert.assertEquals("this is a bytearray test. if you read this Object database has stored it correctlyVERSION2",
+        Assert.assertEquals(
+            "this is a bytearray test. if you read this Object database has stored it correctlyVERSION2",
             new String(out.toByteArray()));
       } finally {
         out.close();
@@ -2057,9 +2207,11 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
   @Test(dependsOnMethods = "oidentifableFieldsTest")
   public void oRecordBytesFieldsTest() {
     try {
-      OObjectIteratorClass<JavaComplexTestClass> browseClass = database.browseClass(JavaComplexTestClass.class);
+      OObjectIteratorClass<JavaComplexTestClass> browseClass =
+          database.browseClass(JavaComplexTestClass.class);
       for (JavaComplexTestClass ebookPropertyItem : browseClass) {
-        OBlob coverThumbnail = ebookPropertyItem.getByteArray(); // The IllegalArgumentException is thrown here.
+        OBlob coverThumbnail =
+            ebookPropertyItem.getByteArray(); // The IllegalArgumentException is thrown here.
       }
     } catch (IllegalArgumentException iae) {
       Assert.fail("ORecordBytes field getter should not throw this exception", iae);
@@ -2121,7 +2273,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
       a = (Account) o;
 
       if (i % 2 == 0)
-        a.getAddresses().set(0, new Address("work", new City(new Country("Spain"), "Madrid"), "Plaza central"));
+        a.getAddresses()
+            .set(0, new Address("work", new City(new Country("Spain"), "Madrid"), "Plaza central"));
 
       a.setSalary(i + 500.10f);
 
@@ -2135,14 +2288,14 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
   public void testUpdate() {
     int i = 0;
     Account a;
-    for (OObjectIteratorClass<Account> iterator = database.browseClass("Account"); iterator.hasNext(); ) {
+    for (OObjectIteratorClass<Account> iterator = database.browseClass("Account");
+        iterator.hasNext(); ) {
       iterator.setFetchPlan("*:1");
       a = iterator.next();
 
       if (i % 2 == 0)
         Assert.assertEquals(a.getAddresses().get(0).getCity().getCountry().getName(), "Spain");
-      else
-        Assert.assertEquals(a.getAddresses().get(0).getCity().getCountry().getName(), "Italy");
+      else Assert.assertEquals(a.getAddresses().get(0).getCity().getCountry().getName(), "Italy");
 
       Assert.assertEquals(a.getSalary(), i + 500.1f);
 
@@ -2154,8 +2307,12 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
   public void createLinked() {
     long profiles = database.countClass("Profile");
 
-    Profile neo = new Profile("Neo").setValue("test")
-        .setLocation(new Address("residence", new City(new Country("Spain"), "Madrid"), "Rio de Castilla"));
+    Profile neo =
+        new Profile("Neo")
+            .setValue("test")
+            .setLocation(
+                new Address(
+                    "residence", new City(new Country("Spain"), "Madrid"), "Rio de Castilla"));
     neo.addFollowing(new Profile("Morpheus"));
     neo.addFollowing(new Profile("Trinity"));
 
@@ -2182,11 +2339,11 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     database.setLazyLoading(false);
     for (Profile obj : database.browseClass(Profile.class).setFetchPlan("*:1")) {
       Assert.assertTrue(
-          !(obj.getFollowings() instanceof OLazyObjectSetInterface) || ((OLazyObjectSetInterface<Profile>) obj.getFollowings())
-              .isConverted());
+          !(obj.getFollowings() instanceof OLazyObjectSetInterface)
+              || ((OLazyObjectSetInterface<Profile>) obj.getFollowings()).isConverted());
       Assert.assertTrue(
-          !(obj.getFollowers() instanceof OLazyObjectSetInterface) || ((OLazyObjectSetInterface<Profile>) obj.getFollowers())
-              .isConverted());
+          !(obj.getFollowers() instanceof OLazyObjectSetInterface)
+              || ((OLazyObjectSetInterface<Profile>) obj.getFollowers()).isConverted());
       if (obj.getNick().equals("Neo")) {
         Assert.assertEquals(obj.getFollowers().size(), 0);
         Assert.assertEquals(obj.getFollowings().size(), 2);
@@ -2200,7 +2357,9 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "checkLazyLoadingOff")
   public void queryPerFloat() {
-    final List<Account> result = database.query(new OSQLSynchQuery<ODocument>("select * from Account where salary = 500.10"));
+    final List<Account> result =
+        database.query(
+            new OSQLSynchQuery<ODocument>("select * from Account where salary = 500.10"));
 
     Assert.assertTrue(result.size() > 0);
 
@@ -2216,8 +2375,10 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
   public void queryCross3Levels() {
     database.getMetadata().getSchema().reload();
 
-    final List<Profile> result = database
-        .query(new OSQLSynchQuery<Profile>("select from Profile where location.city.country.name = 'Spain'"));
+    final List<Profile> result =
+        database.query(
+            new OSQLSynchQuery<Profile>(
+                "select from Profile where location.city.country.name = 'Spain'"));
 
     Assert.assertTrue(result.size() > 0);
 
@@ -2248,7 +2409,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
   public void commandWithPositionalParameters() {
     database.getMetadata().getSchema().reload();
 
-    final OSQLSynchQuery<Profile> query = new OSQLSynchQuery<Profile>("select from Profile where name = ? and surname = ?");
+    final OSQLSynchQuery<Profile> query =
+        new OSQLSynchQuery<Profile>("select from Profile where name = ? and surname = ?");
     List<Profile> result = database.command(query).execute("Barack", "Obama");
 
     Assert.assertTrue(result.size() != 0);
@@ -2258,7 +2420,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
   public void queryWithPositionalParameters() {
     database.getMetadata().getSchema().reload();
 
-    final OSQLSynchQuery<Profile> query = new OSQLSynchQuery<Profile>("select from Profile where name = ? and surname = ?");
+    final OSQLSynchQuery<Profile> query =
+        new OSQLSynchQuery<Profile>("select from Profile where name = ? and surname = ?");
     List<Profile> result = database.query(query, "Barack", "Obama");
 
     Assert.assertTrue(result.size() != 0);
@@ -2270,7 +2433,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
 
     Profile profile = (Profile) database.browseClass("Profile").next();
 
-    final OSQLSynchQuery<Profile> query = new OSQLSynchQuery<Profile>("select from Profile where @rid = ?");
+    final OSQLSynchQuery<Profile> query =
+        new OSQLSynchQuery<Profile>("select from Profile where @rid = ?");
     List<Profile> result = database.query(query, new ORecordId(profile.getId()));
 
     Assert.assertEquals(result.size(), 1);
@@ -2282,7 +2446,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
 
     Profile profile = (Profile) database.browseClass("Profile").next();
 
-    OSQLSynchQuery<Profile> query = new OSQLSynchQuery<Profile>("select from Profile where @rid = ?");
+    OSQLSynchQuery<Profile> query =
+        new OSQLSynchQuery<Profile>("select from Profile where @rid = ?");
     List<Profile> result = database.query(query, profile.getId());
 
     Assert.assertEquals(result.size(), 1);
@@ -2298,8 +2463,9 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
   public void commandWithNamedParameters() {
     database.getMetadata().getSchema().reload();
 
-    final OSQLSynchQuery<Profile> query = new OSQLSynchQuery<Profile>(
-        "select from Profile where name = :name and surname = :surname");
+    final OSQLSynchQuery<Profile> query =
+        new OSQLSynchQuery<Profile>(
+            "select from Profile where name = :name and surname = :surname");
 
     HashMap<String, String> params = new HashMap<String, String>();
     params.put("name", "Barack");
@@ -2314,8 +2480,9 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     try {
       database.getMetadata().getSchema().reload();
 
-      final OSQLSynchQuery<Profile> query = new OSQLSynchQuery<Profile>(
-          "select from Profile where name = :name and surname = :surname%");
+      final OSQLSynchQuery<Profile> query =
+          new OSQLSynchQuery<Profile>(
+              "select from Profile where name = :name and surname = :surname%");
 
       HashMap<String, String> params = new HashMap<String, String>();
       params.put("name", "Barack");
@@ -2332,8 +2499,9 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
   public void queryWithNamedParameters() {
     database.getMetadata().getSchema().reload();
 
-    final OSQLSynchQuery<Profile> query = new OSQLSynchQuery<Profile>(
-        "select from Profile where name = :name and surname = :surname");
+    final OSQLSynchQuery<Profile> query =
+        new OSQLSynchQuery<Profile>(
+            "select from Profile where name = :name and surname = :surname");
 
     HashMap<String, String> params = new HashMap<String, String>();
     params.put("name", "Barack");
@@ -2347,8 +2515,9 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
   public void queryWithObjectAsParameter() {
     database.getMetadata().getSchema().reload();
 
-    final OSQLSynchQuery<Profile> query = new OSQLSynchQuery<Profile>(
-        "select from Profile where name = :name and surname = :surname");
+    final OSQLSynchQuery<Profile> query =
+        new OSQLSynchQuery<Profile>(
+            "select from Profile where name = :name and surname = :surname");
 
     HashMap<String, String> params = new HashMap<String, String>();
     params.put("name", "Barack");
@@ -2359,7 +2528,11 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
 
     Profile obama = result.get(0);
 
-    result = database.query(new OSQLSynchQuery<Profile>("select from Profile where followings contains ( @Rid = :who )"), obama);
+    result =
+        database.query(
+            new OSQLSynchQuery<Profile>(
+                "select from Profile where followings contains ( @Rid = :who )"),
+            obama);
     Assert.assertTrue(result.size() != 0);
   }
 
@@ -2367,8 +2540,9 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
   public void queryWithListOfObjectAsParameter() {
     database.getMetadata().getSchema().reload();
 
-    final OSQLSynchQuery<Profile> query = new OSQLSynchQuery<Profile>(
-        "select from Profile where name = :name and surname = :surname");
+    final OSQLSynchQuery<Profile> query =
+        new OSQLSynchQuery<Profile>(
+            "select from Profile where name = :name and surname = :surname");
 
     HashMap<String, String> params = new HashMap<String, String>();
     params.put("name", "Barack");
@@ -2377,7 +2551,9 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     List<Profile> result = database.query(query, params);
     Assert.assertTrue(result.size() != 0);
 
-    result = database.query(new OSQLSynchQuery<Profile>("select from Profile where followings in (:who)"), result);
+    result =
+        database.query(
+            new OSQLSynchQuery<Profile>("select from Profile where followings in (:who)"), result);
     Assert.assertTrue(result.size() != 0);
   }
 
@@ -2385,18 +2561,28 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
   public void queryConcatAttrib() {
     database.getMetadata().getSchema().reload();
 
-    Assert.assertTrue(database.query(new OSQLSynchQuery<Profile>("select from City where country.@class = 'Country'")).size() > 0);
-    Assert
-        .assertEquals(database.query(new OSQLSynchQuery<Profile>("select from City where country.@class = 'Country22'")).size(), 0);
-
+    Assert.assertTrue(
+        database
+                .query(
+                    new OSQLSynchQuery<Profile>(
+                        "select from City where country.@class = 'Country'"))
+                .size()
+            > 0);
+    Assert.assertEquals(
+        database
+            .query(
+                new OSQLSynchQuery<Profile>("select from City where country.@class = 'Country22'"))
+            .size(),
+        0);
   }
 
   @Test
   public void queryPreparredTwice() {
     database.getMetadata().getSchema().reload();
 
-    final OSQLSynchQuery<Profile> query = new OSQLSynchQuery<Profile>(
-        "select from Profile where name = :name and surname = :surname");
+    final OSQLSynchQuery<Profile> query =
+        new OSQLSynchQuery<Profile>(
+            "select from Profile where name = :name and surname = :surname");
 
     HashMap<String, String> params = new HashMap<String, String>();
     params.put("name", "Barack");
@@ -2413,8 +2599,9 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
   public void commandPreparredTwice() {
     database.getMetadata().getSchema().reload();
 
-    final OSQLSynchQuery<Profile> query = new OSQLSynchQuery<Profile>(
-        "select from Profile where name = :name and surname = :surname");
+    final OSQLSynchQuery<Profile> query =
+        new OSQLSynchQuery<Profile>(
+            "select from Profile where name = :name and surname = :surname");
 
     HashMap<String, String> params = new HashMap<String, String>();
     params.put("name", "Barack");
@@ -2440,7 +2627,8 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     parent = database.save(parent);
 
     List<Parent> presult = database.query(new OSQLSynchQuery<Parent>("select from Parent"));
-    List<EmbeddedChild> cresult = database.query(new OSQLSynchQuery<EmbeddedChild>("select from EmbeddedChild"));
+    List<EmbeddedChild> cresult =
+        database.query(new OSQLSynchQuery<EmbeddedChild>("select from EmbeddedChild"));
     Assert.assertEquals(presult.size(), 1);
     Assert.assertEquals(cresult.size(), 0);
 
@@ -2477,7 +2665,7 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     database.getMetadata().getSchema().reload();
 
     Account a = new Account(0, "Chris", "Martin");
-    a.setThumbnail(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 });
+    a.setThumbnail(new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
     a = database.save(a);
     database.close();
 
@@ -2486,16 +2674,18 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     Assert.assertNotNull(a.getThumbnail());
     Assert.assertNotNull(aa.getThumbnail());
     byte[] b = aa.getThumbnail();
-    for (int i = 0; i < 10; ++i)
-      Assert.assertEquals(b[i], i);
+    for (int i = 0; i < 10; ++i) Assert.assertEquals(b[i], i);
   }
 
   @Test
   public void queryById() {
-    List<Profile> result1 = database.query(new OSQLSynchQuery<Profile>("select from Profile limit 1"));
+    List<Profile> result1 =
+        database.query(new OSQLSynchQuery<Profile>("select from Profile limit 1"));
 
-    List<Profile> result2 = database
-        .query(new OSQLSynchQuery<Profile>("select from Profile where @rid = ?"), result1.get(0).getId());
+    List<Profile> result2 =
+        database.query(
+            new OSQLSynchQuery<Profile>("select from Profile where @rid = ?"),
+            result1.get(0).getId());
 
     Assert.assertTrue(result2.size() != 0);
   }
@@ -2513,7 +2703,7 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
       Assert.assertTrue(result1.get(0) instanceof Profile);
       Profile profile = result1.get(0);
       Assert.assertEquals(profile.getNick(), "foo");
-    }finally {
+    } finally {
       db.drop();
     }
   }

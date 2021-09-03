@@ -32,7 +32,7 @@ import com.orientechnologies.orient.core.replication.OAsyncReplicationOk;
  */
 public class OExecutionThreadLocal extends ThreadLocal<OExecutionThreadLocal.OExecutionThreadData> {
   public class OExecutionThreadData {
-    public volatile OAsyncReplicationOk    onAsyncReplicationOk;
+    public volatile OAsyncReplicationOk onAsyncReplicationOk;
     public volatile OAsyncReplicationError onAsyncReplicationError;
   }
 
@@ -45,35 +45,32 @@ public class OExecutionThreadLocal extends ThreadLocal<OExecutionThreadLocal.OEx
 
   public static boolean isInterruptCurrentOperation() {
     final Thread t = Thread.currentThread();
-    if (t instanceof OSoftThread)
-      return ((OSoftThread) t).isShutdownFlag();
+    if (t instanceof OSoftThread) return ((OSoftThread) t).isShutdownFlag();
     return false;
   }
 
   public void setInterruptCurrentOperation(final Thread t) {
-    if (t instanceof OSoftThread)
-      ((OSoftThread) t).softShutdown();
+    if (t instanceof OSoftThread) ((OSoftThread) t).softShutdown();
   }
 
   public static void setInterruptCurrentOperation() {
     final Thread t = Thread.currentThread();
-    if (t instanceof OSoftThread)
-      ((OSoftThread) t).softShutdown();
+    if (t instanceof OSoftThread) ((OSoftThread) t).softShutdown();
   }
 
   static {
     final Orient inst = Orient.instance();
-    inst.registerListener(new OOrientListenerAbstract() {
-      @Override
-      public void onStartup() {
-        if (INSTANCE == null)
-          INSTANCE = new OExecutionThreadLocal();
-      }
+    inst.registerListener(
+        new OOrientListenerAbstract() {
+          @Override
+          public void onStartup() {
+            if (INSTANCE == null) INSTANCE = new OExecutionThreadLocal();
+          }
 
-      @Override
-      public void onShutdown() {
-        INSTANCE = null;
-      }
-    });
+          @Override
+          public void onShutdown() {
+            INSTANCE = null;
+          }
+        });
   }
 }

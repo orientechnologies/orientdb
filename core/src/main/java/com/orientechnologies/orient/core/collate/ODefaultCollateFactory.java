@@ -25,9 +25,8 @@ import java.util.Set;
 
 /**
  * Factory to hold collating strategies to compare values in SQL statement and indexes.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public class ODefaultCollateFactory implements OCollateFactory {
 
@@ -38,9 +37,7 @@ public class ODefaultCollateFactory implements OCollateFactory {
     register(new OCaseInsensitiveCollate());
   }
 
-  /**
-   * @return Set of supported collate names of this factory
-   */
+  /** @return Set of supported collate names of this factory */
   @Override
   public Set<String> getNames() {
     return COLLATES.keySet();
@@ -48,7 +45,7 @@ public class ODefaultCollateFactory implements OCollateFactory {
 
   /**
    * Returns the requested collate
-   * 
+   *
    * @param name
    */
   @Override

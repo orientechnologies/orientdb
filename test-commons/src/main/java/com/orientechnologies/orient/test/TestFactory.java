@@ -18,13 +18,10 @@ package com.orientechnologies.orient.test;
 import java.util.concurrent.Callable;
 
 /**
- *
  * @author richter
- * @param <T> the type of the {@link Callable} to be created with 
- * {@link #createWorker() }
+ * @param <T> the type of the {@link Callable} to be created with {@link #createWorker() }
  */
 public interface TestFactory<T> {
 
   Callable<T> createWorker();
-    
 }

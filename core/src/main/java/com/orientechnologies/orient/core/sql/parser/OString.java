@@ -10,6 +10,5 @@ public class OString extends SimpleNode {
   public OString(OrientSql p, int id) {
     super(p, id);
   }
-
 }
 /* JavaCC - OriginalChecksum=839493e838048bfc6ae3d35e25d35280 (do not edit this line) */

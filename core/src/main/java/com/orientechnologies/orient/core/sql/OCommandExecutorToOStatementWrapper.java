@@ -32,24 +32,23 @@ import com.orientechnologies.orient.core.sql.parser.OStatement;
 import com.orientechnologies.orient.core.sql.parser.OStatementCache;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
 /**
- * Wrapper for OPrifileStorageStatement command (for compatibility with the old executor architecture,
- * this component should be removed)
- * 
+ * Wrapper for OPrifileStorageStatement command (for compatibility with the old executor
+ * architecture, this component should be removed)
+ *
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
 public class OCommandExecutorToOStatementWrapper implements OCommandExecutor {
 
   protected OSQLAsynchQuery<ODocument> request;
-  private   OCommandContext            context;
-  private   OProgressListener progressListener;
+  private OCommandContext context;
+  private OProgressListener progressListener;
 
-  protected OStatement        statement;
+  protected OStatement statement;
 
   @SuppressWarnings("unchecked")
   @Override
@@ -79,7 +78,8 @@ public class OCommandExecutorToOStatementWrapper implements OCommandExecutor {
   }
 
   @Override
-  public <RET extends OCommandExecutor> RET setProgressListener(OProgressListener progressListener) {
+  public <RET extends OCommandExecutor> RET setProgressListener(
+      OProgressListener progressListener) {
     this.progressListener = progressListener;
     return (RET) this;
   }
@@ -153,5 +153,4 @@ public class OCommandExecutorToOStatementWrapper implements OCommandExecutor {
   public Object mergeResults(Map<String, Object> results) throws Exception {
     return null;
   }
-
 }

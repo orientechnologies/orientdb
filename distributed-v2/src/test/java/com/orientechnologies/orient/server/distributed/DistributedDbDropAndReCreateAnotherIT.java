@@ -15,18 +15,15 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import org.junit.Test;
-
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import org.junit.Test;
 
-/**
- * Distributed test on drop + recreate database with a different name.
- */
+/** Distributed test on drop + recreate database with a different name. */
 public class DistributedDbDropAndReCreateAnotherIT extends AbstractServerClusterTxTest {
-  final static int SERVERS       = 3;
-  private int      lastServerNum = 0;
+  static final int SERVERS = 3;
+  private int lastServerNum = 0;
 
   @Test
   public void test() throws Exception {
@@ -59,7 +56,9 @@ public class DistributedDbDropAndReCreateAnotherIT extends AbstractServerCluster
 
       banner("(RE)CREATING DATABASE " + dbName + " ON SERVER " + server.getServerId());
 
-      server.getServerInstance().createDatabase(getDatabaseName(), ODatabaseType.PLOCAL, OrientDBConfig.defaultConfig());
+      server
+          .getServerInstance()
+          .createDatabase(getDatabaseName(), ODatabaseType.PLOCAL, OrientDBConfig.defaultConfig());
 
       waitForDatabaseIsOnline(0, "europe-0", getDatabaseName(), 15000);
       waitForDatabaseIsOnline(0, "europe-1", getDatabaseName(), 15000);
@@ -67,9 +66,9 @@ public class DistributedDbDropAndReCreateAnotherIT extends AbstractServerCluster
 
       checkSameClusters();
 
-      try(ODatabaseDocument graph = server.getServerInstance().openDatabase(getDatabaseName(), "admin", "admin"))
-      {
-      	onAfterDatabaseCreation(graph);
+      try (ODatabaseDocument graph =
+          server.getServerInstance().openDatabase(getDatabaseName(), "admin", "admin")) {
+        onAfterDatabaseCreation(graph);
       }
 
       checkThePersonClassIsPresentOnAllTheServers();

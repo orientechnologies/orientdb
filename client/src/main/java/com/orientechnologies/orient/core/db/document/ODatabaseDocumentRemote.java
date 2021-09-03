@@ -20,6 +20,10 @@
 
 package com.orientechnologies.orient.core.db.document;
 
+import static com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK;
+import static com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK;
+import static com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK;
+
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -33,7 +37,16 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.script.OCommandScriptException;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseListener;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OHookReplacedRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OLiveQueryMonitor;
+import com.orientechnologies.orient.core.db.OLiveQueryResultListener;
+import com.orientechnologies.orient.core.db.OSharedContext;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -45,12 +58,23 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.index.OIndexManagerRemote;
+import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaRemote;
-import com.orientechnologies.orient.core.metadata.security.*;
+import com.orientechnologies.orient.core.metadata.security.OImmutableUser;
+import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.ORule;
+import com.orientechnologies.orient.core.metadata.security.OToken;
+import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceAction;
-import com.orientechnologies.orient.core.record.*;
+import com.orientechnologies.orient.core.record.OEdge;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.ORecordVersionHelper;
+import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.record.impl.OEdgeDelegate;
@@ -59,30 +83,32 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37Client;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.OBasicTransaction;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageInfo;
 import com.orientechnologies.orient.core.storage.cluster.OOfflineClusterException;
-import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-import static com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.*;
-
-/**
- * Created by tglman on 30/06/16.
- */
+/** Created by tglman on 30/06/16. */
 public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
   protected OStorageRemoteSession sessionMetadata;
-  private   OrientDBConfig        config;
-  private   OStorageRemote        storage;
+  private OrientDBConfig config;
+  private OStorageRemote storage;
 
-  public ODatabaseDocumentRemote(final OStorageRemote storage) {
+  public ODatabaseDocumentRemote(final OStorageRemote storage, OSharedContext sharedContext) {
     activateOnCurrentThread();
 
     try {
@@ -91,6 +117,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
       // OVERWRITE THE URL
       url = storage.getURL();
       this.storage = storage;
+      this.sharedContext = sharedContext;
       this.componentsFactory = storage.getComponentsFactory();
 
       unmodifiableHooks = Collections.unmodifiableMap(hooks);
@@ -100,12 +127,12 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
       init();
 
       databaseOwner = this;
+
     } catch (Exception t) {
       ODatabaseRecordThreadLocal.instance().remove();
 
       throw OException.wrapException(new ODatabaseException("Error on opening database "), t);
     }
-
   }
 
   public <DB extends ODatabase> DB open(final String iUserName, final String iUserPassword) {
@@ -128,7 +155,8 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   }
 
   @Override
-  public <DB extends ODatabase> DB create(final Map<OGlobalConfiguration, Object> iInitialSettings) {
+  public <DB extends ODatabase> DB create(
+      final Map<OGlobalConfiguration, Object> iInitialSettings) {
     throw new UnsupportedOperationException("use OrientDB");
   }
 
@@ -146,11 +174,12 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
       if (indx < 0) {
         if ("clear".equalsIgnoreCase(stringValue)) {
           String query = "alter database CUSTOM 'clear'";
-          //Bypass the database command for avoid transaction management
-          ORemoteQueryResult result = getStorage().command(this, query, new Object[] { iValue });
+          // Bypass the database command for avoid transaction management
+          ORemoteQueryResult result = getStorage().command(this, query, new Object[] {iValue});
           result.getResult().close();
         } else
-          throw new IllegalArgumentException("Syntax error: expected <name> = <value> or clear, instead found: " + iValue);
+          throw new IllegalArgumentException(
+              "Syntax error: expected <name> = <value> or clear, instead found: " + iValue);
       } else {
         String customName = stringValue.substring(0, indx).trim();
         String customValue = stringValue.substring(indx + 1).trim();
@@ -158,8 +187,8 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
       }
     } else {
       String query = "alter database " + iAttribute.name() + " ? ";
-      //Bypass the database command for avoid transaction management
-      ORemoteQueryResult result = getStorage().command(this, query, new Object[] { iValue });
+      // Bypass the database command for avoid transaction management
+      ORemoteQueryResult result = getStorage().command(this, query, new Object[] {iValue});
       result.getResult().close();
       getStorage().reload();
     }
@@ -171,13 +200,13 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   public <DB extends ODatabase> DB setCustom(String name, Object iValue) {
     if ("clear".equals(name) && iValue == null) {
       String query = "alter database CUSTOM 'clear'";
-      //Bypass the database command for avoid transaction management
+      // Bypass the database command for avoid transaction management
       ORemoteQueryResult result = getStorage().command(this, query, new Object[] {});
       result.getResult().close();
     } else {
       String query = "alter database CUSTOM  " + name + " = ?";
-      //Bypass the database command for avoid transaction management
-      ORemoteQueryResult result = getStorage().command(this, query, new Object[] { iValue });
+      // Bypass the database command for avoid transaction management
+      ORemoteQueryResult result = getStorage().command(this, query, new Object[] {iValue});
       result.getResult().close();
       getStorage().reload();
     }
@@ -185,12 +214,12 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   }
 
   public ODatabaseDocumentInternal copy() {
-    ODatabaseDocumentRemote database = new ODatabaseDocumentRemote(storage);
+    ODatabaseDocumentRemote database = new ODatabaseDocumentRemote(storage, this.sharedContext);
     database.storage = storage.copy(this, database);
     database.storage.addUser();
     database.status = STATUS.OPEN;
     database.applyAttributes(config);
-    database.initAtFirstOpen(this.getSharedContext());
+    database.initAtFirstOpen();
     database.user = this.user;
     this.activateOnCurrentThread();
     return database;
@@ -201,7 +230,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     throw new UnsupportedOperationException("use OrientDB");
   }
 
-  public void internalOpen(String user, String password, OrientDBConfig config, OSharedContext ctx) {
+  public void internalOpen(String user, String password, OrientDBConfig config) {
     this.config = config;
     applyAttributes(config);
     applyListeners(config);
@@ -211,9 +240,11 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
       status = STATUS.OPEN;
 
-      initAtFirstOpen(ctx);
-      this.user = new OImmutableUser(-1,
-          new OUser(user, password)); //.addRole(new ORole("passthrough", null, ORole.ALLOW_MODES.ALLOW_ALL_BUT)));
+      initAtFirstOpen();
+      this.user =
+          new OImmutableUser(
+              -1, new OUser(user, password)); // .addRole(new ORole("passthrough", null,
+      // ORole.ALLOW_MODES.ALLOW_ALL_BUT)));
 
       // WAKE UP LISTENERS
       callOnOpenListeners();
@@ -225,7 +256,8 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     } catch (Exception e) {
       close();
       ODatabaseRecordThreadLocal.instance().remove();
-      throw OException.wrapException(new ODatabaseException("Cannot open database url=" + getURL()), e);
+      throw OException.wrapException(
+          new ODatabaseException("Cannot open database url=" + getURL()), e);
     }
   }
 
@@ -235,9 +267,8 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     }
   }
 
-  private void initAtFirstOpen(OSharedContext ctx) {
-    if (initialized)
-      return;
+  private void initAtFirstOpen() {
+    if (initialized) return;
 
     ORecordSerializerFactory serializerFactory = ORecordSerializerFactory.instance();
     serializer = serializerFactory.getFormat(ORecordSerializerNetworkV37Client.NAME);
@@ -245,19 +276,14 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     componentsFactory = getStorage().getComponentsFactory();
     user = null;
 
-    loadMetadata(ctx);
+    loadMetadata();
 
     initialized = true;
   }
 
   @Override
   protected void loadMetadata() {
-    loadMetadata(this.getSharedContext());
-  }
-
-  protected void loadMetadata(OSharedContext ctx) {
     metadata = new OMetadataDefault(this);
-    sharedContext = ctx;
     metadata.init(sharedContext);
     sharedContext.load(this);
   }
@@ -271,13 +297,11 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   public ODatabaseDocumentAbstract begin(final OTransaction.TXTYPE iType) {
     checkOpenness();
     checkIfActive();
-
     if (currentTx.isActive()) {
       if (iType == OTransaction.TXTYPE.OPTIMISTIC && currentTx instanceof OTransactionOptimistic) {
         currentTx.begin();
         return this;
       }
-
       currentTx.rollback(true, 0);
     }
 
@@ -297,18 +321,15 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
       }
 
     switch (iType) {
-    case NOTX:
-      setDefaultTransactionMode(null);
-      break;
-
-    case OPTIMISTIC:
-      currentTx = new OTransactionOptimisticClient(this);
-      break;
-
-    case PESSIMISTIC:
-      throw new UnsupportedOperationException("Pessimistic transaction");
+      case NOTX:
+        setDefaultTransactionMode(null);
+        break;
+      case OPTIMISTIC:
+        currentTx = new OTransactionOptimisticClient(this);
+        break;
+      case PESSIMISTIC:
+        throw new UnsupportedOperationException("Pessimistic transaction");
     }
-
     currentTx.begin();
     return this;
   }
@@ -340,8 +361,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     if (this.currentTx.isActive() && ((OTransactionOptimistic) this.currentTx).isChanged()) {
       if (((OTransactionOptimistic) this.getTransaction()).isAlreadyCleared())
         storage.reBeginTransaction(this, (OTransactionOptimistic) this.currentTx);
-      else
-        storage.beginTransaction(this, (OTransactionOptimistic) this.currentTx);
+      else storage.beginTransaction(this, (OTransactionOptimistic) this.currentTx);
       ((OTransactionOptimistic) this.currentTx).resetChangesTracking();
       ((OTransactionOptimistic) this.currentTx).setSentToServer(true);
     }
@@ -356,10 +376,8 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     checkOpenness();
     checkAndSendTransaction();
     ORemoteQueryResult result = storage.query(this, query, args);
-    if (result.isTransactionUpdated())
-      fetchTransacion();
-    if (result.isReloadMetadata())
-      reload();
+    if (result.isTransactionUpdated()) fetchTransacion();
+    if (result.isReloadMetadata()) reload();
     return result.getResult();
   }
 
@@ -368,10 +386,8 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     checkOpenness();
     checkAndSendTransaction();
     ORemoteQueryResult result = storage.query(this, query, args);
-    if (result.isTransactionUpdated())
-      fetchTransacion();
-    if (result.isReloadMetadata())
-      reload();
+    if (result.isTransactionUpdated()) fetchTransacion();
+    if (result.isReloadMetadata()) reload();
     return result.getResult();
   }
 
@@ -381,14 +397,14 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
     if (getTransaction().isActive()) {
       OTransactionIndexChanges changes = getTransaction().getIndexChanges(indexName);
-      Set<String> changedIndexes = ((OTransactionOptimisticClient) getTransaction()).getIndexChanged();
+      Set<String> changedIndexes =
+          ((OTransactionOptimisticClient) getTransaction()).getIndexChanged();
       if (changedIndexes.contains(indexName) || changes != null) {
         checkAndSendTransaction();
       }
     }
     ORemoteQueryResult result = storage.command(this, query, args);
-    if (result.isReloadMetadata())
-      reload();
+    if (result.isReloadMetadata()) reload();
     return result.getResult();
   }
 
@@ -397,10 +413,8 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     checkOpenness();
     checkAndSendTransaction();
     ORemoteQueryResult result = storage.command(this, query, args);
-    if (result.isTransactionUpdated())
-      fetchTransacion();
-    if (result.isReloadMetadata())
-      reload();
+    if (result.isTransactionUpdated()) fetchTransacion();
+    if (result.isReloadMetadata()) reload();
     return result.getResult();
   }
 
@@ -409,10 +423,8 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     checkOpenness();
     checkAndSendTransaction();
     ORemoteQueryResult result = storage.command(this, query, args);
-    if (result.isTransactionUpdated())
-      fetchTransacion();
-    if (result.isReloadMetadata())
-      reload();
+    if (result.isTransactionUpdated()) fetchTransacion();
+    if (result.isReloadMetadata()) reload();
     return result.getResult();
   }
 
@@ -422,10 +434,8 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     checkOpenness();
     checkAndSendTransaction();
     ORemoteQueryResult result = storage.execute(this, language, script, args);
-    if (result.isTransactionUpdated())
-      fetchTransacion();
-    if (result.isReloadMetadata())
-      reload();
+    if (result.isTransactionUpdated()) fetchTransacion();
+    if (result.isReloadMetadata()) reload();
     return result.getResult();
   }
 
@@ -435,10 +445,8 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     checkOpenness();
     checkAndSendTransaction();
     ORemoteQueryResult result = storage.execute(this, language, script, args);
-    if (result.isTransactionUpdated())
-      fetchTransacion();
-    if (result.isReloadMetadata())
-      reload();
+    if (result.isTransactionUpdated()) fetchTransacion();
+    if (result.isReloadMetadata()) reload();
     return result.getResult();
   }
 
@@ -455,12 +463,15 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
   @Override
   public OLiveQueryMonitor live(String query, OLiveQueryResultListener listener, Object... args) {
-    return storage.liveQuery(this, query, new OLiveQueryClientListener(this.copy(), listener), args);
+    return storage.liveQuery(
+        this, query, new OLiveQueryClientListener(this.copy(), listener), args);
   }
 
   @Override
-  public OLiveQueryMonitor live(String query, OLiveQueryResultListener listener, Map<String, ?> args) {
-    return storage.liveQuery(this, query, new OLiveQueryClientListener(this.copy(), listener), args);
+  public OLiveQueryMonitor live(
+      String query, OLiveQueryResultListener listener, Map<String, ?> args) {
+    return storage.liveQuery(
+        this, query, new OLiveQueryClientListener(this.copy(), listener), args);
   }
 
   @Override
@@ -468,41 +479,30 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     throw new UnsupportedOperationException();
   }
 
-  protected OMicroTransaction beginMicroTransaction() {
-    return null;
-  }
-
-  public static void deInit(OStorageRemote storage) {
-    OSharedContext sharedContext = storage.removeResource(OSharedContext.class.getName());
-    //This storage may not have been completely opened yet
-    if (sharedContext != null)
-      sharedContext.close();
-  }
-
   public static void updateSchema(OStorageRemote storage, ODocument schema) {
-//    storage.get
-    OSharedContext shared = storage.getResource(OSharedContext.class.getName(), () -> null);
+    //    storage.get
+    OSharedContext shared = storage.getSharedContext();
     if (shared != null) {
       ((OSchemaRemote) shared.getSchema()).update(schema);
     }
   }
 
   public static void updateIndexManager(OStorageRemote storage, ODocument indexManager) {
-    OSharedContext shared = storage.getResource(OSharedContext.class.getName(), () -> null);
+    OSharedContext shared = storage.getSharedContext();
     if (shared != null) {
       ((OIndexManagerRemote) shared.getIndexManager()).update(indexManager);
     }
   }
 
   public static void updateFunction(OStorageRemote storage) {
-    OSharedContext shared = storage.getResource(OSharedContext.class.getName(), () -> null);
+    OSharedContext shared = storage.getSharedContext();
     if (shared != null) {
       (shared.getFunctionLibrary()).update();
     }
   }
 
   public static void updateSequences(OStorageRemote storage) {
-    OSharedContext shared = storage.getResource(OSharedContext.class.getName(), () -> null);
+    OSharedContext shared = storage.getSharedContext();
     if (shared != null) {
       (shared.getSequenceLibrary()).update();
     }
@@ -521,13 +521,17 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   }
 
   @Override
-  public void executeDeleteRecord(OIdentifiable record, int iVersion, boolean iRequired, OPERATION_MODE iMode,
+  public void executeDeleteRecord(
+      OIdentifiable record,
+      int iVersion,
+      boolean iRequired,
+      OPERATION_MODE iMode,
       boolean prohibitTombstones) {
-    OTransactionOptimisticClient tx = new OTransactionOptimisticClient(this) {
-      @Override
-      protected void checkTransaction() {
-      }
-    };
+    OTransactionOptimisticClient tx =
+        new OTransactionOptimisticClient(this) {
+          @Override
+          protected void checkTransactionValid() {}
+        };
     tx.begin();
     Set<ORecord> records = ORecordInternal.getDirtyManager((ORecord) record).getUpdateRecords();
     if (records != null) {
@@ -547,7 +551,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
   @Override
   public OIdentifiable beforeCreateOperations(OIdentifiable id, String iClusterName) {
-    checkClusterSecurity(ORole.PERMISSION_CREATE, id, iClusterName);
+    checkSecurity(ORole.PERMISSION_CREATE, id, iClusterName);
     ORecordHook.RESULT res = callbackHooks(ORecordHook.TYPE.BEFORE_CREATE, id);
     if (res == ORecordHook.RESULT.RECORD_CHANGED) {
       if (id instanceof ODocument) {
@@ -566,7 +570,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
   @Override
   public OIdentifiable beforeUpdateOperations(OIdentifiable id, String iClusterName) {
-    checkClusterSecurity(ORole.PERMISSION_UPDATE, id, iClusterName);
+    checkSecurity(ORole.PERMISSION_UPDATE, id, iClusterName);
     ORecordHook.RESULT res = callbackHooks(ORecordHook.TYPE.BEFORE_UPDATE, id);
     if (res == ORecordHook.RESULT.RECORD_CHANGED) {
       if (id instanceof ODocument) {
@@ -585,7 +589,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
   @Override
   public void beforeDeleteOperations(OIdentifiable id, String iClusterName) {
-    checkClusterSecurity(ORole.PERMISSION_DELETE, id, iClusterName);
+    checkSecurity(ORole.PERMISSION_DELETE, id, iClusterName);
     callbackHooks(ORecordHook.TYPE.BEFORE_DELETE, id);
   }
 
@@ -617,7 +621,6 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
         for (OClassIndexManager.IndexChange indexChange : indexChanges) {
           tx.addIndexChanged(indexChange.index.getName());
         }
-
       }
     }
   }
@@ -649,34 +652,45 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   }
 
   @Override
-  public ORecord saveAll(ORecord iRecord, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
-      ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<Integer> iRecordUpdatedCallback) {
-    OTransactionOptimisticClient tx = new OTransactionOptimisticClient(this) {
-      @Override
-      protected void checkTransaction() {
-      }
-    };
+  public ORecord saveAll(
+      ORecord iRecord,
+      String iClusterName,
+      OPERATION_MODE iMode,
+      boolean iForceCreate,
+      ORecordCallback<? extends Number> iRecordCreatedCallback,
+      ORecordCallback<Integer> iRecordUpdatedCallback) {
+    OTransactionOptimisticClient tx =
+        new OTransactionOptimisticClient(this) {
+          @Override
+          protected void checkTransactionValid() {}
+        };
     tx.begin();
-    tx.saveRecord(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
+    tx.saveRecord(
+        iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
     tx.commit();
 
     return iRecord;
   }
 
   /**
-   * This method is internal, it can be subject to signature change or be removed, do not use.
-   *
-   * @Internal
+   * This method is internal, it can be subject to signature change or be removed, do not
+   * use. @Internal
    */
-  public <RET extends ORecord> RET executeReadRecord(final ORecordId rid, ORecord iRecord, final int recordVersion,
-      final String fetchPlan, final boolean ignoreCache, final boolean iUpdateCache, final boolean loadTombstones,
-      final OStorage.LOCKING_STRATEGY lockingStrategy, RecordReader recordReader) {
+  public <RET extends ORecord> RET executeReadRecord(
+      final ORecordId rid,
+      ORecord iRecord,
+      final int recordVersion,
+      final String fetchPlan,
+      final boolean ignoreCache,
+      final boolean iUpdateCache,
+      final boolean loadTombstones,
+      final OStorage.LOCKING_STRATEGY lockingStrategy,
+      RecordReader recordReader) {
     checkOpenness();
     checkIfActive();
 
     getMetadata().makeThreadLocalSchemaSnapshot();
     try {
-      checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_READ, getClusterNameById(rid.getClusterId()));
 
       // SEARCH IN LOCAL TX
       ORecord record = getTransaction().getRecord(rid);
@@ -696,68 +710,66 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
         }
 
         OFetchHelper.checkFetchPlanValid(fetchPlan);
-        if (beforeReadOperations(record))
-          return null;
+        if (beforeReadOperations(record)) return null;
 
-        if (record.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED)
-          record.reload();
+        if (record.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) record.reload();
 
         if (lockingStrategy == KEEP_SHARED_LOCK) {
           OLogManager.instance()
-              .warn(this, "You use deprecated record locking strategy: %s it may lead to deadlocks " + lockingStrategy);
+              .warn(
+                  this,
+                  "You use deprecated record locking strategy: %s it may lead to deadlocks "
+                      + lockingStrategy);
           record.lock(false);
 
         } else if (lockingStrategy == KEEP_EXCLUSIVE_LOCK) {
           OLogManager.instance()
-              .warn(this, "You use deprecated record locking strategy: %s it may lead to deadlocks " + lockingStrategy);
+              .warn(
+                  this,
+                  "You use deprecated record locking strategy: %s it may lead to deadlocks "
+                      + lockingStrategy);
           record.lock(true);
         }
 
         afterReadOperations(record);
-        if (record instanceof ODocument)
-          ODocumentInternal.checkClass((ODocument) record, this);
+        if (record instanceof ODocument) ODocumentInternal.checkClass((ODocument) record, this);
         return (RET) record;
       }
 
       final ORawBuffer recordBuffer;
-      if (!rid.isValid())
-        recordBuffer = null;
+      if (!rid.isValid()) recordBuffer = null;
       else {
         OFetchHelper.checkFetchPlanValid(fetchPlan);
 
         int version;
-        if (iRecord != null)
-          version = iRecord.getVersion();
-        else
-          version = recordVersion;
+        if (iRecord != null) version = iRecord.getVersion();
+        else version = recordVersion;
 
         recordBuffer = recordReader.readRecord(getStorage(), rid, fetchPlan, ignoreCache, version);
       }
 
-      if (recordBuffer == null)
-        return null;
+      if (recordBuffer == null) return null;
 
       if (iRecord == null || ORecordInternal.getRecordType(iRecord) != recordBuffer.recordType)
         // NO SAME RECORD TYPE: CAN'T REUSE OLD ONE BUT CREATE A NEW ONE FOR IT
-        iRecord = Orient.instance().getRecordFactoryManager().newInstance(recordBuffer.recordType, rid.getClusterId(), this);
+        iRecord =
+            Orient.instance()
+                .getRecordFactoryManager()
+                .newInstance(recordBuffer.recordType, rid.getClusterId(), this);
 
       ORecordInternal.setRecordSerializer(iRecord, getSerializer());
       ORecordInternal.fill(iRecord, rid, recordBuffer.version, recordBuffer.buffer, false, this);
 
-      if (iRecord instanceof ODocument)
-        ODocumentInternal.checkClass((ODocument) iRecord, this);
+      if (iRecord instanceof ODocument) ODocumentInternal.checkClass((ODocument) iRecord, this);
 
-      if (ORecordVersionHelper.isTombstone(iRecord.getVersion()))
-        return (RET) iRecord;
+      if (ORecordVersionHelper.isTombstone(iRecord.getVersion())) return (RET) iRecord;
 
-      if (beforeReadOperations(iRecord))
-        return null;
+      if (beforeReadOperations(iRecord)) return null;
 
       iRecord.fromStream(recordBuffer.buffer);
 
       afterReadOperations(iRecord);
-      if (iUpdateCache)
-        getLocalCache().updateRecord(iRecord);
+      if (iUpdateCache) getLocalCache().updateRecord(iRecord);
 
       return (RET) iRecord;
     } catch (OOfflineClusterException t) {
@@ -766,11 +778,17 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
       throw t;
     } catch (Exception t) {
       if (rid.isTemporary())
-        throw OException.wrapException(new ODatabaseException("Error on retrieving record using temporary RID: " + rid), t);
+        throw OException.wrapException(
+            new ODatabaseException("Error on retrieving record using temporary RID: " + rid), t);
       else
-        throw OException.wrapException(new ODatabaseException(
-            "Error on retrieving record " + rid + " (cluster: " + getStorage().getPhysicalClusterNameById(rid.getClusterId())
-                + ")"), t);
+        throw OException.wrapException(
+            new ODatabaseException(
+                "Error on retrieving record "
+                    + rid
+                    + " (cluster: "
+                    + getStorage().getPhysicalClusterNameById(rid.getClusterId())
+                    + ")"),
+            t);
     } finally {
       getMetadata().clearThreadLocalSchemaSnapshot();
     }
@@ -804,27 +822,37 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     OStorageRemote remote = getStorage();
     // -1 value means default timeout
     OLockRecordResponse response = remote.lockRecord(recordId, EXCLUSIVE_LOCK, -1);
-    ORecord record = fillRecordFromNetwork(recordId, response.getRecordType(), response.getVersion(), response.getRecord());
+    ORecord record =
+        fillRecordFromNetwork(
+            recordId, response.getRecordType(), response.getVersion(), response.getRecord());
     return (RET) record;
   }
 
   @Override
-  public <RET extends ORecord> RET lock(ORID recordId, long timeout, TimeUnit timeoutUnit) throws OLockException {
+  public <RET extends ORecord> RET lock(ORID recordId, long timeout, TimeUnit timeoutUnit)
+      throws OLockException {
     checkOpenness();
     checkIfActive();
     pessimisticLockChecks(recordId);
     checkAndSendTransaction();
     OStorageRemote remote = getStorage();
-    OLockRecordResponse response = remote.lockRecord(recordId, EXCLUSIVE_LOCK, timeoutUnit.toMillis(timeout));
-    ORecord record = fillRecordFromNetwork(recordId, response.getRecordType(), response.getVersion(), response.getRecord());
+    OLockRecordResponse response =
+        remote.lockRecord(recordId, EXCLUSIVE_LOCK, timeoutUnit.toMillis(timeout));
+    ORecord record =
+        fillRecordFromNetwork(
+            recordId, response.getRecordType(), response.getVersion(), response.getRecord());
     return (RET) record;
   }
 
-  private ORecord fillRecordFromNetwork(ORID recordId, byte recordType, int version, byte[] buffer) {
+  private ORecord fillRecordFromNetwork(
+      ORID recordId, byte recordType, int version, byte[] buffer) {
     beforeReadOperations(recordId);
     ORecord toFillRecord = getLocalCache().findRecord(recordId);
     if (toFillRecord == null)
-      toFillRecord = Orient.instance().getRecordFactoryManager().newInstance(recordType, recordId.getClusterId(), this);
+      toFillRecord =
+          Orient.instance()
+              .getRecordFactoryManager()
+              .newInstance(recordType, recordId.getClusterId(), this);
     ORecordInternal.fill(toFillRecord, recordId, version, buffer, false);
     getLocalCache().updateRecord(toFillRecord);
     afterReadOperations(recordId);
@@ -839,14 +867,15 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   }
 
   @Override
-  public <T> T sendSequenceAction(OSequenceAction action) throws ExecutionException, InterruptedException {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+  public <T> T sendSequenceAction(OSequenceAction action)
+      throws ExecutionException, InterruptedException {
+    throw new UnsupportedOperationException(
+        "Not supported yet."); // To change body of generated methods, choose Tools | Templates.
   }
 
   public ODatabaseDocumentAbstract delete(final ORecord record) {
     checkOpenness();
-    if (record == null)
-      throw new ODatabaseException("Cannot delete null document");
+    if (record == null) throw new ODatabaseException("Cannot delete null document");
     if (record instanceof OVertex) {
       reload(record, "in*:2 out*:2");
       OVertexDelegate.deleteLinks((OVertex) record);
@@ -855,39 +884,177 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
       OEdgeDelegate.deleteLinks((OEdge) record);
     }
 
-    // CHECK ACCESS ON SCHEMA CLASS NAME (IF ANY)
-    if (record instanceof ODocument && ((ODocument) record).getClassName() != null)
-      checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_DELETE, ((ODocument) record).getClassName());
-
     try {
       currentTx.deleteRecord(record, OPERATION_MODE.SYNCHRONOUS);
     } catch (OException e) {
       throw e;
     } catch (Exception e) {
       if (record instanceof ODocument)
-        throw OException.wrapException(new ODatabaseException(
-            "Error on deleting record " + record.getIdentity() + " of class '" + ((ODocument) record).getClassName() + "'"), e);
+        throw OException.wrapException(
+            new ODatabaseException(
+                "Error on deleting record "
+                    + record.getIdentity()
+                    + " of class '"
+                    + ((ODocument) record).getClassName()
+                    + "'"),
+            e);
       else
-        throw OException.wrapException(new ODatabaseException("Error on deleting record " + record.getIdentity()), e);
+        throw OException.wrapException(
+            new ODatabaseException("Error on deleting record " + record.getIdentity()), e);
     }
     return this;
   }
 
   @Override
-  public <DB extends ODatabaseDocument> DB checkSecurity(ORule.ResourceGeneric resourceGeneric, String resourceSpecific,
-      int iOperation) {
+  public int addCluster(final String iClusterName, final Object... iParameters) {
+    checkIfActive();
+    return getStorage().addCluster(iClusterName, iParameters);
+  }
+
+  @Override
+  public int addCluster(final String iClusterName, final int iRequestedId) {
+    checkIfActive();
+    return getStorage().addCluster(iClusterName, iRequestedId);
+  }
+
+  public ORecordConflictStrategy getConflictStrategy() {
+    checkIfActive();
+    return getStorageInfo().getRecordConflictStrategy();
+  }
+
+  public ODatabaseDocumentAbstract setConflictStrategy(final String iStrategyName) {
+    checkIfActive();
+    getStorage()
+        .setConflictStrategy(
+            Orient.instance().getRecordConflictStrategy().getStrategy(iStrategyName));
+    return this;
+  }
+
+  public ODatabaseDocumentAbstract setConflictStrategy(final ORecordConflictStrategy iResolver) {
+    checkIfActive();
+    getStorage().setConflictStrategy(iResolver);
+    return this;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public long countClusterElements(int iClusterId, boolean countTombstones) {
+    checkIfActive();
+    return getStorage().count(iClusterId, countTombstones);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public long countClusterElements(int[] iClusterIds, boolean countTombstones) {
+    checkIfActive();
+    return getStorage().count(iClusterIds, countTombstones);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public long countClusterElements(final String iClusterName) {
+    checkIfActive();
+
+    final int clusterId = getClusterIdByName(iClusterName);
+    if (clusterId < 0)
+      throw new IllegalArgumentException("Cluster '" + iClusterName + "' was not found");
+    return getStorage().count(clusterId);
+  }
+
+  @Override
+  public long getClusterRecordSizeByName(final String clusterName) {
+    checkIfActive();
+    try {
+      return getStorage().getClusterRecordsSizeByName(clusterName);
+    } catch (Exception e) {
+      throw OException.wrapException(
+          new ODatabaseException("Error on reading records size for cluster '" + clusterName + "'"),
+          e);
+    }
+  }
+
+  @Override
+  public boolean dropCluster(final String iClusterName) {
+    checkIfActive();
+    final int clusterId = getClusterIdByName(iClusterName);
+    OSchemaProxy schema = metadata.getSchema();
+    OClass clazz = schema.getClassByClusterId(clusterId);
+    if (clazz != null) clazz.removeClusterId(clusterId);
+    if (schema.getBlobClusters().contains(clusterId)) schema.removeBlobCluster(iClusterName);
+    getLocalCache().freeCluster(clusterId);
+    checkForClusterPermissions(iClusterName);
+    return getStorage().dropCluster(iClusterName);
+  }
+
+  @Override
+  public boolean dropCluster(final int clusterId) {
+    checkIfActive();
+
+    OSchemaProxy schema = metadata.getSchema();
+    final OClass clazz = schema.getClassByClusterId(clusterId);
+    if (clazz != null) clazz.removeClusterId(clusterId);
+    getLocalCache().freeCluster(clusterId);
+    if (schema.getBlobClusters().contains(clusterId))
+      schema.removeBlobCluster(getClusterNameById(clusterId));
+
+    checkForClusterPermissions(getClusterNameById(clusterId));
+
+    final String clusterName = getClusterNameById(clusterId);
+    if (clusterName == null) {
+      return false;
+    }
+
+    final ORecordIteratorCluster<ODocument> iteratorCluster = browseCluster(clusterName);
+    if (iteratorCluster == null) {
+      return false;
+    }
+
+    while (iteratorCluster.hasNext()) {
+      final ODocument document = iteratorCluster.next();
+      document.delete();
+    }
+
+    return getStorage().dropCluster(clusterId);
+  }
+
+  public boolean dropClusterInternal(int clusterId) {
+    return getStorage().dropCluster(clusterId);
+  }
+
+  @Override
+  public long getClusterRecordSizeById(final int clusterId) {
+    checkIfActive();
+    try {
+      return getStorage().getClusterRecordsSizeById(clusterId);
+    } catch (Exception e) {
+      throw OException.wrapException(
+          new ODatabaseException(
+              "Error on reading records size for cluster with id '" + clusterId + "'"),
+          e);
+    }
+  }
+
+  @Override
+  public long getSize() {
+    checkIfActive();
+    return getStorage().getSize();
+  }
+
+  @Override
+  public <DB extends ODatabaseDocument> DB checkSecurity(
+      ORule.ResourceGeneric resourceGeneric, String resourceSpecific, int iOperation) {
     return (DB) this;
   }
 
   @Override
-  public <DB extends ODatabaseDocument> DB checkSecurity(ORule.ResourceGeneric iResourceGeneric, int iOperation,
-      Object iResourceSpecific) {
+  public <DB extends ODatabaseDocument> DB checkSecurity(
+      ORule.ResourceGeneric iResourceGeneric, int iOperation, Object iResourceSpecific) {
     return (DB) this;
   }
 
   @Override
-  public <DB extends ODatabaseDocument> DB checkSecurity(ORule.ResourceGeneric iResourceGeneric, int iOperation,
-      Object... iResourcesSpecific) {
+  public <DB extends ODatabaseDocument> DB checkSecurity(
+      ORule.ResourceGeneric iResourceGeneric, int iOperation, Object... iResourcesSpecific) {
     return (DB) this;
   }
 
@@ -897,12 +1064,14 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   }
 
   @Override
-  public <DB extends ODatabaseDocument> DB checkSecurity(String iResourceGeneric, int iOperation, Object iResourceSpecific) {
+  public <DB extends ODatabaseDocument> DB checkSecurity(
+      String iResourceGeneric, int iOperation, Object iResourceSpecific) {
     return (DB) this;
   }
 
   @Override
-  public <DB extends ODatabaseDocument> DB checkSecurity(String iResourceGeneric, int iOperation, Object... iResourcesSpecific) {
+  public <DB extends ODatabaseDocument> DB checkSecurity(
+      String iResourceGeneric, int iOperation, Object... iResourcesSpecific) {
     return (DB) this;
   }
 

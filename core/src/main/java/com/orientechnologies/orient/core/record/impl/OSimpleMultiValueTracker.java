@@ -23,56 +23,65 @@ package com.orientechnologies.orient.core.record.impl;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
-
 import java.lang.ref.WeakReference;
 
 /**
- * Perform gathering of all operations performed on tracked collection and create mapping between list of collection operations and
- * field name that contains collection that was changed.
+ * Perform gathering of all operations performed on tracked collection and create mapping between
+ * list of collection operations and field name that contains collection that was changed.
  *
  * @param <K> Value that uniquely identifies position of item in collection
  * @param <V> Item value.
  */
 public final class OSimpleMultiValueTracker<K, V> {
-  private final WeakReference<ORecordElement>             element;
-  private       OMultiValueChangeTimeLine<Object, Object> timeLine;
-  private       boolean                                   enabled;
-  private       OMultiValueChangeTimeLine<K, V>           transactionTimeLine;
+  private final WeakReference<ORecordElement> element;
+  private OMultiValueChangeTimeLine<Object, Object> timeLine;
+  private boolean enabled;
+  private OMultiValueChangeTimeLine<K, V> transactionTimeLine;
 
   public OSimpleMultiValueTracker(ORecordElement element) {
     this.element = new WeakReference<ORecordElement>(element);
   }
 
   public void addNoDirty(K key, V value) {
-    onAfterRecordChanged(new OMultiValueChangeEvent<K, V>(OMultiValueChangeEvent.OChangeType.ADD, key, value, null), false);
+    onAfterRecordChanged(
+        new OMultiValueChangeEvent<K, V>(OMultiValueChangeEvent.OChangeType.ADD, key, value, null),
+        false);
   }
 
   public void removeNoDirty(K key, V value) {
-    onAfterRecordChanged(new OMultiValueChangeEvent<K, V>(OMultiValueChangeEvent.OChangeType.REMOVE, key, null, value), false);
+    onAfterRecordChanged(
+        new OMultiValueChangeEvent<K, V>(
+            OMultiValueChangeEvent.OChangeType.REMOVE, key, null, value),
+        false);
   }
 
   public void add(K key, V value) {
-    onAfterRecordChanged(new OMultiValueChangeEvent<K, V>(OMultiValueChangeEvent.OChangeType.ADD, key, value), true);
+    onAfterRecordChanged(
+        new OMultiValueChangeEvent<K, V>(OMultiValueChangeEvent.OChangeType.ADD, key, value), true);
   }
 
   public void updated(K key, V newValue, V oldValue) {
-    onAfterRecordChanged(new OMultiValueChangeEvent<K, V>(OMultiValueChangeEvent.OChangeType.UPDATE, key, newValue, oldValue),
+    onAfterRecordChanged(
+        new OMultiValueChangeEvent<K, V>(
+            OMultiValueChangeEvent.OChangeType.UPDATE, key, newValue, oldValue),
         true);
   }
 
   public void remove(K key, V value) {
-    onAfterRecordChanged(new OMultiValueChangeEvent<K, V>(OMultiValueChangeEvent.OChangeType.REMOVE, key, null, value), true);
+    onAfterRecordChanged(
+        new OMultiValueChangeEvent<K, V>(
+            OMultiValueChangeEvent.OChangeType.REMOVE, key, null, value),
+        true);
   }
 
   public void onAfterRecordChanged(final OMultiValueChangeEvent<K, V> event, boolean changeOwner) {
-
     if (!enabled) {
       return;
     }
 
-    ORecordElement document = this.element.get();
+    final ORecordElement document = this.element.get();
     if (document == null) {
-      //doc not alive anymore, do nothing.
+      // doc not alive anymore, do nothing.
       return;
     }
 
@@ -85,13 +94,11 @@ public final class OSimpleMultiValueTracker<K, V> {
     if (timeLine == null) {
       timeLine = new OMultiValueChangeTimeLine<Object, Object>();
     }
-
     timeLine.addCollectionChangeEvent((OMultiValueChangeEvent<Object, Object>) event);
 
     if (transactionTimeLine == null) {
       transactionTimeLine = new OMultiValueChangeTimeLine<K, V>();
     }
-
     transactionTimeLine.addCollectionChangeEvent(event);
   }
 

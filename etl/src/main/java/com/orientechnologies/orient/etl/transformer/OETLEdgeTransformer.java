@@ -31,13 +31,12 @@ import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.etl.OETLProcessHaltedException;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 
 public class OETLEdgeTransformer extends OETLAbstractLookupTransformer {
-  private String  edgeClass    = "E";
+  private String edgeClass = "E";
   private boolean directionOut = true;
   private ODocument targetVertexFields;
   private ODocument edgeFields;
@@ -45,17 +44,23 @@ public class OETLEdgeTransformer extends OETLAbstractLookupTransformer {
 
   @Override
   public ODocument getConfiguration() {
-    return new ODocument().fromJSON("{parameters:[" + getCommonConfigurationParameters() + ","
-        + "{joinValue:{optional:true,description:'value to use for join'}},"
-        + "{joinFieldName:{optional:true,description:'field name containing the value to join'}},"
-        + "{lookup:{optional:false,description:'<Class>.<property> or Query to execute'}},"
-        + "{direction:{optional:true,description:'Direction between \'in\' and \'out\'. Default is \'out\''}},"
-        + "{class:{optional:true,description:'Edge class name. Default is \'E\''}},"
-        + "{targetVertexFields:{optional:true,description:'Map of fields to set in target vertex. Use ${$input.<field>} to get input field values'}},"
-        + "{edgeFields:{optional:true,description:'Map of fields to set in edge. Use ${$input.<field>} to get input field values'}},"
-        + "{skipDuplicates:{optional:true,description:'Duplicated edges (with a composite index built on both out and in properties) are skipped', default:false}},"
-        + "{unresolvedLinkAction:{optional:true,description:'action when the target vertex is not found',values:"
-        + stringArray2Json(ACTION.values()) + "}}]," + "input:['ODocument','OVertex'],output:'OVertex'}");
+    return new ODocument()
+        .fromJSON(
+            "{parameters:["
+                + getCommonConfigurationParameters()
+                + ","
+                + "{joinValue:{optional:true,description:'value to use for join'}},"
+                + "{joinFieldName:{optional:true,description:'field name containing the value to join'}},"
+                + "{lookup:{optional:false,description:'<Class>.<property> or Query to execute'}},"
+                + "{direction:{optional:true,description:'Direction between \'in\' and \'out\'. Default is \'out\''}},"
+                + "{class:{optional:true,description:'Edge class name. Default is \'E\''}},"
+                + "{targetVertexFields:{optional:true,description:'Map of fields to set in target vertex. Use ${$input.<field>} to get input field values'}},"
+                + "{edgeFields:{optional:true,description:'Map of fields to set in edge. Use ${$input.<field>} to get input field values'}},"
+                + "{skipDuplicates:{optional:true,description:'Duplicated edges (with a composite index built on both out and in properties) are skipped', default:false}},"
+                + "{unresolvedLinkAction:{optional:true,description:'action when the target vertex is not found',values:"
+                + stringArray2Json(ACTION.values())
+                + "}}],"
+                + "input:['ODocument','OVertex'],output:'OVertex'}");
   }
 
   @Override
@@ -64,12 +69,11 @@ public class OETLEdgeTransformer extends OETLAbstractLookupTransformer {
     edgeClass = iConfiguration.field("class");
     if (iConfiguration.containsField("direction")) {
       final String direction = iConfiguration.field("direction");
-      if ("out".equalsIgnoreCase(direction))
-        directionOut = true;
-      else if ("in".equalsIgnoreCase(direction))
-        directionOut = false;
+      if ("out".equalsIgnoreCase(direction)) directionOut = true;
+      else if ("in".equalsIgnoreCase(direction)) directionOut = false;
       else
-        throw new OConfigurationException("Direction can be 'in' or 'out', but found: " + direction);
+        throw new OConfigurationException(
+            "Direction can be 'in' or 'out', but found: " + direction);
     }
 
     if (iConfiguration.containsField("targetVertexFields"))
@@ -89,8 +93,7 @@ public class OETLEdgeTransformer extends OETLAbstractLookupTransformer {
   public void begin(ODatabaseDocument db) {
     super.begin(db);
     final OClass cls = db.getClass(edgeClass);
-    if (cls == null)
-      db.createEdgeClass(edgeClass);
+    if (cls == null) db.createEdgeClass(edgeClass);
     super.begin(db);
   }
 
@@ -99,19 +102,16 @@ public class OETLEdgeTransformer extends OETLAbstractLookupTransformer {
     for (Object o : OMultiValue.getMultiValueIterable(input)) {
       // GET JOIN VALUE
       final OVertex vertex;
-      if (o instanceof OVertex)
-        vertex = (OVertex) o;
+      if (o instanceof OVertex) vertex = (OVertex) o;
       else if (o instanceof OIdentifiable)
-        vertex = ((OElement)db.getRecord((OIdentifiable) o)).asVertex().get();
+        vertex = ((OElement) db.getRecord((OIdentifiable) o)).asVertex().get();
       else
         throw new OETLTransformException(getName() + ": input type '" + o + "' is not supported");
 
       Object joinCurrentValue = joinValue;
       if (joinCurrentValue == null) {
-        if (joinFieldName.startsWith("$"))
-          joinCurrentValue = resolve(joinFieldName);
-        else
-          joinCurrentValue = vertex.getProperty(joinFieldName);
+        if (joinFieldName.startsWith("$")) joinCurrentValue = resolve(joinFieldName);
+        else joinCurrentValue = vertex.getProperty(joinFieldName);
       }
 
       if (OMultiValue.isMultiValue(joinCurrentValue)) {
@@ -137,50 +137,61 @@ public class OETLEdgeTransformer extends OETLAbstractLookupTransformer {
     return input;
   }
 
-  private List<OEdge> createEdge(ODatabaseDocument db, final OVertex vertex, final Object joinCurrentValue, Object result) {
+  private List<OEdge> createEdge(
+      ODatabaseDocument db, final OVertex vertex, final Object joinCurrentValue, Object result) {
     log(Level.FINE, "joinCurrentValue=%s, lookupResult=%s", joinCurrentValue, result);
 
     if (result == null) {
       // APPLY THE STRATEGY DEFINED IN unresolvedLinkAction
       switch (unresolvedLinkAction) {
-      case CREATE:
-        // Don't try to create a Vertex with a null value
-        if (joinCurrentValue != null) {
-          if (lookup != null) {
-            final String[] lookupParts = lookup.split("\\.");
-            final OVertex linkedV = db.newVertex(lookupParts[0]);
-            linkedV.setProperty(lookupParts[1], joinCurrentValue);
+        case CREATE:
+          // Don't try to create a Vertex with a null value
+          if (joinCurrentValue != null) {
+            if (lookup != null) {
+              final String[] lookupParts = lookup.split("\\.");
+              final OVertex linkedV = db.newVertex(lookupParts[0]);
+              linkedV.setProperty(lookupParts[1], joinCurrentValue);
 
-            if (targetVertexFields != null) {
-              for (String f : targetVertexFields.fieldNames())
-                linkedV.setProperty(f, resolve(targetVertexFields.field(f)));
+              if (targetVertexFields != null) {
+                for (String f : targetVertexFields.fieldNames())
+                  linkedV.setProperty(f, resolve(targetVertexFields.field(f)));
+              }
+
+              linkedV.save();
+
+              log(Level.FINE, "created new vertex=" + linkedV.getRecord());
+
+              result = linkedV.getIdentity();
+            } else {
+              throw new OConfigurationException(
+                  "Cannot create linked document because target class is unknown. Use 'lookup' field");
             }
-
-            linkedV.save();
-
-            log(Level.FINE, "created new vertex=" + linkedV.getRecord());
-
-            result = linkedV.getIdentity();
-          } else {
-            throw new OConfigurationException("Cannot create linked document because target class is unknown. Use 'lookup' field");
           }
-        }
-        break;
-      case ERROR:
-        processor.getStats().incrementErrors();
-        log(Level.SEVERE, "%s: ERROR Cannot resolve join for value '%s'", getName(), joinCurrentValue);
-        break;
-      case WARNING:
-        processor.getStats().incrementWarnings();
-        log(Level.INFO, "%s: WARN Cannot resolve join for value '%s'", getName(), joinCurrentValue);
-        break;
-      case SKIP:
-        return null;
-      case HALT:
-        throw new OETLProcessHaltedException("Cannot resolve join for value '" + joinCurrentValue + "'");
-      case NOTHING:
-      default:
-        return null;
+          break;
+        case ERROR:
+          processor.getStats().incrementErrors();
+          log(
+              Level.SEVERE,
+              "%s: ERROR Cannot resolve join for value '%s'",
+              getName(),
+              joinCurrentValue);
+          break;
+        case WARNING:
+          processor.getStats().incrementWarnings();
+          log(
+              Level.INFO,
+              "%s: WARN Cannot resolve join for value '%s'",
+              getName(),
+              joinCurrentValue);
+          break;
+        case SKIP:
+          return null;
+        case HALT:
+          throw new OETLProcessHaltedException(
+              "Cannot resolve join for value '" + joinCurrentValue + "'");
+        case NOTHING:
+        default:
+          return null;
       }
     }
 
@@ -193,8 +204,7 @@ public class OETLEdgeTransformer extends OETLAbstractLookupTransformer {
           return null;
 
         edges = new ArrayList<OEdge>(size);
-      } else
-        edges = new ArrayList<OEdge>(1);
+      } else edges = new ArrayList<OEdge>(1);
 
       for (Object o : OMultiValue.getMultiValueIterable(result)) {
         OIdentifiable oid = (OIdentifiable) o;
@@ -203,10 +213,8 @@ public class OETLEdgeTransformer extends OETLAbstractLookupTransformer {
         try {
           // CREATE THE EDGE
           final OEdge edge;
-          if (directionOut)
-            edge = (OEdge) vertex.addEdge(targetVertex, edgeClass);
-          else
-            edge = (OEdge) targetVertex.addEdge(vertex, edgeClass);
+          if (directionOut) edge = (OEdge) vertex.addEdge(targetVertex, edgeClass);
+          else edge = (OEdge) targetVertex.addEdge(vertex, edgeClass);
 
           if (edgeFields != null) {
             for (String f : edgeFields.fieldNames())
@@ -220,7 +228,9 @@ public class OETLEdgeTransformer extends OETLAbstractLookupTransformer {
             log(Level.FINE, "skipped creation of new edge because already exists");
             continue;
           } else {
-            log(Level.SEVERE, "error on creation of new edge because it already exists (skipDuplicates=false)");
+            log(
+                Level.SEVERE,
+                "error on creation of new edge because it already exists (skipDuplicates=false)");
             throw e;
           }
         }

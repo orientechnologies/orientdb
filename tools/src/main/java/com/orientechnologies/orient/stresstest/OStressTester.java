@@ -28,42 +28,48 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.stresstest.workload.OCheckWorkload;
 import com.orientechnologies.orient.stresstest.workload.OWorkload;
 import com.orientechnologies.orient.stresstest.workload.OWorkloadFactory;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The main class of the OStressTester. It is instantiated from the OStressTesterCommandLineParser and takes care of launching the
- * needed threads (OOperationsExecutor) for executing the operations of the test.
+ * The main class of the OStressTester. It is instantiated from the OStressTesterCommandLineParser
+ * and takes care of launching the needed threads (OOperationsExecutor) for executing the operations
+ * of the test.
  *
  * @author Andrea Iacono
  */
 public class OStressTester {
-  /**
-   * The access mode to the database
-   */
+  /** The access mode to the database */
   public enum OMode {
-    PLOCAL, MEMORY, REMOTE, DISTRIBUTED
+    PLOCAL,
+    MEMORY,
+    REMOTE,
+    DISTRIBUTED
   }
 
-  private final ODatabaseIdentifier     databaseIdentifier;
-  private OConsoleProgressWriter        consoleProgressWriter;
-  private final OStressTesterSettings   settings;
+  private final ODatabaseIdentifier databaseIdentifier;
+  private OConsoleProgressWriter consoleProgressWriter;
+  private final OStressTesterSettings settings;
 
   private static final OWorkloadFactory workloadFactory = new OWorkloadFactory();
-  private List<OWorkload>               workloads       = new ArrayList<OWorkload>();
+  private List<OWorkload> workloads = new ArrayList<OWorkload>();
 
-  public OStressTester(final List<OWorkload> workloads, ODatabaseIdentifier databaseIdentifier,
-      final OStressTesterSettings settings) throws Exception {
+  public OStressTester(
+      final List<OWorkload> workloads,
+      ODatabaseIdentifier databaseIdentifier,
+      final OStressTesterSettings settings)
+      throws Exception {
     this.workloads = workloads;
     this.databaseIdentifier = databaseIdentifier;
     this.settings = settings;
   }
 
   public static void main(String[] args) {
-    System.out.println(String.format("OrientDB Stress Tool v.%s - %s", OConstants.getVersion(), OConstants.COPYRIGHT));
+    System.out.println(
+        String.format(
+            "OrientDB Stress Tool v.%s - %s", OConstants.getVersion(), OConstants.COPYRIGHT));
 
     int returnValue = 1;
     try {
@@ -94,7 +100,9 @@ public class OStressTester {
         consoleProgressWriter.start();
 
         consoleProgressWriter.printMessage(
-            String.format("\nStarting workload %s (concurrencyLevel=%d)...", workload.getName(), settings.concurrencyLevel));
+            String.format(
+                "\nStarting workload %s (concurrencyLevel=%d)...",
+                workload.getName(), settings.concurrencyLevel));
 
         final long startTime = System.currentTimeMillis();
 
@@ -104,7 +112,9 @@ public class OStressTester {
 
         consoleProgressWriter.sendShutdown();
 
-        System.out.println(String.format("\n- Total execution time: %.3f secs", ((float) (endTime - startTime) / 1000f)));
+        System.out.println(
+            String.format(
+                "\n- Total execution time: %.3f secs", ((float) (endTime - startTime) / 1000f)));
 
         System.out.println(workload.getFinalResult());
 
@@ -117,21 +127,22 @@ public class OStressTester {
         }
       }
 
-      if (settings.resultOutputFile != null)
-        writeFile();
+      if (settings.resultOutputFile != null) writeFile();
 
     } catch (Exception ex) {
-      System.err.println("\nAn error has occurred while running the stress test: " + ex.getMessage());
+      System.err.println(
+          "\nAn error has occurred while running the stress test: " + ex.getMessage());
       returnCode = 1;
     } finally {
       // we don't need to drop the in-memory DB
       if (settings.keepDatabaseAfterTest || databaseIdentifier.getMode() == OMode.MEMORY)
-        consoleProgressWriter.printMessage(String.format("\nDatabase is available on [%s].", databaseIdentifier.getUrl()));
+        consoleProgressWriter.printMessage(
+            String.format("\nDatabase is available on [%s].", databaseIdentifier.getUrl()));
       else {
         ODatabaseUtils.dropDatabase(databaseIdentifier);
-        consoleProgressWriter.printMessage(String.format("\nDropped database [%s].", databaseIdentifier.getUrl()));
+        consoleProgressWriter.printMessage(
+            String.format("\nDropped database [%s].", databaseIdentifier.getUrl()));
       }
-
     }
 
     return returnCode;
@@ -139,9 +150,12 @@ public class OStressTester {
 
   private void dumpHaMetrics() {
     if (settings.haMetrics) {
-      final ODatabase db = ODatabaseUtils.openDatabase(databaseIdentifier, OStorageRemote.CONNECTION_STRATEGY.STICKY);
+      final ODatabase db =
+          ODatabaseUtils.openDatabase(
+              databaseIdentifier, OStorageRemote.CONNECTION_STRATEGY.STICKY);
       try {
-        final String output = db.command(new OCommandSQL("ha status -latency -messages -output=text")).execute();
+        final String output =
+            db.command(new OCommandSQL("ha status -latency -messages -output=text")).execute();
         System.out.println("HA METRICS");
         System.out.println(output);
 
@@ -151,7 +165,6 @@ public class OStressTester {
         db.close();
       }
     }
-
   }
 
   private void writeFile() {
@@ -160,8 +173,7 @@ public class OStressTester {
       output.append("{\"result\":[");
       int i = 0;
       for (OWorkload workload : workloads) {
-        if (i++ > 0)
-          output.append(",");
+        if (i++ > 0) output.append(",");
         output.append(workload.getFinalResultAsJson());
       }
       output.append("]}");

@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.core.sql.executor;
 
+import static org.junit.Assert.assertEquals;
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -8,11 +10,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.junit.Assert;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
-
-/**
- * @author Luigi Dell'Aquila
- */
+/** @author Luigi Dell'Aquila */
 public class ORebuildIndexStatementExecutionTest {
 
   @Test
@@ -34,7 +32,10 @@ public class ORebuildIndexStatementExecutionTest {
       int clId = db.addCluster(className + "secondCluster");
       oclass.addClusterId(clId);
 
-      db.newInstance(className).field("key", "a").field("value", 2).save(className + "secondCluster");
+      db.newInstance(className)
+          .field("key", "a")
+          .field("value", 2)
+          .save(className + "secondCluster");
 
       // when
       OResultSet result = db.command("rebuild index " + className + "index1");
@@ -42,7 +43,10 @@ public class ORebuildIndexStatementExecutionTest {
       OResult resultRecord = result.next();
       Assert.assertEquals(resultRecord.<Object>getProperty("totalIndexed"), 2l);
       Assert.assertFalse(result.hasNext());
-      assertEquals(db.query(new OSQLSynchQuery<Object>("select from " + className + " where key = 'a'")).size(), 2);
+      assertEquals(
+          db.query(new OSQLSynchQuery<Object>("select from " + className + " where key = 'a'"))
+              .size(),
+          2);
     } finally {
       db.drop();
     }

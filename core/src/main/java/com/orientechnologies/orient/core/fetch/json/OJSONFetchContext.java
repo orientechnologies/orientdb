@@ -30,95 +30,126 @@ import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON.FormatSettings;
-
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.Set;
 import java.util.Stack;
 
-/**
- * @author Luca Molino (molino.luca--at--gmail.com)
- * 
- */
+/** @author Luca Molino (molino.luca--at--gmail.com) */
 public class OJSONFetchContext implements OFetchContext {
 
-  protected final OJSONWriter          jsonWriter;
-  protected final FormatSettings       settings;
-  protected final Stack<StringBuilder> typesStack      = new Stack<StringBuilder>();
-  protected final Stack<ODocument>     collectionStack = new Stack<ODocument>();
+  protected final OJSONWriter jsonWriter;
+  protected final FormatSettings settings;
+  protected final Stack<StringBuilder> typesStack = new Stack<>();
+  protected final Stack<ODocument> collectionStack = new Stack<>();
 
-  public OJSONFetchContext(final OJSONWriter iJsonWriter, final FormatSettings iSettings) {
-    jsonWriter = iJsonWriter;
-    settings = iSettings;
+  public OJSONFetchContext(final OJSONWriter jsonWriter, final FormatSettings settings) {
+    this.jsonWriter = jsonWriter;
+    this.settings = settings;
   }
 
-  public void onBeforeFetch(final ODocument iRootRecord) {
+  public void onBeforeFetch(final ODocument rootRecord) {
     typesStack.add(new StringBuilder());
   }
 
-  public void onAfterFetch(final ODocument iRootRecord) {
-    StringBuilder buffer = typesStack.pop();
-    if (settings.keepTypes && buffer.length() > 0)
+  public void onAfterFetch(final ODocument rootRecord) {
+    final StringBuilder sb = typesStack.pop();
+    if (settings.keepTypes && sb.length() > 0) {
       try {
-        jsonWriter.writeAttribute(settings.indentLevel > -1 ? settings.indentLevel : 1, true,
-            ORecordSerializerJSON.ATTRIBUTE_FIELD_TYPES, buffer.toString());
-      } catch (IOException e) {
+        jsonWriter.writeAttribute(
+            settings.indentLevel > -1 ? settings.indentLevel : 1,
+            true,
+            ORecordSerializerJSON.ATTRIBUTE_FIELD_TYPES,
+            sb.toString());
+      } catch (final IOException e) {
         throw OException.wrapException(new OFetchException("Error writing field types"), e);
       }
+    }
   }
 
-  public void onBeforeStandardField(final Object iFieldValue, final String iFieldName, final Object iUserObject, OType fieldType) {
+  public void onBeforeStandardField(
+      final Object iFieldValue,
+      final String iFieldName,
+      final Object iUserObject,
+      OType fieldType) {
     manageTypes(iFieldName, iFieldValue, fieldType);
   }
 
-  public void onAfterStandardField(Object iFieldValue, String iFieldName, Object iUserObject, OType fieldType) {
-  }
+  public void onAfterStandardField(
+      Object iFieldValue, String iFieldName, Object iUserObject, OType fieldType) {}
 
-  public void onBeforeArray(final ODocument iRootRecord, final String iFieldName, final Object iUserObject,
+  public void onBeforeArray(
+      final ODocument iRootRecord,
+      final String iFieldName,
+      final Object iUserObject,
       final OIdentifiable[] iArray) {
     onBeforeCollection(iRootRecord, iFieldName, iUserObject, null);
   }
 
-  public void onAfterArray(final ODocument iRootRecord, final String iFieldName, final Object iUserObject) {
+  public void onAfterArray(
+      final ODocument iRootRecord, final String iFieldName, final Object iUserObject) {
     onAfterCollection(iRootRecord, iFieldName, iUserObject);
   }
 
-  public void onBeforeCollection(final ODocument iRootRecord, final String iFieldName, final Object iUserObject,
+  public void onBeforeCollection(
+      final ODocument rootRecord,
+      final String fieldName,
+      final Object userObject,
       final Iterable<?> iterable) {
     try {
-      manageTypes(iFieldName, iterable, null);
-      jsonWriter.beginCollection(++settings.indentLevel, true, iFieldName);
-      collectionStack.add(iRootRecord);
-    } catch (IOException e) {
+      manageTypes(fieldName, iterable, null);
+      if (settings.earlyTypes) {
+        onAfterFetch(rootRecord);
+      }
+      jsonWriter.beginCollection(++settings.indentLevel, true, fieldName);
+      collectionStack.add(rootRecord);
+    } catch (final IOException e) {
       throw OException.wrapException(
-          new OFetchException("Error writing collection field " + iFieldName + " of record " + iRootRecord.getIdentity()), e);
+          new OFetchException(
+              "Error writing collection field "
+                  + fieldName
+                  + " of record "
+                  + rootRecord.getIdentity()),
+          e);
     }
   }
 
-  public void onAfterCollection(final ODocument iRootRecord, final String iFieldName, final Object iUserObject) {
+  public void onAfterCollection(
+      final ODocument iRootRecord, final String iFieldName, final Object iUserObject) {
     try {
       jsonWriter.endCollection(settings.indentLevel--, true);
       collectionStack.pop();
     } catch (IOException e) {
       throw OException.wrapException(
-          new OFetchException("Error writing collection field " + iFieldName + " of record " + iRootRecord.getIdentity()), e);
+          new OFetchException(
+              "Error writing collection field "
+                  + iFieldName
+                  + " of record "
+                  + iRootRecord.getIdentity()),
+          e);
     }
   }
 
-  public void onBeforeMap(final ODocument iRootRecord, final String iFieldName, final Object iUserObject) {
+  public void onBeforeMap(
+      final ODocument iRootRecord, final String iFieldName, final Object iUserObject) {
     try {
       jsonWriter.beginObject(++settings.indentLevel, true, iFieldName);
       if (!(iUserObject instanceof ODocument)) {
-        collectionStack.add(new ODocument()); // <-- sorry for this... fixes #2845 but this mess should be rewritten...
+        collectionStack.add(
+            new ODocument()); // <-- sorry for this... fixes #2845 but this mess should be
+        // rewritten...
       }
     } catch (IOException e) {
       throw OException.wrapException(
-          new OFetchException("Error writing map field " + iFieldName + " of record " + iRootRecord.getIdentity()), e);
+          new OFetchException(
+              "Error writing map field " + iFieldName + " of record " + iRootRecord.getIdentity()),
+          e);
     }
   }
 
-  public void onAfterMap(final ODocument iRootRecord, final String iFieldName, final Object iUserObject) {
+  public void onAfterMap(
+      final ODocument iRootRecord, final String iFieldName, final Object iUserObject) {
     try {
       jsonWriter.endObject(--settings.indentLevel, true);
       if (!(iUserObject instanceof ODocument)) {
@@ -126,42 +157,56 @@ public class OJSONFetchContext implements OFetchContext {
       }
     } catch (IOException e) {
       throw OException.wrapException(
-          new OFetchException("Error writing map field " + iFieldName + " of record " + iRootRecord.getIdentity()), e);
+          new OFetchException(
+              "Error writing map field " + iFieldName + " of record " + iRootRecord.getIdentity()),
+          e);
     }
   }
 
-  public void onBeforeDocument(final ODocument iRootRecord, final ODocument iDocument, final String iFieldName,
+  public void onBeforeDocument(
+      final ODocument iRootRecord,
+      final ODocument iDocument,
+      final String iFieldName,
       final Object iUserObject) {
     try {
       final String fieldName;
       if (!collectionStack.isEmpty() && collectionStack.peek().equals(iRootRecord))
         fieldName = null;
-      else
-        fieldName = iFieldName;
+      else fieldName = iFieldName;
       jsonWriter.beginObject(++settings.indentLevel, true, fieldName);
       writeSignature(jsonWriter, iDocument);
     } catch (IOException e) {
       throw OException.wrapException(
-          new OFetchException("Error writing link field " + iFieldName + " of record " + iRootRecord.getIdentity()), e);
+          new OFetchException(
+              "Error writing link field " + iFieldName + " of record " + iRootRecord.getIdentity()),
+          e);
     }
   }
 
-  public void onAfterDocument(final ODocument iRootRecord, final ODocument iDocument, final String iFieldName,
+  public void onAfterDocument(
+      final ODocument iRootRecord,
+      final ODocument iDocument,
+      final String iFieldName,
       final Object iUserObject) {
     try {
       jsonWriter.endObject(settings.indentLevel--, true);
     } catch (IOException e) {
       throw OException.wrapException(
-          new OFetchException("Error writing link field " + iFieldName + " of record " + iRootRecord.getIdentity()), e);
+          new OFetchException(
+              "Error writing link field " + iFieldName + " of record " + iRootRecord.getIdentity()),
+          e);
     }
   }
 
-  public void writeLinkedValue(final OIdentifiable iRecord, final String iFieldName) throws IOException {
+  public void writeLinkedValue(final OIdentifiable iRecord, final String iFieldName)
+      throws IOException {
     jsonWriter.writeValue(settings.indentLevel, true, OJSONWriter.encode(iRecord.getIdentity()));
   }
 
-  public void writeLinkedAttribute(final OIdentifiable iRecord, final String iFieldName) throws IOException {
-    final Object link = iRecord.getIdentity().isValid() ? OJSONWriter.encode(iRecord.getIdentity()) : null;
+  public void writeLinkedAttribute(final OIdentifiable iRecord, final String iFieldName)
+      throws IOException {
+    final Object link =
+        iRecord.getIdentity().isValid() ? OJSONWriter.encode(iRecord.getIdentity()) : null;
     jsonWriter.writeAttribute(settings.indentLevel, true, iFieldName, link);
   }
 
@@ -182,32 +227,41 @@ public class OJSONFetchContext implements OFetchContext {
       json.write("null");
       return;
     }
-
     boolean firstAttribute = true;
 
     if (settings.includeType) {
-      json.writeAttribute(firstAttribute ? settings.indentLevel : 1, firstAttribute, ODocumentHelper.ATTRIBUTE_TYPE,
+      json.writeAttribute(
+          firstAttribute ? settings.indentLevel : 1,
+          firstAttribute,
+          ODocumentHelper.ATTRIBUTE_TYPE,
           "" + (char) ORecordInternal.getRecordType(record));
-      if (settings.attribSameRow)
-        firstAttribute = false;
+      if (settings.attribSameRow) firstAttribute = false;
     }
     if (settings.includeId && record.getIdentity() != null && record.getIdentity().isValid()) {
-      json.writeAttribute(!firstAttribute ? settings.indentLevel : 1, firstAttribute, ODocumentHelper.ATTRIBUTE_RID,
+      json.writeAttribute(
+          !firstAttribute ? settings.indentLevel : 1,
+          firstAttribute,
+          ODocumentHelper.ATTRIBUTE_RID,
           record.getIdentity().toString());
-      if (settings.attribSameRow)
-        firstAttribute = false;
+      if (settings.attribSameRow) firstAttribute = false;
     }
     if (settings.includeVer) {
-      json.writeAttribute(firstAttribute ? settings.indentLevel : 1, firstAttribute, ODocumentHelper.ATTRIBUTE_VERSION,
+      json.writeAttribute(
+          firstAttribute ? settings.indentLevel : 1,
+          firstAttribute,
+          ODocumentHelper.ATTRIBUTE_VERSION,
           record.getVersion());
-      if (settings.attribSameRow)
-        firstAttribute = false;
+      if (settings.attribSameRow) firstAttribute = false;
     }
-    if (settings.includeClazz && record instanceof ODocument && ((ODocument) record).getClassName() != null) {
-      json.writeAttribute(firstAttribute ? settings.indentLevel : 1, firstAttribute, ODocumentHelper.ATTRIBUTE_CLASS,
+    if (settings.includeClazz
+        && record instanceof ODocument
+        && ((ODocument) record).getClassName() != null) {
+      json.writeAttribute(
+          firstAttribute ? settings.indentLevel : 1,
+          firstAttribute,
+          ODocumentHelper.ATTRIBUTE_CLASS,
           ((ODocument) record).getClassName());
-      if (settings.attribSameRow)
-        firstAttribute = false;
+      if (settings.attribSameRow) firstAttribute = false;
     }
   }
 
@@ -217,45 +271,31 @@ public class OJSONFetchContext implements OFetchContext {
 
   protected void manageTypes(final String iFieldName, final Object iFieldValue, OType fieldType) {
     if (settings.keepTypes) {
-      if (iFieldValue instanceof Long)
-        appendType(typesStack.peek(), iFieldName, 'l');
-      else if (iFieldValue instanceof OIdentifiable)
-        appendType(typesStack.peek(), iFieldName, 'x');
-      else if (iFieldValue instanceof Float)
-        appendType(typesStack.peek(), iFieldName, 'f');
-      else if (iFieldValue instanceof Short)
-        appendType(typesStack.peek(), iFieldName, 's');
-      else if (iFieldValue instanceof Double)
-        appendType(typesStack.peek(), iFieldName, 'd');
-      else if (iFieldValue instanceof Date)
-        appendType(typesStack.peek(), iFieldName, 't');
+      if (iFieldValue instanceof Long) appendType(typesStack.peek(), iFieldName, 'l');
+      else if (iFieldValue instanceof OIdentifiable) appendType(typesStack.peek(), iFieldName, 'x');
+      else if (iFieldValue instanceof Float) appendType(typesStack.peek(), iFieldName, 'f');
+      else if (iFieldValue instanceof Short) appendType(typesStack.peek(), iFieldName, 's');
+      else if (iFieldValue instanceof Double) appendType(typesStack.peek(), iFieldName, 'd');
+      else if (iFieldValue instanceof Date) appendType(typesStack.peek(), iFieldName, 't');
       else if (iFieldValue instanceof Byte || iFieldValue instanceof byte[])
         appendType(typesStack.peek(), iFieldName, 'b');
-      else if (iFieldValue instanceof BigDecimal)
-        appendType(typesStack.peek(), iFieldName, 'c');
+      else if (iFieldValue instanceof BigDecimal) appendType(typesStack.peek(), iFieldName, 'c');
       else if (iFieldValue instanceof ORecordLazySet)
         appendType(typesStack.peek(), iFieldName, 'n');
-      else if (iFieldValue instanceof Set<?>)
-        appendType(typesStack.peek(), iFieldName, 'e');
-      else if (iFieldValue instanceof ORidBag)
-        appendType(typesStack.peek(), iFieldName, 'g');
+      else if (iFieldValue instanceof Set<?>) appendType(typesStack.peek(), iFieldName, 'e');
+      else if (iFieldValue instanceof ORidBag) appendType(typesStack.peek(), iFieldName, 'g');
       else {
         OType t = fieldType;
-        if (t == null)
-          t = OType.getTypeByValue(iFieldValue);
-        if (t == OType.LINKLIST)
-          appendType(typesStack.peek(), iFieldName, 'z');
-        else if (t == OType.LINKMAP)
-          appendType(typesStack.peek(), iFieldName, 'm');
-        else if (t == OType.CUSTOM)
-          appendType(typesStack.peek(), iFieldName, 'u');
+        if (t == null) t = OType.getTypeByValue(iFieldValue);
+        if (t == OType.LINKLIST) appendType(typesStack.peek(), iFieldName, 'z');
+        else if (t == OType.LINKMAP) appendType(typesStack.peek(), iFieldName, 'm');
+        else if (t == OType.CUSTOM) appendType(typesStack.peek(), iFieldName, 'u');
       }
     }
   }
 
   private void appendType(final StringBuilder iBuffer, final String iFieldName, final char iType) {
-    if (iBuffer.length() > 0)
-      iBuffer.append(',');
+    if (iBuffer.length() > 0) iBuffer.append(',');
     iBuffer.append(iFieldName);
     iBuffer.append('=');
     iBuffer.append(iType);

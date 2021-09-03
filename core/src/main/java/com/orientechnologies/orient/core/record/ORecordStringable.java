@@ -20,7 +20,8 @@
 package com.orientechnologies.orient.core.record;
 
 /**
- * Generic record representation without a schema definition. The object can be reused across call to the database.
+ * Generic record representation without a schema definition. The object can be reused across call
+ * to the database.
  */
 public interface ORecordStringable {
 

@@ -28,13 +28,13 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
 /**
- * Task to request last database configuration across all the servers. This task is executed inside a distributed lock.
+ * Task to request last database configuration across all the servers. This task is executed inside
+ * a distributed lock.
  *
  * @author Luca Garulli (l.garulli--at---orientdb.com)
  */
@@ -43,20 +43,22 @@ public class ORequestDatabaseConfigurationTask extends OAbstractRemoteTask {
 
   private String databaseName;
 
-  public ORequestDatabaseConfigurationTask() {
-  }
+  public ORequestDatabaseConfigurationTask() {}
 
   public ORequestDatabaseConfigurationTask(final String databaseName) {
     this.databaseName = databaseName;
   }
 
   @Override
-  public Object execute(final ODistributedRequestId msgId, final OServer iServer, ODistributedServerManager iManager,
-      final ODatabaseDocumentInternal database) throws Exception {
+  public Object execute(
+      final ODistributedRequestId msgId,
+      final OServer iServer,
+      ODistributedServerManager iManager,
+      final ODatabaseDocumentInternal database)
+      throws Exception {
 
     final ODistributedConfiguration cfg = iManager.getDatabaseConfiguration(databaseName);
-    if (cfg != null)
-      return cfg.getDocument();
+    if (cfg != null) return cfg.getDocument();
 
     return null;
   }

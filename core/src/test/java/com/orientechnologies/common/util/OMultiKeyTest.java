@@ -1,27 +1,29 @@
 package com.orientechnologies.common.util;
 
-import org.junit.Test;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-
-import static org.junit.Assert.*;
+import org.junit.Test;
 
 public class OMultiKeyTest {
   @Test
   public void testEqualsDifferentSize() {
     final OMultiKey multiKey = new OMultiKey(Collections.singletonList("a"));
-    final OMultiKey anotherMultiKey = new OMultiKey(Arrays.asList(new String[] { "a", "b" }));
+    final OMultiKey anotherMultiKey = new OMultiKey(Arrays.asList(new String[] {"a", "b"}));
 
     assertFalse(multiKey.equals(anotherMultiKey));
   }
 
   @Test
   public void testEqualsDifferentItems() {
-    final OMultiKey multiKey = new OMultiKey(Arrays.asList(new String[] { "b", "c" }));
-    final OMultiKey anotherMultiKey = new OMultiKey(Arrays.asList(new String[] { "a", "b" }));
+    final OMultiKey multiKey = new OMultiKey(Arrays.asList(new String[] {"b", "c"}));
+    final OMultiKey anotherMultiKey = new OMultiKey(Arrays.asList(new String[] {"a", "b"}));
 
     assertFalse(multiKey.equals(anotherMultiKey));
   }
@@ -87,10 +89,10 @@ public class OMultiKeyTest {
   public void testTwoKeyMap() {
     final Map<OMultiKey, Object> multiKeyMap = new HashMap<OMultiKey, Object>();
 
-    final OMultiKey multiKey = new OMultiKey(Arrays.asList(new String[] { "a", "b" }));
+    final OMultiKey multiKey = new OMultiKey(Arrays.asList(new String[] {"a", "b"}));
     multiKeyMap.put(multiKey, new Object());
 
-    final OMultiKey anotherMultiKey = new OMultiKey(Arrays.asList(new String[] { "a", "b" }));
+    final OMultiKey anotherMultiKey = new OMultiKey(Arrays.asList(new String[] {"a", "b"}));
     final Object mapResult = multiKeyMap.get(anotherMultiKey);
 
     assertNotNull(mapResult);
@@ -100,13 +102,12 @@ public class OMultiKeyTest {
   public void testTwoKeyMapReordered() {
     final Map<OMultiKey, Object> multiKeyMap = new HashMap<OMultiKey, Object>();
 
-    final OMultiKey multiKey = new OMultiKey(Arrays.asList(new String[] { "a", "b" }));
+    final OMultiKey multiKey = new OMultiKey(Arrays.asList(new String[] {"a", "b"}));
     multiKeyMap.put(multiKey, new Object());
 
-    final OMultiKey anotherMultiKey = new OMultiKey(Arrays.asList(new String[] { "b", "a" }));
+    final OMultiKey anotherMultiKey = new OMultiKey(Arrays.asList(new String[] {"b", "a"}));
     final Object mapResult = multiKeyMap.get(anotherMultiKey);
 
     assertNotNull(mapResult);
   }
-
 }

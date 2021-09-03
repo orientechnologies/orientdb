@@ -15,7 +15,7 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 package com.orientechnologies.orient.test.database.speed;
 
@@ -24,14 +24,13 @@ import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-import org.testng.annotations.Test;
-
 import java.util.Date;
+import org.testng.annotations.Test;
 
 @Test
 public class LocalCreateVertexSpeedTest extends OrientMonoThreadTest {
   private OrientBaseGraph database;
-  private Date            date = new Date();
+  private Date date = new Date();
 
   public LocalCreateVertexSpeedTest() throws InstantiationException, IllegalAccessException {
     super(1000000);
@@ -49,8 +48,7 @@ public class LocalCreateVertexSpeedTest extends OrientMonoThreadTest {
     final OrientGraphFactory factory = new OrientGraphFactory(System.getProperty("url"));
     factory.setStandardElementConstraints(false);
 
-    if (factory.exists())
-      factory.drop();
+    if (factory.exists()) factory.drop();
 
     database = factory.getNoTx();
 
@@ -62,11 +60,20 @@ public class LocalCreateVertexSpeedTest extends OrientMonoThreadTest {
   @Override
   @Test(enabled = false)
   public void cycle() {
-    database.addVertex("class:Account", "id", data.getCyclesDone(), "name", "Luca", "surname", "Garulli", "birthDate", date, "salary",
+    database.addVertex(
+        "class:Account",
+        "id",
+        data.getCyclesDone(),
+        "name",
+        "Luca",
+        "surname",
+        "Garulli",
+        "birthDate",
+        date,
+        "salary",
         3000f + data.getCyclesDone());
 
-    if (data.getCyclesDone() == data.getCycles() - 1)
-      database.commit();
+    if (data.getCyclesDone() == data.getCycles() - 1) database.commit();
   }
 
   @Override
@@ -74,8 +81,7 @@ public class LocalCreateVertexSpeedTest extends OrientMonoThreadTest {
   public void deinit() {
     System.out.println(Orient.instance().getProfiler().dump());
 
-    if (database != null)
-      database.shutdown();
+    if (database != null) database.shutdown();
     super.deinit();
- }
+  }
 }

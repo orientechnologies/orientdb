@@ -11,23 +11,22 @@ import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.OServer;
-import org.junit.Test;
-
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.util.stream.Collectors;
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.util.stream.Collectors;
+import org.junit.Test;
 
 public class RidBagConversionIT {
 
   @Test
   public void testConversion()
-      throws IOException, InstantiationException, InvocationTargetException, NoSuchMethodException, MBeanRegistrationException,
-      IllegalAccessException, InstanceAlreadyExistsException, NotCompliantMBeanException, ClassNotFoundException,
-      MalformedObjectNameException {
+      throws IOException, InstantiationException, InvocationTargetException, NoSuchMethodException,
+          MBeanRegistrationException, IllegalAccessException, InstanceAlreadyExistsException,
+          NotCompliantMBeanException, ClassNotFoundException, MalformedObjectNameException {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(1);
     OrientDB orientDB = new OrientDB("embedded:target/server0/", OrientDBConfig.defaultConfig());
     orientDB.create("test", ODatabaseType.PLOCAL);
@@ -61,5 +60,4 @@ public class RidBagConversionIT {
     server0.shutdown();
     server1.shutdown();
   }
-
 }

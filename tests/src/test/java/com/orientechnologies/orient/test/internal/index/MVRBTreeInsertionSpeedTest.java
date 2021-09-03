@@ -7,9 +7,8 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndexUnique;
 import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import org.testng.annotations.Test;
-
 import java.util.Random;
+import org.testng.annotations.Test;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -18,7 +17,7 @@ import java.util.Random;
  */
 public class MVRBTreeInsertionSpeedTest extends SpeedTestMonoThread {
   private ODatabaseDocumentTx databaseDocumentTx;
-  private OIndexUnique        index;
+  private OIndexUnique index;
   private Random random = new Random();
 
   public MVRBTreeInsertionSpeedTest() {
@@ -32,10 +31,10 @@ public class MVRBTreeInsertionSpeedTest extends SpeedTestMonoThread {
     OGlobalConfiguration.INDEX_MANUAL_LAZY_UPDATES.setValue(10000);
 
     String buildDirectory = System.getProperty("buildDirectory", ".");
-    if (buildDirectory == null)
-      buildDirectory = ".";
+    if (buildDirectory == null) buildDirectory = ".";
 
-    databaseDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDirectory + "/uniqueHashIndexTest");
+    databaseDocumentTx =
+        new ODatabaseDocumentTx("plocal:" + buildDirectory + "/uniqueHashIndexTest");
     if (databaseDocumentTx.exists()) {
       databaseDocumentTx.open("admin", "admin");
       databaseDocumentTx.drop();
@@ -43,8 +42,19 @@ public class MVRBTreeInsertionSpeedTest extends SpeedTestMonoThread {
 
     databaseDocumentTx.create();
 
-    index = (OIndexUnique) databaseDocumentTx.getMetadata().getIndexManagerInternal()
-        .createIndex(databaseDocumentTx, "mvrbtreeIndexTest", "UNIQUE", new OSimpleKeyIndexDefinition(OType.STRING), new int[0], null, null);
+    index =
+        (OIndexUnique)
+            databaseDocumentTx
+                .getMetadata()
+                .getIndexManagerInternal()
+                .createIndex(
+                    databaseDocumentTx,
+                    "mvrbtreeIndexTest",
+                    "UNIQUE",
+                    new OSimpleKeyIndexDefinition(OType.STRING),
+                    new int[0],
+                    null,
+                    null);
   }
 
   @Override

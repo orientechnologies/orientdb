@@ -1,25 +1,27 @@
 package com.tinkerpop.blueprints.impls.orient;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.tinkerpop.blueprints.*;
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Graph;
+import com.tinkerpop.blueprints.GraphQueryTestSuite;
+import com.tinkerpop.blueprints.IndexableGraphTestSuite;
+import com.tinkerpop.blueprints.KeyIndexableGraphTestSuite;
+import com.tinkerpop.blueprints.TestSuite;
+import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.VertexQueryTestSuite;
 import com.tinkerpop.blueprints.impls.GraphTest;
 import com.tinkerpop.blueprints.util.io.gml.GMLReaderTestSuite;
 import com.tinkerpop.blueprints.util.io.graphml.GraphMLReaderTestSuite;
 import com.tinkerpop.blueprints.util.io.graphson.GraphSONReaderTestSuite;
+import java.io.File;
+import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.io.File;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.Map;
-
-/**
- * @author Marko A. Rodriguez (http://markorodriguez.com)
- */
+/** @author Marko A. Rodriguez (http://markorodriguez.com) */
 @RunWith(JUnit4.class)
 public class OrientGraphNoTxTest extends GraphTest {
   private Map<String, OrientGraphNoTx> currentGraphs = new HashMap<String, OrientGraphNoTx>();
@@ -80,13 +82,13 @@ public class OrientGraphNoTxTest extends GraphTest {
   }
 
   public Graph generateGraph(final String graphDirectoryName) {
-    final String url = OrientGraphTest.getStorageType() + ":" + getWorkingDirectory() + "/" + graphDirectoryName;
+    final String url =
+        OrientGraphTest.getStorageType() + ":" + getWorkingDirectory() + "/" + graphDirectoryName;
 
     OrientGraphNoTx graph = currentGraphs.get(url);
 
     if (graph != null) {
-      if (graph.isClosed())
-        currentGraphs.remove(url);
+      if (graph.isClosed()) currentGraphs.remove(url);
       else {
         ODatabaseRecordThreadLocal.instance().set(graph.getRawGraph());
         return graph;
@@ -124,8 +126,7 @@ public class OrientGraphNoTxTest extends GraphTest {
     final String url = OrientGraphTest.getStorageType() + ":" + graphDirectory;
     try {
       OrientGraphNoTx graph = currentGraphs.remove(url);
-      if (graph == null || graph.isClosed())
-        graph = new OrientGraphNoTx(url);
+      if (graph == null || graph.isClosed()) graph = new OrientGraphNoTx(url);
 
       graph.drop();
     } catch (Exception e) {
@@ -157,7 +158,6 @@ public class OrientGraphNoTxTest extends GraphTest {
       dropGraph("graph");
     }
 
-
     graph = generateGraph("graph");
 
     try {
@@ -170,8 +170,5 @@ public class OrientGraphNoTxTest extends GraphTest {
     } finally {
       dropGraph("graph");
     }
-
   }
-
-
 }

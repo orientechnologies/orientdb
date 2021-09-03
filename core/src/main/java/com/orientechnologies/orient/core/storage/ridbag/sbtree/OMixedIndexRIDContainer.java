@@ -1,32 +1,32 @@
 package com.orientechnologies.orient.core.storage.ridbag.sbtree;
 
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OIndexEngineException;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
-
-import java.io.IOException;
-import java.util.*;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class OMixedIndexRIDContainer implements Set<OIdentifiable> {
   private static final String INDEX_FILE_EXTENSION = ".irs";
 
-  private final long                     fileId;
-  private final Set<ORID>                embeddedSet;
-  private       OIndexRIDContainerSBTree tree         = null;
-  private final int                      topThreshold = OGlobalConfiguration.INDEX_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD
-      .getValueAsInteger();
+  private final long fileId;
+  private final Set<ORID> embeddedSet;
+  private OIndexRIDContainerSBTree tree = null;
+  private final int topThreshold =
+      OGlobalConfiguration.INDEX_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
 
-  /**
-   * Should be called inside of lock to ensure uniqueness of entity on disk !!!
-   */
+  /** Should be called inside of lock to ensure uniqueness of entity on disk !!! */
   public OMixedIndexRIDContainer(String name, AtomicLong bonsayFileId) {
     long gotFileId = bonsayFileId.get();
     if (gotFileId == 0) {
@@ -38,46 +38,32 @@ public class OMixedIndexRIDContainer implements Set<OIdentifiable> {
     embeddedSet = new HashSet<>();
   }
 
-  public OMixedIndexRIDContainer(long fileId, Set<ORID> embeddedSet, OIndexRIDContainerSBTree tree) {
+  public OMixedIndexRIDContainer(
+      long fileId, Set<ORID> embeddedSet, OIndexRIDContainerSBTree tree) {
     this.fileId = fileId;
     this.embeddedSet = embeddedSet;
     this.tree = tree;
   }
 
   private static long resolveFileIdByName(String fileName) {
-    final OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.instance().get().getStorage()
-        .getUnderlying();
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation;
-    try {
-      atomicOperation = storage.getAtomicOperationsManager().startAtomicOperation(fileName, true);
-    } catch (IOException e) {
-      throw OException.wrapException(new OIndexEngineException("Error creation of sbtree with name " + fileName, fileName), e);
-    }
+    final OAbstractPaginatedStorage storage =
+        (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.instance().get().getStorage();
+    final OAtomicOperationsManager atomicOperationsManager = storage.getAtomicOperationsManager();
+    final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
+    Objects.requireNonNull(atomicOperation);
 
-    try {
-      long fileId;
-
-      if (atomicOperation.isFileExists(fileName)) {
-        fileId = atomicOperation.loadFile(fileName);
-      } else {
-        fileId = atomicOperation.addFile(fileName);
-      }
-
-      return fileId;
-    } catch (IOException e) {
-      rollback = true;
-      throw OException.wrapException(new OIndexEngineException("Error creation of sbtree with name " + fileName, fileName), e);
-    } catch (RuntimeException e) {
-      rollback = true;
-      throw e;
-    } finally {
-      try {
-        storage.getAtomicOperationsManager().endAtomicOperation(rollback);
-      } catch (IOException ioe) {
-        OLogManager.instance().error(OMixedIndexRIDContainer.class, "Error of rollback of atomic operation", ioe);
-      }
-    }
+    return atomicOperationsManager.calculateInsideComponentOperation(
+        atomicOperation,
+        fileName,
+        (operation) -> {
+          final long fileId;
+          if (atomicOperation.isFileExists(fileName)) {
+            fileId = atomicOperation.loadFile(fileName);
+          } else {
+            fileId = atomicOperation.addFile(fileName);
+          }
+          return fileId;
+        });
   }
 
   public long getFileId() {
@@ -180,8 +166,10 @@ public class OMixedIndexRIDContainer implements Set<OIdentifiable> {
     final T[] treeArray = tree.toArray(a);
 
     @SuppressWarnings("unchecked")
-    final T[] result = (T[]) java.lang.reflect.Array
-        .newInstance(a.getClass().getComponentType(), embeddedArray.length + treeArray.length);
+    final T[] result =
+        (T[])
+            java.lang.reflect.Array.newInstance(
+                a.getClass().getComponentType(), embeddedArray.length + treeArray.length);
 
     System.arraycopy(embeddedArray, 0, result, 0, embeddedArray.length);
     System.arraycopy(treeArray, 0, result, embeddedArray.length, treeArray.length);
@@ -201,7 +189,7 @@ public class OMixedIndexRIDContainer implements Set<OIdentifiable> {
 
     if (tree == null) {
       final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
-      tree = new OIndexRIDContainerSBTree(fileId, (OAbstractPaginatedStorage) db.getStorage().getUnderlying());
+      tree = new OIndexRIDContainerSBTree(fileId, (OAbstractPaginatedStorage) db.getStorage());
     }
 
     return tree.add(oIdentifiable);
@@ -219,7 +207,7 @@ public class OMixedIndexRIDContainer implements Set<OIdentifiable> {
     boolean treeWasCreated = false;
     if (tree == null) {
       final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
-      tree = new OIndexRIDContainerSBTree(fileId, (OAbstractPaginatedStorage) db.getStorage().getUnderlying());
+      tree = new OIndexRIDContainerSBTree(fileId, (OAbstractPaginatedStorage) db.getStorage());
       treeWasCreated = true;
     }
 
@@ -277,7 +265,7 @@ public class OMixedIndexRIDContainer implements Set<OIdentifiable> {
     if (c.size() > sizeDiff) {
       if (tree == null) {
         final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
-        tree = new OIndexRIDContainerSBTree(fileId, (OAbstractPaginatedStorage) db.getStorage().getUnderlying());
+        tree = new OIndexRIDContainerSBTree(fileId, (OAbstractPaginatedStorage) db.getStorage());
       }
 
       while (iterator.hasNext()) {
@@ -325,7 +313,7 @@ public class OMixedIndexRIDContainer implements Set<OIdentifiable> {
       tree = null;
     } else if (fileId > 0) {
       final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
-      tree = new OIndexRIDContainerSBTree(fileId, (OAbstractPaginatedStorage) db.getStorage().getUnderlying());
+      tree = new OIndexRIDContainerSBTree(fileId, (OAbstractPaginatedStorage) db.getStorage());
       tree.delete();
     }
   }

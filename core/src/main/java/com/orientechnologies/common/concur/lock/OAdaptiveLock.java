@@ -22,7 +22,6 @@ package com.orientechnologies.common.concur.lock;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
-
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
@@ -33,17 +32,16 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * Adaptive class to handle shared resources. It's configurable specifying if it's running in a concurrent environment and allow o
- * specify a maximum timeout to avoid deadlocks.
- * 
+ * Adaptive class to handle shared resources. It's configurable specifying if it's running in a
+ * concurrent environment and allow o specify a maximum timeout to avoid deadlocks.
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public class OAdaptiveLock extends OAbstractLock {
   private final ReentrantLock lock = new ReentrantLock();
-  private final boolean       concurrent;
-  private final int           timeout;
-  private final boolean       ignoreThreadInterruption;
+  private final boolean concurrent;
+  private final int timeout;
+  private final boolean ignoreThreadInterruption;
 
   public OAdaptiveLock() {
     this.concurrent = true;
@@ -63,7 +61,8 @@ public class OAdaptiveLock extends OAbstractLock {
     this.ignoreThreadInterruption = false;
   }
 
-  public OAdaptiveLock(final boolean iConcurrent, final int iTimeout, boolean ignoreThreadInterruption) {
+  public OAdaptiveLock(
+      final boolean iConcurrent, final int iTimeout, boolean ignoreThreadInterruption) {
     this.concurrent = iConcurrent;
     this.timeout = iTimeout;
     this.ignoreThreadInterruption = ignoreThreadInterruption;
@@ -90,14 +89,18 @@ public class OAdaptiveLock extends OAbstractLock {
             }
           }
 
-          throw OException.wrapException(new OLockException("Thread interrupted while waiting for resource of class '" + getClass()
-              + "' with timeout=" + timeout), e);
+          throw OException.wrapException(
+              new OLockException(
+                  "Thread interrupted while waiting for resource of class '"
+                      + getClass()
+                      + "' with timeout="
+                      + timeout),
+              e);
         }
 
         throwTimeoutException(lock);
 
-      } else
-        lock.lock();
+      } else lock.lock();
   }
 
   public boolean tryAcquireLock() {
@@ -110,25 +113,27 @@ public class OAdaptiveLock extends OAbstractLock {
         try {
           return lock.tryLock(iTimeout, iUnit);
         } catch (InterruptedException e) {
-          throw OException.wrapException(new OLockException("Thread interrupted while waiting for resource of class '" + getClass()
-              + "' with timeout=" + timeout), e);
+          throw OException.wrapException(
+              new OLockException(
+                  "Thread interrupted while waiting for resource of class '"
+                      + getClass()
+                      + "' with timeout="
+                      + timeout),
+              e);
         }
-      else
-        return lock.tryLock();
+      else return lock.tryLock();
 
     return true;
   }
 
   public void unlock() {
-    if (concurrent)
-      lock.unlock();
+    if (concurrent) lock.unlock();
   }
 
   @Override
   public void close() {
     try {
-      if (lock.isLocked())
-        lock.unlock();
+      if (lock.isLocked()) lock.unlock();
     } catch (Exception e) {
       OLogManager.instance().debug(this, "Cannot unlock a lock", e);
     }
@@ -137,8 +142,12 @@ public class OAdaptiveLock extends OAbstractLock {
   private void throwTimeoutException(Lock lock) {
     final String owner = extractLockOwnerStackTrace(lock);
 
-    throw new OTimeoutException("Timeout on acquiring exclusive lock against resource of class: " + getClass() + " with timeout="
-        + timeout + (owner != null ? "\n" + owner : ""));
+    throw new OTimeoutException(
+        "Timeout on acquiring exclusive lock against resource of class: "
+            + getClass()
+            + " with timeout="
+            + timeout
+            + (owner != null ? "\n" + owner : ""));
   }
 
   private String extractLockOwnerStackTrace(Lock lock) {
@@ -151,8 +160,7 @@ public class OAdaptiveLock extends OAbstractLock {
       getOwner.setAccessible(true);
 
       final Thread owner = (Thread) getOwner.invoke(sync);
-      if (owner == null)
-        return null;
+      if (owner == null) return null;
 
       StringWriter stringWriter = new StringWriter();
       PrintWriter printWriter = new PrintWriter(stringWriter);
@@ -160,15 +168,17 @@ public class OAdaptiveLock extends OAbstractLock {
       printWriter.append("Owner thread : ").append(owner.toString()).append("\n");
 
       StackTraceElement[] stackTrace = owner.getStackTrace();
-      for (StackTraceElement traceElement : stackTrace)
-        printWriter.println("\tat " + traceElement);
+      for (StackTraceElement traceElement : stackTrace) printWriter.println("\tat " + traceElement);
 
       printWriter.flush();
       return stringWriter.toString();
-    } catch (RuntimeException | NoSuchFieldException | IllegalAccessException | InvocationTargetException | NoSuchMethodException ignore) {
+    } catch (RuntimeException
+        | NoSuchFieldException
+        | IllegalAccessException
+        | InvocationTargetException
+        | NoSuchMethodException ignore) {
       return null;
     }
-
   }
 
   public boolean isConcurrent() {

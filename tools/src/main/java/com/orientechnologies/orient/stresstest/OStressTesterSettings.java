@@ -27,19 +27,20 @@ import com.orientechnologies.orient.client.remote.OStorageRemote;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OStressTesterSettings {
-  public String                             dbName;
-  public OStressTester.OMode                mode;
-  public String                             rootPassword;
-  public String                             resultOutputFile;
-  public String                             plocalPath;
-  public int                                operationsPerTransaction;
-  public int                                delay;
-  public int                                concurrencyLevel;
-  public String                             remoteIp;
-  public boolean                            haMetrics;
-  public String                             workloadCfg;
-  public boolean                            keepDatabaseAfterTest;
-  public int                                remotePort    = 2424;
-  public boolean                            checkDatabase = false;
-  public OStorageRemote.CONNECTION_STRATEGY loadBalancing = OStorageRemote.CONNECTION_STRATEGY.ROUND_ROBIN_REQUEST;
+  public String dbName;
+  public OStressTester.OMode mode;
+  public String rootPassword;
+  public String resultOutputFile;
+  public String plocalPath;
+  public int operationsPerTransaction;
+  public int delay;
+  public int concurrencyLevel;
+  public String remoteIp;
+  public boolean haMetrics;
+  public String workloadCfg;
+  public boolean keepDatabaseAfterTest;
+  public int remotePort = 2424;
+  public boolean checkDatabase = false;
+  public OStorageRemote.CONNECTION_STRATEGY loadBalancing =
+      OStorageRemote.CONNECTION_STRATEGY.ROUND_ROBIN_REQUEST;
 }

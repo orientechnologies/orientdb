@@ -20,14 +20,12 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.parser.OMathExpression.Operator;
+import java.math.BigDecimal;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.math.BigDecimal;
-
-/**
- * Created by luigidellaquila on 02/07/15.
- */
+/** Created by luigidellaquila on 02/07/15. */
 public class OMathExpressionTest {
 
   @Test
@@ -35,9 +33,14 @@ public class OMathExpressionTest {
 
     OMathExpression expr = new OMathExpression(-1);
 
-    OMathExpression.Operator[] basicOps = new OMathExpression.Operator[] { OMathExpression.Operator.PLUS,
-        OMathExpression.Operator.MINUS, OMathExpression.Operator.STAR, OMathExpression.Operator.SLASH,
-        OMathExpression.Operator.REM };
+    OMathExpression.Operator[] basicOps =
+        new OMathExpression.Operator[] {
+          OMathExpression.Operator.PLUS,
+          OMathExpression.Operator.MINUS,
+          OMathExpression.Operator.STAR,
+          OMathExpression.Operator.SLASH,
+          OMathExpression.Operator.REM
+        };
 
     for (OMathExpression.Operator op : basicOps) {
       Assert.assertEquals(op.apply(1, 1).getClass(), Integer.class);
@@ -60,8 +63,10 @@ public class OMathExpressionTest {
       Assert.assertEquals(op.apply(1, BigDecimal.ONE).getClass(), BigDecimal.class);
     }
 
-    Assert.assertEquals(OMathExpression.Operator.PLUS.apply(Integer.MAX_VALUE, 1).getClass(), Long.class);
-    Assert.assertEquals(OMathExpression.Operator.MINUS.apply(Integer.MIN_VALUE, 1).getClass(), Long.class);
+    Assert.assertEquals(
+        OMathExpression.Operator.PLUS.apply(Integer.MAX_VALUE, 1).getClass(), Long.class);
+    Assert.assertEquals(
+        OMathExpression.Operator.MINUS.apply(Integer.MIN_VALUE, 1).getClass(), Long.class);
   }
 
   @Test
@@ -82,7 +87,6 @@ public class OMathExpressionTest {
     Object result = exp.execute((OResult) null, null);
     Assert.assertTrue(result instanceof Integer);
     Assert.assertEquals(208, result);
-
   }
 
   @Test
@@ -183,6 +187,16 @@ public class OMathExpressionTest {
     return exp;
   }
 
+  private OMathExpression str(String value) {
+    final OBaseExpression exp = new OBaseExpression(-1);
+    exp.string = "'" + value + "'";
+    return exp;
+  }
+
+  private OMathExpression nullExpr() {
+    return new OBaseExpression(-1);
+  }
+
   private OMathExpression list(Number... values) {
     OBaseExpression exp = new OBaseExpression(-1);
     exp.identifier = new OBaseIdentifier(-1);
@@ -198,4 +212,24 @@ public class OMathExpressionTest {
     return exp;
   }
 
+  @Test
+  public void testNullCoalescing() {
+    testNullCoalescingGeneric(integer(20), integer(15), 20);
+    testNullCoalescingGeneric(nullExpr(), integer(14), 14);
+    testNullCoalescingGeneric(str("32"), nullExpr(), "32");
+    testNullCoalescingGeneric(str("2"), integer(5), "2");
+    testNullCoalescingGeneric(nullExpr(), str("3"), "3");
+  }
+
+  private void testNullCoalescingGeneric(
+      OMathExpression left, OMathExpression right, Object expected) {
+    OMathExpression exp = new OMathExpression(-1);
+    exp.childExpressions.add(left);
+    exp.operators.add(Operator.NULL_COALESCING);
+    exp.childExpressions.add(right);
+
+    Object result = exp.execute((OResult) null, null);
+    //    Assert.assertTrue(result instanceof Integer);
+    Assert.assertEquals(expected, result);
+  }
 }

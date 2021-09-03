@@ -28,8 +28,15 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerRID;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-
-import java.util.*;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Stream;
 
 /**
@@ -38,9 +45,27 @@ import java.util.stream.Stream;
  * @author Luca Garulli
  */
 public abstract class OIndexOneValue extends OIndexAbstract {
-  public OIndexOneValue(String name, final String type, String algorithm, int version, OAbstractPaginatedStorage storage,
-      String valueContainerAlgorithm, ODocument metadata, final int binaryFormatVersion) {
-    super(name, type, algorithm, valueContainerAlgorithm, metadata, version, storage, binaryFormatVersion);
+
+  public OIndexOneValue(
+      String name,
+      final String type,
+      String algorithm,
+      int version,
+      OAbstractPaginatedStorage storage,
+      String valueContainerAlgorithm,
+      ODocument metadata,
+      final int binaryFormatVersion,
+      OAtomicOperationsManager atomicOperationsManager) {
+    super(
+        name,
+        type,
+        algorithm,
+        valueContainerAlgorithm,
+        metadata,
+        version,
+        storage,
+        binaryFormatVersion,
+        atomicOperationsManager);
   }
 
   @Deprecated
@@ -67,8 +92,12 @@ public abstract class OIndexOneValue extends OIndexAbstract {
         try {
           final Stream<ORID> stream;
           if (apiVersion == 0) {
+            final ORID rid = (ORID) storage.getIndexValue(indexId, key);
+            if (rid == null) {
+              return Stream.empty();
+            }
             //noinspection resource
-            stream = Stream.of((ORID) storage.getIndexValue(indexId, key));
+            stream = Stream.of(rid);
           } else if (apiVersion == 1) {
             //noinspection resource
             stream = storage.getIndexValues(indexId, key);
@@ -84,10 +113,21 @@ public abstract class OIndexOneValue extends OIndexAbstract {
     }
   }
 
-  public OIndexOneValue create(final String name, final OIndexDefinition indexDefinition, final String clusterIndexName,
-      final Set<String> clustersToIndex, boolean rebuild, final OProgressListener progressListener) {
-    return (OIndexOneValue) super
-        .create(indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener, determineValueSerializer());
+  public OIndexOneValue create(
+      final String name,
+      final OIndexDefinition indexDefinition,
+      final String clusterIndexName,
+      final Set<String> clustersToIndex,
+      boolean rebuild,
+      final OProgressListener progressListener) {
+    return (OIndexOneValue)
+        super.create(
+            indexDefinition,
+            clusterIndexName,
+            clustersToIndex,
+            rebuild,
+            progressListener,
+            determineValueSerializer());
   }
 
   @Override
@@ -95,43 +135,52 @@ public abstract class OIndexOneValue extends OIndexAbstract {
     final List<Object> sortedKeys = new ArrayList<>(keys);
     final Comparator<Object> comparator;
 
-    if (ascSortOrder)
-      comparator = ODefaultComparator.INSTANCE;
-    else
-      comparator = Collections.reverseOrder(ODefaultComparator.INSTANCE);
+    if (ascSortOrder) comparator = ODefaultComparator.INSTANCE;
+    else comparator = Collections.reverseOrder(ODefaultComparator.INSTANCE);
 
     sortedKeys.sort(comparator);
 
     //noinspection resource
-    return IndexStreamSecurityDecorator.decorateStream(this, sortedKeys.stream().flatMap((key) -> {
-      final Object collatedKey = getCollatingValue(key);
+    return IndexStreamSecurityDecorator.decorateStream(
+        this,
+        sortedKeys.stream()
+            .flatMap(
+                (key) -> {
+                  final Object collatedKey = getCollatingValue(key);
 
-      acquireSharedLock();
-      try {
-        while (true) {
-          try {
-            if (apiVersion == 0) {
-              return Stream.of(Optional.ofNullable((ORID) storage.getIndexValue(indexId, collatedKey))
-                  .map((rid) -> new ORawPair<>(collatedKey, rid)).orElse(null));
-            } else if (apiVersion == 1) {
-              //noinspection resource
-              return storage.getIndexValues(indexId, collatedKey).map((rid) -> new ORawPair<>(collatedKey, rid));
-            } else {
-              throw new IllegalStateException("Invalid version of index API - " + apiVersion);
-            }
-          } catch (OInvalidIndexEngineIdException ignore) {
-            doReloadIndexEngine();
-          }
-        }
-      } finally {
-        releaseSharedLock();
-      }
-    }).filter(Objects::nonNull));
+                  acquireSharedLock();
+                  try {
+                    while (true) {
+                      try {
+                        if (apiVersion == 0) {
+                          final ORID rid = (ORID) storage.getIndexValue(indexId, collatedKey);
+                          if (rid == null) {
+                            return Stream.empty();
+                          }
+                          return Stream.of(new ORawPair<>(collatedKey, rid));
+                        } else if (apiVersion == 1) {
+                          //noinspection resource
+                          return storage
+                              .getIndexValues(indexId, collatedKey)
+                              .map((rid) -> new ORawPair<>(collatedKey, rid));
+                        } else {
+                          throw new IllegalStateException(
+                              "Invalid version of index API - " + apiVersion);
+                        }
+                      } catch (OInvalidIndexEngineIdException ignore) {
+                        doReloadIndexEngine();
+                      }
+                    }
+                  } finally {
+                    releaseSharedLock();
+                  }
+                })
+            .filter(Objects::nonNull));
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> streamEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey,
-      boolean toInclusive, boolean ascOrder) {
+  public Stream<ORawPair<Object, ORID>> streamEntriesBetween(
+      Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive, boolean ascOrder) {
     fromKey = getCollatingValue(fromKey);
     toKey = getCollatingValue(toKey);
 
@@ -139,8 +188,10 @@ public abstract class OIndexOneValue extends OIndexAbstract {
     try {
       while (true)
         try {
-          return IndexStreamSecurityDecorator.decorateStream(this,
-              storage.iterateIndexEntriesBetween(indexId, fromKey, fromInclusive, toKey, toInclusive, ascOrder, null));
+          return IndexStreamSecurityDecorator.decorateStream(
+              this,
+              storage.iterateIndexEntriesBetween(
+                  indexId, fromKey, fromInclusive, toKey, toInclusive, ascOrder, null));
         } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
@@ -150,14 +201,16 @@ public abstract class OIndexOneValue extends OIndexAbstract {
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> streamEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder) {
+  public Stream<ORawPair<Object, ORID>> streamEntriesMajor(
+      Object fromKey, boolean fromInclusive, boolean ascOrder) {
     fromKey = getCollatingValue(fromKey);
     acquireSharedLock();
     try {
       while (true)
         try {
-          return IndexStreamSecurityDecorator
-              .decorateStream(this, storage.iterateIndexEntriesMajor(indexId, fromKey, fromInclusive, ascOrder, null));
+          return IndexStreamSecurityDecorator.decorateStream(
+              this,
+              storage.iterateIndexEntriesMajor(indexId, fromKey, fromInclusive, ascOrder, null));
         } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
@@ -167,14 +220,15 @@ public abstract class OIndexOneValue extends OIndexAbstract {
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> streamEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder) {
+  public Stream<ORawPair<Object, ORID>> streamEntriesMinor(
+      Object toKey, boolean toInclusive, boolean ascOrder) {
     toKey = getCollatingValue(toKey);
     acquireSharedLock();
     try {
       while (true) {
         try {
-          return IndexStreamSecurityDecorator
-              .decorateStream(this, storage.iterateIndexEntriesMinor(indexId, toKey, toInclusive, ascOrder, null));
+          return IndexStreamSecurityDecorator.decorateStream(
+              this, storage.iterateIndexEntriesMinor(indexId, toKey, toInclusive, ascOrder, null));
         } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
@@ -206,7 +260,8 @@ public abstract class OIndexOneValue extends OIndexAbstract {
     try {
       while (true) {
         try {
-          return IndexStreamSecurityDecorator.decorateStream(this, storage.getIndexStream(indexId, null));
+          return IndexStreamSecurityDecorator.decorateStream(
+              this, storage.getIndexStream(indexId, null));
         } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
@@ -222,7 +277,8 @@ public abstract class OIndexOneValue extends OIndexAbstract {
     try {
       while (true) {
         try {
-          return IndexStreamSecurityDecorator.decorateStream(this, storage.getIndexDescStream(indexId, null));
+          return IndexStreamSecurityDecorator.decorateStream(
+              this, storage.getIndexDescStream(indexId, null));
         } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }

@@ -22,17 +22,16 @@ package com.orientechnologies.orient.core.sql;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import java.util.List;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.List;
-
 public class OCommandExecutorSQLCreateLinkTest {
   static ODatabaseDocumentTx db;
   private static String DB_STORAGE = "memory";
-  private static String DB_NAME    = "OCommandExecutorSQLCreateLinkTest";
+  private static String DB_NAME = "OCommandExecutorSQLCreateLinkTest";
 
   @BeforeClass
   public static void beforeClass() throws Exception {
@@ -59,9 +58,13 @@ public class OCommandExecutorSQLCreateLinkTest {
     db.command(new OCommandSQL("insert into Basic2 set pk = 'pkb2_1'")).execute();
     db.command(new OCommandSQL("insert into Basic2 set pk = 'pkb2_2'")).execute();
 
-    db.command(new OCommandSQL("CREATE LINK theLink type link FROM Basic1.fk TO Basic2.pk ")).execute();
+    db.command(new OCommandSQL("CREATE LINK theLink type link FROM Basic1.fk TO Basic2.pk "))
+        .execute();
 
-    List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select pk, theLink.pk as other from Basic1 order by pk"));
+    List<ODocument> result =
+        db.query(
+            new OSQLSynchQuery<ODocument>(
+                "select pk, theLink.pk as other from Basic1 order by pk"));
     Assert.assertEquals(result.size(), 2);
 
     Object otherKey = result.get(0).field("other");
@@ -85,9 +88,15 @@ public class OCommandExecutorSQLCreateLinkTest {
     db.command(new OCommandSQL("insert into Inverse2 set pk = 'pkb2_1'")).execute();
     db.command(new OCommandSQL("insert into Inverse2 set pk = 'pkb2_2'")).execute();
 
-    db.command(new OCommandSQL("CREATE LINK theLink TYPE LINKSET FROM Inverse1.fk TO Inverse2.pk INVERSE")).execute();
+    db.command(
+            new OCommandSQL(
+                "CREATE LINK theLink TYPE LINKSET FROM Inverse1.fk TO Inverse2.pk INVERSE"))
+        .execute();
 
-    List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select pk, theLink.pk as other from Inverse2 order by pk"));
+    List<ODocument> result =
+        db.query(
+            new OSQLSynchQuery<ODocument>(
+                "select pk, theLink.pk as other from Inverse2 order by pk"));
     Assert.assertEquals(result.size(), 2);
 
     Object otherKeys = result.get(0).field("other");

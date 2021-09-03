@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.core.record.impl;
 
+import static org.junit.Assert.assertEquals;
+
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
@@ -7,10 +9,6 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import org.junit.After;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
@@ -18,9 +16,9 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import org.junit.After;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 /**
  * Tests that {@link ODocument} is serializable.
@@ -31,8 +29,8 @@ import static org.junit.Assert.assertNotNull;
 public class ODocumentSerializationPersistentTest {
 
   private static ODatabaseDocumentTx db;
-  private static ORID                docId;
-  private static ORID                linkedId;
+  private static ORID docId;
+  private static ORID linkedId;
 
   @BeforeClass
   public static void setUp() throws Exception {
@@ -54,9 +52,7 @@ public class ODocumentSerializationPersistentTest {
   }
 
   @After
-  public void tearDown() throws Exception {
-
-  }
+  public void tearDown() throws Exception {}
 
   @Test
   public void testSerialization() throws Exception {
@@ -68,7 +64,8 @@ public class ODocumentSerializationPersistentTest {
     out.writeObject(doc);
     db.close();
 
-    final ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(byteArrayOutputStream.toByteArray()));
+    final ObjectInputStream in =
+        new ObjectInputStream(new ByteArrayInputStream(byteArrayOutputStream.toByteArray()));
     final ODocument loadedDoc = (ODocument) in.readObject();
 
     assertEquals(loadedDoc.getIdentity(), docId);
@@ -103,6 +100,5 @@ public class ODocumentSerializationPersistentTest {
 
     byte[] res = db.getSerializer().toStream(doc);
     db.getSerializer().fromStream(res, new ODocument(), new String[] {});
-
   }
 }

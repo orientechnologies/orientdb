@@ -21,12 +21,10 @@ package com.orientechnologies.orient.etl.extractor;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLAbstractComponent;
 
-/**
- * ETL abstract extractor.
- */
+/** ETL abstract extractor. */
 public abstract class OETLAbstractExtractor extends OETLAbstractComponent implements OETLExtractor {
   protected long current = 0;
-  protected long total   = -1;
+  protected long total = -1;
 
   @Override
   public long getProgress() {
@@ -47,5 +45,4 @@ public abstract class OETLAbstractExtractor extends OETLAbstractComponent implem
   public ODocument getConfiguration() {
     return new ODocument().fromJSON("{parameters:[],output:'String'}");
   }
-
 }

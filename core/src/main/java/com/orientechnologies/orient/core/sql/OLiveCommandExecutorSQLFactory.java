@@ -21,7 +21,6 @@ package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -29,12 +28,13 @@ import java.util.Set;
 
 /**
  * Live Query command operator executor factory.
- * 
+ *
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
 public class OLiveCommandExecutorSQLFactory implements OCommandExecutorSQLFactory {
 
-  private static Map<String, Class<? extends OCommandExecutorSQLAbstract>> COMMANDS = new HashMap<String, Class<? extends OCommandExecutorSQLAbstract>>();
+  private static Map<String, Class<? extends OCommandExecutorSQLAbstract>> COMMANDS =
+      new HashMap<String, Class<? extends OCommandExecutorSQLAbstract>>();
 
   static {
     init();
@@ -44,9 +44,14 @@ public class OLiveCommandExecutorSQLFactory implements OCommandExecutorSQLFactor
     if (COMMANDS.size() == 0) {
       synchronized (OLiveCommandExecutorSQLFactory.class) {
         if (COMMANDS.size() == 0) {
-          final Map<String, Class<? extends OCommandExecutorSQLAbstract>> commands = new HashMap<String, Class<? extends OCommandExecutorSQLAbstract>>();
-          commands.put(OCommandExecutorSQLLiveSelect.KEYWORD_LIVE_SELECT, OCommandExecutorSQLLiveSelect.class);
-          commands.put(OCommandExecutorSQLLiveUnsubscribe.KEYWORD_LIVE_UNSUBSCRIBE, OCommandExecutorSQLLiveUnsubscribe.class);
+          final Map<String, Class<? extends OCommandExecutorSQLAbstract>> commands =
+              new HashMap<String, Class<? extends OCommandExecutorSQLAbstract>>();
+          commands.put(
+              OCommandExecutorSQLLiveSelect.KEYWORD_LIVE_SELECT,
+              OCommandExecutorSQLLiveSelect.class);
+          commands.put(
+              OCommandExecutorSQLLiveUnsubscribe.KEYWORD_LIVE_UNSUBSCRIBE,
+              OCommandExecutorSQLLiveUnsubscribe.class);
 
           COMMANDS = Collections.unmodifiableMap(commands);
         }
@@ -54,17 +59,14 @@ public class OLiveCommandExecutorSQLFactory implements OCommandExecutorSQLFactor
     }
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   public Set<String> getCommandNames() {
     return COMMANDS.keySet();
   }
 
-  /**
-   * {@inheritDoc}
-   */
-  public OCommandExecutorSQLAbstract createCommand(final String name) throws OCommandExecutionException {
+  /** {@inheritDoc} */
+  public OCommandExecutorSQLAbstract createCommand(final String name)
+      throws OCommandExecutionException {
     final Class<? extends OCommandExecutorSQLAbstract> clazz = COMMANDS.get(name);
 
     if (clazz == null) {
@@ -74,8 +76,12 @@ public class OLiveCommandExecutorSQLFactory implements OCommandExecutorSQLFactor
     try {
       return clazz.newInstance();
     } catch (Exception e) {
-      throw OException.wrapException(new OCommandExecutionException("Error in creation of command " + name
-          + "(). Probably there is not an empty constructor or the constructor generates errors"), e);
+      throw OException.wrapException(
+          new OCommandExecutionException(
+              "Error in creation of command "
+                  + name
+                  + "(). Probably there is not an empty constructor or the constructor generates errors"),
+          e);
     }
   }
 }

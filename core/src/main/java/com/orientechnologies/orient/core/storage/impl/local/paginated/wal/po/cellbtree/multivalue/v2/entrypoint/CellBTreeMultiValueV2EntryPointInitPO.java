@@ -14,7 +14,7 @@ public final class CellBTreeMultiValueV2EntryPointInitPO extends PageOperationRe
 
   @Override
   public void undo(final OCacheEntry cacheEntry) {
-    //ignore
+    // ignore
   }
 
   @Override

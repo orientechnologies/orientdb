@@ -23,19 +23,23 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.OVertexDelegate;
 
 public class OETLVertexTransformer extends OETLAbstractTransformer {
-  private String  vertexClass;
-  private String  clusterName;
+  private String vertexClass;
+  private String clusterName;
   private boolean skipDuplicates = false;
 
   @Override
   public ODocument getConfiguration() {
-    return new ODocument().fromJSON("{parameters:[" + getCommonConfigurationParameters() + ","
-        + "{class:{optional:true,description:'Vertex class name to assign. Default is V  '}}"
-        + ",skipDuplicates:{optional:true,description:'Vertices with duplicate keys are skipped', default:false}" + "]"
-        + ",input:['OrientVertex','ODocument'],output:'OrientVertex'}");
+    return new ODocument()
+        .fromJSON(
+            "{parameters:["
+                + getCommonConfigurationParameters()
+                + ","
+                + "{class:{optional:true,description:'Vertex class name to assign. Default is V  '}}"
+                + ",skipDuplicates:{optional:true,description:'Vertices with duplicate keys are skipped', default:false}"
+                + "]"
+                + ",input:['OrientVertex','ODocument'],output:'OrientVertex'}");
   }
 
   @Override

@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassEmbedded;
 import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -44,31 +43,32 @@ import java.util.regex.Pattern;
  * @author Michael MacFadden
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
-  public static final String KEYWORD_CREATE   = "CREATE";
+public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstract
+    implements OCommandDistributedReplicateRequest {
+  public static final String KEYWORD_CREATE = "CREATE";
   public static final String KEYWORD_PROPERTY = "PROPERTY";
 
   public static final String KEYWORD_MANDATORY = "MANDATORY";
-  public static final String KEYWORD_READONLY  = "READONLY";
-  public static final String KEYWORD_NOTNULL   = "NOTNULL";
-  public static final String KEYWORD_MIN       = "MIN";
-  public static final String KEYWORD_MAX       = "MAX";
-  public static final String KEYWORD_DEFAULT   = "DEFAULT";
+  public static final String KEYWORD_READONLY = "READONLY";
+  public static final String KEYWORD_NOTNULL = "NOTNULL";
+  public static final String KEYWORD_MIN = "MIN";
+  public static final String KEYWORD_MAX = "MAX";
+  public static final String KEYWORD_DEFAULT = "DEFAULT";
 
   private String className;
   private String fieldName;
 
   private boolean ifNotExists = false;
 
-  private OType  type;
+  private OType type;
   private String linked;
 
-  private boolean readonly  = false;
+  private boolean readonly = false;
   private boolean mandatory = false;
-  private boolean notnull   = false;
+  private boolean notnull = false;
 
-  private String max          = null;
-  private String min          = null;
+  private String max = null;
+  private String min = null;
   private String defaultValue = null;
 
   private boolean unsafe = false;
@@ -90,12 +90,14 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
       int oldPos = 0;
       int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
       if (pos == -1 || !word.toString().equals(KEYWORD_CREATE))
-        throw new OCommandSQLParsingException("Keyword " + KEYWORD_CREATE + " not found", parserText, oldPos);
+        throw new OCommandSQLParsingException(
+            "Keyword " + KEYWORD_CREATE + " not found", parserText, oldPos);
 
       oldPos = pos;
       pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
       if (pos == -1 || !word.toString().equals(KEYWORD_PROPERTY))
-        throw new OCommandSQLParsingException("Keyword " + KEYWORD_PROPERTY + " not found", parserText, oldPos);
+        throw new OCommandSQLParsingException(
+            "Keyword " + KEYWORD_PROPERTY + " not found", parserText, oldPos);
 
       oldPos = pos;
       pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false);
@@ -270,18 +272,20 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
 
   @Override
   public long getDistributedTimeout() {
-    return getDatabase().getConfiguration().getValueAsLong(OGlobalConfiguration.DISTRIBUTED_COMMAND_QUICK_TASK_SYNCH_TIMEOUT);
+    return getDatabase()
+        .getConfiguration()
+        .getValueAsLong(OGlobalConfiguration.DISTRIBUTED_COMMAND_QUICK_TASK_SYNCH_TIMEOUT);
   }
 
-  /**
-   * Execute the CREATE PROPERTY.
-   */
+  /** Execute the CREATE PROPERTY. */
   public Object execute(final Map<Object, Object> iArgs) {
     if (type == null)
-      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+      throw new OCommandExecutionException(
+          "Cannot execute the command because it has not been parsed yet");
 
     final ODatabaseDocument database = getDatabase();
-    final OClassEmbedded sourceClass = (OClassEmbedded) database.getMetadata().getSchema().getClass(className);
+    final OClassEmbedded sourceClass =
+        (OClassEmbedded) database.getMetadata().getSchema().getClass(className);
     if (sourceClass == null)
       throw new OCommandExecutionException("Source class '" + className + "' not found");
 
@@ -292,7 +296,11 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
         return sourceClass.properties().size();
       }
       throw new OCommandExecutionException(
-          "Property '" + className + "." + fieldName + "' already exists. Remove it before to retry.");
+          "Property '"
+              + className
+              + "."
+              + fieldName
+              + "' already exists. Remove it before to retry.");
     }
 
     // CREATE THE PROPERTY
@@ -308,7 +316,8 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
     }
 
     // CREATE IT LOCALLY
-    OPropertyImpl internalProp = sourceClass.addPropertyInternal(fieldName, type, linkedType, linkedClass, unsafe);
+    OPropertyImpl internalProp =
+        sourceClass.addPropertyInternal(fieldName, type, linkedType, linkedClass, unsafe);
     if (readonly) {
       internalProp.setReadonly(true);
     }
@@ -349,6 +358,7 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
   @Override
   public String getSyntax() {
     return "CREATE PROPERTY <class>.<property> [IF NOT EXISTS] <type> [<linked-type>|<linked-class>] "
-        + "[(mandatory <true|false>, notnull <true|false>, <true|false>, default <value>, min <value>, max <value>)] " + "[UNSAFE]";
+        + "[(mandatory <true|false>, notnull <true|false>, <true|false>, default <value>, min <value>, max <value>)] "
+        + "[UNSAFE]";
   }
 }

@@ -8,7 +8,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -122,7 +121,8 @@ public class OOrBlock extends OBooleanExpression {
     return result;
   }
 
-  public List<OBinaryCondition> getIndexedFunctionConditions(OClass iSchemaClass, ODatabaseDocumentInternal database) {
+  public List<OBinaryCondition> getIndexedFunctionConditions(
+      OClass iSchemaClass, ODatabaseDocumentInternal database) {
     if (subBlocks == null || subBlocks.size() > 1) {
       return null;
     }
@@ -166,10 +166,8 @@ public class OOrBlock extends OBooleanExpression {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OOrBlock oOrBlock = (OOrBlock) o;
 
@@ -249,5 +247,17 @@ public class OOrBlock extends OBooleanExpression {
     return this;
   }
 
+  @Override
+  public boolean isAlwaysTrue() {
+    if (subBlocks.isEmpty()) {
+      return true;
+    }
+    for (OBooleanExpression exp : subBlocks) {
+      if (exp.isAlwaysTrue()) {
+        return true;
+      }
+    }
+    return false;
+  }
 }
 /* JavaCC - OriginalChecksum=98d3077303a598705894dbb7bd4e1573 (do not edit this line) */

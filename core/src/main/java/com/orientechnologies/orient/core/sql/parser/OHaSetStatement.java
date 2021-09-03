@@ -10,7 +10,6 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.util.Map;
 
 public class OHaSetStatement extends OSimpleExecStatement {
@@ -47,7 +46,8 @@ public class OHaSetStatement extends OSimpleExecStatement {
 
     OEnterpriseEndpoint ee = db.getEnterpriseEndpoint();
     if (ee == null) {
-      throw new OCommandExecutionException("HA SET statements are only supported in OrientDB Enterprise Edition");
+      throw new OCommandExecutionException(
+          "HA SET statements are only supported in OrientDB Enterprise Edition");
     }
     if (operation.equalsIgnoreCase("status")) {
       String finalResult;

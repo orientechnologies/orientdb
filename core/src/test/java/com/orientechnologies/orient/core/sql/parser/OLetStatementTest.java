@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import org.junit.Test;
+
 public class OLetStatementTest extends OParserTestAbstract {
 
   @Test
@@ -16,10 +17,7 @@ public class OLetStatementTest extends OParserTestAbstract {
 
     checkRightSyntax("LET a = create vertex Test content {\"id\": \"12345678\"}");
 
-
     checkWrongSyntax("LET ");
     checkWrongSyntax("LET foo");
   }
-
-
 }

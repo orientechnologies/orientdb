@@ -28,9 +28,12 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.bucket.*;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.bucket.LocalHashTableV2BucketAddEntryPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.bucket.LocalHashTableV2BucketDeleteEntryPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.bucket.LocalHashTableV2BucketInitPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.bucket.LocalHashTableV2BucketSetDepthPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.bucket.LocalHashTableV2BucketUpdateEntryPO;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashTable;
-
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -41,14 +44,17 @@ import java.util.NoSuchElementException;
  */
 public final class HashIndexBucketV2<K, V> extends ODurablePage {
   private static final int FREE_POINTER_OFFSET = NEXT_FREE_POSITION;
-  private static final int DEPTH_OFFSET        = FREE_POINTER_OFFSET + OIntegerSerializer.INT_SIZE;
-  private static final int SIZE_OFFSET         = DEPTH_OFFSET + OByteSerializer.BYTE_SIZE;
-  private static final int HISTORY_OFFSET      = SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
+  private static final int DEPTH_OFFSET = FREE_POINTER_OFFSET + OIntegerSerializer.INT_SIZE;
+  private static final int SIZE_OFFSET = DEPTH_OFFSET + OByteSerializer.BYTE_SIZE;
+  private static final int HISTORY_OFFSET = SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
 
-  private static final int NEXT_REMOVED_BUCKET_OFFSET = HISTORY_OFFSET + OLongSerializer.LONG_SIZE * 64;
-  private static final int POSITIONS_ARRAY_OFFSET     = NEXT_REMOVED_BUCKET_OFFSET + OLongSerializer.LONG_SIZE;
+  private static final int NEXT_REMOVED_BUCKET_OFFSET =
+      HISTORY_OFFSET + OLongSerializer.LONG_SIZE * 64;
+  private static final int POSITIONS_ARRAY_OFFSET =
+      NEXT_REMOVED_BUCKET_OFFSET + OLongSerializer.LONG_SIZE;
 
-  private static final int MAX_BUCKET_SIZE_BYTES = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
+  private static final int MAX_BUCKET_SIZE_BYTES =
+      OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
 
   private final Comparator keyComparator = ODefaultComparator.INSTANCE;
 
@@ -64,16 +70,20 @@ public final class HashIndexBucketV2<K, V> extends ODurablePage {
     addPageOperation(new LocalHashTableV2BucketInitPO(depth));
   }
 
-  public OHashTable.Entry<K, V> find(final K key, final long hashCode, final OEncryption encryption,
-      final OBinarySerializer<K> keySerializer, final OBinarySerializer<V> valueSerializer) {
+  public OHashTable.Entry<K, V> find(
+      final K key,
+      final long hashCode,
+      final OEncryption encryption,
+      final OBinarySerializer<K> keySerializer,
+      final OBinarySerializer<V> valueSerializer) {
     final int index = binarySearch(key, hashCode, encryption, keySerializer);
-    if (index < 0)
-      return null;
+    if (index < 0) return null;
 
     return getEntry(index, encryption, keySerializer, valueSerializer);
   }
 
-  private int binarySearch(K key, long hashCode, OEncryption encryption, OBinarySerializer<K> keySerializer) {
+  private int binarySearch(
+      K key, long hashCode, OEncryption encryption, OBinarySerializer<K> keySerializer) {
     int low = 0;
     int high = size() - 1;
 
@@ -82,22 +92,17 @@ public final class HashIndexBucketV2<K, V> extends ODurablePage {
 
       final long midHashCode = getHashCode(mid);
       final int cmp;
-      if (lessThanUnsigned(midHashCode, hashCode))
-        cmp = -1;
-      else if (greaterThanUnsigned(midHashCode, hashCode))
-        cmp = 1;
+      if (lessThanUnsigned(midHashCode, hashCode)) cmp = -1;
+      else if (greaterThanUnsigned(midHashCode, hashCode)) cmp = 1;
       else {
         final K midVal = getKey(mid, encryption, keySerializer);
         //noinspection unchecked
         cmp = keyComparator.compare(midVal, key);
       }
 
-      if (cmp < 0)
-        low = mid + 1;
-      else if (cmp > 0)
-        high = mid - 1;
-      else
-        return mid; // key found
+      if (cmp < 0) low = mid + 1;
+      else if (cmp > 0) high = mid - 1;
+      else return mid; // key found
     }
     return -(low + 1); // key not found.
   }
@@ -110,7 +115,10 @@ public final class HashIndexBucketV2<K, V> extends ODurablePage {
     return (longOne + Long.MIN_VALUE) > (longTwo + Long.MIN_VALUE);
   }
 
-  public OHashTable.Entry<K, V> getEntry(final int index, final OEncryption encryption, final OBinarySerializer<K> keySerializer,
+  public OHashTable.Entry<K, V> getEntry(
+      final int index,
+      final OEncryption encryption,
+      final OBinarySerializer<K> keySerializer,
       final OBinarySerializer<V> valueSerializer) {
     int entryPosition = getIntValue(POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE);
 
@@ -138,7 +146,10 @@ public final class HashIndexBucketV2<K, V> extends ODurablePage {
     return new OHashTable.Entry<>(key, value, hashCode);
   }
 
-  public OHashTable.RawEntry getRawEntry(final int index, final OEncryption encryption, final OBinarySerializer<K> keySerializer,
+  public OHashTable.RawEntry getRawEntry(
+      final int index,
+      final OEncryption encryption,
+      final OBinarySerializer<K> keySerializer,
       final OBinarySerializer<V> valueSerializer) {
     int entryPosition = getIntValue(POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE);
 
@@ -162,7 +173,8 @@ public final class HashIndexBucketV2<K, V> extends ODurablePage {
     return new OHashTable.RawEntry(key, value, hashCode);
   }
 
-  public byte[] getRawValue(final int index, final int keySize, final OBinarySerializer<V> valueSerializer) {
+  public byte[] getRawValue(
+      final int index, final int keySize, final OBinarySerializer<V> valueSerializer) {
     int entryPosition = getIntValue(POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE);
 
     // skip hash code and key
@@ -177,7 +189,10 @@ public final class HashIndexBucketV2<K, V> extends ODurablePage {
    * @param index the value index.
    * @return the obtained value.
    */
-  public V getValue(final int index, final OEncryption encryption, final OBinarySerializer<K> keySerializer,
+  public V getValue(
+      final int index,
+      final OEncryption encryption,
+      final OBinarySerializer<K> keySerializer,
       final OBinarySerializer<V> valueSerializer) {
     int entryPosition = getIntValue(POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE);
 
@@ -200,21 +215,28 @@ public final class HashIndexBucketV2<K, V> extends ODurablePage {
     return getLongValue(entryPosition);
   }
 
-  public K getKey(final int index, final OEncryption encryption, final OBinarySerializer<K> keySerializer) {
+  public K getKey(
+      final int index, final OEncryption encryption, final OBinarySerializer<K> keySerializer) {
     int entryPosition = getIntValue(POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE);
 
     if (encryption == null) {
       return deserializeFromDirectMemory(keySerializer, entryPosition + OLongSerializer.LONG_SIZE);
     } else {
       final int encryptedLength = getIntValue(entryPosition + OLongSerializer.LONG_SIZE);
-      final byte[] encryptedBinaryKey = getBinaryValue(entryPosition + OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE,
-          encryptedLength);
+      final byte[] encryptedBinaryKey =
+          getBinaryValue(
+              entryPosition + OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE,
+              encryptedLength);
       final byte[] decryptedBinaryKey = encryption.decrypt(encryptedBinaryKey);
       return keySerializer.deserializeNativeObject(decryptedBinaryKey, 0);
     }
   }
 
-  public int getIndex(final long hashCode, final K key, final OEncryption encryption, final OBinarySerializer<K> keySerializer) {
+  public int getIndex(
+      final long hashCode,
+      final K key,
+      final OEncryption encryption,
+      final OBinarySerializer<K> keySerializer) {
     return binarySearch(key, hashCode, encryption, keySerializer);
   }
 
@@ -222,19 +244,25 @@ public final class HashIndexBucketV2<K, V> extends ODurablePage {
     return getIntValue(SIZE_OFFSET);
   }
 
-  public Iterator<OHashTable.RawEntry> iterator(final OBinarySerializer<K> keySerializer,
-      final OBinarySerializer<V> valueSerializer, final OEncryption encryption) {
+  public Iterator<OHashTable.RawEntry> iterator(
+      final OBinarySerializer<K> keySerializer,
+      final OBinarySerializer<V> valueSerializer,
+      final OEncryption encryption) {
     return new RawEntryIterator(0, keySerializer, valueSerializer, encryption);
   }
 
-  public Iterator<OHashTable.Entry<K, V>> iterator(int index, OBinarySerializer<K> keySerializer,
-      OBinarySerializer<V> valueSerializer, OEncryption encryption) {
+  public Iterator<OHashTable.Entry<K, V>> iterator(
+      int index,
+      OBinarySerializer<K> keySerializer,
+      OBinarySerializer<V> valueSerializer,
+      OEncryption encryption) {
     return new EntryIterator(index, keySerializer, valueSerializer, encryption);
   }
 
   public int getContentSize() {
-    return POSITIONS_ARRAY_OFFSET + size() * OIntegerSerializer.INT_SIZE + (MAX_BUCKET_SIZE_BYTES - getIntValue(
-        FREE_POINTER_OFFSET));
+    return POSITIONS_ARRAY_OFFSET
+        + size() * OIntegerSerializer.INT_SIZE
+        + (MAX_BUCKET_SIZE_BYTES - getIntValue(FREE_POINTER_OFFSET));
   }
 
   public int updateEntry(final int index, final byte[] value, final byte[] oldValue, int keySize) {
@@ -255,7 +283,8 @@ public final class HashIndexBucketV2<K, V> extends ODurablePage {
     return 1;
   }
 
-  public void deleteEntry(final int index, final long hashCode, final byte[] key, final byte[] value) {
+  public void deleteEntry(
+      final int index, final long hashCode, final byte[] key, final byte[] value) {
     final int size = size();
     if (index < 0 || index >= size) {
       throw new IllegalStateException("Can not delete entry outside of border of the bucket");
@@ -268,7 +297,9 @@ public final class HashIndexBucketV2<K, V> extends ODurablePage {
 
     final int entrySize = key.length + value.length + OLongSerializer.LONG_SIZE;
 
-    moveData(positionOffset + OIntegerSerializer.INT_SIZE, positionOffset,
+    moveData(
+        positionOffset + OIntegerSerializer.INT_SIZE,
+        positionOffset,
         size() * OIntegerSerializer.INT_SIZE - (index + 1) * OIntegerSerializer.INT_SIZE);
 
     if (entryPosition > freePointer) {
@@ -297,7 +328,8 @@ public final class HashIndexBucketV2<K, V> extends ODurablePage {
     if (index < 0 || index > size) {
       throw new IllegalStateException("Can not insert entry outside of border of bucket");
     }
-    if (freePointer - entreeSize < POSITIONS_ARRAY_OFFSET + (size + 1) * OIntegerSerializer.INT_SIZE) {
+    if (freePointer - entreeSize
+        < POSITIONS_ARRAY_OFFSET + (size + 1) * OIntegerSerializer.INT_SIZE) {
       return false;
     }
 
@@ -307,13 +339,17 @@ public final class HashIndexBucketV2<K, V> extends ODurablePage {
     return true;
   }
 
-  private void insertEntry(long hashCode, byte[] key, byte[] value, int insertionPoint, int entreeSize) {
+  private void insertEntry(
+      long hashCode, byte[] key, byte[] value, int insertionPoint, int entreeSize) {
     int freePointer = getIntValue(FREE_POINTER_OFFSET);
     int size = size();
 
-    final int positionsOffset = insertionPoint * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET;
+    final int positionsOffset =
+        insertionPoint * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET;
 
-    moveData(positionsOffset, positionsOffset + OIntegerSerializer.INT_SIZE,
+    moveData(
+        positionsOffset,
+        positionsOffset + OIntegerSerializer.INT_SIZE,
         size() * OIntegerSerializer.INT_SIZE - insertionPoint * OIntegerSerializer.INT_SIZE);
 
     final int entreePosition = freePointer - entreeSize;
@@ -347,12 +383,15 @@ public final class HashIndexBucketV2<K, V> extends ODurablePage {
   }
 
   private final class EntryIterator implements Iterator<OHashTable.Entry<K, V>> {
-    private       int                  currentIndex;
+    private int currentIndex;
     private final OBinarySerializer<K> keySerializer;
     private final OBinarySerializer<V> valueSerializer;
-    private final OEncryption          encryption;
+    private final OEncryption encryption;
 
-    private EntryIterator(int currentIndex, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer,
+    private EntryIterator(
+        int currentIndex,
+        OBinarySerializer<K> keySerializer,
+        OBinarySerializer<V> valueSerializer,
         OEncryption encryption) {
       this.currentIndex = currentIndex;
       this.keySerializer = keySerializer;
@@ -370,7 +409,8 @@ public final class HashIndexBucketV2<K, V> extends ODurablePage {
       if (currentIndex >= size())
         throw new NoSuchElementException("Iterator was reached last element");
 
-      final OHashTable.Entry<K, V> entry = getEntry(currentIndex, encryption, keySerializer, valueSerializer);
+      final OHashTable.Entry<K, V> entry =
+          getEntry(currentIndex, encryption, keySerializer, valueSerializer);
       currentIndex++;
       return entry;
     }
@@ -382,12 +422,15 @@ public final class HashIndexBucketV2<K, V> extends ODurablePage {
   }
 
   private final class RawEntryIterator implements Iterator<OHashTable.RawEntry> {
-    private       int                  currentIndex;
+    private int currentIndex;
     private final OBinarySerializer<K> keySerializer;
     private final OBinarySerializer<V> valueSerializer;
-    private final OEncryption          encryption;
+    private final OEncryption encryption;
 
-    private RawEntryIterator(int currentIndex, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer,
+    private RawEntryIterator(
+        int currentIndex,
+        OBinarySerializer<K> keySerializer,
+        OBinarySerializer<V> valueSerializer,
         OEncryption encryption) {
       this.currentIndex = currentIndex;
       this.keySerializer = keySerializer;
@@ -405,7 +448,8 @@ public final class HashIndexBucketV2<K, V> extends ODurablePage {
       if (currentIndex >= size())
         throw new NoSuchElementException("Iterator was reached last element");
 
-      final OHashTable.RawEntry entry = getRawEntry(currentIndex, encryption, keySerializer, valueSerializer);
+      final OHashTable.RawEntry entry =
+          getRawEntry(currentIndex, encryption, keySerializer, valueSerializer);
       currentIndex++;
       return entry;
     }

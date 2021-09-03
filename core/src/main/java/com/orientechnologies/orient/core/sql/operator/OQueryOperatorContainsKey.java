@@ -23,9 +23,13 @@ import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexDefinitionMultiValue;
+import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.index.OPropertyMapIndexDefinition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
-
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -43,8 +47,12 @@ public class OQueryOperatorContainsKey extends OQueryOperatorEqualityNotNulls {
 
   @Override
   @SuppressWarnings("unchecked")
-  protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
-      final Object iRight, OCommandContext iContext) {
+  protected boolean evaluateExpression(
+      final OIdentifiable iRecord,
+      final OSQLFilterCondition iCondition,
+      final Object iLeft,
+      final Object iRight,
+      OCommandContext iContext) {
 
     if (iLeft instanceof Map<?, ?>) {
 
@@ -64,36 +72,37 @@ public class OQueryOperatorContainsKey extends OQueryOperatorEqualityNotNulls {
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> executeIndexQuery(OCommandContext iContext, OIndex index, List<Object> keyParams,
-      boolean ascSortOrder) {
+  public Stream<ORawPair<Object, ORID>> executeIndexQuery(
+      OCommandContext iContext, OIndex index, List<Object> keyParams, boolean ascSortOrder) {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
     Stream<ORawPair<Object, ORID>> stream;
     final OIndexInternal internalIndex = index.getInternal();
-    if (!internalIndex.canBeUsedInEqualityOperators())
-      return null;
+    if (!internalIndex.canBeUsedInEqualityOperators()) return null;
 
     if (indexDefinition.getParamCount() == 1) {
       if (!((indexDefinition instanceof OPropertyMapIndexDefinition)
-          && ((OPropertyMapIndexDefinition) indexDefinition).getIndexBy() == OPropertyMapIndexDefinition.INDEX_BY.KEY))
-        return null;
+          && ((OPropertyMapIndexDefinition) indexDefinition).getIndexBy()
+              == OPropertyMapIndexDefinition.INDEX_BY.KEY)) return null;
 
-      final Object key = ((OIndexDefinitionMultiValue) indexDefinition).createSingleValue(keyParams.get(0));
+      final Object key =
+          ((OIndexDefinitionMultiValue) indexDefinition).createSingleValue(keyParams.get(0));
 
-      if (key == null)
-        return null;
+      if (key == null) return null;
 
       stream = index.getInternal().getRids(key).map((rid) -> new ORawPair<>(key, rid));
     } else {
       // in case of composite keys several items can be returned in case of we perform search
       // using part of composite key stored in index.
 
-      final OCompositeIndexDefinition compositeIndexDefinition = (OCompositeIndexDefinition) indexDefinition;
+      final OCompositeIndexDefinition compositeIndexDefinition =
+          (OCompositeIndexDefinition) indexDefinition;
 
-      if (!((compositeIndexDefinition.getMultiValueDefinition() instanceof OPropertyMapIndexDefinition)
-          && ((OPropertyMapIndexDefinition) compositeIndexDefinition.getMultiValueDefinition()).getIndexBy()
-          == OPropertyMapIndexDefinition.INDEX_BY.KEY))
-        return null;
+      if (!((compositeIndexDefinition.getMultiValueDefinition()
+              instanceof OPropertyMapIndexDefinition)
+          && ((OPropertyMapIndexDefinition) compositeIndexDefinition.getMultiValueDefinition())
+                  .getIndexBy()
+              == OPropertyMapIndexDefinition.INDEX_BY.KEY)) return null;
 
       final Object keyOne = compositeIndexDefinition.createSingleValue(keyParams);
 

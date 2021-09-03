@@ -1,16 +1,14 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
 import com.orientechnologies.common.util.OPair;
-
 import java.util.ArrayList;
 import java.util.List;
 
 public class OViewConfig {
-  /**
-   * default
-   */
+  /** default */
   public static String UPDATE_STRATEGY_BATCH = "batch";
-  public static String UPDATE_STRATEGY_LIVE  = "live";
+
+  public static String UPDATE_STRATEGY_LIVE = "live";
 
   public static class OViewIndexConfig {
 
@@ -40,15 +38,15 @@ public class OViewConfig {
     }
   }
 
-  protected String  name;
-  protected String  query;
+  protected String name;
+  protected String query;
   protected boolean updatable;
-  protected List<OViewIndexConfig> indexes               = new ArrayList<>();
-  protected String                 updateStrategy        = UPDATE_STRATEGY_BATCH;
-  protected List<String>           watchClasses          = new ArrayList<>();
-  protected List<String>           nodes                 = null;
-  protected int                    updateIntervalSeconds = 30;
-  protected String                 originRidField        = null;
+  protected List<OViewIndexConfig> indexes = new ArrayList<>();
+  protected String updateStrategy = UPDATE_STRATEGY_BATCH;
+  protected List<String> watchClasses = new ArrayList<>();
+  protected List<String> nodes = null;
+  protected int updateIntervalSeconds = 30;
+  protected String originRidField = null;
 
   public OViewConfig(String name, String query) {
     this.name = name;

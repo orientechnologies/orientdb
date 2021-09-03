@@ -25,18 +25,16 @@ import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.operator.OIndexReuseType;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
-
 import java.util.Map;
 
-/**
- * @author Artem Orobets (enisher-at-gmail.com)
- */
+/** @author Artem Orobets (enisher-at-gmail.com) */
 public class OFilterOptimizer {
   public void optimize(OSQLFilter filter, OIndexSearchResult indexMatch) {
     filter.setRootCondition(optimize(filter.getRootCondition(), indexMatch));
   }
 
-  private OSQLFilterCondition optimize(OSQLFilterCondition condition, OIndexSearchResult indexMatch) {
+  private OSQLFilterCondition optimize(
+      OSQLFilterCondition condition, OIndexSearchResult indexMatch) {
     if (condition == null) {
       return null;
     }
@@ -50,40 +48,43 @@ public class OFilterOptimizer {
       }
     }
 
-    final OIndexReuseType reuseType = operator.getIndexReuseType(condition.getLeft(), condition.getRight());
+    final OIndexReuseType reuseType =
+        operator.getIndexReuseType(condition.getLeft(), condition.getRight());
     switch (reuseType) {
-    case INDEX_METHOD:
-      if (isCovered(indexMatch, operator, condition.getLeft(), condition.getRight())
-          || isCovered(indexMatch, operator, condition.getRight(), condition.getLeft())) {
-        return null;
-      }
-      return condition;
+      case INDEX_METHOD:
+        if (isCovered(indexMatch, operator, condition.getLeft(), condition.getRight())
+            || isCovered(indexMatch, operator, condition.getRight(), condition.getLeft())) {
+          return null;
+        }
+        return condition;
 
-    case INDEX_INTERSECTION:
-      if (condition.getLeft() instanceof OSQLFilterCondition)
-        condition.setLeft(optimize((OSQLFilterCondition) condition.getLeft(), indexMatch));
+      case INDEX_INTERSECTION:
+        if (condition.getLeft() instanceof OSQLFilterCondition)
+          condition.setLeft(optimize((OSQLFilterCondition) condition.getLeft(), indexMatch));
 
-      if (condition.getRight() instanceof OSQLFilterCondition)
-        condition.setRight(optimize((OSQLFilterCondition) condition.getRight(), indexMatch));
+        if (condition.getRight() instanceof OSQLFilterCondition)
+          condition.setRight(optimize((OSQLFilterCondition) condition.getRight(), indexMatch));
 
-      if (condition.getLeft() == null)
-        return (OSQLFilterCondition) condition.getRight();
-      if (condition.getRight() == null)
-        return (OSQLFilterCondition) condition.getLeft();
-      return condition;
+        if (condition.getLeft() == null) return (OSQLFilterCondition) condition.getRight();
+        if (condition.getRight() == null) return (OSQLFilterCondition) condition.getLeft();
+        return condition;
 
-    case INDEX_OPERATOR:
-      if (isCovered(indexMatch, operator, condition.getLeft(), condition.getRight())
-          || isCovered(indexMatch, operator, condition.getRight(), condition.getLeft())) {
-        return null;
-      }
-      return condition;
-    default:
-      return condition;
+      case INDEX_OPERATOR:
+        if (isCovered(indexMatch, operator, condition.getLeft(), condition.getRight())
+            || isCovered(indexMatch, operator, condition.getRight(), condition.getLeft())) {
+          return null;
+        }
+        return condition;
+      default:
+        return condition;
     }
   }
 
-  private boolean isCovered(OIndexSearchResult indexMatch, OQueryOperator operator, Object fieldCandidate, Object valueCandidate) {
+  private boolean isCovered(
+      OIndexSearchResult indexMatch,
+      OQueryOperator operator,
+      Object fieldCandidate,
+      Object valueCandidate) {
     if (fieldCandidate instanceof OSQLFilterItemField) {
       final OSQLFilterItemField field = (OSQLFilterItemField) fieldCandidate;
       if (operator instanceof OQueryOperatorEquals)
@@ -92,7 +93,8 @@ public class OFilterOptimizer {
             return true;
         }
 
-      return operator.equals(indexMatch.lastOperator) && isSameField(field, indexMatch.lastField)
+      return operator.equals(indexMatch.lastOperator)
+          && isSameField(field, indexMatch.lastField)
           && isSameValue(valueCandidate, indexMatch.lastValue);
     }
     return false;
@@ -102,10 +104,12 @@ public class OFilterOptimizer {
     if (lastValue == null || valueCandidate == null)
       return lastValue == null && valueCandidate == null;
 
-    return lastValue.equals(valueCandidate) || lastValue.equals(OSQLHelper.getValue(valueCandidate));
+    return lastValue.equals(valueCandidate)
+        || lastValue.equals(OSQLHelper.getValue(valueCandidate));
   }
 
-  private boolean isSameField(OSQLFilterItemField field, OSQLFilterItemField.FieldChain fieldChain) {
+  private boolean isSameField(
+      OSQLFilterItemField field, OSQLFilterItemField.FieldChain fieldChain) {
     return fieldChain.belongsTo(field);
   }
 

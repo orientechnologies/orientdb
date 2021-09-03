@@ -2,22 +2,28 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 /**
- * <p>Execution Steps are the building blocks of a query execution plan</p> <p>Typically an execution plan is made of a chain of
- * steps. The execution is pull-based, meaning that the result set that the client iterates is conceptually the one returned by
- * <i>last</i> step of the execution plan</p> <p>At each `next()` invocation, the step typically fetches a record from the previous
- * (upstream) step, does its elaboration (eg. for a filtering step, it can discard the record and fetch another one if it doesn't
- * match the conditions) and returns the elaborated step</p>
+ * Execution Steps are the building blocks of a query execution plan
+ *
+ * <p>Typically an execution plan is made of a chain of steps. The execution is pull-based, meaning
+ * that the result set that the client iterates is conceptually the one returned by <i>last</i> step
+ * of the execution plan
+ *
+ * <p>At each `next()` invocation, the step typically fetches a record from the previous (upstream)
+ * step, does its elaboration (eg. for a filtering step, it can discard the record and fetch another
+ * one if it doesn't match the conditions) and returns the elaborated step
+ *
  * <p>
- * <p>The invocation of <code>syncPull(ctx, nResults)</code> has to return a result set of at most nResults records. If the upstream
- * (the previous steps) return more records, they have to be returned by next call of <code>syncPull()</code>. The returned result
- * set can have less than nResults records ONLY if current step cannot produce any more records (eg. the upstream does not have any
- * more records)</p>
+ *
+ * <p>The invocation of <code>syncPull(ctx, nResults)</code> has to return a result set of at most
+ * nResults records. If the upstream (the previous steps) return more records, they have to be
+ * returned by next call of <code>syncPull()</code>. The returned result set can have less than
+ * nResults records ONLY if current step cannot produce any more records (eg. the upstream does not
+ * have any more records)
  *
  * @author Luigi Dell'Aquila l.dellaquila - at - orientdb.com
  */
@@ -73,7 +79,7 @@ public interface OExecutionStepInternal extends OExecutionStep {
   }
 
   default void reset() {
-    //do nothing
+    // do nothing
   }
 
   default OResult serialize() {
@@ -111,7 +117,8 @@ public interface OExecutionStepInternal extends OExecutionStep {
     if (serializedSubsteps != null) {
       for (OResult serializedSub : serializedSubsteps) {
         String className = serializedSub.getProperty(OInternalExecutionPlan.JAVA_TYPE);
-        OExecutionStepInternal subStep = (OExecutionStepInternal) Class.forName(className).newInstance();
+        OExecutionStepInternal subStep =
+            (OExecutionStepInternal) Class.forName(className).newInstance();
         subStep.deserialize(serializedSub);
         step.getSubSteps().add(subStep);
       }
@@ -121,7 +128,8 @@ public interface OExecutionStepInternal extends OExecutionStep {
     if (serializedSubsteps != null) {
       for (OResult serializedSub : serializedPlans) {
         String className = serializedSub.getProperty(OInternalExecutionPlan.JAVA_TYPE);
-        OInternalExecutionPlan subStep = (OInternalExecutionPlan) Class.forName(className).newInstance();
+        OInternalExecutionPlan subStep =
+            (OInternalExecutionPlan) Class.forName(className).newInstance();
         subStep.deserialize(serializedSub);
         step.getSubExecutionPlans().add(subStep);
       }

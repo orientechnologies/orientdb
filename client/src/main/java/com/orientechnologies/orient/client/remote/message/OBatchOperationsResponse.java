@@ -25,14 +25,11 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by Enrico Risa on 15/05/2017.
- */
+/** Created by Enrico Risa on 15/05/2017. */
 public class OBatchOperationsResponse implements OBinaryResponse {
 
   private int txId;
@@ -41,19 +38,22 @@ public class OBatchOperationsResponse implements OBinaryResponse {
   private List<OCommit37Response.OUpdatedRecordResponse> updated;
   private List<OCommit37Response.ODeletedRecordResponse> deleted;
 
-  public OBatchOperationsResponse(int txId, List<OCommit37Response.OCreatedRecordResponse> created,
-      List<OCommit37Response.OUpdatedRecordResponse> updated, List<OCommit37Response.ODeletedRecordResponse> deleted) {
+  public OBatchOperationsResponse(
+      int txId,
+      List<OCommit37Response.OCreatedRecordResponse> created,
+      List<OCommit37Response.OUpdatedRecordResponse> updated,
+      List<OCommit37Response.ODeletedRecordResponse> deleted) {
     this.txId = txId;
     this.created = created;
     this.updated = updated;
     this.deleted = deleted;
   }
 
-  public OBatchOperationsResponse() {
-  }
+  public OBatchOperationsResponse() {}
 
   @Override
-  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
     channel.writeInt(txId);
 
     channel.writeInt(created.size());
@@ -73,7 +73,6 @@ public class OBatchOperationsResponse implements OBinaryResponse {
     for (OCommit37Response.ODeletedRecordResponse deleteRecord : deleted) {
       channel.writeRID(deleteRecord.getRid());
     }
-
   }
 
   @Override
@@ -106,7 +105,6 @@ public class OBatchOperationsResponse implements OBinaryResponse {
       ORecordId rid = network.readRID();
       deleted.add(new OCommit37Response.ODeletedRecordResponse(rid));
     }
-
   }
 
   public int getTxId() {

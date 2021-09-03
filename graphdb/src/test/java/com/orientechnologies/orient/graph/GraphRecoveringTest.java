@@ -1,8 +1,5 @@
 package com.orientechnologies.orient.graph;
 
-import org.junit.Assert;
-import org.junit.Test;
-
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -14,15 +11,17 @@ import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class GraphRecoveringTest {
 
   private class TestListener implements OStorageRecoverEventListener {
-    public long scannedEdges     = 0;
-    public long removedEdges     = 0;
-    public long scannedVertices  = 0;
-    public long scannedLinks     = 0;
-    public long removedLinks     = 0;
+    public long scannedEdges = 0;
+    public long removedEdges = 0;
+    public long scannedVertices = 0;
+    public long scannedLinks = 0;
+    public long removedLinks = 0;
     public long repairedVertices = 0;
 
     @Override
@@ -54,9 +53,7 @@ public class GraphRecoveringTest {
     public void onRepairedVertex(ODocument vertex) {
       repairedVertices++;
     }
-  }
-
-  ;
+  };
 
   private void init(OrientBaseGraph g, boolean lightweight) {
     g.setUseLightweightEdges(lightweight);
@@ -137,9 +134,9 @@ public class GraphRecoveringTest {
       Assert.assertEquals(eventListener.scannedEdges, 3);
       Assert.assertEquals(eventListener.removedEdges, 3);
       Assert.assertEquals(eventListener.scannedVertices, 3);
-      //This is 3 because 3 referred by the edge are cleaned by the edge delete
+      // This is 3 because 3 referred by the edge are cleaned by the edge delete
       Assert.assertEquals(eventListener.scannedLinks, 3);
-      //This is 3 because 3 referred by the edge are cleaned by the edge delete
+      // This is 3 because 3 referred by the edge are cleaned by the edge delete
       Assert.assertEquals(eventListener.removedLinks, 3);
       Assert.assertEquals(eventListener.repairedVertices, 3);
 
@@ -150,14 +147,14 @@ public class GraphRecoveringTest {
 
   @Test
   public void testRecoverBrokenGraphLinksInVerticesNonLW() {
-    final OrientBaseGraph g = new OrientGraphNoTx("memory:testRecoverBrokenGraphLinksInVerticesNonLW");
+    final OrientBaseGraph g =
+        new OrientGraphNoTx("memory:testRecoverBrokenGraphLinksInVerticesNonLW");
     try {
       init(g, false);
 
       for (Vertex v : g.getVertices()) {
         for (String f : ((OrientVertex) v).getRecord().fieldNames()) {
-          if (f.startsWith("out_"))
-            ((OrientVertex) v).getRecord().removeField(f);
+          if (f.startsWith("out_")) ((OrientVertex) v).getRecord().removeField(f);
         }
       }
 
@@ -168,11 +165,11 @@ public class GraphRecoveringTest {
       Assert.assertEquals(eventListener.scannedEdges, 3);
       Assert.assertEquals(eventListener.removedEdges, 3);
       Assert.assertEquals(eventListener.scannedVertices, 3);
-      //This is 0 because the delete edge does the cleanup
+      // This is 0 because the delete edge does the cleanup
       Assert.assertEquals(eventListener.scannedLinks, 0);
-      //This is 0 because the delete edge does the cleanup
+      // This is 0 because the delete edge does the cleanup
       Assert.assertEquals(eventListener.removedLinks, 0);
-      //This is 0 because the delete edge does the cleanup
+      // This is 0 because the delete edge does the cleanup
       Assert.assertEquals(eventListener.repairedVertices, 0);
 
     } finally {
@@ -191,12 +188,9 @@ public class GraphRecoveringTest {
         final ODocument record = ((OrientVertex) v).getRecord();
 
         int key = v.getProperty("key");
-        if (key == 0)
-          record.field("out_", record);
-        else if (key == 1)
-          record.field("in_E1", new ORecordId(5, 20000000));
-        else if (key == 2)
-          record.field("out_E2", record);
+        if (key == 0) record.field("out_", record);
+        else if (key == 1) record.field("in_E1", new ORecordId(5, 20000000));
+        else if (key == 2) record.field("out_E2", record);
 
         record.save();
       }

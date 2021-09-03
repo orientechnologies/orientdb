@@ -20,7 +20,6 @@
 
 package com.orientechnologies.orient.enterprise.channel.binary;
 
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OSystemException;
 
 /**

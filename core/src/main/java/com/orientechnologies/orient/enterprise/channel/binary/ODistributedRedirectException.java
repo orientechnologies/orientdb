@@ -13,7 +13,7 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.orient.enterprise.channel.binary;
@@ -37,7 +37,10 @@ public class ODistributedRedirectException extends OSystemException {
     this.toServerAddress = exception.toServerAddress;
   }
 
-  public ODistributedRedirectException(final String fromServer, final String toServer, final String toServerAddress,
+  public ODistributedRedirectException(
+      final String fromServer,
+      final String toServer,
+      final String toServerAddress,
       final String reason) {
     super(reason);
     this.fromServer = fromServer;
@@ -59,6 +62,13 @@ public class ODistributedRedirectException extends OSystemException {
 
   @Override
   public String toString() {
-    return getMessage() + ". Reconnecting to " + toServerAddress + " (from=" + fromServer + " to=" + toServer + ")";
+    return getMessage()
+        + ". Reconnecting to "
+        + toServerAddress
+        + " (from="
+        + fromServer
+        + " to="
+        + toServer
+        + ")";
   }
 }

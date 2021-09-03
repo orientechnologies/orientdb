@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common;
 
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
-
 import java.nio.ByteBuffer;
 
 public interface WriteableWALRecord extends OWALRecord {
@@ -21,12 +20,9 @@ public interface WriteableWALRecord extends OWALRecord {
 
   int serializedSize();
 
-  boolean isUpdateMasterRecord();
-
   void written();
 
   boolean isWritten();
 
   int getId();
 }
-

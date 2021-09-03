@@ -5,7 +5,6 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -58,21 +57,19 @@ public class OOrderBy extends SimpleNode {
 
   public OOrderBy copy() {
     OOrderBy result = new OOrderBy(-1);
-    result.items = items == null ? null : items.stream().map(x -> x.copy()).collect(Collectors.toList());
+    result.items =
+        items == null ? null : items.stream().map(x -> x.copy()).collect(Collectors.toList());
     return result;
   }
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OOrderBy oOrderBy = (OOrderBy) o;
 
-    if (items != null ? !items.equals(oOrderBy.items) : oOrderBy.items != null)
-      return false;
+    if (items != null ? !items.equals(oOrderBy.items) : oOrderBy.items != null) return false;
 
     return true;
   }
@@ -104,7 +101,8 @@ public class OOrderBy extends SimpleNode {
   public OResult serialize() {
     OResultInternal result = new OResultInternal();
     if (items != null) {
-      result.setProperty("items", items.stream().map(x -> x.serialize()).collect(Collectors.toList()));
+      result.setProperty(
+          "items", items.stream().map(x -> x.serialize()).collect(Collectors.toList()));
     }
     return result;
   }

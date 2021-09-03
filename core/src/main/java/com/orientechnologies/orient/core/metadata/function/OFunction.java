@@ -33,24 +33,21 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
-
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Stored function. It contains language and code to execute as a function. The execute() takes parameters. The function is
- * state-less, so can be used by different threads.
+ * Stored function. It contains language and code to execute as a function. The execute() takes
+ * parameters. The function is state-less, so can be used by different threads.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OFunction extends ODocumentWrapper {
-  public static final String                     CLASS_NAME = "OFunction";
+  public static final String CLASS_NAME = "OFunction";
   private OCallable<Object, Map<Object, Object>> callback;
 
-  /**
-   * Creates a new function.
-   */
+  /** Creates a new function. */
   public OFunction() {
     super(CLASS_NAME);
     setLanguage("SQL");
@@ -59,8 +56,7 @@ public class OFunction extends ODocumentWrapper {
   /**
    * Creates a new function wrapping the saved document.
    *
-   * @param iDocument
-   *          Document to assign
+   * @param iDocument Document to assign
    */
   public OFunction(final ODocument iDocument) {
     super(iDocument);
@@ -69,8 +65,7 @@ public class OFunction extends ODocumentWrapper {
   /**
    * Loads a function.
    *
-   * @param iRid
-   *          RID of the function to load
+   * @param iRid RID of the function to load
    */
   public OFunction(final ORecordId iRid) {
     super(iRid);
@@ -146,13 +141,12 @@ public class OFunction extends ODocumentWrapper {
     if (iArgs.length > 0) {
       args = new LinkedHashMap<Object, Object>();
       for (int i = 0; i < iArgs.length; ++i) {
-        // final Object argValue = ORecordSerializerStringAbstract.getTypeValue(iArgs[i].toString());
+        // final Object argValue =
+        // ORecordSerializerStringAbstract.getTypeValue(iArgs[i].toString());
         final Object argValue = iArgs[i];
 
-        if (params != null && i < params.size())
-          args.put(params.get(i), argValue);
-        else
-          args.put("param" + i, argValue);
+        if (params != null && i < params.size()) args.put(params.get(i), argValue);
+        else args.put("param" + i, argValue);
       }
     }
 
@@ -198,8 +192,7 @@ public class OFunction extends ODocumentWrapper {
     Object result;
     while (true) {
       try {
-        if (callback != null)
-          return callback.call(iArgs);
+        if (callback != null) return callback.call(iArgs);
 
         final OCommandExecutorScript command = new OCommandExecutorScript();
         command.parse(new OCommandScript(getLanguage(), getCode()));
@@ -211,8 +204,13 @@ public class OFunction extends ODocumentWrapper {
     }
 
     if (Orient.instance().getProfiler().isRecording())
-      Orient.instance().getProfiler().stopChrono("db." + ODatabaseRecordThreadLocal.instance().get().getName() + ".function.execute",
-          "Time to execute a function", start, "db.*.function.execute");
+      Orient.instance()
+          .getProfiler()
+          .stopChrono(
+              "db." + ODatabaseRecordThreadLocal.instance().get().getName() + ".function.execute",
+              "Time to execute a function",
+              start,
+              "db.*.function.execute");
 
     return result;
   }

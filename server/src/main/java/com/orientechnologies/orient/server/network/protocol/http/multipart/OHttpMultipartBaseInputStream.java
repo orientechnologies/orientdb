@@ -19,17 +19,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 
-/**
- * @author Luca Molino (molino.luca--at--gmail.com)
- * 
- */
+/** @author Luca Molino (molino.luca--at--gmail.com) */
 public class OHttpMultipartBaseInputStream extends InputStream {
 
   protected ArrayList<Integer> buffer;
-  protected int                contentLength = 0;
-  protected InputStream        wrappedInputStream;
+  protected int contentLength = 0;
+  protected InputStream wrappedInputStream;
 
-  public OHttpMultipartBaseInputStream(final InputStream in, final int iSkipInput, final int iContentLength) {
+  public OHttpMultipartBaseInputStream(
+      final InputStream in, final int iSkipInput, final int iContentLength) {
     wrappedInputStream = in;
     contentLength = iContentLength;
     this.buffer = new ArrayList<Integer>();
@@ -57,8 +55,7 @@ public class OHttpMultipartBaseInputStream extends InputStream {
 
   @Override
   public synchronized int read() throws IOException {
-    if (contentLength < 1)
-      return -1;
+    if (contentLength < 1) return -1;
 
     contentLength--;
     if (this.buffer.size() > 0) {
@@ -127,5 +124,4 @@ public class OHttpMultipartBaseInputStream extends InputStream {
   public int wrappedAvailable() throws IOException {
     return wrappedInputStream.available();
   }
-
 }

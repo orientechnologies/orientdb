@@ -23,18 +23,14 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.List;
-
-/**
- * Created by Enrico Risa on 10/08/15.
- */
+/** Created by Enrico Risa on 10/08/15. */
 public class LuceneInheritanceQueryTest extends BaseLuceneTest {
 
-  public LuceneInheritanceQueryTest() {
-  }
+  public LuceneInheritanceQueryTest() {}
 
   @Test
   public void testQuery() {
@@ -43,22 +39,22 @@ public class LuceneInheritanceQueryTest extends BaseLuceneTest {
     doc.field("name", "abc");
     db.save(doc);
 
-    List<ODocument> vertices = db.query(new OSQLSynchQuery<ODocument>("select from C1 where name lucene \"abc\" "));
+    List<ODocument> vertices =
+        db.query(new OSQLSynchQuery<ODocument>("select from C1 where name lucene \"abc\" "));
 
     Assert.assertEquals(1, vertices.size());
 
-//    OResultSet resultSet = db.query("select from C1 where name lucene \"abc\" ");
-//
-//    Assert.assertEquals(1, vertices.size());
+    //    OResultSet resultSet = db.query("select from C1 where name lucene \"abc\" ");
+    //
+    //    Assert.assertEquals(1, vertices.size());
 
   }
 
   protected void createSchema(ODatabaseDocumentInternal db) {
     final OClass c1 = db.createVertexClass("C1");
     c1.createProperty("name", OType.STRING);
-    c1.createIndex("C1.name", "FULLTEXT", null, null, "LUCENE", new String[] { "name" });
+    c1.createIndex("C1.name", "FULLTEXT", null, null, "LUCENE", new String[] {"name"});
 
     final OClass c2 = db.createClass("C2", "C1");
   }
-
 }

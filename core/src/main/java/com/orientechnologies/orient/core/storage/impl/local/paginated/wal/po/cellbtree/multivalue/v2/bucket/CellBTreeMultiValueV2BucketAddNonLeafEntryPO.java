@@ -6,22 +6,25 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v2.CellBTreeMultiValueV2Bucket;
-
 import java.nio.ByteBuffer;
 
 public final class CellBTreeMultiValueV2BucketAddNonLeafEntryPO extends PageOperationRecord {
-  private int     index;
-  private byte[]  key;
-  private int     left;
-  private int     right;
+  private int index;
+  private byte[] key;
+  private int left;
+  private int right;
   private boolean updateNeighbours;
-  private int     prevChild;
+  private int prevChild;
 
-  public CellBTreeMultiValueV2BucketAddNonLeafEntryPO() {
-  }
+  public CellBTreeMultiValueV2BucketAddNonLeafEntryPO() {}
 
-  public CellBTreeMultiValueV2BucketAddNonLeafEntryPO(final int index, final byte[] key, final int left, final int right,
-      boolean updateNeighbours, final int prevChild) {
+  public CellBTreeMultiValueV2BucketAddNonLeafEntryPO(
+      final int index,
+      final byte[] key,
+      final int left,
+      final int right,
+      boolean updateNeighbours,
+      final int prevChild) {
     this.index = index;
     this.key = key;
     this.left = left;
@@ -76,7 +79,10 @@ public final class CellBTreeMultiValueV2BucketAddNonLeafEntryPO extends PageOper
 
   @Override
   public int serializedSize() {
-    return super.serializedSize() + 5 * OIntegerSerializer.INT_SIZE + OByteSerializer.BYTE_SIZE + key.length;
+    return super.serializedSize()
+        + 5 * OIntegerSerializer.INT_SIZE
+        + OByteSerializer.BYTE_SIZE
+        + key.length;
   }
 
   @Override

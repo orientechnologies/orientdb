@@ -1,5 +1,8 @@
 package com.orientechnologies.orient.test;
 
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -9,8 +12,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-
-import static org.junit.Assert.*;
 
 /**
  * @param <T> see {@link TestFactory}
@@ -82,5 +83,4 @@ public class ConcurrentTestHelper<T> {
       futures.add(executor.submit(callable));
     }
   }
-
 }

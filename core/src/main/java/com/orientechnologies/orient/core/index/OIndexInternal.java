@@ -36,7 +36,6 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
-
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Optional;
@@ -51,16 +50,16 @@ import java.util.stream.Stream;
  */
 public interface OIndexInternal extends OIndex {
 
-  String CONFIG_KEYTYPE            = "keyType";
-  String CONFIG_AUTOMATIC          = "automatic";
-  String CONFIG_TYPE               = "type";
-  String ALGORITHM                 = "algorithm";
+  String CONFIG_KEYTYPE = "keyType";
+  String CONFIG_AUTOMATIC = "automatic";
+  String CONFIG_TYPE = "type";
+  String ALGORITHM = "algorithm";
   String VALUE_CONTAINER_ALGORITHM = "valueContainerAlgorithm";
-  String CONFIG_NAME               = "name";
-  String INDEX_DEFINITION          = "indexDefinition";
-  String INDEX_DEFINITION_CLASS    = "indexDefinitionClass";
-  String INDEX_VERSION             = "indexVersion";
-  String METADATA                  = "metadata";
+  String CONFIG_NAME = "name";
+  String INDEX_DEFINITION = "indexDefinition";
+  String INDEX_DEFINITION_CLASS = "indexDefinitionClass";
+  String INDEX_VERSION = "indexVersion";
+  String METADATA = "metadata";
 
   Object getCollatingValue(final Object key);
 
@@ -75,7 +74,6 @@ public interface OIndexInternal extends OIndex {
    * Saves the index configuration to disk.
    *
    * @return The configuration as ODocument instance
-   *
    * @see #getConfiguration()
    */
   ODocument updateConfiguration();
@@ -84,7 +82,6 @@ public interface OIndexInternal extends OIndex {
    * Add given cluster to the list of clusters that should be automatically indexed.
    *
    * @param iClusterName Cluster to add.
-   *
    * @return Current index instance.
    */
   OIndex addCluster(final String iClusterName);
@@ -93,17 +90,16 @@ public interface OIndexInternal extends OIndex {
    * Remove given cluster from the list of clusters that should be automatically indexed.
    *
    * @param iClusterName Cluster to remove.
-   *
    * @return Current index instance.
    */
   OIndex removeCluster(final String iClusterName);
 
   /**
-   * Indicates whether given index can be used to calculate result of {@link com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquality}
-   * operators.
+   * Indicates whether given index can be used to calculate result of {@link
+   * com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquality} operators.
    *
-   * @return {@code true} if given index can be used to calculate result of {@link com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquality}
-   * operators.
+   * @return {@code true} if given index can be used to calculate result of {@link
+   *     com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquality} operators.
    */
   boolean canBeUsedInEqualityOperators();
 
@@ -115,7 +111,8 @@ public interface OIndexInternal extends OIndex {
 
   void preCommit(OIndexAbstract.IndexTxSnapshot snapshots);
 
-  void addTxOperation(OIndexAbstract.IndexTxSnapshot snapshots, final OTransactionIndexChanges changes);
+  void addTxOperation(
+      OIndexAbstract.IndexTxSnapshot snapshots, final OTransactionIndexChanges changes);
 
   void commit(OIndexAbstract.IndexTxSnapshot snapshots);
 
@@ -124,34 +121,28 @@ public interface OIndexInternal extends OIndex {
   void setType(OType type);
 
   /**
-   * <p>
-   * Returns the index name for a key. The name is always the current index name, but in cases where the index supports key-based
-   * sharding.
+   * Returns the index name for a key. The name is always the current index name, but in cases where
+   * the index supports key-based sharding.
    *
    * @param key the index key.
-   *
    * @return The index name involved
    */
   String getIndexNameByKey(Object key);
 
   /**
-   * <p>
-   * Acquires exclusive lock in the active atomic operation running on the current thread for this index.
+   * Acquires exclusive lock in the active atomic operation running on the current thread for this
+   * index.
    *
-   * <p>
-   * If this index supports a more narrow locking, for example key-based sharding, it may use the provided {@code key} to infer a
-   * more narrow lock scope, but that is not a requirement.
+   * <p>If this index supports a more narrow locking, for example key-based sharding, it may use the
+   * provided {@code key} to infer a more narrow lock scope, but that is not a requirement.
    *
    * @param key the index key to lock.
-   *
-   * @return {@code true} if this index was locked entirely, {@code false} if this index locking is sensitive to the provided {@code
-   * key} and only some subset of this index was locked.
+   * @return {@code true} if this index was locked entirely, {@code false} if this index locking is
+   *     sensitive to the provided {@code key} and only some subset of this index was locked.
    */
   boolean acquireAtomicExclusiveLock(Object key);
 
-  /**
-   * @return number of entries in the index.
-   */
+  /** @return number of entries in the index. */
   long size();
 
   Stream<ORID> getRids(final Object key);
@@ -165,48 +156,54 @@ public interface OIndexInternal extends OIndex {
   /**
    * Returns stream which presents subset of index data between passed in keys.
    *
-   * @param fromKey       Lower border of index data.
+   * @param fromKey Lower border of index data.
    * @param fromInclusive Indicates whether lower border should be inclusive or exclusive.
-   * @param toKey         Upper border of index data.
-   * @param toInclusive   Indicates whether upper border should be inclusive or exclusive.
-   * @param ascOrder      Flag which determines whether data iterated by stream should be in ascending or descending order.
-   *
+   * @param toKey Upper border of index data.
+   * @param toInclusive Indicates whether upper border should be inclusive or exclusive.
+   * @param ascOrder Flag which determines whether data iterated by stream should be in ascending or
+   *     descending order.
    * @return Cursor which presents subset of index data between passed in keys.
    */
-  Stream<ORawPair<Object, ORID>> streamEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
-      boolean ascOrder);
+  Stream<ORawPair<Object, ORID>> streamEntriesBetween(
+      Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive, boolean ascOrder);
 
   /**
    * Returns stream which presents data associated with passed in keys.
    *
-   * @param keys         Keys data of which should be returned.
-   * @param ascSortOrder Flag which determines whether data iterated by stream should be in ascending or descending order.
-   *
+   * @param keys Keys data of which should be returned.
+   * @param ascSortOrder Flag which determines whether data iterated by stream should be in
+   *     ascending or descending order.
    * @return stream which presents data associated with passed in keys.
    */
   Stream<ORawPair<Object, ORID>> streamEntries(Collection<?> keys, boolean ascSortOrder);
 
   /**
-   * Returns stream which presents subset of data which associated with key which is greater than passed in key.
+   * Returns stream which presents subset of data which associated with key which is greater than
+   * passed in key.
    *
-   * @param fromKey       Lower border of index data.
+   * @param fromKey Lower border of index data.
    * @param fromInclusive Indicates whether lower border should be inclusive or exclusive.
-   * @param ascOrder      Flag which determines whether data iterated by stream should be in ascending or descending order.
-   *
-   * @return stream which presents subset of data which associated with key which is greater than passed in key.
+   * @param ascOrder Flag which determines whether data iterated by stream should be in ascending or
+   *     descending order.
+   * @return stream which presents subset of data which associated with key which is greater than
+   *     passed in key.
    */
-  Stream<ORawPair<Object, ORID>> streamEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder);
+  Stream<ORawPair<Object, ORID>> streamEntriesMajor(
+      Object fromKey, boolean fromInclusive, boolean ascOrder);
 
   /**
-   * Returns stream which presents subset of data which associated with key which is less than passed in key.
+   * Returns stream which presents subset of data which associated with key which is less than
+   * passed in key.
    *
-   * @param toKey       Upper border of index data.
+   * @param toKey Upper border of index data.
    * @param toInclusive Indicates Indicates whether upper border should be inclusive or exclusive.
-   * @param ascOrder    Flag which determines whether data iterated by stream should be in ascending or descending order.
-   *
-   * @return stream which presents subset of data which associated with key which is less than passed in key.
+   * @param ascOrder Flag which determines whether data iterated by stream should be in ascending or
+   *     descending order.
+   * @return stream which presents subset of data which associated with key which is less than
+   *     passed in key.
    */
-  Stream<ORawPair<Object, ORID>> streamEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder);
+  Stream<ORawPair<Object, ORID>> streamEntriesMinor(
+      Object toKey, boolean toInclusive, boolean ascOrder);
 
   static OIdentifiable securityFilterOnRead(OIndex idx, OIdentifiable item) {
     if (idx.getDefinition() == null) {
@@ -246,7 +243,10 @@ public interface OIndexInternal extends OIndex {
     return item;
   }
 
-  static boolean isLabelSecurityDefined(ODatabaseDocumentInternal database, OSecurityInternal security, String indexClass,
+  static boolean isLabelSecurityDefined(
+      ODatabaseDocumentInternal database,
+      OSecurityInternal security,
+      String indexClass,
       String propertyName) {
     Set<String> classesToCheck = new HashSet<>();
     classesToCheck.add(indexClass);
@@ -256,12 +256,15 @@ public interface OIndexInternal extends OIndex {
     }
     clazz.getAllSubclasses().forEach(x -> classesToCheck.add(x.getName()));
     clazz.getAllSuperClasses().forEach(x -> classesToCheck.add(x.getName()));
-    Set<OSecurityResourceProperty> allFilteredProperties = security.getAllFilteredProperties(database);
+    Set<OSecurityResourceProperty> allFilteredProperties =
+        security.getAllFilteredProperties(database);
 
     for (String className : classesToCheck) {
-      Optional<OSecurityResourceProperty> item = allFilteredProperties.stream()
-          .filter(x -> x.getClassName().equalsIgnoreCase(className)).filter(x -> x.getPropertyName().equals(propertyName))
-          .findFirst();
+      Optional<OSecurityResourceProperty> item =
+          allFilteredProperties.stream()
+              .filter(x -> x.getClassName().equalsIgnoreCase(className))
+              .filter(x -> x.getPropertyName().equals(propertyName))
+              .findFirst();
 
       if (item.isPresent()) {
         return true;
@@ -270,7 +273,8 @@ public interface OIndexInternal extends OIndex {
     return false;
   }
 
-  static boolean isReadRestrictedBySecurityPolicy(String indexClass, ODatabaseDocumentInternal db, OSecurityInternal security) {
+  static boolean isReadRestrictedBySecurityPolicy(
+      String indexClass, ODatabaseDocumentInternal db, OSecurityInternal security) {
     if (security.isReadRestrictedBySecurityPolicy(db, "database.class." + indexClass)) {
       return true;
     }
@@ -292,7 +296,10 @@ public interface OIndexInternal extends OIndex {
     if (idx.getMetadata() == null && idx.getDefinition() == null) {
       return items;
     }
-    String indexClass = idx.getMetadata() == null ? idx.getDefinition().getClassName() : idx.getMetadata().getClassName();
+    String indexClass =
+        idx.getMetadata() == null
+            ? idx.getDefinition().getClassName()
+            : idx.getMetadata().getClassName();
     if (indexClass == null) {
       return items;
     }
@@ -302,18 +309,30 @@ public interface OIndexInternal extends OIndex {
     }
     OSecurityInternal security = db.getSharedContext().getSecurity();
     if (isReadRestrictedBySecurityPolicy(indexClass, db, security)) {
-      items = items.stream().map(x -> x.getRecord()) // force record load, that triggers security checks
-          .filter(x -> x != null).map(x -> ((ORecord) x).getIdentity()).collect(Collectors.toList());
+      items =
+          items.stream()
+              .map(x -> x.getRecord()) // force record load, that triggers security checks
+              .filter(x -> x != null)
+              .map(x -> ((ORecord) x).getIdentity())
+              .collect(Collectors.toList());
     }
 
     if (idx.getDefinition().getFields().size() == 1) {
       String indexProp = idx.getDefinition().getFields().get(0);
       if (isLabelSecurityDefined(db, security, indexClass, indexProp)) {
 
-        items = items.stream().map(x -> x.getRecord()).filter(x -> x != null).filter(
-            x -> !(x instanceof ODocument) || ODocumentInternal.getPropertyAccess((ODocument) x) == null || ODocumentInternal
-                .getPropertyAccess((ODocument) x).isReadable(indexProp)).map(x -> ((ORecord) x).getIdentity())
-            .collect(Collectors.toList());
+        items =
+            items.stream()
+                .map(x -> x.getRecord())
+                .filter(x -> x != null)
+                .filter(
+                    x ->
+                        !(x instanceof ODocument)
+                            || ODocumentInternal.getPropertyAccess((ODocument) x) == null
+                            || ODocumentInternal.getPropertyAccess((ODocument) x)
+                                .isReadable(indexProp))
+                .map(x -> ((ORecord) x).getIdentity())
+                .collect(Collectors.toList());
       }
     }
     return items;
@@ -321,11 +340,15 @@ public interface OIndexInternal extends OIndex {
 
   boolean isNativeTxSupported();
 
-  Iterable<OTransactionIndexChangesPerKey.OTransactionIndexEntry> interpretTxKeyChanges(OTransactionIndexChangesPerKey changes);
+  Iterable<OTransactionIndexChangesPerKey.OTransactionIndexEntry> interpretTxKeyChanges(
+      OTransactionIndexChangesPerKey changes);
 
-  void doPut(OAbstractPaginatedStorage storage, Object key, ORID rid) throws OInvalidIndexEngineIdException;
+  void doPut(OAbstractPaginatedStorage storage, Object key, ORID rid)
+      throws OInvalidIndexEngineIdException;
 
-  boolean doRemove(OAbstractPaginatedStorage storage, Object key, ORID rid) throws OInvalidIndexEngineIdException;
+  boolean doRemove(OAbstractPaginatedStorage storage, Object key, ORID rid)
+      throws OInvalidIndexEngineIdException;
 
-  boolean doRemove(OAbstractPaginatedStorage storage, Object key) throws OInvalidIndexEngineIdException;
+  boolean doRemove(OAbstractPaginatedStorage storage, Object key)
+      throws OInvalidIndexEngineIdException;
 }

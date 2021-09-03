@@ -13,7 +13,5 @@ public class OCreateUserStatementTest extends OParserTestAbstract {
     checkRightSyntax("create user test identified by 'foo' role [admin, reader]");
     checkWrongSyntax("CREATE USER test IDENTIFIED BY 'foo' role admin, reader");
     checkWrongSyntax("CREATE USER test");
-
   }
-
 }

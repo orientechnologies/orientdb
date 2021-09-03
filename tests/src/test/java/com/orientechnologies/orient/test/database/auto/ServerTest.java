@@ -16,21 +16,16 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
-import com.orientechnologies.orient.client.remote.OEngineRemote;
-import com.orientechnologies.orient.client.remote.ORemoteConnectionManager;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
+import java.io.IOException;
+import java.util.Map;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
-
-import java.io.IOException;
-import java.util.Map;
 
 @Test
 public class ServerTest extends DocumentDBBaseTest {
@@ -89,5 +84,4 @@ public class ServerTest extends DocumentDBBaseTest {
     admin.dropDatabase("memory");
     admin.close();
   }
-
 }

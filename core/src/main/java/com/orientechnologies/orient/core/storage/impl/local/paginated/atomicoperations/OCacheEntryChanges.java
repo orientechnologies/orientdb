@@ -6,21 +6,19 @@ import com.orientechnologies.orient.core.storage.cache.chm.LRUList;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPageChangesPortion;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.OperationIdLSN;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
-
 import java.util.List;
 
-/**
- * Created by tglman on 23/06/16.
- */
+/** Created by tglman on 23/06/16. */
 public class OCacheEntryChanges implements OCacheEntry {
 
-  protected       OCacheEntry delegate;
+  protected OCacheEntry delegate;
   protected final OWALChanges changes = new OWALPageChangesPortion();
 
   protected boolean isNew;
 
-  private OLogSequenceNumber changeLSN;
+  private OperationIdLSN changeOperationIdLSN;
 
   protected boolean verifyCheckSum;
 
@@ -192,6 +190,11 @@ public class OCacheEntryChanges implements OCacheEntry {
   }
 
   @Override
+  public boolean insideCache() {
+    return delegate.insideCache();
+  }
+
+  @Override
   public OCacheEntry getNext() {
     throw new UnsupportedOperationException();
   }
@@ -221,11 +224,11 @@ public class OCacheEntryChanges implements OCacheEntry {
     throw new UnsupportedOperationException();
   }
 
-  OLogSequenceNumber getChangeLSN() {
-    return changeLSN;
+  OperationIdLSN getChangeOperationIdLSN() {
+    return changeOperationIdLSN;
   }
 
-  void setChangeLSN(final OLogSequenceNumber walLSN) {
-    this.changeLSN = walLSN;
+  void setChangeOperationIdLSN(final OperationIdLSN operationIdLSN) {
+    this.changeOperationIdLSN = operationIdLSN;
   }
 }

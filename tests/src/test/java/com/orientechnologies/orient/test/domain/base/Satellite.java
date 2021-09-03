@@ -19,69 +19,62 @@ package com.orientechnologies.orient.test.domain.base;
 import javax.persistence.Id;
 import javax.persistence.Version;
 
-/**
- * @author Luca Molino (molino.luca--at--gmail.com)
- * 
- */
+/** @author Luca Molino (molino.luca--at--gmail.com) */
 public class Satellite {
-	@Id
-	private String	id;
+  @Id private String id;
 
-	@Version
-	private Integer	version;
+  @Version private Integer version;
 
-	private long		diameter;
+  private long diameter;
 
-	private String	name;
+  private String name;
 
-	private Planet	near;
+  private Planet near;
 
-	public Satellite() {
-	}
+  public Satellite() {}
 
-	public Satellite(String name, long diameter) {
-		this.name = name;
-		this.diameter = diameter;
-	}
+  public Satellite(String name, long diameter) {
+    this.name = name;
+    this.diameter = diameter;
+  }
 
-	public String getId() {
-		return id;
-	}
+  public String getId() {
+    return id;
+  }
 
-	public void setId(String id) {
-		this.id = id;
-	}
+  public void setId(String id) {
+    this.id = id;
+  }
 
-	public Integer getVersion() {
-		return version;
-	}
+  public Integer getVersion() {
+    return version;
+  }
 
-	public void setVersion(Integer version) {
-		this.version = version;
-	}
+  public void setVersion(Integer version) {
+    this.version = version;
+  }
 
-	public long getDiameter() {
-		return diameter;
-	}
+  public long getDiameter() {
+    return diameter;
+  }
 
-	public void setDiameter(long diameter) {
-		this.diameter = diameter;
-	}
+  public void setDiameter(long diameter) {
+    this.diameter = diameter;
+  }
 
-	public String getName() {
-		return name;
-	}
+  public String getName() {
+    return name;
+  }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+  public void setName(String name) {
+    this.name = name;
+  }
 
-	public Planet getNear() {
-		return near;
-	}
+  public Planet getNear() {
+    return near;
+  }
 
-	public void setNear(Planet near) {
-		this.near = near;
-	}
-
+  public void setNear(Planet near) {
+    this.near = near;
+  }
 }

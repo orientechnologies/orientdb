@@ -23,11 +23,10 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
-
 import java.util.Optional;
 import java.util.stream.Stream;
 
-@SuppressWarnings({ "unchecked", "DeprecatedIsStillUsed" })
+@SuppressWarnings({"unchecked", "DeprecatedIsStillUsed"})
 @Deprecated
 public class ODictionary<T> {
   private final OIndex index;
@@ -42,7 +41,6 @@ public class ODictionary<T> {
       value = stream.findAny();
     }
     return value.map(rid -> (RET) rid.getRecord()).orElse(null);
-
   }
 
   public <RET extends T> RET get(final String iKey, final String fetchPlan) {
@@ -50,7 +48,9 @@ public class ODictionary<T> {
     try (Stream<ORID> stream = index.getInternal().getRids(iKey)) {
       value = stream.findAny();
     }
-    return value.map(rid -> (RET) ODatabaseRecordThreadLocal.instance().get().load(rid, fetchPlan)).orElse(null);
+    return value
+        .map(rid -> (RET) ODatabaseRecordThreadLocal.instance().get().load(rid, fetchPlan))
+        .orElse(null);
   }
 
   public void put(final String iKey, final Object iValue) {

@@ -26,7 +26,6 @@ import java.util.List;
  * ResultSet interface that extends List interface for retro compatibility.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- *
  * @param <T>
  * @see OSQLAsynchQuery
  */
@@ -44,7 +43,7 @@ public interface OLegacyResultSet<T> extends List<T>, Externalizable {
 
   /**
    * Returns the current size. If the resultset is not yet ready, returns te current size.
-   * 
+   *
    * @return
    */
   int currentSize();

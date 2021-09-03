@@ -11,24 +11,23 @@ import com.orientechnologies.orient.core.metadata.sequence.SequenceOrderType;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 public class OCreateSequenceStatement extends OSimpleExecStatement {
-  public static final int TYPE_CACHED  = 0;
+  public static final int TYPE_CACHED = 0;
   public static final int TYPE_ORDERED = 1;
 
   OIdentifier name;
 
   public boolean ifNotExists = false;
 
-  int         type;
+  int type;
   OExpression start;
   OExpression increment;
   OExpression cache;
-  boolean     positive = OSequence.DEFAULT_ORDER_TYPE == SequenceOrderType.ORDER_POSITIVE;
-  boolean     cyclic   = OSequence.DEFAULT_RECYCLABLE_VALUE;
+  boolean positive = OSequence.DEFAULT_ORDER_TYPE == SequenceOrderType.ORDER_POSITIVE;
+  boolean cyclic = OSequence.DEFAULT_RECYCLABLE_VALUE;
   OExpression limitValue;
 
   public OCreateSequenceStatement(int id) {
@@ -41,14 +40,18 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
 
   @Override
   public OResultSet executeSimple(OCommandContext ctx) {
-    OSequence seq = ctx.getDatabase().getMetadata().getSequenceLibrary().getSequence(this.name.getStringValue());
+    OSequence seq =
+        ctx.getDatabase()
+            .getMetadata()
+            .getSequenceLibrary()
+            .getSequence(this.name.getStringValue());
     if (seq != null) {
       if (ifNotExists) {
         return new OInternalResultSet();
       } else {
-        throw new OCommandExecutionException("Sequence " + name.getStringValue() + " already exists");
+        throw new OCommandExecutionException(
+            "Sequence " + name.getStringValue() + " already exists");
       }
-
     }
     OResultInternal result = new OResultInternal();
     result.setProperty("operation", "create sequence");
@@ -67,11 +70,16 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
     return rs;
   }
 
-  private void executeInternal(OCommandContext ctx, OResultInternal result) throws ExecutionException, InterruptedException {
+  private void executeInternal(OCommandContext ctx, OResultInternal result)
+      throws ExecutionException, InterruptedException {
     OSequence.CreateParams params = createParams(ctx, result);
-    OSequence.SEQUENCE_TYPE seqType = type == TYPE_CACHED ? OSequence.SEQUENCE_TYPE.CACHED : OSequence.SEQUENCE_TYPE.ORDERED;
+    OSequence.SEQUENCE_TYPE seqType =
+        type == TYPE_CACHED ? OSequence.SEQUENCE_TYPE.CACHED : OSequence.SEQUENCE_TYPE.ORDERED;
     result.setProperty("type", seqType.toString());
-    ctx.getDatabase().getMetadata().getSequenceLibrary().createSequence(this.name.getStringValue(), seqType, params);
+    ctx.getDatabase()
+        .getMetadata()
+        .getSequenceLibrary()
+        .createSequence(this.name.getStringValue(), seqType, params);
   }
 
   private OSequence.CreateParams createParams(OCommandContext ctx, OResultInternal result) {
@@ -114,7 +122,8 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
       }
     }
 
-    params.setOrderType(positive ? SequenceOrderType.ORDER_POSITIVE : SequenceOrderType.ORDER_NEGATIVE);
+    params.setOrderType(
+        positive ? SequenceOrderType.ORDER_POSITIVE : SequenceOrderType.ORDER_NEGATIVE);
     result.setProperty("orderType", params.getOrderType().toString());
     params.setRecyclable(cyclic);
     result.setProperty("recycable", params.getRecyclable());
@@ -131,14 +140,14 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
     }
     builder.append(" TYPE ");
     switch (type) {
-    case TYPE_CACHED:
-      builder.append(" CACHED");
-      break;
-    case TYPE_ORDERED:
-      builder.append(" ORDERED");
-      break;
-    default:
-      throw new IllegalStateException("Invalid type for CREATE SEQUENCE: " + type);
+      case TYPE_CACHED:
+        builder.append(" CACHED");
+        break;
+      case TYPE_ORDERED:
+        builder.append(" ORDERED");
+        break;
+      default:
+        throw new IllegalStateException("Invalid type for CREATE SEQUENCE: " + type);
     }
 
     if (start != null) {
@@ -184,25 +193,18 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OCreateSequenceStatement that = (OCreateSequenceStatement) o;
 
-    if (ifNotExists != that.ifNotExists)
-      return false;
-    if (type != that.type)
-      return false;
-    if (name != null ? !name.equals(that.name) : that.name != null)
-      return false;
-    if (start != null ? !start.equals(that.start) : that.start != null)
-      return false;
+    if (ifNotExists != that.ifNotExists) return false;
+    if (type != that.type) return false;
+    if (name != null ? !name.equals(that.name) : that.name != null) return false;
+    if (start != null ? !start.equals(that.start) : that.start != null) return false;
     if (increment != null ? !increment.equals(that.increment) : that.increment != null)
       return false;
-    if (cache != null ? !cache.equals(that.cache) : that.cache != null)
-      return false;
+    if (cache != null ? !cache.equals(that.cache) : that.cache != null) return false;
     if (limitValue != null ? !limitValue.equals(that.limitValue) : that.limitValue != null)
       return false;
     if (cyclic != that.cyclic) {

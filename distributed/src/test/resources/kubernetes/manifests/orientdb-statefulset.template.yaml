@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ${orientdbNodeName}
+  namespace: ${testNamespace}
+  labels:
+    app: ${orientdbLabel}
+spec:
+  selector:
+    matchLabels:
+      app: ${orientdbLabel}
+  replicas: 1
+  serviceName: ${orientdbNodeName}
+  template:
+    metadata:
+      labels:
+        app: ${orientdbLabel}
+        orientdb-cluster-member: "true"
+    spec:
+      serviceAccountName: hazelcast-k8s
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: orientdb
+          command: ["sh", "-c", "rm /dev/random; mknod /dev/random c 1 9; dserver.sh -DkubernetesNamespace=${testNamespace}"]
+          image: ${orientdbDockerImage}
+          imagePullPolicy: Always
+          env:
+            - name: ORIENTDB_NODE_NAME
+              value: ${orientdbNodeName}
+          ports:
+            - containerPort: ${orientdbHttpPort}
+              protocol: TCP
+            - containerPort: ${orientdbBinaryPort}
+              protocol: TCP
+            - containerPort: ${orientdbHazelcastPort}
+              protocol: TCP
+          livenessProbe:
+            tcpSocket:
+              port: ${orientdbBinaryPort}
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            failureThreshold: 5
+          readinessProbe:
+            tcpSocket:
+              port: ${orientdbBinaryPort}
+            initialDelaySeconds: 10
+            periodSeconds: 20
+            failureThreshold: 5
+          volumeMounts:
+            - name: databases
+              mountPath: /orientdb/databases
+            - name: config
+              mountPath: /orientdb/config
+      # At some point, it would be better to fix resources.
+      #    resources:
+      #      requests:
+      #      limits:
+      #
+      # OrientDB needs the config files (at leaset server config) to be modifiable. Mounting directly from the configMap
+      # would result in a read-only config folder which can crash the server.
+      initContainers:
+        - name: copy-configs
+          image: busybox:1.31
+          command: ['sh', '-c']
+          args:
+            - cp -v /orientdb-config/* /orientdb/config/
+          volumeMounts:
+            - name: config
+              mountPath: /orientdb/config
+            - name: orientdb-config-cm-vol
+              mountPath: /orientdb-config
+      volumes:
+        - name: orientdb-config-cm-vol
+          configMap:
+            name: ${orientdbConfigCm}
+  volumeClaimTemplates:
+    - metadata:
+        name: databases
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: ${databaseVolumeStorageClass}
+        resources:
+          requests:
+            storage: ${databaseVolSize}Gi
+    - metadata:
+        name: config
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: ${configVolumeStorageClass}
+        resources:
+          requests:
+            storage: 100Mi

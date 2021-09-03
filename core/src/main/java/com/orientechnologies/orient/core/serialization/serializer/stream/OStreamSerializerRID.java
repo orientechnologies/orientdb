@@ -22,16 +22,13 @@ package com.orientechnologies.orient.core.serialization.serializer.stream;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
-
-import java.io.IOException;
 import java.nio.ByteBuffer;
 
 public class OStreamSerializerRID implements OBinarySerializer<OIdentifiable> {
   public static final OStreamSerializerRID INSTANCE = new OStreamSerializerRID();
-  public static final byte                 ID       = 16;
+  public static final byte ID = 16;
 
   public int getObjectSize(OIdentifiable object, Object... hints) {
     return OLinkSerializer.INSTANCE.getObjectSize(object.getIdentity());
@@ -57,7 +54,8 @@ public class OStreamSerializerRID implements OBinarySerializer<OIdentifiable> {
     return OLinkSerializer.INSTANCE.getObjectSizeNative(stream, startPosition);
   }
 
-  public void serializeNativeObject(OIdentifiable object, byte[] stream, int startPosition, Object... hints) {
+  public void serializeNativeObject(
+      OIdentifiable object, byte[] stream, int startPosition, Object... hints) {
     OLinkSerializer.INSTANCE.serializeNativeObject(object.getIdentity(), stream, startPosition);
   }
 
@@ -78,41 +76,33 @@ public class OStreamSerializerRID implements OBinarySerializer<OIdentifiable> {
     return value;
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
-  public void serializeInByteBufferObject(OIdentifiable object, ByteBuffer buffer, Object... hints) {
+  public void serializeInByteBufferObject(
+      OIdentifiable object, ByteBuffer buffer, Object... hints) {
     OLinkSerializer.INSTANCE.serializeInByteBufferObject(object, buffer);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public OIdentifiable deserializeFromByteBufferObject(ByteBuffer buffer) {
     return OLinkSerializer.INSTANCE.deserializeFromByteBufferObject(buffer);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
     return OLinkSerializer.INSTANCE.getObjectSizeInByteBuffer(buffer);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
-  public OIdentifiable deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+  public OIdentifiable deserializeFromByteBufferObject(
+      ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return OLinkSerializer.INSTANCE.deserializeFromByteBufferObject(buffer, walChanges, offset);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return OLinkSerializer.INSTANCE.getObjectSizeInByteBuffer(buffer, walChanges, offset);

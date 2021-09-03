@@ -8,9 +8,13 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-
 import java.lang.reflect.Array;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class OArrayRangeSelector extends SimpleNode {
   protected Integer from;
@@ -68,7 +72,7 @@ public class OArrayRangeSelector extends SimpleNode {
     if (toSelector != null) {
       lTo = toSelector.getValue(iCurrentRecord, result, ctx);
     }
-    if(included){
+    if (included) {
       lTo++;
     }
     if (lFrom > lTo) {
@@ -108,7 +112,7 @@ public class OArrayRangeSelector extends SimpleNode {
     if (toSelector != null) {
       lTo = toSelector.getValue(iCurrentRecord, result, ctx);
     }
-    if(included){
+    if (included) {
       lTo++;
     }
     if (lFrom > lTo) {
@@ -155,21 +159,15 @@ public class OArrayRangeSelector extends SimpleNode {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OArrayRangeSelector that = (OArrayRangeSelector) o;
 
-    if (newRange != that.newRange)
-      return false;
-    if (included != that.included)
-      return false;
-    if (from != null ? !from.equals(that.from) : that.from != null)
-      return false;
-    if (to != null ? !to.equals(that.to) : that.to != null)
-      return false;
+    if (newRange != that.newRange) return false;
+    if (included != that.included) return false;
+    if (from != null ? !from.equals(that.from) : that.from != null) return false;
+    if (to != null ? !to.equals(that.to) : that.to != null) return false;
     if (fromSelector != null ? !fromSelector.equals(that.fromSelector) : that.fromSelector != null)
       return false;
     if (toSelector != null ? !toSelector.equals(that.toSelector) : that.toSelector != null)
@@ -212,7 +210,6 @@ public class OArrayRangeSelector extends SimpleNode {
    * @param target
    * @param value
    * @param ctx
-   *
    * @return
    */
   public void setValue(Object target, Object value, OCommandContext ctx) {
@@ -224,9 +221,9 @@ public class OArrayRangeSelector extends SimpleNode {
     } else if (target instanceof List) {
       setValue((List) target, value, ctx);
     } else if (OMultiValue.isMultiValue(value)) {
-      //TODO
+      // TODO
     }
-    //TODO
+    // TODO
 
   }
 
@@ -249,7 +246,7 @@ public class OArrayRangeSelector extends SimpleNode {
       } else if (i >= from) {
         target.set(i, value);
       }
-      //else leave untouched the existing element
+      // else leave untouched the existing element
     }
   }
 
@@ -315,11 +312,12 @@ public class OArrayRangeSelector extends SimpleNode {
     }
     to = Math.min(to, Array.getLength(target) - 1);
     for (int i = from; i <= to; i++) {
-      Array.set(target, i, value);//TODO type conversion?
+      Array.set(target, i, value); // TODO type conversion?
     }
   }
 
-  public void applyRemove(Object currentValue, OResultInternal originalRecord, OCommandContext ctx) {
+  public void applyRemove(
+      Object currentValue, OResultInternal originalRecord, OCommandContext ctx) {
     if (currentValue == null) {
       return;
     }
@@ -332,7 +330,8 @@ public class OArrayRangeSelector extends SimpleNode {
       to = toSelector.getValue(originalRecord, null, ctx);
     }
     if (from == null || to == null) {
-      throw new OCommandExecutionException("Invalid range expression: " + toString() + " one of the elements is null");
+      throw new OCommandExecutionException(
+          "Invalid range expression: " + toString() + " one of the elements is null");
     }
     if (included) {
       to++;
@@ -369,7 +368,11 @@ public class OArrayRangeSelector extends SimpleNode {
       }
     } else {
       throw new OCommandExecutionException(
-          "Trying to remove elements from " + currentValue + " (" + currentValue.getClass().getSimpleName() + ")");
+          "Trying to remove elements from "
+              + currentValue
+              + " ("
+              + currentValue.getClass().getSimpleName()
+              + ")");
     }
   }
 

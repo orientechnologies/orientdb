@@ -1,19 +1,13 @@
 package com.orientechnologies.orient.core.storage.fs;
 
-import com.kenai.jffi.MemoryIO;
-import com.kenai.jffi.Platform;
 import com.orientechnologies.common.concur.lock.ScalableRWLock;
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.jnr.LastErrorException;
-import com.orientechnologies.common.jnr.ONative;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.exception.OStorageException;
-
 import java.io.EOFException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.channels.AsynchronousFileChannel;
 import java.nio.channels.CompletionHandler;
 import java.nio.file.Files;
@@ -27,22 +21,20 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
 public final class AsyncFile implements OFile {
-  private static final int ALLOCATION_THRESHOLD = 1024 * 1024;
+  private final ScalableRWLock lock = new ScalableRWLock();
+  private volatile Path osFile;
 
-  private final    ScalableRWLock lock = new ScalableRWLock();
-  private volatile Path           osFile;
+  private final AtomicLong dirtyCounter = new AtomicLong();
+  private final Object flushSemaphore = new Object();
 
-  private final AtomicLong dirtyCounter   = new AtomicLong();
-  private final Object     flushSemaphore = new Object();
-
-  private final AtomicLong size          = new AtomicLong();
-  private final AtomicLong committedSize = new AtomicLong();
-
+  private final AtomicLong size = new AtomicLong(-1);
   private AsynchronousFileChannel fileChannel;
-  private int                     fd = -1;
 
-  public AsyncFile(Path osFile) {
+  private final int pageSize;
+
+  public AsyncFile(final Path osFile, final int pageSize) {
     this.osFile = osFile;
+    this.pageSize = pageSize;
   }
 
   @Override
@@ -72,17 +64,43 @@ public final class AsyncFile implements OFile {
         try {
           written += writeFuture.get();
         } catch (InterruptedException | ExecutionException e) {
-          throw OException.wrapException(new OStorageException("Error during write operation to the file " + osFile), e);
+          throw OException.wrapException(
+              new OStorageException("Error during write operation to the file " + osFile), e);
         }
       } while (written < HEADER_SIZE);
 
       dirtyCounter.incrementAndGet();
     }
 
-    final long currentSize = fileChannel.size() - HEADER_SIZE;
+    long currentSize = fileChannel.size() - HEADER_SIZE;
 
-    size.set(currentSize);
-    this.committedSize.set(currentSize);
+    if (currentSize % pageSize != 0) {
+      final long initialSize = currentSize;
+
+      currentSize = (currentSize / pageSize) * pageSize;
+      fileChannel.truncate(currentSize + HEADER_SIZE);
+
+      OLogManager.instance()
+          .warnNoDb(
+              this,
+              "Data page in file {} was partially written and will be truncated, "
+                  + "initial size {}, truncated size {}",
+              osFile,
+              initialSize,
+              currentSize);
+    }
+
+    if (size.get() < 0) {
+      size.set(currentSize);
+    } else {
+      if (fileChannel.size() - HEADER_SIZE > size.get()) {
+        throw new IllegalStateException(
+            "Physical size of the file "
+                + (fileChannel.size() - HEADER_SIZE)
+                + " but logical size is "
+                + size.get());
+      }
+    }
   }
 
   @Override
@@ -102,14 +120,8 @@ public final class AsyncFile implements OFile {
       throw new OStorageException("File " + osFile + " is already opened.");
     }
 
-    fileChannel = AsynchronousFileChannel.open(osFile, StandardOpenOption.READ, StandardOpenOption.WRITE);
-    if (Platform.getPlatform().getOS() == Platform.OS.LINUX) {
-      try {
-        fd = ONative.instance().open(osFile.toAbsolutePath().toString(), ONative.O_CREAT | ONative.O_RDONLY | ONative.O_WRONLY);
-      } catch (LastErrorException e) {
-        fd = -1;
-      }
-    }
+    fileChannel =
+        AsynchronousFileChannel.open(osFile, StandardOpenOption.READ, StandardOpenOption.WRITE);
 
     initSize();
   }
@@ -152,11 +164,13 @@ public final class AsyncFile implements OFile {
       int written = 0;
       do {
         buffer.position(written);
-        final Future<Integer> writeFuture = fileChannel.write(buffer, offset + HEADER_SIZE + written);
+        final Future<Integer> writeFuture =
+            fileChannel.write(buffer, offset + HEADER_SIZE + written);
         try {
           written += writeFuture.get();
         } catch (InterruptedException | ExecutionException e) {
-          throw OException.wrapException(new OStorageException("Error during write operation to the file " + osFile), e);
+          throw OException.wrapException(
+              new OStorageException("Error during write operation to the file " + osFile), e);
         }
       } while (written < buffer.limit());
 
@@ -182,7 +196,8 @@ public final class AsyncFile implements OFile {
         checkPosition(pair.first + pair.second.limit() - 1);
 
         final long position = pair.first + HEADER_SIZE;
-        fileChannel.write(byteBuffer, position, latch, new WriteHandler(byteBuffer, asyncIOResult, position));
+        fileChannel.write(
+            byteBuffer, position, latch, new WriteHandler(byteBuffer, asyncIOResult, position));
       } finally {
         lock.sharedUnlock();
       }
@@ -206,7 +221,8 @@ public final class AsyncFile implements OFile {
         try {
           bytesRead = readFuture.get();
         } catch (InterruptedException | ExecutionException e) {
-          throw OException.wrapException(new OStorageException("Error during read operation from the file " + osFile), e);
+          throw OException.wrapException(
+              new OStorageException("Error during read operation from the file " + osFile), e);
         }
 
         if (bytesRead == -1) {
@@ -225,61 +241,8 @@ public final class AsyncFile implements OFile {
   }
 
   @Override
-  public long allocateSpace(int size) throws IOException {
-    lock.sharedLock();
-    final long allocatedPosition;
-    try {
-      final long currentSize = this.size.addAndGet(size);
-      allocatedPosition = currentSize - size;
-
-      long currentCommittedSize = this.committedSize.get();
-
-      final long sizeDifference = currentSize - currentCommittedSize;
-      if (fd >= 0 && sizeDifference <= ALLOCATION_THRESHOLD) {
-        return allocatedPosition;
-      }
-
-      while (currentCommittedSize < currentSize) {
-        if (this.committedSize.compareAndSet(currentCommittedSize, currentSize)) {
-          break;
-        }
-
-        currentCommittedSize = committedSize.get();
-      }
-
-      if (fd < 0) {
-        final MemoryIO memoryIO = MemoryIO.getInstance();
-        final long ptr = memoryIO.allocateMemory(size, true);
-        try {
-          final ByteBuffer buffer = memoryIO.newDirectByteBuffer(ptr, size).order(ByteOrder.nativeOrder());
-          int written = 0;
-          do {
-            buffer.position(written);
-            final Future<Integer> writeFuture = fileChannel.write(buffer, allocatedPosition + written + HEADER_SIZE);
-            try {
-              written += writeFuture.get();
-            } catch (InterruptedException | ExecutionException e) {
-              throw OException.wrapException(new OStorageException("Error during write operation to the file " + osFile), e);
-            }
-          } while (written < size);
-
-          assert written == size;
-        } finally {
-          memoryIO.freeMemory(ptr);
-        }
-      } else {
-        final long sizeDiff = currentSize - currentCommittedSize;
-        if (sizeDiff > 0) {
-          ONative.instance().fallocate(fd, currentCommittedSize + HEADER_SIZE, sizeDiff);
-        }
-      }
-
-      assert fileChannel.size() >= currentSize + HEADER_SIZE;
-    } finally {
-      lock.sharedUnlock();
-    }
-
-    return allocatedPosition;
+  public long allocateSpace(int size) {
+    return this.size.getAndAdd(size);
   }
 
   @Override
@@ -289,8 +252,6 @@ public final class AsyncFile implements OFile {
       checkForClose();
 
       this.size.set(0);
-      this.committedSize.set(size);
-
       fileChannel.truncate(size + HEADER_SIZE);
     } finally {
       lock.exclusiveUnlock();
@@ -315,7 +276,11 @@ public final class AsyncFile implements OFile {
           fileChannel.force(false);
         } catch (final IOException e) {
           OLogManager.instance()
-              .warn(this, "Error during flush of file %s. Data may be lost in case of power failure", e, getName());
+              .warn(
+                  this,
+                  "Error during flush of file %s. Data may be lost in case of power failure",
+                  e,
+                  getName());
         }
 
         dirtyCounter.addAndGet(-dirtyCounterValue);
@@ -330,27 +295,18 @@ public final class AsyncFile implements OFile {
       doSynch();
       doClose();
     } catch (IOException e) {
-      throw OException.wrapException(new OStorageException("Error during closing the file " + osFile), e);
+      throw OException.wrapException(
+          new OStorageException("Error during closing the file " + osFile), e);
     } finally {
       lock.exclusiveUnlock();
     }
   }
 
   private void doClose() throws IOException {
-    //ignore if closed
+    // ignore if closed
     if (fileChannel != null) {
       fileChannel.close();
       fileChannel = null;
-
-      if (fd >= 0) {
-        final long sizeDiff = this.size.get() - this.committedSize.get();
-        if (sizeDiff > 0) {
-          ONative.instance().fallocate(fd, this.committedSize.get() + HEADER_SIZE, sizeDiff);
-        }
-
-        ONative.instance().close(fd);
-        fd = -1;
-      }
     }
   }
 
@@ -399,7 +355,9 @@ public final class AsyncFile implements OFile {
     final long fileSize = size.get();
     if (offset < 0 || offset >= fileSize) {
       throw new OStorageException(
-          "You are going to access region outside of allocated file position. File size = " + fileSize + ", requested position "
+          "You are going to access region outside of allocated file position. File size = "
+              + fileSize
+              + ", requested position "
               + offset);
     }
   }
@@ -411,9 +369,9 @@ public final class AsyncFile implements OFile {
   }
 
   private final class WriteHandler implements CompletionHandler<Integer, CountDownLatch> {
-    private final ByteBuffer    byteBuffer;
+    private final ByteBuffer byteBuffer;
     private final AsyncIOResult ioResult;
-    private final long          position;
+    private final long position;
 
     private WriteHandler(ByteBuffer byteBuffer, AsyncIOResult ioResult, long position) {
       this.byteBuffer = byteBuffer;
@@ -450,7 +408,7 @@ public final class AsyncFile implements OFile {
 
   private static final class AsyncIOResult implements IOResult {
     private final CountDownLatch latch;
-    private       Throwable      exc;
+    private Throwable exc;
 
     private AsyncIOResult(CountDownLatch latch) {
       this.latch = latch;

@@ -20,6 +20,7 @@
 
 package com.orientechnologies.common.reflection;
 
+import com.orientechnologies.common.log.OLogManager;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -39,17 +40,17 @@ import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-import com.orientechnologies.common.log.OLogManager;
-
 /**
- * Helper class to browse .class files. See also: http://forums.sun.com/thread.jspa?threadID=341935&start=15&tstart=0
- * 
+ * Helper class to browse .class files. See also:
+ * http://forums.sun.com/thread.jspa?threadID=341935&start=15&tstart=0
+ *
  * @author Antony Stubbs
  */
 public class OReflectionHelper {
   private static final String CLASS_EXTENSION = ".class";
 
-  public static List<Class<?>> getClassesFor(final Collection<String> classNames, final ClassLoader classLoader)
+  public static List<Class<?>> getClassesFor(
+      final Collection<String> classNames, final ClassLoader classLoader)
       throws ClassNotFoundException {
     List<Class<?>> classes = new ArrayList<Class<?>>(classNames.size());
     for (String className : classNames) {
@@ -58,8 +59,8 @@ public class OReflectionHelper {
     return classes;
   }
 
-  public static List<Class<?>> getClassesFor(final String iPackageName, final ClassLoader iClassLoader)
-      throws ClassNotFoundException {
+  public static List<Class<?>> getClassesFor(
+      final String iPackageName, final ClassLoader iClassLoader) throws ClassNotFoundException {
     // This will hold a list of directories matching the pckgname.
     // There may be more than one if a package is split over multiple jars/paths
     final List<Class<?>> classes = new ArrayList<Class<?>>();
@@ -71,7 +72,8 @@ public class OReflectionHelper {
       if (!resources.hasMoreElements()) {
         resources = iClassLoader.getResources(packageUrl + CLASS_EXTENSION);
         if (resources.hasMoreElements()) {
-          throw new IllegalArgumentException(iPackageName + " does not appear to be a valid package but a class");
+          throw new IllegalArgumentException(
+              iPackageName + " does not appear to be a valid package but a class");
         }
       } else {
         while (resources.hasMoreElements()) {
@@ -81,22 +83,27 @@ public class OReflectionHelper {
             final JarFile jar = conn.getJarFile();
             for (JarEntry e : Collections.list(jar.entries())) {
 
-              if (e.getName().startsWith(iPackageName.replace('.', '/')) && e.getName().endsWith(CLASS_EXTENSION)
+              if (e.getName().startsWith(iPackageName.replace('.', '/'))
+                  && e.getName().endsWith(CLASS_EXTENSION)
                   && !e.getName().contains("$")) {
-                final String className = e.getName().replace("/", ".").substring(0, e.getName().length() - 6);
+                final String className =
+                    e.getName().replace("/", ".").substring(0, e.getName().length() - 6);
                 classes.add(Class.forName(className, true, iClassLoader));
               }
             }
-          } else
-            directories.add(new File(URLDecoder.decode(res.getPath(), "UTF-8")));
+          } else directories.add(new File(URLDecoder.decode(res.getPath(), "UTF-8")));
         }
       }
     } catch (NullPointerException x) {
-      throw new ClassNotFoundException(iPackageName + " does not appear to be " + "a valid package (Null pointer exception)", x);
+      throw new ClassNotFoundException(
+          iPackageName + " does not appear to be " + "a valid package (Null pointer exception)", x);
     } catch (UnsupportedEncodingException encex) {
-      throw new ClassNotFoundException(iPackageName + " does not appear to be " + "a valid package (Unsupported encoding)", encex);
+      throw new ClassNotFoundException(
+          iPackageName + " does not appear to be " + "a valid package (Unsupported encoding)",
+          encex);
     } catch (IOException ioex) {
-      throw new ClassNotFoundException("IOException was thrown when trying " + "to get all resources for " + iPackageName, ioex);
+      throw new ClassNotFoundException(
+          "IOException was thrown when trying " + "to get all resources for " + iPackageName, ioex);
     }
 
     // For every directory identified capture all the .class files
@@ -110,13 +117,15 @@ public class OReflectionHelper {
           } else {
             String className;
             if (file.getName().endsWith(CLASS_EXTENSION)) {
-              className = file.getName().substring(0, file.getName().length() - CLASS_EXTENSION.length());
+              className =
+                  file.getName().substring(0, file.getName().length() - CLASS_EXTENSION.length());
               classes.add(Class.forName(iPackageName + '.' + className, true, iClassLoader));
             }
           }
         }
       } else {
-        throw new ClassNotFoundException(iPackageName + " (" + directory.getPath() + ") does not appear to be a valid package");
+        throw new ClassNotFoundException(
+            iPackageName + " (" + directory.getPath() + ") does not appear to be a valid package");
       }
     }
     return classes;
@@ -124,19 +133,17 @@ public class OReflectionHelper {
 
   /**
    * Recursive method used to find all classes in a given directory and subdirs.
-   * 
-   * @param iDirectory
-   *          The base directory
-   * @param iPackageName
-   *          The package name for classes found inside the base directory
+   *
+   * @param iDirectory The base directory
+   * @param iPackageName The package name for classes found inside the base directory
    * @return The classes
    * @throws ClassNotFoundException
    */
-  private static List<Class<?>> findClasses(final File iDirectory, String iPackageName, ClassLoader iClassLoader)
+  private static List<Class<?>> findClasses(
+      final File iDirectory, String iPackageName, ClassLoader iClassLoader)
       throws ClassNotFoundException {
     final List<Class<?>> classes = new ArrayList<Class<?>>();
-    if (!iDirectory.exists())
-      return classes;
+    if (!iDirectory.exists()) return classes;
 
     iPackageName += "." + iDirectory.getName();
 
@@ -145,11 +152,11 @@ public class OReflectionHelper {
     if (files != null)
       for (File file : files) {
         if (file.isDirectory()) {
-          if (file.getName().contains("."))
-            continue;
+          if (file.getName().contains(".")) continue;
           classes.addAll(findClasses(file, iPackageName, iClassLoader));
         } else if (file.getName().endsWith(CLASS_EXTENSION)) {
-          className = file.getName().substring(0, file.getName().length() - CLASS_EXTENSION.length());
+          className =
+              file.getName().substring(0, file.getName().length() - CLASS_EXTENSION.length());
           classes.add(Class.forName(iPackageName + '.' + className, true, iClassLoader));
         }
       }
@@ -158,13 +165,14 @@ public class OReflectionHelper {
 
   /**
    * Filters discovered classes to see if they implement a given interface.
-   * 
+   *
    * @param thePackage
    * @param theInterface
    * @param iClassLoader
    * @return The list of classes that implements the requested interface
    */
-  public static List<Class<?>> getClassessOfInterface(String thePackage, Class<?> theInterface, final ClassLoader iClassLoader) {
+  public static List<Class<?>> getClassessOfInterface(
+      String thePackage, Class<?> theInterface, final ClassLoader iClassLoader) {
     List<Class<?>> classList = new ArrayList<Class<?>>();
     try {
       for (Class<?> discovered : getClassesFor(thePackage, iClassLoader)) {
@@ -181,9 +189,8 @@ public class OReflectionHelper {
 
   /**
    * Returns the declared generic types of a class.
-   * 
-   * @param iClass
-   *          Class to examine
+   *
+   * @param iClass Class to examine
    * @return The array of Type if any, otherwise null
    */
   public static Type[] getGenericTypes(final Class<?> iClass) {
@@ -198,9 +205,8 @@ public class OReflectionHelper {
 
   /**
    * Returns the generic class of multi-value objects.
-   * 
-   * @param p
-   *          Field to examine
+   *
+   * @param p Field to examine
    * @return The Class<?> of generic type if any, otherwise null
    */
   public static Class<?> getGenericMultivalueType(final Field p) {
@@ -219,28 +225,23 @@ public class OReflectionHelper {
           } else if (pt.getActualTypeArguments()[0] instanceof ParameterizedType)
             return (Class<?>) ((ParameterizedType) pt.getActualTypeArguments()[0]).getRawType();
         }
-      } else if (p.getType().isArray())
-        return p.getType().getComponentType();
+      } else if (p.getType().isArray()) return p.getType().getComponentType();
     }
     return null;
   }
 
   /**
-   * Checks if a class is a Java type: Map, Collection,arrays, Number (extensions and primitives), String, Boolean..
-   * 
-   * @param clazz
-   *          Class<?> to examine
+   * Checks if a class is a Java type: Map, Collection,arrays, Number (extensions and primitives),
+   * String, Boolean..
+   *
+   * @param clazz Class<?> to examine
    * @return true if clazz is Java type, false otherwise
    */
   public static boolean isJavaType(Class<?> clazz) {
-    if (clazz.isPrimitive())
-      return true;
-    else if (clazz.getName().startsWith("java.lang"))
-      return true;
-    else if (clazz.getName().startsWith("java.util"))
-      return true;
-    else if (clazz.isArray())
-      return true;
+    if (clazz.isPrimitive()) return true;
+    else if (clazz.getName().startsWith("java.lang")) return true;
+    else if (clazz.getName().startsWith("java.util")) return true;
+    else if (clazz.isArray()) return true;
     return false;
   }
 }

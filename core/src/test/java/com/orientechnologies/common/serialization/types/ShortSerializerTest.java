@@ -18,9 +18,10 @@ package com.orientechnologies.common.serialization.types;
 
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
-import org.junit.Assert;import org.junit.Before; import org.junit.Test;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import org.junit.Assert;
+import org.junit.Before;
 
 /**
  * @author Ilya Bershadskiy (ibersh20-at-gmail.com)
@@ -84,14 +85,19 @@ public class ShortSerializerTest {
   public void testSerializationWALChanges() {
     final int serializationOffset = 5;
 
-    final ByteBuffer buffer = ByteBuffer.allocateDirect(FIELD_SIZE + serializationOffset).order(ByteOrder.nativeOrder());
+    final ByteBuffer buffer =
+        ByteBuffer.allocateDirect(FIELD_SIZE + serializationOffset).order(ByteOrder.nativeOrder());
     final byte[] data = new byte[FIELD_SIZE];
     shortSerializer.serializeNative(OBJECT, data, 0);
 
     final OWALChanges walChanges = new OWALChangesTree();
     walChanges.setBinaryValue(buffer, data, serializationOffset);
 
-    Assert.assertEquals(shortSerializer.getObjectSizeInByteBuffer(buffer, walChanges, serializationOffset), FIELD_SIZE);
-    Assert.assertEquals(shortSerializer.deserializeFromByteBufferObject(buffer, walChanges, serializationOffset), OBJECT);
+    Assert.assertEquals(
+        shortSerializer.getObjectSizeInByteBuffer(buffer, walChanges, serializationOffset),
+        FIELD_SIZE);
+    Assert.assertEquals(
+        shortSerializer.deserializeFromByteBufferObject(buffer, walChanges, serializationOffset),
+        OBJECT);
   }
 }

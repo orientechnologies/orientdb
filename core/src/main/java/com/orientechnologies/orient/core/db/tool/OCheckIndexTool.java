@@ -26,39 +26,34 @@ import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
-/**
- * @author Luigi Dell'Aquila (l.dellaquila -at- orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila -at- orientdb.com) */
 public class OCheckIndexTool extends ODatabaseTool {
 
   //  class Error {
-//
-//    ORID    rid;
-//    String  indexName;
-//    boolean presentInIndex;
-//    boolean presentOnCluster;
-//
-//    Error(ORID rid, String indexName, boolean presentInIndex, boolean presentOnCluster) {
-//      this.rid = rid;
-//      this.indexName = indexName;
-//      this.presentInIndex = presentInIndex;
-//      this.presentOnCluster = presentOnCluster;
-//    }
-//  }
-//
-//  List<Error> errors = new ArrayList<Error>();
+  //
+  //    ORID    rid;
+  //    String  indexName;
+  //    boolean presentInIndex;
+  //    boolean presentOnCluster;
+  //
+  //    Error(ORID rid, String indexName, boolean presentInIndex, boolean presentOnCluster) {
+  //      this.rid = rid;
+  //      this.indexName = indexName;
+  //      this.presentInIndex = presentInIndex;
+  //      this.presentOnCluster = presentOnCluster;
+  //    }
+  //  }
+  //
+  //  List<Error> errors = new ArrayList<Error>();
   private long totalErrors = 0;
 
   @Override
-  protected void parseSetting(String option, List<String> items) {
-
-  }
+  protected void parseSetting(String option, List<String> items) {}
 
   @Override
   public void run() {
@@ -75,12 +70,12 @@ public class OCheckIndexTool extends ODatabaseTool {
     OIndexDefinition indexDef = index.getDefinition();
     String className = indexDef.getClassName();
     if (className == null) {
-      return false; //manual index, not supported yet
+      return false; // manual index, not supported yet
     }
     List<String> fields = indexDef.getFields();
     List<String> fieldDefs = indexDef.getFieldsToIndex();
 
-    //check if there are fields defined on maps (by key/value). Not supported yet
+    // check if there are fields defined on maps (by key/value). Not supported yet
     for (int i = 0; i < fieldDefs.size(); i++) {
       if (!fields.get(i).equals(fieldDefs.get(i))) {
         return false;
@@ -165,7 +160,12 @@ public class OCheckIndexTool extends ODatabaseTool {
       try (final Stream<ORID> stream = index.getInternal().getRids(key)) {
         if (stream.noneMatch((rid) -> rid.equals(docId))) {
           totalErrors++;
-          message("\rERROR: Index " + index.getName() + " - record not found: " + doc.getIdentity() + "\n");
+          message(
+              "\rERROR: Index "
+                  + index.getName()
+                  + " - record not found: "
+                  + doc.getIdentity()
+                  + "\n");
         }
       }
     }

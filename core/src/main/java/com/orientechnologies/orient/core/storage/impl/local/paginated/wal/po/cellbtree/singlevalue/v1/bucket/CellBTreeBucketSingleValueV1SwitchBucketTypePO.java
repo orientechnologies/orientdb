@@ -6,8 +6,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.Pag
 import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.CellBTreeBucketSingleValueV1;
 
 public class CellBTreeBucketSingleValueV1SwitchBucketTypePO extends PageOperationRecord {
-  public CellBTreeBucketSingleValueV1SwitchBucketTypePO() {
-  }
+  public CellBTreeBucketSingleValueV1SwitchBucketTypePO() {}
 
   @Override
   public void redo(OCacheEntry cacheEntry) {

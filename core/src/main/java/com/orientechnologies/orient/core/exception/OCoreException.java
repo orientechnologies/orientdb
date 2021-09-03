@@ -32,10 +32,10 @@ public abstract class OCoreException extends OException {
 
   public OCoreException(final String message, final String componentName) {
     this(message, componentName, null);
-
   }
 
-  public OCoreException(final String message, final String componentName, final OErrorCode errorCode) {
+  public OCoreException(
+      final String message, final String componentName, final OErrorCode errorCode) {
     super(message);
 
     this.errorCode = errorCode;
@@ -74,7 +74,7 @@ public abstract class OCoreException extends OException {
 
   @Override
   public final String getMessage() {
-    final StringBuilder builder = new StringBuilder(super.getMessage());
+    final StringBuilder builder = new StringBuilder("" + super.getMessage());
     if (dbName != null) {
       builder.append("\r\n\t").append("DB name=\"").append(dbName).append("\"");
     }

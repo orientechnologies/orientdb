@@ -25,96 +25,99 @@ import java.net.Socket;
 import java.net.SocketException;
 
 public class TcpServer {
-	public final static int	COMM_PORT	= 5050; // socket port for client comms
+  public static final int COMM_PORT = 5050; // socket port for client comms
 
-	private ServerSocket		serverSocket;
-	private byte[]					payload;
+  private ServerSocket serverSocket;
+  private byte[] payload;
 
-	/** Default constructor. */
-	public TcpServer() {
-		initServerSocket();
+  /** Default constructor. */
+  public TcpServer() {
+    initServerSocket();
 
-		long transferred = 0;
-		long date = System.currentTimeMillis();
+    long transferred = 0;
+    long date = System.currentTimeMillis();
 
-		try {
-			while (true) {
-				// listen for and accept a client connection to serverSocket
-				Socket sock = this.serverSocket.accept();
-				sock.setSendBufferSize(65000);
+    try {
+      while (true) {
+        // listen for and accept a client connection to serverSocket
+        Socket sock = this.serverSocket.accept();
+        sock.setSendBufferSize(65000);
 
-				InputStream iStream = sock.getInputStream();
-				OutputStream oStream = sock.getOutputStream();
-				ObjectOutputStream ooStream = new ObjectOutputStream(oStream);
-				ObjectInputStream iiStream = null;
-				for (int i = 0; i < 1000000; ++i) {
-					this.payload = new String("10|Gipsy|European|Rome|300.00").getBytes();
+        InputStream iStream = sock.getInputStream();
+        OutputStream oStream = sock.getOutputStream();
+        ObjectOutputStream ooStream = new ObjectOutputStream(oStream);
+        ObjectInputStream iiStream = null;
+        for (int i = 0; i < 1000000; ++i) {
+          this.payload = new String("10|Gipsy|European|Rome|300.00").getBytes();
 
-					ooStream.writeInt(this.payload.length);
-					transferred += 4;
-					ooStream.write(this.payload); // send serialized payload
-					transferred += this.payload.length;
+          ooStream.writeInt(this.payload.length);
+          transferred += 4;
+          ooStream.write(this.payload); // send serialized payload
+          transferred += this.payload.length;
 
-					ooStream.flush();
-					oStream.flush();
+          ooStream.flush();
+          oStream.flush();
 
-					if (iiStream == null)
-						iiStream = new ObjectInputStream(iStream);
+          if (iiStream == null) iiStream = new ObjectInputStream(iStream);
 
-					iiStream.readByte();
-				}
-				ooStream.writeInt(0);
+          iiStream.readByte();
+        }
+        ooStream.writeInt(0);
 
-				System.out.println("Transferred total MB: " + (float) transferred / 1000000 + " in " + (System.currentTimeMillis() - date)
-						+ "ms");
+        System.out.println(
+            "Transferred total MB: "
+                + (float) transferred / 1000000
+                + " in "
+                + (System.currentTimeMillis() - date)
+                + "ms");
 
-				Thread.sleep(1000);
-				ooStream.close();
-			}
-		} catch (SecurityException se) {
-			System.err.println("Unable to get host address due to security.");
-			System.err.println(se.toString());
-		} catch (IOException ioe) {
-			System.err.println("Unable to read data from an open socket.");
-			System.err.println(ioe.toString());
-		} catch (InterruptedException ie) {
-			Thread.currentThread().interrupt();
-		} // Thread sleep interrupted
-		finally {
-			try {
-				this.serverSocket.close();
-			} catch (IOException ioe) {
-				System.err.println("Unable to close an open socket.");
-				System.err.println(ioe.toString());
-				System.exit(1);
-			}
-		}
-	}
+        Thread.sleep(1000);
+        ooStream.close();
+      }
+    } catch (SecurityException se) {
+      System.err.println("Unable to get host address due to security.");
+      System.err.println(se.toString());
+    } catch (IOException ioe) {
+      System.err.println("Unable to read data from an open socket.");
+      System.err.println(ioe.toString());
+    } catch (InterruptedException ie) {
+      Thread.currentThread().interrupt();
+    } // Thread sleep interrupted
+    finally {
+      try {
+        this.serverSocket.close();
+      } catch (IOException ioe) {
+        System.err.println("Unable to close an open socket.");
+        System.err.println(ioe.toString());
+        System.exit(1);
+      }
+    }
+  }
 
-	/** Initialize a server socket for communicating with the client. */
-	private void initServerSocket() {
-		try {
-			this.serverSocket = new java.net.ServerSocket(COMM_PORT);
-			assert this.serverSocket.isBound();
-			if (this.serverSocket.isBound()) {
-				System.out.println("SERVER inbound data port " + this.serverSocket.getLocalPort()
-						+ " is ready and waiting for client to connect...");
-			}
-		} catch (SocketException se) {
-			System.err.println("Unable to create socket.");
-			System.err.println(se.toString());
-			System.exit(1);
-		} catch (IOException ioe) {
-			System.err.println("Unable to read data from an open socket.");
-			System.err.println(ioe.toString());
-			System.exit(1);
-		}
-	}
+  /** Initialize a server socket for communicating with the client. */
+  private void initServerSocket() {
+    try {
+      this.serverSocket = new java.net.ServerSocket(COMM_PORT);
+      assert this.serverSocket.isBound();
+      if (this.serverSocket.isBound()) {
+        System.out.println(
+            "SERVER inbound data port "
+                + this.serverSocket.getLocalPort()
+                + " is ready and waiting for client to connect...");
+      }
+    } catch (SocketException se) {
+      System.err.println("Unable to create socket.");
+      System.err.println(se.toString());
+      System.exit(1);
+    } catch (IOException ioe) {
+      System.err.println("Unable to read data from an open socket.");
+      System.err.println(ioe.toString());
+      System.exit(1);
+    }
+  }
 
-	/**
-	 * Run this class as an application.
-	 */
-	public static void main(String[] args) {
-		new TcpServer();
-	}
+  /** Run this class as an application. */
+  public static void main(String[] args) {
+    new TcpServer();
+  }
 }

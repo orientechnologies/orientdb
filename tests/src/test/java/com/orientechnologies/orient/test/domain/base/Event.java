@@ -5,11 +5,10 @@ import java.util.Date;
 
 public class Event implements Serializable {
 
-  public Event() {
-  }
+  public Event() {}
 
   String name;
-  Date   date;
+  Date date;
 
   public String getName() {
     return name;
@@ -26,5 +25,4 @@ public class Event implements Serializable {
   public void setDate(Date date) {
     this.date = date;
   }
-
 }

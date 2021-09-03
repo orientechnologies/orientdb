@@ -27,22 +27,18 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.junit.Assert;
+import org.junit.Test;
 
-/**
- * Created by Enrico Risa on 10/08/15.
- */
+/** Created by Enrico Risa on 10/08/15. */
 public class LuceneTransactionEmbeddedQueryTest {
 
-  public LuceneTransactionEmbeddedQueryTest() {
-  }
+  public LuceneTransactionEmbeddedQueryTest() {}
 
   @Test
   public void testRollback() {
@@ -53,7 +49,7 @@ public class LuceneTransactionEmbeddedQueryTest {
     createSchema(db);
     try {
       ODocument doc = new ODocument("c1");
-      doc.field("p1", new String[] { "abc" });
+      doc.field("p1", new String[] {"abc"});
       db.begin();
       db.save(doc);
 
@@ -74,7 +70,7 @@ public class LuceneTransactionEmbeddedQueryTest {
   private static void createSchema(ODatabaseDocumentInternal db) {
     final OClass c1 = db.createVertexClass("C1");
     c1.createProperty("p1", OType.EMBEDDEDLIST, OType.STRING);
-    c1.createIndex("C1.p1", "FULLTEXT", null, null, "LUCENE", new String[] { "p1" });
+    c1.createIndex("C1.p1", "FULLTEXT", null, null, "LUCENE", new String[] {"p1"});
   }
 
   @Test
@@ -88,7 +84,7 @@ public class LuceneTransactionEmbeddedQueryTest {
       db.begin();
 
       ODocument doc = new ODocument("c1");
-      doc.field("p1", new String[] { "abc" });
+      doc.field("p1", new String[] {"abc"});
 
       OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "C1.p1");
 
@@ -167,7 +163,7 @@ public class LuceneTransactionEmbeddedQueryTest {
       db.begin();
 
       ODocument doc = new ODocument("c1");
-      doc.field("p1", new String[] { "update removed", "update fixed" });
+      doc.field("p1", new String[] {"update removed", "update fixed"});
 
       db.save(doc);
 
@@ -196,7 +192,7 @@ public class LuceneTransactionEmbeddedQueryTest {
 
       db.begin();
 
-      //select in transaction while updating
+      // select in transaction while updating
       ODocument record = vertices.get(0);
       Collection p1 = record.field("p1");
       p1.remove("update removed");
@@ -246,7 +242,6 @@ public class LuceneTransactionEmbeddedQueryTest {
       //noinspection deprecation
       db.drop();
     }
-
   }
 
   @Test
@@ -265,10 +260,10 @@ public class LuceneTransactionEmbeddedQueryTest {
       db.begin();
 
       ODocument doc = new ODocument("c1");
-      doc.field("p1", new String[] { "abc" });
+      doc.field("p1", new String[] {"abc"});
 
       ODocument doc1 = new ODocument("c1");
-      doc1.field("p1", new String[] { "abc" });
+      doc1.field("p1", new String[] {"abc"});
 
       db.save(doc1);
       db.save(doc);
@@ -277,7 +272,7 @@ public class LuceneTransactionEmbeddedQueryTest {
 
       db.begin();
 
-      doc.field("p1", new String[] { "removed" });
+      doc.field("p1", new String[] {"removed"});
       db.save(doc);
 
       String query = "select from C1 where p1 lucene \"abc\"";
@@ -329,5 +324,4 @@ public class LuceneTransactionEmbeddedQueryTest {
       db.drop();
     }
   }
-
 }

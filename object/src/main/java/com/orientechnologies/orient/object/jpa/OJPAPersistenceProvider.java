@@ -22,35 +22,29 @@ package com.orientechnologies.orient.object.jpa;
 import static com.orientechnologies.orient.core.entity.OEntityManager.getEntityManagerByDatabaseURL;
 import static com.orientechnologies.orient.object.jpa.parsing.PersistenceXmlUtil.PERSISTENCE_XML;
 
+import com.orientechnologies.orient.core.entity.OEntityManager;
+import com.orientechnologies.orient.object.jpa.parsing.PersistenceXmlUtil;
 import java.net.URL;
 import java.util.Collection;
 import java.util.Map;
 import java.util.logging.Logger;
-
-import com.orientechnologies.orient.core.entity.OEntityManager;
-
-import com.orientechnologies.orient.object.jpa.OJPAProviderUtil;
-
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.spi.PersistenceProvider;
 import javax.persistence.spi.PersistenceUnitInfo;
 import javax.persistence.spi.ProviderUtil;
 
-import com.orientechnologies.orient.core.entity.OEntityManager;
-import com.orientechnologies.orient.object.jpa.parsing.PersistenceXmlUtil;
-
 @SuppressWarnings("rawtypes")
 public class OJPAPersistenceProvider implements PersistenceProvider {
-  /**
-   * the log used by this class.
-   */
-  private static Logger           logger       = Logger.getLogger(OJPAPersistenceProvider.class.getName());
+  /** the log used by this class. */
+  private static Logger logger = Logger.getLogger(OJPAPersistenceProvider.class.getName());
+
   private static OJPAProviderUtil providerUtil = new OJPAProviderUtil();
 
   private Collection<? extends PersistenceUnitInfo> persistenceUnits = null;
 
   public OJPAPersistenceProvider() {
-    URL persistenceXml = Thread.currentThread().getContextClassLoader().getResource(PERSISTENCE_XML);
+    URL persistenceXml =
+        Thread.currentThread().getContextClassLoader().getResource(PERSISTENCE_XML);
     try {
       persistenceUnits = PersistenceXmlUtil.parse(persistenceXml);
     } catch (Exception e) {
@@ -70,9 +64,11 @@ public class OJPAPersistenceProvider implements PersistenceProvider {
 
   @SuppressWarnings("unchecked")
   @Override
-  public synchronized EntityManagerFactory createContainerEntityManagerFactory(PersistenceUnitInfo info, Map map) {
+  public synchronized EntityManagerFactory createContainerEntityManagerFactory(
+      PersistenceUnitInfo info, Map map) {
 
-    OJPAProperties properties = ((info == null) ? new OJPAProperties() : (OJPAProperties) info.getProperties());
+    OJPAProperties properties =
+        ((info == null) ? new OJPAProperties() : (OJPAProperties) info.getProperties());
 
     // Override parsed properties with user specified
     if (map != null && !map.isEmpty()) {

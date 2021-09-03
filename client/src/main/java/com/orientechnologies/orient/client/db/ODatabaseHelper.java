@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -40,7 +39,8 @@ public class ODatabaseHelper {
   }
 
   @Deprecated
-  public static void createDatabase(ODatabase database, final String url, String type) throws IOException {
+  public static void createDatabase(ODatabase database, final String url, String type)
+      throws IOException {
     createDatabase(database, url, "server", type);
   }
 
@@ -50,9 +50,13 @@ public class ODatabaseHelper {
   }
 
   @Deprecated
-  public static void createDatabase(ODatabase database, final String url, String directory, String type) throws IOException {
+  public static void createDatabase(
+      ODatabase database, final String url, String directory, String type) throws IOException {
     if (url.startsWith(OEngineRemote.NAME)) {
-      new OServerAdmin(url).connect("root", getServerRootPassword(directory)).createDatabase("document", type).close();
+      new OServerAdmin(url)
+          .connect("root", getServerRootPassword(directory))
+          .createDatabase("document", type)
+          .close();
     } else {
       database.create();
       database.close();
@@ -60,12 +64,14 @@ public class ODatabaseHelper {
   }
 
   @Deprecated
-  public static void deleteDatabase(final ODatabase database, String storageType) throws IOException {
+  public static void deleteDatabase(final ODatabase database, String storageType)
+      throws IOException {
     deleteDatabase(database, "server", storageType);
   }
 
   @Deprecated
-  public static void deleteDatabase(final ODatabase database, final String directory, String storageType) throws IOException {
+  public static void deleteDatabase(
+      final ODatabase database, final String directory, String storageType) throws IOException {
     dropDatabase(database, directory, storageType);
   }
 
@@ -75,29 +81,31 @@ public class ODatabaseHelper {
   }
 
   @Deprecated
-  public static void dropDatabase(final ODatabase database, final String directory, String storageType) throws IOException {
+  public static void dropDatabase(
+      final ODatabase database, final String directory, String storageType) throws IOException {
     if (existsDatabase(database, storageType)) {
       if (database.getURL().startsWith("remote:")) {
         database.activateOnCurrentThread();
         database.close();
-        OServerAdmin admin = new OServerAdmin(database.getURL()).connect("root", getServerRootPassword(directory));
+        OServerAdmin admin =
+            new OServerAdmin(database.getURL()).connect("root", getServerRootPassword(directory));
         admin.dropDatabase(storageType);
         admin.close();
       } else {
-        if (database.isClosed())
-          openDatabase(database);
-        else
-          database.activateOnCurrentThread();
+        if (database.isClosed()) openDatabase(database);
+        else database.activateOnCurrentThread();
         database.drop();
       }
     }
   }
 
   @Deprecated
-  public static boolean existsDatabase(final ODatabase database, String storageType) throws IOException {
+  public static boolean existsDatabase(final ODatabase database, String storageType)
+      throws IOException {
     database.activateOnCurrentThread();
     if (database.getURL().startsWith("remote")) {
-      OServerAdmin admin = new OServerAdmin(database.getURL()).connect("root", getServerRootPassword());
+      OServerAdmin admin =
+          new OServerAdmin(database.getURL()).connect("root", getServerRootPassword());
       boolean exist = admin.existsDatabase(storageType);
       admin.close();
       return exist;
@@ -154,8 +162,7 @@ public class ODatabaseHelper {
   @Deprecated
   protected static String getServerRootPassword(final String iDirectory) throws IOException {
     String passwd = System.getProperty("ORIENTDB_ROOT_PASSWORD");
-    if (passwd != null)
-      return passwd;
+    if (passwd != null) return passwd;
 
     final File file = getConfigurationFile(iDirectory);
 
@@ -181,25 +188,43 @@ public class ODatabaseHelper {
       file = new File(sysProperty != null ? sysProperty : "");
     }
     if (!file.exists())
-      file = new File("../releases/orientdb-" + OConstants.getRawVersion() + "/config/orientdb-server-config.xml");
+      file =
+          new File(
+              "../releases/orientdb-"
+                  + OConstants.getRawVersion()
+                  + "/config/orientdb-server-config.xml");
     if (!file.exists())
-      file = new File("../releases/orientdb-community-" + OConstants.getRawVersion() + "/config/orientdb-server-config.xml");
+      file =
+          new File(
+              "../releases/orientdb-community-"
+                  + OConstants.getRawVersion()
+                  + "/config/orientdb-server-config.xml");
     if (!file.exists())
-      file = new File("../../releases/orientdb-" + OConstants.getRawVersion() + "/config/orientdb-server-config.xml");
+      file =
+          new File(
+              "../../releases/orientdb-"
+                  + OConstants.getRawVersion()
+                  + "/config/orientdb-server-config.xml");
     if (!file.exists())
-      file = new File("../../releases/orientdb-community-" + OConstants.getRawVersion() + "/config/orientdb-server-config.xml");
+      file =
+          new File(
+              "../../releases/orientdb-community-"
+                  + OConstants.getRawVersion()
+                  + "/config/orientdb-server-config.xml");
     if (!file.exists() && iDirectory != null) {
       file = new File(iDirectory + "/config/orientdb-server-config.xml");
       if (!file.exists())
         file = new File("../" + iDirectory + "/config/orientdb-server-config.xml");
     }
     if (!file.exists())
-      file = new File(
-          OSystemVariableResolver.resolveSystemVariables("${" + Orient.ORIENTDB_HOME + "}/config/orientdb-server-config.xml"));
+      file =
+          new File(
+              OSystemVariableResolver.resolveSystemVariables(
+                  "${" + Orient.ORIENTDB_HOME + "}/config/orientdb-server-config.xml"));
     if (!file.exists())
       throw new OConfigurationException(
-          "Cannot load file orientdb-server-config.xml to execute remote tests. Current directory is " + new File(".")
-              .getAbsolutePath());
+          "Cannot load file orientdb-server-config.xml to execute remote tests. Current directory is "
+              + new File(".").getAbsolutePath());
     return file;
   }
 }

@@ -22,10 +22,8 @@ package com.orientechnologies.orient.server.distributed;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
-import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
-
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -34,19 +32,16 @@ import java.util.Set;
  * @author Luca Garulli
  */
 public interface ODistributedTxContext {
-  void lock(ORID rid);
 
-  void lock(ORID rid, long timeout);
+  OTransactionId acquirePromise(ORID rid, int version, boolean force);
 
-  void lockIndexKey(Object rid);
+  OTransactionId acquireIndexKeyPromise(Object key, int version, boolean force);
 
-  void addUndoTask(ORemoteTask undoTask);
+  void releasePromises();
 
   ODistributedRequestId getReqId();
 
   void commit(ODatabaseDocumentInternal database);
-
-  void fix(ODatabaseDocumentInternal database, List<ORemoteTask> fixTasks);
 
   Set<ORecordId> rollback(ODatabaseDocumentInternal database);
 
@@ -54,15 +49,13 @@ public interface ODistributedTxContext {
 
   void clearUndo();
 
-  void unlock();
-
   long getStartedOn();
 
   Set<ORecordId> cancel(ODistributedServerManager current, ODatabaseDocumentInternal database);
 
-  boolean isCanceled();
-
   OTransactionInternal getTransaction();
+
+  OTransactionId getTransactionId();
 
   void begin(ODatabaseDocumentInternal distributed, boolean local);
 }

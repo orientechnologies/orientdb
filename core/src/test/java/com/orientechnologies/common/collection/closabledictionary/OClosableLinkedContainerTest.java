@@ -1,22 +1,25 @@
 package com.orientechnologies.common.collection.closabledictionary;
 
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.LockSupport;
+import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
 
 public class OClosableLinkedContainerTest {
   @Test
   public void testSingleItemAddRemove() throws Exception {
     final OClosableItem closableItem = new CItem(10);
-    final OClosableLinkedContainer<Long, OClosableItem> dictionary = new OClosableLinkedContainer<Long, OClosableItem>(10);
+    final OClosableLinkedContainer<Long, OClosableItem> dictionary =
+        new OClosableLinkedContainer<Long, OClosableItem>(10);
 
     dictionary.add(1L, closableItem);
 
@@ -33,7 +36,8 @@ public class OClosableLinkedContainerTest {
 
   @Test
   public void testCloseHalfOfTheItems() throws Exception {
-    final OClosableLinkedContainer<Long, OClosableItem> dictionary = new OClosableLinkedContainer<Long, OClosableItem>(10);
+    final OClosableLinkedContainer<Long, OClosableItem> dictionary =
+        new OClosableLinkedContainer<Long, OClosableItem>(10);
 
     for (int i = 0; i < 10; i++) {
       final OClosableItem closableItem = new CItem(i);
@@ -85,7 +89,8 @@ public class OClosableLinkedContainerTest {
 
     int limit = 60000;
 
-    OClosableLinkedContainer<Long, CItem> dictionary = new OClosableLinkedContainer<Long, CItem>(16);
+    OClosableLinkedContainer<Long, CItem> dictionary =
+        new OClosableLinkedContainer<Long, CItem>(16);
     futures.add(executor.submit(new Adder(dictionary, latch, 0, limit / 3)));
     futures.add(executor.submit(new Adder(dictionary, latch, limit / 3, 2 * limit / 3)));
 
@@ -122,11 +127,12 @@ public class OClosableLinkedContainerTest {
 
   private class Adder implements Callable<Void> {
     private final OClosableLinkedContainer<Long, CItem> dictionary;
-    private final CountDownLatch                        latch;
-    private final int                                   from;
-    private final int                                   to;
+    private final CountDownLatch latch;
+    private final int from;
+    private final int to;
 
-    public Adder(OClosableLinkedContainer<Long, CItem> dictionary, CountDownLatch latch, int from, int to) {
+    public Adder(
+        OClosableLinkedContainer<Long, CItem> dictionary, CountDownLatch latch, int from, int to) {
       this.dictionary = dictionary;
       this.latch = latch;
       this.from = from;
@@ -154,11 +160,15 @@ public class OClosableLinkedContainerTest {
 
   private class Acquier implements Callable<Void> {
     private final OClosableLinkedContainer<Long, CItem> dictionary;
-    private final CountDownLatch                        latch;
-    private final int                                   limit;
-    private final AtomicBoolean                         stop;
+    private final CountDownLatch latch;
+    private final int limit;
+    private final AtomicBoolean stop;
 
-    public Acquier(OClosableLinkedContainer<Long, CItem> dictionary, CountDownLatch latch, int limit, AtomicBoolean stop) {
+    public Acquier(
+        OClosableLinkedContainer<Long, CItem> dictionary,
+        CountDownLatch latch,
+        int limit,
+        AtomicBoolean stop) {
       this.dictionary = dictionary;
       this.latch = latch;
       this.limit = limit;
@@ -192,13 +202,14 @@ public class OClosableLinkedContainerTest {
 
       long end = System.nanoTime();
 
-      System.out.println("Files processed " + counter + " nanos per item " + (end - start) / counter);
+      System.out.println(
+          "Files processed " + counter + " nanos per item " + (end - start) / counter);
       return null;
     }
   }
 
   private static class CItem implements OClosableItem {
-    public static AtomicInteger openFiles     = new AtomicInteger();
+    public static AtomicInteger openFiles = new AtomicInteger();
     public static AtomicInteger maxDeltaLimit = new AtomicInteger();
 
     private volatile boolean open = true;
@@ -226,8 +237,7 @@ public class OClosableLinkedContainerTest {
         while (true) {
           int max = maxDeltaLimit.get();
           if (count - openLimit > max) {
-            if (maxDeltaLimit.compareAndSet(max, count - openLimit))
-              break;
+            if (maxDeltaLimit.compareAndSet(max, count - openLimit)) break;
           } else {
             break;
           }
@@ -247,8 +257,7 @@ public class OClosableLinkedContainerTest {
         while (true) {
           int max = maxDeltaLimit.get();
           if (count - openLimit > max) {
-            if (maxDeltaLimit.compareAndSet(max, count - openLimit))
-              break;
+            if (maxDeltaLimit.compareAndSet(max, count - openLimit)) break;
           } else {
             break;
           }
@@ -256,5 +265,4 @@ public class OClosableLinkedContainerTest {
       }
     }
   }
-
 }

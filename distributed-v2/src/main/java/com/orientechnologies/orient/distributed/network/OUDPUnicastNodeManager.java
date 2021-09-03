@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.db.config.ONodeConfiguration;
 import com.orientechnologies.orient.core.db.config.OUDPUnicastConfiguration;
 import com.orientechnologies.orient.distributed.impl.ONodeInternalConfiguration;
 import com.orientechnologies.orient.distributed.impl.log.OOperationLog;
-
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -17,7 +16,6 @@ public class OUDPUnicastNodeManager extends ONodeManager {
 
   private static final int BUFFER_SIZE = 1024;
 
-
   private DatagramSocket socket;
   private OUDPUnicastConfiguration unicastConfig;
 
@@ -26,8 +24,12 @@ public class OUDPUnicastNodeManager extends ONodeManager {
    * @param oDistributedNetworkManager
    * @param taskScheduler
    */
-  public OUDPUnicastNodeManager(ONodeConfiguration config, ONodeInternalConfiguration internalConfiguration,
-                                ODiscoveryListener oDistributedNetworkManager, OSchedulerInternal taskScheduler, OOperationLog opLog) {
+  public OUDPUnicastNodeManager(
+      ONodeConfiguration config,
+      ONodeInternalConfiguration internalConfiguration,
+      ODiscoveryListener oDistributedNetworkManager,
+      OSchedulerInternal taskScheduler,
+      OOperationLog opLog) {
     super(config, internalConfiguration, 0, taskScheduler, oDistributedNetworkManager, opLog);
 
     this.unicastConfig = config.getUdpUnicast();
@@ -47,25 +49,27 @@ public class OUDPUnicastNodeManager extends ONodeManager {
 
   protected void initNetwork() throws IOException {
     socket = new DatagramSocket(unicastConfig.getPort());
-
   }
 
   protected void sendMessageToGroup(byte[] msg) throws IOException {
-    unicastConfig.getDiscoveryAddresses().forEach(x -> {
-      try {
-        DatagramSocket sendingSocket = new DatagramSocket();
-        try {
-          InetAddress group = InetAddress.getByName(x.getAddress());
-          DatagramPacket packet = new DatagramPacket(msg, msg.length, group, x.getPort());
-          sendingSocket.send(packet);
-        } finally {
-          sendingSocket.close();
-        }
-      } catch (Exception e) {
-        OLogManager.instance().info(this, "UPD packet send failed: " + e + " - " + e.getMessage());
-      }
-    });
-
+    unicastConfig
+        .getDiscoveryAddresses()
+        .forEach(
+            x -> {
+              try {
+                DatagramSocket sendingSocket = new DatagramSocket();
+                try {
+                  InetAddress group = InetAddress.getByName(x.getAddress());
+                  DatagramPacket packet = new DatagramPacket(msg, msg.length, group, x.getPort());
+                  sendingSocket.send(packet);
+                } finally {
+                  sendingSocket.close();
+                }
+              } catch (Exception e) {
+                OLogManager.instance()
+                    .info(this, "UPD packet send failed: " + e + " - " + e.getMessage());
+              }
+            });
   }
 
   protected void receiveMessages() {

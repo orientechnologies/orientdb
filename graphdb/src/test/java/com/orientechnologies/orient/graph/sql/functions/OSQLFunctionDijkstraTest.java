@@ -2,25 +2,23 @@ package com.orientechnologies.orient.graph.sql.functions;
 
 import static org.junit.Assert.assertEquals;
 
-import java.util.List;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import java.util.List;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 public class OSQLFunctionDijkstraTest {
 
-  private OrientGraph          graph;
-  private Vertex               v1;
-  private Vertex               v2;
-  private Vertex               v3;
-  private Vertex               v4;
+  private OrientGraph graph;
+  private Vertex v1;
+  private Vertex v2;
+  private Vertex v3;
+  private Vertex v4;
   private OSQLFunctionDijkstra functionDijkstra;
 
   @Before
@@ -37,7 +35,7 @@ public class OSQLFunctionDijkstraTest {
 
   private void setUpDatabase() {
     graph = new OrientGraph("memory:OSQLFunctionDijkstraTest");
-		graph.createEdgeType("weight");
+    graph.createEdgeType("weight");
 
     v1 = graph.addVertex(null);
     v2 = graph.addVertex(null);
@@ -63,8 +61,9 @@ public class OSQLFunctionDijkstraTest {
 
   @Test
   public void testExecute() throws Exception {
-    final List<OrientVertex> result = functionDijkstra.execute(null, null, null, new Object[] { v1, v4, "'weight'" },
-        new OBasicCommandContext());
+    final List<OrientVertex> result =
+        functionDijkstra.execute(
+            null, null, null, new Object[] {v1, v4, "'weight'"}, new OBasicCommandContext());
 
     assertEquals(4, result.size());
     assertEquals(v1, result.get(0));

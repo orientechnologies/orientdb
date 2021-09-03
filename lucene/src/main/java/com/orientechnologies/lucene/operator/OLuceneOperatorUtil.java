@@ -25,13 +25,13 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorBetween;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorIn;
-
 import java.util.Collection;
 import java.util.List;
 
 public class OLuceneOperatorUtil {
 
-  public static OIndexSearchResult buildOIndexSearchResult(OClass iSchemaClass,
+  public static OIndexSearchResult buildOIndexSearchResult(
+      OClass iSchemaClass,
       OSQLFilterCondition iCondition,
       List<OIndexSearchResult> iIndexSearchResults,
       OCommandContext context) {
@@ -54,9 +54,12 @@ public class OLuceneOperatorUtil {
             value = iCondition.getRight();
           }
           if (lastResult == null) {
-            lastResult = new OIndexSearchResult(iCondition.getOperator(), item.getFieldChain(), value);
+            lastResult =
+                new OIndexSearchResult(iCondition.getOperator(), item.getFieldChain(), value);
           } else {
-            lastResult = lastResult.merge(new OIndexSearchResult(iCondition.getOperator(), item.getFieldChain(), value));
+            lastResult =
+                lastResult.merge(
+                    new OIndexSearchResult(iCondition.getOperator(), item.getFieldChain(), value));
           }
 
         } else if (obj instanceof OSQLFilterItemVariable) {
@@ -76,12 +79,12 @@ public class OLuceneOperatorUtil {
         iIndexSearchResults.add(lastResult);
       return lastResult;
     } else {
-      OIndexSearchResult result = OLuceneOperatorUtil.createIndexedProperty(iCondition, iCondition.getLeft());
+      OIndexSearchResult result =
+          OLuceneOperatorUtil.createIndexedProperty(iCondition, iCondition.getLeft());
       if (result == null)
         result = OLuceneOperatorUtil.createIndexedProperty(iCondition, iCondition.getRight());
 
-      if (result == null)
-        return null;
+      if (result == null) return null;
 
       if (OLuceneOperatorUtil.checkIndexExistence(iSchemaClass, result))
         iIndexSearchResults.add(result);
@@ -90,9 +93,9 @@ public class OLuceneOperatorUtil {
     }
   }
 
-  public static boolean checkIndexExistence(final OClass iSchemaClass, final OIndexSearchResult result) {
-    if (!iSchemaClass.areIndexed(result.fields()))
-      return false;
+  public static boolean checkIndexExistence(
+      final OClass iSchemaClass, final OIndexSearchResult result) {
+    if (!iSchemaClass.areIndexed(result.fields())) return false;
 
     if (result.lastField.isLong()) {
       final int fieldCount = result.lastField.getItemCount();
@@ -109,30 +112,29 @@ public class OLuceneOperatorUtil {
     return true;
   }
 
-  public static OIndexSearchResult createIndexedProperty(final OSQLFilterCondition iCondition, final Object iItem) {
-    if (iItem == null || !(iItem instanceof OSQLFilterItemField))
-      return null;
+  public static OIndexSearchResult createIndexedProperty(
+      final OSQLFilterCondition iCondition, final Object iItem) {
+    if (iItem == null || !(iItem instanceof OSQLFilterItemField)) return null;
 
-    if (iCondition.getLeft() instanceof OSQLFilterItemField && iCondition.getRight() instanceof OSQLFilterItemField)
-      return null;
+    if (iCondition.getLeft() instanceof OSQLFilterItemField
+        && iCondition.getRight() instanceof OSQLFilterItemField) return null;
 
     final OSQLFilterItemField item = (OSQLFilterItemField) iItem;
 
-    if (item.hasChainOperators() && !item.isFieldChain())
-      return null;
+    if (item.hasChainOperators() && !item.isFieldChain()) return null;
 
-    final Object origValue = iCondition.getLeft() == iItem ? iCondition.getRight() : iCondition.getLeft();
+    final Object origValue =
+        iCondition.getLeft() == iItem ? iCondition.getRight() : iCondition.getLeft();
 
-    if (iCondition.getOperator() instanceof OQueryOperatorBetween || iCondition.getOperator() instanceof OQueryOperatorIn) {
+    if (iCondition.getOperator() instanceof OQueryOperatorBetween
+        || iCondition.getOperator() instanceof OQueryOperatorIn) {
       return new OIndexSearchResult(iCondition.getOperator(), item.getFieldChain(), origValue);
     }
 
     final Object value = OSQLHelper.getValue(origValue);
 
-    if (value == null)
-      return null;
+    if (value == null) return null;
 
     return new OIndexSearchResult(iCondition.getOperator(), item.getFieldChain(), value);
   }
-
 }

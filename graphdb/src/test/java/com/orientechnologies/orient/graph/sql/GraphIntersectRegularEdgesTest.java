@@ -15,7 +15,7 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 
 package com.orientechnologies.orient.graph.sql;
@@ -25,11 +25,10 @@ import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.graph.GraphNoTxAbstractTest;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import java.util.Set;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.util.Set;
 
 public class GraphIntersectRegularEdgesTest extends GraphNoTxAbstractTest {
   private final int TOT = 1000;
@@ -39,8 +38,12 @@ public class GraphIntersectRegularEdgesTest extends GraphNoTxAbstractTest {
     graph.setUseLightweightEdges(false);
 
     graph.setAutoStartTx(false);
-    graph.declareIntent(new OIntentMassiveInsert().setDisableSecurity(true).setDisableHooks(true).setDisableValidation(true)
-        .setEnableCache(false));
+    graph.declareIntent(
+        new OIntentMassiveInsert()
+            .setDisableSecurity(true)
+            .setDisableHooks(true)
+            .setDisableValidation(true)
+            .setEnableCache(false));
 
     // graph.begin();
 
@@ -84,8 +87,10 @@ public class GraphIntersectRegularEdgesTest extends GraphNoTxAbstractTest {
 
     OLogManager.instance().info(this, "Intersecting...");
 
-    final Iterable<OrientVertex> result = graph.command(new OCommandSQL("select intersect( out() ) from [?,?]")).execute(
-        root1.getIdentity(), root2.getIdentity());
+    final Iterable<OrientVertex> result =
+        graph
+            .command(new OCommandSQL("select intersect( out() ) from [?,?]"))
+            .execute(root1.getIdentity(), root2.getIdentity());
 
     OLogManager.instance().info(this, "Intersecting done");
 

@@ -29,14 +29,17 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
 public class OServerCommandGetDocumentByClass extends OServerCommandAuthenticatedDbAbstract {
-  private static final String[] NAMES = { "GET|documentbyclass/*", "HEAD|documentbyclass/*" };
+  private static final String[] NAMES = {"GET|documentbyclass/*", "HEAD|documentbyclass/*"};
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
     ODatabaseDocument db = null;
 
-    final String[] urlParts = checkSyntax(iRequest.getUrl(), 4,
-        "Syntax error: documentbyclass/<database>/<class-name>/<record-position>[/fetchPlan]");
+    final String[] urlParts =
+        checkSyntax(
+            iRequest.getUrl(),
+            4,
+            "Syntax error: documentbyclass/<database>/<class-name>/<record-position>[/fetchPlan]");
 
     final String fetchPlan = urlParts.length > 4 ? urlParts[4] : null;
 
@@ -46,25 +49,30 @@ public class OServerCommandGetDocumentByClass extends OServerCommandAuthenticate
     try {
 
       db = getProfiledDatabaseInstance(iRequest);
-      if (((OMetadataInternal) db.getMetadata()).getImmutableSchemaSnapshot().getClass(urlParts[2]) == null) {
+      if (((OMetadataInternal) db.getMetadata()).getImmutableSchemaSnapshot().getClass(urlParts[2])
+          == null) {
         throw new IllegalArgumentException("Invalid class '" + urlParts[2] + "'");
       }
       final String rid = db.getClusterIdByName(urlParts[2]) + ":" + urlParts[3];
       rec = db.load(new ORecordId(rid), fetchPlan);
 
       if (rec == null)
-        iResponse.send(OHttpUtils.STATUS_NOTFOUND_CODE, OHttpUtils.STATUS_NOTFOUND_DESCRIPTION, OHttpUtils.CONTENT_JSON, "Record with id '" + rid
-            + "' was not found.", null);
+        iResponse.send(
+            OHttpUtils.STATUS_NOTFOUND_CODE,
+            OHttpUtils.STATUS_NOTFOUND_DESCRIPTION,
+            OHttpUtils.CONTENT_JSON,
+            "Record with id '" + rid + "' was not found.",
+            null);
       else if (iRequest.getHttpMethod().equals("HEAD"))
         // JUST SEND HTTP CODE 200
-        iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, null, null, null);
+        iResponse.send(
+            OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, null, null, null);
       else
         // SEND THE DOCUMENT BACK
         iResponse.writeRecord(rec, fetchPlan, null);
 
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
     }
 
     return false;
@@ -74,5 +82,4 @@ public class OServerCommandGetDocumentByClass extends OServerCommandAuthenticate
   public String[] getNames() {
     return NAMES;
   }
-
 }

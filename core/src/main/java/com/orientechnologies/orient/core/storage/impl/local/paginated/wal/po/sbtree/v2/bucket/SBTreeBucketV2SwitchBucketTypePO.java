@@ -6,8 +6,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.Pag
 import com.orientechnologies.orient.core.storage.index.sbtree.local.v2.OSBTreeBucketV2;
 
 public class SBTreeBucketV2SwitchBucketTypePO extends PageOperationRecord {
-  public SBTreeBucketV2SwitchBucketTypePO() {
-  }
+  public SBTreeBucketV2SwitchBucketTypePO() {}
 
   @Override
   public void redo(OCacheEntry cacheEntry) {

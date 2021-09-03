@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.command.OCommandPredicate;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.util.Locale;
 
 /**
@@ -34,7 +33,8 @@ import java.util.Locale;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
-  public OSQLFilter(final String iText, final OCommandContext iContext, final String iFilterKeyword) {
+  public OSQLFilter(
+      final String iText, final OCommandContext iContext, final String iFilterKeyword) {
     super();
 
     if (iText == null) {
@@ -61,12 +61,16 @@ public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
       // QUERY EXCEPTION BUT WITHOUT TEXT: NEST IT
       {
         throw OException.wrapException(
-            new OQueryParsingException("Error on parsing query", parserText, parserGetCurrentPosition()), e);
+            new OQueryParsingException(
+                "Error on parsing query", parserText, parserGetCurrentPosition()),
+            e);
       }
 
       throw e;
     } catch (Exception e) {
-      throw OException.wrapException(new OQueryParsingException("Error on parsing query", parserText, parserGetCurrentPosition()),
+      throw OException.wrapException(
+          new OQueryParsingException(
+              "Error on parsing query", parserText, parserGetCurrentPosition()),
           e);
     }
 
@@ -85,8 +89,11 @@ public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
       OSQLFilterCondition right = (OSQLFilterCondition) iCondition.right;
       iCondition.right = resetOperatorPrecedence(right);
       if (iCondition.operator != null) {
-        if (!right.inBraces && right.operator != null && right.operator.precedence < iCondition.operator.precedence) {
-          OSQLFilterCondition newLeft = new OSQLFilterCondition(iCondition.left, iCondition.operator, right.left);
+        if (!right.inBraces
+            && right.operator != null
+            && right.operator.precedence < iCondition.operator.precedence) {
+          OSQLFilterCondition newLeft =
+              new OSQLFilterCondition(iCondition.left, iCondition.operator, right.left);
           right.setLeft(newLeft);
           resetOperatorPrecedence(right);
           return right;
@@ -97,7 +104,8 @@ public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
     return iCondition;
   }
 
-  public Object evaluate(final OIdentifiable iRecord, final ODocument iCurrentResult, final OCommandContext iContext) {
+  public Object evaluate(
+      final OIdentifiable iRecord, final ODocument iCurrentResult, final OCommandContext iContext) {
     if (rootCondition == null) {
       return true;
     }

@@ -26,27 +26,21 @@ import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OSyncSource;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
-import com.orientechnologies.orient.server.distributed.ODistributedMomentum;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseChunk;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
-
+import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Ask for synchronization of database from a remote node.
@@ -56,149 +50,175 @@ import java.util.concurrent.atomic.AtomicReference;
 public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
   public static final int FACTORYID = 14;
 
-  public OSyncDatabaseTask() {
-  }
-
-  public OSyncDatabaseTask(final OLogSequenceNumber lastLSN, final long lastOperationTimestamp) {
-    super(lastOperationTimestamp);
-    this.lastLSN = lastLSN;
-  }
+  public OSyncDatabaseTask() {}
 
   @Override
-  public Object execute(final ODistributedRequestId requestId, final OServer iServer, final ODistributedServerManager iManager,
-      final ODatabaseDocumentInternal database) throws Exception {
+  public Object execute(
+      final ODistributedRequestId requestId,
+      final OServer iServer,
+      final ODistributedServerManager iManager,
+      final ODatabaseDocumentInternal database)
+      throws Exception {
 
     if (!iManager.getLocalNodeName().equals(getNodeSource())) {
-      if (database == null)
-        throw new ODistributedException("Database instance is null");
+      if (database == null) throw new ODistributedException("Database instance is null");
 
       final String databaseName = database.getName();
-
-      final ODistributedDatabase dDatabase = checkIfCurrentDatabaseIsNotOlder(iManager, databaseName, database);
+      final ODistributedDatabaseImpl dDatabase =
+          (ODistributedDatabaseImpl) iManager.getMessageService().getDatabase(databaseName);
 
       try {
-        final Long lastDeployment = (Long) iManager.getConfigurationMap().get(DEPLOYDB + databaseName);
+        final Long lastDeployment =
+            (Long) iManager.getConfigurationMap().get(DEPLOYDB + databaseName);
         if (lastDeployment != null && lastDeployment.longValue() == random) {
           // SKIP IT
-          ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
-              "Skip deploying database '%s' because already executed", databaseName);
+          ODistributedServerLog.debug(
+              this,
+              iManager.getLocalNodeName(),
+              getNodeSource(),
+              DIRECTION.NONE,
+              "Skip deploying database '%s' because already executed",
+              databaseName);
           return Boolean.FALSE;
         }
 
         iManager.getConfigurationMap().put(DEPLOYDB + databaseName, random);
 
-        iManager.setDatabaseStatus(getNodeSource(), databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
+        iManager.setDatabaseStatus(
+            getNodeSource(), databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
 
-        ODistributedServerLog
-            .info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT, "Deploying database %s...", databaseName);
-
-        final AtomicReference<ODistributedMomentum> momentum = new AtomicReference<ODistributedMomentum>();
+        ODistributedServerLog.info(
+            this,
+            iManager.getLocalNodeName(),
+            getNodeSource(),
+            DIRECTION.OUT,
+            "Deploying database %s...",
+            databaseName);
 
         OBackgroundBackup backup = null;
-        OSyncSource last = ((ODistributedStorage) database.getStorage()).getLastValidBackup();
+        OSyncSource last = dDatabase.getLastValidBackup();
         if (last instanceof OBackgroundBackup) {
           backup = (OBackgroundBackup) last;
         }
 
         if (backup == null || !last.isValid() || !backup.getResultedBackupFile().exists()) {
           // CREATE A BACKUP OF DATABASE FROM SCRATCH
-          File backupFile = new File(Orient.getTempPath() + "/backup_" + database.getName() + ".zip");
+          File backupFile =
+              new File(Orient.getTempPath() + "/backup_" + database.getName() + ".zip");
           String backupPath = backupFile.getAbsolutePath();
 
-          final int compressionRate = OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger();
+          final int compressionRate =
+              OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger();
 
           if (backupFile.exists()) {
             if (backupFile.isDirectory()) {
               OFileUtils.deleteRecursively(backupFile);
             }
             backupFile.delete();
-          } else
-            backupFile.getParentFile().mkdirs();
+          } else backupFile.getParentFile().mkdirs();
           backupFile.createNewFile();
 
           final File resultedBackupFile = backupFile;
 
           final File completedFile = new File(backupFile.getAbsolutePath() + ".completed");
-          if (completedFile.exists())
-            completedFile.delete();
+          if (completedFile.exists()) completedFile.delete();
 
-          ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-              "Creating backup of database '%s' (compressionRate=%d) in directory: %s...", databaseName, compressionRate,
+          ODistributedServerLog.info(
+              this,
+              iManager.getLocalNodeName(),
+              getNodeSource(),
+              DIRECTION.OUT,
+              "Creating backup of database '%s' (compressionRate=%d) in directory: %s...",
+              databaseName,
+              compressionRate,
               backupPath);
 
-          backup = new OBackgroundBackup(this, iManager, database, resultedBackupFile, backupPath, null, momentum, dDatabase,
-              requestId, completedFile);
+          backup =
+              new OBackgroundBackup(
+                  this,
+                  iManager,
+                  database,
+                  resultedBackupFile,
+                  backupPath,
+                  null,
+                  dDatabase,
+                  requestId,
+                  completedFile);
           Thread t = new Thread(backup);
           t.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
           t.start();
 
-          // RECORD LAST BACKUP TO BE REUSED IN CASE ANOTHER NODE ASK FOR THE SAME IN SHORT TIME WHILE THE DB IS NOT UPDATED
-          ((ODistributedStorage) database.getStorage()).setLastValidBackup(backup);
+          // RECORD LAST BACKUP TO BE REUSED IN CASE ANOTHER NODE ASK FOR THE SAME IN SHORT TIME
+          // WHILE THE DB IS NOT UPDATED
+          dDatabase.setLastValidBackup(backup);
         } else {
-          momentum.set(dDatabase.getSyncConfiguration().getMomentum().copy());
           backup.makeStreamFromFile();
-          ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-              "Reusing last backup of database '%s' in directory: %s...", databaseName,
+          ODistributedServerLog.info(
+              this,
+              iManager.getLocalNodeName(),
+              getNodeSource(),
+              DIRECTION.OUT,
+              "Reusing last backup of database '%s' in directory: %s...",
+              databaseName,
               backup.getResultedBackupFile().getAbsolutePath());
         }
 
-        for (int retry = 0; momentum.get() == null && retry < 10; ++retry)
-          Thread.sleep(300);
-
         while (!backup.getStarted().await(1, TimeUnit.MINUTES)) {
-          OLogManager.instance().info(this, "Another backup running on database '%s' waiting it to finish", databaseName);
+          OLogManager.instance()
+              .info(
+                  this,
+                  "Another backup running on database '%s' waiting it to finish",
+                  databaseName);
         }
 
-        final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(backup, CHUNK_MAX_SIZE, momentum.get());
+        final ODistributedDatabaseChunk chunk =
+            new ODistributedDatabaseChunk(backup, CHUNK_MAX_SIZE);
 
-        ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
-            "- transferring chunk #%d offset=%d size=%s lsn=%s...", 1, 0, OFileUtils.getSizeAsNumber(chunk.buffer.length),
-            momentum.get());
+        ODistributedServerLog.info(
+            this,
+            iManager.getLocalNodeName(),
+            getNodeSource(),
+            ODistributedServerLog.DIRECTION.OUT,
+            "- transferring chunk #%d offset=%d size=%s...",
+            1,
+            0,
+            OFileUtils.getSizeAsNumber(chunk.buffer.length));
 
         if (chunk.last) {
           // NO MORE CHUNKS: SET THE NODE ONLINE (SYNCHRONIZING ENDED)
-          iManager.setDatabaseStatus(iManager.getLocalNodeName(), databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
+          iManager.setDatabaseStatus(
+              iManager.getLocalNodeName(),
+              databaseName,
+              ODistributedServerManager.DB_STATUS.ONLINE);
         }
 
         return chunk;
 
       } catch (OLockException e) {
-        ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
-            "Skip deploying database %s because another node is doing it", databaseName);
+        ODistributedServerLog.debug(
+            this,
+            iManager.getLocalNodeName(),
+            getNodeSource(),
+            DIRECTION.NONE,
+            "Skip deploying database %s because another node is doing it",
+            databaseName);
       } finally {
-        ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
+        ODistributedServerLog.info(
+            this,
+            iManager.getLocalNodeName(),
+            getNodeSource(),
+            ODistributedServerLog.DIRECTION.OUT,
             "Deploy database task completed");
       }
     } else
-      ODistributedServerLog.debug(this, iManager.getLocalNodeName(),
-
-          getNodeSource(), DIRECTION.NONE, "Skip deploying database from the same node");
+      ODistributedServerLog.debug(
+          this,
+          iManager.getLocalNodeName(),
+          getNodeSource(),
+          DIRECTION.NONE,
+          "Skip deploying database from the same node");
 
     return Boolean.FALSE;
-  }
-
-  protected ODistributedDatabase checkIfCurrentDatabaseIsNotOlder(final ODistributedServerManager iManager,
-      final String databaseName, ODatabaseDocumentInternal database) {
-    final ODistributedDatabase dDatabase = iManager.getMessageService().getDatabase(databaseName);
-
-    if (lastLSN != null) {
-      final OLogSequenceNumber currentLSN = ((OAbstractPaginatedStorage) database.getStorage().getUnderlying()).getLSN();
-      if (currentLSN != null) {
-        // LOCAL AND REMOTE LSN PRESENT
-        if (lastLSN.compareTo(currentLSN) <= 0)
-          // REQUESTED LSN IS <= LOCAL LSN
-          return dDatabase;
-      }
-    }
-    if (lastOperationTimestamp > -1) {
-      if (lastOperationTimestamp <= dDatabase.getSyncConfiguration().getLastOperationTimestamp())
-        // NO LSN, BUT LOCAL DATABASE HAS BEEN WRITTEN AFTER THE REQUESTER, STILL OK
-        return dDatabase;
-    } else
-      // NO LSN, NO TIMESTAMP, C'MON, CAN'T BE NEWER THAN THIS
-      return dDatabase;
-
-    return databaseIsOld(iManager, databaseName, dDatabase);
   }
 
   @Override
@@ -208,21 +228,16 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
 
   @Override
   public void toStream(final DataOutput out) throws IOException {
-    writeOptionalLSN(out);
     out.writeLong(random);
-    out.writeLong(lastOperationTimestamp);
   }
 
   @Override
   public void fromStream(final DataInput in, final ORemoteTaskFactory factory) throws IOException {
-    readOptionalLSN(in);
     random = in.readLong();
-    lastOperationTimestamp = in.readLong();
   }
 
   @Override
   public int getFactoryId() {
     return FACTORYID;
   }
-
 }

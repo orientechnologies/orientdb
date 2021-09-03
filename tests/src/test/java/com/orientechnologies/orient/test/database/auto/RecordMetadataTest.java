@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
+import static org.testng.Assert.assertEquals;
+
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
@@ -7,13 +9,11 @@ import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.assertEquals;
-
 /**
  * @author edegtyarenko
  * @since 11.03.13 12:00
  */
-@Test(groups = { "crud" })
+@Test(groups = {"crud"})
 public class RecordMetadataTest extends DocumentDBBaseTest {
 
   @Parameters(value = "url")

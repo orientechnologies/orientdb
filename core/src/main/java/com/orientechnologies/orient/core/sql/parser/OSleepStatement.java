@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.util.Map;
 
 public class OSleepStatement extends OSimpleExecStatement {
@@ -21,7 +20,8 @@ public class OSleepStatement extends OSimpleExecStatement {
     super(p, id);
   }
 
-  @Override public OResultSet executeSimple(OCommandContext ctx) {
+  @Override
+  public OResultSet executeSimple(OCommandContext ctx) {
 
     OInternalResultSet result = new OInternalResultSet();
     OResultInternal item = new OResultInternal();
@@ -37,35 +37,35 @@ public class OSleepStatement extends OSimpleExecStatement {
     }
     result.add(item);
     return result;
-
   }
 
-  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("SLEEP ");
     millis.toString(params, builder);
   }
 
-  @Override public OSleepStatement copy() {
+  @Override
+  public OSleepStatement copy() {
     OSleepStatement result = new OSleepStatement(-1);
     result.millis = millis == null ? null : millis.copy();
     return result;
   }
 
-  @Override public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OSleepStatement that = (OSleepStatement) o;
 
-    if (millis != null ? !millis.equals(that.millis) : that.millis != null)
-      return false;
+    if (millis != null ? !millis.equals(that.millis) : that.millis != null) return false;
 
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     return millis != null ? millis.hashCode() : 0;
   }
 }

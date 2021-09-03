@@ -4,39 +4,40 @@ import com.orientechnologies.orient.core.command.OCommandDistributedReplicateReq
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 /**
  * Creates a new user.
- * 
+ *
  * @author Matan Shukry (matanshukry@gmail.com)
  * @since 4/22/2015
  */
-public class OCommandExecutorSQLCreateUser extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
-  public static final String  KEYWORD_CREATE      = "CREATE";
-  public static final String  KEYWORD_USER        = "USER";
-  public static final String  KEYWORD_IDENTIFIED  = "IDENTIFIED";
-  public static final String  KEYWORD_BY          = "BY";
-  public static final String  KEYWORD_ROLE        = "ROLE";
-  public static final String  SYNTAX              = "CREATE USER <user-name> IDENTIFIED BY <user-password> [ ROLE <role-name> ]";
+public class OCommandExecutorSQLCreateUser extends OCommandExecutorSQLAbstract
+    implements OCommandDistributedReplicateRequest {
+  public static final String KEYWORD_CREATE = "CREATE";
+  public static final String KEYWORD_USER = "USER";
+  public static final String KEYWORD_IDENTIFIED = "IDENTIFIED";
+  public static final String KEYWORD_BY = "BY";
+  public static final String KEYWORD_ROLE = "ROLE";
+  public static final String SYNTAX =
+      "CREATE USER <user-name> IDENTIFIED BY <user-password> [ ROLE <role-name> ]";
 
-  private static final String USER_CLASS          = "OUser";
-  private static final String USER_FIELD_NAME     = "name";
+  private static final String USER_CLASS = "OUser";
+  private static final String USER_FIELD_NAME = "name";
   private static final String USER_FIELD_PASSWORD = "password";
-  private static final String USER_FIELD_STATUS   = "status";
-  private static final String USER_FIELD_ROLES    = "roles";
+  private static final String USER_FIELD_STATUS = "status";
+  private static final String USER_FIELD_ROLES = "roles";
 
-  private static final String DEFAULT_STATUS      = "ACTIVE";
-  private static final String DEFAULT_ROLE        = "writer";
-  private static final String ROLE_CLASS          = "ORole";
-  private static final String ROLE_FIELD_NAME     = "name";
+  private static final String DEFAULT_STATUS = "ACTIVE";
+  private static final String DEFAULT_ROLE = "writer";
+  private static final String ROLE_CLASS = "ORole";
+  private static final String ROLE_FIELD_NAME = "name";
 
-  private String              userName;
-  private String              pass;
-  private List<String>        roles;
+  private String userName;
+  private String pass;
+  private List<String> roles;
 
   @Override
   public OCommandExecutorSQLCreateUser parse(OCommandRequest iRequest) {
@@ -83,7 +84,8 @@ public class OCommandExecutorSQLCreateUser extends OCommandExecutorSQLAbstract i
   @Override
   public Object execute(Map<Object, Object> iArgs) {
     if (this.userName == null) {
-      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+      throw new OCommandExecutionException(
+          "Cannot execute the command because it has not been parsed yet");
     }
 
     // Build following command:

@@ -10,9 +10,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class ODeleteEdgeStatementExecutionTest {
   static ODatabaseDocument db;
 
@@ -62,9 +60,15 @@ public class ODeleteEdgeStatementExecutionTest {
     Assert.assertEquals(9, rs.stream().count());
     rs.close();
 
-
-    db.command("DELETE EDGE " + edgeClassName + " from (SELECT FROM " + vertexClassName + " where name = 'a1') to (SELECT FROM "
-        + vertexClassName + " where name = 'a2')").close();
+    db.command(
+            "DELETE EDGE "
+                + edgeClassName
+                + " from (SELECT FROM "
+                + vertexClassName
+                + " where name = 'a1') to (SELECT FROM "
+                + vertexClassName
+                + " where name = 'a2')")
+        .close();
 
     rs = db.query("SELECT FROM " + edgeClassName);
     Assert.assertEquals(8, rs.stream().count());
@@ -108,7 +112,7 @@ public class ODeleteEdgeStatementExecutionTest {
 
     db.command("DELETE EDGE " + edgeClassName).close();
 
-     rs = db.query("SELECT FROM " + edgeClassName);
+    rs = db.query("SELECT FROM " + edgeClassName);
     Assert.assertEquals(0, rs.stream().count());
     rs.close();
 
@@ -120,5 +124,4 @@ public class ODeleteEdgeStatementExecutionTest {
     Assert.assertEquals(0, rs.stream().count());
     rs.close();
   }
-
 }

@@ -6,19 +6,15 @@ import com.tinkerpop.blueprints.TestSuite;
 import com.tinkerpop.blueprints.TransactionalGraph;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.GraphTest;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-
-/**
- * @author Stephen Mallette (http://stephen.genoprime.com)
- */
+/** @author Stephen Mallette (http://stephen.genoprime.com) */
 @RunWith(JUnit4.class)
 public class OrientGraphSpecificTestSuite extends TestSuite {
   public OrientGraphSpecificTestSuite() {
@@ -61,7 +57,7 @@ public class OrientGraphSpecificTestSuite extends TestSuite {
   public void testComplexMapProperty() throws Exception {
     // complex map properties have problems when unmarshalled from disk to
     // an OTrackedMap
-    Graph graph = graphTest.generateGraph("complex-map");
+    Graph graph = graphTest.generateGraph("complex_map");
     final HashMap<String, Object> consignee = new HashMap<String, Object>();
     consignee.put("name", "Company 4");
     final ArrayList consigneeAddress = new ArrayList();
@@ -142,7 +138,7 @@ public class OrientGraphSpecificTestSuite extends TestSuite {
     // do not show the problem.
     graph.shutdown();
 
-    graph = graphTest.generateGraph("complex-map");
+    graph = graphTest.generateGraph("complex_map");
 
     final Vertex v1 = graph.getVertex(v.getId());
     assertNotNull(v1);

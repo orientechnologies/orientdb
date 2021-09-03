@@ -15,23 +15,27 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 
 package com.orientechnologies.orient.core.conflict;
 
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.OStorage;
-
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Manages the MVCC conflicts.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public interface ORecordConflictStrategy {
-  byte[] onUpdate(OStorage storage, byte iRecordType, ORecordId rid, int iRecordVersion, byte[] iRecordContent,
+  byte[] onUpdate(
+      OStorage storage,
+      byte iRecordType,
+      ORecordId rid,
+      int iRecordVersion,
+      byte[] iRecordContent,
       AtomicInteger iDatabaseVersion);
 
   String getName();

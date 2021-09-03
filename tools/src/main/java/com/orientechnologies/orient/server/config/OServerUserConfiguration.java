@@ -19,28 +19,40 @@
  */
 package com.orientechnologies.orient.server.config;
 
+import com.orientechnologies.orient.core.security.OGlobalUser;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlRootElement(name = "user")
-@XmlType(propOrder = { "resources", "password", "name" })
-public class OServerUserConfiguration {
-  @XmlAttribute
-  public String name;
+@XmlType(propOrder = {"resources", "password", "name"})
+public class OServerUserConfiguration implements OGlobalUser {
+  @XmlAttribute public String name;
 
-  @XmlAttribute
-  public String password;
+  @XmlAttribute public String password;
 
-  @XmlAttribute
-  public String resources;
+  @XmlAttribute public String resources;
 
-  public OServerUserConfiguration() {
-  }
+  public OServerUserConfiguration() {}
 
-  public OServerUserConfiguration(final String iName, final String iPassword, final String iResources) {
+  public OServerUserConfiguration(
+      final String iName, final String iPassword, final String iResources) {
     name = iName;
     password = iPassword;
     resources = iResources;
+  }
+
+  @Override
+  public String getName() {
+    return name;
+  }
+
+  @Override
+  public String getPassword() {
+    return password;
+  }
+
+  public String getResources() {
+    return resources;
   }
 }

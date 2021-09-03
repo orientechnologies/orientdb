@@ -27,16 +27,13 @@ import com.orientechnologies.orient.core.record.ODirection;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.setup.ServerRun;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
-/**
- * Distributed TX test against "plocal" protocol.
- */
+/** Distributed TX test against "plocal" protocol. */
 public class DistributedSuperNodeIT extends AbstractServerClusterGraphTest {
   @Test
-  @Ignore
   public void test() throws Exception {
     final long timeout = OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT.getValueAsLong();
     OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT.setValue(1);
@@ -54,7 +51,8 @@ public class DistributedSuperNodeIT extends AbstractServerClusterGraphTest {
 
   @Override
   protected void setFactorySettings(ODatabasePool pool) {
-//    pool.setConnectionStrategy(OStorageRemote.CONNECTION_STRATEGY.ROUND_ROBIN_REQUEST.toString());
+    //
+    // pool.setConnectionStrategy(OStorageRemote.CONNECTION_STRATEGY.ROUND_ROBIN_REQUEST.toString());
   }
 
   @Override
@@ -65,7 +63,8 @@ public class DistributedSuperNodeIT extends AbstractServerClusterGraphTest {
       ODocument rootDoc = graph.load(rootVertexId);
       final OVertex root = rootDoc.asVertex().get();
 
-      Assert.assertEquals(((OMultiCollectionIterator) root.getEdges(ODirection.OUT)).size(),
+      Assert.assertEquals(
+          ((OMultiCollectionIterator) root.getEdges(ODirection.OUT)).size(),
           count * serverInstance.size() * writerCount);
     }
     super.onAfterExecution();

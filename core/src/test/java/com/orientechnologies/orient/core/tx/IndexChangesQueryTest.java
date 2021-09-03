@@ -1,9 +1,8 @@
 package com.orientechnologies.orient.core.tx;
 
+import com.orientechnologies.orient.core.OCreateDatabaseUtil;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexTxAwareMultiValue;
@@ -11,31 +10,29 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.util.Collection;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Collection;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-/**
- * Created by tglman on 28/05/17.
- */
+/** Created by tglman on 28/05/17. */
 public class IndexChangesQueryTest {
-
-  public static final  String                    CLASS_NAME = "idxTxAwareMultiValueGetEntriesTest";
-  private static final String                    FIELD_NAME = "value";
-  private static final String                    INDEX_NAME = "idxTxAwareMultiValueGetEntriesTestIndex";
-  private              OrientDB                  orientDB;
-  private              ODatabaseDocumentInternal database;
+  public static final String CLASS_NAME = "idxTxAwareMultiValueGetEntriesTest";
+  private static final String FIELD_NAME = "value";
+  private static final String INDEX_NAME = "idxTxAwareMultiValueGetEntriesTestIndex";
+  private OrientDB orientDB;
+  private ODatabaseDocumentInternal database;
 
   @Before
   public void before() {
-    orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
-    orientDB.create("test", ODatabaseType.MEMORY);
-    database = (ODatabaseDocumentInternal) orientDB.open("test", "admin", "admin");
+    orientDB =
+        OCreateDatabaseUtil.createDatabase("test", "embedded:", OCreateDatabaseUtil.TYPE_MEMORY);
+    database =
+        (ODatabaseDocumentInternal)
+            orientDB.open("test", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
 
     final OSchema schema = database.getMetadata().getSchema();
     final OClass cls = schema.createClass(CLASS_NAME);
@@ -53,7 +50,8 @@ public class IndexChangesQueryTest {
   public void testMultiplePut() {
     database.begin();
 
-    final OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
+    final OIndex index =
+        database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
     Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
 
     ODocument doc = new ODocument(CLASS_NAME);
@@ -97,7 +95,8 @@ public class IndexChangesQueryTest {
     doc3.field(FIELD_NAME, 2);
     doc3.save();
 
-    final OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
+    final OIndex index =
+        database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
     Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
 
     database.commit();

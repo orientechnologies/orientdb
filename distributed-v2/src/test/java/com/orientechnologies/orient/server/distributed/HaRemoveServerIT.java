@@ -2,37 +2,40 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicReference;
-
-    /*
-     *
-     *  *  Copyright 2015 Orient Technologies LTD (info(at)orientechnologies.com)
-     *  *
-     *  *  Licensed under the Apache License, Version 2.0 (the "License");
-     *  *  you may not use this file except in compliance with the License.
-     *  *  You may obtain a copy of the License at
-     *  *
-     *  *       http://www.apache.org/licenses/LICENSE-2.0
-     *  *
-     *  *  Unless required by applicable law or agreed to in writing, software
-     *  *  distributed under the License is distributed on an "AS IS" BASIS,
-     *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-     *  *  See the License for the specific language governing permissions and
-     *  *  limitations under the License.
-     *  *
-     *  * For more information: http://www.orientechnologies.com
-     *
-     */
-
-/**
- * @author Enrico Risa
+/*
+ *
+ *  *  Copyright 2015 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
  */
+
+/** @author Enrico Risa */
 public class HaRemoveServerIT extends AbstractServerClusterTest {
-  private final static int SERVERS = 2;
+  private static final int SERVERS = 2;
 
   ExecutorService executorService = Executors.newSingleThreadExecutor();
 
@@ -52,42 +55,44 @@ public class HaRemoveServerIT extends AbstractServerClusterTest {
 
     ServerRun firstServer = serverInstance.get(0);
 
-    final String offlineNodeName = serverInstance.get(1).getServerInstance().getDistributedManager().getLocalNodeName();
+    final String offlineNodeName =
+        serverInstance.get(1).getServerInstance().getDistributedManager().getLocalNodeName();
 
-    ODistributedServerManager distributedManager = firstServer.getServerInstance().getDistributedManager();
+    ODistributedServerManager distributedManager =
+        firstServer.getServerInstance().getDistributedManager();
 
-    final AtomicReference<ODistributedServerManager.DB_STATUS> ref = new AtomicReference<ODistributedServerManager.DB_STATUS>(
-        ODistributedServerManager.DB_STATUS.OFFLINE);
+    final AtomicReference<ODistributedServerManager.DB_STATUS> ref =
+        new AtomicReference<ODistributedServerManager.DB_STATUS>(
+            ODistributedServerManager.DB_STATUS.OFFLINE);
     try {
 
       // 3 events for failing test (NOT_AVAILABLE,SYNCHRONIZING,ONLINE)
       final CountDownLatch latch = new CountDownLatch(3);
-      distributedManager.registerLifecycleListener(new ODistributedLifecycleListener() {
-        @Override
-        public boolean onNodeJoining(String iNode) {
-          return false;
-        }
+      distributedManager.registerLifecycleListener(
+          new ODistributedLifecycleListener() {
+            @Override
+            public boolean onNodeJoining(String iNode) {
+              return false;
+            }
 
-        @Override
-        public void onNodeJoined(String iNode) {
+            @Override
+            public void onNodeJoined(String iNode) {}
 
-        }
+            @Override
+            public void onNodeLeft(String iNode) {}
 
-        @Override
-        public void onNodeLeft(String iNode) {
+            @Override
+            public void onDatabaseChangeStatus(
+                String iNode,
+                String iDatabaseName,
+                ODistributedServerManager.DB_STATUS iNewStatus) {
 
-        }
-
-        @Override
-        public void onDatabaseChangeStatus(String iNode, String iDatabaseName, ODistributedServerManager.DB_STATUS iNewStatus) {
-
-          if (iNode.equals(offlineNodeName)) {
-            ref.set(iNewStatus);
-            latch.countDown();
-          }
-
-        }
-      });
+              if (iNode.equals(offlineNodeName)) {
+                ref.set(iNewStatus);
+                latch.countDown();
+              }
+            }
+          });
       Future<Void> voidFuture = invokeRemoveServer(offlineNodeName, serverInstance.get(1));
 
       voidFuture.get();
@@ -107,19 +112,27 @@ public class HaRemoveServerIT extends AbstractServerClusterTest {
 
   protected Future<Void> invokeRemoveServer(final String offlineNodeName, final ServerRun server) {
 
-    Future<Void> future = executorService.submit(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
+    Future<Void> future =
+        executorService.submit(
+            new Callable<Void>() {
+              @Override
+              public Void call() throws Exception {
 
-        try (ODatabaseDocument db = server.getServerInstance().getContext().open(getDatabaseName(), "admin", "admin")) {
-          db.command(new OCommandSQL(String.format("HA remove server `%s`", offlineNodeName))).execute();
-        } catch (Exception e) {
-          e.printStackTrace();
-        }
+                try (ODatabaseDocument db =
+                    server
+                        .getServerInstance()
+                        .getContext()
+                        .open(getDatabaseName(), "admin", "admin")) {
+                  db.command(
+                          new OCommandSQL(String.format("HA remove server `%s`", offlineNodeName)))
+                      .execute();
+                } catch (Exception e) {
+                  e.printStackTrace();
+                }
 
-        return null;
-      }
-    });
+                return null;
+              }
+            });
     return future;
   }
 
@@ -128,5 +141,4 @@ public class HaRemoveServerIT extends AbstractServerClusterTest {
     db.command(new OCommandSQL("CREATE CLASS Person extends V")).execute();
     db.command(new OCommandSQL("CREATE PROPERTY Person.name STRING")).execute();
   }
-
 }

@@ -20,20 +20,14 @@
 package com.orientechnologies.orient.core.storage;
 
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
-import com.orientechnologies.common.concur.resource.OSharedContainer;
-import com.orientechnologies.common.concur.resource.OSharedContainerImpl;
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
-import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-
-import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicLong;
 
-public abstract class OStorageAbstract implements OStorage, OSharedContainer {
+public abstract class OStorageAbstract implements OStorage {
   public static final ThreadGroup storageThreadGroup;
 
   static {
@@ -48,31 +42,25 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
         parentThreadGroup = parentThreadGroup.getParent();
         found = true;
         break;
-      } else
-        parentThreadGroup = parentThreadGroup.getParent();
+      } else parentThreadGroup = parentThreadGroup.getParent();
     }
 
-    if (!found)
-      parentThreadGroup = parentThreadGroupBackup;
+    if (!found) parentThreadGroup = parentThreadGroupBackup;
 
     storageThreadGroup = new ThreadGroup(parentThreadGroup, "OrientDB Storage");
   }
 
-  protected final String                 url;
-  protected final String                 mode;
+  protected final String url;
+  protected final String mode;
   protected final OReadersWriterSpinLock stateLock;
 
-  protected volatile OStorageConfiguration            configuration;
+  protected volatile OStorageConfiguration configuration;
   protected volatile OCurrentStorageComponentsFactory componentsFactory;
-  protected          String                           name;
-  private final      AtomicLong version = new AtomicLong();
-  protected volatile STATUS     status  = STATUS.CLOSED;
+  protected String name;
+  private final AtomicLong version = new AtomicLong();
 
-  /**
-   * This field is used in EE version, do not make it private
-   */
-  @SuppressWarnings("WeakerAccess")
-  protected final OSharedContainerImpl sharedContainer = new OSharedContainerImpl();
+  protected volatile STATUS status = STATUS.CLOSED;
+  protected Throwable error = null;
 
   public OStorageAbstract(final String name, final String iURL, final String mode) {
     this.name = normalizeName(name);
@@ -92,25 +80,21 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
 
       if (OStringSerializerHelper.contains(name, '\\'))
         return name.substring(name.lastIndexOf("\\") + 1);
-      else
-        return name;
+      else return name;
 
     } else if (OStringSerializerHelper.contains(name, '\\')) {
       name = name.substring(name.lastIndexOf("\\") + 1);
 
       if (OStringSerializerHelper.contains(name, '/'))
         return name.substring(name.lastIndexOf("/") + 1);
-      else
-        return name;
+      else return name;
     } else {
       return name;
     }
   }
 
   @Override
-  public abstract OCluster getClusterByName(final String iClusterName);
-
-  @Override
+  @Deprecated
   public OStorage getUnderlying() {
     return this;
   }
@@ -146,28 +130,9 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
   }
 
   @Override
-  public void close(final boolean iForce, boolean onDelete) {
-    sharedContainer.clearResources();
-  }
+  public void close(final boolean iForce, boolean onDelete) {}
 
-  @Override
-  public boolean existsResource(String iName) {
-    return sharedContainer.existsResource(iName);
-  }
-
-  @Override
-  public <T> T removeResource(String iName) {
-    return sharedContainer.removeResource(iName);
-  }
-
-  @Override
-  public <T> T getResource(String iName, Callable<T> iCallback) {
-    return sharedContainer.getResource(iName, iCallback);
-  }
-
-  /**
-   * Returns current storage's version as serial.
-   */
+  /** Returns current storage's version as serial. */
   @Override
   public long getVersion() {
     return version.get();
@@ -183,26 +148,9 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
     long tot = 0;
 
     for (OCluster c : getClusterInstances())
-      if (c != null)
-        tot += c.getEntries() - c.getTombstonesCount();
+      if (c != null) tot += c.getEntries() - c.getTombstonesCount();
 
     return tot;
-  }
-
-  @Override
-  public <V> V callInLock(final Callable<V> iCallable, final boolean iExclusiveLock) {
-    stateLock.acquireReadLock();
-    try {
-      try {
-        return iCallable.call();
-      } catch (RuntimeException e) {
-        throw e;
-      } catch (Exception e) {
-        throw OException.wrapException(new OStorageException("Error on nested call in lock"), e);
-      }
-    } finally {
-      stateLock.releaseReadLock();
-    }
   }
 
   @Override
@@ -215,6 +163,7 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
     return status;
   }
 
+  @Deprecated
   @Override
   public boolean isDistributed() {
     return false;
@@ -234,5 +183,4 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
   public void shutdown() {
     close(true, false);
   }
-
 }

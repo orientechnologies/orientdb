@@ -29,19 +29,20 @@ import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashTabl
 
 public final class OCommonConst {
 
-  public static final long[]                       EMPTY_LONG_ARRAY                   = new long[0];
-  public static final byte[]                       EMPTY_BYTE_ARRAY                   = new byte[0];
-  public static final char[]                       EMPTY_CHAR_ARRAY                   = new char[0];
-  public static final int[]                        EMPTY_INT_ARRAY                    = new int[0];
-  public static final OCluster[]                   EMPTY_CLUSTER_ARRAY                = new OCluster[0];
-  public static final OIdentifiable[]              EMPTY_IDENTIFIABLE_ARRAY           = new OIdentifiable[0];
-  public static final Object[]                     EMPTY_OBJECT_ARRAY                 = new Object[0];
-  public static final OType[]                      EMPTY_TYPES_ARRAY                  = new OType[0];
-  public static final OPageDataVerificationError[] EMPTY_PAGE_DATA_VERIFICATION_ARRAY = new OPageDataVerificationError[0];
-  public static final OHashTable.Entry[]           EMPTY_BUCKET_ENTRY_ARRAY           = new OHashTable.Entry[0];
-  public static final OPhysicalPosition[]          EMPTY_PHYSICAL_POSITIONS_ARRAY     = new OPhysicalPosition[0];
-  public static final OStorageFileConfiguration[]  EMPTY_FILE_CONFIGURATIONS_ARRAY    = new OStorageFileConfiguration[0];
+  public static final long[] EMPTY_LONG_ARRAY = new long[0];
+  public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
+  public static final char[] EMPTY_CHAR_ARRAY = new char[0];
+  public static final int[] EMPTY_INT_ARRAY = new int[0];
+  public static final OCluster[] EMPTY_CLUSTER_ARRAY = new OCluster[0];
+  public static final OIdentifiable[] EMPTY_IDENTIFIABLE_ARRAY = new OIdentifiable[0];
+  public static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
+  public static final OType[] EMPTY_TYPES_ARRAY = new OType[0];
+  public static final OPageDataVerificationError[] EMPTY_PAGE_DATA_VERIFICATION_ARRAY =
+      new OPageDataVerificationError[0];
+  public static final OHashTable.Entry[] EMPTY_BUCKET_ENTRY_ARRAY = new OHashTable.Entry[0];
+  public static final OPhysicalPosition[] EMPTY_PHYSICAL_POSITIONS_ARRAY = new OPhysicalPosition[0];
+  public static final OStorageFileConfiguration[] EMPTY_FILE_CONFIGURATIONS_ARRAY =
+      new OStorageFileConfiguration[0];
 
-  private OCommonConst() {
-  }
+  private OCommonConst() {}
 }

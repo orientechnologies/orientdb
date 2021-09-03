@@ -32,11 +32,13 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandDocumentAbstract;
 
 public class OServerCommandPutIndex extends OServerCommandDocumentAbstract {
-  private static final String[] NAMES = { "PUT|index/*" };
+  private static final String[] NAMES = {"PUT|index/*"};
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    final String[] urlParts = checkSyntax(iRequest.getUrl(), 3, "Syntax error: index/<database>/<index-name>/<key>[/<value>]");
+    final String[] urlParts =
+        checkSyntax(
+            iRequest.getUrl(), 3, "Syntax error: index/<database>/<index-name>/<key>[/<value>]");
 
     iRequest.getData().commandInfo = "Index put";
 
@@ -64,30 +66,34 @@ public class OServerCommandPutIndex extends OServerCommandDocumentAbstract {
 
       final OIndexDefinition indexDefinition = index.getDefinition();
       final Object key;
-      if (indexDefinition != null)
-        key = indexDefinition.createValue(urlParts[3]);
-      else
-        key = urlParts[3];
+      if (indexDefinition != null) key = indexDefinition.createValue(urlParts[3]);
+      else key = urlParts[3];
 
-      if (key == null)
-        throw new IllegalArgumentException("Invalid key value : " + urlParts[3]);
+      if (key == null) throw new IllegalArgumentException("Invalid key value : " + urlParts[3]);
 
       final boolean existent = record.getIdentity().isPersistent();
 
-      if (existent && record instanceof ORecord)
-        ((ORecord) record).save();
+      if (existent && record instanceof ORecord) ((ORecord) record).save();
 
       index.put(key, record);
 
       if (existent)
-        iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
+        iResponse.send(
+            OHttpUtils.STATUS_OK_CODE,
+            OHttpUtils.STATUS_OK_DESCRIPTION,
+            OHttpUtils.CONTENT_TEXT_PLAIN,
+            null,
+            null);
       else
-        iResponse
-            .send(OHttpUtils.STATUS_CREATED_CODE, OHttpUtils.STATUS_CREATED_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
+        iResponse.send(
+            OHttpUtils.STATUS_CREATED_CODE,
+            OHttpUtils.STATUS_CREATED_DESCRIPTION,
+            OHttpUtils.CONTENT_TEXT_PLAIN,
+            null,
+            null);
 
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
     }
     return false;
   }

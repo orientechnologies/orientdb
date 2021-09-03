@@ -19,10 +19,9 @@ import com.orientechnologies.common.test.SpeedTestMonoThread;
 
 public abstract class CollectionBaseAbstractSpeedTest extends SpeedTestMonoThread {
   protected Object searchedValue;
-  protected int    collectionSize;
+  protected int collectionSize;
 
-  protected CollectionBaseAbstractSpeedTest() {
-  }
+  protected CollectionBaseAbstractSpeedTest() {}
 
   protected CollectionBaseAbstractSpeedTest(long iCycles) {
     super(iCycles);

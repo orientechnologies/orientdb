@@ -15,7 +15,7 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 
 package com.orientechnologies.orient.core.conflict;
@@ -25,21 +25,25 @@ import com.orientechnologies.orient.core.exception.OConcurrentModificationExcept
 import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.OStorage;
-
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Default strategy that checks the record version number: if the current update has a version different than stored one, then a
- * OConcurrentModificationException is thrown.
- * 
+ * Default strategy that checks the record version number: if the current update has a version
+ * different than stored one, then a OConcurrentModificationException is thrown.
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OVersionRecordConflictStrategy implements ORecordConflictStrategy {
   public static final String NAME = "version";
 
   @Override
-  public byte[] onUpdate(OStorage storage, final byte iRecordType, final ORecordId rid,
-      final int iRecordVersion, final byte[] iRecordContent, final AtomicInteger iDatabaseVersion) {
+  public byte[] onUpdate(
+      OStorage storage,
+      final byte iRecordType,
+      final ORecordId rid,
+      final int iRecordVersion,
+      final byte[] iRecordContent,
+      final AtomicInteger iDatabaseVersion) {
     checkVersions(rid, iRecordVersion, iDatabaseVersion.get());
     return null;
   }
@@ -49,10 +53,12 @@ public class OVersionRecordConflictStrategy implements ORecordConflictStrategy {
     return NAME;
   }
 
-  protected void checkVersions(final ORecordId rid, final int iRecordVersion, final int iDatabaseVersion) {
+  protected void checkVersions(
+      final ORecordId rid, final int iRecordVersion, final int iDatabaseVersion) {
     if (OFastConcurrentModificationException.enabled())
       throw OFastConcurrentModificationException.instance();
     else
-      throw new OConcurrentModificationException(rid, iDatabaseVersion, iRecordVersion, ORecordOperation.UPDATED);
+      throw new OConcurrentModificationException(
+          rid, iDatabaseVersion, iRecordVersion, ORecordOperation.UPDATED);
   }
 }

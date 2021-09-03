@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import org.junit.Test;
+
 public class ODropClusterStatementTest extends OParserTestAbstract {
 
   @Test
@@ -18,5 +19,4 @@ public class ODropClusterStatementTest extends OParserTestAbstract {
 
     checkWrongSyntax("DROP CLUSTER 14 IF NOT EXISTS");
   }
-
 }

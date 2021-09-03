@@ -18,6 +18,8 @@
 
 package com.orientechnologies.lucene.test;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
@@ -29,22 +31,16 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.io.InputStream;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.junit.Before;
+import org.junit.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * Created by enricorisa on 28/06/14.
- */
-
+/** Created by enricorisa on 28/06/14. */
 public class LuceneInsertDeleteTest extends BaseLuceneTest {
 
   @Before
@@ -55,7 +51,8 @@ public class LuceneInsertDeleteTest extends BaseLuceneTest {
 
     oClass.createProperty("name", OType.STRING);
     //noinspection deprecation
-    db.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
+    db.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE"))
+        .execute();
   }
 
   @Test
@@ -87,7 +84,6 @@ public class LuceneInsertDeleteTest extends BaseLuceneTest {
     }
     assertThat(coll).hasSize(0);
     assertThat(idx.getInternal().size()).isEqualTo(0);
-
   }
 
   @Test
@@ -99,12 +95,14 @@ public class LuceneInsertDeleteTest extends BaseLuceneTest {
     }
 
     //noinspection deprecation
-    db.command(new OCommandSQL(
-        "create index Song.title on Song (title) FULLTEXT ENGINE LUCENE metadata {'closeAfterInterval':1000 , 'firstFlushAfter':1000 }"))
+    db.command(
+            new OCommandSQL(
+                "create index Song.title on Song (title) FULLTEXT ENGINE LUCENE metadata {'closeAfterInterval':1000 , 'firstFlushAfter':1000 }"))
         .execute();
 
     @SuppressWarnings("deprecation")
-    List<ODocument> docs = db.query(new OSQLSynchQuery<>("select from Song where title lucene 'mountain'"));
+    List<ODocument> docs =
+        db.query(new OSQLSynchQuery<>("select from Song where title lucene 'mountain'"));
 
     assertThat(docs).hasSize(4);
     TimeUnit.SECONDS.sleep(5);

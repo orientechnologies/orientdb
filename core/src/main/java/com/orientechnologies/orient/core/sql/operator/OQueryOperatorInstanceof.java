@@ -44,16 +44,22 @@ public class OQueryOperatorInstanceof extends OQueryOperatorEqualityNotNulls {
   }
 
   @Override
-  protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
-      final Object iRight, OCommandContext iContext) {
+  protected boolean evaluateExpression(
+      final OIdentifiable iRecord,
+      final OSQLFilterCondition iCondition,
+      final Object iLeft,
+      final Object iRight,
+      OCommandContext iContext) {
 
-    final OSchema schema = ((OMetadataInternal) ODatabaseRecordThreadLocal.instance().get().getMetadata())
-        .getImmutableSchemaSnapshot();
+    final OSchema schema =
+        ((OMetadataInternal) ODatabaseRecordThreadLocal.instance().get().getMetadata())
+            .getImmutableSchemaSnapshot();
 
     final String baseClassName = iRight.toString();
     final OClass baseClass = schema.getClass(baseClassName);
     if (baseClass == null)
-      throw new OCommandExecutionException("Class '" + baseClassName + "' is not defined in database schema");
+      throw new OCommandExecutionException(
+          "Class '" + baseClassName + "' is not defined in database schema");
 
     OClass cls = null;
     if (iLeft instanceof OIdentifiable) {

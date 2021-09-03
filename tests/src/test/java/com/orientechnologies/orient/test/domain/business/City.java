@@ -19,17 +19,14 @@ import javax.persistence.Id;
 import javax.persistence.Version;
 
 public class City {
-  @Id
-  private Long    id;
+  @Id private Long id;
 
-  @Version
-  private Long    version;
+  @Version private Long version;
 
-  private String  name;
+  private String name;
   private Country country;
 
-  public City() {
-  }
+  public City() {}
 
   public City(String iName) {
     name = iName;

@@ -5,7 +5,6 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -13,16 +12,16 @@ import java.util.Set;
 
 public class ONotInCondition extends OBooleanExpression {
 
-  protected OExpression            left;
+  protected OExpression left;
   protected OBinaryCompareOperator operator;
-  protected OSelectStatement       rightStatement;
+  protected OSelectStatement rightStatement;
 
-  protected Object          right;
+  protected Object right;
   protected OInputParameter rightParam;
   protected OMathExpression rightMathExpression;
 
-  private static final Object UNSET           = new Object();
-  private              Object inputFinalValue = UNSET;
+  private static final Object UNSET = new Object();
+  private Object inputFinalValue = UNSET;
 
   public ONotInCondition(int id) {
     super(id);
@@ -103,7 +102,6 @@ public class ONotInCondition extends OBooleanExpression {
       return false;
     }
     return true;
-
   }
 
   @Override
@@ -188,27 +186,25 @@ public class ONotInCondition extends OBooleanExpression {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     ONotInCondition that = (ONotInCondition) o;
 
-    if (left != null ? !left.equals(that.left) : that.left != null)
-      return false;
-    if (operator != null ? !operator.equals(that.operator) : that.operator != null)
-      return false;
-    if (rightStatement != null ? !rightStatement.equals(that.rightStatement) : that.rightStatement != null)
-      return false;
-    if (right != null ? !right.equals(that.right) : that.right != null)
-      return false;
+    if (left != null ? !left.equals(that.left) : that.left != null) return false;
+    if (operator != null ? !operator.equals(that.operator) : that.operator != null) return false;
+    if (rightStatement != null
+        ? !rightStatement.equals(that.rightStatement)
+        : that.rightStatement != null) return false;
+    if (right != null ? !right.equals(that.right) : that.right != null) return false;
     if (rightParam != null ? !rightParam.equals(that.rightParam) : that.rightParam != null)
       return false;
-    if (rightMathExpression != null ? !rightMathExpression.equals(that.rightMathExpression) : that.rightMathExpression != null)
-      return false;
-    if (inputFinalValue != null ? !inputFinalValue.equals(that.inputFinalValue) : that.inputFinalValue != null)
-      return false;
+    if (rightMathExpression != null
+        ? !rightMathExpression.equals(that.rightMathExpression)
+        : that.rightMathExpression != null) return false;
+    if (inputFinalValue != null
+        ? !inputFinalValue.equals(that.inputFinalValue)
+        : that.inputFinalValue != null) return false;
 
     return true;
   }
@@ -228,7 +224,8 @@ public class ONotInCondition extends OBooleanExpression {
   @Override
   public List<String> getMatchPatternInvolvedAliases() {
     List<String> leftX = left == null ? null : left.getMatchPatternInvolvedAliases();
-    List<String> rightX = rightMathExpression == null ? null : rightMathExpression.getMatchPatternInvolvedAliases();
+    List<String> rightX =
+        rightMathExpression == null ? null : rightMathExpression.getMatchPatternInvolvedAliases();
 
     List<String> result = new ArrayList<String>();
     if (leftX != null) {
@@ -256,6 +253,5 @@ public class ONotInCondition extends OBooleanExpression {
     }
     return true;
   }
-
 }
 /* JavaCC - OriginalChecksum=8fb82bf72cc7d9cbdf2f9e2323ca8ee1 (do not edit this line) */

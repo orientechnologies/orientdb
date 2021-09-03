@@ -4,20 +4,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- *
  * This class is used by the query planner to split projections in three parts:
+ *
  * <ul>
- * <li>pre-aggregate projections</li>
- * <li>aggregate projections</li>
- * <li>post-aggregate projections</li>
+ *   <li>pre-aggregate projections
+ *   <li>aggregate projections
+ *   <li>post-aggregate projections
  * </ul>
  *
- * An example:
- * <code>
+ * An example: <code>
  *   select max(a + b) + (max(b + c * 2) + 1 + 2) * 3 as foo, max(d) + max(e), f from " + className
- * </code>
- * will become
- * <code>
+ * </code> will become <code>
  *
  *   a + b AS _$$$OALIAS$$_1, b + c * 2 AS _$$$OALIAS$$_3, d AS _$$$OALIAS$$_5, e AS _$$$OALIAS$$_7, f
  *
@@ -26,17 +23,15 @@ import java.util.List;
  *   _$$$OALIAS$$_0 + (_$$$OALIAS$$_2 + 1 + 2) * 3 AS `foo`, _$$$OALIAS$$_4 + _$$$OALIAS$$_6 AS `max(d) + max(e)`, f
  * </code>
  *
- *
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
 public class AggregateProjectionSplit {
 
   protected static final String GENERATED_ALIAS_PREFIX = "_$$$OALIAS$$_";
-  protected              int    nextAliasId            = 0;
+  protected int nextAliasId = 0;
 
   protected List<OProjectionItem> preAggregate = new ArrayList<>();
-  protected List<OProjectionItem>   aggregate    = new ArrayList<>();
-
+  protected List<OProjectionItem> aggregate = new ArrayList<>();
 
   public OIdentifier getNextAlias() {
     OIdentifier result = new OIdentifier(GENERATED_ALIAS_PREFIX + (nextAliasId++));
@@ -60,9 +55,7 @@ public class AggregateProjectionSplit {
     this.aggregate = aggregate;
   }
 
-  /**
-   * clean the content, but NOT the counter!
-   */
+  /** clean the content, but NOT the counter! */
   public void reset() {
     this.preAggregate.clear();
     this.aggregate.clear();

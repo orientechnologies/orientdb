@@ -23,14 +23,13 @@ import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
 
 @Test(groups = {"db", "import-export"})
 public class DbImportExportRidbagTest extends DocumentDBBaseTest implements OCommandOutputListener {
@@ -60,10 +59,13 @@ public class DbImportExportRidbagTest extends DocumentDBBaseTest implements OCom
       database.command("insert into V set name ='b" + i + "'");
     }
 
-    database.command("create edge E from (select from V where name ='a') to (select from V where name != 'a')");
+    database.command(
+        "create edge E from (select from V where name ='a') to (select from V where name != 'a')");
 
     // ADD A CUSTOM TO THE CLASS
-    database.command(new OCommandSQL("alter class V custom onBeforeCreate=onBeforeCreateItem")).execute();
+    database
+        .command(new OCommandSQL("alter class V custom onBeforeCreate=onBeforeCreateItem"))
+        .execute();
 
     ODatabaseExport export = new ODatabaseExport(database, testPath + "/" + exportFilePath, this);
     export.exportDatabase();
@@ -75,13 +77,11 @@ public class DbImportExportRidbagTest extends DocumentDBBaseTest implements OCom
   @Test(dependsOnMethods = "testDbExport")
   public void testDbImport() throws IOException {
     final File importDir = new File(testPath + "/" + NEW_DB_PATH);
-    if (importDir.exists())
-      for (File f : importDir.listFiles())
-        f.delete();
-    else
-      importDir.mkdir();
+    if (importDir.exists()) for (File f : importDir.listFiles()) f.delete();
+    else importDir.mkdir();
 
-    ODatabaseDocumentTx database = new ODatabaseDocumentTx(getStorageType() + ":" + testPath + "/" + NEW_DB_URL);
+    ODatabaseDocumentTx database =
+        new ODatabaseDocumentTx(getStorageType() + ":" + testPath + "/" + NEW_DB_URL);
     database.create();
 
     ODatabaseImport dbImport = new ODatabaseImport(database, testPath + "/" + exportFilePath, this);
@@ -104,16 +104,20 @@ public class DbImportExportRidbagTest extends DocumentDBBaseTest implements OCom
   public void testCompareDatabases() throws IOException {
     if ("remote".equals(getStorageType()) || url.startsWith("remote:")) {
       String env = getTestEnv();
-      if (env == null || env.equals("dev"))
-        return;
+      if (env == null || env.equals("dev")) return;
 
       // EXECUTES ONLY IF NOT REMOTE ON CI/RELEASE TEST ENV
     }
 
     String urlPrefix = getStorageType() + ":";
 
-    final ODatabaseCompare databaseCompare = new ODatabaseCompare(url, urlPrefix + testPath + "/" + DbImportExportRidbagTest.NEW_DB_URL,
-            "admin", "admin", this);
+    final ODatabaseCompare databaseCompare =
+        new ODatabaseCompare(
+            url,
+            urlPrefix + testPath + "/" + DbImportExportRidbagTest.NEW_DB_URL,
+            "admin",
+            "admin",
+            this);
     databaseCompare.setCompareEntriesForAutomaticIndexes(true);
     databaseCompare.setCompareIndexMetadata(true);
     Assert.assertTrue(databaseCompare.compare());
@@ -126,7 +130,6 @@ public class DbImportExportRidbagTest extends DocumentDBBaseTest implements OCom
       // ACTIVATE DUMP MODE
       dumpMode = true;
 
-    if (dumpMode)
-      OLogManager.instance().error(this, iText, null);
+    if (dumpMode) OLogManager.instance().error(this, iText, null);
   }
 }

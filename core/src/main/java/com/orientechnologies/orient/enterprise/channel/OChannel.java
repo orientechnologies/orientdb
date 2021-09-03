@@ -29,49 +29,61 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelListener;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.*;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.Socket;
+import java.net.SocketException;
 import java.util.Enumeration;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 public abstract class OChannel extends OListenerManger<OChannelListener> {
-  private static final OProfiler  PROFILER                     = Orient.instance().getProfiler();
+  private static final OProfiler PROFILER = Orient.instance().getProfiler();
   private static final AtomicLong metricGlobalTransmittedBytes = new AtomicLong();
-  private static final AtomicLong metricGlobalReceivedBytes    = new AtomicLong();
-  private static final AtomicLong metricGlobalFlushes          = new AtomicLong();
-  private final OAdaptiveLock     lockRead                     = new OAdaptiveLock();
-  private final OAdaptiveLock     lockWrite                    = new OAdaptiveLock();
-  public volatile Socket          socket;
-  public InputStream              inStream;
-  public OutputStream             outStream;
-  public int                      socketBufferSize;
-  protected long                  timeout;
-  private long                    metricTransmittedBytes       = 0;
-  private long                    metricReceivedBytes          = 0;
-  private long                    metricFlushes                = 0;
-  private String                  profilerMetric;
+  private static final AtomicLong metricGlobalReceivedBytes = new AtomicLong();
+  private static final AtomicLong metricGlobalFlushes = new AtomicLong();
+  private final OAdaptiveLock lockRead = new OAdaptiveLock();
+  private final OAdaptiveLock lockWrite = new OAdaptiveLock();
+  public volatile Socket socket;
+  public InputStream inStream;
+  public OutputStream outStream;
+  public int socketBufferSize;
+  protected long timeout;
+  private long metricTransmittedBytes = 0;
+  private long metricReceivedBytes = 0;
+  private long metricFlushes = 0;
+  private String profilerMetric;
 
   static {
     final String profilerMetric = PROFILER.getProcessMetric("network.channel.binary");
 
-    PROFILER.registerHookValue(profilerMetric + ".transmittedBytes", "Bytes transmitted to all the network channels",
-        METRIC_TYPE.SIZE, new OProfilerHookValue() {
+    PROFILER.registerHookValue(
+        profilerMetric + ".transmittedBytes",
+        "Bytes transmitted to all the network channels",
+        METRIC_TYPE.SIZE,
+        new OProfilerHookValue() {
           public Object getValue() {
             return metricGlobalTransmittedBytes.get();
           }
         });
-    PROFILER.registerHookValue(profilerMetric + ".receivedBytes", "Bytes received from all the network channels", METRIC_TYPE.SIZE,
+    PROFILER.registerHookValue(
+        profilerMetric + ".receivedBytes",
+        "Bytes received from all the network channels",
+        METRIC_TYPE.SIZE,
         new OProfilerHookValue() {
           public Object getValue() {
             return metricGlobalReceivedBytes.get();
           }
         });
-    PROFILER.registerHookValue(profilerMetric + ".flushes", "Number of times the network channels have been flushed",
-        METRIC_TYPE.COUNTER, new OProfilerHookValue() {
+    PROFILER.registerHookValue(
+        profilerMetric + ".flushes",
+        "Number of times the network channels have been flushed",
+        METRIC_TYPE.COUNTER,
+        new OProfilerHookValue() {
           public Object getValue() {
             return metricGlobalFlushes.get();
           }
@@ -97,13 +109,11 @@ public abstract class OChannel extends OListenerManger<OChannelListener> {
     final Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
     while (interfaces.hasMoreElements()) {
       final NetworkInterface current = interfaces.nextElement();
-      if (!current.isUp() || current.isLoopback() || current.isVirtual())
-        continue;
+      if (!current.isUp() || current.isLoopback() || current.isVirtual()) continue;
       Enumeration<InetAddress> addresses = current.getInetAddresses();
       while (addresses.hasMoreElements()) {
         final InetAddress current_addr = addresses.nextElement();
-        if (current_addr.isLoopbackAddress())
-          continue;
+        if (current_addr.isLoopbackAddress()) continue;
 
         if (bestAddress == null || (iFavoriteIp4 && current_addr instanceof Inet4Address))
           // FAVORITE IP4 ADDRESS
@@ -134,8 +144,7 @@ public abstract class OChannel extends OListenerManger<OChannelListener> {
   }
 
   public void flush() throws IOException {
-    if (outStream != null)
-      outStream.flush();
+    if (outStream != null) outStream.flush();
   }
 
   public OAdaptiveLock getLockWrite() {
@@ -190,27 +199,44 @@ public abstract class OChannel extends OListenerManger<OChannelListener> {
   public void connected() {
     final String dictProfilerMetric = PROFILER.getProcessMetric("network.channel.binary.*");
 
-    profilerMetric = PROFILER
-        .getProcessMetric("network.channel.binary." + socket.getRemoteSocketAddress().toString() + ":" + socket.getLocalPort() + "".replace('.', '_'));
+    profilerMetric =
+        PROFILER.getProcessMetric(
+            "network.channel.binary."
+                + socket.getRemoteSocketAddress().toString()
+                + ":"
+                + socket.getLocalPort()
+                + "".replace('.', '_'));
 
-    PROFILER.registerHookValue(profilerMetric + ".transmittedBytes", "Bytes transmitted to a network channel", METRIC_TYPE.SIZE,
+    PROFILER.registerHookValue(
+        profilerMetric + ".transmittedBytes",
+        "Bytes transmitted to a network channel",
+        METRIC_TYPE.SIZE,
         new OProfilerHookValue() {
           public Object getValue() {
             return metricTransmittedBytes;
           }
-        }, dictProfilerMetric + ".transmittedBytes");
-    PROFILER.registerHookValue(profilerMetric + ".receivedBytes", "Bytes received from a network channel", METRIC_TYPE.SIZE,
+        },
+        dictProfilerMetric + ".transmittedBytes");
+    PROFILER.registerHookValue(
+        profilerMetric + ".receivedBytes",
+        "Bytes received from a network channel",
+        METRIC_TYPE.SIZE,
         new OProfilerHookValue() {
           public Object getValue() {
             return metricReceivedBytes;
           }
-        }, dictProfilerMetric + ".receivedBytes");
-    PROFILER.registerHookValue(profilerMetric + ".flushes", "Number of times the network channel has been flushed",
-        METRIC_TYPE.COUNTER, new OProfilerHookValue() {
+        },
+        dictProfilerMetric + ".receivedBytes");
+    PROFILER.registerHookValue(
+        profilerMetric + ".flushes",
+        "Number of times the network channel has been flushed",
+        METRIC_TYPE.COUNTER,
+        new OProfilerHookValue() {
           public Object getValue() {
             return metricFlushes;
           }
-        }, dictProfilerMetric + ".flushes");
+        },
+        dictProfilerMetric + ".flushes");
   }
 
   @Override
@@ -232,5 +258,4 @@ public abstract class OChannel extends OListenerManger<OChannelListener> {
     metricGlobalFlushes.incrementAndGet();
     metricFlushes++;
   }
-
 }

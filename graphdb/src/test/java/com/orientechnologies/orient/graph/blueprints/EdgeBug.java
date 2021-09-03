@@ -33,21 +33,33 @@ public class EdgeBug {
 
   private OServer setupDatabase() throws Exception {
     OServer ret = new OServer(false);
-    ret.startup("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
-        + "<orient-server>"
-        + "<network>"
-        + "<protocols>"
-        + "<protocol name=\"binary\" implementation=\"com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary\"/>"
-        + "<protocol name=\"http\" implementation=\"com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb\"/>"
-        + "</protocols>" + "<listeners>" + "<listener ip-address=\"0.0.0.0\" port-range=\"2424-2430\" protocol=\"binary\"/>"
-        + "<listener ip-address=\"0.0.0.0\" port-range=\"2480-2490\" protocol=\"http\"/>" + "</listeners>" + "</network>"
-        + "<users>" + "<user name=\"root\" password=\"root\" resources=\"*\"/>" + "</users>" + "<storages>"
-        + "<storage path=\"memory:temp\" name=\"temp\" userName=\"admin\" userPassword=\"admin\" loaded-at-startup=\"true\" />"
-        + "</storages>" + "<properties>"
-        + "<entry name=\"orientdb.www.path\" value=\"/Users/curtis/orientdb-graphed-1.3.0/www/\"/>"
-        + "<entry name=\"orientdb.config.file\" value=\"/Users/curtis/orientdb-graphed-1.3.0/config/orientdb-server-config.xml\"/>"
-        + "<entry name=\"server.cache.staticResources\" value=\"false\"/>" + "<entry name=\"log.console.level\" value=\"info\"/>"
-        + "<entry name=\"log.file.level\" value=\"info\"/>" + "</properties>" + "<isAfterFirstTime>true</isAfterFirstTime></orient-server>");
+    ret.startup(
+        "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+            + "<orient-server>"
+            + "<network>"
+            + "<protocols>"
+            + "<protocol name=\"binary\" implementation=\"com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary\"/>"
+            + "<protocol name=\"http\" implementation=\"com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb\"/>"
+            + "</protocols>"
+            + "<listeners>"
+            + "<listener ip-address=\"0.0.0.0\" port-range=\"2424-2430\" protocol=\"binary\"/>"
+            + "<listener ip-address=\"0.0.0.0\" port-range=\"2480-2490\" protocol=\"http\"/>"
+            + "</listeners>"
+            + "</network>"
+            + "<users>"
+            + "<user name=\"root\" password=\"root\" resources=\"*\"/>"
+            + "</users>"
+            + "<storages>"
+            + "<storage path=\"memory:temp\" name=\"temp\" userName=\"admin\" userPassword=\"admin\" loaded-at-startup=\"true\" />"
+            + "</storages>"
+            + "<properties>"
+            + "<entry name=\"orientdb.www.path\" value=\"/Users/curtis/orientdb-graphed-1.3.0/www/\"/>"
+            + "<entry name=\"orientdb.config.file\" value=\"/Users/curtis/orientdb-graphed-1.3.0/config/orientdb-server-config.xml\"/>"
+            + "<entry name=\"server.cache.staticResources\" value=\"false\"/>"
+            + "<entry name=\"log.console.level\" value=\"info\"/>"
+            + "<entry name=\"log.file.level\" value=\"info\"/>"
+            + "</properties>"
+            + "<isAfterFirstTime>true</isAfterFirstTime></orient-server>");
     return ret;
   }
 
@@ -82,8 +94,7 @@ public class EdgeBug {
       System.out.println("GOT VERTEX: " + v);
     }
     Iterable<Vertex> rcs = ((OrientGraphQuery) db.query()).labels("rawCategory").vertices();
-    if (!rcs.iterator().hasNext())
-      System.out.println("??? Where are the rawCategory vertices?");
+    if (!rcs.iterator().hasNext()) System.out.println("??? Where are the rawCategory vertices?");
     else {
       for (Vertex rc : rcs) {
         System.out.println("GOT RC: " + rc);
@@ -106,8 +117,7 @@ public class EdgeBug {
     OrientVertex childVertex = db.getVertex(child.getId());
     Iterable<Edge> parentEdges = childVertex.getEdges(Direction.OUT, "hasParent");
     // remove original parent edge
-    for (Edge parentEdge : parentEdges)
-      parentEdge.remove();
+    for (Edge parentEdge : parentEdges) parentEdge.remove();
     // get vertex again
     childVertex = db.getVertex(childVertex.getId());
     Vertex parentVertex = db.getVertex(parent.getId());

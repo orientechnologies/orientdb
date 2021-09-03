@@ -6,16 +6,14 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cluster.OClusterPositionMapBucket;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
-
 import java.nio.ByteBuffer;
 
 public final class ClusterPositionMapBucketAddPO extends PageOperationRecord {
-  private int  recordPageIndex;
-  private int  recordPosition;
+  private int recordPageIndex;
+  private int recordPosition;
   private byte status;
 
-  public ClusterPositionMapBucketAddPO() {
-  }
+  public ClusterPositionMapBucketAddPO() {}
 
   public ClusterPositionMapBucketAddPO(int recordPageIndex, int recordPosition, byte status) {
     this.recordPageIndex = recordPageIndex;

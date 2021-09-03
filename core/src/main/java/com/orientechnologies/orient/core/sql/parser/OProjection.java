@@ -8,11 +8,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.query.OLegacyResultSet;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class OProjection extends SimpleNode {
@@ -21,11 +17,14 @@ public class OProjection extends SimpleNode {
 
   List<OProjectionItem> items;
 
+  // runtime
+  private Set<String> excludes;
+
   public OProjection(List<OProjectionItem> items, boolean distinct) {
     super(-1);
     this.items = items;
     this.distinct = distinct;
-    //TODO make the whole class immutable!
+    // TODO make the whole class immutable!
   }
 
   public OProjection(int id) {
@@ -80,18 +79,27 @@ public class OProjection extends SimpleNode {
   }
 
   public OResult calculateSingle(OCommandContext iContext, OResult iRecord) {
+    initExcludes(iContext);
     if (isExpand()) {
-      throw new IllegalStateException("This is an expand projection, it cannot be calculated as a single result" + toString());
+      throw new IllegalStateException(
+          "This is an expand projection, it cannot be calculated as a single result" + toString());
     }
 
-    if (items.size() == 0 || (items.size() == 1 && items.get(0).isAll()) && items.get(0).nestedProjection == null) {
+    if (items.size() == 0
+        || (items.size() == 1 && items.get(0).isAll()) && items.get(0).nestedProjection == null) {
       return iRecord;
     }
 
     OResultInternal result = new OResultInternal();
     for (OProjectionItem item : items) {
+      if (item.exclude) {
+        continue;
+      }
       if (item.isAll()) {
         for (String alias : iRecord.getPropertyNames()) {
+          if (this.excludes.contains(alias)) {
+            continue;
+          }
           Object val = item.convert(iRecord.getProperty(alias));
           if (item.nestedProjection != null) {
             val = item.nestedProjection.apply(item.expression, val, iContext);
@@ -100,14 +108,20 @@ public class OProjection extends SimpleNode {
         }
         if (iRecord.getElement().isPresent()) {
           OElement x = iRecord.getElement().get();
-          result.setProperty("@rid", x.getIdentity());
-          result.setProperty("@version", x.getVersion());
-          result.setProperty("@class", x.getSchemaType().map(clazz -> clazz.getName()).orElse(null));
+          if (!this.excludes.contains("@rid")) {
+            result.setProperty("@rid", x.getIdentity());
+          }
+          if (!this.excludes.contains("@version")) {
+            result.setProperty("@version", x.getVersion());
+          }
+          if (!this.excludes.contains("@class")) {
+            result.setProperty(
+                "@class", x.getSchemaType().map(clazz -> clazz.getName()).orElse(null));
+          }
         }
       } else {
         result.setProperty(item.getProjectionAliasAsString(), item.execute(iRecord, iContext));
       }
-
     }
 
     for (String key : iRecord.getMetadataKeys()) {
@@ -116,6 +130,17 @@ public class OProjection extends SimpleNode {
       }
     }
     return result;
+  }
+
+  private void initExcludes(OCommandContext iContext) {
+    if (excludes == null) {
+      this.excludes = new HashSet<String>();
+      for (OProjectionItem item : items) {
+        if (item.exclude) {
+          this.excludes.add(item.getProjectionAliasAsString());
+        }
+      }
+    }
   }
 
   public OLegacyResultSet calculateExpand(OCommandContext iContext, OResult iRecord) {
@@ -133,7 +158,8 @@ public class OProjection extends SimpleNode {
     if (items != null && items.size() > 1) {
       for (OProjectionItem item : items) {
         if (item.isExpand()) {
-          throw new OCommandSQLParsingException("Cannot execute a query with expand() together with other projections");
+          throw new OCommandSQLParsingException(
+              "Cannot execute a query with expand() together with other projections");
         }
       }
     }
@@ -161,15 +187,12 @@ public class OProjection extends SimpleNode {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OProjection that = (OProjection) o;
 
-    if (items != null ? !items.equals(that.items) : that.items != null)
-      return false;
+    if (items != null ? !items.equals(that.items) : that.items != null) return false;
 
     return true;
   }
@@ -208,7 +231,8 @@ public class OProjection extends SimpleNode {
     OResultInternal result = new OResultInternal();
     result.setProperty("distinct", distinct);
     if (items != null) {
-      result.setProperty("items", items.stream().map(x -> x.serialize()).collect(Collectors.toList()));
+      result.setProperty(
+          "items", items.stream().map(x -> x.serialize()).collect(Collectors.toList()));
     }
     return result;
   }

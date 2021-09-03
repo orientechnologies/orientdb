@@ -23,7 +23,12 @@ package com.orientechnologies.orient.core.storage.index.hashindex.local.v2;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.directoryfirstpage.*;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.directoryfirstpage.LocalHashTableV2DirectoryFirstPageSetMaxLeftChildDepthPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.directoryfirstpage.LocalHashTableV2DirectoryFirstPageSetMaxRightChildDepthPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.directoryfirstpage.LocalHashTableV2DirectoryFirstPageSetNodeLocalDepthPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.directoryfirstpage.LocalHashTableV2DirectoryFirstPageSetPointerPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.directoryfirstpage.LocalHashTableV2DirectoryFirstPageSetTombstonePO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.directoryfirstpage.LocalHashTableV2DirectoryFirstPageSetTreeSizePO;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -36,7 +41,8 @@ public final class DirectoryFirstPageV2 extends DirectoryPageV2 {
   private static final int ITEMS_OFFSET = TOMBSTONE_OFFSET + OIntegerSerializer.INT_SIZE;
 
   static final int NODES_PER_PAGE =
-      (OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024 - ITEMS_OFFSET) / HashTableDirectory.BINARY_LEVEL_SIZE;
+      (OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024 - ITEMS_OFFSET)
+          / HashTableDirectory.BINARY_LEVEL_SIZE;
 
   public DirectoryFirstPageV2(OCacheEntry cacheEntry) {
     super(cacheEntry);
@@ -56,7 +62,8 @@ public final class DirectoryFirstPageV2 extends DirectoryPageV2 {
   public void setTombstone(int tombstone) {
     final int pastTombstone = getIntValue(TOMBSTONE_OFFSET);
     setIntValue(TOMBSTONE_OFFSET, tombstone);
-    addPageOperation(new LocalHashTableV2DirectoryFirstPageSetTombstonePO(tombstone, pastTombstone));
+    addPageOperation(
+        new LocalHashTableV2DirectoryFirstPageSetTombstonePO(tombstone, pastTombstone));
   }
 
   public int getTombstone() {
@@ -69,22 +76,32 @@ public final class DirectoryFirstPageV2 extends DirectoryPageV2 {
   }
 
   @Override
-  protected void logSetMaxLeftChildDepth(int localNodeIndex, byte maxLeftChildDepth, byte pastDepth) {
-    addPageOperation(new LocalHashTableV2DirectoryFirstPageSetMaxLeftChildDepthPO(localNodeIndex, maxLeftChildDepth, pastDepth));
+  protected void logSetMaxLeftChildDepth(
+      int localNodeIndex, byte maxLeftChildDepth, byte pastDepth) {
+    addPageOperation(
+        new LocalHashTableV2DirectoryFirstPageSetMaxLeftChildDepthPO(
+            localNodeIndex, maxLeftChildDepth, pastDepth));
   }
 
   @Override
-  protected void logSetMaxRightChildDepth(int localNodeIndex, byte maxRightChildDepth, byte pastDepth) {
-    addPageOperation(new LocalHashTableV2DirectoryFirstPageSetMaxRightChildDepthPO(localNodeIndex, maxRightChildDepth, pastDepth));
+  protected void logSetMaxRightChildDepth(
+      int localNodeIndex, byte maxRightChildDepth, byte pastDepth) {
+    addPageOperation(
+        new LocalHashTableV2DirectoryFirstPageSetMaxRightChildDepthPO(
+            localNodeIndex, maxRightChildDepth, pastDepth));
   }
 
   @Override
   protected void logSetNodeLocalDepth(int localNodeIndex, byte nodeLocalDepth, byte pastDepth) {
-    addPageOperation(new LocalHashTableV2DirectoryFirstPageSetNodeLocalDepthPO(localNodeIndex, nodeLocalDepth, pastDepth));
+    addPageOperation(
+        new LocalHashTableV2DirectoryFirstPageSetNodeLocalDepthPO(
+            localNodeIndex, nodeLocalDepth, pastDepth));
   }
 
   @Override
   protected void logSetPointer(int localNodeIndex, int index, long pointer, long pastPointer) {
-    addPageOperation(new LocalHashTableV2DirectoryFirstPageSetPointerPO(localNodeIndex, index, pointer, pastPointer));
+    addPageOperation(
+        new LocalHashTableV2DirectoryFirstPageSetPointerPO(
+            localNodeIndex, index, pointer, pastPointer));
   }
 }

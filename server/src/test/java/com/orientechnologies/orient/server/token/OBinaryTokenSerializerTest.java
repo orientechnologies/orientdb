@@ -1,41 +1,47 @@
 package com.orientechnologies.orient.server.token;
 
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-
-
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.server.binary.impl.OBinaryToken;
-import org.junit.Test;
-
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.security.binary.OBinaryToken;
+import com.orientechnologies.orient.core.metadata.security.binary.OBinaryTokenPayloadImpl;
+import com.orientechnologies.orient.core.metadata.security.binary.OBinaryTokenSerializer;
+import com.orientechnologies.orient.core.metadata.security.jwt.OrientJwtHeader;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import org.junit.Test;
+
 public class OBinaryTokenSerializerTest {
 
-  private OBinaryTokenSerializer ser = new OBinaryTokenSerializer(new String[] { "plocal", "memory" }, new String[] { "key" },
-                                         new String[] { "HmacSHA256" }, new String[] { "OrientDB" });
+  private OBinaryTokenSerializer ser =
+      new OBinaryTokenSerializer(
+          new String[] {"plocal", "memory"},
+          new String[] {"key"},
+          new String[] {"HmacSHA256"},
+          new String[] {"OrientDB"});
 
   @Test
   public void testSerializerDeserializeToken() throws IOException {
     OBinaryToken token = new OBinaryToken();
-    token.setDatabase("test");
-    token.setDatabaseType("plocal");
-    token.setUserRid(new ORecordId(43, 234));
+    OBinaryTokenPayloadImpl payload = new OBinaryTokenPayloadImpl();
+    payload.setDatabase("test");
+    payload.setDatabaseType("plocal");
+    payload.setUserRid(new ORecordId(43, 234));
     OrientJwtHeader header = new OrientJwtHeader();
     header.setKeyId("key");
     header.setAlgorithm("HmacSHA256");
     header.setType("OrientDB");
     token.setHeader(header);
-    token.setExpiry(20L);
-    token.setProtocolVersion((short) 2);
-    token.setSerializer("ser");
-    token.setDriverName("aa");
-    token.setDriverVersion("aa");
+    payload.setExpiry(20L);
+    payload.setProtocolVersion((short) 2);
+    payload.setSerializer("ser");
+    payload.setDriverName("aa");
+    payload.setDriverVersion("aa");
+    token.setPayload(payload);
     ByteArrayOutputStream bas = new ByteArrayOutputStream();
     ser.serialize(token, bas);
     ByteArrayInputStream input = new ByteArrayInputStream(bas.toByteArray());
@@ -55,27 +61,28 @@ public class OBinaryTokenSerializerTest {
     assertEquals("ser", tok.getSerializer());
     assertEquals("aa", tok.getDriverName());
     assertEquals("aa", tok.getDriverVersion());
-
   }
 
   @Test
   public void testSerializerDeserializeServerUserToken() throws IOException {
     OBinaryToken token = new OBinaryToken();
-    token.setDatabase("test");
-    token.setDatabaseType("plocal");
-    token.setUserRid(new ORecordId(43, 234));
+    OBinaryTokenPayloadImpl payload = new OBinaryTokenPayloadImpl();
+    payload.setDatabase("test");
+    payload.setDatabaseType("plocal");
+    payload.setUserRid(new ORecordId(43, 234));
     OrientJwtHeader header = new OrientJwtHeader();
     header.setKeyId("key");
     header.setAlgorithm("HmacSHA256");
     header.setType("OrientDB");
     token.setHeader(header);
-    token.setExpiry(20L);
-    token.setServerUser(true);
-    token.setUserName("aaa");
-    token.setProtocolVersion((short) 2);
-    token.setSerializer("ser");
-    token.setDriverName("aa");
-    token.setDriverVersion("aa");
+    payload.setExpiry(20L);
+    payload.setServerUser(true);
+    payload.setUserName("aaa");
+    payload.setProtocolVersion((short) 2);
+    payload.setSerializer("ser");
+    payload.setDriverName("aa");
+    payload.setDriverVersion("aa");
+    token.setPayload(payload);
     ByteArrayOutputStream bas = new ByteArrayOutputStream();
     ser.serialize(token, bas);
     ByteArrayInputStream input = new ByteArrayInputStream(bas.toByteArray());
@@ -102,21 +109,23 @@ public class OBinaryTokenSerializerTest {
   @Test
   public void testSerializerDeserializeNullInfoUserToken() throws IOException {
     OBinaryToken token = new OBinaryToken();
-    token.setDatabase(null);
-    token.setDatabaseType(null);
-    token.setUserRid(null);
+    OBinaryTokenPayloadImpl payload = new OBinaryTokenPayloadImpl();
+    payload.setDatabase(null);
+    payload.setDatabaseType(null);
+    payload.setUserRid(null);
     OrientJwtHeader header = new OrientJwtHeader();
     header.setKeyId("key");
     header.setAlgorithm("HmacSHA256");
     header.setType("OrientDB");
     token.setHeader(header);
-    token.setExpiry(20L);
-    token.setServerUser(true);
-    token.setUserName("aaa");
-    token.setProtocolVersion((short) 2);
-    token.setSerializer("ser");
-    token.setDriverName("aa");
-    token.setDriverVersion("aa");
+    payload.setExpiry(20L);
+    payload.setServerUser(true);
+    payload.setUserName("aaa");
+    payload.setProtocolVersion((short) 2);
+    payload.setSerializer("ser");
+    payload.setDriverName("aa");
+    payload.setDriverVersion("aa");
+    token.setPayload(payload);
     ByteArrayOutputStream bas = new ByteArrayOutputStream();
     ser.serialize(token, bas);
     ByteArrayInputStream input = new ByteArrayInputStream(bas.toByteArray());
@@ -138,7 +147,5 @@ public class OBinaryTokenSerializerTest {
     assertEquals("ser", tok.getSerializer());
     assertEquals("aa", tok.getDriverName());
     assertEquals("aa", tok.getDriverVersion());
-
   }
-
 }

@@ -1,21 +1,15 @@
 package com.orientechnologies.orient.server.distributed;
 
-import com.hazelcast.core.Member;
-import com.orientechnologies.common.concur.lock.OInterruptedException;
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedAbstractPlugin;
-
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class ORemoteServerManager {
 
-  private final ConcurrentMap<String, ORemoteServerController> remoteServers = new ConcurrentHashMap<String, ORemoteServerController>();
-  private final String                                         localNodeName;
-  private final ORemoteServerAvailabilityCheck                 check;
+  private final ConcurrentMap<String, ORemoteServerController> remoteServers =
+      new ConcurrentHashMap<String, ORemoteServerController>();
+  private final String localNodeName;
+  private final ORemoteServerAvailabilityCheck check;
 
   public ORemoteServerManager(String localNodeName, ORemoteServerAvailabilityCheck check) {
     this.localNodeName = localNodeName;
@@ -26,10 +20,11 @@ public class ORemoteServerManager {
     return remoteServers.get(rNodeName);
   }
 
-  public ORemoteServerController connectRemoteServer(final String rNodeName, String host, String user, String password)
-      throws IOException {
+  public ORemoteServerController connectRemoteServer(
+      final String rNodeName, String host, String user, String password) throws IOException {
     // OK
-    ORemoteServerController remoteServer = new ORemoteServerController(check, localNodeName, rNodeName, host, user, password);
+    ORemoteServerController remoteServer =
+        new ORemoteServerController(check, localNodeName, rNodeName, host, user, password);
     final ORemoteServerController old = remoteServers.putIfAbsent(rNodeName, remoteServer);
     if (old != null) {
       remoteServer.close();
@@ -40,14 +35,11 @@ public class ORemoteServerManager {
 
   public void closeRemoteServer(final String node) {
     final ORemoteServerController c = remoteServers.remove(node);
-    if (c != null)
-      c.close();
+    if (c != null) c.close();
   }
 
   public void closeAll() {
-    for (ORemoteServerController server : remoteServers.values())
-      server.close();
+    for (ORemoteServerController server : remoteServers.values()) server.close();
     remoteServers.clear();
   }
-
 }

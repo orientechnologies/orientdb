@@ -24,27 +24,24 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-/**
- *
- * @author marko
- */
+/** @author marko */
 @Test
 public class TraverseStrategiesTest extends DocumentDBBaseTest {
-  
+
   private int totalElements = 0;
-  
-  public TraverseStrategiesTest(){
+
+  public TraverseStrategiesTest() {
     super("memory:traverseStrategyTest");
   }
-  
+
   @BeforeClass
-  public void init(){
+  public void init() {
     OrientGraph graph = new OrientGraph(database);
     graph.setUseLightweightEdges(false);
 
     graph.createVertexType("tc");
     graph.createEdgeType("te");
-        
+
     ODocument first = graph.addVertex("class:tc", "name", 1.0).getRecord();
     ++totalElements;
     ODocument firstFirstChild = graph.addVertex("class:tc", "name", 1.1).getRecord();
@@ -57,18 +54,20 @@ public class TraverseStrategiesTest extends DocumentDBBaseTest {
     ++totalElements;
     ODocument secondSecondChild = graph.addVertex("class:tc", "name", 2.2).getRecord();
     ++totalElements;
-    
+
     graph.addEdge(this, graph.getVertex(first), graph.getVertex(firstFirstChild), "te");
     graph.addEdge(this, graph.getVertex(first), graph.getVertex(firstSecondChild), "te");
     graph.addEdge(this, graph.getVertex(second), graph.getVertex(secondFirstCHild), "te");
     graph.addEdge(this, graph.getVertex(second), graph.getVertex(secondSecondChild), "te");
-    
+
     graph.commit();
   }
-  
+
   @Test
-  public void getAllRevresedBreadthFirst(){
-    OResultSet result1 = database.query("traverse in(\"te\") from (select rids from (select @rid as rids, out(\"te\") as outEdge from tc unwind outEdge) where outEdge is null) strategy BREADTH_FIRST");
+  public void getAllRevresedBreadthFirst() {
+    OResultSet result1 =
+        database.query(
+            "traverse in(\"te\") from (select rids from (select @rid as rids, out(\"te\") as outEdge from tc unwind outEdge) where outEdge is null) strategy BREADTH_FIRST");
 
     for (int i = 0; i < totalElements; i++) {
       Assert.assertTrue(result1.hasNext());
@@ -76,10 +75,9 @@ public class TraverseStrategiesTest extends DocumentDBBaseTest {
       OVertex v = result.getVertex().orElse(null);
       Assert.assertNotNull(v);
     }
-    
+
     Assert.assertFalse(result1.hasNext());
-    
+
     result1.close();
   }
-  
 }

@@ -13,22 +13,18 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.tests;
 
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import java.io.InputStream;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.InputStream;
-
-/**
- * Created by enricorisa on 02/10/14.
- */
-
+/** Created by enricorisa on 02/10/14. */
 public class OLuceneQueryErrorTest extends OLuceneBaseTest {
 
   @Before
@@ -38,7 +34,6 @@ public class OLuceneQueryErrorTest extends OLuceneBaseTest {
     db.execute("sql", getScriptFromStream(stream));
 
     db.command("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE");
-
   }
 
   @Test

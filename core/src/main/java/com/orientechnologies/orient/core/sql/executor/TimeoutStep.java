@@ -4,9 +4,7 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.parser.OTimeout;
 
-/**
- * Created by luigidellaquila on 08/08/16.
- */
+/** Created by luigidellaquila on 08/08/16. */
 public class TimeoutStep extends AbstractExecutionStep {
   private final OTimeout timeout;
 
@@ -25,7 +23,7 @@ public class TimeoutStep extends AbstractExecutionStep {
     if (System.currentTimeMillis() > expiryTime) {
       return fail();
     }
-    return getPrev().get().syncPull(ctx, nRecords);//TODO do it more granular
+    return getPrev().get().syncPull(ctx, nRecords); // TODO do it more granular
   }
 
   private OResultSet fail() {
@@ -38,4 +36,26 @@ public class TimeoutStep extends AbstractExecutionStep {
     }
   }
 
+  @Override
+  public String prettyPrint(int depth, int indent) {
+    return OExecutionStepInternal.getIndent(depth, indent)
+        + "+ TIMEOUT ("
+        + timeout.getVal().toString()
+        + " millis)";
+  }
+
+  @Override
+  public void reset() {
+    expiryTime = null;
+  }
+
+  @Override
+  public boolean canBeCached() {
+    return true;
+  }
+
+  @Override
+  public OExecutionStep copy(OCommandContext ctx) {
+    return new TimeoutStep(this.timeout.copy(), ctx, profilingEnabled);
+  }
 }

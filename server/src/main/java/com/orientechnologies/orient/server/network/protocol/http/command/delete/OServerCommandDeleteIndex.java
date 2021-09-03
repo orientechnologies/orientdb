@@ -28,11 +28,13 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandDocumentAbstract;
 
 public class OServerCommandDeleteIndex extends OServerCommandDocumentAbstract {
-  private static final String[] NAMES = { "DELETE|index/*" };
+  private static final String[] NAMES = {"DELETE|index/*"};
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    final String[] urlParts = checkSyntax(iRequest.getUrl(), 3, "Syntax error: index/<database>/<index-name>/<key>/[<value>]");
+    final String[] urlParts =
+        checkSyntax(
+            iRequest.getUrl(), 3, "Syntax error: index/<database>/<index-name>/<key>/[<value>]");
 
     iRequest.getData().commandInfo = "Index remove";
 
@@ -45,19 +47,25 @@ public class OServerCommandDeleteIndex extends OServerCommandDocumentAbstract {
         throw new IllegalArgumentException("Index name '" + urlParts[2] + "' not found");
 
       final boolean found;
-      if (urlParts.length > 4)
-        found = index.remove(urlParts[3], new ORecordId(urlParts[3]));
-      else
-        found = index.remove(urlParts[3]);
+      if (urlParts.length > 4) found = index.remove(urlParts[3], new ORecordId(urlParts[3]));
+      else found = index.remove(urlParts[3]);
 
       if (found)
-        iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
+        iResponse.send(
+            OHttpUtils.STATUS_OK_CODE,
+            OHttpUtils.STATUS_OK_DESCRIPTION,
+            OHttpUtils.CONTENT_TEXT_PLAIN,
+            null,
+            null);
       else
-        iResponse.send(OHttpUtils.STATUS_NOTFOUND_CODE, OHttpUtils.STATUS_NOTFOUND_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, null,
+        iResponse.send(
+            OHttpUtils.STATUS_NOTFOUND_CODE,
+            OHttpUtils.STATUS_NOTFOUND_DESCRIPTION,
+            OHttpUtils.CONTENT_TEXT_PLAIN,
+            null,
             null);
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
     }
     return false;
   }

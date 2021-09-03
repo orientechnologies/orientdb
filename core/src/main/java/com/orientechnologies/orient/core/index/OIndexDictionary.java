@@ -24,19 +24,37 @@ import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdExceptio
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 
 /**
- * Dictionary index similar to unique index but does not check for updates, just executes changes. Last put always wins and override
- * the previous value.
+ * Dictionary index similar to unique index but does not check for updates, just executes changes.
+ * Last put always wins and override the previous value.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OIndexDictionary extends OIndexOneValue {
 
-  public OIndexDictionary(String name, String typeId, String algorithm, int version, OAbstractPaginatedStorage storage,
-      String valueContainerAlgorithm, ODocument metadata, int binaryFormatVersion) {
-    super(name, typeId, algorithm, version, storage, valueContainerAlgorithm, metadata, binaryFormatVersion);
+  public OIndexDictionary(
+      String name,
+      String typeId,
+      String algorithm,
+      int version,
+      OAbstractPaginatedStorage storage,
+      String valueContainerAlgorithm,
+      ODocument metadata,
+      int binaryFormatVersion,
+      OAtomicOperationsManager atomicOperationsManager) {
+    super(
+        name,
+        typeId,
+        algorithm,
+        version,
+        storage,
+        valueContainerAlgorithm,
+        metadata,
+        binaryFormatVersion,
+        atomicOperationsManager);
   }
 
   public OIndexOneValue put(Object key, final OIdentifiable value) {
@@ -59,7 +77,8 @@ public class OIndexDictionary extends OIndexOneValue {
   }
 
   @Override
-  public void doPut(OAbstractPaginatedStorage storage, Object key, ORID rid) throws OInvalidIndexEngineIdException {
+  public void doPut(OAbstractPaginatedStorage storage, Object key, ORID rid)
+      throws OInvalidIndexEngineIdException {
     if (apiVersion == 0) {
       putV0(storage, indexId, key, rid);
     } else if (apiVersion == 1) {
@@ -74,12 +93,14 @@ public class OIndexDictionary extends OIndexOneValue {
     return true;
   }
 
-  private static void putV0(final OAbstractPaginatedStorage storage, int indexId, Object key, OIdentifiable value)
+  private static void putV0(
+      final OAbstractPaginatedStorage storage, int indexId, Object key, OIdentifiable value)
       throws OInvalidIndexEngineIdException {
     storage.putIndexValue(indexId, key, value);
   }
 
-  private static void putV1(final OAbstractPaginatedStorage storage, int indexId, Object key, OIdentifiable value)
+  private static void putV1(
+      final OAbstractPaginatedStorage storage, int indexId, Object key, OIdentifiable value)
       throws OInvalidIndexEngineIdException {
     storage.putRidIndexEntry(indexId, key, value.getIdentity());
   }

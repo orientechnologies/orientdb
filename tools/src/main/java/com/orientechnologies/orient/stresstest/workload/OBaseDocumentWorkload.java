@@ -40,8 +40,7 @@ public abstract class OBaseDocumentWorkload extends OBaseWorkload {
 
     @Override
     public void close() {
-      if (getDb() != null)
-        getDb().close();
+      if (getDb() != null) getDb().close();
     }
 
     public ODatabase getDb() {
@@ -54,13 +53,15 @@ public abstract class OBaseDocumentWorkload extends OBaseWorkload {
     return new OWorkLoadContext();
   }
 
-  protected ODatabase getDocumentDatabase(final ODatabaseIdentifier databaseIdentifier,
+  protected ODatabase getDocumentDatabase(
+      final ODatabaseIdentifier databaseIdentifier,
       final OStorageRemote.CONNECTION_STRATEGY connectionStrategy) {
     // opens the newly created db and creates an index on the class we're going to use
     final ODatabase database = ODatabaseUtils.openDatabase(databaseIdentifier, connectionStrategy);
 
     if (database == null)
-      throw new IllegalArgumentException("Error on opening database " + databaseIdentifier.getName());
+      throw new IllegalArgumentException(
+          "Error on opening database " + databaseIdentifier.getName());
 
     return database;
   }

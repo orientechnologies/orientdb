@@ -12,20 +12,26 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class OUpdateItem extends SimpleNode {
-  public static final int OPERATOR_EQ          = 0;
-  public static final int OPERATOR_PLUSASSIGN  = 1;
+  public static final int OPERATOR_EQ = 0;
+  public static final int OPERATOR_PLUSASSIGN = 1;
   public static final int OPERATOR_MINUSASSIGN = 2;
-  public static final int OPERATOR_STARASSIGN  = 3;
+  public static final int OPERATOR_STARASSIGN = 3;
   public static final int OPERATOR_SLASHASSIGN = 4;
 
   protected OIdentifier left;
-  protected OModifier   leftModifier;
-  protected int         operator;
+  protected OModifier leftModifier;
+  protected int operator;
   protected OExpression right;
 
   public OUpdateItem(int id) {
@@ -42,22 +48,21 @@ public class OUpdateItem extends SimpleNode {
       leftModifier.toString(params, builder);
     }
     switch (operator) {
-    case OPERATOR_EQ:
-      builder.append(" = ");
-      break;
-    case OPERATOR_PLUSASSIGN:
-      builder.append(" += ");
-      break;
-    case OPERATOR_MINUSASSIGN:
-      builder.append(" -= ");
-      break;
-    case OPERATOR_STARASSIGN:
-      builder.append(" *= ");
-      break;
-    case OPERATOR_SLASHASSIGN:
-      builder.append(" /= ");
-      break;
-
+      case OPERATOR_EQ:
+        builder.append(" = ");
+        break;
+      case OPERATOR_PLUSASSIGN:
+        builder.append(" += ");
+        break;
+      case OPERATOR_MINUSASSIGN:
+        builder.append(" -= ");
+        break;
+      case OPERATOR_STARASSIGN:
+        builder.append(" *= ");
+        break;
+      case OPERATOR_SLASHASSIGN:
+        builder.append(" /= ");
+        break;
     }
     right.toString(params, builder);
   }
@@ -73,21 +78,16 @@ public class OUpdateItem extends SimpleNode {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OUpdateItem that = (OUpdateItem) o;
 
-    if (operator != that.operator)
-      return false;
-    if (left != null ? !left.equals(that.left) : that.left != null)
-      return false;
+    if (operator != that.operator) return false;
+    if (left != null ? !left.equals(that.left) : that.left != null) return false;
     if (leftModifier != null ? !leftModifier.equals(that.leftModifier) : that.leftModifier != null)
       return false;
-    if (right != null ? !right.equals(that.right) : that.right != null)
-      return false;
+    if (right != null ? !right.equals(that.right) : that.right != null) return false;
 
     return true;
   }
@@ -153,7 +153,8 @@ public class OUpdateItem extends SimpleNode {
     return calculateTypeForThisItem(clazz, left.getStringValue(), leftModifier, ctx);
   }
 
-  private OType calculateTypeForThisItem(OClass clazz, String propName, OModifier modifier, OCommandContext ctx) {
+  private OType calculateTypeForThisItem(
+      OClass clazz, String propName, OModifier modifier, OCommandContext ctx) {
     OProperty prop = clazz.getProperty(propName);
     if (prop == null) {
       return null;
@@ -164,38 +165,45 @@ public class OUpdateItem extends SimpleNode {
         if (modifier.suffix == null) {
           return null;
         }
-        return calculateTypeForThisItem(prop.getLinkedClass(), modifier.suffix.toString(), modifier.next, ctx);
+        return calculateTypeForThisItem(
+            prop.getLinkedClass(), modifier.suffix.toString(), modifier.next, ctx);
       }
       return OType.LINK;
     }
-    //TODO specialize more
+    // TODO specialize more
     return null;
   }
 
-  public void applyOperation(OResultInternal doc, OIdentifier attrName, Object rightValue, OCommandContext ctx) {
+  public void applyOperation(
+      OResultInternal doc, OIdentifier attrName, Object rightValue, OCommandContext ctx) {
 
     switch (operator) {
-    case OPERATOR_EQ:
-      Object newValue = convertResultToDocument(rightValue);
-      newValue = convertToPropertyType(doc, attrName, newValue, ctx);
-      doc.setProperty(attrName.getStringValue(), newValue);
-      break;
-    case OPERATOR_MINUSASSIGN:
-      doc.setProperty(attrName.getStringValue(), calculateNewValue(doc, ctx, OMathExpression.Operator.MINUS));
-      break;
-    case OPERATOR_PLUSASSIGN:
-      doc.setProperty(attrName.getStringValue(), calculateNewValue(doc, ctx, OMathExpression.Operator.PLUS));
-      break;
-    case OPERATOR_SLASHASSIGN:
-      doc.setProperty(attrName.getStringValue(), calculateNewValue(doc, ctx, OMathExpression.Operator.SLASH));
-      break;
-    case OPERATOR_STARASSIGN:
-      doc.setProperty(attrName.getStringValue(), calculateNewValue(doc, ctx, OMathExpression.Operator.STAR));
-      break;
+      case OPERATOR_EQ:
+        Object newValue = convertResultToDocument(rightValue);
+        newValue = convertToPropertyType(doc, attrName, newValue, ctx);
+        doc.setProperty(attrName.getStringValue(), newValue);
+        break;
+      case OPERATOR_MINUSASSIGN:
+        doc.setProperty(
+            attrName.getStringValue(), calculateNewValue(doc, ctx, OMathExpression.Operator.MINUS));
+        break;
+      case OPERATOR_PLUSASSIGN:
+        doc.setProperty(
+            attrName.getStringValue(), calculateNewValue(doc, ctx, OMathExpression.Operator.PLUS));
+        break;
+      case OPERATOR_SLASHASSIGN:
+        doc.setProperty(
+            attrName.getStringValue(), calculateNewValue(doc, ctx, OMathExpression.Operator.SLASH));
+        break;
+      case OPERATOR_STARASSIGN:
+        doc.setProperty(
+            attrName.getStringValue(), calculateNewValue(doc, ctx, OMathExpression.Operator.STAR));
+        break;
     }
   }
 
-  public static Object convertToPropertyType(OResultInternal res, OIdentifier attrName, Object newValue, OCommandContext ctx) {
+  public static Object convertToPropertyType(
+      OResultInternal res, OIdentifier attrName, Object newValue, OCommandContext ctx) {
     OElement doc = res.toElement();
     Optional<OClass> optSchema = doc.getSchemaType();
     if (!optSchema.isPresent()) {
@@ -211,7 +219,8 @@ public class OUpdateItem extends SimpleNode {
     return convertToType(newValue, type, linkedClass, ctx);
   }
 
-  private static Object convertToType(Object value, OType type, OClass linkedClass, OCommandContext ctx) {
+  private static Object convertToType(
+      Object value, OType type, OClass linkedClass, OCommandContext ctx) {
     if (type == null) {
       return value;
     }
@@ -227,11 +236,16 @@ public class OUpdateItem extends SimpleNode {
       } else {
 
         if (type == OType.EMBEDDEDLIST && linkedClass != null) {
-          return ((Collection) value).stream().map(item -> convertToType(item, linkedClass, ctx)).collect(Collectors.toList());
+          return ((Collection) value)
+              .stream()
+                  .map(item -> convertToType(item, linkedClass, ctx))
+                  .collect(Collectors.toList());
 
         } else if (type == OType.EMBEDDEDSET && linkedClass != null) {
-          return ((Collection) value).stream().map(item -> convertToType(item, linkedClass, ctx)).collect(Collectors.toSet());
-
+          return ((Collection) value)
+              .stream()
+                  .map(item -> convertToType(item, linkedClass, ctx))
+                  .collect(Collectors.toSet());
         }
       }
     }
@@ -252,7 +266,8 @@ public class OUpdateItem extends SimpleNode {
       }
     } else if (item instanceof Map) {
       OElement result = ((ODatabaseSession) ctx.getDatabase()).newElement(linkedClass.getName());
-      ((Map<String, Object>) item).entrySet().stream().forEach(x -> result.setProperty(x.getKey(), x.getValue()));
+      ((Map<String, Object>) item)
+          .entrySet().stream().forEach(x -> result.setProperty(x.getKey(), x.getValue()));
       return result;
     }
     return item;
@@ -266,10 +281,12 @@ public class OUpdateItem extends SimpleNode {
       return value;
     }
     if (value instanceof List && containsOResult((Collection) value)) {
-      return ((List) value).stream().map(x -> convertResultToDocument(x)).collect(Collectors.toList());
+      return ((List) value)
+          .stream().map(x -> convertResultToDocument(x)).collect(Collectors.toList());
     }
     if (value instanceof Set && containsOResult((Collection) value)) {
-      return ((Set) value).stream().map(x -> convertResultToDocument(x)).collect(Collectors.toSet());
+      return ((Set) value)
+          .stream().map(x -> convertResultToDocument(x)).collect(Collectors.toSet());
     }
     return value;
   }
@@ -278,7 +295,8 @@ public class OUpdateItem extends SimpleNode {
     return value.stream().anyMatch(x -> x instanceof OResult);
   }
 
-  private Object calculateNewValue(OResultInternal doc, OCommandContext ctx, OMathExpression.Operator explicitOperator) {
+  private Object calculateNewValue(
+      OResultInternal doc, OCommandContext ctx, OMathExpression.Operator explicitOperator) {
     OExpression leftEx = new OExpression(left.copy());
     if (leftModifier != null) {
       ((OBaseExpression) leftEx.mathExpression).modifier = leftModifier.copy();

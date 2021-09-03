@@ -1,17 +1,10 @@
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.common.util.OCallable;
-
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
 public interface ODistributedResponseManager {
   boolean setLocalResult(String localNodeName, Object localResult);
-
-  default Object getGenericFinalResponse() {
-    return getFinalResponse();
-  }
 
   ODistributedResponse getFinalResponse();
 

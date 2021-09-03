@@ -8,18 +8,14 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
-
 import java.io.IOException;
 
-/**
- * Created by tglman on 30/12/16.
- */
+/** Created by tglman on 30/12/16. */
 public class OFetchTransactionRequest implements OBinaryRequest<OFetchTransactionResponse> {
 
   private int txId;
 
-  public OFetchTransactionRequest() {
-  }
+  public OFetchTransactionRequest() {}
 
   public OFetchTransactionRequest(int txId) {
     this.txId = txId;
@@ -31,7 +27,8 @@ public class OFetchTransactionRequest implements OBinaryRequest<OFetchTransactio
   }
 
   @Override
-  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
     this.txId = channel.readInt();
   }
 

@@ -27,25 +27,27 @@ import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
-/**
- * @author mdjurovi
- */
+/** @author mdjurovi */
 public class OResultBinary implements OResult {
 
-  private       ODocumentSerializer serializer;
-  private       Optional<ORecordId> id;
-  private final byte[]              bytes;
-  private final int                 offset;
-  private final int                 fieldLength;
-  private       OImmutableSchema    schema;
+  private ODocumentSerializer serializer;
+  private Optional<ORecordId> id;
+  private final byte[] bytes;
+  private final int offset;
+  private final int fieldLength;
+  private OImmutableSchema schema;
 
-  public OResultBinary(OImmutableSchema schema, byte[] bytes, int offset, int fieldLength, ODocumentSerializer serializer) {
+  public OResultBinary(
+      OImmutableSchema schema,
+      byte[] bytes,
+      int offset,
+      int fieldLength,
+      ODocumentSerializer serializer) {
     this.schema = schema;
     this.id = Optional.empty();
     this.bytes = bytes;
@@ -54,7 +56,12 @@ public class OResultBinary implements OResult {
     this.fieldLength = fieldLength;
   }
 
-  public OResultBinary(ODatabaseSession db, byte[] bytes, int offset, int fieldLength, ODocumentSerializer serializer,
+  public OResultBinary(
+      ODatabaseSession db,
+      byte[] bytes,
+      int offset,
+      int fieldLength,
+      ODocumentSerializer serializer,
       ORecordId id) {
     schema = ((OMetadataInternal) db.getMetadata()).getImmutableSchemaSnapshot();
     this.id = Optional.of(id);
@@ -62,7 +69,6 @@ public class OResultBinary implements OResult {
     this.serializer = serializer;
     this.offset = offset;
     this.fieldLength = fieldLength;
-
   }
 
   public int getFieldLength() {
@@ -86,12 +92,14 @@ public class OResultBinary implements OResult {
 
   @Override
   public OElement getElementProperty(String name) {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    throw new UnsupportedOperationException(
+        "Not supported yet."); // To change body of generated methods, choose Tools | Templates.
   }
 
   @Override
   public OVertex getVertexProperty(String name) {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    throw new UnsupportedOperationException(
+        "Not supported yet."); // To change body of generated methods, choose Tools | Templates.
   }
 
   @Override
@@ -108,7 +116,7 @@ public class OResultBinary implements OResult {
   public Set<String> getPropertyNames() {
     final BytesContainer container = new BytesContainer(bytes);
     container.skip(offset);
-    //TODO: use something more correct that new ODocument
+    // TODO: use something more correct that new ODocument
     String[] fields = serializer.getFieldNames(new ODocument(), container, !id.isPresent());
     return new HashSet<>(Arrays.asList(fields));
   }
@@ -165,7 +173,8 @@ public class OResultBinary implements OResult {
 
   @Override
   public boolean hasProperty(String varName) {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    throw new UnsupportedOperationException(
+        "Not supported yet."); // To change body of generated methods, choose Tools | Templates.
   }
 
   private ODocument toDocument() {
@@ -175,5 +184,4 @@ public class OResultBinary implements OResult {
     serializer.deserialize(doc, bytes);
     return doc;
   }
-
 }

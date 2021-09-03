@@ -6,48 +6,59 @@ import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.WriteableWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
-
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 final class OAtomicOperationPageOperationsTracking implements OAtomicOperation {
   private final Map<String, OAtomicOperationMetadata<?>> metadata = new LinkedHashMap<>();
 
-  private final OReadCache     readCache;
-  private final OWriteCache    writeCache;
+  private final OReadCache readCache;
+  private final OWriteCache writeCache;
   private final OWriteAheadLog writeAheadLog;
 
-  private final OOperationUnitId operationUnitId;
+  private final long operationUnitId;
 
-  private int startCounter = 1;
+  private int componentOperationsCounter;
 
   private final Set<String> lockedObjects = new HashSet<>();
 
   private boolean rollbackInProgress;
 
-  private List<OLogSequenceNumber>  pageOperationRefs        = new ArrayList<>();
-  private List<PageOperationRecord> pageOperationCache       = new ArrayList<>();
-  private long                      sizeSerializedOperations = 0;
+  private final List<OLogSequenceNumber> pageOperationRefs = new ArrayList<>();
+  private final List<PageOperationRecord> pageOperationCache = new ArrayList<>();
+  private long sizeSerializedOperations = 0;
 
   private final int operationsCacheLimit;
 
   /**
-   * Pointers to ridbags deleted during current transaction. We can not reuse pointers if we delete ridbag and then  create new one
-   * inside of the same transaction.
+   * Pointers to ridbags deleted during current transaction. We can not reuse pointers if we delete
+   * ridbag and then create new one inside of the same transaction.
    */
   private final Set<OBonsaiBucketPointer> deletedBonsaiPointers = new HashSet<>();
 
   private final OLogSequenceNumber startLSN;
 
-  private final Map<ORawPair<Integer, Integer>, Set<Integer>> deletedRecordPositions = new HashMap<>();
+  private final Map<ORawPair<Integer, Integer>, Set<Integer>> deletedRecordPositions =
+      new HashMap<>();
 
-  OAtomicOperationPageOperationsTracking(OReadCache readCache, OWriteCache writeCache, OWriteAheadLog writeAheadLog,
-      OOperationUnitId operationUnitId, int operationsCacheLimit, OLogSequenceNumber startLSN) {
+  OAtomicOperationPageOperationsTracking(
+      OReadCache readCache,
+      OWriteCache writeCache,
+      OWriteAheadLog writeAheadLog,
+      long operationUnitId,
+      int operationsCacheLimit,
+      OLogSequenceNumber startLSN) {
     this.readCache = readCache;
     this.writeCache = writeCache;
     this.operationUnitId = operationUnitId;
@@ -57,13 +68,16 @@ final class OAtomicOperationPageOperationsTracking implements OAtomicOperation {
   }
 
   @Override
-  public OCacheEntry loadPageForWrite(long fileId, long pageIndex, boolean checkPinnedPages, int pageCount, boolean verifyChecksum)
+  public OCacheEntry loadPageForWrite(
+      long fileId, long pageIndex, boolean checkPinnedPages, int pageCount, boolean verifyChecksum)
       throws IOException {
-    return readCache.loadForWrite(fileId, pageIndex, checkPinnedPages, writeCache, verifyChecksum, null);
+    return readCache.loadForWrite(
+        fileId, pageIndex, checkPinnedPages, writeCache, verifyChecksum, null);
   }
 
   @Override
-  public OCacheEntry loadPageForRead(long fileId, long pageIndex, boolean checkPinnedPages, int pageCount) throws IOException {
+  public OCacheEntry loadPageForRead(
+      long fileId, long pageIndex, boolean checkPinnedPages, int pageCount) throws IOException {
     return readCache.loadForRead(fileId, pageIndex, checkPinnedPages, writeCache, true);
   }
 
@@ -93,7 +107,6 @@ final class OAtomicOperationPageOperationsTracking implements OAtomicOperation {
       } else {
         pageOperationCache.clear();
       }
-
     }
 
     if (lastLSN != null) {
@@ -140,23 +153,13 @@ final class OAtomicOperationPageOperationsTracking implements OAtomicOperation {
   }
 
   @Override
+  public long fileIdByName(String fileName) {
+    return writeCache.fileIdByName(fileName);
+  }
+
+  @Override
   public void truncateFile(long fileId) throws IOException {
     readCache.truncateFile(fileId, writeCache);
-  }
-
-  @Override
-  public int getCounter() {
-    return startCounter;
-  }
-
-  @Override
-  public void incrementCounter() {
-    startCounter++;
-  }
-
-  @Override
-  public void decrementCounter() {
-    startCounter--;
   }
 
   @Override
@@ -195,7 +198,7 @@ final class OAtomicOperationPageOperationsTracking implements OAtomicOperation {
   }
 
   @Override
-  public OOperationUnitId getOperationUnitId() {
+  public long getOperationUnitId() {
     return operationUnitId;
   }
 
@@ -219,7 +222,8 @@ final class OAtomicOperationPageOperationsTracking implements OAtomicOperation {
         }
 
         while (true) {
-          List<WriteableWALRecord> walRecords = writeAheadLog.read(pageOperationRefs.get(startIndex), chunkSize);
+          List<WriteableWALRecord> walRecords =
+              writeAheadLog.read(pageOperationRefs.get(startIndex), chunkSize);
 
           int recordsRead = 0;
           while (true) {
@@ -237,7 +241,8 @@ final class OAtomicOperationPageOperationsTracking implements OAtomicOperation {
             }
 
             if (recordsRead < endIndex - startIndex) {
-              walRecords = writeAheadLog.read(pageOperationRefs.get(recordsRead + startIndex), chunkSize);
+              walRecords =
+                  writeAheadLog.read(pageOperationRefs.get(recordsRead + startIndex), chunkSize);
             } else {
               break;
             }
@@ -265,13 +270,20 @@ final class OAtomicOperationPageOperationsTracking implements OAtomicOperation {
       }
     }
 
-    return writeAheadLog.logAtomicOperationEndRecord(getOperationUnitId(), rollbackInProgress, this.startLSN, getMetadata());
+    return writeAheadLog.logAtomicOperationEndRecord(
+        operationUnitId, rollbackInProgress, this.startLSN, getMetadata());
   }
 
   private void revertPageOperation(PageOperationRecord pageOperationRecord) throws IOException {
     OLogSequenceNumber lastLSN = null;
-    final OCacheEntry cacheEntry = readCache
-        .loadForWrite(pageOperationRecord.getFileId(), pageOperationRecord.getPageIndex(), false, writeCache, true, null);
+    final OCacheEntry cacheEntry =
+        readCache.loadForWrite(
+            pageOperationRecord.getFileId(),
+            pageOperationRecord.getPageIndex(),
+            false,
+            writeCache,
+            true,
+            null);
     try {
       pageOperationRecord.undo(cacheEntry);
 
@@ -295,11 +307,10 @@ final class OAtomicOperationPageOperationsTracking implements OAtomicOperation {
   }
 
   /**
-   * Add metadata with given key inside of atomic operation. If metadata with the same key insist inside of atomic operation it will
-   * be overwritten.
+   * Add metadata with given key inside of atomic operation. If metadata with the same key insist
+   * inside of atomic operation it will be overwritten.
    *
    * @param metadata Metadata to add.
-   *
    * @see OAtomicOperationMetadata
    */
   @Override
@@ -309,7 +320,6 @@ final class OAtomicOperationPageOperationsTracking implements OAtomicOperation {
 
   /**
    * @param key Key of metadata which is looking for.
-   *
    * @return Metadata by associated key or <code>null</code> if such metadata is absent.
    */
   @Override
@@ -317,9 +327,7 @@ final class OAtomicOperationPageOperationsTracking implements OAtomicOperation {
     return metadata.get(key);
   }
 
-  /**
-   * @return All keys and associated metadata contained inside of atomic operation
-   */
+  /** @return All keys and associated metadata contained inside of atomic operation */
   private Map<String, OAtomicOperationMetadata<?>> getMetadata() {
     return Collections.unmodifiableMap(metadata);
   }
@@ -327,12 +335,29 @@ final class OAtomicOperationPageOperationsTracking implements OAtomicOperation {
   @Override
   public void addDeletedRecordPosition(int clusterId, int pageIndex, int recordPosition) {
     final ORawPair<Integer, Integer> key = new ORawPair<>(clusterId, pageIndex);
-    final Set<Integer> recordPositions = deletedRecordPositions.computeIfAbsent(key, k -> new HashSet<>());
+    final Set<Integer> recordPositions =
+        deletedRecordPositions.computeIfAbsent(key, k -> new HashSet<>());
     recordPositions.add(recordPosition);
   }
 
   @Override
   public Set<Integer> getBookedRecordPositions(int clusterId, int pageIndex) {
-    return deletedRecordPositions.getOrDefault(new ORawPair<>(clusterId, pageIndex), Collections.emptySet());
+    return deletedRecordPositions.getOrDefault(
+        new ORawPair<>(clusterId, pageIndex), Collections.emptySet());
+  }
+
+  @Override
+  public void incrementComponentOperations() {
+    componentOperationsCounter++;
+  }
+
+  @Override
+  public void decrementComponentOperations() {
+    componentOperationsCounter--;
+  }
+
+  @Override
+  public int getComponentOperations() {
+    return componentOperationsCounter;
   }
 }

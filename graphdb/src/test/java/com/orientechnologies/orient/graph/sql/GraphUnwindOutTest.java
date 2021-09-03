@@ -3,8 +3,6 @@ package com.orientechnologies.orient.graph.sql;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import org.junit.Test;
-
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -13,6 +11,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientElement;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
+import org.junit.Test;
 
 public class GraphUnwindOutTest {
 
@@ -41,14 +40,17 @@ public class GraphUnwindOutTest {
       test3.save();
       graph.commit();
       graph
-          .command(new OCommandSQL(
-              "create edge edgetestedge from (select from edgetest where ida='parentckt1') to (select from edgetest where ida like 'childckt%')"))
+          .command(
+              new OCommandSQL(
+                  "create edge edgetestedge from (select from edgetest where ida='parentckt1') to (select from edgetest where ida like 'childckt%')"))
           .execute();
       graph.commit();
-      Iterable<OrientElement> res = graph
-          .command(
-              new OSQLSynchQuery("select out_edgetestedge[0] from v where out_edgetestedge.size() > 0 unwind out_edgetestedge "))
-          .execute();
+      Iterable<OrientElement> res =
+          graph
+              .command(
+                  new OSQLSynchQuery(
+                      "select out_edgetestedge[0] from v where out_edgetestedge.size() > 0 unwind out_edgetestedge "))
+              .execute();
 
       for (OrientElement oDocument : res) {
         assertNotNull(oDocument.getRecord().field("out_edgetestedge"));
@@ -60,5 +62,4 @@ public class GraphUnwindOutTest {
       graph.drop();
     }
   }
-
 }

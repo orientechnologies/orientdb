@@ -1,14 +1,12 @@
 package com.orientechnologies.orient.core.exception;
 
-import com.orientechnologies.orient.core.id.ORecordId;
-import org.junit.Test;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-/**
- * Created by tglman on 22/02/17.
- */
+import com.orientechnologies.orient.core.id.ORecordId;
+import org.junit.Test;
+
+/** Created by tglman on 22/02/17. */
 public class RecordNotFoundExceptionTest {
 
   @Test
@@ -19,5 +17,4 @@ public class RecordNotFoundExceptionTest {
     assertEquals(ex1.getRid().getClusterId(), 1);
     assertEquals(ex1.getRid().getClusterPosition(), 2);
   }
-
 }

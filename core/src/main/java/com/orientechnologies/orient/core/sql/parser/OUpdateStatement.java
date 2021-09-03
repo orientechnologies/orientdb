@@ -9,7 +9,6 @@ import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.executor.OUpdateExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OUpdateExecutionPlanner;
 import com.orientechnologies.orient.core.storage.OStorage;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -23,16 +22,16 @@ public class OUpdateStatement extends OStatement {
 
   protected boolean upsert = false;
 
-  protected boolean     returnBefore = false;
-  protected boolean     returnAfter  = false;
-  protected boolean     returnCount  = false;
+  protected boolean returnBefore = false;
+  protected boolean returnAfter = false;
+  protected boolean returnCount = false;
   protected OProjection returnProjection;
 
   public OWhereClause whereClause;
 
   public OStorage.LOCKING_STRATEGY lockRecord = null;
 
-  public OLimit   limit;
+  public OLimit limit;
   public OTimeout timeout;
 
   public OUpdateStatement(int id) {
@@ -80,18 +79,18 @@ public class OUpdateStatement extends OStatement {
     if (lockRecord != null) {
       builder.append(" LOCK ");
       switch (lockRecord) {
-      case DEFAULT:
-        builder.append("DEFAULT");
-        break;
-      case EXCLUSIVE_LOCK:
-        builder.append("RECORD");
-        break;
-      case SHARED_LOCK:
-        builder.append("SHARED");
-        break;
-      case NONE:
-        builder.append("NONE");
-        break;
+        case DEFAULT:
+          builder.append("DEFAULT");
+          break;
+        case EXCLUSIVE_LOCK:
+          builder.append("RECORD");
+          break;
+        case SHARED_LOCK:
+          builder.append("SHARED");
+          break;
+        case NONE:
+          builder.append("NONE");
+          break;
       }
     }
     if (limit != null) {
@@ -116,7 +115,10 @@ public class OUpdateStatement extends OStatement {
     }
 
     result.target = target == null ? null : target.copy();
-    result.operations = operations == null ? null : operations.stream().map(x -> x.copy()).collect(Collectors.toList());
+    result.operations =
+        operations == null
+            ? null
+            : operations.stream().map(x -> x.copy()).collect(Collectors.toList());
     result.upsert = upsert;
     result.returnBefore = returnBefore;
     result.returnAfter = returnAfter;
@@ -129,7 +131,8 @@ public class OUpdateStatement extends OStatement {
   }
 
   @Override
-  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
+  public OResultSet execute(
+      ODatabase db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -153,7 +156,8 @@ public class OUpdateStatement extends OStatement {
   }
 
   @Override
-  public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx, boolean usePlanCache) {
+  public OResultSet execute(
+      ODatabase db, Map params, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -179,33 +183,25 @@ public class OUpdateStatement extends OStatement {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OUpdateStatement that = (OUpdateStatement) o;
 
-    if (upsert != that.upsert)
-      return false;
-    if (returnBefore != that.returnBefore)
-      return false;
-    if (returnAfter != that.returnAfter)
-      return false;
-    if (target != null ? !target.equals(that.target) : that.target != null)
-      return false;
+    if (upsert != that.upsert) return false;
+    if (returnBefore != that.returnBefore) return false;
+    if (returnAfter != that.returnAfter) return false;
+    if (target != null ? !target.equals(that.target) : that.target != null) return false;
     if (operations != null ? !operations.equals(that.operations) : that.operations != null)
       return false;
-    if (returnProjection != null ? !returnProjection.equals(that.returnProjection) : that.returnProjection != null)
-      return false;
+    if (returnProjection != null
+        ? !returnProjection.equals(that.returnProjection)
+        : that.returnProjection != null) return false;
     if (whereClause != null ? !whereClause.equals(that.whereClause) : that.whereClause != null)
       return false;
-    if (lockRecord != that.lockRecord)
-      return false;
-    if (limit != null ? !limit.equals(that.limit) : that.limit != null)
-      return false;
-    if (timeout != null ? !timeout.equals(that.timeout) : that.timeout != null)
-      return false;
+    if (lockRecord != that.lockRecord) return false;
+    if (limit != null ? !limit.equals(that.limit) : that.limit != null) return false;
+    if (timeout != null ? !timeout.equals(that.timeout) : that.timeout != null) return false;
 
     return true;
   }

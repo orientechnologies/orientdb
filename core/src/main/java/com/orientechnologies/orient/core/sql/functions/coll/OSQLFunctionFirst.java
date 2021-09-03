@@ -26,10 +26,10 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionConfigurableAbstract;
 
 /**
- * Extract the first item of multi values (arrays, collections and maps) or return the same value for non multi-value types.
- * 
+ * Extract the first item of multi values (arrays, collections and maps) or return the same value
+ * for non multi-value types.
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public class OSQLFunctionFirst extends OSQLFunctionConfigurableAbstract {
   public static final String NAME = "first";
@@ -38,15 +38,18 @@ public class OSQLFunctionFirst extends OSQLFunctionConfigurableAbstract {
     super(NAME, 1, 1);
   }
 
-  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
+  public Object execute(
+      Object iThis,
+      final OIdentifiable iCurrentRecord,
+      Object iCurrentResult,
+      final Object[] iParams,
       final OCommandContext iContext) {
     Object value = iParams[0];
 
     if (value instanceof OSQLFilterItem)
       value = ((OSQLFilterItem) value).getValue(iCurrentRecord, iCurrentResult, iContext);
 
-    if (OMultiValue.isMultiValue(value))
-      value = OMultiValue.getFirstValue(value);
+    if (OMultiValue.isMultiValue(value)) value = OMultiValue.getFirstValue(value);
 
     return value;
   }

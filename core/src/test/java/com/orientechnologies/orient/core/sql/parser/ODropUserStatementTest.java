@@ -10,7 +10,5 @@ public class ODropUserStatementTest extends OParserTestAbstract {
 
     checkWrongSyntax("DROP USER test IDENTIFIED BY 'foo'");
     checkWrongSyntax("DROP USER");
-
   }
-
 }

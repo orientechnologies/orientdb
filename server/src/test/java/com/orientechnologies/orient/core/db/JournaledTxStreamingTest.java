@@ -20,15 +20,13 @@
 
 package com.orientechnologies.orient.core.db;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -38,17 +36,18 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.ArrayDeque;
 import java.util.Deque;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
 
 public class JournaledTxStreamingTest {
 
   private static final int ITERATIONS = 1000;
 
-  private File                buildDir;
-  private Process             serverProcess;
+  private File buildDir;
+  private Process serverProcess;
   private ODatabaseDocumentTx db;
-  private DataInputStream     stream;
+  private DataInputStream stream;
 
   @Before
   public void before() throws Exception {
@@ -60,8 +59,7 @@ public class JournaledTxStreamingTest {
     buildDirectory = buildDir.getCanonicalPath();
     buildDir = new File(buildDirectory);
 
-    if (buildDir.exists())
-      OFileUtils.deleteRecursively(buildDir);
+    if (buildDir.exists()) OFileUtils.deleteRecursively(buildDir);
 
     assertThat(buildDir.mkdir()).isTrue();
 
@@ -72,7 +70,9 @@ public class JournaledTxStreamingTest {
     serverAdmin.createDatabase(JournaledTxStreamingTest.class.getSimpleName(), "graph", "plocal");
     serverAdmin.close();
 
-    db = new ODatabaseDocumentTx("remote:localhost:3500/" + JournaledTxStreamingTest.class.getSimpleName());
+    db =
+        new ODatabaseDocumentTx(
+            "remote:localhost:3500/" + JournaledTxStreamingTest.class.getSimpleName());
     db.open("root", "root");
 
     final Socket socket = new Socket();
@@ -95,7 +95,7 @@ public class JournaledTxStreamingTest {
     Assert.assertFalse(buildDir.exists());
   }
 
-//  @Test
+  //  @Test
   public void testStreaming() throws IOException {
     Deque<Integer> txs = new ArrayDeque<>();
 
@@ -106,15 +106,15 @@ public class JournaledTxStreamingTest {
       db.commit();
     }
 
-    for (int i = 0; i < ITERATIONS; ++i)
-      assertThat(stream.readInt()).isEqualTo(txs.removeFirst());
+    for (int i = 0; i < ITERATIONS; ++i) assertThat(stream.readInt()).isEqualTo(txs.removeFirst());
   }
 
   public static final class RemoteDBRunner {
     public static void main(String[] args) throws Exception {
       OServer server = OServerMain.create(false);
-      server.startup(RemoteDBRunner.class
-          .getResourceAsStream("/com/orientechnologies/orient/core/db/journaled-tx-streaming-test-server-config.xml"));
+      server.startup(
+          RemoteDBRunner.class.getResourceAsStream(
+              "/com/orientechnologies/orient/core/db/journaled-tx-streaming-test-server-config.xml"));
       server.activate();
 
       final String mutexFile = System.getProperty("mutexFile");
@@ -136,9 +136,15 @@ public class JournaledTxStreamingTest {
 
     System.setProperty("ORIENTDB_HOME", buildDir.getCanonicalPath());
 
-    ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-classpath", System.getProperty("java.class.path"),
-        "-DORIENTDB_HOME=" + buildDir.getCanonicalPath(), "-DmutexFile=" + mutexFile.getCanonicalPath(),
-        "-Dstorage.internal.journaled.tx.streaming.port=3600", RemoteDBRunner.class.getName());
+    ProcessBuilder processBuilder =
+        new ProcessBuilder(
+            javaExec,
+            "-classpath",
+            System.getProperty("java.class.path"),
+            "-DORIENTDB_HOME=" + buildDir.getCanonicalPath(),
+            "-DmutexFile=" + mutexFile.getCanonicalPath(),
+            "-Dstorage.internal.journaled.tx.streaming.port=3600",
+            RemoteDBRunner.class.getName());
     processBuilder.inheritIO();
 
     serverProcess = processBuilder.start();
@@ -155,5 +161,4 @@ public class JournaledTxStreamingTest {
     assertThat(mutexFile.delete()).isTrue();
     System.out.println(JournaledTxStreamingTest.class.getSimpleName() + ": Server was started");
   }
-
 }

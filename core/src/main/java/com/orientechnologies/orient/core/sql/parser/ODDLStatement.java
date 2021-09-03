@@ -6,13 +6,10 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.sql.executor.ODDLExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Created by luigidellaquila on 12/08/16.
- */
+/** Created by luigidellaquila on 12/08/16. */
 public abstract class ODDLStatement extends OStatement {
 
   public ODDLStatement(int id) {
@@ -25,7 +22,8 @@ public abstract class ODDLStatement extends OStatement {
 
   public abstract OResultSet executeDDL(OCommandContext ctx);
 
-  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
+  public OResultSet execute(
+      ODatabase db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -42,7 +40,8 @@ public abstract class ODDLStatement extends OStatement {
     return executionPlan.executeInternal(ctx);
   }
 
-  public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx, boolean usePlanCache) {
+  public OResultSet execute(
+      ODatabase db, Map params, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -56,5 +55,4 @@ public abstract class ODDLStatement extends OStatement {
   public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
     return new ODDLExecutionPlan(ctx, this);
   }
-
 }

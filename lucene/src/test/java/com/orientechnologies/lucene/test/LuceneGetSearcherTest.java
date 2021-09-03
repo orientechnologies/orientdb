@@ -28,9 +28,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-/**
- * Created by Enrico Risa on 29/04/15.
- */
+/** Created by Enrico Risa on 29/04/15. */
 public class LuceneGetSearcherTest extends BaseLuceneTest {
 
   @Before
@@ -41,20 +39,21 @@ public class LuceneGetSearcherTest extends BaseLuceneTest {
     song.setSuperClass(v);
     song.createProperty("isDeleted", OType.BOOLEAN);
 
-    db.command(new OCommandSQL("create index Person.isDeleted on Person (isDeleted) FULLTEXT ENGINE LUCENE")).execute();
-
+    db.command(
+            new OCommandSQL(
+                "create index Person.isDeleted on Person (isDeleted) FULLTEXT ENGINE LUCENE"))
+        .execute();
   }
 
   @Test
   public void testSearcherInstance() {
 
-    OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db,"Person.isDeleted");
+    OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Person.isDeleted");
 
     Assert.assertEquals(true, index.getInternal() instanceof OLuceneIndexNotUnique);
 
     OLuceneIndexNotUnique idx = (OLuceneIndexNotUnique) index.getInternal();
 
     Assert.assertNotNull(idx.searcher());
-
   }
 }

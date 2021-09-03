@@ -2,13 +2,10 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
-
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * Created by luigidellaquila on 08/07/16.
- */
+/** Created by luigidellaquila on 08/07/16. */
 public class EmptyDataGeneratorStep extends AbstractExecutionStep {
 
   private long cost = 0;
@@ -50,9 +47,7 @@ public class EmptyDataGeneratorStep extends AbstractExecutionStep {
       }
 
       @Override
-      public void close() {
-
-      }
+      public void close() {}
 
       @Override
       public Optional<OExecutionPlan> getExecutionPlan() {

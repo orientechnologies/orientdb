@@ -6,13 +6,15 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
-
-import java.util.*;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -43,10 +45,8 @@ public class BetweenConversionTest extends DocumentDBBaseTest {
       document.field("a", i);
       document.field("ai", i);
 
-      if (i < 5)
-        document.field("vl", "v1");
-      else
-        document.field("vl", "v2");
+      if (i < 5) document.field("vl", "v1");
+      else document.field("vl", "v2");
 
       ODocument ed = new ODocument();
       ed.field("a", i);
@@ -199,7 +199,8 @@ public class BetweenConversionTest extends DocumentDBBaseTest {
     ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
 
     Assert.assertEquals(explain.<Object>field("rangeQueryConvertedInBetween"), 1);
-    Assert.assertTrue(((Set<String>) explain.field("involvedIndexes")).contains("BetweenConversionTestIndex"));
+    Assert.assertTrue(
+        ((Set<String>) explain.field("involvedIndexes")).contains("BetweenConversionTestIndex"));
   }
 
   public void testBetweenRightLeftIncludedReverseOrderIndex() {
@@ -218,7 +219,8 @@ public class BetweenConversionTest extends DocumentDBBaseTest {
     ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
 
     Assert.assertEquals(explain.<Object>field("rangeQueryConvertedInBetween"), 1);
-    Assert.assertTrue(((Set<String>) explain.field("involvedIndexes")).contains("BetweenConversionTestIndex"));
+    Assert.assertTrue(
+        ((Set<String>) explain.field("involvedIndexes")).contains("BetweenConversionTestIndex"));
   }
 
   public void testBetweenRightIncludedIndex() {
@@ -237,7 +239,8 @@ public class BetweenConversionTest extends DocumentDBBaseTest {
     ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
 
     Assert.assertEquals(explain.<Object>field("rangeQueryConvertedInBetween"), 1);
-    Assert.assertTrue(((Set<String>) explain.field("involvedIndexes")).contains("BetweenConversionTestIndex"));
+    Assert.assertTrue(
+        ((Set<String>) explain.field("involvedIndexes")).contains("BetweenConversionTestIndex"));
   }
 
   public void testBetweenRightIncludedReverseOrderIndex() {
@@ -256,7 +259,8 @@ public class BetweenConversionTest extends DocumentDBBaseTest {
     ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
 
     Assert.assertEquals(explain.<Object>field("rangeQueryConvertedInBetween"), 1);
-    Assert.assertTrue(((Set<String>) explain.field("involvedIndexes")).contains("BetweenConversionTestIndex"));
+    Assert.assertTrue(
+        ((Set<String>) explain.field("involvedIndexes")).contains("BetweenConversionTestIndex"));
   }
 
   public void testBetweenLeftIncludedIndex() {
@@ -275,7 +279,8 @@ public class BetweenConversionTest extends DocumentDBBaseTest {
     ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
 
     Assert.assertEquals(explain.<Object>field("rangeQueryConvertedInBetween"), 1);
-    Assert.assertTrue(((Set<String>) explain.field("involvedIndexes")).contains("BetweenConversionTestIndex"));
+    Assert.assertTrue(
+        ((Set<String>) explain.field("involvedIndexes")).contains("BetweenConversionTestIndex"));
   }
 
   public void testBetweenLeftIncludedReverseOrderIndex() {
@@ -294,7 +299,8 @@ public class BetweenConversionTest extends DocumentDBBaseTest {
     ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
 
     Assert.assertEquals(explain.<Object>field("rangeQueryConvertedInBetween"), 1);
-    Assert.assertTrue(((Set<String>) explain.field("involvedIndexes")).contains("BetweenConversionTestIndex"));
+    Assert.assertTrue(
+        ((Set<String>) explain.field("involvedIndexes")).contains("BetweenConversionTestIndex"));
   }
 
   public void testBetweenIndex() {
@@ -313,11 +319,13 @@ public class BetweenConversionTest extends DocumentDBBaseTest {
     ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
 
     Assert.assertEquals(explain.<Object>field("rangeQueryConvertedInBetween"), 1);
-    Assert.assertTrue(((Set<String>) explain.field("involvedIndexes")).contains("BetweenConversionTestIndex"));
+    Assert.assertTrue(
+        ((Set<String>) explain.field("involvedIndexes")).contains("BetweenConversionTestIndex"));
   }
 
   public void testBetweenRightLeftIncludedDeepQuery() {
-    final String query = "select from BetweenConversionTest where (vl = 'v1' and (vl <> 'v3' and (vl <> 'v2' and ((a >= 1 and a <= 7) and vl = 'v1'))) and vl <> 'v4')";
+    final String query =
+        "select from BetweenConversionTest where (vl = 'v1' and (vl <> 'v3' and (vl <> 'v2' and ((a >= 1 and a <= 7) and vl = 'v1'))) and vl <> 'v4')";
     final List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
 
     Assert.assertEquals(result.size(), 4);
@@ -335,7 +343,8 @@ public class BetweenConversionTest extends DocumentDBBaseTest {
   }
 
   public void testBetweenRightLeftIncludedDeepQueryIndex() {
-    final String query = "select from BetweenConversionTest where (vl = 'v1' and (vl <> 'v3' and (vl <> 'v2' and ((ai >= 1 and ai <= 7) and vl = 'v1'))) and vl <> 'v4')";
+    final String query =
+        "select from BetweenConversionTest where (vl = 'v1' and (vl <> 'v3' and (vl <> 'v2' and ((ai >= 1 and ai <= 7) and vl = 'v1'))) and vl <> 'v4')";
     final List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
 
     Assert.assertEquals(result.size(), 4);
@@ -350,7 +359,8 @@ public class BetweenConversionTest extends DocumentDBBaseTest {
     ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
 
     Assert.assertEquals(explain.<Object>field("rangeQueryConvertedInBetween"), 1);
-    Assert.assertTrue(((Set<String>) explain.field("involvedIndexes")).contains("BetweenConversionTestIndex"));
+    Assert.assertTrue(
+        ((Set<String>) explain.field("involvedIndexes")).contains("BetweenConversionTestIndex"));
   }
 
   public void testBetweenRightLeftIncludedDifferentFields() {

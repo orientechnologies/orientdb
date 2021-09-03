@@ -18,10 +18,5 @@ package com.orientechnologies.orient.core.iterator.object;
 
 import java.util.Iterator;
 
-/**
- * @author Luca Molino (molino.luca--at--gmail.com)
- * 
- */
-public interface OObjectIteratorClusterInterface<T> extends Iterator<T>, Iterable<T> {
-
-}
+/** @author Luca Molino (molino.luca--at--gmail.com) */
+public interface OObjectIteratorClusterInterface<T> extends Iterator<T>, Iterable<T> {}

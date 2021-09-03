@@ -21,7 +21,6 @@
 package com.orientechnologies.common.serialization.types;
 
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
-
 import java.nio.ByteBuffer;
 import java.util.Calendar;
 import java.util.Date;
@@ -34,7 +33,7 @@ import java.util.Date;
  */
 public class ODateSerializer implements OBinarySerializer<Date> {
 
-  public static final byte      ID       = 4;
+  public static final byte ID = 4;
   public static final ODateSerializer INSTANCE = new ODateSerializer();
 
   public int getObjectSize(Date object, Object... hints) {
@@ -69,7 +68,8 @@ public class ODateSerializer implements OBinarySerializer<Date> {
     return OLongSerializer.LONG_SIZE;
   }
 
-  public void serializeNativeObject(final Date object, byte[] stream, int startPosition, Object... hints) {
+  public void serializeNativeObject(
+      final Date object, byte[] stream, int startPosition, Object... hints) {
     final Calendar calendar = Calendar.getInstance();
     calendar.setTime(object);
     calendar.set(Calendar.HOUR_OF_DAY, 0);
@@ -108,9 +108,7 @@ public class ODateSerializer implements OBinarySerializer<Date> {
     return calendar.getTime();
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public void serializeInByteBufferObject(Date object, ByteBuffer buffer, Object... hints) {
     final Calendar calendar = Calendar.getInstance();
@@ -123,35 +121,28 @@ public class ODateSerializer implements OBinarySerializer<Date> {
     dateTimeSerializer.serializeInByteBufferObject(calendar.getTime(), buffer);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public Date deserializeFromByteBufferObject(ByteBuffer buffer) {
     final ODateTimeSerializer dateTimeSerializer = ODateTimeSerializer.INSTANCE;
     return dateTimeSerializer.deserializeFromByteBufferObject(buffer);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
     return OLongSerializer.LONG_SIZE;
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
-  public Date deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+  public Date deserializeFromByteBufferObject(
+      ByteBuffer buffer, OWALChanges walChanges, int offset) {
     final ODateTimeSerializer dateTimeSerializer = ODateTimeSerializer.INSTANCE;
     return dateTimeSerializer.deserializeFromByteBufferObject(buffer, walChanges, offset);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return OLongSerializer.LONG_SIZE;

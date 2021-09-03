@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://orientdb.com
-  *
-  */
+ *
+ *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://orientdb.com
+ *
+ */
 package com.orientechnologies.orient.core.sql.operator;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -28,9 +28,8 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 
 /**
  * NOT operator.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public class OQueryOperatorNot extends OQueryOperator {
   private OQueryOperator next;
@@ -46,13 +45,19 @@ public class OQueryOperatorNot extends OQueryOperator {
   }
 
   @Override
-  public Object evaluateRecord(final OIdentifiable iRecord, ODocument iCurrentResult, final OSQLFilterCondition iCondition,
-      final Object iLeft, final Object iRight, OCommandContext iContext, final ODocumentSerializer serializer) {
+  public Object evaluateRecord(
+      final OIdentifiable iRecord,
+      ODocument iCurrentResult,
+      final OSQLFilterCondition iCondition,
+      final Object iLeft,
+      final Object iRight,
+      OCommandContext iContext,
+      final ODocumentSerializer serializer) {
     if (next != null)
-      return !(Boolean) next.evaluateRecord(iRecord, null, iCondition, iLeft, iRight, iContext, serializer);
+      return !(Boolean)
+          next.evaluateRecord(iRecord, null, iCondition, iLeft, iRight, iContext, serializer);
 
-    if (iLeft == null)
-      return false;
+    if (iLeft == null) return false;
     return !(Boolean) iLeft;
   }
 
@@ -67,14 +72,10 @@ public class OQueryOperatorNot extends OQueryOperator {
       final ORID beginRange = ((OSQLFilterCondition) iLeft).getBeginRidRange();
       final ORID endRange = ((OSQLFilterCondition) iLeft).getEndRidRange();
 
-      if (beginRange == null && endRange == null)
-        return null;
-      else if (beginRange == null)
-        return endRange;
-      else if (endRange == null)
-        return null;
-      else
-        return null;
+      if (beginRange == null && endRange == null) return null;
+      else if (beginRange == null) return endRange;
+      else if (endRange == null) return null;
+      else return null;
     }
 
     return null;
@@ -86,14 +87,10 @@ public class OQueryOperatorNot extends OQueryOperator {
       final ORID beginRange = ((OSQLFilterCondition) iLeft).getBeginRidRange();
       final ORID endRange = ((OSQLFilterCondition) iLeft).getEndRidRange();
 
-      if (beginRange == null && endRange == null)
-        return null;
-      else if (beginRange == null)
-        return null;
-      else if (endRange == null)
-        return beginRange;
-      else
-        return null;
+      if (beginRange == null && endRange == null) return null;
+      else if (beginRange == null) return null;
+      else if (endRange == null) return beginRange;
+      else return null;
     }
 
     return null;

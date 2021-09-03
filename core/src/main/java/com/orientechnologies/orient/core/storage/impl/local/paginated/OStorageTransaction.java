@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 
 /**
@@ -32,5 +31,4 @@ public class OStorageTransaction {
   public OTransactionInternal getClientTx() {
     return clientTx;
   }
-
 }

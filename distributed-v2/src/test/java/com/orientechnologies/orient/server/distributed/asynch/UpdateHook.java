@@ -7,8 +7,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public class UpdateHook implements ORecordHook {
 
   @Override
-  public void onUnregister() {
-  }
+  public void onUnregister() {}
 
   @Override
   public RESULT onTrigger(TYPE iType, ORecord iRecord) {
@@ -20,14 +19,17 @@ public class UpdateHook implements ORecordHook {
             throw new RuntimeException("out vertex can't be null");
           }
           if (doc.field("in") == null) {
-            throw new RuntimeException( "in vertex can't be null");
+            throw new RuntimeException("in vertex can't be null");
           }
         }
       }
     }
 
-  	if (iType.equals(TYPE.AFTER_CREATE) || iType.equals(TYPE.AFTER_UPDATE) || iType.equals(TYPE.AFTER_DELETE)) {
-      // OLogManager.instance().info(this, iType + ": " + iRecord + " at: " + System.currentTimeMillis());
+    if (iType.equals(TYPE.AFTER_CREATE)
+        || iType.equals(TYPE.AFTER_UPDATE)
+        || iType.equals(TYPE.AFTER_DELETE)) {
+      // OLogManager.instance().info(this, iType + ": " + iRecord + " at: " +
+      // System.currentTimeMillis());
     }
     return null;
   }
@@ -36,5 +38,4 @@ public class UpdateHook implements ORecordHook {
   public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
     return DISTRIBUTED_EXECUTION_MODE.SOURCE_NODE;
   }
-
 }

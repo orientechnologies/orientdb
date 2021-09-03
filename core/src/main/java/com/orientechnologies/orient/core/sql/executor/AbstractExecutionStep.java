@@ -1,19 +1,16 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
-
 import java.text.DecimalFormat;
 import java.util.Optional;
 
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public abstract class AbstractExecutionStep implements OExecutionStepInternal {
 
-  protected final OCommandContext                  ctx;
-  protected       Optional<OExecutionStepInternal> prev     = Optional.empty();
-  protected       Optional<OExecutionStepInternal> next     = Optional.empty();
-  protected       boolean                          timedOut = false;
+  protected final OCommandContext ctx;
+  protected Optional<OExecutionStepInternal> prev = Optional.empty();
+  protected Optional<OExecutionStepInternal> next = Optional.empty();
+  protected boolean timedOut = false;
 
   protected boolean profilingEnabled = false;
 
@@ -72,5 +69,4 @@ public abstract class AbstractExecutionStep implements OExecutionStepInternal {
   protected String getCostFormatted() {
     return new DecimalFormat().format(getCost() / 1000) + "μs";
   }
-
 }

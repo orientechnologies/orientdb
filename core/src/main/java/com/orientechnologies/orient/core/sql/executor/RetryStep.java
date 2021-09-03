@@ -7,23 +7,25 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.OExecutionThreadLocal;
 import com.orientechnologies.orient.core.exception.OCommandInterruptedException;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
-
 import java.util.Iterator;
 import java.util.List;
 
-/**
- * Created by luigidellaquila on 19/09/16.
- */
+/** Created by luigidellaquila on 19/09/16. */
 public class RetryStep extends AbstractExecutionStep {
-  public        List<OStatement> body;
-  public        List<OStatement> elseBody;
-  public        boolean          elseFail;
-  private final int              retries;
+  public List<OStatement> body;
+  public List<OStatement> elseBody;
+  public boolean elseFail;
+  private final int retries;
 
-  private Iterator               iterator;
+  private Iterator iterator;
   private OExecutionStepInternal finalResult = null;
 
-  public RetryStep(List<OStatement> statements, int retries, List<OStatement> elseStatements, Boolean elseFail, OCommandContext ctx,
+  public RetryStep(
+      List<OStatement> statements,
+      int retries,
+      List<OStatement> elseStatements,
+      Boolean elseFail,
+      OCommandContext ctx,
       boolean enableProfiling) {
     super(ctx, enableProfiling);
     this.body = statements;
@@ -77,7 +79,6 @@ public class RetryStep extends AbstractExecutionStep {
 
     finalResult = new EmptyStep(ctx, false);
     return finalResult.syncPull(ctx, nRecords);
-
   }
 
   public OScriptExecutionPlan initPlan(List<OStatement> body, OCommandContext ctx) {
@@ -89,5 +90,4 @@ public class RetryStep extends AbstractExecutionStep {
     }
     return plan;
   }
-
 }

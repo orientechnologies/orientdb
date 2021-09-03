@@ -15,28 +15,26 @@
  */
 package com.orientechnologies.orient.test.java.serialization;
 
-import java.io.IOException;
-
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.test.SpeedTestMonoThread;
+import java.io.IOException;
+import org.testng.annotations.Test;
 
 public class StringSerializationSpeedTest extends SpeedTestMonoThread {
 
-	public StringSerializationSpeedTest() {
-		super(1000000);
-	}
+  public StringSerializationSpeedTest() {
+    super(1000000);
+  }
 
-	@Override
-	@Test(enabled = false)
-	public void cycle() throws IOException {
-		StringBuilder buffer = new StringBuilder();
-		buffer.append(new Integer(300).toString());
-		buffer.append(new Boolean(true).toString());
-		buffer.append("Questa e una prova di scrittura di una stringa");
-		buffer.append(new Float(3.0f).toString());
-		buffer.append(new Long(30000000L).toString());
+  @Override
+  @Test(enabled = false)
+  public void cycle() throws IOException {
+    StringBuilder buffer = new StringBuilder();
+    buffer.append(new Integer(300).toString());
+    buffer.append(new Boolean(true).toString());
+    buffer.append("Questa e una prova di scrittura di una stringa");
+    buffer.append(new Float(3.0f).toString());
+    buffer.append(new Long(30000000L).toString());
 
-		buffer.toString().getBytes();
-	}
+    buffer.toString().getBytes();
+  }
 }

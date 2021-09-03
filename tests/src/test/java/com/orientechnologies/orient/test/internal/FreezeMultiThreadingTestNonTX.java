@@ -16,18 +16,6 @@
 
 package com.orientechnologies.orient.test.internal;
 
-import java.io.IOException;
-import java.util.ConcurrentModificationException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -41,38 +29,55 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import java.io.IOException;
+import java.util.ConcurrentModificationException;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 @Test
 public class FreezeMultiThreadingTestNonTX {
-  private static final int               TRANSACTIONAL_CREATOR_THREAD_COUNT = 2;
-  private static final int               TRANSACTIONAL_UPDATER_THREAD_COUNT = 2;
-  private static final int               TRANSACTIONAL_DELETER_THREAD_COUNT = 2;
+  private static final int TRANSACTIONAL_CREATOR_THREAD_COUNT = 2;
+  private static final int TRANSACTIONAL_UPDATER_THREAD_COUNT = 2;
+  private static final int TRANSACTIONAL_DELETER_THREAD_COUNT = 2;
 
-  private static final int               CREATOR_THREAD_COUNT               = 10;
-  private static final int               UPDATER_THREAD_COUNT               = 10;
-  private static final int               DELETER_THREAD_COUNT               = 10;
+  private static final int CREATOR_THREAD_COUNT = 10;
+  private static final int UPDATER_THREAD_COUNT = 10;
+  private static final int DELETER_THREAD_COUNT = 10;
 
-  private static final int               DOCUMENT_COUNT                     = 1000;
+  private static final int DOCUMENT_COUNT = 1000;
 
-  private static final int               TRANSACTIONAL_DOCUMENT_COUNT       = 1000;
+  private static final int TRANSACTIONAL_DOCUMENT_COUNT = 1000;
 
-  private static final String            URL                                = "remote:localhost/FreezeMultiThreadingTestNonTX";
+  private static final String URL = "remote:localhost/FreezeMultiThreadingTestNonTX";
 
-  private static final String            STUDENT_CLASS_NAME                 = "Student";
-  private static final String            TRANSACTIONAL_WORD                 = "Transactional";
+  private static final String STUDENT_CLASS_NAME = "Student";
+  private static final String TRANSACTIONAL_WORD = "Transactional";
 
-  private AtomicInteger                  createCounter                      = new AtomicInteger(0);
-  private AtomicInteger                  deleteCounter                      = new AtomicInteger(0);
+  private AtomicInteger createCounter = new AtomicInteger(0);
+  private AtomicInteger deleteCounter = new AtomicInteger(0);
 
-  private AtomicInteger                  transactionalCreateCounter         = new AtomicInteger(0);
-  private AtomicInteger                  transactionalDeleteCounter         = new AtomicInteger(0);
+  private AtomicInteger transactionalCreateCounter = new AtomicInteger(0);
+  private AtomicInteger transactionalDeleteCounter = new AtomicInteger(0);
 
-  private final ExecutorService          executorService                    = Executors.newFixedThreadPool(CREATOR_THREAD_COUNT
-                                                                                + UPDATER_THREAD_COUNT + DELETER_THREAD_COUNT + 1);
-  private ConcurrentSkipListSet<Integer> deleted                            = new ConcurrentSkipListSet<Integer>();
+  private final ExecutorService executorService =
+      Executors.newFixedThreadPool(
+          CREATOR_THREAD_COUNT + UPDATER_THREAD_COUNT + DELETER_THREAD_COUNT + 1);
+  private ConcurrentSkipListSet<Integer> deleted = new ConcurrentSkipListSet<Integer>();
 
-  private ConcurrentSkipListSet<Integer> deletedInTransaction               = new ConcurrentSkipListSet<Integer>();
-  private CountDownLatch                 countDownLatch                     = new CountDownLatch(1);
+  private ConcurrentSkipListSet<Integer> deletedInTransaction =
+      new ConcurrentSkipListSet<Integer>();
+  private CountDownLatch countDownLatch = new CountDownLatch(1);
 
   private class NonTransactionalAdder implements Callable<Void> {
     public Void call() throws Exception {
@@ -103,7 +108,9 @@ public class FreezeMultiThreadingTestNonTX {
         e.printStackTrace();
         return null;
       } finally {
-        System.out.println(Thread.currentThread() + "************************CLOSE************************************");
+        System.out.println(
+            Thread.currentThread()
+                + "************************CLOSE************************************");
         database.close();
       }
     }
@@ -141,7 +148,9 @@ public class FreezeMultiThreadingTestNonTX {
         e.printStackTrace();
         return null;
       } finally {
-        System.out.println(Thread.currentThread() + "************************CLOSE************************************");
+        System.out.println(
+            Thread.currentThread()
+                + "************************CLOSE************************************");
         database.close();
       }
     }
@@ -167,11 +176,16 @@ public class FreezeMultiThreadingTestNonTX {
 
           List<ODocument> execute = null;
           if (updateCounter % 10 == 0)
-            System.out.println(Thread.currentThread() + " : before search cycle(update)" + updateCounter);
+            System.out.println(
+                Thread.currentThread() + " : before search cycle(update)" + updateCounter);
           do {
             try {
-              execute = database.command(new OSQLSynchQuery<Object>("select * from " + STUDENT_CLASS_NAME + " where counter = ?"))
-                  .execute(updateCounter);
+              execute =
+                  database
+                      .command(
+                          new OSQLSynchQuery<Object>(
+                              "select * from " + STUDENT_CLASS_NAME + " where counter = ?"))
+                      .execute(updateCounter);
             } catch (ORecordNotFoundException onfe) {
               System.out.println("Record not found for doc " + updateCounter);
             } catch (OException e) {
@@ -192,7 +206,8 @@ public class FreezeMultiThreadingTestNonTX {
           } while (!deleted.contains(updateCounter) && (execute == null || execute.isEmpty()));
           if (!deleted.contains(updateCounter)) {
             if (updateCounter % 10 == 0)
-              System.out.println(Thread.currentThread() + " : after search cycle(update) " + updateCounter);
+              System.out.println(
+                  Thread.currentThread() + " : after search cycle(update) " + updateCounter);
 
             ODocument document = execute.get(0);
             document.field("counter2", document.<Object>field("counter"));
@@ -200,29 +215,38 @@ public class FreezeMultiThreadingTestNonTX {
               document.save();
 
               if (updateCounter % 10 == 0)
-                System.out.println(Thread.currentThread() + " : document " + updateCounter + " updated");
+                System.out.println(
+                    Thread.currentThread() + " : document " + updateCounter + " updated");
 
               updateCounter++;
             } catch (ORecordNotFoundException ornfe) {
               System.out.println(Thread.currentThread() + " exception record already deleted");
             } catch (OConcurrentModificationException e) {
-              System.out.println(Thread.currentThread() + " : concurrent modification exception while updating! " + updateCounter);
+              System.out.println(
+                  Thread.currentThread()
+                      + " : concurrent modification exception while updating! "
+                      + updateCounter);
             } catch (Exception e) {
               e.printStackTrace();
               throw e;
             }
 
           } else {
-            System.out.println(Thread.currentThread() + " : document " + updateCounter + " already deleted couldn't update!");
+            System.out.println(
+                Thread.currentThread()
+                    + " : document "
+                    + updateCounter
+                    + " already deleted couldn't update!");
             updateCounter++;
           }
         }
         return null;
       } finally {
-        System.out.println(Thread.currentThread() + "************************CLOSE************************************");
+        System.out.println(
+            Thread.currentThread()
+                + "************************CLOSE************************************");
         database.close();
       }
-
     }
   }
 
@@ -244,12 +268,19 @@ public class FreezeMultiThreadingTestNonTX {
           }
           List<ODocument> execute = null;
           if (updateCounter % 10 == 0)
-            System.out.println(Thread.currentThread() + " : before search cycle(update)" + updateCounter);
+            System.out.println(
+                Thread.currentThread() + " : before search cycle(update)" + updateCounter);
           do {
             try {
-              execute = database.command(
-                  new OSQLSynchQuery<Object>("select * from " + TRANSACTIONAL_WORD + STUDENT_CLASS_NAME + " where counter = ?"))
-                  .execute(updateCounter);
+              execute =
+                  database
+                      .command(
+                          new OSQLSynchQuery<Object>(
+                              "select * from "
+                                  + TRANSACTIONAL_WORD
+                                  + STUDENT_CLASS_NAME
+                                  + " where counter = ?"))
+                      .execute(updateCounter);
             } catch (ORecordNotFoundException onfe) {
               // ignore has been deleted
             } catch (OException e) {
@@ -267,10 +298,12 @@ public class FreezeMultiThreadingTestNonTX {
 
               throw e;
             }
-          } while (!deletedInTransaction.contains(updateCounter) && (execute == null || execute.isEmpty()));
+          } while (!deletedInTransaction.contains(updateCounter)
+              && (execute == null || execute.isEmpty()));
           if (!deletedInTransaction.contains(updateCounter)) {
             if (updateCounter % 10 == 0)
-              System.out.println(Thread.currentThread() + " : after search cycle(update) " + updateCounter);
+              System.out.println(
+                  Thread.currentThread() + " : after search cycle(update) " + updateCounter);
 
             database.begin();
 
@@ -281,30 +314,39 @@ public class FreezeMultiThreadingTestNonTX {
 
               database.commit();
               if (updateCounter % 10 == 0)
-                System.out.println(Thread.currentThread() + " : document " + updateCounter + " updated");
+                System.out.println(
+                    Thread.currentThread() + " : document " + updateCounter + " updated");
 
               updateCounter++;
             } catch (ORecordNotFoundException ornfe) {
               System.out.println(Thread.currentThread() + " exception record already deleted");
             } catch (OConcurrentModificationException e) {
-              System.out.println(Thread.currentThread() + " : concurrent modification exception while updating! " + updateCounter);
+              System.out.println(
+                  Thread.currentThread()
+                      + " : concurrent modification exception while updating! "
+                      + updateCounter);
             } catch (Exception e) {
               e.printStackTrace();
               throw e;
             }
 
           } else {
-            System.out.println(Thread.currentThread() + " : document " + updateCounter + " already deleted couldn't update!");
+            System.out.println(
+                Thread.currentThread()
+                    + " : document "
+                    + updateCounter
+                    + " already deleted couldn't update!");
             updateCounter++;
           }
         }
         return null;
       } finally {
-        System.out.println(Thread.currentThread() + "************************CLOSE************************************");
+        System.out.println(
+            Thread.currentThread()
+                + "************************CLOSE************************************");
         database.close();
       }
     }
-
   }
 
   private class NonTransactionalDeleter implements Callable<Void> {
@@ -322,20 +364,25 @@ public class FreezeMultiThreadingTestNonTX {
         int number = deleteCounter.getAndIncrement();
         while (number < DOCUMENT_COUNT) {
           // wait while necessary document will be created
-          while (number > createCounter.get())
-            ;
+          while (number > createCounter.get()) ;
           try {
 
             List<ODocument> execute;
             if (number % 10 == 0)
-              System.out.println(Thread.currentThread() + " : before search cycle (delete) " + number);
+              System.out.println(
+                  Thread.currentThread() + " : before search cycle (delete) " + number);
             do {
-              execute = database.command(new OSQLSynchQuery<Object>("select * from " + STUDENT_CLASS_NAME + " where counter2 = ?"))
-                  .execute(number);
+              execute =
+                  database
+                      .command(
+                          new OSQLSynchQuery<Object>(
+                              "select * from " + STUDENT_CLASS_NAME + " where counter2 = ?"))
+                      .execute(number);
             } while (execute == null || execute.isEmpty());
 
             if (number % 10 == 0)
-              System.out.println(Thread.currentThread() + " : after search cycle (delete)" + number);
+              System.out.println(
+                  Thread.currentThread() + " : after search cycle (delete)" + number);
 
             ODocument document = execute.get(0);
             document.delete();
@@ -358,7 +405,9 @@ public class FreezeMultiThreadingTestNonTX {
         e.printStackTrace();
         return null;
       } finally {
-        System.out.println(Thread.currentThread() + "************************CLOSE************************************");
+        System.out.println(
+            Thread.currentThread()
+                + "************************CLOSE************************************");
         database.close();
       }
     }
@@ -367,7 +416,8 @@ public class FreezeMultiThreadingTestNonTX {
   private class TransactionalDeleter implements Callable<Void> {
 
     public Void call() throws Exception {
-      Thread.currentThread().setName("TransactionalDeleterDeleter - " + Thread.currentThread().getId());
+      Thread.currentThread()
+          .setName("TransactionalDeleterDeleter - " + Thread.currentThread().getId());
 
       ODatabaseDocumentTx database = new ODatabaseDocumentTx(URL);
       database.open("admin", "admin");
@@ -379,21 +429,28 @@ public class FreezeMultiThreadingTestNonTX {
         int number = transactionalDeleteCounter.getAndIncrement();
         while (number < TRANSACTIONAL_DOCUMENT_COUNT) {
           // wait while necessary document will be created
-          while (number > transactionalCreateCounter.get())
-            ;
+          while (number > transactionalCreateCounter.get()) ;
           try {
 
             List<ODocument> execute;
             if (number % 10 == 0)
-              System.out.println(Thread.currentThread() + " : before search cycle (delete) " + number);
+              System.out.println(
+                  Thread.currentThread() + " : before search cycle (delete) " + number);
             do {
-              execute = database.command(
-                  new OSQLSynchQuery<Object>("select * from " + TRANSACTIONAL_WORD + STUDENT_CLASS_NAME + " where counter2 = ?"))
-                  .execute(number);
+              execute =
+                  database
+                      .command(
+                          new OSQLSynchQuery<Object>(
+                              "select * from "
+                                  + TRANSACTIONAL_WORD
+                                  + STUDENT_CLASS_NAME
+                                  + " where counter2 = ?"))
+                      .execute(number);
             } while (execute == null || execute.isEmpty());
 
             if (number % 10 == 0)
-              System.out.println(Thread.currentThread() + " : after search cycle (delete)" + number);
+              System.out.println(
+                  Thread.currentThread() + " : after search cycle (delete)" + number);
 
             database.begin();
 
@@ -420,7 +477,9 @@ public class FreezeMultiThreadingTestNonTX {
         e.printStackTrace();
         return null;
       } finally {
-        System.out.println(Thread.currentThread() + "************************CLOSE************************************");
+        System.out.println(
+            Thread.currentThread()
+                + "************************CLOSE************************************");
         database.close();
       }
     }
@@ -438,27 +497,39 @@ public class FreezeMultiThreadingTestNonTX {
           ODatabaseHelper.freezeDatabase(database);
           database.open("admin", "admin");
 
-          final List<ODocument> beforeNonTxDocuments = database.query(new OSQLSynchQuery<Object>("select from "
-              + STUDENT_CLASS_NAME));
-          final List<ODocument> beforeTxDocuments = database.query(new OSQLSynchQuery<Object>("select from " + TRANSACTIONAL_WORD
-              + STUDENT_CLASS_NAME));
+          final List<ODocument> beforeNonTxDocuments =
+              database.query(new OSQLSynchQuery<Object>("select from " + STUDENT_CLASS_NAME));
+          final List<ODocument> beforeTxDocuments =
+              database.query(
+                  new OSQLSynchQuery<Object>(
+                      "select from " + TRANSACTIONAL_WORD + STUDENT_CLASS_NAME));
 
           database.close();
 
-          System.out.println("Freeze DB - nonTx : " + beforeNonTxDocuments.size() + " Tx : " + beforeTxDocuments.size());
+          System.out.println(
+              "Freeze DB - nonTx : "
+                  + beforeNonTxDocuments.size()
+                  + " Tx : "
+                  + beforeTxDocuments.size());
           try {
             Thread.sleep(10000);
           } finally {
             database.open("admin", "admin");
-            final List<ODocument> afterNonTxDocuments = database.query(new OSQLSynchQuery<Object>("select from "
-                + STUDENT_CLASS_NAME));
-            final List<ODocument> afterTxDocuments = database.query(new OSQLSynchQuery<Object>("select from " + TRANSACTIONAL_WORD
-                + STUDENT_CLASS_NAME));
+            final List<ODocument> afterNonTxDocuments =
+                database.query(new OSQLSynchQuery<Object>("select from " + STUDENT_CLASS_NAME));
+            final List<ODocument> afterTxDocuments =
+                database.query(
+                    new OSQLSynchQuery<Object>(
+                        "select from " + TRANSACTIONAL_WORD + STUDENT_CLASS_NAME));
             assertDocumentAreEquals(beforeNonTxDocuments, afterNonTxDocuments);
             assertDocumentAreEquals(beforeTxDocuments, afterTxDocuments);
 
             database.close();
-            System.out.println("Release DB - nonTx : " + afterNonTxDocuments.size() + " Tx : " + afterTxDocuments.size());
+            System.out.println(
+                "Release DB - nonTx : "
+                    + afterNonTxDocuments.size()
+                    + " Tx : "
+                    + afterTxDocuments.size());
             ODatabaseHelper.releaseDatabase(database);
           }
           Thread.sleep(10000);
@@ -471,7 +542,9 @@ public class FreezeMultiThreadingTestNonTX {
         e.printStackTrace();
         return null;
       } finally {
-        System.out.println(Thread.currentThread() + "************************CLOSE************************************");
+        System.out.println(
+            Thread.currentThread()
+                + "************************CLOSE************************************");
       }
     }
   }
@@ -510,7 +583,8 @@ public class FreezeMultiThreadingTestNonTX {
     student.createIndex("index2", OClass.INDEX_TYPE.NOTUNIQUE, "counter2");
     student.createIndex("index3", OClass.INDEX_TYPE.NOTUNIQUE, "counter", "counter2");
 
-    OClass transactionalStudent = database.getMetadata().getSchema().createClass(TRANSACTIONAL_WORD + STUDENT_CLASS_NAME);
+    OClass transactionalStudent =
+        database.getMetadata().getSchema().createClass(TRANSACTIONAL_WORD + STUDENT_CLASS_NAME);
 
     transactionalStudent.createProperty("counter", OType.INTEGER);
     transactionalStudent.createProperty("counter2", OType.INTEGER);
@@ -519,14 +593,15 @@ public class FreezeMultiThreadingTestNonTX {
     transactionalStudent.createIndex("index5", OClass.INDEX_TYPE.NOTUNIQUE, "counter2");
     transactionalStudent.createIndex("index6", OClass.INDEX_TYPE.NOTUNIQUE, "counter", "counter2");
 
-
     System.out.println("*in before***********CLOSE************************************");
     database.close();
   }
 
   @Test
   public void test() throws Exception {
-    Set<Future<Void>> threads = new HashSet<Future<Void>>(CREATOR_THREAD_COUNT + DELETER_THREAD_COUNT + UPDATER_THREAD_COUNT + 1);
+    Set<Future<Void>> threads =
+        new HashSet<Future<Void>>(
+            CREATOR_THREAD_COUNT + DELETER_THREAD_COUNT + UPDATER_THREAD_COUNT + 1);
 
     for (int i = 0; i < CREATOR_THREAD_COUNT; ++i) {
       NonTransactionalAdder thread = new NonTransactionalAdder();
@@ -561,21 +636,23 @@ public class FreezeMultiThreadingTestNonTX {
     threads.add(executorService.submit(new Locker()));
 
     countDownLatch.countDown();
-    for (Future<Void> future : threads)
-      future.get();
+    for (Future<Void> future : threads) future.get();
 
     System.out.println("finish");
   }
 
   private void assertDocumentAreEquals(List<ODocument> firstDocs, List<ODocument> secondDocs) {
-    if (firstDocs.size() != secondDocs.size())
-      Assert.fail();
+    if (firstDocs.size() != secondDocs.size()) Assert.fail();
 
-    outer: for (final ODocument firstDoc : firstDocs) {
+    outer:
+    for (final ODocument firstDoc : firstDocs) {
       for (final ODocument secondDoc : secondDocs) {
         if (firstDoc.equals(secondDoc)) {
-          final ODatabaseDocumentInternal databaseRecord = ODatabaseRecordThreadLocal.instance().get();
-          Assert.assertTrue(ODocumentHelper.hasSameContentOf(firstDoc, databaseRecord, secondDoc, databaseRecord, null));
+          final ODatabaseDocumentInternal databaseRecord =
+              ODatabaseRecordThreadLocal.instance().get();
+          Assert.assertTrue(
+              ODocumentHelper.hasSameContentOf(
+                  firstDoc, databaseRecord, secondDoc, databaseRecord, null));
           continue outer;
         }
       }
@@ -583,5 +660,4 @@ public class FreezeMultiThreadingTestNonTX {
       Assert.fail("Document " + firstDoc + " was changed during DB freeze");
     }
   }
-
 }

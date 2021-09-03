@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.server.plugin.mail;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.script.OScriptInjection;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -29,18 +28,18 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 import com.orientechnologies.orient.server.plugin.OServerPluginConfigurable;
-
-import javax.script.Bindings;
-import javax.script.ScriptEngine;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import javax.script.Bindings;
+import javax.script.ScriptEngine;
 
-public class OMailPlugin extends OServerPluginAbstract implements OScriptInjection, OServerPluginConfigurable {
+public class OMailPlugin extends OServerPluginAbstract
+    implements OScriptInjection, OServerPluginConfigurable {
   private static final String CONFIG_PROFILE_PREFIX = "profile.";
-  private static final String CONFIG_MAIL_PREFIX    = "mail.";
+  private static final String CONFIG_MAIL_PREFIX = "mail.";
 
   private ODocument configuration;
 
@@ -48,8 +47,7 @@ public class OMailPlugin extends OServerPluginAbstract implements OScriptInjecti
 
   private String configFile = "${ORIENTDB_HOME}/config/mail.json";
 
-  public OMailPlugin() {
-  }
+  public OMailPlugin() {}
 
   @Override
   public void config(final OServer oServer, final OServerParameterConfiguration[] iParams) {
@@ -57,15 +55,13 @@ public class OMailPlugin extends OServerPluginAbstract implements OScriptInjecti
     OrientDBInternal.extract(oServer.getContext()).getScriptManager().registerInjection(this);
   }
 
-  public void writeConfiguration() throws IOException {
-
-  }
+  public void writeConfiguration() throws IOException {}
 
   /**
-   * Sends an email. Supports the following configuration: subject, message, to, cc, bcc, date, attachments
+   * Sends an email. Supports the following configuration: subject, message, to, cc, bcc, date,
+   * attachments
    *
    * @param iMessage Configuration as Map<String,Object>
-   *
    * @throws ParseException
    */
   public void send(final Map<String, Object> iMessage) {
@@ -105,7 +101,5 @@ public class OMailPlugin extends OServerPluginAbstract implements OScriptInjecti
   }
 
   @Override
-  public void changeConfig(ODocument document) {
-
-  }
+  public void changeConfig(ODocument document) {}
 }

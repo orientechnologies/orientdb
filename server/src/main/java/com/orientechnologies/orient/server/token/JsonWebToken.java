@@ -5,8 +5,9 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.metadata.security.jwt.OJsonWebToken;
-import com.orientechnologies.orient.core.metadata.security.jwt.OJwtHeader;
 import com.orientechnologies.orient.core.metadata.security.jwt.OJwtPayload;
+import com.orientechnologies.orient.core.metadata.security.jwt.OTokenHeader;
+import com.orientechnologies.orient.core.metadata.security.jwt.OrientJwtHeader;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -16,16 +17,16 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 public class JsonWebToken implements OJsonWebToken, OToken {
 
-  public final OJwtHeader  header;
+  public final OTokenHeader header;
   public final OJwtPayload payload;
-  private boolean          isVerified;
-  private boolean          isValid;
+  private boolean isVerified;
+  private boolean isValid;
 
   public JsonWebToken() {
     this(new OrientJwtHeader(), new OrientJwtPayload());
   }
 
-  public JsonWebToken(OJwtHeader header, OJwtPayload payload) {
+  public JsonWebToken(OTokenHeader header, OJwtPayload payload) {
     isVerified = false;
     isValid = false;
     this.header = header;
@@ -33,7 +34,7 @@ public class JsonWebToken implements OJsonWebToken, OToken {
   }
 
   @Override
-  public OJwtHeader getHeader() {
+  public OTokenHeader getHeader() {
     return header;
   }
 
@@ -96,18 +97,16 @@ public class JsonWebToken implements OJsonWebToken, OToken {
       result = null;
     }
     return new OUser(result);
-
   }
 
   @Override
   public void setExpiry(long expiry) {
     this.payload.setExpiry(expiry);
   }
-  
+
   @Override
   public boolean isNowValid() {
     long now = System.currentTimeMillis();
     return getExpiry() > now && payload.getNotBefore() < now;
   }
-  
 }

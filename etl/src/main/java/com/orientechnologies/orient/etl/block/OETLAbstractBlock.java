@@ -21,14 +21,11 @@ package com.orientechnologies.orient.etl.block;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.etl.OETLAbstractComponent;
 
-/**
- * Abstract Block.
- */
+/** Abstract Block. */
 public abstract class OETLAbstractBlock extends OETLAbstractComponent implements OETLBlock {
   @Override
   public Object execute() {
-    if (!skip(null))
-      return executeBlock();
+    if (!skip(null)) return executeBlock();
     return null;
   }
 

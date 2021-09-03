@@ -38,10 +38,13 @@ public class OQueryOperatorLike extends OQueryOperatorEqualityNotNulls {
   }
 
   @Override
-  protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
-      final Object iRight, OCommandContext iContext) {
-    if (OMultiValue.isMultiValue(iLeft) || OMultiValue.isMultiValue(iRight))
-      return false;
+  protected boolean evaluateExpression(
+      final OIdentifiable iRecord,
+      final OSQLFilterCondition iCondition,
+      final Object iLeft,
+      final Object iRight,
+      OCommandContext iContext) {
+    if (OMultiValue.isMultiValue(iLeft) || OMultiValue.isMultiValue(iRight)) return false;
 
     return OQueryHelper.like(iLeft.toString(), iRight.toString());
   }

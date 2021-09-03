@@ -20,7 +20,6 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 /**
- * 
  * @author Johann Sorel (Geomatys)
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
@@ -33,9 +32,13 @@ public class OSQLMethodPrefix extends OAbstractSQLMethod {
   }
 
   @Override
-  public Object execute(Object iThis, OIdentifiable iRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
-    if (iThis == null || iParams[0] == null)
-      return iThis;
+  public Object execute(
+      Object iThis,
+      OIdentifiable iRecord,
+      OCommandContext iContext,
+      Object ioResult,
+      Object[] iParams) {
+    if (iThis == null || iParams[0] == null) return iThis;
 
     return iParams[0] + iThis.toString();
   }

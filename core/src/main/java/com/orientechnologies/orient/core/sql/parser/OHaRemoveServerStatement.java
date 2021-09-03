@@ -8,7 +8,6 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.util.Map;
 
 public class OHaRemoveServerStatement extends OStatement {
@@ -30,7 +29,8 @@ public class OHaRemoveServerStatement extends OStatement {
   }
 
   @Override
-  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentContext, boolean usePlanCache) {
+  public OResultSet execute(
+      ODatabase db, Object[] args, OCommandContext parentContext, boolean usePlanCache) {
     ODatabaseDocumentInternal internalDb = (ODatabaseDocumentInternal) db;
     boolean res = internalDb.removeHaServer(serverName.getStringValue());
     OResultInternal r = new OResultInternal();
@@ -41,7 +41,8 @@ public class OHaRemoveServerStatement extends OStatement {
   }
 
   @Override
-  public OResultSet execute(ODatabase db, Map args, OCommandContext parentContext, boolean usePlanCache) {
+  public OResultSet execute(
+      ODatabase db, Map args, OCommandContext parentContext, boolean usePlanCache) {
     ODatabaseDocumentInternal internalDb = (ODatabaseDocumentInternal) db;
     boolean res = internalDb.removeHaServer(serverName.getStringValue());
     OResultInternal r = new OResultInternal();

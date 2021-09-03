@@ -24,19 +24,15 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-/**
- * @author Luca Molino (molino.luca--at--gmail.com)
- * 
- */
+/** @author Luca Molino (molino.luca--at--gmail.com) */
 public class OEntityManagerClassHandler {
 
   private Map<String, Class<?>> entityClasses = new HashMap<String, Class<?>>();
 
   /**
    * Returns the Java class by its name
-   * 
-   * @param iClassName
-   *          Simple class name without the package
+   *
+   * @param iClassName Simple class name without the package
    * @return Returns the Java class by its name
    */
   public synchronized Class<?> getEntityClass(final String iClassName) {
@@ -55,7 +51,8 @@ public class OEntityManagerClassHandler {
     entityClasses.put(iClassName, iClass);
   }
 
-  public synchronized void registerEntityClass(final String iClassName, final Class<?> iClass, boolean forceSchemaReload) {
+  public synchronized void registerEntityClass(
+      final String iClassName, final Class<?> iClass, boolean forceSchemaReload) {
     entityClasses.put(iClassName, iClass);
   }
 
@@ -79,8 +76,8 @@ public class OEntityManagerClassHandler {
     return entityClasses.containsKey(iClass.getSimpleName());
   }
 
-  public synchronized Object createInstance(final Class<?> iClass) throws InstantiationException, IllegalAccessException,
-      InvocationTargetException {
+  public synchronized Object createInstance(final Class<?> iClass)
+      throws InstantiationException, IllegalAccessException, InvocationTargetException {
     Constructor<?> defaultConstructor = null;
     for (Constructor<?> c : iClass.getConstructors()) {
       if (c.getParameterTypes().length == 0) {
@@ -90,8 +87,12 @@ public class OEntityManagerClassHandler {
     }
 
     if (defaultConstructor == null)
-      throw new IllegalArgumentException("Cannot create an object of class '" + iClass.getName()
-          + "' because it has no default constructor. Please define the method: " + iClass.getSimpleName() + "()");
+      throw new IllegalArgumentException(
+          "Cannot create an object of class '"
+              + iClass.getName()
+              + "' because it has no default constructor. Please define the method: "
+              + iClass.getSimpleName()
+              + "()");
 
     if (!defaultConstructor.isAccessible())
       // OVERRIDE PROTECTION

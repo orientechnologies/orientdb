@@ -15,7 +15,7 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 
 package com.orientechnologies.orient.core.intent;
@@ -24,9 +24,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 
-/**
- * Disable cache. This is helpful with operation like UPDATE/DELETE of many records.
- */
+/** Disable cache. This is helpful with operation like UPDATE/DELETE of many records. */
 public class OIntentNoCache implements OIntent {
   private boolean previousLocalCacheEnabled;
   private boolean previousRetainRecords;
@@ -40,9 +38,7 @@ public class OIntentNoCache implements OIntent {
       ((ODatabaseDocument) ownerDb).setRetainRecords(false);
     }
 
-    while (ownerDb.getDatabaseOwner() != ownerDb)
-      ownerDb = ownerDb.getDatabaseOwner();
-
+    while (ownerDb.getDatabaseOwner() != ownerDb) ownerDb = ownerDb.getDatabaseOwner();
   }
 
   public void end(final ODatabaseDocumentInternal iDatabase) {
@@ -52,9 +48,7 @@ public class OIntentNoCache implements OIntent {
       ((ODatabaseDocument) ownerDb).setRetainRecords(previousRetainRecords);
     }
 
-    while (ownerDb.getDatabaseOwner() != ownerDb)
-      ownerDb = ownerDb.getDatabaseOwner();
-
+    while (ownerDb.getDatabaseOwner() != ownerDb) ownerDb = ownerDb.getDatabaseOwner();
   }
 
   @Override

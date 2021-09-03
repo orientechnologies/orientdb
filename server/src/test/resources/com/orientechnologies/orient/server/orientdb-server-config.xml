@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<orient-server>
+    <handlers>
+        <handler class="com.orientechnologies.orient.server.handler.OJMXPlugin">
+            <parameters>
+                <parameter value="true" name="enabled"/>
+                <parameter value="true" name="profilerManaged"/>
+            </parameters>
+        </handler>
+        <handler class="com.orientechnologies.orient.server.handler.OServerSideScriptInterpreter">
+            <parameters>
+                <parameter value="true" name="enabled"/>
+                <parameter value="SQL" name="allowedLanguages"/>
+            </parameters>
+        </handler>
+    </handlers>
+    <network>
+        <protocols>
+            <protocol
+                    implementation="com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary"
+                    name="binary"/>
+            <protocol implementation="com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb"
+                      name="http"/>
+        </protocols>
+        <listeners>
+            <listener protocol="binary" port-range="2424" ip-address="0.0.0.0"/>
+        </listeners>
+    </network>
+    <storages>
+    </storages>
+    <users>
+        <user resources="*" password="root" name="root"/>
+        <user resources="connect,server.listDatabases" password="guest" name="guest"/>
+    </users>
+    <properties>
+        <entry name="log.console.level" value="info"/>
+        <entry name="log.file.level" value="fine"/>
+    </properties>
+    <isAfterFirstTime>true</isAfterFirstTime>
+</orient-server>

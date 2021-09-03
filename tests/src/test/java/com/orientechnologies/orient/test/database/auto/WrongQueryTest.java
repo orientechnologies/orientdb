@@ -15,18 +15,13 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
-
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.exception.OQueryParsingException;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 
 @Test(groups = "query", sequential = true)
 public class WrongQueryTest extends DocumentDBBaseTest {
@@ -38,7 +33,10 @@ public class WrongQueryTest extends DocumentDBBaseTest {
 
   public void queryFieldOperatorNotSupported() {
     try {
-      database.command(new OSQLSynchQuery<ODocument>("select * from Account where name.not() like 'G%'")).execute();
+      database
+          .command(
+              new OSQLSynchQuery<ODocument>("select * from Account where name.not() like 'G%'"))
+          .execute();
       Assert.fail();
     } catch (OCommandSQLParsingException e) {
     }

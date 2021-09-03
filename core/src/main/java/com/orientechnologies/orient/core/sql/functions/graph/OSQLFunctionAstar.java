@@ -32,7 +32,6 @@ import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -44,39 +43,46 @@ import java.util.PriorityQueue;
 import java.util.Set;
 
 /**
- * A*'s algorithm describes how to find the cheapest path from one node to another node in a directed weighted graph with husrestic
- * function.
- * <p>
- * The first parameter is source record. The second parameter is destination record. The third parameter is a name of property that
- * represents 'weight' and fourth represnts the map of options.
- * <p>
- * If property is not defined in edge or is null, distance between vertexes are 0 .
+ * A*'s algorithm describes how to find the cheapest path from one node to another node in a
+ * directed weighted graph with husrestic function.
  *
- * @author Saeed Tabrizi (saeed a_t  nowcando.com)
+ * <p>The first parameter is source record. The second parameter is destination record. The third
+ * parameter is a name of property that represents 'weight' and fourth represnts the map of options.
+ *
+ * <p>If property is not defined in edge or is null, distance between vertexes are 0 .
+ *
+ * @author Saeed Tabrizi (saeed a_t nowcando.com)
  */
 public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
   public static final String NAME = "astar";
 
-  private   String                paramWeightFieldName = "weight";
-  private   long                  currentDepth         = 0;
-  protected Set<OVertex>          closedSet            = new HashSet<OVertex>();
-  protected Map<OVertex, OVertex> cameFrom             = new HashMap<OVertex, OVertex>();
+  private String paramWeightFieldName = "weight";
+  private long currentDepth = 0;
+  protected Set<OVertex> closedSet = new HashSet<OVertex>();
+  protected Map<OVertex, OVertex> cameFrom = new HashMap<OVertex, OVertex>();
 
-  protected Map<OVertex, Double>   gScore = new HashMap<OVertex, Double>();
-  protected Map<OVertex, Double>   fScore = new HashMap<OVertex, Double>();
-  protected PriorityQueue<OVertex> open   = new PriorityQueue<OVertex>(1, new Comparator<OVertex>() {
+  protected Map<OVertex, Double> gScore = new HashMap<OVertex, Double>();
+  protected Map<OVertex, Double> fScore = new HashMap<OVertex, Double>();
+  protected PriorityQueue<OVertex> open =
+      new PriorityQueue<OVertex>(
+          1,
+          new Comparator<OVertex>() {
 
-    public int compare(OVertex nodeA, OVertex nodeB) {
-      return Double.compare(fScore.get(nodeA), fScore.get(nodeB));
-    }
-  });
+            public int compare(OVertex nodeA, OVertex nodeB) {
+              return Double.compare(fScore.get(nodeA), fScore.get(nodeB));
+            }
+          });
 
   public OSQLFunctionAstar() {
     super(NAME, 3, 4);
   }
 
-  public LinkedList<OVertex> execute(final Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult,
-      final Object[] iParams, final OCommandContext iContext) {
+  public LinkedList<OVertex> execute(
+      final Object iThis,
+      final OIdentifiable iCurrentRecord,
+      final Object iCurrentResult,
+      final Object[] iParams,
+      final OCommandContext iContext) {
     context = iContext;
     final OSQLFunctionAstar context = this;
 
@@ -132,7 +138,6 @@ public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
       return new LinkedList<>();
     }
     return internalExecute(iContext, iContext.getDatabase());
-
   }
 
   private LinkedList<OVertex> internalExecute(final OCommandContext iContext, ODatabase graph) {
@@ -150,7 +155,8 @@ public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
     while (!open.isEmpty()) {
       OVertex current = open.poll();
 
-      // we discussed about this feature in https://github.com/orientechnologies/orientdb/pull/6002#issuecomment-212492687
+      // we discussed about this feature in
+      // https://github.com/orientechnologies/orientdb/pull/6002#issuecomment-212492687
       if (paramEmptyIfMaxDepth == true && currentDepth >= paramMaxDepth) {
         route.clear(); // to ensure our result is empty
         return getPath();
@@ -179,7 +185,8 @@ public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
 
         if (!contains || tentativeGScore < gScore.get(neighbor)) {
           gScore.put(neighbor, tentativeGScore);
-          fScore.put(neighbor, tentativeGScore + getHeuristicCost(neighbor, current, goal, iContext));
+          fScore.put(
+              neighbor, tentativeGScore + getHeuristicCost(neighbor, current, goal, iContext));
 
           if (contains) {
             open.remove(neighbor);
@@ -191,7 +198,6 @@ public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
 
       // Increment Depth Level
       currentDepth++;
-
     }
 
     return getPath();
@@ -221,8 +227,7 @@ public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
     if (node != null) {
       for (OEdge v : node.getEdges(paramDirection, paramEdgeTypeNames)) {
         final OEdge ov = v;
-        if (ov != null)
-          neighbors.add(ov);
+        if (ov != null) neighbors.add(ov);
       }
     }
     return neighbors;
@@ -240,32 +245,44 @@ public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
     }
     if (mapParams != null) {
       ctx.paramEdgeTypeNames = stringArray(mapParams.get(OSQLFunctionAstar.PARAM_EDGE_TYPE_NAMES));
-      ctx.paramVertexAxisNames = stringArray(mapParams.get(OSQLFunctionAstar.PARAM_VERTEX_AXIS_NAMES));
+      ctx.paramVertexAxisNames =
+          stringArray(mapParams.get(OSQLFunctionAstar.PARAM_VERTEX_AXIS_NAMES));
       if (mapParams.get(OSQLFunctionAstar.PARAM_DIRECTION) != null) {
         if (mapParams.get(OSQLFunctionAstar.PARAM_DIRECTION) instanceof String) {
-          ctx.paramDirection = ODirection
-              .valueOf(stringOrDefault(mapParams.get(OSQLFunctionAstar.PARAM_DIRECTION), "OUT").toUpperCase(Locale.ENGLISH));
+          ctx.paramDirection =
+              ODirection.valueOf(
+                  stringOrDefault(mapParams.get(OSQLFunctionAstar.PARAM_DIRECTION), "OUT")
+                      .toUpperCase(Locale.ENGLISH));
         } else {
           ctx.paramDirection = (ODirection) mapParams.get(OSQLFunctionAstar.PARAM_DIRECTION);
         }
       }
 
       ctx.paramParallel = booleanOrDefault(mapParams.get(OSQLFunctionAstar.PARAM_PARALLEL), false);
-      ctx.paramMaxDepth = longOrDefault(mapParams.get(OSQLFunctionAstar.PARAM_MAX_DEPTH), ctx.paramMaxDepth);
-      ctx.paramEmptyIfMaxDepth = booleanOrDefault(mapParams.get(OSQLFunctionAstar.PARAM_EMPTY_IF_MAX_DEPTH),
-          ctx.paramEmptyIfMaxDepth);
-      ctx.paramTieBreaker = booleanOrDefault(mapParams.get(OSQLFunctionAstar.PARAM_TIE_BREAKER), ctx.paramTieBreaker);
-      ctx.paramDFactor = doubleOrDefault(mapParams.get(OSQLFunctionAstar.PARAM_D_FACTOR), ctx.paramDFactor);
+      ctx.paramMaxDepth =
+          longOrDefault(mapParams.get(OSQLFunctionAstar.PARAM_MAX_DEPTH), ctx.paramMaxDepth);
+      ctx.paramEmptyIfMaxDepth =
+          booleanOrDefault(
+              mapParams.get(OSQLFunctionAstar.PARAM_EMPTY_IF_MAX_DEPTH), ctx.paramEmptyIfMaxDepth);
+      ctx.paramTieBreaker =
+          booleanOrDefault(mapParams.get(OSQLFunctionAstar.PARAM_TIE_BREAKER), ctx.paramTieBreaker);
+      ctx.paramDFactor =
+          doubleOrDefault(mapParams.get(OSQLFunctionAstar.PARAM_D_FACTOR), ctx.paramDFactor);
       if (mapParams.get(OSQLFunctionAstar.PARAM_HEURISTIC_FORMULA) != null) {
         if (mapParams.get(OSQLFunctionAstar.PARAM_HEURISTIC_FORMULA) instanceof String) {
-          ctx.paramHeuristicFormula = HeuristicFormula.valueOf(
-              stringOrDefault(mapParams.get(OSQLFunctionAstar.PARAM_HEURISTIC_FORMULA), "MANHATAN").toUpperCase(Locale.ENGLISH));
+          ctx.paramHeuristicFormula =
+              HeuristicFormula.valueOf(
+                  stringOrDefault(
+                          mapParams.get(OSQLFunctionAstar.PARAM_HEURISTIC_FORMULA), "MANHATAN")
+                      .toUpperCase(Locale.ENGLISH));
         } else {
-          ctx.paramHeuristicFormula = (HeuristicFormula) mapParams.get(OSQLFunctionAstar.PARAM_HEURISTIC_FORMULA);
+          ctx.paramHeuristicFormula =
+              (HeuristicFormula) mapParams.get(OSQLFunctionAstar.PARAM_HEURISTIC_FORMULA);
         }
       }
 
-      ctx.paramCustomHeuristicFormula = stringOrDefault(mapParams.get(OSQLFunctionAstar.PARAM_CUSTOM_HEURISTIC_FORMULA), "");
+      ctx.paramCustomHeuristicFormula =
+          stringOrDefault(mapParams.get(OSQLFunctionAstar.PARAM_CUSTOM_HEURISTIC_FORMULA), "");
     }
   }
 
@@ -294,10 +311,8 @@ public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
     if (e != null) {
       final Object fieldValue = e.getProperty(paramWeightFieldName);
       if (fieldValue != null)
-        if (fieldValue instanceof Float)
-          return (Float) fieldValue;
-        else if (fieldValue instanceof Number)
-          return ((Number) fieldValue).doubleValue();
+        if (fieldValue instanceof Float) return (Float) fieldValue;
+        else if (fieldValue instanceof Number) return ((Number) fieldValue).doubleValue();
     }
 
     return MIN;
@@ -307,10 +322,8 @@ public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
     if (edge != null) {
       final Object fieldValue = edge.getProperty(paramWeightFieldName);
       if (fieldValue != null)
-        if (fieldValue instanceof Float)
-          return (Float) fieldValue;
-        else if (fieldValue instanceof Number)
-          return ((Number) fieldValue).doubleValue();
+        if (fieldValue instanceof Float) return (Float) fieldValue;
+        else if (fieldValue instanceof Number) return ((Number) fieldValue).doubleValue();
     }
 
     return MIN;
@@ -322,7 +335,8 @@ public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
   }
 
   @Override
-  protected double getHeuristicCost(final OVertex node, OVertex parent, final OVertex target, OCommandContext iContext) {
+  protected double getHeuristicCost(
+      final OVertex node, OVertex parent, final OVertex target, OCommandContext iContext) {
     double hresult = 0.0;
 
     if (paramVertexAxisNames.length == 0) {
@@ -332,8 +346,7 @@ public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
       double g = doubleOrDefault(target.getProperty(paramVertexAxisNames[0]), 0.0);
       hresult = getSimpleHeuristicCost(n, g, paramDFactor);
     } else if (paramVertexAxisNames.length == 2) {
-      if (parent == null)
-        parent = node;
+      if (parent == null) parent = node;
       double sx = doubleOrDefault(paramSourceVertex.getProperty(paramVertexAxisNames[0]), 0);
       double sy = doubleOrDefault(paramSourceVertex.getProperty(paramVertexAxisNames[1]), 0);
       double nx = doubleOrDefault(node.getProperty(paramVertexAxisNames[0]), 0);
@@ -344,25 +357,34 @@ public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
       double gy = doubleOrDefault(target.getProperty(paramVertexAxisNames[1]), 0);
 
       switch (paramHeuristicFormula) {
-      case MANHATAN:
-        hresult = getManhatanHeuristicCost(nx, ny, gx, gy, paramDFactor);
-        break;
-      case MAXAXIS:
-        hresult = getMaxAxisHeuristicCost(nx, ny, gx, gy, paramDFactor);
-        break;
-      case DIAGONAL:
-        hresult = getDiagonalHeuristicCost(nx, ny, gx, gy, paramDFactor);
-        break;
-      case EUCLIDEAN:
-        hresult = getEuclideanHeuristicCost(nx, ny, gx, gy, paramDFactor);
-        break;
-      case EUCLIDEANNOSQR:
-        hresult = getEuclideanNoSQRHeuristicCost(nx, ny, gx, gy, paramDFactor);
-        break;
-      case CUSTOM:
-        hresult = getCustomHeuristicCost(paramCustomHeuristicFormula, paramVertexAxisNames, paramSourceVertex,
-            paramDestinationVertex, node, parent, currentDepth, paramDFactor, iContext);
-        break;
+        case MANHATAN:
+          hresult = getManhatanHeuristicCost(nx, ny, gx, gy, paramDFactor);
+          break;
+        case MAXAXIS:
+          hresult = getMaxAxisHeuristicCost(nx, ny, gx, gy, paramDFactor);
+          break;
+        case DIAGONAL:
+          hresult = getDiagonalHeuristicCost(nx, ny, gx, gy, paramDFactor);
+          break;
+        case EUCLIDEAN:
+          hresult = getEuclideanHeuristicCost(nx, ny, gx, gy, paramDFactor);
+          break;
+        case EUCLIDEANNOSQR:
+          hresult = getEuclideanNoSQRHeuristicCost(nx, ny, gx, gy, paramDFactor);
+          break;
+        case CUSTOM:
+          hresult =
+              getCustomHeuristicCost(
+                  paramCustomHeuristicFormula,
+                  paramVertexAxisNames,
+                  paramSourceVertex,
+                  paramDestinationVertex,
+                  node,
+                  parent,
+                  currentDepth,
+                  paramDFactor,
+                  iContext);
+          break;
       }
       if (paramTieBreaker) {
         hresult = getTieBreakingHeuristicCost(px, py, sx, sy, gx, gy, hresult);
@@ -379,49 +401,63 @@ public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
         Double c = doubleOrDefault(node.getProperty(paramVertexAxisNames[i]), 0);
         Double g = doubleOrDefault(target.getProperty(paramVertexAxisNames[i]), 0);
         Double p = doubleOrDefault(parent.getProperty(paramVertexAxisNames[i]), 0);
-        if (s != null)
-          sList.put(paramVertexAxisNames[i], s);
-        if (c != null)
-          cList.put(paramVertexAxisNames[i], s);
-        if (g != null)
-          gList.put(paramVertexAxisNames[i], g);
-        if (p != null)
-          pList.put(paramVertexAxisNames[i], p);
+        if (s != null) sList.put(paramVertexAxisNames[i], s);
+        if (c != null) cList.put(paramVertexAxisNames[i], s);
+        if (g != null) gList.put(paramVertexAxisNames[i], g);
+        if (p != null) pList.put(paramVertexAxisNames[i], p);
       }
       switch (paramHeuristicFormula) {
-      case MANHATAN:
-        hresult = getManhatanHeuristicCost(paramVertexAxisNames, sList, cList, pList, gList, currentDepth, paramDFactor);
-        break;
-      case MAXAXIS:
-        hresult = getMaxAxisHeuristicCost(paramVertexAxisNames, sList, cList, pList, gList, currentDepth, paramDFactor);
-        break;
-      case DIAGONAL:
-        hresult = getDiagonalHeuristicCost(paramVertexAxisNames, sList, cList, pList, gList, currentDepth, paramDFactor);
-        break;
-      case EUCLIDEAN:
-        hresult = getEuclideanHeuristicCost(paramVertexAxisNames, sList, cList, pList, gList, currentDepth, paramDFactor);
-        break;
-      case EUCLIDEANNOSQR:
-        hresult = getEuclideanNoSQRHeuristicCost(paramVertexAxisNames, sList, cList, pList, gList, currentDepth, paramDFactor);
-        break;
-      case CUSTOM:
-        hresult = getCustomHeuristicCost(paramCustomHeuristicFormula, paramVertexAxisNames, paramSourceVertex,
-            paramDestinationVertex, node, parent, currentDepth, paramDFactor, iContext);
-        break;
+        case MANHATAN:
+          hresult =
+              getManhatanHeuristicCost(
+                  paramVertexAxisNames, sList, cList, pList, gList, currentDepth, paramDFactor);
+          break;
+        case MAXAXIS:
+          hresult =
+              getMaxAxisHeuristicCost(
+                  paramVertexAxisNames, sList, cList, pList, gList, currentDepth, paramDFactor);
+          break;
+        case DIAGONAL:
+          hresult =
+              getDiagonalHeuristicCost(
+                  paramVertexAxisNames, sList, cList, pList, gList, currentDepth, paramDFactor);
+          break;
+        case EUCLIDEAN:
+          hresult =
+              getEuclideanHeuristicCost(
+                  paramVertexAxisNames, sList, cList, pList, gList, currentDepth, paramDFactor);
+          break;
+        case EUCLIDEANNOSQR:
+          hresult =
+              getEuclideanNoSQRHeuristicCost(
+                  paramVertexAxisNames, sList, cList, pList, gList, currentDepth, paramDFactor);
+          break;
+        case CUSTOM:
+          hresult =
+              getCustomHeuristicCost(
+                  paramCustomHeuristicFormula,
+                  paramVertexAxisNames,
+                  paramSourceVertex,
+                  paramDestinationVertex,
+                  node,
+                  parent,
+                  currentDepth,
+                  paramDFactor,
+                  iContext);
+          break;
       }
       if (paramTieBreaker) {
-        hresult = getTieBreakingHeuristicCost(paramVertexAxisNames, sList, cList, pList, gList, currentDepth, hresult);
+        hresult =
+            getTieBreakingHeuristicCost(
+                paramVertexAxisNames, sList, cList, pList, gList, currentDepth, hresult);
       }
-
     }
 
     return hresult;
-
   }
 
   @Override
   protected boolean isVariableEdgeWeight() {
     return true;
   }
-
 }

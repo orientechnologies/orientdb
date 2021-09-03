@@ -23,13 +23,11 @@ import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.method.misc.OAbstractSQLMethod;
 
 /**
- * ONLY FOR LIVE QUERY. Returns the value of current record (as an OResult) before it was updated. Null if the record is new
- * <br>
- * eg. on update, get only records whose "name" attribute was update
- * <code>
+ * ONLY FOR LIVE QUERY. Returns the value of current record (as an OResult) before it was updated.
+ * Null if the record is new <br>
+ * eg. on update, get only records whose "name" attribute was update <code>
  * db.live("select from Person where @this.beforeUpdate().name != name
  * </code>
- *
  *
  * @author Luigi Dell'Aquila (l.dellaquila--(at)--orientdb.com)
  */
@@ -47,7 +45,12 @@ public class OSQLMethodBeforeUpdate extends OAbstractSQLMethod {
   }
 
   @Override
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
+  public Object execute(
+      Object iThis,
+      OIdentifiable iCurrentRecord,
+      OCommandContext iContext,
+      Object ioResult,
+      Object[] iParams) {
     if (iThis instanceof OResult) {
       return ((OResult) iThis).getMetadata(LiveQueryListenerImpl.BEFORE_METADATA_KEY);
     }

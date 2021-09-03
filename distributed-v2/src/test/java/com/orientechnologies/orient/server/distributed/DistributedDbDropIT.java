@@ -19,11 +19,9 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import org.junit.Assert;
 import org.junit.Test;
 
-/**
- * Distributed test on drop database.
- */
+/** Distributed test on drop database. */
 public class DistributedDbDropIT extends AbstractServerClusterTxTest {
-  final static int SERVERS = 3;
+  static final int SERVERS = 3;
   int serverStarted = 0;
 
   @Test
@@ -49,7 +47,6 @@ public class DistributedDbDropIT extends AbstractServerClusterTxTest {
         Assert.assertTrue(e.getCause().getMessage().contains("it does not exist"));
       }
     }
-
   }
 
   protected String getDatabaseURL(final ServerRun server) {

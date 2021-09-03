@@ -1,8 +1,8 @@
 package com.orientechnologies.orient.core.command.script;
 
-import javax.script.ScriptEngineFactory;
 import java.util.HashSet;
 import java.util.Set;
+import javax.script.ScriptEngineFactory;
 
 public abstract class OSecuredScriptFactory implements ScriptEngineFactory {
 

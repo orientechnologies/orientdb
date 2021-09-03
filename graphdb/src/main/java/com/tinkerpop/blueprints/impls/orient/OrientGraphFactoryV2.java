@@ -30,9 +30,9 @@ import com.orientechnologies.orient.core.db.OrientDB;
  */
 public class OrientGraphFactoryV2 {
 
-  private final OrientDB      orientDB;
-  private       String        dbName;
-  private       ODatabasePool pool;
+  private final OrientDB orientDB;
+  private String dbName;
+  private ODatabasePool pool;
 
   /**
    * @param orientDB
@@ -46,26 +46,21 @@ public class OrientGraphFactoryV2 {
     pool = new ODatabasePool(orientDB, dbName, username, password);
   }
 
-  /**
-   * Closes all pooled databases and clear the pool.
-   */
+  /** Closes all pooled databases and clear the pool. */
   public void close() {
-    if (pool != null)
-      pool.close();
+    if (pool != null) pool.close();
 
     pool = null;
   }
 
-  /**
-   * Drops current database if such one exists.
-   */
+  /** Drops current database if such one exists. */
   public void drop() {
     orientDB.drop(dbName);
   }
 
   /**
-   * Gets transactional graph with the database from pool if pool is configured. Otherwise creates a graph with new db instance. The
-   * Graph instance inherits the factory's configuration.
+   * Gets transactional graph with the database from pool if pool is configured. Otherwise creates a
+   * graph with new db instance. The Graph instance inherits the factory's configuration.
    *
    * @return transactional graph
    */
@@ -78,8 +73,8 @@ public class OrientGraphFactoryV2 {
   }
 
   /**
-   * Gets non transactional graph with the database from pool if pool is configured. Otherwise creates a graph with new db instance.
-   * The Graph instance inherits the factory's configuration.
+   * Gets non transactional graph with the database from pool if pool is configured. Otherwise
+   * creates a graph with new db instance. The Graph instance inherits the factory's configuration.
    *
    * @return non transactional graph
    */
@@ -93,13 +88,12 @@ public class OrientGraphFactoryV2 {
 
   /**
    * Check if the database with path given to the factory exists.
-   * <p>
-   * this api can be used only in embedded mode, and has no need of authentication.
+   *
+   * <p>this api can be used only in embedded mode, and has no need of authentication.
    *
    * @return true if database is exists
    */
   public boolean exists() {
     return orientDB.exists(dbName);
   }
-
 }

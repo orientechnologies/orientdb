@@ -15,26 +15,25 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.client.db.ODatabaseHelper;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.object.db.OObjectDatabasePool;
+import com.orientechnologies.orient.object.enhancement.OObjectEntityEnhancer;
+import com.orientechnologies.orient.object.enhancement.OObjectMethodFilter;
+import com.orientechnologies.orient.test.domain.base.CustomMethodFilterTestClass;
 import java.io.IOException;
 import java.lang.reflect.Method;
-
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.client.db.ODatabaseHelper;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.object.db.OObjectDatabasePool;
-import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
-import com.orientechnologies.orient.object.enhancement.OObjectEntityEnhancer;
-import com.orientechnologies.orient.object.enhancement.OObjectMethodFilter;
-import com.orientechnologies.orient.test.domain.base.CustomMethodFilterTestClass;
-
-@Test(groups = { "object", "enhancingSchemaFull" }, dependsOnGroups = "detachingSchemaFull")
+@Test(
+    groups = {"object", "enhancingSchemaFull"},
+    dependsOnGroups = "detachingSchemaFull")
 public class ObjectEnhancingTestSchemaFull extends ObjectDBBaseTest {
 
   @Parameters(value = "url")
@@ -44,7 +43,8 @@ public class ObjectEnhancingTestSchemaFull extends ObjectDBBaseTest {
 
   @Test()
   public void testCustomMethodFilter() {
-    OObjectEntityEnhancer.getInstance().registerClassMethodFilter(CustomMethodFilterTestClass.class, new CustomMethodFilter());
+    OObjectEntityEnhancer.getInstance()
+        .registerClassMethodFilter(CustomMethodFilterTestClass.class, new CustomMethodFilter());
     CustomMethodFilterTestClass testClass = database.newInstance(CustomMethodFilterTestClass.class);
     testClass.setStandardField("testStandard");
     testClass.setUPPERCASEFIELD("testUpperCase");
@@ -87,8 +87,7 @@ public class ObjectEnhancingTestSchemaFull extends ObjectDBBaseTest {
           return "UPPERCASEFIELD";
         }
         return getFieldName(m.getName(), "set");
-      } else
-        return getFieldName(m.getName(), "is");
+      } else return getFieldName(m.getName(), "is");
     }
 
     @Override
@@ -106,7 +105,7 @@ public class ObjectEnhancingTestSchemaFull extends ObjectDBBaseTest {
   public void end() throws IOException {
     String prefix = url.substring(0, url.indexOf(':') + 1);
     OLogManager.instance().info(this, "deleting database " + url);
-    ODatabaseHelper.dropDatabase(OObjectDatabasePool.global().acquire(url, "admin", "admin"), prefix);
+    ODatabaseHelper.dropDatabase(
+        OObjectDatabasePool.global().acquire(url, "admin", "admin"), prefix);
   }
-
 }

@@ -27,16 +27,18 @@ import com.orientechnologies.orient.core.engine.OMemoryAndLocalPaginatedEnginesI
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.memory.ODirectMemoryStorage;
-
 import java.util.Map;
 
 public class OEngineMemory extends OEngineAbstract {
   public static final String NAME = "memory";
 
-  public OEngineMemory() {
-  }
+  public OEngineMemory() {}
 
-  public OStorage createStorage(String url, Map<String, String> configuration, long maxWalSegSize, long doubleWriteLogMaxSegSize,
+  public OStorage createStorage(
+      String url,
+      Map<String, String> configuration,
+      long maxWalSegSize,
+      long doubleWriteLogMaxSegSize,
       int storageId) {
     try {
       return new ODirectMemoryStorage(url, url, getMode(configuration), storageId);

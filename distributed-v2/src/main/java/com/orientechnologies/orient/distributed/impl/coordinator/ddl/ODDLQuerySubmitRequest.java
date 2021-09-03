@@ -5,7 +5,6 @@ import com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMess
 import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedCoordinator;
 import com.orientechnologies.orient.distributed.impl.coordinator.OSubmitRequest;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -18,18 +17,21 @@ public class ODDLQuerySubmitRequest implements OSubmitRequest {
     this.query = query;
   }
 
-  public ODDLQuerySubmitRequest() {
-
-  }
+  public ODDLQuerySubmitRequest() {}
 
   public String getQuery() {
     return query;
   }
 
   @Override
-  public void begin(ONodeIdentity requester, OSessionOperationId operationId, ODistributedCoordinator coordinator) {
-    coordinator
-        .sendOperation(this, new ODDLQueryOperationRequest(query), new ODDLQueryResultHandler(requester, operationId));
+  public void begin(
+      ONodeIdentity requester,
+      OSessionOperationId operationId,
+      ODistributedCoordinator coordinator) {
+    coordinator.sendOperation(
+        this,
+        new ODDLQueryOperationRequest(query),
+        new ODDLQueryResultHandler(requester, operationId));
   }
 
   @Override

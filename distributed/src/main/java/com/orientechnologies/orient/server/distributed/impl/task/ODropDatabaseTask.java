@@ -34,24 +34,35 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
  */
 public class ODropDatabaseTask extends OAbstractRemoteTask {
   private static final long serialVersionUID = 1L;
-  public static final  int  FACTORYID        = 23;
+  public static final int FACTORYID = 23;
 
-  public ODropDatabaseTask() {
-  }
+  public ODropDatabaseTask() {}
 
   @Override
-  public Object execute(ODistributedRequestId requestId, final OServer iServer, final ODistributedServerManager iManager,
-      final ODatabaseDocumentInternal database) throws Exception {
+  public Object execute(
+      ODistributedRequestId requestId,
+      final OServer iServer,
+      final ODistributedServerManager iManager,
+      final ODatabaseDocumentInternal database)
+      throws Exception {
 
     if (database == null) {
-      ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.IN,
+      ODistributedServerLog.warn(
+          this,
+          iManager.getLocalNodeName(),
+          getNodeSource(),
+          ODistributedServerLog.DIRECTION.IN,
           "Cannot drop database because not existent");
       return true;
     }
 
-    ODistributedServerLog
-        .warn(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.IN, "Dropping database %s...",
-            database.getName());
+    ODistributedServerLog.warn(
+        this,
+        iManager.getLocalNodeName(),
+        getNodeSource(),
+        ODistributedServerLog.DIRECTION.IN,
+        "Dropping database %s...",
+        database.getName());
 
     iServer.dropDatabase(database.getName());
 

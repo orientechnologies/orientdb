@@ -29,22 +29,21 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
-
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 /**
- * SQL TRUNCATE RECORD command: Truncates a record without loading it. Useful when the record is dirty in any way and cannot be
- * loaded correctly.
- * 
+ * SQL TRUNCATE RECORD command: Truncates a record without loading it. Useful when the record is
+ * dirty in any way and cannot be loaded correctly.
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
-public class OCommandExecutorSQLTruncateRecord extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
+public class OCommandExecutorSQLTruncateRecord extends OCommandExecutorSQLAbstract
+    implements OCommandDistributedReplicateRequest {
   public static final String KEYWORD_TRUNCATE = "TRUNCATE";
-  public static final String KEYWORD_RECORD   = "RECORD";
-  private Set<String>        records          = new HashSet<String>();
+  public static final String KEYWORD_RECORD = "RECORD";
+  private Set<String> records = new HashSet<String>();
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLTruncateRecord parse(final OCommandRequest iRequest) {
@@ -63,17 +62,20 @@ public class OCommandExecutorSQLTruncateRecord extends OCommandExecutorSQLAbstra
       int oldPos = 0;
       int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
       if (pos == -1 || !word.toString().equals(KEYWORD_TRUNCATE))
-        throw new OCommandSQLParsingException("Keyword " + KEYWORD_TRUNCATE + " not found. Use " + getSyntax(), parserText, oldPos);
+        throw new OCommandSQLParsingException(
+            "Keyword " + KEYWORD_TRUNCATE + " not found. Use " + getSyntax(), parserText, oldPos);
 
       oldPos = pos;
       pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
       if (pos == -1 || !word.toString().equals(KEYWORD_RECORD))
-        throw new OCommandSQLParsingException("Keyword " + KEYWORD_RECORD + " not found. Use " + getSyntax(), parserText, oldPos);
+        throw new OCommandSQLParsingException(
+            "Keyword " + KEYWORD_RECORD + " not found. Use " + getSyntax(), parserText, oldPos);
 
       oldPos = pos;
       pos = nextWord(parserText, parserText, oldPos, word, true);
       if (pos == -1)
-        throw new OCommandSQLParsingException("Expected one or more records. Use " + getSyntax(), parserText, oldPos);
+        throw new OCommandSQLParsingException(
+            "Expected one or more records. Use " + getSyntax(), parserText, oldPos);
 
       if (word.charAt(0) == '[')
         // COLLECTION
@@ -83,19 +85,19 @@ public class OCommandExecutorSQLTruncateRecord extends OCommandExecutorSQLAbstra
       }
 
       if (records.isEmpty())
-        throw new OCommandSQLParsingException("Missed record(s). Use " + getSyntax(), parserText, oldPos);
+        throw new OCommandSQLParsingException(
+            "Missed record(s). Use " + getSyntax(), parserText, oldPos);
     } finally {
       textRequest.setText(originalQuery);
     }
     return this;
   }
 
-  /**
-   * Execute the command.
-   */
+  /** Execute the command. */
   public Object execute(final Map<Object, Object> iArgs) {
     if (records.isEmpty())
-      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+      throw new OCommandExecutionException(
+          "Cannot execute the command because it has not been parsed yet");
 
     int deleted = 0;
 
@@ -103,14 +105,15 @@ public class OCommandExecutorSQLTruncateRecord extends OCommandExecutorSQLAbstra
     for (String rec : records) {
       try {
         final ORecordId rid = new ORecordId(rec);
-        final OStorageOperationResult<Boolean> result = database.getStorage().deleteRecord(rid, -1, 0, null);
+        final OStorageOperationResult<Boolean> result =
+            database.getStorage().deleteRecord(rid, -1, 0, null);
         database.getLocalCache().deleteRecord(rid);
 
-        if (result.getResult())
-          deleted++;
+        if (result.getResult()) deleted++;
 
       } catch (Exception e) {
-        throw OException.wrapException(new OCommandExecutionException("Error on executing command"), e);
+        throw OException.wrapException(
+            new OCommandExecutionException("Error on executing command"), e);
       }
     }
 
@@ -119,7 +122,9 @@ public class OCommandExecutorSQLTruncateRecord extends OCommandExecutorSQLAbstra
 
   @Override
   public long getDistributedTimeout() {
-    return getDatabase().getConfiguration().getValueAsLong(OGlobalConfiguration.DISTRIBUTED_COMMAND_QUICK_TASK_SYNCH_TIMEOUT);
+    return getDatabase()
+        .getConfiguration()
+        .getValueAsLong(OGlobalConfiguration.DISTRIBUTED_COMMAND_QUICK_TASK_SYNCH_TIMEOUT);
   }
 
   @Override

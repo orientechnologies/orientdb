@@ -26,7 +26,6 @@ package com.orientechnologies.orient.output;
  * @author Gabriele Ponzi
  * @email gabriele.ponzi--at--gmail.com
  */
-
 public interface OPluginMessageHandler {
 
   int getOutputManagerLevel();
@@ -48,5 +47,4 @@ public interface OPluginMessageHandler {
   void error(Object requester, String message);
 
   void error(Object requester, String format, Object... args);
-
 }

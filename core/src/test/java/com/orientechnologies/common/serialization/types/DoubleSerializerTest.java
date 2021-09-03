@@ -18,20 +18,19 @@ package com.orientechnologies.common.serialization.types;
 
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 
 /**
  * @author Ilya Bershadskiy (ibersh20-at-gmail.com)
  * @since 18.01.12
  */
 public class DoubleSerializerTest {
-  private static final int    FIELD_SIZE = 8;
-  private static final Double OBJECT     = Math.PI;
+  private static final int FIELD_SIZE = 8;
+  private static final Double OBJECT = Math.PI;
   byte[] stream = new byte[FIELD_SIZE];
   private ODoubleSerializer doubleSerializer;
 
@@ -92,14 +91,19 @@ public class DoubleSerializerTest {
   @Test
   public void testSerializeWALChanges() {
     final int serializationOffset = 5;
-    final ByteBuffer buffer = ByteBuffer.allocateDirect(FIELD_SIZE + serializationOffset).order(ByteOrder.nativeOrder());
+    final ByteBuffer buffer =
+        ByteBuffer.allocateDirect(FIELD_SIZE + serializationOffset).order(ByteOrder.nativeOrder());
     final byte[] data = new byte[FIELD_SIZE];
     doubleSerializer.serializeNativeObject(OBJECT, data, 0);
 
     final OWALChanges walChanges = new OWALChangesTree();
     walChanges.setBinaryValue(buffer, data, serializationOffset);
 
-    Assert.assertEquals(doubleSerializer.getObjectSizeInByteBuffer(buffer, walChanges, serializationOffset), FIELD_SIZE);
-    Assert.assertEquals(doubleSerializer.deserializeFromByteBufferObject(buffer, walChanges, serializationOffset), OBJECT);
+    Assert.assertEquals(
+        doubleSerializer.getObjectSizeInByteBuffer(buffer, walChanges, serializationOffset),
+        FIELD_SIZE);
+    Assert.assertEquals(
+        doubleSerializer.deserializeFromByteBufferObject(buffer, walChanges, serializationOffset),
+        OBJECT);
   }
 }

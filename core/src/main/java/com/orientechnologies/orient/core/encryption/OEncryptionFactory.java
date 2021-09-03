@@ -27,25 +27,23 @@ import com.orientechnologies.orient.core.encryption.impl.OAESGCMEncryption;
 import com.orientechnologies.orient.core.encryption.impl.ODESEncryption;
 import com.orientechnologies.orient.core.encryption.impl.ONothingEncryption;
 import com.orientechnologies.orient.core.exception.OSecurityException;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
 /**
  * Factory of encryption algorithms.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OEncryptionFactory {
-  public static final OEncryptionFactory                  INSTANCE  = new OEncryptionFactory();
+  public static final OEncryptionFactory INSTANCE = new OEncryptionFactory();
 
-  private final Map<String, OEncryption>                  instances = new HashMap<String, OEncryption>();
-  private final Map<String, Class<? extends OEncryption>> classes   = new HashMap<String, Class<? extends OEncryption>>();
+  private final Map<String, OEncryption> instances = new HashMap<String, OEncryption>();
+  private final Map<String, Class<? extends OEncryption>> classes =
+      new HashMap<String, Class<? extends OEncryption>>();
 
-  /**
-   * Install default encryption algorithms.
-   */
+  /** Install default encryption algorithms. */
   public OEncryptionFactory() {
     register(ONothingEncryption.class);
     register(ODESEncryption.class);
@@ -59,10 +57,8 @@ public class OEncryptionFactory {
 
       final Class<? extends OEncryption> encryptionClass;
 
-      if (name == null)
-        encryptionClass = ONothingEncryption.class;
-      else
-        encryptionClass = classes.get(name);
+      if (name == null) encryptionClass = ONothingEncryption.class;
+      else encryptionClass = classes.get(name);
 
       if (encryptionClass != null) {
         try {
@@ -70,10 +66,10 @@ public class OEncryptionFactory {
           encryption.configure(iOptions);
 
         } catch (Exception e) {
-          throw OException.wrapException(new OSecurityException("Cannot instantiate encryption algorithm '" + name + "'"), e);
+          throw OException.wrapException(
+              new OSecurityException("Cannot instantiate encryption algorithm '" + name + "'"), e);
         }
-      } else
-        throw new OSecurityException("Encryption with name '" + name + "' is absent");
+      } else throw new OSecurityException("Encryption with name '" + name + "' is absent");
     }
     return encryption;
   }
@@ -81,30 +77,31 @@ public class OEncryptionFactory {
   /**
    * Registers a stateful implementations, a new instance will be created for each storage.
    *
-   * @param iEncryption
-   *          Encryption instance
+   * @param iEncryption Encryption instance
    */
   public void register(final OEncryption iEncryption) {
     try {
       final String name = iEncryption.name();
 
       if (instances.containsKey(name))
-        throw new IllegalArgumentException("Encryption with name '" + name + "' was already registered");
+        throw new IllegalArgumentException(
+            "Encryption with name '" + name + "' was already registered");
 
       if (classes.containsKey(name))
-        throw new IllegalArgumentException("Encryption with name '" + name + "' was already registered");
+        throw new IllegalArgumentException(
+            "Encryption with name '" + name + "' was already registered");
 
       instances.put(name, iEncryption);
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Cannot register storage encryption algorithm '%s'", e, iEncryption);
+      OLogManager.instance()
+          .error(this, "Cannot register storage encryption algorithm '%s'", e, iEncryption);
     }
   }
 
   /**
    * Registers a stateless implementations, the same instance will be shared on all the storages.
    *
-   * @param iEncryption
-   *          Encryption class
+   * @param iEncryption Encryption class
    */
   public void register(final Class<? extends OEncryption> iEncryption) {
     try {
@@ -113,14 +110,17 @@ public class OEncryptionFactory {
       final String name = tempInstance.name();
 
       if (instances.containsKey(name))
-        throw new IllegalArgumentException("Encryption with name '" + name + "' was already registered");
+        throw new IllegalArgumentException(
+            "Encryption with name '" + name + "' was already registered");
 
       if (classes.containsKey(tempInstance.name()))
-        throw new IllegalArgumentException("Encryption with name '" + name + "' was already registered");
+        throw new IllegalArgumentException(
+            "Encryption with name '" + name + "' was already registered");
 
       classes.put(name, iEncryption);
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Cannot register storage encryption algorithm '%s'", e, iEncryption);
+      OLogManager.instance()
+          .error(this, "Cannot register storage encryption algorithm '%s'", e, iEncryption);
     }
   }
 

@@ -27,16 +27,14 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
-
 import java.io.IOException;
 
 public class OReloadRequest37 implements OBinaryRequest<OReloadResponse37> {
   @Override
-  public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
-  }
+  public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {}
 
-  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
-  }
+  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {}
 
   @Override
   public byte getCommand() {

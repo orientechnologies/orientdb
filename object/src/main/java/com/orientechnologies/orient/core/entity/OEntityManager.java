@@ -19,6 +19,13 @@
  */
 package com.orientechnologies.orient.core.entity;
 
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.reflection.OReflectionHelper;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.OUser;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
@@ -28,17 +35,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.reflection.OReflectionHelper;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.metadata.security.OUser;
-
 public class OEntityManager {
-  private static Map<String, OEntityManager> databaseInstances = new HashMap<String, OEntityManager>();
-  private OEntityManagerClassHandler         classHandler      = new OEntityManagerClassHandler();
+  private static Map<String, OEntityManager> databaseInstances =
+      new HashMap<String, OEntityManager>();
+  private OEntityManagerClassHandler classHandler = new OEntityManagerClassHandler();
 
   protected OEntityManager() {
     OLogManager.instance().debug(this, "Registering entity manager");
@@ -58,7 +58,7 @@ public class OEntityManager {
 
   /**
    * Create a POJO by its class name.
-   * 
+   *
    * @see #registerEntityClasses(String)
    */
   public synchronized Object createPojo(final String iClassName) throws OConfigurationException {
@@ -68,27 +68,32 @@ public class OEntityManager {
     final Class<?> entityClass = classHandler.getEntityClass(iClassName);
 
     try {
-      if (entityClass != null)
-        return createInstance(entityClass);
+      if (entityClass != null) return createInstance(entityClass);
 
     } catch (Exception e) {
-      throw OException.wrapException(new OConfigurationException("Error while creating new pojo of class '" + iClassName + "'"), e);
+      throw OException.wrapException(
+          new OConfigurationException(
+              "Error while creating new pojo of class '" + iClassName + "'"),
+          e);
     }
 
     try {
       // TRY TO INSTANTIATE THE CLASS DIRECTLY BY ITS NAME
       return createInstance(Class.forName(iClassName));
     } catch (Exception e) {
-      throw OException.wrapException(new OConfigurationException("The class '" + iClassName
-          + "' was not found between the entity classes. Ensure registerEntityClasses(package) has been called first"), e);
+      throw OException.wrapException(
+          new OConfigurationException(
+              "The class '"
+                  + iClassName
+                  + "' was not found between the entity classes. Ensure registerEntityClasses(package) has been called first"),
+          e);
     }
   }
 
   /**
    * Returns the Java class by its name
-   * 
-   * @param iClassName
-   *          Simple class name without the package
+   *
+   * @param iClassName Simple class name without the package
    * @return Returns the Java class by its name
    */
   public synchronized Class<?> getEntityClass(final String iClassName) {
@@ -104,19 +109,22 @@ public class OEntityManager {
   }
 
   /**
-   * Scans all classes accessible from the context class loader which belong to the given package and subpackages.
-   * 
-   * @param iPackageName
-   *          The base package
+   * Scans all classes accessible from the context class loader which belong to the given package
+   * and subpackages.
+   *
+   * @param iPackageName The base package
    */
-  public synchronized void deregisterEntityClasses(final String iPackageName, final ClassLoader iClassLoader) {
-    OLogManager.instance().debug(this, "Discovering entity classes inside package: %s", iPackageName);
+  public synchronized void deregisterEntityClasses(
+      final String iPackageName, final ClassLoader iClassLoader) {
+    OLogManager.instance()
+        .debug(this, "Discovering entity classes inside package: %s", iPackageName);
 
     List<Class<?>> classes = null;
     try {
       classes = OReflectionHelper.getClassesFor(iPackageName, iClassLoader);
     } catch (ClassNotFoundException e) {
-      throw OException.wrapException(new ODatabaseException("Class cannot be found in package " + iPackageName), e);
+      throw OException.wrapException(
+          new ODatabaseException("Class cannot be found in package " + iPackageName), e);
     }
     for (Class<?> c : classes) {
       deregisterEntityClass(c);
@@ -124,7 +132,8 @@ public class OEntityManager {
 
     if (OLogManager.instance().isDebugEnabled()) {
       for (Entry<String, Class<?>> entry : classHandler.getClassesEntrySet()) {
-        OLogManager.instance().debug(this, "Unloaded entity class '%s' from: %s", entry.getKey(), entry.getValue());
+        OLogManager.instance()
+            .debug(this, "Unloaded entity class '%s' from: %s", entry.getKey(), entry.getValue());
       }
     }
   }
@@ -139,9 +148,8 @@ public class OEntityManager {
 
   /**
    * Registers provided classes
-   * 
-   * @param iClassNames
-   *          to be registered
+   *
+   * @param iClassNames to be registered
    */
   public synchronized void registerEntityClasses(final Collection<String> iClassNames) {
     registerEntityClasses(iClassNames, Thread.currentThread().getContextClassLoader());
@@ -149,13 +157,14 @@ public class OEntityManager {
 
   /**
    * Registers provided classes
-   * 
-   * @param iClassNames
-   *          to be registered
+   *
+   * @param iClassNames to be registered
    * @param iClassLoader
    */
-  public synchronized void registerEntityClasses(final Collection<String> iClassNames, final ClassLoader iClassLoader) {
-    OLogManager.instance().debug(this, "Discovering entity classes for class names: %s", iClassNames);
+  public synchronized void registerEntityClasses(
+      final Collection<String> iClassNames, final ClassLoader iClassLoader) {
+    OLogManager.instance()
+        .debug(this, "Discovering entity classes for class names: %s", iClassNames);
 
     try {
       registerEntityClasses(OReflectionHelper.getClassesFor(iClassNames, iClassLoader));
@@ -165,24 +174,26 @@ public class OEntityManager {
   }
 
   /**
-   * Scans all classes accessible from the context class loader which belong to the given package and subpackages.
-   * 
-   * @param iPackageName
-   *          The base package
+   * Scans all classes accessible from the context class loader which belong to the given package
+   * and subpackages.
+   *
+   * @param iPackageName The base package
    */
   public synchronized void registerEntityClasses(final String iPackageName) {
     registerEntityClasses(iPackageName, Thread.currentThread().getContextClassLoader());
   }
 
   /**
-   * Scans all classes accessible from the context class loader which belong to the given package and subpackages.
-   * 
-   * @param iPackageName
-   *          The base package
+   * Scans all classes accessible from the context class loader which belong to the given package
+   * and subpackages.
+   *
+   * @param iPackageName The base package
    * @param iClassLoader
    */
-  public synchronized void registerEntityClasses(final String iPackageName, final ClassLoader iClassLoader) {
-    OLogManager.instance().debug(this, "Discovering entity classes inside package: %s", iPackageName);
+  public synchronized void registerEntityClasses(
+      final String iPackageName, final ClassLoader iClassLoader) {
+    OLogManager.instance()
+        .debug(this, "Discovering entity classes inside package: %s", iPackageName);
 
     try {
       registerEntityClasses(OReflectionHelper.getClassesFor(iPackageName, iClassLoader));
@@ -195,7 +206,8 @@ public class OEntityManager {
     for (Class<?> c : classes) {
       if (!classHandler.containsEntityClass(c)) {
         if (c.isAnonymousClass()) {
-          OLogManager.instance().debug(this, "Skip registration of anonymous class '%s'", c.getName());
+          OLogManager.instance()
+              .debug(this, "Skip registration of anonymous class '%s'", c.getName());
           continue;
         }
         classHandler.registerEntityClass(c);
@@ -204,19 +216,19 @@ public class OEntityManager {
 
     if (OLogManager.instance().isDebugEnabled()) {
       for (Entry<String, Class<?>> entry : classHandler.getClassesEntrySet()) {
-        OLogManager.instance().debug(this, "Loaded entity class '%s' from: %s", entry.getKey(), entry.getValue());
+        OLogManager.instance()
+            .debug(this, "Loaded entity class '%s' from: %s", entry.getKey(), entry.getValue());
       }
     }
   }
 
   /**
-   * Scans all classes accessible from the context class loader which belong to the given class and all it's attributes - classes.
+   * Scans all classes accessible from the context class loader which belong to the given class and
+   * all it's attributes - classes.
    *
-   * @param aClass
-   *          The class to start from
-   * @param recursive
-   *          Beginning from the class, it will register all classes that are direct or indirect a attribute class
-   *
+   * @param aClass The class to start from
+   * @param recursive Beginning from the class, it will register all classes that are direct or
+   *     indirect a attribute class
    */
   public synchronized void registerEntityClasses(Class<?> aClass, boolean recursive) {
     if (recursive) {
@@ -235,7 +247,7 @@ public class OEntityManager {
 
   /**
    * Sets the received handler as default and merges the classes all together.
-   * 
+   *
    * @param iClassHandler
    */
   public synchronized void setClassHandler(final OEntityManagerClassHandler iClassHandler) {

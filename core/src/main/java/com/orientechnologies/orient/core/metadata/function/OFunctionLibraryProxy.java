@@ -19,19 +19,19 @@
  */
 package com.orientechnologies.orient.core.metadata.function;
 
-import java.util.Set;
-
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OProxedResource;
+import java.util.Set;
 
 /**
  * Proxy class to access to the centralized Function Library instance.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public class OFunctionLibraryProxy extends OProxedResource<OFunctionLibraryImpl> implements OFunctionLibrary {
-  public OFunctionLibraryProxy(final OFunctionLibraryImpl iDelegate, final ODatabaseDocumentInternal iDatabase) {
+public class OFunctionLibraryProxy extends OProxedResource<OFunctionLibraryImpl>
+    implements OFunctionLibrary {
+  public OFunctionLibraryProxy(
+      final OFunctionLibraryImpl iDelegate, final ODatabaseDocumentInternal iDatabase) {
     super(iDelegate, iDatabase);
   }
 

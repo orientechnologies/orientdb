@@ -1,5 +1,9 @@
 package com.orientechnologies.orient.core.sql.executor;
 
+import static com.orientechnologies.orient.core.sql.executor.ExecutionPlanPrintUtils.printExecutionPlan;
+
+import com.orientechnologies.common.concur.OTimeoutException;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -14,26 +18,22 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.OSQLEngine;
+import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
+import java.lang.reflect.Array;
+import java.util.*;
+import java.util.concurrent.CountDownLatch;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.lang.reflect.Array;
-import java.util.*;
-import java.util.concurrent.CountDownLatch;
-
-import static com.orientechnologies.orient.core.sql.executor.ExecutionPlanPrintUtils.printExecutionPlan;
-
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OSelectStatementExecutionTest {
   static ODatabaseDocument db;
 
   @BeforeClass
   public static void beforeClass() {
-
     db = new ODatabaseDocumentTx("memory:OSelectStatementExecutionTest");
     db.create();
   }
@@ -54,6 +54,32 @@ public class OSelectStatementExecutionTest {
     Assert.assertEquals(5, item.<Object>getProperty("2 + 3"));
     printExecutionPlan(result);
 
+    result.close();
+  }
+
+  @Test
+  public void testGroupByCount() {
+    db.getMetadata().getSchema().createClass("InputTx");
+
+    for (int i = 0; i < 100; i++) {
+      final String hash = UUID.randomUUID().toString();
+      db.command("insert into InputTx set address = '" + hash + "'");
+
+      // CREATE RANDOM NUMBER OF COPIES final int random = new Random().nextInt(10);
+      final int random = new Random().nextInt(10);
+      for (int j = 0; j < random; j++) {
+        db.command("insert into InputTx set address = '" + hash + "'");
+      }
+    }
+
+    final OResultSet result =
+        db.query(
+            "select address, count(*) as occurrencies from InputTx where address is not null group by address limit 10");
+    while (result.hasNext()) {
+      final OResult row = result.next();
+      Assert.assertNotNull(row.getProperty("address")); // <== FALSE!
+      Assert.assertNotNull(row.getProperty("occurrencies"));
+    }
     result.close();
   }
 
@@ -151,7 +177,8 @@ public class OSelectStatementExecutionTest {
       Assert.assertNotNull(item);
       Assert.assertTrue(("" + item.getProperty("name")).startsWith("name"));
       if (lastItem != null) {
-        Assert.assertTrue(lastItem.getIdentity().compareTo(item.getElement().get().getIdentity()) < 0);
+        Assert.assertTrue(
+            lastItem.getIdentity().compareTo(item.getElement().get().getIdentity()) < 0);
       }
       lastItem = item.getElement().get();
     }
@@ -179,7 +206,8 @@ public class OSelectStatementExecutionTest {
       Assert.assertNotNull(item);
       Assert.assertTrue(("" + item.getProperty("name")).startsWith("name"));
       if (lastItem != null) {
-        Assert.assertTrue(lastItem.getIdentity().compareTo(item.getElement().get().getIdentity()) > 0);
+        Assert.assertTrue(
+            lastItem.getIdentity().compareTo(item.getElement().get().getIdentity()) > 0);
       }
       lastItem = item.getElement().get();
     }
@@ -206,7 +234,6 @@ public class OSelectStatementExecutionTest {
       OResult item = result.next();
       Assert.assertNotNull(item);
       Assert.assertTrue(("" + item.getProperty("name")).startsWith("name"));
-
     }
     Assert.assertFalse(result.hasNext());
     result.close();
@@ -230,7 +257,6 @@ public class OSelectStatementExecutionTest {
       OResult item = result.next();
       Assert.assertNotNull(item);
       Assert.assertTrue(("" + item.getProperty("name")).startsWith("name"));
-
     }
     Assert.assertFalse(result.hasNext());
     result.close();
@@ -304,7 +330,7 @@ public class OSelectStatementExecutionTest {
     }
     long begin = System.nanoTime();
     OResultSet result = db.query("select from " + className + " order by surname asc limit 100");
-//    System.out.println("elapsed: " + (System.nanoTime() - begin));
+    //    System.out.println("elapsed: " + (System.nanoTime() - begin));
     printExecutionPlan(result);
 
     for (int i = 0; i < 100; i++) {
@@ -329,7 +355,7 @@ public class OSelectStatementExecutionTest {
     }
     long begin = System.nanoTime();
     OResultSet result = db.query("select name from " + className + " order by surname asc");
-//    System.out.println("elapsed: " + (System.nanoTime() - begin));
+    //    System.out.println("elapsed: " + (System.nanoTime() - begin));
     printExecutionPlan(result);
 
     String lastName = null;
@@ -359,8 +385,9 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
     long begin = System.nanoTime();
-    OResultSet result = db.query("select name from " + className + " order by name asc, surname asc");
-//    System.out.println("elapsed: " + (System.nanoTime() - begin));
+    OResultSet result =
+        db.query("select name from " + className + " order by name asc, surname asc");
+    //    System.out.println("elapsed: " + (System.nanoTime() - begin));
     printExecutionPlan(result);
 
     String lastName = null;
@@ -389,7 +416,8 @@ public class OSelectStatementExecutionTest {
       doc.setProperty("surname", "surname" + i);
       doc.save();
     }
-    OResultSet result = db.query("select from " + className + " where name = 'name1' or name = 'name7' ");
+    OResultSet result =
+        db.query("select from " + className + " where name = 'name1' or name = 'name7' ");
     printExecutionPlan(result);
 
     for (int i = 0; i < 2; i++) {
@@ -543,7 +571,8 @@ public class OSelectStatementExecutionTest {
     elem.save();
 
     try {
-      OResultSet result = db.query("select count(*) as a from " + className + " where name = 'foo'");
+      OResultSet result =
+          db.query("select count(*) as a from " + className + " where name = 'foo'");
       printExecutionPlan(result);
       Assert.assertNotNull(result);
       Assert.assertTrue(result.hasNext());
@@ -564,7 +593,9 @@ public class OSelectStatementExecutionTest {
     db.getMetadata().getSchema().createClass(className);
 
     try {
-      db.query("select max(a) + max(b) + pippo + pluto as foo, max(d) + max(e), f from " + className).close();
+      db.query(
+              "select max(a) + max(b) + pippo + pluto as foo, max(d) + max(e), f from " + className)
+          .close();
       Assert.fail();
     } catch (OCommandExecutionException x) {
 
@@ -609,7 +640,10 @@ public class OSelectStatementExecutionTest {
     db.getMetadata().getSchema().createClass(className);
 
     try {
-      OResultSet result = db.query("select max(a + b) + (max(b + c * 2) + 1 + 2) * 3 as foo, max(d) + max(e), f from " + className);
+      OResultSet result =
+          db.query(
+              "select max(a + b) + (max(b + c * 2) + 1 + 2) * 3 as foo, max(d) + max(e), f from "
+                  + className);
       printExecutionPlan(result);
       result.close();
     } catch (Exception e) {
@@ -680,7 +714,8 @@ public class OSelectStatementExecutionTest {
       doc.setProperty("val", i);
       doc.save();
     }
-    OResultSet result = db.query("select sum(val), max(val), min(val), type from " + className + " group by type");
+    OResultSet result =
+        db.query("select sum(val), max(val), min(val), type from " + className + " group by type");
     printExecutionPlan(result);
     boolean evenFound = false;
     boolean oddFound = false;
@@ -747,7 +782,8 @@ public class OSelectStatementExecutionTest {
       doc.setProperty("val", i);
       doc.save();
     }
-    OResultSet result = db.query("select sum(val) from " + className + " group by type.substring(0,1)");
+    OResultSet result =
+        db.query("select sum(val) from " + className + " group by type.substring(0,1)");
     printExecutionPlan(result);
     for (int i = 0; i < 1; i++) {
       Assert.assertTrue(result.hasNext());
@@ -755,7 +791,6 @@ public class OSelectStatementExecutionTest {
       Assert.assertNotNull(item);
       Object sum = item.getProperty("sum(val)");
       Assert.assertEquals(45, sum);
-
     }
     Assert.assertFalse(result.hasNext());
     result.close();
@@ -802,7 +837,8 @@ public class OSelectStatementExecutionTest {
       doc.setProperty("val", i);
       doc.save(targetClusterName);
     }
-    OResultSet result = db.query("select from cluster:" + targetClusterName + " order by @rid desc");
+    OResultSet result =
+        db.query("select from cluster:" + targetClusterName + " order by @rid desc");
     printExecutionPlan(result);
     int sum = 0;
     for (int i = 0; i < 10; i++) {
@@ -810,7 +846,6 @@ public class OSelectStatementExecutionTest {
       OResult item = result.next();
       Integer val = item.getProperty("val");
       Assert.assertEquals(i, 9 - val);
-
     }
 
     Assert.assertFalse(result.hasNext());
@@ -838,7 +873,6 @@ public class OSelectStatementExecutionTest {
       OResult item = result.next();
       Integer val = item.getProperty("val");
       Assert.assertEquals((Object) i, val);
-
     }
 
     Assert.assertFalse(result.hasNext());
@@ -870,7 +904,13 @@ public class OSelectStatementExecutionTest {
       doc.save(targetClusterName2);
     }
 
-    OResultSet result = db.query("select from cluster:[" + targetClusterName + ", " + targetClusterName2 + "] order by @rid asc");
+    OResultSet result =
+        db.query(
+            "select from cluster:["
+                + targetClusterName
+                + ", "
+                + targetClusterName2
+                + "] order by @rid asc");
     printExecutionPlan(result);
 
     for (int i = 0; i < 20; i++) {
@@ -896,7 +936,8 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OResultSet result = db.query("select from (select from " + className + " where val > 2)  where val < 8");
+    OResultSet result =
+        db.query("select from (select from " + className + " where val > 2)  where val < 8");
     printExecutionPlan(result);
 
     for (int i = 0; i < 5; i++) {
@@ -945,7 +986,6 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-
   @Test
   public void testQueryMetadataDatabase() {
     OResultSet result = db.query("select from metadata:database");
@@ -953,7 +993,8 @@ public class OSelectStatementExecutionTest {
 
     Assert.assertTrue(result.hasNext());
     OResult item = result.next();
-    Assert.assertEquals(OSelectStatementExecutionTest.class.getSimpleName(), item.getProperty("name"));
+    Assert.assertEquals(
+        OSelectStatementExecutionTest.class.getSimpleName(), item.getProperty("name"));
     Assert.assertFalse(result.hasNext());
     result.close();
   }
@@ -965,7 +1006,8 @@ public class OSelectStatementExecutionTest {
 
     Assert.assertTrue(result.hasNext());
     OResult item = result.next();
-    Assert.assertEquals(OSelectStatementExecutionTest.class.getSimpleName(), item.getProperty("name"));
+    Assert.assertEquals(
+        OSelectStatementExecutionTest.class.getSimpleName(), item.getProperty("name"));
     Assert.assertFalse(result.hasNext());
     result.close();
   }
@@ -1121,14 +1163,17 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OResultSet result = db.query("select from " + className + " where name = 'name2' or surname = 'surname3'");
+    OResultSet result =
+        db.query("select from " + className + " where name = 'name2' or surname = 'surname3'");
     printExecutionPlan(result);
 
     Assert.assertTrue(result.hasNext());
     for (int i = 0; i < 2; i++) {
       OResult next = result.next();
       Assert.assertNotNull(next);
-      Assert.assertTrue("name2".equals(next.getProperty("name")) || ("surname3".equals(next.getProperty("surname"))));
+      Assert.assertTrue(
+          "name2".equals(next.getProperty("name"))
+              || ("surname3".equals(next.getProperty("surname"))));
     }
 
     Assert.assertFalse(result.hasNext());
@@ -1160,8 +1205,11 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OResultSet result = db
-            .query("select from " + className + " where foo is not null and (name = 'name2' or surname = 'surname3')");
+    OResultSet result =
+        db.query(
+            "select from "
+                + className
+                + " where foo is not null and (name = 'name2' or surname = 'surname3')");
     printExecutionPlan(result);
 
     Assert.assertFalse(result.hasNext());
@@ -1185,14 +1233,20 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OResultSet result = db.query("select from " + className + " where foo < 100 and (name = 'name2' or surname = 'surname3')");
+    OResultSet result =
+        db.query(
+            "select from "
+                + className
+                + " where foo < 100 and (name = 'name2' or surname = 'surname3')");
     printExecutionPlan(result);
 
     Assert.assertTrue(result.hasNext());
     for (int i = 0; i < 2; i++) {
       OResult next = result.next();
       Assert.assertNotNull(next);
-      Assert.assertTrue("name2".equals(next.getProperty("name")) || ("surname3".equals(next.getProperty("surname"))));
+      Assert.assertTrue(
+          "name2".equals(next.getProperty("name"))
+              || ("surname3".equals(next.getProperty("surname"))));
     }
 
     Assert.assertFalse(result.hasNext());
@@ -1216,15 +1270,20 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OResultSet result = db.query("select from " + className
-            + " where foo < 100 and ((name = 'name2' and foo < 20) or surname = 'surname3') and ( 4<5 and foo < 50)");
+    OResultSet result =
+        db.query(
+            "select from "
+                + className
+                + " where foo < 100 and ((name = 'name2' and foo < 20) or surname = 'surname3') and ( 4<5 and foo < 50)");
     printExecutionPlan(result);
 
     Assert.assertTrue(result.hasNext());
     for (int i = 0; i < 2; i++) {
       OResult next = result.next();
       Assert.assertNotNull(next);
-      Assert.assertTrue("name2".equals(next.getProperty("name")) || ("surname3".equals(next.getProperty("surname"))));
+      Assert.assertTrue(
+          "name2".equals(next.getProperty("name"))
+              || ("surname3".equals(next.getProperty("surname"))));
     }
 
     Assert.assertFalse(result.hasNext());
@@ -1247,7 +1306,8 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OResultSet result = db.query("select from " + className + " where name = 'name3' and surname >= 'surname1'");
+    OResultSet result =
+        db.query("select from " + className + " where name = 'name3' and surname >= 'surname1'");
     printExecutionPlan(result);
 
     Assert.assertTrue(result.hasNext());
@@ -1277,7 +1337,8 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OResultSet result = db.query("select from " + className + " where name = 'name3' and surname > 'surname3'");
+    OResultSet result =
+        db.query("select from " + className + " where name = 'name3' and surname > 'surname3'");
     printExecutionPlan(result);
 
     Assert.assertFalse(result.hasNext());
@@ -1300,7 +1361,8 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OResultSet result = db.query("select from " + className + " where name = 'name3' and surname >= 'surname3'");
+    OResultSet result =
+        db.query("select from " + className + " where name = 'name3' and surname >= 'surname3'");
     printExecutionPlan(result);
     for (int i = 0; i < 1; i++) {
       OResult next = result.next();
@@ -1327,7 +1389,8 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OResultSet result = db.query("select from " + className + " where name = 'name3' and surname < 'surname3'");
+    OResultSet result =
+        db.query("select from " + className + " where name = 'name3' and surname < 'surname3'");
     printExecutionPlan(result);
 
     Assert.assertFalse(result.hasNext());
@@ -1350,7 +1413,8 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OResultSet result = db.query("select from " + className + " where name = 'name3' and surname <= 'surname3'");
+    OResultSet result =
+        db.query("select from " + className + " where name = 'name3' and surname <= 'surname3'");
     printExecutionPlan(result);
     for (int i = 0; i < 1; i++) {
       OResult next = result.next();
@@ -1482,7 +1546,8 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OResultSet result = db.query("select from " + className + " where name > 'name3' and name < 'name5'");
+    OResultSet result =
+        db.query("select from " + className + " where name > 'name3' and name < 'name5'");
     printExecutionPlan(result);
     for (int i = 0; i < 1; i++) {
       OResult next = result.next();
@@ -1490,7 +1555,8 @@ public class OSelectStatementExecutionTest {
     }
     Assert.assertFalse(result.hasNext());
     OSelectExecutionPlan plan = (OSelectExecutionPlan) result.getExecutionPlan().get();
-    Assert.assertEquals(1, plan.getSteps().stream().filter(step -> step instanceof FetchFromIndexStep).count());
+    Assert.assertEquals(
+        1, plan.getSteps().stream().filter(step -> step instanceof FetchFromIndexStep).count());
     result.close();
   }
 
@@ -1510,12 +1576,16 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OResultSet result = db.query(
-            "select from " + className + " where name > 'name6' and name = 'name3' and surname > 'surname2' and surname < 'surname5' ");
+    OResultSet result =
+        db.query(
+            "select from "
+                + className
+                + " where name > 'name6' and name = 'name3' and surname > 'surname2' and surname < 'surname5' ");
     printExecutionPlan(result);
     Assert.assertFalse(result.hasNext());
     OSelectExecutionPlan plan = (OSelectExecutionPlan) result.getExecutionPlan().get();
-    Assert.assertEquals(1, plan.getSteps().stream().filter(step -> step instanceof FetchFromIndexStep).count());
+    Assert.assertEquals(
+        1, plan.getSteps().stream().filter(step -> step instanceof FetchFromIndexStep).count());
     result.close();
   }
 
@@ -1525,7 +1595,8 @@ public class OSelectStatementExecutionTest {
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
     clazz.createProperty("surname", OType.STRING);
-    clazz.createIndex(className + ".name_surname", OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX, "name", "surname");
+    clazz.createIndex(
+        className + ".name_surname", OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX, "name", "surname");
 
     for (int i = 0; i < 10; i++) {
       ODocument doc = db.newInstance(className);
@@ -1535,7 +1606,8 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OResultSet result = db.query("select from " + className + " where name = 'name6' and surname = 'surname6' ");
+    OResultSet result =
+        db.query("select from " + className + " where name = 'name6' and surname = 'surname6' ");
     printExecutionPlan(result);
 
     for (int i = 0; i < 1; i++) {
@@ -1545,7 +1617,8 @@ public class OSelectStatementExecutionTest {
     }
     Assert.assertFalse(result.hasNext());
     OSelectExecutionPlan plan = (OSelectExecutionPlan) result.getExecutionPlan().get();
-    Assert.assertEquals(1, plan.getSteps().stream().filter(step -> step instanceof FetchFromIndexStep).count());
+    Assert.assertEquals(
+        1, plan.getSteps().stream().filter(step -> step instanceof FetchFromIndexStep).count());
     result.close();
   }
 
@@ -1555,7 +1628,8 @@ public class OSelectStatementExecutionTest {
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
     clazz.createProperty("surname", OType.STRING);
-    clazz.createIndex(className + ".name_surname", OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX, "name", "surname");
+    clazz.createIndex(
+        className + ".name_surname", OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX, "name", "surname");
 
     for (int i = 0; i < 10; i++) {
       ODocument doc = db.newInstance(className);
@@ -1565,7 +1639,8 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OResultSet result = db.query("select from " + className + " where name = 'name6' and surname >= 'surname6' ");
+    OResultSet result =
+        db.query("select from " + className + " where name = 'name6' and surname >= 'surname6' ");
     printExecutionPlan(result);
 
     for (int i = 0; i < 1; i++) {
@@ -1575,8 +1650,8 @@ public class OSelectStatementExecutionTest {
     }
     Assert.assertFalse(result.hasNext());
     OSelectExecutionPlan plan = (OSelectExecutionPlan) result.getExecutionPlan().get();
-    Assert.assertEquals(2, plan.getSteps().size());
-    Assert.assertEquals(FetchFromClassExecutionStep.class, plan.getSteps().get(0).getClass());//index not used
+    Assert.assertEquals(
+        FetchFromClassExecutionStep.class, plan.getSteps().get(0).getClass()); // index not used
     result.close();
   }
 
@@ -1670,7 +1745,8 @@ public class OSelectStatementExecutionTest {
       parent.save();
     }
 
-    OResultSet result = db.query("select expand(linked) from " + parentClassName + " order by name");
+    OResultSet result =
+        db.query("select expand(linked) from " + parentClassName + " order by name");
     printExecutionPlan(result);
 
     String last = null;
@@ -1803,14 +1879,19 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OResultSet result = db.query(
-            "select name, surname, $nameAndSurname as fullname from " + className + " let $nameAndSurname = name + ' ' + surname");
+    OResultSet result =
+        db.query(
+            "select name, surname, $nameAndSurname as fullname from "
+                + className
+                + " let $nameAndSurname = name + ' ' + surname");
     printExecutionPlan(result);
     for (int i = 0; i < 10; i++) {
       Assert.assertTrue(result.hasNext());
       OResult item = result.next();
       Assert.assertNotNull(item);
-      Assert.assertEquals(item.getProperty("fullname"), item.getProperty("name") + " " + item.getProperty("surname"));
+      Assert.assertEquals(
+          item.getProperty("fullname"),
+          item.getProperty("name") + " " + item.getProperty("surname"));
     }
     Assert.assertFalse(result.hasNext());
     result.close();
@@ -1828,8 +1909,13 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OResultSet result = db
-            .query("select from " + className + " where name in (select name from " + className + " where name = 'name1')");
+    OResultSet result =
+        db.query(
+            "select from "
+                + className
+                + " where name in (select name from "
+                + className
+                + " where name = 'name1')");
     printExecutionPlan(result);
     for (int i = 0; i < 1; i++) {
       Assert.assertTrue(result.hasNext());
@@ -1853,8 +1939,13 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OResultSet result = db.query("select $foo as name from " + className + " let $foo = (select name from " + className
-            + " where name = $parent.$current.name)");
+    OResultSet result =
+        db.query(
+            "select $foo as name from "
+                + className
+                + " let $foo = (select name from "
+                + className
+                + " where name = $parent.$current.name)");
     printExecutionPlan(result);
     for (int i = 0; i < 10; i++) {
       Assert.assertTrue(result.hasNext());
@@ -1879,8 +1970,15 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OResultSet result = db.query("select $bar as name from " + className + " " + "let $foo = (select name from " + className
-            + " where name = $parent.$current.name)," + "$bar = $foo[0].name");
+    OResultSet result =
+        db.query(
+            "select $bar as name from "
+                + className
+                + " "
+                + "let $foo = (select name from "
+                + className
+                + " where name = $parent.$current.name),"
+                + "$bar = $foo[0].name");
     printExecutionPlan(result);
     for (int i = 0; i < 10; i++) {
       Assert.assertTrue(result.hasNext());
@@ -1912,7 +2010,8 @@ public class OSelectStatementExecutionTest {
     OClass edgeClass = db.createEdgeClass(edgeClassName);
 
     db.newEdge(doc1, doc2, edgeClass);
-    String queryString = "SELECT $x, name FROM " + vertexClassName + " let $x = out(\"" + edgeClassName + "\")";
+    String queryString =
+        "SELECT $x, name FROM " + vertexClassName + " let $x = out(\"" + edgeClassName + "\")";
     OResultSet resultSet = db.query(queryString);
     int counter = 0;
     while (resultSet.hasNext()) {
@@ -1938,7 +2037,7 @@ public class OSelectStatementExecutionTest {
     for (int i = 0; i < 10; i++) {
       ODocument doc = db.newInstance(className);
       doc.setProperty("i", i);
-      doc.setProperty("iSeq", new int[]{i, 2 * i, 4 * i});
+      doc.setProperty("iSeq", new int[] {i, 2 * i, 4 * i});
       doc.save();
     }
 
@@ -2055,7 +2154,8 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OResultSet result = db.query("select from " + parent + " where name = 'name1' and surname = 'surname1'");
+    OResultSet result =
+        db.query("select from " + parent + " where name = 'name1' and surname = 'surname1'");
     printExecutionPlan(result);
     OInternalExecutionPlan plan = (OInternalExecutionPlan) result.getExecutionPlan().get();
     Assert.assertTrue(plan.getSteps().get(0) instanceof ParallelExecStep);
@@ -2094,10 +2194,12 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OResultSet result = db.query("select from " + parent + " where name = 'name1' and surname = 'surname1'");
+    OResultSet result =
+        db.query("select from " + parent + " where name = 'name1' and surname = 'surname1'");
     printExecutionPlan(result);
     OInternalExecutionPlan plan = (OInternalExecutionPlan) result.getExecutionPlan().get();
-    Assert.assertTrue(plan.getSteps().get(0) instanceof FetchFromClassExecutionStep);//no index used
+    Assert.assertTrue(
+        plan.getSteps().get(0) instanceof FetchFromClassExecutionStep); // no index used
     for (int i = 0; i < 2; i++) {
       Assert.assertTrue(result.hasNext());
       OResult item = result.next();
@@ -2138,11 +2240,14 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OResultSet result = db.query("select from " + parent + " where name = 'name1' and surname = 'surname1'");
+    OResultSet result =
+        db.query("select from " + parent + " where name = 'name1' and surname = 'surname1'");
     printExecutionPlan(result);
     OInternalExecutionPlan plan = (OInternalExecutionPlan) result.getExecutionPlan().get();
-    Assert
-            .assertTrue(plan.getSteps().get(0) instanceof FetchFromClassExecutionStep); //no index, because the superclass is not empty
+    Assert.assertTrue(
+        plan.getSteps().get(0)
+            instanceof
+            FetchFromClassExecutionStep); // no index, because the superclass is not empty
     for (int i = 0; i < 2; i++) {
       Assert.assertTrue(result.hasNext());
       OResult item = result.next();
@@ -2191,7 +2296,8 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OResultSet result = db.query("select from " + parent + " where name = 'name1' and surname = 'surname1'");
+    OResultSet result =
+        db.query("select from " + parent + " where name = 'name1' and surname = 'surname1'");
     printExecutionPlan(result);
     OInternalExecutionPlan plan = (OInternalExecutionPlan) result.getExecutionPlan().get();
     Assert.assertTrue(plan.getSteps().get(0) instanceof ParallelExecStep);
@@ -2214,7 +2320,8 @@ public class OSelectStatementExecutionTest {
     OClass parentClass = db.getMetadata().getSchema().createClass(parent);
     OClass childClass1 = db.getMetadata().getSchema().createClass(child1, parentClass);
     OClass childClass2 = db.getMetadata().getSchema().createClass(child2, parentClass);
-    OClass childClass12 = db.getMetadata().getSchema().createClass(child12, childClass1, childClass2);
+    OClass childClass12 =
+        db.getMetadata().getSchema().createClass(child12, childClass1, childClass2);
 
     parentClass.createProperty("name", OType.STRING);
     childClass1.createIndex(child1 + ".name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
@@ -2241,7 +2348,8 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OResultSet result = db.query("select from " + parent + " where name = 'name1' and surname = 'surname1'");
+    OResultSet result =
+        db.query("select from " + parent + " where name = 'name1' and surname = 'surname1'");
     printExecutionPlan(result);
     OInternalExecutionPlan plan = (OInternalExecutionPlan) result.getExecutionPlan().get();
     Assert.assertTrue(plan.getSteps().get(0) instanceof FetchFromClassExecutionStep);
@@ -2260,8 +2368,14 @@ public class OSelectStatementExecutionTest {
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
     clazz.createProperty("surname", OType.STRING);
-    db.command(new OCommandSQL("create index " + className + ".name_surname on " + className + " (name, surname) NOTUNIQUE"))
-            .execute();
+    db.command(
+            new OCommandSQL(
+                "create index "
+                    + className
+                    + ".name_surname on "
+                    + className
+                    + " (name, surname) NOTUNIQUE"))
+        .execute();
 
     for (int i = 0; i < 10; i++) {
       ODocument doc = db.newInstance(className);
@@ -2270,7 +2384,8 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OResultSet result = db.query("select from " + className + " where name = 'name1' order by surname ASC");
+    OResultSet result =
+        db.query("select from " + className + " where name = 'name1' order by surname ASC");
     printExecutionPlan(result);
     String lastSurname = null;
     for (int i = 0; i < 3; i++) {
@@ -2287,8 +2402,10 @@ public class OSelectStatementExecutionTest {
     }
     Assert.assertFalse(result.hasNext());
     OExecutionPlan plan = result.getExecutionPlan().get();
-    Assert.assertEquals(1, plan.getSteps().stream().filter(step -> step instanceof FetchFromIndexStep).count());
-    Assert.assertEquals(0, plan.getSteps().stream().filter(step -> step instanceof OrderByStep).count());
+    Assert.assertEquals(
+        1, plan.getSteps().stream().filter(step -> step instanceof FetchFromIndexStep).count());
+    Assert.assertEquals(
+        0, plan.getSteps().stream().filter(step -> step instanceof OrderByStep).count());
     result.close();
   }
 
@@ -2298,8 +2415,14 @@ public class OSelectStatementExecutionTest {
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
     clazz.createProperty("surname", OType.STRING);
-    db.command(new OCommandSQL("create index " + className + ".name_surname on " + className + " (name, surname) NOTUNIQUE"))
-            .execute();
+    db.command(
+            new OCommandSQL(
+                "create index "
+                    + className
+                    + ".name_surname on "
+                    + className
+                    + " (name, surname) NOTUNIQUE"))
+        .execute();
 
     for (int i = 0; i < 10; i++) {
       ODocument doc = db.newInstance(className);
@@ -2308,7 +2431,8 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OResultSet result = db.query("select from " + className + " where name = 'name1' order by surname DESC");
+    OResultSet result =
+        db.query("select from " + className + " where name = 'name1' order by surname DESC");
     printExecutionPlan(result);
     String lastSurname = null;
     for (int i = 0; i < 3; i++) {
@@ -2325,8 +2449,10 @@ public class OSelectStatementExecutionTest {
     }
     Assert.assertFalse(result.hasNext());
     OExecutionPlan plan = result.getExecutionPlan().get();
-    Assert.assertEquals(1, plan.getSteps().stream().filter(step -> step instanceof FetchFromIndexStep).count());
-    Assert.assertEquals(0, plan.getSteps().stream().filter(step -> step instanceof OrderByStep).count());
+    Assert.assertEquals(
+        1, plan.getSteps().stream().filter(step -> step instanceof FetchFromIndexStep).count());
+    Assert.assertEquals(
+        0, plan.getSteps().stream().filter(step -> step instanceof OrderByStep).count());
     result.close();
   }
 
@@ -2336,8 +2462,14 @@ public class OSelectStatementExecutionTest {
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
     clazz.createProperty("surname", OType.STRING);
-    db.command(new OCommandSQL("create index " + className + ".name_surname on " + className + " (name, surname) NOTUNIQUE"))
-            .execute();
+    db.command(
+            new OCommandSQL(
+                "create index "
+                    + className
+                    + ".name_surname on "
+                    + className
+                    + " (name, surname) NOTUNIQUE"))
+        .execute();
 
     for (int i = 0; i < 10; i++) {
       ODocument doc = db.newInstance(className);
@@ -2346,7 +2478,9 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OResultSet result = db.query("select from " + className + " where name = 'name1' order by name DESC, surname DESC");
+    OResultSet result =
+        db.query(
+            "select from " + className + " where name = 'name1' order by name DESC, surname DESC");
     printExecutionPlan(result);
     String lastSurname = null;
     for (int i = 0; i < 3; i++) {
@@ -2363,8 +2497,10 @@ public class OSelectStatementExecutionTest {
     }
     Assert.assertFalse(result.hasNext());
     OExecutionPlan plan = result.getExecutionPlan().get();
-    Assert.assertEquals(1, plan.getSteps().stream().filter(step -> step instanceof FetchFromIndexStep).count());
-    Assert.assertEquals(0, plan.getSteps().stream().filter(step -> step instanceof OrderByStep).count());
+    Assert.assertEquals(
+        1, plan.getSteps().stream().filter(step -> step instanceof FetchFromIndexStep).count());
+    Assert.assertEquals(
+        0, plan.getSteps().stream().filter(step -> step instanceof OrderByStep).count());
     result.close();
   }
 
@@ -2374,8 +2510,14 @@ public class OSelectStatementExecutionTest {
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
     clazz.createProperty("surname", OType.STRING);
-    db.command(new OCommandSQL("create index " + className + ".name_surname on " + className + " (name, surname) NOTUNIQUE"))
-            .execute();
+    db.command(
+            new OCommandSQL(
+                "create index "
+                    + className
+                    + ".name_surname on "
+                    + className
+                    + " (name, surname) NOTUNIQUE"))
+        .execute();
 
     for (int i = 0; i < 10; i++) {
       ODocument doc = db.newInstance(className);
@@ -2384,7 +2526,9 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OResultSet result = db.query("select from " + className + " where name = 'name1' order by name ASC, surname ASC");
+    OResultSet result =
+        db.query(
+            "select from " + className + " where name = 'name1' order by name ASC, surname ASC");
     printExecutionPlan(result);
     String lastSurname = null;
     for (int i = 0; i < 3; i++) {
@@ -2398,12 +2542,13 @@ public class OSelectStatementExecutionTest {
         Assert.assertTrue(surname.compareTo(lastSurname) > 0);
       }
       lastSurname = surname;
-
     }
     Assert.assertFalse(result.hasNext());
     OExecutionPlan plan = result.getExecutionPlan().get();
-    Assert.assertEquals(1, plan.getSteps().stream().filter(step -> step instanceof FetchFromIndexStep).count());
-    Assert.assertEquals(0, plan.getSteps().stream().filter(step -> step instanceof OrderByStep).count());
+    Assert.assertEquals(
+        1, plan.getSteps().stream().filter(step -> step instanceof FetchFromIndexStep).count());
+    Assert.assertEquals(
+        0, plan.getSteps().stream().filter(step -> step instanceof OrderByStep).count());
     result.close();
   }
 
@@ -2415,8 +2560,13 @@ public class OSelectStatementExecutionTest {
     clazz.createProperty("surname", OType.STRING);
     clazz.createProperty("address", OType.STRING);
     db.command(
-            new OCommandSQL("create index " + className + ".name_surname on " + className + " (name, surname, address) NOTUNIQUE"))
-            .execute();
+            new OCommandSQL(
+                "create index "
+                    + className
+                    + ".name_surname on "
+                    + className
+                    + " (name, surname, address) NOTUNIQUE"))
+        .execute();
 
     for (int i = 0; i < 10; i++) {
       ODocument doc = db.newInstance(className);
@@ -2425,7 +2575,8 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OResultSet result = db.query("select from " + className + " where name = 'name1' order by surname ASC");
+    OResultSet result =
+        db.query("select from " + className + " where name = 'name1' order by surname ASC");
     printExecutionPlan(result);
     String lastSurname = null;
     for (int i = 0; i < 3; i++) {
@@ -2441,8 +2592,10 @@ public class OSelectStatementExecutionTest {
     }
     Assert.assertFalse(result.hasNext());
     OExecutionPlan plan = result.getExecutionPlan().get();
-    Assert.assertEquals(1, plan.getSteps().stream().filter(step -> step instanceof FetchFromIndexStep).count());
-    Assert.assertEquals(0, plan.getSteps().stream().filter(step -> step instanceof OrderByStep).count());
+    Assert.assertEquals(
+        1, plan.getSteps().stream().filter(step -> step instanceof FetchFromIndexStep).count());
+    Assert.assertEquals(
+        0, plan.getSteps().stream().filter(step -> step instanceof OrderByStep).count());
     result.close();
   }
 
@@ -2454,8 +2607,13 @@ public class OSelectStatementExecutionTest {
     clazz.createProperty("surname", OType.STRING);
     clazz.createProperty("address", OType.STRING);
     db.command(
-            new OCommandSQL("create index " + className + ".name_surname on " + className + " (name, surname, address) NOTUNIQUE"))
-            .execute();
+            new OCommandSQL(
+                "create index "
+                    + className
+                    + ".name_surname on "
+                    + className
+                    + " (name, surname, address) NOTUNIQUE"))
+        .execute();
 
     for (int i = 0; i < 10; i++) {
       ODocument doc = db.newInstance(className);
@@ -2464,7 +2622,8 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OResultSet result = db.query("select from " + className + " where name = 'name1' order by surname DESC");
+    OResultSet result =
+        db.query("select from " + className + " where name = 'name1' order by surname DESC");
     printExecutionPlan(result);
     String lastSurname = null;
     for (int i = 0; i < 3; i++) {
@@ -2480,8 +2639,10 @@ public class OSelectStatementExecutionTest {
     }
     Assert.assertFalse(result.hasNext());
     OExecutionPlan plan = result.getExecutionPlan().get();
-    Assert.assertEquals(1, plan.getSteps().stream().filter(step -> step instanceof FetchFromIndexStep).count());
-    Assert.assertEquals(0, plan.getSteps().stream().filter(step -> step instanceof OrderByStep).count());
+    Assert.assertEquals(
+        1, plan.getSteps().stream().filter(step -> step instanceof FetchFromIndexStep).count());
+    Assert.assertEquals(
+        0, plan.getSteps().stream().filter(step -> step instanceof OrderByStep).count());
     result.close();
   }
 
@@ -2493,8 +2654,13 @@ public class OSelectStatementExecutionTest {
     clazz.createProperty("surname", OType.STRING);
     clazz.createProperty("address", OType.STRING);
     db.command(
-            new OCommandSQL("create index " + className + ".name_surname on " + className + " (name, surname, address) NOTUNIQUE"))
-            .execute();
+            new OCommandSQL(
+                "create index "
+                    + className
+                    + ".name_surname on "
+                    + className
+                    + " (name, surname, address) NOTUNIQUE"))
+        .execute();
 
     for (int i = 0; i < 10; i++) {
       ODocument doc = db.newInstance(className);
@@ -2503,7 +2669,8 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OResultSet result = db.query("select from " + className + " where name = 'name1' order by address DESC");
+    OResultSet result =
+        db.query("select from " + className + " where name = 'name1' order by address DESC");
     printExecutionPlan(result);
 
     for (int i = 0; i < 3; i++) {
@@ -2530,8 +2697,14 @@ public class OSelectStatementExecutionTest {
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
     clazz.createProperty("surname", OType.STRING);
-    db.command(new OCommandSQL("create index " + className + ".name_surname on " + className + " (name, surname) NOTUNIQUE"))
-            .execute();
+    db.command(
+            new OCommandSQL(
+                "create index "
+                    + className
+                    + ".name_surname on "
+                    + className
+                    + " (name, surname) NOTUNIQUE"))
+        .execute();
 
     for (int i = 0; i < 10; i++) {
       ODocument doc = db.newInstance(className);
@@ -2540,7 +2713,9 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OResultSet result = db.query("select from " + className + " where name = 'name1' order by name ASC, surname DESC");
+    OResultSet result =
+        db.query(
+            "select from " + className + " where name = 'name1' order by name ASC, surname DESC");
     printExecutionPlan(result);
     for (int i = 0; i < 3; i++) {
       Assert.assertTrue(result.hasNext());
@@ -2567,8 +2742,14 @@ public class OSelectStatementExecutionTest {
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
     clazz.createProperty("surname", OType.STRING);
-    db.command(new OCommandSQL("create index " + className + ".name_surname on " + className + " (name, surname) NOTUNIQUE"))
-            .execute();
+    db.command(
+            new OCommandSQL(
+                "create index "
+                    + className
+                    + ".name_surname on "
+                    + className
+                    + " (name, surname) NOTUNIQUE"))
+        .execute();
 
     for (int i = 0; i < 10; i++) {
       ODocument doc = db.newInstance(className);
@@ -2604,8 +2785,14 @@ public class OSelectStatementExecutionTest {
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
     clazz.createProperty("surname", OType.STRING);
-    db.command(new OCommandSQL("create index " + className + ".name_surname on " + className + " (name, surname) NOTUNIQUE"))
-            .execute();
+    db.command(
+            new OCommandSQL(
+                "create index "
+                    + className
+                    + ".name_surname on "
+                    + className
+                    + " (name, surname) NOTUNIQUE"))
+        .execute();
 
     for (int i = 0; i < 10; i++) {
       ODocument doc = db.newInstance(className);
@@ -2641,8 +2828,14 @@ public class OSelectStatementExecutionTest {
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
     clazz.createProperty("surname", OType.STRING);
-    db.command(new OCommandSQL("create index " + className + ".name_surname on " + className + " (name, surname) NOTUNIQUE"))
-            .execute();
+    db.command(
+            new OCommandSQL(
+                "create index "
+                    + className
+                    + ".name_surname on "
+                    + className
+                    + " (name, surname) NOTUNIQUE"))
+        .execute();
 
     for (int i = 0; i < 10; i++) {
       ODocument doc = db.newInstance(className);
@@ -2678,8 +2871,14 @@ public class OSelectStatementExecutionTest {
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
     clazz.createProperty("surname", OType.STRING);
-    db.command(new OCommandSQL("create index " + className + ".name_surname on " + className + " (name, surname) NOTUNIQUE"))
-            .execute();
+    db.command(
+            new OCommandSQL(
+                "create index "
+                    + className
+                    + ".name_surname on "
+                    + className
+                    + " (name, surname) NOTUNIQUE"))
+        .execute();
 
     for (int i = 0; i < 10; i++) {
       ODocument doc = db.newInstance(className);
@@ -2701,7 +2900,6 @@ public class OSelectStatementExecutionTest {
         Assert.assertTrue(name.compareTo(last) >= 0);
       }
       last = name;
-
     }
     Assert.assertFalse(result.hasNext());
     Assert.assertFalse(result.hasNext());
@@ -2733,7 +2931,6 @@ public class OSelectStatementExecutionTest {
       OResult item = result.next();
       Assert.assertNotNull(item);
       Assert.assertTrue(("" + item.getProperty("name")).startsWith("name"));
-
     }
     Assert.assertFalse(result.hasNext());
     result.close();
@@ -2758,7 +2955,6 @@ public class OSelectStatementExecutionTest {
       OResult item = result.next();
       Assert.assertNotNull(item);
       Assert.assertTrue(("" + item.getProperty("name")).startsWith("name"));
-
     }
     Assert.assertFalse(result.hasNext());
     result.close();
@@ -2781,7 +2977,6 @@ public class OSelectStatementExecutionTest {
       OResult item = result.next();
       Assert.assertNotNull(item);
       Assert.assertEquals(item.getProperty("name"), "name1");
-
     }
     Assert.assertFalse(result.hasNext());
     result.close();
@@ -2793,7 +2988,7 @@ public class OSelectStatementExecutionTest {
     db.getMetadata().getSchema().createClass(className);
 
     ODocument doc = db.newInstance(className);
-    doc.setProperty("name", new String[]{"a", "b", "c", "d"});
+    doc.setProperty("name", new String[] {"a", "b", "c", "d"});
     doc.save();
 
     OResultSet result = db.query("select name[0..3] as names from " + className);
@@ -2829,7 +3024,7 @@ public class OSelectStatementExecutionTest {
     db.getMetadata().getSchema().createClass(className);
 
     ODocument doc = db.newInstance(className);
-    doc.setProperty("name", new String[]{"a", "b", "c", "d"});
+    doc.setProperty("name", new String[] {"a", "b", "c", "d"});
     doc.save();
 
     OResultSet result = db.query("select name[?..?] as names from " + className, 0, 3);
@@ -2865,7 +3060,7 @@ public class OSelectStatementExecutionTest {
     db.getMetadata().getSchema().createClass(className);
 
     ODocument doc = db.newInstance(className);
-    doc.setProperty("name", new String[]{"a", "b", "c", "d"});
+    doc.setProperty("name", new String[] {"a", "b", "c", "d"});
     doc.save();
 
     Map<String, Object> params = new HashMap<>();
@@ -2904,7 +3099,7 @@ public class OSelectStatementExecutionTest {
     db.getMetadata().getSchema().createClass(className);
 
     ODocument doc = db.newInstance(className);
-    doc.setProperty("name", new String[]{"a", "b", "c", "d"});
+    doc.setProperty("name", new String[] {"a", "b", "c", "d"});
     doc.save();
 
     OResultSet result = db.query("select name[0...2] as names from " + className);
@@ -2975,11 +3170,13 @@ public class OSelectStatementExecutionTest {
     elem4.setProperty("elem3", elem3);
     elem4.save();
 
-    OResultSet result = db.query("select name, elem1:{*}, elem2:{!surname} from " + className + " where name = 'd'");
+    OResultSet result =
+        db.query(
+            "select name, elem1:{*}, elem2:{!surname} from " + className + " where name = 'd'");
     Assert.assertTrue(result.hasNext());
     OResult item = result.next();
     Assert.assertNotNull(item);
-    //TODO refine this!
+    // TODO refine this!
     Assert.assertTrue(item.getProperty("elem1") instanceof OResult);
     Assert.assertEquals("a", ((OResult) item.getProperty("elem1")).getProperty("name"));
     printExecutionPlan(result);
@@ -3028,7 +3225,6 @@ public class OSelectStatementExecutionTest {
     Assert.assertEquals(1, res.size());
     Assert.assertEquals("bar", res.get(0));
     result.close();
-
   }
 
   @Test
@@ -3075,7 +3271,8 @@ public class OSelectStatementExecutionTest {
     db.command("create class " + className).close();
     db.command("create property " + className + ".id LONG").close();
     db.command("create property " + className + ".name STRING").close();
-    db.command("create index " + className + ".id_name on " + className + "(id, name) UNIQUE").close();
+    db.command("create index " + className + ".id_name on " + className + "(id, name) UNIQUE")
+        .close();
     db.command("insert into " + className + " set id = 1 , name = 'Bar'").close();
 
     OResultSet result = db.query("select from " + className + " where name = 'Bar'");
@@ -3095,7 +3292,8 @@ public class OSelectStatementExecutionTest {
     Map<String, Object> params = new HashMap<>();
     params.put("p1", "Foo");
     params.put("p2", "Fox");
-    OResultSet result = db.query("select from " + className + " where name = :p1 and surname = :p2", params);
+    OResultSet result =
+        db.query("select from " + className + " where name = :p1 and surname = :p2", params);
     Assert.assertTrue(result.hasNext());
     result.next();
     Assert.assertFalse(result.hasNext());
@@ -3149,6 +3347,7 @@ public class OSelectStatementExecutionTest {
     Assert.assertFalse(result.hasNext());
     result.close();
   }
+
   @Test
   public void testRidPagination1() {
     String className = "testRidPagination1";
@@ -3166,7 +3365,8 @@ public class OSelectStatementExecutionTest {
       elem.save(db.getClusterNameById(clusterIds[i]));
     }
 
-    OResultSet result = db.query("select from " + className + " where @rid >= #" + clusterIds[1] + ":0");
+    OResultSet result =
+        db.query("select from " + className + " where @rid >= #" + clusterIds[1] + ":0");
     OExecutionPlan execPlan = result.getExecutionPlan().get();
     for (OExecutionStep oExecutionStep : execPlan.getSteps()) {
       if (oExecutionStep instanceof FetchFromClassExecutionStep) {
@@ -3232,8 +3432,15 @@ public class OSelectStatementExecutionTest {
     db.command("insert into " + className + 2 + "  set tags = ['baz', 'bar']");
     db.command("insert into " + className + 2 + "  set tags = ['foo']");
 
-    try (OResultSet result = db
-            .query("select from " + className + 2 + " where tags contains (select from " + className + 1 + " where name = 'foo')")) {
+    try (OResultSet result =
+        db.query(
+            "select from "
+                + className
+                + 2
+                + " where tags contains (select from "
+                + className
+                + 1
+                + " where name = 'foo')")) {
 
       Assert.assertTrue(result.hasNext());
       result.next();
@@ -3256,8 +3463,15 @@ public class OSelectStatementExecutionTest {
     db.command("insert into " + className + 2 + "  set tags = ['baz', 'bar']");
     db.command("insert into " + className + 2 + "  set tags = ['foo']");
 
-    try (OResultSet result = db
-            .query("select from " + className + 2 + " where (select from " + className + 1 + " where name = 'foo') in tags")) {
+    try (OResultSet result =
+        db.query(
+            "select from "
+                + className
+                + 2
+                + " where (select from "
+                + className
+                + 1
+                + " where name = 'foo') in tags")) {
 
       Assert.assertTrue(result.hasNext());
       result.next();
@@ -3276,19 +3490,22 @@ public class OSelectStatementExecutionTest {
     db.command("insert into " + className + "  set tags = ['foo', 'bar']");
     db.command("insert into " + className + "  set tags = ['bbb', 'FFF']");
 
-    try (OResultSet result = db.query("select from " + className + " where tags containsany ['foo','baz']")) {
+    try (OResultSet result =
+        db.query("select from " + className + " where tags containsany ['foo','baz']")) {
       Assert.assertTrue(result.hasNext());
       result.next();
       Assert.assertFalse(result.hasNext());
     }
 
-    try (OResultSet result = db.query("select from " + className + " where tags containsany ['foo','bar']")) {
+    try (OResultSet result =
+        db.query("select from " + className + " where tags containsany ['foo','bar']")) {
       Assert.assertTrue(result.hasNext());
       result.next();
       Assert.assertFalse(result.hasNext());
     }
 
-    try (OResultSet result = db.query("select from " + className + " where tags containsany ['foo','bbb']")) {
+    try (OResultSet result =
+        db.query("select from " + className + " where tags containsany ['foo','bbb']")) {
       Assert.assertTrue(result.hasNext());
       result.next();
       Assert.assertTrue(result.hasNext());
@@ -3296,7 +3513,8 @@ public class OSelectStatementExecutionTest {
       Assert.assertFalse(result.hasNext());
     }
 
-    try (OResultSet result = db.query("select from " + className + " where tags containsany ['xx','baz']")) {
+    try (OResultSet result =
+        db.query("select from " + className + " where tags containsany ['xx','baz']")) {
       Assert.assertFalse(result.hasNext());
     }
 
@@ -3315,37 +3533,51 @@ public class OSelectStatementExecutionTest {
     db.command("insert into " + className + "  set tags = ['foo', 'bar']");
     db.command("insert into " + className + "  set tags = ['bbb', 'FFF']");
 
-    try (OResultSet result = db.query("select from " + className + " where tags containsany ['foo','baz']")) {
+    try (OResultSet result =
+        db.query("select from " + className + " where tags containsany ['foo','baz']")) {
       Assert.assertTrue(result.hasNext());
       result.next();
       Assert.assertFalse(result.hasNext());
-      Assert.assertTrue(result.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
+      Assert.assertTrue(
+          result.getExecutionPlan().get().getSteps().stream()
+              .anyMatch(x -> x instanceof FetchFromIndexStep));
     }
 
-    try (OResultSet result = db.query("select from " + className + " where tags containsany ['foo','bar']")) {
+    try (OResultSet result =
+        db.query("select from " + className + " where tags containsany ['foo','bar']")) {
       Assert.assertTrue(result.hasNext());
       result.next();
       Assert.assertFalse(result.hasNext());
-      Assert.assertTrue(result.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
+      Assert.assertTrue(
+          result.getExecutionPlan().get().getSteps().stream()
+              .anyMatch(x -> x instanceof FetchFromIndexStep));
     }
 
-    try (OResultSet result = db.query("select from " + className + " where tags containsany ['foo','bbb']")) {
+    try (OResultSet result =
+        db.query("select from " + className + " where tags containsany ['foo','bbb']")) {
       Assert.assertTrue(result.hasNext());
       result.next();
       Assert.assertTrue(result.hasNext());
       result.next();
       Assert.assertFalse(result.hasNext());
-      Assert.assertTrue(result.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
+      Assert.assertTrue(
+          result.getExecutionPlan().get().getSteps().stream()
+              .anyMatch(x -> x instanceof FetchFromIndexStep));
     }
 
-    try (OResultSet result = db.query("select from " + className + " where tags containsany ['xx','baz']")) {
+    try (OResultSet result =
+        db.query("select from " + className + " where tags containsany ['xx','baz']")) {
       Assert.assertFalse(result.hasNext());
-      Assert.assertTrue(result.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
+      Assert.assertTrue(
+          result.getExecutionPlan().get().getSteps().stream()
+              .anyMatch(x -> x instanceof FetchFromIndexStep));
     }
 
     try (OResultSet result = db.query("select from " + className + " where tags containsany []")) {
       Assert.assertFalse(result.hasNext());
-      Assert.assertTrue(result.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
+      Assert.assertTrue(
+          result.getExecutionPlan().get().getSteps().stream()
+              .anyMatch(x -> x instanceof FetchFromIndexStep));
     }
   }
 
@@ -3358,13 +3590,15 @@ public class OSelectStatementExecutionTest {
     db.command("insert into " + className + "  set tags = ['foo', 'bar']");
     db.command("insert into " + className + "  set tags = ['foo', 'FFF']");
 
-    try (OResultSet result = db.query("select from " + className + " where tags containsall ['foo','bar']")) {
+    try (OResultSet result =
+        db.query("select from " + className + " where tags containsall ['foo','bar']")) {
       Assert.assertTrue(result.hasNext());
       result.next();
       Assert.assertFalse(result.hasNext());
     }
 
-    try (OResultSet result = db.query("select from " + className + " where tags containsall ['foo']")) {
+    try (OResultSet result =
+        db.query("select from " + className + " where tags containsall ['foo']")) {
       Assert.assertTrue(result.hasNext());
       result.next();
       Assert.assertTrue(result.hasNext());
@@ -3383,7 +3617,6 @@ public class OSelectStatementExecutionTest {
     db.command("insert into " + className + "  set name = 'foo3', val = 3");
     db.command("insert into " + className + "  set name = 'foo4', val = 4");
 
-
     try (OResultSet result = db.query("select from " + className + " where val between 2 and 3")) {
       Assert.assertTrue(result.hasNext());
       result.next();
@@ -3392,7 +3625,6 @@ public class OSelectStatementExecutionTest {
       Assert.assertFalse(result.hasNext());
     }
   }
-
 
   @Test
   public void testInWithIndex() {
@@ -3408,7 +3640,9 @@ public class OSelectStatementExecutionTest {
       Assert.assertTrue(result.hasNext());
       result.next();
       Assert.assertFalse(result.hasNext());
-      Assert.assertTrue(result.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
+      Assert.assertTrue(
+          result.getExecutionPlan().get().getSteps().stream()
+              .anyMatch(x -> x instanceof FetchFromIndexStep));
     }
 
     try (OResultSet result = db.query("select from " + className + " where tag in ['foo','bar']")) {
@@ -3417,12 +3651,16 @@ public class OSelectStatementExecutionTest {
       Assert.assertTrue(result.hasNext());
       result.next();
       Assert.assertFalse(result.hasNext());
-      Assert.assertTrue(result.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
+      Assert.assertTrue(
+          result.getExecutionPlan().get().getSteps().stream()
+              .anyMatch(x -> x instanceof FetchFromIndexStep));
     }
 
     try (OResultSet result = db.query("select from " + className + " where tag in []")) {
       Assert.assertFalse(result.hasNext());
-      Assert.assertTrue(result.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
+      Assert.assertTrue(
+          result.getExecutionPlan().get().getSteps().stream()
+              .anyMatch(x -> x instanceof FetchFromIndexStep));
     }
 
     List<String> params = new ArrayList<>();
@@ -3434,9 +3672,10 @@ public class OSelectStatementExecutionTest {
       Assert.assertTrue(result.hasNext());
       result.next();
       Assert.assertFalse(result.hasNext());
-      Assert.assertTrue(result.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
+      Assert.assertTrue(
+          result.getExecutionPlan().get().getSteps().stream()
+              .anyMatch(x -> x instanceof FetchFromIndexStep));
     }
-
   }
 
   @Test
@@ -3474,12 +3713,71 @@ public class OSelectStatementExecutionTest {
     elem1.setProperty("name", "wrong");
     elem1.save();
 
-    try (OResultSet result = db.query("select from " + className1 + " where next.next.name = ?", "John")) {
+    try (OResultSet result =
+        db.query("select from " + className1 + " where next.next.name = ?", "John")) {
       Assert.assertTrue(result.hasNext());
       OResult item = result.next();
       Assert.assertEquals("right", item.getProperty("name"));
       Assert.assertFalse(result.hasNext());
-      Assert.assertTrue(result.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
+      Assert.assertTrue(
+          result.getExecutionPlan().get().getSteps().stream()
+              .anyMatch(x -> x instanceof FetchFromIndexStep));
+    }
+  }
+
+  @Test
+  public void testIndexChainWithContainsAny() {
+    String className1 = "testIndexChainWithContainsAny1";
+    String className2 = "testIndexChainWithContainsAny2";
+    String className3 = "testIndexChainWithContainsAny3";
+
+    OClass clazz3 = db.createClassIfNotExist(className3);
+    OProperty prop = clazz3.createProperty("name", OType.STRING);
+    prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+
+    OClass clazz2 = db.createClassIfNotExist(className2);
+    prop = clazz2.createProperty("next", OType.LINKSET, clazz3);
+    prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+
+    OClass clazz1 = db.createClassIfNotExist(className1);
+    prop = clazz1.createProperty("next", OType.LINKSET, clazz2);
+    prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+
+    OElement elem3 = db.newElement(className3);
+    elem3.setProperty("name", "John");
+    elem3.save();
+
+    OElement elemFoo = db.newElement(className3);
+    elemFoo.setProperty("foo", "bar");
+    elemFoo.save();
+
+    OElement elem2 = db.newElement(className2);
+    List<OElement> elems3 = new ArrayList<>();
+    elems3.add(elem3);
+    elems3.add(elemFoo);
+    elem2.setProperty("next", elems3);
+    elem2.save();
+
+    OElement elem1 = db.newElement(className1);
+    List<OElement> elems2 = new ArrayList<>();
+    elems2.add(elem2);
+    elem1.setProperty("next", elems2);
+    elem1.setProperty("name", "right");
+    elem1.save();
+
+    elem1 = db.newElement(className1);
+    elem1.setProperty("name", "wrong");
+    elem1.save();
+
+    try (OResultSet result =
+        db.query("select from " + className1 + " where next.next.name CONTAINSANY ['John']")) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertEquals("right", item.getProperty("name"));
+      Assert.assertFalse(result.hasNext());
+      Assert.assertTrue(
+          result.getExecutionPlan().get().getSteps().stream()
+              .anyMatch(x -> x instanceof FetchFromIndexStep));
     }
   }
 
@@ -3496,23 +3794,28 @@ public class OSelectStatementExecutionTest {
 
     OViewConfig cfg = new OViewConfig(viewName, "SELECT FROM " + className);
     final CountDownLatch latch = new CountDownLatch(1);
-    db.getMetadata().getSchema().createView(cfg, new ViewCreationListener() {
+    db.getMetadata()
+        .getSchema()
+        .createView(
+            cfg,
+            new ViewCreationListener() {
 
-      @Override
-      public void afterCreate(ODatabaseSession database, String viewName) {
-        latch.countDown();
-      }
+              @Override
+              public void afterCreate(ODatabaseSession database, String viewName) {
+                latch.countDown();
+              }
 
-      @Override
-      public void onError(String viewName, Exception exception) {
-        latch.countDown();
-      }
-    });
+              @Override
+              public void onError(String viewName, Exception exception) {
+                latch.countDown();
+              }
+            });
 
     latch.await();
 
     OResultSet result = db.query("SELECT FROM " + viewName);
-    int count = result.stream().map(x -> (Integer) x.getProperty("counter")).reduce((x, y) -> x + y).get();
+    int count =
+        result.stream().map(x -> (Integer) x.getProperty("counter")).reduce((x, y) -> x + y).get();
     Assert.assertEquals(45, count);
     result.close();
   }
@@ -3524,7 +3827,8 @@ public class OSelectStatementExecutionTest {
     OClass clazz1 = db.createClassIfNotExist(className);
     OProperty prop = clazz1.createProperty("themap", OType.EMBEDDEDMAP);
 
-    db.command("CREATE INDEX " + className + ".themap ON " + className + "(themap by key) NOTUNIQUE");
+    db.command(
+        "CREATE INDEX " + className + ".themap ON " + className + "(themap by key) NOTUNIQUE");
 
     for (int i = 0; i < 100; i++) {
       Map<String, Object> theMap = new HashMap<>();
@@ -3534,13 +3838,16 @@ public class OSelectStatementExecutionTest {
       elem1.save();
     }
 
-    try (OResultSet result = db.query("select from " + className + " where themap CONTAINSKEY ?", "key10")) {
+    try (OResultSet result =
+        db.query("select from " + className + " where themap CONTAINSKEY ?", "key10")) {
       Assert.assertTrue(result.hasNext());
       OResult item = result.next();
       Map<String, Object> map = item.getProperty("themap");
       Assert.assertEquals("key10", map.keySet().iterator().next());
       Assert.assertFalse(result.hasNext());
-      Assert.assertTrue(result.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
+      Assert.assertTrue(
+          result.getExecutionPlan().get().getSteps().stream()
+              .anyMatch(x -> x instanceof FetchFromIndexStep));
     }
   }
 
@@ -3552,7 +3859,12 @@ public class OSelectStatementExecutionTest {
     clazz1.createProperty("themap", OType.EMBEDDEDMAP);
     clazz1.createProperty("thestring", OType.STRING);
 
-    db.command("CREATE INDEX " + className + ".themap_thestring ON " + className + "(themap by key, thestring) NOTUNIQUE");
+    db.command(
+        "CREATE INDEX "
+            + className
+            + ".themap_thestring ON "
+            + className
+            + "(themap by key, thestring) NOTUNIQUE");
 
     for (int i = 0; i < 100; i++) {
       Map<String, Object> theMap = new HashMap<>();
@@ -3563,14 +3875,19 @@ public class OSelectStatementExecutionTest {
       elem1.save();
     }
 
-    try (OResultSet result = db
-            .query("select from " + className + " where themap CONTAINSKEY ? AND thestring = ?", "key10", "thestring10")) {
+    try (OResultSet result =
+        db.query(
+            "select from " + className + " where themap CONTAINSKEY ? AND thestring = ?",
+            "key10",
+            "thestring10")) {
       Assert.assertTrue(result.hasNext());
       OResult item = result.next();
       Map<String, Object> map = item.getProperty("themap");
       Assert.assertEquals("key10", map.keySet().iterator().next());
       Assert.assertFalse(result.hasNext());
-      Assert.assertTrue(result.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
+      Assert.assertTrue(
+          result.getExecutionPlan().get().getSteps().stream()
+              .anyMatch(x -> x instanceof FetchFromIndexStep));
     }
   }
 
@@ -3581,7 +3898,8 @@ public class OSelectStatementExecutionTest {
     OClass clazz1 = db.createClassIfNotExist(className);
     OProperty prop = clazz1.createProperty("themap", OType.EMBEDDEDMAP, OType.STRING);
 
-    db.command("CREATE INDEX " + className + ".themap ON " + className + "(themap by value) NOTUNIQUE");
+    db.command(
+        "CREATE INDEX " + className + ".themap ON " + className + "(themap by value) NOTUNIQUE");
 
     for (int i = 0; i < 100; i++) {
       Map<String, Object> theMap = new HashMap<>();
@@ -3591,13 +3909,16 @@ public class OSelectStatementExecutionTest {
       elem1.save();
     }
 
-    try (OResultSet result = db.query("select from " + className + " where themap CONTAINSVALUE ?", "val10")) {
+    try (OResultSet result =
+        db.query("select from " + className + " where themap CONTAINSVALUE ?", "val10")) {
       Assert.assertTrue(result.hasNext());
       OResult item = result.next();
       Map<String, Object> map = item.getProperty("themap");
       Assert.assertEquals("key10", map.keySet().iterator().next());
       Assert.assertFalse(result.hasNext());
-      Assert.assertTrue(result.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
+      Assert.assertTrue(
+          result.getExecutionPlan().get().getSteps().stream()
+              .anyMatch(x -> x instanceof FetchFromIndexStep));
     }
   }
 
@@ -3611,7 +3932,8 @@ public class OSelectStatementExecutionTest {
     db.command("INSERT INTO " + className + " SET thelist = [{name:\"Jack\"}]").close();
     db.command("INSERT INTO " + className + " SET thelist = [{name:\"Joe\"}]").close();
 
-    try (OResultSet result = db.query("select from " + className + " where thelist CONTAINS ( name = ?)", "Jack")) {
+    try (OResultSet result =
+        db.query("select from " + className + " where thelist CONTAINS ( name = ?)", "Jack")) {
       Assert.assertTrue(result.hasNext());
       result.next();
       Assert.assertFalse(result.hasNext());
@@ -3630,7 +3952,8 @@ public class OSelectStatementExecutionTest {
     db.command("INSERT INTO " + className + " SET name = 'b', idx = 1").close();
     db.command("INSERT INTO " + className + " SET name = 'd', idx = 3").close();
 
-    try (OResultSet result = db.query("select from " + className + " order by name asc collate ci")) {
+    try (OResultSet result =
+        db.query("select from " + className + " order by name asc collate ci")) {
       for (int i = 0; i < 5; i++) {
         Assert.assertTrue(result.hasNext());
         OResult item = result.next();
@@ -3648,10 +3971,26 @@ public class OSelectStatementExecutionTest {
     db.createClassIfNotExist(className);
 
     db.command("INSERT INTO " + className + " content {\"name\": \"jack\", \"age\": 22}").close();
-    db.command("INSERT INTO " + className + " content {\"name\": \"rose\", \"age\": 22, \"test\": [[]]}").close();
-    db.command("INSERT INTO " + className + " content {\"name\": \"rose\", \"age\": 22, \"test\": [[1]]}").close();
-    db.command("INSERT INTO " + className + " content {\"name\": \"pete\", \"age\": 22, \"test\": [{}]}").close();
-    db.command("INSERT INTO " + className + " content {\"name\": \"david\", \"age\": 22, \"test\": [\"hello\"]}").close();
+    db.command(
+            "INSERT INTO "
+                + className
+                + " content {\"name\": \"rose\", \"age\": 22, \"test\": [[]]}")
+        .close();
+    db.command(
+            "INSERT INTO "
+                + className
+                + " content {\"name\": \"rose\", \"age\": 22, \"test\": [[1]]}")
+        .close();
+    db.command(
+            "INSERT INTO "
+                + className
+                + " content {\"name\": \"pete\", \"age\": 22, \"test\": [{}]}")
+        .close();
+    db.command(
+            "INSERT INTO "
+                + className
+                + " content {\"name\": \"david\", \"age\": 22, \"test\": [\"hello\"]}")
+        .close();
 
     try (OResultSet result = db.query("select from " + className + " where test contains []")) {
       Assert.assertTrue(result.hasNext());
@@ -3667,10 +4006,26 @@ public class OSelectStatementExecutionTest {
     db.createClassIfNotExist(className);
 
     db.command("INSERT INTO " + className + " content {\"name\": \"jack\", \"age\": 22}").close();
-    db.command("INSERT INTO " + className + " content {\"name\": \"rose\", \"age\": 22, \"test\": [[]]}").close();
-    db.command("INSERT INTO " + className + " content {\"name\": \"rose\", \"age\": 22, \"test\": [[1]]}").close();
-    db.command("INSERT INTO " + className + " content {\"name\": \"pete\", \"age\": 22, \"test\": [{}]}").close();
-    db.command("INSERT INTO " + className + " content {\"name\": \"david\", \"age\": 22, \"test\": [\"hello\"]}").close();
+    db.command(
+            "INSERT INTO "
+                + className
+                + " content {\"name\": \"rose\", \"age\": 22, \"test\": [[]]}")
+        .close();
+    db.command(
+            "INSERT INTO "
+                + className
+                + " content {\"name\": \"rose\", \"age\": 22, \"test\": [[1]]}")
+        .close();
+    db.command(
+            "INSERT INTO "
+                + className
+                + " content {\"name\": \"pete\", \"age\": 22, \"test\": [{}]}")
+        .close();
+    db.command(
+            "INSERT INTO "
+                + className
+                + " content {\"name\": \"david\", \"age\": 22, \"test\": [\"hello\"]}")
+        .close();
 
     try (OResultSet result = db.query("select from " + className + " where test contains [1]")) {
       Assert.assertTrue(result.hasNext());
@@ -3714,5 +4069,399 @@ public class OSelectStatementExecutionTest {
       Assert.assertEquals(11, (int) item.getProperty("foo"));
       Assert.assertFalse(result.hasNext());
     }
+  }
+
+  @Test
+  public void testLike() {
+    String className = "testLike";
+
+    db.createClassIfNotExist(className);
+
+    db.command("INSERT INTO " + className + " content {\"name\": \"foobarbaz\"}").close();
+    db.command("INSERT INTO " + className + " content {\"name\": \"test[]{}()|*^.test\"}").close();
+
+    try (OResultSet result = db.query("select from " + className + " where name LIKE 'foo%'")) {
+      Assert.assertTrue(result.hasNext());
+      result.next();
+      Assert.assertFalse(result.hasNext());
+    }
+    try (OResultSet result =
+        db.query("select from " + className + " where name LIKE '%foo%baz%'")) {
+      Assert.assertTrue(result.hasNext());
+      result.next();
+      Assert.assertFalse(result.hasNext());
+    }
+    try (OResultSet result = db.query("select from " + className + " where name LIKE '%bar%'")) {
+      Assert.assertTrue(result.hasNext());
+      result.next();
+      Assert.assertFalse(result.hasNext());
+    }
+
+    try (OResultSet result = db.query("select from " + className + " where name LIKE 'bar%'")) {
+      Assert.assertFalse(result.hasNext());
+    }
+
+    try (OResultSet result = db.query("select from " + className + " where name LIKE '%bar'")) {
+      Assert.assertFalse(result.hasNext());
+    }
+
+    String specialChars = "[]{}()|*^.";
+    for (char c : specialChars.toCharArray()) {
+      try (OResultSet result =
+          db.query("select from " + className + " where name LIKE '%" + c + "%'")) {
+        Assert.assertTrue(result.hasNext());
+        result.next();
+        Assert.assertFalse(result.hasNext());
+      }
+    }
+  }
+
+  @Test
+  public void testCountGroupBy() {
+    // issue #9288
+    String className = "testCountGroupBy";
+    db.getMetadata().getSchema().createClass(className);
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("type", i % 2 == 0 ? "even" : "odd");
+      doc.setProperty("val", i);
+      doc.save();
+    }
+    OResultSet result = db.query("select count(val) as count from " + className + " limit 3");
+    printExecutionPlan(result);
+
+    Assert.assertTrue(result.hasNext());
+    OResult item = result.next();
+    Assert.assertEquals(10L, (long) item.getProperty("count"));
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test
+  public void testTimeout() {
+    String className = "testTimeout";
+    final String funcitonName = getClass().getSimpleName() + "_sleep";
+    db.getMetadata().getSchema().createClass(className);
+
+    OSQLEngine.getInstance()
+        .registerFunction(
+            funcitonName,
+            new OSQLFunction() {
+
+              @Override
+              public Object execute(
+                  Object iThis,
+                  OIdentifiable iCurrentRecord,
+                  Object iCurrentResult,
+                  Object[] iParams,
+                  OCommandContext iContext) {
+                try {
+                  Thread.sleep(5);
+                } catch (InterruptedException e) {
+                }
+                return null;
+              }
+
+              @Override
+              public void config(Object[] configuredParameters) {}
+
+              @Override
+              public boolean aggregateResults() {
+                return false;
+              }
+
+              @Override
+              public boolean filterResult() {
+                return false;
+              }
+
+              @Override
+              public String getName() {
+                return funcitonName;
+              }
+
+              @Override
+              public int getMinParams() {
+                return 0;
+              }
+
+              @Override
+              public int getMaxParams() {
+                return 0;
+              }
+
+              @Override
+              public String getSyntax() {
+                return "";
+              }
+
+              @Override
+              public Object getResult() {
+                return null;
+              }
+
+              @Override
+              public void setResult(Object iResult) {}
+
+              @Override
+              public boolean shouldMergeDistributedResult() {
+                return false;
+              }
+
+              @Override
+              public Object mergeDistributedResult(List<Object> resultsToMerge) {
+                return null;
+              }
+            });
+    for (int i = 0; i < 3; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("type", i % 2 == 0 ? "even" : "odd");
+      doc.setProperty("val", i);
+      doc.save();
+    }
+    try (OResultSet result =
+        db.query("select " + funcitonName + "(), * from " + className + " timeout 1")) {
+      while (result.hasNext()) {
+        result.next();
+      }
+      Assert.fail();
+    } catch (OTimeoutException ex) {
+
+    }
+
+    try (OResultSet result =
+        db.query("select " + funcitonName + "(), * from " + className + " timeout 100")) {
+      while (result.hasNext()) {
+        result.next();
+      }
+    } catch (OTimeoutException ex) {
+      Assert.fail();
+    }
+  }
+
+  @Test
+  public void testSimpleRangeQueryWithIndexGTE() {
+    final String className = "testSimpleRangeQueryWithIndexGTE";
+    final OClass clazz = db.getMetadata().getSchema().getOrCreateClass(className);
+    final OProperty prop = clazz.createProperty("name", OType.STRING);
+    prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+
+    for (int i = 0; i < 10; i++) {
+      final ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.save();
+    }
+    final OResultSet result = db.query("select from " + className + " WHERE name >= 'name5'");
+    printExecutionPlan(result);
+
+    for (int i = 0; i < 5; i++) {
+      Assert.assertTrue(result.hasNext());
+      System.out.println(result.next());
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test
+  public void testSimpleRangeQueryWithIndexLTE() {
+    final String className = "testSimpleRangeQueryWithIndexLTE";
+    final OClass clazz = db.getMetadata().getSchema().getOrCreateClass(className);
+    final OProperty prop = clazz.createProperty("name", OType.STRING);
+    prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+
+    for (int i = 0; i < 10; i++) {
+      final ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.save();
+    }
+    final OResultSet result = db.query("select from " + className + " WHERE name <= 'name5'");
+    printExecutionPlan(result);
+
+    for (int i = 0; i < 6; i++) {
+      Assert.assertTrue(result.hasNext());
+      System.out.println(result.next());
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test
+  public void testSimpleRangeQueryWithOutIndex() {
+    final String className = "testSimpleRangeQueryWithOutIndex";
+    final OClass clazz = db.getMetadata().getSchema().getOrCreateClass(className);
+    final OProperty prop = clazz.createProperty("name", OType.STRING);
+    // Hash Index skipped for range query
+    prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX);
+
+    for (int i = 0; i < 10; i++) {
+      final ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.save();
+    }
+    final OResultSet result = db.query("select from " + className + " WHERE name >= 'name5'");
+    printExecutionPlan(result);
+
+    for (int i = 0; i < 5; i++) {
+      Assert.assertTrue(result.hasNext());
+      System.out.println(result.next());
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test
+  public void testComplexIndexChain() {
+
+    // A -b-> B -c-> C -d-> D.name
+    //               C.name
+
+    String classNamePrefix = "testComplexIndexChain_";
+    OClass a = db.getMetadata().getSchema().createClass(classNamePrefix + "A");
+    OClass b = db.getMetadata().getSchema().createClass(classNamePrefix + "C");
+    OClass c = db.getMetadata().getSchema().createClass(classNamePrefix + "B");
+    OClass d = db.getMetadata().getSchema().createClass(classNamePrefix + "D");
+
+    a.createProperty("b", OType.LINK, b).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+    b.createProperty("c", OType.LINK, c).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+    c.createProperty("d", OType.LINK, d).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+    c.createProperty("name", OType.STRING).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+    d.createProperty("name", OType.STRING).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+
+    OElement dDoc = db.newElement(d.getName());
+    dDoc.setProperty("name", "foo");
+    dDoc.save();
+
+    OElement cDoc = db.newElement(c.getName());
+    cDoc.setProperty("name", "foo");
+    cDoc.setProperty("d", dDoc);
+    cDoc.save();
+
+    OElement bDoc = db.newElement(b.getName());
+    bDoc.setProperty("c", cDoc);
+    bDoc.save();
+
+    OElement aDoc = db.newElement(a.getName());
+    aDoc.setProperty("b", bDoc);
+    aDoc.save();
+
+    try (OResultSet rs =
+        db.query(
+            "SELECT FROM "
+                + classNamePrefix
+                + "A WHERE b.c.name IN ['foo'] AND b.c.d.name IN ['foo']")) {
+      Assert.assertTrue(rs.hasNext());
+    }
+
+    try (OResultSet rs =
+        db.query(
+            "SELECT FROM " + classNamePrefix + "A WHERE b.c.name = 'foo' AND b.c.d.name = 'foo'")) {
+      Assert.assertTrue(rs.hasNext());
+      Assert.assertTrue(
+          rs.getExecutionPlan().get().getSteps().stream()
+              .anyMatch(x -> x instanceof FetchFromIndexStep));
+    }
+  }
+
+  @Test
+  public void testIndexWithSubquery() {
+    String classNamePrefix = "testIndexWithSubquery_";
+    db.command("create class " + classNamePrefix + "Ownership extends V abstract;").close();
+    db.command("create class " + classNamePrefix + "User extends V;").close();
+    db.command("create property " + classNamePrefix + "User.id String;").close();
+    db.command(
+            "create index "
+                + classNamePrefix
+                + "User.id ON "
+                + classNamePrefix
+                + "User(id) unique;")
+        .close();
+    db.command(
+            "create class " + classNamePrefix + "Report extends " + classNamePrefix + "Ownership;")
+        .close();
+    db.command("create property " + classNamePrefix + "Report.id String;").close();
+    db.command("create property " + classNamePrefix + "Report.label String;").close();
+    db.command("create property " + classNamePrefix + "Report.format String;").close();
+    db.command("create property " + classNamePrefix + "Report.source String;").close();
+    db.command("create class " + classNamePrefix + "hasOwnership extends E;").close();
+    db.command("insert into " + classNamePrefix + "User content {id:\"admin\"};");
+    db.command(
+            "insert into "
+                + classNamePrefix
+                + "Report content {format:\"PDF\", id:\"rep1\", label:\"Report 1\", source:\"Report1.src\"};")
+        .close();
+    db.command(
+            "insert into "
+                + classNamePrefix
+                + "Report content {format:\"CSV\", id:\"rep2\", label:\"Report 2\", source:\"Report2.src\"};")
+        .close();
+    db.command(
+            "create edge "
+                + classNamePrefix
+                + "hasOwnership from (select from "
+                + classNamePrefix
+                + "User) to (select from "
+                + classNamePrefix
+                + "Report);")
+        .close();
+
+    try (OResultSet rs =
+        db.query(
+            "select from "
+                + classNamePrefix
+                + "Report where id in (select out('"
+                + classNamePrefix
+                + "hasOwnership').id from "
+                + classNamePrefix
+                + "User where id = 'admin');")) {
+      Assert.assertTrue(rs.hasNext());
+      rs.next();
+      Assert.assertTrue(rs.hasNext());
+      rs.next();
+      Assert.assertFalse(rs.hasNext());
+    }
+
+    db.command(
+            "create index "
+                + classNamePrefix
+                + "Report.id ON "
+                + classNamePrefix
+                + "Report(id) unique;")
+        .close();
+
+    try (OResultSet rs =
+        db.query(
+            "select from "
+                + classNamePrefix
+                + "Report where id in (select out('"
+                + classNamePrefix
+                + "hasOwnership').id from "
+                + classNamePrefix
+                + "User where id = 'admin');")) {
+      Assert.assertTrue(rs.hasNext());
+      rs.next();
+      Assert.assertTrue(rs.hasNext());
+      rs.next();
+      Assert.assertFalse(rs.hasNext());
+    }
+  }
+
+  @Test
+  public void testExclude() {
+    String className = "TestExclude";
+    db.getMetadata().getSchema().createClass(className);
+    ODocument doc = db.newInstance(className);
+    doc.setProperty("name", "foo");
+    doc.setProperty("surname", "bar");
+    doc.save();
+
+    OResultSet result = db.query("select *, !surname from " + className);
+    Assert.assertTrue(result.hasNext());
+    OResult item = result.next();
+    Assert.assertNotNull(item);
+    Assert.assertEquals("foo", item.getProperty("name"));
+    Assert.assertNull(item.getProperty("surname"));
+
+    printExecutionPlan(result);
+    result.close();
   }
 }

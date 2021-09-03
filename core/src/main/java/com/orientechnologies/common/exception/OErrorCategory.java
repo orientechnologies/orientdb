@@ -1,10 +1,7 @@
 package com.orientechnologies.common.exception;
 
-/**
- * Created by luigidellaquila on 13/08/15.
- */
+/** Created by luigidellaquila on 13/08/15. */
 public enum OErrorCategory {
-
   GENERIC(1),
 
   SQL_GENERIC(2),
@@ -24,5 +21,4 @@ public enum OErrorCategory {
   private OErrorCategory(int code) {
     this.code = code;
   }
-
 }

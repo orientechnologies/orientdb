@@ -24,7 +24,6 @@ import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-
 import java.io.IOException;
 
 /**
@@ -32,10 +31,11 @@ import java.io.IOException;
  * @since 5/14/14
  */
 public class ODirectoryPage extends ODurablePage {
-  private static final int  ITEMS_OFFSET   = NEXT_FREE_POSITION;
+  private static final int ITEMS_OFFSET = NEXT_FREE_POSITION;
 
-  public static final int   NODES_PER_PAGE = (OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024 - ITEMS_OFFSET)
-                                               / OHashTableDirectory.BINARY_LEVEL_SIZE;
+  public static final int NODES_PER_PAGE =
+      (OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024 - ITEMS_OFFSET)
+          / OHashTableDirectory.BINARY_LEVEL_SIZE;
 
   private final OCacheEntry entry;
 
@@ -59,35 +59,53 @@ public class ODirectoryPage extends ODurablePage {
   }
 
   void setMaxRightChildDepth(int localNodeIndex, byte maxRightChildDepth) {
-    int offset = getItemsOffset() + localNodeIndex * OHashTableDirectory.BINARY_LEVEL_SIZE + OByteSerializer.BYTE_SIZE;
+    int offset =
+        getItemsOffset()
+            + localNodeIndex * OHashTableDirectory.BINARY_LEVEL_SIZE
+            + OByteSerializer.BYTE_SIZE;
     setByteValue(offset, maxRightChildDepth);
   }
 
   byte getMaxRightChildDepth(int localNodeIndex) {
-    int offset = getItemsOffset() + localNodeIndex * OHashTableDirectory.BINARY_LEVEL_SIZE + OByteSerializer.BYTE_SIZE;
+    int offset =
+        getItemsOffset()
+            + localNodeIndex * OHashTableDirectory.BINARY_LEVEL_SIZE
+            + OByteSerializer.BYTE_SIZE;
     return getByteValue(offset);
   }
 
   void setNodeLocalDepth(int localNodeIndex, byte nodeLocalDepth) {
-    int offset = getItemsOffset() + localNodeIndex * OHashTableDirectory.BINARY_LEVEL_SIZE + 2 * OByteSerializer.BYTE_SIZE;
+    int offset =
+        getItemsOffset()
+            + localNodeIndex * OHashTableDirectory.BINARY_LEVEL_SIZE
+            + 2 * OByteSerializer.BYTE_SIZE;
     setByteValue(offset, nodeLocalDepth);
   }
 
   byte getNodeLocalDepth(int localNodeIndex) {
-    int offset = getItemsOffset() + localNodeIndex * OHashTableDirectory.BINARY_LEVEL_SIZE + 2 * OByteSerializer.BYTE_SIZE;
+    int offset =
+        getItemsOffset()
+            + localNodeIndex * OHashTableDirectory.BINARY_LEVEL_SIZE
+            + 2 * OByteSerializer.BYTE_SIZE;
     return getByteValue(offset);
   }
 
   void setPointer(int localNodeIndex, int index, long pointer) throws IOException {
-    int offset = getItemsOffset() + (localNodeIndex * OHashTableDirectory.BINARY_LEVEL_SIZE + 3 * OByteSerializer.BYTE_SIZE)
-        + index * OHashTableDirectory.ITEM_SIZE;
+    int offset =
+        getItemsOffset()
+            + (localNodeIndex * OHashTableDirectory.BINARY_LEVEL_SIZE
+                + 3 * OByteSerializer.BYTE_SIZE)
+            + index * OHashTableDirectory.ITEM_SIZE;
 
     setLongValue(offset, pointer);
   }
 
   public long getPointer(int localNodeIndex, int index) {
-    int offset = getItemsOffset() + (localNodeIndex * OHashTableDirectory.BINARY_LEVEL_SIZE + 3 * OByteSerializer.BYTE_SIZE)
-        + index * OHashTableDirectory.ITEM_SIZE;
+    int offset =
+        getItemsOffset()
+            + (localNodeIndex * OHashTableDirectory.BINARY_LEVEL_SIZE
+                + 3 * OByteSerializer.BYTE_SIZE)
+            + index * OHashTableDirectory.ITEM_SIZE;
 
     return getLongValue(offset);
   }

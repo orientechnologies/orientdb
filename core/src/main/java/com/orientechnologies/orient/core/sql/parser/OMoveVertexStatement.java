@@ -8,16 +8,15 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.sql.executor.OMoveVertexExecutionPlanner;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.executor.OUpdateExecutionPlan;
-
 import java.util.HashMap;
 import java.util.Map;
 
 public class OMoveVertexStatement extends OStatement {
-  protected OFromItem         source;
-  protected OCluster          targetCluster;
-  protected OIdentifier       targetClass;
+  protected OFromItem source;
+  protected OCluster targetCluster;
+  protected OIdentifier targetClass;
   protected OUpdateOperations updateOperations;
-  protected OBatch            batch;
+  protected OBatch batch;
 
   public OMoveVertexStatement(int id) {
     super(id);
@@ -27,8 +26,9 @@ public class OMoveVertexStatement extends OStatement {
     super(p, id);
   }
 
-
-  @Override public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
+  @Override
+  public OResultSet execute(
+      ODatabase db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
     Map<Object, Object> params = new HashMap<>();
     if (args != null) {
       for (int i = 0; i < args.length; i++) {
@@ -38,7 +38,9 @@ public class OMoveVertexStatement extends OStatement {
     return execute(db, params, parentCtx, usePlanCache);
   }
 
-  @Override public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx, boolean usePlanCache) {
+  @Override
+  public OResultSet execute(
+      ODatabase db, Map params, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -47,7 +49,7 @@ public class OMoveVertexStatement extends OStatement {
     ctx.setInputParameters(params);
     OUpdateExecutionPlan executionPlan;
     if (usePlanCache) {
-      executionPlan =  createExecutionPlan(ctx, false);
+      executionPlan = createExecutionPlan(ctx, false);
     } else {
       executionPlan = (OUpdateExecutionPlan) createExecutionPlanNoCache(ctx, false);
     }
@@ -95,21 +97,20 @@ public class OMoveVertexStatement extends OStatement {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OMoveVertexStatement that = (OMoveVertexStatement) o;
 
-    if (!source.equals(that.source))
-      return false;
-    if (targetCluster != null ? !targetCluster.equals(that.targetCluster) : that.targetCluster != null)
-      return false;
+    if (!source.equals(that.source)) return false;
+    if (targetCluster != null
+        ? !targetCluster.equals(that.targetCluster)
+        : that.targetCluster != null) return false;
     if (targetClass != null ? !targetClass.equals(that.targetClass) : that.targetClass != null)
       return false;
-    if (updateOperations != null ? !updateOperations.equals(that.updateOperations) : that.updateOperations != null)
-      return false;
+    if (updateOperations != null
+        ? !updateOperations.equals(that.updateOperations)
+        : that.updateOperations != null) return false;
     return batch != null ? batch.equals(that.batch) : that.batch == null;
   }
 

@@ -1,18 +1,17 @@
 package com.orientechnologies.orient.graph.sql.functions;
 
+import static org.junit.Assert.assertEquals;
+
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.id.ORID;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static org.junit.Assert.assertEquals;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 public class OSQLFunctionShortestPathTest {
 
@@ -64,8 +63,13 @@ public class OSQLFunctionShortestPathTest {
 
   @Test
   public void testExecute() throws Exception {
-    final List<ORID> result = function.execute(null, null, null, new Object[] { vertices.get(1), vertices.get(4) },
-        new OBasicCommandContext());
+    final List<ORID> result =
+        function.execute(
+            null,
+            null,
+            null,
+            new Object[] {vertices.get(1), vertices.get(4)},
+            new OBasicCommandContext());
 
     assertEquals(3, result.size());
     assertEquals(vertices.get(1).getId(), result.get(0));
@@ -75,8 +79,13 @@ public class OSQLFunctionShortestPathTest {
 
   @Test
   public void testExecuteOut() throws Exception {
-    final List<ORID> result = function.execute(null, null, null, new Object[] { vertices.get(1), vertices.get(4), "out", null },
-        new OBasicCommandContext());
+    final List<ORID> result =
+        function.execute(
+            null,
+            null,
+            null,
+            new Object[] {vertices.get(1), vertices.get(4), "out", null},
+            new OBasicCommandContext());
 
     assertEquals(4, result.size());
     assertEquals(vertices.get(1).getId(), result.get(0));
@@ -87,8 +96,13 @@ public class OSQLFunctionShortestPathTest {
 
   @Test
   public void testExecuteOnlyEdge1() throws Exception {
-    final List<ORID> result = function.execute(null, null, null, new Object[] { vertices.get(1), vertices.get(4), null, "Edge1" },
-        new OBasicCommandContext());
+    final List<ORID> result =
+        function.execute(
+            null,
+            null,
+            null,
+            new Object[] {vertices.get(1), vertices.get(4), null, "Edge1"},
+            new OBasicCommandContext());
 
     assertEquals(4, result.size());
     assertEquals(vertices.get(1).getId(), result.get(0));
@@ -99,8 +113,13 @@ public class OSQLFunctionShortestPathTest {
 
   @Test
   public void testLong() throws Exception {
-    final List<ORID> result = function.execute(null, null, null, new Object[] { vertices.get(1), vertices.get(20) },
-        new OBasicCommandContext());
+    final List<ORID> result =
+        function.execute(
+            null,
+            null,
+            null,
+            new Object[] {vertices.get(1), vertices.get(20)},
+            new OBasicCommandContext());
 
     assertEquals(11, result.size());
     assertEquals(vertices.get(1).getId(), result.get(0));
@@ -115,8 +134,12 @@ public class OSQLFunctionShortestPathTest {
   public void testMaxDepth1() throws Exception {
     Map<String, Object> additionalParams = new HashMap<String, Object>();
     additionalParams.put(OSQLFunctionShortestPath.PARAM_MAX_DEPTH, 11);
-    final List<ORID> result = function
-        .execute(null, null, null, new Object[] { vertices.get(1), vertices.get(20), null, null, additionalParams },
+    final List<ORID> result =
+        function.execute(
+            null,
+            null,
+            null,
+            new Object[] {vertices.get(1), vertices.get(20), null, null, additionalParams},
             new OBasicCommandContext());
 
     assertEquals(11, result.size());
@@ -126,8 +149,12 @@ public class OSQLFunctionShortestPathTest {
   public void testMaxDepth2() throws Exception {
     Map<String, Object> additionalParams = new HashMap<String, Object>();
     additionalParams.put(OSQLFunctionShortestPath.PARAM_MAX_DEPTH, 12);
-    final List<ORID> result = function
-        .execute(null, null, null, new Object[] { vertices.get(1), vertices.get(20), null, null, additionalParams },
+    final List<ORID> result =
+        function.execute(
+            null,
+            null,
+            null,
+            new Object[] {vertices.get(1), vertices.get(20), null, null, additionalParams},
             new OBasicCommandContext());
 
     assertEquals(11, result.size());
@@ -137,8 +164,12 @@ public class OSQLFunctionShortestPathTest {
   public void testMaxDepth3() throws Exception {
     Map<String, Object> additionalParams = new HashMap<String, Object>();
     additionalParams.put(OSQLFunctionShortestPath.PARAM_MAX_DEPTH, 10);
-    final List<ORID> result = function
-        .execute(null, null, null, new Object[] { vertices.get(1), vertices.get(20), null, null, additionalParams },
+    final List<ORID> result =
+        function.execute(
+            null,
+            null,
+            null,
+            new Object[] {vertices.get(1), vertices.get(20), null, null, additionalParams},
             new OBasicCommandContext());
 
     assertEquals(0, result.size());
@@ -148,8 +179,12 @@ public class OSQLFunctionShortestPathTest {
   public void testMaxDepth4() throws Exception {
     Map<String, Object> additionalParams = new HashMap<String, Object>();
     additionalParams.put(OSQLFunctionShortestPath.PARAM_MAX_DEPTH, 3);
-    final List<ORID> result = function
-        .execute(null, null, null, new Object[] { vertices.get(1), vertices.get(20), null, null, additionalParams },
+    final List<ORID> result =
+        function.execute(
+            null,
+            null,
+            null,
+            new Object[] {vertices.get(1), vertices.get(20), null, null, additionalParams},
             new OBasicCommandContext());
 
     assertEquals(0, result.size());

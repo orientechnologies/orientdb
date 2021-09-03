@@ -1,23 +1,22 @@
 package com.orientechnologies.orient.core.metadata.security;
 
-import java.util.HashSet;
-import java.util.Set;
-
-import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.directmemory.ODirectMemoryAllocator;
-import org.junit.Assert; import org.junit.Test;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.util.HashSet;
+import java.util.Set;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class ORestricetedUserCleanUpTest {
 
   @Test
   public void testAutoCleanUserAfterDelate() {
-    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + ORestricetedUserCleanUpTest.class.getSimpleName());
+    ODatabaseDocument db =
+        new ODatabaseDocumentTx("memory:" + ORestricetedUserCleanUpTest.class.getSimpleName());
     db.create();
     try {
       OSchema schema = db.getMetadata().getSchema();
@@ -75,5 +74,4 @@ public class ORestricetedUserCleanUpTest {
     System.gc();
     ODirectMemoryAllocator.instance().checkTrackedPointerLeaks();
   }
-
 }

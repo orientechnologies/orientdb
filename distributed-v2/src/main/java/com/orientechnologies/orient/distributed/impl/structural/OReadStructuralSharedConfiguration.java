@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.distributed.impl.structural;
 
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;

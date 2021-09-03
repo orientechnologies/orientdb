@@ -1,5 +1,12 @@
 package com.tinkerpop.blueprints.impls.orient;
 
+import com.orientechnologies.orient.client.db.ODatabaseHelper;
+import com.orientechnologies.orient.client.remote.OServerAdmin;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.tinkerpop.blueprints.Vertex;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -9,36 +16,31 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import org.junit.*;
-
-import com.orientechnologies.orient.client.db.ODatabaseHelper;
-import com.orientechnologies.orient.client.remote.OServerAdmin;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.tinkerpop.blueprints.Vertex;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
 
 public class OrientCommitMTTestIT {
-  public static final String        DB_URL           = "plocal:./avltreetest";
-  public static final String        DB_USER          = "admin";
-  public static final String        DB_PASSWORD      = "admin";
-  private static final String       TEST_CLASS       = "ORIENT_COMMIT_TEST";
-  private static final String       THREAD_ID        = "ThreadId";
-  private static final String       ID               = "IdField";
+  public static final String DB_URL = "plocal:./avltreetest";
+  public static final String DB_USER = "admin";
+  public static final String DB_PASSWORD = "admin";
+  private static final String TEST_CLASS = "ORIENT_COMMIT_TEST";
+  private static final String THREAD_ID = "ThreadId";
+  private static final String ID = "IdField";
 
-  private String                    failureMessage   = "";
-  private boolean                   isValidData;
-  private TestExecutor[]            threads;
+  private String failureMessage = "";
+  private boolean isValidData;
+  private TestExecutor[] threads;
 
-  final int                         threadCount      = 5;
-  final int                         maxSleepTime     = 100;
-  final int                         maxOpCount       = 6;
-  final int                         initialCacheSize = 10;
-  final AtomicInteger               idGenerator      = new AtomicInteger(1);
+  final int threadCount = 5;
+  final int maxSleepTime = 100;
+  final int maxOpCount = 6;
+  final int initialCacheSize = 10;
+  final AtomicInteger idGenerator = new AtomicInteger(1);
 
-  private static Random             random           = new Random();
+  private static Random random = new Random();
   private static OrientGraphFactory factory;
 
   @Before
@@ -84,7 +86,8 @@ public class OrientCommitMTTestIT {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(Integer.MAX_VALUE);
 
     try {
-      System.setOut(new PrintStream(new File("target/log/CommitTestTransactionalEmbeddedRidBag.txt")));
+      System.setOut(
+          new PrintStream(new File("target/log/CommitTestTransactionalEmbeddedRidBag.txt")));
     } catch (FileNotFoundException e) {
     }
     // set to run until it fails with the transaction set to true
@@ -96,7 +99,9 @@ public class OrientCommitMTTestIT {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(Integer.MAX_VALUE);
 
     try {
-      System.setOut(new PrintStream(new File("target/log/CommitTestTransactionalSingleThreadEmbeddedRidBag.txt")));
+      System.setOut(
+          new PrintStream(
+              new File("target/log/CommitTestTransactionalSingleThreadEmbeddedRidBag.txt")));
     } catch (FileNotFoundException e) {
     }
     // set to run 5 minutes with the transaction set to true
@@ -109,7 +114,8 @@ public class OrientCommitMTTestIT {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(-1);
 
     try {
-      System.setOut(new PrintStream(new File("target/log/CommitTestTransactionalSBTreeRidBag.txt")));
+      System.setOut(
+          new PrintStream(new File("target/log/CommitTestTransactionalSBTreeRidBag.txt")));
     } catch (FileNotFoundException e) {
     }
     // set to run until it fails with the transaction set to true
@@ -121,16 +127,16 @@ public class OrientCommitMTTestIT {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(-1);
 
     try {
-      System.setOut(new PrintStream(new File("target/log/CommitTestTransactionalSingleThreadSBTreeRidBag.txt")));
+      System.setOut(
+          new PrintStream(
+              new File("target/log/CommitTestTransactionalSingleThreadSBTreeRidBag.txt")));
     } catch (FileNotFoundException e) {
     }
     // set to run 5 minutes with the transaction set to true
     executeTest(1, this.maxSleepTime, this.maxOpCount, this.initialCacheSize, 2);
   }
 
-  /**
-   * If failure occurs, set its message and kill all other running threads
-   */
+  /** If failure occurs, set its message and kill all other running threads */
   public void setFailureMessage(final String message) {
     this.isValidData = false;
     this.failureMessage = message;
@@ -142,14 +148,13 @@ public class OrientCommitMTTestIT {
     }
   }
 
-  /**
-   * Get failure message
-   */
+  /** Get failure message */
   public String getFailureMessage() {
     return this.failureMessage;
   }
 
-  private void executeTest(final int threadCount,
+  private void executeTest(
+      final int threadCount,
       final int maxSleepTime,
       final int maxOpCount,
       final int initialCacheSize,
@@ -193,14 +198,18 @@ public class OrientCommitMTTestIT {
   }
 
   class TestExecutor implements Runnable {
-    private int                  maxSleepTime;
+    private int maxSleepTime;
     private final CountDownLatch endLatch;
-    private boolean              shutdown;
-    private int                  maxOpCount;
-    private final List<IdPair>   cache;
-    private final int            threadId;
+    private boolean shutdown;
+    private int maxOpCount;
+    private final List<IdPair> cache;
+    private final int threadId;
 
-    public TestExecutor(final int threadId, final CountDownLatch endLatch, final int maxSleepTime, final int maxOpCount) {
+    public TestExecutor(
+        final int threadId,
+        final CountDownLatch endLatch,
+        final int maxSleepTime,
+        final int maxOpCount) {
       this.endLatch = endLatch;
       this.maxSleepTime = maxSleepTime;
       this.maxOpCount = maxOpCount;
@@ -234,10 +243,11 @@ public class OrientCommitMTTestIT {
     }
 
     /**
-     * Perform a set of insert or delete operations (picked at random) with variable transaction flag
+     * Perform a set of insert or delete operations (picked at random) with variable transaction
+     * flag
      */
     private void commitOperations() {
-      OrientGraph graph = factory.getTx();// new OrientGraph(DB_URL, DB_USER, DB_PASSWORD);
+      OrientGraph graph = factory.getTx(); // new OrientGraph(DB_URL, DB_USER, DB_PASSWORD);
       try {
         List<TempCacheObject> tempCache = new ArrayList<TempCacheObject>();
         try {
@@ -259,7 +269,8 @@ public class OrientCommitMTTestIT {
                 // add deleted id to temp cache
                 tempCache.add(new TempCacheObject(operation, deleteId, customId));
               } else {
-                System.out.println("ThreadId: " + this.threadId + " no ids in database for thread to delete.");
+                System.out.println(
+                    "ThreadId: " + this.threadId + " no ids in database for thread to delete.");
               }
             }
           }
@@ -269,8 +280,13 @@ public class OrientCommitMTTestIT {
         } catch (Exception e) {
           graph.rollback();
           tempCache.clear();
-          System.out.println("ThreadId: " + this.threadId + " Rolling back transaction due to " + e.getClass().getSimpleName()
-              + " " + e.getMessage());
+          System.out.println(
+              "ThreadId: "
+                  + this.threadId
+                  + " Rolling back transaction due to "
+                  + e.getClass().getSimpleName()
+                  + " "
+                  + e.getMessage());
           e.printStackTrace(System.out);
         }
         // update permanent cache from temp cache
@@ -279,7 +295,8 @@ public class OrientCommitMTTestIT {
         validateCustomIdsAgainstDatabase(graph);
         validateDatabase(this.cache, graph);
       } catch (Exception e) {
-        System.out.println("ThreadId: " + this.threadId + " threw a validation exception: " + e.getMessage());
+        System.out.println(
+            "ThreadId: " + this.threadId + " threw a validation exception: " + e.getMessage());
         e.printStackTrace(System.out);
         // validation failed - set failure message
         setFailureMessage(e.getMessage());
@@ -291,8 +308,7 @@ public class OrientCommitMTTestIT {
 
     private void validateCustomIdsAgainstDatabase(OrientGraph graph) throws Exception {
       List<Vertex> recordsInDb = new ArrayList<Vertex>();
-      for (Vertex v : graph.getVerticesOfClass(TEST_CLASS))
-        recordsInDb.add(v);
+      for (Vertex v : graph.getVerticesOfClass(TEST_CLASS)) recordsInDb.add(v);
 
       for (IdPair cacheInstance : this.cache) {
         Integer customId = cacheInstance.getCustomId();
@@ -304,7 +320,8 @@ public class OrientCommitMTTestIT {
           }
         }
         if (!found) {
-          throw new Exception("Custom id: " + customId + " exists in cache but was not found in db.");
+          throw new Exception(
+              "Custom id: " + customId + " exists in cache but was not found in db.");
         }
       }
     }
@@ -314,14 +331,15 @@ public class OrientCommitMTTestIT {
     }
 
     /**
-     * Verify that all ids in the permanent cache are in the db. Verify that all ids (for a given thread) in the db are in the
-     * permanent cache.
+     * Verify that all ids in the permanent cache are in the db. Verify that all ids (for a given
+     * thread) in the db are in the permanent cache.
      */
     private void validateDatabase(final List<IdPair> cache, OrientGraph graph) throws Exception {
       for (IdPair idPair : cache) {
         ORID id = idPair.getOrid();
         if (!isInDatabase(id, graph)) {
-          throw new Exception("Insert issue: expected record " + id + " was not found in database.");
+          throw new Exception(
+              "Insert issue: expected record " + id + " was not found in database.");
         }
       }
       for (Vertex vertex : graph.getVerticesOfClass(TEST_CLASS)) {
@@ -329,15 +347,18 @@ public class OrientCommitMTTestIT {
           ORID dbId = ((OrientVertex) vertex).getIdentity();
           Integer customId = vertex.getProperty(ID);
           if (!cache.contains(new IdPair(dbId, customId))) {
-            throw new Exception("Delete issue: record id " + dbId + " for thread id " + this.threadId + " was not found in cache.");
+            throw new Exception(
+                "Delete issue: record id "
+                    + dbId
+                    + " for thread id "
+                    + this.threadId
+                    + " was not found in cache.");
           }
         }
       }
     }
 
-    /**
-     * Checks to see if an id for a given thread exist in the db.
-     */
+    /** Checks to see if an id for a given thread exist in the db. */
     private boolean isInDatabase(final ORID id, OrientGraph orientGraph) throws Exception {
       final OrientVertex vertex = orientGraph.getVertex(id);
       if (vertex != null) {
@@ -349,11 +370,10 @@ public class OrientCommitMTTestIT {
     }
 
     /**
-     * Add id from the temp cache with insert operation to permanent cache. Remove id from permanent cache that has a delete
-     * operation in the temp cache.
-     * 
-     * @param tempCache
-     *          cached objects
+     * Add id from the temp cache with insert operation to permanent cache. Remove id from permanent
+     * cache that has a delete operation in the temp cache.
+     *
+     * @param tempCache cached objects
      */
     private void updateCache(final List<TempCacheObject> tempCache) {
       for (TempCacheObject tempCacheObject : tempCache) {
@@ -368,9 +388,7 @@ public class OrientCommitMTTestIT {
       }
     }
 
-    /**
-     * Insert new node and create edge with the random node in the db.
-     */
+    /** Insert new node and create edge with the random node in the db. */
     private IdPair insertNewNode(OrientGraph graph) {
       boolean closeDb = false;
       if (graph == null) {
@@ -380,7 +398,9 @@ public class OrientCommitMTTestIT {
 
       try {
         Integer id = OrientCommitMTTestIT.this.idGenerator.getAndIncrement();
-        OrientVertex vertex = graph.addVertex("class:" + TEST_CLASS, THREAD_ID, Integer.valueOf(this.threadId), ID, id);
+        OrientVertex vertex =
+            graph.addVertex(
+                "class:" + TEST_CLASS, THREAD_ID, Integer.valueOf(this.threadId), ID, id);
 
         ORID randomId = getRandomIdForThread(graph);
         if (randomId != null) {
@@ -390,14 +410,11 @@ public class OrientCommitMTTestIT {
         ORID newRecordId = vertex.getIdentity();
         return new IdPair(newRecordId, id);
       } finally {
-        if (closeDb)
-          graph.shutdown();
+        if (closeDb) graph.shutdown();
       }
     }
 
-    /**
-     * Delete all edges connected to given vertex and then delete vertex.
-     */
+    /** Delete all edges connected to given vertex and then delete vertex. */
     private Integer deleteExistingNode(final ORID recordId, OrientGraph graph) {
       OrientVertex vertex = graph.getVertex(recordId);
       Integer customId = vertex.getProperty(ID);
@@ -407,7 +424,8 @@ public class OrientCommitMTTestIT {
     }
 
     /**
-     * Get all of the ids from the db for that class for a given thread id. Return id from the list at random.
+     * Get all of the ids from the db for that class for a given thread id. Return id from the list
+     * at random.
      */
     private ORID getRandomIdForThread(OrientGraph graph) {
       boolean closeDb = false;
@@ -431,10 +449,8 @@ public class OrientCommitMTTestIT {
         int index = random.nextInt(size);
         return idsInDb.get(index);
       } finally {
-        if (closeDb)
-          graph.shutdown();
+        if (closeDb) graph.shutdown();
       }
-
     }
 
     private List<Operation> generateOperations(final int maxOpCount) {
@@ -453,10 +469,11 @@ public class OrientCommitMTTestIT {
 
     private class TempCacheObject {
       private Operation operation;
-      private ORID      orientId;
-      private Integer   customId;
+      private ORID orientId;
+      private Integer customId;
 
-      public TempCacheObject(final Operation operation, final ORID orientId, final Integer customId) {
+      public TempCacheObject(
+          final Operation operation, final ORID orientId, final Integer customId) {
         this.operation = operation;
         this.orientId = orientId;
         this.customId = customId;
@@ -475,20 +492,22 @@ public class OrientCommitMTTestIT {
       }
 
       public String toString() {
-        return "Operation:" + this.operation + ", ORID:" + this.orientId + ", CustomId:" + this.customId;
+        return "Operation:"
+            + this.operation
+            + ", ORID:"
+            + this.orientId
+            + ", CustomId:"
+            + this.customId;
       }
     }
   }
 
-  /**
-   * Defines two operations types
-   */
+  /** Defines two operations types */
   private static enum Operation {
-    INSERT, DELETE;
+    INSERT,
+    DELETE;
 
-    /**
-     * Picks operation at random
-     */
+    /** Picks operation at random */
     public static Operation getRandom() {
       if (0.55 > Math.random()) {
         return INSERT;
@@ -499,7 +518,7 @@ public class OrientCommitMTTestIT {
   }
 
   private static class IdPair {
-    private ORID    orid;
+    private ORID orid;
     private Integer customId;
 
     public IdPair(final ORID orid, final Integer customId) {
@@ -530,12 +549,9 @@ public class OrientCommitMTTestIT {
       }
       return true;
     }
-
   }
 
-  /**
-   * Create schema that has one class and one field
-   */
+  /** Create schema that has one class and one field */
   public void buildSchemaAndSeed() {
     OrientGraphNoTx graph = factory.getNoTx();
     try {
@@ -546,5 +562,4 @@ public class OrientCommitMTTestIT {
       graph.shutdown();
     }
   }
-
 }

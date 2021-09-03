@@ -20,6 +20,17 @@ import com.orientechnologies.orient.core.sql.parser.OBinaryCompareOperator;
 import com.orientechnologies.orient.core.sql.parser.OExpression;
 import com.orientechnologies.orient.core.sql.parser.OFromClause;
 import com.orientechnologies.orient.core.sql.parser.OFromItem;
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queries.mlt.MoreLikeThis;
 import org.apache.lucene.queryparser.classic.QueryParser;
@@ -29,16 +40,9 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-/**
- * Created by frank on 15/01/2017.
- */
-public class OLuceneSearchMoreLikeThisFunction extends OSQLFunctionAbstract implements OIndexableSQLFunction {
+/** Created by frank on 15/01/2017. */
+public class OLuceneSearchMoreLikeThisFunction extends OSQLFunctionAbstract
+    implements OIndexableSQLFunction {
 
   public static final String NAME = "search_more";
 
@@ -52,7 +56,12 @@ public class OLuceneSearchMoreLikeThisFunction extends OSQLFunctionAbstract impl
   }
 
   @Override
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] params, OCommandContext ctx) {
+  public Object execute(
+      Object iThis,
+      OIdentifiable iCurrentRecord,
+      Object iCurrentResult,
+      Object[] params,
+      OCommandContext ctx) {
 
     throw new OLuceneIndexException("SEARCH_MORE can't be executed by document");
   }
@@ -63,13 +72,16 @@ public class OLuceneSearchMoreLikeThisFunction extends OSQLFunctionAbstract impl
   }
 
   @Override
-  public Iterable<OIdentifiable> searchFromTarget(OFromClause target, OBinaryCompareOperator operator, Object rightValue,
-      OCommandContext ctx, OExpression... args) {
+  public Iterable<OIdentifiable> searchFromTarget(
+      OFromClause target,
+      OBinaryCompareOperator operator,
+      Object rightValue,
+      OCommandContext ctx,
+      OExpression... args) {
 
     OLuceneFullTextIndex index = this.searchForIndex(target, ctx);
 
-    if (index == null)
-      return Collections.emptySet();
+    if (index == null) return Collections.emptySet();
 
     IndexSearcher searcher = index.searcher();
 
@@ -79,12 +91,17 @@ public class OLuceneSearchMoreLikeThisFunction extends OSQLFunctionAbstract impl
 
     List<String> ridsAsString = parseRids(ctx, expression);
 
-    List<ORecord> others = ridsAsString.stream().map(rid -> {
-      ORecordId recordId = new ORecordId();
+    List<ORecord> others =
+        ridsAsString.stream()
+            .map(
+                rid -> {
+                  ORecordId recordId = new ORecordId();
 
-      recordId.fromString(rid);
-      return recordId;
-    }).map(id -> id.<ORecord>getRecord()).collect(Collectors.toList());
+                  recordId.fromString(rid);
+                  return recordId;
+                })
+            .map(id -> id.<ORecord>getRecord())
+            .collect(Collectors.toList());
 
     MoreLikeThis mlt = buildMoreLikeThis(index, searcher, metadata);
 
@@ -97,20 +114,24 @@ public class OLuceneSearchMoreLikeThisFunction extends OSQLFunctionAbstract impl
     Query mltQuery = queryBuilder.build();
 
     Set<OIdentifiable> luceneResultSet;
-    try (Stream<ORID> rids = index.getInternal().getRids(
-        new OLuceneKeyAndMetadata(new OLuceneCompositeKey(Arrays.asList(mltQuery.toString())).setContext(ctx), metadata))) {
+    try (Stream<ORID> rids =
+        index
+            .getInternal()
+            .getRids(
+                new OLuceneKeyAndMetadata(
+                    new OLuceneCompositeKey(Arrays.asList(mltQuery.toString())).setContext(ctx),
+                    metadata))) {
       luceneResultSet = rids.collect(Collectors.toSet());
     }
 
     return luceneResultSet;
-
   }
 
   private List<String> parseRids(OCommandContext ctx, OExpression expression) {
 
     Object expResult = expression.execute((OIdentifiable) null, ctx);
 
-    //single rind
+    // single rind
     if (expResult instanceof OIdentifiable) {
       return Collections.singletonList(((OIdentifiable) expResult).getIdentity().toString());
     }
@@ -154,60 +175,87 @@ public class OLuceneSearchMoreLikeThisFunction extends OSQLFunctionAbstract impl
     return metadata;
   }
 
-  private MoreLikeThis buildMoreLikeThis(OLuceneFullTextIndex index, IndexSearcher searcher, ODocument metadata) {
+  private MoreLikeThis buildMoreLikeThis(
+      OLuceneFullTextIndex index, IndexSearcher searcher, ODocument metadata) {
 
     MoreLikeThis mlt = new MoreLikeThis(searcher.getIndexReader());
 
     mlt.setAnalyzer(index.queryAnalyzer());
 
     mlt.setFieldNames(
-        Optional.ofNullable(metadata.<List<String>>getProperty("fieldNames")).orElse(index.getDefinition().getFields())
+        Optional.ofNullable(metadata.<List<String>>getProperty("fieldNames"))
+            .orElse(index.getDefinition().getFields())
             .toArray(new String[] {}));
 
     mlt.setMaxQueryTerms(
-        Optional.ofNullable(metadata.<Integer>getProperty("maxQueryTerms")).orElse(MoreLikeThis.DEFAULT_MAX_QUERY_TERMS));
+        Optional.ofNullable(metadata.<Integer>getProperty("maxQueryTerms"))
+            .orElse(MoreLikeThis.DEFAULT_MAX_QUERY_TERMS));
 
     mlt.setMinTermFreq(
-        Optional.ofNullable(metadata.<Integer>getProperty("minTermFreq")).orElse(MoreLikeThis.DEFAULT_MIN_TERM_FREQ));
+        Optional.ofNullable(metadata.<Integer>getProperty("minTermFreq"))
+            .orElse(MoreLikeThis.DEFAULT_MIN_TERM_FREQ));
 
-    mlt.setMaxDocFreq(Optional.ofNullable(metadata.<Integer>getProperty("maxDocFreq")).orElse(MoreLikeThis.DEFAULT_MAX_DOC_FREQ));
+    mlt.setMaxDocFreq(
+        Optional.ofNullable(metadata.<Integer>getProperty("maxDocFreq"))
+            .orElse(MoreLikeThis.DEFAULT_MAX_DOC_FREQ));
 
-    mlt.setMinDocFreq(Optional.ofNullable(metadata.<Integer>getProperty("minDocFreq")).orElse(MoreLikeThis.DEFAULT_MAX_DOC_FREQ));
+    mlt.setMinDocFreq(
+        Optional.ofNullable(metadata.<Integer>getProperty("minDocFreq"))
+            .orElse(MoreLikeThis.DEFAULT_MAX_DOC_FREQ));
 
-    mlt.setBoost(Optional.ofNullable(metadata.<Boolean>getProperty("boost")).orElse(MoreLikeThis.DEFAULT_BOOST));
+    mlt.setBoost(
+        Optional.ofNullable(metadata.<Boolean>getProperty("boost"))
+            .orElse(MoreLikeThis.DEFAULT_BOOST));
 
     mlt.setBoostFactor(Optional.ofNullable(metadata.<Float>getProperty("boostFactor")).orElse(1f));
 
     mlt.setMaxWordLen(
-        Optional.ofNullable(metadata.<Integer>getProperty("maxWordLen")).orElse(MoreLikeThis.DEFAULT_MAX_WORD_LENGTH));
+        Optional.ofNullable(metadata.<Integer>getProperty("maxWordLen"))
+            .orElse(MoreLikeThis.DEFAULT_MAX_WORD_LENGTH));
 
     mlt.setMinWordLen(
-        Optional.ofNullable(metadata.<Integer>getProperty("minWordLen")).orElse(MoreLikeThis.DEFAULT_MIN_WORD_LENGTH));
+        Optional.ofNullable(metadata.<Integer>getProperty("minWordLen"))
+            .orElse(MoreLikeThis.DEFAULT_MIN_WORD_LENGTH));
 
-    mlt.setMaxNumTokensParsed(Optional.ofNullable(metadata.<Integer>getProperty("maxNumTokensParsed"))
-        .orElse(MoreLikeThis.DEFAULT_MAX_NUM_TOKENS_PARSED));
+    mlt.setMaxNumTokensParsed(
+        Optional.ofNullable(metadata.<Integer>getProperty("maxNumTokensParsed"))
+            .orElse(MoreLikeThis.DEFAULT_MAX_NUM_TOKENS_PARSED));
 
-    mlt.setStopWords((Set<?>) Optional.ofNullable(metadata.getProperty("stopWords")).orElse(MoreLikeThis.DEFAULT_STOP_WORDS));
+    mlt.setStopWords(
+        (Set<?>)
+            Optional.ofNullable(metadata.getProperty("stopWords"))
+                .orElse(MoreLikeThis.DEFAULT_STOP_WORDS));
 
     return mlt;
   }
 
   private void addLikeQueries(List<ORecord> others, MoreLikeThis mlt, Builder queryBuilder) {
-    others.stream().map(or -> or.<OElement>load()).forEach(element -> Arrays.stream(mlt.getFieldNames()).forEach(fieldName -> {
-      String property = element.getProperty(fieldName);
-      try {
-        Query fieldQuery = mlt.like(fieldName, new StringReader(property));
-        if (!fieldQuery.toString().isEmpty())
-          queryBuilder.add(fieldQuery, Occur.SHOULD);
-      } catch (IOException e) {
-        //FIXME handle me!
-        OLogManager.instance().error(this, "Error during Lucene query generation", e);
-      }
-    }));
+    others.stream()
+        .map(or -> or.<OElement>load())
+        .forEach(
+            element ->
+                Arrays.stream(mlt.getFieldNames())
+                    .forEach(
+                        fieldName -> {
+                          String property = element.getProperty(fieldName);
+                          try {
+                            Query fieldQuery = mlt.like(fieldName, new StringReader(property));
+                            if (!fieldQuery.toString().isEmpty())
+                              queryBuilder.add(fieldQuery, Occur.SHOULD);
+                          } catch (IOException e) {
+                            // FIXME handle me!
+                            OLogManager.instance()
+                                .error(this, "Error during Lucene query generation", e);
+                          }
+                        }));
   }
 
   private void excludeOtherFromResults(List<String> ridsAsString, Builder queryBuilder) {
-    ridsAsString.stream().forEach(rid -> queryBuilder.add(new TermQuery(new Term("RID", QueryParser.escape(rid))), Occur.MUST_NOT));
+    ridsAsString.stream()
+        .forEach(
+            rid ->
+                queryBuilder.add(
+                    new TermQuery(new Term("RID", QueryParser.escape(rid))), Occur.MUST_NOT));
   }
 
   private OLuceneFullTextIndex searchForIndex(OFromClause target, OCommandContext ctx) {
@@ -221,8 +269,11 @@ public class OLuceneSearchMoreLikeThisFunction extends OSQLFunctionAbstract impl
   private OLuceneFullTextIndex searchForIndex(OCommandContext ctx, String className) {
     OMetadata dbMetadata = ctx.getDatabase().activateOnCurrentThread().getMetadata();
 
-    List<OLuceneFullTextIndex> indices = dbMetadata.getSchema().getClass(className).getIndexes().stream()
-        .filter(idx -> idx instanceof OLuceneFullTextIndex).map(idx -> (OLuceneFullTextIndex) idx).collect(Collectors.toList());
+    List<OLuceneFullTextIndex> indices =
+        dbMetadata.getSchema().getClass(className).getIndexes().stream()
+            .filter(idx -> idx instanceof OLuceneFullTextIndex)
+            .map(idx -> (OLuceneFullTextIndex) idx)
+            .collect(Collectors.toList());
 
     if (indices.size() > 1) {
       throw new IllegalArgumentException("too many full-text indices on given class: " + className);
@@ -232,24 +283,34 @@ public class OLuceneSearchMoreLikeThisFunction extends OSQLFunctionAbstract impl
   }
 
   @Override
-  public long estimate(OFromClause target, OBinaryCompareOperator operator, Object rightValue, OCommandContext ctx,
+  public long estimate(
+      OFromClause target,
+      OBinaryCompareOperator operator,
+      Object rightValue,
+      OCommandContext ctx,
       OExpression... args) {
     OLuceneFullTextIndex index = this.searchForIndex(target, ctx);
 
-    if (index != null)
-      return index.size();
+    if (index != null) return index.size();
     return 0;
-
   }
 
   @Override
-  public boolean canExecuteInline(OFromClause target, OBinaryCompareOperator operator, Object rightValue, OCommandContext ctx,
+  public boolean canExecuteInline(
+      OFromClause target,
+      OBinaryCompareOperator operator,
+      Object rightValue,
+      OCommandContext ctx,
       OExpression... args) {
     return false;
   }
 
   @Override
-  public boolean allowsIndexedExecution(OFromClause target, OBinaryCompareOperator operator, Object rightValue, OCommandContext ctx,
+  public boolean allowsIndexedExecution(
+      OFromClause target,
+      OBinaryCompareOperator operator,
+      Object rightValue,
+      OCommandContext ctx,
       OExpression... args) {
 
     OLuceneFullTextIndex index = this.searchForIndex(target, ctx);
@@ -258,10 +319,12 @@ public class OLuceneSearchMoreLikeThisFunction extends OSQLFunctionAbstract impl
   }
 
   @Override
-  public boolean shouldExecuteAfterSearch(OFromClause target, OBinaryCompareOperator operator, Object rightValue,
-
-      OCommandContext ctx, OExpression... args) {
+  public boolean shouldExecuteAfterSearch(
+      OFromClause target,
+      OBinaryCompareOperator operator,
+      Object rightValue,
+      OCommandContext ctx,
+      OExpression... args) {
     return false;
   }
-
 }

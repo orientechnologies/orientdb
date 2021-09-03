@@ -21,32 +21,42 @@
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
-import com.orientechnologies.orient.core.sql.operator.*;
-
+import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContains;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContainsKey;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContainsValue;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Presents query subset in form of field1 = "field1 value" AND field2 = "field2 value" ... AND fieldN anyOpetator "fieldN value"
- * <p/>
- * Where pairs (field1, value1) ... (fieldn-1, valuen-1) are stored in {@link #fieldValuePairs} map but last pair is stored in
- * {@link #lastField} {@link #lastValue} properties and their operator will be stored in {@link #lastOperator} property.
- * <p/>
- * Such data structure is used because from composite index point of view any "field and value" pairs can be reordered to match keys
- * order that is used in index in case all fields and values are related to each other using equals operator, but position of field
- * - value pair that uses non equals operator cannot be changed. Actually only one non-equals operator can be used for composite
- * index search and filed - value pair that uses this index should always be placed at last position.
+ * Presents query subset in form of field1 = "field1 value" AND field2 = "field2 value" ... AND
+ * fieldN anyOpetator "fieldN value"
+ *
+ * <p>Where pairs (field1, value1) ... (fieldn-1, valuen-1) are stored in {@link #fieldValuePairs}
+ * map but last pair is stored in {@link #lastField} {@link #lastValue} properties and their
+ * operator will be stored in {@link #lastOperator} property.
+ *
+ * <p>Such data structure is used because from composite index point of view any "field and value"
+ * pairs can be reordered to match keys order that is used in index in case all fields and values
+ * are related to each other using equals operator, but position of field - value pair that uses non
+ * equals operator cannot be changed. Actually only one non-equals operator can be used for
+ * composite index search and filed - value pair that uses this index should always be placed at
+ * last position.
  */
 public class OIndexSearchResult {
-  public final Map<String, Object>            fieldValuePairs = new HashMap<String, Object>(8);
-  public final OQueryOperator                 lastOperator;
+  public final Map<String, Object> fieldValuePairs = new HashMap<String, Object>(8);
+  public final OQueryOperator lastOperator;
   public final OSQLFilterItemField.FieldChain lastField;
-  public final Object                         lastValue;
-  protected    boolean                        containsNullValues;
+  public final Object lastValue;
+  protected boolean containsNullValues;
 
-  public OIndexSearchResult(final OQueryOperator lastOperator, final OSQLFilterItemField.FieldChain field, final Object value) {
+  public OIndexSearchResult(
+      final OQueryOperator lastOperator,
+      final OSQLFilterItemField.FieldChain field,
+      final Object value) {
     this.lastOperator = lastOperator;
     lastField = field;
     lastValue = value;
@@ -55,13 +65,16 @@ public class OIndexSearchResult {
   }
 
   public static boolean isIndexEqualityOperator(OQueryOperator queryOperator) {
-    return queryOperator instanceof OQueryOperatorEquals || queryOperator instanceof OQueryOperatorContains
-        || queryOperator instanceof OQueryOperatorContainsKey || queryOperator instanceof OQueryOperatorContainsValue;
+    return queryOperator instanceof OQueryOperatorEquals
+        || queryOperator instanceof OQueryOperatorContains
+        || queryOperator instanceof OQueryOperatorContainsKey
+        || queryOperator instanceof OQueryOperatorContainsValue;
   }
 
   /**
-   * Combines two queries subset into one. This operation will be valid only if {@link #canBeMerged(OIndexSearchResult)} method will
-   * return <code>true</code> for the same passed in parameter.
+   * Combines two queries subset into one. This operation will be valid only if {@link
+   * #canBeMerged(OIndexSearchResult)} method will return <code>true</code> for the same passed in
+   * parameter.
    *
    * @param searchResult Query subset to merge.
    * @return New instance that presents merged query.
@@ -80,9 +93,11 @@ public class OIndexSearchResult {
     return mergeFields(searchResult, this);
   }
 
-  private OIndexSearchResult mergeFields(OIndexSearchResult mainSearchResult, OIndexSearchResult searchResult) {
-    OIndexSearchResult result = new OIndexSearchResult(mainSearchResult.lastOperator, mainSearchResult.lastField,
-        mainSearchResult.lastValue);
+  private OIndexSearchResult mergeFields(
+      OIndexSearchResult mainSearchResult, OIndexSearchResult searchResult) {
+    OIndexSearchResult result =
+        new OIndexSearchResult(
+            mainSearchResult.lastOperator, mainSearchResult.lastField, mainSearchResult.lastValue);
     result.fieldValuePairs.putAll(searchResult.fieldValuePairs);
     result.fieldValuePairs.putAll(mainSearchResult.fieldValuePairs);
     result.fieldValuePairs.put(searchResult.lastField.getItemName(0), searchResult.lastValue);
@@ -101,7 +116,8 @@ public class OIndexSearchResult {
     if (!lastOperator.canBeMerged() || !searchResult.lastOperator.canBeMerged()) {
       return false;
     }
-    return isIndexEqualityOperator(lastOperator) || isIndexEqualityOperator(searchResult.lastOperator);
+    return isIndexEqualityOperator(lastOperator)
+        || isIndexEqualityOperator(searchResult.lastOperator);
   }
 
   public List<String> fields() {
@@ -171,5 +187,4 @@ public class OIndexSearchResult {
     result = 31 * result + (containsNullValues ? 1 : 0);
     return result;
   }
-
 }

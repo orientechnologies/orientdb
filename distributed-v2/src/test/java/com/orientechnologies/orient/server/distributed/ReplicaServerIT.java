@@ -15,7 +15,7 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 
 package com.orientechnologies.orient.server.distributed;
@@ -23,17 +23,13 @@ package com.orientechnologies.orient.server.distributed;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.OVertex;
-
+import java.util.Set;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.Set;
-
-/**
- * Start 3 servers with only "europe" as master and the others as REPLICA
- */
+/** Start 3 servers with only "europe" as master and the others as REPLICA */
 public class ReplicaServerIT extends AbstractServerClusterTest {
-  final static int SERVERS = 3;
+  static final int SERVERS = 3;
 
   public String getDatabaseName() {
     return "distributed-replicatest";
@@ -52,7 +48,11 @@ public class ReplicaServerIT extends AbstractServerClusterTest {
     checkReplicasDontOwnAnyClusters();
 
     for (int s = 0; s < SERVERS; ++s) {
-      ODatabaseDocument g = serverInstance.get(s).getServerInstance().openDatabase(getDatabaseName(), "admin", "admin");
+      ODatabaseDocument g =
+          serverInstance
+              .get(s)
+              .getServerInstance()
+              .openDatabase(getDatabaseName(), "admin", "admin");
 
       try {
         System.out.println("Creating vertex class Client" + s + " against server " + g + "...");
@@ -73,7 +73,11 @@ public class ReplicaServerIT extends AbstractServerClusterTest {
     for (int s = 0; s < SERVERS; ++s) {
       System.out.println("Add vertices on server " + s + "...");
 
-      ODatabaseDocument g = serverInstance.get(s).getServerInstance().openDatabase(getDatabaseName(), "admin", "admin");
+      ODatabaseDocument g =
+          serverInstance
+              .get(s)
+              .getServerInstance()
+              .openDatabase(getDatabaseName(), "admin", "admin");
 
       try {
         final OVertex v = g.newVertex("Client" + s);
@@ -90,7 +94,11 @@ public class ReplicaServerIT extends AbstractServerClusterTest {
     for (int s = 0; s < SERVERS; ++s) {
       System.out.println("Add vertices in TX on server " + s + "...");
 
-      ODatabaseDocument g = serverInstance.get(s).getServerInstance().openDatabase(getDatabaseName(), "admin", "admin");
+      ODatabaseDocument g =
+          serverInstance
+              .get(s)
+              .getServerInstance()
+              .openDatabase(getDatabaseName(), "admin", "admin");
       g.begin();
 
       try {
@@ -116,12 +124,14 @@ public class ReplicaServerIT extends AbstractServerClusterTest {
   }
 
   private void checkReplicasDontOwnAnyClusters() {
-    final ODistributedServerManager dMgr = serverInstance.get(0).getServerInstance().getDistributedManager();
+    final ODistributedServerManager dMgr =
+        serverInstance.get(0).getServerInstance().getDistributedManager();
     final ODistributedConfiguration dCfg = dMgr.getDatabaseConfiguration(getDatabaseName());
 
     for (int s = 1; s < SERVERS; ++s) {
-      final Set<String> clusters = dCfg
-          .getClustersOwnedByServer(serverInstance.get(s).getServerInstance().getDistributedManager().getLocalNodeName());
+      final Set<String> clusters =
+          dCfg.getClustersOwnedByServer(
+              serverInstance.get(s).getServerInstance().getDistributedManager().getLocalNodeName());
       Assert.assertTrue(clusters.isEmpty());
     }
   }

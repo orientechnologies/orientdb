@@ -2,23 +2,24 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
-
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by luigidellaquila on 20/09/16.
- */
+/** Created by luigidellaquila on 20/09/16. */
 public class MatchPrefetchStep extends AbstractExecutionStep {
 
   public static final String PREFETCHED_MATCH_ALIAS_PREFIX = "$$OrientDB_Prefetched_Alias_Prefix__";
 
-  private final String                 alias;
+  private final String alias;
   private final OInternalExecutionPlan prefetchExecutionPlan;
 
   private boolean executed = false;
 
-  public MatchPrefetchStep(OCommandContext ctx, OInternalExecutionPlan prefetchExecPlan, String alias, boolean profilingEnabled) {
+  public MatchPrefetchStep(
+      OCommandContext ctx,
+      OInternalExecutionPlan prefetchExecPlan,
+      String alias,
+      boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.prefetchExecutionPlan = prefetchExecPlan;
     this.alias = alias;

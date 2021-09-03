@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.security.jwt.OTokenHeader;
 
 /**
  * Created by emrul on 25/10/2014.
@@ -9,6 +10,8 @@ import com.orientechnologies.orient.core.id.ORID;
  * @author Emrul Islam <emrul@emrul.com> Copyright 2014 Emrul Islam
  */
 public interface OToken {
+
+  OTokenHeader getHeader();
 
   boolean getIsVerified();
 

@@ -1,49 +1,51 @@
 package com.orientechnologies.orient.core.index;
 
 public abstract class OIndexUpdateAction<V> {
-  private static OIndexUpdateAction nothing = new OIndexUpdateAction() {
-    @Override
-    public boolean isNothing() {
-      return true;
-    }
+  private static OIndexUpdateAction nothing =
+      new OIndexUpdateAction() {
+        @Override
+        public boolean isNothing() {
+          return true;
+        }
 
-    @Override
-    public boolean isChange() {
-      return false;
-    }
+        @Override
+        public boolean isChange() {
+          return false;
+        }
 
-    @Override
-    public boolean isRemove() {
-      return false;
-    }
+        @Override
+        public boolean isRemove() {
+          return false;
+        }
 
-    @Override
-    public Object getValue() {
-      throw new UnsupportedOperationException();
-    }
-  };
+        @Override
+        public Object getValue() {
+          throw new UnsupportedOperationException();
+        }
+      };
 
-  private static OIndexUpdateAction remove = new OIndexUpdateAction() {
-    @Override
-    public boolean isNothing() {
-      return false;
-    }
+  private static OIndexUpdateAction remove =
+      new OIndexUpdateAction() {
+        @Override
+        public boolean isNothing() {
+          return false;
+        }
 
-    @Override
-    public boolean isChange() {
-      return false;
-    }
+        @Override
+        public boolean isChange() {
+          return false;
+        }
 
-    @Override
-    public boolean isRemove() {
-      return true;
-    }
+        @Override
+        public boolean isRemove() {
+          return true;
+        }
 
-    @Override
-    public Object getValue() {
-      throw new UnsupportedOperationException();
-    }
-  };
+        @Override
+        public Object getValue() {
+          throw new UnsupportedOperationException();
+        }
+      };
 
   public static OIndexUpdateAction nothing() {
     return nothing;

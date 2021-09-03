@@ -6,8 +6,13 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class OContainsAllCondition extends OBooleanExpression {
 
@@ -42,7 +47,9 @@ public class OContainsAllCondition extends OBooleanExpression {
           boolean found = false;
           if (((Collection) left).contains(next)) {
             found = true;
-          } else if (next instanceof OResult && ((OResult) next).isElement() && ((Collection) left).contains(((OResult) next).toElement())) {
+          } else if (next instanceof OResult
+              && ((OResult) next).isElement()
+              && ((Collection) left).contains(((OResult) next).toElement())) {
             found = true;
           }
           if (!found) {
@@ -114,7 +121,39 @@ public class OContainsAllCondition extends OBooleanExpression {
 
   @Override
   public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+    if (left.isFunctionAny()) {
+      return evaluateAny(currentRecord, ctx);
+    }
+
+    if (left.isFunctionAll()) {
+      return evaluateAllFunction(currentRecord, ctx);
+    }
+
     Object leftValue = left.execute(currentRecord, ctx);
+    return evaluateSingle(leftValue, currentRecord, ctx);
+  }
+
+  private boolean evaluateAllFunction(OResult currentRecord, OCommandContext ctx) {
+    for (String propertyName : currentRecord.getPropertyNames()) {
+      Object leftValue = currentRecord.getProperty(propertyName);
+      if (!evaluateSingle(leftValue, currentRecord, ctx)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private boolean evaluateAny(OResult currentRecord, OCommandContext ctx) {
+    for (String propertyName : currentRecord.getPropertyNames()) {
+      Object leftValue = currentRecord.getProperty(propertyName);
+      if (evaluateSingle(leftValue, currentRecord, ctx)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private boolean evaluateSingle(Object leftValue, OResult currentRecord, OCommandContext ctx) {
     if (right != null) {
       Object rightValue = right.execute(currentRecord, ctx);
       return execute(leftValue, rightValue);
@@ -139,7 +178,6 @@ public class OContainsAllCondition extends OBooleanExpression {
       }
       return true;
     }
-
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
@@ -265,17 +303,13 @@ public class OContainsAllCondition extends OBooleanExpression {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OContainsAllCondition that = (OContainsAllCondition) o;
 
-    if (left != null ? !left.equals(that.left) : that.left != null)
-      return false;
-    if (right != null ? !right.equals(that.right) : that.right != null)
-      return false;
+    if (left != null ? !left.equals(that.left) : that.left != null) return false;
+    if (right != null ? !right.equals(that.right) : that.right != null) return false;
     if (rightBlock != null ? !rightBlock.equals(that.rightBlock) : that.rightBlock != null)
       return false;
 
@@ -294,7 +328,8 @@ public class OContainsAllCondition extends OBooleanExpression {
   public List<String> getMatchPatternInvolvedAliases() {
     List<String> leftX = left == null ? null : left.getMatchPatternInvolvedAliases();
     List<String> rightX = right == null ? null : right.getMatchPatternInvolvedAliases();
-    List<String> rightBlockX = rightBlock == null ? null : rightBlock.getMatchPatternInvolvedAliases();
+    List<String> rightBlockX =
+        rightBlock == null ? null : rightBlock.getMatchPatternInvolvedAliases();
 
     List<String> result = new ArrayList<String>();
     if (leftX != null) {

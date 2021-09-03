@@ -28,13 +28,15 @@ public class OCommandSQLParsingException extends OCoreException {
 
   private Integer line;
   private Integer column;
-  private String  statement;
-  private String  text;
-  private int     position;
+  private String statement;
+  private String text;
+  private int position;
   private static final long serialVersionUID = -7430575036316163711L;
 
   public OCommandSQLParsingException(ParseException e, String statement) {
-    super(generateMessage(e, statement, e.currentToken.next.beginLine, e.currentToken.next.endColumn), null,
+    super(
+        generateMessage(e, statement, e.currentToken.next.beginLine, e.currentToken.next.endColumn),
+        null,
         OErrorCode.QUERY_PARSE_ERROR);
     this.statement = statement;
     this.line = e.currentToken.next.beginLine;
@@ -48,7 +50,8 @@ public class OCommandSQLParsingException extends OCoreException {
     this.column = 0;
   }
 
-  private static String generateMessage(ParseException e, String statement, Integer line, Integer column) {
+  private static String generateMessage(
+      ParseException e, String statement, Integer line, Integer column) {
     StringBuilder result = new StringBuilder();
     result.append("Error parsing query:\n");
     String[] stmLines = statement.split("\n");
@@ -75,8 +78,7 @@ public class OCommandSQLParsingException extends OCoreException {
       buffer.append("\nCommand: ");
       buffer.append(text);
       buffer.append("\n---------");
-      for (int i = 0; i < position - 1; ++i)
-        buffer.append("-");
+      for (int i = 0; i < position - 1; ++i) buffer.append("-");
 
       buffer.append("^");
     }
@@ -115,8 +117,7 @@ public class OCommandSQLParsingException extends OCoreException {
 
   @Override
   public boolean equals(final Object obj) {
-    if (obj == null)
-      return false;
+    if (obj == null) return false;
 
     return toString().equals(obj.toString());
   }

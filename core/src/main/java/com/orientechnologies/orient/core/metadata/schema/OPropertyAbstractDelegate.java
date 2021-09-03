@@ -19,13 +19,12 @@ package com.orientechnologies.orient.core.metadata.schema;
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.util.Collection;
 import java.util.Set;
 
 /**
  * Abstract Delegate for OProperty interface.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com) (http://orientdb.com)
  */
 public class OPropertyAbstractDelegate implements OProperty {
@@ -56,12 +55,12 @@ public class OPropertyAbstractDelegate implements OProperty {
     delegate.setName(iName);
     return this;
   }
-  
+
   @Override
   public String getDescription() {
     return delegate.getDescription();
   }
-  
+
   @Override
   public OProperty setDescription(String iDescription) {
     delegate.setDescription(iDescription);

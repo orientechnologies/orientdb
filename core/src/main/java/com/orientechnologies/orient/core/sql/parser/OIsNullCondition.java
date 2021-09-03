@@ -5,7 +5,6 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -30,7 +29,35 @@ public class OIsNullCondition extends OBooleanExpression {
 
   @Override
   public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+    if (expression.isFunctionAny()) {
+      return evaluateAny(currentRecord, ctx);
+    }
+
+    if (expression.isFunctionAll()) {
+      return evaluateAllFunction(currentRecord, ctx);
+    }
+
     return expression.execute(currentRecord, ctx) == null;
+  }
+
+  private boolean evaluateAny(OResult currentRecord, OCommandContext ctx) {
+    for (String s : currentRecord.getPropertyNames()) {
+      Object leftVal = currentRecord.getProperty(s);
+      if (leftVal == null) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private boolean evaluateAllFunction(OResult currentRecord, OCommandContext ctx) {
+    for (String s : currentRecord.getPropertyNames()) {
+      Object leftVal = currentRecord.getProperty(s);
+      if (!(leftVal == null)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   public OExpression getExpression() {
@@ -94,10 +121,8 @@ public class OIsNullCondition extends OBooleanExpression {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OIsNullCondition that = (OIsNullCondition) o;
 
@@ -121,6 +146,5 @@ public class OIsNullCondition extends OBooleanExpression {
   public boolean isCacheable() {
     return expression.isCacheable();
   }
-
 }
 /* JavaCC - OriginalChecksum=29ebbc506a98f90953af91a66a03aa1e (do not edit this line) */

@@ -5,9 +5,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 
-/**
- * This class is designed to compare documents based on deep equality (to be used in Sets)
- */
+/** This class is designed to compare documents based on deep equality (to be used in Sets) */
 public class ODocumentEqualityWrapper {
   private final ODocument internal;
 
@@ -19,7 +17,8 @@ public class ODocumentEqualityWrapper {
   public boolean equals(Object obj) {
     if (obj instanceof ODocumentEqualityWrapper) {
       ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
-      return ODocumentHelper.hasSameContentOf(internal, db, ((ODocumentEqualityWrapper) obj).internal, db, null);
+      return ODocumentHelper.hasSameContentOf(
+          internal, db, ((ODocumentEqualityWrapper) obj).internal, db, null);
     }
     return false;
   }

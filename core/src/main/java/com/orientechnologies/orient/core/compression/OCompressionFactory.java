@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.compression.impl.OHighZIPCompression;
 import com.orientechnologies.orient.core.compression.impl.OLowZIPCompression;
 import com.orientechnologies.orient.core.compression.impl.ONothingCompression;
 import com.orientechnologies.orient.core.exception.OSecurityException;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -41,12 +40,11 @@ import java.util.Set;
 public class OCompressionFactory {
   public static final OCompressionFactory INSTANCE = new OCompressionFactory();
 
-  private final Map<String, OCompression>                  compressions       = new HashMap<String, OCompression>();
-  private final Map<String, Class<? extends OCompression>> compressionClasses = new HashMap<String, Class<? extends OCompression>>();
+  private final Map<String, OCompression> compressions = new HashMap<String, OCompression>();
+  private final Map<String, Class<? extends OCompression>> compressionClasses =
+      new HashMap<String, Class<? extends OCompression>>();
 
-  /**
-   * Install default compression algorithms.
-   */
+  /** Install default compression algorithms. */
   public OCompressionFactory() {
     register(new OHighZIPCompression());
     register(new OLowZIPCompression());
@@ -55,17 +53,14 @@ public class OCompressionFactory {
   }
 
   public OCompression getCompression(final String name, final String iOptions) {
-    if (name.length() == 0)
-      return ONothingCompression.INSTANCE;
+    if (name.length() == 0) return ONothingCompression.INSTANCE;
 
     OCompression compression = compressions.get(name);
     if (compression == null) {
 
       final Class<? extends OCompression> compressionClass;
-      if (name == null)
-        compressionClass = ONothingCompression.class;
-      else
-        compressionClass = compressionClasses.get(name);
+      if (name == null) compressionClass = ONothingCompression.class;
+      else compressionClass = compressionClasses.get(name);
 
       if (compressionClass != null) {
         try {
@@ -73,10 +68,10 @@ public class OCompressionFactory {
           compression.configure(iOptions);
 
         } catch (Exception e) {
-          throw OException.wrapException(new OSecurityException("Cannot instantiate compression algorithm '" + name + "'"), e);
+          throw OException.wrapException(
+              new OSecurityException("Cannot instantiate compression algorithm '" + name + "'"), e);
         }
-      } else
-        throw new OSecurityException("Compression with name '" + name + "' is absent");
+      } else throw new OSecurityException("Compression with name '" + name + "' is absent");
     }
     return compression;
   }
@@ -91,14 +86,17 @@ public class OCompressionFactory {
       final String name = compression.name();
 
       if (compressions.containsKey(name))
-        throw new IllegalArgumentException("Compression with name '" + name + "' was already registered");
+        throw new IllegalArgumentException(
+            "Compression with name '" + name + "' was already registered");
 
       if (compressionClasses.containsKey(name))
-        throw new IllegalArgumentException("Compression with name '" + name + "' was already registered");
+        throw new IllegalArgumentException(
+            "Compression with name '" + name + "' was already registered");
 
       compressions.put(name, compression);
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Cannot register storage compression algorithm '%s'", e, compression);
+      OLogManager.instance()
+          .error(this, "Cannot register storage compression algorithm '%s'", e, compression);
     }
   }
 
@@ -114,14 +112,17 @@ public class OCompressionFactory {
       final String name = tempInstance.name();
 
       if (compressions.containsKey(name))
-        throw new IllegalArgumentException("Compression with name '" + name + "' was already registered");
+        throw new IllegalArgumentException(
+            "Compression with name '" + name + "' was already registered");
 
       if (compressionClasses.containsKey(tempInstance.name()))
-        throw new IllegalArgumentException("Compression with name '" + name + "' was already registered");
+        throw new IllegalArgumentException(
+            "Compression with name '" + name + "' was already registered");
 
       compressionClasses.put(name, compression);
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Cannot register storage compression algorithm '%s'", e, compression);
+      OLogManager.instance()
+          .error(this, "Cannot register storage compression algorithm '%s'", e, compression);
     }
   }
 

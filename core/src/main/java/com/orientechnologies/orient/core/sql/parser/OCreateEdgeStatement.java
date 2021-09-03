@@ -8,7 +8,6 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.sql.executor.OCreateEdgeExecutionPlanner;
 import com.orientechnologies.orient.core.sql.executor.OInsertExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,9 +23,9 @@ public class OCreateEdgeStatement extends OStatement {
   protected OExpression rightExpression;
 
   protected OInsertBody body;
-  protected Number      retry;
-  protected Number      wait;
-  protected OBatch      batch;
+  protected Number retry;
+  protected Number wait;
+  protected OBatch batch;
 
   public OCreateEdgeStatement(int id) {
     super(id);
@@ -37,7 +36,8 @@ public class OCreateEdgeStatement extends OStatement {
   }
 
   @Override
-  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
+  public OResultSet execute(
+      ODatabase db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -51,9 +51,9 @@ public class OCreateEdgeStatement extends OStatement {
     }
     ctx.setInputParameters(params);
     OInsertExecutionPlan executionPlan;
-    if(usePlanCache) {
+    if (usePlanCache) {
       executionPlan = createExecutionPlan(ctx, false);
-    }else{
+    } else {
       executionPlan = createExecutionPlanNoCache(ctx, false);
     }
     executionPlan.executeInternal();
@@ -61,7 +61,8 @@ public class OCreateEdgeStatement extends OStatement {
   }
 
   @Override
-  public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx, boolean usePlanCache) {
+  public OResultSet execute(
+      ODatabase db, Map params, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -69,9 +70,9 @@ public class OCreateEdgeStatement extends OStatement {
     ctx.setDatabase(db);
     ctx.setInputParameters(params);
     OInsertExecutionPlan executionPlan;
-    if(usePlanCache) {
+    if (usePlanCache) {
       executionPlan = createExecutionPlan(ctx, false);
-    }else{
+    } else {
       executionPlan = createExecutionPlanNoCache(ctx, false);
     }
     executionPlan.executeInternal();
@@ -85,7 +86,8 @@ public class OCreateEdgeStatement extends OStatement {
     return result;
   }
 
-  public OInsertExecutionPlan createExecutionPlanNoCache(OCommandContext ctx, boolean enableProfiling) {
+  public OInsertExecutionPlan createExecutionPlanNoCache(
+      OCommandContext ctx, boolean enableProfiling) {
     OCreateEdgeExecutionPlanner planner = new OCreateEdgeExecutionPlanner(this);
     OInsertExecutionPlan result = planner.createExecutionPlan(ctx, enableProfiling, false);
     result.setStatement(this.originalStatement);
@@ -169,29 +171,26 @@ public class OCreateEdgeStatement extends OStatement {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OCreateEdgeStatement that = (OCreateEdgeStatement) o;
 
-    if (upsert != that.upsert)
-      return false;
+    if (upsert != that.upsert) return false;
     if (targetClass != null ? !targetClass.equals(that.targetClass) : that.targetClass != null)
       return false;
-    if (targetClusterName != null ? !targetClusterName.equals(that.targetClusterName) : that.targetClusterName != null)
-      return false;
-    if (leftExpression != null ? !leftExpression.equals(that.leftExpression) : that.leftExpression != null)
-      return false;
-    if (rightExpression != null ? !rightExpression.equals(that.rightExpression) : that.rightExpression != null)
-      return false;
-    if (body != null ? !body.equals(that.body) : that.body != null)
-      return false;
-    if (retry != null ? !retry.equals(that.retry) : that.retry != null)
-      return false;
-    if (wait != null ? !wait.equals(that.wait) : that.wait != null)
-      return false;
+    if (targetClusterName != null
+        ? !targetClusterName.equals(that.targetClusterName)
+        : that.targetClusterName != null) return false;
+    if (leftExpression != null
+        ? !leftExpression.equals(that.leftExpression)
+        : that.leftExpression != null) return false;
+    if (rightExpression != null
+        ? !rightExpression.equals(that.rightExpression)
+        : that.rightExpression != null) return false;
+    if (body != null ? !body.equals(that.body) : that.body != null) return false;
+    if (retry != null ? !retry.equals(that.retry) : that.retry != null) return false;
+    if (wait != null ? !wait.equals(that.wait) : that.wait != null) return false;
     return batch != null ? batch.equals(that.batch) : that.batch == null;
   }
 

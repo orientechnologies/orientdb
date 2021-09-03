@@ -3,9 +3,9 @@ package com.orientechnologies.common.util;
 import java.util.Objects;
 
 public class ORawTriple<K, T, V> {
-  private final K first;
-  private final T second;
-  private final V third;
+  public final K first;
+  public final T second;
+  public final V third;
 
   public ORawTriple(K first, T second, V third) {
     this.first = first;
@@ -15,13 +15,13 @@ public class ORawTriple<K, T, V> {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     ORawTriple<?, ?, ?> that = (ORawTriple<?, ?, ?>) o;
-    return Objects.equals(first, that.first) && Objects.equals(second, that.second) && Objects.equals(third, that.third);
+    return Objects.equals(first, that.first)
+        && Objects.equals(second, that.second)
+        && Objects.equals(third, that.third);
   }
 
   @Override

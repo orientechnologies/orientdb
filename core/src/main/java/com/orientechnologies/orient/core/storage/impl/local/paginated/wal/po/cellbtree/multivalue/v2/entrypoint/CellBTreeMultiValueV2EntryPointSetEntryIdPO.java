@@ -5,15 +5,13 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v2.CellBTreeMultiValueV2EntryPoint;
-
 import java.nio.ByteBuffer;
 
 public final class CellBTreeMultiValueV2EntryPointSetEntryIdPO extends PageOperationRecord {
   private long entryId;
   private long prevEntryId;
 
-  public CellBTreeMultiValueV2EntryPointSetEntryIdPO() {
-  }
+  public CellBTreeMultiValueV2EntryPointSetEntryIdPO() {}
 
   public CellBTreeMultiValueV2EntryPointSetEntryIdPO(long entryId, long prevEntryId) {
     this.entryId = entryId;

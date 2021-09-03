@@ -15,32 +15,39 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 
 package com.orientechnologies.orient.server.distributed;
 
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
-import org.junit.Assert;
-import org.junit.Test;
-
+import com.orientechnologies.orient.setup.ServerRun;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import org.junit.Assert;
+import org.junit.Test;
 
-/**
- * Tests the behavior of hooks in distributed configuration.
- */
-public class DistributedLifecycleListenerIT extends AbstractServerClusterTest implements ODistributedLifecycleListener {
-  private final static int                                               SERVERS        = 2;
+/** Tests the behavior of hooks in distributed configuration. */
+public class DistributedLifecycleListenerIT extends AbstractServerClusterTest
+    implements ODistributedLifecycleListener {
+  private static final int SERVERS = 2;
 
-  private final AtomicLong                                               beforeNodeJoin = new AtomicLong();
-  private final AtomicLong                                               afterNodeJoin  = new AtomicLong();
-  private final AtomicLong                                               nodeLeft       = new AtomicLong();
-  private final List<OPair<String, ODistributedServerManager.DB_STATUS>> changeStatus   = Collections
-      .synchronizedList(new ArrayList<OPair<String, ODistributedServerManager.DB_STATUS>>());
+  private final AtomicLong beforeNodeJoin = new AtomicLong();
+  private final AtomicLong afterNodeJoin = new AtomicLong();
+  private final AtomicLong nodeLeft = new AtomicLong();
+  private final List<OPair<String, ODistributedServerManager.DB_STATUS>> changeStatus =
+      Collections.synchronizedList(
+          new ArrayList<OPair<String, ODistributedServerManager.DB_STATUS>>());
+  private final CountDownLatch started = new CountDownLatch(SERVERS - 1);
+  private final CountDownLatch ended = new CountDownLatch(SERVERS - 1);
 
   @Override
   public boolean onNodeJoining(String iNode) {
@@ -51,17 +58,23 @@ public class DistributedLifecycleListenerIT extends AbstractServerClusterTest im
   @Override
   public void onNodeJoined(String iNode) {
     afterNodeJoin.incrementAndGet();
+    started.countDown();
   }
 
   @Override
   public void onNodeLeft(String iNode) {
     nodeLeft.incrementAndGet();
+    ended.countDown();
   }
 
   @Override
-  public void onDatabaseChangeStatus(String iNode, String iDatabaseName, ODistributedServerManager.DB_STATUS iNewStatus) {
-    OLogManager.instance().info(this, "CHANGE OF STATUS node=%s db=%s status-%s", iNode, iDatabaseName, iNewStatus);
-    changeStatus.add(new OPair<String, ODistributedServerManager.DB_STATUS>(iNode + "." + iDatabaseName, iNewStatus));
+  public void onDatabaseChangeStatus(
+      String iNode, String iDatabaseName, ODistributedServerManager.DB_STATUS iNewStatus) {
+    OLogManager.instance()
+        .info(this, "CHANGE OF STATUS node=%s db=%s status-%s", iNode, iDatabaseName, iNewStatus);
+    changeStatus.add(
+        new OPair<String, ODistributedServerManager.DB_STATUS>(
+            iNode + "." + iDatabaseName, iNewStatus));
   }
 
   public String getDatabaseName() {
@@ -84,7 +97,7 @@ public class DistributedLifecycleListenerIT extends AbstractServerClusterTest im
 
   @Override
   protected void executeTest() throws Exception {
-    Thread.sleep(1000);
+    assertTrue(started.await(5, TimeUnit.SECONDS));
   }
 
   @Override
@@ -92,21 +105,19 @@ public class DistributedLifecycleListenerIT extends AbstractServerClusterTest im
     Assert.assertEquals(SERVERS - 1, beforeNodeJoin.get());
     Assert.assertEquals(SERVERS - 1, afterNodeJoin.get());
 
-    for (int attempt = 0; attempt < 50; ++attempt) {
-      if (nodeLeft.get() >= SERVERS - 1)
-        break;
-      try {
-        Thread.sleep(500);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
+    try {
+      assertTrue(ended.await(5, TimeUnit.SECONDS));
+    } catch (InterruptedException e1) {
+      fail();
     }
     Assert.assertEquals(SERVERS - 1, nodeLeft.get());
 
     Assert.assertEquals(9, changeStatus.size());
     // Assert.assertEquals("europe-0." + getDatabaseName(), changeStatus.get(0).getKey());
-    // Assert.assertEquals(ODistributedServerManager.DB_STATUS.BACKUP, changeStatus.get(0).getValue());
+    // Assert.assertEquals(ODistributedServerManager.DB_STATUS.BACKUP,
+    // changeStatus.get(0).getValue());
     // Assert.assertEquals("europe-0." + getDatabaseName(), changeStatus.get(1).getKey());
-    // Assert.assertEquals(ODistributedServerManager.DB_STATUS.ONLINE, changeStatus.get(1).getValue());
+    // Assert.assertEquals(ODistributedServerManager.DB_STATUS.ONLINE,
+    // changeStatus.get(1).getValue());
   }
 }

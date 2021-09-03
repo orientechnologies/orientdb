@@ -9,22 +9,17 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
-
 import java.io.IOException;
 
-/**
- * Created by tglman on 16/05/17.
- */
+/** Created by tglman on 16/05/17. */
 public class OExperimentalRequest implements OBinaryRequest<OExperimentalResponse> {
 
-  public static final byte                                      REQUEST_RECORD_LOCK   = 48;
-  public static final byte                                      REQUEST_RECORD_UNLOCK = 49;
-  private             byte                                      messageID;
-  private             OBinaryRequest<? extends OBinaryResponse> request;
+  public static final byte REQUEST_RECORD_LOCK = 48;
+  public static final byte REQUEST_RECORD_UNLOCK = 49;
+  private byte messageID;
+  private OBinaryRequest<? extends OBinaryResponse> request;
 
-  public OExperimentalRequest() {
-
-  }
+  public OExperimentalRequest() {}
 
   public OExperimentalRequest(OBinaryRequest<? extends OBinaryResponse> request) {
     this.messageID = request.getCommand();
@@ -38,7 +33,8 @@ public class OExperimentalRequest implements OBinaryRequest<OExperimentalRespons
   }
 
   @Override
-  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
     messageID = channel.readByte();
     request = createBinaryRequest(messageID);
     request.read(channel, protocolVersion, serializer);
@@ -46,11 +42,11 @@ public class OExperimentalRequest implements OBinaryRequest<OExperimentalRespons
 
   private OBinaryRequest<? extends OBinaryResponse> createBinaryRequest(byte message) {
     switch (message) {
-    case REQUEST_RECORD_LOCK:
-      return new OLockRecordRequest();
-    case REQUEST_RECORD_UNLOCK:
-      return new OUnlockRecordRequest();
-    //NONE FOR NOW
+      case REQUEST_RECORD_LOCK:
+        return new OLockRecordRequest();
+      case REQUEST_RECORD_UNLOCK:
+        return new OUnlockRecordRequest();
+        // NONE FOR NOW
     }
 
     throw new ODatabaseException("Unknown message response for code:" + message);

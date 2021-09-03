@@ -1,7 +1,17 @@
 package com.orientechnologies.orient.core.metadata.security;
 
-import com.orientechnologies.orient.core.db.*;
-import org.junit.*;
+import com.orientechnologies.orient.core.OCreateDatabaseUtil;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 public class OSecuritySharedTest {
 
@@ -10,7 +20,12 @@ public class OSecuritySharedTest {
 
   @BeforeClass
   public static void beforeClass() {
-    orient = new OrientDB("plocal:.", OrientDBConfig.defaultConfig());
+    orient =
+        new OrientDB(
+            "plocal:.",
+            OrientDBConfig.builder()
+                .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
+                .build());
   }
 
   @AfterClass
@@ -20,8 +35,15 @@ public class OSecuritySharedTest {
 
   @Before
   public void before() {
-    orient.create("test", ODatabaseType.MEMORY);
-    this.db = orient.open("test", "admin", "admin");
+    orient.execute(
+        "create database "
+            + "test"
+            + " "
+            + "memory"
+            + " users ( admin identified by '"
+            + OCreateDatabaseUtil.NEW_ADMIN_PASSWORD
+            + "' role admin)");
+    this.db = orient.open("test", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
   }
 
   @After
@@ -49,7 +71,7 @@ public class OSecuritySharedTest {
   @Test
   public void testUpdateSecurityPolicy() {
     OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
-    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "testPolicy");
     policy.setActive(true);
     policy.setReadRule("name = 'foo'");
     security.saveSecurityPolicy(db, policy);
@@ -63,13 +85,18 @@ public class OSecuritySharedTest {
 
     db.createClass("Person");
 
-    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "testPolicy");
     policy.setActive(true);
     policy.setReadRule("name = 'foo'");
     security.saveSecurityPolicy(db, policy);
     security.setSecurityPolicy(db, security.getRole(db, "reader"), "database.class.Person", policy);
 
-    Assert.assertEquals("testPolicy", security.getSecurityPolicies(db, security.getRole(db, "reader")).get("database.class.Person").getName());
+    Assert.assertEquals(
+        "testPolicy",
+        security
+            .getSecurityPolicies(db, security.getRole(db, "reader"))
+            .get("database.class.Person")
+            .getName());
   }
 
   @Test
@@ -78,14 +105,16 @@ public class OSecuritySharedTest {
 
     db.createClass("Person");
 
-    OSecurityPolicy policy = security.createSecurityPolicy(db, "testPolicy");
+    OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "testPolicy");
     policy.setActive(true);
     policy.setReadRule("name = 'foo'");
     security.saveSecurityPolicy(db, policy);
     security.setSecurityPolicy(db, security.getRole(db, "reader"), "database.class.Person", policy);
     security.removeSecurityPolicy(db, security.getRole(db, "reader"), "database.class.Person");
 
-    Assert.assertNull(security.getSecurityPolicies(db, security.getRole(db, "reader")).get("database.class.Person"));
+    Assert.assertNull(
+        security
+            .getSecurityPolicies(db, security.getRole(db, "reader"))
+            .get("database.class.Person"));
   }
-
 }

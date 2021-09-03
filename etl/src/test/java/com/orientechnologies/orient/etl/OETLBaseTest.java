@@ -19,15 +19,13 @@
 package com.orientechnologies.orient.etl;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.context.OETLContext;
+import java.util.List;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestName;
-
-import java.util.List;
 
 /**
  * Tests ETL JSON Extractor.
@@ -35,31 +33,32 @@ import java.util.List;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public abstract class OETLBaseTest {
-  @Rule
-  public TestName name = new TestName();
+  @Rule public TestName name = new TestName();
 
-  protected String[] names    = new String[] { "Jay", "Luca", "Bill", "Steve", "Jill", "Luigi", "Enrico", "Emanuele" };
-  protected String[] surnames = new String[] { "Miner", "Ferguson", "Cancelli", "Lavori", "Raggio", "Eagles", "Smiles",
-      "Ironcutter" };
-  protected OETLProcessor             proc;
-  private   OETLProcessorConfigurator configurator;
+  protected String[] names =
+      new String[] {"Jay", "Luca", "Bill", "Steve", "Jill", "Luigi", "Enrico", "Emanuele"};
+  protected String[] surnames =
+      new String[] {
+        "Miner", "Ferguson", "Cancelli", "Lavori", "Raggio", "Eagles", "Smiles", "Ironcutter"
+      };
+  protected OETLProcessor proc;
+  private OETLProcessorConfigurator configurator;
 
   @Before
   public void configureProcessor() throws Throwable {
 
     OLogManager.instance().installCustomFormatter();
-    OETLComponentFactory factory = new OETLComponentFactory()
-        .registerLoader(OETLStubLoader.class)
-        .registerExtractor(OETLStubRandomExtractor.class);
+    OETLComponentFactory factory =
+        new OETLComponentFactory()
+            .registerLoader(OETLStubLoader.class)
+            .registerExtractor(OETLStubRandomExtractor.class);
 
     configurator = new OETLProcessorConfigurator(factory);
-
   }
 
   @After
   public void closeResources() {
-    if (proc != null)
-      proc.close();
+    if (proc != null) proc.close();
   }
 
   protected List<ODocument> getResult() {
@@ -71,10 +70,9 @@ public abstract class OETLBaseTest {
     configure(cfgJson, new OETLContext());
   }
 
-  protected void configure(final String cfgJson, final OCommandContext iContext) {
+  protected void configure(final String cfgJson, final OETLContext iContext) {
     ODocument cfg = new ODocument().fromJSON(cfgJson, "noMap");
 
     proc = configurator.parse(cfg, iContext);
-
   }
 }

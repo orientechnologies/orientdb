@@ -19,10 +19,10 @@
  */
 package com.orientechnologies.common.directmemory;
 
+import com.orientechnologies.common.directmemory.ODirectMemoryAllocator.Intention;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -31,32 +31,28 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Object of this class works at the same time as factory for <code>DirectByteBuffer</code> objects and pool for
- * <code>DirectByteBuffer</code> objects which were used and now are free to be reused by other parts of the code.
- * All <code>DirectByteBuffer</code> objects have the same size which is specified in objects constructor as "page size".
+ * Object of this class works at the same time as factory for <code>DirectByteBuffer</code> objects
+ * and pool for <code>DirectByteBuffer</code> objects which were used and now are free to be reused
+ * by other parts of the code. All <code>DirectByteBuffer</code> objects have the same size which is
+ * specified in objects constructor as "page size".
  *
  * @see ODirectMemoryAllocator
  */
 public final class OByteBufferPool implements OByteBufferPoolMXBean {
-  /**
-   * Whether we should track memory leaks during application execution
-   */
-  private static final boolean TRACK = OGlobalConfiguration.DIRECT_MEMORY_TRACK_MODE.getValueAsBoolean();
+  /** Whether we should track memory leaks during application execution */
+  private static final boolean TRACK =
+      OGlobalConfiguration.DIRECT_MEMORY_TRACK_MODE.getValueAsBoolean();
 
   /**
-   * Holder for singleton instance. We use {@link AtomicReference} instead of static constructor to avoid throwing of exceptions in
-   * static initializers.
+   * Holder for singleton instance. We use {@link AtomicReference} instead of static constructor to
+   * avoid throwing of exceptions in static initializers.
    */
   private static final AtomicReference<OByteBufferPool> INSTANCE_HOLDER = new AtomicReference<>();
 
-  /**
-   * Limit of direct memory pointers are hold inside of the pool
-   */
+  /** Limit of direct memory pointers are hold inside of the pool */
   private final int poolSize;
 
-  /**
-   * @return Singleton instance
-   */
+  /** @return Singleton instance */
   public static OByteBufferPool instance(OContextConfiguration contextConfiguration) {
     final OByteBufferPool instance = INSTANCE_HOLDER.get();
     if (instance != null) {
@@ -65,7 +61,8 @@ public final class OByteBufferPool implements OByteBufferPoolMXBean {
 
     int bufferSize;
     if (contextConfiguration != null) {
-      bufferSize = contextConfiguration.getValueAsInteger(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE);
+      bufferSize =
+          contextConfiguration.getValueAsInteger(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE);
     } else {
       bufferSize = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger();
     }
@@ -78,33 +75,31 @@ public final class OByteBufferPool implements OByteBufferPoolMXBean {
     return INSTANCE_HOLDER.get();
   }
 
-  /**
-   * Size of single page in bytes.
-   */
+  /** Size of single page in bytes. */
   private final int pageSize;
 
   /**
-   * {@link ByteBuffer}s can not be extended, so to keep mapping between pointers and buffers we use concurrent hash map.
+   * {@link ByteBuffer}s can not be extended, so to keep mapping between pointers and buffers we use
+   * concurrent hash map.
    */
-  private final ConcurrentHashMap<OPointer, PointerTracker> pointerMapping = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<OPointer, PointerTracker> pointerMapping =
+      new ConcurrentHashMap<>();
 
-  /**
-   * Pool of already allocated pages.
-   */
+  /** Pool of already allocated pages. */
   private final ConcurrentLinkedQueue<OPointer> pointersPool = new ConcurrentLinkedQueue<>();
 
   /**
-   * Size of the pool of pages is kept in separate counter because it is slow to ask pool itself and count all links in the pool.
+   * Size of the pool of pages is kept in separate counter because it is slow to ask pool itself and
+   * count all links in the pool.
    */
   private final AtomicInteger pointersPoolSize = new AtomicInteger();
 
-  /**
-   * Direct memory allocator.
-   */
+  /** Direct memory allocator. */
   private final ODirectMemoryAllocator allocator;
 
   /**
-   * @param pageSize Size of single page (instance of <code>DirectByteBuffer</code>) returned by pool.
+   * @param pageSize Size of single page (instance of <code>DirectByteBuffer</code>) returned by
+   *     pool.
    */
   public OByteBufferPool(int pageSize) {
     this.pageSize = pageSize;
@@ -114,8 +109,9 @@ public final class OByteBufferPool implements OByteBufferPoolMXBean {
 
   /**
    * @param allocator Direct memory allocator to use.
-   * @param pageSize  Size of single page (instance of <code>DirectByteBuffer</code>) returned by pool.
-   * @param poolSize  Size of the page pool
+   * @param pageSize Size of single page (instance of <code>DirectByteBuffer</code>) returned by
+   *     pool.
+   * @param poolSize Size of the page pool
    */
   public OByteBufferPool(int pageSize, ODirectMemoryAllocator allocator, int poolSize) {
     this.pageSize = pageSize;
@@ -124,14 +120,14 @@ public final class OByteBufferPool implements OByteBufferPoolMXBean {
   }
 
   /**
-   * Acquires direct memory buffer with native byte order. If there is free (already released) direct memory page we reuse it,
-   * otherwise new memory chunk is allocated from direct memory.
+   * Acquires direct memory buffer with native byte order. If there is free (already released)
+   * direct memory page we reuse it, otherwise new memory chunk is allocated from direct memory.
    *
    * @param clear Whether returned buffer should be filled with zeros before return.
-   *
+   * @param intention Why this memory is allocated. This parameter is used for memory profiling.
    * @return Direct memory buffer instance.
    */
-  public final OPointer acquireDirect(boolean clear) {
+  public final OPointer acquireDirect(boolean clear, Intention intention) {
     OPointer pointer;
 
     pointer = pointersPool.poll();
@@ -143,7 +139,7 @@ public final class OByteBufferPool implements OByteBufferPoolMXBean {
         pointer.clear();
       }
     } else {
-      pointer = allocator.allocate(pageSize, -1, clear);
+      pointer = allocator.allocate(pageSize, -1, clear, intention);
     }
 
     pointer.getNativeByteBuffer().position(0);
@@ -159,7 +155,6 @@ public final class OByteBufferPool implements OByteBufferPoolMXBean {
    * Put buffer which is not used any more back to the pool or frees direct memory if pool is full.
    *
    * @param pointer Not used instance of buffer.
-   *
    * @see OGlobalConfiguration#DIRECT_MEMORY_POOL_LIMIT
    */
   public final void release(OPointer pointer) {
@@ -176,23 +171,22 @@ public final class OByteBufferPool implements OByteBufferPoolMXBean {
     }
   }
 
-  /**
-   * @inheritDoc
-   */
+  /** @inheritDoc */
   @Override
   public final int getPoolSize() {
     return pointersPoolSize.get();
   }
 
-  /**
-   * Checks whether there are not released buffers in the pool
-   */
+  /** Checks whether there are not released buffers in the pool */
   public void checkMemoryLeaks() {
     boolean detected = false;
     if (TRACK) {
       for (Map.Entry<OPointer, PointerTracker> entry : pointerMapping.entrySet()) {
         OLogManager.instance()
-            .errorNoDb(this, "DIRECT-TRACK: unreleased direct memory pointer `%X` detected.", entry.getValue().allocation,
+            .errorNoDb(
+                this,
+                "DIRECT-TRACK: unreleased direct memory pointer `%X` detected.",
+                entry.getValue().allocation,
                 System.identityHashCode(entry.getKey()));
         detected = true;
       }
@@ -201,9 +195,7 @@ public final class OByteBufferPool implements OByteBufferPoolMXBean {
     assert !detected;
   }
 
-  /**
-   * Clears pool and dealocates memory.
-   */
+  /** Clears pool and dealocates memory. */
   public void clear() {
     for (OPointer pointer : pointersPool) {
       allocator.deallocate(pointer);
@@ -219,9 +211,7 @@ public final class OByteBufferPool implements OByteBufferPoolMXBean {
     pointerMapping.clear();
   }
 
-  /**
-   * Holder which contains if memory tracking is enabled stack trace for the first allocation.
-   */
+  /** Holder which contains if memory tracking is enabled stack trace for the first allocation. */
   private static final class PointerTracker {
     private final Exception allocation;
 

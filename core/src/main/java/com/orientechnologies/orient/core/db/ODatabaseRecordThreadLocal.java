@@ -22,35 +22,33 @@ package com.orientechnologies.orient.core.db;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-
 import java.util.concurrent.atomic.AtomicReference;
 
 public class ODatabaseRecordThreadLocal extends ThreadLocal<ODatabaseDocumentInternal> {
 
-  private static final AtomicReference<ODatabaseRecordThreadLocal> INSTANCE = new AtomicReference<>();
+  private static final AtomicReference<ODatabaseRecordThreadLocal> INSTANCE =
+      new AtomicReference<>();
 
   public static ODatabaseRecordThreadLocal instance() {
     final ODatabaseRecordThreadLocal dbInst = INSTANCE.get();
 
-    if (dbInst != null)
-      return dbInst;
+    if (dbInst != null) return dbInst;
 
-    //we can do that to avoid thread local memory leaks in containers
+    // we can do that to avoid thread local memory leaks in containers
     if (INSTANCE.get() == null) {
       final Orient inst = Orient.instance();
-      inst.registerListener(new OOrientListenerAbstract() {
-        @Override
-        public void onStartup() {
-        }
+      inst.registerListener(
+          new OOrientListenerAbstract() {
+            @Override
+            public void onStartup() {}
 
-        @Override
-        public void onShutdown() {
-          INSTANCE.set(null);
-        }
-      });
+            @Override
+            public void onShutdown() {
+              INSTANCE.set(null);
+            }
+          });
 
       INSTANCE.compareAndSet(null, new ODatabaseRecordThreadLocal());
-
     }
     return INSTANCE.get();
   }
@@ -92,5 +90,4 @@ public class ODatabaseRecordThreadLocal extends ThreadLocal<ODatabaseDocumentInt
   public boolean isDefined() {
     return super.get() != null;
   }
-
 }

@@ -5,21 +5,24 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionConfigurableAbstract;
 
 public class OSQLFunctionConcat extends OSQLFunctionConfigurableAbstract {
-  public static final String        NAME = "concat";
-  private             StringBuilder sb;
+  public static final String NAME = "concat";
+  private StringBuilder sb;
 
   public OSQLFunctionConcat() {
     super(NAME, 1, 2);
   }
 
   @Override
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iParams,
+  public Object execute(
+      Object iThis,
+      OIdentifiable iCurrentRecord,
+      Object iCurrentResult,
+      Object[] iParams,
       OCommandContext iContext) {
     if (sb == null) {
       sb = new StringBuilder();
     } else {
-      if (iParams.length > 1)
-        sb.append(iParams[1]);
+      if (iParams.length > 1) sb.append(iParams[1]);
     }
     sb.append(iParams[0]);
     return null;
@@ -39,5 +42,4 @@ public class OSQLFunctionConcat extends OSQLFunctionConfigurableAbstract {
   public boolean aggregateResults() {
     return true;
   }
-
 }

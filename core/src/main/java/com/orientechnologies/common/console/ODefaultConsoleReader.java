@@ -21,14 +21,11 @@
 package com.orientechnologies.common.console;
 
 import com.orientechnologies.common.thread.OSoftThread;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-/**
- * Console reader implementation that uses the Java System.in.
- */
+/** Console reader implementation that uses the Java System.in. */
 public class ODefaultConsoleReader implements OConsoleReader {
   private final BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 
@@ -75,8 +72,7 @@ public class ODefaultConsoleReader implements OConsoleReader {
   }
 
   @Override
-  public void setConsole(OConsoleApplication console) {
-  }
+  public void setConsole(OConsoleApplication console) {}
 
   @Override
   public int getConsoleWidth() {

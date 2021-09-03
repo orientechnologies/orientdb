@@ -3,7 +3,6 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.core.sql.parser.OExpression;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,7 +12,7 @@ import java.util.List;
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
 public class OFuncitonAggregationContext implements AggregationContext {
-  private OSQLFunction      aggregateFunction;
+  private OSQLFunction aggregateFunction;
   private List<OExpression> params;
 
   public OFuncitonAggregationContext(OSQLFunction function, List<OExpression> params) {

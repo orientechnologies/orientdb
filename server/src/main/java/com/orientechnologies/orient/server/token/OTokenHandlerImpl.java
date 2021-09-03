@@ -2,7 +2,6 @@ package com.orientechnologies.orient.server.token;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OSystemException;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -12,26 +11,26 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.OTokenException;
-import com.orientechnologies.orient.core.metadata.security.jwt.OJwtHeader;
+import com.orientechnologies.orient.core.metadata.security.binary.OBinaryToken;
+import com.orientechnologies.orient.core.metadata.security.binary.OBinaryTokenPayloadImpl;
+import com.orientechnologies.orient.core.metadata.security.binary.OBinaryTokenSerializer;
 import com.orientechnologies.orient.core.metadata.security.jwt.OJwtPayload;
-import com.orientechnologies.orient.core.metadata.security.jwt.OKeyProvider;
-import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.metadata.security.jwt.OTokenHeader;
+import com.orientechnologies.orient.core.metadata.security.jwt.OrientJwtHeader;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.security.OSecurityManager;
+import com.orientechnologies.orient.core.security.OParsedToken;
+import com.orientechnologies.orient.core.security.OTokenSign;
+import com.orientechnologies.orient.core.security.OTokenSignImpl;
 import com.orientechnologies.orient.server.OClientConnection;
-import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OTokenHandler;
-import com.orientechnologies.orient.server.binary.impl.OBinaryToken;
-import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
-
-import javax.crypto.Mac;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
-import java.util.Random;
 import java.util.UUID;
 
 /**
@@ -40,67 +39,50 @@ import java.util.UUID;
  * @author Emrul Islam <emrul@emrul.com> Copyright 2014 Emrul Islam
  */
 public class OTokenHandlerImpl implements OTokenHandler {
-  public static final String ENCRYPTION_ALGORITHM_DEFAULT = "HmacSHA256";
+  protected static final int JWT_DELIMITER = '.';
+  private OBinaryTokenSerializer binarySerializer;
+  private long sessionInMills = 1000 * 60 * 60; // 1 HOUR
+  private final OTokenSign sign;
 
-  private static       String           algorithm      = ENCRYPTION_ALGORITHM_DEFAULT;
-  private static final ThreadLocal<Mac> threadLocalMac = new MacThreadLocal();
-
-  protected static final int                    JWT_DELIMITER  = '.';
-  private                OBinaryTokenSerializer binarySerializer;
-  private                long                   sessionInMills = 1000 * 60 * 60;              // 1 HOUR
-  private                OKeyProvider           keyProvider;
-  private                Random                 keyGenerator   = new Random();
-
-  public OTokenHandlerImpl(OServer server) {
-    byte[] key = null;
-    String algorithm;
-    Long sessionTimeout;
-
-    OContextConfiguration config = server.getContextConfiguration();
-    String configKey = config.getValueAsString(OGlobalConfiguration.NETWORK_TOKEN_SECRETKEY);
-    if (configKey == null || configKey.length() == 0)
-      configKey = config.getValueAsString(OGlobalConfiguration.OAUTH2_SECRETKEY);
-
-    if (configKey != null && configKey.length() > 0)
-      key = Base64.getUrlDecoder().decode(configKey);
-
-    if (key == null)
-      key = OSecurityManager.instance().digestSHA256(String.valueOf(keyGenerator.nextLong()));
-
-    keyProvider = new DefaultKeyProvider(key);
-
-    sessionTimeout = config.getValueAsLong(OGlobalConfiguration.NETWORK_TOKEN_EXPIRE_TIMEOUT);
-    if (sessionTimeout != null)
-      sessionInMills = sessionTimeout * 1000 * 60;
-
-    algorithm = config.getValueAsString(OGlobalConfiguration.NETWORK_TOKEN_ENCRYPTION_ALGORITHM);
-    if (algorithm != null)
-      this.algorithm = algorithm;
-
-    try {
-      Mac.getInstance(algorithm);
-    } catch (NoSuchAlgorithmException nsa) {
-      throw new IllegalArgumentException("Can't find encryption algorithm '" + algorithm + "'", nsa);
-    }
-
-    this.binarySerializer = new OBinaryTokenSerializer(new String[] { "plocal", "memory" }, keyProvider.getKeys(),
-        new String[] { this.algorithm }, new String[] { "OrientDB", "node" });
-  }
-
-  protected OTokenHandlerImpl() {
-
+  public OTokenHandlerImpl(OContextConfiguration config) {
+    this(
+        new OTokenSignImpl(config),
+        config.getValueAsLong(OGlobalConfiguration.NETWORK_TOKEN_EXPIRE_TIMEOUT));
   }
 
   protected OTokenHandlerImpl(byte[] key, long sessionLength, String algorithm) {
-    keyProvider = new DefaultKeyProvider(key);
-    this.algorithm = algorithm;
+    this(new OTokenSignImpl(key, algorithm), sessionLength);
+  }
+
+  public OTokenHandlerImpl(OTokenSign sign, OContextConfiguration config) {
+    this(sign, config.getValueAsLong(OGlobalConfiguration.NETWORK_TOKEN_EXPIRE_TIMEOUT));
+  }
+
+  protected OTokenHandlerImpl(OTokenSign sign, long sessionLength) {
+    this.sign = sign;
     sessionInMills = sessionLength * 1000 * 60;
-    this.binarySerializer = new OBinaryTokenSerializer(new String[] { "plocal", "memory" }, keyProvider.getKeys(),
-        new String[] { this.algorithm }, new String[] { "OrientDB" });
+    this.binarySerializer =
+        new OBinaryTokenSerializer(
+            new String[] {"plocal", "memory"},
+            this.sign.getKeys(),
+            new String[] {this.sign.getAlgorithm()},
+            new String[] {"OrientDB", "node"});
+  }
+
+  protected OTokenHandlerImpl() {
+    this.sign = null;
   }
 
   @Override
   public OToken parseWebToken(byte[] tokenBytes) {
+    OParsedToken parsedToken = parseOnlyWebToken(tokenBytes);
+    OToken token = parsedToken.getToken();
+    token.setIsVerified(this.sign.verifyTokenSign(parsedToken));
+    return token;
+  }
+
+  @Override
+  public OParsedToken parseOnlyWebToken(byte[] tokenBytes) {
     JsonWebToken token = null;
 
     // / <header>.<payload>.<signature>
@@ -108,8 +90,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
     int secondDot = -1;
     for (int x = 0; x < tokenBytes.length; x++) {
       if (tokenBytes[x] == JWT_DELIMITER) {
-        if (firstDot == -1)
-          firstDot = x; // stores reference to first '.' character in JWT token
+        if (firstDot == -1) firstDot = x; // stores reference to first '.' character in JWT token
         else {
           secondDot = x;
           break;
@@ -117,24 +98,37 @@ public class OTokenHandlerImpl implements OTokenHandler {
       }
     }
 
-    if (firstDot == -1)
-      throw new RuntimeException("Token data too short: missed header");
+    if (firstDot == -1) throw new RuntimeException("Token data too short: missed header");
 
-    if (secondDot == -1)
-      throw new RuntimeException("Token data too short: missed signature");
+    if (secondDot == -1) throw new RuntimeException("Token data too short: missed signature");
     ;
-    final byte[] decodedHeader = Base64.getUrlDecoder().decode(ByteBuffer.wrap(tokenBytes, 0, firstDot)).array();
-    final byte[] decodedPayload = Base64.getUrlDecoder()
-        .decode(ByteBuffer.wrap(tokenBytes, firstDot + 1, secondDot - (firstDot + 1))).array();
-    final byte[] decodedSignature = Base64.getUrlDecoder()
-        .decode(ByteBuffer.wrap(tokenBytes, secondDot + 1, tokenBytes.length - (secondDot + 1))).array();
+    final byte[] decodedHeader =
+        Base64.getUrlDecoder().decode(ByteBuffer.wrap(tokenBytes, 0, firstDot)).array();
+    final byte[] decodedPayload =
+        Base64.getUrlDecoder()
+            .decode(ByteBuffer.wrap(tokenBytes, firstDot + 1, secondDot - (firstDot + 1)))
+            .array();
+    final byte[] decodedSignature =
+        Base64.getUrlDecoder()
+            .decode(ByteBuffer.wrap(tokenBytes, secondDot + 1, tokenBytes.length - (secondDot + 1)))
+            .array();
 
     final OrientJwtHeader header = deserializeWebHeader(decodedHeader);
-    final OJwtPayload deserializeWebPayload = deserializeWebPayload(header.getType(), decodedPayload);
+    final OJwtPayload deserializeWebPayload =
+        deserializeWebPayload(header.getType(), decodedPayload);
     token = new JsonWebToken(header, deserializeWebPayload);
+    byte[] onlyTokenBytes = new byte[secondDot];
+    System.arraycopy(tokenBytes, 0, onlyTokenBytes, 0, secondDot);
+    return new OParsedToken(token, onlyTokenBytes, decodedSignature);
+  }
 
-    token.setIsVerified(verifyTokenSignature(header, tokenBytes, 0, secondDot, decodedSignature));
-    return token;
+  @Override
+  public boolean validateToken(OParsedToken token, String command, String database) {
+    if (!token.getToken().getIsVerified()) {
+      boolean value = this.sign.verifyTokenSign(token);
+      token.getToken().setIsVerified(value);
+    }
+    return token.getToken().getIsVerified() && validateToken(token.getToken(), command, database);
   }
 
   @Override
@@ -143,8 +137,10 @@ public class OTokenHandlerImpl implements OTokenHandler {
     if (!(token instanceof JsonWebToken)) {
       return false;
     }
-    final OrientJwtPayload payload = (OrientJwtPayload) ((JsonWebToken) token).getPayload();
-    if (token.getDatabase().equalsIgnoreCase(database) && token.isNowValid()) {
+    final long curTime = System.currentTimeMillis();
+    if (token.getDatabase().equalsIgnoreCase(database)
+        && token.getExpiry() > curTime
+        && (token.getExpiry() - (sessionInMills + 1)) < curTime) {
       valid = true;
     }
     token.setIsValid(valid);
@@ -152,9 +148,20 @@ public class OTokenHandlerImpl implements OTokenHandler {
   }
 
   @Override
+  public boolean validateBinaryToken(OParsedToken token) {
+    if (!token.getToken().getIsVerified()) {
+      boolean value = this.sign.verifyTokenSign(token);
+      token.getToken().setIsVerified(value);
+    }
+    return token.getToken().getIsVerified() && validateBinaryToken(token.getToken());
+  }
+
+  @Override
   public boolean validateBinaryToken(final OToken token) {
     boolean valid = false;
-    if (token instanceof OBinaryToken && "node".equals(((OBinaryToken) token).getHeader().getType())) {
+    // The "node" token is for backward compatibility for old ditributed binary, may be removed if
+    // we do not support runtime compatiblity with 3.1 or less
+    if ("node".equals(token.getHeader().getType())) {
       valid = true;
     } else {
       final long curTime = System.currentTimeMillis();
@@ -177,15 +184,18 @@ public class OTokenHandlerImpl implements OTokenHandler {
     header.setType(getPayloadType(payload));
     try {
       byte[] bytes = serializeWebHeader(header);
-      tokenByteOS.write(Base64.getUrlEncoder().encode(ByteBuffer.wrap(bytes, 0, bytes.length)).array());
+      tokenByteOS.write(
+          Base64.getUrlEncoder().encode(ByteBuffer.wrap(bytes, 0, bytes.length)).array());
       tokenByteOS.write(JWT_DELIMITER);
       bytes = serializeWebPayload(payload);
-      tokenByteOS.write(Base64.getUrlEncoder().encode(ByteBuffer.wrap(bytes, 0, bytes.length)).array());
+      tokenByteOS.write(
+          Base64.getUrlEncoder().encode(ByteBuffer.wrap(bytes, 0, bytes.length)).array());
       byte[] unsignedToken = tokenByteOS.toByteArray();
       tokenByteOS.write(JWT_DELIMITER);
 
-      bytes = signToken(header, unsignedToken);
-      tokenByteOS.write(Base64.getUrlEncoder().encode(ByteBuffer.wrap(bytes, 0, bytes.length)).array());
+      bytes = this.sign.signToken(header, unsignedToken);
+      tokenByteOS.write(
+          Base64.getUrlEncoder().encode(ByteBuffer.wrap(bytes, 0, bytes.length)).array());
     } catch (Exception ex) {
       throw OException.wrapException(new OSystemException("Error on token parsing"), ex);
     }
@@ -193,7 +203,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
     return tokenByteOS.toByteArray();
   }
 
-  public byte[] getSignedWebTokenServerUser(final OServerUserConfiguration user) {
+  public byte[] getSignedWebTokenServerUser(final OSecurityUser user) {
     final ByteArrayOutputStream tokenByteOS = new ByteArrayOutputStream(1024);
     final OrientJwtHeader header = new OrientJwtHeader();
     header.setAlgorithm("HS256");
@@ -203,15 +213,18 @@ public class OTokenHandlerImpl implements OTokenHandler {
     header.setType(getPayloadType(payload));
     try {
       byte[] bytes = serializeWebHeader(header);
-      tokenByteOS.write(Base64.getUrlEncoder().encode(ByteBuffer.wrap(bytes, 0, bytes.length)).array());
+      tokenByteOS.write(
+          Base64.getUrlEncoder().encode(ByteBuffer.wrap(bytes, 0, bytes.length)).array());
       tokenByteOS.write(JWT_DELIMITER);
       bytes = serializeWebPayload(payload);
-      tokenByteOS.write(Base64.getUrlEncoder().encode(ByteBuffer.wrap(bytes, 0, bytes.length)).array());
+      tokenByteOS.write(
+          Base64.getUrlEncoder().encode(ByteBuffer.wrap(bytes, 0, bytes.length)).array());
       byte[] unsignedToken = tokenByteOS.toByteArray();
       tokenByteOS.write(JWT_DELIMITER);
 
-      bytes = signToken(header, unsignedToken);
-      tokenByteOS.write(Base64.getUrlEncoder().encode(ByteBuffer.wrap(bytes, 0, bytes.length)).array());
+      bytes = this.sign.signToken(header, unsignedToken);
+      tokenByteOS.write(
+          Base64.getUrlEncoder().encode(ByteBuffer.wrap(bytes, 0, bytes.length)).array());
     } catch (Exception ex) {
       throw OException.wrapException(new OSystemException("Error on token parsing"), ex);
     }
@@ -233,33 +246,9 @@ public class OTokenHandlerImpl implements OTokenHandler {
     return valid;
   }
 
-  @Override
-  public byte[] getDistributedToken(ONetworkProtocolData data) {
-    try {
-
-      final OBinaryToken token = new OBinaryToken();
-      final OrientJwtHeader header = new OrientJwtHeader();
-      header.setAlgorithm(algorithm);
-      header.setKeyId(keyProvider.getDefaultKey());
-      header.setType("node");
-      token.setHeader(header);
-      token.setServerUser(true);
-      token.setUserName(data.serverUsername);
-      token.setExpiry(0);
-      token.setProtocolVersion(data.protocolVersion);
-      token.setSerializer(data.getSerializationImpl());
-      token.setDriverName(data.driverName);
-      token.setDriverVersion(data.driverVersion);
-
-      return serializeSignedToken(token);
-    } catch (RuntimeException e) {
-      throw e;
-    } catch (Exception e) {
-      throw OException.wrapException(new OSystemException("Error on token parsing"), e);
-    }
-  }
-
-  public byte[] getSignedBinaryToken(final ODatabaseDocumentInternal db, final OSecurityUser user,
+  public byte[] getSignedBinaryToken(
+      final ODatabaseDocumentInternal db,
+      final OSecurityUser user,
       final ONetworkProtocolData data) {
     try {
 
@@ -268,25 +257,28 @@ public class OTokenHandlerImpl implements OTokenHandler {
       long curTime = System.currentTimeMillis();
 
       final OrientJwtHeader header = new OrientJwtHeader();
-      header.setAlgorithm(algorithm);
-      header.setKeyId(keyProvider.getDefaultKey());
+      header.setAlgorithm(this.sign.getAlgorithm());
+      header.setKeyId(this.sign.getDefaultKey());
       header.setType("OrientDB");
       token.setHeader(header);
+      OBinaryTokenPayloadImpl payload = new OBinaryTokenPayloadImpl();
       if (db != null) {
-        token.setDatabase(db.getName());
-        token.setDatabaseType(db.getStorage().getUnderlying().getType());
+        payload.setDatabase(db.getName());
+        payload.setDatabaseType(db.getStorage().getType());
       }
       if (data.serverUser) {
-        token.setServerUser(true);
-        token.setUserName(data.serverUsername);
+        payload.setServerUser(true);
+        payload.setUserName(data.serverUsername);
       }
-      if (user != null)
-        token.setUserRid(user.getIdentity().getIdentity());
-      token.setExpiry(curTime + sessionInMills);
-      token.setProtocolVersion(data.protocolVersion);
-      token.setSerializer(data.getSerializationImpl());
-      token.setDriverName(data.driverName);
-      token.setDriverVersion(data.driverVersion);
+      if (user != null) {
+        payload.setUserRid(user.getIdentity().getIdentity());
+      }
+      payload.setExpiry(curTime + sessionInMills);
+      payload.setProtocolVersion(data.protocolVersion);
+      payload.setSerializer(data.getSerializationImpl());
+      payload.setDriverName(data.driverName);
+      payload.setDriverVersion(data.driverVersion);
+      token.setPayload(payload);
 
       return serializeSignedToken(token);
     } catch (RuntimeException e) {
@@ -300,13 +292,14 @@ public class OTokenHandlerImpl implements OTokenHandler {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     binarySerializer.serialize(token, baos);
 
-    final byte[] signature = signToken(token.getHeader(), baos.toByteArray());
+    final byte[] signature = this.sign.signToken(token.getHeader(), baos.toByteArray());
     baos.write(signature);
 
     return baos.toByteArray();
   }
 
-  public ONetworkProtocolData getProtocolDataFromToken(OClientConnection connection, final OToken token) {
+  public ONetworkProtocolData getProtocolDataFromToken(
+      OClientConnection connection, final OToken token) {
     if (token instanceof OBinaryToken) {
       final OBinaryToken binary = (OBinaryToken) token;
       final ONetworkProtocolData data = new ONetworkProtocolData();
@@ -331,7 +324,8 @@ public class OTokenHandlerImpl implements OTokenHandler {
     return deserializeBinaryToken(bais);
   }
 
-  public OToken parseBinaryToken(final byte[] binaryToken) {
+  @Override
+  public OParsedToken parseOnlyBinary(byte[] binaryToken) {
     try {
       final ByteArrayInputStream bais = new ByteArrayInputStream(binaryToken);
 
@@ -339,18 +333,24 @@ public class OTokenHandlerImpl implements OTokenHandler {
       final int end = binaryToken.length - bais.available();
       final byte[] decodedSignature = new byte[bais.available()];
       bais.read(decodedSignature);
-
-      token.setIsVerified(verifyTokenSignature(token.getHeader(), binaryToken, 0, end, decodedSignature));
-      return token;
+      byte[] onlyTokenBytes = new byte[end];
+      System.arraycopy(binaryToken, 0, onlyTokenBytes, 0, end);
+      return new OParsedToken(token, onlyTokenBytes, decodedSignature);
     } catch (Exception e) {
       throw OException.wrapException(new OSystemException("Error on token parsing"), e);
     }
   }
 
+  public OToken parseBinaryToken(final byte[] binaryToken) {
+    OParsedToken parsedToken = parseOnlyBinary(binaryToken);
+    OToken token = parsedToken.getToken();
+    token.setIsVerified(this.sign.verifyTokenSign(parsedToken));
+    return token;
+  }
+
   @Override
   public byte[] renewIfNeeded(final OToken token) {
-    if (token == null)
-      throw new IllegalArgumentException("Token is null");
+    if (token == null) throw new IllegalArgumentException("Token is null");
 
     final long curTime = System.currentTimeMillis();
     if (token.getExpiry() - curTime < (sessionInMills / 2) && token.getExpiry() >= curTime) {
@@ -358,10 +358,8 @@ public class OTokenHandlerImpl implements OTokenHandler {
       final long currTime = System.currentTimeMillis();
       token.setExpiry(currTime + expiryMinutes);
       try {
-        if (token instanceof OBinaryToken)
-          return serializeSignedToken((OBinaryToken) token);
-        else
-          throw new OTokenException("renew of web token not supported");
+        if (token instanceof OBinaryToken) return serializeSignedToken((OBinaryToken) token);
+        else throw new OTokenException("renew of web token not supported");
       } catch (IOException e) {
         throw OException.wrapException(new OSystemException("Error on token parsing"), e);
       }
@@ -382,7 +380,8 @@ public class OTokenHandlerImpl implements OTokenHandler {
     try {
       doc.fromJSON(new String(decodedHeader, "UTF-8"));
     } catch (UnsupportedEncodingException e) {
-      throw OException.wrapException(new OSystemException("Header is not encoded in UTF-8 format"), e);
+      throw OException.wrapException(
+          new OSystemException("Header is not encoded in UTF-8 format"), e);
     }
     final OrientJwtHeader header = new OrientJwtHeader();
     header.setType((String) doc.field("typ"));
@@ -399,7 +398,8 @@ public class OTokenHandlerImpl implements OTokenHandler {
     try {
       doc.fromJSON(new String(decodedPayload, "UTF-8"));
     } catch (UnsupportedEncodingException e) {
-      throw OException.wrapException(new OSystemException("Payload encoding format differs from UTF-8"), e);
+      throw OException.wrapException(
+          new OSystemException("Payload encoding format differs from UTF-8"), e);
     }
     final OrientJwtPayload payload = new OrientJwtPayload();
     payload.setUserName((String) doc.field("username"));
@@ -417,9 +417,8 @@ public class OTokenHandlerImpl implements OTokenHandler {
     return payload;
   }
 
-  protected byte[] serializeWebHeader(final OJwtHeader header) throws Exception {
-    if (header == null)
-      throw new IllegalArgumentException("Token header is null");
+  protected byte[] serializeWebHeader(final OTokenHeader header) throws Exception {
+    if (header == null) throw new IllegalArgumentException("Token header is null");
 
     ODocument doc = new ODocument();
     doc.field("typ", header.getType());
@@ -429,8 +428,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
   }
 
   protected byte[] serializeWebPayload(final OJwtPayload payload) throws Exception {
-    if (payload == null)
-      throw new IllegalArgumentException("Token payload is null");
+    if (payload == null) throw new IllegalArgumentException("Token payload is null");
 
     final ODocument doc = new ODocument();
     doc.field("username", payload.getUserName());
@@ -447,9 +445,8 @@ public class OTokenHandlerImpl implements OTokenHandler {
     return doc.toJSON().getBytes("UTF-8");
   }
 
-  protected OJwtPayload createPayloadServerUser(OServerUserConfiguration serverUser) {
-    if (serverUser == null)
-      throw new IllegalArgumentException("User is null");
+  protected OJwtPayload createPayloadServerUser(OSecurityUser serverUser) {
+    if (serverUser == null) throw new IllegalArgumentException("User is null");
 
     final OrientJwtPayload payload = new OrientJwtPayload();
     payload.setAudience("OrientDBServer");
@@ -460,20 +457,19 @@ public class OTokenHandlerImpl implements OTokenHandler {
     final long currTime = System.currentTimeMillis();
     payload.setIssuedAt(currTime);
     payload.setNotBefore(currTime);
-    payload.setUserName(serverUser.name);
+    payload.setUserName(serverUser.getName());
     payload.setTokenId(UUID.randomUUID().toString());
     payload.setExpiry(currTime + expiryMinutes);
     return payload;
   }
 
   protected OJwtPayload createPayload(final ODatabaseDocument db, final OSecurityUser user) {
-    if (user == null)
-      throw new IllegalArgumentException("User is null");
+    if (user == null) throw new IllegalArgumentException("User is null");
 
     final OrientJwtPayload payload = new OrientJwtPayload();
     payload.setAudience("OrientDB");
     payload.setDatabase(db.getName());
-    payload.setUserRid(user.getDocument().getIdentity());
+    payload.setUserRid(user.getIdentity().getIdentity());
 
     final long expiryMinutes = sessionInMills;
     final long currTime = System.currentTimeMillis();
@@ -489,45 +485,6 @@ public class OTokenHandlerImpl implements OTokenHandler {
     return "OrientDB";
   }
 
-  protected OKeyProvider getKeyProvider() {
-    return keyProvider;
-  }
-
-  private boolean verifyTokenSignature(final OJwtHeader header, final byte[] base, final int baseOffset, final int baseLength,
-      final byte[] signature) {
-    final Mac mac = threadLocalMac.get();
-
-    try {
-      mac.init(getKeyProvider().getKey(header));
-      mac.update(base, baseOffset, baseLength);
-      final byte[] calculatedSignature = mac.doFinal();
-      boolean valid = MessageDigest.isEqual(calculatedSignature, signature);
-      if (!valid) {
-        OLogManager.instance().warn(this, "Token signature failure: %s", Base64.getEncoder().encodeToString(base));
-      }
-      return valid;
-
-    } catch (RuntimeException e) {
-      throw e;
-    } catch (Exception e) {
-      throw OException.wrapException(new OSystemException("Token signature cannot be verified"), e);
-    } finally {
-      mac.reset();
-    }
-  }
-
-  private byte[] signToken(final OJwtHeader header, final byte[] unsignedToken) {
-    final Mac mac = threadLocalMac.get();
-    try {
-      mac.init(getKeyProvider().getKey(header));
-      return mac.doFinal(unsignedToken);
-    } catch (Exception ex) {
-      throw OException.wrapException(new OSystemException("Error on token parsing"), ex);
-    } finally {
-      mac.reset();
-    }
-  }
-
   private OBinaryToken deserializeBinaryToken(final InputStream bais) {
     try {
       return binarySerializer.deserialize(bais);
@@ -538,16 +495,5 @@ public class OTokenHandlerImpl implements OTokenHandler {
 
   public void setSessionInMills(long sessionInMills) {
     this.sessionInMills = sessionInMills;
-  }
-
-  private static class MacThreadLocal extends ThreadLocal<Mac> {
-    @Override
-    protected Mac initialValue() {
-      try {
-        return Mac.getInstance(algorithm);
-      } catch (NoSuchAlgorithmException nsa) {
-        throw new IllegalArgumentException("Can't find encryption algorithm '" + algorithm + "'", nsa);
-      }
-    }
   }
 }

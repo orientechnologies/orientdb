@@ -15,19 +15,16 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.setup.ServerRun;
 import org.junit.Test;
 
-import com.orientechnologies.orient.core.db.ODatabaseType;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-
-/**
- * Distributed test on drop + recreate database with a different name.
- */
+/** Distributed test on drop + recreate database with a different name. */
 public class DistributedDbDropAndReCreateAnotherIT extends AbstractServerClusterTxTest {
-  final static int SERVERS       = 3;
-  private int      lastServerNum = 0;
+  static final int SERVERS = 3;
+  private int lastServerNum = 0;
 
+  // TODO: is distributed
   @Test
   public void test() throws Exception {
     count = 10;
@@ -59,7 +56,12 @@ public class DistributedDbDropAndReCreateAnotherIT extends AbstractServerCluster
 
       banner("(RE)CREATING DATABASE " + dbName + " ON SERVER " + server.getServerId());
 
-      server.getServerInstance().createDatabase(getDatabaseName(), ODatabaseType.PLOCAL, OrientDBConfig.defaultConfig());
+      server
+          .getServerInstance()
+          .getContext()
+          .execute(
+              "create database ? plocal users(admin identified by 'admin' role admin)",
+              getDatabaseName());
 
       waitForDatabaseIsOnline(0, "europe-0", getDatabaseName(), 15000);
       waitForDatabaseIsOnline(0, "europe-1", getDatabaseName(), 15000);
@@ -67,9 +69,9 @@ public class DistributedDbDropAndReCreateAnotherIT extends AbstractServerCluster
 
       checkSameClusters();
 
-      try(ODatabaseDocument graph = server.getServerInstance().openDatabase(getDatabaseName(), "admin", "admin"))
-      {
-      	onAfterDatabaseCreation(graph);
+      try (ODatabaseDocument graph =
+          server.getServerInstance().openDatabase(getDatabaseName(), "admin", "admin")) {
+        onAfterDatabaseCreation(graph);
       }
 
       checkThePersonClassIsPresentOnAllTheServers();

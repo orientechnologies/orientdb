@@ -5,12 +5,11 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Edge;
+import java.util.Iterator;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.Iterator;
 
 public class OrientLightWeightEdgeTest {
 
@@ -35,7 +34,8 @@ public class OrientLightWeightEdgeTest {
     vertex.addEdge("friend", vertex2);
     Object id = vertex.getId();
     graph.commit();
-    // This shouldn't be done, i do it for ensure that the data is reloaded from the db, because the issue was after reload.
+    // This shouldn't be done, i do it for ensure that the data is reloaded from the db, because the
+    // issue was after reload.
     graph.getRawGraph().getLocalCache().clear();
     OrientVertex vertexPrev = graph.getVertex(id);
     OrientVertex vertex3 = graph.addVertex(null);
@@ -61,10 +61,10 @@ public class OrientLightWeightEdgeTest {
     ODocument doc = (ODocument) item.rawElement;
     Object fieldVal = doc.rawField("out_testDeleteVertex");
     Assert.assertTrue(fieldVal instanceof Iterable);
-    Assert.assertTrue(((Iterable)fieldVal).iterator().hasNext());
+    Assert.assertTrue(((Iterable) fieldVal).iterator().hasNext());
     graph.commit();
 
-    graph.command(new OCommandSQL("DELETE VERTEX "+vertex2.getIdentity())).execute();
+    graph.command(new OCommandSQL("DELETE VERTEX " + vertex2.getIdentity())).execute();
     graph.commit();
     result = graph.command(new OSQLSynchQuery("SELECT FROM " + vertexId)).execute();
     iterator = result.iterator();
@@ -74,7 +74,6 @@ public class OrientLightWeightEdgeTest {
     doc = (ODocument) item.rawElement;
     fieldVal = doc.rawField("out_testDeleteVertex");
     Assert.assertTrue(fieldVal instanceof Iterable);
-    Assert.assertFalse(((Iterable)fieldVal).iterator().hasNext());
-
+    Assert.assertFalse(((Iterable) fieldVal).iterator().hasNext());
   }
 }

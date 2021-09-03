@@ -6,17 +6,14 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Created by tglman on 28/12/16.
- */
+/** Created by tglman on 28/12/16. */
 public class OBeginTransactionResponse implements OBinaryResponse {
 
-  private int             txId;
+  private int txId;
   private Map<ORID, ORID> updatedIds;
 
   public OBeginTransactionResponse(int txId, Map<ORID, ORID> updatedIds) {
@@ -24,11 +21,11 @@ public class OBeginTransactionResponse implements OBinaryResponse {
     this.updatedIds = updatedIds;
   }
 
-  public OBeginTransactionResponse() {
-  }
+  public OBeginTransactionResponse() {}
 
   @Override
-  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
     channel.writeInt(txId);
     channel.writeInt(updatedIds.size());
     for (Map.Entry<ORID, ORID> ids : updatedIds.entrySet()) {

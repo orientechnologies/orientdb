@@ -15,27 +15,24 @@
  */
 package com.orientechnologies.orient.test.java.serialization;
 
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import java.util.List;
 
-import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-
 public class OrientStringSplitSpeedTest {
-	private static final String	TEXT	= "Ciao, questa, e, una, prova. Che ne pensi?";
-	private static final int		MAX		= 10000000;
+  private static final String TEXT = "Ciao, questa, e, una, prova. Che ne pensi?";
+  private static final int MAX = 10000000;
 
-	public static void main(String[] iArgs) {
-		List<String> pieces = OStringSerializerHelper.split(TEXT, ',');
-		for (String s : pieces)
-			System.out.println("String: " + s);
+  public static void main(String[] iArgs) {
+    List<String> pieces = OStringSerializerHelper.split(TEXT, ',');
+    for (String s : pieces) System.out.println("String: " + s);
 
-		System.out.println("Start testing cycle X " + MAX);
+    System.out.println("Start testing cycle X " + MAX);
 
-		long time = System.currentTimeMillis();
-		for (int i = 0; i < MAX; ++i) {
-			pieces = OStringSerializerHelper.split(TEXT, ',');
-			if (i % (MAX / 10) == 0)
-				System.out.print(".");
-		}
-		System.out.println("\nElapsed: " + (System.currentTimeMillis() - time));
-	}
+    long time = System.currentTimeMillis();
+    for (int i = 0; i < MAX; ++i) {
+      pieces = OStringSerializerHelper.split(TEXT, ',');
+      if (i % (MAX / 10) == 0) System.out.print(".");
+    }
+    System.out.println("\nElapsed: " + (System.currentTimeMillis() - time));
+  }
 }

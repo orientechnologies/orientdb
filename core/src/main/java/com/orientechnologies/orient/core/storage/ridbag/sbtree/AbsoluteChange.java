@@ -60,7 +60,6 @@ public class AbsoluteChange implements Change {
   }
 
   private void checkPositive() {
-    if (value < 0)
-      value = 0;
+    if (value < 0) value = 0;
   }
 }

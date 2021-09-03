@@ -23,20 +23,17 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OLegacyResultSet;
 import com.orientechnologies.orient.core.sql.query.OLiveQuery;
 import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
-import org.testng.Assert;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import org.testng.Assert;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
-/**
- * only for remote usage (it requires registered LiveQuery plugin)
- */
+/** only for remote usage (it requires registered LiveQuery plugin) */
 @Test(groups = "Query")
 public class LiveQueryTest extends DocumentDBBaseTest implements OCommandOutputListener {
 
@@ -54,18 +51,17 @@ public class LiveQueryTest extends DocumentDBBaseTest implements OCommandOutputL
       latch.countDown();
     }
 
-    @Override public void onError(int iLiveToken) {
+    @Override
+    public void onError(int iLiveToken) {}
 
-    }
-
-    @Override public void onUnsubscribe(int iLiveToken) {
+    @Override
+    public void onUnsubscribe(int iLiveToken) {
       unsubscribe = iLiveToken;
       unLatch.countDown();
-
     }
   }
 
-  @Parameters(value = { "url" })
+  @Parameters(value = {"url"})
   public LiveQueryTest(@Optional String url) {
     super(url);
   }
@@ -79,26 +75,36 @@ public class LiveQueryTest extends DocumentDBBaseTest implements OCommandOutputL
 
     MyLiveQueryListener listener = new MyLiveQueryListener();
 
-    OLegacyResultSet<ODocument> tokens = database.query(new OLiveQuery<ODocument>("live select from " + className1, listener));
+    OLegacyResultSet<ODocument> tokens =
+        database.query(new OLiveQuery<ODocument>("live select from " + className1, listener));
     Assert.assertEquals(tokens.size(), 1);
     ODocument tokenDoc = tokens.get(0);
     int token = tokenDoc.field("token");
     Assert.assertNotNull(token);
 
-    database.command(new OCommandSQL("insert into " + className1 + " set name = 'foo', surname = 'bar'")).execute();
-    database.command(new OCommandSQL("insert into  " + className1 + " set name = 'foo', surname = 'baz'")).execute();
+    database
+        .command(
+            new OCommandSQL("insert into " + className1 + " set name = 'foo', surname = 'bar'"))
+        .execute();
+    database
+        .command(
+            new OCommandSQL("insert into  " + className1 + " set name = 'foo', surname = 'baz'"))
+        .execute();
     database.command(new OCommandSQL("insert into " + className2 + " set name = 'foo'"));
     latch.await(1, TimeUnit.MINUTES);
 
     database.command(new OCommandSQL("live unsubscribe " + token)).execute();
-    database.command(new OCommandSQL("insert into " + className1 + " set name = 'foo', surname = 'bax'")).execute();
+    database
+        .command(
+            new OCommandSQL("insert into " + className1 + " set name = 'foo', surname = 'bax'"))
+        .execute();
     Assert.assertEquals(listener.ops.size(), 2);
     for (ORecordOperation doc : listener.ops) {
       Assert.assertEquals(doc.type, ORecordOperation.CREATED);
       Assert.assertEquals(((ODocument) doc.record).field("name"), "foo");
     }
     unLatch.await(1, TimeUnit.MINUTES);
-    Assert.assertEquals(listener.unsubscribe,token);
+    Assert.assertEquals(listener.unsubscribe, token);
   }
 
   @Override

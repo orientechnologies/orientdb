@@ -5,17 +5,13 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import junit.framework.TestCase;
-import org.junit.Test;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import junit.framework.TestCase;
+import org.junit.Test;
 
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) (l.dellaquila-at-orientdb.com)
- */
-
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) (l.dellaquila-at-orientdb.com) */
 public class OGraphBatchInsertTest extends TestCase {
 
   @Test
@@ -104,7 +100,6 @@ public class OGraphBatchInsertTest extends TestCase {
       } else {
         assertNotSame("foo", doc.field("foo"));
         assertNotSame(3, doc.field("bar"));
-
       }
     }
     assertTrue(found0);
@@ -186,11 +181,14 @@ public class OGraphBatchInsertTest extends TestCase {
     batch.setVertexProperties(3L, vertexProps);
 
     batch.end();
-    
-		OrientGraph g = new OrientGraph(dbUrl, "admin", "admin");
 
-    Iterable<Vertex> result = g.command(
-        new OSQLSynchQuery<Vertex>("select expand(out().in().out().out().in().out()) from V where uid = ?")).execute(1L);
+    OrientGraph g = new OrientGraph(dbUrl, "admin", "admin");
+
+    Iterable<Vertex> result =
+        g.command(
+                new OSQLSynchQuery<Vertex>(
+                    "select expand(out().in().out().out().in().out()) from V where uid = ?"))
+            .execute(1L);
 
     for (Vertex v : result) {
       assertEquals("bar", v.getProperty("foo"));
@@ -217,8 +215,11 @@ public class OGraphBatchInsertTest extends TestCase {
 
     OrientGraph g = new OrientGraph(dbUrl, "admin", "admin");
 
-    Iterable<Vertex> result = g.command(
-        new OSQLSynchQuery<Vertex>("select expand(out().in().out().out().in().out().out().in().out()) from V where uid = ?")).execute(0L);
+    Iterable<Vertex> result =
+        g.command(
+                new OSQLSynchQuery<Vertex>(
+                    "select expand(out().in().out().out().in().out().out().in().out()) from V where uid = ?"))
+            .execute(0L);
 
     boolean found = false;
     for (Vertex v : result) {
@@ -229,5 +230,4 @@ public class OGraphBatchInsertTest extends TestCase {
     assertTrue(found);
     g.shutdown();
   }
-
 }

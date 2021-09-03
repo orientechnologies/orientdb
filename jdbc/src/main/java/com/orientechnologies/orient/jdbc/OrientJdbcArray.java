@@ -7,9 +7,7 @@ import java.sql.Types;
 import java.util.Collection;
 import java.util.Map;
 
-/**
- * Created by frank on 16/01/2017.
- */
+/** Created by frank on 16/01/2017. */
 public class OrientJdbcArray implements Array {
 
   private final Collection<? extends Object> values;
@@ -65,12 +63,11 @@ public class OrientJdbcArray implements Array {
   }
 
   @Override
-  public ResultSet getResultSet(long index, int count, Map<String, Class<?>> map) throws SQLException {
+  public ResultSet getResultSet(long index, int count, Map<String, Class<?>> map)
+      throws SQLException {
     return null;
   }
 
   @Override
-  public void free() throws SQLException {
-
-  }
+  public void free() throws SQLException {}
 }

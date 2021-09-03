@@ -2,7 +2,6 @@ package com.orientechnologies.orient.distributed.impl.structural.operations;
 
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;

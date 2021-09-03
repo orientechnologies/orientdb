@@ -1,10 +1,10 @@
 package com.orientechnologies.orient.core.record.impl;
 
+import static org.junit.Assert.assertEquals;
+
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.OVarIntSerializer;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
 
 public class OVarIntSerializerTest {
 
@@ -60,5 +60,4 @@ public class OVarIntSerializerTest {
     bytes.offset = OVarIntSerializer.write(bytes, Long.MIN_VALUE);
     assertEquals(OVarIntSerializer.readAsLong(bytes), Long.MIN_VALUE);
   }
-
 }

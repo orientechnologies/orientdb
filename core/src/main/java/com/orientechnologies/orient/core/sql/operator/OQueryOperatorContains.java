@@ -23,13 +23,16 @@ import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexDefinitionMultiValue;
+import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
-
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -48,15 +51,18 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
 
   @Override
   @SuppressWarnings("unchecked")
-  protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
-      final Object iRight, OCommandContext iContext) {
+  protected boolean evaluateExpression(
+      final OIdentifiable iRecord,
+      final OSQLFilterCondition iCondition,
+      final Object iLeft,
+      final Object iRight,
+      OCommandContext iContext) {
     final OSQLFilterCondition condition;
     if (iCondition.getLeft() instanceof OSQLFilterCondition)
       condition = (OSQLFilterCondition) iCondition.getLeft();
     else if (iCondition.getRight() instanceof OSQLFilterCondition)
       condition = (OSQLFilterCondition) iCondition.getRight();
-    else
-      condition = null;
+    else condition = null;
 
     if (iLeft instanceof Iterable<?>) {
 
@@ -66,13 +72,11 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
         // CHECK AGAINST A CONDITION
         for (final Object o : iterable) {
           final OIdentifiable id;
-          if (o instanceof OIdentifiable)
-            id = (OIdentifiable) o;
+          if (o instanceof OIdentifiable) id = (OIdentifiable) o;
           else if (o instanceof Map<?, ?>) {
             final Iterator<Object> iter = ((Map<?, Object>) o).values().iterator();
             final Object v = iter.hasNext() ? iter.next() : null;
-            if (v instanceof OIdentifiable)
-              id = (OIdentifiable) v;
+            if (v instanceof OIdentifiable) id = (OIdentifiable) v;
             else
               // TRANSFORM THE ENTIRE MAP IN A DOCUMENT. PROBABLY HAS BEEN IMPORTED FROM JSON
               id = new ODocument((Map) o);
@@ -80,19 +84,19 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
           } else if (o instanceof Iterable<?>) {
             final Iterator<OIdentifiable> iter = ((Iterable<OIdentifiable>) o).iterator();
             id = iter.hasNext() ? iter.next() : null;
-          } else
-            continue;
+          } else continue;
 
-          if ((Boolean) condition.evaluate(id, null, iContext) == Boolean.TRUE)
-            return true;
+          if ((Boolean) condition.evaluate(id, null, iContext) == Boolean.TRUE) return true;
         }
       } else {
         // CHECK AGAINST A SINGLE VALUE
         OType type = null;
 
-        if (iCondition.getLeft() instanceof OSQLFilterItemField && ((OSQLFilterItemField) iCondition.getLeft()).isFieldChain()
+        if (iCondition.getLeft() instanceof OSQLFilterItemField
+            && ((OSQLFilterItemField) iCondition.getLeft()).isFieldChain()
             && ((OSQLFilterItemField) iCondition.getLeft()).getFieldChain().getItemCount() == 1) {
-          String fieldName = ((OSQLFilterItemField) iCondition.getLeft()).getFieldChain().getItemName(0);
+          String fieldName =
+              ((OSQLFilterItemField) iCondition.getLeft()).getFieldChain().getItemName(0);
           if (fieldName != null) {
             Object record = iRecord.getRecord();
             if (record instanceof ODocument) {
@@ -104,8 +108,7 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
           }
         }
         for (final Object o : iterable) {
-          if (OQueryOperatorEquals.equals(iRight, o, type))
-            return true;
+          if (OQueryOperatorEquals.equals(iRight, o, type)) return true;
         }
       }
     } else if (iRight instanceof Iterable<?>) {
@@ -115,14 +118,12 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
 
       if (condition != null) {
         for (final OIdentifiable o : iterable) {
-          if ((Boolean) condition.evaluate(o, null, iContext) == Boolean.TRUE)
-            return true;
+          if ((Boolean) condition.evaluate(o, null, iContext) == Boolean.TRUE) return true;
         }
       } else {
         // CHECK AGAINST A SINGLE VALUE
         for (final Object o : iterable) {
-          if (OQueryOperatorEquals.equals(iLeft, o))
-            return true;
+          if (OQueryOperatorEquals.equals(iLeft, o)) return true;
         }
       }
     }
@@ -138,36 +139,33 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> executeIndexQuery(OCommandContext iContext, OIndex index, List<Object> keyParams,
-      boolean ascSortOrder) {
+  public Stream<ORawPair<Object, ORID>> executeIndexQuery(
+      OCommandContext iContext, OIndex index, List<Object> keyParams, boolean ascSortOrder) {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
     Stream<ORawPair<Object, ORID>> stream;
     final OIndexInternal internalIndex = index.getInternal();
-    if (!internalIndex.canBeUsedInEqualityOperators())
-      return null;
+    if (!internalIndex.canBeUsedInEqualityOperators()) return null;
 
     if (indexDefinition.getParamCount() == 1) {
       final Object key;
       if (indexDefinition instanceof OIndexDefinitionMultiValue)
         key = ((OIndexDefinitionMultiValue) indexDefinition).createSingleValue(keyParams.get(0));
-      else
-        key = indexDefinition.createValue(keyParams);
+      else key = indexDefinition.createValue(keyParams);
 
-      if (key == null)
-        return null;
+      if (key == null) return null;
 
       stream = index.getInternal().getRids(key).map((rid) -> new ORawPair<>(key, rid));
     } else {
       // in case of composite keys several items can be returned in case of we perform search
       // using part of composite key stored in index.
 
-      final OCompositeIndexDefinition compositeIndexDefinition = (OCompositeIndexDefinition) indexDefinition;
+      final OCompositeIndexDefinition compositeIndexDefinition =
+          (OCompositeIndexDefinition) indexDefinition;
 
       final Object keyOne = compositeIndexDefinition.createSingleValue(keyParams);
 
-      if (keyOne == null)
-        return null;
+      if (keyOne == null) return null;
 
       final Object keyTwo = compositeIndexDefinition.createSingleValue(keyParams);
       if (internalIndex.hasRangeQuerySupport()) {
@@ -176,8 +174,7 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
         int indexParamCount = indexDefinition.getParamCount();
         if (indexParamCount == keyParams.size()) {
           stream = index.getInternal().getRids(keyOne).map((rid) -> new ORawPair<>(keyOne, rid));
-        } else
-          return null;
+        } else return null;
       }
     }
 
@@ -194,5 +191,4 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
   public ORID getEndRidRange(Object iLeft, Object iRight) {
     return null;
   }
-
 }

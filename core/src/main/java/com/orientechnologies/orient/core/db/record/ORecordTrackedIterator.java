@@ -21,16 +21,15 @@ package com.orientechnologies.orient.core.db.record;
 
 import java.util.Iterator;
 
-import com.orientechnologies.orient.core.record.ORecord;
-
 /**
- * Implementation of Iterator that keeps track of changes to the source record avoiding to call setDirty() by hand.
+ * Implementation of Iterator that keeps track of changes to the source record avoiding to call
+ * setDirty() by hand.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class ORecordTrackedIterator implements Iterator<OIdentifiable> {
   private final ORecordElement sourceRecord;
-  private final Iterator<?>    underlying;
+  private final Iterator<?> underlying;
 
   public ORecordTrackedIterator(final ORecordElement iSourceRecord, final Iterator<?> iIterator) {
     this.sourceRecord = iSourceRecord;
@@ -47,7 +46,6 @@ public class ORecordTrackedIterator implements Iterator<OIdentifiable> {
 
   public void remove() {
     underlying.remove();
-    if (sourceRecord != null)
-      sourceRecord.setDirty();
+    if (sourceRecord != null) sourceRecord.setDirty();
   }
 }

@@ -6,18 +6,23 @@ import com.orientechnologies.orient.core.index.OIndexTxAwareOneValue;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import java.util.stream.Stream;
 import org.testng.Assert;
 import org.testng.SkipException;
-import org.testng.annotations.*;
-
-import java.util.stream.Stream;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 @Test
 public class IndexTxAwareOneValueGetTest extends DocumentDBBaseTest {
 
-  private static final String CLASS_NAME    = "idxTxAwareOneValueGetTest";
+  private static final String CLASS_NAME = "idxTxAwareOneValueGetTest";
   private static final String PROPERTY_NAME = "value";
-  private static final String INDEX         = "idxTxAwareOneValueGetTestIndex";
+  private static final String INDEX = "idxTxAwareOneValueGetTestIndex";
 
   @Parameters(value = "url")
   public IndexTxAwareOneValueGetTest(@Optional String url) {
@@ -280,6 +285,34 @@ public class IndexTxAwareOneValueGetTest extends DocumentDBBaseTest {
 
     try (Stream<ORID> stream = index.getInternal().getRids(1)) {
       Assert.assertTrue(stream.findAny().isPresent());
+    }
+  }
+
+  public void testInsertionDeletionInsideTx() {
+    final String className = "_" + IndexTxAwareOneValueGetTest.class.getSimpleName();
+    database.command("create class " + className + " extends V").close();
+    database.command("create property " + className + ".name STRING").close();
+    database.command("CREATE INDEX " + className + ".name UNIQUE").close();
+
+    database
+        .execute(
+            "SQL",
+            "begin;\n"
+                + "insert into "
+                + className
+                + "(name) values ('c');\n"
+                + "let top = (select from "
+                + className
+                + " where name='c');\n"
+                + "delete vertex $top;\n"
+                + "commit;\n"
+                + "return $top")
+        .close();
+
+    try (final OResultSet resultSet = database.query("select * from " + className)) {
+      try (Stream<OResult> stream = resultSet.stream()) {
+        Assert.assertEquals(stream.count(), 0);
+      }
     }
   }
 }

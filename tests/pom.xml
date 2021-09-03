@@ -17,8 +17,8 @@
     <parent>
         <groupId>com.orientechnologies</groupId>
         <artifactId>orientdb-parent</artifactId>
-        <version>3.1.0-SNAPSHOT</version>
-        <relativePath>../</relativePath>
+        <version>3.2.1-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>orientdb-tests</artifactId>
@@ -35,6 +35,7 @@
             -Dstorage.diskCache.checksumMode=storeAndThrow
             -Dindex.allowManualIndexes=false
             -Dsecurity.warningDefaultUsers=false
+            -Dsecurity.createDefaultUsers=false
         </argLine>
         <project.rootdir>${project.basedir}/../</project.rootdir>
     </properties>
@@ -122,6 +123,26 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+            <groupId>org.openjdk.jmh</groupId>
+            <artifactId>jmh-core</artifactId>
+            <version>1.22</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.openjdk.jmh</groupId>
+            <artifactId>jmh-generator-annprocess</artifactId>
+            <version>1.22</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- plotting -->
+        <dependency>
+            <groupId>org.knowm.xchart</groupId>
+            <artifactId>xchart</artifactId>
+            <version>3.8.0</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

@@ -1,11 +1,11 @@
 package com.orientechnologies.orient.core.record.impl;
 
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
-import org.junit.Test;
-
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
+import org.junit.Test;
 
 public class BytesContainerTest {
 
@@ -40,5 +40,4 @@ public class BytesContainerTest {
     bytesContainer.skip((short) 100);
     assertEquals(bytesContainer.offset, 100);
   }
-
 }

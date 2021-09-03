@@ -4,9 +4,7 @@ import com.orientechnologies.orient.core.db.document.ODocumentFieldVisitor;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 
-/**
- * Created by tglman on 28/07/17.
- */
+/** Created by tglman on 28/07/17. */
 public final class OLinksRewriter implements ODocumentFieldVisitor {
   private OConverterData converterData;
 
@@ -23,9 +21,9 @@ public final class OLinksRewriter implements ODocumentFieldVisitor {
       multiValue.setAutoConvertToRecord(false);
     }
 
-    final OValuesConverter valuesConverter = OImportConvertersFactory.INSTANCE.getConverter(value, converterData);
-    if (valuesConverter == null)
-      return value;
+    final OValuesConverter valuesConverter =
+        OImportConvertersFactory.INSTANCE.getConverter(value, converterData);
+    if (valuesConverter == null) return value;
 
     final Object newValue = valuesConverter.convert(value);
 
@@ -34,10 +32,10 @@ public final class OLinksRewriter implements ODocumentFieldVisitor {
       multiValue.setAutoConvertToRecord(oldAutoConvertValue);
     }
 
-    //this code intentionally uses == instead of equals, in such case we may distinguish rids which already contained in
-    //document and RID which is used to indicate broken record
-    if (newValue == OImportConvertersFactory.BROKEN_LINK)
-      return null;
+    // this code intentionally uses == instead of equals, in such case we may distinguish rids which
+    // already contained in
+    // document and RID which is used to indicate broken record
+    if (newValue == OImportConvertersFactory.BROKEN_LINK) return null;
 
     return newValue;
   }
@@ -56,5 +54,4 @@ public final class OLinksRewriter implements ODocumentFieldVisitor {
   public boolean updateMode() {
     return true;
   }
-
 }

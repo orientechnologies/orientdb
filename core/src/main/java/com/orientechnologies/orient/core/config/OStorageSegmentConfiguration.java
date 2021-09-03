@@ -20,26 +20,26 @@
 package com.orientechnologies.orient.core.config;
 
 import com.orientechnologies.common.util.OCommonConst;
-
 import java.io.Serializable;
 
 @SuppressWarnings("serial")
 public class OStorageSegmentConfiguration implements Serializable {
-  public transient OStorageConfiguration       root;
-  public volatile  int                         id;
-  public volatile  String                      name;
-  public volatile  String                      maxSize           = "0";
-  public volatile  String                      fileType          = "mmap";
-  public volatile  String                      fileStartSize     = "500Kb";
-  public volatile  String                      fileMaxSize       = "500Mb";
-  public volatile  String                      fileIncrementSize = "50%";
-  public volatile  String                      defrag            = "auto";
-  public volatile  STATUS                      status            = STATUS.ONLINE;
-  public           OStorageFileConfiguration[] infoFiles;
-  protected        String                      location;
+  public transient OStorageConfiguration root;
+  public volatile int id;
+  public volatile String name;
+  public volatile String maxSize = "0";
+  public volatile String fileType = "mmap";
+  public volatile String fileStartSize = "500Kb";
+  public volatile String fileMaxSize = "500Mb";
+  public volatile String fileIncrementSize = "50%";
+  public volatile String defrag = "auto";
+  public volatile STATUS status = STATUS.ONLINE;
+  public OStorageFileConfiguration[] infoFiles;
+  protected String location;
 
   public enum STATUS {
-    ONLINE, OFFLINE
+    ONLINE,
+    OFFLINE
   }
 
   public OStorageSegmentConfiguration() {
@@ -48,13 +48,11 @@ public class OStorageSegmentConfiguration implements Serializable {
 
   public void setRoot(OStorageConfiguration iRoot) {
     this.root = iRoot;
-    for (OStorageFileConfiguration f : infoFiles)
-      f.parent = this;
+    for (OStorageFileConfiguration f : infoFiles) f.parent = this;
   }
 
   public String getLocation() {
-    if (location != null)
-      return location;
+    if (location != null) return location;
 
     return root != null ? root.getDirectory() : null;
   }

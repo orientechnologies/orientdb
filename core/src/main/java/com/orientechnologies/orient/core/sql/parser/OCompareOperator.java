@@ -10,6 +10,5 @@ public class OCompareOperator extends SimpleNode {
   public OCompareOperator(OrientSql p, int id) {
     super(p, id);
   }
-
 }
 /* JavaCC - OriginalChecksum=aeef93fd1b053c63a8b92a979ac225df (do not edit this line) */

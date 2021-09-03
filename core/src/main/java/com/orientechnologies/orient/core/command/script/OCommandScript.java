@@ -24,25 +24,23 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandRequestTextAbstract;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
-import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
-
 import javax.script.CompiledScript;
 
 /**
- * Script command request implementation. It just stores the request and delegated the execution to the configured OCommandExecutor.
- * 
- * 
+ * Script command request implementation. It just stores the request and delegated the execution to
+ * the configured OCommandExecutor.
+ *
  * @see OCommandExecutorScript
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 @SuppressWarnings("serial")
 public class OCommandScript extends OCommandRequestTextAbstract {
-  private String                                                         language;
-  private CompiledScript                                                 compiledScript;
+  private String language;
+  private CompiledScript compiledScript;
 
-  private OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE executionMode = OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE.LOCAL;
+  private OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE executionMode =
+      OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE.LOCAL;
 
   public OCommandScript() {
     useCache = true;
@@ -74,7 +72,8 @@ public class OCommandScript extends OCommandRequestTextAbstract {
     return this;
   }
 
-  public OCommandRequestText fromStream(byte[] iStream, ORecordSerializer serializer) throws OSerializationException {
+  public OCommandRequestText fromStream(byte[] iStream, ORecordSerializer serializer)
+      throws OSerializationException {
     final OMemoryStream buffer = new OMemoryStream(iStream);
     language = buffer.getAsString();
 
@@ -88,7 +87,7 @@ public class OCommandScript extends OCommandRequestTextAbstract {
       buffer.setPosition(currPosition);
     }
 
-    fromStream(buffer,serializer);
+    fromStream(buffer, serializer);
     return this;
   }
 
@@ -109,8 +108,7 @@ public class OCommandScript extends OCommandRequestTextAbstract {
 
   @Override
   public String toString() {
-    if (language != null)
-      return language + "." + text;
+    if (language != null) return language + "." + text;
     return "script." + text;
   }
 
@@ -118,7 +116,8 @@ public class OCommandScript extends OCommandRequestTextAbstract {
     return executionMode;
   }
 
-  public OCommandScript setExecutionMode(OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE executionMode) {
+  public OCommandScript setExecutionMode(
+      OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE executionMode) {
     this.executionMode = executionMode;
     return this;
   }

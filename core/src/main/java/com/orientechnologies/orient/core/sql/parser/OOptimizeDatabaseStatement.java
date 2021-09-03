@@ -13,7 +13,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -23,7 +22,7 @@ import java.util.stream.Collectors;
 public class OOptimizeDatabaseStatement extends OSimpleExecStatement {
 
   protected List<OCommandLineOption> options = new ArrayList<OCommandLineOption>();
-  private   int                      batch   = 1000;
+  private int batch = 1000;
 
   public OOptimizeDatabaseStatement(int id) {
     super(id);
@@ -33,7 +32,8 @@ public class OOptimizeDatabaseStatement extends OSimpleExecStatement {
     super(p, id);
   }
 
-  @Override public OResultSet executeSimple(OCommandContext ctx) {
+  @Override
+  public OResultSet executeSimple(OCommandContext ctx) {
     OResultInternal result = new OResultInternal();
     result.setProperty("operation", "optimize databae");
 
@@ -47,7 +47,8 @@ public class OOptimizeDatabaseStatement extends OSimpleExecStatement {
     return rs;
   }
 
-  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("OPTIMIZE DATABASE");
     for (OCommandLineOption option : options) {
       builder.append(" ");
@@ -55,9 +56,13 @@ public class OOptimizeDatabaseStatement extends OSimpleExecStatement {
     }
   }
 
-  @Override public OOptimizeDatabaseStatement copy() {
+  @Override
+  public OOptimizeDatabaseStatement copy() {
     OOptimizeDatabaseStatement result = new OOptimizeDatabaseStatement(-1);
-    result.options = options == null ? null : options.stream().map(OCommandLineOption::copy).collect(Collectors.toList());
+    result.options =
+        options == null
+            ? null
+            : options.stream().map(OCommandLineOption::copy).collect(Collectors.toList());
     return result;
   }
 
@@ -67,8 +72,7 @@ public class OOptimizeDatabaseStatement extends OSimpleExecStatement {
     db.declareIntent(new OIntentMassiveInsert());
     try {
       long transformed = 0;
-      if (db.getTransaction().isActive())
-        db.commit();
+      if (db.getTransaction().isActive()) db.commit();
 
       db.begin();
 
@@ -80,8 +84,7 @@ public class OOptimizeDatabaseStatement extends OSimpleExecStatement {
         long lastLapTime = System.currentTimeMillis();
 
         for (ODocument doc : db.browseClass("E")) {
-          if (Thread.currentThread().isInterrupted())
-            break;
+          if (Thread.currentThread().isInterrupted()) break;
 
           browsedEdges++;
 
@@ -139,8 +142,13 @@ public class OOptimizeDatabaseStatement extends OSimpleExecStatement {
                 final long elapsed = now - lastLapTime;
 
                 OLogManager.instance()
-                    .info(this, "Browsed %,d of %,d edges, transformed %,d so far (%,d edges/sec)", browsedEdges, totalEdges,
-                        transformed, (((browsedEdges - lastLapBrowsed) * 1000 / elapsed)));
+                    .info(
+                        this,
+                        "Browsed %,d of %,d edges, transformed %,d so far (%,d edges/sec)",
+                        browsedEdges,
+                        totalEdges,
+                        transformed,
+                        (((browsedEdges - lastLapBrowsed) * 1000 / elapsed)));
 
                 lastLapTime = System.currentTimeMillis();
                 lastLapBrowsed = browsedEdges;
@@ -153,8 +161,7 @@ public class OOptimizeDatabaseStatement extends OSimpleExecStatement {
         db.commit();
 
       } finally {
-        if (db.getTransaction().isActive())
-          db.rollback();
+        if (db.getTransaction().isActive()) db.rollback();
       }
       return "Transformed " + transformed + " regular edges in lightweight edges";
 
@@ -181,21 +188,20 @@ public class OOptimizeDatabaseStatement extends OSimpleExecStatement {
     return true;
   }
 
-  @Override public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OOptimizeDatabaseStatement that = (OOptimizeDatabaseStatement) o;
 
-    if (options != null ? !options.equals(that.options) : that.options != null)
-      return false;
+    if (options != null ? !options.equals(that.options) : that.options != null) return false;
 
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     return options != null ? options.hashCode() : 0;
   }
 }

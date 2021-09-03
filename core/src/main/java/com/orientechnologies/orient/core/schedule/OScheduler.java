@@ -19,25 +19,21 @@ package com.orientechnologies.orient.core.schedule;
 import java.util.Map;
 
 /**
- * Scheduler interface.
-<<<<<<< HEAD
- * 
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
-=======
+ * Scheduler interface. <<<<<<< HEAD
  *
- * @author Luca Garulli
->>>>>>> 1b627a8... HA: fixed issues with distributed scheduler events
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com) =======
+ * @author Luca Garulli >>>>>>> 1b627a8... HA: fixed issues with distributed scheduler events
  * @author henryzhao81-at-gmail.com
  * @since Mar 28, 2013
  */
 public interface OScheduler {
   enum STATUS {
-    RUNNING, STOPPED, WAITING
+    RUNNING,
+    STOPPED,
+    WAITING
   }
 
-  /**
-   * Creates a new scheduled event.
-   */
+  /** Creates a new scheduled event. */
   void scheduleEvent(OScheduledEvent event);
 
   /**
@@ -47,9 +43,7 @@ public interface OScheduler {
    */
   void removeEvent(String eventName);
 
-  /**
-   * Updates a scheduled event.
-   */
+  /** Updates a scheduled event. */
   void updateEvent(OScheduledEvent event);
 
   /**
@@ -66,21 +60,15 @@ public interface OScheduler {
    */
   OScheduledEvent getEvent(String eventName);
 
-  /**
-   * Loads the scheduled events from database in memory and schedule them.
-   */
+  /** Loads the scheduled events from database in memory and schedule them. */
   @Deprecated
   void load();
 
-  /**
-   * Shuts down the scheduler.
-   */
+  /** Shuts down the scheduler. */
   @Deprecated
   void close();
 
-  /**
-   * Creates the scheduler classes on database.
-   */
+  /** Creates the scheduler classes on database. */
   @Deprecated
   void create();
 }

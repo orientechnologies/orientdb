@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.util.Set;
 
 public class OPropertyAccess {
@@ -20,5 +19,4 @@ public class OPropertyAccess {
   public boolean isReadable(String property) {
     return filtered == null || !filtered.contains(property);
   }
-
 }

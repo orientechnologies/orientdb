@@ -22,25 +22,23 @@ package com.orientechnologies.orient.core.exception;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.exception.OHighLevelException;
 import com.orientechnologies.orient.core.id.ORID;
-
 import java.util.Objects;
 
 /**
- * Exception thrown when a create operation get a non expected RID. This could happen with distributed inserts. The client should
- * retry to re-execute the operation.
+ * Exception thrown when a create operation get a non expected RID. This could happen with
+ * distributed inserts. The client should retry to re-execute the operation.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- *
  */
 public class OConcurrentCreateException extends ONeedRetryException implements OHighLevelException {
 
   private static final long serialVersionUID = 1L;
 
-  private ORID              expectedRid;
-  private ORID              actualRid;
+  private ORID expectedRid;
+  private ORID actualRid;
 
   public OConcurrentCreateException(OConcurrentCreateException exception) {
-    super(exception,null);
+    super(exception, null);
 
     this.expectedRid = exception.expectedRid;
     this.actualRid = exception.actualRid;
@@ -59,8 +57,7 @@ public class OConcurrentCreateException extends ONeedRetryException implements O
 
   @Override
   public boolean equals(final Object obj) {
-    if (!(obj instanceof OConcurrentCreateException))
-      return false;
+    if (!(obj instanceof OConcurrentCreateException)) return false;
 
     final OConcurrentCreateException other = (OConcurrentCreateException) obj;
 

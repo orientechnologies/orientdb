@@ -3,9 +3,7 @@ package com.orientechnologies.orient.core.sql.executor;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * Created by luigidellaquila on 20/07/16.
- */
+/** Created by luigidellaquila on 20/07/16. */
 public interface OExecutionStep {
 
   String getName();
@@ -34,10 +32,12 @@ public interface OExecutionStep {
     result.setProperty("targetNode", getType());
     result.setProperty(OInternalExecutionPlan.JAVA_TYPE, getClass().getName());
     result.setProperty("cost", getCost());
-    result.setProperty("subSteps",
-        getSubSteps() == null ? null : getSubSteps().stream().map(x -> x.toResult()).collect(Collectors.toList()));
+    result.setProperty(
+        "subSteps",
+        getSubSteps() == null
+            ? null
+            : getSubSteps().stream().map(x -> x.toResult()).collect(Collectors.toList()));
     result.setProperty("description", getDescription());
     return result;
   }
-
 }

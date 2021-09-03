@@ -32,19 +32,20 @@ import com.orientechnologies.orient.test.domain.business.Country;
 import com.orientechnologies.orient.test.domain.inheritance.InheritanceTestAbstractClass;
 import com.orientechnologies.orient.test.domain.inheritance.InheritanceTestBaseClass;
 import com.orientechnologies.orient.test.domain.inheritance.InheritanceTestClass;
+import java.lang.reflect.Field;
+import java.util.List;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import java.lang.reflect.Field;
-import java.util.List;
-
-@Test(groups = { "crud", "object" }, sequential = true)
+@Test(
+    groups = {"crud", "object"},
+    sequential = true)
 public class CRUDObjectInheritanceTest extends ObjectDBBaseTest {
   protected static final int TOT_RECORDS = 10;
-  protected long             startRecordNumber;
-  private City               redmond     = new City(new Country("Washington"), "Redmond");
+  protected long startRecordNumber;
+  private City redmond = new City(new Country("Washington"), "Redmond");
 
   @Parameters(value = "url")
   public CRUDObjectInheritanceTest(@Optional String url) {
@@ -53,7 +54,9 @@ public class CRUDObjectInheritanceTest extends ObjectDBBaseTest {
 
   @Test
   public void create() {
-    database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.business");
+    database
+        .getEntityManager()
+        .registerEntityClasses("com.orientechnologies.orient.test.domain.business");
 
     database.command(new OCommandSQL("delete from Company")).execute();
 
@@ -76,7 +79,8 @@ public class CRUDObjectInheritanceTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "testCreate")
   public void queryByBaseType() {
-    final List<Account> result = database.query(new OSQLSynchQuery<Account>("select from Company where name.length() > 0"));
+    final List<Account> result =
+        database.query(new OSQLSynchQuery<Account>("select from Company where name.length() > 0"));
 
     Assert.assertTrue(result.size() > 0);
     Assert.assertEquals(result.size(), TOT_RECORDS);
@@ -86,8 +90,7 @@ public class CRUDObjectInheritanceTest extends ObjectDBBaseTest {
     for (int i = 0; i < result.size(); ++i) {
       account = result.get(i);
 
-      if (account instanceof Company)
-        companyRecords++;
+      if (account instanceof Company) companyRecords++;
 
       Assert.assertNotSame(account.getName().length(), 0);
     }
@@ -97,7 +100,9 @@ public class CRUDObjectInheritanceTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "queryByBaseType")
   public void queryPerSuperType() {
-    final List<Company> result = database.query(new OSQLSynchQuery<ODocument>("select * from Company where name.length() > 0"));
+    final List<Company> result =
+        database.query(
+            new OSQLSynchQuery<ODocument>("select * from Company where name.length() > 0"));
 
     Assert.assertTrue(result.size() == TOT_RECORDS);
 
@@ -126,10 +131,13 @@ public class CRUDObjectInheritanceTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "deleteFirst")
   public void testSuperclassInheritanceCreation() {
-    database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.inheritance");
+    database
+        .getEntityManager()
+        .registerEntityClasses("com.orientechnologies.orient.test.domain.inheritance");
     database.close();
     database.open("admin", "admin");
-    OClass abstractClass = database.getMetadata().getSchema().getClass(InheritanceTestAbstractClass.class);
+    OClass abstractClass =
+        database.getMetadata().getSchema().getClass(InheritanceTestAbstractClass.class);
     OClass baseClass = database.getMetadata().getSchema().getClass(InheritanceTestBaseClass.class);
     OClass testClass = database.getMetadata().getSchema().getClass(InheritanceTestClass.class);
     Assert.assertEquals(baseClass.getSuperClass(), abstractClass);
@@ -165,19 +173,18 @@ public class CRUDObjectInheritanceTest extends ObjectDBBaseTest {
     database.save(a);
     database.save(b);
 
-    final List<InheritanceTestBaseClass> result1 = database
-        .query(new OSQLSynchQuery<InheritanceTestBaseClass>("select from InheritanceTestBaseClass"));
+    final List<InheritanceTestBaseClass> result1 =
+        database.query(
+            new OSQLSynchQuery<InheritanceTestBaseClass>("select from InheritanceTestBaseClass"));
     Assert.assertEquals(2, result1.size());
   }
 
   @Test
-  public void testKeywordClass(){
+  public void testKeywordClass() {
     OClass klass = database.getMetadata().getSchema().createClass("Not");
 
     OClass klass1 = database.getMetadata().getSchema().createClass("Extends_Not", klass);
-    Assert.assertEquals(1,klass1.getSuperClasses().size(),1);
-    Assert.assertEquals("Not",klass1.getSuperClasses().get(0).getName());
+    Assert.assertEquals(1, klass1.getSuperClasses().size(), 1);
+    Assert.assertEquals("Not", klass1.getSuperClasses().get(0).getName());
   }
-
-
 }

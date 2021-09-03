@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.server.network.protocol.http;
 
 import com.orientechnologies.common.collection.OMultiValue;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -32,9 +31,11 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-
-import java.io.*;
-import java.net.Socket;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringWriter;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -50,16 +51,29 @@ public class OHttpGraphResponse extends OHttpResponse {
   private OHttpResponse iWrapped;
 
   public OHttpGraphResponse(final OHttpResponse iWrapped) {
-    super(iWrapped.getOutputStream(), iWrapped.getHttpVersion(), iWrapped.getAdditionalHeaders(), iWrapped.getCharacterSet(),
-        iWrapped.getServerInfo(), iWrapped.getSessionId(), iWrapped.getCallbackFunction(), iWrapped.isKeepAlive(),
-        iWrapped.getConnection(), iWrapped.getContextConfiguration());
+    super(
+        iWrapped.getOutputStream(),
+        iWrapped.getHttpVersion(),
+        iWrapped.getAdditionalHeaders(),
+        iWrapped.getCharacterSet(),
+        iWrapped.getServerInfo(),
+        iWrapped.getSessionId(),
+        iWrapped.getCallbackFunction(),
+        iWrapped.isKeepAlive(),
+        iWrapped.getConnection(),
+        iWrapped.getContextConfiguration());
     this.iWrapped = iWrapped;
   }
 
-  public void writeRecords(final Object iRecords, final String iFetchPlan, String iFormat, final String accept,
-      final Map<String, Object> iAdditionalProperties, final String mode) throws IOException {
-    if (iRecords == null)
-      return;
+  public void writeRecords(
+      final Object iRecords,
+      final String iFetchPlan,
+      String iFormat,
+      final String accept,
+      final Map<String, Object> iAdditionalProperties,
+      final String mode)
+      throws IOException {
+    if (iRecords == null) return;
 
     if (!mode.equalsIgnoreCase("graph")) {
       super.writeRecords(iRecords, iFetchPlan, iFormat, accept, iAdditionalProperties, mode);
@@ -132,15 +146,14 @@ public class OHttpGraphResponse extends OHttpResponse {
         // ADD ALL THE PROPERTIES
         for (String field : vertex.getPropertyNames()) {
           final Object v = vertex.getProperty(field);
-          if (v != null)
-            json.writeAttribute(field, v);
+          if (v != null) json.writeAttribute(field, v);
         }
         json.endObject();
       }
       json.endCollection();
 
       if (lightweightFound) {
-        //clean up cached edges and re-calculate, there could be more
+        // clean up cached edges and re-calculate, there could be more
         edgeRids.clear();
       }
 
@@ -151,10 +164,12 @@ public class OHttpGraphResponse extends OHttpResponse {
         for (OVertex vertex : vertices) {
           for (OEdge e : vertex.getEdges(ODirection.OUT)) {
             OEdge edge = (OEdge) e;
-            if (edgeRids.contains(e.getIdentity()) && e.getIdentity() != null /* only for non-lighweight */) {
+            if (edgeRids.contains(e.getIdentity())
+                && e.getIdentity() != null /* only for non-lighweight */) {
               continue;
             }
-            if (!vertices.contains(edge.getVertex(ODirection.OUT)) || !vertices.contains(edge.getVertex(ODirection.IN)))
+            if (!vertices.contains(edge.getVertex(ODirection.OUT))
+                || !vertices.contains(edge.getVertex(ODirection.IN)))
               // ONE OF THE 2 VERTICES ARE NOT PART OF THE RESULT SET: DISCARD IT
               continue;
 
@@ -186,19 +201,21 @@ public class OHttpGraphResponse extends OHttpResponse {
             json.beginCollection(-1, true, entry.getKey());
             formatMultiValue(OMultiValue.getMultiValueIterator(v), buffer, null);
             json.endCollection(-1, true);
-          } else
-            json.writeAttribute(entry.getKey(), v);
+          } else json.writeAttribute(entry.getKey(), v);
 
-          if (Thread.currentThread().isInterrupted())
-            break;
-
+          if (Thread.currentThread().isInterrupted()) break;
         }
       }
 
       json.endObject();
       json.endObject();
 
-      send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, buffer.toString(), null);
+      send(
+          OHttpUtils.STATUS_OK_CODE,
+          OHttpUtils.STATUS_OK_DESCRIPTION,
+          OHttpUtils.CONTENT_JSON,
+          buffer.toString(),
+          null);
     } finally {
       graph.close();
     }
@@ -215,8 +232,7 @@ public class OHttpGraphResponse extends OHttpResponse {
     for (String field : edge.getPropertyNames()) {
       if (!(field.equals("out") || field.equals("in"))) {
         final Object v = edge.getProperty(field);
-        if (v != null)
-          json.writeAttribute(field, v);
+        if (v != null) json.writeAttribute(field, v);
       }
     }
 
@@ -224,7 +240,12 @@ public class OHttpGraphResponse extends OHttpResponse {
   }
 
   @Override
-  public void send(final int iCode, final String iReason, final String iContentType, final Object iContent, final String iHeaders)
+  public void send(
+      final int iCode,
+      final String iReason,
+      final String iContentType,
+      final Object iContent,
+      final String iHeaders)
       throws IOException {
     iWrapped.send(iCode, iReason, iContentType, iContent, iHeaders);
   }
@@ -235,20 +256,38 @@ public class OHttpGraphResponse extends OHttpResponse {
   }
 
   @Override
-  public void sendStream(final int iCode, final String iReason, final String iContentType, InputStream iContent, long iSize)
+  public void sendStream(
+      final int iCode,
+      final String iReason,
+      final String iContentType,
+      InputStream iContent,
+      long iSize)
       throws IOException {
     sendStream(iCode, iReason, iContentType, iContent, iSize, null, null);
   }
 
   @Override
-  public void sendStream(final int iCode, final String iReason, final String iContentType, InputStream iContent, long iSize,
-      final String iFileName) throws IOException {
+  public void sendStream(
+      final int iCode,
+      final String iReason,
+      final String iContentType,
+      InputStream iContent,
+      long iSize,
+      final String iFileName)
+      throws IOException {
     sendStream(iCode, iReason, iContentType, iContent, iSize, iFileName, null);
   }
 
   @Override
-  public void sendStream(final int iCode, final String iReason, final String iContentType, InputStream iContent, long iSize,
-      final String iFileName, Map<String, String> additionalHeaders) throws IOException {
+  public void sendStream(
+      final int iCode,
+      final String iReason,
+      final String iContentType,
+      InputStream iContent,
+      long iSize,
+      final String iFileName,
+      Map<String, String> additionalHeaders)
+      throws IOException {
     writeStatus(iCode, iReason);
     writeHeaders(iContentType);
     writeLine("Content-Transfer-Encoding: binary");
@@ -292,8 +331,13 @@ public class OHttpGraphResponse extends OHttpResponse {
   }
 
   @Override
-  public void sendStream(final int iCode, final String iReason, final String iContentType, final String iFileName,
-      final OCallable<Void, OChunkedResponse> iWriter) throws IOException {
+  public void sendStream(
+      final int iCode,
+      final String iReason,
+      final String iContentType,
+      final String iFileName,
+      final OCallable<Void, OChunkedResponse> iWriter)
+      throws IOException {
     writeStatus(iCode, iReason);
     writeHeaders(iContentType);
     writeLine("Content-Transfer-Encoding: binary");

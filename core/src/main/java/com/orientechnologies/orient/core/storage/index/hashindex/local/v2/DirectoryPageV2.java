@@ -37,7 +37,8 @@ public class DirectoryPageV2 extends ODurablePage {
   private static final int ITEMS_OFFSET = NEXT_FREE_POSITION;
 
   static final int NODES_PER_PAGE =
-      (OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024 - ITEMS_OFFSET) / HashTableDirectory.BINARY_LEVEL_SIZE;
+      (OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024 - ITEMS_OFFSET)
+          / HashTableDirectory.BINARY_LEVEL_SIZE;
 
   public DirectoryPageV2(OCacheEntry cacheEntry) {
     super(cacheEntry);
@@ -52,8 +53,11 @@ public class DirectoryPageV2 extends ODurablePage {
     logSetMaxLeftChildDepth(localNodeIndex, maxLeftChildDepth, pastDepth);
   }
 
-  protected void logSetMaxLeftChildDepth(int localNodeIndex, byte maxLeftChildDepth, byte pastDepth) {
-    addPageOperation(new LocalHashTableV2DirectoryPageSetMaxLeftChildDepthPO(localNodeIndex, maxLeftChildDepth, pastDepth));
+  protected void logSetMaxLeftChildDepth(
+      int localNodeIndex, byte maxLeftChildDepth, byte pastDepth) {
+    addPageOperation(
+        new LocalHashTableV2DirectoryPageSetMaxLeftChildDepthPO(
+            localNodeIndex, maxLeftChildDepth, pastDepth));
   }
 
   public byte getMaxLeftChildDepth(int localNodeIndex) {
@@ -62,7 +66,10 @@ public class DirectoryPageV2 extends ODurablePage {
   }
 
   public void setMaxRightChildDepth(int localNodeIndex, byte maxRightChildDepth) {
-    final int offset = getItemsOffset() + localNodeIndex * HashTableDirectory.BINARY_LEVEL_SIZE + OByteSerializer.BYTE_SIZE;
+    final int offset =
+        getItemsOffset()
+            + localNodeIndex * HashTableDirectory.BINARY_LEVEL_SIZE
+            + OByteSerializer.BYTE_SIZE;
     final byte pastDepth = getByteValue(offset);
 
     setByteValue(offset, maxRightChildDepth);
@@ -70,17 +77,26 @@ public class DirectoryPageV2 extends ODurablePage {
     logSetMaxRightChildDepth(localNodeIndex, maxRightChildDepth, pastDepth);
   }
 
-  protected void logSetMaxRightChildDepth(int localNodeIndex, byte maxRightChildDepth, byte pastDepth) {
-    addPageOperation(new LocalHashTableV2DirectoryPageSetMaxRightChildDepthPO(localNodeIndex, maxRightChildDepth, pastDepth));
+  protected void logSetMaxRightChildDepth(
+      int localNodeIndex, byte maxRightChildDepth, byte pastDepth) {
+    addPageOperation(
+        new LocalHashTableV2DirectoryPageSetMaxRightChildDepthPO(
+            localNodeIndex, maxRightChildDepth, pastDepth));
   }
 
   public byte getMaxRightChildDepth(int localNodeIndex) {
-    int offset = getItemsOffset() + localNodeIndex * HashTableDirectory.BINARY_LEVEL_SIZE + OByteSerializer.BYTE_SIZE;
+    int offset =
+        getItemsOffset()
+            + localNodeIndex * HashTableDirectory.BINARY_LEVEL_SIZE
+            + OByteSerializer.BYTE_SIZE;
     return getByteValue(offset);
   }
 
   public void setNodeLocalDepth(int localNodeIndex, byte nodeLocalDepth) {
-    final int offset = getItemsOffset() + localNodeIndex * HashTableDirectory.BINARY_LEVEL_SIZE + 2 * OByteSerializer.BYTE_SIZE;
+    final int offset =
+        getItemsOffset()
+            + localNodeIndex * HashTableDirectory.BINARY_LEVEL_SIZE
+            + 2 * OByteSerializer.BYTE_SIZE;
 
     final byte pastDepth = getByteValue(offset);
     setByteValue(offset, nodeLocalDepth);
@@ -88,17 +104,25 @@ public class DirectoryPageV2 extends ODurablePage {
   }
 
   protected void logSetNodeLocalDepth(int localNodeIndex, byte nodeLocalDepth, byte pastDepth) {
-    addPageOperation(new LocalHashTableV2DirectoryPageSetNodeLocalDepthPO(localNodeIndex, nodeLocalDepth, pastDepth));
+    addPageOperation(
+        new LocalHashTableV2DirectoryPageSetNodeLocalDepthPO(
+            localNodeIndex, nodeLocalDepth, pastDepth));
   }
 
   public byte getNodeLocalDepth(int localNodeIndex) {
-    int offset = getItemsOffset() + localNodeIndex * HashTableDirectory.BINARY_LEVEL_SIZE + 2 * OByteSerializer.BYTE_SIZE;
+    int offset =
+        getItemsOffset()
+            + localNodeIndex * HashTableDirectory.BINARY_LEVEL_SIZE
+            + 2 * OByteSerializer.BYTE_SIZE;
     return getByteValue(offset);
   }
 
   public void setPointer(int localNodeIndex, int index, long pointer) {
-    final int offset = getItemsOffset() + (localNodeIndex * HashTableDirectory.BINARY_LEVEL_SIZE + 3 * OByteSerializer.BYTE_SIZE)
-        + index * HashTableDirectory.ITEM_SIZE;
+    final int offset =
+        getItemsOffset()
+            + (localNodeIndex * HashTableDirectory.BINARY_LEVEL_SIZE
+                + 3 * OByteSerializer.BYTE_SIZE)
+            + index * HashTableDirectory.ITEM_SIZE;
 
     final long pastPointer = getLongValue(offset);
     setLongValue(offset, pointer);
@@ -106,12 +130,16 @@ public class DirectoryPageV2 extends ODurablePage {
   }
 
   protected void logSetPointer(int localNodeIndex, int index, long pointer, long pastPointer) {
-    addPageOperation(new LocalHashTableV2DirectoryPageSetPointerPO(localNodeIndex, index, pointer, pastPointer));
+    addPageOperation(
+        new LocalHashTableV2DirectoryPageSetPointerPO(localNodeIndex, index, pointer, pastPointer));
   }
 
   public long getPointer(int localNodeIndex, int index) {
-    int offset = getItemsOffset() + (localNodeIndex * HashTableDirectory.BINARY_LEVEL_SIZE + 3 * OByteSerializer.BYTE_SIZE)
-        + index * HashTableDirectory.ITEM_SIZE;
+    int offset =
+        getItemsOffset()
+            + (localNodeIndex * HashTableDirectory.BINARY_LEVEL_SIZE
+                + 3 * OByteSerializer.BYTE_SIZE)
+            + index * HashTableDirectory.ITEM_SIZE;
 
     return getLongValue(offset);
   }

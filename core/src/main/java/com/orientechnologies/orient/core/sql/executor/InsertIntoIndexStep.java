@@ -7,23 +7,28 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.sql.parser.*;
-
+import com.orientechnologies.orient.core.sql.parser.OExpression;
+import com.orientechnologies.orient.core.sql.parser.OIdentifier;
+import com.orientechnologies.orient.core.sql.parser.OIndexIdentifier;
+import com.orientechnologies.orient.core.sql.parser.OInsertBody;
+import com.orientechnologies.orient.core.sql.parser.OInsertSetExpression;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * Created by luigidellaquila on 20/03/17.
- */
+/** Created by luigidellaquila on 20/03/17. */
 public class InsertIntoIndexStep extends AbstractExecutionStep {
   private final OIndexIdentifier targetIndex;
-  private final OInsertBody      body;
+  private final OInsertBody body;
 
   private boolean executed = false;
 
-  public InsertIntoIndexStep(OIndexIdentifier targetIndex, OInsertBody insertBody, OCommandContext ctx, boolean profilingEnabled) {
+  public InsertIntoIndexStep(
+      OIndexIdentifier targetIndex,
+      OInsertBody insertBody,
+      OCommandContext ctx,
+      boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.targetIndex = targetIndex;
     this.body = insertBody;
@@ -43,15 +48,20 @@ public class InsertIntoIndexStep extends AbstractExecutionStep {
         if (!hasNext()) {
           throw new IllegalStateException();
         }
-        //TODO
+        // TODO
         final ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
-        OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, targetIndex.getIndexName());
+        OIndex index =
+            database
+                .getMetadata()
+                .getIndexManagerInternal()
+                .getIndex(database, targetIndex.getIndexName());
         if (index == null) {
           throw new OCommandExecutionException("Index not found: " + targetIndex);
         }
         List<OInsertSetExpression> setExps = body.getSetExpressions();
         if (body.getContent() != null) {
-          throw new OCommandExecutionException("Invalid expression: INSERT INTO INDEX:... CONTENT ...");
+          throw new OCommandExecutionException(
+              "Invalid expression: INSERT INTO INDEX:... CONTENT ...");
         }
         int count;
         if (setExps != null) {
@@ -66,7 +76,10 @@ public class InsertIntoIndexStep extends AbstractExecutionStep {
         return result;
       }
 
-      private int handleKeyValues(List<OIdentifier> identifierList, List<List<OExpression>> setExpressions, OIndex index,
+      private int handleKeyValues(
+          List<OIdentifier> identifierList,
+          List<List<OExpression>> setExpressions,
+          OIndex index,
           OCommandContext ctx) {
         OExpression keyExp = null;
         OExpression valueExp = null;
@@ -113,7 +126,8 @@ public class InsertIntoIndexStep extends AbstractExecutionStep {
         return doExecute(index, ctx, keyExp, valueExp);
       }
 
-      private int doExecute(OIndex index, OCommandContext ctx, OExpression keyExp, OExpression valueExp) {
+      private int doExecute(
+          OIndex index, OCommandContext ctx, OExpression keyExp, OExpression valueExp) {
         int count = 0;
         Object key = keyExp.execute((OResult) null, ctx);
         Object value = valueExp.execute((OResult) null, ctx);
@@ -143,14 +157,13 @@ public class InsertIntoIndexStep extends AbstractExecutionStep {
         return count;
       }
 
-      private void insertIntoIndex(final OIndex index, final Object key, final OIdentifiable value) {
+      private void insertIntoIndex(
+          final OIndex index, final Object key, final OIdentifiable value) {
         index.put(key, value);
       }
 
       @Override
-      public void close() {
-
-      }
+      public void close() {}
 
       @Override
       public Optional<OExecutionPlan> getExecutionPlan() {
@@ -163,5 +176,4 @@ public class InsertIntoIndexStep extends AbstractExecutionStep {
       }
     };
   }
-
 }

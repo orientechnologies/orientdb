@@ -10,7 +10,8 @@ public class TestReaderDropClass {
 
   @Test
   public void testReaderDropClass() {
-    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + TestReaderDropClass.class.getSimpleName());
+    ODatabaseDocument db =
+        new ODatabaseDocumentTx("memory:" + TestReaderDropClass.class.getSimpleName());
     db.create();
     try {
       db.getMetadata().getSchema().createClass("Test");
@@ -29,5 +30,4 @@ public class TestReaderDropClass {
       db.drop();
     }
   }
-
 }

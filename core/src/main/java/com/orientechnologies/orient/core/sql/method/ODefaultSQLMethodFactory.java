@@ -18,15 +18,50 @@ package com.orientechnologies.orient.core.sql.method;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.functions.coll.OSQLMethodMultiValue;
-import com.orientechnologies.orient.core.sql.functions.conversion.*;
+import com.orientechnologies.orient.core.sql.functions.conversion.OSQLMethodAsDate;
+import com.orientechnologies.orient.core.sql.functions.conversion.OSQLMethodAsDateTime;
+import com.orientechnologies.orient.core.sql.functions.conversion.OSQLMethodAsDecimal;
+import com.orientechnologies.orient.core.sql.functions.conversion.OSQLMethodBeforeUpdate;
+import com.orientechnologies.orient.core.sql.functions.conversion.OSQLMethodConvert;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLMethodExclude;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLMethodInclude;
-import com.orientechnologies.orient.core.sql.functions.text.*;
-import com.orientechnologies.orient.core.sql.method.misc.*;
+import com.orientechnologies.orient.core.sql.functions.text.OSQLMethodAppend;
+import com.orientechnologies.orient.core.sql.functions.text.OSQLMethodFromJSON;
+import com.orientechnologies.orient.core.sql.functions.text.OSQLMethodHash;
+import com.orientechnologies.orient.core.sql.functions.text.OSQLMethodLength;
+import com.orientechnologies.orient.core.sql.functions.text.OSQLMethodReplace;
+import com.orientechnologies.orient.core.sql.functions.text.OSQLMethodRight;
+import com.orientechnologies.orient.core.sql.functions.text.OSQLMethodSubString;
+import com.orientechnologies.orient.core.sql.functions.text.OSQLMethodToJSON;
+import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodAsBoolean;
+import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodAsFloat;
+import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodAsInteger;
+import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodAsList;
+import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodAsLong;
+import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodAsMap;
+import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodAsSet;
+import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodAsString;
+import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodField;
+import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodFormat;
+import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodFunctionDelegate;
+import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodIndexOf;
+import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodJavaType;
+import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodKeys;
+import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodLastIndexOf;
+import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodNormalize;
+import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodPrefix;
+import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodRemove;
+import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodRemoveAll;
+import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodSize;
+import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodSplit;
+import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodToLowerCase;
+import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodToUpperCase;
+import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodTrim;
+import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodType;
+import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodValues;
 import com.orientechnologies.orient.core.sql.method.sequence.OSQLMethodCurrent;
 import com.orientechnologies.orient.core.sql.method.sequence.OSQLMethodNext;
 import com.orientechnologies.orient.core.sql.method.sequence.OSQLMethodReset;
-
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -116,15 +151,13 @@ public class ODefaultSQLMethodFactory implements OSQLMethodFactory {
       try {
         method = (OSQLMethod) ((Class<?>) m).newInstance();
       } catch (Exception e) {
-        throw OException.wrapException(new OCommandExecutionException("Cannot create SQL method: " + m), e);
+        throw OException.wrapException(
+            new OCommandExecutionException("Cannot create SQL method: " + m), e);
       }
-    else
-      method = (OSQLMethod) m;
+    else method = (OSQLMethod) m;
 
-    if (method == null)
-      throw new OCommandExecutionException("Unknown method name: " + name);
+    if (method == null) throw new OCommandExecutionException("Unknown method name: " + name);
 
     return method;
   }
-
 }

@@ -1,24 +1,34 @@
 package com.tinkerpop.blueprints.impls.orient;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.tinkerpop.blueprints.*;
+import com.tinkerpop.blueprints.EdgeTestSuite;
+import com.tinkerpop.blueprints.Graph;
+import com.tinkerpop.blueprints.GraphQueryTestSuite;
+import com.tinkerpop.blueprints.GraphTestSuite;
+import com.tinkerpop.blueprints.IndexTestSuite;
+import com.tinkerpop.blueprints.IndexableGraphTestSuite;
+import com.tinkerpop.blueprints.KeyIndexableGraphTestSuite;
+import com.tinkerpop.blueprints.TestSuite;
+import com.tinkerpop.blueprints.TransactionalGraphTestSuite;
+import com.tinkerpop.blueprints.VertexQueryTestSuite;
+import com.tinkerpop.blueprints.VertexTestSuite;
 import com.tinkerpop.blueprints.impls.GraphTest;
 import com.tinkerpop.blueprints.util.io.gml.GMLReaderTestSuite;
 import com.tinkerpop.blueprints.util.io.graphml.GraphMLReaderTestSuite;
 import com.tinkerpop.blueprints.util.io.graphson.GraphSONReaderTestSuite;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.io.File;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
 
 /**
  * Test suite for OrientDB graph implementation.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com) (http://orientdb.com)
  */
 public abstract class OrientGraphTest extends GraphTest {
@@ -52,6 +62,7 @@ public abstract class OrientGraphTest extends GraphTest {
   }
 
   @Test
+  @Ignore
   public void testGraphTestSuite() throws Exception {
     this.stopWatch();
     doTestSuite(new GraphTestSuite(this));
@@ -66,6 +77,7 @@ public abstract class OrientGraphTest extends GraphTest {
   }
 
   @Test
+  @Ignore
   public void testGraphQueryTestSuite() throws Exception {
     this.stopWatch();
     doTestSuite(new GraphQueryTestSuite(this));
@@ -146,8 +158,7 @@ public abstract class OrientGraphTest extends GraphTest {
     OrientGraph graph = currentGraphs.get(url);
 
     if (graph != null) {
-      if (graph.isClosed())
-        currentGraphs.remove(url);
+      if (graph.isClosed()) currentGraphs.remove(url);
       else {
         ODatabaseRecordThreadLocal.instance().set(graph.getRawGraph());
         return graph;
@@ -183,8 +194,7 @@ public abstract class OrientGraphTest extends GraphTest {
     final String url = getStorageType() + ":" + graphDirectory;
     try {
       OrientGraph graph = currentGraphs.remove(url);
-      if (graph == null || graph.isClosed())
-        graph = new OrientGraph(url);
+      if (graph == null || graph.isClosed()) graph = new OrientGraph(url);
 
       graph.drop();
     } catch (Exception e) {
@@ -199,7 +209,9 @@ public abstract class OrientGraphTest extends GraphTest {
   }
 
   public static enum ENV {
-    DEV, RELEASE, CI
+    DEV,
+    RELEASE,
+    CI
   }
 
   public static ENV getEnvironment() {
@@ -210,15 +222,13 @@ public abstract class OrientGraphTest extends GraphTest {
     } catch (IllegalArgumentException e) {
     }
 
-    if (result == null)
-      result = ENV.DEV;
+    if (result == null) result = ENV.DEV;
 
     return result;
   }
 
   public static String getStorageType() {
-    if (getEnvironment().equals(ENV.DEV))
-      return "memory";
+    if (getEnvironment().equals(ENV.DEV)) return "memory";
 
     return "plocal";
   }

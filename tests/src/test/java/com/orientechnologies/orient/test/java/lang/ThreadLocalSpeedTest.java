@@ -15,24 +15,21 @@
  */
 package com.orientechnologies.orient.test.java.lang;
 
+import com.orientechnologies.common.test.SpeedTestMonoThread;
 import java.io.IOException;
-
 import org.testng.annotations.Test;
 
-import com.orientechnologies.common.test.SpeedTestMonoThread;
-
 public class ThreadLocalSpeedTest extends SpeedTestMonoThread {
-	private final ThreadLocal<Object>	INSTANCE	= new ThreadLocal<Object>() {
-																				};
+  private final ThreadLocal<Object> INSTANCE = new ThreadLocal<Object>() {};
 
-	public ThreadLocalSpeedTest() throws SecurityException, NoSuchFieldException {
-		super(10000000);
-	}
+  public ThreadLocalSpeedTest() throws SecurityException, NoSuchFieldException {
+    super(10000000);
+  }
 
-	@Override
-	@Test(enabled = false)
-	public void cycle() throws IOException, IllegalArgumentException, IllegalAccessException {
-		INSTANCE.set(this);
-		INSTANCE.get();
-	}
+  @Override
+  @Test(enabled = false)
+  public void cycle() throws IOException, IllegalArgumentException, IllegalAccessException {
+    INSTANCE.set(this);
+    INSTANCE.get();
+  }
 }

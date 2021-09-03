@@ -25,17 +25,18 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 
 /**
  * Represents a binary field.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OBinaryField {
 
-  public final String         name;
-  public final OType          type;
+  public final String name;
+  public final OType type;
   public final BytesContainer bytes;
-  public final OCollate       collate;
+  public final OCollate collate;
 
-  public OBinaryField(final String iName, final OType iType, final BytesContainer iBytes, final OCollate iCollate) {
+  public OBinaryField(
+      final String iName, final OType iType, final BytesContainer iBytes, final OCollate iCollate) {
     name = iName;
     type = iType;
     bytes = iBytes;

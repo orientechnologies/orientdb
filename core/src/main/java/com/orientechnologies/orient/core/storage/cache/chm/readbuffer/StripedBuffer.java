@@ -27,9 +27,9 @@ import java.util.function.Consumer;
 
 /**
  * A base class providing the mechanics for supporting dynamic striping of bounded buffers. This
- * implementation is an adaption of the numeric 64-bit <code>java.util.concurrent.atomic.Striped64</code>
- * class, which is used by atomic counters. The approach was modified to lazily grow an array of
- * buffers in order to minimize memory usage for caches that are not heavily contended on.
+ * implementation is an adaption of the numeric 64-bit <code>java.util.concurrent.atomic.Striped64
+ * </code> class, which is used by atomic counters. The approach was modified to lazily grow an
+ * array of buffers in order to minimize memory usage for caches that are not heavily contended on.
  *
  * @author dl@cs.oswego.edu (Doug Lea)
  * @author ben.manes@gmail.com (Ben Manes)
@@ -81,57 +81,36 @@ abstract class StripedBuffer<E> implements Buffer<E> {
    * again; and for short-lived ones, it does not matter.
    */
 
-  /**
-   * The increment for generating probe values
-   */
+  /** The increment for generating probe values */
   private static final int PROBE_INCREMENT = 0x9e3779b9;
 
-  /**
-   * Generates per-thread initialization/probe field
-   */
+  /** Generates per-thread initialization/probe field */
   private static final AtomicInteger probeGenerator = new AtomicInteger();
 
-  /**
-   * Thread local probe
-   */
+  /** Thread local probe */
   private final ThreadLocal<AtomicInteger> probe = ThreadLocal.withInitial(AtomicInteger::new);
 
-  /**
-   * Spinlock (locked via CAS) used when resizing and/or creating Buffers.
-   */
+  /** Spinlock (locked via CAS) used when resizing and/or creating Buffers. */
   private final AtomicBoolean tableBusy = new AtomicBoolean();
 
-  /**
-   * Number of CPUS.
-   */
+  /** Number of CPUS. */
   private static final int NCPU = Runtime.getRuntime().availableProcessors();
 
-  /**
-   * The bound on the table size.
-   */
+  /** The bound on the table size. */
   private static final int MAXIMUM_TABLE_SIZE = 4 * ceilingNextPowerOfTwo();
 
-  /**
-   * The maximum number of attempts when trying to expand the table.
-   */
+  /** The maximum number of attempts when trying to expand the table. */
   private static final int ATTEMPTS = 3;
 
-  /**
-   * Table of buffers. When non-null, size is a power of 2.
-   */
-  private transient volatile
-  Buffer<E>[] table;
+  /** Table of buffers. When non-null, size is a power of 2. */
+  private transient volatile Buffer<E>[] table;
 
-  /**
-   * Returns the probe value for the current thread.
-   */
+  /** Returns the probe value for the current thread. */
   private int getProbe() {
     return probe.get().get();
   }
 
-  /**
-   * Pseudo-randomly advances and records the given probe value for the given thread.
-   */
+  /** Pseudo-randomly advances and records the given probe value for the given thread. */
   private int advanceProbe(int probe) {
     probe ^= probe << 13; // xorshift
     probe ^= probe >>> 17;
@@ -141,9 +120,7 @@ abstract class StripedBuffer<E> implements Buffer<E> {
     return probe;
   }
 
-  /**
-   * Returns the closest power-of-two at or higher than the given value.
-   */
+  /** Returns the closest power-of-two at or higher than the given value. */
   private static int ceilingNextPowerOfTwo() {
     // From Hacker's Delight, Chapter 3, Harry S. Warren Jr.
     return 1 << (Integer.SIZE - Integer.numberOfLeadingZeros(StripedBuffer.NCPU - 1));
@@ -153,7 +130,6 @@ abstract class StripedBuffer<E> implements Buffer<E> {
    * Creates a new buffer instance after resizing to accommodate a producer.
    *
    * @param e the producer's element
-   *
    * @return a newly created buffer populated with a single element
    */
   protected abstract Buffer<E> create(E e);
@@ -166,8 +142,10 @@ abstract class StripedBuffer<E> implements Buffer<E> {
     boolean uncontended = true;
     final Buffer<E>[] buffers = table;
 
-    if ((buffers == null) || (mask = buffers.length - 1) < 0 || (buffer = buffers[getProbe() & mask]) == null || !(uncontended = (
-        (result = buffer.offer(e)) != Buffer.FAILED))) {
+    if ((buffers == null)
+        || (mask = buffers.length - 1) < 0
+        || (buffer = buffers[getProbe() & mask]) == null
+        || !(uncontended = ((result = buffer.offer(e)) != Buffer.FAILED))) {
       expandOrRetry(e, uncontended);
     }
     return result;
@@ -221,7 +199,7 @@ abstract class StripedBuffer<E> implements Buffer<E> {
    * contention. See above for explanation. This method suffers the usual non-modularity problems of
    * optimistic retry code, relying on rechecked sets of reads.
    *
-   * @param e              the element to add
+   * @param e the element to add
    * @param wasUncontended false if CAS failed before call
    */
   @SuppressWarnings("PMD.ConfusingTernary")
@@ -240,13 +218,16 @@ abstract class StripedBuffer<E> implements Buffer<E> {
       final int n;
       if (((buffers = table) != null) && ((n = buffers.length) > 0)) {
         if ((buffer = buffers[(n - 1) & h]) == null) {
-          if ((!tableBusy.get()) && tableBusy.compareAndSet(false, true)) { // Try to attach new Buffer
+          if ((!tableBusy.get())
+              && tableBusy.compareAndSet(false, true)) { // Try to attach new Buffer
             boolean created = false;
             try { // Recheck under lock
               final Buffer<E>[] rs;
               final int mask;
               final int j;
-              if (((rs = table) != null) && ((mask = rs.length) > 0) && (rs[j = (mask - 1) & h] == null)) {
+              if (((rs = table) != null)
+                  && ((mask = rs.length) > 0)
+                  && (rs[j = (mask - 1) & h] == null)) {
                 rs[j] = create(e);
                 created = true;
               }
@@ -260,7 +241,7 @@ abstract class StripedBuffer<E> implements Buffer<E> {
           }
           collide = false;
         } else if (!wasUncontended) { // CAS already known to fail
-          wasUncontended = true;      // Continue after rehash
+          wasUncontended = true; // Continue after rehash
         } else if (buffer.offer(e) != Buffer.FAILED) {
           break;
         } else if (n >= MAXIMUM_TABLE_SIZE || table != buffers) {
@@ -283,7 +264,7 @@ abstract class StripedBuffer<E> implements Buffer<E> {
         boolean init = false;
         try { // Initialize table
           if (table == buffers) {
-            @SuppressWarnings({ "unchecked" })
+            @SuppressWarnings({"unchecked"})
             final Buffer<E>[] rs = new Buffer[1];
             rs[0] = create(e);
             table = rs;

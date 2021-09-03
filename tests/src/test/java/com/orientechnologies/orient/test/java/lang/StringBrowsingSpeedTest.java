@@ -16,39 +16,38 @@
 package com.orientechnologies.orient.test.java.lang;
 
 public class StringBrowsingSpeedTest {
-	private final static String	S		= "OrientDB is an Open Source NoSQL DBMS with both the features of Document and Graph DBMSs. It's written in Java and it's amazing fast: can store up to 150,000 records per second on common hardware. Even if it's Document based database the relationships are managed as in Graph Databases with direct connections among records. You can traverse entire or part of trees and graphs of records in few milliseconds. Supports schema-less, schema-full and schema-mixed modes. Has a strong security profiling system based on user and roles and support the SQL between";
-	private final static int		MAX	= 1000000000;
+  private static final String S =
+      "OrientDB is an Open Source NoSQL DBMS with both the features of Document and Graph DBMSs. It's written in Java and it's amazing fast: can store up to 150,000 records per second on common hardware. Even if it's Document based database the relationships are managed as in Graph Databases with direct connections among records. You can traverse entire or part of trees and graphs of records in few milliseconds. Supports schema-less, schema-full and schema-mixed modes. Has a strong security profiling system based on user and roles and support the SQL between";
+  private static final int MAX = 1000000000;
 
-	public static final void main(String[] args) {
-		long timer = System.currentTimeMillis();
-		for (int i = 0; i < MAX; ++i) {
-		}
+  public static final void main(String[] args) {
+    long timer = System.currentTimeMillis();
+    for (int i = 0; i < MAX; ++i) {}
 
-		final long fixed = System.currentTimeMillis() - timer;
+    final long fixed = System.currentTimeMillis() - timer;
 
-		final int len = S.length();
+    final int len = S.length();
 
-		{
-			timer = System.currentTimeMillis();
+    {
+      timer = System.currentTimeMillis();
 
-			final char[] chars = S.toCharArray();
-			for (int i = 0; i < MAX; ++i)
-				for (int k = 0; k < len; ++k) {
-					final char c = chars[k];
-				}
-			System.out.println("String chars[]: " + (System.currentTimeMillis() - timer - fixed));
-		}
+      final char[] chars = S.toCharArray();
+      for (int i = 0; i < MAX; ++i)
+        for (int k = 0; k < len; ++k) {
+          final char c = chars[k];
+        }
+      System.out.println("String chars[]: " + (System.currentTimeMillis() - timer - fixed));
+    }
 
-		{
-			timer = System.currentTimeMillis();
+    {
+      timer = System.currentTimeMillis();
 
-			for (int i = 0; i < MAX; ++i)
-				for (int k = 0; k < len; ++k) {
-					final char c = S.charAt(k);
-				}
+      for (int i = 0; i < MAX; ++i)
+        for (int k = 0; k < len; ++k) {
+          final char c = S.charAt(k);
+        }
 
-			System.out.println("String charAt(): " + (System.currentTimeMillis() - timer - fixed));
-		}
-
-	}
+      System.out.println("String charAt(): " + (System.currentTimeMillis() - timer - fixed));
+    }
+  }
 }

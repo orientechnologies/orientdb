@@ -25,9 +25,7 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-/**
- * Wrapper of dictionary instance that convert values in records.
- */
+/** Wrapper of dictionary instance that convert values in records. */
 @SuppressWarnings("DeprecatedIsStillUsed")
 @Deprecated
 public class ODictionaryWrapper extends ODictionary<Object> {

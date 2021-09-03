@@ -5,15 +5,13 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.v2.HashIndexBucketV2;
-
 import java.nio.ByteBuffer;
 
 public final class LocalHashTableV2BucketSetDepthPO extends PageOperationRecord {
   private byte depth;
   private byte oldDepth;
 
-  public LocalHashTableV2BucketSetDepthPO() {
-  }
+  public LocalHashTableV2BucketSetDepthPO() {}
 
   public LocalHashTableV2BucketSetDepthPO(byte depth, byte oldDepth) {
     this.depth = depth;

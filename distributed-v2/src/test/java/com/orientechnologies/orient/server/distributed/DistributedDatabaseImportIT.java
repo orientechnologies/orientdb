@@ -1,23 +1,20 @@
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.orient.core.db.*;
+import static org.junit.Assert.assertTrue;
+
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.OElement;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.OServer;
+import java.io.File;
+import java.io.IOException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.io.File;
-import java.io.IOException;
-
-import static org.junit.Assert.assertTrue;
 
 public class DistributedDatabaseImportIT {
 
@@ -38,16 +35,18 @@ public class DistributedDatabaseImportIT {
     ctx1.create("import-test", ODatabaseType.PLOCAL);
     ODatabaseSession session = ctx1.open("import-test", "admin", "admin");
     session.createClass("testa");
-    ODatabaseExport export = new ODatabaseExport((ODatabaseDocumentInternal) session, "target/export.tar.gz", iText -> {
-    });
+    ODatabaseExport export =
+        new ODatabaseExport(
+            (ODatabaseDocumentInternal) session, "target/export.tar.gz", iText -> {});
     export.exportDatabase();
     export.close();
     session.close();
 
     ctx1.create("imported-test", ODatabaseType.PLOCAL);
     ODatabaseSession session1 = ctx1.open("imported-test", "admin", "admin");
-    ODatabaseImport imp = new ODatabaseImport((ODatabaseDocumentInternal) session1, "target/export.tar.gz", iText -> {
-    });
+    ODatabaseImport imp =
+        new ODatabaseImport(
+            (ODatabaseDocumentInternal) session1, "target/export.tar.gz", iText -> {});
     imp.importDatabase();
     imp.close();
     session1.close();
@@ -66,9 +65,7 @@ public class DistributedDatabaseImportIT {
     server1.shutdown();
     server2.shutdown();
     File file = new File("target/export.tar.gz");
-    if (file.exists())
-      file.delete();
+    if (file.exists()) file.delete();
     ODatabaseDocumentTx.closeAll();
   }
-
 }

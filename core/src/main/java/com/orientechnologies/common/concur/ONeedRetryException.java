@@ -23,8 +23,8 @@ import com.orientechnologies.common.exception.OErrorCode;
 import com.orientechnologies.orient.core.exception.OCoreException;
 
 /**
- * Abstract base exception to extend for all the exception that report to the user it has been thrown but re-executing it could
- * succeed.
+ * Abstract base exception to extend for all the exception that report to the user it has been
+ * thrown but re-executing it could succeed.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */

@@ -27,5 +27,4 @@ import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 @Deprecated
-public class OServerHandlerHelper extends OServerPluginHelper {
-}
+public class OServerHandlerHelper extends OServerPluginHelper {}

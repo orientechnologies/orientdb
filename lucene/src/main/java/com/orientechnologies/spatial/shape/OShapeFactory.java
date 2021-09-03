@@ -1,16 +1,17 @@
 /**
  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
- * <p>
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
- * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS"
- * BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language
- * governing permissions and limitations under the License.
- * <p>
- * For more information: http://www.orientdb.com
+ *
+ * <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ * except in compliance with the License. You may obtain a copy of the License at
+ *
+ * <p>http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * <p>Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * <p>For more information: http://www.orientdb.com
  */
 package com.orientechnologies.spatial.shape;
 
@@ -18,18 +19,16 @@ import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.spatial4j.shape.Point;
 import org.locationtech.spatial4j.shape.Rectangle;
 import org.locationtech.spatial4j.shape.Shape;
 import org.locationtech.spatial4j.shape.ShapeCollection;
 import org.locationtech.spatial4j.shape.jts.JtsGeometry;
-
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class OShapeFactory extends OComplexShapeBuilder {
 
@@ -84,7 +83,7 @@ public class OShapeFactory extends OComplexShapeBuilder {
     if (obj instanceof String) {
       try {
         return fromText((String) obj);
-      } catch (ParseException e) {
+      } catch (Exception e) {
         e.printStackTrace();
       }
     }
@@ -107,10 +106,17 @@ public class OShapeFactory extends OComplexShapeBuilder {
 
   @Override
   public String asText(ODocument document) {
-    OShapeBuilder oShapeBuilder = factories.get(document.getClassName());
+    String className = document.getClassName();
+    OShapeBuilder oShapeBuilder = factories.get(className);
     if (oShapeBuilder != null) {
       return oShapeBuilder.asText(document);
+    } else if (className.endsWith("Z")) {
+      oShapeBuilder = factories.get(className.substring(0, className.length() - 1));
+      if (oShapeBuilder != null) {
+        return oShapeBuilder.asText(document);
+      }
     }
+
     // TODO handle exception shape not found
     return null;
   }
@@ -180,6 +186,21 @@ public class OShapeFactory extends OComplexShapeBuilder {
   }
 
   @Override
+  protected ODocument toDoc(Shape shape, Geometry geometry) {
+    if (Point.class.isAssignableFrom(shape.getClass())) {
+      return factories.get(OPointShapeBuilder.NAME).toDoc(shape, geometry);
+    } else if (geometry != null && "LineString".equals(geometry.getClass().getSimpleName())) {
+      return factories.get("OLineString").toDoc(shape, geometry);
+    } else if (geometry != null && "MultiLineString".equals(geometry.getClass().getSimpleName())) {
+      return factories.get("OMultiLineString").toDoc(shape, geometry);
+    } else if (geometry != null && "Polygon".equals(geometry.getClass().getSimpleName())) {
+      return factories.get("OPolygon").toDoc(shape, geometry);
+    } else {
+      return toDoc(shape);
+    }
+  }
+
+  @Override
   public Shape fromMapGeoJson(Map geoJsonMap) {
     OShapeBuilder oShapeBuilder = factories.get(geoJsonMap.get("type"));
 
@@ -215,7 +236,8 @@ public class OShapeFactory extends OComplexShapeBuilder {
       return toDoc(point1);
     }
     if (geometry instanceof org.locationtech.jts.geom.GeometryCollection) {
-      org.locationtech.jts.geom.GeometryCollection gc = (org.locationtech.jts.geom.GeometryCollection) geometry;
+      org.locationtech.jts.geom.GeometryCollection gc =
+          (org.locationtech.jts.geom.GeometryCollection) geometry;
       List<Shape> shapes = new ArrayList<Shape>();
       for (int i = 0; i < gc.getNumGeometries(); i++) {
         Geometry geo = gc.getGeometryN(i);
@@ -240,5 +262,4 @@ public class OShapeFactory extends OComplexShapeBuilder {
   public void registerFactory(OShapeBuilder factory) {
     factories.put(factory.getName(), factory);
   }
-
 }

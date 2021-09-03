@@ -23,9 +23,8 @@ import com.orientechnologies.common.exception.OException;
 
 /**
  * OSecuritySystem Exception
- * 
+ *
  * @author S. Colin Leister
- * 
  */
 @SuppressWarnings("serial")
 public class OSecuritySystemException extends OException {

@@ -5,15 +5,18 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.sql.executor.*;
-
+import com.orientechnologies.orient.core.sql.executor.ForEachStep;
+import com.orientechnologies.orient.core.sql.executor.GlobalLetExpressionStep;
+import com.orientechnologies.orient.core.sql.executor.OForEachExecutionPlan;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.OUpdateExecutionPlan;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-//import com.orientechnologies.orient.core.sql.executor.LetExpressionStep;
+// import com.orientechnologies.orient.core.sql.executor.LetExpressionStep;
 
 public class OForEachBlock extends OStatement {
 
@@ -32,7 +35,8 @@ public class OForEachBlock extends OStatement {
   }
 
   @Override
-  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
+  public OResultSet execute(
+      ODatabase db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -49,7 +53,7 @@ public class OForEachBlock extends OStatement {
     if (usePlanCache) {
       executionPlan = createExecutionPlan(ctx, false);
     } else {
-      executionPlan = (OUpdateExecutionPlan)createExecutionPlanNoCache(ctx, false);
+      executionPlan = (OUpdateExecutionPlan) createExecutionPlanNoCache(ctx, false);
     }
 
     executionPlan.executeInternal();
@@ -57,7 +61,8 @@ public class OForEachBlock extends OStatement {
   }
 
   @Override
-  public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx, boolean usePlanCache) {
+  public OResultSet execute(
+      ODatabase db, Map params, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -69,7 +74,7 @@ public class OForEachBlock extends OStatement {
     if (usePlanCache) {
       executionPlan = createExecutionPlan(ctx, false);
     } else {
-      executionPlan = (OUpdateExecutionPlan)createExecutionPlanNoCache(ctx, false);
+      executionPlan = (OUpdateExecutionPlan) createExecutionPlanNoCache(ctx, false);
     }
 
     executionPlan.executeInternal();
@@ -84,7 +89,8 @@ public class OForEachBlock extends OStatement {
     }
     OIdentifier varName = new OIdentifier("$__ORIENTDB_FOREACH_VAR_" + nextProg);
     plan.chain(new GlobalLetExpressionStep(varName, loopValues, ctx, enableProfiling));
-    plan.chain(new ForEachStep(loopVariable, new OExpression(varName), statements, ctx, enableProfiling));
+    plan.chain(
+        new ForEachStep(loopVariable, new OExpression(varName), statements, ctx, enableProfiling));
     return plan;
   }
 
@@ -99,10 +105,8 @@ public class OForEachBlock extends OStatement {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OForEachBlock that = (OForEachBlock) o;
 
@@ -111,7 +115,6 @@ public class OForEachBlock extends OStatement {
     if (loopValues != null ? !loopValues.equals(that.loopValues) : that.loopValues != null)
       return false;
     return statements != null ? statements.equals(that.statements) : that.statements == null;
-
   }
 
   @Override
@@ -133,7 +136,6 @@ public class OForEachBlock extends OStatement {
       builder.append("\n");
     }
     builder.append("}");
-
   }
 
   public boolean containsReturn() {

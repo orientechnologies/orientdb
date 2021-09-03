@@ -5,22 +5,22 @@ import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 public class ConcurrentTxTest {
 
-  private final static String STORAGE_ENGINE = "memory";
-  private final static String DATABASE_URL   = STORAGE_ENGINE + ":" + ConcurrentTxTest.class.getSimpleName();
+  private static final String STORAGE_ENGINE = "memory";
+  private static final String DATABASE_URL =
+      STORAGE_ENGINE + ":" + ConcurrentTxTest.class.getSimpleName();
 
-  private final static String PROPERTY_NAME = "pn";
+  private static final String PROPERTY_NAME = "pn";
   OrientGraphFactory graphFactory;
 
   @Before
@@ -53,24 +53,26 @@ public class ConcurrentTxTest {
     // Spawn two threads and modify the vertex
     for (int i = 0; i < threadCount; i++) {
       final int threadNo = i;
-      Thread thread = run(new Runnable() {
+      Thread thread =
+          run(
+              new Runnable() {
 
-        @Override
-        public void run() {
-          OrientGraph tx = graphFactory.getTx();
-          try {
-            tx.begin();
-            OrientVertex secondVertexHandle = tx.getVertex(recordId);
-            secondVertexHandle.setProperty(PROPERTY_NAME, threadNo);
-            waitFor(barrier);
-            tx.commit();
-          } catch (Exception e) {
-            t.set(e);
-          } finally {
-            tx.shutdown();
-          }
-        }
-      });
+                @Override
+                public void run() {
+                  OrientGraph tx = graphFactory.getTx();
+                  try {
+                    tx.begin();
+                    OrientVertex secondVertexHandle = tx.getVertex(recordId);
+                    secondVertexHandle.setProperty(PROPERTY_NAME, threadNo);
+                    waitFor(barrier);
+                    tx.commit();
+                  } catch (Exception e) {
+                    t.set(e);
+                  } finally {
+                    tx.shutdown();
+                  }
+                }
+              });
       threads.add(thread);
     }
 
@@ -103,24 +105,26 @@ public class ConcurrentTxTest {
 
     // Spawn two threads and modify the vertex
     for (int i = 0; i < 2; i++) {
-      Thread thread = run(new Runnable() {
+      Thread thread =
+          run(
+              new Runnable() {
 
-        @Override
-        public void run() {
-          OrientGraph tx = graphFactory.getTx();
-          try {
-            tx.begin();
-            Vertex secondVertexHandle = tx.getVertex(recordId);
-            secondVertexHandle.setProperty(PROPERTY_NAME, secondValue);
-            waitFor(barrier);
-            tx.commit();
-          } catch (Exception e) {
-            t.set(e);
-          } finally {
-            tx.shutdown();
-          }
-        }
-      });
+                @Override
+                public void run() {
+                  OrientGraph tx = graphFactory.getTx();
+                  try {
+                    tx.begin();
+                    Vertex secondVertexHandle = tx.getVertex(recordId);
+                    secondVertexHandle.setProperty(PROPERTY_NAME, secondValue);
+                    waitFor(barrier);
+                    tx.commit();
+                  } catch (Exception e) {
+                    t.set(e);
+                  } finally {
+                    tx.shutdown();
+                  }
+                }
+              });
 
       threads.add(thread);
     }
@@ -154,25 +158,27 @@ public class ConcurrentTxTest {
     tx.begin();
     final OrientVertex firstVertexHandle = tx.addVertex(null, PROPERTY_NAME, firstValue);
     tx.commit();
-    //tx.shutdown();
+    // tx.shutdown();
 
     final Object recordId = firstVertexHandle.getId();
 
-    Thread updateThread = new Thread(new Runnable() {
-      @Override
-      public void run() {
-        // 1. Update
-        OrientGraph tx2 = graphFactory.getTx();
-        try {
-          tx2.begin();
-          Vertex secondVertexHandle = tx2.getVertex(recordId);
-          secondVertexHandle.setProperty(PROPERTY_NAME, secondValue);
-          tx2.commit();
-        } finally {
-          tx2.shutdown();
-        }
-      }
-    });
+    Thread updateThread =
+        new Thread(
+            new Runnable() {
+              @Override
+              public void run() {
+                // 1. Update
+                OrientGraph tx2 = graphFactory.getTx();
+                try {
+                  tx2.begin();
+                  Vertex secondVertexHandle = tx2.getVertex(recordId);
+                  secondVertexHandle.setProperty(PROPERTY_NAME, secondValue);
+                  tx2.commit();
+                } finally {
+                  tx2.shutdown();
+                }
+              }
+            });
     updateThread.start();
     updateThread.join();
 
@@ -183,7 +189,7 @@ public class ConcurrentTxTest {
       Vertex thirdVertexHandle = tx3.getVertex(recordId);
       thirdVertexHandle.setProperty(PROPERTY_NAME, thirdValue);
 
-      //commit
+      // commit
       tx3.commit();
     } finally {
       tx3.shutdown();

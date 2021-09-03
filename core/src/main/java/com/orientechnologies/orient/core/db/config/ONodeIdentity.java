@@ -15,9 +15,7 @@ public class ONodeIdentity implements Cloneable {
     this.name = name;
   }
 
-  public ONodeIdentity() {
-
-  }
+  public ONodeIdentity() {}
 
   public static ONodeIdentity generate(String nodeName) {
     return new ONodeIdentity(UUID.randomUUID().toString(), nodeName);
@@ -41,10 +39,8 @@ public class ONodeIdentity implements Cloneable {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
     ONodeIdentity that = (ONodeIdentity) o;
     return Objects.equals(id, that.id);
   }
@@ -68,5 +64,4 @@ public class ONodeIdentity implements Cloneable {
     id = input.readUTF();
     name = input.readUTF();
   }
-
 }

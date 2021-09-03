@@ -1,26 +1,28 @@
 package com.orientechnologies.orient.client.remote.message;
 
+import static org.junit.Assert.assertEquals;
+
 import com.orientechnologies.orient.client.remote.message.push.OStorageConfigurationPayload;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import java.io.IOException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.IOException;
-
-import static org.junit.Assert.assertEquals;
-
 public class OReloadMessageTest {
 
-  private OrientDB         orientDB;
+  private OrientDB orientDB;
   private ODatabaseSession session;
 
   @Before
   public void before() {
     orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
-    orientDB.create("test", ODatabaseType.MEMORY);
+    orientDB.execute("create database test memory users (admin identified by 'admin' role admin)");
     session = orientDB.open("test", "admin", "admin");
   }
 
@@ -32,7 +34,8 @@ public class OReloadMessageTest {
 
   @Test
   public void testWriteReadResponse() throws IOException {
-    OStorageConfiguration configuration = ((ODatabaseDocumentInternal) session).getStorage().getConfiguration();
+    OStorageConfiguration configuration =
+        ((ODatabaseDocumentInternal) session).getStorage().getConfiguration();
     OReloadResponse37 responseWrite = new OReloadResponse37(configuration);
     MockChannel channel = new MockChannel();
     responseWrite.write(channel, OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION, null);
@@ -43,7 +46,8 @@ public class OReloadMessageTest {
     assertEquals(configuration.getProperties().size(), payload.getProperties().size());
     for (int i = 0; i < configuration.getProperties().size(); i++) {
       assertEquals(configuration.getProperties().get(i).name, payload.getProperties().get(i).name);
-      assertEquals(configuration.getProperties().get(i).value, payload.getProperties().get(i).value);
+      assertEquals(
+          configuration.getProperties().get(i).value, payload.getProperties().get(i).value);
     }
     assertEquals(configuration.getDateFormat(), payload.getDateFormat());
     assertEquals(configuration.getDateTimeFormat(), payload.getDateTimeFormat());
@@ -67,10 +71,10 @@ public class OReloadMessageTest {
 
     assertEquals(configuration.getClusters().size(), payload.getClusters().size());
     for (int i = 0; i < configuration.getClusters().size(); i++) {
-      assertEquals(configuration.getClusters().get(i).getId(), payload.getClusters().get(i).getId());
-      assertEquals(configuration.getClusters().get(i).getName(), payload.getClusters().get(i).getName());
+      assertEquals(
+          configuration.getClusters().get(i).getId(), payload.getClusters().get(i).getId());
+      assertEquals(
+          configuration.getClusters().get(i).getName(), payload.getClusters().get(i).getName());
     }
-
   }
-
 }

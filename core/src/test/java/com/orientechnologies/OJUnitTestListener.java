@@ -28,14 +28,15 @@ import org.junit.runner.Result;
 import org.junit.runner.notification.RunListener;
 
 /**
+ *
+ *
  * <ol>
- * <li>Listens for JUnit test run started and prohibits logging of exceptions on storage level.</li>
- * <li>Listens for the JUnit test run finishing and runs the direct memory leaks detector, if no tests failed. If leak detector
- * finds
- * some leaks, it triggers {@link AssertionError} and the build is marked as failed. Java assertions (-ea) must be active for this
- * to work.</li>
- * <li>Triggers {@link AssertionError} if {@link OLogManager} is shutdown before test is finished.
- * We may miss some errors because {@link OLogManager} is shutdown</li>
+ *   <li>Listens for JUnit test run started and prohibits logging of exceptions on storage level.
+ *   <li>Listens for the JUnit test run finishing and runs the direct memory leaks detector, if no
+ *       tests failed. If leak detector finds some leaks, it triggers {@link AssertionError} and the
+ *       build is marked as failed. Java assertions (-ea) must be active for this to work.
+ *   <li>Triggers {@link AssertionError} if {@link OLogManager} is shutdown before test is finished.
+ *       We may miss some errors because {@link OLogManager} is shutdown
  * </ol>
  *
  * @author Sergey Sitnikov
@@ -64,12 +65,11 @@ public class OJUnitTestListener extends RunListener {
       final Orient orient = Orient.instance();
 
       if (orient != null) {
-        //state is verified during engine shutdown
+        // state is verified during engine shutdown
         orient.shutdown();
       } else {
         OByteBufferPool.instance(null).checkMemoryLeaks();
       }
     }
   }
-
 }

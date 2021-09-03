@@ -3,25 +3,23 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSet;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * Created by luigidellaquila on 11/10/16.
- */
+/** Created by luigidellaquila on 11/10/16. */
 public class CartesianProductStep extends AbstractExecutionStep {
 
   private List<OInternalExecutionPlan> subPlans = new ArrayList<>();
 
-  private boolean                  inited            = false;
-  private List<Boolean>            completedPrefetch = new ArrayList<>();
-  private List<OInternalResultSet> preFetches        = new ArrayList<>();//consider using resultset.reset() instead of buffering
+  private boolean inited = false;
+  private List<Boolean> completedPrefetch = new ArrayList<>();
+  private List<OInternalResultSet> preFetches =
+      new ArrayList<>(); // consider using resultset.reset() instead of buffering
 
-  private List<OResultSet> resultSets   = new ArrayList<>();
-  private List<OResult>    currentTuple = new ArrayList<>();
+  private List<OResultSet> resultSets = new ArrayList<>();
+  private List<OResult> currentTuple = new ArrayList<>();
 
   private OResultInternal nextRecord;
 
@@ -59,9 +57,7 @@ public class CartesianProductStep extends AbstractExecutionStep {
       }
 
       @Override
-      public void close() {
-
-      }
+      public void close() {}
 
       @Override
       public Optional<OExecutionPlan> getExecutionPlan() {
@@ -73,8 +69,9 @@ public class CartesianProductStep extends AbstractExecutionStep {
         return null;
       }
     };
-    //    throw new UnsupportedOperationException("cartesian product is not yet implemented in MATCH statement");
-    //TODO
+    //    throw new UnsupportedOperationException("cartesian product is not yet implemented in MATCH
+    // statement");
+    // TODO
   }
 
   private void init(OCommandContext ctx) {

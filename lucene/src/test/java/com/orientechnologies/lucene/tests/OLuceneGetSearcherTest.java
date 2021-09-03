@@ -26,9 +26,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-/**
- * Created by Enrico Risa on 29/04/15.
- */
+/** Created by Enrico Risa on 29/04/15. */
 public class OLuceneGetSearcherTest extends OLuceneBaseTest {
 
   @Before
@@ -37,7 +35,6 @@ public class OLuceneGetSearcherTest extends OLuceneBaseTest {
     song.createProperty("isDeleted", OType.BOOLEAN);
 
     db.command("create index Person.isDeleted on Person (isDeleted) FULLTEXT ENGINE LUCENE");
-
   }
 
   @Test

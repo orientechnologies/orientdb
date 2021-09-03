@@ -5,13 +5,11 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 
-public
-class OFieldMatchPathItem extends OMatchPathItem {
+public class OFieldMatchPathItem extends OMatchPathItem {
 
   protected OIdentifier field;
 
@@ -25,10 +23,7 @@ class OFieldMatchPathItem extends OMatchPathItem {
     super(p, id);
   }
 
-
-  /**
-   * Accept the visitor.
-   **/
+  /** Accept the visitor. */
   public boolean isBidirectional() {
     return false;
   }
@@ -41,29 +36,34 @@ class OFieldMatchPathItem extends OMatchPathItem {
     }
   }
 
-  protected Iterable<OIdentifiable> traversePatternEdge(OMatchStatement.MatchContext matchContext, OIdentifiable startingPoint,
-                                                        OCommandContext iCommandContext) {
+  protected Iterable<OIdentifiable> traversePatternEdge(
+      OMatchStatement.MatchContext matchContext,
+      OIdentifiable startingPoint,
+      OCommandContext iCommandContext) {
 
-//    Iterable possibleResults = null;
-//    if (filter != null) {
-//      OIdentifiable matchedNode = matchContext.matched.get(filter.getAlias());
-//      if (matchedNode != null) {
-//        possibleResults = Collections.singleton(matchedNode);
-//      } else if (matchContext.matched.containsKey(filter.getAlias())) {
-//        possibleResults = Collections.emptySet();//optional node, the matched element is a null value
-//      } else {
-//        possibleResults = matchContext.candidates == null ? null : matchContext.candidates.get(filter.getAlias());
-//      }
-//    }
+    //    Iterable possibleResults = null;
+    //    if (filter != null) {
+    //      OIdentifiable matchedNode = matchContext.matched.get(filter.getAlias());
+    //      if (matchedNode != null) {
+    //        possibleResults = Collections.singleton(matchedNode);
+    //      } else if (matchContext.matched.containsKey(filter.getAlias())) {
+    //        possibleResults = Collections.emptySet();//optional node, the matched element is a
+    // null value
+    //      } else {
+    //        possibleResults = matchContext.candidates == null ? null :
+    // matchContext.candidates.get(filter.getAlias());
+    //      }
+    //    }
 
     if (exp == null) {
       exp = new OSuffixIdentifier(field);
     }
     // TODO check possible results!
     Object qR = this.exp.execute(startingPoint, iCommandContext);
-    return (qR instanceof Iterable && !(qR instanceof ODocument)) ? (Iterable) qR : Collections.singleton((OIdentifiable) qR);
+    return (qR instanceof Iterable && !(qR instanceof ODocument))
+        ? (Iterable) qR
+        : Collections.singleton((OIdentifiable) qR);
   }
-
 
   @Override
   public boolean equals(Object o) {
@@ -71,8 +71,7 @@ class OFieldMatchPathItem extends OMatchPathItem {
     if (o == null || getClass() != o.getClass()) return false;
     if (!super.equals(o)) return false;
     OFieldMatchPathItem that = (OFieldMatchPathItem) o;
-    return Objects.equals(field, that.field) &&
-            Objects.equals(exp, that.exp);
+    return Objects.equals(field, that.field) && Objects.equals(exp, that.exp);
   }
 
   @Override

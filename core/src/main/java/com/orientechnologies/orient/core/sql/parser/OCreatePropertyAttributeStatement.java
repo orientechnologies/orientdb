@@ -7,7 +7,6 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
-
 import java.util.Map;
 
 public class OCreatePropertyAttributeStatement extends SimpleNode {
@@ -22,7 +21,8 @@ public class OCreatePropertyAttributeStatement extends SimpleNode {
     super(p, id);
   }
 
-  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     settingName.toString(params, builder);
     if (settingValue != null) {
       builder.append(" ");
@@ -37,11 +37,10 @@ public class OCreatePropertyAttributeStatement extends SimpleNode {
     return result;
   }
 
-  @Override public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OCreatePropertyAttributeStatement that = (OCreatePropertyAttributeStatement) o;
 
@@ -53,7 +52,8 @@ public class OCreatePropertyAttributeStatement extends SimpleNode {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = settingName != null ? settingName.hashCode() : 0;
     result = 31 * result + (settingValue != null ? settingValue.hashCode() : 0);
     return result;
@@ -61,7 +61,8 @@ public class OCreatePropertyAttributeStatement extends SimpleNode {
 
   public Object setOnProperty(OPropertyImpl internalProp, OCommandContext ctx) {
     String attrName = settingName.getStringValue();
-    Object attrValue = this.settingValue == null ? true : this.settingValue.execute((OIdentifiable) null, ctx);
+    Object attrValue =
+        this.settingValue == null ? true : this.settingValue.execute((OIdentifiable) null, ctx);
     try {
       if (attrName.equalsIgnoreCase("readonly")) {
         internalProp.setReadonly((boolean) attrValue);
@@ -74,7 +75,7 @@ public class OCreatePropertyAttributeStatement extends SimpleNode {
       } else if (attrName.equalsIgnoreCase("min")) {
         internalProp.setMin("" + attrValue);
       } else if (attrName.equalsIgnoreCase("default")) {
-        if(this.settingValue==null){
+        if (this.settingValue == null) {
           throw new OCommandExecutionException("");
         }
         internalProp.setDefaultValue("" + attrValue);
@@ -87,7 +88,9 @@ public class OCreatePropertyAttributeStatement extends SimpleNode {
       }
     } catch (Exception e) {
       throw OException.wrapException(
-          new OCommandExecutionException("Cannot set attribute on property " + settingName.getStringValue() + " " + attrValue), e);
+          new OCommandExecutionException(
+              "Cannot set attribute on property " + settingName.getStringValue() + " " + attrValue),
+          e);
     }
     return attrValue;
   }

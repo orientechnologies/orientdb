@@ -4,34 +4,46 @@ import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
-import com.orientechnologies.orient.core.sql.executor.*;
+import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
+import com.orientechnologies.orient.core.sql.executor.OExecutionStep;
+import com.orientechnologies.orient.core.sql.executor.OInfoExecutionPlan;
+import com.orientechnologies.orient.core.sql.executor.OInfoExecutionStep;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
-
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
-/**
- * Created by luigidellaquila on 01/12/16.
- */
+/** Created by luigidellaquila on 01/12/16. */
 public class OQueryResponse implements OBinaryResponse {
 
-  public static final byte RECORD_TYPE_BLOB       = 0;
-  public static final byte RECORD_TYPE_VERTEX     = 1;
-  public static final byte RECORD_TYPE_EDGE       = 2;
-  public static final byte RECORD_TYPE_ELEMENT    = 3;
+  public static final byte RECORD_TYPE_BLOB = 0;
+  public static final byte RECORD_TYPE_VERTEX = 1;
+  public static final byte RECORD_TYPE_EDGE = 2;
+  public static final byte RECORD_TYPE_ELEMENT = 3;
   public static final byte RECORD_TYPE_PROJECTION = 4;
 
-  private String                   queryId;
-  private boolean                  txChanges;
-  private List<OResultInternal>    result;
+  private String queryId;
+  private boolean txChanges;
+  private List<OResultInternal> result;
   private Optional<OExecutionPlan> executionPlan;
-  private boolean                  hasNextPage;
-  private Map<String, Long>        queryStats;
-  private boolean                  reloadMetadata;
+  private boolean hasNextPage;
+  private Map<String, Long> queryStats;
+  private boolean reloadMetadata;
 
-  public OQueryResponse(String queryId, boolean txChanges, List<OResultInternal> result, Optional<OExecutionPlan> executionPlan,
-      boolean hasNextPage, Map<String, Long> queryStats, boolean reloadMetadata) {
+  public OQueryResponse(
+      String queryId,
+      boolean txChanges,
+      List<OResultInternal> result,
+      Optional<OExecutionPlan> executionPlan,
+      boolean hasNextPage,
+      Map<String, Long> queryStats,
+      boolean reloadMetadata) {
     this.queryId = queryId;
     this.txChanges = txChanges;
     this.result = result;
@@ -41,15 +53,15 @@ public class OQueryResponse implements OBinaryResponse {
     this.reloadMetadata = reloadMetadata;
   }
 
-  public OQueryResponse() {
-  }
+  public OQueryResponse() {}
 
   @Override
-  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
     channel.writeString(queryId);
     channel.writeBoolean(txChanges);
     writeExecutionPlan(executionPlan, channel, serializer);
-    //THIS IS A PREFETCHED COLLECTION NOT YET HERE
+    // THIS IS A PREFETCHED COLLECTION NOT YET HERE
     channel.writeInt(0);
     channel.writeInt(result.size());
     for (OResult res : result) {
@@ -65,7 +77,7 @@ public class OQueryResponse implements OBinaryResponse {
     queryId = network.readString();
     txChanges = network.readBoolean();
     executionPlan = readExecutionPlan(network);
-    //THIS IS A PREFETCHED COLLECTION NOT YET HERE
+    // THIS IS A PREFETCHED COLLECTION NOT YET HERE
     int prefetched = network.readInt();
     int size = network.readInt();
     this.result = new ArrayList<>(size);
@@ -77,7 +89,8 @@ public class OQueryResponse implements OBinaryResponse {
     reloadMetadata = network.readBoolean();
   }
 
-  private void writeQueryStats(Map<String, Long> queryStats, OChannelDataOutput channel) throws IOException {
+  private void writeQueryStats(Map<String, Long> queryStats, OChannelDataOutput channel)
+      throws IOException {
     if (queryStats == null) {
       channel.writeInt(0);
       return;
@@ -100,9 +113,13 @@ public class OQueryResponse implements OBinaryResponse {
     return result;
   }
 
-  private void writeExecutionPlan(Optional<OExecutionPlan> executionPlan, OChannelDataOutput channel,
-      ORecordSerializer recordSerializer) throws IOException {
-    if (executionPlan.isPresent() && OGlobalConfiguration.QUERY_REMOTE_SEND_EXECUTION_PLAN.getValueAsBoolean()) {
+  private void writeExecutionPlan(
+      Optional<OExecutionPlan> executionPlan,
+      OChannelDataOutput channel,
+      ORecordSerializer recordSerializer)
+      throws IOException {
+    if (executionPlan.isPresent()
+        && OGlobalConfiguration.QUERY_REMOTE_SEND_EXECUTION_PLAN.getValueAsBoolean()) {
       channel.writeBoolean(true);
       OMessageHelper.writeResult(executionPlan.get().toResult(), channel, recordSerializer);
     } else {
@@ -162,7 +179,6 @@ public class OQueryResponse implements OBinaryResponse {
     }
     result.setDescription(x.getProperty("description"));
     return result;
-
   }
 
   public boolean isTxChanges() {

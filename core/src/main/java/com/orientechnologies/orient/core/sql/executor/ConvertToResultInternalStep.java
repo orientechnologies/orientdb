@@ -4,16 +4,14 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.util.Map;
 import java.util.Optional;
 
 /**
- * <p>
- * takes a result set made of OUpdatableRecord instances and transforms it in another result set made of normal OResultInternal
- * instances.
- * </p>
- * <p>This is the opposite of ConvertToUpdatableResultStep</p>
+ * takes a result set made of OUpdatableRecord instances and transforms it in another result set
+ * made of normal OResultInternal instances.
+ *
+ * <p>This is the opposite of ConvertToUpdatableResultStep
  *
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
@@ -127,12 +125,12 @@ public class ConvertToResultInternalStep extends AbstractExecutionStep {
         return null;
       }
     };
-
   }
 
   @Override
   public String prettyPrint(int depth, int indent) {
-    String result = OExecutionStepInternal.getIndent(depth, indent) + "+ CONVERT TO REGULAR RESULT ITEM";
+    String result =
+        OExecutionStepInternal.getIndent(depth, indent) + "+ CONVERT TO REGULAR RESULT ITEM";
     if (profilingEnabled) {
       result += " (" + getCostFormatted() + ")";
     }

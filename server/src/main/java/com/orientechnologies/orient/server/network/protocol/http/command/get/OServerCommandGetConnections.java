@@ -25,11 +25,10 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
-
 import java.io.StringWriter;
 
 public class OServerCommandGetConnections extends OServerCommandAuthenticatedServerAbstract {
-  private static final String[] NAMES = { "GET|connections/*" };
+  private static final String[] NAMES = {"GET|connections/*"};
 
   public OServerCommandGetConnections() {
     super("server.connections");
@@ -41,7 +40,8 @@ public class OServerCommandGetConnections extends OServerCommandAuthenticatedSer
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    final String[] args = checkSyntax(iRequest.getUrl(), 1, "Syntax error: connections[/<database>]");
+    final String[] args =
+        checkSyntax(iRequest.getUrl(), 1, "Syntax error: connections[/<database>]");
 
     iRequest.getData().commandInfo = "Server status";
 
@@ -55,7 +55,12 @@ public class OServerCommandGetConnections extends OServerCommandAuthenticatedSer
 
     json.endObject();
 
-    iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, jsonBuffer.toString(), null);
+    iResponse.send(
+        OHttpUtils.STATUS_OK_CODE,
+        OHttpUtils.STATUS_OK_DESCRIPTION,
+        OHttpUtils.CONTENT_JSON,
+        jsonBuffer.toString(),
+        null);
 
     return false;
   }

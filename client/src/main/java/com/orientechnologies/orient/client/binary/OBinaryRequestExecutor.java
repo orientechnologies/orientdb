@@ -77,7 +77,8 @@ public interface OBinaryRequestExecutor {
 
   OBinaryResponse executeSBTFirstKey(OSBTFirstKeyRequest request);
 
-  OBinaryResponse executeSBTFetchEntriesMajor(@SuppressWarnings("rawtypes") OSBTFetchEntriesMajorRequest request);
+  OBinaryResponse executeSBTFetchEntriesMajor(
+      @SuppressWarnings("rawtypes") OSBTFetchEntriesMajorRequest request);
 
   OBinaryResponse executeSBTGetRealSize(OSBTGetRealBagSizeRequest request);
 
@@ -101,6 +102,8 @@ public interface OBinaryRequestExecutor {
 
   OBinaryResponse executeQuery(OQueryRequest request);
 
+  OBinaryResponse executeServerQuery(OServerQueryRequest request);
+
   OBinaryResponse closeQuery(OCloseQueryRequest request);
 
   OBinaryResponse executeQueryNextPage(OQueryNextPageRequest request);
@@ -115,7 +118,8 @@ public interface OBinaryRequestExecutor {
 
   OBinaryResponse executeSubscribe(OSubscribeRequest request);
 
-  OBinaryResponse executeSubscribeDistributedConfiguration(OSubscribeDistributedConfigurationRequest request);
+  OBinaryResponse executeSubscribeDistributedConfiguration(
+      OSubscribeDistributedConfigurationRequest request);
 
   OBinaryResponse executeSubscribeLiveQuery(OSubscribeLiveQueryRequest request);
 
@@ -125,7 +129,8 @@ public interface OBinaryRequestExecutor {
 
   OBinaryResponse executeDistributedConnect(ODistributedConnectRequest request);
 
-  OBinaryResponse executeSubscribeStorageConfiguration(OSubscribeStorageConfigurationRequest request);
+  OBinaryResponse executeSubscribeStorageConfiguration(
+      OSubscribeStorageConfigurationRequest request);
 
   OBinaryResponse executeSubscribeSchema(OSubscribeSchemaRequest request);
 

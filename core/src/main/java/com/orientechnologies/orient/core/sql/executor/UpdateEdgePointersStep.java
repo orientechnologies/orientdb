@@ -6,13 +6,13 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 
 /**
- * after an update of an edge, this step updates edge pointers on vertices to make the graph consistent again
+ * after an update of an edge, this step updates edge pointers on vertices to make the graph
+ * consistent again
  */
 public class UpdateEdgePointersStep extends AbstractExecutionStep {
 
@@ -38,13 +38,9 @@ public class UpdateEdgePointersStep extends AbstractExecutionStep {
         return result;
       }
 
-      private void updateIn(OResult item) {
+      private void updateIn(OResult item) {}
 
-      }
-
-      private void updateOut(OResult item) {
-
-      }
+      private void updateOut(OResult item) {}
 
       @Override
       public void close() {
@@ -103,12 +99,13 @@ public class UpdateEdgePointersStep extends AbstractExecutionStep {
   /**
    * updates old and new vertices connected to an edge after out/in update on the edge itself
    *
-   * @param edge          the edge
-   * @param prevVertex    the previously connected vertex
+   * @param edge the edge
+   * @param prevVertex the previously connected vertex
    * @param currentVertex the currently connected vertex
-   * @param direction     the direction ("out" or "in")
+   * @param direction the direction ("out" or "in")
    */
-  private void changeVertexEdgePointer(ODocument edge, OIdentifiable prevVertex, OIdentifiable currentVertex, String direction) {
+  private void changeVertexEdgePointer(
+      ODocument edge, OIdentifiable prevVertex, OIdentifiable currentVertex, String direction) {
     if (prevVertex != null && !prevVertex.equals(currentVertex)) {
       String edgeClassName = edge.getClassName();
       if (edgeClassName.equalsIgnoreCase("E")) {
@@ -134,19 +131,20 @@ public class UpdateEdgePointersStep extends AbstractExecutionStep {
 
   private void validateOutInForEdge(ODocument record, Object currentOut, Object currentIn) {
     if (!isRecordInstanceOf(currentOut, "V")) {
-      throw new OCommandExecutionException("Error updating edge: 'out' is not a vertex - " + currentOut + "");
+      throw new OCommandExecutionException(
+          "Error updating edge: 'out' is not a vertex - " + currentOut + "");
     }
     if (!isRecordInstanceOf(currentIn, "V")) {
-      throw new OCommandExecutionException("Error updating edge: 'in' is not a vertex - " + currentIn + "");
+      throw new OCommandExecutionException(
+          "Error updating edge: 'in' is not a vertex - " + currentIn + "");
     }
   }
 
   /**
    * checks if an object is an OIdentifiable and an instance of a particular (schema) class
    *
-   * @param iRecord     The record object
+   * @param iRecord The record object
    * @param orientClass The schema class
-   *
    * @return
    */
   private boolean isRecordInstanceOf(Object iRecord, String orientClass) {

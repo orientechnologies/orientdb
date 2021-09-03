@@ -393,6 +393,8 @@ TOKEN:
 	|
 	< USER: ( "u" | "U" ) ( "s" | "S" ) ( "e" | "E" ) ( "r" | "R" ) >
 	|
+	< USERS: ( "u" | "U" ) ( "s" | "S" ) ( "e" | "E" ) ( "r" | "R" ) ( "s" | "S" ) >
+	|
 	< RID: ( "r" | "R" ) ( "i" | "I" ) ( "d" | "D" ) >
 	|
 	< SECURITY: ( "s" | "S" ) ( "e" | "E" ) ( "c" | "C" ) ( "u" | "U" ) ( "r" | "R" ) ( "i" | "I" ) ( "t" | "T" ) ( "y" | "Y" ) >
@@ -400,6 +402,8 @@ TOKEN:
 	< POLICY: ( "p" | "P" ) ( "o" | "O" ) ( "l" | "L" ) ( "i" | "I" ) ( "c" | "C" ) ( "y" | "Y" ) >
 	|
 	< DEFAULTCLUSTER: ( "D" | "d") ( "E" | "e") ( "F" | "f") ( "A" | "a") ( "U" | "u") ( "L" | "l") ( "T" | "t") ( "C" | "c" ) ( "L" | "l" ) ( "U" | "u" ) ( "S" | "s" ) ( "T" | "t" ) ( "E" | "e" ) ( "R" | "r" ) >
+	|
+	< SYSTEM: ( "s" | "S" ) ( "y" | "Y" ) ( "s" | "S" ) ( "t" | "T" ) ( "e" | "E" ) ( "m" | "M" ) >
 	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
@@ -565,6 +569,7 @@ TOKEN :
 | < STAR: "*" >
 | < SLASH: "/" >
 | < BIT_AND: "&" >
+| < NULL_COALESCING: "??" >
 | < BIT_OR: "|" >
 | < XOR: "^" >
 | < REM: "%" >
@@ -703,6 +708,14 @@ List<OStatement> parseScript() :
   <EOF>
   { return result; }
 }
+
+OServerStatement parseServerStatement() :
+{OServerStatement result;}
+{
+  result = ServerStatement() <EOF>
+  { return result; }
+}
+
 
 java.lang.String String():
 {
@@ -935,6 +948,8 @@ OIdentifier Identifier():
     |
     token = <USER>
     |
+    token = <USERS>
+    |
     token = <RID>
     |
     token = <DEFAULTCLUSTER>
@@ -942,6 +957,8 @@ OIdentifier Identifier():
     token = <SECURITY>
     |
     token = <POLICY>
+    |
+    token = <SYSTEM>
     |
     quotedToken = <QUOTED_IDENTIFIER>
 ) {
@@ -1004,6 +1021,32 @@ ONumber Number():
         result = FloatingPoint()
     )
     { return result; }
+}
+
+OServerStatement ServerStatement():
+{
+    OServerStatement result = null;
+}
+{
+    (
+        LOOKAHEAD(2)
+        result = CreateDatabaseStatement()
+        |
+        result = DropDatabaseStatement()
+        |
+        LOOKAHEAD(3)
+        result = CreateSystemUserStatement()
+        |
+        LOOKAHEAD(3)
+        result = AlterSystemRoleStatement()
+        |
+        LOOKAHEAD(3)
+        result = ExistsSystemUserStatement()
+
+    )
+	{
+	    return result;
+	}
 }
 
 OStatement Statement():
@@ -2054,6 +2097,7 @@ OProjectionItem ProjectionItem():
 {}
 {
 (
+    [<BANG> {jjtThis.exclude = true;}]
     jjtThis.expression = Expression()
     [ jjtThis.nestedProjection = NestedProjection() ]
     [ <AS> jjtThis.alias = Alias() ]
@@ -2431,6 +2475,8 @@ OMathExpression MathExpression():
 	            <RUNSIGNEDSHIFT> { jjtThis.operators.add(OMathExpression.Operator.RUNSIGNEDSHIFT); }
 	            |
 	            <BIT_AND> { jjtThis.operators.add(OMathExpression.Operator.BIT_AND); }
+	            |
+	            <NULL_COALESCING> { jjtThis.operators.add(OMathExpression.Operator.NULL_COALESCING); }
 	            |
 	            <BIT_OR> { jjtThis.operators.add(OMathExpression.Operator.BIT_OR); }
 	            |
@@ -4271,7 +4317,11 @@ ODropClassStatement DropClassStatement():
 {}
 {
 	<DROP> <CLASS>
-	jjtThis.name = Identifier()
+	(
+	  jjtThis.name = Identifier()
+	  |
+	  jjtThis.nameParam = InputParameter()
+	)
 	[ <IF> <EXISTS> { jjtThis.ifExists = true; } ]
 	[ <UNSAFE> { jjtThis.unsafe = true; } ]
 	{ return jjtThis; }
@@ -4767,6 +4817,64 @@ OCreateFunctionStatement CreateFunctionStatement():
 }
 
 
+OCreateSystemUserStatement CreateSystemUserStatement():
+{
+    Token token;
+    OIdentifier lastIdentifier;
+}
+{
+    (
+        <CREATE> <SYSTEM> <USER>
+        jjtThis.name = Identifier()
+        <IDENTIFIED> <BY>
+        (
+            jjtThis.passwordIdentifier = Identifier()
+            |
+            jjtThis.passwordString = String()
+            |
+            jjtThis.passwordParam = InputParameter()
+        )
+        [
+          <ROLE>
+          (
+            (
+              lastIdentifier = Identifier()
+              {
+                 jjtThis.roles.add(lastIdentifier);
+              }
+            )
+            |
+            (
+               <LBRACKET>
+               [
+                 lastIdentifier = Identifier() { jjtThis.roles.add(lastIdentifier);}
+                 (
+                    <COMMA> lastIdentifier = Identifier() { jjtThis.roles.add(lastIdentifier);}
+                 )*
+               ]
+               <RBRACKET>
+            )
+          )
+        ]
+    )
+    { return jjtThis; }
+}
+
+OExistsSystemUserStatement ExistsSystemUserStatement():
+{}
+{
+    (
+        <EXISTS> <SYSTEM> <USER>
+        (
+            jjtThis.name = Identifier()
+            |
+            jjtThis.nameParam = InputParameter()
+
+        )
+    )
+    { return jjtThis; }
+}
+
 OCreateUserStatement CreateUserStatement():
 {
     Token token;
@@ -4781,6 +4889,8 @@ OCreateUserStatement CreateUserStatement():
             jjtThis.passwordIdentifier = Identifier()
             |
             jjtThis.passwordString = String()
+            |
+            jjtThis.passwordParam = InputParameter()
         )
         [
           <ROLE>
@@ -4849,6 +4959,34 @@ OAlterRoleStatement AlterRoleStatement():
   ) { return jjtThis; }
 }
 
+OAlterSystemRoleStatement AlterSystemRoleStatement():
+{
+  OSecurityResourceSegment lastSecurityResource;
+  OIdentifier lastPolicy;
+}
+{
+  (
+    <ALTER> <SYSTEM> <ROLE>
+    jjtThis.name = Identifier()
+    (
+      ( <SET> <POLICY> lastPolicy = Identifier() <ON> lastSecurityResource = SecurityResourceSegment()
+
+        {
+        jjtThis.operations.add(new com.orientechnologies.orient.core.sql.parser.OAlterRoleStatement.Op(
+          com.orientechnologies.orient.core.sql.parser.OAlterRoleStatement.Op.TYPE_ADD,
+          lastSecurityResource, lastPolicy));
+        }
+      )
+      |
+      ( <REMOVE> <POLICY> <ON> lastSecurityResource = SecurityResourceSegment()  )
+        {
+          jjtThis.operations.add(new com.orientechnologies.orient.core.sql.parser.OAlterRoleStatement.Op(
+            com.orientechnologies.orient.core.sql.parser.OAlterRoleStatement.Op.TYPE_REMOVE,
+            lastSecurityResource, null));
+        }
+    )+
+  ) { return jjtThis; }
+}
 
 
 OLetStatement LetStatement():
@@ -5388,5 +5526,93 @@ OAlterSecurityPolicyStatement AlterSecurityPolicyStatement():
       )
     )+
 
+  ) {return jjtThis; }
+}
+
+
+ODatabaseUserData DatabaseUserData():
+{
+  OIdentifier lastIdentifier;
+}
+{
+(
+    (
+      jjtThis.name = Identifier()
+      |
+      jjtThis.nameParam = InputParameter()
+    )
+    <IDENTIFIED> <BY>
+    (
+        jjtThis.passwordIdentifier = Identifier()
+        |
+        jjtThis.passwordString = String()
+        |
+        jjtThis.passwordParam = InputParameter()
+    )
+    [
+      <ROLE>
+      (
+        (
+          lastIdentifier = Identifier()
+          {
+             jjtThis.roles.add(lastIdentifier);
+          }
+        )
+        |
+        (
+           <LBRACKET>
+           [
+             lastIdentifier = Identifier() { jjtThis.roles.add(lastIdentifier);}
+             (
+                <COMMA> lastIdentifier = Identifier() { jjtThis.roles.add(lastIdentifier);}
+             )*
+           ]
+           <RBRACKET>
+        )
+      )
+    ]
+)
+    {return jjtThis; }
+}
+
+OCreateDatabaseStatement CreateDatabaseStatement():
+{
+  ODatabaseUserData lastUserData;
+}
+{
+  (
+    <CREATE> <DATABASE>
+    (
+       jjtThis.name = Identifier()
+       |
+       jjtThis.nameParam = InputParameter()
+    )
+    jjtThis.type = Identifier()
+    [ <IF> <NOT> <EXISTS> { jjtThis.ifNotExists = true; } ]
+    [
+       <USERS> <LPAREN>
+       (
+          lastUserData = DatabaseUserData() { jjtThis.users.add(lastUserData); }
+          (
+            <COMMA> lastUserData = DatabaseUserData() { jjtThis.users.add(lastUserData); }
+          )*
+       )
+       <RPAREN>
+    ]
+    [ jjtThis.config = Json() ]
+  ) {return jjtThis; }
+}
+
+ODropDatabaseStatement DropDatabaseStatement():
+{}
+{
+  (
+    <DROP> <DATABASE>
+    (
+      jjtThis.name = Identifier()
+      |
+      jjtThis.nameParam = InputParameter()
+    )
+    [ <IF> <EXISTS> { jjtThis.ifExists = true; } ]
   ) {return jjtThis; }
 }

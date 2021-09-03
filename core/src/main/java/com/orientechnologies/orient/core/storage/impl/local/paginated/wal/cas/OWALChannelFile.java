@@ -1,16 +1,17 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas;
 
 import com.orientechnologies.common.io.OIOUtils;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 
 public class OWALChannelFile implements OWALFile {
   private final FileChannel channel;
+  private final long segmentId;
 
-  OWALChannelFile(FileChannel channel) {
+  OWALChannelFile(FileChannel channel, long segmentId) {
     this.channel = channel;
+    this.segmentId = segmentId;
   }
 
   @Override
@@ -29,6 +30,11 @@ public class OWALChannelFile implements OWALFile {
   }
 
   @Override
+  public long segmentId() {
+    return segmentId;
+  }
+
+  @Override
   public void force(boolean forceMetadata) throws IOException {
     channel.force(forceMetadata);
   }
@@ -43,4 +49,3 @@ public class OWALChannelFile implements OWALFile {
     channel.close();
   }
 }
-

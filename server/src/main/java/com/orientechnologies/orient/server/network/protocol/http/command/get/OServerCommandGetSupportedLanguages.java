@@ -17,10 +17,6 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
-import java.util.HashSet;
-import java.util.Set;
-
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -28,13 +24,16 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
+import java.util.HashSet;
+import java.util.Set;
 
 public class OServerCommandGetSupportedLanguages extends OServerCommandAuthenticatedDbAbstract {
-  private static final String[] NAMES = { "GET|supportedLanguages/*" };
+  private static final String[] NAMES = {"GET|supportedLanguages/*"};
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    String[] urlParts = checkSyntax(iRequest.getUrl(), 2, "Syntax error: supportedLanguages/<database>");
+    String[] urlParts =
+        checkSyntax(iRequest.getUrl(), 2, "Syntax error: supportedLanguages/<database>");
 
     iRequest.getData().commandInfo = "Returns the supported languages";
 
@@ -46,9 +45,11 @@ public class OServerCommandGetSupportedLanguages extends OServerCommandAuthentic
       ODocument result = new ODocument();
       Set<String> languages = new HashSet<String>();
 
-      OScriptManager scriptManager = OrientDBInternal.extract(server.getContext()).getScriptManager();
+      OScriptManager scriptManager =
+          OrientDBInternal.extract(server.getContext()).getScriptManager();
       for (String language : scriptManager.getSupportedLanguages()) {
-        if (scriptManager.getFormatters() != null && scriptManager.getFormatters().get(language) != null) {
+        if (scriptManager.getFormatters() != null
+            && scriptManager.getFormatters().get(language) != null) {
           languages.add(language);
         }
       }
@@ -56,8 +57,7 @@ public class OServerCommandGetSupportedLanguages extends OServerCommandAuthentic
       result.field("languages", languages);
       iResponse.writeRecord(result);
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
     }
     return false;
   }

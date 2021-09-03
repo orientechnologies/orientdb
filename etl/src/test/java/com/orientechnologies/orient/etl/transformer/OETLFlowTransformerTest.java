@@ -18,13 +18,13 @@
 
 package com.orientechnologies.orient.etl.transformer;
 
+import static org.junit.Assert.assertEquals;
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.etl.OETLBaseTest;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
 
 /**
  * Tests ETL Flow Transformer.
@@ -35,10 +35,14 @@ public class OETLFlowTransformerTest extends OETLBaseTest {
   @Test
   public void testSkip() {
 
-    configure("{source: { content: { value: 'name,surname\nJay,Miner\nSkipMe,Test' } }, extractor : { csv: {} },"
-        + " transformers: [{vertex: {class:'V'}}, " + "{flow:{operation:'skip',if: 'name <> \'Jay\''}},"
-        + "{field:{fieldName:'name', value:'3'}}" + "], loader: { orientdb: { dbURL: 'memory:" + name.getMethodName()
-        + "', dbType:'graph' } } }");
+    configure(
+        "{source: { content: { value: 'name,surname\nJay,Miner\nSkipMe,Test' } }, extractor : { csv: {} },"
+            + " transformers: [{vertex: {class:'V'}}, "
+            + "{flow:{operation:'skip',if: 'name <> \'Jay\''}},"
+            + "{field:{fieldName:'name', value:'3'}}"
+            + "], loader: { orientdb: { dbURL: 'memory:"
+            + name.getMethodName()
+            + "', dbType:'graph' } } }");
     proc.execute();
     ODatabaseDocument db = proc.getLoader().getPool().acquire();
 
@@ -49,16 +53,21 @@ public class OETLFlowTransformerTest extends OETLBaseTest {
     Object value1 = v1.getProperty("name");
     assertEquals("3", value1);
     resultSet.close();
-
   }
 
   @Test
   public void testSkipNever() {
     configure(
-        "{source: { content: { value: 'name,surname\nJay,Miner\nTest,Test' } }, " + "extractor : { csv: {} }," + " transformers: ["
-            + "{vertex: {class:'V'}}, " + "{flow:{operation:'skip',if: 'name = \'Jay\''}},"
-            + "{field:{fieldName:'name', value:'3'}}" + "],"
-            + " loader: { orientdb: {  dbURL: 'memory:" + name.getMethodName() + "', dbType:'graph'} } }");
+        "{source: { content: { value: 'name,surname\nJay,Miner\nTest,Test' } }, "
+            + "extractor : { csv: {} },"
+            + " transformers: ["
+            + "{vertex: {class:'V'}}, "
+            + "{flow:{operation:'skip',if: 'name = \'Jay\''}},"
+            + "{field:{fieldName:'name', value:'3'}}"
+            + "],"
+            + " loader: { orientdb: {  dbURL: 'memory:"
+            + name.getMethodName()
+            + "', dbType:'graph'} } }");
 
     proc.execute();
     ODatabaseDocument db = proc.getLoader().getPool().acquire();
@@ -72,6 +81,5 @@ public class OETLFlowTransformerTest extends OETLBaseTest {
     Object value2 = v1.getProperty("surname");
     assertEquals("Test", value2);
     resultSet.close();
-
   }
 }

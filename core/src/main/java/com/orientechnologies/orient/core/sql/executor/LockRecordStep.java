@@ -3,14 +3,14 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.storage.OStorage;
-
 import java.util.Map;
 import java.util.Optional;
 
 public class LockRecordStep extends AbstractExecutionStep {
   private final OStorage.LOCKING_STRATEGY lockStrategy;
 
-  public LockRecordStep(OStorage.LOCKING_STRATEGY lockStrategy, OCommandContext ctx, boolean enableProfiling) {
+  public LockRecordStep(
+      OStorage.LOCKING_STRATEGY lockStrategy, OCommandContext ctx, boolean enableProfiling) {
     super(ctx, enableProfiling);
     this.lockStrategy = lockStrategy;
   }
@@ -27,7 +27,9 @@ public class LockRecordStep extends AbstractExecutionStep {
       @Override
       public OResult next() {
         OResult result = upstream.next();
-        result.getElement().ifPresent(x -> ctx.getDatabase().getTransaction().lockRecord(x, lockStrategy));
+        result
+            .getElement()
+            .ifPresent(x -> ctx.getDatabase().getTransaction().lockRecord(x, lockStrategy));
         return result;
       }
 

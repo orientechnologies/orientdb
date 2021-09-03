@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionConfigurableAbstract;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -68,12 +67,20 @@ public class OSQLFunctionTraversedElement extends OSQLFunctionConfigurableAbstra
     return getName() + "(<beginIndex> [,<items>])";
   }
 
-  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
+  public Object execute(
+      Object iThis,
+      final OIdentifiable iCurrentRecord,
+      Object iCurrentResult,
+      final Object[] iParams,
       final OCommandContext iContext) {
     return evaluate(iThis, iParams, iContext, null);
   }
 
-  protected Object evaluate(final Object iThis, final Object[] iParams, final OCommandContext iContext, final String iClassName) {
+  protected Object evaluate(
+      final Object iThis,
+      final Object[] iParams,
+      final OCommandContext iContext,
+      final String iClassName) {
     final int beginIndex = (Integer) iParams[0];
     final int items = iParams.length > 1 ? (Integer) iParams[1] : 1;
 
@@ -82,7 +89,8 @@ public class OSQLFunctionTraversedElement extends OSQLFunctionConfigurableAbstra
       stack = (Collection) ((OResult) iThis).getMetadata("$stack");
     }
     if (stack == null)
-      throw new OCommandExecutionException("Cannot invoke " + getName() + "() against non traverse command");
+      throw new OCommandExecutionException(
+          "Cannot invoke " + getName() + "() against non traverse command");
 
     final List<OIdentifiable> result = items > 1 ? new ArrayList<OIdentifiable>(items) : null;
 
@@ -93,15 +101,14 @@ public class OSQLFunctionTraversedElement extends OSQLFunctionConfigurableAbstra
         if (o instanceof OTraverseRecordProcess) {
           final OIdentifiable record = ((OTraverseRecordProcess) o).getTarget();
 
-          if (iClassName == null || ODocumentInternal.getImmutableSchemaClass((ODocument) record.getRecord())
-              .isSubClassOf(iClassName)) {
+          if (iClassName == null
+              || ODocumentInternal.getImmutableSchemaClass((ODocument) record.getRecord())
+                  .isSubClassOf(iClassName)) {
             if (i <= beginIndex) {
-              if (items == 1)
-                return record;
+              if (items == 1) return record;
               else {
                 result.add(record);
-                if (result.size() >= items)
-                  break;
+                if (result.size() >= items) break;
               }
             }
             i--;
@@ -109,21 +116,19 @@ public class OSQLFunctionTraversedElement extends OSQLFunctionConfigurableAbstra
         } else if (o instanceof OIdentifiable) {
           final OIdentifiable record = (OIdentifiable) o;
 
-          if (iClassName == null || ODocumentInternal.getImmutableSchemaClass((ODocument) record.getRecord())
-              .isSubClassOf(iClassName)) {
+          if (iClassName == null
+              || ODocumentInternal.getImmutableSchemaClass((ODocument) record.getRecord())
+                  .isSubClassOf(iClassName)) {
             if (i <= beginIndex) {
-              if (items == 1)
-                return record;
+              if (items == 1) return record;
               else {
                 result.add(record);
-                if (result.size() >= items)
-                  break;
+                if (result.size() >= items) break;
               }
             }
             i--;
           }
         }
-
       }
     } else {
       int i = 0;
@@ -133,15 +138,14 @@ public class OSQLFunctionTraversedElement extends OSQLFunctionConfigurableAbstra
         if (o instanceof OTraverseRecordProcess) {
           final OIdentifiable record = ((OTraverseRecordProcess) o).getTarget();
 
-          if (iClassName == null || ODocumentInternal.getImmutableSchemaClass((ODocument) record.getRecord())
-              .isSubClassOf(iClassName)) {
+          if (iClassName == null
+              || ODocumentInternal.getImmutableSchemaClass((ODocument) record.getRecord())
+                  .isSubClassOf(iClassName)) {
             if (i >= beginIndex) {
-              if (items == 1)
-                return record;
+              if (items == 1) return record;
               else {
                 result.add(record);
-                if (result.size() >= items)
-                  break;
+                if (result.size() >= items) break;
               }
             }
             i++;
@@ -149,26 +153,23 @@ public class OSQLFunctionTraversedElement extends OSQLFunctionConfigurableAbstra
         } else if (o instanceof OIdentifiable) {
           final OIdentifiable record = (OIdentifiable) o;
 
-          if (iClassName == null || ODocumentInternal.getImmutableSchemaClass((ODocument) record.getRecord())
-              .isSubClassOf(iClassName)) {
+          if (iClassName == null
+              || ODocumentInternal.getImmutableSchemaClass((ODocument) record.getRecord())
+                  .isSubClassOf(iClassName)) {
             if (i >= beginIndex) {
-              if (items == 1)
-                return record;
+              if (items == 1) return record;
               else {
                 result.add(record);
-                if (result.size() >= items)
-                  break;
+                if (result.size() >= items) break;
               }
             }
             i++;
           }
         }
-
       }
     }
 
-    if (items > 0 && result != null && !result.isEmpty())
-      return result;
+    if (items > 0 && result != null && !result.isEmpty()) return result;
     return null;
   }
 
@@ -176,8 +177,7 @@ public class OSQLFunctionTraversedElement extends OSQLFunctionConfigurableAbstra
     if (stack instanceof List) {
       return (List) stack;
     }
-    
+
     return (List) stack.stream().collect(Collectors.toList());
   }
-
 }

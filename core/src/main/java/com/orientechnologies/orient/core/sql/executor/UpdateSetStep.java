@@ -4,18 +4,16 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.parser.OUpdateItem;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * Created by luigidellaquila on 09/08/16.
- */
+/** Created by luigidellaquila on 09/08/16. */
 public class UpdateSetStep extends AbstractExecutionStep {
   private final List<OUpdateItem> items;
 
-  public UpdateSetStep(List<OUpdateItem> updateItems, OCommandContext ctx, boolean profilingEnabled) {
+  public UpdateSetStep(
+      List<OUpdateItem> updateItems, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.items = updateItems;
   }

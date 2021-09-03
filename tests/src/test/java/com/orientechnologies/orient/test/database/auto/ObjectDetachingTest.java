@@ -26,22 +26,31 @@ import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 import com.orientechnologies.orient.test.domain.base.EnumTest;
 import com.orientechnologies.orient.test.domain.base.JavaAttachDetachTestClass;
 import com.orientechnologies.orient.test.domain.base.SimpleObject;
-import com.orientechnologies.orient.test.domain.business.*;
+import com.orientechnologies.orient.test.domain.business.Account;
+import com.orientechnologies.orient.test.domain.business.Address;
+import com.orientechnologies.orient.test.domain.business.Child;
+import com.orientechnologies.orient.test.domain.business.City;
+import com.orientechnologies.orient.test.domain.business.Country;
 import com.orientechnologies.orient.test.domain.cycle.CycleChild;
 import com.orientechnologies.orient.test.domain.cycle.CycleParent;
 import com.orientechnologies.orient.test.domain.cycle.GrandChild;
 import com.orientechnologies.orient.test.domain.lazy.LazyChild;
 import com.orientechnologies.orient.test.domain.lazy.LazyParent;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import javassist.util.proxy.Proxy;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import java.util.*;
-
-@Test(groups = { "object" })
+@Test(groups = {"object"})
 public class ObjectDetachingTest extends ObjectDBBaseTest {
   private Account account;
   private Profile profile;
@@ -53,9 +62,15 @@ public class ObjectDetachingTest extends ObjectDBBaseTest {
 
   @Test
   public void createAnnotatedObjects() {
-    database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.business");
-    database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.whiz");
-    database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.base");
+    database
+        .getEntityManager()
+        .registerEntityClasses("com.orientechnologies.orient.test.domain.business");
+    database
+        .getEntityManager()
+        .registerEntityClasses("com.orientechnologies.orient.test.domain.whiz");
+    database
+        .getEntityManager()
+        .registerEntityClasses("com.orientechnologies.orient.test.domain.base");
     Country austria = new Country("Austria");
     City graz = new City(austria, "Graz");
     graz = database.save(graz);
@@ -109,7 +124,10 @@ public class ObjectDetachingTest extends ObjectDBBaseTest {
   public void testOrientObjectIdPlusVersionAnnotationsNotInTx() {
     // BROWSE ALL THE OBJECTS
     Assert.assertTrue(database.countClass(Country.class) > 0);
-    for (Country c : (List<Country>) database.query(new OSQLSynchQuery<Object>("select from Country where name = 'Austria'"))) {
+    for (Country c :
+        (List<Country>)
+            database.query(
+                new OSQLSynchQuery<Object>("select from Country where name = 'Austria'"))) {
       Assert.assertNotNull(c.getId());
       Assert.assertNotNull(c.getVersion());
 
@@ -122,14 +140,19 @@ public class ObjectDetachingTest extends ObjectDBBaseTest {
     }
 
     // BROWSE ALL THE OBJECTS
-    for (Country c : (List<Country>) database.query(new OSQLSynchQuery<Object>("select from Country where name = 'Austria v1'"))) {
+    for (Country c :
+        (List<Country>)
+            database.query(
+                new OSQLSynchQuery<Object>("select from Country where name = 'Austria v1'"))) {
       Assert.assertNotNull(c.getId());
       Assert.assertNotNull(c.getVersion());
       Assert.assertTrue((Integer) c.getVersion() > 0);
     }
   }
 
-  @Test(dependsOnMethods = "testOrientObjectIdPlusVersionAnnotationsNotInTx"/* , expectedExceptions = OTransactionException.class */)
+  @Test(
+      dependsOnMethods =
+          "testOrientObjectIdPlusVersionAnnotationsNotInTx" /* , expectedExceptions = OTransactionException.class */)
   public void testOrientObjectIdPlusVersionAnnotationsInTx() {
     // TODO CHECK WHY SHOULD THROW EXCEPTION
     // database.begin();
@@ -186,7 +209,8 @@ public class ObjectDetachingTest extends ObjectDBBaseTest {
     database.rollback();
 
     Assert.assertEquals(database.countClass(Country.class), initCount);
-    Assert.assertTrue(country.getId() == null || ((ORID) country.getId()).isNew(), "id=" + country.getId());
+    Assert.assertTrue(
+        country.getId() == null || ((ORID) country.getId()).isNew(), "id=" + country.getId());
     // Assert.assertNull(country.getVersion());
   }
 
@@ -205,14 +229,17 @@ public class ObjectDetachingTest extends ObjectDBBaseTest {
     Country loaded = (Country) database.load((ORecordId) country.getId());
     Assert.assertEquals(loaded.getId(), country.getId());
     Assert.assertEquals(loaded.getVersion(), country.getVersion());
-    Assert.assertEquals((Object) database.getRecordByUserObject(loaded, false), database.getRecordByUserObject(country, false));
+    Assert.assertEquals(
+        (Object) database.getRecordByUserObject(loaded, false),
+        database.getRecordByUserObject(country, false));
     String newName = "ShouldBeChanged";
     loaded.setName(newName);
     loaded = (Country) database.save(loaded);
     database.commit();
 
     loaded = (Country) database.load((ORecordId) country.getId());
-    Assert.assertEquals((Object) database.getRecordByUserObject(loaded, false),
+    Assert.assertEquals(
+        (Object) database.getRecordByUserObject(loaded, false),
         (Object) database.getRecordByUserObject(country, false));
     Assert.assertEquals(loaded.getId(), country.getId());
     Assert.assertEquals(((Integer) loaded.getVersion()), (Integer) (initVersion + 1));
@@ -234,14 +261,18 @@ public class ObjectDetachingTest extends ObjectDBBaseTest {
     Country loaded = (Country) database.load((ORecordId) country.getId());
     Assert.assertEquals(loaded.getId(), country.getId());
     Assert.assertEquals(loaded.getVersion(), country.getVersion());
-    Assert.assertEquals((Object) database.getRecordByUserObject(loaded, false), database.getRecordByUserObject(country, false));
+    Assert.assertEquals(
+        (Object) database.getRecordByUserObject(loaded, false),
+        database.getRecordByUserObject(country, false));
     String newName = "ShouldNotBeChanged";
     loaded.setName(newName);
     loaded = (Country) database.save(loaded);
     database.rollback();
 
     loaded = database.load((ORecordId) country.getId());
-    Assert.assertNotSame(database.getRecordByUserObject(loaded, false), database.getRecordByUserObject(country, false));
+    Assert.assertNotSame(
+        database.getRecordByUserObject(loaded, false),
+        database.getRecordByUserObject(country, false));
     Assert.assertEquals(loaded.getVersion(), initVersion);
     Assert.assertEquals(loaded.getName(), initialCountryName);
   }
@@ -335,7 +366,8 @@ public class ObjectDetachingTest extends ObjectDBBaseTest {
     Assert.assertEquals(doc.field("enumeration"), EnumTest.ENUM1.toString());
     Assert.assertTrue(doc.field("children") instanceof Map<?, ?>);
     Assert.assertTrue(((Map<?, ?>) doc.field("children")).get("first") instanceof ODocument);
-    Assert.assertEquals(((ODocument) ((Map<?, ?>) doc.field("children")).get("first")).field("name"), "Jesus");
+    Assert.assertEquals(
+        ((ODocument) ((Map<?, ?>) doc.field("children")).get("first")).field("name"), "Jesus");
     Assert.assertEquals(((List<?>) doc.field("enumList")).size(), 2);
     Assert.assertEquals(((List<?>) doc.field("enumList")).get(0), EnumTest.ENUM1.toString());
     Assert.assertEquals(((List<?>) doc.field("enumList")).get(1), EnumTest.ENUM2.toString());
@@ -435,7 +467,8 @@ public class ObjectDetachingTest extends ObjectDBBaseTest {
     Assert.assertEquals(doc.field("enumeration"), EnumTest.ENUM1.toString());
     Assert.assertTrue(doc.field("children") instanceof Map<?, ?>);
     Assert.assertTrue(((Map<?, ?>) doc.field("children")).get("first") instanceof ODocument);
-    Assert.assertEquals(((ODocument) ((Map<?, ?>) doc.field("children")).get("first")).field("name"), "Jesus");
+    Assert.assertEquals(
+        ((ODocument) ((Map<?, ?>) doc.field("children")).get("first")).field("name"), "Jesus");
     Assert.assertEquals(((List<?>) doc.field("enumList")).size(), 2);
     Assert.assertEquals(((List<?>) doc.field("enumList")).get(0), EnumTest.ENUM1.toString());
     Assert.assertEquals(((List<?>) doc.field("enumList")).get(1), EnumTest.ENUM2.toString());
@@ -522,7 +555,8 @@ public class ObjectDetachingTest extends ObjectDBBaseTest {
     Assert.assertEquals(doc.field("enumeration"), EnumTest.ENUM1.toString());
     Assert.assertTrue(doc.field("children") instanceof Map<?, ?>);
     Assert.assertTrue(((Map<?, ?>) doc.field("children")).get("first") instanceof ODocument);
-    Assert.assertEquals(((ODocument) ((Map<?, ?>) doc.field("children")).get("first")).field("name"), "Jesus");
+    Assert.assertEquals(
+        ((ODocument) ((Map<?, ?>) doc.field("children")).get("first")).field("name"), "Jesus");
     Assert.assertEquals(((List<?>) doc.field("enumList")).size(), 2);
     Assert.assertEquals(((List<?>) doc.field("enumList")).get(0), EnumTest.ENUM1.toString());
     Assert.assertEquals(((List<?>) doc.field("enumList")).get(1), EnumTest.ENUM2.toString());
@@ -614,7 +648,8 @@ public class ObjectDetachingTest extends ObjectDBBaseTest {
     Assert.assertEquals(doc.field("enumeration"), EnumTest.ENUM1.toString());
     Assert.assertTrue(doc.field("children") instanceof Map<?, ?>);
     Assert.assertTrue(((Map<?, ?>) doc.field("children")).get("first") instanceof ODocument);
-    Assert.assertEquals(((ODocument) ((Map<?, ?>) doc.field("children")).get("first")).field("name"), "Jesus");
+    Assert.assertEquals(
+        ((ODocument) ((Map<?, ?>) doc.field("children")).get("first")).field("name"), "Jesus");
     Assert.assertEquals(((List<?>) doc.field("enumList")).size(), 2);
     Assert.assertEquals(((List<?>) doc.field("enumList")).get(0), EnumTest.ENUM1.toString());
     Assert.assertEquals(((List<?>) doc.field("enumList")).get(1), EnumTest.ENUM2.toString());
@@ -706,7 +741,12 @@ public class ObjectDetachingTest extends ObjectDBBaseTest {
   }
 
   public void testObjectSerialization() {
-    Profile profile = new Profile("NonProxiedObjectToDelete", "NonProxiedObjectToDelete", "NonProxiedObjectToDelete", null);
+    Profile profile =
+        new Profile(
+            "NonProxiedObjectToDelete",
+            "NonProxiedObjectToDelete",
+            "NonProxiedObjectToDelete",
+            null);
     profile = database.save(profile);
     ODocument originalDoc = database.getRecordByUserObject(profile, false);
     // DETACH TEST
@@ -722,7 +762,9 @@ public class ObjectDetachingTest extends ObjectDBBaseTest {
   }
 
   public void testDetachAllWithCycles() {
-    database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.cycle");
+    database
+        .getEntityManager()
+        .registerEntityClasses("com.orientechnologies.orient.test.domain.cycle");
 
     CycleParent parent = new CycleParent();
     parent.setName("parent");
@@ -751,11 +793,12 @@ public class ObjectDetachingTest extends ObjectDBBaseTest {
     GrandChild detachedGrandChild = detachedCycleChild1.getGrandChildren().iterator().next();
     Assert.assertEquals(detachedGrandChild.getName(), grandChild.getName());
     Assert.assertSame(detachedGrandChild.getGrandParent(), detachedParent);
-
   }
 
   public void testDetachAllWithLazyOneToOne() {
-    database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.lazy");
+    database
+        .getEntityManager()
+        .registerEntityClasses("com.orientechnologies.orient.test.domain.lazy");
     LazyParent parent = new LazyParent();
     LazyChild theChild = new LazyChild();
     theChild.setName("name");
@@ -771,7 +814,9 @@ public class ObjectDetachingTest extends ObjectDBBaseTest {
   }
 
   public void testDetachMap() {
-    database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.base");
+    database
+        .getEntityManager()
+        .registerEntityClasses("com.orientechnologies.orient.test.domain.base");
     SimpleObject obj = new SimpleObject();
     obj.setObjectId("foo");
     Map<String, String> parts = new HashMap<>();
@@ -780,8 +825,10 @@ public class ObjectDetachingTest extends ObjectDBBaseTest {
     obj.setTemplatePartsIds(parts);
     SimpleObject saved = database.save(obj);
 
-    SimpleObject loaded = (SimpleObject) ((List) database.objectQuery("SELECT FROM SimpleObject")).get(0);
-    SimpleObject a = OObjectEntitySerializer.detachAll(loaded, database, true, new HashMap<>(), new HashMap<>());
+    SimpleObject loaded =
+        (SimpleObject) ((List) database.objectQuery("SELECT FROM SimpleObject")).get(0);
+    SimpleObject a =
+        OObjectEntitySerializer.detachAll(loaded, database, true, new HashMap<>(), new HashMap<>());
     Assert.assertEquals(a.getObjectId(), "foo");
     Assert.assertFalse(a.getTemplatePartsIds() instanceof OTrackedMap);
   }

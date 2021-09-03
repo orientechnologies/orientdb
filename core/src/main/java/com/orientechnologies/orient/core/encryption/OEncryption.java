@@ -21,15 +21,16 @@
 package com.orientechnologies.orient.core.encryption;
 
 /**
- * Storage encryption interface. Additional encryption implementations can be plugged via <code>register()</code> method. There are
- * 2 versions:<br>
+ * Storage encryption interface. Additional encryption implementations can be plugged via <code>
+ * register()</code> method. There are 2 versions:<br>
+ *
  * <ul>
- * <li><code>OEncryptionFactory.INSTANCE.register(<class>)</code> for stateful implementations, a new instance will be created for
- * each storage/li>
- * <li><code>OEncryptionFactory.INSTANCE.register(<instance>)</code> for stateless implementations, the same instance will be shared
- * across all the storages./li>
+ *   <li><code>OEncryptionFactory.INSTANCE.register(<class>)</code> for stateful implementations, a
+ *       new instance will be created for each storage/li>
+ *   <li><code>OEncryptionFactory.INSTANCE.register(<instance>)</code> for stateless
+ *       implementations, the same instance will be shared across all the storages./li>
  * </ul>
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public interface OEncryption {

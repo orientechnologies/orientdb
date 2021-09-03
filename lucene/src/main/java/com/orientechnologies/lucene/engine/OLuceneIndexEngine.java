@@ -13,7 +13,7 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.engine;
@@ -24,23 +24,21 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.index.engine.OIndexEngine;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorageComponent;
+import java.io.IOException;
+import java.util.Set;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 
-import java.io.IOException;
-import java.util.Set;
-
-/**
- * Created by Enrico Risa on 04/09/15.
- */
+/** Created by Enrico Risa on 04/09/15. */
 public interface OLuceneIndexEngine extends OIndexEngine, OFreezableStorageComponent {
 
   String indexName();
 
-  void onRecordAddedToResultSet(OLuceneQueryContext queryContext, OContextualRecordId recordId, Document ret, ScoreDoc score);
+  void onRecordAddedToResultSet(
+      OLuceneQueryContext queryContext, OContextualRecordId recordId, Document ret, ScoreDoc score);
 
   Document buildDocument(Object key, OIdentifiable value);
 
@@ -64,7 +62,5 @@ public interface OLuceneIndexEngine extends OIndexEngine, OFreezableStorageCompo
 
   Query deleteQuery(Object key, OIdentifiable value);
 
-
   boolean isCollectionIndex();
-
 }

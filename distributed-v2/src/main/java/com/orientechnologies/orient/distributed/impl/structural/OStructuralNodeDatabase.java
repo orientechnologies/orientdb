@@ -7,16 +7,15 @@ import java.util.UUID;
 
 public class OStructuralNodeDatabase implements Cloneable {
 
-  public OStructuralNodeDatabase() {
-
-  }
+  public OStructuralNodeDatabase() {}
 
   public enum NodeMode {
-    ACTIVE, REPLICA,
+    ACTIVE,
+    REPLICA,
   }
 
-  private UUID     uuid;
-  private String   name;
+  private UUID uuid;
+  private String name;
   private NodeMode mode;
 
   public OStructuralNodeDatabase(UUID uuid, String name, NodeMode mode) {
@@ -55,5 +54,4 @@ public class OStructuralNodeDatabase implements Cloneable {
   public void distributedSerialize(DataOutput output) throws IOException {
     serialize(output);
   }
-
 }

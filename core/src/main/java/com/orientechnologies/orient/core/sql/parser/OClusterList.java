@@ -4,7 +4,6 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -54,15 +53,12 @@ public class OClusterList extends SimpleNode {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OClusterList that = (OClusterList) o;
 
-    if (clusters != null ? !clusters.equals(that.clusters) : that.clusters != null)
-      return false;
+    if (clusters != null ? !clusters.equals(that.clusters) : that.clusters != null) return false;
 
     return true;
   }
@@ -75,7 +71,8 @@ public class OClusterList extends SimpleNode {
   public OResult serialize() {
     OResultInternal result = new OResultInternal();
     if (clusters != null) {
-      result.setProperty("clusters", clusters.stream().map(x -> x.serialize()).collect(Collectors.toList()));
+      result.setProperty(
+          "clusters", clusters.stream().map(x -> x.serialize()).collect(Collectors.toList()));
     }
     return result;
   }

@@ -7,13 +7,15 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.util.ODateHelper;
-
 import java.lang.reflect.Array;
-import java.util.*;
+import java.util.Base64;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
-/**
- * Created by luigidellaquila on 21/07/16.
- */
+/** Created by luigidellaquila on 21/07/16. */
 public interface OResult {
 
   /**
@@ -21,10 +23,9 @@ public interface OResult {
    *
    * @param name the property name
    * @param <T>
-   *
-   * @return the property value. If the property value is a persistent record, it only returns the RID. See also  {@link
-   * #getElementProperty(String)}  {@link #getVertexProperty(String)} {@link #getEdgeProperty(String)} {@link
-   * #getBlobProperty(String)}
+   * @return the property value. If the property value is a persistent record, it only returns the
+   *     RID. See also {@link #getElementProperty(String)} {@link #getVertexProperty(String)} {@link
+   *     #getEdgeProperty(String)} {@link #getBlobProperty(String)}
    */
   <T> T getProperty(String name);
 
@@ -32,7 +33,6 @@ public interface OResult {
    * returns an OElement property from the result
    *
    * @param name the property name
-   *
    * @return the property value. Null if the property is not defined or if it's not an OElement
    */
   OElement getElementProperty(String name);
@@ -41,7 +41,6 @@ public interface OResult {
    * returns an OVertex property from the result
    *
    * @param name the property name
-   *
    * @return the property value. Null if the property is not defined or if it's not an OVertex
    */
   OVertex getVertexProperty(String name);
@@ -50,7 +49,6 @@ public interface OResult {
    * returns an OEdge property from the result
    *
    * @param name the property name
-   *
    * @return the property value. Null if the property is not defined or if it's not an OEdge
    */
   OEdge getEdgeProperty(String name);
@@ -59,7 +57,6 @@ public interface OResult {
    * returns an OEdge property from the result
    *
    * @param name the property name
-   *
    * @return the property value. Null if the property is not defined or if it's not an OEdge
    */
   OBlob getBlobProperty(String name);
@@ -106,7 +103,6 @@ public interface OResult {
    * return metadata related to current result given a key
    *
    * @param key the metadata key
-   *
    * @return metadata related to current result given a key
    */
   Object getMetadata(String key);
@@ -151,13 +147,15 @@ public interface OResult {
     } else if (val instanceof OElement) {
       ORID id = ((OElement) val).getIdentity();
       if (id.isPersistent()) {
-//        jsonVal = "{\"@rid\":\"" + id + "\"}"; //TODO enable this syntax when Studio and the parsing are OK
+        //        jsonVal = "{\"@rid\":\"" + id + "\"}"; //TODO enable this syntax when Studio and
+        // the parsing are OK
         jsonVal = "\"" + id + "\"";
       } else {
         jsonVal = ((OElement) val).toJSON();
       }
     } else if (val instanceof ORID) {
-//      jsonVal = "{\"@rid\":\"" + val + "\"}"; //TODO enable this syntax when Studio and the parsing are OK
+      //      jsonVal = "{\"@rid\":\"" + val + "\"}"; //TODO enable this syntax when Studio and the
+      // parsing are OK
       jsonVal = "\"" + val + "\"";
     } else if (val instanceof Iterable) {
       StringBuilder builder = new StringBuilder();
@@ -219,7 +217,8 @@ public interface OResult {
       builder.append("]");
       jsonVal = builder.toString();
     } else {
-      throw new UnsupportedOperationException("Cannot convert " + val + " - " + val.getClass() + " to JSON");
+      throw new UnsupportedOperationException(
+          "Cannot convert " + val + " - " + val.getClass() + " to JSON");
     }
     return jsonVal;
   }

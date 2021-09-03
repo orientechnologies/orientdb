@@ -16,13 +16,10 @@
 
 package com.orientechnologies.lucene;
 
+import java.io.IOException;
 import org.apache.lucene.search.IndexSearcher;
 
-import java.io.IOException;
-
-/**
- * Created by enricorisa on 19/03/14.
- */
+/** Created by enricorisa on 19/03/14. */
 public interface OLuceneIndex {
   IndexSearcher searcher() throws IOException;
 }

@@ -26,20 +26,17 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
-/**
- * Created by Enrico Risa on 10/08/15.
- */
+/** Created by Enrico Risa on 10/08/15. */
 public class LuceneTransactionQueryTest extends BaseLuceneTest {
 
   @Before
@@ -47,7 +44,7 @@ public class LuceneTransactionQueryTest extends BaseLuceneTest {
 
     final OClass c1 = db.createVertexClass("C1");
     c1.createProperty("p1", OType.STRING);
-    c1.createIndex("C1.p1", "FULLTEXT", null, null, "LUCENE", new String[] { "p1" });
+    c1.createIndex("C1.p1", "FULLTEXT", null, null, "LUCENE", new String[] {"p1"});
   }
 
   @Test
@@ -60,16 +57,23 @@ public class LuceneTransactionQueryTest extends BaseLuceneTest {
 
     String query = "select from C1 where p1 lucene \"abc\" ";
     @SuppressWarnings("deprecation")
-    List<ODocument> vertices = ODatabaseRecordThreadLocal.instance().get().command(new OSQLSynchQuery<ODocument>(query)).execute();
+    List<ODocument> vertices =
+        ODatabaseRecordThreadLocal.instance()
+            .get()
+            .command(new OSQLSynchQuery<ODocument>(query))
+            .execute();
 
     Assert.assertEquals(vertices.size(), 1);
     db.rollback();
 
     query = "select from C1 where p1 lucene \"abc\" ";
     //noinspection deprecation
-    vertices = ODatabaseRecordThreadLocal.instance().get().command(new OSQLSynchQuery<ODocument>(query)).execute();
+    vertices =
+        ODatabaseRecordThreadLocal.instance()
+            .get()
+            .command(new OSQLSynchQuery<ODocument>(query))
+            .execute();
     Assert.assertEquals(vertices.size(), 0);
-
   }
 
   @Test
@@ -85,7 +89,11 @@ public class LuceneTransactionQueryTest extends BaseLuceneTest {
 
     String query = "select from C1 where p1 lucene \"abc\" ";
     @SuppressWarnings("deprecation")
-    List<ODocument> vertices = ODatabaseRecordThreadLocal.instance().get().command(new OSQLSynchQuery<ODocument>(query)).execute();
+    List<ODocument> vertices =
+        ODatabaseRecordThreadLocal.instance()
+            .get()
+            .command(new OSQLSynchQuery<ODocument>(query))
+            .execute();
 
     Assert.assertEquals(1, vertices.size());
 
@@ -136,7 +144,6 @@ public class LuceneTransactionQueryTest extends BaseLuceneTest {
     Assert.assertEquals(1, vertices.size());
 
     Assert.assertEquals(1, index.getInternal().size());
-
   }
 
   @Test
@@ -161,7 +168,11 @@ public class LuceneTransactionQueryTest extends BaseLuceneTest {
 
     String query = "select from C1 where p1 lucene \"update\" ";
     @SuppressWarnings("deprecation")
-    List<ODocument> vertices = ODatabaseRecordThreadLocal.instance().get().command(new OSQLSynchQuery<ODocument>(query)).execute();
+    List<ODocument> vertices =
+        ODatabaseRecordThreadLocal.instance()
+            .get()
+            .command(new OSQLSynchQuery<ODocument>(query))
+            .execute();
 
     Assert.assertEquals(vertices.size(), 1);
 
@@ -227,7 +238,6 @@ public class LuceneTransactionQueryTest extends BaseLuceneTest {
     Assert.assertEquals(vertices.size(), 1);
 
     Assert.assertEquals(index.getInternal().size(), 1);
-
   }
 
   @Test
@@ -305,7 +315,5 @@ public class LuceneTransactionQueryTest extends BaseLuceneTest {
     Assert.assertEquals(vertices.size(), 2);
 
     Assert.assertEquals(index.getInternal().size(), 2);
-
   }
-
 }

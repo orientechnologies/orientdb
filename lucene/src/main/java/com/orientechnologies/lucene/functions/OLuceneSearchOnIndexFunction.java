@@ -12,20 +12,21 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-import com.orientechnologies.orient.core.sql.parser.*;
-import org.apache.lucene.index.IndexableField;
-import org.apache.lucene.index.memory.MemoryIndex;
-
+import com.orientechnologies.orient.core.sql.parser.OBinaryCompareOperator;
+import com.orientechnologies.orient.core.sql.parser.OExpression;
+import com.orientechnologies.orient.core.sql.parser.OFromClause;
+import com.orientechnologies.orient.core.sql.parser.OFromItem;
+import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.apache.lucene.index.IndexableField;
+import org.apache.lucene.index.memory.MemoryIndex;
 
-/**
- * Created by frank on 15/01/2017.
- */
+/** Created by frank on 15/01/2017. */
 public class OLuceneSearchOnIndexFunction extends OLuceneSearchFunctionTemplate {
 
   public static final String MEMORY_INDEX = "_memoryIndex";
@@ -42,29 +43,37 @@ public class OLuceneSearchOnIndexFunction extends OLuceneSearchFunctionTemplate 
   }
 
   @Override
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] params, OCommandContext ctx) {
+  public Object execute(
+      Object iThis,
+      OIdentifiable iCurrentRecord,
+      Object iCurrentResult,
+      Object[] params,
+      OCommandContext ctx) {
     OElement element = iThis instanceof OElement ? (OElement) iThis : ((OResult) iThis).toElement();
 
     String indexName = (String) params[0];
 
     OLuceneFullTextIndex index = searchForIndex(ctx, indexName);
 
-    if (index == null)
-      return false;
+    if (index == null) return false;
 
     String query = (String) params[1];
 
     MemoryIndex memoryIndex = getOrCreateMemoryIndex(ctx);
 
-    List<Object> key = index.getDefinition().getFields().stream().map(s -> element.getProperty(s)).collect(Collectors.toList());
+    List<Object> key =
+        index.getDefinition().getFields().stream()
+            .map(s -> element.getProperty(s))
+            .collect(Collectors.toList());
 
     for (IndexableField field : index.buildDocument(key).getFields()) {
       memoryIndex.addField(field, index.indexAnalyzer());
     }
 
     ODocument metadata = getMetadata(params);
-    OLuceneKeyAndMetadata keyAndMetadata = new OLuceneKeyAndMetadata(new OLuceneCompositeKey(Arrays.asList(query)).setContext(ctx),
-        metadata);
+    OLuceneKeyAndMetadata keyAndMetadata =
+        new OLuceneKeyAndMetadata(
+            new OLuceneCompositeKey(Arrays.asList(query)).setContext(ctx), metadata);
 
     return memoryIndex.search(index.buildQuery(keyAndMetadata)) > 0.0f;
   }
@@ -76,7 +85,6 @@ public class OLuceneSearchOnIndexFunction extends OLuceneSearchFunctionTemplate 
     }
 
     return OLuceneQueryBuilder.EMPTY_METADATA;
-
   }
 
   private MemoryIndex getOrCreateMemoryIndex(OCommandContext ctx) {
@@ -101,8 +109,12 @@ public class OLuceneSearchOnIndexFunction extends OLuceneSearchFunctionTemplate 
   }
 
   @Override
-  public Iterable<OIdentifiable> searchFromTarget(OFromClause target, OBinaryCompareOperator operator, Object rightValue,
-      OCommandContext ctx, OExpression... args) {
+  public Iterable<OIdentifiable> searchFromTarget(
+      OFromClause target,
+      OBinaryCompareOperator operator,
+      Object rightValue,
+      OCommandContext ctx,
+      OExpression... args) {
 
     OLuceneFullTextIndex index = searchForIndex(target, ctx, args);
 
@@ -113,8 +125,12 @@ public class OLuceneSearchOnIndexFunction extends OLuceneSearchFunctionTemplate 
       ODocument meta = getMetadata(index, query, args);
 
       List<OIdentifiable> luceneResultSet;
-      try (Stream<ORID> rids = index.getInternal()
-          .getRids(new OLuceneKeyAndMetadata(new OLuceneCompositeKey(Arrays.asList(query)).setContext(ctx), meta))) {
+      try (Stream<ORID> rids =
+          index
+              .getInternal()
+              .getRids(
+                  new OLuceneKeyAndMetadata(
+                      new OLuceneCompositeKey(Arrays.asList(query)).setContext(ctx), meta))) {
         luceneResultSet = rids.collect(Collectors.toList());
       }
 
@@ -133,19 +149,25 @@ public class OLuceneSearchOnIndexFunction extends OLuceneSearchFunctionTemplate 
   }
 
   @Override
-  protected OLuceneFullTextIndex searchForIndex(OFromClause target, OCommandContext ctx, OExpression... args) {
+  protected OLuceneFullTextIndex searchForIndex(
+      OFromClause target, OCommandContext ctx, OExpression... args) {
 
     OFromItem item = target.getItem();
     OIdentifier identifier = item.getIdentifier();
     return searchForIndex(identifier.getStringValue(), ctx, args);
   }
 
-  private OLuceneFullTextIndex searchForIndex(String className, OCommandContext ctx, OExpression... args) {
+  private OLuceneFullTextIndex searchForIndex(
+      String className, OCommandContext ctx, OExpression... args) {
 
     String indexName = (String) args[0].execute((OIdentifiable) null, ctx);
 
     final ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
-    OIndex index = database.getMetadata().getIndexManagerInternal().getClassIndex(database, className, indexName);
+    OIndex index =
+        database
+            .getMetadata()
+            .getIndexManagerInternal()
+            .getClassIndex(database, className, indexName);
 
     if (index != null && index.getInternal() instanceof OLuceneFullTextIndex) {
       return (OLuceneFullTextIndex) index;
@@ -169,5 +191,4 @@ public class OLuceneSearchOnIndexFunction extends OLuceneSearchFunctionTemplate 
   public Object getResult() {
     return super.getResult();
   }
-
 }

@@ -13,7 +13,7 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.test;
@@ -22,16 +22,12 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import java.util.Collection;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Collection;
-
-/**
- * Created by enricorisa on 28/06/14.
- */
-
+/** Created by enricorisa on 28/06/14. */
 public class LuceneGraphTXTest extends BaseLuceneTest {
 
   @Before
@@ -39,7 +35,8 @@ public class LuceneGraphTXTest extends BaseLuceneTest {
     OClass type = db.createVertexClass("City");
     type.createProperty("name", OType.STRING);
 
-    db.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
+    db.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE"))
+        .execute();
   }
 
   @Test
@@ -50,7 +47,8 @@ public class LuceneGraphTXTest extends BaseLuceneTest {
 
     db.save(v);
 
-    Collection results = db.command(new OCommandSQL("select from City where name lucene 'London'")).execute();
+    Collection results =
+        db.command(new OCommandSQL("select from City where name lucene 'London'")).execute();
     Assert.assertEquals(results.size(), 1);
 
     v.setProperty("name", "Berlin");
@@ -70,7 +68,5 @@ public class LuceneGraphTXTest extends BaseLuceneTest {
     Assert.assertEquals(results.size(), 1);
     results = db.command(new OCommandSQL("select from City where name lucene 'London'")).execute();
     Assert.assertEquals(results.size(), 0);
-
   }
-
 }

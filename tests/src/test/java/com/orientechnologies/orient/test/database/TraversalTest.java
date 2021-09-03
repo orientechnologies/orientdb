@@ -1,20 +1,19 @@
 package com.orientechnologies.orient.test.database;
 
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ODirection;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OVertex;
+import java.util.Iterator;
 import org.testng.annotations.Test;
 
-import java.util.Iterator;
-
 public class TraversalTest {
-  private static final int      SIZE     = 1000000;
-  private              OrientDB orientdb = new OrientDB("embedded:./target/databases", OrientDBConfig.defaultConfig());
+  private static final int SIZE = 1000000;
+  private OrientDB orientdb =
+      new OrientDB("embedded:./target/databases", OrientDBConfig.defaultConfig());
 
   public static void main(String[] args) {
     new TraversalTest().test();
@@ -25,7 +24,8 @@ public class TraversalTest {
     if (orientdb.exists("test")) {
       orientdb.drop("test");
     }
-    orientdb.create("test", ODatabaseType.PLOCAL);
+    orientdb.execute(
+        "create database " + "test" + " plocal users ( admin identified by 'admin' role admin)");
 
     ODatabaseSession db = orientdb.open("test", "admin", "admin");
 
@@ -37,8 +37,10 @@ public class TraversalTest {
       v.setProperty("val", i);
       v.setProperty("name", "vertex" + i);
       v.setProperty("foo", "foo laksjdf lakjsdf lkasjf dlkafdjs " + i);
-      v.setProperty("bar", "foo adfakbjk lkjaw elkm,nbn apoij w.e,jr ;kjhaw erlkasjf dlkafdjs " + i);
-      v.setProperty("baz", "foo laksjdf lakjsdf .lkau s;olknawe; oih;na ero;ij; lkasjf dlkafdjs " + i);
+      v.setProperty(
+          "bar", "foo adfakbjk lkjaw elkm,nbn apoij w.e,jr ;kjhaw erlkasjf dlkafdjs " + i);
+      v.setProperty(
+          "baz", "foo laksjdf lakjsdf .lkau s;olknawe; oih;na ero;ij; lkasjf dlkafdjs " + i);
       v.save();
 
       if (lastRid != null) {

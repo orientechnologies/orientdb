@@ -5,14 +5,12 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.v2.HashIndexNullBucketV2;
-
 import java.nio.ByteBuffer;
 
 public final class LocalHashTableV2NullBucketRemoveValuePO extends PageOperationRecord {
   private byte[] prevValue;
 
-  public LocalHashTableV2NullBucketRemoveValuePO() {
-  }
+  public LocalHashTableV2NullBucketRemoveValuePO() {}
 
   public LocalHashTableV2NullBucketRemoveValuePO(byte[] prevValue) {
     this.prevValue = prevValue;

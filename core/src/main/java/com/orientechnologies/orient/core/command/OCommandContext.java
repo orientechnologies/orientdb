@@ -21,7 +21,6 @@ package com.orientechnologies.orient.core.command;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.db.ODatabase;
-
 import java.util.Map;
 
 /**
@@ -31,9 +30,9 @@ import java.util.Map;
  */
 public interface OCommandContext {
 
-
   enum TIMEOUT_STRATEGY {
-    RETURN, EXCEPTION
+    RETURN,
+    EXCEPTION
   }
 
   Object getVariable(String iName);
@@ -55,9 +54,8 @@ public interface OCommandContext {
   /**
    * Updates a counter. Used to record metrics.
    *
-   * @param iName  Metric's name
+   * @param iName Metric's name
    * @param iValue delta to add or subtract
-   *
    * @return
    */
   long updateMetric(String iName, long iValue);
@@ -72,7 +70,6 @@ public interface OCommandContext {
    * Check if timeout is elapsed, if defined.
    *
    * @return false if it the timeout is elapsed and strategy is "return"
-   *
    * @throws OTimeoutException if the strategy is "exception" (default)
    */
   public boolean checkTimeout();
@@ -81,9 +78,7 @@ public interface OCommandContext {
 
   public void setInputParameters(Map<Object, Object> inputParameters);
 
-  /**
-   * Creates a copy of execution context.
-   */
+  /** Creates a copy of execution context. */
   OCommandContext copy();
 
   /**

@@ -4,16 +4,14 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.util.Map;
 import java.util.Optional;
 
 /**
- * <p>
- * takes a normal result set and transforms it in another result set made of OUpdatableRecord instances. Records that are not
- * identifiable are discarded.
- * </p>
- * <p>This is the opposite of ConvertToResultInternalStep</p>
+ * takes a normal result set and transforms it in another result set made of OUpdatableRecord
+ * instances. Records that are not identifiable are discarded.
+ *
+ * <p>This is the opposite of ConvertToResultInternalStep
  *
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
@@ -130,7 +128,6 @@ public class ConvertToUpdatableResultStep extends AbstractExecutionStep {
         return null;
       }
     };
-
   }
 
   @Override
@@ -147,4 +144,3 @@ public class ConvertToUpdatableResultStep extends AbstractExecutionStep {
     return cost;
   }
 }
-

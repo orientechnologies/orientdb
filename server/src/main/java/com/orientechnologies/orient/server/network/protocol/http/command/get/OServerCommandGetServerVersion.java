@@ -25,7 +25,7 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 
 public class OServerCommandGetServerVersion extends OServerCommandGetConnections {
-  private static final String[] NAMES = { "GET|server/version" };
+  private static final String[] NAMES = {"GET|server/version"};
 
   public OServerCommandGetServerVersion() {
     super("server.info");
@@ -37,7 +37,10 @@ public class OServerCommandGetServerVersion extends OServerCommandGetConnections
   }
 
   @Override
-  public boolean authenticate(final OHttpRequest iRequest, final OHttpResponse iResponse, final boolean iAskForAuthentication) {
+  public boolean authenticate(
+      final OHttpRequest iRequest,
+      final OHttpResponse iResponse,
+      final boolean iAskForAuthentication) {
     // return always true, as authentication is not needed
     return true;
   }
@@ -50,7 +53,12 @@ public class OServerCommandGetServerVersion extends OServerCommandGetConnections
 
     final String result = OConstants.getRawVersion();
 
-    iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, result, null);
+    iResponse.send(
+        OHttpUtils.STATUS_OK_CODE,
+        OHttpUtils.STATUS_OK_DESCRIPTION,
+        OHttpUtils.CONTENT_JSON,
+        result,
+        null);
 
     return false;
   }

@@ -40,18 +40,19 @@ public class OServerMain {
 
   public static void main(final String[] args) throws Exception {
     // STARTS ORIENTDB IN A NON DAEMON THREAD TO PREVENT EXIT
-    final Thread t = new Thread() {
-      @Override
-      public void run() {
-        try {
-          instance = OServerMain.create();
-          instance.startup().activate();
-          instance.waitForShutdown();
-        } catch (Exception e) {
-          OLogManager.instance().error(this, "Error during server execution", e);
-        }
-      }
-    };
+    final Thread t =
+        new Thread() {
+          @Override
+          public void run() {
+            try {
+              instance = OServerMain.create();
+              instance.startup().activate();
+              instance.waitForShutdown();
+            } catch (Exception e) {
+              OLogManager.instance().error(this, "Error during server execution", e);
+            }
+          }
+        };
 
     t.setDaemon(false);
 

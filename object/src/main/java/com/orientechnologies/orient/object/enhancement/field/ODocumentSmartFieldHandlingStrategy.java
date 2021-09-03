@@ -14,28 +14,29 @@
 
 package com.orientechnologies.orient.object.enhancement.field;
 
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-
 /**
- * {@link ODocumentFieldHandlingStrategy} that deals with fields (depending on their type) in a smarter way than a
- * {@link ODocumentSimpleFieldHandlingStrategy}.
- * 
+ * {@link ODocumentFieldHandlingStrategy} that deals with fields (depending on their type) in a
+ * smarter way than a {@link ODocumentSimpleFieldHandlingStrategy}.
+ *
  * @author diegomtassis <a href="mailto:dta@compart.com">Diego Martin Tassis</a>
  */
 public class ODocumentSmartFieldHandlingStrategy extends ODocumentSimpleFieldHandlingStrategy {
 
-  private final Map<OType, ODocumentFieldOTypeHandlingStrategy> customTypeHandlers = new HashMap<OType, ODocumentFieldOTypeHandlingStrategy>();
+  private final Map<OType, ODocumentFieldOTypeHandlingStrategy> customTypeHandlers =
+      new HashMap<OType, ODocumentFieldOTypeHandlingStrategy>();
 
   /**
    * Constructor
-   * 
+   *
    * @param typeHandlers
    */
-  public ODocumentSmartFieldHandlingStrategy(Map<OType, ODocumentFieldOTypeHandlingStrategy> typeHandlers) {
+  public ODocumentSmartFieldHandlingStrategy(
+      Map<OType, ODocumentFieldOTypeHandlingStrategy> typeHandlers) {
     this.customTypeHandlers.putAll(typeHandlers);
 
     // Validate the strategy mappings
@@ -43,13 +44,18 @@ public class ODocumentSmartFieldHandlingStrategy extends ODocumentSimpleFieldHan
     for (OType oType : this.customTypeHandlers.keySet()) {
       currentStrategy = this.customTypeHandlers.get(oType);
       if (!oType.equals(currentStrategy.getOType())) {
-        throw new IllegalArgumentException("Strategy " + currentStrategy.getClass() + " can not handle fields with type: " + oType);
+        throw new IllegalArgumentException(
+            "Strategy "
+                + currentStrategy.getClass()
+                + " can not handle fields with type: "
+                + oType);
       }
     }
   }
 
   @Override
-  public ODocument store(ODocument iRecord, String fieldName, Object fieldValue, OType suggestedFieldType) {
+  public ODocument store(
+      ODocument iRecord, String fieldName, Object fieldValue, OType suggestedFieldType) {
 
     OType fieldType = deriveFieldType(iRecord, fieldName, suggestedFieldType);
 

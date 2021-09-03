@@ -1,10 +1,9 @@
 package com.orientechnologies.orient.test.java.serialization;
 
+import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-
-import com.orientechnologies.orient.core.serialization.OMemoryStream;
 
 public class BinarySerializationStream {
 
@@ -36,6 +35,5 @@ public class BinarySerializationStream {
     System.out.println("OMemoryStream " + (System.currentTimeMillis() - time));
 
     System.out.println("" + s.toByteArray().length + " " + mou.toByteArray().length);
-
   }
 }

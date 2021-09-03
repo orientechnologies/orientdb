@@ -25,19 +25,23 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.exception.OStorageExistsException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
-import org.testng.Assert;
-import org.testng.annotations.*;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.Locale;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 @Test(groups = "db")
 public class DbCreationTest extends ObjectDBBaseTest {
@@ -66,18 +70,15 @@ public class DbCreationTest extends ObjectDBBaseTest {
 
   @BeforeMethod
   @Override
-  public void beforeMethod() throws Exception {
-  }
+  public void beforeMethod() throws Exception {}
 
   @AfterMethod
   @Override
-  public void afterMethod() throws Exception {
-  }
+  public void afterMethod() throws Exception {}
 
   @AfterMethod
   public void tearDown() {
-    if (url.contains("remote:"))
-      ODatabaseDocumentPool.global().close();
+    if (url.contains("remote:")) ODatabaseDocumentPool.global().close();
   }
 
   @Test
@@ -88,12 +89,13 @@ public class DbCreationTest extends ObjectDBBaseTest {
     ODatabaseHelper.createDatabase(new OObjectDatabaseTx(url), url, getStorageType());
   }
 
-  @Test(dependsOnMethods = { "testDbCreationDefault" })
+  @Test(dependsOnMethods = {"testDbCreationDefault"})
   public void testDbExists() throws IOException {
-    Assert.assertTrue(ODatabaseHelper.existsDatabase(new ODatabaseDocumentTx(url), getStorageType()));
+    Assert.assertTrue(
+        ODatabaseHelper.existsDatabase(new ODatabaseDocumentTx(url), getStorageType()));
   }
 
-  @Test(dependsOnMethods = { "testDbExists" })
+  @Test(dependsOnMethods = {"testDbExists"})
   public void testDbOpen() {
     database = new OObjectDatabaseTx(url);
     database.open("admin", "admin");
@@ -101,37 +103,45 @@ public class DbCreationTest extends ObjectDBBaseTest {
     database.close();
   }
 
-  @Test(dependsOnMethods = { "testDbOpen" })
+  @Test(dependsOnMethods = {"testDbOpen"})
   public void testDbOpenWithLastAsSlash() {
     database = new OObjectDatabaseTx(url + "/");
     database.open("admin", "admin");
     database.close();
   }
 
-  @Test(dependsOnMethods = { "testDbOpenWithLastAsSlash" })
+  @Test(dependsOnMethods = {"testDbOpenWithLastAsSlash"})
   public void testDbOpenWithBackSlash() {
     database = new OObjectDatabaseTx(url.replace('/', '\\'));
     database.open("admin", "admin");
     database.close();
   }
 
-  @Test(dependsOnMethods = { "testDbOpenWithBackSlash" })
+  @Test(dependsOnMethods = {"testDbOpenWithBackSlash"})
   public void testChangeLocale() throws IOException {
     database = new OObjectDatabaseTx(url);
     database.open("admin", "admin");
-    database.command(new OCommandSQL(" ALTER DATABASE LOCALELANGUAGE  ?")).execute(Locale.GERMANY.getLanguage());
-    database.command(new OCommandSQL(" ALTER DATABASE LOCALECOUNTRY  ?")).execute(Locale.GERMANY.getCountry());
+    database
+        .command(new OCommandSQL(" ALTER DATABASE LOCALELANGUAGE  ?"))
+        .execute(Locale.GERMANY.getLanguage());
+    database
+        .command(new OCommandSQL(" ALTER DATABASE LOCALECOUNTRY  ?"))
+        .execute(Locale.GERMANY.getCountry());
     database.reload();
-    Assert.assertEquals(database.get(ODatabase.ATTRIBUTES.LOCALELANGUAGE), Locale.GERMANY.getLanguage());
-    Assert.assertEquals(database.get(ODatabase.ATTRIBUTES.LOCALECOUNTRY), Locale.GERMANY.getCountry());
+    Assert.assertEquals(
+        database.get(ODatabase.ATTRIBUTES.LOCALELANGUAGE), Locale.GERMANY.getLanguage());
+    Assert.assertEquals(
+        database.get(ODatabase.ATTRIBUTES.LOCALECOUNTRY), Locale.GERMANY.getCountry());
     database.set(ODatabase.ATTRIBUTES.LOCALECOUNTRY, Locale.ENGLISH.getCountry());
     database.set(ODatabase.ATTRIBUTES.LOCALELANGUAGE, Locale.ENGLISH.getLanguage());
-    Assert.assertEquals(database.get(ODatabase.ATTRIBUTES.LOCALECOUNTRY), Locale.ENGLISH.getCountry());
-    Assert.assertEquals(database.get(ODatabase.ATTRIBUTES.LOCALELANGUAGE), Locale.ENGLISH.getLanguage());
+    Assert.assertEquals(
+        database.get(ODatabase.ATTRIBUTES.LOCALECOUNTRY), Locale.ENGLISH.getCountry());
+    Assert.assertEquals(
+        database.get(ODatabase.ATTRIBUTES.LOCALELANGUAGE), Locale.ENGLISH.getLanguage());
     database.close();
   }
 
-  @Test(dependsOnMethods = { "testChangeLocale" })
+  @Test(dependsOnMethods = {"testChangeLocale"})
   public void testRoles() throws IOException {
     database = new OObjectDatabaseTx(url);
     database.open("admin", "admin");
@@ -139,13 +149,12 @@ public class DbCreationTest extends ObjectDBBaseTest {
     database.close();
   }
 
-  @Test(dependsOnMethods = { "testChangeLocale" })
+  @Test(dependsOnMethods = {"testChangeLocale"})
   public void testSubFolderDbCreate() throws IOException {
     int pos = url.lastIndexOf("/");
 
     final String u;
-    if (pos > -1)
-      u = url.substring(0, pos) + "/sub/subTest";
+    if (pos > -1) u = url.substring(0, pos) + "/sub/subTest";
     else {
       pos = url.lastIndexOf(":");
       u = url.substring(0, pos + 1) + "sub/subTest";
@@ -161,13 +170,12 @@ public class DbCreationTest extends ObjectDBBaseTest {
     ODatabaseHelper.dropDatabase(db, getStorageType());
   }
 
-  @Test(dependsOnMethods = { "testChangeLocale" })
+  @Test(dependsOnMethods = {"testChangeLocale"})
   public void testSubFolderDbCreateConnPool() throws IOException {
     int pos = url.lastIndexOf("/");
 
     final String u;
-    if (pos > -1)
-      u = url.substring(0, pos) + "/sub/subTest";
+    if (pos > -1) u = url.substring(0, pos) + "/sub/subTest";
     else {
       pos = url.lastIndexOf(":");
       u = url.substring(0, pos + 1) + "sub/subTest";
@@ -179,8 +187,7 @@ public class DbCreationTest extends ObjectDBBaseTest {
     ODatabaseHelper.createDatabase(db, u, getStorageType());
 
     db = ODatabaseDocumentPool.global().acquire(u, "admin", "admin");
-    if (u.startsWith("remote:"))
-      db.close();
+    if (u.startsWith("remote:")) db.close();
 
     ODatabaseHelper.dropDatabase(db, getStorageType());
   }
@@ -212,7 +219,7 @@ public class DbCreationTest extends ObjectDBBaseTest {
     ODatabaseHelper.createDatabase(db, url, getStorageType());
   }
 
-  @Test(dependsOnMethods = { "testCreateAndConnectionPool" })
+  @Test(dependsOnMethods = {"testCreateAndConnectionPool"})
   public void testOpenCloseConnectionPool() throws IOException {
     ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
     if (!ODatabaseHelper.existsDatabase(db, null)) {
@@ -229,13 +236,12 @@ public class DbCreationTest extends ObjectDBBaseTest {
     }
   }
 
-  @Test(dependsOnMethods = { "testChangeLocale" })
+  @Test(dependsOnMethods = {"testChangeLocale"})
   public void testSubFolderMultipleDbCreateSameName() throws IOException {
     int pos = url.lastIndexOf("/");
     String u = url;
 
-    if (pos > -1)
-      u = url.substring(0, pos);
+    if (pos > -1) u = url.substring(0, pos);
     else {
       pos = url.lastIndexOf(":");
       u = url.substring(0, pos + 1);
@@ -266,8 +272,7 @@ public class DbCreationTest extends ObjectDBBaseTest {
   }
 
   public void testZipCompression() {
-    if (database == null || !database.getURL().startsWith("plocal:"))
-      return;
+    if (database == null || !database.getURL().startsWith("plocal:")) return;
 
     OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.setValue("gzip");
 
@@ -275,17 +280,19 @@ public class DbCreationTest extends ObjectDBBaseTest {
     String dburl = "plocal:" + buildDirectory + "/test-db/" + this.getClass().getSimpleName();
 
     final OrientGraphFactory factory = new OrientGraphFactory(dburl, "admin", "admin");
-    if (factory.exists())
-      factory.drop();
+    if (factory.exists()) factory.drop();
     factory.close();
     OrientGraphNoTx db = factory.getNoTx();
     db.drop();
-    OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.setValue(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getValue());
+    OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.setValue(
+        OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getValue());
   }
 
   public void testDbIsNotRemovedOnSecondTry() {
-    final String buildDirectory = new File(System.getProperty("buildDirectory", ".")).getAbsolutePath();
-    final String dbPath = buildDirectory + File.separator + this.getClass().getSimpleName() + "Remove";
+    final String buildDirectory =
+        new File(System.getProperty("buildDirectory", ".")).getAbsolutePath();
+    final String dbPath =
+        buildDirectory + File.separator + this.getClass().getSimpleName() + "Remove";
     final String dburl = "plocal:" + dbPath;
 
     ODatabaseDocumentTx db = new ODatabaseDocumentTx(dburl);
@@ -299,7 +306,7 @@ public class DbCreationTest extends ObjectDBBaseTest {
       dbTwo.create();
       Assert.fail();
     } catch (ODatabaseException e) {
-      //ignore all is correct
+      // ignore all is correct
     }
 
     Assert.assertTrue(new File(dbPath).exists());
@@ -311,8 +318,7 @@ public class DbCreationTest extends ObjectDBBaseTest {
   }
 
   public void testDbOutOfPath() throws IOException {
-    if (!url.startsWith("remote"))
-      return;
+    if (!url.startsWith("remote")) return;
 
     // TRY UNIX PATH
     try {

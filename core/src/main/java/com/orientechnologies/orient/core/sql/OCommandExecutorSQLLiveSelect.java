@@ -32,41 +32,42 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.security.*;
+import com.orientechnologies.orient.core.metadata.security.ORestrictedAccessHook;
+import com.orientechnologies.orient.core.metadata.security.ORestrictedOperation;
+import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.ORule;
+import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.query.live.OLiveQueryListener;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OLegacyResultSet;
 import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
-
 import java.util.Map;
 import java.util.Random;
 
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
-public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect implements OLiveQueryListener {
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
+public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect
+    implements OLiveQueryListener {
   public static final String KEYWORD_LIVE_SELECT = "LIVE SELECT";
   private ODatabaseDocument execDb;
-  private int               token;
+  private int token;
   private static final Random random = new Random();
 
-  public OCommandExecutorSQLLiveSelect() {
-
-  }
+  public OCommandExecutorSQLLiveSelect() {}
 
   public Object execute(final Map<Object, Object> iArgs) {
     try {
       final ODatabaseDocumentInternal db = getDatabase();
-      execInSeparateDatabase(new OCallable() {
-        @Override
-        public Object call(Object iArgument) {
-          return execDb = db.copy();
-        }
-      });
+      execInSeparateDatabase(
+          new OCallable() {
+            @Override
+            public Object call(Object iArgument) {
+              return execDb = db.copy();
+            }
+          });
 
       synchronized (random) {
-        token = random.nextInt();// TODO do something better ;-)!
+        token = random.nextInt(); // TODO do something better ;-)!
       }
       subscribeToLiveQuery(token, db);
       bindDefaultContextVariables();
@@ -84,7 +85,7 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
       }
 
       ODocument result = new ODocument();
-      result.field("token", token);// TODO change this name...?
+      result.field("token", token); // TODO change this name...?
 
       ((OLegacyResultSet) getResult()).add(result);
       return getResult();
@@ -125,14 +126,15 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
     }
     final OCommandResultListener listener = request.getResultListener();
     if (listener instanceof OLiveResultListener) {
-      execInSeparateDatabase(new OCallable() {
-        @Override
-        public Object call(Object iArgument) {
-          execDb.activateOnCurrentThread();
-          ((OLiveResultListener) listener).onLiveResult(token, iOp);
-          return null;
-        }
-      });
+      execInSeparateDatabase(
+          new OCallable() {
+            @Override
+            public Object call(Object iArgument) {
+              execDb.activateOnCurrentThread();
+              ((OLiveResultListener) listener).onLiveResult(token, iOp);
+              return null;
+            }
+          });
     }
   }
 
@@ -152,13 +154,22 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
   private boolean checkSecurity(OIdentifiable value) {
     try {
       // TODO check this!
-      execDb.checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, ((ODocument) value.getRecord()).getClassName());
+      execDb.checkSecurity(
+          ORule.ResourceGeneric.CLASS,
+          ORole.PERMISSION_READ,
+          ((ODocument) value.getRecord()).getClassName());
     } catch (OSecurityException ignore) {
       return false;
     }
-    OSecurityInternal security = ((ODatabaseDocumentInternal) execDb).getSharedContext().getSecurity();
+    OSecurityInternal security =
+        ((ODatabaseDocumentInternal) execDb).getSharedContext().getSecurity();
     boolean allowedByPolicy = security.canRead((ODatabaseSession) execDb, value.getRecord());
-    return allowedByPolicy && ORestrictedAccessHook.isAllowed((ODatabaseDocumentInternal) execDb, (ODocument) value.getRecord(), ORestrictedOperation.ALLOW_READ, false);
+    return allowedByPolicy
+        && ORestrictedAccessHook.isAllowed(
+            (ODatabaseDocumentInternal) execDb,
+            (ODocument) value.getRecord(),
+            ORestrictedOperation.ALLOW_READ,
+            false);
   }
 
   private boolean matchesFilters(OIdentifiable value) {
@@ -168,7 +179,8 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
     if (!(value instanceof ODocument)) {
       value = value.getRecord();
     }
-    return !(Boolean.FALSE.equals(compiledFilter.evaluate((ODocument) value, (ODocument) value, getContext())));
+    return !(Boolean.FALSE.equals(
+        compiledFilter.evaluate((ODocument) value, (ODocument) value, getContext())));
   }
 
   private boolean matchesTarget(OIdentifiable value) {
@@ -202,7 +214,7 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
       final String clusterName = execDb.getClusterNameById(value.getIdentity().getClusterId());
       if (clusterName != null) {
         for (String cluster : parsedTarget.getTargetClusters().keySet()) {
-          if (clusterName.equalsIgnoreCase(cluster)) { //make it case insensitive in 3.0?
+          if (clusterName.equalsIgnoreCase(cluster)) { // make it case insensitive in 3.0?
             return true;
           }
         }
@@ -245,5 +257,4 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
   public QUORUM_TYPE getQuorumType() {
     return QUORUM_TYPE.NONE;
   }
-
 }

@@ -23,20 +23,17 @@ import com.orientechnologies.orient.core.db.OLiveQueryResultListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-import org.testng.Assert;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import org.testng.Assert;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
-/**
- * only for remote usage (it requires registered LiveQuery plugin)
- */
+/** only for remote usage (it requires registered LiveQuery plugin) */
 @Test(groups = "Query")
 public class LiveQuery30TxTest extends DocumentDBBaseTest implements OCommandOutputListener {
 
@@ -67,9 +64,7 @@ public class LiveQuery30TxTest extends DocumentDBBaseTest implements OCommandOut
     }
 
     @Override
-    public void onError(ODatabaseDocument database, OException exception) {
-
-    }
+    public void onError(ODatabaseDocument database, OException exception) {}
 
     @Override
     public void onEnd(ODatabaseDocument database) {
@@ -78,11 +73,10 @@ public class LiveQuery30TxTest extends DocumentDBBaseTest implements OCommandOut
     }
   }
 
-  @Parameters(value = { "url" })
+  @Parameters(value = {"url"})
   public LiveQuery30TxTest(@Optional String url) {
     super(url);
   }
-
 
   @Test
   public void checkLiveQueryTx() throws IOException, InterruptedException {
@@ -90,7 +84,6 @@ public class LiveQuery30TxTest extends DocumentDBBaseTest implements OCommandOut
     final String className2 = "LiveQuery30Test_checkLiveQueryTx_2";
     database.getMetadata().getSchema().createClass(className1);
     database.getMetadata().getSchema().createClass(className2);
-
 
     MyLiveQueryListener listener = new MyLiveQueryListener();
 

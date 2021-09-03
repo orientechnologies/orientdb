@@ -3,18 +3,15 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
-
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class RemoveEmptyOptionalsStep extends AbstractExecutionStep {
 
-  public RemoveEmptyOptionalsStep(OCommandContext ctx, OIdentifier cluster, boolean profilingEnabled) {
+  public RemoveEmptyOptionalsStep(
+      OCommandContext ctx, OIdentifier cluster, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
-
   }
 
   public RemoveEmptyOptionalsStep(OCommandContext ctx, boolean profilingEnabled) {

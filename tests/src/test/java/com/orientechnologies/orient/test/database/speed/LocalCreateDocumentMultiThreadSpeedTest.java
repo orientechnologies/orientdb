@@ -25,20 +25,19 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.test.database.base.OrientMultiThreadTest;
 import com.orientechnologies.orient.test.database.base.OrientThreadTest;
+import java.util.Date;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import java.util.Date;
-
 public class LocalCreateDocumentMultiThreadSpeedTest extends OrientMultiThreadTest {
   private ODatabaseDocumentTx mainDatabase;
-  private long                foundObjects;
+  private long foundObjects;
 
   @Test(enabled = false)
   public static class CreateObjectsThread extends OrientThreadTest {
     private ODatabaseDocumentTx database;
-    private ODocument           record;
-    private Date                date = new Date();
+    private ODocument record;
+    private Date date = new Date();
 
     public CreateObjectsThread(final SpeedTestMultiThreads parent, final int threadId) {
       super(parent, threadId);
@@ -66,14 +65,12 @@ public class LocalCreateDocumentMultiThreadSpeedTest extends OrientMultiThreadTe
 
       record.save();
 
-      if (data.getCyclesDone() == data.getCycles() - 1)
-        database.commit();
+      if (data.getCyclesDone() == data.getCycles() - 1) database.commit();
     }
 
     @Override
     public void deinit() throws Exception {
-      if (database != null)
-        database.close();
+      if (database != null) database.close();
       super.deinit();
     }
   }
@@ -104,7 +101,7 @@ public class LocalCreateDocumentMultiThreadSpeedTest extends OrientMultiThreadTe
     mainDatabase.set(ODatabase.ATTRIBUTES.MINIMUMCLUSTERS, 8);
     mainDatabase.getMetadata().getSchema().createClass("Account");
 
-    foundObjects = 0;// database.countClusterElements("Account");
+    foundObjects = 0; // database.countClusterElements("Account");
 
     System.out.println("\nTotal objects in Animal cluster before the test: " + foundObjects);
   }
@@ -113,7 +110,6 @@ public class LocalCreateDocumentMultiThreadSpeedTest extends OrientMultiThreadTe
   public void deinit() {
     Assert.assertEquals(mainDatabase.countClass("Account"), 1000000 + foundObjects);
 
-    if (mainDatabase != null)
-      mainDatabase.close();
+    if (mainDatabase != null) mainDatabase.close();
   }
 }

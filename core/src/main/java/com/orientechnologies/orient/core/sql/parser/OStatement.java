@@ -14,12 +14,11 @@ import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
-
 import java.util.Map;
 
 public class OStatement extends SimpleNode {
 
-  //only for internal use!!! (caching and profiling)
+  // only for internal use!!! (caching and profiling)
   protected String originalStatement;
 
   public static final String CUSTOM_STRICT_SQL = "strictSql";
@@ -33,12 +32,11 @@ public class OStatement extends SimpleNode {
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
-    throw new UnsupportedOperationException("missing implementation in " + getClass().getSimpleName());
+    throw new UnsupportedOperationException(
+        "missing implementation in " + getClass().getSimpleName());
   }
 
-  public void validate() throws OCommandSQLParsingException {
-
-  }
+  public void validate() throws OCommandSQLParsingException {}
 
   @Override
   public String toString(String prefix) {
@@ -47,17 +45,19 @@ public class OStatement extends SimpleNode {
     return builder.toString();
   }
 
-  public Object execute(OSQLAsynchQuery<ODocument> request, OCommandContext context, OProgressListener progressListener) {
+  public Object execute(
+      OSQLAsynchQuery<ODocument> request,
+      OCommandContext context,
+      OProgressListener progressListener) {
     throw new UnsupportedOperationException("Unsupported command: " + getClass().getSimpleName());
   }
-
 
   public OResultSet execute(ODatabase db, Object[] args) {
     return execute(db, args, true);
   }
 
   public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentContext) {
-    return execute(db, args, parentContext,true);
+    return execute(db, args, parentContext, true);
   }
 
   public OResultSet execute(ODatabase db, Map args) {
@@ -65,14 +65,15 @@ public class OStatement extends SimpleNode {
   }
 
   public OResultSet execute(ODatabase db, Map args, OCommandContext parentContext) {
-    return execute(db, args, parentContext,true);
+    return execute(db, args, parentContext, true);
   }
 
   public OResultSet execute(ODatabase db, Object[] args, boolean usePlanCache) {
     return execute(db, args, null, usePlanCache);
   }
 
-  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentContext, boolean usePlanCache) {
+  public OResultSet execute(
+      ODatabase db, Object[] args, OCommandContext parentContext, boolean usePlanCache) {
     throw new UnsupportedOperationException();
   }
 
@@ -80,16 +81,15 @@ public class OStatement extends SimpleNode {
     return execute(db, args, null, usePlanCache);
   }
 
-  public OResultSet execute(ODatabase db, Map args, OCommandContext parentContext, boolean usePlanCache) {
+  public OResultSet execute(
+      ODatabase db, Map args, OCommandContext parentContext, boolean usePlanCache) {
     throw new UnsupportedOperationException();
   }
-
 
   /**
    * creates an execution plan for current statement, with profiling disabled
    *
    * @param ctx the context that will be used to execute the statement
-   *
    * @return an execution plan
    */
   public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx) {
@@ -99,9 +99,8 @@ public class OStatement extends SimpleNode {
   /**
    * creates an execution plan for current statement
    *
-   * @param ctx     the context that will be used to execute the statement
+   * @param ctx the context that will be used to execute the statement
    * @param profile true to enable profiling, false to disable it
-   *
    * @return an execution plan
    */
   public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx, boolean profile) {
@@ -117,7 +116,8 @@ public class OStatement extends SimpleNode {
   }
 
   public boolean refersToParent() {
-    throw new UnsupportedOperationException("Implement " + getClass().getSimpleName() + ".refersToParent()");
+    throw new UnsupportedOperationException(
+        "Implement " + getClass().getSimpleName() + ".refersToParent()");
   }
 
   public boolean isIdempotent() {
@@ -126,7 +126,11 @@ public class OStatement extends SimpleNode {
 
   public static OStatement deserializeFromOResult(OResult doc) {
     try {
-      OStatement result = (OStatement) Class.forName(doc.getProperty("__class")).getConstructor(Integer.class).newInstance(-1);
+      OStatement result =
+          (OStatement)
+              Class.forName(doc.getProperty("__class"))
+                  .getConstructor(Integer.class)
+                  .newInstance(-1);
       result.deserialize(doc);
     } catch (Exception e) {
       throw OException.wrapException(new OCommandExecutionException(""), e);

@@ -3,14 +3,17 @@ package com.orientechnologies.orient.core.db.record;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
-import org.junit.Assert;
-import org.junit.Test;
-
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.NotSerializableException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class TrackedMapTest {
   @Test
@@ -24,7 +27,9 @@ public class TrackedMapTest {
 
     map.put("key1", "value1");
 
-    OMultiValueChangeEvent<Object, Object> event = new OMultiValueChangeEvent<Object, Object>(OMultiValueChangeEvent.OChangeType.ADD, "key1", "value1", null);
+    OMultiValueChangeEvent<Object, Object> event =
+        new OMultiValueChangeEvent<Object, Object>(
+            OMultiValueChangeEvent.OChangeType.ADD, "key1", "value1", null);
     Assert.assertEquals(event, map.getTimeLine().getMultiValueChangeEvents().get(0));
     Assert.assertTrue(map.isModified());
     Assert.assertTrue(doc.isDirty());
@@ -46,8 +51,9 @@ public class TrackedMapTest {
     map.enableTracking(doc);
 
     map.put("key1", "value2");
-    OMultiValueChangeEvent<Object, Object> event = new OMultiValueChangeEvent<Object, Object>(OMultiValueChangeEvent.OChangeType.UPDATE, "key1", "value2",
-        "value1");
+    OMultiValueChangeEvent<Object, Object> event =
+        new OMultiValueChangeEvent<Object, Object>(
+            OMultiValueChangeEvent.OChangeType.UPDATE, "key1", "value2", "value1");
     Assert.assertEquals(event, map.getTimeLine().getMultiValueChangeEvents().get(0));
     Assert.assertTrue(map.isModified());
     Assert.assertTrue(doc.isDirty());
@@ -123,8 +129,9 @@ public class TrackedMapTest {
     map.disableTracking(doc);
     map.enableTracking(doc);
 
-    OMultiValueChangeEvent<Object, Object> event = new OMultiValueChangeEvent<Object, Object>(OMultiValueChangeEvent.OChangeType.REMOVE, "key1", null,
-        "value1");
+    OMultiValueChangeEvent<Object, Object> event =
+        new OMultiValueChangeEvent<Object, Object>(
+            OMultiValueChangeEvent.OChangeType.REMOVE, "key1", null, "value1");
     map.remove("key1");
     Assert.assertEquals(event, map.getTimeLine().getMultiValueChangeEvents().get(0));
     Assert.assertTrue(map.isModified());
@@ -164,9 +171,15 @@ public class TrackedMapTest {
     Assert.assertFalse(doc.isDirty());
 
     final List<OMultiValueChangeEvent<Object, String>> firedEvents = new ArrayList<>();
-    firedEvents.add(new OMultiValueChangeEvent<Object, String>(OMultiValueChangeEvent.OChangeType.REMOVE, "key1", null, "value1"));
-    firedEvents.add(new OMultiValueChangeEvent<Object, String>(OMultiValueChangeEvent.OChangeType.REMOVE, "key2", null, "value2"));
-    firedEvents.add(new OMultiValueChangeEvent<Object, String>(OMultiValueChangeEvent.OChangeType.REMOVE, "key3", null, "value3"));
+    firedEvents.add(
+        new OMultiValueChangeEvent<Object, String>(
+            OMultiValueChangeEvent.OChangeType.REMOVE, "key1", null, "value1"));
+    firedEvents.add(
+        new OMultiValueChangeEvent<Object, String>(
+            OMultiValueChangeEvent.OChangeType.REMOVE, "key2", null, "value2"));
+    firedEvents.add(
+        new OMultiValueChangeEvent<Object, String>(
+            OMultiValueChangeEvent.OChangeType.REMOVE, "key3", null, "value3"));
 
     trackedMap.enableTracking(doc);
     trackedMap.clear();
@@ -219,8 +232,9 @@ public class TrackedMapTest {
     trackedMap.remove("key8");
     trackedMap.remove("key3");
 
-    Assert.assertEquals(trackedMap.returnOriginalState((List) trackedMap.getTimeLine().getMultiValueChangeEvents()), original);
-
+    Assert.assertEquals(
+        trackedMap.returnOriginalState((List) trackedMap.getTimeLine().getMultiValueChangeEvents()),
+        original);
   }
 
   @Test
@@ -249,13 +263,12 @@ public class TrackedMapTest {
     trackedMap.remove("key8");
     trackedMap.remove("key3");
 
-    Assert.assertEquals(trackedMap.returnOriginalState((List) trackedMap.getTimeLine().getMultiValueChangeEvents()), original);
-
+    Assert.assertEquals(
+        trackedMap.returnOriginalState((List) trackedMap.getTimeLine().getMultiValueChangeEvents()),
+        original);
   }
 
-  /**
-   * Test that {@link OTrackedMap} is serialised correctly.
-   */
+  /** Test that {@link OTrackedMap} is serialised correctly. */
   @Test
   public void testMapSerialization() throws Exception {
 
@@ -267,7 +280,8 @@ public class TrackedMapTest {
       }
     }
 
-    final OTrackedMap<String> beforeSerialization = new OTrackedMap<String>(new NotSerializableDocument());
+    final OTrackedMap<String> beforeSerialization =
+        new OTrackedMap<String>(new NotSerializableDocument());
     beforeSerialization.put(0, "firstVal");
     beforeSerialization.put(1, "secondVal");
 
@@ -276,7 +290,8 @@ public class TrackedMapTest {
     out.writeObject(beforeSerialization);
     out.close();
 
-    final ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(memoryStream.copy()));
+    final ObjectInputStream input =
+        new ObjectInputStream(new ByteArrayInputStream(memoryStream.copy()));
     @SuppressWarnings("unchecked")
     final Map<Object, String> afterSerialization = (Map<Object, String>) input.readObject();
 

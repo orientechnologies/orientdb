@@ -16,26 +16,20 @@
  */
 package com.orientechnologies.orient.test.domain.base;
 
+import com.orientechnologies.orient.core.record.impl.OBlob;
+import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import javax.persistence.Id;
 import javax.persistence.OneToOne;
 import javax.persistence.Version;
 
-import com.orientechnologies.orient.core.record.impl.OBlob;
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-
-/**
- * @author Luca Molino (molino.luca--at--gmail.com)
- * 
- */
+/** @author Luca Molino (molino.luca--at--gmail.com) */
 public class Media {
 
-  @Id
-  private Object       id;
+  @Id private Object id;
 
-  @Version
-  private Object       version;
+  @Version private Object version;
 
-  private String       name;
+  private String name;
 
   @OneToOne(orphanRemoval = true)
   private OBlob content;
@@ -71,12 +65,10 @@ public class Media {
   public void setContent(OBlob content) {
     OBlob current = this.getContent();
     this.content = content;
-    if (current != null)
-      current.getRecord().delete();
+    if (current != null) current.getRecord().delete();
   }
 
   public void setContent(byte[] bytes) {
     this.content = new ORecordBytes(bytes);
   }
-
 }

@@ -21,26 +21,28 @@ package com.orientechnologies.orient.core.sql.functions.math;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
 
 /**
  * Evaluates a complex expression.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public class OSQLFunctionDecimal extends OSQLFunctionMathAbstract {
   public static final String NAME = "decimal";
-  private Object             result;
+  private Object result;
 
   public OSQLFunctionDecimal() {
     super(NAME, 1, 1);
   }
 
-  public Object execute(Object iThis, final OIdentifiable iRecord, final Object iCurrentResult, final Object[] iParams,
+  public Object execute(
+      Object iThis,
+      final OIdentifiable iRecord,
+      final Object iCurrentResult,
+      final Object[] iParams,
       OCommandContext iContext) {
     Object inputValue = iParams[0];
     if (inputValue == null) {

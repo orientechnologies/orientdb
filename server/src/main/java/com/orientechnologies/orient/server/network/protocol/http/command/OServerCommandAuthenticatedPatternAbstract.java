@@ -21,13 +21,13 @@ package com.orientechnologies.orient.server.network.protocol.http.command;
 
 import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
 
-public abstract class OServerCommandAuthenticatedPatternAbstract extends OServerCommandAuthenticatedDbAbstract {
+public abstract class OServerCommandAuthenticatedPatternAbstract
+    extends OServerCommandAuthenticatedDbAbstract {
 
   private String[] pattern;
 
   public OServerCommandAuthenticatedPatternAbstract(final OServerCommandConfiguration iConfig) {
-    if (iConfig.pattern == null)
-      throw new IllegalArgumentException("Command pattern missed");
+    if (iConfig.pattern == null) throw new IllegalArgumentException("Command pattern missed");
 
     pattern = iConfig.pattern.split(" ");
   }

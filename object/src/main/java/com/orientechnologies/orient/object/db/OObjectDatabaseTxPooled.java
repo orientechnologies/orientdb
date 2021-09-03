@@ -28,8 +28,9 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 
 /**
- * Pooled wrapper to the OObjectDatabaseTx class. Allows to being reused across calls. The close() method does not close the
- * database for real but release it to the owner pool. The database born as opened and will leave open until the pool is closed.
+ * Pooled wrapper to the OObjectDatabaseTx class. Allows to being reused across calls. The close()
+ * method does not close the database for real but release it to the owner pool. The database born
+ * as opened and will leave open until the pool is closed.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  * @see ODatabasePoolBase
@@ -37,10 +38,13 @@ import com.orientechnologies.orient.core.metadata.security.OToken;
 @SuppressWarnings("unchecked")
 public class OObjectDatabaseTxPooled extends OObjectDatabaseTx implements ODatabasePooled {
 
-  private       OObjectDatabasePool ownerPool;
-  private final String              userName;
+  private OObjectDatabasePool ownerPool;
+  private final String userName;
 
-  public OObjectDatabaseTxPooled(final OObjectDatabasePool iOwnerPool, final String iURL, final String iUserName,
+  public OObjectDatabaseTxPooled(
+      final OObjectDatabasePool iOwnerPool,
+      final String iURL,
+      final String iUserName,
       final String iUserPassword) {
     super(iURL);
     ownerPool = iOwnerPool;
@@ -50,8 +54,7 @@ public class OObjectDatabaseTxPooled extends OObjectDatabaseTx implements ODatab
 
   public void reuse(final Object iOwner, final Object[] iAdditionalArgs) {
     ownerPool = (OObjectDatabasePool) iOwner;
-    if (isClosed())
-      open((String) iAdditionalArgs[0], (String) iAdditionalArgs[1]);
+    if (isClosed()) open((String) iAdditionalArgs[0], (String) iAdditionalArgs[1]);
     ODatabaseRecordThreadLocal.instance().set(getUnderlying());
     init();
 
@@ -92,13 +95,10 @@ public class OObjectDatabaseTxPooled extends OObjectDatabaseTx implements ODatab
     return ownerPool == null || super.isClosed();
   }
 
-  /**
-   * Avoid to close it but rather release itself to the owner pool.
-   */
+  /** Avoid to close it but rather release itself to the owner pool. */
   @Override
   public void close() {
-    if (isClosed())
-      return;
+    if (isClosed()) return;
 
     checkOpenness();
     if (ownerPool.getConnectionsInCurrentThread(getURL(), userName) > 1) {

@@ -21,13 +21,12 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.method.misc.OAbstractSQLMethod;
-
 import java.text.ParseException;
 import java.util.Date;
 
 /**
  * Transforms a value to datetime. If the conversion is not possible, null is returned.
- * 
+ *
  * @author Johann Sorel (Geomatys)
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
@@ -45,7 +44,12 @@ public class OSQLMethodAsDateTime extends OAbstractSQLMethod {
   }
 
   @Override
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
+  public Object execute(
+      Object iThis,
+      OIdentifiable iCurrentRecord,
+      OCommandContext iContext,
+      Object ioResult,
+      Object[] iParams) {
     if (iThis != null) {
       if (iThis instanceof Date) {
         return iThis;
@@ -53,7 +57,12 @@ public class OSQLMethodAsDateTime extends OAbstractSQLMethod {
         return new Date(((Number) iThis).longValue());
       } else {
         try {
-          return ODatabaseRecordThreadLocal.instance().get().getStorage().getConfiguration().getDateTimeFormatInstance().parse(iThis.toString());
+          return ODatabaseRecordThreadLocal.instance()
+              .get()
+              .getStorage()
+              .getConfiguration()
+              .getDateTimeFormatInstance()
+              .parse(iThis.toString());
         } catch (ParseException e) {
           OLogManager.instance().error(this, "Error during %s execution", e, NAME);
           // IGNORE IT: RETURN NULL

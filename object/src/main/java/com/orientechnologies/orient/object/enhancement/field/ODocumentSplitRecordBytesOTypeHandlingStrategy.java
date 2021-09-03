@@ -22,7 +22,6 @@ import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -30,22 +29,22 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * {@link ODocumentFieldOTypeHandlingStrategy} that stores each {@link OType#BINARY} object split in several {@link ORecordBytes}.
- * <p>
- * Binary data optimization: http://orientdb.com/docs/2.2/Binary-Data.html
+ * {@link ODocumentFieldOTypeHandlingStrategy} that stores each {@link OType#BINARY} object split in
+ * several {@link ORecordBytes}.
+ *
+ * <p>Binary data optimization: http://orientdb.com/docs/2.2/Binary-Data.html
  *
  * @author diegomtassis <a href="mailto:dta@compart.com">Diego Martin Tassis</a>
  */
-public class ODocumentSplitRecordBytesOTypeHandlingStrategy implements ODocumentFieldOTypeHandlingStrategy {
+public class ODocumentSplitRecordBytesOTypeHandlingStrategy
+    implements ODocumentFieldOTypeHandlingStrategy {
 
   private static final int DEFAULT_CHUNK_SIZE = 64;
-  private static final int BYTES_PER_KB       = 1024;
+  private static final int BYTES_PER_KB = 1024;
 
   private final int chunkSize;
 
-  /**
-   * Constuctor. Chunk size = {@value #DEFAULT_CHUNK_SIZE}
-   */
+  /** Constuctor. Chunk size = {@value #DEFAULT_CHUNK_SIZE} */
   public ODocumentSplitRecordBytesOTypeHandlingStrategy() {
     this(DEFAULT_CHUNK_SIZE);
   }
@@ -96,8 +95,12 @@ public class ODocumentSplitRecordBytesOTypeHandlingStrategy implements ODocument
             clusterId = database.getDefaultClusterId();
           }
         }
-        chunks.add(database.save(new ORecordBytes(Arrays.copyOfRange(bytes, offset, offset + nextChunkLength)),
-            database.getClusterNameById(clusterId)).getIdentity());
+        chunks.add(
+            database
+                .save(
+                    new ORecordBytes(Arrays.copyOfRange(bytes, offset, offset + nextChunkLength)),
+                    database.getClusterNameById(clusterId))
+                .getIdentity());
         offset += nextChunkLength;
       }
 
@@ -120,7 +123,8 @@ public class ODocumentSplitRecordBytesOTypeHandlingStrategy implements ODocument
       try {
         chunk.toOutputStream(outputStream);
       } catch (IOException e) {
-        throw OException.wrapException(new OSerializationException("Error loading binary field " + fieldName), e);
+        throw OException.wrapException(
+            new OSerializationException("Error loading binary field " + fieldName), e);
       }
       chunk.unload();
     }

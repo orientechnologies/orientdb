@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +37,7 @@ public final class OCommit37Response implements OBinaryResponse {
   public static class OCreatedRecordResponse {
     private final ORecordId currentRid;
     private final ORecordId createdRid;
-    private final int       version;
+    private final int version;
 
     public OCreatedRecordResponse(ORecordId currentRid, ORecordId createdRid, int version) {
       this.currentRid = currentRid;
@@ -61,7 +60,7 @@ public final class OCommit37Response implements OBinaryResponse {
 
   public static class OUpdatedRecordResponse {
     private final ORecordId rid;
-    private final int       version;
+    private final int version;
 
     public OUpdatedRecordResponse(ORecordId rid, int version) {
       this.rid = rid;
@@ -87,16 +86,18 @@ public final class OCommit37Response implements OBinaryResponse {
     public ORID getRid() {
       return rid;
     }
-
   }
 
-  private List<OCreatedRecordResponse>        created;
-  private List<OUpdatedRecordResponse>        updated;
-  private List<ODeletedRecordResponse>        deleted;
+  private List<OCreatedRecordResponse> created;
+  private List<OUpdatedRecordResponse> updated;
+  private List<ODeletedRecordResponse> deleted;
   private Map<UUID, OBonsaiCollectionPointer> collectionChanges;
 
-  public OCommit37Response(List<OCreatedRecordResponse> created, List<OUpdatedRecordResponse> updated,
-      List<ODeletedRecordResponse> deleted, Map<UUID, OBonsaiCollectionPointer> collectionChanges) {
+  public OCommit37Response(
+      List<OCreatedRecordResponse> created,
+      List<OUpdatedRecordResponse> updated,
+      List<ODeletedRecordResponse> deleted,
+      Map<UUID, OBonsaiCollectionPointer> collectionChanges) {
     super();
     this.created = created;
     this.updated = updated;
@@ -104,8 +105,7 @@ public final class OCommit37Response implements OBinaryResponse {
     this.collectionChanges = collectionChanges;
   }
 
-  public OCommit37Response() {
-  }
+  public OCommit37Response() {}
 
   @Override
   public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
@@ -138,11 +138,11 @@ public final class OCommit37Response implements OBinaryResponse {
     }
 
     collectionChanges = OMessageHelper.readCollectionChanges(network);
-
   }
 
   @Override
-  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
 
     channel.writeInt(created.size());
     for (OCreatedRecordResponse createdRecord : created) {

@@ -19,11 +19,6 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Arrays;
-
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
@@ -31,17 +26,22 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Arrays;
 
 /**
- * The rawest representation of a record. It's schema less. Use this if you need to store Strings or byte[] without matter about the
- * content. Useful also to store multimedia contents and binary files. The object can be reused across calls to the database by
- * using the reset() at every re-use.
+ * The rawest representation of a record. It's schema less. Use this if you need to store Strings or
+ * byte[] without matter about the content. Useful also to store multimedia contents and binary
+ * files. The object can be reused across calls to the database by using the reset() at every
+ * re-use.
  */
-@SuppressWarnings({ "unchecked" })
+@SuppressWarnings({"unchecked"})
 public class ORecordBytes extends ORecordAbstract implements OBlob {
-  private static final long   serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-  private static final byte[] EMPTY_SOURCE     = new byte[] {};
+  private static final byte[] EMPTY_SOURCE = new byte[] {};
 
   public ORecordBytes() {
     setup(ODatabaseRecordThreadLocal.instance().getIfDefined());
@@ -108,11 +108,11 @@ public class ORecordBytes extends ORecordAbstract implements OBlob {
   }
 
   /**
-   * Reads the input stream in memory. This is less efficient than {@link #fromInputStream(InputStream, int)} because allocation is
-   * made multiple times. If you already know the input size use {@link #fromInputStream(InputStream, int)}.
+   * Reads the input stream in memory. This is less efficient than {@link
+   * #fromInputStream(InputStream, int)} because allocation is made multiple times. If you already
+   * know the input size use {@link #fromInputStream(InputStream, int)}.
    *
-   * @param in
-   *          Input Stream, use buffered input stream wrapper to speed up reading
+   * @param in Input Stream, use buffered input stream wrapper to speed up reading
    * @return Buffer read from the stream. It's also the internal buffer size in bytes
    * @throws IOException
    */
@@ -138,16 +138,14 @@ public class ORecordBytes extends ORecordAbstract implements OBlob {
   }
 
   /**
-   * Reads the input stream in memory specifying the maximum bytes to read. This is more efficient than
-   * {@link #fromInputStream(InputStream)} because allocation is made only once.
+   * Reads the input stream in memory specifying the maximum bytes to read. This is more efficient
+   * than {@link #fromInputStream(InputStream)} because allocation is made only once.
    *
-   * @param in
-   *          Input Stream, use buffered input stream wrapper to speed up reading
-   * @param maxSize
-   *          Maximum size to read
-   * @return Buffer count of bytes that are read from the stream. It's also the internal buffer size in bytes
-   * @throws IOException
-   *           if an I/O error occurs.
+   * @param in Input Stream, use buffered input stream wrapper to speed up reading
+   * @param maxSize Maximum size to read
+   * @return Buffer count of bytes that are read from the stream. It's also the internal buffer size
+   *     in bytes
+   * @throws IOException if an I/O error occurs.
    */
   public int fromInputStream(final InputStream in, final int maxSize) throws IOException {
     final byte[] buffer = new byte[maxSize];

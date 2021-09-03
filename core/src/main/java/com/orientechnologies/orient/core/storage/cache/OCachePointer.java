@@ -22,11 +22,10 @@ package com.orientechnologies.orient.core.storage.cache;
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.directmemory.OPointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
+import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
@@ -34,31 +33,44 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @since 05.08.13
  */
 public final class OCachePointer {
+  private static final AtomicIntegerFieldUpdater<OCachePointer> REFERRERS_COUNT_UPDATER;
+  private static final AtomicLongFieldUpdater<OCachePointer> READERS_WRITERS_REFERRER_UPDATER;
+
+  static {
+    REFERRERS_COUNT_UPDATER =
+        AtomicIntegerFieldUpdater.newUpdater(OCachePointer.class, "referrersCount");
+    READERS_WRITERS_REFERRER_UPDATER =
+        AtomicLongFieldUpdater.newUpdater(OCachePointer.class, "readersWritersReferrer");
+  }
+
   private static final int WRITERS_OFFSET = 32;
-  private static final int READERS_MASK   = 0xFFFFFFFF;
+  private static final int READERS_MASK = 0xFFFFFFFF;
 
   private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
-  private final AtomicInteger referrersCount         = new AtomicInteger();
-  private final AtomicLong    readersWritersReferrer = new AtomicLong();
+  private volatile int referrersCount;
 
-  private final AtomicInteger usagesCounter = new AtomicInteger();
+  private volatile long readersWritersReferrer;
 
   private volatile WritersListener writersListener;
 
-  private final OPointer        pointer;
+  private final OPointer pointer;
   private final OByteBufferPool bufferPool;
 
   private long version;
 
   private final long fileId;
-  private final int  pageIndex;
+  private final int pageIndex;
 
   private OLogSequenceNumber endLSN;
 
   private int hash;
 
-  public OCachePointer(final OPointer pointer, final OByteBufferPool bufferPool, final long fileId, final int pageIndex) {
+  public OCachePointer(
+      final OPointer pointer,
+      final OByteBufferPool bufferPool,
+      final long fileId,
+      final int pageIndex) {
     this.pointer = pointer;
     this.bufferPool = bufferPool;
 
@@ -87,13 +99,14 @@ public final class OCachePointer {
   }
 
   public void incrementReadersReferrer() {
-    long readersWriters = readersWritersReferrer.get();
+    long readersWriters = READERS_WRITERS_REFERRER_UPDATER.get(this);
     int readers = getReaders(readersWriters);
     int writers = getWriters(readersWriters);
     readers++;
 
-    while (!readersWritersReferrer.compareAndSet(readersWriters, composeReadersWriters(readers, writers))) {
-      readersWriters = readersWritersReferrer.get();
+    while (!READERS_WRITERS_REFERRER_UPDATER.compareAndSet(
+        this, readersWriters, composeReadersWriters(readers, writers))) {
+      readersWriters = READERS_WRITERS_REFERRER_UPDATER.get(this);
       readers = getReaders(readersWriters);
       writers = getWriters(readersWriters);
       readers++;
@@ -110,15 +123,16 @@ public final class OCachePointer {
   }
 
   public void decrementReadersReferrer() {
-    long readersWriters = readersWritersReferrer.get();
+    long readersWriters = READERS_WRITERS_REFERRER_UPDATER.get(this);
     int readers = getReaders(readersWriters);
     int writers = getWriters(readersWriters);
     readers--;
 
     assert readers >= 0;
 
-    while (!readersWritersReferrer.compareAndSet(readersWriters, composeReadersWriters(readers, writers))) {
-      readersWriters = readersWritersReferrer.get();
+    while (!READERS_WRITERS_REFERRER_UPDATER.compareAndSet(
+        this, readersWriters, composeReadersWriters(readers, writers))) {
+      readersWriters = READERS_WRITERS_REFERRER_UPDATER.get(this);
       readers = getReaders(readersWriters);
       writers = getWriters(readersWriters);
       readers--;
@@ -137,13 +151,14 @@ public final class OCachePointer {
   }
 
   public void incrementWritersReferrer() {
-    long readersWriters = readersWritersReferrer.get();
+    long readersWriters = READERS_WRITERS_REFERRER_UPDATER.get(this);
     int readers = getReaders(readersWriters);
     int writers = getWriters(readersWriters);
     writers++;
 
-    while (!readersWritersReferrer.compareAndSet(readersWriters, composeReadersWriters(readers, writers))) {
-      readersWriters = readersWritersReferrer.get();
+    while (!READERS_WRITERS_REFERRER_UPDATER.compareAndSet(
+        this, readersWriters, composeReadersWriters(readers, writers))) {
+      readersWriters = READERS_WRITERS_REFERRER_UPDATER.get(this);
       readers = getReaders(readersWriters);
       writers = getWriters(readersWriters);
       writers++;
@@ -153,15 +168,16 @@ public final class OCachePointer {
   }
 
   public void decrementWritersReferrer() {
-    long readersWriters = readersWritersReferrer.get();
+    long readersWriters = READERS_WRITERS_REFERRER_UPDATER.get(this);
     int readers = getReaders(readersWriters);
     int writers = getWriters(readersWriters);
     writers--;
 
     assert writers >= 0;
 
-    while (!readersWritersReferrer.compareAndSet(readersWriters, composeReadersWriters(readers, writers))) {
-      readersWriters = readersWritersReferrer.get();
+    while (!READERS_WRITERS_REFERRER_UPDATER.compareAndSet(
+        this, readersWriters, composeReadersWriters(readers, writers))) {
+      readersWriters = READERS_WRITERS_REFERRER_UPDATER.get(this);
       readers = getReaders(readersWriters);
       writers = getWriters(readersWriters);
       writers--;
@@ -189,17 +205,18 @@ public final class OCachePointer {
   }
 
   public void incrementReferrer() {
-    referrersCount.incrementAndGet();
+    REFERRERS_COUNT_UPDATER.incrementAndGet(this);
   }
 
   public void decrementReferrer() {
-    final int rf = referrersCount.decrementAndGet();
+    final int rf = REFERRERS_COUNT_UPDATER.decrementAndGet(this);
     if (rf == 0 && pointer != null) {
       bufferPool.release(pointer);
     }
 
     if (rf < 0) {
-      throw new IllegalStateException("Invalid direct memory state, number of referrers cannot be negative " + rf);
+      throw new IllegalStateException(
+          "Invalid direct memory state, number of referrers cannot be negative " + rf);
     }
   }
 
@@ -219,10 +236,9 @@ public final class OCachePointer {
     if (pointer == null) {
       return null;
     }
-
-    final ByteBuffer duplicate = pointer.getNativeByteBuffer().duplicate().order(ByteOrder.nativeOrder());
+    final ByteBuffer duplicate =
+        pointer.getNativeByteBuffer().duplicate().order(ByteOrder.nativeOrder());
     duplicate.rewind();
-
     return duplicate;
   }
 
@@ -253,10 +269,8 @@ public final class OCachePointer {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OCachePointer that = (OCachePointer) o;
 
@@ -282,7 +296,7 @@ public final class OCachePointer {
 
   @Override
   public String toString() {
-    return "OCachePointer{" + "referrersCount=" + referrersCount + ", usagesCount=" + usagesCounter + '}';
+    return "OCachePointer{" + "referrersCount=" + referrersCount + '}';
   }
 
   private static long composeReadersWriters(int readers, int writers) {

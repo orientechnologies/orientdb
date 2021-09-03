@@ -15,27 +15,25 @@
  */
 package com.orientechnologies.orient.core.metadata.sequence;
 
-/**
- * @author marko
- */
+/** @author marko */
 public class OSequenceAction {
 
-  public static final int CREATE   = 1;
-  public static final int REMOVE   = 2;
-  public static final int CURRENT  = 3;
-  public static final int NEXT     = 4;
-  public static final int RESET    = 5;
-  public static final int UPDATE   = 6;
+  public static final int CREATE = 1;
+  public static final int REMOVE = 2;
+  public static final int CURRENT = 3;
+  public static final int NEXT = 4;
+  public static final int RESET = 5;
+  public static final int UPDATE = 6;
   public static final int SET_NEXT = 7;
 
-  private final int                     actionType;
-  private final String                  sequenceName;
-  private final OSequence.CreateParams  parameters;
-  //we need it for create action
+  private final int actionType;
+  private final String sequenceName;
+  private final OSequence.CreateParams parameters;
+  // we need it for create action
   private final OSequence.SEQUENCE_TYPE sequenceType;
-  private final Long                    currentValue;
+  private final Long currentValue;
 
-  //to use only for SET_NEXT on CACHED sequences
+  // to use only for SET_NEXT on CACHED sequences
   public OSequenceAction(String sequenceName, long currentvalue) {
     actionType = SET_NEXT;
     this.currentValue = currentvalue;
@@ -44,7 +42,11 @@ public class OSequenceAction {
     sequenceType = OSequence.SEQUENCE_TYPE.CACHED;
   }
 
-  public OSequenceAction(int actionType, String sequenceName, OSequence.CreateParams params, OSequence.SEQUENCE_TYPE sequenceType) {
+  public OSequenceAction(
+      int actionType,
+      String sequenceName,
+      OSequence.CreateParams params,
+      OSequence.SEQUENCE_TYPE sequenceType) {
     this.actionType = actionType;
     this.sequenceName = sequenceName;
     this.parameters = params;
@@ -71,5 +73,4 @@ public class OSequenceAction {
   public Long getCurrentValue() {
     return currentValue;
   }
-
 }

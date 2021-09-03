@@ -23,26 +23,24 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.parser.OOrderBy;
 import com.orientechnologies.orient.core.sql.parser.OOrderByItem;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 public class OSortedMultiIterator<T extends OIdentifiable> implements Iterator<T> {
 
-  private static final int  STATUS_INIT     = 0;
-  private static final int  STATUS_RUNNING  = 1;
+  private static final int STATUS_INIT = 0;
+  private static final int STATUS_RUNNING = 1;
 
-  private final OOrderBy    orderBy;
+  private final OOrderBy orderBy;
 
   private List<Iterator<T>> sourceIterators = new ArrayList<Iterator<T>>();
-  private List<T>           heads           = new ArrayList<T>();
+  private List<T> heads = new ArrayList<T>();
 
-  private int               status          = STATUS_INIT;
+  private int status = STATUS_INIT;
 
   public OSortedMultiIterator(OOrderBy orderBy) {
     this.orderBy = orderBy;
-
   }
 
   public void add(Iterator<T> iterator) {
@@ -54,7 +52,8 @@ public class OSortedMultiIterator<T extends OIdentifiable> implements Iterator<T
         heads.add(null);
       }
     } else {
-      throw new IllegalStateException("You are trying to add a sub-iterator on a running OSortedMultiIterator");
+      throw new IllegalStateException(
+          "You are trying to add a sub-iterator on a running OSortedMultiIterator");
     }
   }
 
@@ -116,8 +115,10 @@ public class OSortedMultiIterator<T extends OIdentifiable> implements Iterator<T
       return false;
     }
 
-    ODocument leftDoc = (left instanceof ODocument) ? (ODocument) left : (ODocument) left.getRecord();
-    ODocument rightDoc = (right instanceof ODocument) ? (ODocument) right : (ODocument) right.getRecord();
+    ODocument leftDoc =
+        (left instanceof ODocument) ? (ODocument) left : (ODocument) left.getRecord();
+    ODocument rightDoc =
+        (right instanceof ODocument) ? (ODocument) right : (ODocument) right.getRecord();
 
     for (OOrderByItem orderItem : orderBy.getItems()) {
       Object leftVal = leftDoc.field(orderItem.getRecordAttr());

@@ -6,20 +6,19 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cluster.OClusterPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
-
 import java.nio.ByteBuffer;
 import java.util.Collections;
 
 public final class ClusterPageDeleteRecordPO extends PageOperationRecord {
-  private int     recordPosition;
-  private int     recordVersion;
-  private byte[]  record;
+  private int recordPosition;
+  private int recordVersion;
+  private byte[] record;
   private boolean preserveFreeListPointer;
 
-  public ClusterPageDeleteRecordPO() {
-  }
+  public ClusterPageDeleteRecordPO() {}
 
-  public ClusterPageDeleteRecordPO(int recordPosition, int recordVersion, byte[] record, boolean preserveFreeListPointer) {
+  public ClusterPageDeleteRecordPO(
+      int recordPosition, int recordVersion, byte[] record, boolean preserveFreeListPointer) {
     this.recordPosition = recordPosition;
     this.recordVersion = recordVersion;
     this.record = record;
@@ -54,7 +53,8 @@ public final class ClusterPageDeleteRecordPO extends PageOperationRecord {
   @Override
   public void undo(OCacheEntry cacheEntry) {
     final OClusterPage clusterPage = new OClusterPage(cacheEntry);
-    final int allocatedPosition = clusterPage.appendRecord(recordVersion, record, recordPosition, Collections.emptySet());
+    final int allocatedPosition =
+        clusterPage.appendRecord(recordVersion, record, recordPosition, Collections.emptySet());
     if (allocatedPosition < 0) {
       throw new IllegalStateException("Can not undo operation of record creation.");
     }
@@ -67,7 +67,10 @@ public final class ClusterPageDeleteRecordPO extends PageOperationRecord {
 
   @Override
   public int serializedSize() {
-    return super.serializedSize() + OByteSerializer.BYTE_SIZE + 3 * OIntegerSerializer.INT_SIZE + record.length;
+    return super.serializedSize()
+        + OByteSerializer.BYTE_SIZE
+        + 3 * OIntegerSerializer.INT_SIZE
+        + record.length;
   }
 
   @Override

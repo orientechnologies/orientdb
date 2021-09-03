@@ -2,14 +2,11 @@ package com.orientechnologies.orient.core.storage.cache.local.doublewritelog;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.directmemory.OPointer;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 
-/**
- * Stub for double write log
- */
+/** Stub for double write log */
 public class DoubleWriteLogNoOP implements DoubleWriteLog {
   @Override
   public boolean write(ByteBuffer[] buffers, int[] fileId, int[] pageIndex) {
@@ -17,14 +14,10 @@ public class DoubleWriteLogNoOP implements DoubleWriteLog {
   }
 
   @Override
-  public void truncate() {
-
-  }
+  public void truncate() {}
 
   @Override
-  public void open(String storageName, Path storagePath, int pageSize) {
-
-  }
+  public void open(String storageName, Path storagePath, int pageSize) {}
 
   @Override
   public OPointer loadPage(int fileId, int pageIndex, OByteBufferPool bufferPool) {
@@ -32,22 +25,17 @@ public class DoubleWriteLogNoOP implements DoubleWriteLog {
   }
 
   @Override
-  public void restoreModeOn() throws IOException {
-  }
+  public void restoreModeOn() throws IOException {}
 
   @Override
-  public void restoreModeOff() {
-  }
+  public void restoreModeOff() {}
 
   @Override
-  public void close() throws IOException {
-  }
+  public void close() throws IOException {}
 
   @Override
-  public void startCheckpoint() {
-  }
+  public void startCheckpoint() {}
 
   @Override
-  public void endCheckpoint() {
-  }
+  public void endCheckpoint() {}
 }

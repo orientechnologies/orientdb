@@ -10,6 +10,5 @@ public class OparseScript extends SimpleNode {
   public OparseScript(OrientSql p, int id) {
     super(p, id);
   }
-
 }
 /* JavaCC - OriginalChecksum=5fdc32eed51a7a14e93e0d983b5e32c1 (do not edit this line) */

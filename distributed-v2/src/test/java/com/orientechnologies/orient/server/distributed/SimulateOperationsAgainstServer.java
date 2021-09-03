@@ -23,29 +23,26 @@ import com.orientechnologies.orient.core.exception.OConcurrentModificationExcept
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 
-/**
- * Executes random operations against multiple servers
- */
+/** Executes random operations against multiple servers */
 public class SimulateOperationsAgainstServer {
-  protected static final int                    delay           = 0;
-  private static final int                      MAX_RETRY       = 30;
-  protected final AtomicLong                    totalOperations = new AtomicLong();
-  protected int                                 count           = 1000;
-  protected int                                 threads         = 20;
-  protected String[]                            urls            = new String[] { "remote:localhost:2424/test",
-      "remote:localhost:2425/test"                             };
-  protected String                              className       = "Customer";
-  protected String                              userName        = "admin";
-  protected String                              userPassword    = "admin";
+  protected static final int delay = 0;
+  private static final int MAX_RETRY = 30;
+  protected final AtomicLong totalOperations = new AtomicLong();
+  protected int count = 1000;
+  protected int threads = 20;
+  protected String[] urls =
+      new String[] {"remote:localhost:2424/test", "remote:localhost:2425/test"};
+  protected String className = "Customer";
+  protected String userName = "admin";
+  protected String userPassword = "admin";
 
-  private final OPartitionedDatabasePoolFactory poolFactory     = new OPartitionedDatabasePoolFactory();
+  private final OPartitionedDatabasePoolFactory poolFactory = new OPartitionedDatabasePoolFactory();
 
   public static void main(String[] args) {
     new SimulateOperationsAgainstServer().randomExecute();
@@ -61,51 +58,60 @@ public class SimulateOperationsAgainstServer {
     for (int i = 0; i < threads; ++i) {
       final int id = i;
 
-      executor.submit(new Runnable() {
-        private int threadId = id;
+      executor.submit(
+          new Runnable() {
+            private int threadId = id;
 
-        @Override
-        public void run() {
-          for (int i = 0; i < count; ++i) {
-            final Random rnd = new Random();
+            @Override
+            public void run() {
+              for (int i = 0; i < count; ++i) {
+                final Random rnd = new Random();
 
-            try {
-              switch (rnd.nextInt(5)) {
-              case 0:
-                createDocument(threadId, i, urls[rnd.nextInt(urls.length)], className, rnd.nextInt(5));
-                break;
-              case 1:
-                queryClass(threadId, i, urls[rnd.nextInt(urls.length)], className, rnd.nextInt(10));
-                break;
-              case 2:
-                updateDocument(threadId, i, urls[rnd.nextInt(urls.length)], className, rnd.nextInt(100));
-                break;
-              case 3:
-                deleteDocument(threadId, i, urls[rnd.nextInt(urls.length)], className, rnd.nextInt(100));
-                break;
-              case 4:
-                pause(threadId, i, rnd.nextInt(2000));
-                break;
-              }
-
-              totalOperations.addAndGet(1);
-
-              if (delay > 0)
                 try {
-                  Thread.sleep(delay);
-                } catch (InterruptedException e) {
-                }
+                  switch (rnd.nextInt(5)) {
+                    case 0:
+                      createDocument(
+                          threadId, i, urls[rnd.nextInt(urls.length)], className, rnd.nextInt(5));
+                      break;
+                    case 1:
+                      queryClass(
+                          threadId, i, urls[rnd.nextInt(urls.length)], className, rnd.nextInt(10));
+                      break;
+                    case 2:
+                      updateDocument(
+                          threadId, i, urls[rnd.nextInt(urls.length)], className, rnd.nextInt(100));
+                      break;
+                    case 3:
+                      deleteDocument(
+                          threadId, i, urls[rnd.nextInt(urls.length)], className, rnd.nextInt(100));
+                      break;
+                    case 4:
+                      pause(threadId, i, rnd.nextInt(2000));
+                      break;
+                  }
 
-            } catch (Exception e) {
-              e.printStackTrace();
+                  totalOperations.addAndGet(1);
+
+                  if (delay > 0)
+                    try {
+                      Thread.sleep(delay);
+                    } catch (InterruptedException e) {
+                    }
+
+                } catch (Exception e) {
+                  e.printStackTrace();
+                }
+              }
             }
-          }
-        }
-      });
+          });
     }
   }
 
-  protected void createDocument(final int threadId, final int iCycle, final String dbUrl, final String className,
+  protected void createDocument(
+      final int threadId,
+      final int iCycle,
+      final String dbUrl,
+      final String className,
       final int iProperties) {
     final ODatabaseDocument db = getDatabase(dbUrl);
     try {
@@ -121,7 +127,12 @@ public class SimulateOperationsAgainstServer {
     }
   }
 
-  protected void queryClass(final int threadId, final int iCycle, final String dbUrl, final String className, final int iMax) {
+  protected void queryClass(
+      final int threadId,
+      final int iCycle,
+      final String dbUrl,
+      final String className,
+      final int iMax) {
     final ODatabaseDocument db = getDatabase(dbUrl);
     try {
       log(threadId, iCycle, dbUrl, " query class=" + className);
@@ -130,8 +141,7 @@ public class SimulateOperationsAgainstServer {
 
       int browsed = 0;
       for (OIdentifiable r : result) {
-        if (browsed++ > iMax)
-          return;
+        if (browsed++ > iMax) return;
 
         r.getRecord().toString();
       }
@@ -141,13 +151,20 @@ public class SimulateOperationsAgainstServer {
     }
   }
 
-  protected void updateDocument(final int threadId, final int iCycle, final String dbUrl, final String className, final int iSkip) {
+  protected void updateDocument(
+      final int threadId,
+      final int iCycle,
+      final String dbUrl,
+      final String className,
+      final int iSkip) {
     final ODatabaseDocument db = getDatabase(dbUrl);
     for (int retry = 0; retry < MAX_RETRY; ++retry) {
       ODocument doc = null;
       try {
-        List<OIdentifiable> result = db
-            .query(new OSQLSynchQuery<Object>("select from " + className + " skip " + iSkip + " limit 1"));
+        List<OIdentifiable> result =
+            db.query(
+                new OSQLSynchQuery<Object>(
+                    "select from " + className + " skip " + iSkip + " limit 1"));
 
         if (result == null || result.isEmpty())
           log(threadId, iCycle, dbUrl, " update no item " + iSkip + " because out of range");
@@ -162,10 +179,18 @@ public class SimulateOperationsAgainstServer {
         break;
 
       } catch (OConcurrentModificationException e) {
-        log(threadId, iCycle, dbUrl, " concurrent update against record " + doc + ", reload it and retry " + retry + "/"
-            + MAX_RETRY + "...");
-        if (doc != null)
-          doc.reload(null, true);
+        log(
+            threadId,
+            iCycle,
+            dbUrl,
+            " concurrent update against record "
+                + doc
+                + ", reload it and retry "
+                + retry
+                + "/"
+                + MAX_RETRY
+                + "...");
+        if (doc != null) doc.reload(null, true);
 
       } catch (ORecordNotFoundException e) {
         log(threadId, iCycle, dbUrl, " update no item " + iSkip + " because not found");
@@ -177,13 +202,20 @@ public class SimulateOperationsAgainstServer {
     }
   }
 
-  protected void deleteDocument(final int threadId, final int iCycle, final String dbUrl, final String className, final int iSkip) {
+  protected void deleteDocument(
+      final int threadId,
+      final int iCycle,
+      final String dbUrl,
+      final String className,
+      final int iSkip) {
     final ODatabaseDocument db = getDatabase(dbUrl);
     for (int retry = 0; retry < MAX_RETRY; ++retry) {
       ODocument doc = null;
       try {
-        List<OIdentifiable> result = db
-            .query(new OSQLSynchQuery<Object>("select from " + className + " skip " + iSkip + " limit 1"));
+        List<OIdentifiable> result =
+            db.query(
+                new OSQLSynchQuery<Object>(
+                    "select from " + className + " skip " + iSkip + " limit 1"));
 
         if (result == null || result.isEmpty())
           log(threadId, iCycle, dbUrl, " delete no item " + iSkip + " because out of range");
@@ -194,10 +226,18 @@ public class SimulateOperationsAgainstServer {
         }
         break;
       } catch (OConcurrentModificationException e) {
-        log(threadId, iCycle, dbUrl, " concurrent delete against record " + doc + ", reload it and retry " + retry + "/"
-            + MAX_RETRY + "...");
-        if (doc != null)
-          doc.reload(null, true);
+        log(
+            threadId,
+            iCycle,
+            dbUrl,
+            " concurrent delete against record "
+                + doc
+                + ", reload it and retry "
+                + retry
+                + "/"
+                + MAX_RETRY
+                + "...");
+        if (doc != null) doc.reload(null, true);
       } catch (ORecordNotFoundException e) {
         log(threadId, iCycle, dbUrl, " delete no item " + iSkip + " because not found");
       } finally {
@@ -214,12 +254,14 @@ public class SimulateOperationsAgainstServer {
     }
   }
 
-  protected void log(final int threadId, final int iCycle, final String dbUrl, final String iMessage) {
-    System.out.println(String.format("%-12d [%2d:%-4d] %25s %s", totalOperations.get(), threadId, iCycle, dbUrl, iMessage));
+  protected void log(
+      final int threadId, final int iCycle, final String dbUrl, final String iMessage) {
+    System.out.println(
+        String.format(
+            "%-12d [%2d:%-4d] %25s %s", totalOperations.get(), threadId, iCycle, dbUrl, iMessage));
   }
 
   protected ODatabaseDocument getDatabase(final String dbUrl) {
     return poolFactory.get(dbUrl, userName, userPassword).acquire();
   }
-
 }

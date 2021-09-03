@@ -12,22 +12,19 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
+import java.util.concurrent.atomic.AtomicLong;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import java.util.concurrent.atomic.AtomicLong;
-
-/**
- * @author Artem Orobets (enisher-at-gmail.com)
- */
+/** @author Artem Orobets (enisher-at-gmail.com) */
 /*
  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS"
  * BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
@@ -35,15 +32,15 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @Test(enabled = false)
 public class SuperNodeInsertSpeedTest extends OrientMultiThreadTest {
-  protected static final String      URL     = "plocal:target/databases/graphspeedtest";
+  protected static final String URL = "plocal:target/databases/graphspeedtest";
   protected final OrientGraphFactory factory = new OrientGraphFactory(URL);
-  protected static final AtomicLong  counter = new AtomicLong();
-  protected static ORID              superNodeRID;
+  protected static final AtomicLong counter = new AtomicLong();
+  protected static ORID superNodeRID;
 
   @Test(enabled = false)
   public static class CreateObjectsThread extends OrientThreadTest {
     protected OrientBaseGraph graph;
-    protected OrientVertex    superNode;
+    protected OrientVertex superNode;
 
     public CreateObjectsThread(final SpeedTestMultiThreads parent, final int threadId) {
       super(parent, threadId);
@@ -61,15 +58,16 @@ public class SuperNodeInsertSpeedTest extends OrientMultiThreadTest {
     }
 
     public void cycle() {
-      final OrientVertex v = graph.addVertex("class:Client,cluster:client_" + currentThreadId(), "uid", counter.getAndIncrement());
+      final OrientVertex v =
+          graph.addVertex(
+              "class:Client,cluster:client_" + currentThreadId(), "uid", counter.getAndIncrement());
 
       superNode.addEdge("test", v);
     }
 
     @Override
     public void deinit() throws Exception {
-      if (graph != null)
-        graph.shutdown();
+      if (graph != null) graph.shutdown();
       super.deinit();
     }
 
@@ -91,8 +89,7 @@ public class SuperNodeInsertSpeedTest extends OrientMultiThreadTest {
 
   @Override
   public void init() {
-    if (factory.exists())
-      factory.drop();
+    if (factory.exists()) factory.drop();
 
     final OrientGraphNoTx graph = factory.getNoTx();
 
@@ -100,8 +97,9 @@ public class SuperNodeInsertSpeedTest extends OrientMultiThreadTest {
       if (graph.getVertexType("Client") == null) {
         final OrientVertexType clientType = graph.createVertexType("Client");
 
-        final OrientVertexType.OrientVertexProperty property = clientType.createProperty("uid", OType.STRING);
-        //property.createIndex(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX);
+        final OrientVertexType.OrientVertexProperty property =
+            clientType.createProperty("uid", OType.STRING);
+        // property.createIndex(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX);
 
         // CREATE ONE CLUSTER PER THREAD
         for (int i = 0; i < getThreads(); ++i) {
@@ -129,10 +127,11 @@ public class SuperNodeInsertSpeedTest extends OrientMultiThreadTest {
 
       System.out.println("\nTotal objects in Client cluster after the test: " + total);
       System.out.println("Created " + (total));
-      Assert.assertEquals(total , threadCycles);
+      Assert.assertEquals(total, threadCycles);
 
-//      final long indexedItems = graph.getRawGraph().getMetadata().getIndexManager().getIndex("Client.uid").getSize();
-//      System.out.println("\nTotal indexed objects after the test: " + indexedItems);
+      //      final long indexedItems =
+      // graph.getRawGraph().getMetadata().getIndexManager().getIndex("Client.uid").getSize();
+      //      System.out.println("\nTotal indexed objects after the test: " + indexedItems);
 
     } finally {
       graph.shutdown();

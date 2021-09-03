@@ -10,6 +10,5 @@ public class OIfNotExists extends SimpleNode {
   public OIfNotExists(OrientSql p, int id) {
     super(p, id);
   }
-
 }
 /* JavaCC - OriginalChecksum=5990db905ac7259f864fa5c62f123bcc (do not edit this line) */

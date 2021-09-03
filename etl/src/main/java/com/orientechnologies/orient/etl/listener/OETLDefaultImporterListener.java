@@ -27,12 +27,10 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public class OETLDefaultImporterListener implements OETLImporterListener {
 
   @Override
-  public void onBeforeFile(final ODatabaseDocument db, final OCommandContext iContext) {
-  }
+  public void onBeforeFile(final ODatabaseDocument db, final OCommandContext iContext) {}
 
   @Override
-  public void onAfterFile(final ODatabaseDocument db, final OCommandContext iContext) {
-  }
+  public void onAfterFile(final ODatabaseDocument db, final OCommandContext iContext) {}
 
   @Override
   public boolean onBeforeLine(final ODatabaseDocument db, final OCommandContext iContext) {
@@ -40,23 +38,27 @@ public class OETLDefaultImporterListener implements OETLImporterListener {
   }
 
   @Override
-  public void onAfterLine(final ODatabaseDocument db, final OCommandContext iContext) {
-  }
+  public void onAfterLine(final ODatabaseDocument db, final OCommandContext iContext) {}
 
   @Override
-  public void onDump(final ODatabaseDocument db, final OCommandContext iContext) {
-  }
+  public void onDump(final ODatabaseDocument db, final OCommandContext iContext) {}
 
   @Override
-  public void onJoinNotFound(final ODatabaseDocument db, final OCommandContext iContext, final OIndex iIndex,
+  public void onJoinNotFound(
+      final ODatabaseDocument db,
+      final OCommandContext iContext,
+      final OIndex iIndex,
       final Object iKey) {
     iContext.setVariable("joinNotFound", ((Integer) iContext.getVariable("joinNotFound", 0)) + 1);
     OLogManager.instance()
-        .warn(this, "     + %d line: join record not found in index '%s' for key='%s'", iContext.getVariable("currentLine"), iIndex,
+        .warn(
+            this,
+            "     + %d line: join record not found in index '%s' for key='%s'",
+            iContext.getVariable("currentLine"),
+            iIndex,
             iKey);
   }
 
   @Override
-  public void validate(ODatabaseDocument db, OCommandContext iContext, ODocument iRecord) {
-  }
+  public void validate(ODatabaseDocument db, OCommandContext iContext, ODocument iRecord) {}
 }

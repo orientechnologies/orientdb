@@ -19,26 +19,34 @@
  */
 package com.orientechnologies.orient.core.db;
 
-import java.util.*;
-
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
 import com.orientechnologies.orient.core.db.config.ONodeConfiguration;
+import com.orientechnologies.orient.core.security.ODefaultSecurityConfig;
+import com.orientechnologies.orient.core.security.OGlobalUser;
+import com.orientechnologies.orient.core.security.OSecurityConfig;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-/**
- * Created by tglman on 27/06/16.
- */
+/** Created by tglman on 27/06/16. */
 public class OrientDBConfig {
 
   public static final String LOCK_TYPE_MODIFICATION = "modification";
-  public static final String LOCK_TYPE_READWRITE    = "readwrite";
+  public static final String LOCK_TYPE_READWRITE = "readwrite";
 
-  private OrientDBConfig          parent;
-  private OContextConfiguration   configurations;
+  private OrientDBConfig parent;
+  private OContextConfiguration configurations;
   private Map<ATTRIBUTES, Object> attributes;
-  private Set<ODatabaseListener>  listeners;
-  private ClassLoader             classLoader;
-  private ONodeConfiguration      nodeConfiguration;
+  private Set<ODatabaseListener> listeners;
+  private ClassLoader classLoader;
+  private ONodeConfiguration nodeConfiguration;
+  private OSecurityConfig securityConfig;
+  private List<OGlobalUser> users;
 
   protected OrientDBConfig() {
     configurations = new OContextConfiguration();
@@ -46,22 +54,29 @@ public class OrientDBConfig {
     parent = null;
     listeners = new HashSet<>();
     classLoader = this.getClass().getClassLoader();
+    this.securityConfig = new ODefaultSecurityConfig();
+    this.users = new ArrayList<OGlobalUser>();
   }
 
-  protected OrientDBConfig(OContextConfiguration configurations, Map<ATTRIBUTES, Object> attributes,
-      Set<ODatabaseListener> listeners, ClassLoader classLoader, ONodeConfiguration nodeConfiguration) {
+  protected OrientDBConfig(
+      OContextConfiguration configurations,
+      Map<ATTRIBUTES, Object> attributes,
+      Set<ODatabaseListener> listeners,
+      ClassLoader classLoader,
+      ONodeConfiguration nodeConfiguration,
+      OSecurityConfig securityConfig,
+      List<OGlobalUser> users) {
     this.configurations = configurations;
     this.attributes = attributes;
     parent = null;
-    if (listeners != null)
-      this.listeners = listeners;
-    else
-      this.listeners = Collections.emptySet();
+    if (listeners != null) this.listeners = listeners;
+    else this.listeners = Collections.emptySet();
     if (classLoader != null) {
       this.classLoader = classLoader;
-    } else
-      this.classLoader = this.getClass().getClassLoader();
+    } else this.classLoader = this.getClass().getClassLoader();
     this.nodeConfiguration = nodeConfiguration;
+    this.securityConfig = securityConfig;
+    this.users = users;
   }
 
   public static OrientDBConfig defaultConfig() {
@@ -90,6 +105,14 @@ public class OrientDBConfig {
 
   public ClassLoader getClassLoader() {
     return classLoader;
+  }
+
+  public OSecurityConfig getSecurityConfig() {
+    return securityConfig;
+  }
+
+  public List<OGlobalUser> getUsers() {
+    return users;
   }
 
   protected void setParent(OrientDBConfig parent) {
@@ -126,7 +149,5 @@ public class OrientDBConfig {
         this.listeners = lis;
       }
     }
-
   }
-
 }

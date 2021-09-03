@@ -16,25 +16,24 @@
 package com.orientechnologies.orient.test.java.collection;
 
 public class ArraySpeedTest extends CollectionBaseAbstractSpeedTest {
-	private String[]	array;
+  private String[] array;
 
-	@Override
-	public void cycle() {
-		for (String item : array) {
-			if (item.equals(searchedValue))
-				break;
-		}
-	}
+  @Override
+  public void cycle() {
+    for (String item : array) {
+      if (item.equals(searchedValue)) break;
+    }
+  }
 
-	@Override
-	public void init() {
-		array = new String[collectionSize];
-		for (int i = 0; i < collectionSize; ++i) {
-			array[i] = String.valueOf(i);
-		}
-	}
+  @Override
+  public void init() {
+    array = new String[collectionSize];
+    for (int i = 0; i < collectionSize; ++i) {
+      array[i] = String.valueOf(i);
+    }
+  }
 
-	public void deInit() {
-		array = null;
-	}
+  public void deInit() {
+    array = null;
+  }
 }

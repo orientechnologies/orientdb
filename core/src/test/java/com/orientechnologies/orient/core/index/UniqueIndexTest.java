@@ -9,16 +9,13 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
+import java.util.List;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.After;
 import org.junit.Test;
 
-import java.util.List;
-
-/**
- * Created by tglman on 01/02/16.
- */
+/** Created by tglman on 01/02/16. */
 public class UniqueIndexTest {
 
   private ODatabaseDocument db;
@@ -89,7 +86,9 @@ public class UniqueIndexTest {
     } catch (ORecordDuplicatedException ex) {
     }
 
-    final List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from User where MailAddress = 'john@doe.com'"));
+    final List<ODocument> result =
+        db.query(
+            new OSQLSynchQuery<ODocument>("select from User where MailAddress = 'john@doe.com'"));
     Assert.assertEquals(result.size(), 1);
   }
 
@@ -97,5 +96,4 @@ public class UniqueIndexTest {
   public void after() {
     db.drop();
   }
-
 }

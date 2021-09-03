@@ -26,7 +26,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlRootElement(name = "command")
-@XmlType(propOrder = { "parameters", "implementation", "pattern" })
+@XmlType(propOrder = {"parameters", "implementation", "pattern"})
 public class OServerCommandConfiguration {
   @XmlAttribute(required = true)
   public String pattern;

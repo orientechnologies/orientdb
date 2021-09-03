@@ -21,9 +21,7 @@ package com.orientechnologies.orient.etl.extractor;
 import java.io.IOException;
 import java.io.Reader;
 
-/**
- * ETL abstract extractor.
- */
+/** ETL abstract extractor. */
 public abstract class OETLAbstractSourceExtractor extends OETLAbstractExtractor {
   protected Reader reader;
 
@@ -34,8 +32,7 @@ public abstract class OETLAbstractSourceExtractor extends OETLAbstractExtractor 
 
   @Override
   public boolean hasNext() {
-    if (reader == null)
-      return false;
+    if (reader == null) return false;
 
     try {
       return reader.ready();

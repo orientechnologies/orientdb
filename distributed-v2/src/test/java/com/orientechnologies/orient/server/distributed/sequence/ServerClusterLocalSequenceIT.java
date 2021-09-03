@@ -1,9 +1,8 @@
 package com.orientechnologies.orient.server.distributed.sequence;
 
-import org.junit.Test;
-
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.server.distributed.ServerRun;
+import org.junit.Test;
 
 /**
  * @author Matan Shukry (matanshukry@gmail.com)
@@ -16,7 +15,7 @@ public class ServerClusterLocalSequenceIT extends AbstractServerClusterSequenceT
     final long previous = OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT.getValueAsLong();
     try {
       OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT.setValue(0);
-//      OGlobalConfiguration.DISTRIBUTED_REPLICATION_PROTOCOL_VERSION.setValue(2);
+      //      OGlobalConfiguration.DISTRIBUTED_REPLICATION_PROTOCOL_VERSION.setValue(2);
 
       init(2);
       prepare(false);
@@ -24,7 +23,6 @@ public class ServerClusterLocalSequenceIT extends AbstractServerClusterSequenceT
 
     } finally {
       OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT.setValue(previous);
-
     }
   }
 

@@ -23,15 +23,14 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
-import org.testng.annotations.Test;
-
 import java.util.Date;
+import org.testng.annotations.Test;
 
 @Test
 public class LocalCreateDocumentSpeedTest extends OrientMonoThreadTest {
   private ODatabaseDocumentTx database;
-  private ODocument           record;
-  private Date                date = new Date();
+  private ODocument record;
+  private Date date = new Date();
 
   public LocalCreateDocumentSpeedTest() throws InstantiationException, IllegalAccessException {
     super(1000000);
@@ -78,8 +77,7 @@ public class LocalCreateDocumentSpeedTest extends OrientMonoThreadTest {
 
     record.save();
 
-    if (data.getCyclesDone() == data.getCycles() - 1)
-      database.commit();
+    if (data.getCyclesDone() == data.getCycles() - 1) database.commit();
   }
 
   @Override
@@ -87,8 +85,7 @@ public class LocalCreateDocumentSpeedTest extends OrientMonoThreadTest {
   public void deinit() {
     System.out.println(Orient.instance().getProfiler().dump());
 
-    if (database != null)
-      database.close();
+    if (database != null) database.close();
     super.deinit();
   }
 }

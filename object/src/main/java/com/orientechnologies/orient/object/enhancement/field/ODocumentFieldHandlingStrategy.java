@@ -19,31 +19,28 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Strategy handling how to store and retrieve data in documents.
- * 
+ *
  * @author diegomtassis <a href="mailto:dta@compart.com">Diego Martin Tassis</a>
  */
 public interface ODocumentFieldHandlingStrategy {
 
   /**
    * Stores an object in a document
-   * 
+   *
    * @param iRecord
    * @param fieldName
    * @param fieldValue
-   * @param suggestedFieldType
-   *          ignored if the type is set in the schema
+   * @param suggestedFieldType ignored if the type is set in the schema
    */
   ODocument store(ODocument iRecord, String fieldName, Object fieldValue, OType suggestedFieldType);
 
   /**
    * Retrieves a field from a document
-   * 
+   *
    * @param iRecord
    * @param fieldName
-   * @param suggestedFieldType
-   *          ignored if the type is set in the schema
+   * @param suggestedFieldType ignored if the type is set in the schema
    * @return field value
    */
   Object load(ODocument iRecord, String fieldName, OType suggestedFieldType);
-
 }

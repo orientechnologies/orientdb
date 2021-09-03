@@ -23,7 +23,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -36,16 +35,34 @@ import java.util.stream.Collectors;
 public class OIndexRemoteMultiValue extends OIndexRemote {
   private static final String QUERY_GET = "select expand( rid ) from index:`%s` where key = ?";
 
-  public OIndexRemoteMultiValue(final String iName, final String iWrappedType, final String algorithm, final ORID iRid,
-      final OIndexDefinition iIndexDefinition, final ODocument iConfiguration, final Set<String> clustersToIndex, String database) {
-    super(iName, iWrappedType, algorithm, iRid, iIndexDefinition, iConfiguration, clustersToIndex, database);
+  public OIndexRemoteMultiValue(
+      final String iName,
+      final String iWrappedType,
+      final String algorithm,
+      final ORID iRid,
+      final OIndexDefinition iIndexDefinition,
+      final ODocument iConfiguration,
+      final Set<String> clustersToIndex,
+      String database) {
+    super(
+        iName,
+        iWrappedType,
+        algorithm,
+        iRid,
+        iIndexDefinition,
+        iConfiguration,
+        clustersToIndex,
+        database);
   }
 
   @Deprecated
   public Collection<OIdentifiable> get(final Object key) {
-    try (final OResultSet result = getDatabase().indexQuery(getName(), String.format(QUERY_GET, name), key)) {
+    try (final OResultSet result =
+        getDatabase().indexQuery(getName(), String.format(QUERY_GET, name), key)) {
       //noinspection resource
-      return result.stream().map((res) -> res.getIdentity().orElse(null)).collect(Collectors.toSet());
+      return result.stream()
+          .map((res) -> res.getIdentity().orElse(null))
+          .collect(Collectors.toSet());
     }
   }
 

@@ -30,18 +30,17 @@ import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
-
-import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @Test
 public class GraphDatabaseTest extends DocumentDBBaseTest {
@@ -69,14 +68,21 @@ public class GraphDatabaseTest extends DocumentDBBaseTest {
     database.createVertexType("GraphCar", vehicleClass);
     database.createVertexType("GraphMotocycle", "GraphVehicle");
 
-    ODocument carNode = database.addVertex("class:GraphCar", "brand", "Hyundai", "model", "Coupe", "year", 2003).getRecord();
-    ODocument motoNode = database.addVertex("class:GraphMotocycle", "brand", "Yamaha", "model", "X-City 250", "year", 2009)
-        .getRecord();
+    ODocument carNode =
+        database
+            .addVertex("class:GraphCar", "brand", "Hyundai", "model", "Coupe", "year", 2003)
+            .getRecord();
+    ODocument motoNode =
+        database
+            .addVertex(
+                "class:GraphMotocycle", "brand", "Yamaha", "model", "X-City 250", "year", 2009)
+            .getRecord();
 
     database.commit();
     database.addEdge(null, database.getVertex(carNode), database.getVertex(motoNode), "E").save();
 
-    List<ODocument> result = database.getRawGraph().query(new OSQLSynchQuery<ODocument>("select from GraphVehicle"));
+    List<ODocument> result =
+        database.getRawGraph().query(new OSQLSynchQuery<ODocument>("select from GraphVehicle"));
     Assert.assertEquals(result.size(), 2);
     for (ODocument v : result) {
       Assert.assertTrue(v.getSchemaClass().isSubClassOf(vehicleClass));
@@ -90,7 +96,8 @@ public class GraphDatabaseTest extends DocumentDBBaseTest {
 
     database.getRawGraph().getMetadata().getSchema().reload();
 
-    result = database.getRawGraph().query(new OSQLSynchQuery<ODocument>("select from GraphVehicle"));
+    result =
+        database.getRawGraph().query(new OSQLSynchQuery<ODocument>("select from GraphVehicle"));
     Assert.assertEquals(result.size(), 2);
 
     Edge edge1 = null;
@@ -126,16 +133,28 @@ public class GraphDatabaseTest extends DocumentDBBaseTest {
     Assert.assertNotNull(database.getVertex(tom).getEdges(Direction.OUT, "drives"));
     Assert.assertEquals(database.getVertex(tom).countEdges(Direction.OUT, "drives"), 2);
 
-    List<ODocument> result = database.getRawGraph().query(
-        new OSQLSynchQuery<ODocument>("select out_[in.@class = 'GraphCar'].in_ from V where name = 'Tom'"));
+    List<ODocument> result =
+        database
+            .getRawGraph()
+            .query(
+                new OSQLSynchQuery<ODocument>(
+                    "select out_[in.@class = 'GraphCar'].in_ from V where name = 'Tom'"));
     Assert.assertEquals(result.size(), 1);
 
-    result = database.getRawGraph().query(
-        new OSQLSynchQuery<ODocument>("select out_[label='drives'][in.brand = 'Ferrari'].in_ from V where name = 'Tom'"));
+    result =
+        database
+            .getRawGraph()
+            .query(
+                new OSQLSynchQuery<ODocument>(
+                    "select out_[label='drives'][in.brand = 'Ferrari'].in_ from V where name = 'Tom'"));
     Assert.assertEquals(result.size(), 1);
 
-    result = database.getRawGraph().query(
-        new OSQLSynchQuery<ODocument>("select out_[in.brand = 'Ferrari'].in_ from V where name = 'Tom'"));
+    result =
+        database
+            .getRawGraph()
+            .query(
+                new OSQLSynchQuery<ODocument>(
+                    "select out_[in.brand = 'Ferrari'].in_ from V where name = 'Tom'"));
     Assert.assertEquals(result.size(), 1);
   }
 
@@ -143,10 +162,8 @@ public class GraphDatabaseTest extends DocumentDBBaseTest {
     database.setAutoStartTx(false);
     database.commit();
     OClass oc = database.getVertexType("vertexA");
-    if (oc == null)
-      oc = database.createVertexType("vertexA");
-    if (!oc.existsProperty("name"))
-      oc.createProperty("name", OType.STRING);
+    if (oc == null) oc = database.createVertexType("vertexA");
+    if (!oc.existsProperty("name")) oc.createProperty("name", OType.STRING);
 
     if (oc.getClassIndex("vertexA_name_idx") == null)
       oc.createIndex("vertexA_name_idx", OClass.INDEX_TYPE.UNIQUE, "name");
@@ -210,13 +227,13 @@ public class GraphDatabaseTest extends DocumentDBBaseTest {
     result = database.getRawGraph().query(new OSQLSynchQuery<ODocument>(query2));
     Assert.assertEquals(result.size(), 1);
 
-
-    //TODO these tests are broken, they should test "contains" instead of "="
+    // TODO these tests are broken, they should test "contains" instead of "="
     String query3 = "select driver from V where outE()[action='owns'].inV().car = 'ford'";
     result = database.getRawGraph().query(new OSQLSynchQuery<ODocument>(query3));
     Assert.assertEquals(result.size(), 1);
 
-    String query4 = "select driver from V where outE()[color='red'][action='owns'].inV().car = 'ford'";
+    String query4 =
+        "select driver from V where outE()[color='red'][action='owns'].inV().car = 'ford'";
     result = database.getRawGraph().query(new OSQLSynchQuery<ODocument>(query4));
     Assert.assertEquals(result.size(), 1);
   }
@@ -224,15 +241,18 @@ public class GraphDatabaseTest extends DocumentDBBaseTest {
   @SuppressWarnings("unchecked")
   public void nestedQuery() {
     Vertex countryVertex1 = database.addVertex(null, "name", "UK", "area", "Europe", "code", "2");
-    Vertex cityVertex1 = database.addVertex(null, "name", "leicester", "lat", "52.64640", "long", "-1.13159");
-    Vertex cityVertex2 = database.addVertex(null, "name", "manchester", "lat", "53.47497", "long", "-2.25769");
+    Vertex cityVertex1 =
+        database.addVertex(null, "name", "leicester", "lat", "52.64640", "long", "-1.13159");
+    Vertex cityVertex2 =
+        database.addVertex(null, "name", "manchester", "lat", "53.47497", "long", "-2.25769");
 
     database.addEdge(null, countryVertex1, cityVertex1, "owns");
     database.addEdge(null, countryVertex1, cityVertex2, "owns");
 
     database.commit();
     String subquery = "select out('owns') from V where name = 'UK'";
-    List<OIdentifiable> result = database.getRawGraph().query(new OSQLSynchQuery<ODocument>(subquery));
+    List<OIdentifiable> result =
+        database.getRawGraph().query(new OSQLSynchQuery<ODocument>(subquery));
 
     Assert.assertEquals(result.size(), 1);
     Assert.assertEquals(((Collection) ((ODocument) result.get(0)).field("out")).size(), 2);
@@ -242,16 +262,17 @@ public class GraphDatabaseTest extends DocumentDBBaseTest {
 
     Assert.assertEquals(result.size(), 2);
     for (int i = 0; i < result.size(); i++) {
-//      System.out.println("uno: " + result.get(i));
+      //      System.out.println("uno: " + result.get(i));
       Assert.assertTrue(((ODocument) result.get(i).getRecord()).containsField("lat"));
     }
 
-    String query = "select name, lat, long, distance(lat,long,51.5,0.08) as distance from (select expand(out('owns')) from V where name = 'UK') order by distance";
+    String query =
+        "select name, lat, long, distance(lat,long,51.5,0.08) as distance from (select expand(out('owns')) from V where name = 'UK') order by distance";
     result = database.getRawGraph().query(new OSQLSynchQuery<ODocument>(query));
 
     Assert.assertEquals(result.size(), 2);
     for (int i = 0; i < result.size(); i++) {
-//      System.out.println("dos: " + result.get(i));
+      //      System.out.println("dos: " + result.get(i));
       Assert.assertTrue(((ODocument) result.get(i).getRecord()).containsField("lat"));
       Assert.assertTrue(((ODocument) result.get(i).getRecord()).containsField("distance"));
     }
@@ -276,24 +297,28 @@ public class GraphDatabaseTest extends DocumentDBBaseTest {
   }
 
   public void testDeleteOfVerticesAndEdgesWithDeleteCommandAndUnsafe() {
-    Iterable<OIdentifiable> deletedVertices = database.command(
-        new OCommandSQL("delete from GraphVehicle return before limit 1 unsafe")).execute();
+    Iterable<OIdentifiable> deletedVertices =
+        database
+            .command(new OCommandSQL("delete from GraphVehicle return before limit 1 unsafe"))
+            .execute();
     Assert.assertTrue(deletedVertices.iterator().hasNext());
 
     OrientVertex v = (OrientVertex) deletedVertices.iterator().next();
 
-    Integer confirmDeleted = database.command(new OCommandSQL("delete from " + v.getIdentity() + " unsafe")).execute();
+    Integer confirmDeleted =
+        database.command(new OCommandSQL("delete from " + v.getIdentity() + " unsafe")).execute();
     Assert.assertFalse(deletedVertices.iterator().hasNext());
     Assert.assertEquals(confirmDeleted.intValue(), 0);
 
     Iterable<Edge> edges = v.getEdges(Direction.BOTH);
 
     for (Edge e : edges) {
-      Integer deletedEdges = database.command(new OCommandSQL("delete from " + ((OrientEdge) e).getIdentity() + " unsafe"))
-          .execute();
+      Integer deletedEdges =
+          database
+              .command(new OCommandSQL("delete from " + ((OrientEdge) e).getIdentity() + " unsafe"))
+              .execute();
       Assert.assertEquals(deletedEdges.intValue(), 1);
     }
-
   }
 
   public void testInsertOfEdgeWithInsertCommand() {
@@ -303,33 +328,38 @@ public class GraphDatabaseTest extends DocumentDBBaseTest {
     } catch (OCommandExecutionException e) {
       Assert.assertTrue(true);
     }
-
   }
 
   public void testInsertOfEdgeWithInsertCommandUnsafe() {
 
-    OrientEdge insertedEdge = database.command(new OCommandSQL("insert into E set in = #9:0, out = #9:1, a = 33 unsafe")).execute();
+    OrientEdge insertedEdge =
+        database
+            .command(new OCommandSQL("insert into E set in = #9:0, out = #9:1, a = 33 unsafe"))
+            .execute();
     Assert.assertNotNull(insertedEdge);
 
-    Integer confirmDeleted = database.command(new OCommandSQL("delete from " + insertedEdge.getIdentity() + " unsafe")).execute();
+    Integer confirmDeleted =
+        database
+            .command(new OCommandSQL("delete from " + insertedEdge.getIdentity() + " unsafe"))
+            .execute();
     Assert.assertEquals(confirmDeleted.intValue(), 1);
   }
 
-
   public void testEmbeddedDoc() {
-    database.executeOutsideTx(new OCallable<Object, OrientBaseGraph>() {
-      @Override public Object call(OrientBaseGraph iArgument) {
-        return iArgument.getRawGraph().getMetadata().getSchema().createClass("NonVertex");
-      }
-    });
+    database.executeOutsideTx(
+        new OCallable<Object, OrientBaseGraph>() {
+          @Override
+          public Object call(OrientBaseGraph iArgument) {
+            return iArgument.getRawGraph().getMetadata().getSchema().createClass("NonVertex");
+          }
+        });
     Vertex vertex = database.addVertex("class:V", "name", "vertexWithEmbedded");
     ODocument doc = new ODocument();
     doc.field("foo", "bar");
-    doc.save(database.getRawGraph().getClusterNameById(database.getRawGraph().getDefaultClusterId()));
-
+    doc.save(
+        database.getRawGraph().getClusterNameById(database.getRawGraph().getDefaultClusterId()));
 
     vertex.setProperty("emb1", doc);
-
 
     ODocument doc2 = new ODocument("V");
     doc2.field("foo", "bar1");
@@ -352,5 +382,4 @@ public class GraphDatabaseTest extends DocumentDBBaseTest {
     Assert.assertTrue(res3 instanceof ODocument);
     database.commit();
   }
-
 }

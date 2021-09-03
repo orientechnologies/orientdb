@@ -22,8 +22,13 @@ package com.orientechnologies.orient.core.sql.functions.coll;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This operator add an item in a list. The list accepts duplicates.
@@ -37,7 +42,11 @@ public class OSQLFunctionList extends OSQLFunctionMultiValueAbstract<List<Object
     super(NAME, 1, -1);
   }
 
-  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
+  public Object execute(
+      Object iThis,
+      final OIdentifiable iCurrentRecord,
+      Object iCurrentResult,
+      final Object[] iParams,
       OCommandContext iContext) {
     if (iParams.length > 1)
       // IN LINE MODE
@@ -49,10 +58,8 @@ public class OSQLFunctionList extends OSQLFunctionMultiValueAbstract<List<Object
           // AGGREGATION MODE (STATEFULL)
           context = new ArrayList<Object>();
 
-        if (value instanceof Map)
-          context.add(value);
-        else
-          OMultiValue.add(context, value);
+        if (value instanceof Map) context.add(value);
+        else OMultiValue.add(context, value);
       }
     }
     return prepareResult(context);
@@ -79,14 +86,14 @@ public class OSQLFunctionList extends OSQLFunctionMultiValueAbstract<List<Object
     if (returnDistributedResult()) {
       final Collection<Object> result = new HashSet<Object>();
       for (Object iParameter : resultsToMerge) {
-        final Map<String, Object> container = (Map<String, Object>) ((Collection<?>) iParameter).iterator().next();
+        final Map<String, Object> container =
+            (Map<String, Object>) ((Collection<?>) iParameter).iterator().next();
         result.addAll((Collection<?>) container.get("context"));
       }
       return result;
     }
 
-    if (!resultsToMerge.isEmpty())
-      return resultsToMerge.get(0);
+    if (!resultsToMerge.isEmpty()) return resultsToMerge.get(0);
 
     return null;
   }

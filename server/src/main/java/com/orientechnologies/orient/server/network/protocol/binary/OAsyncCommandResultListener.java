@@ -32,27 +32,27 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OClientConnection;
-
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Asynchronous command result manager. As soon as a record is returned by the command is sent over the wire.
+ * Asynchronous command result manager. As soon as a record is returned by the command is sent over
+ * the wire.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- *
  */
 public class OAsyncCommandResultListener extends OAbstractCommandResultListener {
 
   private final ONetworkProtocolBinary protocol;
-  private final AtomicBoolean          empty       = new AtomicBoolean(true);
-  private final int                    txId;
-  private final Set<ORID>              alreadySent = new HashSet<ORID>();
-  private final OClientConnection      connection;
+  private final AtomicBoolean empty = new AtomicBoolean(true);
+  private final int txId;
+  private final Set<ORID> alreadySent = new HashSet<ORID>();
+  private final OClientConnection connection;
 
-  public OAsyncCommandResultListener(OClientConnection connection, final OCommandResultListener wrappedResultListener) {
+  public OAsyncCommandResultListener(
+      OClientConnection connection, final OCommandResultListener wrappedResultListener) {
     super(wrappedResultListener);
     this.protocol = (ONetworkProtocolBinary) connection.getProtocol();
     this.txId = connection.getId();
@@ -64,24 +64,27 @@ public class OAsyncCommandResultListener extends OAbstractCommandResultListener 
     empty.compareAndSet(true, false);
 
     try {
-      fetchRecord(iRecord, new ORemoteFetchListener() {
-        @Override
-        protected void sendRecord(ORecord iLinked) {
-          if (!alreadySent.contains(iLinked.getIdentity())) {
-            alreadySent.add(iLinked.getIdentity());
-            try {
-              protocol.channel.writeByte((byte) 2); // CACHE IT ON THE CLIENT
-              protocol.writeIdentifiable(protocol.channel, connection, iLinked);
-            } catch (IOException e) {
-              OLogManager.instance().error(this, "Cannot write against channel", e);
+      fetchRecord(
+          iRecord,
+          new ORemoteFetchListener() {
+            @Override
+            protected void sendRecord(ORecord iLinked) {
+              if (!alreadySent.contains(iLinked.getIdentity())) {
+                alreadySent.add(iLinked.getIdentity());
+                try {
+                  protocol.channel.writeByte((byte) 2); // CACHE IT ON THE CLIENT
+                  protocol.writeIdentifiable(protocol.channel, connection, iLinked);
+                } catch (IOException e) {
+                  OLogManager.instance().error(this, "Cannot write against channel", e);
+                }
+              }
             }
-          }
-        }
-      });
+          });
       alreadySent.add(((OIdentifiable) iRecord).getIdentity());
       protocol.channel.writeByte((byte) 1); // ONE MORE RECORD
-      protocol.writeIdentifiable(protocol.channel, connection, ((OIdentifiable) iRecord).getRecord());
-      protocol.channel.flush();// TODO review this flush... it's for non blocking...
+      protocol.writeIdentifiable(
+          protocol.channel, connection, ((OIdentifiable) iRecord).getRecord());
+      protocol.channel.flush(); // TODO review this flush... it's for non blocking...
 
       if (wrappedResultListener != null)
         // NOTIFY THE WRAPPED LISTENER
@@ -100,37 +103,44 @@ public class OAsyncCommandResultListener extends OAbstractCommandResultListener 
 
   @Override
   public void linkdedBySimpleValue(ODocument doc) {
-    ORemoteFetchListener listener = new ORemoteFetchListener() {
-      @Override
-      protected void sendRecord(ORecord iLinked) {
-        if (!alreadySent.contains(iLinked.getIdentity())) {
-          alreadySent.add(iLinked.getIdentity());
-          try {
-            protocol.channel.writeByte((byte) 2); // CACHE IT ON THE CLIENT
-            protocol.writeIdentifiable(protocol.channel, connection, iLinked);
-          } catch (IOException e) {
-            OLogManager.instance().error(this, "Cannot write against channel", e);
+    ORemoteFetchListener listener =
+        new ORemoteFetchListener() {
+          @Override
+          protected void sendRecord(ORecord iLinked) {
+            if (!alreadySent.contains(iLinked.getIdentity())) {
+              alreadySent.add(iLinked.getIdentity());
+              try {
+                protocol.channel.writeByte((byte) 2); // CACHE IT ON THE CLIENT
+                protocol.writeIdentifiable(protocol.channel, connection, iLinked);
+              } catch (IOException e) {
+                OLogManager.instance().error(this, "Cannot write against channel", e);
+              }
+            }
           }
-        }
-      }
 
-      @Override
-      public void parseLinked(ODocument iRootRecord, OIdentifiable iLinked, Object iUserObject, String iFieldName,
-          OFetchContext iContext) throws OFetchException {
-        if (iLinked instanceof ORecord)
-          sendRecord((ORecord) iLinked);
-      }
+          @Override
+          public void parseLinked(
+              ODocument iRootRecord,
+              OIdentifiable iLinked,
+              Object iUserObject,
+              String iFieldName,
+              OFetchContext iContext)
+              throws OFetchException {
+            if (iLinked instanceof ORecord) sendRecord((ORecord) iLinked);
+          }
 
-      @Override
-      public void parseLinkedCollectionValue(ODocument iRootRecord, OIdentifiable iLinked, Object iUserObject, String iFieldName,
-          OFetchContext iContext) throws OFetchException {
-        if (iLinked instanceof ORecord)
-          sendRecord((ORecord) iLinked);
-      }
-
-    };
+          @Override
+          public void parseLinkedCollectionValue(
+              ODocument iRootRecord,
+              OIdentifiable iLinked,
+              Object iUserObject,
+              String iFieldName,
+              OFetchContext iContext)
+              throws OFetchException {
+            if (iLinked instanceof ORecord) sendRecord((ORecord) iLinked);
+          }
+        };
     final OFetchContext context = new ORemoteFetchContext();
     OFetchHelper.fetch(doc, doc, OFetchHelper.buildFetchPlan(""), listener, context, "");
   }
-
 }

@@ -8,18 +8,17 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.sql.executor.ODeleteExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.ODeleteVertexExecutionPlanner;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.util.HashMap;
 import java.util.Map;
 
 public class ODeleteVertexStatement extends OStatement {
 
   protected boolean from = false;
-  protected OFromClause  fromClause;
+  protected OFromClause fromClause;
   protected OWhereClause whereClause;
   protected boolean returnBefore = false;
-  protected OLimit  limit        = null;
-  protected OBatch  batch        = null;
+  protected OLimit limit = null;
+  protected OBatch batch = null;
 
   public ODeleteVertexStatement(int id) {
     super(id);
@@ -29,7 +28,9 @@ public class ODeleteVertexStatement extends OStatement {
     super(p, id);
   }
 
-  @Override public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx, boolean usePlanCache) {
+  @Override
+  public OResultSet execute(
+      ODatabase db, Map params, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -46,7 +47,9 @@ public class ODeleteVertexStatement extends OStatement {
     return new OLocalResultSet(executionPlan);
   }
 
-  @Override public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
+  @Override
+  public OResultSet execute(
+      ODatabase db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -97,7 +100,8 @@ public class ODeleteVertexStatement extends OStatement {
     }
   }
 
-  @Override public ODeleteVertexStatement copy() {
+  @Override
+  public ODeleteVertexStatement copy() {
     ODeleteVertexStatement result = new ODeleteVertexStatement(-1);
     result.from = from;
     result.fromClause = fromClause == null ? null : fromClause.copy();
@@ -108,31 +112,27 @@ public class ODeleteVertexStatement extends OStatement {
     return result;
   }
 
-  @Override public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     ODeleteVertexStatement that = (ODeleteVertexStatement) o;
 
-    if (from != that.from)
-      return false;
-    if (returnBefore != that.returnBefore)
-      return false;
+    if (from != that.from) return false;
+    if (returnBefore != that.returnBefore) return false;
     if (fromClause != null ? !fromClause.equals(that.fromClause) : that.fromClause != null)
       return false;
     if (whereClause != null ? !whereClause.equals(that.whereClause) : that.whereClause != null)
       return false;
-    if (limit != null ? !limit.equals(that.limit) : that.limit != null)
-      return false;
-    if (batch != null ? !batch.equals(that.batch) : that.batch != null)
-      return false;
+    if (limit != null ? !limit.equals(that.limit) : that.limit != null) return false;
+    if (batch != null ? !batch.equals(that.batch) : that.batch != null) return false;
 
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = (from ? 1 : 0);
     result = 31 * result + (fromClause != null ? fromClause.hashCode() : 0);
     result = 31 * result + (whereClause != null ? whereClause.hashCode() : 0);

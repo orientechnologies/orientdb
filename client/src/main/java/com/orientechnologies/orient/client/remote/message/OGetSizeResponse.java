@@ -19,25 +19,24 @@
  */
 package com.orientechnologies.orient.client.remote.message;
 
-import java.io.IOException;
-
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
+import java.io.IOException;
 
 public class OGetSizeResponse implements OBinaryResponse {
   private long size;
 
-  public OGetSizeResponse() {
-  }
+  public OGetSizeResponse() {}
 
   public OGetSizeResponse(long size) {
     this.size = size;
   }
 
-  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
     channel.writeLong(size);
   }
 
@@ -49,5 +48,4 @@ public class OGetSizeResponse implements OBinaryResponse {
   public long getSize() {
     return size;
   }
-
 }

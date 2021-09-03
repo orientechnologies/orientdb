@@ -19,31 +19,35 @@
  */
 package com.orientechnologies.orient.server.plugin;
 
+import com.orientechnologies.common.log.OLogManager;
 import java.lang.reflect.Method;
 import java.net.URLClassLoader;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.orientechnologies.common.log.OLogManager;
-
 /**
  * Server plugin information
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- *
  */
 public class OServerPluginInfo {
-  private final String              name;
-  private final String              version;
-  private final String              description;
-  private final String              web;
-  private final OServerPlugin       instance;
+  private final String name;
+  private final String version;
+  private final String description;
+  private final String web;
+  private final OServerPlugin instance;
   private final Map<String, Object> parameters;
-  private final long                loadedOn;
-  private final URLClassLoader      pluginClassLoader;
+  private final long loadedOn;
+  private final URLClassLoader pluginClassLoader;
 
-  public OServerPluginInfo(final String name, final String version, final String description, final String web,
-      final OServerPlugin instance, final Map<String, Object> parameters, final long loadedOn,
+  public OServerPluginInfo(
+      final String name,
+      final String version,
+      final String description,
+      final String web,
+      final OServerPlugin instance,
+      final Map<String, Object> parameters,
+      final long loadedOn,
       final URLClassLoader pluginClassLoader) {
     this.name = name;
     this.version = version;
@@ -60,16 +64,14 @@ public class OServerPluginInfo {
   }
 
   public void shutdown(boolean closeClassLoader) {
-    if (instance != null)
-      instance.sendShutdown();
+    if (instance != null) instance.sendShutdown();
 
     if (pluginClassLoader != null && closeClassLoader) {
       // JAVA7 ONLY
       Method m;
       try {
         m = pluginClassLoader.getClass().getMethod("close");
-        if (m != null)
-          m.invoke(pluginClassLoader);
+        if (m != null) m.invoke(pluginClassLoader);
       } catch (NoSuchMethodException e) {
       } catch (Exception e) {
         OLogManager.instance().error(this, "Error on closing plugin classloader", e);

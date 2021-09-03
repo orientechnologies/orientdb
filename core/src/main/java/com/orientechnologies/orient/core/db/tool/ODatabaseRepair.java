@@ -24,13 +24,12 @@ import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.util.Iterator;
 import java.util.List;
 
 /**
  * Repair database tool.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  * @since v2.2.0
  */
@@ -46,15 +45,13 @@ public class ODatabaseRepair extends ODatabaseTool {
     } else if (option.equalsIgnoreCase("-removeBrokenLinks")) {
 
       removeBrokenLinks = Boolean.parseBoolean(items.get(0));
-
     }
   }
 
   public void run() {
     long errors = 0;
 
-    if (removeBrokenLinks)
-      errors += removeBrokenLinks();
+    if (removeBrokenLinks) errors += removeBrokenLinks();
 
     message("\nRepair database complete (" + errors + " errors)");
   }
@@ -81,8 +78,14 @@ public class ODatabaseRepair extends ODatabaseTool {
                   fixedLinks++;
                   changed = true;
                   if (verbose)
-                    message("\n--- reset link " + ((OIdentifiable) fieldValue).getIdentity() + " in field '" + fieldName + "' (rid="
-                        + doc.getIdentity() + ")");
+                    message(
+                        "\n--- reset link "
+                            + ((OIdentifiable) fieldValue).getIdentity()
+                            + " in field '"
+                            + fieldName
+                            + "' (rid="
+                            + doc.getIdentity()
+                            + ")");
                 }
               } else if (fieldValue instanceof Iterable<?>) {
                 if (fieldValue instanceof ORecordLazyMultiValue)
@@ -96,8 +99,16 @@ public class ODatabaseRepair extends ODatabaseTool {
                     fixedLinks++;
                     changed = true;
                     if (verbose)
-                      message("\n--- reset link " + ((OIdentifiable) v).getIdentity() + " as item " + i
-                          + " in collection of field '" + fieldName + "' (rid=" + doc.getIdentity() + ")");
+                      message(
+                          "\n--- reset link "
+                              + ((OIdentifiable) v).getIdentity()
+                              + " as item "
+                              + i
+                              + " in collection of field '"
+                              + fieldName
+                              + "' (rid="
+                              + doc.getIdentity()
+                              + ")");
                   }
                 }
               }
@@ -107,8 +118,7 @@ public class ODatabaseRepair extends ODatabaseTool {
               modifiedDocuments++;
               doc.save();
 
-              if (verbose)
-                message("\n-- updated document " + doc.getIdentity());
+              if (verbose) message("\n-- updated document " + doc.getIdentity());
             }
           }
         } catch (Exception ignore) {
@@ -124,26 +134,21 @@ public class ODatabaseRepair extends ODatabaseTool {
   /**
    * Checks if the link must be fixed.
    *
-   * @param fieldValue
-   *          Field containing the OIdentifiable (RID or Record)
+   * @param fieldValue Field containing the OIdentifiable (RID or Record)
    * @return true to fix it, otherwise false
    */
   protected boolean fixLink(final Object fieldValue) {
     if (fieldValue instanceof OIdentifiable) {
       final ORID id = ((OIdentifiable) fieldValue).getIdentity();
 
-      if (id.getClusterId() == 0 && id.getClusterPosition() == 0)
-        return true;
+      if (id.getClusterId() == 0 && id.getClusterPosition() == 0) return true;
 
       if (id.isValid())
         if (id.isPersistent()) {
           final ORecord connected = ((OIdentifiable) fieldValue).getRecord();
-          if (connected == null)
-            return true;
-        } else
-          return true;
+          if (connected == null) return true;
+        } else return true;
     }
     return false;
   }
-
 }

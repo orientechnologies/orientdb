@@ -1,18 +1,17 @@
 package com.orientechnologies.orient.distributed.impl.structural.operations;
 
+import static com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory.STRUCTURAL_FULL_CONFIGURATION;
+
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.log.OLogId;
 import com.orientechnologies.orient.distributed.impl.structural.OReadStructuralSharedConfiguration;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-import static com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory.STRUCTURAL_FULL_CONFIGURATION;
-
 public class OFullConfiguration implements OOperation {
-  private OLogId                             lastId;
+  private OLogId lastId;
   private OReadStructuralSharedConfiguration shared;
 
   public OFullConfiguration(OLogId lastId, OReadStructuralSharedConfiguration shared) {
@@ -20,9 +19,7 @@ public class OFullConfiguration implements OOperation {
     this.shared = shared;
   }
 
-  public OFullConfiguration() {
-
-  }
+  public OFullConfiguration() {}
 
   @Override
   public int getOperationId() {

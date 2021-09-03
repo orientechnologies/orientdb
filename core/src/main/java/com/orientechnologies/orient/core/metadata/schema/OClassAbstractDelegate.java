@@ -20,7 +20,6 @@ import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
@@ -29,7 +28,7 @@ import java.util.Set;
 
 /**
  * Abstract Delegate for OClass interface.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com) (http://orientdb.com)
  */
 public abstract class OClassAbstractDelegate implements OClass {
@@ -37,8 +36,7 @@ public abstract class OClassAbstractDelegate implements OClass {
   protected final OClass delegate;
 
   public OClassAbstractDelegate(final OClass delegate) {
-    if (delegate == null)
-      throw new IllegalArgumentException("Class is null");
+    if (delegate == null) throw new IllegalArgumentException("Class is null");
 
     this.delegate = delegate;
   }
@@ -168,22 +166,26 @@ public abstract class OClassAbstractDelegate implements OClass {
   }
 
   @Override
-  public OProperty createProperty(final String iPropertyName, final OType iType, final OClass iLinkedClass) {
+  public OProperty createProperty(
+      final String iPropertyName, final OType iType, final OClass iLinkedClass) {
     return delegate.createProperty(iPropertyName, iType, iLinkedClass);
   }
 
   @Override
-  public OProperty createProperty(String iPropertyName, OType iType, OClass iLinkedClass, boolean unsafe) {
+  public OProperty createProperty(
+      String iPropertyName, OType iType, OClass iLinkedClass, boolean unsafe) {
     return delegate.createProperty(iPropertyName, iType, iLinkedClass, unsafe);
   }
 
   @Override
-  public OProperty createProperty(final String iPropertyName, final OType iType, final OType iLinkedType) {
+  public OProperty createProperty(
+      final String iPropertyName, final OType iType, final OType iLinkedType) {
     return delegate.createProperty(iPropertyName, iType, iLinkedType);
   }
 
   @Override
-  public OProperty createProperty(String iPropertyName, OType iType, OType iLinkedType, boolean unsafe) {
+  public OProperty createProperty(
+      String iPropertyName, OType iType, OType iLinkedType, boolean unsafe) {
     return delegate.createProperty(iPropertyName, iType, iLinkedType, unsafe);
   }
 
@@ -246,9 +248,7 @@ public abstract class OClassAbstractDelegate implements OClass {
     return this;
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public OClass truncateCluster(String clusterName) {
     delegate.truncateCluster(clusterName);
@@ -384,20 +384,32 @@ public abstract class OClassAbstractDelegate implements OClass {
   }
 
   @Override
-  public OIndex createIndex(final String iName, final INDEX_TYPE iType, final OProgressListener iProgressListener,
+  public OIndex createIndex(
+      final String iName,
+      final INDEX_TYPE iType,
+      final OProgressListener iProgressListener,
       final String... fields) {
     return delegate.createIndex(iName, iType, iProgressListener, fields);
   }
 
   @Override
-  public OIndex createIndex(final String iName, final String iType, final OProgressListener iProgressListener,
-      final ODocument metadata, String algorithm, String... fields) {
+  public OIndex createIndex(
+      final String iName,
+      final String iType,
+      final OProgressListener iProgressListener,
+      final ODocument metadata,
+      String algorithm,
+      String... fields) {
     return delegate.createIndex(iName, iType, iProgressListener, metadata, algorithm, fields);
   }
 
   @Override
-  public OIndex createIndex(final String iName, final String iType, final OProgressListener iProgressListener,
-      final ODocument metadata, String... fields) {
+  public OIndex createIndex(
+      final String iName,
+      final String iType,
+      final OProgressListener iProgressListener,
+      final ODocument metadata,
+      String... fields) {
     return delegate.createIndex(iName, iType, iProgressListener, metadata, fields);
   }
 

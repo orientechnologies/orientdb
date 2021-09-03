@@ -37,23 +37,22 @@ public class ODatabaseIdentifier {
   public String getUrl() {
 
     switch (settings.mode) {
-    case MEMORY:
-      return "memory:" + settings.dbName;
-    case REMOTE:
-      return "remote:" + settings.remoteIp + ":" + settings.remotePort + "/" + settings.dbName;
-    case DISTRIBUTED:
-      return null;
-    case PLOCAL:
-    default:
-      String basePath = System.getProperty("java.io.tmpdir");
-      if (settings.plocalPath != null) {
-        basePath = settings.plocalPath;
-      }
+      case MEMORY:
+        return "memory:" + settings.dbName;
+      case REMOTE:
+        return "remote:" + settings.remoteIp + ":" + settings.remotePort + "/" + settings.dbName;
+      case DISTRIBUTED:
+        return null;
+      case PLOCAL:
+      default:
+        String basePath = System.getProperty("java.io.tmpdir");
+        if (settings.plocalPath != null) {
+          basePath = settings.plocalPath;
+        }
 
-      if (!basePath.endsWith(File.separator))
-        basePath += File.separator;
+        if (!basePath.endsWith(File.separator)) basePath += File.separator;
 
-      return "plocal:" + basePath + settings.dbName;
+        return "plocal:" + basePath + settings.dbName;
     }
   }
 

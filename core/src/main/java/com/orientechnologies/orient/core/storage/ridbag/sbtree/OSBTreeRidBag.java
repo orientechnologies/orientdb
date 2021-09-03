@@ -28,21 +28,26 @@ import com.orientechnologies.common.util.OResettable;
 import com.orientechnologies.common.util.OSizeable;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.*;
+import com.orientechnologies.orient.core.db.record.OAutoConvertToRecord;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBagDelegate;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.OSimpleMultiValueTracker;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORidBagDeleteSerializationOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORidBagUpdateSerializationOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsaiLocal;
-
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Collection;
@@ -63,28 +68,30 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 /**
- * Persistent Set<OIdentifiable> implementation that uses the SBTree to handle entries in persistent way.
+ * Persistent Set<OIdentifiable> implementation that uses the SBTree to handle entries in persistent
+ * way.
  *
  * @author Artem Orobets (enisher-at-gmail.com)
  */
 public class OSBTreeRidBag implements ORidBagDelegate {
-  private final OSBTreeCollectionManager                           collectionManager = ODatabaseRecordThreadLocal.instance().get()
-      .getSbTreeCollectionManager();
-  private final NavigableMap<OIdentifiable, Change>                changes           = new ConcurrentSkipListMap<>();
-  /**
-   * Entries with not valid id.
-   */
-  private final IdentityHashMap<OIdentifiable, OModifiableInteger> newEntries        = new IdentityHashMap<>();
-  private       OBonsaiCollectionPointer                           collectionPointer;
-  private       int                                                size;
+  private final OSBTreeCollectionManager collectionManager =
+      ODatabaseRecordThreadLocal.instance().get().getSbTreeCollectionManager();
+  private final NavigableMap<OIdentifiable, Change> changes = new ConcurrentSkipListMap<>();
+  /** Entries with not valid id. */
+  private final IdentityHashMap<OIdentifiable, OModifiableInteger> newEntries =
+      new IdentityHashMap<>();
 
-  private OSimpleMultiValueTracker<OIdentifiable, OIdentifiable> tracker = new OSimpleMultiValueTracker<>(this);
+  private OBonsaiCollectionPointer collectionPointer;
+  private int size;
+
+  private final OSimpleMultiValueTracker<OIdentifiable, OIdentifiable> tracker =
+      new OSimpleMultiValueTracker<>(this);
 
   private boolean autoConvertToRecord = true;
 
   private transient ORecordElement owner;
-  private           boolean        dirty;
-  private           boolean        transactionDirty = false;
+  private boolean dirty;
+  private boolean transactionDirty = false;
 
   @Override
   public void setSize(int size) {
@@ -93,7 +100,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
 
   private static class OIdentifiableIntegerEntry implements Entry<OIdentifiable, Integer> {
     private final Entry<OIdentifiable, Integer> entry;
-    private final int                           newValue;
+    private final int newValue;
 
     OIdentifiableIntegerEntry(Entry<OIdentifiable, Integer> entry, int newValue) {
       this.entry = entry;
@@ -116,21 +123,25 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     }
   }
 
-  private final class RIDBagIterator implements Iterator<OIdentifiable>, OResettable, OSizeable, OAutoConvertToRecord {
-    private final NavigableMap<OIdentifiable, Change>                    changedValues;
-    private final SBTreeMapEntryIterator                                 sbTreeIterator;
-    private       boolean                                                convertToRecord;
-    private       Iterator<Map.Entry<OIdentifiable, OModifiableInteger>> newEntryIterator;
-    private       Iterator<Map.Entry<OIdentifiable, Change>>             changedValuesIterator;
-    private       Map.Entry<OIdentifiable, Change>                       nextChange;
-    private       Map.Entry<OIdentifiable, Integer>                      nextSBTreeEntry;
-    private       OIdentifiable                                          currentValue;
-    private       int                                                    currentFinalCounter;
-    private       int                                                    currentCounter;
-    private       boolean                                                currentRemoved;
+  private final class RIDBagIterator
+      implements Iterator<OIdentifiable>, OResettable, OSizeable, OAutoConvertToRecord {
+    private final NavigableMap<OIdentifiable, Change> changedValues;
+    private final SBTreeMapEntryIterator sbTreeIterator;
+    private boolean convertToRecord;
+    private Iterator<Map.Entry<OIdentifiable, OModifiableInteger>> newEntryIterator;
+    private Iterator<Map.Entry<OIdentifiable, Change>> changedValuesIterator;
+    private Map.Entry<OIdentifiable, Change> nextChange;
+    private Map.Entry<OIdentifiable, Integer> nextSBTreeEntry;
+    private OIdentifiable currentValue;
+    private int currentFinalCounter;
+    private int currentCounter;
+    private boolean currentRemoved;
 
-    private RIDBagIterator(IdentityHashMap<OIdentifiable, OModifiableInteger> newEntries,
-        NavigableMap<OIdentifiable, Change> changedValues, SBTreeMapEntryIterator sbTreeIterator, boolean convertToRecord) {
+    private RIDBagIterator(
+        IdentityHashMap<OIdentifiable, OModifiableInteger> newEntries,
+        NavigableMap<OIdentifiable, Change> changedValues,
+        SBTreeMapEntryIterator sbTreeIterator,
+        boolean convertToRecord) {
       newEntryIterator = newEntries.entrySet().iterator();
       this.changedValues = changedValues;
       this.convertToRecord = convertToRecord;
@@ -146,8 +157,10 @@ public class OSBTreeRidBag implements ORidBagDelegate {
 
     @Override
     public boolean hasNext() {
-      return newEntryIterator.hasNext() || nextChange != null || nextSBTreeEntry != null || (currentValue != null
-          && currentCounter < currentFinalCounter);
+      return newEntryIterator.hasNext()
+          || nextChange != null
+          || nextSBTreeEntry != null
+          || (currentValue != null && currentCounter < currentFinalCounter);
     }
 
     @Override
@@ -234,7 +247,8 @@ public class OSBTreeRidBag implements ORidBagDelegate {
         } else {
           if (nextChange != null) {
             changedValues.put(currentValue, new DiffChange(-1));
-            changedValuesIterator = changedValues.tailMap(nextChange.getKey(), false).entrySet().iterator();
+            changedValuesIterator =
+                changedValues.tailMap(nextChange.getKey(), false).entrySet().iterator();
           } else {
             changedValues.put(currentValue, new DiffChange(-1));
           }
@@ -278,7 +292,8 @@ public class OSBTreeRidBag implements ORidBagDelegate {
       this.convertToRecord = convertToRecord;
     }
 
-    private Map.Entry<OIdentifiable, Change> nextChangedNotRemovedEntry(Iterator<Map.Entry<OIdentifiable, Change>> iterator) {
+    private Map.Entry<OIdentifiable, Change> nextChangedNotRemovedEntry(
+        Iterator<Map.Entry<OIdentifiable, Change>> iterator) {
       Map.Entry<OIdentifiable, Change> entry;
 
       while (iterator.hasNext()) {
@@ -293,10 +308,11 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     }
   }
 
-  private final class SBTreeMapEntryIterator implements Iterator<Map.Entry<OIdentifiable, Integer>>, OResettable {
-    private final int                                           prefetchSize;
-    private       LinkedList<Map.Entry<OIdentifiable, Integer>> preFetchedValues;
-    private       OIdentifiable                                 firstKey;
+  private final class SBTreeMapEntryIterator
+      implements Iterator<Map.Entry<OIdentifiable, Integer>>, OResettable {
+    private final int prefetchSize;
+    private LinkedList<Map.Entry<OIdentifiable, Integer>> preFetchedValues;
+    private OIdentifiable firstKey;
 
     SBTreeMapEntryIterator(int prefetchSize) {
       this.prefetchSize = prefetchSize;
@@ -332,30 +348,36 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     private void prefetchData(boolean firstTime) {
       final OSBTreeBonsai<OIdentifiable, Integer> tree = loadTree();
       if (tree == null) {
-        throw new IllegalStateException("RidBag is not properly initialized, can not load tree implementation");
+        throw new IllegalStateException(
+            "RidBag is not properly initialized, can not load tree implementation");
       }
 
       try {
-        tree.loadEntriesMajor(firstKey, firstTime, true, entry -> {
-          preFetchedValues.add(new Entry<OIdentifiable, Integer>() {
-            @Override
-            public OIdentifiable getKey() {
-              return entry.getKey();
-            }
+        tree.loadEntriesMajor(
+            firstKey,
+            firstTime,
+            true,
+            entry -> {
+              preFetchedValues.add(
+                  new Entry<OIdentifiable, Integer>() {
+                    @Override
+                    public OIdentifiable getKey() {
+                      return entry.getKey();
+                    }
 
-            @Override
-            public Integer getValue() {
-              return entry.getValue();
-            }
+                    @Override
+                    public Integer getValue() {
+                      return entry.getValue();
+                    }
 
-            @Override
-            public Integer setValue(Integer v) {
-              throw new UnsupportedOperationException("setValue");
-            }
-          });
+                    @Override
+                    public Integer setValue(Integer v) {
+                      throw new UnsupportedOperationException("setValue");
+                    }
+                  });
 
-          return preFetchedValues.size() <= prefetchSize;
-        });
+              return preFetchedValues.size() <= prefetchSize;
+            });
       } finally {
         releaseTree();
       }
@@ -370,7 +392,8 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     private void init() {
       OSBTreeBonsai<OIdentifiable, Integer> tree = loadTree();
       if (tree == null) {
-        throw new IllegalStateException("RidBag is not properly initialized, can not load tree implementation");
+        throw new IllegalStateException(
+            "RidBag is not properly initialized, can not load tree implementation");
       }
 
       try {
@@ -407,8 +430,10 @@ public class OSBTreeRidBag implements ORidBagDelegate {
   @Override
   public void setOwner(ORecordElement owner) {
     if (owner != null && this.owner != null && !this.owner.equals(owner)) {
-      throw new IllegalStateException("This data structure is owned by document " + owner
-          + " if you want to use it in other document create new rid bag instance and copy content of current one.");
+      throw new IllegalStateException(
+          "This data structure is owned by document "
+              + owner
+              + " if you want to use it in other document create new rid bag instance and copy content of current one.");
     }
     if (this.owner != null) {
       for (OIdentifiable entry : newEntries.keySet()) {
@@ -432,14 +457,20 @@ public class OSBTreeRidBag implements ORidBagDelegate {
 
   @Override
   public Iterator<OIdentifiable> iterator() {
-    return new RIDBagIterator(new IdentityHashMap<>(newEntries), changes,
-        collectionPointer != null ? new SBTreeMapEntryIterator(1000) : null, autoConvertToRecord);
+    return new RIDBagIterator(
+        new IdentityHashMap<>(newEntries),
+        changes,
+        collectionPointer != null ? new SBTreeMapEntryIterator(1000) : null,
+        autoConvertToRecord);
   }
 
   @Override
   public Iterator<OIdentifiable> rawIterator() {
-    return new RIDBagIterator(new IdentityHashMap<>(newEntries), changes,
-        collectionPointer != null ? new SBTreeMapEntryIterator(1000) : null, false);
+    return new RIDBagIterator(
+        new IdentityHashMap<>(newEntries),
+        changes,
+        collectionPointer != null ? new SBTreeMapEntryIterator(1000) : null,
+        false);
   }
 
   @Override
@@ -524,6 +555,11 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     for (OIdentifiable identifiable : values) {
       add(identifiable);
     }
+  }
+
+  @Override
+  public boolean addInternal(OIdentifiable e) {
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -645,26 +681,27 @@ public class OSBTreeRidBag implements ORidBagDelegate {
   }
 
   @Override
-  public Object returnOriginalState(List<OMultiValueChangeEvent<OIdentifiable, OIdentifiable>> multiValueChangeEvents) {
+  public Object returnOriginalState(
+      List<OMultiValueChangeEvent<OIdentifiable, OIdentifiable>> multiValueChangeEvents) {
     final OSBTreeRidBag reverted = new OSBTreeRidBag();
     for (OIdentifiable identifiable : this) {
       reverted.add(identifiable);
     }
 
-    final ListIterator<OMultiValueChangeEvent<OIdentifiable, OIdentifiable>> listIterator = multiValueChangeEvents
-        .listIterator(multiValueChangeEvents.size());
+    final ListIterator<OMultiValueChangeEvent<OIdentifiable, OIdentifiable>> listIterator =
+        multiValueChangeEvents.listIterator(multiValueChangeEvents.size());
 
     while (listIterator.hasPrevious()) {
       final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> event = listIterator.previous();
       switch (event.getChangeType()) {
-      case ADD:
-        reverted.remove(event.getKey());
-        break;
-      case REMOVE:
-        reverted.add(event.getOldValue());
-        break;
-      default:
-        throw new IllegalArgumentException("Invalid change type : " + event.getChangeType());
+        case ADD:
+          reverted.remove(event.getKey());
+          break;
+        case REMOVE:
+          reverted.add(event.getOldValue());
+          break;
+        default:
+          throw new IllegalArgumentException("Invalid change type : " + event.getChangeType());
       }
     }
 
@@ -674,7 +711,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
   @Override
   public int getSerializedSize() {
     int result = 2 * OLongSerializer.LONG_SIZE + 3 * OIntegerSerializer.INT_SIZE;
-    if (ODatabaseRecordThreadLocal.instance().get().getStorage() instanceof OStorageProxy
+    if (ODatabaseRecordThreadLocal.instance().get().isRemote()
         || ORecordSerializationContext.getContext() == null) {
       result += getChangesSerializedSize();
     }
@@ -702,7 +739,8 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     }
   }
 
-  public void handleContextSBTree(ORecordSerializationContext context, OBonsaiCollectionPointer pointer) {
+  public void handleContextSBTree(
+      ORecordSerializationContext context, OBonsaiCollectionPointer pointer) {
     rearrangeChanges();
     this.collectionPointer = pointer;
     context.push(new ORidBagUpdateSerializationOperation(changes, collectionPointer));
@@ -713,7 +751,11 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     applyNewEntries();
 
     final ORecordSerializationContext context;
-    boolean remoteMode = ODatabaseRecordThreadLocal.instance().get().getStorage() instanceof OStorageProxy;
+
+    final ODatabaseDocumentInternal databaseDocumentInternal =
+        ODatabaseRecordThreadLocal.instance().get();
+
+    boolean remoteMode = databaseDocumentInternal.isRemote();
     if (remoteMode) {
       context = null;
     } else {
@@ -726,8 +768,15 @@ public class OSBTreeRidBag implements ORidBagDelegate {
         final int clusterId = getHighLevelDocClusterId();
         assert clusterId > -1;
         try {
-          collectionPointer = ODatabaseRecordThreadLocal.instance().get().getSbTreeCollectionManager()
-              .createSBTree(clusterId, ownerUuid);
+          final OAtomicOperationsManager atomicOperationsManager =
+              ((OAbstractPaginatedStorage) databaseDocumentInternal.getStorage())
+                  .getAtomicOperationsManager();
+          final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
+          assert atomicOperation != null;
+          collectionPointer =
+              databaseDocumentInternal
+                  .getSbTreeCollectionManager()
+                  .createSBTree(clusterId, atomicOperation, ownerUuid);
         } catch (IOException e) {
           throw OException.wrapException(new ODatabaseException("Error during ridbag creation"), e);
         }
@@ -756,7 +805,8 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     offset += OIntegerSerializer.INT_SIZE;
 
     if (context == null) {
-      ChangeSerializationHelper.INSTANCE.serializeChanges(changes, OLinkSerializer.INSTANCE, stream, offset);
+      ChangeSerializationHelper.INSTANCE.serializeChanges(
+          changes, OLinkSerializer.INSTANCE, stream, offset);
     } else {
       handleContextSBTree(context, collectionPointer);
       // 0-length serialized list of changes
@@ -791,7 +841,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
   public void requestDelete() {
     final ORecordSerializationContext context = ORecordSerializationContext.getContext();
     if (context != null && collectionPointer != null) {
-      context.push(new ORidBagDeleteSerializationOperation(collectionPointer, this));
+      context.push(new ORidBagDeleteSerializationOperation(this));
     }
   }
 
@@ -819,14 +869,16 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     if (fileId == -1) {
       collectionPointer = null;
     } else {
-      collectionPointer = new OBonsaiCollectionPointer(fileId, new OBonsaiBucketPointer(pageIndex, pageOffset));
+      collectionPointer =
+          new OBonsaiCollectionPointer(fileId, new OBonsaiBucketPointer(pageIndex, pageOffset));
     }
 
     this.size = -1;
 
     changes.putAll(ChangeSerializationHelper.INSTANCE.deserializeChanges(stream, offset));
 
-    offset += OIntegerSerializer.INT_SIZE + (OLinkSerializer.RID_SIZE + Change.SIZE) * changes.size();
+    offset +=
+        OIntegerSerializer.INT_SIZE + (OLinkSerializer.RID_SIZE + Change.SIZE) * changes.size();
 
     return offset;
   }
@@ -900,7 +952,8 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     if (collectionPointer != null) {
       final OSBTreeBonsai<OIdentifiable, Integer> tree = loadTree();
       if (tree == null) {
-        throw new IllegalStateException("RidBag is not properly initialized, can not load tree implementation");
+        throw new IllegalStateException(
+            "RidBag is not properly initialized, can not load tree implementation");
       }
 
       try {
@@ -945,7 +998,6 @@ public class OSBTreeRidBag implements ORidBagDelegate {
    * Removes entry with given key from {@link #newEntries}.
    *
    * @param identifiable key to remove
-   *
    * @return true if entry have been removed
    */
   private boolean removeFromNewEntries(final OIdentifiable identifiable) {
@@ -962,7 +1014,8 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     }
   }
 
-  private Map.Entry<OIdentifiable, Integer> nextChangedNotRemovedSBTreeEntry(Iterator<Map.Entry<OIdentifiable, Integer>> iterator) {
+  private Map.Entry<OIdentifiable, Integer> nextChangedNotRemovedSBTreeEntry(
+      Iterator<Map.Entry<OIdentifiable, Integer>> iterator) {
     while (iterator.hasNext()) {
       final Map.Entry<OIdentifiable, Integer> entry = iterator.next();
       final Change change = changes.get(entry.getKey());
@@ -983,7 +1036,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
   public void debugPrint(PrintStream writer) throws IOException {
     OSBTreeBonsai<OIdentifiable, Integer> tree = loadTree();
     if (tree instanceof OSBTreeBonsaiLocal) {
-      ((OSBTreeBonsaiLocal) tree).debugPrintBucket(writer);
+      ((OSBTreeBonsaiLocal<OIdentifiable, Integer>) tree).debugPrintBucket(writer);
     }
   }
 
@@ -995,7 +1048,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
 
   @Override
   public void replace(OMultiValueChangeEvent<Object, Object> event, Object newValue) {
-    //do nothing not needed
+    // do nothing not needed
   }
 
   private void addEvent(OIdentifiable key, OIdentifiable identifiable) {
@@ -1073,8 +1126,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
 
   @Override
   public void setDirtyNoChanged() {
-    if (owner != null)
-      owner.setDirtyNoChanged();
+    if (owner != null) owner.setDirtyNoChanged();
     this.dirty = true;
     this.transactionDirty = true;
   }
@@ -1093,5 +1145,4 @@ public class OSBTreeRidBag implements ORidBagDelegate {
   public OMultiValueChangeTimeLine<OIdentifiable, OIdentifiable> getTransactionTimeLine() {
     return this.tracker.getTransactionTimeLine();
   }
-
 }

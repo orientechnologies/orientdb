@@ -4,17 +4,14 @@ import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.entity.OEntityManager;
 import com.orientechnologies.orient.object.db.entity.Car;
 import com.orientechnologies.orient.object.db.entity.Person;
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.HashMap;
-import java.util.Map;
-
-/**
- * Created by tglman on 16/12/15.
- */
+/** Created by tglman on 16/12/15. */
 public class OPersistentEmbeddedMapTest {
 
   private OPartitionedDatabasePool pool;
@@ -71,5 +68,4 @@ public class OPersistentEmbeddedMapTest {
 
     return new Person("John", placeToCar);
   }
-
 }

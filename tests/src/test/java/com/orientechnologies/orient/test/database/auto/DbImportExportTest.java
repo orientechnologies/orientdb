@@ -23,67 +23,70 @@ import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-
-@Test(groups = { "db", "import-export" })
+@Test(groups = {"db", "import-export"})
 public class DbImportExportTest extends DocumentDBBaseTest implements OCommandOutputListener {
   public static final String EXPORT_FILE_PATH = "target/db.export.gz";
-  public static final String NEW_DB_PATH      = "target/test-import";
-  public static final String NEW_DB_URL       = "target/test-import";
+  public static final String NEW_DB_PATH = "target/test-import";
+  public static final String NEW_DB_URL = "target/test-import";
 
-  private String             testPath;
-  private String             exportFilePath;
-  private boolean            dumpMode         = false;
+  private String testPath;
+  private String exportFilePath;
+  private boolean dumpMode = false;
 
-  @Parameters(value = { "url", "testPath" })
+  @Parameters(value = {"url", "testPath"})
   public DbImportExportTest(@Optional String url, String testPath) {
     super(url);
     this.testPath = testPath;
-
-    exportFilePath = System.getProperty("exportFilePath", EXPORT_FILE_PATH);
+    this.exportFilePath = System.getProperty("exportFilePath", EXPORT_FILE_PATH);
   }
 
   @Test
   public void testDbExport() throws IOException {
-    ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
+    final ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
     database.open("admin", "admin");
 
     // ADD A CUSTOM TO THE CLASS
-    database.command(new OCommandSQL("alter class V custom onBeforeCreate=onBeforeCreateItem")).execute();
+    database
+        .command(new OCommandSQL("alter class V custom onBeforeCreate=onBeforeCreateItem"))
+        .execute();
 
-    ODatabaseExport export = new ODatabaseExport(database, testPath + "/" + exportFilePath, this);
+    final ODatabaseExport export =
+        new ODatabaseExport(database, testPath + "/" + exportFilePath, this);
     export.exportDatabase();
     export.close();
-
     database.close();
   }
 
   @Test(dependsOnMethods = "testDbExport")
   public void testDbImport() throws IOException {
     final File importDir = new File(testPath + "/" + NEW_DB_PATH);
-    if (importDir.exists())
-      for (File f : importDir.listFiles())
+    if (importDir.exists()) {
+      for (final File f : importDir.listFiles()) {
         f.delete();
-    else
+      }
+    } else {
       importDir.mkdir();
-
-    ODatabaseDocumentTx database = new ODatabaseDocumentTx(getStorageType() + ":" + testPath + "/" + NEW_DB_URL);
-    database.create();
-
-    ODatabaseImport dbImport = new ODatabaseImport(database, testPath + "/" + exportFilePath, this);
-
-    // UNREGISTER ALL THE HOOKS
-    for (ORecordHook hook : new ArrayList<ORecordHook>(database.getHooks().keySet())) {
-      database.unregisterHook(hook);
     }
 
+    final ODatabaseDocumentTx database =
+        new ODatabaseDocumentTx(getStorageType() + ":" + testPath + "/" + NEW_DB_URL);
+    database.create();
+
+    final ODatabaseImport dbImport =
+        new ODatabaseImport(database, testPath + "/" + exportFilePath, this);
+
+    // UNREGISTER ALL THE HOOKS
+    for (final ORecordHook hook : new ArrayList<>(database.getHooks().keySet())) {
+      database.unregisterHook(hook);
+    }
     dbImport.setPreserveRids(true);
     dbImport.setDeleteRIDMapping(false);
     dbImport.importDatabase();
@@ -95,17 +98,21 @@ public class DbImportExportTest extends DocumentDBBaseTest implements OCommandOu
   @Test(dependsOnMethods = "testDbImport")
   public void testCompareDatabases() throws IOException {
     if ("remote".equals(getStorageType()) || url.startsWith("remote:")) {
-      String env = getTestEnv();
-      if (env == null || env.equals("dev"))
+      final String env = getTestEnv();
+      if (env == null || env.equals("dev")) {
         return;
-
+      }
       // EXECUTES ONLY IF NOT REMOTE ON CI/RELEASE TEST ENV
     }
+    final String urlPrefix = getStorageType() + ":";
 
-    String urlPrefix = getStorageType() + ":";
-
-    final ODatabaseCompare databaseCompare = new ODatabaseCompare(url, urlPrefix + testPath + "/" + DbImportExportTest.NEW_DB_URL,
-        "admin", "admin", this);
+    final ODatabaseCompare databaseCompare =
+        new ODatabaseCompare(
+            url,
+            urlPrefix + testPath + "/" + DbImportExportTest.NEW_DB_URL,
+            "admin",
+            "admin",
+            this);
     databaseCompare.setCompareEntriesForAutomaticIndexes(true);
     databaseCompare.setCompareIndexMetadata(true);
 
@@ -115,11 +122,12 @@ public class DbImportExportTest extends DocumentDBBaseTest implements OCommandOu
   @Override
   @Test(enabled = false)
   public void onMessage(final String iText) {
-    if (iText != null && iText.contains("ERR"))
+    if (iText != null && iText.contains("ERR")) {
       // ACTIVATE DUMP MODE
       dumpMode = true;
-
-    if (dumpMode)
+    }
+    if (dumpMode) {
       OLogManager.instance().error(this, iText, null);
+    }
   }
 }

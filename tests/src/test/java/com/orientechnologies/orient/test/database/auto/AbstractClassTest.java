@@ -22,13 +22,12 @@ import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.io.IOException;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
-
-import java.io.IOException;
 
 @Test(groups = "schema")
 public class AbstractClassTest extends DocumentDBBaseTest {
@@ -40,12 +39,11 @@ public class AbstractClassTest extends DocumentDBBaseTest {
   @BeforeClass
   public void createSchema() throws IOException {
     database = new ODatabaseDocumentTx(url);
-    if (ODatabaseHelper.existsDatabase(database, "plocal"))
-      database.open("admin", "admin");
-    else
-      database.create();
+    if (ODatabaseHelper.existsDatabase(database, "plocal")) database.open("admin", "admin");
+    else database.create();
 
-    OClass abstractPerson = database.getMetadata().getSchema().createAbstractClass("AbstractPerson");
+    OClass abstractPerson =
+        database.getMetadata().getSchema().createAbstractClass("AbstractPerson");
     abstractPerson.createProperty("name", OType.STRING);
 
     Assert.assertTrue(abstractPerson.isAbstract());
@@ -60,8 +58,7 @@ public class AbstractClassTest extends DocumentDBBaseTest {
     } catch (OException e) {
       Throwable cause = e;
 
-      while (cause.getCause() != null)
-        cause = cause.getCause();
+      while (cause.getCause() != null) cause = cause.getCause();
 
       Assert.assertTrue(cause instanceof OSchemaException);
     }

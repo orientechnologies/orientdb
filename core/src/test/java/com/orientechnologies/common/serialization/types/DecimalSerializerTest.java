@@ -16,22 +16,23 @@
 
 package com.orientechnologies.common.serialization.types;
 
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import org.junit.Assert;
+import org.junit.Before;
 
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
-import org.junit.Assert;import org.junit.Before; import org.junit.Test;
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 04.04.12
  */
 public class DecimalSerializerTest {
-  private final static int        FIELD_SIZE = 9;
-  private static final byte[]     stream     = new byte[FIELD_SIZE];
-  private static final BigDecimal OBJECT     = new BigDecimal(new BigInteger("20"), 2);
+  private static final int FIELD_SIZE = 9;
+  private static final byte[] stream = new byte[FIELD_SIZE];
+  private static final BigDecimal OBJECT = new BigDecimal(new BigInteger("20"), 2);
   private ODecimalSerializer decimalSerializer;
 
   @Before
@@ -56,7 +57,8 @@ public class DecimalSerializerTest {
   public void testNativeDirectMemoryCompatibility() {
     decimalSerializer.serializeNativeObject(OBJECT, stream, 0);
 
-    final ByteBuffer buffer = ByteBuffer.allocateDirect(stream.length).order(ByteOrder.nativeOrder());
+    final ByteBuffer buffer =
+        ByteBuffer.allocateDirect(stream.length).order(ByteOrder.nativeOrder());
     buffer.put(stream);
     buffer.position(0);
 
@@ -85,14 +87,19 @@ public class DecimalSerializerTest {
 
   public void testSerializeWALChanges() {
     final int serializationOffset = 5;
-    final ByteBuffer buffer = ByteBuffer.allocateDirect(FIELD_SIZE + serializationOffset).order(ByteOrder.nativeOrder());
+    final ByteBuffer buffer =
+        ByteBuffer.allocateDirect(FIELD_SIZE + serializationOffset).order(ByteOrder.nativeOrder());
 
     final byte[] data = new byte[FIELD_SIZE];
     decimalSerializer.serializeNativeObject(OBJECT, data, 0);
     final OWALChanges walChanges = new OWALChangesTree();
     walChanges.setBinaryValue(buffer, data, serializationOffset);
 
-    Assert.assertEquals(decimalSerializer.getObjectSizeInByteBuffer(buffer, walChanges, serializationOffset), FIELD_SIZE);
-    Assert.assertEquals(decimalSerializer.deserializeFromByteBufferObject(buffer, walChanges, serializationOffset), OBJECT);
+    Assert.assertEquals(
+        decimalSerializer.getObjectSizeInByteBuffer(buffer, walChanges, serializationOffset),
+        FIELD_SIZE);
+    Assert.assertEquals(
+        decimalSerializer.deserializeFromByteBufferObject(buffer, walChanges, serializationOffset),
+        OBJECT);
   }
 }

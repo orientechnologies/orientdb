@@ -50,15 +50,14 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
   }
 
   @Override
-  public void onUnregister() {
-  }
+  public void onUnregister() {}
 
   /**
    * It's called just before to create the new document.
    *
    * @param iDocument The document to create
-   *
-   * @return True if the document has been modified and a new marshalling is required, otherwise false
+   * @return True if the document has been modified and a new marshalling is required, otherwise
+   *     false
    */
   public RESULT onRecordBeforeCreate(final ODocument iDocument) {
     return RESULT.RECORD_NOT_CHANGED;
@@ -69,31 +68,28 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
    *
    * @param iDocument The document is going to be created
    */
-  public void onRecordAfterCreate(final ODocument iDocument) {
-  }
+  public void onRecordAfterCreate(final ODocument iDocument) {}
 
   /**
    * It's called just after the document creation was failed.
    *
    * @param iDocument The document just created
    */
-  public void onRecordCreateFailed(final ODocument iDocument) {
-  }
+  public void onRecordCreateFailed(final ODocument iDocument) {}
 
   /**
    * It's called just after the document creation was replicated on another node.
    *
    * @param iDocument The document just created
    */
-  public void onRecordCreateReplicated(final ODocument iDocument) {
-  }
+  public void onRecordCreateReplicated(final ODocument iDocument) {}
 
   /**
    * It's called just before to read the document.
    *
    * @param iDocument The document to read
-   *
-   * @return True if the document has been modified and a new marshalling is required, otherwise false
+   * @return True if the document has been modified and a new marshalling is required, otherwise
+   *     false
    */
   public RESULT onRecordBeforeRead(final ODocument iDocument) {
     return RESULT.RECORD_NOT_CHANGED;
@@ -104,31 +100,28 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
    *
    * @param iDocument The document just read
    */
-  public void onRecordAfterRead(final ODocument iDocument) {
-  }
+  public void onRecordAfterRead(final ODocument iDocument) {}
 
   /**
    * It's called just after the document read was failed.
    *
    * @param iDocument The document just created
    */
-  public void onRecordReadFailed(final ODocument iDocument) {
-  }
+  public void onRecordReadFailed(final ODocument iDocument) {}
 
   /**
    * It's called just after the document read was replicated on another node.
    *
    * @param iDocument The document just created
    */
-  public void onRecordReadReplicated(final ODocument iDocument) {
-  }
+  public void onRecordReadReplicated(final ODocument iDocument) {}
 
   /**
    * It's called just before to update the document.
    *
    * @param iDocument The document to update
-   *
-   * @return True if the document has been modified and a new marshalling is required, otherwise false
+   * @return True if the document has been modified and a new marshalling is required, otherwise
+   *     false
    */
   public RESULT onRecordBeforeUpdate(final ODocument iDocument) {
     return RESULT.RECORD_NOT_CHANGED;
@@ -139,31 +132,28 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
    *
    * @param iDocument The document just updated
    */
-  public void onRecordAfterUpdate(final ODocument iDocument) {
-  }
+  public void onRecordAfterUpdate(final ODocument iDocument) {}
 
   /**
    * It's called just after the document updated was failed.
    *
    * @param iDocument The document is going to be updated
    */
-  public void onRecordUpdateFailed(final ODocument iDocument) {
-  }
+  public void onRecordUpdateFailed(final ODocument iDocument) {}
 
   /**
    * It's called just after the document updated was replicated.
    *
    * @param iDocument The document is going to be updated
    */
-  public void onRecordUpdateReplicated(final ODocument iDocument) {
-  }
+  public void onRecordUpdateReplicated(final ODocument iDocument) {}
 
   /**
    * It's called just before to delete the document.
    *
    * @param iDocument The document to delete
-   *
-   * @return True if the document has been modified and a new marshalling is required, otherwise false
+   * @return True if the document has been modified and a new marshalling is required, otherwise
+   *     false
    */
   public RESULT onRecordBeforeDelete(final ODocument iDocument) {
     return RESULT.RECORD_NOT_CHANGED;
@@ -174,121 +164,112 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
    *
    * @param iDocument The document just deleted
    */
-  public void onRecordAfterDelete(final ODocument iDocument) {
-  }
+  public void onRecordAfterDelete(final ODocument iDocument) {}
 
   /**
    * It's called just after the document deletion was failed.
    *
    * @param iDocument The document is going to be deleted
    */
-  public void onRecordDeleteFailed(final ODocument iDocument) {
-  }
+  public void onRecordDeleteFailed(final ODocument iDocument) {}
 
   /**
    * It's called just after the document deletion was replicated.
    *
    * @param iDocument The document is going to be deleted
    */
-  public void onRecordDeleteReplicated(final ODocument iDocument) {
-  }
+  public void onRecordDeleteReplicated(final ODocument iDocument) {}
 
-  public void onRecordFinalizeUpdate(final ODocument document) {
-  }
+  public void onRecordFinalizeUpdate(final ODocument document) {}
 
-  public void onRecordFinalizeCreation(final ODocument document) {
-  }
+  public void onRecordFinalizeCreation(final ODocument document) {}
 
-  public void onRecordFinalizeDeletion(final ODocument document) {
-  }
+  public void onRecordFinalizeDeletion(final ODocument document) {}
 
   public RESULT onTrigger(final TYPE iType, final ORecord iRecord) {
-    if (database.getStatus() != STATUS.OPEN)
-      return RESULT.RECORD_NOT_CHANGED;
+    if (database.getStatus() != STATUS.OPEN) return RESULT.RECORD_NOT_CHANGED;
 
-    if (!(iRecord instanceof ODocument))
-      return RESULT.RECORD_NOT_CHANGED;
+    if (!(iRecord instanceof ODocument)) return RESULT.RECORD_NOT_CHANGED;
 
     final ODocument document = (ODocument) iRecord;
 
-    if (!filterBySchemaClass(document))
-      return RESULT.RECORD_NOT_CHANGED;
+    if (!filterBySchemaClass(document)) return RESULT.RECORD_NOT_CHANGED;
 
     switch (iType) {
-    case BEFORE_CREATE:
-      return onRecordBeforeCreate(document);
+      case BEFORE_CREATE:
+        return onRecordBeforeCreate(document);
 
-    case AFTER_CREATE:
-      onRecordAfterCreate(document);
-      break;
+      case AFTER_CREATE:
+        onRecordAfterCreate(document);
+        break;
 
-    case CREATE_FAILED:
-      onRecordCreateFailed(document);
-      break;
+      case CREATE_FAILED:
+        onRecordCreateFailed(document);
+        break;
 
-    case CREATE_REPLICATED:
-      onRecordCreateReplicated(document);
-      break;
+      case CREATE_REPLICATED:
+        onRecordCreateReplicated(document);
+        break;
 
-    case BEFORE_READ:
-      return onRecordBeforeRead(document);
+      case BEFORE_READ:
+        return onRecordBeforeRead(document);
 
-    case AFTER_READ:
-      onRecordAfterRead(document);
-      break;
+      case AFTER_READ:
+        onRecordAfterRead(document);
+        break;
 
-    case READ_FAILED:
-      onRecordReadFailed(document);
-      break;
+      case READ_FAILED:
+        onRecordReadFailed(document);
+        break;
 
-    case READ_REPLICATED:
-      onRecordReadReplicated(document);
-      break;
+      case READ_REPLICATED:
+        onRecordReadReplicated(document);
+        break;
 
-    case BEFORE_UPDATE:
-      return onRecordBeforeUpdate(document);
+      case BEFORE_UPDATE:
+        return onRecordBeforeUpdate(document);
 
-    case AFTER_UPDATE:
-      onRecordAfterUpdate(document);
-      break;
+      case AFTER_UPDATE:
+        onRecordAfterUpdate(document);
+        break;
 
-    case UPDATE_FAILED:
-      onRecordUpdateFailed(document);
-      break;
+      case UPDATE_FAILED:
+        onRecordUpdateFailed(document);
+        break;
 
-    case UPDATE_REPLICATED:
-      onRecordUpdateReplicated(document);
-      break;
+      case UPDATE_REPLICATED:
+        onRecordUpdateReplicated(document);
+        break;
 
-    case BEFORE_DELETE:
-      return onRecordBeforeDelete(document);
+      case BEFORE_DELETE:
+        return onRecordBeforeDelete(document);
 
-    case AFTER_DELETE:
-      onRecordAfterDelete(document);
-      break;
+      case AFTER_DELETE:
+        onRecordAfterDelete(document);
+        break;
 
-    case DELETE_FAILED:
-      onRecordDeleteFailed(document);
-      break;
+      case DELETE_FAILED:
+        onRecordDeleteFailed(document);
+        break;
 
-    case DELETE_REPLICATED:
-      onRecordDeleteReplicated(document);
-      break;
+      case DELETE_REPLICATED:
+        onRecordDeleteReplicated(document);
+        break;
 
-    case FINALIZE_CREATION:
-      onRecordFinalizeCreation(document);
-      break;
+      case FINALIZE_CREATION:
+        onRecordFinalizeCreation(document);
+        break;
 
-    case FINALIZE_UPDATE:
-      onRecordFinalizeUpdate(document);
-      break;
+      case FINALIZE_UPDATE:
+        onRecordFinalizeUpdate(document);
+        break;
 
-    case FINALIZE_DELETION:
-      onRecordFinalizeDeletion(document);
-      break;
+      case FINALIZE_DELETION:
+        onRecordFinalizeDeletion(document);
+        break;
 
-    default:
-      throw new IllegalStateException("Hook method " + iType + " is not managed");
+      default:
+        throw new IllegalStateException("Hook method " + iType + " is not managed");
     }
 
     return RESULT.RECORD_NOT_CHANGED;
@@ -317,26 +298,21 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
   }
 
   protected boolean filterBySchemaClass(final ODocument iDocument) {
-    if (includeClasses == null && excludeClasses == null)
-      return true;
+    if (includeClasses == null && excludeClasses == null) return true;
 
-    final OClass clazz = ODocumentInternal.getImmutableSchemaClass((ODatabaseDocumentInternal) database, iDocument);
-    if (clazz == null)
-      return false;
+    final OClass clazz =
+        ODocumentInternal.getImmutableSchemaClass((ODatabaseDocumentInternal) database, iDocument);
+    if (clazz == null) return false;
 
     if (includeClasses != null) {
       // FILTER BY CLASSES
-      for (String cls : includeClasses)
-        if (clazz.isSubClassOf(cls))
-          return true;
+      for (String cls : includeClasses) if (clazz.isSubClassOf(cls)) return true;
       return false;
     }
 
     if (excludeClasses != null) {
       // FILTER BY CLASSES
-      for (String cls : excludeClasses)
-        if (clazz.isSubClassOf(cls))
-          return false;
+      for (String cls : excludeClasses) if (clazz.isSubClassOf(cls)) return false;
     }
 
     return true;

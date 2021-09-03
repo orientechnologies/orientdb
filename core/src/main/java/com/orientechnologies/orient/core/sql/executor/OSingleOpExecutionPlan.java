@@ -4,21 +4,18 @@ import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.parser.OSimpleExecStatement;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OSingleOpExecutionPlan implements OInternalExecutionPlan {
 
   protected final OSimpleExecStatement statement;
-  private         OCommandContext      ctx;
+  private OCommandContext ctx;
 
-  private boolean    executed = false;
+  private boolean executed = false;
   private OResultSet result;
 
   public OSingleOpExecutionPlan(OCommandContext ctx, OSimpleExecStatement stm) {
@@ -27,9 +24,7 @@ public class OSingleOpExecutionPlan implements OInternalExecutionPlan {
   }
 
   @Override
-  public void close() {
-
-  }
+  public void close() {}
 
   @Override
   public OResultSet fetchNext(int n) {
@@ -93,7 +88,8 @@ public class OSingleOpExecutionPlan implements OInternalExecutionPlan {
 
   public OResultSet executeInternal(OBasicCommandContext ctx) throws OCommandExecutionException {
     if (executed) {
-      throw new OCommandExecutionException("Trying to execute a result-set twice. Please use reset()");
+      throw new OCommandExecutionException(
+          "Trying to execute a result-set twice. Please use reset()");
     }
     executed = true;
     result = statement.executeSimple(this.ctx);

@@ -44,7 +44,8 @@ public final class HashIndexMetadataPageV2 extends ODurablePage {
   public void setRecordsCount(long recordsCount) {
     final long pastRecordsCount = getLongValue(RECORDS_COUNT_OFFSET);
     setLongValue(RECORDS_COUNT_OFFSET, recordsCount);
-    addPageOperation(new LocalHashTableV2MetadataPageSetRecordsCountPO(recordsCount, pastRecordsCount));
+    addPageOperation(
+        new LocalHashTableV2MetadataPageSetRecordsCountPO(recordsCount, pastRecordsCount));
   }
 
   public long getRecordsCount() {

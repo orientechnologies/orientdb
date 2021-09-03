@@ -4,19 +4,18 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import org.junit.Ignore;
-import org.junit.Test;
-
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.junit.Ignore;
+import org.junit.Test;
 
 public class ShardingDocsAndEdgesIT extends AbstractServerClusterTest {
 
-  protected final static int    SERVERS        = 2;
-  private static final   String clusterNodeUSA = "client-type_usa";
-  private static final   String clusterNodeEUR = "client-type_eur";
-  private static         int    testNumber     = 0;
+  protected static final int SERVERS = 2;
+  private static final String clusterNodeUSA = "client-type_usa";
+  private static final String clusterNodeEUR = "client-type_eur";
+  private static int testNumber = 0;
   private ODatabaseDocument USA;
   private ODatabaseDocument EUR;
 
@@ -51,8 +50,18 @@ public class ShardingDocsAndEdgesIT extends AbstractServerClusterTest {
 
   @Override
   protected void executeTest() throws Exception {
-    EUR = serverInstance.get(0).getServerInstance().getContext().open(getDatabaseName(), "admin", "admin");
-    USA = serverInstance.get(1).getServerInstance().getContext().open(getDatabaseName(), "admin", "admin");
+    EUR =
+        serverInstance
+            .get(0)
+            .getServerInstance()
+            .getContext()
+            .open(getDatabaseName(), "admin", "admin");
+    USA =
+        serverInstance
+            .get(1)
+            .getServerInstance()
+            .getContext()
+            .open(getDatabaseName(), "admin", "admin");
 
     Set<String> queryResult;
 
@@ -61,57 +70,58 @@ public class ShardingDocsAndEdgesIT extends AbstractServerClusterTest {
 
     // test 0
     queryResult = execute(USA, "select from `cluster:" + clusterNodeUSA + "`");
-    compare(queryResult, new String[] { "mike" });
+    compare(queryResult, new String[] {"mike"});
 
     queryResult = execute(USA, "select from `cluster:" + clusterNodeEUR + "`");
     compare(queryResult, new String[] {});
 
     queryResult = execute(USA, "select from `Client-Type`");
-    compare(queryResult, new String[] { "mike" });
+    compare(queryResult, new String[] {"mike"});
 
     queryResult = execute(EUR, "select from `cluster:" + clusterNodeUSA + "`");
-    compare(queryResult, new String[] { "mike" });
+    compare(queryResult, new String[] {"mike"});
 
     queryResult = execute(EUR, "select from `cluster:" + clusterNodeEUR + "`");
     compare(queryResult, new String[] {});
 
     queryResult = execute(EUR, "select from `Client-Type`");
-    compare(queryResult, new String[] { "mike" });
+    compare(queryResult, new String[] {"mike"});
 
     execute(EUR, "insert into `cluster:" + clusterNodeEUR + "` set name = 'phoebe'");
     Thread.sleep(1000);
 
     // test 6
     queryResult = execute(USA, "select from `cluster:" + clusterNodeUSA + "`");
-    compare(queryResult, new String[] { "mike" });
+    compare(queryResult, new String[] {"mike"});
 
     queryResult = execute(USA, "select from `cluster:" + clusterNodeEUR + "`");
-    compare(queryResult, new String[] { "phoebe" });
+    compare(queryResult, new String[] {"phoebe"});
 
     queryResult = execute(USA, "select from `Client-Type`");
-    compare(queryResult, new String[] { "mike", "phoebe" });
+    compare(queryResult, new String[] {"mike", "phoebe"});
 
     queryResult = execute(EUR, "select from `cluster:" + clusterNodeUSA + "`");
-    compare(queryResult, new String[] { "mike" });
+    compare(queryResult, new String[] {"mike"});
 
     queryResult = execute(EUR, "select from `cluster:" + clusterNodeEUR + "`");
-    compare(queryResult, new String[] { "phoebe" });
+    compare(queryResult, new String[] {"phoebe"});
 
     queryResult = execute(EUR, "select from `Client-Type`");
-    compare(queryResult, new String[] { "mike", "phoebe" });
+    compare(queryResult, new String[] {"mike", "phoebe"});
 
     /*
      * verify that 'select from V returns' the same as 'select from Client-Type' on both nodes
      */
     // test 12
     queryResult = execute(USA, "select from V");
-    compare(queryResult, new String[] { "mike", "phoebe" });
+    compare(queryResult, new String[] {"mike", "phoebe"});
     // test 13
     queryResult = execute(EUR, "select from V");
-    compare(queryResult, new String[] { "mike", "phoebe" });
+    compare(queryResult, new String[] {"mike", "phoebe"});
 
     // LINE A
-    execute(USA,
+    execute(
+        USA,
         "create edge Follows from (select from `Client-Type` where name = 'mike') to (select from `Client-Type` where name = 'phoebe')");
     USA.close();
     EUR.close();
@@ -156,6 +166,5 @@ public class ShardingDocsAndEdgesIT extends AbstractServerClusterTest {
       System.out.println(testNumber + " : ko -> result : " + result.toString());
     }
     testNumber++;
-
   }
 }

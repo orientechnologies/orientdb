@@ -1,13 +1,10 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
-
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by luigidellaquila on 17/10/16.
- */
+/** Created by luigidellaquila on 17/10/16. */
 public class OptionalMatchEdgeTraverser extends MatchEdgeTraverser {
   public static final OResult EMPTY_OPTIONAL = new OResultInternal();
 

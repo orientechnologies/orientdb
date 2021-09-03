@@ -21,7 +21,7 @@ import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 
 /**
  * Represents an Edge class.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com) (http://orientdb.com)
  */
 public class OrientEdgeType extends OrientElementType {
@@ -37,12 +37,16 @@ public class OrientEdgeType extends OrientElementType {
   }
 
   protected static void checkType(final OClass iType) {
-    if (iType == null)
-      throw new IllegalArgumentException("Edge class is null");
+    if (iType == null) throw new IllegalArgumentException("Edge class is null");
 
-    if (((iType instanceof OImmutableClass) && !((OImmutableClass) iType).isEdgeType()) || !iType.isSubClassOf(CLASS_NAME))
-      throw new IllegalArgumentException("Type error. The class " + iType + " does not extend class '" + CLASS_NAME
-          + "' and therefore cannot be considered an Edge");
+    if (((iType instanceof OImmutableClass) && !((OImmutableClass) iType).isEdgeType())
+        || !iType.isSubClassOf(CLASS_NAME))
+      throw new IllegalArgumentException(
+          "Type error. The class "
+              + iType
+              + " does not extend class '"
+              + CLASS_NAME
+              + "' and therefore cannot be considered an Edge");
   }
 
   @Override

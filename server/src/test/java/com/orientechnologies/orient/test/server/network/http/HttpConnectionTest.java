@@ -2,21 +2,21 @@ package com.orientechnologies.orient.test.server.network.http;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.io.IOException;
+import java.util.Collection;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.util.Collection;
-
 /**
  * Tests HTTP "connect" command.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com) (l.garulli--at-orientdb.com)
  */
 public class HttpConnectionTest extends BaseHttpDatabaseTest {
   @Test
   public void testConnect() throws Exception {
-    Assert.assertEquals(get("connect/" + getDatabaseName()).getResponse().getStatusLine().getStatusCode(), 204);
+    Assert.assertEquals(
+        get("connect/" + getDatabaseName()).getResponse().getStatusLine().getStatusCode(), 204);
   }
 
   public void testTooManyConnect() throws Exception {
@@ -24,7 +24,8 @@ public class HttpConnectionTest extends BaseHttpDatabaseTest {
       // SKIP IT
       return;
 
-    final int originalMax = OGlobalConfiguration.NETWORK_MAX_CONCURRENT_SESSIONS.getValueAsInteger();
+    final int originalMax =
+        OGlobalConfiguration.NETWORK_MAX_CONCURRENT_SESSIONS.getValueAsInteger();
     try {
 
       int MAX = 10;
@@ -35,7 +36,12 @@ public class HttpConnectionTest extends BaseHttpDatabaseTest {
       OGlobalConfiguration.NETWORK_MAX_CONCURRENT_SESSIONS.setValue(MAX);
       for (int i = 0; i < TOTAL; ++i) {
         try {
-          final int response = get("connect/" + getDatabaseName()).setRetry(0).getResponse().getStatusLine().getStatusCode();
+          final int response =
+              get("connect/" + getDatabaseName())
+                  .setRetry(0)
+                  .getResponse()
+                  .getStatusLine()
+                  .getStatusCode();
           Assert.assertEquals(response, 204);
           good++;
         } catch (IOException e) {
@@ -73,29 +79,40 @@ public class HttpConnectionTest extends BaseHttpDatabaseTest {
     int TOTAL = max * 3;
 
     for (int i = 0; i < TOTAL; ++i) {
-      final int response = get("connect/" + getDatabaseName()).setRetry(0).getResponse().getStatusLine().getStatusCode();
+      final int response =
+          get("connect/" + getDatabaseName())
+              .setRetry(0)
+              .getResponse()
+              .getStatusLine()
+              .getStatusCode();
       Assert.assertEquals(response, 204);
 
-      if (i % 100 == 0)
-        System.out.printf("\nConnections " + i);
+      if (i % 100 == 0) System.out.printf("\nConnections " + i);
     }
 
     System.out.printf("\nTest completed");
 
     Collection<ODocument> conns = null;
     for (int i = 0; i < 20; ++i) {
-      Assert.assertEquals(get("server").setKeepAlive(false).setUserName("root").setUserPassword("root").getResponse()
-          .getStatusLine().getStatusCode(), 200);
+      Assert.assertEquals(
+          get("server")
+              .setKeepAlive(false)
+              .setUserName("root")
+              .setUserPassword("root")
+              .getResponse()
+              .getStatusLine()
+              .getStatusCode(),
+          200);
 
-      final ODocument serverStatus = new ODocument().fromJSON(getResponse().getEntity().getContent());
+      final ODocument serverStatus =
+          new ODocument().fromJSON(getResponse().getEntity().getContent());
       conns = serverStatus.field("connections");
 
       final int openConnections = conns.size();
 
       System.out.printf("\nConnections still open: " + openConnections);
 
-      if (openConnections <= 1)
-        break;
+      if (openConnections <= 1) break;
 
       Thread.sleep(1000);
     }

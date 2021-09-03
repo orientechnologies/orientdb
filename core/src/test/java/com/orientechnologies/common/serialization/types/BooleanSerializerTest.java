@@ -18,20 +18,18 @@ package com.orientechnologies.common.serialization.types;
 
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
-import org.junit.Assert;
-import org.junit.Before;
-
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import org.junit.Assert;
+import org.junit.Before;
 
 /**
  * @author Ilya Bershadskiy (ibersh20-at-gmail.com)
  * @since 18.01.12
  */
-
 public class BooleanSerializerTest {
   private static final int FIELD_SIZE = 1;
-  private static final Boolean OBJECT_TRUE  = true;
+  private static final Boolean OBJECT_TRUE = true;
   private static final Boolean OBJECT_FALSE = false;
   byte[] stream = new byte[FIELD_SIZE];
   private OBooleanSerializer booleanSerializer;
@@ -110,19 +108,28 @@ public class BooleanSerializerTest {
     final int serializationOffset = 5;
 
     byte[] data = new byte[FIELD_SIZE];
-    ByteBuffer buffer = ByteBuffer.allocateDirect(FIELD_SIZE + serializationOffset).order(ByteOrder.nativeOrder());
+    ByteBuffer buffer =
+        ByteBuffer.allocateDirect(FIELD_SIZE + serializationOffset).order(ByteOrder.nativeOrder());
 
     booleanSerializer.serializeNative(OBJECT_TRUE, data, 0);
     OWALChanges walChanges = new OWALChangesTree();
     walChanges.setBinaryValue(buffer, data, serializationOffset);
 
-    Assert.assertEquals(booleanSerializer.getObjectSizeInByteBuffer(buffer, walChanges, serializationOffset), FIELD_SIZE);
-    Assert.assertEquals(booleanSerializer.deserializeFromByteBufferObject(buffer, walChanges, serializationOffset), OBJECT_TRUE);
+    Assert.assertEquals(
+        booleanSerializer.getObjectSizeInByteBuffer(buffer, walChanges, serializationOffset),
+        FIELD_SIZE);
+    Assert.assertEquals(
+        booleanSerializer.deserializeFromByteBufferObject(buffer, walChanges, serializationOffset),
+        OBJECT_TRUE);
 
     booleanSerializer.serializeNative(OBJECT_FALSE, data, 0);
     walChanges.setBinaryValue(buffer, data, 0);
 
-    Assert.assertEquals(booleanSerializer.getObjectSizeInByteBuffer(buffer, walChanges, serializationOffset), FIELD_SIZE);
-    Assert.assertEquals(booleanSerializer.deserializeFromByteBufferObject(buffer, walChanges, serializationOffset), OBJECT_FALSE);
+    Assert.assertEquals(
+        booleanSerializer.getObjectSizeInByteBuffer(buffer, walChanges, serializationOffset),
+        FIELD_SIZE);
+    Assert.assertEquals(
+        booleanSerializer.deserializeFromByteBufferObject(buffer, walChanges, serializationOffset),
+        OBJECT_FALSE);
   }
 }

@@ -30,11 +30,9 @@ import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OProperty.ATTRIBUTES;
 import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.parser.OAlterPropertyStatement;
 import com.orientechnologies.orient.core.sql.parser.OExpression;
 import com.orientechnologies.orient.core.util.ODateHelper;
-
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Locale;
@@ -46,14 +44,15 @@ import java.util.Map;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
-  public static final String KEYWORD_ALTER    = "ALTER";
+public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstract
+    implements OCommandDistributedReplicateRequest {
+  public static final String KEYWORD_ALTER = "ALTER";
   public static final String KEYWORD_PROPERTY = "PROPERTY";
 
-  private String     className;
-  private String     fieldName;
+  private String className;
+  private String fieldName;
   private ATTRIBUTES attribute;
-  private String     value;
+  private String value;
 
   public OCommandExecutorSQLAlterProperty parse(final OCommandRequest iRequest) {
     final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
@@ -71,17 +70,20 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstrac
       int oldPos = 0;
       int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
       if (pos == -1 || !word.toString().equals(KEYWORD_ALTER))
-        throw new OCommandSQLParsingException("Keyword " + KEYWORD_ALTER + " not found. Use " + getSyntax(), parserText, oldPos);
+        throw new OCommandSQLParsingException(
+            "Keyword " + KEYWORD_ALTER + " not found. Use " + getSyntax(), parserText, oldPos);
 
       oldPos = pos;
       pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
       if (pos == -1 || !word.toString().equals(KEYWORD_PROPERTY))
-        throw new OCommandSQLParsingException("Keyword " + KEYWORD_PROPERTY + " not found. Use " + getSyntax(), parserText, oldPos);
+        throw new OCommandSQLParsingException(
+            "Keyword " + KEYWORD_PROPERTY + " not found. Use " + getSyntax(), parserText, oldPos);
 
       oldPos = pos;
       pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false);
       if (pos == -1)
-        throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), parserText, oldPos);
+        throw new OCommandSQLParsingException(
+            "Expected <class>.<property>. Use " + getSyntax(), parserText, oldPos);
 
       String[] parts = word.toString().split("\\.");
       if (parts.length != 2) {
@@ -93,9 +95,10 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstrac
             }
             fullName.append(parts[i]);
           }
-          parts = new String[] { parts[0], fullName.toString() };
+          parts = new String[] {parts[0], fullName.toString()};
         } else {
-          throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), parserText, oldPos);
+          throw new OCommandSQLParsingException(
+              "Expected <class>.<property>. Use " + getSyntax(), parserText, oldPos);
         }
       }
 
@@ -107,16 +110,23 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstrac
       oldPos = pos;
       pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
       if (pos == -1)
-        throw new OCommandSQLParsingException("Missing property attribute to change. Use " + getSyntax(), parserText, oldPos);
+        throw new OCommandSQLParsingException(
+            "Missing property attribute to change. Use " + getSyntax(), parserText, oldPos);
 
       final String attributeAsString = word.toString();
 
       try {
         attribute = OProperty.ATTRIBUTES.valueOf(attributeAsString.toUpperCase(Locale.ENGLISH));
       } catch (IllegalArgumentException e) {
-        throw OException.wrapException(new OCommandSQLParsingException(
-            "Unknown property attribute '" + attributeAsString + "'. Supported attributes are: " + Arrays
-                .toString(OProperty.ATTRIBUTES.values()), parserText, oldPos), e);
+        throw OException.wrapException(
+            new OCommandSQLParsingException(
+                "Unknown property attribute '"
+                    + attributeAsString
+                    + "'. Supported attributes are: "
+                    + Arrays.toString(OProperty.ATTRIBUTES.values()),
+                parserText,
+                oldPos),
+            e);
       }
 
       value = parserText.substring(pos + 1).trim();
@@ -126,7 +136,12 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstrac
 
       if (value.length() == 0) {
         throw new OCommandSQLParsingException(
-            "Missing property value to change for attribute '" + attribute + "'. Use " + getSyntax(), parserText, oldPos);
+            "Missing property value to change for attribute '"
+                + attribute
+                + "'. Use "
+                + getSyntax(),
+            parserText,
+            oldPos);
       }
 
       if (preParsedStatement != null) {
@@ -138,8 +153,7 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstrac
           }
           if (expValue instanceof Date) {
             value = ODateHelper.getDateTimeFormatInstance().format((Date) expValue);
-          } else
-            value = expValue.toString();
+          } else value = expValue.toString();
 
           if (attribute.equals(ATTRIBUTES.NAME) || attribute.equals(ATTRIBUTES.LINKEDCLASS)) {
             value = decodeClassName(value);
@@ -166,19 +180,18 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstrac
 
   private boolean isQuoted(String s) {
     s = s.trim();
-    if (s.startsWith("\"") && s.endsWith("\""))
-      return true;
-    if (s.startsWith("'") && s.endsWith("'"))
-      return true;
-    if (s.startsWith("`") && s.endsWith("`"))
-      return true;
+    if (s.startsWith("\"") && s.endsWith("\"")) return true;
+    if (s.startsWith("'") && s.endsWith("'")) return true;
+    if (s.startsWith("`") && s.endsWith("`")) return true;
 
     return false;
   }
 
   @Override
   public long getDistributedTimeout() {
-    return getDatabase().getConfiguration().getValueAsLong(OGlobalConfiguration.DISTRIBUTED_COMMAND_QUICK_TASK_SYNCH_TIMEOUT);
+    return getDatabase()
+        .getConfiguration()
+        .getValueAsLong(OGlobalConfiguration.DISTRIBUTED_COMMAND_QUICK_TASK_SYNCH_TIMEOUT);
   }
 
   @Override
@@ -186,25 +199,24 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstrac
     return QUORUM_TYPE.ALL;
   }
 
-  /**
-   * Execute the ALTER PROPERTY.
-   */
+  /** Execute the ALTER PROPERTY. */
   public Object execute(final Map<Object, Object> iArgs) {
     if (attribute == null)
-      throw new OCommandExecutionException("Cannot execute the command because it has not yet been parsed");
+      throw new OCommandExecutionException(
+          "Cannot execute the command because it has not yet been parsed");
 
-    final OClassImpl sourceClass = (OClassImpl) getDatabase().getMetadata().getSchema().getClass(className);
+    final OClassImpl sourceClass =
+        (OClassImpl) getDatabase().getMetadata().getSchema().getClass(className);
     if (sourceClass == null)
       throw new OCommandExecutionException("Source class '" + className + "' not found");
 
     final OPropertyImpl prop = (OPropertyImpl) sourceClass.getProperty(fieldName);
     if (prop == null)
-      throw new OCommandExecutionException("Property '" + className + "." + fieldName + "' not exists");
+      throw new OCommandExecutionException(
+          "Property '" + className + "." + fieldName + "' not exists");
 
-    if ("null".equalsIgnoreCase(value))
-      prop.set(attribute, null);
-    else
-      prop.set(attribute, value);
+    if ("null".equalsIgnoreCase(value)) prop.set(attribute, null);
+    else prop.set(attribute, value);
     return null;
   }
 

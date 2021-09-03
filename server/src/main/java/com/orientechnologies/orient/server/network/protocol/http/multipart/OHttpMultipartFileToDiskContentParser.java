@@ -15,41 +15,47 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.multipart;
 
-import java.io.*;
-import java.util.Map;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.StringWriter;
+import java.util.Map;
 
-/**
- * @author Luca Molino (molino.luca--at--gmail.com)
- * 
- */
-public class OHttpMultipartFileToDiskContentParser implements OHttpMultipartContentParser<InputStream> {
+/** @author Luca Molino (molino.luca--at--gmail.com) */
+public class OHttpMultipartFileToDiskContentParser
+    implements OHttpMultipartContentParser<InputStream> {
 
   protected boolean overwrite = false;
-  protected String  path;
+  protected String path;
 
   public OHttpMultipartFileToDiskContentParser(String iPath) {
     path = iPath;
-    if (!path.endsWith("/"))
-      path += "/";
+    if (!path.endsWith("/")) path += "/";
     new File(path).mkdirs();
   }
 
   @Override
-  public InputStream parse(final OHttpRequest iRequest, final Map<String, String> headers,
-      final OHttpMultipartContentInputStream in, ODatabaseDocument database) throws IOException {
+  public InputStream parse(
+      final OHttpRequest iRequest,
+      final Map<String, String> headers,
+      final OHttpMultipartContentInputStream in,
+      ODatabaseDocument database)
+      throws IOException {
     final StringWriter buffer = new StringWriter();
     final OJSONWriter json = new OJSONWriter(buffer);
     json.beginObject();
     String fileName = headers.get(OHttpUtils.MULTIPART_CONTENT_FILENAME);
     int fileSize = 0;
 
-    if (fileName.charAt(0) == '"')
-      fileName = fileName.substring(1);
+    if (fileName.charAt(0) == '"') fileName = fileName.substring(1);
 
     if (fileName.charAt(fileName.length() - 1) == '"')
       fileName = fileName.substring(0, fileName.length() - 1);
@@ -62,7 +68,7 @@ public class OHttpMultipartFileToDiskContentParser implements OHttpMultipartCont
         final String fileExt = fileName.substring(fileName.lastIndexOf("."));
         final String fileNoExt = fileName.substring(0, fileName.lastIndexOf("."));
 
-        for (int i = 1;; ++i) {
+        for (int i = 1; ; ++i) {
           if (!new File(fileNoExt + "_" + i + fileExt).exists()) {
             fileName = fileNoExt + "_" + i + fileExt;
             break;
@@ -99,5 +105,4 @@ public class OHttpMultipartFileToDiskContentParser implements OHttpMultipartCont
     this.overwrite = overwrite;
     return this;
   }
-
 }

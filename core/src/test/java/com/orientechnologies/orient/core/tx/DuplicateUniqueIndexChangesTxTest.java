@@ -26,21 +26,24 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
-import org.junit.*;
-
 import java.util.stream.Stream;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
-/**
- * @author Sergey Sitnikov
- */
+/** @author Sergey Sitnikov */
 public class DuplicateUniqueIndexChangesTxTest {
 
   private static ODatabaseDocumentTx db;
-  private        OIndex              index;
+  private OIndex index;
 
   @BeforeClass
   public static void before() {
-    db = new ODatabaseDocumentTx("memory:" + DuplicateUniqueIndexChangesTxTest.class.getSimpleName());
+    db =
+        new ODatabaseDocumentTx(
+            "memory:" + DuplicateUniqueIndexChangesTxTest.class.getSimpleName());
   }
 
   @AfterClass
@@ -50,11 +53,13 @@ public class DuplicateUniqueIndexChangesTxTest {
 
   @Before
   public void beforeMethod() {
-    if (!db.isClosed())
-      db.drop();
+    if (!db.isClosed()) db.drop();
     db.create();
     final OClass class_ = db.getMetadata().getSchema().createClass("Person");
-    index = class_.createProperty("name", OType.STRING).createIndex(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX);
+    index =
+        class_
+            .createProperty("name", OType.STRING)
+            .createIndex(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX);
   }
 
   @Test
@@ -262,7 +267,6 @@ public class DuplicateUniqueIndexChangesTxTest {
     //      }
     //    });
     db.commit();
-
   }
 
   @Test(expected = ORecordDuplicatedException.class)
@@ -293,5 +297,4 @@ public class DuplicateUniqueIndexChangesTxTest {
     //    });
     db.commit();
   }
-
 }

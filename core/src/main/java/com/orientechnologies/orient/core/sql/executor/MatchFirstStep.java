@@ -4,27 +4,28 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSet;
-
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * Created by luigidellaquila on 20/09/16.
- */
+/** Created by luigidellaquila on 20/09/16. */
 public class MatchFirstStep extends AbstractExecutionStep {
-  private final PatternNode            node;
-  private       OInternalExecutionPlan executionPlan;
+  private final PatternNode node;
+  private OInternalExecutionPlan executionPlan;
 
   private Iterator<OResult> iterator;
-  private OResultSet        subResultSet;
+  private OResultSet subResultSet;
 
   public MatchFirstStep(OCommandContext context, PatternNode node, boolean profilingEnabled) {
     this(context, node, null, profilingEnabled);
   }
 
-  public MatchFirstStep(OCommandContext context, PatternNode node, OInternalExecutionPlan subPlan, boolean profilingEnabled) {
+  public MatchFirstStep(
+      OCommandContext context,
+      PatternNode node,
+      OInternalExecutionPlan subPlan,
+      boolean profilingEnabled) {
     super(context, profilingEnabled);
     this.node = node;
     this.executionPlan = subPlan;
@@ -76,9 +77,7 @@ public class MatchFirstStep extends AbstractExecutionStep {
       }
 
       @Override
-      public void close() {
-
-      }
+      public void close() {}
 
       @Override
       public Optional<OExecutionPlan> getExecutionPlan() {
@@ -101,7 +100,8 @@ public class MatchFirstStep extends AbstractExecutionStep {
   private void init(OCommandContext ctx) {
     if (iterator == null && subResultSet == null) {
       String alias = getAlias();
-      Object matchedNodes = ctx.getVariable(MatchPrefetchStep.PREFETCHED_MATCH_ALIAS_PREFIX + alias);
+      Object matchedNodes =
+          ctx.getVariable(MatchPrefetchStep.PREFETCHED_MATCH_ALIAS_PREFIX + alias);
       if (matchedNodes != null) {
         initFromPrefetch(matchedNodes);
       } else {
@@ -146,5 +146,4 @@ public class MatchFirstStep extends AbstractExecutionStep {
   private String getAlias() {
     return this.node.alias;
   }
-
 }

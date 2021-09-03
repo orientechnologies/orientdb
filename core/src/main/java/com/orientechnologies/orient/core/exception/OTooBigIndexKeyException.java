@@ -21,9 +21,7 @@ package com.orientechnologies.orient.core.exception;
 
 import com.orientechnologies.common.exception.OHighLevelException;
 
-/**
- * This exception is thrown when key size exceeds allowed limits
- */
+/** This exception is thrown when key size exceeds allowed limits */
 public class OTooBigIndexKeyException extends OCoreException implements OHighLevelException {
   public OTooBigIndexKeyException(OCoreException exception) {
     super(exception);

@@ -15,21 +15,20 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import org.testng.Assert;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import org.testng.Assert;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 @Test
 public class ConnectDatabaseTest {
@@ -38,24 +37,20 @@ public class ConnectDatabaseTest {
 
   @Parameters(value = "url")
   public ConnectDatabaseTest(@Optional String iURL) {
-    if (iURL == null)
-      url = "remote:xxx/GratefulDeadConcerts";
-    else
-      url = iURL;
+    if (iURL == null) url = "remote:xxx/GratefulDeadConcerts";
+    else url = iURL;
 
-    if (url.contains("/"))
-      databaseName = url.substring(url.lastIndexOf("/") + 1);
-    else
-      databaseName = url.substring(url.lastIndexOf(":") + 1);
+    if (url.contains("/")) databaseName = url.substring(url.lastIndexOf("/") + 1);
+    else databaseName = url.substring(url.lastIndexOf(":") + 1);
   }
 
   public void connectWithDNS() throws IOException {
-    if (!url.startsWith("remote:") || !isInternetAvailable())
-      return;
+    if (!url.startsWith("remote:") || !isInternetAvailable()) return;
 
     OGlobalConfiguration.NETWORK_BINARY_DNS_LOADBALANCING_ENABLED.setValue(true);
     try {
-      final ODatabaseDocumentTx database = new ODatabaseDocumentTx("remote:orientechnologies.com/" + databaseName);
+      final ODatabaseDocumentTx database =
+          new ODatabaseDocumentTx("remote:orientechnologies.com/" + databaseName);
       database.open("admin", "admin");
       Assert.assertFalse(database.isClosed());
       database.close();

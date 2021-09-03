@@ -20,24 +20,30 @@
 
 package com.orientechnologies.orient.core.db;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
 import com.orientechnologies.orient.core.db.config.ONodeConfiguration;
 import com.orientechnologies.orient.core.db.config.ONodeConfigurationBuilder;
+import com.orientechnologies.orient.core.security.OGlobalUser;
+import com.orientechnologies.orient.core.security.OGlobalUserImpl;
+import com.orientechnologies.orient.core.security.OSecurityConfig;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class OrientDBConfigBuilder {
 
-  private OContextConfiguration     configurations           = new OContextConfiguration();
-  private Map<ATTRIBUTES, Object>   attributes               = new HashMap<>();
-  private Set<ODatabaseListener>    listeners                = new HashSet<>();
-  private ClassLoader               classLoader;
+  private OContextConfiguration configurations = new OContextConfiguration();
+  private Map<ATTRIBUTES, Object> attributes = new HashMap<>();
+  private Set<ODatabaseListener> listeners = new HashSet<>();
+  private ClassLoader classLoader;
   private ONodeConfigurationBuilder nodeConfigurationBuilder = ONodeConfiguration.builder();
+  private OSecurityConfig securityConfig;
+  private List<OGlobalUser> users = new ArrayList<OGlobalUser>();
 
   public OrientDBConfigBuilder fromGlobalMap(Map<OGlobalConfiguration, Object> values) {
     for (Map.Entry<OGlobalConfiguration, Object> entry : values.entrySet()) {
@@ -57,12 +63,13 @@ public class OrientDBConfigBuilder {
     listeners.add(listener);
   }
 
-  public OrientDBConfigBuilder addConfig(OGlobalConfiguration configuration, Object value) {
+  public OrientDBConfigBuilder addConfig(
+      final OGlobalConfiguration configuration, final Object value) {
     configurations.setValue(configuration, value);
     return this;
   }
 
-  public OrientDBConfigBuilder addAttribute(ATTRIBUTES attribute, Object value) {
+  public OrientDBConfigBuilder addAttribute(final ATTRIBUTES attribute, final Object value) {
     attributes.put(attribute, value);
     return this;
   }
@@ -75,13 +82,30 @@ public class OrientDBConfigBuilder {
     return nodeConfigurationBuilder;
   }
 
-  public OrientDBConfig build() {
-    return new OrientDBConfig(configurations, attributes, listeners, classLoader, nodeConfigurationBuilder.build());
+  public OrientDBConfigBuilder setSecurityConfig(OSecurityConfig securityConfig) {
+    this.securityConfig = securityConfig;
+    return this;
   }
 
-  public OrientDBConfigBuilder fromContext(OContextConfiguration contextConfiguration) {
+  public OrientDBConfig build() {
+    return new OrientDBConfig(
+        configurations,
+        attributes,
+        listeners,
+        classLoader,
+        nodeConfigurationBuilder.build(),
+        securityConfig,
+        users);
+  }
+
+  public OrientDBConfigBuilder fromContext(final OContextConfiguration contextConfiguration) {
     configurations = contextConfiguration;
     return this;
   }
 
+  public OrientDBConfigBuilder addGlobalUser(
+      final String user, final String password, final String resource) {
+    users.add(new OGlobalUserImpl(user, password, resource));
+    return this;
+  }
 }

@@ -3,16 +3,20 @@ package com.orientechnologies.orient.test.server.network.http;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import org.junit.*;
-
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.test.server.network.http.BaseHttpTest.CONTENT;
 import java.io.File;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
 
 /**
  * Test HTTP "query" command.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com) (l.garulli--at-orientdb.com)
  */
-
 public abstract class BaseHttpDatabaseTest extends BaseHttpTest {
 
   private static String serverHome;
@@ -37,10 +41,17 @@ public abstract class BaseHttpDatabaseTest extends BaseHttpTest {
   @Before
   public void createDatabase() throws Exception {
     ODatabaseRecordThreadLocal.instance().remove();
-
+    ODocument pass = new ODocument();
+    pass.setProperty("adminPassword", "admin");
     Assert.assertEquals(
-        post("database/" + getDatabaseName() + "/memory").setUserName("root").setUserPassword("root").getResponse().getStatusLine()
-            .getStatusCode(), 200);
+        post("database/" + getDatabaseName() + "/memory")
+            .setUserName("root")
+            .setUserPassword("root")
+            .payload(pass.toJSON(), CONTENT.JSON)
+            .getResponse()
+            .getStatusLine()
+            .getStatusCode(),
+        200);
 
     onAfterDatabaseCreated();
   }
@@ -48,8 +59,13 @@ public abstract class BaseHttpDatabaseTest extends BaseHttpTest {
   @After
   public void dropDatabase() throws Exception {
     Assert.assertEquals(
-        delete("database/" + getDatabaseName()).setUserName("root").setUserPassword("root").getResponse().getStatusLine()
-            .getStatusCode(), 204);
+        delete("database/" + getDatabaseName())
+            .setUserName("root")
+            .setUserPassword("root")
+            .getResponse()
+            .getStatusLine()
+            .getStatusCode(),
+        204);
 
     onAfterDatabaseDropped();
   }
@@ -60,10 +76,8 @@ public abstract class BaseHttpDatabaseTest extends BaseHttpTest {
 
     Orient.instance().shutdown();
 
-    if (oldOrientDBHome != null)
-      System.setProperty("ORIENTDB_HOME", oldOrientDBHome);
-    else
-      System.clearProperty("ORIENTDB_HOME");
+    if (oldOrientDBHome != null) System.setProperty("ORIENTDB_HOME", oldOrientDBHome);
+    else System.clearProperty("ORIENTDB_HOME");
 
     Thread.sleep(1000);
     ODatabaseDocumentTx.closeAll();
@@ -73,11 +87,9 @@ public abstract class BaseHttpDatabaseTest extends BaseHttpTest {
     Orient.instance().startup();
   }
 
-  protected void onAfterDatabaseCreated() throws Exception {
-  }
+  protected void onAfterDatabaseCreated() throws Exception {}
 
-  protected void onAfterDatabaseDropped() throws Exception {
-  }
+  protected void onAfterDatabaseDropped() throws Exception {}
 
   protected static void deleteDirectory(File directory) {
     if (directory.exists()) {
@@ -100,5 +112,4 @@ public abstract class BaseHttpDatabaseTest extends BaseHttpTest {
       throw new RuntimeException("unable to delete directory " + directory.getAbsolutePath());
     }
   }
-
 }

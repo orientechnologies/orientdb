@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.core.record.impl;
 
+import static org.junit.Assert.fail;
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -8,23 +10,31 @@ import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.text.SimpleDateFormat;
-import java.util.*;
-
-import static org.junit.Assert.fail;
 
 public class ODocumentValidationTest {
 
   @Test
   public void testRequiredValidation() {
-    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + ODocumentValidationTest.class.getSimpleName());
+    ODatabaseDocument db =
+        new ODatabaseDocumentTx("memory:" + ODocumentValidationTest.class.getSimpleName());
     db.create();
     try {
       ODocument doc = new ODocument();
-      OIdentifiable id = db.save(doc, db.getClusterNameById(db.getDefaultClusterId())).getIdentity();
+      OIdentifiable id =
+          db.save(doc, db.getClusterNameById(db.getDefaultClusterId())).getIdentity();
 
       OClass embeddedClazz = db.getMetadata().getSchema().createClass("EmbeddedValidation");
       embeddedClazz.createProperty("int", OType.INTEGER).setMandatory(true);
@@ -131,12 +141,12 @@ public class ODocumentValidationTest {
     } finally {
       db.drop();
     }
-
   }
 
   @Test
   public void testValidationNotValidEmbedded() {
-    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + ODocumentValidationTest.class.getSimpleName());
+    ODatabaseDocument db =
+        new ODatabaseDocumentTx("memory:" + ODocumentValidationTest.class.getSimpleName());
     db.create();
     try {
       OClass embeddedClazz = db.getMetadata().getSchema().createClass("EmbeddedValidation");
@@ -165,7 +175,8 @@ public class ODocumentValidationTest {
 
   @Test
   public void testValidationNotValidEmbeddedSet() {
-    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + ODocumentValidationTest.class.getSimpleName());
+    ODatabaseDocument db =
+        new ODatabaseDocumentTx("memory:" + ODocumentValidationTest.class.getSimpleName());
     db.create();
     try {
       OClass embeddedClazz = db.getMetadata().getSchema().createClass("EmbeddedValidation");
@@ -206,7 +217,8 @@ public class ODocumentValidationTest {
 
   @Test
   public void testValidationNotValidEmbeddedList() {
-    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + ODocumentValidationTest.class.getSimpleName());
+    ODatabaseDocument db =
+        new ODatabaseDocumentTx("memory:" + ODocumentValidationTest.class.getSimpleName());
     db.create();
     try {
       OClass embeddedClazz = db.getMetadata().getSchema().createClass("EmbeddedValidation");
@@ -243,12 +255,12 @@ public class ODocumentValidationTest {
     } finally {
       db.drop();
     }
-
   }
 
   @Test
   public void testValidationNotValidEmbeddedMap() {
-    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + ODocumentValidationTest.class.getSimpleName());
+    ODatabaseDocument db =
+        new ODatabaseDocumentTx("memory:" + ODocumentValidationTest.class.getSimpleName());
     db.create();
     try {
       OClass embeddedClazz = db.getMetadata().getSchema().createClass("EmbeddedValidation");
@@ -285,7 +297,6 @@ public class ODocumentValidationTest {
     } finally {
       db.drop();
     }
-
   }
 
   private void checkRequireField(ODocument toCheck, String fieldName) {
@@ -300,7 +311,8 @@ public class ODocumentValidationTest {
 
   @Test
   public void testMaxValidation() {
-    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + ODocumentValidationTest.class.getSimpleName());
+    ODatabaseDocument db =
+        new ODatabaseDocumentTx("memory:" + ODocumentValidationTest.class.getSimpleName());
     db.create();
     try {
       OClass clazz = db.getMetadata().getSchema().createClass("Validation");
@@ -312,11 +324,13 @@ public class ODocumentValidationTest {
       clazz.createProperty("byte", OType.BYTE).setMax("11");
       Calendar cal = Calendar.getInstance();
       cal.add(Calendar.HOUR, cal.get(Calendar.HOUR) == 11 ? 0 : 1);
-      SimpleDateFormat format = ((ODatabaseDocumentTx) db).getStorage().getConfiguration().getDateFormatInstance();
+      SimpleDateFormat format =
+          ((ODatabaseDocumentTx) db).getStorage().getConfiguration().getDateFormatInstance();
       clazz.createProperty("date", OType.DATE).setMax(format.format(cal.getTime()));
       cal = Calendar.getInstance();
       cal.add(Calendar.HOUR, 1);
-      format = ((ODatabaseDocumentTx) db).getStorage().getConfiguration().getDateTimeFormatInstance();
+      format =
+          ((ODatabaseDocumentTx) db).getStorage().getConfiguration().getDateTimeFormatInstance();
       clazz.createProperty("datetime", OType.DATETIME).setMax(format.format(cal.getTime()));
 
       clazz.createProperty("decimal", OType.DECIMAL).setMax("11");
@@ -339,7 +353,7 @@ public class ODocumentValidationTest {
       d.field("int", 11);
       d.field("long", 11);
       d.field("float", 11);
-      d.field("binary", new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 });
+      d.field("binary", new byte[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11});
       d.field("byte", 11);
       d.field("date", new Date());
       d.field("datetime", new Date());
@@ -354,7 +368,9 @@ public class ODocumentValidationTest {
       cont.put("two", "one");
       d.field("embeddedMap", cont);
       d.field("linkList", Arrays.asList(new ORecordId(40, 30), new ORecordId(40, 34)));
-      d.field("linkSet", new HashSet<ORecordId>(Arrays.asList(new ORecordId(40, 30), new ORecordId(40, 31))));
+      d.field(
+          "linkSet",
+          new HashSet<ORecordId>(Arrays.asList(new ORecordId(40, 30), new ORecordId(40, 31))));
       HashMap<String, ORecordId> cont1 = new HashMap<String, ORecordId>();
       cont1.put("one", new ORecordId(30, 30));
       cont1.put("two", new ORecordId(30, 30));
@@ -368,7 +384,7 @@ public class ODocumentValidationTest {
       checkField(d, "int", 12);
       checkField(d, "long", 12);
       checkField(d, "float", 20);
-      checkField(d, "binary", new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 });
+      checkField(d, "binary", new byte[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13});
 
       checkField(d, "byte", 20);
       cal = Calendar.getInstance();
@@ -387,9 +403,15 @@ public class ODocumentValidationTest {
       con1.put("three", "one");
 
       checkField(d, "embeddedMap", con1);
-      checkField(d, "linkList", Arrays.asList(new ORecordId(40, 30), new ORecordId(40, 33), new ORecordId(40, 31)));
-      checkField(d, "linkSet",
-          new HashSet<ORecordId>(Arrays.asList(new ORecordId(40, 30), new ORecordId(40, 33), new ORecordId(40, 31))));
+      checkField(
+          d,
+          "linkList",
+          Arrays.asList(new ORecordId(40, 30), new ORecordId(40, 33), new ORecordId(40, 31)));
+      checkField(
+          d,
+          "linkSet",
+          new HashSet<ORecordId>(
+              Arrays.asList(new ORecordId(40, 30), new ORecordId(40, 33), new ORecordId(40, 31))));
 
       HashMap<String, ORecordId> cont3 = new HashMap<String, ORecordId>();
       cont3.put("one", new ORecordId(30, 30));
@@ -406,16 +428,17 @@ public class ODocumentValidationTest {
     } finally {
       db.drop();
     }
-
   }
 
   @Test
   public void testMinValidation() {
-    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + ODocumentValidationTest.class.getSimpleName());
+    ODatabaseDocument db =
+        new ODatabaseDocumentTx("memory:" + ODocumentValidationTest.class.getSimpleName());
     db.create();
     try {
       ODocument doc = new ODocument();
-      OIdentifiable id = db.save(doc, db.getClusterNameById(db.getDefaultClusterId())).getIdentity();
+      OIdentifiable id =
+          db.save(doc, db.getClusterNameById(db.getDefaultClusterId())).getIdentity();
       OClass clazz = db.getMetadata().getSchema().createClass("Validation");
       clazz.createProperty("int", OType.INTEGER).setMin("11");
       clazz.createProperty("long", OType.LONG).setMin("11");
@@ -425,11 +448,13 @@ public class ODocumentValidationTest {
       clazz.createProperty("byte", OType.BYTE).setMin("11");
       Calendar cal = Calendar.getInstance();
       cal.add(Calendar.HOUR, cal.get(Calendar.HOUR) == 11 ? 0 : 1);
-      SimpleDateFormat format = ((ODatabaseDocumentTx) db).getStorage().getConfiguration().getDateFormatInstance();
+      SimpleDateFormat format =
+          ((ODatabaseDocumentTx) db).getStorage().getConfiguration().getDateFormatInstance();
       clazz.createProperty("date", OType.DATE).setMin(format.format(cal.getTime()));
       cal = Calendar.getInstance();
       cal.add(Calendar.HOUR, 1);
-      format = ((ODatabaseDocumentTx) db).getStorage().getConfiguration().getDateTimeFormatInstance();
+      format =
+          ((ODatabaseDocumentTx) db).getStorage().getConfiguration().getDateTimeFormatInstance();
       clazz.createProperty("datetime", OType.DATETIME).setMin(format.format(cal.getTime()));
 
       clazz.createProperty("decimal", OType.DECIMAL).setMin("11");
@@ -452,7 +477,7 @@ public class ODocumentValidationTest {
       d.field("int", 11);
       d.field("long", 11);
       d.field("float", 11);
-      d.field("binary", new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 });
+      d.field("binary", new byte[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11});
       d.field("byte", 11);
 
       cal = Calendar.getInstance();
@@ -483,7 +508,7 @@ public class ODocumentValidationTest {
       checkField(d, "int", 10);
       checkField(d, "long", 10);
       checkField(d, "float", 10);
-      checkField(d, "binary", new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 });
+      checkField(d, "binary", new byte[] {1, 2, 3, 4, 5, 6, 7, 8});
       checkField(d, "byte", 10);
 
       cal = Calendar.getInstance();
@@ -505,16 +530,17 @@ public class ODocumentValidationTest {
     } finally {
       db.drop();
     }
-
   }
 
   @Test
   public void testNotNullValidation() {
-    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + ODocumentValidationTest.class.getSimpleName());
+    ODatabaseDocument db =
+        new ODatabaseDocumentTx("memory:" + ODocumentValidationTest.class.getSimpleName());
     db.create();
     try {
       ODocument doc = new ODocument();
-      OIdentifiable id = db.save(doc, db.getClusterNameById(db.getDefaultClusterId())).getIdentity();
+      OIdentifiable id =
+          db.save(doc, db.getClusterNameById(db.getDefaultClusterId())).getIdentity();
       OClass clazz = db.getMetadata().getSchema().createClass("Validation");
       clazz.createProperty("int", OType.INTEGER).setNotNull(true);
       clazz.createProperty("long", OType.LONG).setNotNull(true);
@@ -544,7 +570,7 @@ public class ODocumentValidationTest {
       d.field("long", 12);
       d.field("float", 12);
       d.field("boolean", true);
-      d.field("binary", new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 });
+      d.field("binary", new byte[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12});
       d.field("byte", 12);
       d.field("date", new Date());
       d.field("datetime", new Date());
@@ -586,12 +612,12 @@ public class ODocumentValidationTest {
     } finally {
       db.drop();
     }
-
   }
 
   @Test
   public void testRegExpValidation() {
-    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + ODocumentValidationTest.class.getSimpleName());
+    ODatabaseDocument db =
+        new ODatabaseDocumentTx("memory:" + ODocumentValidationTest.class.getSimpleName());
     db.create();
     try {
       OClass clazz = db.getMetadata().getSchema().createClass("Validation");
@@ -606,12 +632,12 @@ public class ODocumentValidationTest {
     } finally {
       db.drop();
     }
-
   }
 
   @Test
   public void testLinkedTypeValidation() {
-    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + ODocumentValidationTest.class.getSimpleName());
+    ODatabaseDocument db =
+        new ODatabaseDocumentTx("memory:" + ODocumentValidationTest.class.getSimpleName());
     db.create();
     try {
       OClass clazz = db.getMetadata().getSchema().createClass("Validation");
@@ -646,7 +672,8 @@ public class ODocumentValidationTest {
 
   @Test
   public void testLinkedClassValidation() {
-    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + ODocumentValidationTest.class.getSimpleName());
+    ODatabaseDocument db =
+        new ODatabaseDocumentTx("memory:" + ODocumentValidationTest.class.getSimpleName());
     db.create();
     try {
       OClass clazz = db.getMetadata().getSchema().createClass("Validation");
@@ -706,7 +733,8 @@ public class ODocumentValidationTest {
 
   @Test
   public void testValidLinkCollectionsUpdate() {
-    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + ODocumentValidationTest.class.getSimpleName());
+    ODatabaseDocument db =
+        new ODatabaseDocumentTx("memory:" + ODocumentValidationTest.class.getSimpleName());
     db.create();
     try {
       OClass clazz = db.getMetadata().getSchema().createClass("Validation");
@@ -761,7 +789,6 @@ public class ODocumentValidationTest {
     } finally {
       db.drop();
     }
-
   }
 
   private void checkField(ODocument toCheck, String field, Object newValue) {
@@ -773,5 +800,4 @@ public class ODocumentValidationTest {
     } catch (OValidationException v) {
     }
   }
-
 }

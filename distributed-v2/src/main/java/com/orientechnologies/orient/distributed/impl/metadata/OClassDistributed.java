@@ -4,23 +4,28 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
-import com.orientechnologies.orient.core.metadata.schema.*;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OClassEmbedded;
+import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
+import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OPropertyEmbedded;
+import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
+import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-/**
- * Created by tglman on 22/06/17.
- */
+/** Created by tglman on 22/06/17. */
 public class OClassDistributed extends OClassEmbedded {
 
   private volatile int[] bestClusterIds;
-  private volatile int   lastVersion;
+  private volatile int lastVersion;
 
   protected OClassDistributed(OSchemaShared iOwner, String iName) {
     super(iOwner, iName);
@@ -44,10 +49,13 @@ public class OClassDistributed extends OClassEmbedded {
     return new OPropertyDistributed(this, global);
   }
 
-  public OProperty addProperty(final String propertyName, final OType type, final OType linkedType, final OClass linkedClass,
+  public OProperty addProperty(
+      final String propertyName,
+      final OType type,
+      final OType linkedType,
+      final OClass linkedClass,
       final boolean unsafe) {
-    if (type == null)
-      throw new OSchemaException("Property type not defined.");
+    if (type == null) throw new OSchemaException("Property type not defined.");
 
     if (propertyName == null || propertyName.length() == 0)
       throw new OSchemaException("Property name is null or empty");
@@ -55,16 +63,15 @@ public class OClassDistributed extends OClassEmbedded {
     final ODatabaseDocumentInternal database = getDatabase();
     validatePropertyName(propertyName);
     if (database.getTransaction().isActive()) {
-      throw new OSchemaException("Cannot create property '" + propertyName + "' inside a transaction");
+      throw new OSchemaException(
+          "Cannot create property '" + propertyName + "' inside a transaction");
     }
 
     database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
-    if (linkedType != null)
-      OPropertyImpl.checkLinkTypeSupport(type);
+    if (linkedType != null) OPropertyImpl.checkLinkTypeSupport(type);
 
-    if (linkedClass != null)
-      OPropertyImpl.checkSupportLinkedClass(type);
+    if (linkedClass != null) OPropertyImpl.checkSupportLinkedClass(type);
 
     acquireSchemaWriteLock();
     try {
@@ -96,18 +103,20 @@ public class OClassDistributed extends OClassEmbedded {
           cmd.append('`');
         }
 
-        if (unsafe)
-          cmd.append(" unsafe ");
+        if (unsafe) cmd.append(" unsafe ");
         if (!isRunLocal(database)) {
           OScenarioThreadLocal.executeAsDistributed(
-              (Callable<OProperty>) () -> addPropertyInternal(propertyName, type, linkedType, linkedClass, unsafe));
+              (Callable<OProperty>)
+                  () -> addPropertyInternal(propertyName, type, linkedType, linkedClass, unsafe));
         }
 
         owner.sendCommand(database, cmd.toString());
 
       } else
-        return (OProperty) OScenarioThreadLocal.executeAsDistributed(
-            (Callable<OProperty>) () -> addPropertyInternal(propertyName, type, linkedType, linkedClass, unsafe));
+        return (OProperty)
+            OScenarioThreadLocal.executeAsDistributed(
+                (Callable<OProperty>)
+                    () -> addPropertyInternal(propertyName, type, linkedType, linkedClass, unsafe));
 
     } finally {
       releaseSchemaWriteLock();
@@ -127,8 +136,7 @@ public class OClassDistributed extends OClassEmbedded {
         if (!isRunLocal(database)) {
           setEncryptionInternal(database, iValue);
         }
-      } else
-        setEncryptionInternal(database, iValue);
+      } else setEncryptionInternal(database, iValue);
     } finally {
       releaseSchemaWriteLock();
     }
@@ -148,8 +156,7 @@ public class OClassDistributed extends OClassEmbedded {
         if (!isRunLocal(database)) {
           setClusterSelectionInternal(value);
         }
-      } else
-        setClusterSelectionInternal(value);
+      } else setClusterSelectionInternal(value);
 
       return this;
     } finally {
@@ -169,8 +176,7 @@ public class OClassDistributed extends OClassEmbedded {
         if (!isRunLocal(database)) {
           setCustomInternal(name, value);
         }
-      } else
-        setCustomInternal(name, value);
+      } else setCustomInternal(name, value);
 
       return this;
     } finally {
@@ -190,8 +196,7 @@ public class OClassDistributed extends OClassEmbedded {
         if (!isRunLocal(database)) {
           clearCustomInternal();
         }
-      } else
-        clearCustomInternal();
+      } else clearCustomInternal();
 
     } finally {
       releaseSchemaWriteLock();
@@ -216,16 +221,14 @@ public class OClassDistributed extends OClassEmbedded {
             sb.append('`').append(superClass.getName()).append("`,");
           }
           sb.deleteCharAt(sb.length() - 1);
-        } else
-          sb.append("null");
+        } else sb.append("null");
 
         final String cmd = String.format("alter class `%s` superclasses %s", name, sb);
         owner.sendCommand(database, cmd);
         if (!isRunLocal(database)) {
           setSuperClassesInternal(classes);
         }
-      } else
-        setSuperClassesInternal(classes);
+      } else setSuperClassesInternal(classes);
 
     } finally {
       releaseSchemaWriteLock();
@@ -241,14 +244,15 @@ public class OClassDistributed extends OClassEmbedded {
     acquireSchemaWriteLock();
     try {
       if (isDistributedCommand(database)) {
-        final String cmd = String
-            .format("alter class `%s` superclass +`%s`", name, superClass != null ? superClass.getName() : null);
+        final String cmd =
+            String.format(
+                "alter class `%s` superclass +`%s`",
+                name, superClass != null ? superClass.getName() : null);
         owner.sendCommand(database, cmd);
         if (!isRunLocal(database)) {
           addSuperClassInternal(database, superClass);
         }
-      } else
-        addSuperClassInternal(database, superClass);
+      } else addSuperClassInternal(database, superClass);
 
     } finally {
       releaseSchemaWriteLock();
@@ -263,14 +267,15 @@ public class OClassDistributed extends OClassEmbedded {
     acquireSchemaWriteLock();
     try {
       if (isDistributedCommand(database)) {
-        final String cmd = String
-            .format("alter class `%s` superclass -`%s`", name, superClass != null ? superClass.getName() : null);
+        final String cmd =
+            String.format(
+                "alter class `%s` superclass -`%s`",
+                name, superClass != null ? superClass.getName() : null);
         owner.sendCommand(database, cmd);
         if (!isRunLocal(database)) {
           removeSuperClassInternal(superClass);
         }
-      } else
-        removeSuperClassInternal(superClass);
+      } else removeSuperClassInternal(superClass);
 
     } finally {
       releaseSchemaWriteLock();
@@ -279,19 +284,24 @@ public class OClassDistributed extends OClassEmbedded {
   }
 
   public OClass setName(final String name) {
-    if (getName().equals(name))
-      return this;
+    if (getName().equals(name)) return this;
     final ODatabaseDocumentInternal database = getDatabase();
     database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
     final Character wrongCharacter = OSchemaShared.checkClassNameIfValid(name);
     OClass oClass = database.getMetadata().getSchema().getClass(name);
     if (oClass != null) {
-      String error = String.format("Cannot rename class %s to %s. A Class with name %s exists", this.name, name, name);
+      String error =
+          String.format(
+              "Cannot rename class %s to %s. A Class with name %s exists", this.name, name, name);
       throw new OSchemaException(error);
     }
     if (wrongCharacter != null)
       throw new OSchemaException(
-          "Invalid class name found. Character '" + wrongCharacter + "' cannot be used in class name '" + name + "'");
+          "Invalid class name found. Character '"
+              + wrongCharacter
+              + "' cannot be used in class name '"
+              + name
+              + "'");
     acquireSchemaWriteLock();
     try {
 
@@ -301,8 +311,7 @@ public class OClassDistributed extends OClassEmbedded {
         if (!isRunLocal(database)) {
           setNameInternal(database, name);
         }
-      } else
-        setNameInternal(database, name);
+      } else setNameInternal(database, name);
 
     } finally {
       releaseSchemaWriteLock();
@@ -314,8 +323,7 @@ public class OClassDistributed extends OClassEmbedded {
   public OClass setShortName(String shortName) {
     if (shortName != null) {
       shortName = shortName.trim();
-      if (shortName.isEmpty())
-        shortName = null;
+      if (shortName.isEmpty()) shortName = null;
     }
     final ODatabaseDocumentInternal database = getDatabase();
     database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
@@ -329,8 +337,7 @@ public class OClassDistributed extends OClassEmbedded {
         if (!isRunLocal(database)) {
           setShortNameInternal(database, shortName);
         }
-      } else
-        setShortNameInternal(database, shortName);
+      } else setShortNameInternal(database, shortName);
     } finally {
       releaseSchemaWriteLock();
     }
@@ -351,8 +358,7 @@ public class OClassDistributed extends OClassEmbedded {
         if (!isRunLocal(database)) {
           truncateClusterInternal(clusterName, database);
         }
-      } else
-        truncateClusterInternal(clusterName, database);
+      } else truncateClusterInternal(clusterName, database);
     } finally {
       releaseSchemaReadLock();
     }
@@ -373,8 +379,7 @@ public class OClassDistributed extends OClassEmbedded {
         if (!isRunLocal(database)) {
           setStrictModeInternal(isStrict);
         }
-      } else
-        setStrictModeInternal(isStrict);
+      } else setStrictModeInternal(isStrict);
 
     } finally {
       releaseSchemaWriteLock();
@@ -386,8 +391,7 @@ public class OClassDistributed extends OClassEmbedded {
   public OClass setDescription(String iDescription) {
     if (iDescription != null) {
       iDescription = iDescription.trim();
-      if (iDescription.isEmpty())
-        iDescription = null;
+      if (iDescription.isEmpty()) iDescription = null;
     }
     final ODatabaseDocumentInternal database = getDatabase();
     database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
@@ -400,8 +404,7 @@ public class OClassDistributed extends OClassEmbedded {
         if (!isRunLocal(database)) {
           setDescriptionInternal(iDescription);
         }
-      } else
-        setDescriptionInternal(iDescription);
+      } else setDescriptionInternal(iDescription);
     } finally {
       releaseSchemaWriteLock();
     }
@@ -426,8 +429,7 @@ public class OClassDistributed extends OClassEmbedded {
         if (!isRunLocal(database)) {
           addClusterIdInternal(database, clusterId);
         }
-      } else
-        addClusterIdInternal(database, clusterId);
+      } else addClusterIdInternal(database, clusterId);
 
     } finally {
       releaseSchemaWriteLock();
@@ -440,7 +442,10 @@ public class OClassDistributed extends OClassEmbedded {
     database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
     if (clusterIds.length == 1 && clusterId == clusterIds[0])
-      throw new ODatabaseException(" Impossible to remove the last cluster of class '" + getName() + "' drop the class instead");
+      throw new ODatabaseException(
+          " Impossible to remove the last cluster of class '"
+              + getName()
+              + "' drop the class instead");
 
     acquireSchemaWriteLock();
     try {
@@ -451,8 +456,7 @@ public class OClassDistributed extends OClassEmbedded {
         if (!isRunLocal(database)) {
           removeClusterIdInternal(database, clusterId);
         }
-      } else
-        removeClusterIdInternal(database, clusterId);
+      } else removeClusterIdInternal(database, clusterId);
     } finally {
       releaseSchemaWriteLock();
     }
@@ -470,22 +474,27 @@ public class OClassDistributed extends OClassEmbedded {
     acquireSchemaWriteLock();
     try {
       if (!properties.containsKey(propertyName))
-        throw new OSchemaException("Property '" + propertyName + "' not found in class " + name + "'");
+        throw new OSchemaException(
+            "Property '" + propertyName + "' not found in class " + name + "'");
 
       if (isDistributedCommand(database)) {
         if (!isRunLocal(database)) {
-          OScenarioThreadLocal.executeAsDistributed((Callable<OProperty>) () -> {
-            dropPropertyInternal(database, propertyName);
-            return null;
-          });
+          OScenarioThreadLocal.executeAsDistributed(
+              (Callable<OProperty>)
+                  () -> {
+                    dropPropertyInternal(database, propertyName);
+                    return null;
+                  });
         }
 
         owner.sendCommand(database, "drop property " + name + '.' + propertyName);
       } else
-        OScenarioThreadLocal.executeAsDistributed((Callable<OProperty>) () -> {
-          dropPropertyInternal(database, propertyName);
-          return null;
-        });
+        OScenarioThreadLocal.executeAsDistributed(
+            (Callable<OProperty>)
+                () -> {
+                  dropPropertyInternal(database, propertyName);
+                  return null;
+                });
 
     } finally {
       releaseSchemaWriteLock();
@@ -531,13 +540,13 @@ public class OClassDistributed extends OClassEmbedded {
 
       if (isDistributedCommand(database)) {
         // FORMAT FLOAT LOCALE AGNOSTIC
-        final String cmd = String.format("alter class `%s` oversize %s", name, new Float(overSize).toString());
+        final String cmd =
+            String.format("alter class `%s` oversize %s", name, new Float(overSize).toString());
         owner.sendCommand(database, cmd);
         if (!isRunLocal(database)) {
           setOverSizeInternal(database, overSize);
         }
-      } else
-        setOverSizeInternal(database, overSize);
+      } else setOverSizeInternal(database, overSize);
     } finally {
       releaseSchemaWriteLock();
     }
@@ -558,8 +567,7 @@ public class OClassDistributed extends OClassEmbedded {
         if (!isRunLocal(database)) {
           setAbstractInternal(database, isAbstract);
         }
-      } else
-        setAbstractInternal(database, isAbstract);
+      } else setAbstractInternal(database, isAbstract);
     } finally {
       releaseSchemaWriteLock();
     }
@@ -567,13 +575,12 @@ public class OClassDistributed extends OClassEmbedded {
     return this;
   }
 
-
   protected boolean isDistributedCommand(ODatabaseDocumentInternal database) {
-    return database.getStorage() instanceof OAutoshardedStorage && !((OAutoshardedStorage) database.getStorage()).isLocalEnv();
+    return database.getStorage() instanceof OAutoshardedStorage
+        && !((OAutoshardedStorage) database.getStorage()).isLocalEnv();
   }
 
   private boolean isRunLocal(ODatabaseDocumentInternal database) {
     return ((OSchemaDistributed) owner).isRunLocal(database);
   }
-
 }

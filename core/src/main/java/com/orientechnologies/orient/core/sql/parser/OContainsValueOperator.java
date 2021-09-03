@@ -13,32 +13,37 @@ public class OContainsValueOperator extends SimpleNode implements OBinaryCompare
     super(p, id);
   }
 
-  @Override public boolean execute(Object iLeft, Object iRight) {
+  @Override
+  public boolean execute(Object iLeft, Object iRight) {
     if (iLeft instanceof Map<?, ?>) {
       final Map<String, ?> map = (Map<String, ?>) iLeft;
       return map.containsValue(iRight);
     }
     return false;
-
   }
 
-  @Override public boolean supportsBasicCalculation() {
+  @Override
+  public boolean supportsBasicCalculation() {
     return true;
   }
 
-  @Override public OContainsValueOperator copy() {
+  @Override
+  public OContainsValueOperator copy() {
     return this;
   }
 
-  @Override public String toString() {
+  @Override
+  public String toString() {
     return "CONTAINSVALUE";
   }
 
-  @Override public boolean equals(Object obj) {
+  @Override
+  public boolean equals(Object obj) {
     return obj != null && obj.getClass().equals(this.getClass());
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     return getClass().hashCode();
   }
 }

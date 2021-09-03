@@ -20,23 +20,33 @@
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.comparator.ODefaultComparator;
+import com.orientechnologies.orient.core.exception.OSerializationException;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
-
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 /**
- * Container for the list of heterogeneous values that are going to be stored in in index as composite keys.
+ * Container for the list of heterogeneous values that are going to be stored in in index as
+ * composite keys.
  *
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com), Artem Orobets
  */
-public class OCompositeKey implements Comparable<OCompositeKey>, Serializable, ODocumentSerializable {
-  private static final long         serialVersionUID = 1L;
-  /**
-   *
-   */
-  private final        List<Object> keys;
+public class OCompositeKey
+    implements Comparable<OCompositeKey>, Serializable, ODocumentSerializable {
+  private static final long serialVersionUID = 1L;
+  /** */
+  private final List<Object> keys;
 
   public OCompositeKey(final List<?> keys) {
     this.keys = new ArrayList<>(keys.size());
@@ -58,27 +68,23 @@ public class OCompositeKey implements Comparable<OCompositeKey>, Serializable, O
     this.keys = new ArrayList<>();
   }
 
-  /**
-   * Clears the keys array for reuse of the object
-   */
+  /** Clears the keys array for reuse of the object */
   public void reset() {
     if (this.keys != null) {
       this.keys.clear();
     }
   }
 
-  /**
-   *
-   */
+  /** */
   public List<Object> getKeys() {
     return Collections.unmodifiableList(keys);
   }
 
   /**
    * Add new key value to the list of already registered values.
-   * <p>
-   * If passed in value is {@link OCompositeKey} itself then its values will be copied in current index. But key itself will not be
-   * added.
+   *
+   * <p>If passed in value is {@link OCompositeKey} itself then its values will be copied in current
+   * index. But key itself will not be added.
    *
    * @param key Key to add.
    */
@@ -95,14 +101,14 @@ public class OCompositeKey implements Comparable<OCompositeKey>, Serializable, O
 
   /**
    * Performs partial comparison of two composite keys.
-   * <p>
-   * Two objects will be equal if the common subset of their keys is equal. For example if first object contains two keys and second
-   * contains four keys then only first two keys will be compared.
+   *
+   * <p>Two objects will be equal if the common subset of their keys is equal. For example if first
+   * object contains two keys and second contains four keys then only first two keys will be
+   * compared.
    *
    * @param otherKey Key to compare.
-   *
-   * @return a negative integer, zero, or a positive integer as this object is less than, equal to, or greater than the specified
-   * object.
+   * @return a negative integer, zero, or a positive integer as this object is less than, equal to,
+   *     or greater than the specified object.
    */
   public int compareTo(final OCompositeKey otherKey) {
     final Iterator<Object> inIter = keys.iterator();
@@ -133,36 +139,27 @@ public class OCompositeKey implements Comparable<OCompositeKey>, Serializable, O
         return result;
       }
     }
-
     return 0;
   }
 
-  /**
-   * {@inheritDoc }
-   */
+  /** {@inheritDoc } */
   @Override
   public boolean equals(final Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     final OCompositeKey that = (OCompositeKey) o;
 
     return keys.equals(that.keys);
   }
 
-  /**
-   * {@inheritDoc }
-   */
+  /** {@inheritDoc } */
   @Override
   public int hashCode() {
     return keys.hashCode();
   }
 
-  /**
-   * {@inheritDoc }
-   */
+  /** {@inheritDoc } */
   @Override
   public String toString() {
     return "OCompositeKey{" + "keys=" + keys + '}';
@@ -195,5 +192,42 @@ public class OCompositeKey implements Comparable<OCompositeKey>, Serializable, O
 
     keys.clear();
     keys.addAll(keyMap.values());
+  }
+
+  // Alternative (de)serialization methods that avoid converting the OCompositeKey to a document.
+  public void toStream(ORecordSerializerNetworkV37 serializer, DataOutput out) throws IOException {
+    int l = keys.size();
+    out.writeInt(l);
+    for (Object key : keys) {
+      if (key instanceof OCompositeKey) {
+        throw new OSerializationException("Cannot serialize unflattened nested composite key.");
+      }
+      if (key == null) {
+        out.writeByte((byte) -1);
+      } else {
+        OType type = OType.getTypeByValue(key);
+        byte[] bytes = serializer.serializeValue(key, type);
+        out.writeByte((byte) type.getId());
+        out.writeInt(bytes.length);
+        out.write(bytes);
+      }
+    }
+  }
+
+  public void fromStream(ORecordSerializerNetworkV37 serializer, DataInput in) throws IOException {
+    int l = in.readInt();
+    for (int i = 0; i < l; i++) {
+      byte b = in.readByte();
+      if (b == -1) {
+        addKey(null);
+      } else {
+        int len = in.readInt();
+        byte[] bytes = new byte[len];
+        in.readFully(bytes);
+        OType type = OType.getById(b);
+        Object k = serializer.deserializeValue(bytes, type);
+        addKey(k);
+      }
+    }
   }
 }

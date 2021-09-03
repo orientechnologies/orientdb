@@ -3,54 +3,45 @@ package com.orientechnologies.orient.core.security;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.Test;
-/**
- * Created by frank on 19/11/2015.
- */
+
+/** Created by frank on 19/11/2015. */
 public class OSecurityManagerTest {
 
   @Test
   public void shouldCheckPlainPasswordAgainstHash() throws Exception {
 
-    OSecurityManager securityManager = OSecurityManager.instance();
+    String hash = OSecurityManager.createHash("password", OSecurityManager.HASH_ALGORITHM, true);
 
-    String hash = securityManager.createHash("password", OSecurityManager.HASH_ALGORITHM, true);
+    assertThat(OSecurityManager.checkPassword("password", hash)).isTrue();
 
-    assertThat(securityManager.checkPassword("password", hash)).isTrue();
+    hash = OSecurityManager.createHash("password", OSecurityManager.PBKDF2_ALGORITHM, true);
 
-    hash = securityManager.createHash("password", OSecurityManager.PBKDF2_ALGORITHM, true);
-
-    assertThat(securityManager.checkPassword("password", hash)).isTrue();
+    assertThat(OSecurityManager.checkPassword("password", hash)).isTrue();
   }
 
   @Test
   public void shouldCheckHashedPasswordAgainstHash() throws Exception {
 
-    OSecurityManager securityManager = OSecurityManager.instance();
+    String hash = OSecurityManager.createHash("password", OSecurityManager.HASH_ALGORITHM, true);
+    assertThat(OSecurityManager.checkPassword(hash, hash)).isFalse();
 
-    String hash = securityManager.createHash("password", OSecurityManager.HASH_ALGORITHM, true);
-    assertThat(securityManager.checkPassword(hash, hash)).isFalse();
+    hash = OSecurityManager.createHash("password", OSecurityManager.PBKDF2_ALGORITHM, true);
 
-    hash = securityManager.createHash("password", OSecurityManager.PBKDF2_ALGORITHM, true);
-
-    assertThat(securityManager.checkPassword(hash, hash)).isFalse();
+    assertThat(OSecurityManager.checkPassword(hash, hash)).isFalse();
   }
 
   @Test
   public void shouldCheckPlainPasswordAgainstHashWithSalt() throws Exception {
 
-    OSecurityManager securityManager = OSecurityManager.instance();
+    String hash = OSecurityManager.createHashWithSalt("password");
 
-    String hash = securityManager.createHashWithSalt("password");
-
-    assertThat(securityManager.checkPasswordWithSalt("password", hash)).isTrue();
+    assertThat(OSecurityManager.checkPasswordWithSalt("password", hash)).isTrue();
   }
 
   @Test
   public void shouldCheckHashedWithSalPasswordAgainstHashWithSalt() throws Exception {
 
-    OSecurityManager securityManager = OSecurityManager.instance();
-
-    String hash = securityManager.createHashWithSalt("password");
-    assertThat(securityManager.checkPasswordWithSalt(hash, hash)).isFalse();
+    String hash = OSecurityManager.createHashWithSalt("password");
+    assertThat(OSecurityManager.checkPasswordWithSalt(hash, hash)).isFalse();
   }
 }

@@ -5,14 +5,11 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.parser.OMatchPathItem;
 import com.orientechnologies.orient.core.sql.parser.ORid;
 import com.orientechnologies.orient.core.sql.parser.OWhereClause;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Created by luigidellaquila on 15/10/16.
- */
+/** Created by luigidellaquila on 15/10/16. */
 public class MatchReverseEdgeTraverser extends MatchEdgeTraverser {
 
   private final String startingPointAlias;
@@ -41,7 +38,8 @@ public class MatchReverseEdgeTraverser extends MatchEdgeTraverser {
   }
 
   @Override
-  protected Iterable<OResultInternal> traversePatternEdge(OIdentifiable startingPoint, OCommandContext iCommandContext) {
+  protected Iterable<OResultInternal> traversePatternEdge(
+      OIdentifiable startingPoint, OCommandContext iCommandContext) {
 
     Object qR = this.item.getMethod().executeReverse(startingPoint, iCommandContext);
     if (qR == null) {
@@ -81,5 +79,4 @@ public class MatchReverseEdgeTraverser extends MatchEdgeTraverser {
   protected String getEndpointAlias() {
     return endPointAlias;
   }
-
 }

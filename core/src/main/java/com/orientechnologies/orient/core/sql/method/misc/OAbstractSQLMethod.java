@@ -19,15 +19,12 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.method.OSQLMethod;
 
-/**
- * 
- * @author Johann Sorel (Geomatys)
- */
+/** @author Johann Sorel (Geomatys) */
 public abstract class OAbstractSQLMethod implements OSQLMethod {
 
   private final String name;
-  private final int    minparams;
-  private final int    maxparams;
+  private final int minparams;
+  private final int maxparams;
 
   public OAbstractSQLMethod(String name) {
     this(name, 0);

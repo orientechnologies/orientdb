@@ -23,24 +23,29 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
- * Index implementation bound to one schema class property that presents {@link com.orientechnologies.orient.core.metadata.schema.OType#EMBEDDEDLIST},
- * {@link com.orientechnologies.orient.core.metadata.schema.OType#LINKLIST}, {@link com.orientechnologies.orient.core.metadata.schema.OType#LINKSET}
- * or {@link com.orientechnologies.orient.core.metadata.schema.OType#EMBEDDEDSET} properties.
+ * Index implementation bound to one schema class property that presents {@link
+ * com.orientechnologies.orient.core.metadata.schema.OType#EMBEDDEDLIST}, {@link
+ * com.orientechnologies.orient.core.metadata.schema.OType#LINKLIST}, {@link
+ * com.orientechnologies.orient.core.metadata.schema.OType#LINKSET} or {@link
+ * com.orientechnologies.orient.core.metadata.schema.OType#EMBEDDEDSET} properties.
  */
 public class OPropertyListIndexDefinition extends OAbstractIndexDefinitionMultiValue {
 
   private static final long serialVersionUID = -6499782365051906190L;
 
-  public OPropertyListIndexDefinition(final String iClassName, final String iField, final OType iType) {
+  public OPropertyListIndexDefinition(
+      final String iClassName, final String iField, final OType iType) {
     super(iClassName, iField, iType);
   }
 
-  public OPropertyListIndexDefinition() {
-  }
+  public OPropertyListIndexDefinition() {}
 
   @Override
   public Object getDocumentValueToIndex(ODocument iDocument) {
@@ -49,8 +54,7 @@ public class OPropertyListIndexDefinition extends OAbstractIndexDefinitionMultiV
 
   @Override
   public Object createValue(List<?> params) {
-    if (!(params.get(0) instanceof Collection))
-      params = (List) Collections.singletonList(params);
+    if (!(params.get(0) instanceof Collection)) params = (List) Collections.singletonList(params);
 
     final Collection<?> multiValueCollection = (Collection<?>) params.get(0);
     final List<Object> values = new ArrayList<>(multiValueCollection.size());
@@ -83,30 +87,38 @@ public class OPropertyListIndexDefinition extends OAbstractIndexDefinitionMultiV
     try {
       return OType.convert(param[0], keyType.getDefaultJavaType());
     } catch (Exception e) {
-      OException ex = OException
-          .wrapException(new OIndexException("Invalid key for index: " + param[0] + " cannot be converted to " + keyType), e);
+      OException ex =
+          OException.wrapException(
+              new OIndexException(
+                  "Invalid key for index: " + param[0] + " cannot be converted to " + keyType),
+              e);
       throw ex;
     }
   }
 
-  public void processChangeEvent(final OMultiValueChangeEvent<?, ?> changeEvent, final Map<Object, Integer> keysToAdd,
+  public void processChangeEvent(
+      final OMultiValueChangeEvent<?, ?> changeEvent,
+      final Map<Object, Integer> keysToAdd,
       final Map<Object, Integer> keysToRemove) {
     switch (changeEvent.getChangeType()) {
-    case ADD: {
-      processAdd(createSingleValue(changeEvent.getValue()), keysToAdd, keysToRemove);
-      break;
-    }
-    case REMOVE: {
-      processRemoval(createSingleValue(changeEvent.getOldValue()), keysToAdd, keysToRemove);
-      break;
-    }
-    case UPDATE: {
-      processRemoval(createSingleValue(changeEvent.getOldValue()), keysToAdd, keysToRemove);
-      processAdd(createSingleValue(changeEvent.getValue()), keysToAdd, keysToRemove);
-      break;
-    }
-    default:
-      throw new IllegalArgumentException("Invalid change type : " + changeEvent.getChangeType());
+      case ADD:
+        {
+          processAdd(createSingleValue(changeEvent.getValue()), keysToAdd, keysToRemove);
+          break;
+        }
+      case REMOVE:
+        {
+          processRemoval(createSingleValue(changeEvent.getOldValue()), keysToAdd, keysToRemove);
+          break;
+        }
+      case UPDATE:
+        {
+          processRemoval(createSingleValue(changeEvent.getOldValue()), keysToAdd, keysToRemove);
+          processAdd(createSingleValue(changeEvent.getValue()), keysToAdd, keysToRemove);
+          break;
+        }
+      default:
+        throw new IllegalArgumentException("Invalid change type : " + changeEvent.getChangeType());
     }
   }
 

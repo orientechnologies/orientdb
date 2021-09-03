@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordOperationMetadata;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationMetadata;
-
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -41,18 +40,18 @@ import java.util.Set;
 public class OAtomicUnitEndRecord extends OOperationUnitBodyRecord {
   private boolean rollback;
 
-  private Map<String, OAtomicOperationMetadata<?>> atomicOperationMetadataMap = new LinkedHashMap<>();
+  private Map<String, OAtomicOperationMetadata<?>> atomicOperationMetadataMap =
+      new LinkedHashMap<>();
 
-  public OAtomicUnitEndRecord() {
-  }
+  public OAtomicUnitEndRecord() {}
 
-  public OAtomicUnitEndRecord(final OOperationUnitId operationUnitId, final boolean rollback,
+  public OAtomicUnitEndRecord(
+      final long operationUnitId,
+      final boolean rollback,
       final Map<String, OAtomicOperationMetadata<?>> atomicOperationMetadataMap) {
     super(operationUnitId);
 
     this.rollback = rollback;
-
-    assert operationUnitId != null;
 
     if (atomicOperationMetadataMap != null && atomicOperationMetadataMap.size() > 0) {
       this.atomicOperationMetadataMap = atomicOperationMetadataMap;
@@ -68,11 +67,13 @@ public class OAtomicUnitEndRecord extends OOperationUnitBodyRecord {
     buffer.put(rollback ? (byte) 1 : 0);
 
     if (atomicOperationMetadataMap.size() > 0) {
-      for (final Map.Entry<String, OAtomicOperationMetadata<?>> entry : atomicOperationMetadataMap.entrySet()) {
+      for (final Map.Entry<String, OAtomicOperationMetadata<?>> entry :
+          atomicOperationMetadataMap.entrySet()) {
         if (entry.getKey().equals(ORecordOperationMetadata.RID_METADATA_KEY)) {
           buffer.put((byte) 1);
 
-          final ORecordOperationMetadata recordOperationMetadata = (ORecordOperationMetadata) entry.getValue();
+          final ORecordOperationMetadata recordOperationMetadata =
+              (ORecordOperationMetadata) entry.getValue();
           final Set<ORID> rids = recordOperationMetadata.getValue();
           buffer.putInt(rids.size());
 
@@ -81,7 +82,8 @@ public class OAtomicUnitEndRecord extends OOperationUnitBodyRecord {
             buffer.putInt(rid.getClusterId());
           }
         } else {
-          throw new IllegalStateException("Invalid metadata key " + ORecordOperationMetadata.RID_METADATA_KEY);
+          throw new IllegalStateException(
+              "Invalid metadata key " + ORecordOperationMetadata.RID_METADATA_KEY);
         }
       }
     } else {
@@ -125,24 +127,22 @@ public class OAtomicUnitEndRecord extends OOperationUnitBodyRecord {
   private int metadataSize() {
     int size = OByteSerializer.BYTE_SIZE;
 
-    for (Map.Entry<String, OAtomicOperationMetadata<?>> entry : atomicOperationMetadataMap.entrySet()) {
+    for (Map.Entry<String, OAtomicOperationMetadata<?>> entry :
+        atomicOperationMetadataMap.entrySet()) {
       if (entry.getKey().equals(ORecordOperationMetadata.RID_METADATA_KEY)) {
-        final ORecordOperationMetadata recordOperationMetadata = (ORecordOperationMetadata) entry.getValue();
+        final ORecordOperationMetadata recordOperationMetadata =
+            (ORecordOperationMetadata) entry.getValue();
 
         size += OIntegerSerializer.INT_SIZE;
         final Set<ORID> rids = recordOperationMetadata.getValue();
         size += rids.size() * (OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE);
       } else {
-        throw new IllegalStateException("Invalid metadata key " + ORecordOperationMetadata.RID_METADATA_KEY);
+        throw new IllegalStateException(
+            "Invalid metadata key " + ORecordOperationMetadata.RID_METADATA_KEY);
       }
     }
 
     return size;
-  }
-
-  @Override
-  public boolean isUpdateMasterRecord() {
-    return false;
   }
 
   @Override

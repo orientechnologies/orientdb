@@ -5,7 +5,6 @@ import com.orientechnologies.orient.core.db.viewmanager.ViewManager;
 import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.ODatabaseDocumentDistributed;
-
 import java.util.List;
 
 public class ViewManagerDistributed extends ViewManager {

@@ -23,11 +23,9 @@ package com.orientechnologies.orient.core.intent;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 
 public class OIntentMassiveRead implements OIntent {
-  public void begin(final ODatabaseDocumentInternal iDatabase) {
-  }
+  public void begin(final ODatabaseDocumentInternal iDatabase) {}
 
-  public void end(final ODatabaseDocumentInternal iDatabase) {
-  }
+  public void end(final ODatabaseDocumentInternal iDatabase) {}
 
   @Override
   public OIntent copy() {

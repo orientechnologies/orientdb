@@ -19,46 +19,46 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
-import java.text.Collator;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Locale;
-
 import com.orientechnologies.common.util.OPair;
-import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
+import java.text.Collator;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Locale;
 
 /**
- * Comparator implementation class used by ODocumentSorter class to sort documents following dynamic criteria.
+ * Comparator implementation class used by ODocumentSorter class to sort documents following dynamic
+ * criteria.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- *
  */
 public class ODocumentComparator implements Comparator<OIdentifiable> {
   private List<OPair<String, String>> orderCriteria;
-  private OCommandContext             context;
-  private Collator                    collator;
+  private OCommandContext context;
+  private Collator collator;
 
-  public ODocumentComparator(final List<OPair<String, String>> iOrderCriteria, OCommandContext iContext) {
+  public ODocumentComparator(
+      final List<OPair<String, String>> iOrderCriteria, OCommandContext iContext) {
     this.orderCriteria = iOrderCriteria;
     this.context = iContext;
     ODatabaseDocumentInternal internal = ODatabaseRecordThreadLocal.instance().get();
-    collator = Collator.getInstance(new Locale(internal.get(ATTRIBUTES.LOCALECOUNTRY) + "_"
-        + internal.get(ATTRIBUTES.LOCALELANGUAGE)));
+    collator =
+        Collator.getInstance(
+            new Locale(
+                internal.get(ATTRIBUTES.LOCALECOUNTRY)
+                    + "_"
+                    + internal.get(ATTRIBUTES.LOCALELANGUAGE)));
   }
 
   @SuppressWarnings("unchecked")
   public int compare(final OIdentifiable iDoc1, final OIdentifiable iDoc2) {
-    if (iDoc1 != null && iDoc1.equals(iDoc2))
-      return 0;
+    if (iDoc1 != null && iDoc1.equals(iDoc2)) return 0;
 
     Object fieldValue1;
     Object fieldValue2;
@@ -76,11 +76,9 @@ public class ODocumentComparator implements Comparator<OIdentifiable> {
         continue;
       }
 
-      if (fieldValue1 == null)
-        return factor(-1, ordering);
+      if (fieldValue1 == null) return factor(-1, ordering);
 
-      if (fieldValue2 == null)
-        return factor(1, ordering);
+      if (fieldValue2 == null) return factor(1, ordering);
 
       if (!(fieldValue1 instanceof Comparable<?>)) {
         context.incrementVariable(OBasicCommandContext.INVALID_COMPARE_COUNT);
@@ -89,8 +87,7 @@ public class ODocumentComparator implements Comparator<OIdentifiable> {
         try {
           if (collator != null && fieldValue1 instanceof String && fieldValue2 instanceof String)
             partialResult = collator.compare(fieldValue1, fieldValue2);
-          else
-            partialResult = ((Comparable<Object>) fieldValue1).compareTo(fieldValue2);
+          else partialResult = ((Comparable<Object>) fieldValue1).compareTo(fieldValue2);
         } catch (Exception ignore) {
           context.incrementVariable(OBasicCommandContext.INVALID_COMPARE_COUNT);
           partialResult = collator.compare("" + fieldValue1, "" + fieldValue2);
@@ -98,8 +95,7 @@ public class ODocumentComparator implements Comparator<OIdentifiable> {
       }
       partialResult = factor(partialResult, ordering);
 
-      if (partialResult != 0)
-        break;
+      if (partialResult != 0) break;
 
       // CONTINUE WITH THE NEXT FIELD
     }
@@ -114,5 +110,4 @@ public class ODocumentComparator implements Comparator<OIdentifiable> {
 
     return partialResult;
   }
-
 }

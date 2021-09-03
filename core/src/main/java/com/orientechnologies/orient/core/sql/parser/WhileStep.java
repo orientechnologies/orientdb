@@ -5,17 +5,26 @@ import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.OExecutionThreadLocal;
 import com.orientechnologies.orient.core.exception.OCommandInterruptedException;
-import com.orientechnologies.orient.core.sql.executor.*;
-
+import com.orientechnologies.orient.core.sql.executor.AbstractExecutionStep;
+import com.orientechnologies.orient.core.sql.executor.EmptyStep;
+import com.orientechnologies.orient.core.sql.executor.OExecutionStepInternal;
+import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.OScriptExecutionPlan;
 import java.util.List;
 
 public class WhileStep extends AbstractExecutionStep {
   private final OBooleanExpression condition;
-  private final List<OStatement>   statements;
+  private final List<OStatement> statements;
 
   private OExecutionStepInternal finalResult = null;
 
-  public WhileStep(OBooleanExpression condition, List<OStatement> statements, OCommandContext ctx, boolean enableProfiling) {
+  public WhileStep(
+      OBooleanExpression condition,
+      List<OStatement> statements,
+      OCommandContext ctx,
+      boolean enableProfiling) {
     super(ctx, enableProfiling);
     this.condition = condition;
     this.statements = statements;
@@ -41,7 +50,6 @@ public class WhileStep extends AbstractExecutionStep {
     }
     finalResult = new EmptyStep(ctx, false);
     return finalResult.syncPull(ctx, nRecords);
-
   }
 
   public OScriptExecutionPlan initPlan(OCommandContext ctx) {
@@ -54,7 +62,7 @@ public class WhileStep extends AbstractExecutionStep {
       }
       OInternalExecutionPlan subPlan;
       if (stm.originalStatement.contains("?")) {
-        //cannot cache execution plans with positional parameters inside scripts
+        // cannot cache execution plans with positional parameters inside scripts
         subPlan = stm.createExecutionPlanNoCache(subCtx1, profilingEnabled);
       } else {
         subPlan = stm.createExecutionPlan(subCtx1, profilingEnabled);

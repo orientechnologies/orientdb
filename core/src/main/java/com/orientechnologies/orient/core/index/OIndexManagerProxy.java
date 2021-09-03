@@ -25,23 +25,20 @@ import com.orientechnologies.orient.core.db.record.OProxedResource;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.type.ODocumentWrapper;
-
 import java.util.Collection;
 import java.util.Set;
 
-public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract> implements OIndexManager {
+public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract>
+    implements OIndexManager {
 
-  public OIndexManagerProxy(final OIndexManagerAbstract iDelegate, final ODatabaseDocumentInternal iDatabase) {
+  public OIndexManagerProxy(
+      final OIndexManagerAbstract iDelegate, final ODatabaseDocumentInternal iDatabase) {
     super(iDelegate, iDatabase);
   }
 
-  public void load() {
-  }
+  public void load() {}
 
-  /**
-   * Force reloading of indexes.
-   */
+  /** Force reloading of indexes. */
   public OIndexManagerProxy reload() {
     delegate.load(database);
     return this;
@@ -63,16 +60,35 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract> i
     return delegate.existsIndex(iName);
   }
 
-  public OIndex createIndex(final String iName, final String iType, final OIndexDefinition indexDefinition,
-      final int[] clusterIdsToIndex, final OProgressListener progressListener, final ODocument metadata) {
-    return delegate.createIndex(database, iName, iType, indexDefinition, clusterIdsToIndex, progressListener, metadata);
+  public OIndex createIndex(
+      final String iName,
+      final String iType,
+      final OIndexDefinition indexDefinition,
+      final int[] clusterIdsToIndex,
+      final OProgressListener progressListener,
+      final ODocument metadata) {
+    return delegate.createIndex(
+        database, iName, iType, indexDefinition, clusterIdsToIndex, progressListener, metadata);
   }
 
   @Override
-  public OIndex createIndex(final String iName, final String iType, final OIndexDefinition iIndexDefinition,
-      final int[] iClusterIdsToIndex, final OProgressListener progressListener, final ODocument metadata, final String algorithm) {
-    return delegate
-        .createIndex(database, iName, iType, iIndexDefinition, iClusterIdsToIndex, progressListener, metadata, algorithm);
+  public OIndex createIndex(
+      final String iName,
+      final String iType,
+      final OIndexDefinition iIndexDefinition,
+      final int[] iClusterIdsToIndex,
+      final OProgressListener progressListener,
+      final ODocument metadata,
+      final String algorithm) {
+    return delegate.createIndex(
+        database,
+        iName,
+        iType,
+        iIndexDefinition,
+        iClusterIdsToIndex,
+        progressListener,
+        metadata,
+        algorithm);
   }
 
   public ODocument getConfiguration() {
@@ -96,7 +112,8 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract> i
     return delegate.getDictionary(database);
   }
 
-  public Set<OIndex> getClassInvolvedIndexes(final String className, final Collection<String> fields) {
+  public Set<OIndex> getClassInvolvedIndexes(
+      final String className, final Collection<String> fields) {
     return delegate.getClassInvolvedIndexes(database, className, fields);
   }
 
@@ -160,8 +177,9 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract> i
   }
 
   @Override
-  public <RET extends ODocumentWrapper> RET save() {
-    return delegate.save();
+  public OIndexManager save() {
+    delegate.save();
+    return this;
   }
 
   public void removeClassPropertyIndex(final OIndex idx) {

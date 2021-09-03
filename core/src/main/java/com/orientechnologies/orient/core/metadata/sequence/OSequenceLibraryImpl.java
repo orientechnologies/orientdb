@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -41,8 +40,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @since 3/2/2015
  */
 public class OSequenceLibraryImpl {
-  private final Map<String, OSequence> sequences    = new ConcurrentHashMap<String, OSequence>();
-  private final AtomicBoolean          reloadNeeded = new AtomicBoolean(false);
+  private final Map<String, OSequence> sequences = new ConcurrentHashMap<String, OSequence>();
+  private final AtomicBoolean reloadNeeded = new AtomicBoolean(false);
 
   public void create(ODatabaseDocumentInternal database) {
     init(database);
@@ -56,7 +55,8 @@ public class OSequenceLibraryImpl {
         while (result.hasNext()) {
           OResult res = result.next();
 
-          final OSequence sequence = OSequenceHelper.createSequence((ODocument) res.getElement().get());
+          final OSequence sequence =
+              OSequenceHelper.createSequence((ODocument) res.getElement().get());
           sequences.put(sequence.getName().toUpperCase(Locale.ENGLISH), sequence);
         }
       }
@@ -101,15 +101,19 @@ public class OSequenceLibraryImpl {
     return seq;
   }
 
-  public synchronized OSequence createSequence(final ODatabaseDocumentInternal database, final String iName,
-      final SEQUENCE_TYPE sequenceType, final OSequence.CreateParams params) {
+  public synchronized OSequence createSequence(
+      final ODatabaseDocumentInternal database,
+      final String iName,
+      final SEQUENCE_TYPE sequenceType,
+      final OSequence.CreateParams params) {
     init(database);
     reloadIfNeeded(database);
 
     final String key = iName.toUpperCase(Locale.ENGLISH);
     validateSequenceNoExists(key);
 
-    final OSequence sequence = OSequenceHelper.createSequence(sequenceType, params, null).setName(iName);
+    final OSequence sequence =
+        OSequenceHelper.createSequence(sequenceType, params, null).setName(iName);
     sequence.save(database);
     sequences.put(key, sequence);
     if (database.getTransaction().isActive()) {
@@ -119,7 +123,8 @@ public class OSequenceLibraryImpl {
     return sequence;
   }
 
-  public synchronized void dropSequence(final ODatabaseDocumentInternal database, final String iName) {
+  public synchronized void dropSequence(
+      final ODatabaseDocumentInternal database, final String iName) {
     final OSequence seq = getSequence(database, iName);
 
     if (seq != null) {
@@ -128,19 +133,18 @@ public class OSequenceLibraryImpl {
     }
   }
 
-  public OSequence onSequenceCreated(final ODatabaseDocumentInternal database, final ODocument iDocument) {
+  public OSequence onSequenceCreated(
+      final ODatabaseDocumentInternal database, final ODocument iDocument) {
     init(database);
 
     String name = OSequence.getSequenceName(iDocument);
-    if (name == null)
-      return null;
+    if (name == null) return null;
 
     name = name.toUpperCase(Locale.ENGLISH);
 
     final OSequence seq = getSequence(database, name);
 
-    if (seq != null)
-      return seq;
+    if (seq != null) return seq;
 
     final OSequence sequence = OSequenceHelper.createSequence(iDocument);
 
@@ -149,25 +153,24 @@ public class OSequenceLibraryImpl {
     return sequence;
   }
 
-  public OSequence onSequenceUpdated(final ODatabaseDocumentInternal database, final ODocument iDocument) {
+  public OSequence onSequenceUpdated(
+      final ODatabaseDocumentInternal database, final ODocument iDocument) {
     String name = OSequence.getSequenceName(iDocument);
-    if (name == null)
-      return null;
+    if (name == null) return null;
 
     name = name.toUpperCase(Locale.ENGLISH);
 
     final OSequence sequence = sequences.get(name);
-    if (sequence == null)
-      return null;
+    if (sequence == null) return null;
 
     sequence.onUpdate(iDocument);
     return sequence;
   }
 
-  public void onSequenceDropped(final ODatabaseDocumentInternal database, final ODocument iDocument) {
+  public void onSequenceDropped(
+      final ODatabaseDocumentInternal database, final ODocument iDocument) {
     String name = OSequence.getSequenceName(iDocument);
-    if (name == null)
-      return;
+    if (name == null) return;
 
     name = name.toUpperCase(Locale.ENGLISH);
 
@@ -180,7 +183,8 @@ public class OSequenceLibraryImpl {
       return;
     }
 
-    final OClassImpl sequenceClass = (OClassImpl) database.getMetadata().getSchema().createClass(OSequence.CLASS_NAME);
+    final OClassImpl sequenceClass =
+        (OClassImpl) database.getMetadata().getSchema().createClass(OSequence.CLASS_NAME);
     OSequence.initClass(sequenceClass);
   }
 

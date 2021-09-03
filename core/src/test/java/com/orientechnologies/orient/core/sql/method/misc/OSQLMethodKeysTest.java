@@ -1,13 +1,12 @@
 package com.orientechnologies.orient.core.sql.method.misc;
 
-import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
-
-import static org.junit.Assert.assertEquals;
+import org.junit.Before;
+import org.junit.Test;
 
 public class OSQLMethodKeysTest {
 
@@ -28,5 +27,4 @@ public class OSQLMethodKeysTest {
     Object result = function.execute(null, null, null, resultInternal, null);
     assertEquals(new LinkedHashSet(Arrays.asList("name", "surname")), result);
   }
-
 }

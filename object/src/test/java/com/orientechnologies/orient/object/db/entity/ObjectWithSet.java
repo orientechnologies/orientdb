@@ -1,17 +1,15 @@
 package com.orientechnologies.orient.object.db.entity;
 
-import javax.persistence.Id;
-import javax.persistence.OneToMany;
 import java.util.HashSet;
 import java.util.Set;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
 
 public class ObjectWithSet {
 
-  @Id
-  public String id;
+  @Id public String id;
 
-  @OneToMany
-  Set<ObjectWithSet> friends = new HashSet<>();
+  @OneToMany Set<ObjectWithSet> friends = new HashSet<>();
 
   String name;
 

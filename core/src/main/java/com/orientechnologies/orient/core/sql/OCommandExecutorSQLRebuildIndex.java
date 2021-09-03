@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
-
 import java.util.Map;
 
 /**
@@ -34,9 +33,10 @@ import java.util.Map;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLRebuildIndex extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
+public class OCommandExecutorSQLRebuildIndex extends OCommandExecutorSQLAbstract
+    implements OCommandDistributedReplicateRequest {
   public static final String KEYWORD_REBUILD = "REBUILD";
-  public static final String KEYWORD_INDEX   = "INDEX";
+  public static final String KEYWORD_INDEX = "INDEX";
 
   private String name;
 
@@ -55,12 +55,14 @@ public class OCommandExecutorSQLRebuildIndex extends OCommandExecutorSQLAbstract
       int oldPos = 0;
       int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
       if (pos == -1 || !word.toString().equals(KEYWORD_REBUILD))
-        throw new OCommandSQLParsingException("Keyword " + KEYWORD_REBUILD + " not found. Use " + getSyntax(), parserText, oldPos);
+        throw new OCommandSQLParsingException(
+            "Keyword " + KEYWORD_REBUILD + " not found. Use " + getSyntax(), parserText, oldPos);
 
       oldPos = pos;
       pos = nextWord(parserText, parserTextUpperCase, pos, word, true);
       if (pos == -1 || !word.toString().equals(KEYWORD_INDEX))
-        throw new OCommandSQLParsingException("Keyword " + KEYWORD_INDEX + " not found. Use " + getSyntax(), parserText, oldPos);
+        throw new OCommandSQLParsingException(
+            "Keyword " + KEYWORD_INDEX + " not found. Use " + getSyntax(), parserText, oldPos);
 
       oldPos = pos;
       pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false);
@@ -76,31 +78,30 @@ public class OCommandExecutorSQLRebuildIndex extends OCommandExecutorSQLAbstract
     return this;
   }
 
-  /**
-   * Execute the REMOVE INDEX.
-   */
+  /** Execute the REMOVE INDEX. */
   public Object execute(final Map<Object, Object> iArgs) {
     if (name == null)
-      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+      throw new OCommandExecutionException(
+          "Cannot execute the command because it has not been parsed yet");
 
     final ODatabaseDocumentInternal database = getDatabase();
     if (name.equals("*")) {
       long totalIndexed = 0;
       for (OIndex idx : database.getMetadata().getIndexManagerInternal().getIndexes(database)) {
-        if (idx.isAutomatic())
-          totalIndexed += idx.rebuild();
+        if (idx.isAutomatic()) totalIndexed += idx.rebuild();
       }
 
       return totalIndexed;
 
     } else {
       final OIndex idx = database.getMetadata().getIndexManagerInternal().getIndex(database, name);
-      if (idx == null)
-        throw new OCommandExecutionException("Index '" + name + "' not found");
+      if (idx == null) throw new OCommandExecutionException("Index '" + name + "' not found");
 
       if (!idx.isAutomatic())
         throw new OCommandExecutionException(
-            "Cannot rebuild index '" + name + "' because it's manual and there aren't indications of what to index");
+            "Cannot rebuild index '"
+                + name
+                + "' because it's manual and there aren't indications of what to index");
 
       return idx.rebuild();
     }

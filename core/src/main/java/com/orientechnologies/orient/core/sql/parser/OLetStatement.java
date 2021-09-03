@@ -6,13 +6,12 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.util.Map;
 
 public class OLetStatement extends OSimpleExecStatement {
   protected OIdentifier name;
 
-  protected OStatement  statement;
+  protected OStatement statement;
   protected OExpression expression;
 
   public OLetStatement(int id) {
@@ -77,15 +76,12 @@ public class OLetStatement extends OSimpleExecStatement {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OLetStatement that = (OLetStatement) o;
 
-    if (name != null ? !name.equals(that.name) : that.name != null)
-      return false;
+    if (name != null ? !name.equals(that.name) : that.name != null) return false;
     if (statement != null ? !statement.equals(that.statement) : that.statement != null)
       return false;
     if (expression != null ? !expression.equals(that.expression) : that.expression != null)

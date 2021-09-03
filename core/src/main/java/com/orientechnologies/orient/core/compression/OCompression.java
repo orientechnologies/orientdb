@@ -21,13 +21,14 @@
 package com.orientechnologies.orient.core.compression;
 
 /**
- * /** Storage compression interface. Additional compression implementations can be plugged via <code>register()</code> method.
- * There are 2 versions:<br>
+ * /** Storage compression interface. Additional compression implementations can be plugged via
+ * <code>register()</code> method. There are 2 versions:<br>
+ *
  * <ul>
- * <li><code>OCompressionFactory.INSTANCE.register(<class>)</code> for stateful implementations, a new instance will be created for
- * each storage/li>
- * <li><code>OCompressionFactory.INSTANCE.register(<instance>)</code> for stateless implementations, the same instance will be
- * shared across all the storages./li>
+ *   <li><code>OCompressionFactory.INSTANCE.register(<class>)</code> for stateful implementations, a
+ *       new instance will be created for each storage/li>
+ *   <li><code>OCompressionFactory.INSTANCE.register(<instance>)</code> for stateless
+ *       implementations, the same instance will be shared across all the storages./li>
  * </ul>
  *
  * @author Andrey Lomakin
