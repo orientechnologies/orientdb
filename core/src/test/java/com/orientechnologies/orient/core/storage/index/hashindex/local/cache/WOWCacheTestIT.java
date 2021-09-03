@@ -916,8 +916,8 @@ public class WOWCacheTestIT {
 
     long segment =
         OLongSerializer.INSTANCE.deserializeNative(content, ODurablePage.WAL_SEGMENT_OFFSET);
-    int position =
-        OIntegerSerializer.INSTANCE.deserializeNative(content, ODurablePage.WAL_POSITION_OFFSET);
+    long position =
+        OLongSerializer.INSTANCE.deserializeNative(content, ODurablePage.WAL_POSITION_OFFSET);
 
     OLogSequenceNumber readLsn = new OLogSequenceNumber(segment, position);
 
@@ -939,7 +939,7 @@ public class WOWCacheTestIT {
     fileClassic.open();
     byte[] content = new byte[8 + ODurablePage.NEXT_FREE_POSITION];
     fileClassic.read(
-        pageIndex * (8 + ODurablePage.NEXT_FREE_POSITION),
+            (long) pageIndex * (8 + ODurablePage.NEXT_FREE_POSITION),
         ByteBuffer.wrap(content).order(ByteOrder.nativeOrder()),
         true);
 
