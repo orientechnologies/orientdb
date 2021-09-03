@@ -591,12 +591,12 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
 
     InterruptTimerTask commandInterruptTimer = null;
     if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
-      commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
-      getSharedContext()
-          .getOrientDB()
-          .scheduleOnce(
-              commandInterruptTimer,
-              getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT));
+      //      commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
+      //      getSharedContext()
+      //          .getOrientDB()
+      //          .scheduleOnce(
+      //              commandInterruptTimer,
+      //              getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT));
     }
     try {
 
@@ -624,12 +624,12 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
 
     InterruptTimerTask commandInterruptTimer = null;
     if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
-      commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
-      getSharedContext()
-          .getOrientDB()
-          .scheduleOnce(
-              commandInterruptTimer,
-              getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT));
+      //      commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
+      //      getSharedContext()
+      //          .getOrientDB()
+      //          .scheduleOnce(
+      //              commandInterruptTimer,
+      //              getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT));
     }
     try {
 
@@ -657,12 +657,13 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
 
     InterruptTimerTask commandInterruptTimer = null;
     if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
-      commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
-      getSharedContext()
-          .getOrientDB()
-          .scheduleOnce(
-              commandInterruptTimer,
-              getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT));
+      //      commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
+      //      getSharedContext()
+      //              .getOrientDB()
+      //              .scheduleOnce(
+      //                      commandInterruptTimer,
+      //
+      // getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT));
     }
     try {
 
@@ -696,12 +697,12 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
 
     InterruptTimerTask commandInterruptTimer = null;
     if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
-      commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
-      getSharedContext()
-          .getOrientDB()
-          .scheduleOnce(
-              commandInterruptTimer,
-              getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT));
+      //      commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
+      //      getSharedContext()
+      //          .getOrientDB()
+      //          .scheduleOnce(
+      //              commandInterruptTimer,
+      //              getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT));
     }
     try {
 
@@ -738,12 +739,12 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
 
     InterruptTimerTask commandInterruptTimer = null;
     if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
-      commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
-      getSharedContext()
-          .getOrientDB()
-          .scheduleOnce(
-              commandInterruptTimer,
-              getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT));
+      //      commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
+      //      getSharedContext()
+      //          .getOrientDB()
+      //          .scheduleOnce(
+      //              commandInterruptTimer,
+      //              getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT));
     }
     try {
       OScriptExecutor executor =
@@ -781,12 +782,12 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
 
     InterruptTimerTask commandInterruptTimer = null;
     if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
-      commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
-      getSharedContext()
-          .getOrientDB()
-          .scheduleOnce(
-              commandInterruptTimer,
-              getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT));
+      //      commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
+      //      getSharedContext()
+      //          .getOrientDB()
+      //          .scheduleOnce(
+      //              commandInterruptTimer,
+      //              getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT));
     }
     try {
       OScriptExecutor executor =

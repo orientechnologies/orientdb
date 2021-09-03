@@ -271,6 +271,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
       final OCommandOutputListener iOutput,
       final int compressionLevel,
       final int bufferSize) {
+    stateLock.acquireReadLock();
     try {
       if (out == null) throw new IllegalArgumentException("Backup output is null");
 
@@ -327,6 +328,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
       throw logAndPrepareForRethrow(e);
     } catch (final Throwable t) {
       throw logAndPrepareForRethrow(t);
+    } finally {
+      stateLock.releaseReadLock();
     }
   }
 
@@ -337,9 +340,12 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
       final Callable<Object> callable,
       final OCommandOutputListener iListener) {
     try {
-      if (!isClosed()) close(true, false);
+      stateLock.acquireWriteLock();
       try {
-        stateLock.acquireWriteLock();
+        if (!isClosed()) {
+          close(true, false);
+        }
+
         final java.io.File dbDir =
             new java.io.File(
                 OIOUtils.getPathFromDatabaseName(

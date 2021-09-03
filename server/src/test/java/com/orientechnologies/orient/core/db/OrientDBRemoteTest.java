@@ -94,6 +94,7 @@ public class OrientDBRemoteTest {
   }
 
   @Test
+  @Ignore
   public void testCachedPool() {
     if (!factory.exists("testdb"))
       factory.execute(

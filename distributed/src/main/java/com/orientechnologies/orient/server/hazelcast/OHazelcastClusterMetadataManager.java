@@ -402,10 +402,6 @@ public class OHazelcastClusterMetadataManager
         && s != ODistributedServerManager.DB_STATUS.NOT_AVAILABLE;
   }
 
-  public String getLockManagerServer() {
-    return "";
-  }
-
   protected void publishLocalNodeConfiguration() {
     try {
       final ODocument cfg = distributedPlugin.getLocalNodeConfiguration();
@@ -945,8 +941,7 @@ public class OHazelcastClusterMetadataManager
           nodeName,
           null,
           ODistributedServerLog.DIRECTION.NONE,
-          "Server merged the existent cluster, lock=%s, merging databases...",
-          getLockManagerServer());
+          "Server merged the existent cluster, merging databases...");
 
       configurationMap.clearLocalCache();
 
@@ -982,35 +977,6 @@ public class OHazelcastClusterMetadataManager
                 @Override
                 public void run() {
                   try {
-                    // WAIT (MAX 10 SECS) THE LOCK MANAGER IS ONLINE
-                    ODistributedServerLog.info(
-                        this,
-                        nodeName,
-                        null,
-                        ODistributedServerLog.DIRECTION.NONE,
-                        "Merging networks, waiting for the lock %s to be reachable...",
-                        getLockManagerServer());
-
-                    for (int retry = 0;
-                        !getActiveServers().contains(getLockManagerServer()) && retry < 10;
-                        ++retry) {
-                      try {
-                        Thread.sleep(1000);
-                      } catch (InterruptedException e) {
-                        // IGNORE IT
-                      }
-                    }
-
-                    final String cs = getLockManagerServer();
-
-                    ODistributedServerLog.info(
-                        this,
-                        nodeName,
-                        null,
-                        ODistributedServerLog.DIRECTION.NONE,
-                        "Merging networks, lock=%s (active=%s)...",
-                        cs,
-                        getActiveServers().contains(getLockManagerServer()));
 
                     for (final String databaseName :
                         distributedPlugin.getMessageService().getDatabases()) {
@@ -1042,8 +1008,7 @@ public class OHazelcastClusterMetadataManager
                         nodeName,
                         null,
                         ODistributedServerLog.DIRECTION.NONE,
-                        "Network merged, lock=%s...",
-                        getLockManagerServer());
+                        "Network merged ...");
                     setNodeStatus(ODistributedServerManager.NODE_STATUS.ONLINE);
                   }
                 }

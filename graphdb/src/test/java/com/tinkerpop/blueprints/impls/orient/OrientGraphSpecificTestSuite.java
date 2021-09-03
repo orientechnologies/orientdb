@@ -57,7 +57,7 @@ public class OrientGraphSpecificTestSuite extends TestSuite {
   public void testComplexMapProperty() throws Exception {
     // complex map properties have problems when unmarshalled from disk to
     // an OTrackedMap
-    Graph graph = graphTest.generateGraph("complex-map");
+    Graph graph = graphTest.generateGraph("complex_map");
     final HashMap<String, Object> consignee = new HashMap<String, Object>();
     consignee.put("name", "Company 4");
     final ArrayList consigneeAddress = new ArrayList();
@@ -138,7 +138,7 @@ public class OrientGraphSpecificTestSuite extends TestSuite {
     // do not show the problem.
     graph.shutdown();
 
-    graph = graphTest.generateGraph("complex-map");
+    graph = graphTest.generateGraph("complex_map");
 
     final Vertex v1 = graph.getVertex(v.getId());
     assertNotNull(v1);
