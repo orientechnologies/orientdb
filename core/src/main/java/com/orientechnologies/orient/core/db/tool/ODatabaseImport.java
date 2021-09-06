@@ -304,10 +304,10 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
             importSchema(parser, clustersImported);
           } else if (parser.getValueAsString().equals("records")) {
             importRecords(parser);
+          } else if (parser.getValueAsString().equals("indexes")) {
+            importIndexes(parser);
           }
-          /*FIXME:
-          else if (tag.equals("indexes")) importIndexes();
-          else if (tag.equals("manualIndexes")) importManualIndexes();
+          /*FIXME: else if (tag.equals("manualIndexes")) importManualIndexes();
           else if (tag.equals("brokenRids")) {
             processBrokenRids();
           } else
@@ -2812,7 +2812,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     return record.getIdentity();
   }*/
 
-  private void importSkippedRidbag(ORecord record, Map<String, ORidSet> bags) {
+  private void importSkippedRidbag(final ORecord record, final Map<String, ORidSet> bags) {
     if (bags == null) {
       return;
     }
@@ -2877,6 +2877,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     }
   }
 
+  @Deprecated
   private void importIndexes() throws IOException, ParseException {
     listener.onMessage("\n\nImporting indexes ...");
 
@@ -2885,7 +2886,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
     jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
 
-    int n = 0;
+    int numberOfCreatedIndexes = 0;
     while (jsonReader.lastChar() != ']') {
       jsonReader.readNext(OJSONReader.NEXT_OBJ_IN_ARRAY);
       if (jsonReader.lastChar() == ']') {
@@ -2929,68 +2930,174 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         } else if (fieldName.equals("blueprintsIndexClass"))
           blueprintsIndexClass = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
       }
-
-      if (indexName == null) throw new IllegalArgumentException("Index name is missing");
-
       jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
 
-      // drop automatically created indexes
-      if (!indexName.equalsIgnoreCase(EXPORT_IMPORT_INDEX_NAME)) {
-        listener.onMessage("\n- Index '" + indexName + "'...");
-
-        indexManager.dropIndex(database, indexName);
-        indexesToRebuild.remove(indexName);
-        List<Integer> clusterIds = new ArrayList<>();
-
-        for (final String clusterName : clustersToIndex) {
-          int id = database.getClusterIdByName(clusterName);
-          if (id != -1) clusterIds.add(id);
-          else
-            listener.onMessage(
-                String.format(
-                    "found not existent cluster '%s' in index '%s' configuration, skipping",
-                    clusterName, indexName));
-        }
-        int[] clusterIdsToIndex = new int[clusterIds.size()];
-
-        int i = 0;
-        for (Integer clusterId : clusterIds) {
-          clusterIdsToIndex[i] = clusterId;
-          i++;
-        }
-
-        if (indexDefinition == null) {
-          indexDefinition = new OSimpleKeyIndexDefinition(OType.STRING);
-        }
-
-        boolean oldValue =
-            OGlobalConfiguration.INDEX_IGNORE_NULL_VALUES_DEFAULT.getValueAsBoolean();
-        OGlobalConfiguration.INDEX_IGNORE_NULL_VALUES_DEFAULT.setValue(
-            indexDefinition.isNullValuesIgnored());
-        final OIndex index =
-            indexManager.createIndex(
-                database,
-                indexName,
-                indexType,
-                indexDefinition,
-                clusterIdsToIndex,
-                null,
-                metadata,
-                indexAlgorithm);
-        OGlobalConfiguration.INDEX_IGNORE_NULL_VALUES_DEFAULT.setValue(oldValue);
-        if (blueprintsIndexClass != null) {
-          ODocument configuration = index.getConfiguration();
-          configuration.field("blueprintsIndexClass", blueprintsIndexClass);
-          indexManager.save();
-        }
-
-        n++;
-        listener.onMessage("OK");
-      }
+      numberOfCreatedIndexes =
+          dropAutoCreatedIndexesAndCountCreatedIndexes(
+              indexManager,
+              numberOfCreatedIndexes,
+              blueprintsIndexClass,
+              indexName,
+              indexType,
+              indexAlgorithm,
+              clustersToIndex,
+              indexDefinition,
+              metadata);
     }
-
-    listener.onMessage("\nDone. Created " + n + " indexes.");
+    listener.onMessage("\nDone. Created " + numberOfCreatedIndexes + " indexes.");
     jsonReader.readNext(OJSONReader.NEXT_IN_OBJECT);
+  }
+
+  private int dropAutoCreatedIndexesAndCountCreatedIndexes(
+      final OIndexManagerAbstract indexManager,
+      int numberOfCreatedIndexes,
+      final String blueprintsIndexClass,
+      final String indexName,
+      final String indexType,
+      final String indexAlgorithm,
+      final Set<String> clustersToIndex,
+      OIndexDefinition indexDefinition,
+      final ODocument metadata) {
+    if (indexName == null) throw new IllegalArgumentException("Index name is missing");
+
+    // drop automatically created indexes
+    if (!indexName.equalsIgnoreCase(EXPORT_IMPORT_INDEX_NAME)) {
+      listener.onMessage("\n- Index '" + indexName + "'...");
+
+      indexManager.dropIndex(database, indexName);
+      indexesToRebuild.remove(indexName);
+      List<Integer> clusterIds = new ArrayList<>();
+
+      for (final String clusterName : clustersToIndex) {
+        int id = database.getClusterIdByName(clusterName);
+        if (id != -1) clusterIds.add(id);
+        else
+          listener.onMessage(
+              String.format(
+                  "found not existent cluster '%s' in index '%s' configuration, skipping",
+                  clusterName, indexName));
+      }
+      int[] clusterIdsToIndex = new int[clusterIds.size()];
+
+      int i = 0;
+      for (Integer clusterId : clusterIds) {
+        clusterIdsToIndex[i] = clusterId;
+        i++;
+      }
+
+      if (indexDefinition == null) {
+        indexDefinition = new OSimpleKeyIndexDefinition(OType.STRING);
+      }
+
+      boolean oldValue = OGlobalConfiguration.INDEX_IGNORE_NULL_VALUES_DEFAULT.getValueAsBoolean();
+      OGlobalConfiguration.INDEX_IGNORE_NULL_VALUES_DEFAULT.setValue(
+          indexDefinition.isNullValuesIgnored());
+      final OIndex index =
+          indexManager.createIndex(
+              database,
+              indexName,
+              indexType,
+              indexDefinition,
+              clusterIdsToIndex,
+              null,
+              metadata,
+              indexAlgorithm);
+      OGlobalConfiguration.INDEX_IGNORE_NULL_VALUES_DEFAULT.setValue(oldValue);
+      if (blueprintsIndexClass != null) {
+        ODocument configuration = index.getConfiguration();
+        configuration.field("blueprintsIndexClass", blueprintsIndexClass);
+        indexManager.save();
+      }
+      numberOfCreatedIndexes++;
+      listener.onMessage("OK");
+    }
+    return numberOfCreatedIndexes;
+  }
+
+  private void importIndexes(final JsonParser parser) throws IOException, ParseException {
+    listener.onMessage("\n\nImporting indexes ...");
+
+    final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
+    indexManager.reload();
+
+    // jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
+    JsonToken jsonToken = parser.nextToken();
+
+    int numberOfCreatedIndexes = 0;
+    while (!JsonToken.END_ARRAY.equals(jsonToken)) {
+      // while (jsonReader.lastChar() != ']') {
+      //  jsonReader.readNext(OJSONReader.NEXT_OBJ_IN_ARRAY);
+      //  if (jsonReader.lastChar() == ']') {
+      //    break;
+      //  }
+
+      String blueprintsIndexClass = null;
+      String indexName = null;
+      String indexType = null;
+      String indexAlgorithm = null;
+      Set<String> clustersToIndex = new HashSet<>();
+      OIndexDefinition indexDefinition = null;
+      ODocument metadata = null;
+      Map<String, String> engineProperties = null;
+
+      // if (JsonToken.START_OBJECT.equals(jsonToken)) {
+      // while (jsonReader.lastChar() != '}') {
+      while (!JsonToken.END_OBJECT.equals(jsonToken)) {
+        // final String fieldName = jsonReader.readString(OJSONReader.FIELD_ASSIGNMENT);
+        if (JsonToken.FIELD_NAME.equals(jsonToken) && "name".equals(parser.getValueAsString())) {
+          indexName = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
+        } else if (JsonToken.FIELD_NAME.equals(jsonToken)
+            && "type".equals(parser.getValueAsString())) {
+          indexType = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
+        } else if (JsonToken.FIELD_NAME.equals(jsonToken)
+            && "algorithm".equals(parser.getValueAsString())) {
+          indexAlgorithm = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
+        } else if (JsonToken.FIELD_NAME.equals(jsonToken)
+            && "clusterToIndex".equals(parser.getValueAsString())) {
+          clustersToIndex = importClustersToIndex();
+        } else if (JsonToken.FIELD_NAME.equals(jsonToken)
+            && "definition".equals(parser.getValueAsString())) {
+          indexDefinition = importIndexDefinition();
+          jsonReader.readNext(OJSONReader.NEXT_IN_OBJECT);
+        } else if (JsonToken.FIELD_NAME.equals(jsonToken)
+            && "metadata".equals(parser.getValueAsString())) {
+          final String jsonMetadata = jsonReader.readString(OJSONReader.END_OBJECT, true);
+          metadata = new ODocument().fromJSON(jsonMetadata);
+          jsonReader.readNext(OJSONReader.NEXT_IN_OBJECT);
+        } else if (JsonToken.FIELD_NAME.equals(jsonToken)
+            && "engineProperties".equals(parser.getValueAsString())) {
+          final String jsonEngineProperties = jsonReader.readString(OJSONReader.END_OBJECT, true);
+          final Map<String, Object> map = new ODocument().fromJSON(jsonEngineProperties).toMap();
+          if (map != null) {
+            engineProperties = new HashMap<>(map.size());
+            for (Entry<String, Object> entry : map.entrySet()) {
+              map.put(entry.getKey(), entry.getValue());
+            }
+          }
+          jsonReader.readNext(OJSONReader.NEXT_IN_OBJECT);
+        } else if (JsonToken.FIELD_NAME.equals(jsonToken)
+            && "blueprintsIndexClass".equals(parser.getValueAsString())) {
+          blueprintsIndexClass = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
+        }
+        jsonToken = parser.nextToken();
+      }
+      // }
+      // jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
+      numberOfCreatedIndexes =
+          dropAutoCreatedIndexesAndCountCreatedIndexes(
+              indexManager,
+              numberOfCreatedIndexes,
+              blueprintsIndexClass,
+              indexName,
+              indexType,
+              indexAlgorithm,
+              clustersToIndex,
+              indexDefinition,
+              metadata);
+      jsonToken = parser.nextToken();
+    }
+    listener.onMessage("\nDone. Created " + numberOfCreatedIndexes + " indexes.");
+    // jsonReader.readNext(OJSONReader.NEXT_IN_OBJECT);
   }
 
   private Set<String> importClustersToIndex() throws IOException, ParseException {
