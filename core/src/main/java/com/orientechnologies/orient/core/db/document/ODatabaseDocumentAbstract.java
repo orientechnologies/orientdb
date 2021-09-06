@@ -92,7 +92,6 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.OBinary
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.storage.OBasicTransaction;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -832,11 +831,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   public OTransaction getTransaction() {
     checkIfActive();
     return currentTx;
-  }
-
-  @Override
-  public OBasicTransaction getMicroOrRegularTransaction() {
-    return getTransaction();
   }
 
   @SuppressWarnings("unchecked")

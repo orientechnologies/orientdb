@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.storage.OBasicTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
+import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import java.io.IOException;
@@ -83,7 +84,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
   public boolean remove(final Object key, final OIdentifiable rid) {
 
     if (key != null) {
-      OBasicTransaction transaction = getDatabase().getMicroOrRegularTransaction();
+      OTransaction transaction = getDatabase().getTransaction();
       if (transaction.isActive()) {
 
         transaction.addIndexEntry(
@@ -180,7 +181,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
                   OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
                   indexEngine.put(atomicOperation, decodeKey(key), operations.added);
                 }
-                OBasicTransaction transaction = getDatabase().getMicroOrRegularTransaction();
+                OTransaction transaction = getDatabase().getTransaction();
                 resetTransactionChanges(transaction);
                 return null;
               } catch (IOException e) {
@@ -336,7 +337,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
 
   @Override
   public Stream<ORID> getRids(Object key) {
-    final OBasicTransaction transaction = getDatabase().getMicroOrRegularTransaction();
+    final OTransaction transaction = getDatabase().getTransaction();
     if (transaction.isActive()) {
       while (true) {
         try {
@@ -376,7 +377,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
   public OLuceneIndexNotUnique put(final Object key, final OIdentifiable value) {
 
     if (key != null) {
-      OBasicTransaction transaction = getDatabase().getMicroOrRegularTransaction();
+      OTransaction transaction = getDatabase().getTransaction();
 
       if (transaction.isActive()) {
         OLuceneTxChanges transactionChanges = getTransactionChanges(transaction);
@@ -425,7 +426,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
             false,
             indexId,
             engine -> {
-              OBasicTransaction transaction = getDatabase().getMicroOrRegularTransaction();
+              OTransaction transaction = getDatabase().getTransaction();
               OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
               return indexEngine.sizeInTx(getTransactionChanges(transaction));
             });
