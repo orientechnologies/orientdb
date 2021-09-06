@@ -2906,7 +2906,7 @@ public class OConsoleDatabaseApp extends OrientConsole
     if (config == null)
       throw new IllegalArgumentException("Configuration variable '" + iConfigName + "' not found");
 
-    if (!OrientDBInternal.extract(orientDB).isEmbedded()) {
+    if (orientDB != null && !OrientDBInternal.extract(orientDB).isEmbedded()) {
       ((OrientDBRemote) OrientDBInternal.extract(orientDB))
           .setGlobalConfiguration(
               currentDatabaseUserName, currentDatabaseUserPassword, config, iConfigValue);
