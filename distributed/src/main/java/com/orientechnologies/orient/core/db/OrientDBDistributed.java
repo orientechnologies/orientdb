@@ -190,6 +190,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
           plugin.dropOnAllServers(name);
           return null;
         });
+    plugin.dropConfig(name);
   }
 
   private boolean checkDbAvailable(String name) {

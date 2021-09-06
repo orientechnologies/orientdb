@@ -472,6 +472,10 @@ public class ODistributedPlugin extends OServerPluginAbstract
     }
   }
 
+  public void dropConfig(String dbName) {
+    clusterManager.dropDatabaseConfiguration(dbName);
+  }
+
   @Override
   public void onDropClass(ODatabaseInternal iDatabase, OClass iClass) {}
 
