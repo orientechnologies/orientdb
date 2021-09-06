@@ -35,7 +35,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.orientechnologies.orient.core.storage.OBasicTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
 import java.io.ByteArrayOutputStream;
@@ -152,7 +151,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract
   public ORecord getRecord(final ORID rid) {
     final ORecordOperation e = getRecordEntry(rid);
     if (e != null)
-      if (e.type == ORecordOperation.DELETED) return OBasicTransaction.DELETED_RECORD;
+      if (e.type == ORecordOperation.DELETED) return OTransactionAbstract.DELETED_RECORD;
       else return e.getRecord();
     return null;
   }

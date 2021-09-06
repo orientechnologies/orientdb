@@ -49,7 +49,6 @@ import com.orientechnologies.orient.core.record.impl.ODirtyManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.schedule.OScheduledEvent;
-import com.orientechnologies.orient.core.storage.OBasicTransaction;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
@@ -199,7 +198,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     checkTransactionValid();
 
     final ORecord txRecord = getRecord(rid);
-    if (txRecord == OBasicTransaction.DELETED_RECORD) {
+    if (txRecord == OTransactionAbstract.DELETED_RECORD) {
       // DELETED IN TX
       return null;
     }
@@ -248,7 +247,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     checkTransactionValid();
 
     final ORecord txRecord = getRecord(rid);
-    if (txRecord == OBasicTransaction.DELETED_RECORD) {
+    if (txRecord == OTransactionAbstract.DELETED_RECORD) {
       // DELETED IN TX
       throw new ORecordNotFoundException(rid);
     }
@@ -295,7 +294,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     checkTransactionValid();
 
     final ORecord txRecord = getRecord(rid);
-    if (txRecord == OBasicTransaction.DELETED_RECORD) {
+    if (txRecord == OTransactionAbstract.DELETED_RECORD) {
       // DELETED IN TX
       return null;
     }
