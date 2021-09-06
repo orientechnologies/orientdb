@@ -302,6 +302,11 @@ public class OrientDBRemote implements OrientDBInternal {
   }
 
   @Override
+  public void internalDrop(String database) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public Set<String> listDatabases(String user, String password) {
     return getDatabases(user, password).keySet();
   }

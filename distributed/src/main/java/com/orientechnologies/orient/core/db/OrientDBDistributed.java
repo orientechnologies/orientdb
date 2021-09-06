@@ -140,7 +140,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   @Override
-  public void drop(String name, String user, String password) {
+  public void internalDrop(String name) {
     synchronized (this) {
       checkOpen();
       // This is a temporary fix for distributed drop that avoid scheduled view update to re-open
@@ -153,7 +153,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
     ODatabaseDocumentInternal current = ODatabaseRecordThreadLocal.instance().getIfDefined();
     try {
-      ODatabaseDocumentInternal db = openNoAuthenticate(name, user);
+      ODatabaseDocumentInternal db = openNoAuthenticate(name, null);
       for (Iterator<ODatabaseLifecycleListener> it = orient.getDbLifecycleListeners();
           it.hasNext(); ) {
         it.next().onDrop(db);
@@ -164,7 +164,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     }
 
     synchronized (this) {
-      if (exists(name, user, password)) {
+      if (exists(name, null, null)) {
         OAbstractPaginatedStorage storage = getOrInitStorage(name);
         OSharedContext sharedContext = sharedContexts.get(name);
         if (sharedContext != null) {
@@ -178,6 +178,18 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         sharedContexts.remove(name);
       }
     }
+  }
+
+  @Override
+  public void drop(String name, String user, String password) {
+    plugin.executeInDistributedDatabaseLock(
+        name,
+        20000,
+        null,
+        (cfg) -> {
+          plugin.dropOnAllServers(name);
+          return null;
+        });
   }
 
   private boolean checkDbAvailable(String name) {

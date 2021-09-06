@@ -857,6 +857,11 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   @Override
+  public void internalDrop(String database) {
+    this.drop(database, null, null);
+  }
+
+  @Override
   public void drop(String name, String user, String password) {
     synchronized (this) {
       checkOpen();

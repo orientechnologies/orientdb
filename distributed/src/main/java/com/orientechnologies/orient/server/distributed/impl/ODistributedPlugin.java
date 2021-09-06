@@ -450,17 +450,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
     ODistributedServerLog.info(
         this, getLocalNodeName(), null, DIRECTION.NONE, "Dropping database %s...", dbName);
 
-    if (!((ODatabaseDocumentInternal) iDatabase).isLocalEnv()) {
-      executeInDistributedDatabaseLock(
-          dbName,
-          20000,
-          null,
-          (cfg) -> {
-            dropOnAllServers(dbName);
-            return null;
-          });
-    }
-
     final ODistributedMessageService msgService = getMessageService();
     if (msgService != null) {
       msgService.unregisterDatabase(iDatabase.getName());
@@ -469,7 +458,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
     clusterManager.removeDbFromClusterMetadata(iDatabase);
   }
 
-  private void dropOnAllServers(final String dbName) {
+  public void dropOnAllServers(final String dbName) {
     Set<String> servers = clusterManager.dropDbFromConfiguration(dbName);
     if (!servers.isEmpty() && messageService.getDatabase(dbName) != null) {
       sendRequest(
