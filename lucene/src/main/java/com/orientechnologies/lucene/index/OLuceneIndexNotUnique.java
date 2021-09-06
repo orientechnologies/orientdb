@@ -34,7 +34,6 @@ import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerSBTreeIndexRIDContainer;
-import com.orientechnologies.orient.core.storage.OBasicTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
@@ -220,7 +219,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
     return key;
   }
 
-  private void resetTransactionChanges(OBasicTransaction transaction) {
+  private void resetTransactionChanges(OTransaction transaction) {
     transaction.setCustomData(getName(), null);
   }
 
@@ -280,7 +279,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
     return key;
   }
 
-  private OLuceneTxChanges getTransactionChanges(OBasicTransaction transaction) {
+  private OLuceneTxChanges getTransactionChanges(OTransaction transaction) {
 
     OLuceneTxChanges changes = (OLuceneTxChanges) transaction.getCustomData(getName());
     if (changes == null) {

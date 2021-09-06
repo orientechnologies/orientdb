@@ -19,19 +19,21 @@
  */
 package com.orientechnologies.orient.core.tx;
 
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OBasicTransaction;
+import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import java.util.List;
 
-public interface OTransaction extends OBasicTransaction {
+public interface OTransaction {
   enum TXTYPE {
     NOTX,
     OPTIMISTIC,
@@ -173,4 +175,110 @@ public interface OTransaction extends OBasicTransaction {
   OTransaction unlockRecord(OIdentifiable iRecord);
 
   int getEntryCount();
+
+  /** @return {@code true} if this transaction is active, {@code false} otherwise. */
+  boolean isActive();
+
+  /**
+   * Saves the given record in this transaction.
+   *
+   * @param record the record to save.
+   * @param clusterName record's cluster name.
+   * @param operationMode the operation mode.
+   * @param forceCreate the force creation flag, {@code true} to force the creation of the record,
+   *     {@code false} to allow updates.
+   * @param createdCallback the callback to invoke when the record save operation triggered the
+   *     creation of the record.
+   * @param updatedCallback the callback to invoke when the record save operation triggered the
+   *     update of the record.
+   * @return the record saved.
+   */
+  ORecord saveRecord(
+      ORecord record,
+      String clusterName,
+      ODatabase.OPERATION_MODE operationMode,
+      boolean forceCreate,
+      ORecordCallback<? extends Number> createdCallback,
+      ORecordCallback<Integer> updatedCallback);
+
+  /**
+   * Deletes the given record in this transaction.
+   *
+   * @param record the record to delete.
+   * @param mode the operation mode.
+   */
+  void deleteRecord(ORecord record, ODatabase.OPERATION_MODE mode);
+
+  /**
+   * Resolves a record with the given RID in the context of this transaction.
+   *
+   * @param rid the record RID.
+   * @return the resolved record, or {@code null} if no record is found, or {@link
+   *     OTransactionAbstract#DELETED_RECORD} if the record was deleted in this transaction.
+   */
+  ORecord getRecord(ORID rid);
+
+  /**
+   * Adds the transactional index entry in this transaction.
+   *
+   * @param index the index.
+   * @param indexName the index name.
+   * @param operation the index operation to register.
+   * @param key the index key.
+   * @param value the index key value.
+   */
+  void addIndexEntry(
+      OIndex index,
+      String indexName,
+      OTransactionIndexChanges.OPERATION operation,
+      Object key,
+      OIdentifiable value);
+
+  /**
+   * Adds the given document to a set of changed documents known to this transaction.
+   *
+   * @param document the document to add.
+   */
+  void addChangedDocument(ODocument document);
+
+  /**
+   * Obtains the index changes done in the context of this transaction.
+   *
+   * @param indexName the index name.
+   * @return the index changes in question or {@code null} if index is not found.
+   */
+  OTransactionIndexChanges getIndexChanges(String indexName);
+
+  /**
+   * Does the same thing as {@link #getIndexChanges(String)}, but handles remote storages in a
+   * special way.
+   *
+   * @param indexName the index name.
+   * @return the index changes in question or {@code null} if index is not found or storage is
+   *     remote.
+   */
+  OTransactionIndexChanges getIndexChangesInternal(String indexName);
+
+  /**
+   * Obtains the custom value by its name stored in the context of this transaction.
+   *
+   * @param name the value name.
+   * @return the obtained value or {@code null} if no value found.
+   */
+  Object getCustomData(String name);
+
+  /**
+   * Sets the custom value by its name stored in the context of this transaction.
+   *
+   * @param name the value name.
+   * @param value the value to store.
+   */
+  void setCustomData(String name, Object value);
+
+  /** @return this transaction ID as seen by the client of this transaction. */
+  default int getClientTransactionId() {
+    return getId();
+  }
+
+  int getId();
 }
