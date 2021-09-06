@@ -89,7 +89,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
-import com.orientechnologies.orient.core.storage.OBasicTransaction;
+import com.orientechnologies.orient.core.tx.OTransaction;
 import java.io.ByteArrayOutputStream;
 import java.io.Externalizable;
 import java.io.IOException;
@@ -2007,7 +2007,7 @@ public class ODocument extends ORecordAbstract
       final ODatabaseDocumentInternal database = getDatabaseIfDefined();
 
       if (database != null) {
-        final OBasicTransaction transaction = database.getMicroOrRegularTransaction();
+        final OTransaction transaction = database.getTransaction();
         transaction.addChangedDocument(this);
       }
     }
