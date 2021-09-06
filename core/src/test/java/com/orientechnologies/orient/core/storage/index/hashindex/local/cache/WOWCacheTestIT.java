@@ -939,7 +939,7 @@ public class WOWCacheTestIT {
     fileClassic.open();
     byte[] content = new byte[8 + ODurablePage.NEXT_FREE_POSITION];
     fileClassic.read(
-        pageIndex * (8 + ODurablePage.NEXT_FREE_POSITION),
+            (long) pageIndex * (8 + ODurablePage.NEXT_FREE_POSITION),
         ByteBuffer.wrap(content).order(ByteOrder.nativeOrder()),
         true);
 
@@ -1017,6 +1017,13 @@ public class WOWCacheTestIT {
     public void toStream(ByteBuffer buffer) {
       buffer.putInt(data.length);
       buffer.put(data);
+    }
+
+    @Override
+    public void fromStream(ByteBuffer buffer) {
+      final int dataLen = buffer.getInt();
+      final byte[] data = new byte[dataLen];
+      buffer.get(data);
     }
 
     @Override

@@ -272,7 +272,7 @@ public final class OWALRecordsFactory {
     return walRecord;
   }
 
-  private WriteableWALRecord walRecordById(final int recordId) {
+  public WriteableWALRecord walRecordById(final int recordId) {
     final WriteableWALRecord walRecord;
     switch (recordId) {
       case UPDATE_PAGE_RECORD:
@@ -719,7 +719,6 @@ public final class OWALRecordsFactory {
       default:
         if (idToTypeMap.containsKey(recordId))
           try {
-            //noinspection unchecked
             walRecord =
                 (WriteableWALRecord)
                     idToTypeMap.get(recordId).getDeclaredConstructor().newInstance();

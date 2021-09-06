@@ -21,6 +21,9 @@ public final class EmptyWALRecord extends OAbstractWALRecord {
   }
 
   @Override
+  public void fromStream(ByteBuffer buffer) {}
+
+  @Override
   public int serializedSize() {
     return 0;
   }

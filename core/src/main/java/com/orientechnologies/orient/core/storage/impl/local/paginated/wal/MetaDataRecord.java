@@ -43,6 +43,14 @@ public final class MetaDataRecord extends OAbstractWALRecord {
   }
 
   @Override
+  public void fromStream(ByteBuffer buffer) {
+    final int metadataLan = buffer.getInt();
+    final byte[] metadata = new byte[metadataLan];
+    buffer.get(metadata);
+    this.metadata = metadata;
+  }
+
+  @Override
   public int serializedSize() {
     return OIntegerSerializer.INT_SIZE + metadata.length;
   }

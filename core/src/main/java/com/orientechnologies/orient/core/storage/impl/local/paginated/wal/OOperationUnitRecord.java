@@ -72,6 +72,13 @@ public abstract class OOperationUnitRecord extends OAbstractWALRecord {
   }
 
   @Override
+  public void fromStream(ByteBuffer buffer) {
+    operationUnitId = buffer.getLong();
+
+    deserializeFromByteBuffer(buffer);
+  }
+
+  @Override
   public int serializedSize() {
     return OLongSerializer.LONG_SIZE;
   }

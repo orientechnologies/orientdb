@@ -5254,6 +5254,13 @@ public class CASDiskWriteAheadLogIT {
     }
 
     @Override
+    public void fromStream(ByteBuffer buffer) {
+      final int dataLen = buffer.getInt();
+      final byte[] data = new byte[dataLen];
+      buffer.get(data);
+    }
+
+    @Override
     public int serializedSize() {
       return data.length + OIntegerSerializer.INT_SIZE;
     }

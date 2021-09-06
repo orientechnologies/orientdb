@@ -18,6 +18,8 @@ public interface WriteableWALRecord extends OWALRecord {
 
   int fromStream(byte[] content, int offset);
 
+  void fromStream(ByteBuffer buffer);
+
   int serializedSize();
 
   void written();
