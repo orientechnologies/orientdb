@@ -160,7 +160,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   @Override
   public void run() {
     importDatabase();
-    // TODO: importDatabaseV2();
+    // TODO importDatabaseV2();
   }
 
   @Override
@@ -306,12 +306,14 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
             importRecords(parser);
           } else if (parser.getValueAsString().equals("indexes")) {
             importIndexes(parser);
+          } /*else if (parser.getValueAsString().equals("manualIndexes")) {
+              importManualIndexes(parser);
+            }*/ else if (parser.getValueAsString().equals("brokenRids")) {
+            processBrokenRids(parser);
+          } else {
+            throw new ODatabaseImportException(
+                "Invalid format. Found unsupported tag '" + jsonToken + "'");
           }
-          /*FIXME: else if (tag.equals("manualIndexes")) importManualIndexes();
-          else if (tag.equals("brokenRids")) {
-            processBrokenRids();
-          } else
-            throw new ODatabaseImportException("Invalid format. Found unsupported tag '" + tag + "'");*/
         }
       }
       if (rebuildIndexes) {
@@ -594,6 +596,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     listener.onMessage("\nDone " + indexesToRebuild.size() + " indexes were rebuilt.");
   }
 
+  @Deprecated
   public ODatabaseImport importDatabase() {
     final boolean preValidation = database.isValidationEnabled();
     try {
@@ -681,12 +684,20 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     return this;
   }
 
+  @Deprecated
   private void processBrokenRids() throws IOException, ParseException {
     final Set<ORID> brokenRids = new HashSet<>();
     processBrokenRids(brokenRids);
     jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
   }
 
+  private void processBrokenRids(final JsonParser parser) throws IOException, ParseException {
+    final Set<ORID> brokenRids = new HashSet<>();
+    processBrokenRids(parser, brokenRids);
+    // jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
+  }
+
+  @Deprecated
   // just read collection so import process can continue
   private void processBrokenRids(final Set<ORID> brokenRids) throws IOException, ParseException {
     if (exporterVersion >= 12) {
@@ -701,6 +712,41 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         brokenRids.add(recordId);
 
         if (jsonReader.lastChar() == ']') break;
+      }
+    }
+    if (migrateLinks) {
+      if (exporterVersion >= 12)
+        listener.onMessage(
+            brokenRids.size()
+                + " were detected as broken during database export, links on those records will be removed from"
+                + " result database");
+      migrateLinksInImportedDocuments(brokenRids);
+    }
+  }
+
+  // TODO refactor
+  // read collection and migrate broken RIDs so that the import process can continue
+  private void processBrokenRids(final JsonParser parser, final Set<ORID> brokenRids)
+      throws IOException, ParseException {
+    JsonToken jsonToken = parser.nextToken();
+    if (exporterVersion >= 12) {
+      listener.onMessage(
+          "Reading of set of RIDs of records which were detected as broken during database export\n");
+      // jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
+      while (!JsonToken.START_ARRAY.equals(jsonToken)) {
+        jsonToken = parser.nextToken();
+      }
+      jsonToken = parser.nextToken();
+      while (!JsonToken.END_ARRAY.equals(jsonToken)) {
+        // while (true) {
+        // jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
+
+        // final ORecordId recordId = new ORecordId(jsonReader.getValue());
+        final ORecordId recordId = new ORecordId(parser.getValueAsString());
+        brokenRids.add(recordId);
+
+        // if (jsonReader.lastChar() == ']') break;
+        jsonToken = parser.nextToken();
       }
     }
     if (migrateLinks) {
@@ -936,6 +982,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     listener.onMessage("\nRemoved " + removedClasses + " classes.");
   }
 
+  @Deprecated
   private void importManualIndexes() throws IOException, ParseException {
     listener.onMessage("\nImporting manual index entries...");
 
@@ -1023,6 +1070,101 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     } while (jsonReader.lastChar() == ',');
 
     listener.onMessage("\nDone. Imported " + String.format("%,d", n) + " indexes.");
+
+    jsonReader.readNext(OJSONReader.NEXT_IN_OBJECT);
+  }
+
+  // TODO: no manual indexes in the latest exported version?!
+  private void importManualIndexes(final JsonParser parser) throws IOException, ParseException {
+    listener.onMessage("\nImporting manual index entries...");
+
+    final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
+    // FORCE RELOADING
+    indexManager.reload();
+
+    final JsonToken jsonToken = parser.nextToken();
+    ODocument document = new ODocument();
+    int importedIndexes = 0;
+    while (!JsonToken.END_ARRAY.equals(jsonToken)) {
+      // do {
+      // jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
+      // TODO: from here
+      if (JsonToken.START_OBJECT.equals(jsonToken)) {}
+
+      jsonReader.readString(OJSONReader.FIELD_ASSIGNMENT);
+      final String indexName = jsonReader.readString(OJSONReader.NEXT_IN_ARRAY);
+
+      if (indexName == null || indexName.length() == 0) return;
+
+      listener.onMessage("\n- Index '" + indexName + "'...");
+
+      final OIndex index =
+          database.getMetadata().getIndexManagerInternal().getIndex(database, indexName);
+
+      long tot = 0;
+
+      jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
+
+      do {
+        final String value = jsonReader.readString(OJSONReader.NEXT_IN_ARRAY).trim();
+        if ("[]".equals(value)) {
+          return;
+        }
+
+        if (!value.isEmpty()) {
+          document = (ODocument) ORecordSerializerJSON.INSTANCE.fromString(value, document, null);
+          document.setLazyLoad(false);
+
+          final OIdentifiable oldRid = document.field("rid");
+          assert oldRid != null;
+
+          final OIdentifiable newRid;
+          if (!document.<Boolean>field("binary")) {
+            try (final OResultSet result =
+                database.query(
+                    "select value from " + EXPORT_IMPORT_CLASS_NAME + " where key = ?",
+                    String.valueOf(oldRid))) {
+              if (!result.hasNext()) {
+                newRid = oldRid;
+              } else {
+                newRid = new ORecordId(result.next().<String>getProperty("value"));
+              }
+            }
+
+            index.put(document.field("key"), newRid.getIdentity());
+          } else {
+            ORuntimeKeyIndexDefinition<?> runtimeKeyIndexDefinition =
+                (ORuntimeKeyIndexDefinition<?>) index.getDefinition();
+            OBinarySerializer<?> binarySerializer = runtimeKeyIndexDefinition.getSerializer();
+
+            try (final OResultSet result =
+                database.query(
+                    "select value from " + EXPORT_IMPORT_CLASS_NAME + " where key = ?",
+                    String.valueOf(document.<OIdentifiable>field("rid")))) {
+              if (!result.hasNext()) {
+                newRid = document.field("rid");
+              } else {
+                newRid = new ORecordId(result.next().<String>getProperty("value"));
+              }
+            }
+
+            index.put(binarySerializer.deserialize(document.field("key"), 0), newRid);
+          }
+          tot++;
+        }
+      } while (jsonReader.lastChar() == ',');
+
+      if (index != null) {
+        listener.onMessage("OK (" + tot + " entries)");
+        importedIndexes++;
+      } else listener.onMessage("ERR, the index wasn't found in configuration");
+
+      jsonReader.readNext(OJSONReader.END_OBJECT);
+      jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
+    }
+    while (jsonReader.lastChar() == ',') ;
+
+    listener.onMessage("\nDone. Imported " + String.format("%,d", importedIndexes) + " indexes.");
 
     jsonReader.readNext(OJSONReader.NEXT_IN_OBJECT);
   }
