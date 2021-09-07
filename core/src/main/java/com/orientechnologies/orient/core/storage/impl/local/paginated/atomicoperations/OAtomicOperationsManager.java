@@ -63,7 +63,6 @@ public class OAtomicOperationsManager {
   private final int operationsCacheLimit;
 
   private final OperationsFreezer atomicOperationsFreezer = new OperationsFreezer();
-  private final OperationsFreezer componentOperationsFreezer = new OperationsFreezer();
   private final AtomicOperationsTable atomicOperationsTable;
 
   public OAtomicOperationsManager(
@@ -243,22 +242,10 @@ public class OAtomicOperationsManager {
       final OAtomicOperation atomicOperation, final String lockName) {
     acquireExclusiveLockTillOperationComplete(atomicOperation, lockName);
     atomicOperation.incrementComponentOperations();
-
-    componentOperationsFreezer.startOperation();
   }
 
   private void endComponentOperation(final OAtomicOperation atomicOperation) {
     atomicOperation.decrementComponentOperations();
-
-    componentOperationsFreezer.endOperation();
-  }
-
-  public long freezeComponentOperations() {
-    return componentOperationsFreezer.freezeOperations(null, null);
-  }
-
-  public void releaseComponentOperations(final long freezeId) {
-    componentOperationsFreezer.releaseOperations(freezeId);
   }
 
   private boolean tryStartComponentOperation(
@@ -285,7 +272,6 @@ public class OAtomicOperationsManager {
     }
     operation.addLockedObject(lockName);
 
-    componentOperationsFreezer.startOperation();
     return true;
   }
 
