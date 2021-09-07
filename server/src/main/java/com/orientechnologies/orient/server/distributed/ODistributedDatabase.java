@@ -99,4 +99,6 @@ public interface ODistributedDatabase {
 
   void setDistributedConfiguration(
       final OModifiableDistributedConfiguration distributedConfiguration);
+
+  void fillStatus();
 }
