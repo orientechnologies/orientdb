@@ -5,9 +5,9 @@ name: Java 11 CI with Maven
 
 on:
   push:
-    branches: [ develop ]
+    branches: [ develop, 3.1.x, 3.0.x ]
   pull_request:
-    branches: [ develop ]
+    branches: [ develop, 3.1.x, 3.0.x ]
 
 jobs:
   build:
