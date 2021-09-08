@@ -478,7 +478,7 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
             final OUpdatePageRecord updatePageRecord =
                 new OUpdatePageRecord(pageIndex, fileId, operationUnitId, filePageChanges.changes);
             writeAheadLog.log(updatePageRecord);
-            filePageChanges.setChangeLSN(updatePageRecord.getLsn());
+            filePageChanges.setChangeOperationIdLSN(updatePageRecord.getOperationIdLSN());
           } else {
             filePageChangesIterator.remove();
           }
@@ -538,7 +538,7 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
               cacheEntry.setEndLSN(txEndLsn);
 
               durablePage.restoreChanges(filePageChanges.changes);
-              durablePage.setLSN(filePageChanges.getChangeSN());
+              durablePage.setOperationIdLSN(filePageChanges.getChangeOperationIdLSN());
             } finally {
               readCache.releaseFromWrite(cacheEntry, writeCache, true);
             }

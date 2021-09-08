@@ -170,11 +170,15 @@ public final class OWALRecordsFactory {
   private static final int RECORD_ID_OFFSET = 0;
   private static final int RECORD_ID_SIZE = 2;
 
-  private static final int ORIGINAL_CONTENT_SIZE_OFFSET = RECORD_ID_OFFSET + RECORD_ID_SIZE;
+  private static final int OPERATION_ID_OFFSET = RECORD_ID_OFFSET + RECORD_ID_SIZE;
+  private static final int OPERATION_ID_SIZE = 4;
+
+  private static final int ORIGINAL_CONTENT_SIZE_OFFSET = OPERATION_ID_OFFSET + OPERATION_ID_SIZE;
   private static final int ORIGINAL_CONTENT_SIZE = 4;
 
-  private static final int METADATA_SIZE = RECORD_ID_SIZE;
-  private static final int COMPRESSED_METADATA_SIZE = RECORD_ID_SIZE + ORIGINAL_CONTENT_SIZE;
+  private static final int METADATA_SIZE = RECORD_ID_SIZE + OPERATION_ID_SIZE;
+  private static final int COMPRESSED_METADATA_SIZE =
+      RECORD_ID_SIZE + OPERATION_ID_SIZE + ORIGINAL_CONTENT_SIZE;
 
   private final Map<Integer, Class<?>> idToTypeMap = new HashMap<>();
 
@@ -206,7 +210,7 @@ public final class OWALRecordsFactory {
         ByteBuffer.allocate(maxCompressedLength + COMPRESSED_METADATA_SIZE)
             .order(ByteOrder.nativeOrder());
 
-    content.position(METADATA_SIZE);
+    content.position(OPERATION_ID_OFFSET + OPERATION_ID_SIZE);
     compressedContent.position(COMPRESSED_METADATA_SIZE);
     final int compressedLength =
         compressor.compress(
@@ -228,8 +232,13 @@ public final class OWALRecordsFactory {
     }
   }
 
+  public static void serializeRecordId(final ByteBuffer buffer, final int operationId) {
+    buffer.putInt(OPERATION_ID_OFFSET, operationId);
+  }
+
   public WriteableWALRecord fromStream(byte[] content) {
     int recordId = OShortSerializer.INSTANCE.deserializeNative(content, RECORD_ID_OFFSET);
+    int operationId = OIntegerSerializer.INSTANCE.deserializeNative(content, OPERATION_ID_OFFSET);
 
     if (recordId < 0) {
       final int originalLen =
@@ -250,7 +259,7 @@ public final class OWALRecordsFactory {
     final WriteableWALRecord walRecord = walRecordById(recordId);
 
     walRecord.fromStream(content, METADATA_SIZE);
-    walRecord.setLsn(null);
+    walRecord.setOperationIdLsn(null, operationId);
 
     if (walRecord.getId() != recordId) {
       throw new IllegalStateException(
@@ -710,6 +719,7 @@ public final class OWALRecordsFactory {
       default:
         if (idToTypeMap.containsKey(recordId))
           try {
+            //noinspection unchecked
             walRecord =
                 (WriteableWALRecord)
                     idToTypeMap.get(recordId).getDeclaredConstructor().newInstance();

@@ -27,16 +27,16 @@ import java.io.IOException;
  */
 public class OLogSequenceNumber implements Comparable<OLogSequenceNumber> {
   private final long segment;
-  private final long position;
+  private final int position;
 
-  public OLogSequenceNumber(final long segment, final long position) {
+  public OLogSequenceNumber(final long segment, final int position) {
     this.segment = segment;
     this.position = position;
   }
 
   public OLogSequenceNumber(final DataInput in) throws IOException {
     this.segment = in.readLong();
-    this.position = in.readLong();
+    this.position = in.readInt();
   }
 
   public long getSegment() {
@@ -45,23 +45,29 @@ public class OLogSequenceNumber implements Comparable<OLogSequenceNumber> {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
 
     OLogSequenceNumber that = (OLogSequenceNumber) o;
 
-    if (segment != that.segment) return false;
+    if (segment != that.segment) {
+      return false;
+    }
     return position == that.position;
   }
 
   @Override
   public int hashCode() {
     int result = (int) (segment ^ (segment >>> 32));
-    result = 31 * result + (int) (position ^ (position >>> 32));
+    result = 31 * result + position;
     return result;
   }
 
-  public long getPosition() {
+  public int getPosition() {
     return position;
   }
 
@@ -78,7 +84,7 @@ public class OLogSequenceNumber implements Comparable<OLogSequenceNumber> {
 
   public void toStream(final DataOutput out) throws IOException {
     out.writeLong(segment);
-    out.writeLong(position);
+    out.writeInt(position);
   }
 
   @Override

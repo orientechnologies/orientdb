@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import java.nio.ByteBuffer;
+import java.util.Objects;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -74,6 +75,39 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
   @Override
   public boolean trackOperationId() {
     return true;
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
+
+    final OUpdatePageRecord that = (OUpdatePageRecord) o;
+
+    if (operationIdLSN == null && that.operationIdLSN == null) {
+      return true;
+    }
+    if (operationIdLSN == null) {
+      return false;
+    }
+
+    if (that.operationIdLSN == null) {
+      return false;
+    }
+
+    return Objects.equals(operationIdLSN.lsn, that.operationIdLSN.lsn);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = super.hashCode();
+    result =
+        31 * result
+            + (operationIdLSN != null && operationIdLSN.lsn != null
+                ? operationIdLSN.lsn.hashCode()
+                : 0);
+    return result;
   }
 
   @Override

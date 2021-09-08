@@ -924,7 +924,12 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
             return null;
           }
 
-          wal.appendSegment(segment + 1);
+          final long freezeId = atomicOperationsManager.freezeComponentOperations();
+          try {
+            wal.appendSegment(segment + 1);
+          } finally {
+            atomicOperationsManager.releaseComponentOperations(freezeId);
+          }
 
           atomicOperationsTable.compactTable();
         } finally {

@@ -916,8 +916,8 @@ public class WOWCacheTestIT {
 
     long segment =
         OLongSerializer.INSTANCE.deserializeNative(content, ODurablePage.WAL_SEGMENT_OFFSET);
-    long position =
-        OLongSerializer.INSTANCE.deserializeNative(content, ODurablePage.WAL_POSITION_OFFSET);
+    int position =
+        OIntegerSerializer.INSTANCE.deserializeNative(content, ODurablePage.WAL_POSITION_OFFSET);
 
     OLogSequenceNumber readLsn = new OLogSequenceNumber(segment, position);
 
