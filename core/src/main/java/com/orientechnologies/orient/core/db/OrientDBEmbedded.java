@@ -1236,4 +1236,13 @@ public class OrientDBEmbedded implements OrientDBInternal {
       throw new ODatabaseException(String.format("Invalid database name:'%s'", name));
     }
   }
+
+  public Set<String> listLodadedDatabases() {
+    Set<String> dbs;
+    synchronized (this) {
+      dbs = new HashSet<String>(storages.keySet());
+    }
+    dbs.remove(OSystemDatabase.SYSTEM_DB_NAME);
+    return dbs;
+  }
 }

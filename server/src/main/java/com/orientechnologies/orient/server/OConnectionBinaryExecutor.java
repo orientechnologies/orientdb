@@ -1645,7 +1645,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     OPushManager manager = server.getPushManager();
     manager.subscribeDistributeConfig((ONetworkProtocolBinary) connection.getProtocol());
 
-    Set<String> dbs = server.listDatabases();
+    Set<String> dbs = server.getDatabases().listLodadedDatabases();
     ODistributedServerManager plugin = server.getPlugin("cluster");
     if (plugin != null) {
       Orient.instance()
