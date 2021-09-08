@@ -12,6 +12,7 @@ import org.junit.Test;
 
 /** Created by tglman on 23/05/16. */
 public class ODatabaseImportTest {
+  // keep this test despite additional streaming api
   @Test
   public void exportImportOnlySchemaTest() throws IOException {
     final String databaseName = "test";
@@ -56,10 +57,8 @@ public class ODatabaseImportTest {
     orientDB.close();
   }
 
-  // TODO: part of the end to end import renovation
-  @Ignore
   @Test
-  public void exportImportOnlySchemaTestV2() throws IOException {
+  public void exportImportOnlySchemaTestStreamed() throws IOException {
     final String databaseName = "testV2";
     final String exportDbUrl =
         "memory:target/exportV2_" + ODatabaseImportTest.class.getSimpleName();
@@ -97,7 +96,7 @@ public class ODatabaseImportTest {
                 @Override
                 public void onMessage(String iText) {}
               });
-      importer.importDatabaseV2();
+      importer.importDatabaseStreamed();
       Assert.assertTrue(
           "SimpleClass schema must exist.",
           db.getMetadata().getSchema().existsClass("SimpleClass"));
@@ -108,7 +107,7 @@ public class ODatabaseImportTest {
 
   @Test
   public void exportImportExcludeClusters() throws IOException {
-    final String databaseName = "test";
+    final String databaseName = "testExcludeClusters";
     final String exportDbUrl =
         "memory:target/export_" + ODatabaseImportTest.class.getSimpleName() + "_excludeclusters";
     final OrientDB orientDB =
@@ -156,7 +155,7 @@ public class ODatabaseImportTest {
   // TODO: part of the end to end import renovation
   @Ignore
   @Test
-  public void exportImportExcludeClusters2() throws IOException {
+  public void exportImportExcludeClustersStreamed() throws IOException {
     final String databaseName = "test2";
     final String exportDbUrl =
         "memory:target/export2_" + ODatabaseImportTest.class.getSimpleName() + "_excludeclusters";
@@ -195,10 +194,11 @@ public class ODatabaseImportTest {
                 @Override
                 public void onMessage(String iText) {}
               });
-      importer.importDatabaseV2();
+      importer.importDatabaseStreamed();
       Assert.assertTrue(db.getMetadata().getSchema().existsClass("SimpleClass"));
+    } finally {
+      orientDB.drop(databaseName);
+      orientDB.close();
     }
-    orientDB.drop(databaseName);
-    orientDB.close();
   }
 }
