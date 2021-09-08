@@ -721,7 +721,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   @Override
   public void setOnline() {
-    loadStatus();
+    fillStatus();
     ODistributedServerLog.info(
         this,
         localNodeName,
@@ -737,7 +737,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     resume();
   }
 
-  public void loadStatus() {
+  public void fillStatus() {
     OAbstractPaginatedStorage storage =
         ((OAbstractPaginatedStorage) manager.getStorage(databaseName).getUnderlying());
     if (storage != null) {
