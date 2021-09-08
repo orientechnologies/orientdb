@@ -743,7 +743,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
                       OWALRecordsFactory.INSTANCE.fromStream(recordContent);
 
                   walRecord.setOperationIdLsn(
-                      new OLogSequenceNumber(segment, lsnPos),
+                      new OLogSequenceNumber(segment, (int) lsnPos),
                       walRecord.getOperationIdLSN().operationId);
 
                   recordContent = null;
@@ -1697,7 +1697,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
 
         record.setDistance(0);
 
-        return newPosition;
+        return (int) newPosition;
       } else {
         final long prevPosition = prevRecord.getLsn().getPosition();
         final long end = prevPosition + prevRecord.getDistance();
@@ -1758,7 +1758,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
       record.setDiskSize(diskSize);
     }
 
-    return start;
+    return (int) start;
   }
 
   private void fireEventsFor(final OLogSequenceNumber lsn) {
