@@ -40,7 +40,7 @@ public class ODistributedDatabaseChunk implements OStreamable {
   public boolean incremental;
   // This are not used anymore remove in the next version
   public long walSegment;
-  public int walPosition;
+  public long walPosition;
 
   public ODistributedDatabaseChunk() {}
 
@@ -95,7 +95,7 @@ public class ODistributedDatabaseChunk implements OStreamable {
       final boolean gzipCompressed,
       boolean incremental,
       long walSegment,
-      int walPosition)
+      long walPosition)
       throws IOException {
     filePath = iFile.getAbsolutePath();
     offset = iOffset;
@@ -169,7 +169,7 @@ public class ODistributedDatabaseChunk implements OStreamable {
     out.writeBoolean(last);
     out.writeBoolean(incremental);
     out.writeLong(walSegment);
-    out.writeInt(walPosition);
+    out.writeLong(walPosition);
   }
 
   @Override
@@ -185,7 +185,7 @@ public class ODistributedDatabaseChunk implements OStreamable {
     last = in.readBoolean();
     incremental = in.readBoolean();
     walSegment = in.readLong();
-    walPosition = in.readInt();
+    walPosition = in.readLong();
   }
 
   public OLogSequenceNumber getLastWal() {

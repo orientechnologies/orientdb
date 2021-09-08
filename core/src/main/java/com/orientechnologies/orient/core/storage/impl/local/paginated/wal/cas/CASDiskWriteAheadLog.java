@@ -172,6 +172,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
 
   private final ScheduledFuture<?> recordsWriterFuture;
   private final ReentrantLock recordsWriterLock = new ReentrantLock();
+  private volatile boolean cancelRecordsWrite = false;
 
   private final ConcurrentNavigableMap<OLogSequenceNumber, EventWrapper> events =
       new ConcurrentSkipListMap<>();
@@ -583,7 +584,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
 
         int bytesRead = 0;
 
-        int lsnPos = -1;
+        long lsnPos = -1;
 
         segment = segmentsIterator.next();
 
@@ -632,7 +633,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
               while (buffer.remaining() > 0) {
                 if (recordLen == -1) {
                   if (recordLenBytes == null) {
-                    lsnPos = (int) (pageIndex * pageSize + buffer.position());
+                    lsnPos = pageIndex * pageSize + buffer.position();
 
                     if (buffer.remaining() >= OIntegerSerializer.INT_SIZE) {
                       recordLen = buffer.getInt();
@@ -1294,6 +1295,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
       throw new OStorageException("Can not cancel background write thread in WAL");
     }
 
+    cancelRecordsWrite = true;
     try {
       recordsWriterFuture.get();
     } catch (CancellationException e) {
@@ -1304,18 +1306,20 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
           e);
     }
 
-    if (writeFuture != null) {
-      try {
-        writeFuture.get();
-      } catch (InterruptedException | ExecutionException e) {
-        throw OException.wrapException(
-            new OStorageException("Error during writing of WAL records in storage " + storageName),
-            e);
-      }
-    }
-
     recordsWriterLock.lock();
     try {
+      final Future<?> writer = writeFuture;
+      if (writer != null) {
+        try {
+          writer.get();
+        } catch (InterruptedException | ExecutionException e) {
+          throw OException.wrapException(
+              new OStorageException(
+                  "Error during writing of WAL records in storage " + storageName),
+              e);
+        }
+      }
+
       OWALRecord record = records.poll();
       while (record != null) {
         if (record instanceof WriteableWALRecord) {
@@ -1323,19 +1327,6 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
         }
 
         record = records.poll();
-      }
-
-      try {
-        if (writeFuture != null) {
-          writeFuture.get();
-        }
-
-      } catch (final InterruptedException e) {
-        OLogManager.instance().errorNoDb(this, "WAL write was interrupted", e);
-      } catch (final ExecutionException e) {
-        OLogManager.instance().errorNoDb(this, "Error during writint of WAL data", e);
-        throw OException.wrapException(
-            new OStorageException("Error during writint of WAL data"), e);
       }
 
       for (final OPair<Long, OWALFile> pair : fileCloseQueue) {
@@ -1620,7 +1611,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
 
         record.setDistance(0);
 
-        return (int) newPosition;
+        return newPosition;
       } else {
         final long prevPosition = prevRecord.getLsn().getPosition();
         final long end = prevPosition + prevRecord.getDistance();
@@ -1681,7 +1672,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
       record.setDiskSize(diskSize);
     }
 
-    return (int) start;
+    return start;
   }
 
   private void fireEventsFor(final OLogSequenceNumber lsn) {
@@ -1711,6 +1702,10 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
     public void run() {
       recordsWriterLock.lock();
       try {
+        if (cancelRecordsWrite) {
+          return;
+        }
+
         if (printPerformanceStatistic) {
           printReport();
         }
