@@ -773,52 +773,30 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
       walPath = Paths.get(configWalPath);
     }
 
-    final CASDiskWriteAheadLog diskWriteAheadLog =
-        new CASDiskWriteAheadLog(
-            name,
-            storagePath,
-            walPath,
-            contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_CACHE_SIZE),
-            contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_BUFFER_SIZE),
-            aesKey,
-            iv,
-            contextConfiguration.getValueAsLong(OGlobalConfiguration.WAL_SEGMENTS_INTERVAL)
-                * 60
-                * 1_000_000_000L,
-            walMaxSegSize,
-            10,
-            true,
-            Locale.getDefault(),
-            contextConfiguration.getValueAsLong(OGlobalConfiguration.WAL_MAX_SIZE) * 1024 * 1024,
-            contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_COMMIT_TIMEOUT),
-            contextConfiguration.getValueAsBoolean(OGlobalConfiguration.WAL_KEEP_SINGLE_SEGMENT),
-            contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_CALL_FSYNC),
-            contextConfiguration.getValueAsBoolean(
-                OGlobalConfiguration.STORAGE_PRINT_WAL_PERFORMANCE_STATISTICS),
-            contextConfiguration.getValueAsInteger(
-                OGlobalConfiguration.STORAGE_PRINT_WAL_PERFORMANCE_INTERVAL));
-
-    writeAheadLog = diskWriteAheadLog;
+    writeAheadLog = new CASDiskWriteAheadLog(
+        name,
+        storagePath,
+        walPath,
+        contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_CACHE_SIZE),
+        contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_BUFFER_SIZE),
+        aesKey,
+        iv,
+        contextConfiguration.getValueAsLong(OGlobalConfiguration.WAL_SEGMENTS_INTERVAL)
+            * 60
+            * 1_000_000_000L,
+        walMaxSegSize,
+        10,
+        true,
+        Locale.getDefault(),
+        contextConfiguration.getValueAsLong(OGlobalConfiguration.WAL_MAX_SIZE) * 1024 * 1024,
+        contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_COMMIT_TIMEOUT),
+        contextConfiguration.getValueAsBoolean(OGlobalConfiguration.WAL_KEEP_SINGLE_SEGMENT),
+        contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_CALL_FSYNC),
+        contextConfiguration.getValueAsBoolean(
+            OGlobalConfiguration.STORAGE_PRINT_WAL_PERFORMANCE_STATISTICS),
+        contextConfiguration.getValueAsInteger(
+            OGlobalConfiguration.STORAGE_PRINT_WAL_PERFORMANCE_INTERVAL));
     writeAheadLog.addCheckpointListener(this);
-
-    diskWriteAheadLog.addSegmentOverflowListener(
-        (segment) -> {
-          if (status != STATUS.OPEN && status != STATUS.MIGRATION) {
-            return;
-          }
-
-          final Future<Void> oldAppender = segmentAppender.get();
-          if (oldAppender == null || oldAppender.isDone()) {
-            final Future<Void> appender =
-                segmentAdderExecutor.submit(new SegmentAdder(segment, diskWriteAheadLog));
-
-            if (segmentAppender.compareAndSet(oldAppender, appender)) {
-              return;
-            }
-
-            appender.cancel(false);
-          }
-        });
 
     final int pageSize =
         contextConfiguration.getValueAsInteger(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE) * ONE_KB;

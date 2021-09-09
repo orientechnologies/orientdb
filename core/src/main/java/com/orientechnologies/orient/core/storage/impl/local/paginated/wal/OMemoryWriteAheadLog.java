@@ -75,25 +75,12 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   @Override
   public OLogSequenceNumber log(WriteableWALRecord record) {
     final OLogSequenceNumber lsn = new OLogSequenceNumber(0, nextPosition.incrementAndGet());
-    final int operationId;
-
-    if (record.trackOperationId()) {
-      operationId = nextOperationId.getAndIncrement();
-    } else {
-      operationId = nextOperationId.get();
-    }
-
-    record.setOperationIdLsn(lsn, operationId);
+    record.setLsn(lsn);
 
     return lsn;
   }
 
-  @Override
-  public int lastOperationId() {
-    return nextOperationId.get();
-  }
-
-  @Override
+    @Override
   public void close() throws IOException {}
 
   @Override

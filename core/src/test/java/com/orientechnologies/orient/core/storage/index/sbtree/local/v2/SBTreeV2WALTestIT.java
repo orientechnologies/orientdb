@@ -347,7 +347,7 @@ public class SBTreeV2WALTestIT extends SBTreeV2TestIT {
               try {
                 ODurablePage durablePage = new ODurablePage(cacheEntry);
                 durablePage.restoreChanges(updatePageRecord.getChanges());
-                durablePage.setOperationIdLSN(new OperationIdLSN(0, new OLogSequenceNumber(0, 0)));
+                durablePage.setLsn(new OLogSequenceNumber(0, 0));
               } finally {
                 expectedReadCache.releaseFromWrite(cacheEntry, expectedWriteCache, true);
               }

@@ -18,7 +18,7 @@ public class OCacheEntryChanges implements OCacheEntry {
 
   protected boolean isNew;
 
-  private OperationIdLSN changeOperationIdLSN;
+  private OLogSequenceNumber changeLSN;
 
   protected boolean verifyCheckSum;
 
@@ -224,11 +224,11 @@ public class OCacheEntryChanges implements OCacheEntry {
     throw new UnsupportedOperationException();
   }
 
-  OperationIdLSN getChangeOperationIdLSN() {
-    return changeOperationIdLSN;
+  OLogSequenceNumber getChangeLSN() {
+    return changeLSN;
   }
 
-  void setChangeOperationIdLSN(final OperationIdLSN operationIdLSN) {
-    this.changeOperationIdLSN = operationIdLSN;
+  void setChangeLSN(final OLogSequenceNumber lsn) {
+    this.changeLSN = lsn;
   }
 }

@@ -32,12 +32,7 @@ public abstract class PageOperationRecord extends OOperationUnitBodyRecord {
     return pageIndex;
   }
 
-  @Override
-  public boolean trackOperationId() {
-    return true;
-  }
-
-  @Override
+    @Override
   public int serializedSize() {
     return super.serializedSize() + OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE;
   }

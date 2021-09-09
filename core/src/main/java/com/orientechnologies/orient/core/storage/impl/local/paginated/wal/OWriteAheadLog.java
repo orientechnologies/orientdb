@@ -59,9 +59,7 @@ public interface OWriteAheadLog {
 
   OLogSequenceNumber log(WriteableWALRecord record) throws IOException;
 
-  int lastOperationId();
-
-  void close() throws IOException;
+    void close() throws IOException;
 
   void close(boolean flush) throws IOException;
 
