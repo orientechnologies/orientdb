@@ -271,7 +271,7 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
     OSecurityUser user = getServerUser(username);
 
     if (user != null && user.getPassword() != null) {
-      if (OSecurityManager.checkPassword(password, user.getPassword())) {
+      if (OSecurityManager.checkPassword(password, user.getPassword().trim())) {
         return user;
       }
     }
