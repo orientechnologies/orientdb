@@ -4,6 +4,7 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitBodyRecord;
+
 import java.nio.ByteBuffer;
 
 public abstract class PageOperationRecord extends OOperationUnitBodyRecord {
@@ -32,7 +33,7 @@ public abstract class PageOperationRecord extends OOperationUnitBodyRecord {
     return pageIndex;
   }
 
-    @Override
+  @Override
   public int serializedSize() {
     return super.serializedSize() + OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE;
   }

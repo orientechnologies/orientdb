@@ -20,8 +20,6 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.OperationIdLSN;
-
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 25.04.13

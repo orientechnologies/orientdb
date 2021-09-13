@@ -20,21 +20,16 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.OStorageAbstract;
 import com.orientechnologies.orient.core.storage.impl.local.OCheckpointRequestListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationMetadata;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitEndRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartMetadataRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecordsFactory;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.CASWALPage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.EmptyWALRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.MilestoneWALRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.StartWALRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.WriteableWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.deque.Cursor;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.deque.MPSCFAAArrayDequeue;
+import net.jpountz.xxhash.XXHash64;
+import net.jpountz.xxhash.XXHashFactory;
 
+import javax.crypto.*;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -45,43 +40,13 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Locale;
-import java.util.Map;
-import java.util.NavigableSet;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ConcurrentNavigableMap;
-import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.SecretKey;
-import javax.crypto.ShortBufferException;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
-
-import net.jpountz.xxhash.XXHash64;
-import net.jpountz.xxhash.XXHashFactory;
 
 public final class CASDiskWriteAheadLog implements OWriteAheadLog {
   private static final String ALGORITHM_NAME = "AES";
@@ -1312,8 +1277,9 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
           future.get();
         } catch (InterruptedException | ExecutionException e) {
           throw OException.wrapException(
-                  new OStorageException("Error during writing of WAL records in storage " + storageName),
-                  e);
+              new OStorageException(
+                  "Error during writing of WAL records in storage " + storageName),
+              e);
         }
       }
 
@@ -1816,8 +1782,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
                     if (writeBuffer == null || writeBuffer.remaining() == 0) {
                       if (writeBufferPointer != null) {
                         assert writeBuffer != null;
-                        writeBuffer(
-                            walFile, segmentId, writeBuffer, lastLSN);
+                        writeBuffer(walFile, segmentId, writeBuffer, lastLSN);
                       }
 
                       if (useFirstBuffer) {
@@ -2012,10 +1977,10 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
     }
 
     private void writeBuffer(
-            final OWALFile file,
-            final long segmentId,
-            final ByteBuffer buffer,
-            final OLogSequenceNumber lastLSN)
+        final OWALFile file,
+        final long segmentId,
+        final ByteBuffer buffer,
+        final OLogSequenceNumber lastLSN)
         throws IOException {
 
       if (buffer.position() <= CASWALPage.RECORDS_OFFSET) {

@@ -504,7 +504,9 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-site-plugin</artifactId>
                 <configuration>
-                    <moduleExcludes><distribution/></moduleExcludes>
+                    <moduleExcludes>
+                        <distribution/>
+                    </moduleExcludes>
                 </configuration>
             </plugin>
 
@@ -680,12 +682,12 @@
                     <version>${graalvm.version}</version>
                     <scope>compile</scope>
                 </dependency>
-<!--                <dependency>-->
-<!--                    <groupId>org.graalvm.truffle</groupId>-->
-<!--                    <artifactId>truffle-api</artifactId>-->
-<!--                    <version>${graalvm.version}</version>-->
-<!--                    <scope>compile</scope>-->
-<!--                </dependency>-->
+                <!--                <dependency>-->
+                <!--                    <groupId>org.graalvm.truffle</groupId>-->
+                <!--                    <artifactId>truffle-api</artifactId>-->
+                <!--                    <version>${graalvm.version}</version>-->
+                <!--                    <scope>compile</scope>-->
+                <!--                </dependency>-->
                 <dependency>
                     <groupId>org.graalvm.js</groupId>
                     <artifactId>js</artifactId>
@@ -698,18 +700,18 @@
                     <version>${graalvm.version}</version>
                     <scope>runtime</scope>
                 </dependency>
-<!--                <dependency>-->
-<!--                    <groupId>org.graalvm.tools</groupId>-->
-<!--                    <artifactId>profiler</artifactId>-->
-<!--                    <version>${graalvm.version}</version>-->
-<!--                    <scope>runtime</scope>-->
-<!--                </dependency>-->
-<!--                <dependency>-->
-<!--                    <groupId>org.graalvm.tools</groupId>-->
-<!--                    <artifactId>chromeinspector</artifactId>-->
-<!--                    <version>${graalvm.version}</version>-->
-<!--                    <scope>runtime</scope>-->
-<!--                </dependency>-->
+                <!--                <dependency>-->
+                <!--                    <groupId>org.graalvm.tools</groupId>-->
+                <!--                    <artifactId>profiler</artifactId>-->
+                <!--                    <version>${graalvm.version}</version>-->
+                <!--                    <scope>runtime</scope>-->
+                <!--                </dependency>-->
+                <!--                <dependency>-->
+                <!--                    <groupId>org.graalvm.tools</groupId>-->
+                <!--                    <artifactId>chromeinspector</artifactId>-->
+                <!--                    <version>${graalvm.version}</version>-->
+                <!--                    <scope>runtime</scope>-->
+                <!--                </dependency>-->
             </dependencies>
             <build>
                 <plugins>

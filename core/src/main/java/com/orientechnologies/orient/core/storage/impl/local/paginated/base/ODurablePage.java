@@ -20,18 +20,14 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.base;
 
-import com.orientechnologies.common.serialization.types.OBinarySerializer;
-import com.orientechnologies.common.serialization.types.OByteSerializer;
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.common.serialization.types.OShortSerializer;
+import com.orientechnologies.common.serialization.types.*;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.OperationIdLSN;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
@@ -353,7 +349,7 @@ public class ODurablePage {
 
     buffer.putLong(WAL_SEGMENT_OFFSET, lsn.getSegment());
     buffer.putInt(WAL_POSITION_OFFSET, lsn.getPosition());
-}
+  }
 
   public static void setPageLSN(final OLogSequenceNumber lsn, final OCacheEntry cacheEntry) {
     final ByteBuffer buffer = cacheEntry.getCachePointer().getBufferDuplicate();

@@ -23,6 +23,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 import com.orientechnologies.orient.core.storage.impl.local.OCheckpointRequestListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationMetadata;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.WriteableWALRecord;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -80,7 +81,7 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
     return lsn;
   }
 
-    @Override
+  @Override
   public void close() throws IOException {}
 
   @Override
