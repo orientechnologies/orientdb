@@ -160,7 +160,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   @Override
   public void run() {
     importDatabase();
-    // TODO importDatabaseStreamed();
+    // TODO importDatabaseV2();
   }
 
   @Override
@@ -267,13 +267,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     return this;
   }
 
-  /**
-   * The database import is streamed via a JSON streaming library. This requires an export from
-   * exporter version 13 and higher.
-   *
-   * @return ODatabaseImport
-   */
-  public ODatabaseImport importDatabaseStreamed() {
+  // TODO: WIP - adding jackson stream parser replacing old logic
+  public ODatabaseImport importDatabaseV2() {
     final boolean preValidation = database.isValidationEnabled();
 
     try (final JsonParser parser = factory.createParser(input)) {
@@ -1195,6 +1190,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         // FIXME: implement (tests insufficient)
         while (!JsonToken.END_ARRAY.equals(jsonToken)) {
           jsonToken = parser.nextToken();
+          System.out.println("within blob-clusters: " + jsonToken);
           /*String blobClusterIds = jsonReader.readString(OJSONReader.END_COLLECTION, true).trim();
           blobClusterIds = blobClusterIds.substring(1, blobClusterIds.length() - 1);
 
@@ -1220,6 +1216,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         // FIXME: implement (tests insufficient)
         while (!JsonToken.END_ARRAY.equals(jsonToken)) {
           jsonToken = parser.nextToken();
+          System.out.println("within globalProperties: " + jsonToken);
           /*jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
           do {
             jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
@@ -1291,14 +1288,10 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
                 }
                 while (!JsonToken.END_ARRAY.equals(jsonToken)) {
                   jsonToken = parser.nextToken();
-                  if (JsonToken.VALUE_NUMBER_INT.equals(jsonToken) && clustersImported) {
+                  if (JsonToken.VALUE_NUMBER_INT.equals(jsonToken)) {
                     int clusterId = parser.getValueAsInt();
                     // ASSIGN OTHER CLUSTER IDS
                     if (clusterId != -1) {
-                      if (!clusterToClusterMapping.isEmpty()
-                          && clusterToClusterMapping.get(classDefClusterId) != null) {
-                        clusterId = clusterToClusterMapping.get(clusterId);
-                      }
                       cls.addClusterId(clusterId);
                     }
                   }
@@ -1367,12 +1360,14 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         listener.onMessage("OK (" + classImported + " classes)");
         schemaImported = true;
       } else if (!JsonToken.START_ARRAY.equals(jsonToken)) {
+        System.out.println(jsonToken);
         jsonToken = parser.nextToken();
       } else {
         final StringBuffer sb = new StringBuffer();
         sb.append("\t" + jsonToken + "=" + parser.getValueAsString()).append(":::");
         jsonToken = parser.nextToken();
         sb.append(jsonToken + " " + parser.getValueAsString());
+        System.out.println(sb.toString());
       }
     }
 
@@ -1688,6 +1683,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           propertyType = OType.valueOf(type);
         } else if (parser.getValueAsString().equals("customFields")) {
           jsonToken = parser.nextToken();
+          System.out.println(jsonToken + "-" + parser.getValueAsString());
         } else {
           final String value = parser.getValueAsString();
           if (value.equals("min")) {
@@ -2074,20 +2070,20 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   // FIXME
   private ORID importRecord(final JsonParser parser, final HashSet<ORID> recordsBeforeImport)
       throws Exception {
-    // OPair<String, Map<String, ORidSet>> recordParse =
-    //    jsonReader.readRecordString(this.maxRidbagStringSizeBeforeLazyImport);
-    // String value = recordParse.getKey().trim();
+    OPair<String, Map<String, ORidSet>> recordParse =
+        jsonReader.readRecordString(this.maxRidbagStringSizeBeforeLazyImport);
+    String value = recordParse.getKey().trim();
 
-    // if (value.isEmpty()) {
-    //   return null;
-    // }
+    if (value.isEmpty()) {
+      return null;
+    }
 
     // JUMP EMPTY RECORDS
-    // while (!value.isEmpty() && value.charAt(0) != '{') {
-    //   value = value.substring(1);
-    // }
+    while (!value.isEmpty() && value.charAt(0) != '{') {
+      value = value.substring(1);
+    }
 
-    // record = null;
+    record = null;
 
     // big ridbags (ie. supernodes) sometimes send the system OOM, so they have to be discarded at
     // this stage
@@ -2097,30 +2093,17 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
     try {
       try {
-        // TODO
         record =
-            ORecordSerializerJSON.INSTANCE.fromStream(
-                // FIXME: adapt e2e stream handling will require new APIs
-                parser,
+            ORecordSerializerJSON.INSTANCE.fromString(
+                value,
                 record,
                 null,
                 null,
                 false,
                 maxRidbagStringSizeBeforeLazyImport,
-                skippedPartsIndexes,
-                JsonToken.END_OBJECT);
-
-        /*record =
-        ORecordSerializerJSON.INSTANCE.fromString(
-            value,
-            record,
-            null,
-            null,
-            false,
-            maxRidbagStringSizeBeforeLazyImport,
-            skippedPartsIndexes);*/
+                skippedPartsIndexes);
       } catch (OSerializationException e) {
-        /*if (e.getCause() instanceof OSchemaException) {
+        if (e.getCause() instanceof OSchemaException) {
           // EXTRACT CLASS NAME If ANY
           final int pos = value.indexOf("\"@class\":\"");
           if (pos > -1) {
@@ -2143,9 +2126,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
                     maxRidbagStringSizeBeforeLazyImport,
                     skippedPartsIndexes);
           }
-        } else */
-        throw OException.wrapException(
-            new ODatabaseImportException("Error on importing record"), e);
+        } else
+          throw OException.wrapException(
+              new ODatabaseImportException("Error on importing record"), e);
       }
 
       // Incorrect record format , skip this record
@@ -2270,8 +2253,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       }
 
       // import skipped records (too big to be imported before)
-      // FIXME
-      /*if (skippedPartsIndexes.size() > 0) {
+      if (skippedPartsIndexes.size() > 0) {
         for (Integer skippedPartsIndex : skippedPartsIndexes) {
           importSkippedRidbag(record, value, skippedPartsIndex);
         }
@@ -2279,7 +2261,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
       if (recordParse.value.size() > 0) {
         importSkippedRidbag(record, recordParse.getValue());
-      }*/
+      }
+
     } catch (Exception t) {
       if (record != null)
         OLogManager.instance()
@@ -2640,7 +2623,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     database.getMetadata().reload();
 
     final Set<ORID> brokenRids = new HashSet<>();
-    processBrokenRids(parser, brokenRids);
+    processBrokenRids(brokenRids);
     listener.onMessage(
         String.format(
             "\n\nDone. Imported %,d records in %,.2f secs\n",

@@ -209,25 +209,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
       boolean needReload,
       int maxRidbagSizeBeforeSkip,
       Set<Integer> skippedPartsIndexes)
-      throws IOException {
-    return fromStream(
-        factory.createParser(source),
-        record,
-        iOptions,
-        needReload,
-        maxRidbagSizeBeforeSkip,
-        skippedPartsIndexes,
-        null);
-  }
-
-  public ORecord fromStream(
-      final JsonParser parser,
-      ORecord record,
-      final String iOptions,
-      boolean needReload,
-      int maxRidbagSizeBeforeSkip,
-      Set<Integer> skippedPartsIndexes,
-      JsonToken terminatorToken) {
+      throws JsonParseException {
     String className = null;
     boolean noMap = false;
     if (iOptions != null) {
@@ -243,10 +225,11 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     }
 
     try {
-      JsonToken jsonToken = parser.currentToken();
+      final JsonParser parser = factory.createParser(source);
+
+      JsonToken jsonToken = null;
       final Map<String, Character> fieldTypes = new HashMap<>();
-      while (jsonToken != terminatorToken) { // FIXME: hack for import API to terminate records
-        jsonToken = parser.nextToken();
+      while ((jsonToken = parser.nextToken()) != null) {
         if (jsonToken.equals(JsonToken.START_OBJECT)) {
           while (jsonToken != JsonToken.END_OBJECT) {
             parser.nextToken();
@@ -261,9 +244,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     } catch (final JsonParseException e) {
       // compatibility mode for invalid JSON
       OLogManager.instance().warn(this, "Falling back to legacy JSON parser due to invalid JSON.");
-      throw OException.wrapException(
-          new OSerializationException("Falling back to legacy JSON parser due to invalid JSON."),
-          e);
+      throw e;
     } catch (final Exception e) {
       if (record.getIdentity().isValid()) {
         throw OException.wrapException(
@@ -273,7 +254,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
       } else {
         throw OException.wrapException(
             new OSerializationException(
-                "Error on unmarshalling JSON content for record"), // + source),
+                "Error on unmarshalling JSON content for record: " + source),
             e);
       }
     }
@@ -313,25 +294,6 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
   }
 
   public ORecord fromStream(
-      final JsonParser parser,
-      ORecord record,
-      final String[] iFields,
-      final String iOptions,
-      boolean needReload,
-      int maxRidbagSizeBeforeSkip,
-      Set<Integer> skippedPartsIndexes,
-      JsonToken terminatorToken) {
-    return this.fromStream(
-        parser,
-        record,
-        iOptions,
-        needReload,
-        maxRidbagSizeBeforeSkip,
-        skippedPartsIndexes,
-        terminatorToken);
-  }
-
-  public ORecord fromStream(
       final InputStream source,
       ORecord record,
       final String[] iFields,
@@ -362,7 +324,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
                     + " and failed fallback to fromString"),
             e);
       }*/
-    } catch (final IOException e) {
+    } catch (final JsonParseException e) {
       final OutputStream out = new ByteArrayOutputStream();
       try {
         OIOUtils.copyStream(source, out, -1);
@@ -412,7 +374,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
       boolean needReload,
       int maxRidbagSizeBeforeSkip,
       Set<Integer> skippedPartsIndexes)
-      throws IOException {
+      throws JsonParseException {
     return this.fromStream(
         source, record, iOptions, needReload, maxRidbagSizeBeforeSkip, skippedPartsIndexes);
   }
