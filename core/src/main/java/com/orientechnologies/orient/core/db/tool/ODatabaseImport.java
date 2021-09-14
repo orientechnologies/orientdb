@@ -160,7 +160,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   @Override
   public void run() {
     importDatabase();
-    // TODO importDatabaseV2();
+    // TODO importDatabaseStreamed();
   }
 
   @Override
@@ -268,7 +268,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   }
 
   // TODO: WIP - adding jackson stream parser replacing old logic
-  public ODatabaseImport importDatabaseV2() {
+  public ODatabaseImport importDatabaseStreamed() {
     final boolean preValidation = database.isValidationEnabled();
 
     try (final JsonParser parser = factory.createParser(input)) {
@@ -1190,7 +1190,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         // FIXME: implement (tests insufficient)
         while (!JsonToken.END_ARRAY.equals(jsonToken)) {
           jsonToken = parser.nextToken();
-          System.out.println("within blob-clusters: " + jsonToken);
+          OLogManager.instance().warn(this, "Blob-clusters not yet supported.");
           /*String blobClusterIds = jsonReader.readString(OJSONReader.END_COLLECTION, true).trim();
           blobClusterIds = blobClusterIds.substring(1, blobClusterIds.length() - 1);
 
@@ -1216,7 +1216,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         // FIXME: implement (tests insufficient)
         while (!JsonToken.END_ARRAY.equals(jsonToken)) {
           jsonToken = parser.nextToken();
-          System.out.println("within globalProperties: " + jsonToken);
+          OLogManager.instance().warn(this, "GlobalProperties not yet supported.");
           /*jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
           do {
             jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
@@ -1288,10 +1288,14 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
                 }
                 while (!JsonToken.END_ARRAY.equals(jsonToken)) {
                   jsonToken = parser.nextToken();
-                  if (JsonToken.VALUE_NUMBER_INT.equals(jsonToken)) {
+                  if (JsonToken.VALUE_NUMBER_INT.equals(jsonToken) && clustersImported) {
                     int clusterId = parser.getValueAsInt();
                     // ASSIGN OTHER CLUSTER IDS
                     if (clusterId != -1) {
+                      if (!clusterToClusterMapping.isEmpty()
+                          && clusterToClusterMapping.get(classDefClusterId) != null) {
+                        clusterId = clusterToClusterMapping.get(clusterId);
+                      }
                       cls.addClusterId(clusterId);
                     }
                   }
@@ -1360,14 +1364,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         listener.onMessage("OK (" + classImported + " classes)");
         schemaImported = true;
       } else if (!JsonToken.START_ARRAY.equals(jsonToken)) {
-        System.out.println(jsonToken);
         jsonToken = parser.nextToken();
       } else {
-        final StringBuffer sb = new StringBuffer();
-        sb.append("\t" + jsonToken + "=" + parser.getValueAsString()).append(":::");
         jsonToken = parser.nextToken();
-        sb.append(jsonToken + " " + parser.getValueAsString());
-        System.out.println(sb.toString());
       }
     }
 
@@ -1683,7 +1682,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           propertyType = OType.valueOf(type);
         } else if (parser.getValueAsString().equals("customFields")) {
           jsonToken = parser.nextToken();
-          System.out.println(jsonToken + "-" + parser.getValueAsString());
         } else {
           final String value = parser.getValueAsString();
           if (value.equals("min")) {
