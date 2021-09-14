@@ -33,4 +33,6 @@ public interface OToken {
   void setExpiry(long expiry);
 
   boolean isNowValid();
+
+  boolean isCloseToExpire();
 }
