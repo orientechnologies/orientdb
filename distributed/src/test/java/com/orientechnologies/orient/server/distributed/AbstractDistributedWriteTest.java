@@ -209,26 +209,6 @@ public abstract class AbstractDistributedWriteTest extends AbstractServerCluster
     return new Writer(serverId, threadId);
   }
 
-  protected void dumpDistributedDatabaseCfgOfAllTheServers() {
-    for (ServerRun s : serverInstance) {
-      final ODistributedServerManager dManager = s.getServerInstance().getDistributedManager();
-      final ODistributedConfiguration cfg = dManager.getDatabaseConfiguration(getDatabaseName());
-      final String cfgOutput =
-          ODistributedOutput.formatClusterTable(
-              dManager, getDatabaseName(), cfg, dManager.getAvailableNodes(getDatabaseName()));
-
-      ODistributedServerLog.info(
-          this,
-          s.getServerInstance().getDistributedManager().getLocalNodeName(),
-          null,
-          ODistributedServerLog.DIRECTION.NONE,
-          "Distributed configuration for database: %s (version=%d)%s\n",
-          getDatabaseName(),
-          cfg.getVersion(),
-          cfgOutput);
-    }
-  }
-
   protected void checkThePersonClassIsPresentOnAllTheServers() {
     for (ServerRun s : serverInstance) {
       // CHECK THE CLASS WAS CREATED ON ALL THE SERVERS

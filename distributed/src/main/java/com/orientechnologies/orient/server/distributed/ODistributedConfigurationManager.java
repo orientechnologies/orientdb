@@ -73,23 +73,14 @@ public class ODistributedConfigurationManager {
       this.distributedConfiguration =
           new ODistributedConfiguration(distributedConfiguration.getDocument().copy());
 
-      // PRINT THE NEW CONFIGURATION
-      final String cfgOutput =
-          ODistributedOutput.formatClusterTable(
-              distributedManager,
-              databaseName,
-              distributedConfiguration,
-              distributedManager.getTotalNodes(databaseName));
-
       ODistributedServerLog.info(
           this,
           distributedManager.getLocalNodeName(),
           null,
           ODistributedServerLog.DIRECTION.NONE,
-          "Setting new distributed configuration for database: %s (version=%d)%s\n",
+          "Setting new distributed configuration for database: %s (version=%d)\n",
           databaseName,
-          distributedConfiguration.getVersion(),
-          cfgOutput);
+          distributedConfiguration.getVersion());
 
       saveDatabaseConfiguration();
     }
