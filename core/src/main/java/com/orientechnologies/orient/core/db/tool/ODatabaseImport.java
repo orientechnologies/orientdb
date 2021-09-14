@@ -177,96 +177,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     else super.parseSetting(option, items);
   }
 
-  // TODO: WIP - using existing OJSONReader
-  public ODatabaseImport importDatabaseV3() {
-    final boolean preValidation = database.isValidationEnabled();
-    try (final JsonParser parser = factory.createParser(input)) {
-      listener.onMessage(
-          "\nStarted import of database '" + database.getURL() + "' from " + fileName + "...");
-      final long time = System.nanoTime();
-
-      jsonReader.readNext(parser, JsonToken.START_OBJECT);
-      database.setValidationEnabled(false);
-      // status concept seems deprecated - status `IMPORTING` never checked
-      database.setStatus(STATUS.IMPORTING);
-
-      if (!merge) {
-        removeDefaultNonSecurityClasses();
-        database.getMetadata().getIndexManagerInternal().reload();
-      }
-
-      for (final OIndex index :
-          database.getMetadata().getIndexManagerInternal().getIndexes(database)) {
-        if (index.isAutomatic()) indexesToRebuild.add(index.getName());
-      }
-
-      boolean clustersImported = false;
-      while (!parser.isClosed()) {
-        // while (jsonReader.hasNext() && jsonReader.lastChar() != '}') {
-        // final String tag = jsonReader.readString(OJSONReader.FIELD_ASSIGNMENT);
-        final String tag = jsonReader.readString(parser, JsonToken.FIELD_NAME);
-
-        if (tag.equals("info")) {
-          importInfoV2(parser);
-        } else if (tag.equals("clusters")) {
-          importClusters();
-          clustersImported = true;
-        } else if (tag.equals("schema")) importSchema(clustersImported);
-        else if (tag.equals("records")) importRecords();
-        else if (tag.equals("indexes")) importIndexes();
-        else if (tag.equals("manualIndexes")) importManualIndexes();
-        else if (tag.equals("brokenRids")) {
-          processBrokenRids();
-        } else
-          throw new ODatabaseImportException("Invalid format. Found unsupported tag '" + tag + "'");
-      }
-      if (rebuildIndexes) {
-        rebuildIndexes();
-      }
-
-      // This is needed to insure functions loaded into an open
-      // in memory database are available after the import.
-      // see issue #5245
-      database.getMetadata().reload();
-
-      database.getStorage().synch();
-      // status concept seems deprecated, but status `OPEN` is checked elsewhere
-      database.setStatus(STATUS.OPEN);
-
-      if (isDeleteRIDMapping()) {
-        removeExportImportRIDsMap();
-      }
-      listener.onMessage(
-          "\n\nDatabase import completed in " + ((System.nanoTime() - time) / 1000000) + " ms");
-    } catch (final Exception e) {
-      final StringWriter writer = new StringWriter();
-      writer.append(
-          "Error on database import happened just before line "
-              + jsonReader.getLineNumber()
-              + ", column "
-              + jsonReader.getColumnNumber()
-              + "\n");
-      final PrintWriter printWriter = new PrintWriter(writer);
-      e.printStackTrace(printWriter);
-      printWriter.flush();
-
-      listener.onMessage(writer.toString());
-
-      try {
-        writer.close();
-      } catch (final IOException e1) {
-        throw new ODatabaseExportException(
-            "Error on importing database '" + database.getName() + "' from file: " + fileName, e1);
-      }
-      throw new ODatabaseExportException(
-          "Error on importing database '" + database.getName() + "' from file: " + fileName, e);
-    } finally {
-      database.setValidationEnabled(preValidation);
-      close();
-    }
-    return this;
-  }
-
   // TODO: WIP - adding jackson stream parser replacing old logic
   public ODatabaseImport importDatabaseStreamed() {
     final boolean preValidation = database.isValidationEnabled();
@@ -2621,7 +2531,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     database.getMetadata().reload();
 
     final Set<ORID> brokenRids = new HashSet<>();
-    processBrokenRids(brokenRids);
+    processBrokenRids(parser, brokenRids);
     listener.onMessage(
         String.format(
             "\n\nDone. Imported %,d records in %,.2f secs\n",
