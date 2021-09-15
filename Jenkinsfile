@@ -45,15 +45,15 @@ node {
                   //sh "cd orientdb && rsync -ra --stats ${WORKSPACE}/target/site/apidocs/ -e ${env.RSYNC_JAVADOC}/${env.BRANCH_NAME}/"
               }
 
-              try{
-                  if (!env.BRANCH_NAME.contains("dritter")){ // TODO: add "!env.BRANCH_NAME.startsWith("WIP") &&"
-                    build job: "orientdb-gremlin-multibranch/${env.BRANCH_NAME}", wait: false
-                    build job: "orientdb-security-multibranch/${env.BRANCH_NAME}", wait: false
-                    build job: "orientdb-sap-enterprise-multibranch/${env.BRANCH_NAME}", wait: false
-                  }
-              } catch (ex){
-                  slackSend(color: '#FFAAAA', channel: '#jenkins-failures', message: "Error scheduling downstream builds: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})\n${ex}")
-              }
+              //try{
+                  //if (!env.BRANCH_NAME.contains("dritter")){ // TODO: add "!env.BRANCH_NAME.startsWith("WIP") &&"
+                  //  build job: "orientdb-gremlin-multibranch/${env.BRANCH_NAME}", wait: false
+                  //  build job: "orientdb-security-multibranch/${env.BRANCH_NAME}", wait: false
+                  //  build job: "orientdb-sap-enterprise-multibranch/${env.BRANCH_NAME}", wait: false
+                  //}
+              //} catch (ex){
+              //    slackSend(color: '#FFAAAA', channel: '#jenkins-failures', message: "Error scheduling downstream builds: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})\n${ex}")
+              //}
 
           }catch(e){
               slackSend(color: '#FF0000', channel: '#jenkins-failures', message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})\n${e}")
