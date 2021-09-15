@@ -46,7 +46,7 @@ node {
               }
 
               try{
-                  if (!env.BRANCH_NAME.startsWith('WIP') && !env.BRANCH_NAME.startsWith('dritter')){
+                  if (!env.BRANCH_NAME.startsWith("dritter")){ // TODO: add "!env.BRANCH_NAME.startsWith("WIP") &&"
                     build job: "orientdb-gremlin-multibranch/${env.BRANCH_NAME}", wait: false
                     build job: "orientdb-security-multibranch/${env.BRANCH_NAME}", wait: false
                     build job: "orientdb-sap-enterprise-multibranch/${env.BRANCH_NAME}", wait: false
