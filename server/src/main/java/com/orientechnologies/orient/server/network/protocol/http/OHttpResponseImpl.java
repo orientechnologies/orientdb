@@ -78,7 +78,7 @@ public class OHttpResponseImpl extends OHttpResponse {
     }
 
     if (getSessionId() != null) {
-      String sameSite = (isSameSiteCookie() ? "SameSite=Strict; Secure" : "");
+      String sameSite = (isSameSiteCookie() ? "SameSite=Strict;" : "");
       writeLine(
           "Set-Cookie: "
               + OHttpUtils.OSESSIONID
