@@ -1,9 +1,6 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.mmap;
 
 import com.orientechnologies.common.concur.lock.ScalableRWLock;
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-
-import com.orientechnologies.common.serialization.types.OShortSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecordsFactory;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.WriteableWALRecord;
@@ -23,13 +20,10 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.mmap.ReadOnlyWALSegment.*;
+
 public final class ModifiableWALSegment implements AutoCloseable {
   private static final XXHash64 xxHash = XXHashFactory.fastestInstance().hash64();
-
-  private static final long XX_HASH_SEED = 0xA36FE94F;
-
-  private static final int XX_HASH_SIZE = 8;
-
   private final Path segmentPath;
 
   private final AtomicInteger currentPosition = new AtomicInteger();
@@ -39,7 +33,8 @@ public final class ModifiableWALSegment implements AutoCloseable {
   private final ScalableRWLock syncLock = new ScalableRWLock();
 
   private final MappedByteBuffer buffer;
-  private final int segmentSize;
+  private final ByteBuffer dataBuffer;
+
   private final long segmentIndex;
 
   private boolean synced = false;
@@ -50,17 +45,25 @@ public final class ModifiableWALSegment implements AutoCloseable {
 
   public ModifiableWALSegment(
       final Path segmentPath, final int segmentSize, final long segmentIndex) throws IOException {
-    this.segmentPath = segmentPath;
-    this.segmentSize = segmentSize;
-    this.segmentIndex = segmentIndex;
+    syncLock.exclusiveLock();
+    try {
+      this.segmentPath = segmentPath;
+      this.segmentIndex = segmentIndex;
 
-    try (final FileChannel fileChannel =
-        FileChannel.open(
-            segmentPath,
-            StandardOpenOption.READ,
-            StandardOpenOption.CREATE_NEW,
-            StandardOpenOption.WRITE)) {
-      buffer = fileChannel.map(FileChannel.MapMode.READ_WRITE, 0, segmentSize);
+      try (final FileChannel fileChannel =
+          FileChannel.open(
+              segmentPath,
+              StandardOpenOption.READ,
+              StandardOpenOption.CREATE_NEW,
+              StandardOpenOption.WRITE)) {
+        buffer = fileChannel.map(FileChannel.MapMode.READ_WRITE, 0, segmentSize);
+      }
+
+      buffer.position(METADATA_SIZE);
+
+      dataBuffer = buffer.slice();
+    } finally {
+      syncLock.exclusiveUnlock();
     }
   }
 
@@ -75,22 +78,25 @@ public final class ModifiableWALSegment implements AutoCloseable {
       }
 
       final int recordSize = record.serializedSize();
+      if (recordSize + RECORD_SYSTEM_DATA_SIZE > dataBuffer.capacity()) {
+        throw new IllegalArgumentException(
+            "Record size exceeds maximum allowed size of the record "
+                + recordSize
+                + " vs "
+                + (dataBuffer.capacity() - RECORD_SYSTEM_DATA_SIZE));
+      }
+
       int position = this.currentPosition.get();
       while (true) {
-        final long newPosition =
-            position
-                + recordSize
-                + XX_HASH_SIZE
-                + OIntegerSerializer.INT_SIZE
-                + OShortSerializer.SHORT_SIZE;
-        if (newPosition < segmentSize) {
+        final long newPosition = position + recordSize + RECORD_SYSTEM_DATA_SIZE;
+        if (newPosition < dataBuffer.capacity()) {
           if (currentPosition.compareAndSet(position, (int) newPosition)) {
             final OLogSequenceNumber lsn = new OLogSequenceNumber(segmentIndex, position);
 
             record.setOperationIdLsn(lsn, 0);
             records.put(position, record);
 
-            final ByteBuffer copy = buffer.duplicate();
+            final ByteBuffer copy = dataBuffer.duplicate();
             copy.position(position);
 
             copy.putShort((short) record.getId());
@@ -99,10 +105,7 @@ public final class ModifiableWALSegment implements AutoCloseable {
 
             final long hash =
                 xxHash.hash(
-                    copy,
-                    position,
-                    recordSize + OIntegerSerializer.INT_SIZE + OShortSerializer.SHORT_SIZE,
-                    XX_HASH_SEED);
+                    copy, position, recordSize + RECORD_SIZE_SIZE + RECORD_ID_SIZE, XX_HASH_SEED);
 
             copy.putLong(hash);
 
@@ -137,16 +140,15 @@ public final class ModifiableWALSegment implements AutoCloseable {
               + segmentIndex);
     }
 
-    if (lsn.getPosition() >= segmentSize) {
+    if (lsn.getPosition() >= dataBuffer.capacity()) {
       throw new IllegalArgumentException(
           "Requested record position "
               + lsn.getPosition()
               + " bigger than segment size "
-              + segmentSize);
+              + dataBuffer.capacity());
     }
 
-    if (lsn.getPosition()
-        >= segmentSize - OIntegerSerializer.INT_SIZE - OShortSerializer.SHORT_SIZE - XX_HASH_SIZE) {
+    if (lsn.getPosition() >= dataBuffer.capacity() - RECORD_SYSTEM_DATA_SIZE) {
       return Optional.empty();
     }
 
@@ -154,7 +156,7 @@ public final class ModifiableWALSegment implements AutoCloseable {
       return Optional.ofNullable(records.get(lsn.getPosition()));
     }
 
-    final ByteBuffer copy = buffer.duplicate();
+    final ByteBuffer copy = dataBuffer.duplicate();
     copy.position(lsn.getPosition());
 
     final int recordId = copy.getShort();
@@ -164,26 +166,15 @@ public final class ModifiableWALSegment implements AutoCloseable {
 
     final int recordSize = copy.getInt();
     if (recordSize < 0
-        || lsn.getPosition()
-                + OIntegerSerializer.INT_SIZE
-                + OShortSerializer.SHORT_SIZE
-                + recordSize
-                + XX_HASH_SIZE
-            > segmentSize) {
+        || lsn.getPosition() +  recordSize + RECORD_SYSTEM_DATA_SIZE
+            > dataBuffer.capacity()) {
       return Optional.empty();
     }
 
     final long hash =
-        copy.getLong(
-            lsn.getPosition()
-                + OShortSerializer.SHORT_SIZE
-                + OIntegerSerializer.INT_SIZE
-                + recordSize);
+        copy.getLong(lsn.getPosition() + RECORD_ID_SIZE + RECORD_SIZE_SIZE + recordSize);
     if (xxHash.hash(
-            copy,
-            lsn.getPosition(),
-            OShortSerializer.SHORT_SIZE + OIntegerSerializer.INT_SIZE + recordSize,
-            XX_HASH_SEED)
+            copy, lsn.getPosition(), RECORD_ID_SIZE + RECORD_SIZE_SIZE + recordSize, XX_HASH_SEED)
         != hash) {
       return Optional.empty();
     }
@@ -212,9 +203,7 @@ public final class ModifiableWALSegment implements AutoCloseable {
     final int nextPosition =
         record.getOperationIdLSN().lsn.getPosition()
             + serializedSize
-            + OShortSerializer.SHORT_SIZE
-            + OIntegerSerializer.INT_SIZE
-            + XX_HASH_SIZE;
+            + RECORD_SYSTEM_DATA_SIZE;
 
     if (!synced) {
       return Optional.ofNullable(records.get(nextPosition));
@@ -251,13 +240,21 @@ public final class ModifiableWALSegment implements AutoCloseable {
       return;
     }
 
-    buffer.force();
-
     if (!records.isEmpty()) {
       firstRecord = records.firstKey();
       lastRecord = records.lastKey();
       records.clear();
     }
+
+    buffer.position(0);
+
+    buffer.putInt(firstRecord);
+    buffer.putInt(lastRecord);
+
+    final long hash = xxHash.hash(buffer, 0, METADATA_SIZE, XX_HASH_SEED);
+    buffer.putLong(hash);
+
+    buffer.force();
 
     synced = true;
   }
