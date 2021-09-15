@@ -177,8 +177,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     else super.parseSetting(option, items);
   }
 
-  /* Alternative API proposal using JSON stream parsing.
-   */
+  /* Alternative API proposal using JSON stream parsing. */
   public ODatabaseImport importDatabaseStreamed() {
     final boolean preValidation = database.isValidationEnabled();
 
