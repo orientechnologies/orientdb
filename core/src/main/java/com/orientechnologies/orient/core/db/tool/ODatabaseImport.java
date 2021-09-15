@@ -114,7 +114,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       throws IOException {
     super(database, fileName, outputListener);
 
-    // FIXME: unclosed stream?
+    // TODO: check unclosed stream?
     final BufferedInputStream bufferedInputStream =
         new BufferedInputStream(new FileInputStream(this.fileName));
     bufferedInputStream.mark(1024);
@@ -177,7 +177,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     else super.parseSetting(option, items);
   }
 
-  // TODO: WIP - adding jackson stream parser replacing old logic
+  /* Alternative API proposal using JSON stream parsing.
+   */
   public ODatabaseImport importDatabaseStreamed() {
     final boolean preValidation = database.isValidationEnabled();
 
