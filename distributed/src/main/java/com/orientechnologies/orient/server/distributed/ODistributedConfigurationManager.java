@@ -2,7 +2,6 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedOutput;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastClusterMetadataManager;
 import java.io.File;
 import java.io.FileInputStream;
