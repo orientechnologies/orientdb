@@ -141,7 +141,7 @@ public final class BinaryBTree extends ODurableComponent {
         }
 
         if (index >= 0) {
-          pageIndex = keyBucket.getLeft(index);
+          pageIndex = keyBucket.getRight(index);
         } else {
           final int insertionIndex = -index - 1;
           if (insertionIndex >= keyBucket.size()) {
@@ -309,18 +309,10 @@ public final class BinaryBTree extends ODurableComponent {
     final int bucketSize = bucketToSplit.size();
 
     final int indexToSplit = bucketSize >>> 1;
-    // if we split leaf bucket we split bucket by half and all entries to the left should be less or
-    // equal to the
-    // separation key. If we split non-leaf bucket then separation key is removed from the child
-    // and put into the parent
-    // so above mentioned invariant is hold automatically
-    final byte[] separationKey =
-        splitLeaf ? bucketToSplit.getKey(indexToSplit - 1) : bucketToSplit.getKey(indexToSplit);
+    final byte[] separationKey = bucketToSplit.getKey(indexToSplit);
 
     final List<byte[]> rightEntries = new ArrayList<>(indexToSplit);
 
-    // we remove the separation key from the child in case of non-leaf node that is why skip first
-    // entry
     final int startRightIndex = splitLeaf ? indexToSplit : indexToSplit + 1;
 
     for (int i = startRightIndex; i < bucketSize; i++) {
@@ -436,9 +428,7 @@ public final class BinaryBTree extends ODurableComponent {
         new ArrayList<>(itemPointers.subList(0, itemPointers.size() - 1));
 
     if (splitLeaf) {
-      // key to insert is smaller than separation key, entry is going to be inserted into the left
-      // bucket
-      if (keyIndex < indexToSplit) {
+      if (keyIndex <= indexToSplit) {
         resultPath.add(pageIndex);
         resultItemPointers.add(keyIndex);
 
@@ -582,7 +572,7 @@ public final class BinaryBTree extends ODurableComponent {
     final ArrayList<Integer> itemPointers = new ArrayList<>(8);
 
     if (splitLeaf) {
-      if (keyIndex < indexToSplit) {
+      if (keyIndex <= indexToSplit) {
         itemPointers.add(-1);
         itemPointers.add(keyIndex);
 
@@ -639,8 +629,8 @@ public final class BinaryBTree extends ODurableComponent {
         }
 
         if (index >= 0) {
-          pageIndex = keyBucket.getLeft(index);
-          itemIndexes.add(index);
+          pageIndex = keyBucket.getRight(index);
+          itemIndexes.add(index + 1);
         } else {
           final int insertionIndex = -index - 1;
 
@@ -1449,9 +1439,9 @@ public final class BinaryBTree extends ODurableComponent {
         }
 
         if (index >= 0) {
-          path.add(new RemovalPathItem(pageIndex, index, true));
+          path.add(new RemovalPathItem(pageIndex, index, false));
 
-          pageIndex = bucket.getLeft(index);
+          pageIndex = bucket.getRight(index);
         } else {
           final int insertionIndex = -index - 1;
           if (insertionIndex >= bucket.size()) {
