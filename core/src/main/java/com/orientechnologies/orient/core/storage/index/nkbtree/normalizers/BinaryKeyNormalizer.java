@@ -1,15 +1,23 @@
 package com.orientechnologies.orient.core.storage.index.nkbtree.normalizers;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 
-public class BinaryKeyNormalizer implements KeyNormalizers {
+public final class BinaryKeyNormalizer implements KeyNormalizer {
   @Override
-  public byte[] execute(Object key, int decomposition) throws IOException {
+  public int normalizedSize(Object key) {
     final byte[] matKey = (byte[]) key;
-    final ByteBuffer bb = ByteBuffer.allocate(1 + matKey.length);
-    bb.put((byte) 0);
-    bb.put(matKey);
-    return bb.array();
+    return matKey.length;
+  }
+
+  @Override
+  public int normalize(Object key, int offset, byte[] stream) {
+    final byte[] matKey = (byte[]) key;
+
+    final ByteBuffer buffer = ByteBuffer.wrap(stream);
+    buffer.position(offset);
+
+    buffer.put(matKey);
+
+    return buffer.position();
   }
 }

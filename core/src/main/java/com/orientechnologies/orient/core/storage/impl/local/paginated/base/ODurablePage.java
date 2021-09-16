@@ -185,6 +185,22 @@ public class ODurablePage {
     return changes.getLongValue(pointer.getBufferDuplicate(), pageOffset);
   }
 
+  protected final ByteBuffer getBinaryValueBuffer(final int pageOffset, final int valLen) {
+    final ByteBuffer buffer = pointer.getBufferDuplicate();
+
+    if (changes == null) {
+      assert buffer != null;
+      assert buffer.order() == ByteOrder.nativeOrder();
+
+      buffer.position(pageOffset);
+      buffer.limit(pageOffset + valLen);
+
+      return buffer.slice();
+    }
+
+    return ByteBuffer.wrap(changes.getBinaryValue(buffer, pageOffset, valLen));
+  }
+
   protected final byte[] getBinaryValue(final int pageOffset, final int valLen) {
     final ByteBuffer buffer = pointer.getBufferDuplicate();
 
@@ -262,11 +278,11 @@ public class ODurablePage {
 
   protected final int setShortValue(final int pageOffset, final short value) {
     final ByteBuffer buffer = pointer.getBuffer();
-    assert buffer != null;
 
     if (changes != null) {
       changes.setIntValue(buffer, value, pageOffset);
     } else {
+      assert buffer != null;
       assert buffer.order() == ByteOrder.nativeOrder();
       buffer.putShort(pageOffset, value);
     }
