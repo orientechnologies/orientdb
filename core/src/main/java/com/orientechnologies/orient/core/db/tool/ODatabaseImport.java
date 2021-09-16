@@ -114,7 +114,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       throws IOException {
     super(database, fileName, outputListener);
 
-    // FIXME: unclosed stream
+    // TODO: check unclosed stream?
     final BufferedInputStream bufferedInputStream =
         new BufferedInputStream(new FileInputStream(this.fileName));
     bufferedInputStream.mark(1024);
@@ -147,6 +147,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     jsonReader = new OJSONReader(new InputStreamReader(inputStream));
     database.declareIntent(new OIntentMassiveInsert());
 
+    // TODO: replace jsonReader by JsonParser for all imports, based on the exporter version?!
     input = inputStream;
   }
 
@@ -159,7 +160,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   @Override
   public void run() {
     importDatabase();
-    // TODO: importDatabaseV2();
+    // TODO importDatabaseStreamed();
   }
 
   @Override
@@ -176,98 +177,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     else super.parseSetting(option, items);
   }
 
-  // TODO: WIP - using existing OJSONReader
-  public ODatabaseImport importDatabaseV3() {
-    final boolean preValidation = database.isValidationEnabled();
-    try (final JsonParser parser = factory.createParser(input)) {
-      listener.onMessage(
-          "\nStarted import of database '" + database.getURL() + "' from " + fileName + "...");
-      final long time = System.nanoTime();
-
-      jsonReader.readNext(parser, JsonToken.START_OBJECT);
-      database.setValidationEnabled(false);
-      // status concept seems deprecated - status `IMPORTING` never checked
-      database.setStatus(STATUS.IMPORTING);
-
-      if (!merge) {
-        removeDefaultNonSecurityClasses();
-        database.getMetadata().getIndexManagerInternal().reload();
-      }
-
-      for (final OIndex index :
-          database.getMetadata().getIndexManagerInternal().getIndexes(database)) {
-        if (index.isAutomatic()) indexesToRebuild.add(index.getName());
-      }
-
-      boolean clustersImported = false;
-      while (!parser.isClosed()) {
-        // while (jsonReader.hasNext() && jsonReader.lastChar() != '}') {
-        // final String tag = jsonReader.readString(OJSONReader.FIELD_ASSIGNMENT);
-        final String tag = jsonReader.readString(parser, JsonToken.FIELD_NAME);
-
-        if (tag.equals("info")) {
-          importInfoV2(parser);
-        } else if (tag.equals("clusters")) {
-          importClusters();
-          clustersImported = true;
-        } else if (tag.equals("schema")) importSchema(clustersImported);
-        else if (tag.equals("records")) importRecords();
-        else if (tag.equals("indexes")) importIndexes();
-        else if (tag.equals("manualIndexes")) importManualIndexes();
-        else if (tag.equals("brokenRids")) {
-          processBrokenRids();
-        } else
-          throw new ODatabaseImportException("Invalid format. Found unsupported tag '" + tag + "'");
-      }
-      if (rebuildIndexes) {
-        rebuildIndexes();
-      }
-
-      // This is needed to insure functions loaded into an open
-      // in memory database are available after the import.
-      // see issue #5245
-      database.getMetadata().reload();
-
-      database.getStorage().synch();
-      // status concept seems deprecated, but status `OPEN` is checked elsewhere
-      database.setStatus(STATUS.OPEN);
-
-      if (isDeleteRIDMapping()) {
-        removeExportImportRIDsMap();
-      }
-      listener.onMessage(
-          "\n\nDatabase import completed in " + ((System.nanoTime() - time) / 1000000) + " ms");
-    } catch (final Exception e) {
-      final StringWriter writer = new StringWriter();
-      writer.append(
-          "Error on database import happened just before line "
-              + jsonReader.getLineNumber()
-              + ", column "
-              + jsonReader.getColumnNumber()
-              + "\n");
-      final PrintWriter printWriter = new PrintWriter(writer);
-      e.printStackTrace(printWriter);
-      printWriter.flush();
-
-      listener.onMessage(writer.toString());
-
-      try {
-        writer.close();
-      } catch (final IOException e1) {
-        throw new ODatabaseExportException(
-            "Error on importing database '" + database.getName() + "' from file: " + fileName, e1);
-      }
-      throw new ODatabaseExportException(
-          "Error on importing database '" + database.getName() + "' from file: " + fileName, e);
-    } finally {
-      database.setValidationEnabled(preValidation);
-      close();
-    }
-    return this;
-  }
-
-  // TODO: WIP - adding jackson stream parser replacing old logic
-  public ODatabaseImport importDatabaseV2() {
+  /* Alternative API proposal using JSON stream parsing. */
+  public ODatabaseImport importDatabaseStreamed() {
     final boolean preValidation = database.isValidationEnabled();
 
     try (final JsonParser parser = factory.createParser(input)) {
@@ -303,14 +214,16 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
             importSchema(parser, clustersImported);
           } else if (parser.getValueAsString().equals("records")) {
             importRecords(parser);
+          } else if (parser.getValueAsString().equals("indexes")) {
+            importIndexes(parser);
+          } /*else if (parser.getValueAsString().equals("manualIndexes")) {
+              importManualIndexes(parser);
+            }*/ else if (parser.getValueAsString().equals("brokenRids")) {
+            processBrokenRids(parser);
+          } else {
+            throw new ODatabaseImportException(
+                "Invalid format. Found unsupported tag '" + jsonToken + "'");
           }
-          /*FIXME:
-          else if (tag.equals("indexes")) importIndexes();
-          else if (tag.equals("manualIndexes")) importManualIndexes();
-          else if (tag.equals("brokenRids")) {
-            processBrokenRids();
-          } else
-            throw new ODatabaseImportException("Invalid format. Found unsupported tag '" + tag + "'");*/
         }
       }
       if (rebuildIndexes) {
@@ -593,6 +506,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     listener.onMessage("\nDone " + indexesToRebuild.size() + " indexes were rebuilt.");
   }
 
+  @Deprecated
   public ODatabaseImport importDatabase() {
     final boolean preValidation = database.isValidationEnabled();
     try {
@@ -680,12 +594,20 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     return this;
   }
 
+  @Deprecated
   private void processBrokenRids() throws IOException, ParseException {
     final Set<ORID> brokenRids = new HashSet<>();
     processBrokenRids(brokenRids);
     jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
   }
 
+  private void processBrokenRids(final JsonParser parser) throws IOException, ParseException {
+    final Set<ORID> brokenRids = new HashSet<>();
+    processBrokenRids(parser, brokenRids);
+    // jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
+  }
+
+  @Deprecated
   // just read collection so import process can continue
   private void processBrokenRids(final Set<ORID> brokenRids) throws IOException, ParseException {
     if (exporterVersion >= 12) {
@@ -700,6 +622,41 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         brokenRids.add(recordId);
 
         if (jsonReader.lastChar() == ']') break;
+      }
+    }
+    if (migrateLinks) {
+      if (exporterVersion >= 12)
+        listener.onMessage(
+            brokenRids.size()
+                + " were detected as broken during database export, links on those records will be removed from"
+                + " result database");
+      migrateLinksInImportedDocuments(brokenRids);
+    }
+  }
+
+  // TODO refactor
+  // read collection and migrate broken RIDs so that the import process can continue
+  private void processBrokenRids(final JsonParser parser, final Set<ORID> brokenRids)
+      throws IOException, ParseException {
+    JsonToken jsonToken = parser.nextToken();
+    if (exporterVersion >= 12) {
+      listener.onMessage(
+          "Reading of set of RIDs of records which were detected as broken during database export\n");
+      // jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
+      while (!JsonToken.START_ARRAY.equals(jsonToken)) {
+        jsonToken = parser.nextToken();
+      }
+      jsonToken = parser.nextToken();
+      while (!JsonToken.END_ARRAY.equals(jsonToken)) {
+        // while (true) {
+        // jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
+
+        // final ORecordId recordId = new ORecordId(jsonReader.getValue());
+        final ORecordId recordId = new ORecordId(parser.getValueAsString());
+        brokenRids.add(recordId);
+
+        // if (jsonReader.lastChar() == ']') break;
+        jsonToken = parser.nextToken();
       }
     }
     if (migrateLinks) {
@@ -848,6 +805,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     listener.onMessage("OK");
   }
 
+  @Deprecated
   private void importInfo() throws IOException, ParseException {
     listener.onMessage("\nImporting database info...");
 
@@ -934,6 +892,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     listener.onMessage("\nRemoved " + removedClasses + " classes.");
   }
 
+  @Deprecated
   private void importManualIndexes() throws IOException, ParseException {
     listener.onMessage("\nImporting manual index entries...");
 
@@ -1025,6 +984,101 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     jsonReader.readNext(OJSONReader.NEXT_IN_OBJECT);
   }
 
+  // TODO: no manual indexes in the latest exported version?!
+  private void importManualIndexes(final JsonParser parser) throws IOException, ParseException {
+    listener.onMessage("\nImporting manual index entries...");
+
+    final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
+    // FORCE RELOADING
+    indexManager.reload();
+
+    final JsonToken jsonToken = parser.nextToken();
+    ODocument document = new ODocument();
+    int importedIndexes = 0;
+    while (!JsonToken.END_ARRAY.equals(jsonToken)) {
+      // do {
+      // jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
+      // TODO: from here
+      if (JsonToken.START_OBJECT.equals(jsonToken)) {}
+
+      jsonReader.readString(OJSONReader.FIELD_ASSIGNMENT);
+      final String indexName = jsonReader.readString(OJSONReader.NEXT_IN_ARRAY);
+
+      if (indexName == null || indexName.length() == 0) return;
+
+      listener.onMessage("\n- Index '" + indexName + "'...");
+
+      final OIndex index =
+          database.getMetadata().getIndexManagerInternal().getIndex(database, indexName);
+
+      long tot = 0;
+
+      jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
+
+      do {
+        final String value = jsonReader.readString(OJSONReader.NEXT_IN_ARRAY).trim();
+        if ("[]".equals(value)) {
+          return;
+        }
+
+        if (!value.isEmpty()) {
+          document = (ODocument) ORecordSerializerJSON.INSTANCE.fromString(value, document, null);
+          document.setLazyLoad(false);
+
+          final OIdentifiable oldRid = document.field("rid");
+          assert oldRid != null;
+
+          final OIdentifiable newRid;
+          if (!document.<Boolean>field("binary")) {
+            try (final OResultSet result =
+                database.query(
+                    "select value from " + EXPORT_IMPORT_CLASS_NAME + " where key = ?",
+                    String.valueOf(oldRid))) {
+              if (!result.hasNext()) {
+                newRid = oldRid;
+              } else {
+                newRid = new ORecordId(result.next().<String>getProperty("value"));
+              }
+            }
+
+            index.put(document.field("key"), newRid.getIdentity());
+          } else {
+            ORuntimeKeyIndexDefinition<?> runtimeKeyIndexDefinition =
+                (ORuntimeKeyIndexDefinition<?>) index.getDefinition();
+            OBinarySerializer<?> binarySerializer = runtimeKeyIndexDefinition.getSerializer();
+
+            try (final OResultSet result =
+                database.query(
+                    "select value from " + EXPORT_IMPORT_CLASS_NAME + " where key = ?",
+                    String.valueOf(document.<OIdentifiable>field("rid")))) {
+              if (!result.hasNext()) {
+                newRid = document.field("rid");
+              } else {
+                newRid = new ORecordId(result.next().<String>getProperty("value"));
+              }
+            }
+
+            index.put(binarySerializer.deserialize(document.field("key"), 0), newRid);
+          }
+          tot++;
+        }
+      } while (jsonReader.lastChar() == ',');
+
+      if (index != null) {
+        listener.onMessage("OK (" + tot + " entries)");
+        importedIndexes++;
+      } else listener.onMessage("ERR, the index wasn't found in configuration");
+
+      jsonReader.readNext(OJSONReader.END_OBJECT);
+      jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
+    }
+    while (jsonReader.lastChar() == ',') ;
+
+    listener.onMessage("\nDone. Imported " + String.format("%,d", importedIndexes) + " indexes.");
+
+    jsonReader.readNext(OJSONReader.NEXT_IN_OBJECT);
+  }
+
   private void importSchema(final JsonParser parser, final boolean clustersImported)
       throws IOException, ParseException {
     if (!clustersImported) {
@@ -1046,7 +1100,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         // FIXME: implement (tests insufficient)
         while (!JsonToken.END_ARRAY.equals(jsonToken)) {
           jsonToken = parser.nextToken();
-          System.out.println("within blob-clusters: " + jsonToken);
+          OLogManager.instance().warn(this, "Blob-clusters not yet supported.");
           /*String blobClusterIds = jsonReader.readString(OJSONReader.END_COLLECTION, true).trim();
           blobClusterIds = blobClusterIds.substring(1, blobClusterIds.length() - 1);
 
@@ -1072,7 +1126,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         // FIXME: implement (tests insufficient)
         while (!JsonToken.END_ARRAY.equals(jsonToken)) {
           jsonToken = parser.nextToken();
-          System.out.println("within globalProperties: " + jsonToken);
+          OLogManager.instance().warn(this, "GlobalProperties not yet supported.");
           /*jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
           do {
             jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
@@ -1144,10 +1198,14 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
                 }
                 while (!JsonToken.END_ARRAY.equals(jsonToken)) {
                   jsonToken = parser.nextToken();
-                  if (JsonToken.VALUE_NUMBER_INT.equals(jsonToken)) {
+                  if (JsonToken.VALUE_NUMBER_INT.equals(jsonToken) && clustersImported) {
                     int clusterId = parser.getValueAsInt();
                     // ASSIGN OTHER CLUSTER IDS
                     if (clusterId != -1) {
+                      if (!clusterToClusterMapping.isEmpty()
+                          && clusterToClusterMapping.get(classDefClusterId) != null) {
+                        clusterId = clusterToClusterMapping.get(clusterId);
+                      }
                       cls.addClusterId(clusterId);
                     }
                   }
@@ -1216,14 +1274,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         listener.onMessage("OK (" + classImported + " classes)");
         schemaImported = true;
       } else if (!JsonToken.START_ARRAY.equals(jsonToken)) {
-        System.out.println(jsonToken);
         jsonToken = parser.nextToken();
       } else {
-        final StringBuffer sb = new StringBuffer();
-        sb.append("\t" + jsonToken + "=" + parser.getValueAsString()).append(":::");
         jsonToken = parser.nextToken();
-        sb.append(jsonToken + " " + parser.getValueAsString());
-        System.out.println(sb.toString());
       }
     }
 
@@ -1539,7 +1592,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           propertyType = OType.valueOf(type);
         } else if (parser.getValueAsString().equals("customFields")) {
           jsonToken = parser.nextToken();
-          System.out.println(jsonToken + "-" + parser.getValueAsString());
         } else {
           final String value = parser.getValueAsString();
           if (value.equals("min")) {
@@ -2148,7 +2200,11 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     return record.getIdentity();
   }
 
-  // TODO: WIP
+  /**
+   * From `exporterVersion` >= `13`, `fromStream()` will be used. However, the import is still of
+   * type String, and thus has to be converted to InputStream, which can only be avoided by
+   * introducing a new interface method.
+   */
   @Deprecated
   private ORID importRecord(final HashSet<ORID> recordsBeforeImport) throws Exception {
     OPair<String, Map<String, ORidSet>> recordParse =
@@ -2173,12 +2229,12 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     Set<Integer> skippedPartsIndexes = new HashSet<>();
 
     try {
-
       try {
-        if (exporterVersion < 13) {
+        if (exporterVersion >= 13) {
           record =
-              ORecordSerializerJSON.INSTANCE.fromString(
-                  value,
+              ORecordSerializerJSON.INSTANCE.fromStream(
+                  // FIXME: adapt e2e stream handling will require new APIs
+                  new ByteArrayInputStream(value.getBytes()),
                   record,
                   null,
                   null,
@@ -2186,7 +2242,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
                   maxRidbagStringSizeBeforeLazyImport,
                   skippedPartsIndexes);
         } else {
-          // FIXME: switch to `fromStream` + adapt e2e stream handling
           record =
               ORecordSerializerJSON.INSTANCE.fromString(
                   value,
@@ -2226,7 +2281,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
               new ODatabaseImportException("Error on importing record"), e);
       }
 
-      // Incorrect record format , skip this record
+      // Incorrect record format, skip this record
       if (record == null || record.getIdentity() == null) {
         OLogManager.instance().warn(this, "Broken record was detected and will be skipped");
         return null;
@@ -2323,13 +2378,11 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
                     + loadedRecord.getClass()
                     + " .");
           }
-
           ORecordInternal.setVersion(record, loadedRecord.getVersion());
         } else {
           ORecordInternal.setVersion(record, 0);
           ORecordInternal.setIdentity(record, new ORecordId());
         }
-
         record.setDirty();
 
         if (!preserveRids
@@ -2478,7 +2531,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     database.getMetadata().reload();
 
     final Set<ORID> brokenRids = new HashSet<>();
-    processBrokenRids(brokenRids);
+    processBrokenRids(parser, brokenRids);
     listener.onMessage(
         String.format(
             "\n\nDone. Imported %,d records in %,.2f secs\n",
@@ -2495,7 +2548,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     if (schema.getClass(EXPORT_IMPORT_CLASS_NAME) != null) {
       schema.dropClass(EXPORT_IMPORT_CLASS_NAME);
     }
-
     final OClass cls = schema.createClass(EXPORT_IMPORT_CLASS_NAME);
     cls.createProperty("key", OType.STRING);
     cls.createProperty("value", OType.STRING);
@@ -2810,7 +2862,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     return record.getIdentity();
   }*/
 
-  private void importSkippedRidbag(ORecord record, Map<String, ORidSet> bags) {
+  private void importSkippedRidbag(final ORecord record, final Map<String, ORidSet> bags) {
     if (bags == null) {
       return;
     }
@@ -2875,6 +2927,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     }
   }
 
+  @Deprecated
   private void importIndexes() throws IOException, ParseException {
     listener.onMessage("\n\nImporting indexes ...");
 
@@ -2883,7 +2936,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
     jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
 
-    int n = 0;
+    int numberOfCreatedIndexes = 0;
     while (jsonReader.lastChar() != ']') {
       jsonReader.readNext(OJSONReader.NEXT_OBJ_IN_ARRAY);
       if (jsonReader.lastChar() == ']') {
@@ -2927,68 +2980,174 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         } else if (fieldName.equals("blueprintsIndexClass"))
           blueprintsIndexClass = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
       }
-
-      if (indexName == null) throw new IllegalArgumentException("Index name is missing");
-
       jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
 
-      // drop automatically created indexes
-      if (!indexName.equalsIgnoreCase(EXPORT_IMPORT_INDEX_NAME)) {
-        listener.onMessage("\n- Index '" + indexName + "'...");
-
-        indexManager.dropIndex(database, indexName);
-        indexesToRebuild.remove(indexName);
-        List<Integer> clusterIds = new ArrayList<>();
-
-        for (final String clusterName : clustersToIndex) {
-          int id = database.getClusterIdByName(clusterName);
-          if (id != -1) clusterIds.add(id);
-          else
-            listener.onMessage(
-                String.format(
-                    "found not existent cluster '%s' in index '%s' configuration, skipping",
-                    clusterName, indexName));
-        }
-        int[] clusterIdsToIndex = new int[clusterIds.size()];
-
-        int i = 0;
-        for (Integer clusterId : clusterIds) {
-          clusterIdsToIndex[i] = clusterId;
-          i++;
-        }
-
-        if (indexDefinition == null) {
-          indexDefinition = new OSimpleKeyIndexDefinition(OType.STRING);
-        }
-
-        boolean oldValue =
-            OGlobalConfiguration.INDEX_IGNORE_NULL_VALUES_DEFAULT.getValueAsBoolean();
-        OGlobalConfiguration.INDEX_IGNORE_NULL_VALUES_DEFAULT.setValue(
-            indexDefinition.isNullValuesIgnored());
-        final OIndex index =
-            indexManager.createIndex(
-                database,
-                indexName,
-                indexType,
-                indexDefinition,
-                clusterIdsToIndex,
-                null,
-                metadata,
-                indexAlgorithm);
-        OGlobalConfiguration.INDEX_IGNORE_NULL_VALUES_DEFAULT.setValue(oldValue);
-        if (blueprintsIndexClass != null) {
-          ODocument configuration = index.getConfiguration();
-          configuration.field("blueprintsIndexClass", blueprintsIndexClass);
-          indexManager.save();
-        }
-
-        n++;
-        listener.onMessage("OK");
-      }
+      numberOfCreatedIndexes =
+          dropAutoCreatedIndexesAndCountCreatedIndexes(
+              indexManager,
+              numberOfCreatedIndexes,
+              blueprintsIndexClass,
+              indexName,
+              indexType,
+              indexAlgorithm,
+              clustersToIndex,
+              indexDefinition,
+              metadata);
     }
-
-    listener.onMessage("\nDone. Created " + n + " indexes.");
+    listener.onMessage("\nDone. Created " + numberOfCreatedIndexes + " indexes.");
     jsonReader.readNext(OJSONReader.NEXT_IN_OBJECT);
+  }
+
+  private int dropAutoCreatedIndexesAndCountCreatedIndexes(
+      final OIndexManagerAbstract indexManager,
+      int numberOfCreatedIndexes,
+      final String blueprintsIndexClass,
+      final String indexName,
+      final String indexType,
+      final String indexAlgorithm,
+      final Set<String> clustersToIndex,
+      OIndexDefinition indexDefinition,
+      final ODocument metadata) {
+    if (indexName == null) throw new IllegalArgumentException("Index name is missing");
+
+    // drop automatically created indexes
+    if (!indexName.equalsIgnoreCase(EXPORT_IMPORT_INDEX_NAME)) {
+      listener.onMessage("\n- Index '" + indexName + "'...");
+
+      indexManager.dropIndex(database, indexName);
+      indexesToRebuild.remove(indexName);
+      List<Integer> clusterIds = new ArrayList<>();
+
+      for (final String clusterName : clustersToIndex) {
+        int id = database.getClusterIdByName(clusterName);
+        if (id != -1) clusterIds.add(id);
+        else
+          listener.onMessage(
+              String.format(
+                  "found not existent cluster '%s' in index '%s' configuration, skipping",
+                  clusterName, indexName));
+      }
+      int[] clusterIdsToIndex = new int[clusterIds.size()];
+
+      int i = 0;
+      for (Integer clusterId : clusterIds) {
+        clusterIdsToIndex[i] = clusterId;
+        i++;
+      }
+
+      if (indexDefinition == null) {
+        indexDefinition = new OSimpleKeyIndexDefinition(OType.STRING);
+      }
+
+      boolean oldValue = OGlobalConfiguration.INDEX_IGNORE_NULL_VALUES_DEFAULT.getValueAsBoolean();
+      OGlobalConfiguration.INDEX_IGNORE_NULL_VALUES_DEFAULT.setValue(
+          indexDefinition.isNullValuesIgnored());
+      final OIndex index =
+          indexManager.createIndex(
+              database,
+              indexName,
+              indexType,
+              indexDefinition,
+              clusterIdsToIndex,
+              null,
+              metadata,
+              indexAlgorithm);
+      OGlobalConfiguration.INDEX_IGNORE_NULL_VALUES_DEFAULT.setValue(oldValue);
+      if (blueprintsIndexClass != null) {
+        ODocument configuration = index.getConfiguration();
+        configuration.field("blueprintsIndexClass", blueprintsIndexClass);
+        indexManager.save();
+      }
+      numberOfCreatedIndexes++;
+      listener.onMessage("OK");
+    }
+    return numberOfCreatedIndexes;
+  }
+
+  private void importIndexes(final JsonParser parser) throws IOException, ParseException {
+    listener.onMessage("\n\nImporting indexes ...");
+
+    final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
+    indexManager.reload();
+
+    // jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
+    JsonToken jsonToken = parser.nextToken();
+
+    int numberOfCreatedIndexes = 0;
+    while (!JsonToken.END_ARRAY.equals(jsonToken)) {
+      // while (jsonReader.lastChar() != ']') {
+      //  jsonReader.readNext(OJSONReader.NEXT_OBJ_IN_ARRAY);
+      //  if (jsonReader.lastChar() == ']') {
+      //    break;
+      //  }
+
+      String blueprintsIndexClass = null;
+      String indexName = null;
+      String indexType = null;
+      String indexAlgorithm = null;
+      Set<String> clustersToIndex = new HashSet<>();
+      OIndexDefinition indexDefinition = null;
+      ODocument metadata = null;
+      Map<String, String> engineProperties = null;
+
+      // if (JsonToken.START_OBJECT.equals(jsonToken)) {
+      // while (jsonReader.lastChar() != '}') {
+      while (!JsonToken.END_OBJECT.equals(jsonToken)) {
+        // final String fieldName = jsonReader.readString(OJSONReader.FIELD_ASSIGNMENT);
+        if (JsonToken.FIELD_NAME.equals(jsonToken) && "name".equals(parser.getValueAsString())) {
+          indexName = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
+        } else if (JsonToken.FIELD_NAME.equals(jsonToken)
+            && "type".equals(parser.getValueAsString())) {
+          indexType = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
+        } else if (JsonToken.FIELD_NAME.equals(jsonToken)
+            && "algorithm".equals(parser.getValueAsString())) {
+          indexAlgorithm = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
+        } else if (JsonToken.FIELD_NAME.equals(jsonToken)
+            && "clusterToIndex".equals(parser.getValueAsString())) {
+          clustersToIndex = importClustersToIndex();
+        } else if (JsonToken.FIELD_NAME.equals(jsonToken)
+            && "definition".equals(parser.getValueAsString())) {
+          indexDefinition = importIndexDefinition();
+          jsonReader.readNext(OJSONReader.NEXT_IN_OBJECT);
+        } else if (JsonToken.FIELD_NAME.equals(jsonToken)
+            && "metadata".equals(parser.getValueAsString())) {
+          final String jsonMetadata = jsonReader.readString(OJSONReader.END_OBJECT, true);
+          metadata = new ODocument().fromJSON(jsonMetadata);
+          jsonReader.readNext(OJSONReader.NEXT_IN_OBJECT);
+        } else if (JsonToken.FIELD_NAME.equals(jsonToken)
+            && "engineProperties".equals(parser.getValueAsString())) {
+          final String jsonEngineProperties = jsonReader.readString(OJSONReader.END_OBJECT, true);
+          final Map<String, Object> map = new ODocument().fromJSON(jsonEngineProperties).toMap();
+          if (map != null) {
+            engineProperties = new HashMap<>(map.size());
+            for (Entry<String, Object> entry : map.entrySet()) {
+              map.put(entry.getKey(), entry.getValue());
+            }
+          }
+          jsonReader.readNext(OJSONReader.NEXT_IN_OBJECT);
+        } else if (JsonToken.FIELD_NAME.equals(jsonToken)
+            && "blueprintsIndexClass".equals(parser.getValueAsString())) {
+          blueprintsIndexClass = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
+        }
+        jsonToken = parser.nextToken();
+      }
+      // }
+      // jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
+      numberOfCreatedIndexes =
+          dropAutoCreatedIndexesAndCountCreatedIndexes(
+              indexManager,
+              numberOfCreatedIndexes,
+              blueprintsIndexClass,
+              indexName,
+              indexType,
+              indexAlgorithm,
+              clustersToIndex,
+              indexDefinition,
+              metadata);
+      jsonToken = parser.nextToken();
+    }
+    listener.onMessage("\nDone. Created " + numberOfCreatedIndexes + " indexes.");
+    // jsonReader.readNext(OJSONReader.NEXT_IN_OBJECT);
   }
 
   private Set<String> importClustersToIndex() throws IOException, ParseException {

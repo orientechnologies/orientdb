@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.core.record;
 
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -34,7 +33,6 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.cluster.OOfflineClusterException;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -169,18 +167,18 @@ public abstract class ORecordAbstract implements ORecord {
     return (RET) ORecordSerializerJSON.INSTANCE.fromString(iSource, this, null, needReload);
   }
 
-  public <RET extends ORecord> RET fromJSON(final InputStream iContentResult) throws IOException {
+  /*public <RET extends ORecord> RET fromJSON(final InputStream iContentResult) throws IOException {
     final ByteArrayOutputStream out = new ByteArrayOutputStream();
     OIOUtils.copyStream(iContentResult, out, -1);
     ORecordSerializerJSON.INSTANCE.fromString(out.toString(), this, null);
     return (RET) this;
-  }
+  }*/
 
-  // TODO: replace above by this
-  /*public <RET extends ORecord> RET fromJSON(final InputStream contentStream) throws IOException {
+  // requires streaming friendly placement of `fieldTypes` from exporter version 13 onwards
+  public <RET extends ORecord> RET fromJSON(final InputStream contentStream) throws IOException {
     ORecordSerializerJSON.INSTANCE.fromStream(contentStream, this, null);
     return (RET) this;
-  }*/
+  }
 
   public String toJSON() {
     return toJSON(DEFAULT_FORMAT);

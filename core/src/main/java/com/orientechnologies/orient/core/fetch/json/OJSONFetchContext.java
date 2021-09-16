@@ -17,6 +17,7 @@
 package com.orientechnologies.orient.core.fetch.json;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
@@ -269,27 +270,38 @@ public class OJSONFetchContext implements OFetchContext {
     return settings.alwaysFetchEmbeddedDocuments;
   }
 
-  protected void manageTypes(final String iFieldName, final Object iFieldValue, OType fieldType) {
+  protected void manageTypes(
+      final String fieldName, final Object fieldValue, final OType fieldType) {
+    // TODO: avoid `EmptyStackException`, but check root cause
+    if (typesStack.empty()) {
+      typesStack.push(new StringBuilder());
+      OLogManager.instance()
+          .warn(
+              OJSONFetchContext.class,
+              "Type stack in `manageTypes` null for `field` %s, `value` %s, and `type` %s.",
+              fieldName,
+              fieldValue,
+              fieldType);
+    }
     if (settings.keepTypes) {
-      if (iFieldValue instanceof Long) appendType(typesStack.peek(), iFieldName, 'l');
-      else if (iFieldValue instanceof OIdentifiable) appendType(typesStack.peek(), iFieldName, 'x');
-      else if (iFieldValue instanceof Float) appendType(typesStack.peek(), iFieldName, 'f');
-      else if (iFieldValue instanceof Short) appendType(typesStack.peek(), iFieldName, 's');
-      else if (iFieldValue instanceof Double) appendType(typesStack.peek(), iFieldName, 'd');
-      else if (iFieldValue instanceof Date) appendType(typesStack.peek(), iFieldName, 't');
-      else if (iFieldValue instanceof Byte || iFieldValue instanceof byte[])
-        appendType(typesStack.peek(), iFieldName, 'b');
-      else if (iFieldValue instanceof BigDecimal) appendType(typesStack.peek(), iFieldName, 'c');
-      else if (iFieldValue instanceof ORecordLazySet)
-        appendType(typesStack.peek(), iFieldName, 'n');
-      else if (iFieldValue instanceof Set<?>) appendType(typesStack.peek(), iFieldName, 'e');
-      else if (iFieldValue instanceof ORidBag) appendType(typesStack.peek(), iFieldName, 'g');
+      if (fieldValue instanceof Long) appendType(typesStack.peek(), fieldName, 'l');
+      else if (fieldValue instanceof OIdentifiable) appendType(typesStack.peek(), fieldName, 'x');
+      else if (fieldValue instanceof Float) appendType(typesStack.peek(), fieldName, 'f');
+      else if (fieldValue instanceof Short) appendType(typesStack.peek(), fieldName, 's');
+      else if (fieldValue instanceof Double) appendType(typesStack.peek(), fieldName, 'd');
+      else if (fieldValue instanceof Date) appendType(typesStack.peek(), fieldName, 't');
+      else if (fieldValue instanceof Byte || fieldValue instanceof byte[])
+        appendType(typesStack.peek(), fieldName, 'b');
+      else if (fieldValue instanceof BigDecimal) appendType(typesStack.peek(), fieldName, 'c');
+      else if (fieldValue instanceof ORecordLazySet) appendType(typesStack.peek(), fieldName, 'n');
+      else if (fieldValue instanceof Set<?>) appendType(typesStack.peek(), fieldName, 'e');
+      else if (fieldValue instanceof ORidBag) appendType(typesStack.peek(), fieldName, 'g');
       else {
         OType t = fieldType;
-        if (t == null) t = OType.getTypeByValue(iFieldValue);
-        if (t == OType.LINKLIST) appendType(typesStack.peek(), iFieldName, 'z');
-        else if (t == OType.LINKMAP) appendType(typesStack.peek(), iFieldName, 'm');
-        else if (t == OType.CUSTOM) appendType(typesStack.peek(), iFieldName, 'u');
+        if (t == null) t = OType.getTypeByValue(fieldValue);
+        if (t == OType.LINKLIST) appendType(typesStack.peek(), fieldName, 'z');
+        else if (t == OType.LINKMAP) appendType(typesStack.peek(), fieldName, 'm');
+        else if (t == OType.CUSTOM) appendType(typesStack.peek(), fieldName, 'u');
       }
     }
   }
