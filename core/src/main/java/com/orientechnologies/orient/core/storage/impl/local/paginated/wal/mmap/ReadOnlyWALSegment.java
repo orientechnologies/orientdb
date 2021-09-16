@@ -19,7 +19,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Optional;
 
-public final class ReadOnlyWALSegment {
+public final class ReadOnlyWALSegment implements AutoCloseable, WALSegment {
   private static final XXHash64 xxHash = XXHashFactory.fastestInstance().hash64();
 
 
@@ -28,11 +28,11 @@ public final class ReadOnlyWALSegment {
 
   static final int XX_HASH_SIZE = 8;
 
-  static final int RECORD_SYSTEM_DATA_SIZE = XX_HASH_SIZE + RECORD_SIZE_SIZE + RECORD_SIZE_SIZE;
+  static final int RECORD_SYSTEM_DATA_SIZE = XX_HASH_SIZE + RECORD_SIZE_SIZE + RECORD_ID_SIZE;
 
   static final long XX_HASH_SEED = 0xA36FE94F;
 
-  static final int METADATA_SIZE = XX_HASH_SIZE + XX_HASH_SIZE;
+  static final int METADATA_SIZE = 8 + XX_HASH_SIZE;
 
   private final Path segmentPath;
 
@@ -47,7 +47,7 @@ public final class ReadOnlyWALSegment {
   private final ScalableRWLock closeLock = new ScalableRWLock();
   private boolean closed = false;
 
-  public ReadOnlyWALSegment(final Path segmentPath, final int segmentSize, final long segmentIndex)
+  public ReadOnlyWALSegment(final Path segmentPath, final long segmentIndex)
       throws IOException {
     closeLock.exclusiveLock();
     try {
@@ -55,10 +55,10 @@ public final class ReadOnlyWALSegment {
       this.segmentIndex = segmentIndex;
 
       try (final FileChannel fileChannel = FileChannel.open(segmentPath, StandardOpenOption.READ)) {
-        buffer = fileChannel.map(FileChannel.MapMode.READ_ONLY, 0, segmentSize);
+        buffer = fileChannel.map(FileChannel.MapMode.READ_ONLY, 0, fileChannel.size());
       }
 
-      buffer.position(METADATA_SIZE + XX_HASH_SIZE);
+      buffer.position(METADATA_SIZE);
       dataBuffer = buffer.slice();
 
       if (buffer.capacity() >= 2 * 4 + 8) {
@@ -68,7 +68,7 @@ public final class ReadOnlyWALSegment {
 
         final long hash = buffer.getLong();
 
-        if (xxHash.hash(buffer, 0, METADATA_SIZE, XX_HASH_SEED) == hash) {
+        if (xxHash.hash(buffer, 0, 8, XX_HASH_SEED) == hash) {
           firstRecord = fr;
           lastRecord = lr;
         } else {
@@ -117,6 +117,7 @@ public final class ReadOnlyWALSegment {
     return new int[] {fr, lr};
   }
 
+  @Override
   public Optional<WriteableWALRecord> read(final OLogSequenceNumber lsn) {
     closeLock.sharedLock();
     try {
@@ -174,6 +175,7 @@ public final class ReadOnlyWALSegment {
     return Optional.of(record);
   }
 
+  @Override
   public Optional<WriteableWALRecord> next(final WriteableWALRecord record) {
     closeLock.sharedLock();
     try {
@@ -190,12 +192,11 @@ public final class ReadOnlyWALSegment {
     final int nextPosition =
         record.getOperationIdLSN().lsn.getPosition()
             + serializedSize
-            + RECORD_ID_SIZE
-            + RECORD_SIZE_SIZE
-            + XX_HASH_SIZE;
+            + RECORD_SYSTEM_DATA_SIZE;
     return doRead(new OLogSequenceNumber(segmentIndex, nextPosition));
   }
 
+  @Override
   public Optional<WriteableWALRecord> next(final OLogSequenceNumber lsn) {
     closeLock.readLock();
     try {
@@ -212,6 +213,7 @@ public final class ReadOnlyWALSegment {
     return record.flatMap(this::doNext);
   }
 
+  @Override
   public Optional<OLogSequenceNumber> begin() {
     if (firstRecord == -1) {
       return Optional.empty();
@@ -220,6 +222,7 @@ public final class ReadOnlyWALSegment {
     return Optional.of(new OLogSequenceNumber(segmentIndex, firstRecord));
   }
 
+  @Override
   public Optional<OLogSequenceNumber> end() {
     if (lastRecord == -1) {
       return Optional.empty();
@@ -228,6 +231,7 @@ public final class ReadOnlyWALSegment {
     return Optional.of(new OLogSequenceNumber(segmentIndex, lastRecord));
   }
 
+  @Override
   public void close() throws Exception {
     closeLock.exclusiveLock();
     try {
@@ -247,6 +251,7 @@ public final class ReadOnlyWALSegment {
     IoUtil.unmap(buffer);
   }
 
+  @Override
   public void delete() throws IOException {
     closeLock.exclusiveLock();
     try{

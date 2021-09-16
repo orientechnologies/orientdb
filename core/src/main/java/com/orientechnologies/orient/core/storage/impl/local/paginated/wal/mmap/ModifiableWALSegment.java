@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.mmap.ReadOnlyWALSegment.*;
 
-public final class ModifiableWALSegment implements AutoCloseable {
+public final class ModifiableWALSegment implements AutoCloseable, WALSegment {
   private static final XXHash64 xxHash = XXHashFactory.fastestInstance().hash64();
   private final Path segmentPath;
 
@@ -120,6 +120,7 @@ public final class ModifiableWALSegment implements AutoCloseable {
     }
   }
 
+  @Override
   public Optional<WriteableWALRecord> read(final OLogSequenceNumber lsn) {
     syncLock.sharedLock();
     try {
@@ -187,6 +188,7 @@ public final class ModifiableWALSegment implements AutoCloseable {
     return Optional.of(record);
   }
 
+  @Override
   public Optional<WriteableWALRecord> next(final WriteableWALRecord record) {
     syncLock.sharedLock();
     try {
@@ -212,6 +214,7 @@ public final class ModifiableWALSegment implements AutoCloseable {
     }
   }
 
+  @Override
   public Optional<WriteableWALRecord> next(final OLogSequenceNumber lsn) {
     syncLock.sharedLock();
     try {
@@ -251,7 +254,7 @@ public final class ModifiableWALSegment implements AutoCloseable {
     buffer.putInt(firstRecord);
     buffer.putInt(lastRecord);
 
-    final long hash = xxHash.hash(buffer, 0, METADATA_SIZE, XX_HASH_SEED);
+    final long hash = xxHash.hash(buffer, 0, 8, XX_HASH_SEED);
     buffer.putLong(hash);
 
     buffer.force();
@@ -259,6 +262,7 @@ public final class ModifiableWALSegment implements AutoCloseable {
     synced = true;
   }
 
+  @Override
   public Optional<OLogSequenceNumber> begin() {
     syncLock.sharedLock();
     try {
@@ -281,6 +285,7 @@ public final class ModifiableWALSegment implements AutoCloseable {
     }
   }
 
+  @Override
   public Optional<OLogSequenceNumber> end() {
     syncLock.sharedLock();
     try {
