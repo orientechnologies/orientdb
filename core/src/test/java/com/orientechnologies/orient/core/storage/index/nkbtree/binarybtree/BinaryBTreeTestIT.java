@@ -506,7 +506,7 @@ public class BinaryBTreeTestIT {
     final TreeMap<byte[], ORID> keyMap =
         new TreeMap<>(OComparatorFactory.INSTANCE.getComparator(byte[].class));
 
-    final long seed = System.nanoTime();
+    final long seed = 559430631165266L;//System.nanoTime();
     final Random random = new Random(seed);
 
     System.out.println("testRandomOperations : seed " + seed);
