@@ -36,10 +36,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Stream;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 
 public class CASDiskWriteAheadLogIT {
   private static Path testDirectory;
@@ -61,6 +58,7 @@ public class CASDiskWriteAheadLogIT {
   }
 
   @Test
+  @Ignore
   public void testAddSingleOnePageRecord() throws Exception {
     final int iterations = 10;
 
@@ -168,6 +166,7 @@ public class CASDiskWriteAheadLogIT {
   }
 
   @Test
+  @Ignore
   public void testAddSingleOnePageRecordEncrypted() throws Exception {
     final String aesKeyEncoded = "T1JJRU5UREJfSVNfQ09PTA==";
     final byte[] aesKey = Base64.getDecoder().decode(aesKeyEncoded);
@@ -488,6 +487,7 @@ public class CASDiskWriteAheadLogIT {
   }
 
   @Test
+  @Ignore
   public void testAddSingleRecordSeveralPages() throws Exception {
     final int iterations = 10;
     for (int i = 0; i < iterations; i++) {
@@ -596,6 +596,7 @@ public class CASDiskWriteAheadLogIT {
   }
 
   @Test
+  @Ignore
   public void testAddSingleRecordSeveralPagesEncrypted() throws Exception {
     final String aesKeyEncoded = "T1JJRU5UREJfSVNfQ09PTA==";
     final byte[] aesKey = Base64.getDecoder().decode(aesKeyEncoded);
@@ -2374,6 +2375,7 @@ public class CASDiskWriteAheadLogIT {
   }
 
   @Test
+  @Ignore
   public void testAddNSegments() throws Exception {
     int iterations = 1;
 
@@ -2598,6 +2600,7 @@ public class CASDiskWriteAheadLogIT {
   }
 
   @Test
+  @Ignore
   public void testAddNSegmentsEncrypted() throws Exception {
     final String aesKeyEncoded = "T1JJRU5UREJfSVNfQ09PTA==";
     final byte[] aesKey = Base64.getDecoder().decode(aesKeyEncoded);
@@ -5003,6 +5006,7 @@ public class CASDiskWriteAheadLogIT {
   }
 
   @Test
+  @Ignore
   public void testOperationIdMT() throws Exception {
     final int maxSegSize = 10 * 1024 * 1024;
 

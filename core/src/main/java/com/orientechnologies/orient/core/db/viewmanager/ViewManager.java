@@ -50,12 +50,16 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 public class ViewManager {
   private final OrientDBInternal orientDB;
   private final String dbName;
   private boolean viewsExist = false;
+
+  Map<String, Lock> locks = new ConcurrentHashMap<>();
 
   /**
    * To retain clusters that are being used in queries until the queries are closed.
@@ -439,11 +443,21 @@ public class ViewManager {
   }
 
   private synchronized void unlockView(OView view) {
-    // TODO
+    Lock lock = locks.get(view.getName());
+    if (lock == null) {
+      lock = new ReentrantLock();
+      locks.put(view.getName(), lock);
+    }
+    lock.unlock();
   }
 
-  private void lockView(OView view) {
-    // TODO
+  private synchronized void lockView(OView view) {
+    Lock lock = locks.get(view.getName());
+    if (lock == null) {
+      lock = new ReentrantLock();
+      locks.put(view.getName(), lock);
+    }
+    lock.lock();
   }
 
   private String getNextClusterNameFor(OView view, ODatabase db) {

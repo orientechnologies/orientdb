@@ -71,6 +71,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.*;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -174,6 +175,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
   private long segmentId = -1;
 
   private final ScheduledFuture<?> recordsWriterFuture;
+  private final ReentrantLock recordsWriterLock = new ReentrantLock();
 
   private final ConcurrentNavigableMap<OLogSequenceNumber, EventWrapper> events =
       new ConcurrentSkipListMap<>();
@@ -740,7 +742,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
                       OWALRecordsFactory.INSTANCE.fromStream(recordContent);
 
                   walRecord.setOperationIdLsn(
-                      new OLogSequenceNumber(segment, lsnPos),
+                      new OLogSequenceNumber(segment, (int) lsnPos),
                       walRecord.getOperationIdLSN().operationId);
 
                   recordContent = null;
@@ -1392,57 +1394,63 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
       }
     }
 
-    OWALRecord record = records.poll();
-    while (record != null) {
-      if (record instanceof WriteableWALRecord) {
-        ((WriteableWALRecord) record).freeBinaryContent();
-      }
-
-      record = records.poll();
-    }
-
+    recordsWriterLock.lock();
     try {
-      if (writeFuture != null) {
-        writeFuture.get();
+      OWALRecord record = records.poll();
+      while (record != null) {
+        if (record instanceof WriteableWALRecord) {
+          ((WriteableWALRecord) record).freeBinaryContent();
+        }
+
+        record = records.poll();
       }
 
-    } catch (final InterruptedException e) {
-      OLogManager.instance().errorNoDb(this, "WAL write was interrupted", e);
-    } catch (final ExecutionException e) {
-      OLogManager.instance().errorNoDb(this, "Error during writint of WAL data", e);
-      throw OException.wrapException(new OStorageException("Error during writint of WAL data"), e);
-    }
+      try {
+        if (writeFuture != null) {
+          writeFuture.get();
+        }
 
-    for (final OPair<Long, OWALFile> pair : fileCloseQueue) {
-      final OWALFile file = pair.value;
-
-      if (callFsync) {
-        file.force(true);
+      } catch (final InterruptedException e) {
+        OLogManager.instance().errorNoDb(this, "WAL write was interrupted", e);
+      } catch (final ExecutionException e) {
+        OLogManager.instance().errorNoDb(this, "Error during writint of WAL data", e);
+        throw OException.wrapException(
+            new OStorageException("Error during writint of WAL data"), e);
       }
 
-      file.close();
-    }
+      for (final OPair<Long, OWALFile> pair : fileCloseQueue) {
+        final OWALFile file = pair.value;
 
-    fileCloseQueueSize.set(0);
+        if (callFsync) {
+          file.force(true);
+        }
 
-    if (walFile != null) {
-      if (callFsync) {
-        walFile.force(true);
+        file.close();
       }
 
-      walFile.close();
-    }
+      fileCloseQueueSize.set(0);
 
-    segments.clear();
-    fileCloseQueue.clear();
+      if (walFile != null) {
+        if (callFsync) {
+          walFile.force(true);
+        }
 
-    allocator.deallocate(writeBufferPointerOne);
-    allocator.deallocate(writeBufferPointerTwo);
+        walFile.close();
+      }
 
-    if (writeBufferPointer != null) {
-      writeBufferPointer = null;
-      writeBuffer = null;
-      writeBufferPageIndex = -1;
+      segments.clear();
+      fileCloseQueue.clear();
+
+      allocator.deallocate(writeBufferPointerOne);
+      allocator.deallocate(writeBufferPointerTwo);
+
+      if (writeBufferPointer != null) {
+        writeBufferPointer = null;
+        writeBuffer = null;
+        writeBufferPageIndex = -1;
+      }
+    } finally {
+      recordsWriterLock.unlock();
     }
   }
 
@@ -1787,6 +1795,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
 
     @Override
     public void run() {
+      recordsWriterLock.lock();
       try {
         if (printPerformanceStatistic) {
           printReport();
@@ -2130,6 +2139,8 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
       } catch (final RuntimeException | Error e) {
         OLogManager.instance().errorNoDb(this, "Error during WAL writing", e);
         throw e;
+      } finally {
+        recordsWriterLock.unlock();
       }
     }
 

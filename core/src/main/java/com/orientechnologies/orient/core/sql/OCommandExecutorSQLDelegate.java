@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.command.OCommandExecutorNotFoundExcepti
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import java.util.Map;
 import java.util.Set;
 
@@ -45,7 +46,7 @@ public class OCommandExecutorSQLDelegate extends OCommandExecutorSQLAbstract
       final String text = textRequest.getText();
       if (text == null) throw new IllegalArgumentException("Command text is null");
 
-      final String textUpperCase = upperCase(text);
+      final String textUpperCase = OSQLPredicate.upperCase(text);
 
       delegate = OSQLEngine.getInstance().getCommand(textUpperCase);
       if (delegate == null)

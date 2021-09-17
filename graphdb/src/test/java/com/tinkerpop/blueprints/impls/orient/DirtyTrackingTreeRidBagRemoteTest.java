@@ -67,6 +67,7 @@ public class DirtyTrackingTreeRidBagRemoteTest {
   }
 
   @Test
+  @Ignore
   public void test() {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(
         OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getDefValue());

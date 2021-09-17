@@ -783,19 +783,11 @@ public abstract class OClassImpl implements OClass {
 
   @Override
   public int hashCode() {
-    int sh = hashCode;
-    if (sh != 0) return sh;
-
-    acquireSchemaReadLock();
-    try {
-      sh = hashCode;
-      if (sh != 0) return sh;
-
-      calculateHashCode();
-      return hashCode;
-    } finally {
-      releaseSchemaReadLock();
+    String name = this.name;
+    if (name != null) {
+      return name.hashCode();
     }
+    return 0;
   }
 
   public int compareTo(final OClass o) {

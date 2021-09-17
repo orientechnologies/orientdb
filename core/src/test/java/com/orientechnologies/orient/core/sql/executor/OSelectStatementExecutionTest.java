@@ -13,11 +13,7 @@ import com.orientechnologies.orient.core.db.viewmanager.ViewCreationListener;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.metadata.schema.OViewConfig;
+import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -25,14 +21,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -65,6 +54,32 @@ public class OSelectStatementExecutionTest {
     Assert.assertEquals(5, item.<Object>getProperty("2 + 3"));
     printExecutionPlan(result);
 
+    result.close();
+  }
+
+  @Test
+  public void testGroupByCount() {
+    db.getMetadata().getSchema().createClass("InputTx");
+
+    for (int i = 0; i < 100; i++) {
+      final String hash = UUID.randomUUID().toString();
+      db.command("insert into InputTx set address = '" + hash + "'");
+
+      // CREATE RANDOM NUMBER OF COPIES final int random = new Random().nextInt(10);
+      final int random = new Random().nextInt(10);
+      for (int j = 0; j < random; j++) {
+        db.command("insert into InputTx set address = '" + hash + "'");
+      }
+    }
+
+    final OResultSet result =
+        db.query(
+            "select address, count(*) as occurrencies from InputTx where address is not null group by address limit 10");
+    while (result.hasNext()) {
+      final OResult row = result.next();
+      Assert.assertNotNull(row.getProperty("address")); // <== FALSE!
+      Assert.assertNotNull(row.getProperty("occurrencies"));
+    }
     result.close();
   }
 
@@ -3700,6 +3715,62 @@ public class OSelectStatementExecutionTest {
 
     try (OResultSet result =
         db.query("select from " + className1 + " where next.next.name = ?", "John")) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertEquals("right", item.getProperty("name"));
+      Assert.assertFalse(result.hasNext());
+      Assert.assertTrue(
+          result.getExecutionPlan().get().getSteps().stream()
+              .anyMatch(x -> x instanceof FetchFromIndexStep));
+    }
+  }
+
+  @Test
+  public void testIndexChainWithContainsAny() {
+    String className1 = "testIndexChainWithContainsAny1";
+    String className2 = "testIndexChainWithContainsAny2";
+    String className3 = "testIndexChainWithContainsAny3";
+
+    OClass clazz3 = db.createClassIfNotExist(className3);
+    OProperty prop = clazz3.createProperty("name", OType.STRING);
+    prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+
+    OClass clazz2 = db.createClassIfNotExist(className2);
+    prop = clazz2.createProperty("next", OType.LINKSET, clazz3);
+    prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+
+    OClass clazz1 = db.createClassIfNotExist(className1);
+    prop = clazz1.createProperty("next", OType.LINKSET, clazz2);
+    prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+
+    OElement elem3 = db.newElement(className3);
+    elem3.setProperty("name", "John");
+    elem3.save();
+
+    OElement elemFoo = db.newElement(className3);
+    elemFoo.setProperty("foo", "bar");
+    elemFoo.save();
+
+    OElement elem2 = db.newElement(className2);
+    List<OElement> elems3 = new ArrayList<>();
+    elems3.add(elem3);
+    elems3.add(elemFoo);
+    elem2.setProperty("next", elems3);
+    elem2.save();
+
+    OElement elem1 = db.newElement(className1);
+    List<OElement> elems2 = new ArrayList<>();
+    elems2.add(elem2);
+    elem1.setProperty("next", elems2);
+    elem1.setProperty("name", "right");
+    elem1.save();
+
+    elem1 = db.newElement(className1);
+    elem1.setProperty("name", "wrong");
+    elem1.save();
+
+    try (OResultSet result =
+        db.query("select from " + className1 + " where next.next.name CONTAINSANY ['John']")) {
       Assert.assertTrue(result.hasNext());
       OResult item = result.next();
       Assert.assertEquals("right", item.getProperty("name"));

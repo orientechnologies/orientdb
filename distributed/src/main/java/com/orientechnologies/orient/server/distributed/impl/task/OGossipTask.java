@@ -54,10 +54,8 @@ public class OGossipTask extends OAbstractRemoteTask {
   private static final SimpleDateFormat dateFormat =
       new SimpleDateFormat(ODateHelper.DEF_DATETIME_FORMAT);
 
-  public OGossipTask() {}
-
-  public OGossipTask(final String lockManagerServer) {
-    this.lockManagerServer = lockManagerServer;
+  public OGossipTask() {
+    this.lockManagerServer = "";
   }
 
   @Override

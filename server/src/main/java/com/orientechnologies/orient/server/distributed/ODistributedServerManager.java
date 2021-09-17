@@ -104,8 +104,6 @@ public interface ODistributedServerManager {
   @Deprecated
   String getCoordinatorServer();
 
-  String getLockManagerServer();
-
   void waitUntilNodeOnline() throws InterruptedException;
 
   void waitUntilNodeOnline(String nodeName, String databaseName) throws InterruptedException;
