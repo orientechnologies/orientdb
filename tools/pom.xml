@@ -51,6 +51,8 @@
             -Dstorage.diskCache.checksumMode=storeAndThrow
             -Dindex.allowManualIndexes=false
             -Dsecurity.warningDefaultUsers=false
+            --add-opens jdk.unsupported/sun.misc=ALL-UNNAMED
+            --add-opens java.base/sun.security.x509=ALL-UNNAMED
         </argLine>
         <project.rootdir>${project.basedir}/../</project.rootdir>
     </properties>
@@ -74,17 +76,18 @@
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>
+
         <dependency>
-            <groupId>javax.xml.bind</groupId>
-            <artifactId>jaxb-api</artifactId>
-            <version>${jaxb.api.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.orientechnologies</groupId>
-            <artifactId>orientdb-core</artifactId>
-            <version>${project.version}</version>
+            <groupId>jakarta.xml.bind</groupId>
+            <artifactId>jakarta.xml.bind-api</artifactId>
+            <version>3.0.1</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-core</artifactId>
+            <version>3.0.2</version>
+        </dependency>
     </dependencies>
 
     <build>

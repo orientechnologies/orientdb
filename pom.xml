@@ -35,24 +35,9 @@
 
     <developers>
         <developer>
-            <id>l.garulli</id>
-            <name>Luca Garulli</name>
-            <email>l.garulli@orientdb.com</email>
-            <organization>Orientechnologies</organization>
-            <organizationUrl>http://www.orientdb.com</organizationUrl>
-            <roles>
-                <role>architect</role>
-                <role>developer</role>
-                <role>founder</role>
-            </roles>
-            <timezone>+1</timezone>
-        </developer>
-        <developer>
             <id>lomakin.andrey</id>
             <name>Andrey Lomakin</name>
             <organization>OrientDB</organization>
-            <email>a.lomakin@orientdb.com</email>
-            <organizationUrl>http://www.orientdb.com</organizationUrl>
             <roles>
                 <role>architect</role>
                 <role>developer</role>
@@ -60,21 +45,8 @@
             <timezone>+2</timezone>
         </developer>
         <developer>
-            <id>e.risa</id>
-            <name>Enrico Risa</name>
-            <email>e.risa@orientdb.com</email>
-            <organizationUrl>http://www.orientdb.com</organizationUrl>
-            <roles>
-                <role>architect</role>
-                <role>developer</role>
-            </roles>
-            <timezone>+1</timezone>
-        </developer>
-        <developer>
             <id>l.aquila</id>
             <name>Luigi Dell'Aquila</name>
-            <email>l.dellaquila@orientdb.com</email>
-            <organizationUrl>http://www.orientdb.com</organizationUrl>
             <roles>
                 <role>architect</role>
                 <role>developer</role>
@@ -84,8 +56,6 @@
         <developer>
             <id>e.tagliaferri</id>
             <name>Emanuale Tagliaferri</name>
-            <email>l.tagliaferri@orientdb.com</email>
-            <organizationUrl>http://www.orientdb.com</organizationUrl>
             <roles>
                 <role>architect</role>
                 <role>developer</role>
@@ -167,8 +137,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.build.resourceEncoding>UTF-8</project.build.resourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <maven.compiler.source>16</maven.compiler.source>
-        <maven.compiler.target>16</maven.compiler.target>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
         <maven.build.timestamp.format>yyyy-MM-dd HH:mm:ssZ</maven.build.timestamp.format>
         <!--suppress UnresolvedMavenProperty -->
         <implementation.build>${scmBranch}@r${buildNumber}</implementation.build>
@@ -180,7 +150,7 @@
         <osgi.dynamicImport/>
         <osgi.private/>
         <!-- | shared build/report plugins version -->
-        <surefire.version>2.21.0</surefire.version>
+        <surefire.version>3.0.0-M5</surefire.version>
         <sonatypeOssDistMgmtSnapshotsUrl>https://oss.sonatype.org/content/repositories/snapshots/
         </sonatypeOssDistMgmtSnapshotsUrl>
 
@@ -437,48 +407,6 @@
                 </configuration>
             </plugin>
 
-
-            <plugin>
-                <groupId>org.apache.felix</groupId>
-                <artifactId>maven-bundle-plugin</artifactId>
-                <version>3.5.0</version>
-                <configuration>
-                    <!-- | dummy entry to stop bundle plugin from picking
-                        up jar config and reporting | WARNING: Duplicate name in Manifest | See http://markmail.org/message/mpkl24wk3jrjhhjg -->
-                    <archive>
-                        <forced>true</forced>
-                    </archive>
-                    <excludeDependencies>true</excludeDependencies>
-                    <manifestLocation>${project.build.directory}/osgi</manifestLocation>
-                    <instructions>
-                        <!-- | stops the "uses" clauses being added to "Export-Package"
-                            manifest entry -->
-                        <_nouses>true</_nouses>
-                        <!-- | Stop the JAVA_1_n_HOME variables from being
-                            treated as headers by Bnd -->
-                        <_removeheaders>JAVA_1_3_HOME,JAVA_1_4_HOME,JAVA_1_5_HOME,JAVA_1_6_HOME,JAVA_1_7_HOME,
-                            Bnd-LastModified,Built-By,Private-Package,Tool,Created-By,Build-Jdk,Include-Resource,
-                            Ignore-Package,Private-Package,Bundle-DocURL
-                        </_removeheaders>
-                        <Fragment-Host>${osgi.fragment.host}</Fragment-Host>
-                        <Export-Package>${osgi.export}</Export-Package>
-                        <Private-Package>${osgi.private}</Private-Package>
-                        <Import-Package>${project.groupId}.*;provide:=true,${osgi.import}</Import-Package>
-                        <DynamicImport-Package>${osgi.dynamicImport}</DynamicImport-Package>
-                        <Bundle-RequiredExecutionEnvironment>JavaSE-1.6</Bundle-RequiredExecutionEnvironment>
-                    </instructions>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>bundle-manifest</id>
-                        <phase>process-classes</phase>
-                        <goals>
-                            <goal>manifest</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
@@ -495,6 +423,7 @@
                             <Implementation-Build-Date>${maven.build.timestamp}</Implementation-Build-Date>
                             <X-Compile-Source-JDK>${maven.compiler.source}</X-Compile-Source-JDK>
                             <X-Compile-Target-JDK>${maven.compiler.target}</X-Compile-Target-JDK>
+                            <Add-Opens>jdk.unsupported/sun.misc=ALL-UNNAMED java.base/sun.security.x509=ALL-UNNAMED</Add-Opens>
                         </manifestEntries>
                     </archive>
                 </configuration>
@@ -526,7 +455,7 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.5</version>
+                <version>0.8.7</version>
                 <configuration>
                     <excludes>
                         <exclude>
@@ -642,7 +571,7 @@
                     <plugin>
                         <groupId>org.jacoco</groupId>
                         <artifactId>jacoco-maven-plugin</artifactId>
-                        <version>0.8.5</version>
+                        <version>0.8.7</version>
                         <configuration>
                             <destFile>${project.basedir}/../target/jacoco.exec</destFile>
                             <dataFile>${project.basedir}/../target/jacoco.exec</dataFile>
@@ -678,14 +607,13 @@
                     <groupId>org.graalvm.sdk</groupId>
                     <artifactId>graal-sdk</artifactId>
                     <version>${graalvm.version}</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.graalvm.truffle</groupId>
+                    <artifactId>truffle-api</artifactId>
+                    <version>${graalvm.version}</version>
                     <scope>compile</scope>
                 </dependency>
-<!--                <dependency>-->
-<!--                    <groupId>org.graalvm.truffle</groupId>-->
-<!--                    <artifactId>truffle-api</artifactId>-->
-<!--                    <version>${graalvm.version}</version>-->
-<!--                    <scope>compile</scope>-->
-<!--                </dependency>-->
                 <dependency>
                     <groupId>org.graalvm.js</groupId>
                     <artifactId>js</artifactId>
@@ -696,20 +624,19 @@
                     <groupId>org.graalvm.js</groupId>
                     <artifactId>js-scriptengine</artifactId>
                     <version>${graalvm.version}</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.graalvm.tools</groupId>
+                    <artifactId>profiler</artifactId>
+                    <version>${graalvm.version}</version>
                     <scope>runtime</scope>
                 </dependency>
-<!--                <dependency>-->
-<!--                    <groupId>org.graalvm.tools</groupId>-->
-<!--                    <artifactId>profiler</artifactId>-->
-<!--                    <version>${graalvm.version}</version>-->
-<!--                    <scope>runtime</scope>-->
-<!--                </dependency>-->
-<!--                <dependency>-->
-<!--                    <groupId>org.graalvm.tools</groupId>-->
-<!--                    <artifactId>chromeinspector</artifactId>-->
-<!--                    <version>${graalvm.version}</version>-->
-<!--                    <scope>runtime</scope>-->
-<!--                </dependency>-->
+                <dependency>
+                    <groupId>org.graalvm.tools</groupId>
+                    <artifactId>chromeinspector</artifactId>
+                    <version>${graalvm.version}</version>
+                    <scope>runtime</scope>
+                </dependency>
             </dependencies>
             <build>
                 <plugins>
@@ -723,7 +650,6 @@
                             <showWarnings>true</showWarnings>
                             <optimize>true</optimize>
                             <compilerArgs>
-                                <arg>--add-exports</arg><arg>java.base/sun.security.x509=ALL-UNNAMED</arg>
                             </compilerArgs>
                         </configuration>
                     </plugin>
@@ -787,7 +713,7 @@
                             <showWarnings>true</showWarnings>
                             <optimize>true</optimize>
                             <compilerArgs>
-                                <arg>--add-exports</arg><arg>java.base/sun.security.x509=ALL-UNNAMED</arg>
+<!--                                <arg>&#45;&#45;add-exports</arg><arg>java.base/sun.security.x509=ALL-UNNAMED</arg>-->
                             </compilerArgs>
                         </configuration>
                     </plugin>

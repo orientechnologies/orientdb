@@ -167,7 +167,8 @@
             -Dstorage.diskCache.checksumMode=storeAndThrow
             -Dindex.allowManualIndexes=false
             -Dsecurity.warningDefaultUsers=false
-            -Dsecurity.createDefaultUsers=false 
+            -Dsecurity.createDefaultUsers=false
+            --add-opens jdk.unsupported/sun.misc=ALL-UNNAMED
         </argLine>
         <project.rootdir>${project.basedir}/../</project.rootdir>
     </properties>

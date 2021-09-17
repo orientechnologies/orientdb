@@ -896,21 +896,15 @@ public class OServer {
   }
 
   protected void loadUsers() throws IOException {
-    try {
-      final OServerConfiguration configuration = serverCfg.getConfiguration();
+    final OServerConfiguration configuration = serverCfg.getConfiguration();
 
-      if (configuration.isAfterFirstTime) {
-        return;
-      }
-
-      configuration.isAfterFirstTime = true;
-
-      createDefaultServerUsers();
-
-    } finally {
-      // REMOVE THE ENV VARIABLE FOR SECURITY REASONS
-      OSystemVariableResolver.setEnv(ROOT_PASSWORD_VAR, "");
+    if (configuration.isAfterFirstTime) {
+      return;
     }
+
+    configuration.isAfterFirstTime = true;
+
+    createDefaultServerUsers();
   }
 
   /** Load configured storages. */

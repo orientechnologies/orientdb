@@ -50,6 +50,8 @@
             -Dindex.allowManualIndexes=false
             -Dsecurity.warningDefaultUsers=false
             -Dsecurity.createDefaultUsers=false
+            --add-opens jdk.unsupported/sun.misc=ALL-UNNAMED
+            --add-opens java.base/sun.security.x509=ALL-UNNAMED
         </argLine>
         <project.rootdir>${project.basedir}/../</project.rootdir>
     </properties>
