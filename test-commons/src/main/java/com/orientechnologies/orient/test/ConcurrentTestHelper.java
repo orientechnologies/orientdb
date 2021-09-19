@@ -22,7 +22,7 @@ public class ConcurrentTestHelper<T> {
   private final List<Future<T>> futures;
 
   private ConcurrentTestHelper(int threadCount) {
-    this.futures = new ArrayList<Future<T>>(threadCount);
+    this.futures = new ArrayList<>(threadCount);
     this.executor = Executors.newFixedThreadPool(threadCount);
   }
 
@@ -32,7 +32,7 @@ public class ConcurrentTestHelper<T> {
   }
 
   protected static <T> Collection<T> go(List<Callable<T>> workers) {
-    final ConcurrentTestHelper<T> helper = new ConcurrentTestHelper<T>(workers.size());
+    final ConcurrentTestHelper<T> helper = new ConcurrentTestHelper<>(workers.size());
 
     helper.submit(workers);
 
@@ -40,7 +40,7 @@ public class ConcurrentTestHelper<T> {
   }
 
   protected static <T> List<Callable<T>> prepareWorkers(int threadCount, TestFactory<T> factory) {
-    final List<Callable<T>> callables = new ArrayList<Callable<T>>(threadCount);
+    final List<Callable<T>> callables = new ArrayList<>(threadCount);
     for (int i = 0; i < threadCount; i++) {
       callables.add(factory.createWorker());
     }
@@ -56,8 +56,8 @@ public class ConcurrentTestHelper<T> {
       executor.shutdown();
       assertTrue("Test threads hanged", executor.awaitTermination(30, TimeUnit.MINUTES));
 
-      List<T> results = new ArrayList<T>(futures.size());
-      List<Exception> exceptions = new ArrayList<Exception>();
+      List<T> results = new ArrayList<>(futures.size());
+      List<Exception> exceptions = new ArrayList<>();
       for (Future<T> future : futures) {
         try {
           results.add(future.get());
