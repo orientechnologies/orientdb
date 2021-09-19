@@ -102,6 +102,7 @@
     </mailingLists>
 
     <modules>
+        <module>code-analysis</module>
         <module>test-commons</module>
         <module>client</module>
         <module>core</module>
@@ -315,9 +316,29 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-pmd-plugin</artifactId>
-                    <version>3.10.0</version>
+                    <version>3.14.0</version>
+                    <executions>
+                        <execution>
+                            <id>pmd-check</id>
+                            <goals>
+                                <goal>check</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <rulesets>
+                            <ruleset>/code-analysis/pmd-ruleset.xml</ruleset>
+                        </rulesets>
+                        <printFailingErrors>true</printFailingErrors>
+                    </configuration>
+                    <dependencies>
+                        <dependency>
+                            <groupId>com.orientechnologies</groupId>
+                            <artifactId>code-analysis</artifactId>
+                            <version>0.1.0</version>
+                        </dependency>
+                    </dependencies>
                 </plugin>
-
 
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
