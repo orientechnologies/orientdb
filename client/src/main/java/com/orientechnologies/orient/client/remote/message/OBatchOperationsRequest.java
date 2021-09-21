@@ -27,7 +27,7 @@ import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationReq
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37Client;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
@@ -37,13 +37,11 @@ import java.util.List;
 
 /** Created by Enrico Risa on 15/05/2017. */
 public class OBatchOperationsRequest implements OBinaryRequest<OBatchOperationsResponse> {
-
-  private ORecordSerializerNetworkV37 serializer = ORecordSerializerNetworkV37.INSTANCE;
   private int txId;
   private List<ORecordOperationRequest> operations;
 
   public OBatchOperationsRequest(int txId, Iterable<ORecordOperation> operations) {
-
+    ORecordSerializerNetworkV37Client serializer = ORecordSerializerNetworkV37Client.INSTANCE;
     this.txId = txId;
     List<ORecordOperationRequest> netOperations = new ArrayList<>();
     for (ORecordOperation txEntry : operations) {
@@ -69,6 +67,7 @@ public class OBatchOperationsRequest implements OBinaryRequest<OBatchOperationsR
 
   @Override
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
+    ORecordSerializerNetworkV37Client serializer = ORecordSerializerNetworkV37Client.INSTANCE;
 
     network.writeInt(txId);
     for (ORecordOperationRequest txEntry : operations) {

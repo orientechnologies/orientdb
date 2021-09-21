@@ -7,7 +7,7 @@ import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37Client;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
@@ -37,7 +37,7 @@ public class OSubscribeLiveQueryRequest implements OBinaryRequest<OSubscribeLive
 
   @Override
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
-    ORecordSerializerNetworkV37 serializer = new ORecordSerializerNetworkV37();
+    ORecordSerializerNetworkV37Client serializer = new ORecordSerializerNetworkV37Client();
     network.writeString(query);
     // params
     ODocument parms = new ODocument();

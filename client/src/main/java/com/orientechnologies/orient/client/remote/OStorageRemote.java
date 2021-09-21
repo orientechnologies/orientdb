@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.client.remote;
 
-import static com.orientechnologies.orient.client.remote.OStorageRemote.ADDRESS_SEPARATOR;
-
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
@@ -152,7 +150,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OCredentialInterceptor;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37Client;
 import com.orientechnologies.orient.core.sql.query.OLiveQuery;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
@@ -1201,7 +1199,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
             query,
             args,
             OServerQueryRequest.COMMAND,
-            ORecordSerializerNetworkV37.INSTANCE,
+            ORecordSerializerNetworkV37Client.INSTANCE,
             recordsPerPage);
     OServerQueryResponse response =
         networkOperationNoRetry(request, "Error on executing command: " + query);
@@ -1232,7 +1230,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
             query,
             args,
             OServerQueryRequest.COMMAND,
-            ORecordSerializerNetworkV37.INSTANCE,
+            ORecordSerializerNetworkV37Client.INSTANCE,
             recordsPerPage);
     OServerQueryResponse response =
         networkOperationNoRetry(request, "Error on executing command: " + query);

@@ -76,7 +76,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OCredentialInterceptor;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.security.OSecuritySystem;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37Client;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.OStorage;
 import java.io.IOException;
@@ -550,7 +550,7 @@ public class OrientDBRemote implements OrientDBInternal {
             statement,
             params,
             OServerQueryRequest.COMMAND,
-            ORecordSerializerNetworkV37.INSTANCE,
+            ORecordSerializerNetworkV37Client.INSTANCE,
             recordsPerPage);
 
     OServerQueryResponse response = connectAndSend(null, user, pw, request);
@@ -581,7 +581,7 @@ public class OrientDBRemote implements OrientDBInternal {
             statement,
             params,
             OServerQueryRequest.COMMAND,
-            ORecordSerializerNetworkV37.INSTANCE,
+            ORecordSerializerNetworkV37Client.INSTANCE,
             recordsPerPage);
 
     OServerQueryResponse response = connectAndSend(null, user, pw, request);
