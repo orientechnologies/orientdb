@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.core.db.document;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OHighLevelException;
 import com.orientechnologies.common.listener.OListenerManger;
@@ -1452,6 +1453,8 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     } catch (OOfflineClusterException t) {
       throw t;
     } catch (ORecordNotFoundException t) {
+      throw t;
+    } catch (OTimeoutException t) {
       throw t;
     } catch (Exception t) {
       if (rid.isTemporary())
