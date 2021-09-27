@@ -141,8 +141,16 @@ public class ORemoteServerChannel {
         try {
           connect();
           totalConsecutiveErrors = 0;
+          break;
         } catch (Exception e1) {
           handleNewError();
+          if (retry > 1) {
+            try {
+              Thread.sleep(100 * (retry * 2));
+            } catch (InterruptedException e2) {
+              break;
+            }
+          }
         }
       }
     }
@@ -282,12 +290,13 @@ public class ORemoteServerChannel {
 
         if (!check.isNodeAvailable(server)) break;
 
-        if (retry > 1)
+        if (retry > 1) {
           try {
             Thread.sleep(100 * (retry * 2));
           } catch (InterruptedException e1) {
             break;
           }
+        }
 
         try {
           connect();
