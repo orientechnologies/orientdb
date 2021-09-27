@@ -88,11 +88,6 @@ public class OrientTokenHandler extends OServerPluginAbstract
     throw new UnsupportedOperationException();
   }
 
-  @Override
-  public byte[] getDistributedToken(ONetworkProtocolData data) {
-    throw new UnsupportedOperationException();
-  }
-
   public OToken parseBinaryToken(final byte[] binaryToken) {
     throw new UnsupportedOperationException();
   }
