@@ -182,15 +182,19 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   @Override
   public void drop(String name, String user, String password) {
-    plugin.executeInDistributedDatabaseLock(
-        name,
-        20000,
-        null,
-        (cfg) -> {
-          plugin.dropOnAllServers(name);
-          return null;
-        });
-    plugin.dropConfig(name);
+    if (getPlugin() != null && getPlugin().isEnabled()) {
+      plugin.executeInDistributedDatabaseLock(
+          name,
+          20000,
+          null,
+          (cfg) -> {
+            plugin.dropOnAllServers(name);
+            return null;
+          });
+      plugin.dropConfig(name);
+    } else {
+      super.drop(name, user, password);
+    }
   }
 
   private boolean checkDbAvailable(String name) {
