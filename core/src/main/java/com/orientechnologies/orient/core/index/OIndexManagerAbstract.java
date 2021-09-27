@@ -40,7 +40,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sharding.auto.OAutoShardingIndexFactory;
-import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageInfo;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -480,7 +480,7 @@ public abstract class OIndexManagerAbstract implements OCloseable {
     return ODatabaseRecordThreadLocal.instance().get();
   }
 
-  protected abstract OStorage getStorage();
+  protected abstract OStorageInfo getStorage();
 
   private static ODatabaseDocumentInternal getDatabaseIfDefined() {
     return ODatabaseRecordThreadLocal.instance().getIfDefined();
@@ -565,7 +565,7 @@ public abstract class OIndexManagerAbstract implements OCloseable {
   }
 
   Locale getServerLocale() {
-    OStorage storage = getStorage();
+    OStorageInfo storage = getStorage();
     OStorageConfiguration configuration = storage.getConfiguration();
     return configuration.getLocaleInstance();
   }
