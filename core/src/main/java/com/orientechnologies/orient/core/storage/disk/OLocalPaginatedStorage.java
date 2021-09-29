@@ -369,6 +369,11 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
       }
 
       open(null, null, new OContextConfiguration());
+      atomicOperationsManager.executeInsideAtomicOperation(
+          null,
+          (atomicOperation) -> {
+            generateDatabaseInstanceId(atomicOperation);
+          });
     } catch (final RuntimeException e) {
       throw logAndPrepareForRethrow(e);
     } catch (final Error e) {
