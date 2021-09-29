@@ -61,6 +61,19 @@ import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.encryption.OEncryptionFactory;
 import com.orientechnologies.orient.core.encryption.impl.ONothingEncryption;
 import com.orientechnologies.orient.core.exception.*;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
+import com.orientechnologies.orient.core.exception.OInvalidDatabaseNameException;
+import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
+import com.orientechnologies.orient.core.exception.OInvalidInstanceIdException;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.exception.ORetryQueryException;
+import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.exception.OStorageExistsException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndexAbstract;
@@ -259,6 +272,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   private final AtomicInteger sessionCount = new AtomicInteger(0);
   private final AtomicLong lastCloseTime = new AtomicLong(System.currentTimeMillis());
+
+  protected static final String DATABASE_INSTANCE_ID = "databaseInstenceId";
 
   protected AtomicOperationsTable atomicOperationsTable;
 
@@ -700,6 +715,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                       atomicOperation,
                       OGlobalConfiguration.SBTREE_MAX_KEY_SIZE.getValueAsInteger());
 
+              generateDatabaseInstanceId(atomicOperation);
+
               // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF
               // INDEXING
               doAddCluster(atomicOperation, OMetadataDefault.CLUSTER_INDEX_NAME);
@@ -755,6 +772,37 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             "Storage '%s' is created under OrientDB distribution : %s",
             getURL(),
             OConstants.getVersion());
+  }
+
+  protected void generateDatabaseInstanceId(OAtomicOperation atomicOperation) {
+    ((OClusterBasedStorageConfiguration) configuration)
+        .setProperty(atomicOperation, DATABASE_INSTANCE_ID, UUID.randomUUID().toString());
+  }
+
+  protected UUID readDatabaseInstanceId() {
+    String id = configuration.getProperty(DATABASE_INSTANCE_ID);
+    if (id != null) {
+      return UUID.fromString(id);
+    } else {
+      return null;
+    }
+  }
+
+  protected void checkDatabaseInstanceId(UUID instanceId) {
+    UUID readId = readDatabaseInstanceId();
+    if (instanceId != null && readId != null) {
+      if (!readId.equals(instanceId)) {
+        throw new OInvalidInstanceIdException(
+            String.format(
+                "The Database Instance Id do not mach, database: '%s' backup: '%s'",
+                readId, instanceId));
+      }
+    } else if (instanceId != null || readId != null) {
+      throw new OInvalidInstanceIdException(
+          String.format(
+              "The Database Instance Id do not mach, database: '%s' backup: '%s'",
+              readId, instanceId));
+    }
   }
 
   protected abstract void initIv() throws IOException;
