@@ -74,7 +74,6 @@ public class OEdgeIterator extends OLazyWrapperIterator<OEdge> {
 
     if (rec == null) {
       // SKIP IT
-      OLogManager.instance().warn(this, "Record (%s) is null", iObject);
       return null;
     }
 
