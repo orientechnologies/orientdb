@@ -788,20 +788,19 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  protected void checkDatabaseInstanceId(UUID instanceId) {
-    UUID readId = readDatabaseInstanceId();
-    if (instanceId != null && readId != null) {
-      if (!readId.equals(instanceId)) {
+  protected void checkDatabaseInstanceId(UUID backupUUID) {
+    UUID dbUUID = readDatabaseInstanceId();
+    if (backupUUID == null) {
+      throw new OInvalidInstanceIdException(
+          "The Database Instance Id do not mach, backup UUID is null");
+    }
+    if (dbUUID != null) {
+      if (!dbUUID.equals(backupUUID)) {
         throw new OInvalidInstanceIdException(
             String.format(
                 "The Database Instance Id do not mach, database: '%s' backup: '%s'",
-                readId, instanceId));
+                dbUUID, backupUUID));
       }
-    } else if (instanceId != null || readId != null) {
-      throw new OInvalidInstanceIdException(
-          String.format(
-              "The Database Instance Id do not mach, database: '%s' backup: '%s'",
-              readId, instanceId));
     }
   }
 
