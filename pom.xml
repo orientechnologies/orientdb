@@ -424,7 +424,8 @@
                             <Implementation-Build-Date>${maven.build.timestamp}</Implementation-Build-Date>
                             <X-Compile-Source-JDK>${maven.compiler.source}</X-Compile-Source-JDK>
                             <X-Compile-Target-JDK>${maven.compiler.target}</X-Compile-Target-JDK>
-                            <Add-Opens>jdk.unsupported/sun.misc=ALL-UNNAMED java.base/sun.security.x509=ALL-UNNAMED</Add-Opens>
+                            <Add-Opens>jdk.unsupported/sun.misc=ALL-UNNAMED java.base/sun.security.x509=ALL-UNNAMED
+                            </Add-Opens>
                         </manifestEntries>
                     </archive>
                 </configuration>
@@ -434,7 +435,9 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-site-plugin</artifactId>
                 <configuration>
-                    <moduleExcludes><distribution/></moduleExcludes>
+                    <moduleExcludes>
+                        <distribution/>
+                    </moduleExcludes>
                 </configuration>
             </plugin>
 
@@ -666,6 +669,7 @@
             <activation>
                 <jdk>[11,)</jdk>
             </activation>
+
             <dependencies>
                 <dependency>
                     <groupId>org.graalvm.sdk</groupId>
@@ -714,7 +718,7 @@
                             <showWarnings>true</showWarnings>
                             <optimize>true</optimize>
                             <compilerArgs>
-<!--                                <arg>&#45;&#45;add-exports</arg><arg>java.base/sun.security.x509=ALL-UNNAMED</arg>-->
+                                <!--                                <arg>&#45;&#45;add-exports</arg><arg>java.base/sun.security.x509=ALL-UNNAMED</arg>-->
                             </compilerArgs>
                         </configuration>
                     </plugin>
