@@ -23,7 +23,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /** @author Luca Molino (molino.luca--at--gmail.com) */
 public interface OFetchContext {
-
   void onBeforeFetch(final ODocument iRootRecord) throws OFetchException;
 
   void onAfterFetch(final ODocument iRootRecord) throws OFetchException;

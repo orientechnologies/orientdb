@@ -19,7 +19,11 @@ public class AsyncIndexIT extends BareBoneBase2ServerTest {
 
   protected void dbClient1(BareBonesServer[] servers) {
     OrientDB orientDB = servers[0].getServer().getContext();
-    orientDB.createIfNotExists(getDatabaseName(), ODatabaseType.PLOCAL);
+    if (!orientDB.exists(getDatabaseName())) {
+      orientDB.execute(
+          "create database ? plocal users(admin identified by 'admin' role admin)",
+          getDatabaseName());
+    }
     ODatabaseDocument graph = orientDB.open(getDatabaseName(), "admin", "admin");
     try {
       graph.command(new OCommandSQL("create class SMS")).execute();

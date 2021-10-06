@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.metadata.security.auth.OAuthenticationI
 import com.orientechnologies.orient.core.security.OSecuritySystem;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.OStorage;
+
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -364,6 +365,8 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
     throw new UnsupportedOperationException();
   }
 
+  void internalDrop(String database);
+
   void create(
       String name,
       String user,
@@ -375,4 +378,8 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
   OrientDBConfig getConfigurations();
 
   OSecuritySystem getSecuritySystem();
+
+  default Set<String> listLodadedDatabases() {
+    throw new UnsupportedOperationException();
+  }
 }

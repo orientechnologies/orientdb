@@ -28,9 +28,9 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.metadata.security.OToken;
-import com.orientechnologies.orient.core.storage.OBasicTransaction;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -182,11 +182,6 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T>
 
   public OStorage getStorage() {
     return underlying.getStorage();
-  }
-
-  @Override
-  public OBasicTransaction getMicroOrRegularTransaction() {
-    return underlying.getMicroOrRegularTransaction();
   }
 
   public OLocalRecordCache getLocalCache() {

@@ -28,7 +28,8 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLCreateIndex;
-import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageInfo;
+
 import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -37,9 +38,9 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
   private AtomicBoolean skipPush = new AtomicBoolean(false);
   private static final String QUERY_DROP = "drop index `%s` if exists";
   private static final long serialVersionUID = -6570577338095096235L;
-  private OStorage storage;
+  private OStorageInfo storage;
 
-  public OIndexManagerRemote(OStorage storage) {
+  public OIndexManagerRemote(OStorageInfo storage) {
     super();
     this.storage = storage;
   }
@@ -246,7 +247,7 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
     }
   }
 
-  protected OStorage getStorage() {
+  protected OStorageInfo getStorage() {
     return storage;
   }
 }

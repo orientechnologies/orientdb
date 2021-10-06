@@ -25,14 +25,14 @@ import com.orientechnologies.orient.client.remote.message.ODistributedConnectReq
 import com.orientechnologies.orient.client.remote.message.ODistributedConnectResponse;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.metadata.security.OToken;
+import com.orientechnologies.orient.core.metadata.security.binary.OBinaryTokenSerializer;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Date;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.RejectedExecutionHandler;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * Remote server channel.
@@ -58,6 +58,8 @@ public class ORemoteServerChannel {
   private static final boolean COLLECT_STATS = false;
   private int sessionId = -1;
   private byte[] sessionToken;
+  private OToken tokenInstance = null;
+  private OBinaryTokenSerializer tokenDeserializer = new OBinaryTokenSerializer();
   private OContextConfiguration contextConfig = new OContextConfiguration();
   private Date createdOn = new Date();
 
@@ -128,6 +130,29 @@ public class ORemoteServerChannel {
     T execute() throws IOException;
   }
 
+  public void checkReconnect() {
+    if (tokenInstance.isCloseToExpire()) {
+      for (int retry = 1;
+          retry <= MAX_RETRY && totalConsecutiveErrors < MAX_CONSECUTIVE_ERRORS;
+          ++retry) {
+        try {
+          connect();
+          totalConsecutiveErrors = 0;
+          break;
+        } catch (Exception e1) {
+          handleNewError();
+          if (retry > 1) {
+            try {
+              Thread.sleep(100 * (retry * 2));
+            } catch (InterruptedException e2) {
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+
   private <T> void executeNetworkOperation(
       final byte operationId,
       final OStorageRemoteOperation<T> operation,
@@ -136,12 +161,10 @@ public class ORemoteServerChannel {
       final boolean autoReconnect) {
     executor.execute(
         () -> {
-          networkOperation(
-              OChannelBinaryProtocol.DISTRIBUTED_REQUEST,
-              operation,
-              errorMessage,
-              maxRetry,
-              autoReconnect);
+          if (autoReconnect) {
+            checkReconnect();
+          }
+          networkOperation(operationId, operation, errorMessage, maxRetry, autoReconnect);
         });
   }
 
@@ -166,7 +189,7 @@ public class ORemoteServerChannel {
           channel.flush();
           return null;
         };
-    networkOperation(
+    executeNetworkOperation(
         OChannelBinaryProtocol.DISTRIBUTED_RESPONSE,
         remoteOperation,
         "Cannot send response back to the sender node '"
@@ -199,7 +222,10 @@ public class ORemoteServerChannel {
           ODistributedConnectResponse response = request.createResponse();
           response.read(channel, null);
           sessionId = response.getSessionId();
-          sessionToken = response.getToken();
+          if (response.getToken() != null) {
+            sessionToken = response.getToken();
+            tokenInstance = tokenDeserializer.deserialize(new ByteArrayInputStream(sessionToken));
+          }
 
           // SET THE PROTOCOL TO THE MINIMUM NUMBER TO SUPPORT BACKWARD COMPATIBILITY
           protocolVersion = response.getDistributedProtocolVersion();
@@ -261,12 +287,13 @@ public class ORemoteServerChannel {
 
         if (!check.isNodeAvailable(server)) break;
 
-        if (retry > 1)
+        if (retry > 1) {
           try {
             Thread.sleep(100 * (retry * 2));
           } catch (InterruptedException e1) {
             break;
           }
+        }
 
         try {
           connect();

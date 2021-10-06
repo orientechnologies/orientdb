@@ -24,21 +24,16 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedOutput;
 import com.orientechnologies.orient.setup.ServerRun;
+import org.junit.Assert;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.junit.Assert;
 
 /** Insert records concurrently against the cluster */
 public abstract class AbstractDistributedWriteTest extends AbstractServerClusterTest {
@@ -207,26 +202,6 @@ public abstract class AbstractDistributedWriteTest extends AbstractServerCluster
   protected Callable<Void> createWriter(
       final int serverId, final int threadId, final ServerRun serverRun) {
     return new Writer(serverId, threadId);
-  }
-
-  protected void dumpDistributedDatabaseCfgOfAllTheServers() {
-    for (ServerRun s : serverInstance) {
-      final ODistributedServerManager dManager = s.getServerInstance().getDistributedManager();
-      final ODistributedConfiguration cfg = dManager.getDatabaseConfiguration(getDatabaseName());
-      final String cfgOutput =
-          ODistributedOutput.formatClusterTable(
-              dManager, getDatabaseName(), cfg, dManager.getAvailableNodes(getDatabaseName()));
-
-      ODistributedServerLog.info(
-          this,
-          s.getServerInstance().getDistributedManager().getLocalNodeName(),
-          null,
-          ODistributedServerLog.DIRECTION.NONE,
-          "Distributed configuration for database: %s (version=%d)%s\n",
-          getDatabaseName(),
-          cfg.getVersion(),
-          cfgOutput);
-    }
   }
 
   protected void checkThePersonClassIsPresentOnAllTheServers() {

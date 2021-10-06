@@ -19,9 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_MAX_STARTUP_DELAY;
-import static com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION.OUT;
-
 import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
@@ -46,14 +43,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
-import com.orientechnologies.orient.core.db.OSystemDatabase;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
-import com.orientechnologies.orient.core.db.OrientDBDistributed;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -76,75 +66,32 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedException;
-import com.orientechnologies.orient.server.distributed.ODistributedLifecycleListener;
-import com.orientechnologies.orient.server.distributed.ODistributedLockManager;
-import com.orientechnologies.orient.server.distributed.ODistributedMessageService;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest;
-import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedResponse;
-import com.orientechnologies.orient.server.distributed.ODistributedResponseManager;
-import com.orientechnologies.orient.server.distributed.ODistributedResponseManagerFactory;
-import com.orientechnologies.orient.server.distributed.ODistributedResponseManagerImpl;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.ODistributedStartupException;
-import com.orientechnologies.orient.server.distributed.ODistributedStrategy;
-import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ORemoteServerAvailabilityCheck;
-import com.orientechnologies.orient.server.distributed.ORemoteServerController;
-import com.orientechnologies.orient.server.distributed.ORemoteServerManager;
-import com.orientechnologies.orient.server.distributed.ORemoteTaskFactoryManager;
-import com.orientechnologies.orient.server.distributed.impl.task.ODropDatabaseTask;
-import com.orientechnologies.orient.server.distributed.impl.task.ONewDeltaTaskResponse;
-import com.orientechnologies.orient.server.distributed.impl.task.ORemoteTaskFactoryManagerImpl;
-import com.orientechnologies.orient.server.distributed.impl.task.ORestartServerTask;
-import com.orientechnologies.orient.server.distributed.impl.task.OStopServerTask;
-import com.orientechnologies.orient.server.distributed.impl.task.OSyncDatabaseNewDeltaTask;
-import com.orientechnologies.orient.server.distributed.impl.task.OSyncDatabaseTask;
-import com.orientechnologies.orient.server.distributed.impl.task.OUpdateDatabaseConfigurationTask;
+import com.orientechnologies.orient.server.distributed.impl.task.*;
 import com.orientechnologies.orient.server.distributed.sql.OCommandExecutorSQLHASyncCluster;
-import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
-import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
-import com.orientechnologies.orient.server.distributed.task.ODatabaseIsOldException;
-import com.orientechnologies.orient.server.distributed.task.ODistributedDatabaseDeltaSyncException;
-import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
+import com.orientechnologies.orient.server.distributed.task.*;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastClusterMetadataManager;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.OBeforeDatabaseOpenNetworkEventListener;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
+import sun.misc.Signal;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.AtomicMoveNotSupportedException;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
-import sun.misc.Signal;
+
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_MAX_STARTUP_DELAY;
+import static com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION.OUT;
 
 /**
  * Plugin to manage the distributed environment.
@@ -450,17 +397,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
     ODistributedServerLog.info(
         this, getLocalNodeName(), null, DIRECTION.NONE, "Dropping database %s...", dbName);
 
-    if (!((ODatabaseDocumentInternal) iDatabase).isLocalEnv()) {
-      executeInDistributedDatabaseLock(
-          dbName,
-          20000,
-          null,
-          (cfg) -> {
-            dropOnAllServers(dbName);
-            return null;
-          });
-    }
-
     final ODistributedMessageService msgService = getMessageService();
     if (msgService != null) {
       msgService.unregisterDatabase(iDatabase.getName());
@@ -469,7 +405,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
     clusterManager.removeDbFromClusterMetadata(iDatabase);
   }
 
-  private void dropOnAllServers(final String dbName) {
+  public void dropOnAllServers(final String dbName) {
     Set<String> servers = clusterManager.dropDbFromConfiguration(dbName);
     if (!servers.isEmpty() && messageService.getDatabase(dbName) != null) {
       sendRequest(
@@ -481,6 +417,10 @@ public class ODistributedPlugin extends OServerPluginAbstract
           ODistributedRequest.EXECUTION_MODE.RESPONSE,
           null);
     }
+  }
+
+  public void dropConfig(String dbName) {
+    clusterManager.dropDatabaseConfiguration(dbName);
   }
 
   @Override

@@ -8,7 +8,6 @@ import com.orientechnologies.common.serialization.types.ONullSerializer;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
-import com.orientechnologies.orient.client.remote.message.*;
 import com.orientechnologies.orient.client.remote.message.OCommitResponse.OCreatedRecordResponse;
 import com.orientechnologies.orient.client.remote.message.OCommitResponse.OUpdatedRecordResponse;
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
@@ -18,7 +17,6 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
@@ -69,28 +67,16 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProt
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
-import com.orientechnologies.orient.server.network.protocol.binary.HandshakeInfo;
-import com.orientechnologies.orient.server.network.protocol.binary.OAbstractCommandResultListener;
-import com.orientechnologies.orient.server.network.protocol.binary.OAsyncCommandResultListener;
-import com.orientechnologies.orient.server.network.protocol.binary.OLiveCommandResultListener;
-import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
-import com.orientechnologies.orient.server.network.protocol.binary.OSyncCommandResultListener;
+import com.orientechnologies.orient.server.network.protocol.binary.*;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticServer;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -1645,7 +1631,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     OPushManager manager = server.getPushManager();
     manager.subscribeDistributeConfig((ONetworkProtocolBinary) connection.getProtocol());
 
-    Set<String> dbs = server.listDatabases();
+    Set<String> dbs = server.getDatabases().listLodadedDatabases();
     ODistributedServerManager plugin = server.getPlugin("cluster");
     if (plugin != null) {
       Orient.instance()
