@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.core.storage.index.nkbtree.normalizers;
 
 import com.orientechnologies.common.serialization.types.OShortSerializer;
-
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 

@@ -6,17 +6,15 @@ import com.orientechnologies.common.comparator.OUnsafeByteArrayComparator;
 import com.orientechnologies.common.comparator.OUnsafeByteArrayComparatorV2;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.Consumer;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
 
 public class KeyNormalizationTest {
   KeyNormalizers keyNormalizer;
@@ -39,7 +37,7 @@ public class KeyNormalizationTest {
   }
 
   @Test
-  public void normalizeCompositeNull() throws IOException {
+  public void normalizeCompositeNull() {
     final byte[] bytes = getNormalizedKeySingle(null, null);
     Assert.assertEquals((new byte[] {(byte) 0x2})[0], bytes[0]);
   }
@@ -63,21 +61,21 @@ public class KeyNormalizationTest {
   }
 
   @Test
-  public void normalizeCompositeInt() throws IOException {
+  public void normalizeCompositeInt() {
     final byte[] bytes = getNormalizedKeySingle(5, OType.INTEGER);
     Assert.assertEquals((new byte[] {(byte) 0x1})[0], bytes[0]);
     Assert.assertEquals((new byte[] {(byte) 0x5})[0], bytes[4]);
   }
 
   @Test
-  public void normalizeCompositeIntZero() throws IOException {
+  public void normalizeCompositeIntZero() {
     final byte[] bytes = getNormalizedKeySingle(0, OType.INTEGER);
     Assert.assertEquals((new byte[] {(byte) 0x1})[0], bytes[0]);
     Assert.assertEquals((new byte[] {(byte) 0x0})[0], bytes[4]);
   }
 
   @Test
-  public void normalizeCompositeNegInt() throws IOException {
+  public void normalizeCompositeNegInt() {
     final byte[] bytes = getNormalizedKeySingle(-62, OType.INTEGER);
     Assert.assertEquals((new byte[] {(byte) 0x1})[0], bytes[0]);
     // -62 signed := 4294967234 unsigned := FFFFFFC2 hex
@@ -88,7 +86,7 @@ public class KeyNormalizationTest {
   }
 
   @Test
-  public void normalizeCompositeIntCompare() throws IOException {
+  public void normalizeCompositeIntCompare() {
     final byte[] negative = getNormalizedKeySingle(-62, OType.INTEGER);
     final byte[] zero = getNormalizedKeySingle(0, OType.INTEGER);
     final byte[] positive = getNormalizedKeySingle(5, OType.INTEGER);
@@ -99,7 +97,7 @@ public class KeyNormalizationTest {
   // long running, move to separate test?
   @Ignore
   @Test
-  public void normalizeCompositeIntCompareLoop() throws IOException {
+  public void normalizeCompositeIntCompareLoop() {
     final byte[] zero = getNormalizedKeySingle(0, OType.INTEGER);
 
     for (int i = 1; i < Integer.MAX_VALUE; ++i) {
@@ -111,7 +109,7 @@ public class KeyNormalizationTest {
   }
 
   @Test
-  public void normalizeCompositeDouble() throws IOException {
+  public void normalizeCompositeDouble() {
     final byte[] bytes = getNormalizedKeySingle(1.5d, OType.DOUBLE);
     Assert.assertEquals((new byte[] {(byte) 0x1})[0], bytes[0]);
     Assert.assertEquals((new byte[] {(byte) 0xbf})[0], bytes[1]);
@@ -119,7 +117,7 @@ public class KeyNormalizationTest {
   }
 
   @Test
-  public void normalizeCompositeDoubleCompare() throws IOException {
+  public void normalizeCompositeDoubleCompare() {
     final byte[] negative = getNormalizedKeySingle(-62.0d, OType.DOUBLE);
     final byte[] zero = getNormalizedKeySingle(0.0d, OType.DOUBLE);
     final byte[] positive = getNormalizedKeySingle(1.5d, OType.DOUBLE);
@@ -128,7 +126,7 @@ public class KeyNormalizationTest {
   }
 
   @Test
-  public void normalizeCompositeFloat() throws IOException {
+  public void normalizeCompositeFloat() {
     final byte[] bytes = getNormalizedKeySingle(1.5f, OType.FLOAT);
     Assert.assertEquals((new byte[] {(byte) 0x1})[0], bytes[0]);
     Assert.assertEquals((new byte[] {(byte) 0xbf})[0], bytes[1]);
@@ -136,7 +134,7 @@ public class KeyNormalizationTest {
   }
 
   @Test
-  public void normalizeCompositeFloatCompare() throws IOException {
+  public void normalizeCompositeFloatCompare() {
     final byte[] negative = getNormalizedKeySingle(-62.0f, OType.FLOAT);
     final byte[] zero = getNormalizedKeySingle(0.0f, OType.FLOAT);
     final byte[] positive = getNormalizedKeySingle(1.5f, OType.FLOAT);
@@ -147,7 +145,7 @@ public class KeyNormalizationTest {
   // we do not compare across data types
   @Ignore
   @Test
-  public void normalizeCompositeDoubleFloatCompare() throws IOException {
+  public void normalizeCompositeDoubleFloatCompare() {
     final byte[] negative = getNormalizedKeySingle(-62.5, OType.DOUBLE);
     final byte[] zero = getNormalizedKeySingle(-61.75f, OType.FLOAT);
     final byte[] smallerNegative = getNormalizedKeySingle(-61.0d, OType.DOUBLE);
@@ -160,7 +158,7 @@ public class KeyNormalizationTest {
   // we do not compare across data types
   @Ignore
   @Test
-  public void normalizeCompositeIntFloatCompare() throws IOException {
+  public void normalizeCompositeIntFloatCompare() {
     final byte[] negative = getNormalizedKeySingle(-62, OType.INTEGER);
     final byte[] zero = getNormalizedKeySingle(-61.75f, OType.FLOAT);
     final byte[] smallerNegative = getNormalizedKeySingle(-61, OType.INTEGER);
@@ -171,14 +169,14 @@ public class KeyNormalizationTest {
   }
 
   @Test
-  public void normalizeCompositeBoolean() throws IOException {
+  public void normalizeCompositeBoolean() {
     final byte[] bytes = getNormalizedKeySingle(true, OType.BOOLEAN);
     Assert.assertEquals((new byte[] {(byte) 0x1})[0], bytes[0]);
     Assert.assertEquals((new byte[] {(byte) 0x1})[0], bytes[1]);
   }
 
   @Test
-  public void normalizeCompositeLong() throws IOException {
+  public void normalizeCompositeLong() {
     final byte[] bytes = getNormalizedKeySingle(5L, OType.LONG);
     Assert.assertEquals((new byte[] {(byte) 0x1})[0], bytes[0]);
     Assert.assertEquals((new byte[] {(byte) 0x80})[0], bytes[1]);
@@ -186,7 +184,7 @@ public class KeyNormalizationTest {
   }
 
   @Test
-  public void normalizeCompositeNegLong() throws IOException {
+  public void normalizeCompositeNegLong() {
     final byte[] bytes = getNormalizedKeySingle(-62L, OType.LONG);
     Assert.assertEquals((new byte[] {(byte) 0x1})[0], bytes[0]);
     Assert.assertEquals((new byte[] {(byte) 0x7f})[0], bytes[1]);
@@ -200,7 +198,7 @@ public class KeyNormalizationTest {
   }
 
   @Test
-  public void normalizeCompositeLongCompare() throws IOException {
+  public void normalizeCompositeLongCompare() {
     final byte[] negative = getNormalizedKeySingle(-62L, OType.LONG);
     final byte[] zero = getNormalizedKeySingle(0L, OType.LONG);
     final byte[] positive = getNormalizedKeySingle(5L, OType.LONG);
@@ -209,21 +207,21 @@ public class KeyNormalizationTest {
   }
 
   @Test
-  public void normalizeCompositeByte() throws IOException {
+  public void normalizeCompositeByte() {
     final byte[] bytes = getNormalizedKeySingle((byte) 3, OType.BYTE);
     Assert.assertEquals((new byte[] {(byte) 0x1})[0], bytes[0]);
     Assert.assertEquals((new byte[] {(byte) 0x83})[0], bytes[1]);
   }
 
   @Test
-  public void normalizeCompositeNegByte() throws IOException {
+  public void normalizeCompositeNegByte() {
     final byte[] bytes = getNormalizedKeySingle((byte) -62, OType.BYTE);
     Assert.assertEquals((new byte[] {(byte) 0x1})[0], bytes[0]);
     Assert.assertEquals((new byte[] {(byte) 0x42})[0], bytes[1]);
   }
 
   @Test
-  public void normalizeCompositeByteCompare() throws IOException {
+  public void normalizeCompositeByteCompare() {
     final byte[] negative = getNormalizedKeySingle((byte) -62, OType.BYTE);
     final byte[] zero = getNormalizedKeySingle((byte) 0, OType.BYTE);
     final byte[] positive = getNormalizedKeySingle((byte) 5, OType.BYTE);
@@ -232,7 +230,7 @@ public class KeyNormalizationTest {
   }
 
   @Test
-  public void normalizeCompositeShort() throws IOException {
+  public void normalizeCompositeShort() {
     final byte[] bytes = getNormalizedKeySingle((short) 3, OType.SHORT);
     Assert.assertEquals((new byte[] {(byte) 0x1})[0], bytes[0]);
     Assert.assertEquals((new byte[] {(byte) 0x80})[0], bytes[1]);
@@ -240,7 +238,7 @@ public class KeyNormalizationTest {
   }
 
   @Test
-  public void normalizeCompositeNegShort() throws IOException {
+  public void normalizeCompositeNegShort() {
     final byte[] bytes = getNormalizedKeySingle((short) -62, OType.SHORT);
     Assert.assertEquals((new byte[] {(byte) 0x1})[0], bytes[0]);
     Assert.assertEquals((new byte[] {(byte) 0x7f})[0], bytes[1]);
@@ -248,7 +246,7 @@ public class KeyNormalizationTest {
   }
 
   @Test
-  public void normalizeCompositeShortCompare() throws IOException {
+  public void normalizeCompositeShortCompare() {
     final byte[] negative = getNormalizedKeySingle((short) -62, OType.SHORT);
     final byte[] zero = getNormalizedKeySingle((short) 0, OType.SHORT);
     final byte[] positive = getNormalizedKeySingle((short) 5, OType.SHORT);
@@ -310,7 +308,7 @@ public class KeyNormalizationTest {
   }
 
   @Test
-  public void normalizeCompositeStringCompare() throws IOException {
+  public void normalizeCompositeStringCompare() {
     final byte[] smallest = getNormalizedKeySingle("a", OType.STRING);
     final byte[] middle = getNormalizedKeySingle("b", OType.STRING);
     final byte[] largest = getNormalizedKeySingle("c", OType.STRING);
@@ -319,7 +317,7 @@ public class KeyNormalizationTest {
   }
 
   @Test
-  public void normalizeCompositeIntStringCompare() throws IOException {
+  public void normalizeCompositeIntStringCompare() {
     final byte[] smallest = getNormalizedKeySingle("-1", OType.STRING);
     final byte[] smaller = getNormalizedKeySingle("-13", OType.STRING);
     final byte[] middle = getNormalizedKeySingle("0", OType.STRING);
@@ -329,7 +327,7 @@ public class KeyNormalizationTest {
   }
 
   @Test
-  public void normalizeCompositeStringSequenceCompare() throws IOException {
+  public void normalizeCompositeStringSequenceCompare() {
     // compare: http://demo.icu-project.org/icu-bin/collation.html
     final byte[] smallest = getNormalizedKeySingle("abc", OType.STRING);
     final byte[] middle = getNormalizedKeySingle("abC", OType.STRING);
@@ -399,7 +397,7 @@ public class KeyNormalizationTest {
   }
 
   @Test
-  public void normalizeCompositeDate() throws IOException {
+  public void normalizeCompositeDate() {
     final GregorianCalendar calendar = getGregorianCalendarUTC(2013, Calendar.NOVEMBER, 5);
     final Date key = calendar.getTime();
     final byte[] bytes = getNormalizedKeySingle(key, OType.DATE);
@@ -425,7 +423,7 @@ public class KeyNormalizationTest {
   }
 
   @Test
-  public void normalizeCompositeDateCompare() throws IOException {
+  public void normalizeCompositeDateCompare() {
     GregorianCalendar calendar = getGregorianCalendarUTC(2013, Calendar.AUGUST, 5);
     Date key = calendar.getTime();
     final byte[] smallest = getNormalizedKeySingle(key, OType.DATE);
@@ -443,7 +441,7 @@ public class KeyNormalizationTest {
 
   @Ignore
   @Test
-  public void normalizeCompositeDateTime() throws IOException {
+  public void normalizeCompositeDateTime() {
     final ZonedDateTime zdt =
         LocalDateTime.of(2013, 11, 5, 3, 3, 3)
             .atZone(ZoneId.systemDefault())
@@ -466,7 +464,7 @@ public class KeyNormalizationTest {
   }
 
   @Test
-  public void normalizeCompositeDateTimeCompare() throws IOException {
+  public void normalizeCompositeDateTimeCompare() {
     ZonedDateTime zdt =
         LocalDateTime.of(2013, 11, 5, 3, 3, 3)
             .atZone(ZoneId.systemDefault())
@@ -509,7 +507,7 @@ public class KeyNormalizationTest {
   }
 
   @Test
-  public void normalizeCompositeBinaryCompare() throws IOException {
+  public void normalizeCompositeBinaryCompare() {
     final byte[] smallest = getNormalizedKeySingle(new byte[] {1, 2, 3, 4, 5, 6}, OType.BINARY);
     final byte[] middle = getNormalizedKeySingle(new byte[] {2, 2, 3, 4, 5, 6}, OType.BINARY);
     final byte[] biggest = getNormalizedKeySingle(new byte[] {3, 2, 3, 4, 5, 6}, OType.BINARY);

@@ -13,12 +13,11 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.index.nkbtree.normalizers.KeyNormalizers;
-import org.junit.*;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Stream;
+import org.junit.*;
 
 public class BinaryBTreeTestIT {
   private static KeyNormalizers keyNormalizers;
@@ -506,7 +505,7 @@ public class BinaryBTreeTestIT {
     final TreeMap<byte[], ORID> keyMap =
         new TreeMap<>(OComparatorFactory.INSTANCE.getComparator(byte[].class));
 
-    final long seed = 559430631165266L;//System.nanoTime();
+    final long seed = 559430631165266L; // System.nanoTime();
     final Random random = new Random(seed);
 
     System.out.println("testRandomOperations : seed " + seed);

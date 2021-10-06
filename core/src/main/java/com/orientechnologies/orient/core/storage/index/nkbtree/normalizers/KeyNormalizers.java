@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.index.OAlwaysLessKey;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.index.nkbtree.binarybtree.BinaryBTree;
-
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;

@@ -16,8 +16,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import jnr.ffi.annotations.In;
-
 import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
@@ -314,7 +312,7 @@ public final class BinaryBTree extends ODurableComponent {
 
     final int indexToSplit;
 
-    byte[] separationKey = null;
+    byte[] separationKey;
     if (splitLeaf) {
       final int median = bucketSize >>> 1;
       int minLen = Integer.MAX_VALUE;

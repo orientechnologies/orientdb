@@ -3,13 +3,6 @@ package com.orientechnologies.orient.core.storage.index.nkbtree.normalizers;
 import com.ibm.icu.text.Collator;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import org.openjdk.jmh.annotations.*;
-import org.openjdk.jmh.profile.StackProfiler;
-import org.openjdk.jmh.runner.Runner;
-import org.openjdk.jmh.runner.RunnerException;
-import org.openjdk.jmh.runner.options.Options;
-import org.openjdk.jmh.runner.options.OptionsBuilder;
-
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Calendar;
@@ -17,6 +10,12 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
+import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.profile.StackProfiler;
+import org.openjdk.jmh.runner.Runner;
+import org.openjdk.jmh.runner.RunnerException;
+import org.openjdk.jmh.runner.options.Options;
+import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 @State(Scope.Thread)
 @BenchmarkMode(Mode.AverageTime)

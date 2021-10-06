@@ -5,6 +5,9 @@ import com.orientechnologies.common.comparator.OByteArrayComparator;
 import com.orientechnologies.common.comparator.OUnsafeByteArrayComparator;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import java.io.IOException;
+import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.profile.StackProfiler;
@@ -12,10 +15,6 @@ import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
-
-import java.io.IOException;
-import java.util.Locale;
-import java.util.concurrent.TimeUnit;
 
 @State(Scope.Thread)
 @BenchmarkMode(Mode.AverageTime)
