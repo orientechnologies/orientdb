@@ -210,6 +210,7 @@
                             </property>
                         </properties>
 
+                        <useModulePath>false</useModulePath>
                     </configuration>
                 </plugin>
 
@@ -223,6 +224,7 @@
                         <systemPropertyVariables>
                             <security.userPasswordSaltIterations>1</security.userPasswordSaltIterations>
                         </systemPropertyVariables>
+                        <useModulePath>false</useModulePath>
                     </configuration>
                 </plugin>
 
@@ -412,7 +414,6 @@
                 <artifactId>maven-jar-plugin</artifactId>
                 <configuration>
                     <archive>
-                        <manifestFile>${project.build.directory}/osgi/MANIFEST.MF</manifestFile>
                         <manifest>
                             <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
                             <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>

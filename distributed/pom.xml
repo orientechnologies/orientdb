@@ -254,6 +254,7 @@
                 <configuration>
                     <reuseForks>false</reuseForks>
                     <forkCount>1</forkCount>
+                    <useModulePath>false</useModulePath>
                 </configuration>
             </plugin>
         </plugins>

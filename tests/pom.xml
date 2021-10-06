@@ -251,6 +251,7 @@
                             <value>com.orientechnologies.OTestNGTestListener</value>
                         </property>
                     </properties>
+                    <useModulePath>false</useModulePath>
                 </configuration>
             </plugin>
         </plugins>

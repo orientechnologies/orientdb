@@ -19,6 +19,7 @@
         <groupId>com.orientechnologies</groupId>
         <artifactId>orientdb-parent</artifactId>
         <version>3.2.2-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>orientdb-server</artifactId>
@@ -29,11 +30,6 @@
         <javac.src.version>${maven.compiler.source}</javac.src.version>
         <javac.target.version>${maven.compiler.target}</javac.target.version>
         <jar.manifest.mainclass>com.orientechnologies.orient.server.OServerMain</jar.manifest.mainclass>
-        <osgi.import>
-            orient.client.*;resolution:=optional,
-            *
-        </osgi.import>
-        <osgi.export>com.orientechnologies.orient.server.*</osgi.export>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <argLine>
             -ea
@@ -49,7 +45,6 @@
             --add-opens jdk.unsupported/sun.misc=ALL-UNNAMED
             --add-opens java.base/sun.security.x509=ALL-UNNAMED
         </argLine>
-        <project.rootdir>${project.basedir}/../</project.rootdir>
     </properties>
 
     <dependencies>
@@ -63,13 +58,11 @@
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-client</artifactId>
             <version>${project.version}</version>
-            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-tools</artifactId>
             <version>${project.version}</version>
-            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>com.orientechnologies</groupId>
@@ -197,6 +190,7 @@
                     <systemPropertyVariables>
                         <buildDirectory>${project.build.directory}</buildDirectory>
                     </systemPropertyVariables>
+                    <useModulePath>false</useModulePath>
                 </configuration>
             </plugin>
             <plugin>
