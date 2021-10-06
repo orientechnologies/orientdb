@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.iterator.OLazyWrapperIterator;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.*;
-
 import java.util.Iterator;
 
 /** @author Luigi Dell'Aquila */

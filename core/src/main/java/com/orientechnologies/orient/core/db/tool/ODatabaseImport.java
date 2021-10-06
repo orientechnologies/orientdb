@@ -66,7 +66,6 @@ import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.executor.ORidSet;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
-
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;

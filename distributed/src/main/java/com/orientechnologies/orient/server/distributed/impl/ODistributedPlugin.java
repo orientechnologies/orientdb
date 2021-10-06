@@ -19,6 +19,9 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_MAX_STARTUP_DELAY;
+import static com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION.OUT;
+
 import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
@@ -75,8 +78,6 @@ import com.orientechnologies.orient.server.hazelcast.OHazelcastClusterMetadataMa
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.OBeforeDatabaseOpenNetworkEventListener;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
-import sun.misc.Signal;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -89,9 +90,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
-
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_MAX_STARTUP_DELAY;
-import static com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION.OUT;
+import sun.misc.Signal;
 
 /**
  * Plugin to manage the distributed environment.

@@ -34,7 +34,6 @@ import com.orientechnologies.orient.core.security.authenticator.ODatabaseUserAut
 import com.orientechnologies.orient.core.security.authenticator.OServerConfigAuthenticator;
 import com.orientechnologies.orient.core.security.authenticator.OSystemUserAuthenticator;
 import com.orientechnologies.orient.core.security.authenticator.OTemporaryGlobalUser;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.*;

@@ -19,6 +19,8 @@
  */
 package com.orientechnologies.orient.core.db;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.*;
+
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
@@ -48,8 +50,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.config.OClusterBasedStorageConfiguration;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import org.apache.commons.lang.NullArgumentException;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -59,8 +59,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.*;
+import org.apache.commons.lang.NullArgumentException;
 
 /** Created by tglman on 08/04/16. */
 public class OrientDBEmbedded implements OrientDBInternal {

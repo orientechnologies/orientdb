@@ -19,7 +19,6 @@ import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDis
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
