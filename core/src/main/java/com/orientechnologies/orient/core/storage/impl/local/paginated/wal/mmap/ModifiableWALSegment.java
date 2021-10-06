@@ -1,6 +1,8 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.mmap;
 
 import com.orientechnologies.common.concur.lock.ScalableRWLock;
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecordsFactory;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.WriteableWALRecord;
@@ -17,18 +19,15 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Optional;
 
-import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.mmap.ReadOnlyWALSegment.*;
 
-public final class ModifiableWALSegment implements AutoCloseable, WALSegment {
+public final class ModifiableWALSegment implements WALSegment {
   private static final XXHash64 xxHash = XXHashFactory.fastestInstance().hash64();
   private final Path segmentPath;
 
-  private final AtomicInteger currentPosition = new AtomicInteger();
-  private final ConcurrentSkipListMap<Integer, WriteableWALRecord> records =
-      new ConcurrentSkipListMap<>();
+  private final AtomicLong lastPositionFreeHeader = new AtomicLong();
 
   private final ScalableRWLock syncLock = new ScalableRWLock();
 
@@ -37,11 +36,9 @@ public final class ModifiableWALSegment implements AutoCloseable, WALSegment {
 
   private final long segmentIndex;
 
-  private boolean synced = false;
-  private int lastRecord = -1;
-  private int firstRecord = -1;
-
   private boolean closed;
+
+  private volatile boolean dirty = false;
 
   public ModifiableWALSegment(
       final Path segmentPath, final int segmentSize, final long segmentIndex) throws IOException {
@@ -59,6 +56,12 @@ public final class ModifiableWALSegment implements AutoCloseable, WALSegment {
         buffer = fileChannel.map(FileChannel.MapMode.READ_WRITE, 0, segmentSize);
       }
 
+      buffer.putLong(segmentIndex);
+      final long hash = xxHash.hash(buffer, 0, SEGMENT_INDEX_SIZE, XX_HASH_SEED);
+      buffer.putLong(hash);
+
+      buffer.force();
+
       buffer.position(METADATA_SIZE);
 
       dataBuffer = buffer.slice();
@@ -72,9 +75,9 @@ public final class ModifiableWALSegment implements AutoCloseable, WALSegment {
     try {
       checkForClose();
 
-      if (synced) {
-        throw new IllegalStateException(
-            "Segment " + segmentIndex + " is already synced and can not be used for writes.");
+      // optimization to decrease amount of membars during write
+      if (!dirty) {
+        dirty = true;
       }
 
       final int recordSize = record.serializedSize();
@@ -86,18 +89,25 @@ public final class ModifiableWALSegment implements AutoCloseable, WALSegment {
                 + (dataBuffer.capacity() - RECORD_SYSTEM_DATA_SIZE));
       }
 
-      int position = this.currentPosition.get();
       while (true) {
-        final long newPosition = position + recordSize + RECORD_SYSTEM_DATA_SIZE;
-        if (newPosition < dataBuffer.capacity()) {
-          if (currentPosition.compareAndSet(position, (int) newPosition)) {
-            final OLogSequenceNumber lsn = new OLogSequenceNumber(segmentIndex, position);
+        final long lastPositionFreeHeader = this.lastPositionFreeHeader.get();
+
+        final int freeHeader = (int) (lastPositionFreeHeader >>> 32);
+
+        final int delta = recordSize + RECORD_SYSTEM_DATA_SIZE;
+        final int newFreeHeader = freeHeader + delta;
+        @SuppressWarnings("UnnecessaryLocalVariable")
+        final int newPosition = freeHeader;
+
+        if (newFreeHeader <= dataBuffer.capacity()) {
+          long newLastPositionFreeHeader = (((long) newFreeHeader) << (8 * 4)) | newPosition;
+          if (this.lastPositionFreeHeader.compareAndSet(
+              lastPositionFreeHeader, newLastPositionFreeHeader)) {
+            final OLogSequenceNumber lsn = new OLogSequenceNumber(segmentIndex, newPosition);
 
             record.setOperationIdLsn(lsn, 0);
-            records.put(position, record);
-
             final ByteBuffer copy = dataBuffer.duplicate();
-            copy.position(position);
+            copy.position(freeHeader);
 
             copy.putShort((short) record.getId());
             copy.putInt(recordSize);
@@ -105,11 +115,11 @@ public final class ModifiableWALSegment implements AutoCloseable, WALSegment {
 
             final long hash =
                 xxHash.hash(
-                    copy, position, recordSize + RECORD_SIZE_SIZE + RECORD_ID_SIZE, XX_HASH_SEED);
+                    copy, freeHeader, recordSize + RECORD_SIZE_SIZE + RECORD_ID_SIZE, XX_HASH_SEED);
 
             copy.putLong(hash);
 
-            return Optional.of(new OLogSequenceNumber(segmentIndex, position));
+            return Optional.of(lsn);
           }
         } else {
           return Optional.empty();
@@ -122,17 +132,43 @@ public final class ModifiableWALSegment implements AutoCloseable, WALSegment {
 
   @Override
   public Optional<WriteableWALRecord> read(final OLogSequenceNumber lsn) {
-    syncLock.sharedLock();
+    // Initially we try to read record inside of shared lock,
+    // but there could be a situation when record is only partially written or invalid LSN is
+    // passed.
+    // If record is partially written then hash code will not match to the record content and
+    // exception will be
+    // thrown. After that write lock will be acquired and WAL waits till writing is done.
+    // If record is broken during the read once write lock is acquired that means that invalid value
+    // of LSN is passed
+    // and read is performed starting from the middle of the other record. We do not consider
+    // situation when writable segment
+    // could be broken because only new segments are used inside current running  session and never
+    // read from disk.
     try {
-      checkForClose();
+      syncLock.sharedLock();
+      try {
+        checkForClose();
 
-      return doRead(lsn);
-    } finally {
-      syncLock.sharedUnlock();
+        return Optional.of(doRead(lsn));
+      } finally {
+        syncLock.sharedUnlock();
+      }
+    } catch (InvalidRecordReadException e) {
+      syncLock.exclusiveLock();
+      try {
+        checkForClose();
+
+        return Optional.of(doRead(lsn));
+      } catch (InvalidRecordReadException irre) {
+        throw OException.wrapException(
+            new OStorageException("Invalid LSN is passed as method argument"), irre);
+      } finally {
+        syncLock.exclusiveUnlock();
+      }
     }
   }
 
-  private Optional<WriteableWALRecord> doRead(OLogSequenceNumber lsn) {
+  private WriteableWALRecord doRead(OLogSequenceNumber lsn) throws InvalidRecordReadException {
     if (lsn.getSegment() != segmentIndex) {
       throw new IllegalArgumentException(
           "Segment index passed in LSN differs from current segment index. "
@@ -149,12 +185,10 @@ public final class ModifiableWALSegment implements AutoCloseable, WALSegment {
               + dataBuffer.capacity());
     }
 
-    if (lsn.getPosition() >= dataBuffer.capacity() - RECORD_SYSTEM_DATA_SIZE) {
-      return Optional.empty();
-    }
+    final int position = (int) this.lastPositionFreeHeader.get();
 
-    if (!synced) {
-      return Optional.ofNullable(records.get(lsn.getPosition()));
+    if (lsn.getPosition() > position) {
+      throw new InvalidRecordReadException();
     }
 
     final ByteBuffer copy = dataBuffer.duplicate();
@@ -162,14 +196,13 @@ public final class ModifiableWALSegment implements AutoCloseable, WALSegment {
 
     final int recordId = copy.getShort();
     if (recordId < 0) {
-      return Optional.empty();
+      throw new InvalidRecordReadException();
     }
 
     final int recordSize = copy.getInt();
     if (recordSize < 0
-        || lsn.getPosition() +  recordSize + RECORD_SYSTEM_DATA_SIZE
-            > dataBuffer.capacity()) {
-      return Optional.empty();
+        || lsn.getPosition() + recordSize + RECORD_SYSTEM_DATA_SIZE > dataBuffer.capacity()) {
+      throw new InvalidRecordReadException();
     }
 
     final long hash =
@@ -177,7 +210,7 @@ public final class ModifiableWALSegment implements AutoCloseable, WALSegment {
     if (xxHash.hash(
             copy, lsn.getPosition(), RECORD_ID_SIZE + RECORD_SIZE_SIZE + recordSize, XX_HASH_SEED)
         != hash) {
-      return Optional.empty();
+      throw new InvalidRecordReadException();
     }
 
     final WriteableWALRecord record = OWALRecordsFactory.INSTANCE.walRecordById(recordId);
@@ -185,46 +218,28 @@ public final class ModifiableWALSegment implements AutoCloseable, WALSegment {
 
     record.setOperationIdLsn(lsn, 0);
 
-    return Optional.of(record);
+    return record;
   }
 
   @Override
   public Optional<WriteableWALRecord> next(final WriteableWALRecord record) {
-    syncLock.sharedLock();
-    try {
-      checkForClose();
-
-      return doNext(record);
-    } finally {
-      syncLock.sharedUnlock();
-    }
-  }
-
-  private Optional<WriteableWALRecord> doNext(WriteableWALRecord record) {
     final int serializedSize = record.serializedSize();
     final int nextPosition =
-        record.getOperationIdLSN().lsn.getPosition()
-            + serializedSize
-            + RECORD_SYSTEM_DATA_SIZE;
+        record.getOperationIdLSN().lsn.getPosition() + serializedSize + RECORD_SYSTEM_DATA_SIZE;
 
-    if (!synced) {
-      return Optional.ofNullable(records.get(nextPosition));
-    } else {
-      return read(new OLogSequenceNumber(segmentIndex, nextPosition));
+    final int position = (int) this.lastPositionFreeHeader.get();
+    if (nextPosition > position) {
+      return Optional.empty();
     }
+
+    return read(new OLogSequenceNumber(segmentIndex, nextPosition));
   }
 
   @Override
   public Optional<WriteableWALRecord> next(final OLogSequenceNumber lsn) {
-    syncLock.sharedLock();
-    try {
-      checkForClose();
+    final Optional<WriteableWALRecord> record = read(lsn);
 
-      final Optional<WriteableWALRecord> record = doRead(lsn);
-      return record.flatMap(this::doNext);
-    } finally {
-      syncLock.sharedUnlock();
-    }
+    return record.flatMap(this::next);
   }
 
   public void sync() {
@@ -239,27 +254,37 @@ public final class ModifiableWALSegment implements AutoCloseable, WALSegment {
   }
 
   private void doSync() {
-    if (synced) {
+    if (!dirty) {
       return;
     }
 
-    if (!records.isEmpty()) {
-      firstRecord = records.firstKey();
-      lastRecord = records.lastKey();
-      records.clear();
+    buffer.position(SEGMENT_INDEX_SIZE + XX_HASH_SIZE);
+
+    final long lastPositionFreeHeader = this.lastPositionFreeHeader.get();
+
+    final int position = (int) lastPositionFreeHeader;
+    final int freeHeader = (int) (lastPositionFreeHeader >>> 32);
+    if (position != freeHeader) {
+      buffer.putInt(0);
+      buffer.putInt(position);
+    } else {
+      assert position == 0;
+
+      buffer.putInt(-1);
+      buffer.putInt(-1);
     }
 
-    buffer.position(0);
-
-    buffer.putInt(firstRecord);
-    buffer.putInt(lastRecord);
-
-    final long hash = xxHash.hash(buffer, 0, 8, XX_HASH_SEED);
+    final long hash =
+        xxHash.hash(
+            buffer,
+            SEGMENT_INDEX_SIZE + XX_HASH_SIZE,
+            BEGIN_POSITION_SIZE + END_POSITION_SIZE,
+            XX_HASH_SEED);
     buffer.putLong(hash);
 
     buffer.force();
 
-    synced = true;
+    dirty = false;
   }
 
   @Override
@@ -268,18 +293,18 @@ public final class ModifiableWALSegment implements AutoCloseable, WALSegment {
     try {
       checkForClose();
 
-      if (!synced) {
-        if (records.isEmpty()) {
-          return Optional.empty();
-        }
+      final long lastPositionFreeHeader = this.lastPositionFreeHeader.get();
 
-        return Optional.of(new OLogSequenceNumber(segmentIndex, records.firstKey()));
-      } else {
-        if (firstRecord < 0) {
-          return Optional.empty();
-        }
-        return Optional.of(new OLogSequenceNumber(segmentIndex, firstRecord));
+      final int position = (int) lastPositionFreeHeader;
+      final int freeHeader = (int) (lastPositionFreeHeader >>> 32);
+
+      if (position == freeHeader) {
+        assert position == 0;
+
+        return Optional.empty();
       }
+
+      return Optional.of(new OLogSequenceNumber(segmentIndex, 0));
     } finally {
       syncLock.sharedUnlock();
     }
@@ -291,22 +316,26 @@ public final class ModifiableWALSegment implements AutoCloseable, WALSegment {
     try {
       checkForClose();
 
-      if (!synced) {
-        if (records.isEmpty()) {
-          return Optional.empty();
-        }
+      final long lastPositionFreeHeader = this.lastPositionFreeHeader.get();
 
-        return Optional.of(new OLogSequenceNumber(segmentIndex, records.lastKey()));
-      } else {
-        if (lastRecord < 0) {
-          return Optional.empty();
-        }
+      final int position = (int) lastPositionFreeHeader;
+      final int freeHeader = (int) (lastPositionFreeHeader >>> 32);
 
-        return Optional.of(new OLogSequenceNumber(segmentIndex, lastRecord));
+      if (position == freeHeader) {
+        assert position == 0;
+
+        return Optional.empty();
       }
+
+      return Optional.of(new OLogSequenceNumber(segmentIndex, position));
     } finally {
       syncLock.sharedUnlock();
     }
+  }
+
+  @Override
+  public Optional<Long> segmentIndex() {
+    return Optional.of(segmentIndex);
   }
 
   @Override
@@ -324,9 +353,7 @@ public final class ModifiableWALSegment implements AutoCloseable, WALSegment {
       return;
     }
 
-    if (!synced) {
-      doSync();
-    }
+    doSync();
 
     IoUtil.unmap(buffer);
 

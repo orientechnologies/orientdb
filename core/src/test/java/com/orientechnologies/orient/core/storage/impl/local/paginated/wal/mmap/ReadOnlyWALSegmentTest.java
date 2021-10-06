@@ -60,7 +60,7 @@ public class ReadOnlyWALSegmentTest {
     }
 
     try (final ReadOnlyWALSegment readOnlyWALSegment =
-        new ReadOnlyWALSegment(testDirectory.resolve("seg.wal"), 42)) {
+        new ReadOnlyWALSegment(testDirectory.resolve("seg.wal"))) {
 
       final Optional<OLogSequenceNumber> begin = readOnlyWALSegment.begin();
       final Optional<OLogSequenceNumber> end = readOnlyWALSegment.end();
@@ -111,7 +111,7 @@ public class ReadOnlyWALSegmentTest {
     }
 
     try (final ReadOnlyWALSegment readOnlyWALSegment =
-        new ReadOnlyWALSegment(testDirectory.resolve("seg.wal"), 42)) {
+        new ReadOnlyWALSegment(testDirectory.resolve("seg.wal"))) {
       final Optional<OLogSequenceNumber> begin = readOnlyWALSegment.begin();
       final Optional<OLogSequenceNumber> end = readOnlyWALSegment.end();
 
@@ -169,7 +169,7 @@ public class ReadOnlyWALSegmentTest {
     }
 
     try (final ReadOnlyWALSegment readOnlyWALSegment =
-        new ReadOnlyWALSegment(testDirectory.resolve("seg.wal"), 42)) {
+        new ReadOnlyWALSegment(testDirectory.resolve("seg.wal"))) {
 
       final Optional<OLogSequenceNumber> begin = readOnlyWALSegment.begin();
       final Optional<OLogSequenceNumber> end = readOnlyWALSegment.end();

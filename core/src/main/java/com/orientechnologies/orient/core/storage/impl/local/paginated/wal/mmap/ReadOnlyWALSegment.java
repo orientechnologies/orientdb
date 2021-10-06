@@ -19,9 +19,8 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Optional;
 
-public final class ReadOnlyWALSegment implements AutoCloseable, WALSegment {
+public final class ReadOnlyWALSegment implements WALSegment {
   private static final XXHash64 xxHash = XXHashFactory.fastestInstance().hash64();
-
 
   static final int RECORD_ID_SIZE = OShortSerializer.SHORT_SIZE;
   static final int RECORD_SIZE_SIZE = OIntegerSerializer.INT_SIZE;
@@ -32,7 +31,12 @@ public final class ReadOnlyWALSegment implements AutoCloseable, WALSegment {
 
   static final long XX_HASH_SEED = 0xA36FE94F;
 
-  static final int METADATA_SIZE = 8 + XX_HASH_SIZE;
+  static final int SEGMENT_INDEX_SIZE = 8;
+  static final int BEGIN_POSITION_SIZE = 4;
+  static final int END_POSITION_SIZE = 4;
+
+  static final int METADATA_SIZE =
+      SEGMENT_INDEX_SIZE + BEGIN_POSITION_SIZE + END_POSITION_SIZE + 2 * XX_HASH_SIZE;
 
   private final Path segmentPath;
 
@@ -47,22 +51,47 @@ public final class ReadOnlyWALSegment implements AutoCloseable, WALSegment {
   private final ScalableRWLock closeLock = new ScalableRWLock();
   private boolean closed = false;
 
-  public ReadOnlyWALSegment(final Path segmentPath, final long segmentIndex)
-      throws IOException {
+  public ReadOnlyWALSegment(final Path segmentPath) throws IOException {
     closeLock.exclusiveLock();
     try {
       this.segmentPath = segmentPath;
-      this.segmentIndex = segmentIndex;
 
       try (final FileChannel fileChannel = FileChannel.open(segmentPath, StandardOpenOption.READ)) {
         buffer = fileChannel.map(FileChannel.MapMode.READ_ONLY, 0, fileChannel.size());
       }
 
-      buffer.position(METADATA_SIZE);
-      dataBuffer = buffer.slice();
+      if (buffer.capacity() >= SEGMENT_INDEX_SIZE + XX_HASH_SIZE) {
+        final long sIndex = buffer.getLong();
 
-      if (buffer.capacity() >= 2 * 4 + 8) {
-        buffer.position(0);
+        if (sIndex >= 0) {
+          final long hash = buffer.getLong();
+
+          if (xxHash.hash(buffer, 0, SEGMENT_INDEX_SIZE, XX_HASH_SEED) != hash) {
+            this.segmentIndex = -1;
+          } else {
+            segmentIndex = sIndex;
+          }
+        } else {
+          this.segmentIndex = -1;
+        }
+      } else {
+        this.segmentIndex = -1;
+      }
+
+      if (this.segmentIndex < 0) {
+        firstRecord = -1;
+        lastRecord = -1;
+
+        dataBuffer = buffer.slice();
+
+        return;
+      }
+
+      if (buffer.capacity() >= METADATA_SIZE) {
+        buffer.position(METADATA_SIZE);
+        dataBuffer = buffer.slice();
+
+        buffer.position(SEGMENT_INDEX_SIZE + XX_HASH_SIZE);
         final int fr = buffer.getInt();
         final int lr = buffer.getInt();
 
@@ -84,6 +113,8 @@ public final class ReadOnlyWALSegment implements AutoCloseable, WALSegment {
       } else {
         firstRecord = -1;
         lastRecord = -1;
+
+        dataBuffer = buffer.slice();
       }
     } finally {
       closeLock.exclusiveUnlock();
@@ -130,6 +161,10 @@ public final class ReadOnlyWALSegment implements AutoCloseable, WALSegment {
   }
 
   private Optional<WriteableWALRecord> doRead(OLogSequenceNumber lsn) {
+    if (this.segmentIndex < 0) {
+      return Optional.empty();
+    }
+
     if (lsn.getSegment() != segmentIndex) {
       throw new IllegalArgumentException(
           "Segment index passed in LSN differs from current segment index. "
@@ -190,9 +225,7 @@ public final class ReadOnlyWALSegment implements AutoCloseable, WALSegment {
   private Optional<WriteableWALRecord> doNext(WriteableWALRecord record) {
     final int serializedSize = record.serializedSize();
     final int nextPosition =
-        record.getOperationIdLSN().lsn.getPosition()
-            + serializedSize
-            + RECORD_SYSTEM_DATA_SIZE;
+        record.getOperationIdLSN().lsn.getPosition() + serializedSize + RECORD_SYSTEM_DATA_SIZE;
     return doRead(new OLogSequenceNumber(segmentIndex, nextPosition));
   }
 
@@ -232,6 +265,15 @@ public final class ReadOnlyWALSegment implements AutoCloseable, WALSegment {
   }
 
   @Override
+  public Optional<Long> segmentIndex() {
+    if (segmentIndex == -1) {
+      return Optional.empty();
+    }
+
+    return Optional.of(segmentIndex);
+  }
+
+  @Override
   public void close() throws Exception {
     closeLock.exclusiveLock();
     try {
@@ -254,13 +296,13 @@ public final class ReadOnlyWALSegment implements AutoCloseable, WALSegment {
   @Override
   public void delete() throws IOException {
     closeLock.exclusiveLock();
-    try{
+    try {
       checkForClose();
 
       doClose();
 
       Files.delete(segmentPath);
-    } finally{
+    } finally {
       closeLock.exclusiveUnlock();
     }
   }
