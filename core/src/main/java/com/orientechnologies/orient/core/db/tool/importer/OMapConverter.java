@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.core.db.tool.importer;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /** Created by tglman on 28/07/17. */
@@ -11,7 +11,7 @@ public final class OMapConverter extends OAbstractCollectionConverter<Map> {
 
   @Override
   public Map convert(Map value) {
-    final HashMap result = new HashMap();
+    final Map result = new LinkedHashMap();
     boolean updated = false;
     final class MapResultCallback implements ResultCallback {
       private Object key;
@@ -29,7 +29,7 @@ public final class OMapConverter extends OAbstractCollectionConverter<Map> {
     final MapResultCallback callback = new MapResultCallback();
     for (Map.Entry entry : (Iterable<Map.Entry>) value.entrySet()) {
       callback.setKey(entry.getKey());
-      updated = convertSingleValue(entry.getValue(), callback, updated);
+      updated = convertSingleValue(entry.getValue(), callback, updated) || updated;
     }
     if (updated) return result;
 
