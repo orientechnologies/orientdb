@@ -73,7 +73,6 @@ import com.orientechnologies.orient.server.network.protocol.binary.*;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticServer;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
