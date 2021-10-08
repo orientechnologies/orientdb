@@ -2031,7 +2031,7 @@ public class OSelectStatementExecutionTest {
 
   @Test
   public void testLetVariableSubqueryProjectionFetchFromClassTarget_9695() {
-    String className = "testSelectFromSubqueryWithLetQuery_9695";
+    String className = "testLetVariableSubqueryProjectionFetchFromClassTarget_9695";
     db.getMetadata().getSchema().createClass(className);
 
     for (int i = 0; i < 10; i++) {
