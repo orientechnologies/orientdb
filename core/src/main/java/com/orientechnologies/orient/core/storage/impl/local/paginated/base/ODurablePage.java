@@ -339,6 +339,25 @@ public class ODurablePage {
     return value.length;
   }
 
+  protected final int setBinaryValue(final int pageOffset, final byte[] value, final int offset, final int len) {
+    if (len == 0) {
+      return 0;
+    }
+
+    final ByteBuffer buffer = pointer.getBuffer();
+
+    if (changes != null) {
+      changes.setBinaryValue(buffer, value, pageOffset, offset, len);
+    } else {
+      assert buffer != null;
+      assert buffer.order() == ByteOrder.nativeOrder();
+      buffer.position(pageOffset);
+      buffer.put(value, offset, len);
+    }
+
+    return value.length;
+  }
+
   protected final void moveData(final int from, final int to, final int len) {
     if (len == 0) {
       return;

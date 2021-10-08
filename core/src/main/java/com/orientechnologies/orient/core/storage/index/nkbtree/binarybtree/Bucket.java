@@ -65,8 +65,8 @@ public final class Bucket extends ODurablePage {
     return getIntValue(SIZE_OFFSET);
   }
 
-  public int find(final byte[] key) {
-    final ByteBuffer bufferKey = ByteBuffer.wrap(key);
+  public int find(final byte[] key, int offset, int length) {
+    final ByteBuffer bufferKey = ByteBuffer.wrap(key, offset, length);
 
     int low = 0;
     int high = size() - 1;
@@ -181,7 +181,16 @@ public final class Bucket extends ODurablePage {
   }
 
   public boolean addLeafEntry(final int index, final byte[] key, final byte[] serializedValue) {
-    final int entrySize = OShortSerializer.SHORT_SIZE + key.length + serializedValue.length;
+    return addLeafEntry(index, key, 0, key.length, serializedValue);
+  }
+
+  public boolean addLeafEntry(
+      final int index,
+      final byte[] key,
+      final int keyOffset,
+      final int keyLen,
+      final byte[] serializedValue) {
+    final int entrySize = OShortSerializer.SHORT_SIZE + keyLen + serializedValue.length;
 
     assert isLeaf();
     final int size = getIntValue(SIZE_OFFSET);
@@ -205,9 +214,9 @@ public final class Bucket extends ODurablePage {
     setIntValue(POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE, freePointer);
     setIntValue(SIZE_OFFSET, size + 1);
 
-    setShortValue(freePointer, (short) key.length);
-    setBinaryValue(freePointer + OShortSerializer.SHORT_SIZE, key);
-    setBinaryValue(freePointer + key.length + OShortSerializer.SHORT_SIZE, serializedValue);
+    setShortValue(freePointer, (short) keyLen);
+    setBinaryValue(freePointer + OShortSerializer.SHORT_SIZE, key, keyOffset, keyLen);
+    setBinaryValue(freePointer + keyLen + OShortSerializer.SHORT_SIZE, serializedValue);
 
     return true;
   }
@@ -285,9 +294,19 @@ public final class Bucket extends ODurablePage {
 
   public boolean addNonLeafEntry(
       final int index, final int leftChildIndex, final int newRightChildIndex, final byte[] key) {
+    return addNonLeafEntry(index, leftChildIndex, newRightChildIndex, key, 0, key.length);
+  }
+
+  public boolean addNonLeafEntry(
+      final int index,
+      final int leftChildIndex,
+      final int newRightChildIndex,
+      final byte[] key,
+      final int keyOffset,
+      final int keyLen) {
     assert !isLeaf();
 
-    final int keySize = key.length + OShortSerializer.SHORT_SIZE;
+    final int keySize = keyLen + OShortSerializer.SHORT_SIZE;
 
     final int entrySize = keySize + 2 * OIntegerSerializer.INT_SIZE;
 
@@ -314,8 +333,8 @@ public final class Bucket extends ODurablePage {
     freePointer += setIntValue(freePointer, leftChildIndex);
     freePointer += setIntValue(freePointer, newRightChildIndex);
 
-    setShortValue(freePointer, (short) key.length);
-    setBinaryValue(freePointer + OShortSerializer.SHORT_SIZE, key);
+    setShortValue(freePointer, (short) keyLen);
+    setBinaryValue(freePointer + OShortSerializer.SHORT_SIZE, key, keyOffset, keyLen);
 
     size++;
 
