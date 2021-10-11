@@ -4170,6 +4170,7 @@ public class CASDiskWriteAheadLogIT {
       OFileUtils.deleteRecursively(testDirectory.toFile());
 
       final long seed = System.nanoTime();
+      System.out.println("testAppendSegment seed : " + seed);
       final Random random = new Random(seed);
 
       try {
@@ -4196,9 +4197,11 @@ public class CASDiskWriteAheadLogIT {
 
         List<TestRecord> records = new ArrayList<>();
 
+        boolean segmentWasAdded = false;
         System.out.println("Load data");
         final int recordsCount = 100_000;
         for (int i = 0; i < recordsCount; i++) {
+          segmentWasAdded = false;
           final TestRecord walRecord = new TestRecord(random, 3 * wal.pageSize(), 1);
           records.add(walRecord);
 
@@ -4213,6 +4216,7 @@ public class CASDiskWriteAheadLogIT {
 
             for (int k = 0; k < segments; k++) {
               wal.appendNewSegment();
+              segmentWasAdded = true;
             }
           }
         }
@@ -4264,11 +4268,19 @@ public class CASDiskWriteAheadLogIT {
                 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
-        Assert.assertEquals(
-            wal.end(),
-            new OLogSequenceNumber(
-                records.get(records.size() - 1).getLsn().getSegment() + 1,
-                CASWALPage.RECORDS_OFFSET));
+        if (segmentWasAdded) {
+          Assert.assertEquals(
+              new OLogSequenceNumber(
+                  records.get(records.size() - 1).getLsn().getSegment() + 2,
+                  CASWALPage.RECORDS_OFFSET),
+              wal.end());
+        } else {
+          Assert.assertEquals(
+              new OLogSequenceNumber(
+                  records.get(records.size() - 1).getLsn().getSegment() + 1,
+                  CASWALPage.RECORDS_OFFSET),
+              wal.end());
+        }
 
         for (int i = 0; i < recordsCount; i++) {
           final List<WriteableWALRecord> result = wal.read(records.get(i).getLsn(), 500);
@@ -4309,6 +4321,7 @@ public class CASDiskWriteAheadLogIT {
       OFileUtils.deleteRecursively(testDirectory.toFile());
 
       final long seed = System.nanoTime();
+      System.out.println("testAppendSegmentNext seed : " + seed);
       final Random random = new Random(seed);
 
       try {
@@ -4335,9 +4348,11 @@ public class CASDiskWriteAheadLogIT {
 
         List<TestRecord> records = new ArrayList<>();
 
+        boolean segmentWasAdded = false;
         System.out.println("Load data");
         final int recordsCount = 100_000;
         for (int i = 0; i < recordsCount; i++) {
+          segmentWasAdded = false;
           final TestRecord walRecord = new TestRecord(random, 3 * wal.pageSize(), 1);
           records.add(walRecord);
 
@@ -4352,6 +4367,7 @@ public class CASDiskWriteAheadLogIT {
 
             for (int k = 0; k < segments; k++) {
               wal.appendNewSegment();
+              segmentWasAdded = true;
             }
           }
         }
@@ -4406,12 +4422,19 @@ public class CASDiskWriteAheadLogIT {
                 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
-        Assert.assertEquals(
-            wal.end(),
-            new OLogSequenceNumber(
-                records.get(records.size() - 1).getLsn().getSegment() + 1,
-                CASWALPage.RECORDS_OFFSET));
-
+        if (segmentWasAdded) {
+          Assert.assertEquals(
+              new OLogSequenceNumber(
+                  records.get(records.size() - 1).getLsn().getSegment() + 2,
+                  CASWALPage.RECORDS_OFFSET),
+              wal.end());
+        } else {
+          Assert.assertEquals(
+              new OLogSequenceNumber(
+                  records.get(records.size() - 1).getLsn().getSegment() + 1,
+                  CASWALPage.RECORDS_OFFSET),
+              wal.end());
+        }
         for (int i = 0; i < recordsCount - 1; i++) {
           final List<WriteableWALRecord> result = wal.next(records.get(i).getLsn(), 500);
           Assert.assertFalse(result.isEmpty());
