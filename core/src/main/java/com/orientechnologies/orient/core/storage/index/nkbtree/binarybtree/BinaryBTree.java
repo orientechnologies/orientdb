@@ -18,6 +18,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -235,7 +236,6 @@ public final class BinaryBTree extends ODurableComponent {
 
     byte[] bucketLLB = ROOT_LARGEST_LOWER_BOUND;
     byte[] bucketSUB = ROOT_SMALLEST_UPPER_BOUND;
-
 
     byte[] keyPrefix = new byte[0];
 
@@ -614,6 +614,8 @@ public final class BinaryBTree extends ODurableComponent {
     final int indexToSplit;
 
     byte[] separationKey;
+    final byte[] bucketPrefix = keyPrefixes.get(keyPrefixes.size() - 1);
+
     if (splitLeaf) {
       final int median = bucketSize >>> 1;
       int minLen = Integer.MAX_VALUE;
@@ -621,14 +623,28 @@ public final class BinaryBTree extends ODurableComponent {
 
       for (int i = -1; i < 2; i++) {
         int index = median + i;
-        final byte[] keyOne = keyIndex == index ? key : bucketToSplit.getKey(index - 1);
+
+        final byte[] keyOne;
+        final int keyOneLen;
+        final int keyOneOffset;
+
+        if (keyIndex == index) {
+          keyOne = key;
+          keyOneLen = key.length - bucketPrefix.length;
+          keyOneOffset = bucketPrefix.length;
+        } else {
+          keyOne = bucketToSplit.getKey(index - 1);
+          keyOneLen = key.length;
+          keyOneOffset = 0;
+        }
+
         final byte[] keyTwo = bucketToSplit.getKey(index);
 
-        final int commonLen = Math.min(keyOne.length, keyTwo.length);
+        final int commonLen = Math.min(keyOneLen, keyTwo.length);
 
         boolean keyFound = false;
         for (int k = 0; k < commonLen; k++) {
-          if (keyOne[k] < keyTwo[k]) {
+          if (keyOne[k + keyOneOffset] < keyTwo[k]) {
             if (minLen > k + 1) {
               minLen = k + 1;
               minIndex = index;
@@ -640,7 +656,7 @@ public final class BinaryBTree extends ODurableComponent {
         }
 
         if (!keyFound && minLen > commonLen + 1) {
-          assert keyOne.length > keyTwo.length;
+          assert keyOneLen > keyTwo.length;
 
           minLen = commonLen + 1;
           minIndex = index;
@@ -774,6 +790,13 @@ public final class BinaryBTree extends ODurableComponent {
         byte[] separationKey =
             calculateSeparationKey(separationKeyBase, commonPrefix, parentKeyPrefix);
 
+        byte[] bkey = parentBucket.getKey(0);
+        for (int i = 1; i < parentBucket.size(); i++) {
+          byte[] nextKey = parentBucket.getKey(i);
+          assert Arrays.compare(nextKey, bkey)> 0;
+          bkey = nextKey;
+        }
+
         if (!parentBucket.addNonLeafEntry(
             parentInsertionIndex,
             (int) pageIndex,
@@ -819,6 +842,14 @@ public final class BinaryBTree extends ODurableComponent {
           }
         }
 
+        bkey = parentBucket.getKey(0);
+        for (int i = 1; i < parentBucket.size(); i++) {
+          byte[] nextKey = parentBucket.getKey(i);
+          assert Arrays.compare(nextKey, bkey)> 0;
+          bkey = nextKey;
+        }
+
+
         if (parentInsertionIndex > 0) {
           final byte[] key = parentBucket.getKey(parentInsertionIndex - 1);
           leftLLB = new byte[parentKeyPrefix.length + key.length];
@@ -829,15 +860,11 @@ public final class BinaryBTree extends ODurableComponent {
           leftLLB = parentLLB;
         }
 
-        leftSUB = new byte[parentKeyPrefix.length + separationKeyBase.length];
+        leftSUB = new byte[parentKeyPrefix.length + separationKey.length];
         System.arraycopy(parentKeyPrefix, 0, leftSUB, 0, parentKeyPrefix.length);
-        System.arraycopy(
-            separationKeyBase, 0, leftSUB, parentKeyPrefix.length, separationKeyBase.length);
+        System.arraycopy(separationKey, 0, leftSUB, parentKeyPrefix.length, separationKey.length);
 
-        rightLLB = new byte[parentKeyPrefix.length + separationKeyBase.length];
-        System.arraycopy(parentKeyPrefix, 0, rightLLB, 0, parentKeyPrefix.length);
-        System.arraycopy(
-            separationKeyBase, 0, rightLLB, parentKeyPrefix.length, separationKeyBase.length);
+        rightLLB = leftSUB;
 
         if (parentInsertionIndex < parentBucket.size() - 1) {
           final byte[] key = parentBucket.getKey(parentInsertionIndex + 1);
@@ -872,7 +899,7 @@ public final class BinaryBTree extends ODurableComponent {
             bucketToSplit.addNonLeafEntry(
                 i,
                 entry.leftChild,
-                entry.leftChild,
+                entry.rightChild,
                 entry.key,
                 leftKeyOffset,
                 entry.key.length - leftKeyOffset);
@@ -2460,6 +2487,7 @@ public final class BinaryBTree extends ODurableComponent {
     private final long leafPageIndex;
     private final int leafEntryPageIndex;
     private final List<RemovalPathItem> path;
+
     @SuppressWarnings({"FieldCanBeLocal", "unused"})
     private final ArrayList<byte[]> keyPrefixes;
 
