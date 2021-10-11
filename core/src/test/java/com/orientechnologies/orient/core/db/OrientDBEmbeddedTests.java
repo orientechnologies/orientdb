@@ -25,6 +25,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /** Created by tglman on 08/04/16. */
@@ -364,6 +365,7 @@ public class OrientDBEmbeddedTests {
   }
 
   @Test
+  @Ignore
   public void autoClose() throws InterruptedException {
     OrientDB orientDB = new OrientDB("embedded:./target/", OrientDBConfig.defaultConfig());
     OrientDBEmbedded embedded = ((OrientDBEmbedded) OrientDBInternal.extract(orientDB));

@@ -24,10 +24,7 @@ import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 
 public class OStorageTestIT {
   private OrientDB orientDB;
@@ -39,6 +36,13 @@ public class OStorageTestIT {
     String buildDirectory = System.getProperty("buildDirectory", ".");
     buildPath = Paths.get(buildDirectory);
     Files.createDirectories(buildPath);
+  }
+
+  @Before
+  public void before() {
+    if (orientDB != null) {
+      orientDB.close();
+    }
   }
 
   @Test
@@ -303,5 +307,6 @@ public class OStorageTestIT {
   @After
   public void after() {
     orientDB.drop(OStorageTestIT.class.getSimpleName());
+    orientDB.close();
   }
 }
