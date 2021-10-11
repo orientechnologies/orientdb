@@ -49,6 +49,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <argLine>-ea
             -Xmx${heapSize}
+            -XX:+HeapDumpOnOutOfMemoryError
             -Dstorage.diskCache.bufferSize=4096
             -Dindex.flushAfterCreate=false
             -Dstorage.makeFullCheckpointAfterCreate=false
@@ -63,7 +64,7 @@
             -Djava.util.logging.manager=com.orientechnologies.common.log.ShutdownLogManager
             -Dstorage.diskCache.checksumMode=storeAndThrow
             -Dindex.allowManualIndexes=false
-	    -Dsecurity.warningDefaultUsers=false
+	        -Dsecurity.warningDefaultUsers=false
         </argLine>
         <project.rootdir>${project.basedir}/../</project.rootdir>
     </properties>
