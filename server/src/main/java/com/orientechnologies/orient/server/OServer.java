@@ -70,7 +70,8 @@ import java.util.concurrent.locks.ReentrantLock;
 public class OServer {
   private static final String ROOT_PASSWORD_VAR = "ORIENTDB_ROOT_PASSWORD";
   private static ThreadGroup threadGroup;
-  private static final Map<String, OServer> distributedServers = new ConcurrentHashMap<String, OServer>();
+  private static final Map<String, OServer> distributedServers =
+      new ConcurrentHashMap<String, OServer>();
   private CountDownLatch startupLatch;
   private CountDownLatch shutdownLatch;
   private final boolean shutdownEngineOnExit;

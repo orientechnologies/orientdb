@@ -190,13 +190,12 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
           d.setLazyLoad(false);
           try {
             final boolean isMultiValue =
-                ODefaultIndexFactory.isMultiValueIndex(
-                        d.field(OIndexInternal.CONFIG_TYPE));
+                ODefaultIndexFactory.isMultiValueIndex(d.field(OIndexInternal.CONFIG_TYPE));
 
             final OIndexMetadata newIndexMetadata =
                 OIndexAbstract.loadMetadataInternal(
                     d,
-                        d.field(OIndexInternal.CONFIG_TYPE),
+                    d.field(OIndexInternal.CONFIG_TYPE),
                     d.field(OIndexInternal.ALGORITHM),
                     d.field(OIndexInternal.VALUE_CONTAINER_ALGORITHM));
 
@@ -208,7 +207,7 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
                     newIndexMetadata.getAlgorithm(),
                     newIndexMetadata.getClustersToIndex(),
                     newIndexMetadata.getIndexDefinition(),
-                        d.field(OIndexAbstract.CONFIG_MAP_RID),
+                    d.field(OIndexAbstract.CONFIG_MAP_RID),
                     d));
           } catch (Exception e) {
             OLogManager.instance()

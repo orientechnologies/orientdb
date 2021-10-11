@@ -889,14 +889,12 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
       if ("remote".equals(type)) {
         factory = getOrCreateRemoteFactory(baseUrl);
         OrientDBConfig config = buildConfig(null);
-        internal =
-                factory.open(dbName, iUserName, iUserPassword, config);
+        internal = factory.open(dbName, iUserName, iUserPassword, config);
 
       } else {
         factory = getOrCreateEmbeddedFactory(baseUrl, null);
         OrientDBConfig config = buildConfig(null);
-        internal =
-                factory.open(dbName, iUserName, iUserPassword, config);
+        internal = factory.open(dbName, iUserName, iUserPassword, config);
       }
       if (databaseOwner != null) internal.setDatabaseOwner(databaseOwner);
       if (intent != null) internal.declareIntent(intent);

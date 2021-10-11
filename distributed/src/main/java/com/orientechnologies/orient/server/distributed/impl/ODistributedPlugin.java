@@ -2204,8 +2204,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
       final Set<String> availableNodes = getAvailableNodeNames(iDatabase.getName());
 
       iDatabase.activateOnCurrentThread();
-      final OSchema schema =
-          iDatabase.getDatabaseOwner().getMetadata().getSchema();
+      final OSchema schema = iDatabase.getDatabaseOwner().getMetadata().getSchema();
 
       final Map<OClass, List<String>> cluster2CreateMap = new HashMap<OClass, List<String>>(1);
       for (final OClass clazz : schema.getClasses()) {

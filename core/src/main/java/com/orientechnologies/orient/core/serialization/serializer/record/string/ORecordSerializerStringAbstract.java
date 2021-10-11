@@ -632,8 +632,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 
       case BYTE:
         if (iValue instanceof Character) iBuffer.append((int) ((Character) iValue).charValue());
-        else if (iValue instanceof String)
-          iBuffer.append((int) ((String) iValue).charAt(0));
+        else if (iValue instanceof String) iBuffer.append((int) ((String) iValue).charAt(0));
         else iBuffer.append(iValue);
         iBuffer.append('b');
         break;
@@ -681,8 +680,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
   }
 
   public ORecord fromString(final String iSource) {
-    return fromString(
-        iSource, ODatabaseRecordThreadLocal.instance().get().newInstance(), null);
+    return fromString(iSource, ODatabaseRecordThreadLocal.instance().get().newInstance(), null);
   }
 
   @Override
@@ -709,7 +707,9 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
     final long timer = PROFILER.startChrono();
 
     try {
-      return toString(iRecord, new StringBuilder(2048), null, true).toString().getBytes(StandardCharsets.UTF_8);
+      return toString(iRecord, new StringBuilder(2048), null, true)
+          .toString()
+          .getBytes(StandardCharsets.UTF_8);
     } finally {
 
       PROFILER.stopChrono(

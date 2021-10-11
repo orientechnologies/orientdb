@@ -587,11 +587,9 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
       }
 
       if (value instanceof OTrackedSet<?>) {
-        if (OMultiValue.getFirstValue(value) instanceof OIdentifiable)
-          type = OType.LINKSET;
+        if (OMultiValue.getFirstValue(value) instanceof OIdentifiable) type = OType.LINKSET;
       } else if (value instanceof OTrackedList<?>) {
-        if (OMultiValue.getFirstValue(value) instanceof OIdentifiable)
-          type = OType.LINKLIST;
+        if (OMultiValue.getFirstValue(value) instanceof OIdentifiable) type = OType.LINKLIST;
       }
 
       if (type != null) {
