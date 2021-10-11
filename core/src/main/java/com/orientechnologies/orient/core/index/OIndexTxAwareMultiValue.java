@@ -30,16 +30,8 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.Spliterator;
+
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -262,7 +254,7 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
   @Override
   public Stream<ORID> getRids(final Object key) {
     final OTransactionIndexChanges indexChanges =
-        database.getMicroOrRegularTransaction().getIndexChangesInternal(delegate.getName());
+        database.getTransaction().getIndexChangesInternal(delegate.getName());
     if (indexChanges == null) {
       return super.getRids(key);
     }
@@ -290,7 +282,7 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
   @Override
   public Stream<ORawPair<Object, ORID>> stream() {
     final OTransactionIndexChanges indexChanges =
-        database.getMicroOrRegularTransaction().getIndexChangesInternal(delegate.getName());
+        database.getTransaction().getIndexChangesInternal(delegate.getName());
     if (indexChanges == null) {
       return super.stream();
     }
@@ -312,7 +304,7 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
   @Override
   public Stream<ORawPair<Object, ORID>> descStream() {
     final OTransactionIndexChanges indexChanges =
-        database.getMicroOrRegularTransaction().getIndexChangesInternal(delegate.getName());
+        database.getTransaction().getIndexChangesInternal(delegate.getName());
     if (indexChanges == null) {
       return super.descStream();
     }
@@ -340,7 +332,7 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
       final boolean ascOrder) {
 
     final OTransactionIndexChanges indexChanges =
-        database.getMicroOrRegularTransaction().getIndexChangesInternal(delegate.getName());
+        database.getTransaction().getIndexChangesInternal(delegate.getName());
     if (indexChanges == null) {
       return super.streamEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascOrder);
     }
@@ -402,7 +394,7 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
   public Stream<ORawPair<Object, ORID>> streamEntriesMajor(
       Object fromKey, boolean fromInclusive, boolean ascOrder) {
     final OTransactionIndexChanges indexChanges =
-        database.getMicroOrRegularTransaction().getIndexChangesInternal(delegate.getName());
+        database.getTransaction().getIndexChangesInternal(delegate.getName());
     if (indexChanges == null) {
       return super.streamEntriesMajor(fromKey, fromInclusive, ascOrder);
     }
@@ -444,7 +436,7 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
   public Stream<ORawPair<Object, ORID>> streamEntriesMinor(
       Object toKey, boolean toInclusive, boolean ascOrder) {
     final OTransactionIndexChanges indexChanges =
-        database.getMicroOrRegularTransaction().getIndexChangesInternal(delegate.getName());
+        database.getTransaction().getIndexChangesInternal(delegate.getName());
     if (indexChanges == null) {
       return super.streamEntriesMinor(toKey, toInclusive, ascOrder);
     }
@@ -484,7 +476,7 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
   @Override
   public Stream<ORawPair<Object, ORID>> streamEntries(Collection<?> keys, boolean ascSortOrder) {
     final OTransactionIndexChanges indexChanges =
-        database.getMicroOrRegularTransaction().getIndexChangesInternal(delegate.getName());
+        database.getTransaction().getIndexChangesInternal(delegate.getName());
     if (indexChanges == null) {
       return super.streamEntries(keys, ascSortOrder);
     }

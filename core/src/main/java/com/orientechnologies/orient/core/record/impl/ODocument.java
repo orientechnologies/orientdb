@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DB_CUSTOM_SUPPORT;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
@@ -34,54 +32,19 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.OAutoConvertToRecord;
-import com.orientechnologies.orient.core.db.record.ODetachable;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
-import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
-import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.db.record.ORecordLazyList;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
-import com.orientechnologies.orient.core.db.record.ORecordLazySet;
-import com.orientechnologies.orient.core.db.record.OTrackedList;
-import com.orientechnologies.orient.core.db.record.OTrackedMap;
-import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
-import com.orientechnologies.orient.core.db.record.OTrackedSet;
+import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.OQueryParsingException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.exception.OSchemaException;
-import com.orientechnologies.orient.core.exception.OSecurityException;
-import com.orientechnologies.orient.core.exception.OSerializationException;
-import com.orientechnologies.orient.core.exception.OValidationException;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.OEmptyMapEntryIterator;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
-import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
-import com.orientechnologies.orient.core.metadata.schema.OImmutableProperty;
-import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
-import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.metadata.security.OIdentity;
 import com.orientechnologies.orient.core.metadata.security.OPropertyAccess;
 import com.orientechnologies.orient.core.metadata.security.OPropertyEncryption;
 import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
-import com.orientechnologies.orient.core.record.OEdge;
-import com.orientechnologies.orient.core.record.OElement;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordAbstract;
-import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.ORecordSchemaAware;
-import com.orientechnologies.orient.core.record.ORecordVersionHelper;
-import com.orientechnologies.orient.core.record.OVertex;
+import com.orientechnologies.orient.core.record.*;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
@@ -89,31 +52,17 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
-import com.orientechnologies.orient.core.storage.OBasicTransaction;
-import java.io.ByteArrayOutputStream;
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.io.UnsupportedEncodingException;
+import com.orientechnologies.orient.core.tx.OTransaction;
+
+import java.io.*;
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DB_CUSTOM_SUPPORT;
 
 /**
  * Document representation to handle values dynamically. Can be used in schema-less, schema-mixed
@@ -1264,12 +1213,7 @@ public class ODocument extends ORecordAbstract
   public void fromString(final String iValue) {
     dirty = true;
     contentChanged = true;
-    try {
-      source = iValue.getBytes("UTF-8");
-    } catch (UnsupportedEncodingException e) {
-      throw OException.wrapException(
-          new OSerializationException("Error reading content from string"), e);
-    }
+    source = iValue.getBytes(StandardCharsets.UTF_8);
 
     removeAllCollectionChangeListeners();
 
@@ -1311,7 +1255,7 @@ public class ODocument extends ORecordAbstract
     }
 
     // NOT FOUND, PARSE THE FIELD NAME
-    return (RET) ODocumentHelper.getFieldValue(this, iFieldName);
+    return ODocumentHelper.getFieldValue(this, iFieldName);
   }
 
   /**
@@ -1885,7 +1829,7 @@ public class ODocument extends ORecordAbstract
           }
         final Entry<String, Object> toRet =
             new Entry<String, Object>() {
-              private Entry<String, ODocumentEntry> intern = current;
+              private final Entry<String, ODocumentEntry> intern = current;
 
               @Override
               public Object setValue(Object value) {
@@ -2007,7 +1951,7 @@ public class ODocument extends ORecordAbstract
       final ODatabaseDocumentInternal database = getDatabaseIfDefined();
 
       if (database != null) {
-        final OBasicTransaction transaction = database.getMicroOrRegularTransaction();
+        final OTransaction transaction = database.getTransaction();
         transaction.addChangedDocument(this);
       }
     }
@@ -2298,22 +2242,22 @@ public class ODocument extends ORecordAbstract
 
   @Override
   public ODocument fromJSON(final String iSource, final String iOptions) {
-    return (ODocument) super.fromJSON(iSource, iOptions);
+    return super.fromJSON(iSource, iOptions);
   }
 
   @Override
   public ODocument fromJSON(final String iSource) {
-    return (ODocument) super.fromJSON(iSource);
+    return super.fromJSON(iSource);
   }
 
   @Override
   public ODocument fromJSON(final InputStream contentStream) throws IOException {
-    return (ODocument) super.fromJSON(contentStream);
+    return super.fromJSON(contentStream);
   }
 
   @Override
   public ODocument fromJSON(final String iSource, final boolean needReload) {
-    return (ODocument) super.fromJSON(iSource, needReload);
+    return super.fromJSON(iSource, needReload);
   }
 
   public boolean isEmbedded() {
@@ -3207,7 +3151,7 @@ public class ODocument extends ORecordAbstract
         ((ODocument) cur).clearTrackData();
       } else if (cur instanceof List) {
         OTrackedList newList = new OTrackedList<>(parent);
-        fillTrackedCollection((Collection) newList, newList, (Collection<Object>) cur);
+        fillTrackedCollection(newList, newList, (Collection<Object>) cur);
         cur = newList;
       } else if (cur instanceof Set) {
         OTrackedSet<Object> newSet = new OTrackedSet<>(parent);

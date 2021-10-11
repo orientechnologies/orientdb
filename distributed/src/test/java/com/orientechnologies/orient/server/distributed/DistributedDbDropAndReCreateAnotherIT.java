@@ -80,8 +80,6 @@ public class DistributedDbDropAndReCreateAnotherIT extends AbstractServerCluster
 
     banner("EXECUTING FINAL TESTS");
 
-    dumpDistributedDatabaseCfgOfAllTheServers();
-
     Thread.sleep(10000);
 
     executeMultipleTest(0);

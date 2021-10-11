@@ -14,7 +14,6 @@ import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OSystemDatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentAbstract;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -27,6 +26,7 @@ import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
 import com.orientechnologies.orient.server.distributed.impl.task.OAbstractSyncDatabaseTask;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
@@ -71,7 +71,7 @@ public class OHazelcastClusterMetadataManager
   private String nodeName = null;
   private OServer serverInstance;
 
-  private ODistributedPlugin distributedPlugin;
+  private final ODistributedPlugin distributedPlugin;
 
   public OHazelcastClusterMetadataManager(ODistributedPlugin distributedPlugin) {
     this.distributedPlugin = distributedPlugin;
@@ -1023,20 +1023,20 @@ public class OHazelcastClusterMetadataManager
 
     if (configurationMap != null) {
       configurationMap.remove(CONFIG_DBSTATUS_PREFIX + nodeName + "." + dbName);
-
-      if (!OScenarioThreadLocal.INSTANCE.isRunModeDistributed()) {
-        // LAST NODE HOLDING THE DATABASE, DELETE DISTRIBUTED CFG TOO
-        configurationMap.remove(CONFIG_DATABASE_PREFIX + dbName);
-        configurationMap.remove(OAbstractSyncDatabaseTask.DEPLOYDB + dbName);
-        ODistributedServerLog.info(
-            this,
-            nodeName,
-            null,
-            ODistributedServerLog.DIRECTION.NONE,
-            "Dropped last copy of database '%s', removing it from the cluster",
-            dbName);
-      }
     }
+  }
+
+  public void dropDatabaseConfiguration(final String dbName) {
+    // LAST NODE HOLDING THE DATABASE, DELETE DISTRIBUTED CFG TOO
+    configurationMap.remove(CONFIG_DATABASE_PREFIX + dbName);
+    configurationMap.remove(OAbstractSyncDatabaseTask.DEPLOYDB + dbName);
+    ODistributedServerLog.info(
+        this,
+        nodeName,
+        null,
+        ODistributedServerLog.DIRECTION.NONE,
+        "Dropped last copy of database '%s', removing it from the cluster",
+        dbName);
   }
 
   // Remove the given distributed db from the current server's configuration and
@@ -1045,8 +1045,6 @@ public class OHazelcastClusterMetadataManager
     final ODistributedConfiguration dCfg = getDatabaseConfiguration(dbName);
 
     final Set<String> servers = dCfg.getAllConfiguredServers();
-    servers.remove(nodeName);
-
     final long start = System.currentTimeMillis();
 
     // WAIT ALL THE SERVERS BECOME ONLINE

@@ -2,8 +2,8 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedOutput;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastClusterMetadataManager;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -14,7 +14,7 @@ public class ODistributedConfigurationManager {
 
   private final ODistributedServerManager distributedManager;
   private volatile ODistributedConfiguration distributedConfiguration;
-  private String databaseName;
+  private final String databaseName;
 
   public ODistributedConfigurationManager(
       ODistributedServerManager distributedManager, String name) {
@@ -73,23 +73,14 @@ public class ODistributedConfigurationManager {
       this.distributedConfiguration =
           new ODistributedConfiguration(distributedConfiguration.getDocument().copy());
 
-      // PRINT THE NEW CONFIGURATION
-      final String cfgOutput =
-          ODistributedOutput.formatClusterTable(
-              distributedManager,
-              databaseName,
-              distributedConfiguration,
-              distributedManager.getTotalNodes(databaseName));
-
       ODistributedServerLog.info(
           this,
           distributedManager.getLocalNodeName(),
           null,
           ODistributedServerLog.DIRECTION.NONE,
-          "Setting new distributed configuration for database: %s (version=%d)%s\n",
+          "Setting new distributed configuration for database: %s (version=%d)\n",
           databaseName,
-          distributedConfiguration.getVersion(),
-          cfgOutput);
+          distributedConfiguration.getVersion());
 
       saveDatabaseConfiguration();
     }

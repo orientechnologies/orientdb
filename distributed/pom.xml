@@ -28,7 +28,7 @@
     <parent>
         <groupId>com.orientechnologies</groupId>
         <artifactId>orientdb-parent</artifactId>
-        <version>3.2.2-SNAPSHOT</version>
+        <version>3.2.3-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -41,35 +41,70 @@
         <javac.src.version>1.6</javac.src.version>
         <javac.target.version>1.6</javac.target.version>
         <jar.manifest.mainclass>com.orientechnologies.orient.server.OServerMain</jar.manifest.mainclass>
-        <osgi.import>com.hazelcast.*;resolution:=optional,*</osgi.import>
-        <osgi.export>com.orientechnologies.orient.server.hazelcast.*,com.orientechnologies.orient.server.distributed.impl.*
-        </osgi.export>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <argLine>-ea
-            -Xmx${heapSize}
-            -Dstorage.diskCache.bufferSize=4096
-            -Dindex.flushAfterCreate=false
-            -Dstorage.makeFullCheckpointAfterCreate=false
-            -Dmemory.directMemory.trackMode=true
-            -Dstorage.makeFullCheckpointAfterOpen=false
-            -Dstorage.makeFullCheckpointAfterClusterCreate=false
-            -Dstorage.wal.syncOnPageFlush=false
-            -Dserver.backwardCompatibility=false
-            -Dstorage.configuration.syncOnUpdate=false
-            -Ddb.makeFullCheckpointOnIndexChange=false
-            -Ddb.makeFullCheckpointOnSchemaChange=false
-            -Dhazelcast.wait.seconds.before.join=3
-            -Djava.util.logging.manager=com.orientechnologies.common.log.ShutdownLogManager
-            -Dstorage.diskCache.checksumMode=storeAndThrow
-            -Dindex.allowManualIndexes=false
-            -Dsecurity.warningDefaultUsers=false
-            -Dsecurity.createDefaultUsers=false
-        </argLine>
         <exclude.test.distributed>NONE</exclude.test.distributed>
         <project.rootdir>${project.basedir}/../</project.rootdir>
     </properties>
 
     <profiles>
+        <profile>
+            <id>java8</id>
+            <activation>
+                <jdk>1.8</jdk>
+            </activation>
+            <properties>
+                <argLine>-ea
+                    -Xmx${heapSize}
+                    -Dstorage.diskCache.bufferSize=4096
+                    -Dindex.flushAfterCreate=false
+                    -Dstorage.makeFullCheckpointAfterCreate=false
+                    -Dmemory.directMemory.trackMode=true
+                    -Dstorage.makeFullCheckpointAfterOpen=false
+                    -Dstorage.makeFullCheckpointAfterClusterCreate=false
+                    -Dstorage.wal.syncOnPageFlush=false
+                    -Dserver.backwardCompatibility=false
+                    -Dstorage.configuration.syncOnUpdate=false
+                    -Ddb.makeFullCheckpointOnIndexChange=false
+                    -Ddb.makeFullCheckpointOnSchemaChange=false
+                    -Dhazelcast.wait.seconds.before.join=3
+                    -Djava.util.logging.manager=com.orientechnologies.common.log.ShutdownLogManager
+                    -Dstorage.diskCache.checksumMode=storeAndThrow
+                    -Dindex.allowManualIndexes=false
+                    -Dsecurity.warningDefaultUsers=false
+                    -Dsecurity.createDefaultUsers=false
+                </argLine>
+            </properties>
+        </profile>
+        <profile>
+            <id>java11</id>
+            <activation>
+                <jdk>[11,)</jdk>
+            </activation>
+            <properties>
+                <argLine>-ea
+                    -Xmx${heapSize}
+                    -Dstorage.diskCache.bufferSize=4096
+                    -Dindex.flushAfterCreate=false
+                    -Dstorage.makeFullCheckpointAfterCreate=false
+                    -Dmemory.directMemory.trackMode=true
+                    -Dstorage.makeFullCheckpointAfterOpen=false
+                    -Dstorage.makeFullCheckpointAfterClusterCreate=false
+                    -Dstorage.wal.syncOnPageFlush=false
+                    -Dserver.backwardCompatibility=false
+                    -Dstorage.configuration.syncOnUpdate=false
+                    -Ddb.makeFullCheckpointOnIndexChange=false
+                    -Ddb.makeFullCheckpointOnSchemaChange=false
+                    -Dhazelcast.wait.seconds.before.join=3
+                    -Djava.util.logging.manager=com.orientechnologies.common.log.ShutdownLogManager
+                    -Dstorage.diskCache.checksumMode=storeAndThrow
+                    -Dindex.allowManualIndexes=false
+                    -Dsecurity.warningDefaultUsers=false
+                    -Dsecurity.createDefaultUsers=false
+                    --add-opens jdk.unsupported/sun.misc=ALL-UNNAMED
+                    --add-opens java.base/sun.security.x509=ALL-UNNAMED
+                </argLine>
+            </properties>
+        </profile>
         <profile>
             <id>crash-tests</id>
             <build>
@@ -252,6 +287,7 @@
                 <configuration>
                     <reuseForks>false</reuseForks>
                     <forkCount>1</forkCount>
+                    <useModulePath>false</useModulePath>
                 </configuration>
             </plugin>
         </plugins>

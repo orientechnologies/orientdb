@@ -17,7 +17,7 @@
     <parent>
         <groupId>com.orientechnologies</groupId>
         <artifactId>orientdb-parent</artifactId>
-        <version>3.2.2-SNAPSHOT</version>
+        <version>3.2.3-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -27,17 +27,6 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <argLine>
-            -Xmx${heapSize}
-            -Dstorage.diskCache.bufferSize=4096
-            -Dmemory.directMemory.trackMode=true
-            -Djava.util.logging.manager=com.orientechnologies.common.log.ShutdownLogManager
-            -Dstorage.diskCache.checksumMode=storeAndThrow
-            -Dindex.allowManualIndexes=false
-            -Dsecurity.warningDefaultUsers=false
-            -Dsecurity.createDefaultUsers=false
-        </argLine>
-        <project.rootdir>${project.basedir}/../</project.rootdir>
     </properties>
 
     <dependencies>
@@ -250,12 +239,50 @@
                             <value>com.orientechnologies.OTestNGTestListener</value>
                         </property>
                     </properties>
+                    <useModulePath>false</useModulePath>
                 </configuration>
             </plugin>
         </plugins>
     </build>
 
     <profiles>
+        <profile>
+            <id>java8</id>
+            <activation>
+                <jdk>1.8</jdk>
+            </activation>
+            <properties>
+                <argLine>
+                    -Xmx${heapSize}
+                    -Dstorage.diskCache.bufferSize=4096
+                    -Dmemory.directMemory.trackMode=true
+                    -Djava.util.logging.manager=com.orientechnologies.common.log.ShutdownLogManager
+                    -Dstorage.diskCache.checksumMode=storeAndThrow
+                    -Dindex.allowManualIndexes=false
+                    -Dsecurity.warningDefaultUsers=false
+                    -Dsecurity.createDefaultUsers=false
+                </argLine>
+            </properties>
+        </profile>
+        <profile>
+            <id>java11</id>
+            <activation>
+                <jdk>[11,)</jdk>
+            </activation>
+            <properties>
+                <argLine>
+                    -Xmx${heapSize}
+                    -Dstorage.diskCache.bufferSize=4096
+                    -Dmemory.directMemory.trackMode=true
+                    -Djava.util.logging.manager=com.orientechnologies.common.log.ShutdownLogManager
+                    -Dstorage.diskCache.checksumMode=storeAndThrow
+                    -Dindex.allowManualIndexes=false
+                    -Dsecurity.warningDefaultUsers=false
+                    -Dsecurity.createDefaultUsers=false
+                    --add-opens jdk.unsupported/sun.misc=ALL-UNNAMED
+                </argLine>
+            </properties>
+        </profile>
         <profile>
             <id>test-embedded</id>
             <build>

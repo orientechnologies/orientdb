@@ -1,13 +1,5 @@
 package com.orientechnologies.orient.core.db;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
 import com.orientechnologies.orient.core.OCreateDatabaseUtil;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -18,16 +10,19 @@ import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
+
+import java.util.List;
+import java.util.TimerTask;
+import java.util.UUID;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import org.junit.Assert;
-import org.junit.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.*;
 
 /** Created by tglman on 08/04/16. */
 public class OrientDBEmbeddedTests {
@@ -499,7 +494,7 @@ public class OrientDBEmbeddedTests {
     try (final OrientDB orientDB =
         OCreateDatabaseUtil.createDatabase(
             "testCreateForceCloseOpen", "embedded:./target/", OCreateDatabaseUtil.TYPE_PLOCAL)) {
-      ((OrientDBEmbedded) orientDB.getInternal()).forceDatabaseClose("test");
+      orientDB.getInternal().forceDatabaseClose("test");
       ODatabaseSession db1 =
           orientDB.open(
               "testCreateForceCloseOpen", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
@@ -510,6 +505,7 @@ public class OrientDBEmbeddedTests {
   }
 
   @Test
+  @Ignore
   public void autoClose() throws InterruptedException {
     OrientDB orientDB =
         new OrientDB(
@@ -559,10 +555,7 @@ public class OrientDBEmbeddedTests {
               "testExecutor",
               "admin",
               (session) -> {
-                if (session.isClosed() && session.getUser() == null) {
-                  return false;
-                }
-                return true;
+                return !session.isClosed() || session.getUser() != null;
               });
 
       assertTrue(result.get());
@@ -579,10 +572,7 @@ public class OrientDBEmbeddedTests {
           internal.executeNoAuthorization(
               "testExecutorNoAuthorization",
               (session) -> {
-                if (session.isClosed() && session.getUser() != null) {
-                  return false;
-                }
-                return true;
+                return !session.isClosed() || session.getUser() == null;
               });
 
       assertTrue(result.get());

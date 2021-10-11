@@ -24,7 +24,7 @@
     <parent>
         <groupId>com.orientechnologies</groupId>
         <artifactId>orientdb-parent</artifactId>
-        <version>3.2.2-SNAPSHOT</version>
+        <version>3.2.3-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -33,41 +33,10 @@
     <name>OrientDB GraphDB</name>
 
     <properties>
-        <javac.src.version>1.8</javac.src.version>
-        <javac.target.version>1.8</javac.target.version>
+        <javac.src.version>${maven.compiler.source}</javac.src.version>
+        <javac.target.version>${maven.compiler.target}</javac.target.version>
         <jar.manifest.mainclass>com.orientechnologies.orient.server.OServerMain</jar.manifest.mainclass>
-        <osgi.import>
-            com.tinkerpop.blueprints;resolution:=optional,
-            com.tinkerpop.gremlin.groovy.jsr223;resolution:=optional,
-            com.tinkerpop.gremlin.java;resolution:=optional,
-            com.tinkerpop.rexster.config;resolution:=optional,
-            *
-        </osgi.import>
-        <osgi.export>
-            com.orientechnologies.orient.graph.*,
-            com.tinkerpop.blueprints.impls.orient
-        </osgi.export>
-
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <argLine>
-            -ea
-            -Xmx${heapSize}
-            -Dstorage.diskCache.bufferSize=4096
-            -Dindex.flushAfterCreate=false
-            -Dmemory.directMemory.trackMode=true
-            -Dstorage.makeFullCheckpointAfterCreate=false
-            -Dstorage.makeFullCheckpointAfterOpen=false
-            -Dstorage.makeFullCheckpointAfterClusterCreate=false
-            -Dstorage.wal.syncOnPageFlush=false
-            -Dstorage.configuration.syncOnUpdate=false
-            -Ddb.makeFullCheckpointOnIndexChange=false
-            -Ddb.makeFullCheckpointOnSchemaChange=false
-            -Djava.util.logging.manager=com.orientechnologies.common.log.ShutdownLogManager
-            -Dstorage.diskCache.checksumMode=storeAndThrow
-            -Dindex.allowManualIndexes=false
-            -Dsecurity.warningDefaultUsers=false
-        </argLine>
-        <project.rootdir>${project.basedir}/../</project.rootdir>
     </properties>
 
     <dependencies>
@@ -143,12 +112,12 @@
         <dependency>
             <groupId>org.codehaus.groovy</groupId>
             <artifactId>groovy</artifactId>
-            <version>2.5.8</version>
+            <version>2.5.15</version>
         </dependency>
         <dependency>
             <groupId>org.codehaus.groovy</groupId>
             <artifactId>groovy-jsr223</artifactId>
-            <version>2.5.8</version>
+            <version>2.5.15</version>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
@@ -215,6 +184,63 @@
         </plugins>
     </build>
     <profiles>
+        <profile>
+            <id>java8</id>
+            <activation>
+                <jdk>1.8</jdk>
+            </activation>
+            <properties>
+                <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+                <argLine>
+                    -ea
+                    -Xmx${heapSize}
+                    -Dstorage.diskCache.bufferSize=4096
+                    -Dindex.flushAfterCreate=false
+                    -Dmemory.directMemory.trackMode=true
+                    -Dstorage.makeFullCheckpointAfterCreate=false
+                    -Dstorage.makeFullCheckpointAfterOpen=false
+                    -Dstorage.makeFullCheckpointAfterClusterCreate=false
+                    -Dstorage.wal.syncOnPageFlush=false
+                    -Dstorage.configuration.syncOnUpdate=false
+                    -Ddb.makeFullCheckpointOnIndexChange=false
+                    -Ddb.makeFullCheckpointOnSchemaChange=false
+                    -Djava.util.logging.manager=com.orientechnologies.common.log.ShutdownLogManager
+                    -Dstorage.diskCache.checksumMode=storeAndThrow
+                    -Dindex.allowManualIndexes=false
+                    -Dsecurity.warningDefaultUsers=false
+                </argLine>
+            </properties>
+        </profile>
+        <profile>
+            <id>java11</id>
+            <activation>
+                <jdk>[11,)</jdk>
+            </activation>
+            <properties>
+                <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+                <argLine>
+                    -ea
+                    -Xmx${heapSize}
+                    -Dstorage.diskCache.bufferSize=4096
+                    -Dindex.flushAfterCreate=false
+                    -Dmemory.directMemory.trackMode=true
+                    -Dstorage.makeFullCheckpointAfterCreate=false
+                    -Dstorage.makeFullCheckpointAfterOpen=false
+                    -Dstorage.makeFullCheckpointAfterClusterCreate=false
+                    -Dstorage.wal.syncOnPageFlush=false
+                    -Dstorage.configuration.syncOnUpdate=false
+                    -Ddb.makeFullCheckpointOnIndexChange=false
+                    -Ddb.makeFullCheckpointOnSchemaChange=false
+                    -Djava.util.logging.manager=com.orientechnologies.common.log.ShutdownLogManager
+                    -Dstorage.diskCache.checksumMode=storeAndThrow
+                    -Dindex.allowManualIndexes=false
+                    -Dsecurity.warningDefaultUsers=false
+                    --add-opens jdk.unsupported/sun.misc=ALL-UNNAMED
+                    --add-opens java.base/sun.security.x509=ALL-UNNAMED
+                </argLine>
+            </properties>
+        </profile>
+
         <profile>
             <id>crash-tests</id>
             <build>

@@ -31,24 +31,12 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.server.OClientConnection;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.StringWriter;
-import java.io.Writer;
+
+import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.TimeZone;
+import java.util.*;
 import java.util.zip.GZIPOutputStream;
 
 /**
@@ -57,10 +45,11 @@ import java.util.zip.GZIPOutputStream;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public abstract class OHttpResponse {
+  // from exporter version 13, `earlyTypes` is enabled
   public static final String JSON_FORMAT =
-      "type,indent:-1,rid,version,attribSameRow,class,keepTypes,alwaysFetchEmbeddedDocuments";
+      "type,indent:-1,rid,version,attribSameRow,class,keepTypes,alwaysFetchEmbeddedDocuments,earlyTypes";
   public static final char[] URL_SEPARATOR = {'/'};
-  protected static final Charset utf8 = Charset.forName("utf8");
+  protected static final Charset utf8 = StandardCharsets.UTF_8;
 
   private final String httpVersion;
   private final OutputStream out;
@@ -71,7 +60,7 @@ public abstract class OHttpResponse {
   private String contentType;
   private String serverInfo;
 
-  private Map<String, String> headersMap = new HashMap<>();
+  private final Map<String, String> headersMap = new HashMap<>();
 
   private String sessionId;
   private String callbackFunction;
@@ -515,7 +504,7 @@ public abstract class OHttpResponse {
     GZIPOutputStream gout = null;
     ByteArrayOutputStream baos = null;
     try {
-      byte[] incoming = jsonStr.getBytes("UTF-8");
+      byte[] incoming = jsonStr.getBytes(StandardCharsets.UTF_8);
       baos = new ByteArrayOutputStream();
       gout = new GZIPOutputStream(baos, 16384); // 16KB
       gout.write(incoming);

@@ -10,6 +10,7 @@ import com.orientechnologies.orient.client.remote.message.OSubscribeRequest;
 import com.orientechnologies.orient.client.remote.message.OSubscribeResponse;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.SynchronousQueue;
@@ -23,8 +24,9 @@ public class OStorageRemotePushThread extends Thread {
   private final int retryDelay;
   private final long requestTimeout;
   private OChannelBinary network;
-  private BlockingQueue<Object> blockingQueue = new SynchronousQueue<>();
+  private final BlockingQueue<Object> blockingQueue = new SynchronousQueue<>();
   private volatile OBinaryRequest currentRequest;
+  private volatile boolean shutDown;
 
   public OStorageRemotePushThread(
       ORemotePushHandler storage, String host, int retryDelay, long requestTimeout) {
@@ -46,7 +48,7 @@ public class OStorageRemotePushThread extends Thread {
 
   @Override
   public void run() {
-    while (!Thread.interrupted()) {
+    while (!Thread.interrupted() && !shutDown) {
       try {
         network.setWaitResponseTimeout();
         byte res = network.readByte();
@@ -136,6 +138,7 @@ public class OStorageRemotePushThread extends Thread {
   }
 
   public void shutdown() {
+    shutDown = true;
     interrupt();
     pushHandler.returnSocket(this.network);
   }

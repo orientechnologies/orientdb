@@ -28,7 +28,7 @@
     <parent>
         <groupId>com.orientechnologies</groupId>
         <artifactId>orientdb-parent</artifactId>
-        <version>3.2.2-SNAPSHOT</version>
+        <version>3.2.3-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -37,20 +37,7 @@
     <name>OrientDB Client</name>
 
     <properties>
-        <osgi.import>*</osgi.import>
-        <osgi.export>com.orientechnologies.orient.client.*</osgi.export>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <argLine>
-            -ea
-            -Xmx${heapSize}
-            -Dmemory.directMemory.trackMode=true
-            -Djava.util.logging.manager=com.orientechnologies.common.log.ShutdownLogManager
-            -Dstorage.diskCache.checksumMode=storeAndThrow
-            -Dstorage.diskCache.bufferSize=4096
-            -Dindex.allowManualIndexes=false
-            -Dsecurity.warningDefaultUsers=false
-            -Dsecurity.createDefaultUsers=false
-        </argLine>
         <project.rootdir>${project.basedir}/../</project.rootdir>
     </properties>
 
@@ -93,6 +80,47 @@
     </build>
 
     <profiles>
+        <profile>
+            <id>java8</id>
+            <activation>
+                <jdk>1.8</jdk>
+            </activation>
+            <properties>
+                <argLine>
+                    -ea
+                    -Xmx${heapSize}
+                    -Dmemory.directMemory.trackMode=true
+                    -Djava.util.logging.manager=com.orientechnologies.common.log.ShutdownLogManager
+                    -Dstorage.diskCache.checksumMode=storeAndThrow
+                    -Dstorage.diskCache.bufferSize=4096
+                    -Dindex.allowManualIndexes=false
+                    -Dsecurity.warningDefaultUsers=false
+                    -Dsecurity.createDefaultUsers=false
+                </argLine>
+            </properties>
+        </profile>
+        <profile>
+            <id>java11</id>
+            <activation>
+                <jdk>[11,)</jdk>
+            </activation>
+            <properties>
+                <argLine>
+                    -ea
+                    -Xmx${heapSize}
+                    -Dmemory.directMemory.trackMode=true
+                    -Djava.util.logging.manager=com.orientechnologies.common.log.ShutdownLogManager
+                    -Dstorage.diskCache.checksumMode=storeAndThrow
+                    -Dstorage.diskCache.bufferSize=4096
+                    -Dindex.allowManualIndexes=false
+                    -Dsecurity.warningDefaultUsers=false
+                    -Dsecurity.createDefaultUsers=false
+                    --add-opens jdk.unsupported/sun.misc=ALL-UNNAMED
+                    --add-opens java.base/sun.security.x509=ALL-UNNAMED
+                </argLine>
+            </properties>
+        </profile>
+
         <profile>
             <id>crash-tests</id>
             <build>

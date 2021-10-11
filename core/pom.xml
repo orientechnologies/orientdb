@@ -17,7 +17,7 @@
     <parent>
         <groupId>com.orientechnologies</groupId>
         <artifactId>orientdb-parent</artifactId>
-        <version>3.2.2-SNAPSHOT</version>
+        <version>3.2.3-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -25,46 +25,8 @@
     <name>OrientDB Core</name>
 
     <properties>
-        <osgi.import>
-            com.orientechnologies.orient.graph.console;resolution:=optional,
-            com.orientechnologies.orient.graph.gremlin;resolution:=optional,
-            com.orientechnologies.orient.graph.handler;resolution:=optional,
-            com.orientechnologies.orient.graph.sql.functions;resolution:=optional,
-            javax.imageio.spi,sun.misc;resolution:=optional,
-            com.orientechnologies.orient.client.remote;resolution:=optional,
-            com.sun.jna;resolution:=optional,
-            sun.nio.ch;resolution:=optional,
-            com.orientechnologies.orient.server.distributed.impl;resolution:=optional,
-            com.orientechnologies.orient.server.distributed.impl.task;resolution:=optional,
-            *
-        </osgi.import>
-        <osgi.export>com.orientechnologies.orient.core.*,
-            com.orientechnologies.common.*,com.orientechnologies.nio.*,
-            com.orientechnologies.orient.enterprise.*
-        </osgi.export>
         <jna.version>4.0.0</jna.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <argLine>-ea
-            -Xmx${heapSize}
-            -Dstorage.diskCache.bufferSize=4096
-            -Dindex.flushAfterCreate=false
-            -Dstorage.makeFullCheckpointAfterCreate=false
-            -Dstorage.makeFullCheckpointAfterOpen=false
-            -Dstorage.makeFullCheckpointAfterClusterCreate=false
-            -Dstorage.wal.syncOnPageFlush=false
-            -Dstorage.configuration.syncOnUpdate=false
-            -Ddb.makeFullCheckpointOnIndexChange=false
-            -Ddb.makeFullCheckpointOnSchemaChange=false
-            -Dsecurity.userPasswordSaltIterations=10
-            -Dmemory.directMemory.trackMode=true
-            -Djava.util.logging.manager=com.orientechnologies.common.log.ShutdownLogManager
-            -Dstorage.diskCache.checksumMode=storeAndThrow
-            -Dindex.allowManualIndexes=false
-            -Dsecurity.warningDefaultUsers=false
-            <!-- new security feature -->
-            -Dsecurity.createDefaultUsers=false
-        </argLine>
-        <project.rootdir>${project.basedir}/../</project.rootdir>
     </properties>
 
     <profiles>
@@ -130,6 +92,65 @@
                     </plugin>
                 </plugins>
             </build>
+        </profile>
+
+        <profile>
+            <id>java8</id>
+            <activation>
+                <jdk>1.8</jdk>
+            </activation>
+            <properties>
+                <argLine>-ea
+                    -Xmx${heapSize}
+                    -Dstorage.diskCache.bufferSize=4096
+                    -Dindex.flushAfterCreate=false
+                    -Dstorage.makeFullCheckpointAfterCreate=false
+                    -Dstorage.makeFullCheckpointAfterOpen=false
+                    -Dstorage.makeFullCheckpointAfterClusterCreate=false
+                    -Dstorage.wal.syncOnPageFlush=false
+                    -Dstorage.configuration.syncOnUpdate=false
+                    -Ddb.makeFullCheckpointOnIndexChange=false
+                    -Ddb.makeFullCheckpointOnSchemaChange=false
+                    -Dsecurity.userPasswordSaltIterations=10
+                    -Dmemory.directMemory.trackMode=true
+                    -Djava.util.logging.manager=com.orientechnologies.common.log.ShutdownLogManager
+                    -Dstorage.diskCache.checksumMode=storeAndThrow
+                    -Dindex.allowManualIndexes=false
+                    -Dsecurity.warningDefaultUsers=false
+                    <!-- new security feature -->
+                    -Dsecurity.createDefaultUsers=false
+                </argLine>
+            </properties>
+        </profile>
+        <profile>
+            <id>java11</id>
+            <activation>
+                <jdk>[11,)</jdk>
+            </activation>
+            <properties>
+                <argLine>-ea
+                    -Xmx${heapSize}
+                    -Dstorage.diskCache.bufferSize=4096
+                    -Dindex.flushAfterCreate=false
+                    -Dstorage.makeFullCheckpointAfterCreate=false
+                    -Dstorage.makeFullCheckpointAfterOpen=false
+                    -Dstorage.makeFullCheckpointAfterClusterCreate=false
+                    -Dstorage.wal.syncOnPageFlush=false
+                    -Dstorage.configuration.syncOnUpdate=false
+                    -Ddb.makeFullCheckpointOnIndexChange=false
+                    -Ddb.makeFullCheckpointOnSchemaChange=false
+                    -Dsecurity.userPasswordSaltIterations=10
+                    -Dmemory.directMemory.trackMode=true
+                    -Djava.util.logging.manager=com.orientechnologies.common.log.ShutdownLogManager
+                    -Dstorage.diskCache.checksumMode=storeAndThrow
+                    -Dindex.allowManualIndexes=false
+                    -Dsecurity.warningDefaultUsers=false
+                    <!-- new security feature -->
+                    -Dsecurity.createDefaultUsers=false
+                    --add-opens jdk.unsupported/sun.misc=ALL-UNNAMED
+                    --add-opens java.base/sun.security.x509=ALL-UNNAMED
+                </argLine>
+            </properties>
         </profile>
     </profiles>
 

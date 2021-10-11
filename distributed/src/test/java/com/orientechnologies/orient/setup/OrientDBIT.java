@@ -5,7 +5,6 @@ import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.OStorageException;
 
 // Adds retries to the operations provided by OrientDB
 public class OrientDBIT extends OrientDB {
@@ -43,25 +42,5 @@ public class OrientDBIT extends OrientDB {
   public void create(String database, ODatabaseType type) {
     TestSetupUtil.log("Creating database '%s'.", database);
     super.create(database, type);
-  }
-
-  @Override
-  public void drop(String database) {
-    int i = 1;
-    while (true) {
-      try {
-        TestSetupUtil.log("Trying (%d/%d) to drop database %s.", i, MAX_DROP_RETRY, database);
-        super.drop(database);
-        break;
-      } catch (OStorageException e) {
-        if (i++ >= MAX_DROP_RETRY) {
-          throw e;
-        }
-        try {
-          Thread.sleep(DROP_RETRY_INTERVAL_SECONDS * 1000);
-        } catch (InterruptedException interruptedException) {
-        }
-      }
-    }
   }
 }

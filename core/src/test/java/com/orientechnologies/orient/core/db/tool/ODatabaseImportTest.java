@@ -2,13 +2,16 @@ package com.orientechnologies.orient.core.db.tool;
 
 import com.orientechnologies.orient.core.OCreateDatabaseUtil;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.db.*;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.OrientDB;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 
 /** Created by tglman on 23/05/16. */
 public class ODatabaseImportTest {
@@ -56,13 +59,11 @@ public class ODatabaseImportTest {
     orientDB.close();
   }
 
-  // TODO: part of the end to end import renovation
-  @Ignore
   @Test
-  public void exportImportOnlySchemaTestV2() throws IOException {
-    final String databaseName = "testV2";
+  public void exportImportOnlySchemaTestStreamed() throws IOException {
+    final String databaseName = "testStreamed";
     final String exportDbUrl =
-        "memory:target/exportV2_" + ODatabaseImportTest.class.getSimpleName();
+        "memory:target/exportStreamed_" + ODatabaseImportTest.class.getSimpleName();
     final OrientDB orientDB =
         OCreateDatabaseUtil.createDatabase(
             databaseName, exportDbUrl, OCreateDatabaseUtil.TYPE_PLOCAL);
@@ -85,7 +86,7 @@ public class ODatabaseImportTest {
     }
 
     final String importDbUrl =
-        "memory:target/importV2_" + ODatabaseImportTest.class.getSimpleName();
+        "memory:target/importStreamed_" + ODatabaseImportTest.class.getSimpleName();
     OCreateDatabaseUtil.createDatabase(databaseName, importDbUrl, OCreateDatabaseUtil.TYPE_PLOCAL);
     try (final ODatabaseSession db =
         orientDB.open(databaseName, "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD)) {
@@ -97,7 +98,7 @@ public class ODatabaseImportTest {
                 @Override
                 public void onMessage(String iText) {}
               });
-      importer.importDatabaseV2();
+      importer.importDatabaseStreamed();
       Assert.assertTrue(
           "SimpleClass schema must exist.",
           db.getMetadata().getSchema().existsClass("SimpleClass"));
@@ -156,7 +157,7 @@ public class ODatabaseImportTest {
   // TODO: part of the end to end import renovation
   @Ignore
   @Test
-  public void exportImportExcludeClusters2() throws IOException {
+  public void exportImportExcludeClustersStreamed() throws IOException {
     final String databaseName = "test2";
     final String exportDbUrl =
         "memory:target/export2_" + ODatabaseImportTest.class.getSimpleName() + "_excludeclusters";
@@ -195,7 +196,7 @@ public class ODatabaseImportTest {
                 @Override
                 public void onMessage(String iText) {}
               });
-      importer.importDatabaseV2();
+      importer.importDatabaseStreamed();
       Assert.assertTrue(db.getMetadata().getSchema().existsClass("SimpleClass"));
     }
     orientDB.drop(databaseName);

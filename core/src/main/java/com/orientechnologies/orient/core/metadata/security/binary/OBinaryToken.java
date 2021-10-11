@@ -111,6 +111,12 @@ public class OBinaryToken implements OToken {
     return getExpiry() > now;
   }
 
+  @Override
+  public boolean isCloseToExpire() {
+    long now = System.currentTimeMillis();
+    return getExpiry() - 120000 <= now;
+  }
+
   public OBinaryTokenPayload getPayload() {
     return payload;
   }
