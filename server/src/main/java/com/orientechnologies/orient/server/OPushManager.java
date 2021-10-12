@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.client.remote.message.OBinaryPushRequest;
 import com.orientechnologies.orient.client.remote.message.OBinaryPushResponse;
 import com.orientechnologies.orient.client.remote.message.OPushDistributedConfigurationRequest;
@@ -215,6 +216,7 @@ public class OPushManager implements OMetadataUpdateListener {
     public Thread newThread(Runnable r) {
       Thread th = new Thread(r);
       th.setName("Push Requests");
+      th.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
       return th;
     }
   }

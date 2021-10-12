@@ -51,7 +51,7 @@ public class OrientDBRemoteTest {
     OrientDBConfig config =
         OrientDBConfig.builder()
             .addConfig(OGlobalConfiguration.DB_CACHED_POOL_CAPACITY, 2)
-            .addConfig(OGlobalConfiguration.DB_CACHED_POOL_CLEAN_UP_TIMEOUT, 2_000)
+            .addConfig(OGlobalConfiguration.DB_CACHED_POOL_CLEAN_UP_TIMEOUT, 300_000)
             .build();
     factory = new OrientDB("remote:localhost", "root", "root", config);
   }

@@ -25,6 +25,7 @@ import com.orientechnologies.common.concur.lock.OModificationOperationProhibited
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.thread.NonDaemonThreadFactory;
 import com.orientechnologies.common.thread.OScheduledThreadPoolExecutorWithLogging;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OCommonConst;
@@ -166,7 +167,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
         clientConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_RETRY_DELAY);
     serverURLs = hosts;
 
-    asynchExecutor = new OScheduledThreadPoolExecutorWithLogging(1);
+    asynchExecutor =
+        new OScheduledThreadPoolExecutorWithLogging(
+            1, new NonDaemonThreadFactory("Async executor"));
 
     this.connectionManager = connectionManager;
     this.context = context;

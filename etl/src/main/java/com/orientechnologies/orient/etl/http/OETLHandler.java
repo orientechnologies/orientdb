@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.etl.http;
 
+import com.orientechnologies.common.thread.NonDaemonThreadFactory;
 import com.orientechnologies.common.thread.OThreadPoolExecutorWithLogging;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.util.OMigrationConfigManager;
@@ -19,7 +20,12 @@ public class OETLHandler {
 
   private ExecutorService pool =
       new OThreadPoolExecutorWithLogging(
-          1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
+          1,
+          1,
+          0L,
+          TimeUnit.MILLISECONDS,
+          new LinkedBlockingQueue<>(),
+          new NonDaemonThreadFactory("ETL handler pool thread"));
   private OETLJob currentJob = null;
   private OETLListener listener;
 

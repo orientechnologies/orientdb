@@ -28,6 +28,7 @@ import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfilerStub;
+import com.orientechnologies.common.thread.NonDaemonThreadFactory;
 import com.orientechnologies.common.thread.OThreadPoolExecutorWithLogging;
 import com.orientechnologies.common.util.OClassLoaderHelper;
 import com.orientechnologies.orient.core.cache.OLocalRecordCacheFactory;
@@ -285,7 +286,8 @@ public class Orient extends OListenerManger<OOrientListener> {
                   }
                   return false;
                 }
-              });
+              },
+              new NonDaemonThreadFactory("Orient worker"));
 
       registerEngines();
 

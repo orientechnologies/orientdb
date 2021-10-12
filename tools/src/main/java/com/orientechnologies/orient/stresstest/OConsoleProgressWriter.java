@@ -33,7 +33,8 @@ public class OConsoleProgressWriter extends OSoftThread {
   private final OWorkload workload;
   private String lastResult = null;
 
-  public OConsoleProgressWriter(final OWorkload workload) {
+  public OConsoleProgressWriter(String name, final OWorkload workload) {
+    super(name);
     this.workload = workload;
   }
 

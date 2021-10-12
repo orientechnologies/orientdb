@@ -25,6 +25,7 @@ import com.orientechnologies.common.concur.lock.OModificationOperationProhibited
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.thread.NonDaemonThreadFactory;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
@@ -146,7 +147,8 @@ public class OrientDBEmbedded implements OrientDBInternal {
             Runtime.getRuntime().availableProcessors(),
             30,
             TimeUnit.MINUTES,
-            new LinkedBlockingQueue<>());
+            new LinkedBlockingQueue<>(),
+            new NonDaemonThreadFactory("OrientDBEmbedded thread"));
     timer = new Timer();
 
     cachedPoolFactory = createCachedDatabasePoolFactory(this.configurations);
