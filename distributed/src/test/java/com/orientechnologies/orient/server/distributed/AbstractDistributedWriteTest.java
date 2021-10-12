@@ -44,8 +44,8 @@ public abstract class AbstractDistributedWriteTest extends AbstractServerCluster
   // OPartitionedDatabasePoolFactory();
 
   class Writer implements Callable<Void> {
-    private int serverId;
-    private int threadId;
+    private final int serverId;
+    private final int threadId;
 
     public Writer(final int iServerId, final int iThreadId) {
       serverId = iServerId;
@@ -74,7 +74,7 @@ public abstract class AbstractDistributedWriteTest extends AbstractServerCluster
           final ODocument person = createRecord(database, i);
           updateRecord(database, i);
           checkRecord(database, i);
-          checkIndex(database, (String) person.field("name"), person.getIdentity());
+          checkIndex(database, person.field("name"), person.getIdentity());
 
           if (delayWriter > 0) Thread.sleep(delayWriter);
 

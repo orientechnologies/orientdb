@@ -80,8 +80,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
   public static final int IMPORT_RECORD_DUMP_LAP_EVERY_MS = 5000;
 
-  private Map<OPropertyImpl, String> linkedClasses = new HashMap<>();
-  private Map<OClass, List<String>> superClasses = new HashMap<>();
+  private final Map<OPropertyImpl, String> linkedClasses = new HashMap<>();
+  private final Map<OClass, List<String>> superClasses = new HashMap<>();
   private OJSONReader jsonReader;
   private ORecord record;
   private boolean schemaImported = false;
@@ -96,10 +96,10 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   private boolean merge = false;
   private boolean rebuildIndexes = true;
 
-  private Set<String> indexesToRebuild = new HashSet<>();
-  private Map<String, String> convertedClassNames = new HashMap<>();
+  private final Set<String> indexesToRebuild = new HashSet<>();
+  private final Map<String, String> convertedClassNames = new HashMap<>();
 
-  private Map<Integer, Integer> clusterToClusterMapping = new HashMap<>();
+  private final Map<Integer, Integer> clusterToClusterMapping = new HashMap<>();
 
   private int maxRidbagStringSizeBeforeLazyImport = 100_000_000;
 

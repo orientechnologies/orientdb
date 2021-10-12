@@ -70,7 +70,7 @@ public class OHazelcastClusterMetadataManager
   private String nodeName = null;
   private OServer serverInstance;
 
-  private ODistributedPlugin distributedPlugin;
+  private final ODistributedPlugin distributedPlugin;
 
   public OHazelcastClusterMetadataManager(ODistributedPlugin distributedPlugin) {
     this.distributedPlugin = distributedPlugin;

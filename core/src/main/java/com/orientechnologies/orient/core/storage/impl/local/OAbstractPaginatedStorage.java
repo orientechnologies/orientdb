@@ -21,11 +21,7 @@
 package com.orientechnologies.orient.core.storage.impl.local;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
-import com.orientechnologies.common.concur.lock.OLockManager;
-import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
-import com.orientechnologies.common.concur.lock.ONotThreadRWLockManager;
-import com.orientechnologies.common.concur.lock.OPartitionedLockManager;
-import com.orientechnologies.common.concur.lock.OSimpleRWLockManager;
+import com.orientechnologies.common.concur.lock.*;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OHighLevelException;
 import com.orientechnologies.common.io.OIOException;
@@ -38,18 +34,16 @@ import com.orientechnologies.common.serialization.types.OUTF8Serializer;
 import com.orientechnologies.common.thread.OScheduledThreadPoolExecutorWithLogging;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.types.OModifiableLong;
-import com.orientechnologies.common.util.*;
+import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.common.util.OCommonConst;
+import com.orientechnologies.common.util.ORawPair;
+import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
-import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
-import com.orientechnologies.orient.core.config.OStorageConfiguration;
-import com.orientechnologies.orient.core.config.OStorageConfigurationImpl;
-import com.orientechnologies.orient.core.config.OStorageConfigurationUpdateListener;
+import com.orientechnologies.orient.core.config.*;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
@@ -62,28 +56,11 @@ import com.orientechnologies.orient.core.db.record.ridbag.ORidBagDeleter;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.encryption.OEncryptionFactory;
 import com.orientechnologies.orient.core.encryption.impl.ONothingEncryption;
-import com.orientechnologies.orient.core.exception.OClusterDoesNotExistException;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
-import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
-import com.orientechnologies.orient.core.exception.OInvalidDatabaseNameException;
-import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.exception.ORetryQueryException;
-import com.orientechnologies.orient.core.exception.OStorageDoesNotExistException;
-import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.exception.OStorageExistsException;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.*;
-import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
-import com.orientechnologies.orient.core.index.engine.OIndexEngine;
-import com.orientechnologies.orient.core.index.engine.OMultiValueIndexEngine;
-import com.orientechnologies.orient.core.index.engine.OSingleValueIndexEngine;
-import com.orientechnologies.orient.core.index.engine.OV1IndexEngine;
+import com.orientechnologies.orient.core.index.engine.*;
 import com.orientechnologies.orient.core.index.engine.v1.OCellBTreeMultiValueIndexEngine;
 import com.orientechnologies.orient.core.index.engine.v1.OCellBTreeSingleValueIndexEngine;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
@@ -102,14 +79,7 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.sharding.auto.OAutoShardingIndexEngine;
-import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.OIdentifiableStorage;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.ORecordMetadata;
-import com.orientechnologies.orient.core.storage.OStorageAbstract;
-import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OPageDataVerificationError;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
@@ -124,67 +94,16 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.MetaDataRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitEndRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartMetadataRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFileCreatedWALRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFileDeletedWALRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OHighLevelTransactionChangeRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ONonTxOperationPerformedWALRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OPaginatedClusterFactory;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPageBrokenException;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.EmptyWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.WriteableWALRecord;
 import com.orientechnologies.orient.core.storage.index.engine.OHashTableIndexEngine;
 import com.orientechnologies.orient.core.storage.index.engine.OSBTreeIndexEngine;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsaiLocal;
-import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
-import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainerSBTree;
-import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
-import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManagerShared;
-import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeRidBag;
-import com.orientechnologies.orient.core.tx.OTransactionAbstract;
-import com.orientechnologies.orient.core.tx.OTransactionData;
-import com.orientechnologies.orient.core.tx.OTransactionId;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
-import com.orientechnologies.orient.core.tx.OTransactionInternal;
-import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
-import com.orientechnologies.orient.core.tx.OTxMetadataHolderImpl;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TimeZone;
-import java.util.TreeMap;
-import java.util.TreeSet;
-import java.util.UUID;
-import java.util.WeakHashMap;
+import com.orientechnologies.orient.core.storage.ridbag.sbtree.*;
+import com.orientechnologies.orient.core.tx.*;
+import java.io.*;
+import java.util.*;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -6145,33 +6064,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     writeCache.restoreModeOn();
     try {
-      final int nextOperationId;
-
-      if (OGlobalConfiguration.STORAGE_CHECK_LATEST_OPERATION_ID.getValueAsBoolean()) {
-        OLogManager.instance()
-            .infoNoDb(
-                this,
-                "Storage %s , scan all pages to "
-                    + "find the latest operation stored into the files,"
-                    + " if you wish to skip this step to speed up data restore but"
-                    + " decrease durability guarantees please set flag %s to the false",
-                name,
-                OGlobalConfiguration.STORAGE_CHECK_LATEST_OPERATION_ID.getKey());
-
-        nextOperationId = fetchNextOperationId();
-        assert nextOperationId >= 0;
-      } else {
-        nextOperationId = Integer.MIN_VALUE;
-      }
-
-      return restoreFrom(writeAheadLog, lsn, nextOperationId);
+      return restoreFrom(writeAheadLog, lsn);
     } finally {
       writeCache.restoreModeOff();
     }
   }
 
-  protected OLogSequenceNumber restoreFrom(
-      OWriteAheadLog writeAheadLog, OLogSequenceNumber lsn, int nextOperationId)
+  protected OLogSequenceNumber restoreFrom(OWriteAheadLog writeAheadLog, OLogSequenceNumber lsn)
       throws IOException {
     OLogSequenceNumber logSequenceNumber = null;
     final OModifiableBoolean atLeastOnePageUpdate = new OModifiableBoolean();
@@ -6185,33 +6084,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     long lastReportTime = 0;
 
-    final String errorMessage =
-        "In storage %s WAL does not contain enough data to correctly restore database after crash. "
-            + "Required operation id %d operation id contained into the WAL %d."
-            + " Please create issue in bug tracker";
-
     try {
       List<WriteableWALRecord> records = writeAheadLog.read(lsn, 1_000);
-
-      if (nextOperationId >= 0) {
-        if (records.isEmpty()) {
-          final int lastOperationId = writeAheadLog.lastOperationId();
-          if (nextOperationId - 1 != lastOperationId) {
-            OLogManager.instance()
-                .errorNoDb(this, errorMessage, null, name, nextOperationId - 1, lastOperationId);
-          }
-
-          return null;
-        } else {
-          final WriteableWALRecord writeableWALRecord = records.get(0);
-          final int firstOperationId = writeableWALRecord.getOperationIdLSN().operationId;
-
-          if (firstOperationId > nextOperationId) {
-            OLogManager.instance()
-                .errorNoDb(this, errorMessage, null, name, nextOperationId, firstOperationId);
-          }
-        }
-      }
 
       while (!records.isEmpty()) {
         for (final WriteableWALRecord walRecord : records) {
@@ -6381,7 +6255,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           final ODurablePage durablePage = new ODurablePage(cacheEntry);
           if (durablePage.getLSN().compareTo(walRecord.getLsn()) < 0) {
             durablePage.restoreChanges(updatePageRecord.getChanges());
-            durablePage.setOperationIdLSN(updatePageRecord.getOperationIdLSN());
+            durablePage.setLsn(updatePageRecord.getLsn());
           }
         } finally {
           readCache.releaseFromWrite(cacheEntry, writeCache, true);
@@ -6408,60 +6282,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         assert false : "Invalid WAL record type was passed " + walRecord.getClass().getName();
       }
     }
-  }
-
-  private int fetchNextOperationId() throws IOException {
-    int lastOperationId = 0;
-
-    final Map<String, Long> files = writeCache.files();
-    int scannedFiles = 0;
-    for (final Map.Entry<String, Long> fileEntry : files.entrySet()) {
-      OLogManager.instance()
-          .infoNoDb(
-              this,
-              "Scanning of file %s in storage %s (%d out of %d files are scanned)",
-              fileEntry.getKey(),
-              name,
-              scannedFiles,
-              files.size());
-
-      final long fileId = fileEntry.getValue();
-      final long filledUpTo = writeCache.getFilledUpTo(fileId);
-
-      int prevScannedPercent = 0;
-      for (int pageIndex = 0; pageIndex < filledUpTo; pageIndex++) {
-        final OCacheEntry cacheEntry =
-            readCache.loadForRead(fileId, pageIndex, false, writeCache, true);
-        try {
-          final ODurablePage durablePage = new ODurablePage(cacheEntry);
-
-          final int operationId = durablePage.getOperationId();
-          if (operationId > lastOperationId) {
-            lastOperationId = operationId;
-          } else if (lastOperationId == operationId) {
-            throw new IllegalStateException("Id of WAL operation can not be duplicated");
-          }
-
-          final int scannedPercent = (int) ((100 * (pageIndex + 1)) / filledUpTo);
-          if (scannedPercent >= prevScannedPercent + 10) {
-            prevScannedPercent = scannedPercent;
-            OLogManager.instance()
-                .infoNoDb(
-                    this,
-                    "%d %% of file %s in storage %s  is scanned.",
-                    scannedPercent,
-                    fileEntry.getKey(),
-                    name);
-          }
-        } finally {
-          readCache.releaseFromRead(cacheEntry, writeCache);
-        }
-      }
-
-      scannedFiles++;
-    }
-
-    return lastOperationId;
   }
 
   @SuppressWarnings("unused")

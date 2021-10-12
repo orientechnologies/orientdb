@@ -7,7 +7,7 @@ import javax.script.ScriptEngineFactory;
 
 public class OSecuredScriptEngineFactory extends OSecuredScriptFactory {
 
-  private ScriptEngineFactory engineFactory;
+  private final ScriptEngineFactory engineFactory;
 
   public OSecuredScriptEngineFactory(ScriptEngineFactory engineFactory) {
     this.engineFactory = engineFactory;

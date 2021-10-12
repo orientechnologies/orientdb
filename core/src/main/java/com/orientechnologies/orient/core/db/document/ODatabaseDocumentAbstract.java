@@ -202,23 +202,22 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   /** {@inheritDoc} */
   public <RET extends ORecord> RET getRecord(final OIdentifiable iIdentifiable) {
     if (iIdentifiable instanceof ORecord) return (RET) iIdentifiable;
-    return (RET) load(iIdentifiable.getIdentity());
+    return load(iIdentifiable.getIdentity());
   }
 
   /** {@inheritDoc} */
   public <RET extends ORecord> RET load(
       final ORID iRecordId, final String iFetchPlan, final boolean iIgnoreCache) {
-    return (RET)
-        executeReadRecord(
-            (ORecordId) iRecordId,
-            null,
-            -1,
-            iFetchPlan,
-            iIgnoreCache,
-            !iIgnoreCache,
-            false,
-            OStorage.LOCKING_STRATEGY.DEFAULT,
-            new SimpleRecordReader(prefetchRecords));
+    return executeReadRecord(
+        (ORecordId) iRecordId,
+        null,
+        -1,
+        iFetchPlan,
+        iIgnoreCache,
+        !iIgnoreCache,
+        false,
+        OStorage.LOCKING_STRATEGY.DEFAULT,
+        new SimpleRecordReader(prefetchRecords));
   }
 
   /** Deletes the record checking the version. */
@@ -293,7 +292,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   public <RET extends List<?>> RET query(final OQuery<?> iCommand, final Object... iArgs) {
     checkIfActive();
     iCommand.reset();
-    return (RET) iCommand.execute(iArgs);
+    return iCommand.execute(iArgs);
   }
 
   /** {@inheritDoc} */
@@ -381,8 +380,8 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       final OMetadata metadata = getMetadata();
       if (metadata != null) {
         final OSecurityInternal security = sharedContext.getSecurity();
-        this.user = new OImmutableUser(security.getVersion(this), (OUser) user);
-      } else this.user = new OImmutableUser(-1, (OUser) user);
+        this.user = new OImmutableUser(security.getVersion(this), user);
+      } else this.user = new OImmutableUser(-1, user);
     } else this.user = (OImmutableUser) user;
   }
 
@@ -446,7 +445,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
   /** {@inheritDoc} */
   public <DB extends ODatabase<?>> DB registerHook(final ORecordHook iHookImpl) {
-    return (DB) registerHook(iHookImpl, ORecordHook.HOOK_POSITION.REGULAR);
+    return registerHook(iHookImpl, ORecordHook.HOOK_POSITION.REGULAR);
   }
 
   /** {@inheritDoc} */
@@ -858,17 +857,16 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   /** {@inheritDoc} */
   public <RET extends ORecord> RET load(
       final ORecord iRecord, final String iFetchPlan, final boolean iIgnoreCache) {
-    return (RET)
-        executeReadRecord(
-            (ORecordId) iRecord.getIdentity(),
-            iRecord,
-            -1,
-            iFetchPlan,
-            iIgnoreCache,
-            !iIgnoreCache,
-            false,
-            OStorage.LOCKING_STRATEGY.NONE,
-            new SimpleRecordReader(prefetchRecords));
+    return executeReadRecord(
+        (ORecordId) iRecord.getIdentity(),
+        iRecord,
+        -1,
+        iFetchPlan,
+        iIgnoreCache,
+        !iIgnoreCache,
+        false,
+        OStorage.LOCKING_STRATEGY.NONE,
+        new SimpleRecordReader(prefetchRecords));
   }
 
   @Override
@@ -1314,7 +1312,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
    */
   @Override
   public <RET extends ORecord> RET save(final ORecord iRecord) {
-    return (RET) save(iRecord, null, OPERATION_MODE.SYNCHRONOUS, false, null, null);
+    return save(iRecord, null, OPERATION_MODE.SYNCHRONOUS, false, null, null);
   }
 
   /**
@@ -1379,7 +1377,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
    */
   @Override
   public <RET extends ORecord> RET save(final ORecord iRecord, final String iClusterName) {
-    return (RET) save(iRecord, iClusterName, OPERATION_MODE.SYNCHRONOUS, false, null, null);
+    return save(iRecord, iClusterName, OPERATION_MODE.SYNCHRONOUS, false, null, null);
   }
 
   /**
@@ -2023,22 +2021,19 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   @Override
   public boolean isClusterEdge(int cluster) {
     OClass clazz = getMetadata().getImmutableSchemaSnapshot().getClassByClusterId(cluster);
-    if (clazz != null && clazz.isEdgeType()) return true;
-    return false;
+    return clazz != null && clazz.isEdgeType();
   }
 
   @Override
   public boolean isClusterVertex(int cluster) {
     OClass clazz = getMetadata().getImmutableSchemaSnapshot().getClassByClusterId(cluster);
-    if (clazz != null && clazz.isVertexType()) return true;
-    return false;
+    return clazz != null && clazz.isVertexType();
   }
 
   @Override
   public boolean isClusterView(int cluster) {
     OView view = getViewFromCluster(cluster);
-    if (view != null) return true;
-    return false;
+    return view != null;
   }
 
   public OView getViewFromCluster(int cluster) {

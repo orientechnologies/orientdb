@@ -102,7 +102,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
 
   protected class InterruptTimerTask extends TimerTask {
 
-    private Thread executionThread;
+    private final Thread executionThread;
     boolean canceled = false;
 
     protected InterruptTimerTask(Thread executionThread) {
@@ -865,7 +865,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     ORecord record = identifiable.getRecord();
     if (record == null) return;
     if (record instanceof ODocument) {
-      if (((ODocument) record).getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
+      if (record.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
         ((ODocument) record).reload();
       }
     }

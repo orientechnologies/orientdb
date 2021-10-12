@@ -47,9 +47,9 @@ import java.io.IOException;
 import java.util.*;
 
 public final class OCommandResponse implements OBinaryResponse {
-  private boolean asynch;
-  private OCommandResultListener listener;
-  private ODatabaseDocumentInternal database;
+  private final boolean asynch;
+  private final OCommandResultListener listener;
+  private final ODatabaseDocumentInternal database;
   private boolean live;
   private Object result;
   private boolean isRecordResultSet;

@@ -57,6 +57,7 @@ import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import java.io.*;
 import java.lang.ref.WeakReference;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
@@ -1211,12 +1212,7 @@ public class ODocument extends ORecordAbstract
   public void fromString(final String iValue) {
     dirty = true;
     contentChanged = true;
-    try {
-      source = iValue.getBytes("UTF-8");
-    } catch (UnsupportedEncodingException e) {
-      throw OException.wrapException(
-          new OSerializationException("Error reading content from string"), e);
-    }
+    source = iValue.getBytes(StandardCharsets.UTF_8);
 
     removeAllCollectionChangeListeners();
 
@@ -1258,7 +1254,7 @@ public class ODocument extends ORecordAbstract
     }
 
     // NOT FOUND, PARSE THE FIELD NAME
-    return (RET) ODocumentHelper.getFieldValue(this, iFieldName);
+    return ODocumentHelper.getFieldValue(this, iFieldName);
   }
 
   /**
@@ -1832,7 +1828,7 @@ public class ODocument extends ORecordAbstract
           }
         final Entry<String, Object> toRet =
             new Entry<String, Object>() {
-              private Entry<String, ODocumentEntry> intern = current;
+              private final Entry<String, ODocumentEntry> intern = current;
 
               @Override
               public Object setValue(Object value) {
@@ -2245,22 +2241,22 @@ public class ODocument extends ORecordAbstract
 
   @Override
   public ODocument fromJSON(final String iSource, final String iOptions) {
-    return (ODocument) super.fromJSON(iSource, iOptions);
+    return super.fromJSON(iSource, iOptions);
   }
 
   @Override
   public ODocument fromJSON(final String iSource) {
-    return (ODocument) super.fromJSON(iSource);
+    return super.fromJSON(iSource);
   }
 
   @Override
   public ODocument fromJSON(final InputStream contentStream) throws IOException {
-    return (ODocument) super.fromJSON(contentStream);
+    return super.fromJSON(contentStream);
   }
 
   @Override
   public ODocument fromJSON(final String iSource, final boolean needReload) {
-    return (ODocument) super.fromJSON(iSource, needReload);
+    return super.fromJSON(iSource, needReload);
   }
 
   public boolean isEmbedded() {
@@ -3154,7 +3150,7 @@ public class ODocument extends ORecordAbstract
         ((ODocument) cur).clearTrackData();
       } else if (cur instanceof List) {
         OTrackedList newList = new OTrackedList<>(parent);
-        fillTrackedCollection((Collection) newList, newList, (Collection<Object>) cur);
+        fillTrackedCollection(newList, newList, (Collection<Object>) cur);
         cur = newList;
       } else if (cur instanceof Set) {
         OTrackedSet<Object> newSet = new OTrackedSet<>(parent);

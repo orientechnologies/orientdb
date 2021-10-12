@@ -90,7 +90,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   protected final AtomicReference<Thread> owner = new AtomicReference<Thread>();
   private final boolean ownerProtection;
 
-  private static OShutdownHandler shutdownHandler =
+  private static final OShutdownHandler shutdownHandler =
       new OShutdownHandler() {
         @Override
         public void shutdown() throws Exception {
@@ -224,7 +224,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
       ORID rid, int recordVersion, String fetchPlan, boolean ignoreCache)
       throws ORecordNotFoundException {
     checkOpenness();
-    return (RET) internal.loadIfVersionIsNotLatest(rid, recordVersion, fetchPlan, ignoreCache);
+    return internal.loadIfVersionIsNotLatest(rid, recordVersion, fetchPlan, ignoreCache);
   }
 
   @Override
@@ -888,14 +888,12 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
       if ("remote".equals(type)) {
         factory = getOrCreateRemoteFactory(baseUrl);
         OrientDBConfig config = buildConfig(null);
-        internal =
-            (ODatabaseDocumentInternal) factory.open(dbName, iUserName, iUserPassword, config);
+        internal = factory.open(dbName, iUserName, iUserPassword, config);
 
       } else {
         factory = getOrCreateEmbeddedFactory(baseUrl, null);
         OrientDBConfig config = buildConfig(null);
-        internal =
-            (ODatabaseDocumentInternal) factory.open(dbName, iUserName, iUserPassword, config);
+        internal = factory.open(dbName, iUserName, iUserPassword, config);
       }
       if (databaseOwner != null) internal.setDatabaseOwner(databaseOwner);
       if (intent != null) internal.declareIntent(intent);
@@ -950,7 +948,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
         factory.create(dbName, null, null, ODatabaseType.MEMORY, config);
         OrientDBConfig openConfig =
             OrientDBConfig.builder().fromContext(config.getConfigurations()).build();
-        internal = (ODatabaseDocumentInternal) factory.open(dbName, "admin", "admin", openConfig);
+        internal = factory.open(dbName, "admin", "admin", openConfig);
         for (Map.Entry<ATTRIBUTES, Object> attr : preopenAttributes.entrySet()) {
           internal.set(attr.getKey(), attr.getValue());
         }
@@ -964,7 +962,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
         factory.create(dbName, null, null, ODatabaseType.PLOCAL, config);
         OrientDBConfig openConfig =
             OrientDBConfig.builder().fromContext(config.getConfigurations()).build();
-        internal = (ODatabaseDocumentInternal) factory.open(dbName, "admin", "admin", openConfig);
+        internal = factory.open(dbName, "admin", "admin", openConfig);
         for (Map.Entry<ATTRIBUTES, Object> attr : preopenAttributes.entrySet()) {
           internal.set(attr.getKey(), attr.getValue());
         }
@@ -1340,7 +1338,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   public void setSerializer(ORecordSerializer serializer) {
     if (internal != null) {
-      ((ODatabaseDocumentAbstract) internal).setSerializer(serializer);
+      internal.setSerializer(serializer);
     } else {
       this.serializer = serializer;
     }

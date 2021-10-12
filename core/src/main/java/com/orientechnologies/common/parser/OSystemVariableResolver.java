@@ -28,7 +28,7 @@ public class OSystemVariableResolver implements OVariableParserListener {
   public static final String VAR_BEGIN = "${";
   public static final String VAR_END = "}";
 
-  private static OSystemVariableResolver instance = new OSystemVariableResolver();
+  private static final OSystemVariableResolver instance = new OSystemVariableResolver();
 
   public static String resolveSystemVariables(final String iPath) {
     return resolveSystemVariables(iPath, null);

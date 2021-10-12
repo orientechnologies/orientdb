@@ -63,8 +63,8 @@ public abstract class OIndexManagerAbstract implements OCloseable {
   protected Map<String, OIndex> indexes = new ConcurrentHashMap<>();
   protected String defaultClusterName = OMetadataDefault.CLUSTER_INDEX_NAME;
   protected String manualClusterName = OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME;
-  private AtomicInteger writeLockNesting = new AtomicInteger();
-  private ReadWriteLock lock = new ReentrantReadWriteLock();
+  private final AtomicInteger writeLockNesting = new AtomicInteger();
+  private final ReadWriteLock lock = new ReentrantReadWriteLock();
   protected ODocument document;
 
   public OIndexManagerAbstract() {
@@ -203,7 +203,6 @@ public abstract class OIndexManagerAbstract implements OCloseable {
 
   public OIndex getRawIndex(final String iName) {
     final OIndex index = indexes.get(iName);
-    if (index == null) return null;
     return index;
   }
 
@@ -269,7 +268,7 @@ public abstract class OIndexManagerAbstract implements OCloseable {
     if (idx == null) {
       idx = createDictionaryIfNeeded(database);
     }
-    return new ODictionary<>((OIndex) idx);
+    return new ODictionary<>(idx);
   }
 
   public ODocument getConfiguration() {

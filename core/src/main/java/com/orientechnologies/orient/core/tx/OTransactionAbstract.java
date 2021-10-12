@@ -146,8 +146,7 @@ public abstract class OTransactionAbstract implements OTransaction {
     final ORID rid = iRecord.getIdentity();
     final LockedRecordMetadata lockedRecordMetadata = locks.get(rid);
 
-    if (lockedRecordMetadata == null || lockedRecordMetadata.locksCount == 0) return false;
-    else return true;
+    return lockedRecordMetadata != null && lockedRecordMetadata.locksCount != 0;
   }
 
   @Override

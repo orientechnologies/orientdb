@@ -37,7 +37,6 @@ import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
-import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ORule.ResourceGeneric;
@@ -53,18 +52,7 @@ import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.parser.OBooleanExpression;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
@@ -95,7 +83,7 @@ public class OSecurityShared implements OSecurityInternal {
   /** set of all the security resources defined on properties (used for optimizations) */
   protected Set<OSecurityResourceProperty> filteredProperties;
 
-  private OSecuritySystem security;
+  private final OSecuritySystem security;
 
   /** Uses the ORestrictedOperation ENUM instead. */
   @Deprecated
@@ -631,9 +619,9 @@ public class OSecurityShared implements OSecurityInternal {
     // This will return the global value if a local storage context configuration value does not
     // exist.
     if (createDefUsers) {
-      adminUser = createUser(session, OUser.ADMIN, OUser.ADMIN, new String[] {ORole.ADMIN});
-      createUser(session, "reader", "reader", new String[] {DEFAULT_READER_ROLE_NAME});
-      createUser(session, "writer", "writer", new String[] {DEFAULT_WRITER_ROLE_NAME});
+      adminUser = createUser(session, OUser.ADMIN, OUser.ADMIN, ORole.ADMIN);
+      createUser(session, "reader", "reader", DEFAULT_READER_ROLE_NAME);
+      createUser(session, "writer", "writer", DEFAULT_WRITER_ROLE_NAME);
     }
     return adminUser;
   }
@@ -902,7 +890,7 @@ public class OSecurityShared implements OSecurityInternal {
       userClass.setSuperClasses(Arrays.asList(identityClass));
 
     if (!userClass.existsProperty("name")) {
-      ((OClassImpl) userClass)
+      userClass
           .createProperty("name", OType.STRING, (OType) null, unsafe)
           .setMandatory(true)
           .setNotNull(true)
@@ -1263,14 +1251,10 @@ public class OSecurityShared implements OSecurityInternal {
     }
     if (res instanceof OSecurityResourceClass) {
       String resourceClass = ((OSecurityResourceClass) res).getClassName();
-      if (clazz.isSubClassOf(resourceClass)) {
-        return true;
-      }
+      return clazz.isSubClassOf(resourceClass);
     } else if (res instanceof OSecurityResourceProperty) {
       String resourceClass = ((OSecurityResourceProperty) res).getClassName();
-      if (clazz.isSubClassOf(resourceClass)) {
-        return true;
-      }
+      return clazz.isSubClassOf(resourceClass);
     }
     return false;
   }
@@ -1693,10 +1677,7 @@ public class OSecurityShared implements OSecurityInternal {
     OBooleanExpression predicate =
         OSecurityEngine.getPredicateForSecurityResource(
             session, this, resource, OSecurityPolicy.Scope.READ);
-    if (predicate == null || OBooleanExpression.TRUE.equals(predicate)) {
-      return false;
-    }
-    return true;
+    return predicate != null && !OBooleanExpression.TRUE.equals(predicate);
   }
 
   @Override

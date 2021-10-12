@@ -89,7 +89,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   public static final String DRIVER_NAME = "OrientDB Java";
 
-  private static AtomicInteger sessionSerialId = new AtomicInteger(-1);
+  private static final AtomicInteger sessionSerialId = new AtomicInteger(-1);
 
   public enum CONNECTION_STRATEGY {
     STICKY,
@@ -106,9 +106,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   private final ExecutorService asynchExecutor;
   private final ODocument clusterConfiguration = new ODocument();
   private final AtomicInteger users = new AtomicInteger(0);
-  private OContextConfiguration clientConfiguration;
-  private int connectionRetry;
-  private int connectionRetryDelay;
+  private final OContextConfiguration clientConfiguration;
+  private final int connectionRetry;
+  private final int connectionRetryDelay;
   private OCluster[] clusters = OCommonConst.EMPTY_CLUSTER_ARRAY;
   private int defaultClusterId;
   public ORemoteConnectionManager connectionManager;

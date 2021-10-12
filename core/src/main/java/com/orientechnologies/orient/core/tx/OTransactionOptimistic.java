@@ -56,7 +56,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class OTransactionOptimistic extends OTransactionRealAbstract {
-  private static AtomicInteger txSerial = new AtomicInteger();
+  private static final AtomicInteger txSerial = new AtomicInteger();
   protected boolean changed = true;
   private boolean alreadyCleared = false;
   private boolean usingLog = true;

@@ -454,7 +454,7 @@ public abstract class ORecordAbstract implements ORecord {
   }
 
   protected <RET extends ORecord> RET flatCopy() {
-    return (RET) copy();
+    return copy();
   }
 
   protected void addIdentityChangeListener(OIdentityChangeListener identityChangeListener) {

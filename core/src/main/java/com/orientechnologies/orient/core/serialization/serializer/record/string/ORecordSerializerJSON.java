@@ -586,11 +586,9 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
       }
 
       if (value instanceof OTrackedSet<?>) {
-        if (OMultiValue.getFirstValue((Set<?>) value) instanceof OIdentifiable)
-          type = OType.LINKSET;
+        if (OMultiValue.getFirstValue(value) instanceof OIdentifiable) type = OType.LINKSET;
       } else if (value instanceof OTrackedList<?>) {
-        if (OMultiValue.getFirstValue((List<?>) value) instanceof OIdentifiable)
-          type = OType.LINKLIST;
+        if (OMultiValue.getFirstValue(value) instanceof OIdentifiable) type = OType.LINKLIST;
       }
 
       if (type != null) {
@@ -691,9 +689,9 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         type = ORecordSerializerStringAbstract.getType(fieldValue, fieldTypes.get(fieldName));
 
       if (v instanceof OTrackedSet<?>) {
-        if (OMultiValue.getFirstValue((Set<?>) v) instanceof OIdentifiable) type = OType.LINKSET;
+        if (OMultiValue.getFirstValue(v) instanceof OIdentifiable) type = OType.LINKSET;
       } else if (v instanceof OTrackedList<?>) {
-        if (OMultiValue.getFirstValue((List<?>) v) instanceof OIdentifiable) type = OType.LINKLIST;
+        if (OMultiValue.getFirstValue(v) instanceof OIdentifiable) type = OType.LINKLIST;
       }
 
       if (type != null) doc.setProperty(fieldName, v, type);

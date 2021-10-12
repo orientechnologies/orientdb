@@ -52,7 +52,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
   private final short protocolVersion;
   private List<ORecordOperationRequest> operations;
   private final ODocument indexChanges;
-  private ORecordSerializer serializer;
+  private final ORecordSerializer serializer;
 
   public OTransactionOptimisticProxy(
       ODatabaseDocumentInternal database,
@@ -230,7 +230,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
         } else key = null;
 
         for (final ODocument op : operations) {
-          final int operation = (Integer) op.rawField("o");
+          final int operation = op.rawField("o");
           final OTransactionIndexChanges.OPERATION indexOperation =
               OTransactionIndexChanges.OPERATION.values()[operation];
           final OIdentifiable value = op.field("v");

@@ -13,7 +13,7 @@ public class ODistributedConfigurationManager {
 
   private final ODistributedServerManager distributedManager;
   private volatile ODistributedConfiguration distributedConfiguration;
-  private String databaseName;
+  private final String databaseName;
 
   public ODistributedConfigurationManager(
       ODistributedServerManager distributedManager, String name) {

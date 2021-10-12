@@ -283,8 +283,7 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
   private boolean checkCallHooks(Map<ORID, ORecordOperation> oldTx, ORID id, byte type) {
     if (oldTx != null) {
       ORecordOperation entry = oldTx.get(id);
-      if (entry == null || entry.getType() != type) return true;
-      return false;
+      return entry == null || entry.getType() != type;
     } else {
       return true;
     }

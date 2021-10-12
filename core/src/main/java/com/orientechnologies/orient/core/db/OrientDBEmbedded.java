@@ -80,8 +80,8 @@ public class OrientDBEmbedded implements OrientDBInternal {
   protected final Orient orient;
   protected final OCachedDatabasePoolFactory cachedPoolFactory;
   private volatile boolean open = true;
-  private ExecutorService executor;
-  private Timer timer;
+  private final ExecutorService executor;
+  private final Timer timer;
   private TimerTask autoCloseTimer = null;
   private final OScriptManager scriptManager = new OScriptManager();
   private final OSystemDatabase systemDatabase;
@@ -165,8 +165,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     }
     systemDatabase = new OSystemDatabase(this);
     securitySystem = new ODefaultSecuritySystem();
-    ((ODefaultSecuritySystem) securitySystem)
-        .activate(this, this.configurations.getSecurityConfig());
+    securitySystem.activate(this, this.configurations.getSecurityConfig());
   }
 
   protected OCachedDatabasePoolFactory createCachedDatabasePoolFactory(OrientDBConfig config) {

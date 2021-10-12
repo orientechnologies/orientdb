@@ -34,10 +34,10 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class OIndexManagerRemote extends OIndexManagerAbstract {
-  private AtomicBoolean skipPush = new AtomicBoolean(false);
+  private final AtomicBoolean skipPush = new AtomicBoolean(false);
   private static final String QUERY_DROP = "drop index `%s` if exists";
   private static final long serialVersionUID = -6570577338095096235L;
-  private OStorageInfo storage;
+  private final OStorageInfo storage;
 
   public OIndexManagerRemote(OStorageInfo storage) {
     super();
@@ -189,15 +189,14 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
           d.setLazyLoad(false);
           try {
             final boolean isMultiValue =
-                ODefaultIndexFactory.isMultiValueIndex(
-                    (String) d.field(OIndexInternal.CONFIG_TYPE));
+                ODefaultIndexFactory.isMultiValueIndex(d.field(OIndexInternal.CONFIG_TYPE));
 
             final OIndexMetadata newIndexMetadata =
                 OIndexAbstract.loadMetadataInternal(
                     d,
-                    (String) d.field(OIndexInternal.CONFIG_TYPE),
-                    d.<String>field(OIndexInternal.ALGORITHM),
-                    d.<String>field(OIndexInternal.VALUE_CONTAINER_ALGORITHM));
+                    d.field(OIndexInternal.CONFIG_TYPE),
+                    d.field(OIndexInternal.ALGORITHM),
+                    d.field(OIndexInternal.VALUE_CONTAINER_ALGORITHM));
 
             addIndexInternal(
                 getRemoteIndexInstance(
@@ -207,7 +206,7 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
                     newIndexMetadata.getAlgorithm(),
                     newIndexMetadata.getClustersToIndex(),
                     newIndexMetadata.getIndexDefinition(),
-                    (ORID) d.field(OIndexAbstract.CONFIG_MAP_RID),
+                    d.field(OIndexAbstract.CONFIG_MAP_RID),
                     d));
           } catch (Exception e) {
             OLogManager.instance()

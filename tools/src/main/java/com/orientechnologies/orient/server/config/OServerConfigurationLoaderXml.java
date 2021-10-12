@@ -32,7 +32,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public class OServerConfigurationLoaderXml {
-  private Class<? extends OServerConfiguration> rootClass;
+  private final Class<? extends OServerConfiguration> rootClass;
   private JAXBContext context;
   private InputStream inputStream;
   private File file;

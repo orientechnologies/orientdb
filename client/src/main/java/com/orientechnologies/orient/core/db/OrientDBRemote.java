@@ -62,7 +62,7 @@ public class OrientDBRemote implements OrientDBInternal {
   private final OCachedDatabasePoolFactory cachedPoolFactory;
   protected volatile ORemoteConnectionManager connectionManager;
   private volatile boolean open = true;
-  private Timer timer;
+  private final Timer timer;
   private final ORemoteURLs urls;
 
   public OrientDBRemote(String[] hosts, OrientDBConfig configurations, Orient orient) {
@@ -223,7 +223,7 @@ public class OrientDBRemote implements OrientDBInternal {
 
   public void setGlobalConfiguration(
       String username, String password, OGlobalConfiguration config, String iConfigValue) {
-    String value = iConfigValue != null ? iConfigValue.toString() : "";
+    String value = iConfigValue != null ? iConfigValue : "";
     OSetGlobalConfigurationRequest request =
         new OSetGlobalConfigurationRequest(config.getKey(), value);
     OSetGlobalConfigurationResponse response = connectAndSend(null, username, password, request);

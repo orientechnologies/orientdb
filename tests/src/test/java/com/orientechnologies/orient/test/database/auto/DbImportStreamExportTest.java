@@ -39,8 +39,8 @@ public class DbImportStreamExportTest extends DocumentDBBaseTest implements OCom
   public static final String NEW_DB_PATH = "target/test-import";
   public static final String NEW_DB_URL = "target/test-import";
 
-  private String testPath;
-  private String exportFilePath;
+  private final String testPath;
+  private final String exportFilePath;
   private boolean dumpMode = false;
 
   @Parameters(value = {"url", "testPath"})

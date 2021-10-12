@@ -204,12 +204,8 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     if (OSystemDatabase.SYSTEM_DB_NAME.equals(name)) return true;
     ODistributedServerManager.DB_STATUS dbStatus =
         plugin.getDatabaseStatus(plugin.getLocalNodeName(), name);
-    if (dbStatus != ODistributedServerManager.DB_STATUS.ONLINE
-        && dbStatus != ODistributedServerManager.DB_STATUS.BACKUP) {
-      return false;
-    } else {
-      return true;
-    }
+    return dbStatus == ODistributedServerManager.DB_STATUS.ONLINE
+        || dbStatus == ODistributedServerManager.DB_STATUS.BACKUP;
   }
 
   @Override

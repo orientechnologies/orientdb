@@ -23,7 +23,7 @@ public class OStorageRemotePushThread extends Thread {
   private final int retryDelay;
   private final long requestTimeout;
   private OChannelBinary network;
-  private BlockingQueue<Object> blockingQueue = new SynchronousQueue<>();
+  private final BlockingQueue<Object> blockingQueue = new SynchronousQueue<>();
   private volatile OBinaryRequest currentRequest;
   private volatile boolean shutDown;
 

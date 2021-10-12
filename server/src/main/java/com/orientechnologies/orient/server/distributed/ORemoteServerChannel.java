@@ -50,7 +50,7 @@ public class ORemoteServerChannel {
   private int protocolVersion;
   private ODistributedRequest prevRequest;
   private ODistributedResponse prevResponse;
-  private String localNodeName;
+  private final String localNodeName;
 
   private static final int MAX_RETRY = 3;
   private static final String CLIENT_TYPE = "OrientDB Server";
@@ -58,13 +58,13 @@ public class ORemoteServerChannel {
   private int sessionId = -1;
   private byte[] sessionToken;
   private OToken tokenInstance = null;
-  private OBinaryTokenSerializer tokenDeserializer = new OBinaryTokenSerializer();
-  private OContextConfiguration contextConfig = new OContextConfiguration();
-  private Date createdOn = new Date();
+  private final OBinaryTokenSerializer tokenDeserializer = new OBinaryTokenSerializer();
+  private final OContextConfiguration contextConfig = new OContextConfiguration();
+  private final Date createdOn = new Date();
 
   private volatile int totalConsecutiveErrors = 0;
   private static final int MAX_CONSECUTIVE_ERRORS = 10;
-  private ExecutorService executor;
+  private final ExecutorService executor;
 
   public ORemoteServerChannel(
       final ORemoteServerAvailabilityCheck check,

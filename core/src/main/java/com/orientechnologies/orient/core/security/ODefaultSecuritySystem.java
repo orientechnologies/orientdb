@@ -58,13 +58,13 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
   // default authentication mode if external authentication fails.
   private boolean allowDefault = true;
 
-  private Object passwordValidatorSynch = new Object();
+  private final Object passwordValidatorSynch = new Object();
   private OPasswordValidator passwordValidator;
 
-  private Object importLDAPSynch = new Object();
+  private final Object importLDAPSynch = new Object();
   private OSecurityComponent importLDAP;
 
-  private Object auditingSynch = new Object();
+  private final Object auditingSynch = new Object();
   private OAuditingService auditingService;
 
   private ODocument configDoc; // Holds the
@@ -83,7 +83,7 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
   private volatile List<OSecurityAuthenticator> authenticatorsList;
   private volatile List<OSecurityAuthenticator> enabledAuthenticators;
 
-  private ConcurrentHashMap<String, Class<?>> securityClassMap =
+  private final ConcurrentHashMap<String, Class<?>> securityClassMap =
       new ConcurrentHashMap<String, Class<?>>();
   private OTokenSign tokenSign;
   private final Map<String, OTemporaryGlobalUser> ephemeralUsers =
@@ -428,9 +428,7 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
 
     if (user != null) {
       // TODO: to verify if this logic match previous logic
-      if (user.checkIfAllowed(resource, ORole.PERMISSION_ALL) != null) {
-        return true;
-      }
+      return user.checkIfAllowed(resource, ORole.PERMISSION_ALL) != null;
       /*
       if (user.getResources().equals("*"))
         // ACCESS TO ALL
@@ -859,7 +857,7 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
             final byte[] buffer = new byte[(int) file.length()];
             fis.read(buffer);
 
-            securityDoc = (ODocument) new ODocument().fromJSON(new String(buffer), "noMap");
+            securityDoc = new ODocument().fromJSON(new String(buffer), "noMap");
           } finally {
             if (fis != null) fis.close();
           }
