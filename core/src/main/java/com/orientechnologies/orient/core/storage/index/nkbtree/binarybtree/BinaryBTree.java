@@ -790,13 +790,6 @@ public final class BinaryBTree extends ODurableComponent {
         byte[] separationKey =
             calculateSeparationKey(separationKeyBase, commonPrefix, parentKeyPrefix);
 
-        byte[] bkey = parentBucket.getKey(0);
-        for (int i = 1; i < parentBucket.size(); i++) {
-          byte[] nextKey = parentBucket.getKey(i);
-          assert Arrays.compare(nextKey, bkey)> 0;
-          bkey = nextKey;
-        }
-
         if (!parentBucket.addNonLeafEntry(
             parentInsertionIndex,
             (int) pageIndex,
@@ -842,14 +835,6 @@ public final class BinaryBTree extends ODurableComponent {
           }
         }
 
-        bkey = parentBucket.getKey(0);
-        for (int i = 1; i < parentBucket.size(); i++) {
-          byte[] nextKey = parentBucket.getKey(i);
-          assert Arrays.compare(nextKey, bkey)> 0;
-          bkey = nextKey;
-        }
-
-
         if (parentInsertionIndex > 0) {
           final byte[] key = parentBucket.getKey(parentInsertionIndex - 1);
           leftLLB = new byte[parentKeyPrefix.length + key.length];
@@ -875,6 +860,9 @@ public final class BinaryBTree extends ODurableComponent {
         } else {
           rightSUB = parentSUB;
         }
+
+        assert COMPARATOR.compare(rightSUB, rightLLB) > 0;
+        assert COMPARATOR.compare(leftSUB, leftLLB) > 0;
 
         rightBucketPrefix = extractCommonPrefix(rightLLB, rightSUB);
         leftBucketPrefix = extractCommonPrefix(leftLLB, leftSUB);
@@ -1056,9 +1044,12 @@ public final class BinaryBTree extends ODurableComponent {
     @SuppressWarnings("UnnecessaryLocalVariable")
     final byte[] leftSUB = separationKey;
 
-    final byte[] rightLLB = ROOT_SMALLEST_UPPER_BOUND;
+    final byte[] rightLLB = separationKey;
     @SuppressWarnings("UnnecessaryLocalVariable")
-    final byte[] rightSUB = separationKey;
+    final byte[] rightSUB = ROOT_SMALLEST_UPPER_BOUND;
+
+    assert COMPARATOR.compare(rightSUB, rightLLB) > 0;
+    assert COMPARATOR.compare(leftSUB, leftLLB) > 0;
 
     final byte[] leftPrefix = extractCommonPrefix(leftLLB, leftSUB);
     final byte[] rightPrefix = extractCommonPrefix(rightLLB, rightSUB);

@@ -77,7 +77,7 @@ public class BinaryBTreeTestIT {
 
   @Test
   public void testKeyPut() throws Exception {
-    final int keysCount = 40_000;
+    final int keysCount = 1_000_000;
 
     String[] lastKey = new String[1];
     for (int i = 0; i < keysCount; i++) {
@@ -86,24 +86,10 @@ public class BinaryBTreeTestIT {
           null,
           atomicOperation -> {
             final String key = Integer.toString(iteration);
-            if (iteration == 28017) {
-              Assert.assertEquals(
-                  267 + " key is absent",
-                  new ORecordId(267 % 32000, 267),
-                  binaryBTree.get(stringToLexicalBytes(Integer.toString(267))));
-            }
             binaryBTree.put(
                 atomicOperation,
                 stringToLexicalBytes(key),
                 new ORecordId(iteration % 32000, iteration));
-
-            if (iteration == 28017) {
-              Assert.assertEquals(
-                      267 + " key is absent",
-                      new ORecordId(267 % 32000, 267),
-                      binaryBTree.get(stringToLexicalBytes(Integer.toString(267))));
-            }
-
             if ((iteration + 1) % 100_000 == 0) {
               System.out.printf("%d items loaded out of %d%n", iteration + 1, keysCount);
             }
@@ -118,17 +104,6 @@ public class BinaryBTreeTestIT {
       //      Assert.assertArrayEquals(stringToLexicalBytes("0"), binaryBTree.firstKey());
       //      Assert.assertArrayEquals(stringToLexicalBytes(lastKey[0]), binaryBTree.lastKey());
     }
-
-    System.out.println(
-        "First key len "
-            + binaryBTree.firstKey().length
-            + " vs "
-            + stringToLexicalBytes("0").length);
-    System.out.println(
-        "Last key len "
-            + binaryBTree.lastKey().length
-            + " vs "
-            + stringToLexicalBytes(lastKey[0]).length);
 
     for (int i = 0; i < keysCount; i++) {
       Assert.assertEquals(
@@ -151,7 +126,7 @@ public class BinaryBTreeTestIT {
     final long seed = System.nanoTime();
     System.out.println("testKeyPutRandomUniform seed : " + seed);
     final Random random = new Random(seed);
-    final int keysCount = 1_000_000;
+    final int keysCount = 10_000_000;
 
     while (keys.size() < keysCount) {
       atomicOperationsManager.executeInsideAtomicOperation(
@@ -166,9 +141,14 @@ public class BinaryBTreeTestIT {
 
             Assert.assertEquals(
                 binaryBTree.get(stringToLexicalBytes(key)), new ORecordId(val % 32000, val));
+            if (keys.size() % 10_000 == 0) {
+              System.out.println(keys.size() + " keys were added.");
+            }
 
-            Assert.assertArrayEquals(stringToLexicalBytes(keys.firstKey()), binaryBTree.firstKey());
-            Assert.assertArrayEquals(stringToLexicalBytes(keys.lastKey()), binaryBTree.lastKey());
+            // Assert.assertArrayEquals(stringToLexicalBytes(keys.firstKey()),
+            // binaryBTree.firstKey());
+            //            Assert.assertArrayEquals(stringToLexicalBytes(keys.lastKey()),
+            // binaryBTree.lastKey());
           });
     }
 
