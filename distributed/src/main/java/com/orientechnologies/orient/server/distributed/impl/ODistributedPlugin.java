@@ -34,7 +34,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.io.OIOUtils;
-import com.orientechnologies.common.io.OUtils;
 import com.orientechnologies.common.log.OAnsiCode;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
@@ -46,7 +45,14 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
+import com.orientechnologies.orient.core.db.OSystemDatabase;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.OrientDBDistributed;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -69,22 +75,68 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.distributed.*;
+import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.ODistributedException;
+import com.orientechnologies.orient.server.distributed.ODistributedLifecycleListener;
+import com.orientechnologies.orient.server.distributed.ODistributedLockManager;
+import com.orientechnologies.orient.server.distributed.ODistributedMessageService;
+import com.orientechnologies.orient.server.distributed.ODistributedRequest;
+import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
+import com.orientechnologies.orient.server.distributed.ODistributedResponse;
+import com.orientechnologies.orient.server.distributed.ODistributedResponseManager;
+import com.orientechnologies.orient.server.distributed.ODistributedResponseManagerFactory;
+import com.orientechnologies.orient.server.distributed.ODistributedResponseManagerImpl;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.impl.task.*;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.ODistributedStartupException;
+import com.orientechnologies.orient.server.distributed.ODistributedStrategy;
+import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.ORemoteServerAvailabilityCheck;
+import com.orientechnologies.orient.server.distributed.ORemoteServerController;
+import com.orientechnologies.orient.server.distributed.ORemoteServerManager;
+import com.orientechnologies.orient.server.distributed.ORemoteTaskFactoryManager;
+import com.orientechnologies.orient.server.distributed.impl.task.ODropDatabaseTask;
+import com.orientechnologies.orient.server.distributed.impl.task.ONewDeltaTaskResponse;
+import com.orientechnologies.orient.server.distributed.impl.task.ORemoteTaskFactoryManagerImpl;
+import com.orientechnologies.orient.server.distributed.impl.task.ORestartServerTask;
+import com.orientechnologies.orient.server.distributed.impl.task.OStopServerTask;
+import com.orientechnologies.orient.server.distributed.impl.task.OSyncDatabaseNewDeltaTask;
+import com.orientechnologies.orient.server.distributed.impl.task.OSyncDatabaseTask;
+import com.orientechnologies.orient.server.distributed.impl.task.OUpdateDatabaseConfigurationTask;
 import com.orientechnologies.orient.server.distributed.sql.OCommandExecutorSQLHASyncCluster;
-import com.orientechnologies.orient.server.distributed.task.*;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
+import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
+import com.orientechnologies.orient.server.distributed.task.ODatabaseIsOldException;
+import com.orientechnologies.orient.server.distributed.task.ODistributedDatabaseDeltaSyncException;
+import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastClusterMetadataManager;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
-import com.orientechnologies.orient.server.network.protocol.OBeforeDatabaseOpenNetworkEventListener;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.*;
+import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.security.SecureRandom;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TimerTask;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
@@ -98,10 +150,7 @@ import sun.misc.Signal;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ODistributedPlugin extends OServerPluginAbstract
-    implements ODistributedServerManager,
-        ODatabaseLifecycleListener,
-        OCommandOutputListener,
-        OBeforeDatabaseOpenNetworkEventListener {
+    implements ODistributedServerManager, ODatabaseLifecycleListener, OCommandOutputListener {
   public static final String REPLICATOR_USER = "_CrossServerTempUser";
 
   protected static final String PAR_DEF_DISTRIB_DB_CONFIG = "configuration.db.default";
@@ -273,9 +322,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
                     new OClusterHealthChecker(this, healthChecker), healthChecker, healthChecker);
       }
 
-      for (OServerNetworkListener nl : serverInstance.getNetworkListeners())
-        nl.registerBeforeConnectNetworkEventListener(this);
-
       // WAIT ALL THE MESSAGES IN QUEUE ARE PROCESSED OR MAX 10 SECONDS
       waitStartupIsCompleted();
 
@@ -314,13 +360,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
   }
 
   @Override
-  public void onBeforeDatabaseOpen(final String url) {
-    final ODistributedDatabaseImpl dDatabase =
-        getMessageService().getDatabase(OUtils.getDatabaseNameFromURL(url));
-    if (dDatabase != null) dDatabase.waitForOnline();
-  }
-
-  @Override
   public ODistributedPlugin registerLifecycleListener(
       final ODistributedLifecycleListener iListener) {
     if (iListener == null) {
@@ -342,9 +381,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
     if (!enabled) return;
     OSignalHandler signalHandler = Orient.instance().getSignalHandler();
     if (signalHandler != null) signalHandler.unregisterListener(signalListener);
-
-    for (OServerNetworkListener nl : serverInstance.getNetworkListeners())
-      nl.unregisterBeforeConnectNetworkEventListener(this);
 
     OLogManager.instance().warn(this, "Shutting down node '%s'...", nodeName);
     setNodeStatus(NODE_STATUS.SHUTTINGDOWN);

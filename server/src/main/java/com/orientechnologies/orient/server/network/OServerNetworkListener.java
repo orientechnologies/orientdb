@@ -30,7 +30,6 @@ import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolEx
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.network.protocol.OBeforeDatabaseOpenNetworkEventListener;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
 import java.io.IOException;
@@ -58,8 +57,6 @@ public class OServerNetworkListener extends Thread {
   private OContextConfiguration configuration;
   private OServer server;
   private int protocolVersion = -1;
-  private List<OBeforeDatabaseOpenNetworkEventListener> beforeDatabaseOpenNetworkEventListener =
-      new ArrayList<OBeforeDatabaseOpenNetworkEventListener>();
 
   public OServerNetworkListener(
       final OServer iServer,
@@ -264,16 +261,6 @@ public class OServerNetworkListener extends Thread {
     }
   }
 
-  public void registerBeforeConnectNetworkEventListener(
-      final OBeforeDatabaseOpenNetworkEventListener listener) {
-    beforeDatabaseOpenNetworkEventListener.add(listener);
-  }
-
-  public void unregisterBeforeConnectNetworkEventListener(
-      final OBeforeDatabaseOpenNetworkEventListener listener) {
-    beforeDatabaseOpenNetworkEventListener.remove(listener);
-  }
-
   public Class<? extends ONetworkProtocol> getProtocolType() {
     return protocolType;
   }
@@ -348,10 +335,6 @@ public class OServerNetworkListener extends Thread {
     }
 
     return null;
-  }
-
-  public List<OBeforeDatabaseOpenNetworkEventListener> getBeforeDatabaseOpenNetworkEventListener() {
-    return beforeDatabaseOpenNetworkEventListener;
   }
 
   /**
