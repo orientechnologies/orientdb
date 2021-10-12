@@ -2,12 +2,11 @@ package com.orientechnologies.orient.test.server.network.http;
 
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.io.IOException;
+import java.util.List;
 import org.apache.http.HttpResponse;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.io.IOException;
-import java.util.List;
 
 /**
  * Test HTTP "Graph" .

@@ -20,6 +20,8 @@
 
 package com.orientechnologies.orient.core.db.document;
 
+import static com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.*;
+
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -68,7 +70,6 @@ import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.cluster.OOfflineClusterException;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.tx.*;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -77,8 +78,6 @@ import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-
-import static com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.*;
 
 /** Created by tglman on 30/06/16. */
 public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {

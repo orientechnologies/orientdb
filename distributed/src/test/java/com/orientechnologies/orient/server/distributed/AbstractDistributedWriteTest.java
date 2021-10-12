@@ -25,8 +25,6 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.setup.ServerRun;
-import org.junit.Assert;
-
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -34,6 +32,7 @@ import java.util.UUID;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.junit.Assert;
 
 /** Insert records concurrently against the cluster */
 public abstract class AbstractDistributedWriteTest extends AbstractServerClusterTest {

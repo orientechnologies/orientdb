@@ -36,9 +36,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.search.IndexSearcher;
-
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
@@ -46,6 +43,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.search.IndexSearcher;
 
 public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneIndex {
 

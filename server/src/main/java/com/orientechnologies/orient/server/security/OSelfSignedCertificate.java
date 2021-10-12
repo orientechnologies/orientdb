@@ -1,7 +1,5 @@
 package com.orientechnologies.orient.server.security;
 
-import sun.security.x509.*;
-
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.*;
@@ -9,6 +7,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Calendar;
 import java.util.Date;
+import sun.security.x509.*;
 
 /**
  * @author Matteo Bollo (matteo.bollo-at-sap.com)

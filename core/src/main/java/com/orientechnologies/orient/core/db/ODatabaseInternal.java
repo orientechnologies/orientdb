@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageInfo;
-
 import java.util.*;
 
 public interface ODatabaseInternal<T> extends ODatabase<T> {

@@ -3,12 +3,11 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.sql.executor.ORidSet;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class ORidSetTest extends OParserTestAbstract {
 

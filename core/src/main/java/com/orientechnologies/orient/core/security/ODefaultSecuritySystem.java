@@ -34,7 +34,6 @@ import com.orientechnologies.orient.core.security.authenticator.ODatabaseUserAut
 import com.orientechnologies.orient.core.security.authenticator.OServerConfigAuthenticator;
 import com.orientechnologies.orient.core.security.authenticator.OSystemUserAuthenticator;
 import com.orientechnologies.orient.core.security.authenticator.OTemporaryGlobalUser;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.*;
@@ -402,7 +401,7 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
                       return new OImmutableUser(
                           0,
                           new OSystemUser(
-                                  resultset.next().getElement().get().getRecord(), dbName));
+                              (ODocument) resultset.next().getElement().get().getRecord(), dbName));
                     return null;
                   },
                   "select from OUser where name = ? limit 1 fetchplan roles:1",

@@ -20,6 +20,9 @@
 
 package com.orientechnologies.orient.core.db;
 
+import static com.orientechnologies.orient.client.remote.OStorageRemote.ADDRESS_SEPARATOR;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.NETWORK_SOCKET_RETRY;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
@@ -42,15 +45,11 @@ import com.orientechnologies.orient.core.security.OSecuritySystem;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37Client;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.OStorage;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
-
-import static com.orientechnologies.orient.client.remote.OStorageRemote.ADDRESS_SEPARATOR;
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.NETWORK_SOCKET_RETRY;
 
 /** Created by tglman on 08/04/16. */
 public class OrientDBRemote implements OrientDBInternal {

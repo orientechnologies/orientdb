@@ -56,7 +56,6 @@ import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 import com.orientechnologies.orient.server.plugin.OServerPluginManager;
 import com.orientechnologies.orient.server.token.OTokenHandlerImpl;
-
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
