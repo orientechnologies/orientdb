@@ -403,7 +403,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       if (quorum > availableNodes) {
         Set<String> online = dManager.getAvailableNodeNames(getName());
         throw new ODistributedException(
-            String.format("No enough nodes online to execute the operation, available nodes:%s quorun:%s", online, quorum));
+            String.format(
+                "No enough nodes online to execute the operation, available nodes:%s quorun:%s",
+                online, quorum));
       }
 
       txManager.commit(this, iTx, clusters);
