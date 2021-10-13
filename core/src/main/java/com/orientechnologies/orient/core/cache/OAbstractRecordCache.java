@@ -142,4 +142,8 @@ public abstract class OAbstractRecordCache {
       Orient.instance().getProfiler().unregisterHookValue(profilerPrefix + "max");
     }
   }
+
+  public void clearRecords() {
+    underlying.clearRecords();
+  }
 }

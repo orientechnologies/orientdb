@@ -113,4 +113,6 @@ public interface ORecordCache {
    * @return keys of records
    */
   Collection<ORID> keys();
+
+  void clearRecords();
 }
