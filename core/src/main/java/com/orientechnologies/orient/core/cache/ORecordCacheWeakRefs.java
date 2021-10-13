@@ -63,13 +63,17 @@ public class ORecordCacheWeakRefs
     else return value.get();
   }
 
-  @Override
-  public void shutdown() {
-    cache = new WeakHashMap<ORID, WeakReference<ORecord>>();
+  public void clearRecords() {
+    for (WeakReference<ORecord> recRef : cache.values()) {
+      ORecord rec = recRef.get();
+      if (rec != null) {
+        rec.clear();
+      }
+    }
   }
 
   @Override
-  public void clear() {
-    cache.clear();
+  public void shutdown() {
+    cache = new WeakHashMap<ORID, WeakReference<ORecord>>();
   }
 }
