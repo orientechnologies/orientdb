@@ -339,7 +339,8 @@ public class ODurablePage {
     return value.length;
   }
 
-  protected final int setBinaryValue(final int pageOffset, final byte[] value, final int offset, final int len) {
+  protected final int setBinaryValue(
+      final int pageOffset, final byte[] value, final int offset, final int len) {
     if (len == 0) {
       return 0;
     }

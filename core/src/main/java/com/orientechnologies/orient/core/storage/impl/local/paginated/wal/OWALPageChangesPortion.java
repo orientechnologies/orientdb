@@ -346,7 +346,8 @@ public class OWALPageChangesPortion implements OWALChanges {
     }
   }
 
-  private void updateData(ByteBuffer pointer, int pageOffset,final byte[] data, final int offset,final int len) {
+  private void updateData(
+      ByteBuffer pointer, int pageOffset, final byte[] data, final int offset, final int len) {
     if (offset + len > data.length) {
       throw new IllegalArgumentException(
           "Provided data range exceeds data length offset - "
@@ -363,7 +364,6 @@ public class OWALPageChangesPortion implements OWALChanges {
     if (len < 0) {
       throw new IllegalArgumentException("Len can not be negative");
     }
-
 
     if (pageChunks == null) {
       pageChunks = new byte[(pageSize + (PORTION_BYTES - 1)) / PORTION_BYTES][][];
