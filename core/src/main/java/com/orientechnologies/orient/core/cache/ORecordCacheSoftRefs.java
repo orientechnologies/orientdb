@@ -20,6 +20,8 @@
 
 package com.orientechnologies.orient.core.cache;
 
+import java.lang.ref.WeakReference;
+
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 
@@ -66,4 +68,11 @@ public class ORecordCacheSoftRefs extends OAbstractMapCache<OSoftRefsHashMap<ORI
     cache.clear();
     cache = new OSoftRefsHashMap<ORID, ORecord>();
   }
+
+  public void clearRecords() {
+    for (ORecord rec : cache.values()) {
+      rec.clear();
+    }
+  }
+
 }
