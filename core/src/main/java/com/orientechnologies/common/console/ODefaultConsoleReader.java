@@ -30,6 +30,10 @@ public class ODefaultConsoleReader implements OConsoleReader {
   private final BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 
   private static class EraserThread extends OSoftThread {
+    public EraserThread(String name) {
+      super(name);
+    }
+
     @Override
     @SuppressWarnings({"checkstyle:AvoidEscapedUnicodeCharacters", "checkstyle:IllegalTokenText"})
     protected void execute() throws Exception {
@@ -59,7 +63,7 @@ public class ODefaultConsoleReader implements OConsoleReader {
 
     System.out.print(" ");
 
-    final EraserThread et = new EraserThread();
+    final EraserThread et = new EraserThread("Read password thread");
     et.start();
 
     try {

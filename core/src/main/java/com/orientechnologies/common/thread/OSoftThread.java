@@ -29,7 +29,8 @@ public abstract class OSoftThread extends Thread implements OService {
 
   private boolean dumpExceptions = true;
 
-  public OSoftThread() {
+  public OSoftThread(String name) {
+    super(name);
     setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
   }
 

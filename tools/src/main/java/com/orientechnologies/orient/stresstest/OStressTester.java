@@ -95,7 +95,7 @@ public class OStressTester {
 
     try {
       for (OWorkload workload : workloads) {
-        consoleProgressWriter = new OConsoleProgressWriter(workload);
+        consoleProgressWriter = new OConsoleProgressWriter("Console progress writer", workload);
 
         consoleProgressWriter.start();
 
