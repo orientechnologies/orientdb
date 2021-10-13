@@ -50,19 +50,16 @@ public class OUnsafeByteArrayComparator implements Comparator<byte[]> {
     unsafe =
         (Unsafe)
             AccessController.doPrivileged(
-                new PrivilegedAction<Object>() {
-                  public Object run() {
-                    try {
-                      Field f = Unsafe.class.getDeclaredField("theUnsafe");
-                      f.setAccessible(true);
-                      return f.get(null);
-                    } catch (NoSuchFieldException e) {
-                      throw new Error(e);
-                    } catch (IllegalAccessException e) {
-                      throw new Error(e);
-                    }
-                  }
-                });
+                (PrivilegedAction<Object>)
+                    () -> {
+                      try {
+                        Field f = Unsafe.class.getDeclaredField("theUnsafe");
+                        f.setAccessible(true);
+                        return f.get(null);
+                      } catch (NoSuchFieldException | IllegalAccessException e) {
+                        throw new Error(e);
+                      }
+                    });
 
     BYTE_ARRAY_OFFSET = unsafe.arrayBaseOffset(byte[].class);
 
@@ -72,11 +69,8 @@ public class OUnsafeByteArrayComparator implements Comparator<byte[]> {
   }
 
   public int compare(byte[] arrayOne, byte[] arrayTwo) {
-    if (arrayOne.length > arrayTwo.length) return 1;
-
-    if (arrayOne.length < arrayTwo.length) return -1;
-
-    final int WORDS = arrayOne.length / LONG_SIZE;
+    final int commonLen = Math.min(arrayOne.length, arrayTwo.length);
+    final int WORDS = commonLen / LONG_SIZE;
 
     for (int i = 0; i < WORDS * LONG_SIZE; i += LONG_SIZE) {
       final long index = i + BYTE_ARRAY_OFFSET;
@@ -92,12 +86,12 @@ public class OUnsafeByteArrayComparator implements Comparator<byte[]> {
       return lessThanUnsigned(wOne, wTwo) ? -1 : 1;
     }
 
-    for (int i = WORDS * LONG_SIZE; i < arrayOne.length; i++) {
+    for (int i = WORDS * LONG_SIZE; i < commonLen; i++) {
       int diff = compareUnsignedByte(arrayOne[i], arrayTwo[i]);
       if (diff != 0) return diff;
     }
 
-    return 0;
+    return Integer.compare(arrayOne.length, arrayTwo.length);
   }
 
   private static boolean lessThanUnsigned(long longOne, long longTwo) {
