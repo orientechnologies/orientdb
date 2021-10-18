@@ -33,6 +33,8 @@ public final class SerializerFactory {
     TYPE_SERIALIZERS.put(OType.EMBEDDEDSET, new EmbeddedSetSerializer());
     TYPE_SERIALIZERS.put(OType.SHORT, new ShortSerializer());
     TYPE_SERIALIZERS.put(OType.EMBEDDEDMAP, new EmbeddedMapSerializer());
+    TYPE_SERIALIZERS.put(OType.STRING, new StringSerializer());
+    TYPE_SERIALIZERS.put(OType.EMBEDDED, new RecordSerializer());
 
     for (Map.Entry<OType, ValueSerializer> entry : TYPE_SERIALIZERS.entrySet()) {
       final OType prevType = ID_TYPE_MAP.put(entry.getValue().typeId(), entry.getKey());

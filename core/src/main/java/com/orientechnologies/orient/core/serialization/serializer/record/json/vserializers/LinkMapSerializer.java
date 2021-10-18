@@ -13,11 +13,6 @@ import java.util.Map;
 public class LinkMapSerializer implements ValueSerializer {
   @Override
   public void toJSON(JsonGenerator generator, Object value) throws IOException {
-    if (value == null) {
-      generator.writeNull();
-      return;
-    }
-
     final LinkSerializer linkSerializer =
         (LinkSerializer) SerializerFactory.INSTANCE.findSerializer(OType.LINK);
 
@@ -37,6 +32,12 @@ public class LinkMapSerializer implements ValueSerializer {
       for (Map.Entry<Object, OIdentifiable> entry : map.entrySet()) {
         final String key = entry.getKey().toString();
         generator.writeFieldName(key);
+
+        if (entry.getValue() == null) {
+          generator.writeNull();
+          continue;
+        }
+
         linkSerializer.toJSON(generator, entry.getValue());
       }
     } finally {

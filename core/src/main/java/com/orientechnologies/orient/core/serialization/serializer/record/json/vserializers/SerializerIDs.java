@@ -13,6 +13,7 @@ public interface SerializerIDs {
   String LINK_MAP = "m";
   String LINK_SET = "n";
   String EMBEDDED_MAP = "p";
+  String STRING = "r";
   String SHORT = "s";
   String DATE_TIME = "t";
   String EMBEDDED = "o";
