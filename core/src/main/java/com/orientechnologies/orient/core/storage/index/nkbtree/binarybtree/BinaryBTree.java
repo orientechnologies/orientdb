@@ -165,6 +165,8 @@ public final class BinaryBTree extends ODurableComponent {
             System.arraycopy(keyPrefix, 0, bucketSUB, 0, keyPrefix.length);
             System.arraycopy(bucketKey, 0, bucketSUB, keyPrefix.length, bucketKey.length);
           }
+
+          bucketLLB = calculateLargestLowerBoundary(bucket, index, false, bucketLLB);
         } else {
           final int insertionIndex = -index - 1;
           if (insertionIndex >= bucket.size()) {
@@ -1652,7 +1654,7 @@ public final class BinaryBTree extends ODurableComponent {
     }
   }
 
-  private boolean deleteFromNonLeafNode(
+  private Optional<NonLeafItemDeletionResult> deleteFromNonLeafNode(
       final OAtomicOperation atomicOperation,
       final Bucket bucket,
       final Bucket mergedChildNode,
@@ -1771,67 +1773,278 @@ public final class BinaryBTree extends ODurableComponent {
     }
   }
 
-  private boolean rotateNoneLeafRightAndRemoveItem(
+  private Optional<NonLeafItemDeletionResult> rotateNoneLeafRightAndRemoveItem(
       final RemovalPathItem parentItem,
       final Bucket parentBucket,
+      final byte[] parentKeyPrefix,
+      final byte[] parentLargestLowerBound,
+      final byte[] parentSmallestUpperBound,
       final Bucket bucket,
       final Bucket leftSibling,
+      final byte[] leftSiblingKeyPrefix,
       final int orhanPointer) {
     if (bucket.size() != 1 || leftSibling.size() <= 1) {
       throw new BinaryBTreeException("BTree is broken", this);
     }
 
-    final byte[] bucketKey = parentBucket.getKey(parentItem.indexInsidePage);
+    final byte[] partialBucketKey = parentBucket.getKey(parentItem.indexInsidePage);
     final int leftSiblingSize = leftSibling.size();
-    final byte[] separatorKey = leftSibling.getKey(leftSiblingSize - 1);
+    final byte[] partialSeparatorKey = leftSibling.getKey(leftSiblingSize - 1);
+
+    assert leftSiblingKeyPrefix.length >= parentKeyPrefix.length;
+
+    final byte[] separatorKey;
+    if (leftSiblingKeyPrefix.length > parentKeyPrefix.length) {
+      final int prefixDif = leftSiblingKeyPrefix.length - parentKeyPrefix.length;
+      separatorKey = new byte[partialSeparatorKey.length + prefixDif];
+      System.arraycopy(leftSiblingKeyPrefix, parentKeyPrefix.length, separatorKey, 0, prefixDif);
+      System.arraycopy(partialSeparatorKey, 0, separatorKey, prefixDif, partialSeparatorKey.length);
+    } else {
+      separatorKey = partialSeparatorKey;
+    }
 
     if (!parentBucket.updateKey(parentItem.indexInsidePage, separatorKey)) {
-      return false;
+      return Optional.empty();
     }
+
     final int bucketLeft = leftSibling.getRight(leftSiblingSize - 1);
 
     leftSibling.removeNonLeafEntry(leftSiblingSize - 1, false);
     bucket.removeNonLeafEntry(0, true);
-    final boolean result = bucket.addNonLeafEntry(0, bucketLeft, orhanPointer, bucketKey);
+
+    final byte[] leftSiblingLargestLowerBound;
+    if (parentItem.indexInsidePage > 0) {
+      final byte[] partialKey = parentBucket.getKey(parentItem.indexInsidePage - 1);
+      leftSiblingLargestLowerBound = new byte[partialKey.length + parentKeyPrefix.length];
+      System.arraycopy(parentKeyPrefix, 0, leftSiblingLargestLowerBound, 0, parentKeyPrefix.length);
+      System.arraycopy(
+          partialKey, 0, leftSiblingLargestLowerBound, parentKeyPrefix.length, partialKey.length);
+    } else {
+      leftSiblingLargestLowerBound = parentLargestLowerBound;
+    }
+
+    final byte[] leftSiblingSmallestUpperBound =
+        new byte[separatorKey.length + parentKeyPrefix.length];
+    System.arraycopy(parentKeyPrefix, 0, leftSiblingSmallestUpperBound, 0, parentKeyPrefix.length);
+    System.arraycopy(
+        separatorKey,
+        0,
+        leftSiblingSmallestUpperBound,
+        parentKeyPrefix.length,
+        separatorKey.length);
+
+    final byte[] newLeftSiblingKeyPrefix =
+        extractCommonPrefix(leftSiblingLargestLowerBound, leftSiblingSmallestUpperBound);
+    assert newLeftSiblingKeyPrefix.length >= leftSiblingKeyPrefix.length;
+
+    if (newLeftSiblingKeyPrefix.length > leftSiblingKeyPrefix.length) {
+      final int leftSiblingDiff = newLeftSiblingKeyPrefix.length - leftSiblingKeyPrefix.length;
+
+      leftSibling.shrink(0);
+
+      final ArrayList<Bucket.Entry> entries = new ArrayList<>(leftSiblingSize);
+      for (int i = 0; i < leftSiblingSize; i++) {
+        entries.add(leftSibling.getEntry(i));
+      }
+
+      for (int i = 0; i < leftSiblingSize; i++) {
+        final Bucket.Entry entry = entries.get(i);
+        leftSibling.addNonLeafEntry(
+            i,
+            entry.leftChild,
+            entry.rightChild,
+            entry.key,
+            leftSiblingDiff,
+            entry.key.length - leftSiblingDiff);
+      }
+    }
+
+    @SuppressWarnings("UnnecessaryLocalVariable")
+    final byte[] bucketLargestLowerBound = leftSiblingSmallestUpperBound;
+    final byte[] bucketSmallestUpperBound;
+
+    if (parentItem.indexInsidePage > parentBucket.size() - 1) {
+      final byte[] partialKey = parentBucket.getKey(parentItem.indexInsidePage + 1);
+      bucketSmallestUpperBound = new byte[partialKey.length + parentKeyPrefix.length];
+
+      System.arraycopy(parentKeyPrefix, 0, bucketSmallestUpperBound, 0, parentKeyPrefix.length);
+      System.arraycopy(
+          partialKey, 0, bucketSmallestUpperBound, parentKeyPrefix.length, partialKey.length);
+    } else {
+      bucketSmallestUpperBound = parentSmallestUpperBound;
+    }
+
+    final byte[] bucketPrefix =
+        extractCommonPrefix(bucketLargestLowerBound, bucketSmallestUpperBound);
+    assert bucketPrefix.length >= parentKeyPrefix.length;
+    final int bucketDiff = bucketPrefix.length - parentKeyPrefix.length;
+
+    final boolean result =
+        bucket.addNonLeafEntry(
+            0,
+            bucketLeft,
+            orhanPointer,
+            partialBucketKey,
+            bucketDiff,
+            partialBucketKey.length - bucketDiff);
     assert result;
 
-    return true;
+    final byte[] rightChildrenLargestLowerBound =
+        new byte[partialBucketKey.length + parentKeyPrefix.length];
+    System.arraycopy(parentKeyPrefix, 0, rightChildrenLargestLowerBound, 0, parentKeyPrefix.length);
+    System.arraycopy(
+        partialBucketKey,
+        0,
+        rightChildrenLargestLowerBound,
+        parentKeyPrefix.length,
+        partialBucketKey.length);
+
+    @SuppressWarnings("UnnecessaryLocalVariable")
+    final byte[] rightChildrenSmallestUpperBound = bucketSmallestUpperBound;
+
+    return Optional.of(
+        new NonLeafItemDeletionResult(
+            rightChildrenLargestLowerBound, rightChildrenSmallestUpperBound, false));
   }
 
-  private boolean rotateNoneLeafLeftAndRemoveItem(
+  private Optional<NonLeafItemDeletionResult> rotateNoneLeafLeftAndRemoveItem(
       final RemovalPathItem parentItem,
       final Bucket parentBucket,
+      final byte[] parentKeyPrefix,
+      final byte[] parentLargestLowerBound,
+      final byte[] parentSmallestUpperBound,
       final Bucket bucket,
       final Bucket rightSibling,
+      final byte[] rightSiblingPrefix,
       final int orphanPointer) {
     if (bucket.size() != 1 || rightSibling.size() <= 1) {
       throw new BinaryBTreeException("BTree is broken", this);
     }
 
-    final byte[] bucketKey = parentBucket.getKey(parentItem.indexInsidePage);
+    final byte[] partialBucketKey = parentBucket.getKey(parentItem.indexInsidePage);
+    final byte[] partialSeparatorKey = rightSibling.getKey(0);
 
-    final byte[] separatorKey = rightSibling.getKey(0);
+    final byte[] separatorKey;
+
+    assert rightSiblingPrefix.length >= parentKeyPrefix.length;
+    if (rightSiblingPrefix.length > parentKeyPrefix.length) {
+      final int separatorKeyDiff = rightSiblingPrefix.length - parentKeyPrefix.length;
+      separatorKey = new byte[partialSeparatorKey.length + separatorKeyDiff];
+
+      System.arraycopy(
+          rightSiblingPrefix, parentKeyPrefix.length, separatorKey, 0, separatorKeyDiff);
+      System.arraycopy(
+          partialSeparatorKey, 0, separatorKey, separatorKeyDiff, partialSeparatorKey.length);
+    } else {
+      separatorKey = partialSeparatorKey;
+    }
 
     if (!parentBucket.updateKey(parentItem.indexInsidePage, separatorKey)) {
-      return false;
+      return Optional.empty();
     }
 
     final int bucketRight = rightSibling.getLeft(0);
 
     bucket.removeNonLeafEntry(0, true);
-    final boolean result = bucket.addNonLeafEntry(0, orphanPointer, bucketRight, bucketKey);
+
+    final byte[] bucketLargestLowerBound;
+    if (parentItem.indexInsidePage > 0) {
+      bucketLargestLowerBound = parentBucket.getKey(parentItem.indexInsidePage - 1);
+    } else {
+      bucketLargestLowerBound = parentLargestLowerBound;
+    }
+
+    final byte[] bucketSmallestUpperBound = new byte[separatorKey.length + parentKeyPrefix.length];
+
+    System.arraycopy(parentKeyPrefix, 0, bucketSmallestUpperBound, 0, parentKeyPrefix.length);
+    System.arraycopy(
+        separatorKey, 0, bucketSmallestUpperBound, parentKeyPrefix.length, separatorKey.length);
+
+    final byte[] bucketKeyPrefix =
+        extractCommonPrefix(bucketLargestLowerBound, bucketSmallestUpperBound);
+    assert bucketKeyPrefix.length >= parentKeyPrefix.length;
+    final int bucketKeyDiff = bucketKeyPrefix.length - parentKeyPrefix.length;
+
+    final boolean result =
+        bucket.addNonLeafEntry(
+            0,
+            orphanPointer,
+            bucketRight,
+            partialBucketKey,
+            bucketKeyDiff,
+            partialBucketKey.length - bucketKeyDiff);
     assert result;
 
     rightSibling.removeNonLeafEntry(0, true);
-    return true;
+
+    @SuppressWarnings("UnnecessaryLocalVariable")
+    final byte[] rightSiblingLargestLowerBound = bucketSmallestUpperBound;
+    final byte[] rightSiblingSmallestUpperBound;
+
+    if (parentItem.indexInsidePage < bucket.size() - 1) {
+      final byte[] partialKey = parentBucket.getKey(parentItem.indexInsidePage + 1);
+      rightSiblingSmallestUpperBound = new byte[partialKey.length + parentKeyPrefix.length];
+
+      System.arraycopy(
+          parentKeyPrefix, 0, rightSiblingSmallestUpperBound, 0, parentKeyPrefix.length);
+      System.arraycopy(
+          partialKey, 0, rightSiblingSmallestUpperBound, parentKeyPrefix.length, partialKey.length);
+    } else {
+      rightSiblingSmallestUpperBound = parentSmallestUpperBound;
+    }
+
+    final byte[] newRightSiblingPrefix =
+        extractCommonPrefix(rightSiblingLargestLowerBound, rightSiblingSmallestUpperBound);
+    assert newRightSiblingPrefix.length >= rightSiblingPrefix.length;
+
+    if (newRightSiblingPrefix.length > rightSiblingPrefix.length) {
+      final int siblingDiff = newRightSiblingPrefix.length - rightSiblingPrefix.length;
+      final int bucketSize = rightSibling.size();
+
+      final ArrayList<Bucket.Entry> entries = new ArrayList<>(bucketSize);
+
+      for (int i = 0; i < bucketSize; i++) {
+        entries.add(rightSibling.getEntry(i));
+      }
+
+      rightSibling.shrink(0);
+      for (int i = 0; i < bucketSize; i++) {
+        final Bucket.Entry entry = entries.get(i);
+        rightSibling.addNonLeafEntry(
+            i,
+            entry.leftChild,
+            entry.rightChild,
+            entry.key,
+            siblingDiff,
+            entry.key.length - siblingDiff);
+      }
+    }
+
+    @SuppressWarnings("UnnecessaryLocalVariable")
+    final byte[] leftChildLargestLowerBound = bucketLargestLowerBound;
+    final byte[] leftChildSmallestUpperBound =
+        new byte[partialBucketKey.length + parentKeyPrefix.length];
+    System.arraycopy(parentKeyPrefix, 0, leftChildSmallestUpperBound, 0, parentKeyPrefix.length);
+    System.arraycopy(
+        partialBucketKey,
+        0,
+        leftChildSmallestUpperBound,
+        parentKeyPrefix.length,
+        partialBucketKey.length);
+
+    return Optional.of(
+        new NonLeafItemDeletionResult(
+            leftChildLargestLowerBound, leftChildSmallestUpperBound, false));
   }
 
-  private boolean mergeNoneLeafWithRightSiblingAndDeleteItem(
+  private Optional<NonLeafItemDeletionResult> mergeNoneLeafWithRightSiblingAndDeleteItem(
       final OAtomicOperation atomicOperation,
       final RemovalPathItem parentItem,
       final Bucket parentBucket,
+      final byte[] parentBucketPrefix,
       final Bucket bucket,
       final Bucket rightSibling,
+      final byte[] rightSiblingPrefix,
       final int orphanPointer,
       final List<RemovalPathItem> path)
       throws IOException {
@@ -1840,29 +2053,78 @@ public final class BinaryBTree extends ODurableComponent {
       throw new BinaryBTreeException("BTree is broken", this);
     }
 
-    final byte[] leftKey = parentBucket.getKey(parentItem.indexInsidePage);
+    final byte[] partialKey = parentBucket.getKey(parentItem.indexInsidePage);
     final int rightChild = rightSibling.getLeft(0);
 
-    final boolean result = rightSibling.addNonLeafEntry(0, orphanPointer, rightChild, leftKey);
+    assert rightSiblingPrefix.length >= parentBucketPrefix.length;
+    final int siblingPrefixDiff = rightSiblingPrefix.length - parentBucketPrefix.length;
+
+    final boolean result =
+        rightSibling.addNonLeafEntry(
+            0,
+            orphanPointer,
+            rightChild,
+            partialKey,
+            siblingPrefixDiff,
+            partialKey.length - siblingPrefixDiff);
     assert result;
 
-    if (deleteFromNonLeafNode(
-        atomicOperation, parentBucket, rightSibling, path.subList(0, path.size() - 1))) {
+    final Optional<NonLeafItemDeletionResult> oDeletionResult =
+        deleteFromNonLeafNode(
+            atomicOperation, parentBucket, rightSibling, path.subList(0, path.size() - 1));
+    if (oDeletionResult.isPresent()) {
+      final NonLeafItemDeletionResult deletionResult = oDeletionResult.get();
+      if (!deletionResult.mergedWithRoot) {
+        final byte[] newRightSiblingPrefix =
+            extractCommonPrefix(
+                deletionResult.largestLowerBoundary, deletionResult.smallestUpperBoundary);
+
+        assert newRightSiblingPrefix.length <= rightSiblingPrefix.length;
+
+        if (newRightSiblingPrefix.length < rightSiblingPrefix.length) {
+          final int newSiblingPrefixDiff = rightSiblingPrefix.length - newRightSiblingPrefix.length;
+
+          final ArrayList<Bucket.Entry> entries = new ArrayList<>(2);
+
+          entries.add(rightSibling.getEntry(0));
+          entries.add(rightSibling.getEntry(1));
+
+          rightSibling.shrink(0);
+
+          for (int i = 0; i < 2; i++) {
+            final Bucket.Entry entry = entries.get(i);
+
+            final byte[] oldKey = entry.key;
+            final byte[] newKey = new byte[newSiblingPrefixDiff + oldKey.length];
+
+            System.arraycopy(
+                rightSiblingPrefix, newRightSiblingPrefix.length, newKey, 0, newSiblingPrefixDiff);
+            System.arraycopy(oldKey, 0, newKey, newSiblingPrefixDiff, oldKey.length);
+
+            rightSibling.addNonLeafEntry(i, entry.leftChild, entry.rightChild, newKey);
+          }
+        }
+      }
+
       addToFreeList(atomicOperation, bucket.getCacheEntry().getPageIndex());
 
-      return true;
+      final byte[]
+      return Optional.of(new NonLeafItemDeletionResult());
     }
 
-    rightSibling.removeNonLeafEntry(0, leftKey.length, true);
-    return false;
+    rightSibling.removeNonLeafEntry(0, partialKey.length, true);
+    return Optional.empty();
   }
 
-  private boolean mergeNoneLeafWithLeftSiblingAndDeleteItem(
+  private Optional<NonLeafItemDeletionResult> mergeNoneLeafWithLeftSiblingAndDeleteItem(
       final OAtomicOperation atomicOperation,
       final RemovalPathItem parentItem,
       final Bucket parentBucket,
+      final byte[] parentBucketPrefix,
+      final byte[] parentSmallestUpperBoundary,
       final Bucket bucket,
       final Bucket leftSibling,
+      final byte[] leftSiblingPrefix,
       final int orphanPointer,
       final List<RemovalPathItem> path)
       throws IOException {
@@ -1871,20 +2133,97 @@ public final class BinaryBTree extends ODurableComponent {
       throw new BinaryBTreeException("BTree is broken", this);
     }
 
-    final byte[] rightKey = parentBucket.getKey(parentItem.indexInsidePage);
+    final byte[] partialKey = parentBucket.getKey(parentItem.indexInsidePage);
+    assert parentBucketPrefix.length <= leftSiblingPrefix.length;
+    final int partialKeyDiff = leftSiblingPrefix.length - parentBucketPrefix.length;
+
     final int leftChild = leftSibling.getRight(0);
-    final boolean result = leftSibling.addNonLeafEntry(1, leftChild, orphanPointer, rightKey);
+    final boolean result =
+        leftSibling.addNonLeafEntry(
+            1,
+            leftChild,
+            orphanPointer,
+            partialKey,
+            partialKeyDiff,
+            partialKey.length - partialKeyDiff);
     assert result;
 
-    if (deleteFromNonLeafNode(
-        atomicOperation, parentBucket, leftSibling, path.subList(0, path.size() - 1))) {
+    final Optional<NonLeafItemDeletionResult> oDeletionResult =
+        deleteFromNonLeafNode(
+            atomicOperation, parentBucket, leftSibling, path.subList(0, path.size() - 1));
+    if (oDeletionResult.isPresent()) {
+      final NonLeafItemDeletionResult deletionResult = oDeletionResult.get();
+      if (!deletionResult.mergedWithRoot) {
+        final byte[] newLeftSiblingPrefix =
+            extractCommonPrefix(
+                deletionResult.largestLowerBoundary, deletionResult.smallestUpperBoundary);
+        assert newLeftSiblingPrefix.length <= leftSiblingPrefix.length;
+
+        if (newLeftSiblingPrefix.length < leftSiblingPrefix.length) {
+          assert leftSibling.size() == 2;
+
+          final ArrayList<Bucket.Entry> entries = new ArrayList<>(2);
+          entries.add(leftSibling.getEntry(0));
+          entries.add(leftSibling.getEntry(1));
+
+          leftSibling.shrink(0);
+
+          final int prefixDiff = leftSiblingPrefix.length - newLeftSiblingPrefix.length;
+          for (int i = 0; i < 2; i++) {
+            final Bucket.Entry entry = entries.get(i);
+            final byte[] oldKey = entry.key;
+            final byte[] newKey = new byte[oldKey.length + prefixDiff];
+
+            System.arraycopy(leftSiblingPrefix, newLeftSiblingPrefix.length, newKey, 0, prefixDiff);
+            System.arraycopy(oldKey, 0, newKey, prefixDiff, oldKey.length);
+
+            leftSibling.addNonLeafEntry(0, entry.leftChild, entry.rightChild, newKey);
+          }
+        }
+      }
+
       addToFreeList(atomicOperation, bucket.getCacheEntry().getPageIndex());
 
-      return true;
+      final byte[] rightChildLargestLowerBoundary =
+          new byte[parentBucketPrefix.length + partialKey.length];
+
+      System.arraycopy(
+          parentBucketPrefix, 0, rightChildLargestLowerBoundary, 0, parentBucketPrefix.length);
+      System.arraycopy(
+          partialKey,
+          0,
+          rightChildLargestLowerBoundary,
+          parentBucketPrefix.length,
+          partialKey.length);
+
+      @SuppressWarnings("UnnecessaryLocalVariable")
+      final byte[] rightChildSmallestUpperBoundary = parentSmallestUpperBoundary;
+
+      return Optional.of(
+          new NonLeafItemDeletionResult(
+              rightChildLargestLowerBoundary, rightChildSmallestUpperBoundary, false));
     }
 
-    leftSibling.removeNonLeafEntry(1, rightKey.length, false);
-    return false;
+    leftSibling.removeNonLeafEntry(1, partialKey.length, false);
+    return Optional.empty();
+  }
+
+  private byte[] calculateLargestLowerBoundary(final Bucket parent, final int parentIndex,
+                                               final boolean leftChild, final byte[] parentLargestLowerBoundary) {
+
+  }
+
+  private byte[] calculateSmallestUpperBoundary(final Bucket parent, final int parentIndex, final boolean leftChild,
+                                                final byte[] parentSmallestUpperBoundary) {
+
+  }
+
+  private byte[] restoreKey(final byte[] keyPrefix, final byte[] partialKey) {
+
+  }
+
+  private byte[] extendKey(final byte[] parentKeyPrefix, final byte[] keyPrefix, final byte[] partialKey) {
+
   }
 
   private void addToFreeList(OAtomicOperation atomicOperation, int pageIndex) throws IOException {
@@ -2421,6 +2760,19 @@ public final class BinaryBTree extends ODurableComponent {
       this.largestLowerBound = largestLowerBound;
       this.smallestUpperBound = smallestUpperBound;
       this.keyPrefix = keyPrefix;
+    }
+  }
+
+  private static final class NonLeafItemDeletionResult {
+    private final byte[] largestLowerBoundary;
+    private final byte[] smallestUpperBoundary;
+    private final boolean mergedWithRoot;
+
+    private NonLeafItemDeletionResult(
+        byte[] largestLowerBoundary, byte[] smallestUpperBoundary, boolean mergedWithRoot) {
+      this.largestLowerBoundary = largestLowerBoundary;
+      this.smallestUpperBoundary = smallestUpperBoundary;
+      this.mergedWithRoot = mergedWithRoot;
     }
   }
 
