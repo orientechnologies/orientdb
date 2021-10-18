@@ -2030,6 +2030,42 @@ public class OSelectStatementExecutionTest {
   }
 
   @Test
+  public void testLetVariableSubqueryProjectionFetchFromClassTarget_9695() {
+    String className = "testLetVariableSubqueryProjectionFetchFromClassTarget_9695";
+    db.getMetadata().getSchema().createClass(className);
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("i", i);
+      doc.setProperty("iSeq", new int[] {i, 2 * i, 4 * i});
+      doc.save();
+    }
+    OResultSet result =
+        db.query(
+            "select $current.*, $b.*, $b.@class from (select 1 as sqa, @class as sqc from "
+                + className
+                + " LIMIT 2)\n"
+                + "let $b = $current");
+    printExecutionPlan(result);
+    Assert.assertTrue(result.hasNext());
+    OResult item = result.next();
+    Assert.assertNotNull(item);
+    Object currentProperty = item.getProperty("$current.*");
+    Assert.assertTrue(currentProperty instanceof OResult);
+    final OResult currentResult = (OResult) currentProperty;
+    Assert.assertTrue(currentResult.isProjection());
+    Assert.assertEquals(Integer.valueOf(1), currentResult.<Integer>getProperty("sqa"));
+    Assert.assertEquals(className, currentResult.getProperty("sqc"));
+    Object bProperty = item.getProperty("$b.*");
+    Assert.assertTrue(bProperty instanceof OResult);
+    final OResult bResult = (OResult) bProperty;
+    Assert.assertTrue(bResult.isProjection());
+    Assert.assertEquals(Integer.valueOf(1), bResult.<Integer>getProperty("sqa"));
+    Assert.assertEquals(className, bResult.getProperty("sqc"));
+    result.close();
+  }
+
+  @Test
   public void testUnwind1() {
     String className = "testUnwind1";
     db.getMetadata().getSchema().createClass(className);
