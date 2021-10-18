@@ -73,6 +73,7 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OInvalidDatabaseNameException;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
+import com.orientechnologies.orient.core.exception.OInvalidInstanceIdException;
 import com.orientechnologies.orient.core.exception.OJVMErrorException;
 import com.orientechnologies.orient.core.exception.OLowDiskSpaceException;
 import com.orientechnologies.orient.core.exception.OPageIsBrokenException;
@@ -207,6 +208,7 @@ import java.util.SortedSet;
 import java.util.TimeZone;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
@@ -318,6 +320,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private final AtomicInteger sessionCount = new AtomicInteger(0);
   private final AtomicLong lastCloseTime = new AtomicLong(System.currentTimeMillis());
 
+  protected static final String DATABASE_INSTANCE_ID = "databaseInstenceId";
+  
   protected AtomicOperationsTable atomicOperationsTable;
 
   public OAbstractPaginatedStorage(final String name, final String filePath, final String mode,
@@ -661,6 +665,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           ((OClusterBasedStorageConfiguration) configuration)
               .setMaxKeySize(atomicOperation, OGlobalConfiguration.SBTREE_MAX_KEY_SIZE.getValueAsInteger());
 
+          generateDatabaseInstanceId(atomicOperation);
+
           // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF
           // INDEXING
           doAddCluster(atomicOperation, OMetadataDefault.CLUSTER_INDEX_NAME, null);
@@ -702,6 +708,33 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     OLogManager.instance()
         .infoNoDb(this, "Storage '%s' is created under OrientDB distribution : %s", getURL(), OConstants.getVersion());
 
+  }
+  
+  protected void generateDatabaseInstanceId(OAtomicOperation atomicOperation) {
+    ((OClusterBasedStorageConfiguration) configuration).setProperty(atomicOperation, DATABASE_INSTANCE_ID,
+        UUID.randomUUID().toString());
+  }
+  
+  protected UUID readDatabaseInstanceId() {
+    String id = configuration.getProperty(DATABASE_INSTANCE_ID);
+    if (id != null) {
+      return UUID.fromString(id);
+    } else {
+      return null;
+    }
+  }
+  
+  protected void checkDatabaseInstanceId(UUID backupUUID) {
+    UUID dbUUID = readDatabaseInstanceId();
+    if(backupUUID == null){
+      throw new OInvalidInstanceIdException("The Database Instance Id do not mach, backup UUID is null");
+    }
+    if (dbUUID != null) {
+      if (!dbUUID.equals(backupUUID)) {
+        throw new OInvalidInstanceIdException(
+            String.format("The Database Instance Id do not mach, database: '%s' backup: '%s'", dbUUID, backupUUID));
+      }
+    }
   }
 
   private void checkPageSizeAndRelatedParameters() {
