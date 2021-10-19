@@ -22,8 +22,11 @@ import com.orientechnologies.agent.services.backup.OBackupConfig;
 import com.orientechnologies.agent.services.backup.OBackupListener;
 import com.orientechnologies.agent.services.backup.log.*;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.schedule.OCronExpression;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OEnterpriseLocalPaginatedStorage;
 import com.orientechnologies.orient.server.handler.OAutomaticBackup;
 import java.io.File;
 import java.io.IOException;
@@ -42,7 +45,7 @@ public class OBackupStrategyIncrementalBackup extends OBackupStrategy {
     return OAutomaticBackup.MODE.INCREMENTAL_BACKUP;
   }
 
-  protected String calculatePath() {
+  protected String calculatePath(ODatabaseDocument db) {
 
     OBackupFinishedLog last = null;
     try {
@@ -52,7 +55,17 @@ public class OBackupStrategyIncrementalBackup extends OBackupStrategy {
     }
 
     if (last != null && !Boolean.TRUE.equals(last.getPrevChange())) {
-      return last.getPath();
+      String path = last.getPath();
+
+      try {
+        if (((OEnterpriseLocalPaginatedStorage) ((ODatabaseInternal) db).getStorage())
+            .isLastBackupCompatibleWithUUID(new File(path))) {
+          return last.getPath();
+        }
+      } catch (IOException e) {
+        OLogManager.instance().warn(this, "Error checking backup compatibility", e);
+        return last.getPath();
+      }
     }
 
     long begin = System.currentTimeMillis();

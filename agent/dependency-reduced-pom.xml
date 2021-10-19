@@ -3,7 +3,7 @@
   <parent>
     <artifactId>orientdb-enterprise-parent</artifactId>
     <groupId>com.orientechnologies</groupId>
-    <version>3.2.2-sap-01</version>
+    <version>3.2.3-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <artifactId>agent</artifactId>
@@ -108,7 +108,7 @@
     <dependency>
       <groupId>com.orientechnologies</groupId>
       <artifactId>orientdb-core</artifactId>
-      <version>3.2.2</version>
+      <version>3.2.3-SNAPSHOT</version>
       <scope>provided</scope>
       <exclusions>
         <exclusion>
@@ -144,33 +144,25 @@
     <dependency>
       <groupId>com.orientechnologies</groupId>
       <artifactId>orientdb-client</artifactId>
-      <version>3.2.2</version>
+      <version>3.2.3-SNAPSHOT</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.orientechnologies</groupId>
       <artifactId>orientdb-server</artifactId>
-      <version>3.2.2</version>
+      <version>3.2.3-SNAPSHOT</version>
       <scope>provided</scope>
       <exclusions>
         <exclusion>
-          <artifactId>jaxb-api</artifactId>
-          <groupId>javax.xml.bind</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>jaxb-impl</artifactId>
-          <groupId>com.sun.xml.bind</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>jaxb-core</artifactId>
-          <groupId>com.sun.xml.bind</groupId>
+          <artifactId>jaxb-runtime</artifactId>
+          <groupId>org.glassfish.jaxb</groupId>
         </exclusion>
       </exclusions>
     </dependency>
     <dependency>
       <groupId>com.orientechnologies</groupId>
       <artifactId>orientdb-distributed</artifactId>
-      <version>3.2.2</version>
+      <version>3.2.3-SNAPSHOT</version>
       <scope>provided</scope>
       <exclusions>
         <exclusion>
@@ -186,7 +178,7 @@
     <dependency>
       <groupId>com.orientechnologies</groupId>
       <artifactId>orientdb-lucene</artifactId>
-      <version>3.2.2</version>
+      <version>3.2.3-SNAPSHOT</version>
       <scope>provided</scope>
       <exclusions>
         <exclusion>
@@ -250,19 +242,23 @@
     <dependency>
       <groupId>com.orientechnologies</groupId>
       <artifactId>orientdb-tools</artifactId>
-      <version>3.2.2</version>
+      <version>3.2.3-SNAPSHOT</version>
       <scope>provided</scope>
       <exclusions>
         <exclusion>
-          <artifactId>jaxb-api</artifactId>
-          <groupId>javax.xml.bind</groupId>
+          <artifactId>jakarta.xml.bind-api</artifactId>
+          <groupId>jakarta.xml.bind</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>jaxb-core</artifactId>
+          <groupId>org.glassfish.jaxb</groupId>
         </exclusion>
       </exclusions>
     </dependency>
     <dependency>
       <groupId>com.orientechnologies</groupId>
       <artifactId>orientdb-test-commons</artifactId>
-      <version>3.2.2</version>
+      <version>3.2.3-SNAPSHOT</version>
       <scope>test</scope>
       <exclusions>
         <exclusion>
@@ -282,7 +278,7 @@
     <dependency>
       <groupId>com.orientechnologies</groupId>
       <artifactId>orientdb-core</artifactId>
-      <version>3.2.2</version>
+      <version>3.2.3-SNAPSHOT</version>
       <type>test-jar</type>
       <scope>test</scope>
       <exclusions>
@@ -319,7 +315,7 @@
     <dependency>
       <groupId>com.orientechnologies</groupId>
       <artifactId>orientdb-lucene</artifactId>
-      <version>3.2.2</version>
+      <version>3.2.3-SNAPSHOT</version>
       <type>test-jar</type>
       <scope>test</scope>
       <exclusions>
@@ -384,7 +380,7 @@
     <dependency>
       <groupId>com.orientechnologies</groupId>
       <artifactId>orientdb-graphdb</artifactId>
-      <version>3.2.2</version>
+      <version>3.2.3-SNAPSHOT</version>
       <scope>test</scope>
       <exclusions>
         <exclusion>
@@ -474,7 +470,7 @@
   </dependencies>
   <properties>
     <metrics.version>4.1.6</metrics.version>
-    <orientdb.version>3.2.2</orientdb.version>
+    <orientdb.version>3.2.3-SNAPSHOT</orientdb.version>
     <jackson.version>2.10.5.1</jackson.version>
     <exclude.kerberos.tests>%regex[com.orientechnologies.security.kerberos.*Test.*]</exclude.kerberos.tests>
     <project.rootdir>${project.basedir}/../</project.rootdir>
