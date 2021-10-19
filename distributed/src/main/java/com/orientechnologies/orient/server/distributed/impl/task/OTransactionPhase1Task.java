@@ -71,8 +71,6 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask implements O
   // changed with this tx.
   // If a null key is allowed by the index, index-key could be null.
   private SortedSet<OTransactionUniqueKey> uniqueIndexKeys;
-  private OCommandDistributedReplicateRequest.QUORUM_TYPE quorumType =
-      OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE;
   private transient int retryCount = 0;
   private volatile boolean finished;
   private TimerTask notYetFinishedTask;
@@ -134,7 +132,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask implements O
 
   @Override
   public OCommandDistributedReplicateRequest.QUORUM_TYPE getQuorumType() {
-    return quorumType;
+    return OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE;
   }
 
   @Override
@@ -393,7 +391,6 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask implements O
                   changes.resolveAssociatedIndex(
                       index, database.getMetadata().getIndexManagerInternal(), database);
               if (resolvedIndex != null && resolvedIndex.isUnique()) {
-                quorumType = OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE_ALL_MASTERS;
                 for (final Object keyWithChange : changes.changesPerKey.keySet()) {
                   int version = storage.getVersionForKey(index, keyWithChange);
                   uniqueIndexKeys.add(new OTransactionUniqueKey(index, keyWithChange, version));
