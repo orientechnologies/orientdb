@@ -131,13 +131,12 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
   public void internalRollback() {
     status = TXSTATUS.ROLLBACKING;
-    // CLEAR THE CACHE
-    database.getLocalCache().clear();
 
     // REMOVE ALL THE DIRTY ENTRIES AND UNDO ANY DIRTY DOCUMENT IF POSSIBLE.
     for (final ORecordOperation v : allEntries.values()) {
       final ORecord rec = v.getRecord();
       rec.unload();
+      database.getLocalCache().deleteRecord(rec.getIdentity());
     }
     close();
     status = TXSTATUS.ROLLED_BACK;
