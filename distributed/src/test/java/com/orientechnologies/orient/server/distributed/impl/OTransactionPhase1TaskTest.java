@@ -33,8 +33,7 @@ public class OTransactionPhase1TaskTest {
   public void before()
       throws ClassNotFoundException, InstantiationException, IOException, IllegalAccessException {
     server = new OServer(false);
-    server.startup(
-        getClass().getClassLoader().getResourceAsStream("orientdb-server-config-tx.xml"));
+    server.startup(getClass().getClassLoader().getResourceAsStream("orientdb-server-config.xml"));
     server.activate();
     OrientDB orientDB = server.getContext();
     orientDB.execute(
@@ -49,9 +48,7 @@ public class OTransactionPhase1TaskTest {
   @After
   public void after() {
     if (session != null) session.close();
-    if (server.getContext() != null) {
-      server.getContext().drop(OTransactionPhase1TaskTest.class.getSimpleName());
-    }
+    server.getContext().drop(OTransactionPhase1TaskTest.class.getSimpleName());
     server.shutdown();
   }
 
