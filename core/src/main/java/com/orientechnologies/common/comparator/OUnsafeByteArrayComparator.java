@@ -50,7 +50,8 @@ public class OUnsafeByteArrayComparator implements Comparator<byte[]> {
     unsafe =
         (Unsafe)
             AccessController.doPrivileged(
-                    (PrivilegedAction<Object>) () -> {
+                (PrivilegedAction<Object>)
+                    () -> {
                       try {
                         Field f = Unsafe.class.getDeclaredField("theUnsafe");
                         f.setAccessible(true);

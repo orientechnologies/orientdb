@@ -364,8 +364,6 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
   private void doRollback() {
     OTransactionAbstract.updateCacheFromEntries(database, getRecordOperations(), false);
 
-    database.getLocalCache().clear();
-
     for (ORecordOperation recordOperation : recordOperations.values()) {
       final ORecord record = recordOperation.record.getRecord();
 
