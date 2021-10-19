@@ -267,7 +267,7 @@ public abstract class OBackupStrategy {
       db = getDatabase();
       db.activateOnCurrentThread();
 
-      final String path = calculatePath();
+      final String path = calculatePath(db);
       final String fName = db.incrementalBackup(path);
       final OBackupFinishedLog end = endBackup(start.getUnitId(), start.getTxId());
       end.setFileName(fName);
@@ -289,7 +289,7 @@ public abstract class OBackupStrategy {
 
   public abstract OAutomaticBackup.MODE getMode();
 
-  protected abstract String calculatePath();
+  protected abstract String calculatePath(ODatabaseDocument db);
 
   public abstract Date scheduleNextExecution(OBackupListener listener);
 
@@ -300,7 +300,7 @@ public abstract class OBackupStrategy {
   protected ODatabaseDocument getDatabase() {
     final String dbName = cfg.field(OBackupConfig.DBNAME);
     final OEnterpriseServer server = logger.getServer();
-    // String url = server.getAvailableStorageNames().get(dbName);
+
     final ODatabaseDocumentInternal db = server.getDatabases().openNoAuthenticate(dbName, null);
     return db;
   }
