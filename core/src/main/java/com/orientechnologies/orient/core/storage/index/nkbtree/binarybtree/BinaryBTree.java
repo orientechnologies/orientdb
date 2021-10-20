@@ -346,7 +346,7 @@ public final class BinaryBTree extends ODurableComponent {
 
             pageIndex = bucket.getRight(insertionIndex - 1);
 
-            bucketLLB = calculateLargestLowerBoundary(index, bucket, keyPrefix, bucketLLB, false);
+            bucketLLB = calculateLargestLowerBoundary(insertionIndex - 1, bucket, keyPrefix, bucketLLB, false);
           } else {
             path.add(new RemovalPathItem(pageIndex, insertionIndex, true));
 
@@ -356,8 +356,8 @@ public final class BinaryBTree extends ODurableComponent {
 
             pageIndex = bucket.getLeft(insertionIndex);
 
-            bucketLLB = calculateLargestLowerBoundary(index, bucket, keyPrefix, bucketLLB, true);
-            bucketSUB = calculateSmallestUpperBoundary(index, bucket, keyPrefix, bucketSUB, true);
+            bucketLLB = calculateLargestLowerBoundary(insertionIndex, bucket, keyPrefix, bucketLLB, true);
+            bucketSUB = calculateSmallestUpperBoundary(insertionIndex, bucket, keyPrefix, bucketSUB, true);
           }
         }
 
