@@ -1596,7 +1596,8 @@ public final class BinaryBTree extends ODurableComponent {
                 final byte[] oldKey = entry.key;
                 final byte[] newKey = extendKey(rightSiblingPrefix, newRightSiblingPrefix, oldKey);
 
-                rightSiblingBucket.addLeafEntry(i, newKey, serializeValue(entry.value));
+                final boolean added = rightSiblingBucket.addLeafEntry(i, newKey, serializeValue(entry.value));
+                assert added;
               }
             }
 
@@ -1667,7 +1668,8 @@ public final class BinaryBTree extends ODurableComponent {
               final byte[] oldKey = entry.key;
               final byte[] newKey = extendKey(leftSiblingPrefix, newLeftSiblingPrefix, oldKey);
 
-              leftSiblingBucket.addLeafEntry(i, newKey, serializeValue(entry.value));
+              final boolean added = leftSiblingBucket.addLeafEntry(i, newKey, serializeValue(entry.value));
+              assert added;
             }
           }
 

@@ -330,9 +330,9 @@ public class BinaryBTreeTestIT {
         keysIterator.remove();
       }
     }
-//
-//    Assert.assertArrayEquals(stringToLexicalBytes(keys.firstKey()), binaryBTree.firstKey());
-//    Assert.assertArrayEquals(stringToLexicalBytes(keys.lastKey()), binaryBTree.lastKey());
+    //
+    //    Assert.assertArrayEquals(stringToLexicalBytes(keys.firstKey()), binaryBTree.firstKey());
+    //    Assert.assertArrayEquals(stringToLexicalBytes(keys.lastKey()), binaryBTree.lastKey());
 
     for (final Map.Entry<String, ORID> entry : keys.entrySet()) {
       final int val = (int) entry.getValue().getClusterPosition();
@@ -347,7 +347,7 @@ public class BinaryBTreeTestIT {
 
   @Test
   public void testKeyAddDeleteHalf() throws Exception {
-    final int keysCount = 1_000_000;
+    final int keysCount = 8_000;
 
     for (int i = 0; i < keysCount / 2; i++) {
       final int key = i;
@@ -380,8 +380,20 @@ public class BinaryBTreeTestIT {
 
       final int offset = iterations * (keysCount / 2);
 
+      if (iterations == 2) {
+        Assert.assertEquals(
+            new ORecordId(15995 % 32000, 15995),
+            binaryBTree.get(stringToLexicalBytes(Integer.toString(15995))));
+      }
+
       for (int i = 0; i < keysCount / 2; i++) {
         final int key = i + offset;
+        if (iterations == 2 && key == 9999) {
+          Assert.assertEquals(
+              new ORecordId(15995 % 32000, 15995),
+              binaryBTree.get(stringToLexicalBytes(Integer.toString(15995))));
+        }
+
         atomicOperationsManager.executeInsideAtomicOperation(
             null,
             atomicOperation ->
@@ -389,6 +401,12 @@ public class BinaryBTreeTestIT {
                     binaryBTree.remove(
                         atomicOperation, stringToLexicalBytes(Integer.toString(key))),
                     new ORecordId(key % 32000, key)));
+
+        if (iterations == 2 && key == 9999) {
+          Assert.assertEquals(
+              new ORecordId(15995 % 32000, 15995),
+              binaryBTree.get(stringToLexicalBytes(Integer.toString(15995))));
+        }
       }
 
       final int start = (iterations + 1) * (keysCount / 2);
