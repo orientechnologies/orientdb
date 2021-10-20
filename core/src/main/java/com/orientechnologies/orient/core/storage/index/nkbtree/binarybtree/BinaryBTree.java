@@ -346,7 +346,9 @@ public final class BinaryBTree extends ODurableComponent {
 
             pageIndex = bucket.getRight(insertionIndex - 1);
 
-            bucketLLB = calculateLargestLowerBoundary(insertionIndex - 1, bucket, keyPrefix, bucketLLB, false);
+            bucketLLB =
+                calculateLargestLowerBoundary(
+                    insertionIndex - 1, bucket, keyPrefix, bucketLLB, false);
           } else {
             path.add(new RemovalPathItem(pageIndex, insertionIndex, true));
 
@@ -356,8 +358,10 @@ public final class BinaryBTree extends ODurableComponent {
 
             pageIndex = bucket.getLeft(insertionIndex);
 
-            bucketLLB = calculateLargestLowerBoundary(insertionIndex, bucket, keyPrefix, bucketLLB, true);
-            bucketSUB = calculateSmallestUpperBoundary(insertionIndex, bucket, keyPrefix, bucketSUB, true);
+            bucketLLB =
+                calculateLargestLowerBoundary(insertionIndex, bucket, keyPrefix, bucketLLB, true);
+            bucketSUB =
+                calculateSmallestUpperBoundary(insertionIndex, bucket, keyPrefix, bucketSUB, true);
           }
         }
 
@@ -1596,7 +1600,8 @@ public final class BinaryBTree extends ODurableComponent {
                 final byte[] oldKey = entry.key;
                 final byte[] newKey = extendKey(rightSiblingPrefix, newRightSiblingPrefix, oldKey);
 
-                final boolean added = rightSiblingBucket.addLeafEntry(i, newKey, serializeValue(entry.value));
+                final boolean added =
+                    rightSiblingBucket.addLeafEntry(i, newKey, serializeValue(entry.value));
                 assert added;
               }
             }
@@ -1668,7 +1673,8 @@ public final class BinaryBTree extends ODurableComponent {
               final byte[] oldKey = entry.key;
               final byte[] newKey = extendKey(leftSiblingPrefix, newLeftSiblingPrefix, oldKey);
 
-              final boolean added = leftSiblingBucket.addLeafEntry(i, newKey, serializeValue(entry.value));
+              final boolean added =
+                  leftSiblingBucket.addLeafEntry(i, newKey, serializeValue(entry.value));
               assert added;
             }
           }
@@ -1874,24 +1880,26 @@ public final class BinaryBTree extends ODurableComponent {
 
     final byte[] partialBucketKey = parentBucket.getKey(parentItem.indexInsidePage);
     final int leftSiblingSize = leftSibling.size();
-    final byte[] partialSeparatorKey = leftSibling.getKey(leftSiblingSize - 1);
+    final Bucket.Entry partialSeparatorEntry = leftSibling.getEntry(leftSiblingSize - 1);
 
     assert leftSiblingKeyPrefix.length >= parentKeyPrefix.length;
 
     final byte[] separatorKey;
     if (leftSiblingKeyPrefix.length > parentKeyPrefix.length) {
-      separatorKey = extendKey(parentKeyPrefix, leftSiblingKeyPrefix, partialSeparatorKey);
+      separatorKey = extendKey(parentKeyPrefix, leftSiblingKeyPrefix, partialSeparatorEntry.key);
     } else {
-      separatorKey = partialSeparatorKey;
+      separatorKey = partialSeparatorEntry.key;
     }
 
     if (!parentBucket.updateKey(parentItem.indexInsidePage, separatorKey)) {
       return Optional.empty();
     }
 
-    final int bucketLeft = leftSibling.getRight(leftSiblingSize - 1);
+    final int bucketLeft = partialSeparatorEntry.rightChild;
 
     leftSibling.removeNonLeafEntry(leftSiblingSize - 1, false);
+
+    final Bucket.Entry bucketEntry = bucket.getEntry(0);
     bucket.removeNonLeafEntry(0, true);
 
     final byte[] leftSiblingLargestLowerBound =
@@ -1913,19 +1921,58 @@ public final class BinaryBTree extends ODurableComponent {
       leftSibling.shrink(0);
 
       final ArrayList<Bucket.Entry> entries = new ArrayList<>(leftSiblingSize);
-      for (int i = 0; i < leftSiblingSize; i++) {
+      for (int i = 0; i < leftSiblingSize - 1; i++) {
         entries.add(leftSibling.getEntry(i));
       }
 
-      for (int i = 0; i < leftSiblingSize; i++) {
+      boolean rollback = false;
+      for (int i = 0; i < leftSiblingSize - 1; i++) {
         final Bucket.Entry entry = entries.get(i);
-        leftSibling.addNonLeafEntry(
-            i,
-            entry.leftChild,
-            entry.rightChild,
-            entry.key,
-            leftSiblingDiff,
-            entry.key.length - leftSiblingDiff);
+
+        final boolean added =
+            leftSibling.addNonLeafEntry(
+                i,
+                entry.leftChild,
+                entry.rightChild,
+                entry.key,
+                leftSiblingDiff,
+                entry.key.length - leftSiblingDiff);
+        if (!added) {
+          rollback = true;
+          break;
+        }
+      }
+
+      if (rollback) {
+        leftSibling.shrink(0);
+
+        boolean added;
+        for (int i = 0; i < leftSiblingSize - 1; i++) {
+          final Bucket.Entry entry = entries.get(i);
+          added = leftSibling.addNonLeafEntry(i, entry.leftChild, entry.rightChild, entry.key);
+          assert added;
+        }
+
+        added =
+            leftSibling.addNonLeafEntry(
+                leftSiblingSize - 1,
+                partialSeparatorEntry.leftChild,
+                partialSeparatorEntry.rightChild,
+                partialSeparatorEntry.key);
+        assert added;
+        assert leftSibling.size() == leftSiblingSize;
+
+        final boolean updated =
+            parentBucket.updateKey(parentItem.indexInsidePage, partialBucketKey);
+        assert updated;
+
+        assert bucket.size() == 0;
+        added =
+            bucket.addNonLeafEntry(
+                0, bucketEntry.leftChild, bucketEntry.rightChild, bucketEntry.key);
+        assert added;
+
+        return Optional.empty();
       }
     }
 
@@ -1980,23 +2027,24 @@ public final class BinaryBTree extends ODurableComponent {
     }
 
     final byte[] partialBucketKey = parentBucket.getKey(parentItem.indexInsidePage);
-    final byte[] partialSeparatorKey = rightSibling.getKey(0);
+    final Bucket.Entry partialSeparatorEntry = rightSibling.getEntry(0);
 
     final byte[] separatorKey;
 
     assert rightSiblingPrefix.length >= parentKeyPrefix.length;
     if (rightSiblingPrefix.length > parentKeyPrefix.length) {
-      separatorKey = extendKey(rightSiblingPrefix, parentKeyPrefix, partialSeparatorKey);
+      separatorKey = extendKey(rightSiblingPrefix, parentKeyPrefix, partialSeparatorEntry.key);
     } else {
-      separatorKey = partialSeparatorKey;
+      separatorKey = partialSeparatorEntry.key;
     }
 
     if (!parentBucket.updateKey(parentItem.indexInsidePage, separatorKey)) {
       return Optional.empty();
     }
 
-    final int bucketRight = rightSibling.getLeft(0);
+    final int bucketRight = partialSeparatorEntry.leftChild;
 
+    final Bucket.Entry bucketEntry = bucket.getEntry(0);
     bucket.removeNonLeafEntry(0, true);
 
     final byte[] bucketLargestLowerBound =
@@ -2040,6 +2088,7 @@ public final class BinaryBTree extends ODurableComponent {
         extractCommonPrefix(rightSiblingLargestLowerBound, rightSiblingSmallestUpperBound);
     assert newRightSiblingPrefix.length >= rightSiblingPrefix.length;
 
+    boolean rollback = false;
     if (newRightSiblingPrefix.length > rightSiblingPrefix.length) {
       final int siblingDiff = newRightSiblingPrefix.length - rightSiblingPrefix.length;
       final int bucketSize = rightSibling.size();
@@ -2051,15 +2100,55 @@ public final class BinaryBTree extends ODurableComponent {
       }
 
       rightSibling.shrink(0);
+
       for (int i = 0; i < bucketSize; i++) {
         final Bucket.Entry entry = entries.get(i);
-        rightSibling.addNonLeafEntry(
-            i,
-            entry.leftChild,
-            entry.rightChild,
-            entry.key,
-            siblingDiff,
-            entry.key.length - siblingDiff);
+        final boolean added =
+            rightSibling.addNonLeafEntry(
+                i,
+                entry.leftChild,
+                entry.rightChild,
+                entry.key,
+                siblingDiff,
+                entry.key.length - siblingDiff);
+        if (!added) {
+          rollback = true;
+          break;
+        }
+      }
+
+      if (rollback) {
+        rightSibling.shrink(0);
+
+        boolean added =
+            rightSibling.addNonLeafEntry(
+                0,
+                partialSeparatorEntry.leftChild,
+                partialSeparatorEntry.rightChild,
+                partialSeparatorEntry.key);
+
+        assert added;
+
+        for (int i = 0; i < bucketSize; i++) {
+          final Bucket.Entry entry = entries.get(i);
+          added = rightSibling.addNonLeafEntry(i + 1, entry.leftChild, entry.rightChild, entry.key);
+
+          assert added;
+        }
+
+        final boolean updated =
+            parentBucket.updateKey(parentItem.indexInsidePage, partialBucketKey);
+        assert updated;
+
+        assert bucket.size() == 1;
+        bucket.removeNonLeafEntry(0, true);
+
+        added =
+            bucket.addNonLeafEntry(
+                0, bucketEntry.leftChild, bucketEntry.rightChild, bucketEntry.key);
+        assert added;
+
+        return Optional.empty();
       }
     }
 
@@ -2135,7 +2224,10 @@ public final class BinaryBTree extends ODurableComponent {
 
           final byte[] oldKey = entry.key;
           final byte[] newKey = extendKey(rightSiblingPrefix, newRightSiblingPrefix, oldKey);
-          rightSibling.addNonLeafEntry(i, entry.leftChild, entry.rightChild, newKey);
+
+          final boolean added =
+              rightSibling.addNonLeafEntry(i, entry.leftChild, entry.rightChild, newKey);
+          assert added;
         }
       }
 
@@ -2190,13 +2282,13 @@ public final class BinaryBTree extends ODurableComponent {
 
       final int leftChild = leftSibling.getRight(0);
       final boolean result =
-              leftSibling.addNonLeafEntry(
-                      1,
-                      leftChild,
-                      orphanPointer,
-                      partialKey,
-                      partialKeyDiff,
-                      partialKey.length - partialKeyDiff);
+          leftSibling.addNonLeafEntry(
+              1,
+              leftChild,
+              orphanPointer,
+              partialKey,
+              partialKeyDiff,
+              partialKey.length - partialKeyDiff);
       assert result;
 
       final byte[] newLeftSiblingPrefix = oNewLeftSiblingPrefix.get();
@@ -2216,7 +2308,9 @@ public final class BinaryBTree extends ODurableComponent {
           final byte[] oldKey = entry.key;
           final byte[] newKey = extendKey(leftSiblingPrefix, newLeftSiblingPrefix, oldKey);
 
-          leftSibling.addNonLeafEntry(i, entry.leftChild, entry.rightChild, newKey);
+          final boolean added =
+              leftSibling.addNonLeafEntry(i, entry.leftChild, entry.rightChild, newKey);
+          assert added;
         }
       }
 
