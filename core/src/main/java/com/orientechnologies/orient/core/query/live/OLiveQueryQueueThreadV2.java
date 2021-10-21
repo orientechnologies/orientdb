@@ -21,10 +21,14 @@ package com.orientechnologies.orient.core.query.live;
 
 import com.orientechnologies.common.log.OLogManager;
 
+import java.util.concurrent.BlockingQueue;
+
 /**
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
 public class OLiveQueryQueueThreadV2 extends Thread {
+
+  private static final OLogManager logger = OLogManager.instance();
 
   private final OLiveQueryHookV2.OLiveQueryOps ops;
 
@@ -42,10 +46,15 @@ public class OLiveQueryQueueThreadV2 extends Thread {
 
   @Override
   public void run() {
+    long totalEventsServed = 0;
     while (!stopped) {
       OLiveQueryHookV2.OLiveQueryOp next = null;
       try {
-        next = ops.getQueue().take();
+        BlockingQueue<OLiveQueryHookV2.OLiveQueryOp> queue = ops.getQueue();
+        if (totalEventsServed > 0 && totalEventsServed % 100_000 == 0) {
+          logger.info(this.getClass(), "LiveQuery events: %d served, %d in queue", totalEventsServed, queue.size());
+        }
+        next = queue.take();
       } catch (InterruptedException ignore) {
         break;
       }
@@ -60,6 +69,7 @@ public class OLiveQueryQueueThreadV2 extends Thread {
         }
 
       }
+      totalEventsServed++;
     }
   }
 
