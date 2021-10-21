@@ -149,6 +149,7 @@ public class OrientDBRemoteTest {
   }
 
   @Test
+  @Ignore
   public void testMultiThread() {
     if (!factory.exists("test"))
       factory.execute(
