@@ -1569,7 +1569,7 @@ public final class BinaryBTree extends ODurableComponent {
             loadPageForWrite(atomicOperation, fileId, rightSiblingPageIndex, true, true);
         try {
           final Bucket rightSiblingBucket = new Bucket(rightSiblingEntry);
-          final Optional<byte[]> oNewRightSiblingPrefix =
+          final Optional<NonLeafNodeDeletionResult> oNonLeafDeletionResult =
               deleteFromNonLeafNode(
                   atomicOperation,
                   parentBucket,
@@ -1578,7 +1578,7 @@ public final class BinaryBTree extends ODurableComponent {
                   removeSearchResult.smallestUpperBoundaries,
                   removeSearchResult.keyPrefixes);
 
-          if (oNewRightSiblingPrefix.isPresent()) {
+          if (oNonLeafDeletionResult.isPresent()) {
             final long leftSiblingIndex = keyBucket.getLeftSibling();
             assert rightSiblingBucket.getLeftSibling() == keyBucket.getCacheEntry().getPageIndex();
 
@@ -1596,7 +1596,9 @@ public final class BinaryBTree extends ODurableComponent {
               }
             }
 
-            final byte[] newRightSiblingPrefix = oNewRightSiblingPrefix.get();
+            final NonLeafNodeDeletionResult  deletionResult = oNonLeafDeletionResult.get();
+            final byte[] newRightSiblingPrefix = deletionResult.newChildPrefix;
+
             final ArrayList<ORawPair<byte[], ORID>> leftOvers = new ArrayList<>();
 
             assert newRightSiblingPrefix.length <= rightSiblingPrefix.length;
@@ -1655,7 +1657,7 @@ public final class BinaryBTree extends ODurableComponent {
       try {
         // merge with right sibling
         final Bucket leftSiblingBucket = new Bucket(leftSiblingEntry);
-        final Optional<byte[]> oNewLeftSiblingPrefix =
+        final Optional<NonLeafNodeDeletionResult> oNonLeafDeletionResult =
             deleteFromNonLeafNode(
                 atomicOperation,
                 parentBucket,
@@ -1664,7 +1666,7 @@ public final class BinaryBTree extends ODurableComponent {
                 removeSearchResult.smallestUpperBoundaries,
                 removeSearchResult.keyPrefixes);
 
-        if (oNewLeftSiblingPrefix.isPresent()) {
+        if (oNonLeafDeletionResult.isPresent()) {
           final long rightSiblingIndex = keyBucket.getRightSibling();
 
           assert leftSiblingBucket.getRightSibling() == keyBucket.getCacheEntry().getPageIndex();
@@ -1681,7 +1683,8 @@ public final class BinaryBTree extends ODurableComponent {
             }
           }
 
-          final byte[] newLeftSiblingPrefix = oNewLeftSiblingPrefix.get();
+          final NonLeafNodeDeletionResult deletionResult = oNonLeafDeletionResult.get();
+          final byte[] newLeftSiblingPrefix = deletionResult.newChildPrefix;
           assert newLeftSiblingPrefix.length <= leftSiblingPrefix.length;
 
           final ArrayList<ORawPair<byte[], ORID>> leftOvers = new ArrayList<>();
@@ -1729,7 +1732,7 @@ public final class BinaryBTree extends ODurableComponent {
     }
   }
 
-  private Optional<byte[]> deleteFromNonLeafNode(
+  private Optional<NonLeafNodeDeletionResult> deleteFromNonLeafNode(
       final OAtomicOperation atomicOperation,
       final Bucket bucket,
       final List<RemovalPathItem> path,
@@ -1777,7 +1780,7 @@ public final class BinaryBTree extends ODurableComponent {
       }
 
       newChildPrefix = extractCommonPrefix(llb, sub);
-      return Optional.of(newChildPrefix);
+      return Optional.of(new NonLeafNodeDeletionResult(newChildPrefix, llb, sub));
     }
 
     final RemovalPathItem parentItem = path.get(path.size() - 2);
@@ -1831,8 +1834,7 @@ public final class BinaryBTree extends ODurableComponent {
                 parentItem,
                 parentBucket,
                 parentPrefix,
-                parentLLB,
-                bucket,
+                    bucket,
                 rightSiblingBucket,
                 rightSiblingPrefix,
                 orphanPointer,
@@ -1852,7 +1854,7 @@ public final class BinaryBTree extends ODurableComponent {
             calculateLargestLowerBoundary(
                 parentItem.indexInsidePage, parentBucket, parentPrefix, parentLLB, true);
         final byte[] leftSiblingSUB =
-            calculateLargestLowerBoundary(
+            calculateSmallestUpperBoundary(
                 parentItem.indexInsidePage, parentBucket, parentPrefix, parentSUB, true);
         final byte[] leftSiblingPrefix = extractCommonPrefix(leftSiblingLLB, leftSiblingSUB);
 
@@ -1880,8 +1882,7 @@ public final class BinaryBTree extends ODurableComponent {
                 parentItem,
                 parentBucket,
                 parentPrefix,
-                parentSUB,
-                bucket,
+                    bucket,
                 leftSiblingBucket,
                 leftSiblingPrefix,
                 orphanPointer,
@@ -1902,7 +1903,7 @@ public final class BinaryBTree extends ODurableComponent {
     }
   }
 
-  private Optional<byte[]> rotateNoneLeafRightAndRemoveItem(
+  private Optional<NonLeafNodeDeletionResult> rotateNoneLeafRightAndRemoveItem(
       final RemovalPathItem parentItem,
       final Bucket parentBucket,
       final byte[] parentKeyPrefix,
@@ -1924,7 +1925,7 @@ public final class BinaryBTree extends ODurableComponent {
 
     final byte[] separatorKey;
     if (leftSiblingKeyPrefix.length > parentKeyPrefix.length) {
-      separatorKey = extendKey(parentKeyPrefix, leftSiblingKeyPrefix, partialSeparatorEntry.key);
+      separatorKey = extendKey(leftSiblingKeyPrefix, parentKeyPrefix, partialSeparatorEntry.key);
     } else {
       separatorKey = partialSeparatorEntry.key;
     }
@@ -2047,10 +2048,12 @@ public final class BinaryBTree extends ODurableComponent {
     final byte[] rightChildKeyPrefix =
         extractCommonPrefix(rightChildLargestLowerBound, rightChildSmallestUpperBound);
 
-    return Optional.of(rightChildKeyPrefix);
+    return Optional.of(
+        new NonLeafNodeDeletionResult(
+            rightChildKeyPrefix, rightChildLargestLowerBound, rightChildSmallestUpperBound));
   }
 
-  private Optional<byte[]> rotateNoneLeafLeftAndRemoveItem(
+  private Optional<NonLeafNodeDeletionResult> rotateNoneLeafLeftAndRemoveItem(
       final RemovalPathItem parentItem,
       final Bucket parentBucket,
       final byte[] parentKeyPrefix,
@@ -2196,30 +2199,32 @@ public final class BinaryBTree extends ODurableComponent {
 
     final byte[] leftChildPrefix =
         extractCommonPrefix(leftChildLargestLowerBound, leftChildSmallestUpperBound);
-    return Optional.of(leftChildPrefix);
+    return Optional.of(
+        new NonLeafNodeDeletionResult(
+            leftChildPrefix, leftChildLargestLowerBound, leftChildSmallestUpperBound));
   }
 
-  private Optional<byte[]> mergeNoneLeafWithRightSiblingAndRemoveItem(
-      final OAtomicOperation atomicOperation,
-      final RemovalPathItem parentItem,
-      final Bucket parentBucket,
-      final byte[] parentBucketPrefix,
-      final byte[] parentLargestLowerBoundary,
-      final Bucket bucket,
-      final Bucket rightSibling,
-      final byte[] rightSiblingPrefix,
-      final int orphanPointer,
-      final List<RemovalPathItem> path,
-      final List<byte[]> largestLowerBoundaries,
-      final List<byte[]> smallestUpperBoundaries,
-      final List<byte[]> keyPrefixes)
+  private Optional<NonLeafNodeDeletionResult> mergeNoneLeafWithRightSiblingAndRemoveItem(
+          final OAtomicOperation atomicOperation,
+          final RemovalPathItem parentItem,
+          final Bucket parentBucket,
+          final byte[] parentBucketPrefix,
+          final Bucket bucket,
+          final Bucket rightSibling,
+          final byte[] rightSiblingPrefix,
+          final int orphanPointer,
+          final List<RemovalPathItem> path,
+          final List<byte[]> largestLowerBoundaries,
+          final List<byte[]> smallestUpperBoundaries,
+          final List<byte[]> keyPrefixes)
       throws IOException {
 
     if (rightSibling.size() != 1 || bucket.size() != 1) {
       throw new BinaryBTreeException("BTree is broken", this);
     }
 
-    final Optional<byte[]> oNewRightSiblingPrefix =
+    final byte[] partialKey = parentBucket.getKey(parentItem.indexInsidePage);
+    final Optional<NonLeafNodeDeletionResult> oNonLeafDeletionResult =
         deleteFromNonLeafNode(
             atomicOperation,
             parentBucket,
@@ -2228,8 +2233,7 @@ public final class BinaryBTree extends ODurableComponent {
             smallestUpperBoundaries.subList(0, smallestUpperBoundaries.size() - 1),
             keyPrefixes.subList(0, keyPrefixes.size() - 1));
 
-    if (oNewRightSiblingPrefix.isPresent()) {
-      final byte[] partialKey = parentBucket.getKey(parentItem.indexInsidePage);
+    if (oNonLeafDeletionResult.isPresent()) {
       final int rightChild = rightSibling.getLeft(0);
 
       assert rightSiblingPrefix.length >= parentBucketPrefix.length;
@@ -2245,7 +2249,8 @@ public final class BinaryBTree extends ODurableComponent {
               partialKey.length - siblingPrefixDiff);
       assert result;
 
-      final byte[] newRightSiblingPrefix = oNewRightSiblingPrefix.get();
+      final NonLeafNodeDeletionResult deletionResult = oNonLeafDeletionResult.get();
+      final byte[] newRightSiblingPrefix = deletionResult.newChildPrefix;
 
       assert newRightSiblingPrefix.length <= rightSiblingPrefix.length;
 
@@ -2273,38 +2278,39 @@ public final class BinaryBTree extends ODurableComponent {
 
       final byte[] leftChildSmallestUpperBoundary = restoreKey(parentBucketPrefix, partialKey);
 
-      @SuppressWarnings("UnnecessaryLocalVariable")
-      final byte[] leftChildLargestLowerBoundary = parentLargestLowerBoundary;
+      final byte[] leftChildLargestLowerBoundary = deletionResult.newChildLLB;
       final byte[] leftChildKeyPrefix =
           extractCommonPrefix(leftChildLargestLowerBoundary, leftChildSmallestUpperBoundary);
 
-      return Optional.of(leftChildKeyPrefix);
+      return Optional.of(new NonLeafNodeDeletionResult(leftChildKeyPrefix,
+              leftChildLargestLowerBoundary, leftChildSmallestUpperBoundary));
     }
 
     return Optional.empty();
   }
 
-  private Optional<byte[]> mergeNoneLeafWithLeftSiblingAndRemoveItem(
-      final OAtomicOperation atomicOperation,
-      final RemovalPathItem parentItem,
-      final Bucket parentBucket,
-      final byte[] parentBucketPrefix,
-      final byte[] parentSmallestUpperBoundary,
-      final Bucket bucket,
-      final Bucket leftSibling,
-      final byte[] leftSiblingPrefix,
-      final int orphanPointer,
-      final List<RemovalPathItem> path,
-      final List<byte[]> largestLowerBounds,
-      final List<byte[]> smallestUpperBounds,
-      final List<byte[]> keyPrefixes)
+  private Optional<NonLeafNodeDeletionResult> mergeNoneLeafWithLeftSiblingAndRemoveItem(
+          final OAtomicOperation atomicOperation,
+          final RemovalPathItem parentItem,
+          final Bucket parentBucket,
+          final byte[] parentBucketPrefix,
+          final Bucket bucket,
+          final Bucket leftSibling,
+          final byte[] leftSiblingPrefix,
+          final int orphanPointer,
+          final List<RemovalPathItem> path,
+          final List<byte[]> largestLowerBounds,
+          final List<byte[]> smallestUpperBounds,
+          final List<byte[]> keyPrefixes)
       throws IOException {
 
     if (leftSibling.size() != 1 || bucket.size() != 1) {
       throw new BinaryBTreeException("BTree is broken", this);
     }
 
-    final Optional<byte[]> oNewLeftSiblingPrefix =
+    final byte[] partialKey = parentBucket.getKey(parentItem.indexInsidePage);
+
+    final Optional<NonLeafNodeDeletionResult> oNonLeadNodeDeletionResult =
         deleteFromNonLeafNode(
             atomicOperation,
             parentBucket,
@@ -2313,8 +2319,7 @@ public final class BinaryBTree extends ODurableComponent {
             smallestUpperBounds.subList(0, smallestUpperBounds.size() - 1),
             keyPrefixes.subList(0, keyPrefixes.size() - 1));
 
-    if (oNewLeftSiblingPrefix.isPresent()) {
-      final byte[] partialKey = parentBucket.getKey(parentItem.indexInsidePage);
+    if (oNonLeadNodeDeletionResult.isPresent()) {
       assert parentBucketPrefix.length <= leftSiblingPrefix.length;
       final int partialKeyDiff = leftSiblingPrefix.length - parentBucketPrefix.length;
 
@@ -2329,7 +2334,8 @@ public final class BinaryBTree extends ODurableComponent {
               partialKey.length - partialKeyDiff);
       assert result;
 
-      final byte[] newLeftSiblingPrefix = oNewLeftSiblingPrefix.get();
+      final NonLeafNodeDeletionResult deletionResult = oNonLeadNodeDeletionResult.get();
+      final byte[] newLeftSiblingPrefix = deletionResult.newChildPrefix;
       assert newLeftSiblingPrefix.length <= leftSiblingPrefix.length;
 
       if (newLeftSiblingPrefix.length < leftSiblingPrefix.length) {
@@ -2356,11 +2362,11 @@ public final class BinaryBTree extends ODurableComponent {
 
       final byte[] rightChildLargestLowerBoundary = restoreKey(parentBucketPrefix, partialKey);
 
-      @SuppressWarnings("UnnecessaryLocalVariable")
-      final byte[] rightChildSmallestUpperBoundary = parentSmallestUpperBoundary;
+      final byte[] rightChildSmallestUpperBoundary = deletionResult.newChildSUB;
       final byte[] rightChildPrefix =
           extractCommonPrefix(rightChildLargestLowerBoundary, rightChildSmallestUpperBoundary);
-      return Optional.of(rightChildPrefix);
+      return Optional.of(new NonLeafNodeDeletionResult(rightChildPrefix, rightChildLargestLowerBoundary,
+              rightChildSmallestUpperBoundary));
     }
 
     return Optional.empty();
@@ -2945,6 +2951,19 @@ public final class BinaryBTree extends ODurableComponent {
     @Override
     public Comparator<? super ORawPair<byte[], ORID>> getComparator() {
       return (pairOne, pairTwo) -> -COMPARATOR.compare(pairOne.first, pairTwo.first);
+    }
+  }
+
+  private static final class NonLeafNodeDeletionResult {
+    private final byte[] newChildPrefix;
+    private final byte[] newChildLLB;
+    private final byte[] newChildSUB;
+
+    private NonLeafNodeDeletionResult(
+        byte[] newChildPrefix, byte[] newChildLLB, byte[] newChildSUB) {
+      this.newChildPrefix = newChildPrefix;
+      this.newChildLLB = newChildLLB;
+      this.newChildSUB = newChildSUB;
     }
   }
 

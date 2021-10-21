@@ -347,7 +347,7 @@ public class BinaryBTreeTestIT {
 
   @Test
   public void testKeyAddDeleteHalf() throws Exception {
-    final int keysCount = 8_000;
+    final int keysCount = 100_000;
 
     for (int i = 0; i < keysCount / 2; i++) {
       final int key = i;
@@ -378,20 +378,21 @@ public class BinaryBTreeTestIT {
             new ORecordId(key % 32000, key));
       }
 
-      final int offset = iterations * (keysCount / 2);
-
-      if (iterations == 2) {
+      if (iterations == 1) {
         Assert.assertEquals(
-            new ORecordId(15995 % 32000, 15995),
-            binaryBTree.get(stringToLexicalBytes(Integer.toString(15995))));
+                new ORecordId(59250 % 32000, 59250),
+                binaryBTree.get(stringToLexicalBytes(Integer.toString(59250))));
       }
+
+      final int offset = iterations * (keysCount / 2);
 
       for (int i = 0; i < keysCount / 2; i++) {
         final int key = i + offset;
-        if (iterations == 2 && key == 9999) {
+
+        if (iterations == 1 && key == 59249) {
           Assert.assertEquals(
-              new ORecordId(15995 % 32000, 15995),
-              binaryBTree.get(stringToLexicalBytes(Integer.toString(15995))));
+                  new ORecordId(59250 % 32000, 59250),
+                  binaryBTree.get(stringToLexicalBytes(Integer.toString(59250))));
         }
 
         atomicOperationsManager.executeInsideAtomicOperation(
@@ -402,10 +403,10 @@ public class BinaryBTreeTestIT {
                         atomicOperation, stringToLexicalBytes(Integer.toString(key))),
                     new ORecordId(key % 32000, key)));
 
-        if (iterations == 2 && key == 9999) {
+        if (iterations == 1 && key == 59249) {
           Assert.assertEquals(
-              new ORecordId(15995 % 32000, 15995),
-              binaryBTree.get(stringToLexicalBytes(Integer.toString(15995))));
+                  new ORecordId(59250 % 32000, 59250),
+                  binaryBTree.get(stringToLexicalBytes(Integer.toString(59250))));
         }
       }
 
