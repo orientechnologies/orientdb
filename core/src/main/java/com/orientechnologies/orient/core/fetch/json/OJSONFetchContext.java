@@ -276,7 +276,7 @@ public class OJSONFetchContext implements OFetchContext {
     if (typesStack.empty()) {
       typesStack.push(new StringBuilder());
       OLogManager.instance()
-          .warn(
+          .debug(
               OJSONFetchContext.class,
               "Type stack in `manageTypes` null for `field` %s, `value` %s, and `type` %s.",
               fieldName,
