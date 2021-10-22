@@ -49,21 +49,23 @@ public abstract class AbstractLinkedCollectionSerializer {
 
     protected static <T extends OTrackedMultiValue<?, OIdentifiable>> void readLinkCollection(final JsonParser parser,
                                              final T collection) throws IOException {
-        JsonToken nextToken = parser.nextToken();
-        if (nextToken != JsonToken.START_ARRAY) {
-            throw new ODatabaseException("Invalid JSON format, start of array was expected");
-        }
-
         final LinkSerializer linkSerializer =
                 (LinkSerializer) SerializerFactory.INSTANCE.findSerializer(OType.LINK);
 
-        nextToken = parser.nextToken();
+        JsonToken nextToken = parser.nextToken();
         while (nextToken != JsonToken.END_ARRAY) {
             final JsonToken valueToken = parser.nextToken();
 
-            if (JsonToken.VALUE_STRING == valueToken) {
-                throw new ODatabaseException("Invalid token was encountered : " + valueToken + ", link was expected");
+            if (JsonToken.VALUE_NULL == valueToken) {
+                collection.addInternal(null);
+                continue;
             }
+
+            if (JsonToken.VALUE_STRING != valueToken) {
+                throw new ODatabaseException("Invalid token was encountered : " + valueToken +
+                        ", link was expected");
+            }
+
             final ORID rid = (ORID) linkSerializer.fromJSON(parser, null);
 
             collection.addInternal(rid);

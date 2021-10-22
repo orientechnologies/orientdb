@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.serialization.serializer.record.json.v
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -29,5 +30,10 @@ public class LinkListSerializer extends AbstractLinkedCollectionSerializer
   @Override
   public String typeId() {
     return SerializerIDs.LINK_LIST;
+  }
+
+  @Override
+  public JsonToken startToken() {
+    return JsonToken.START_ARRAY;
   }
 }

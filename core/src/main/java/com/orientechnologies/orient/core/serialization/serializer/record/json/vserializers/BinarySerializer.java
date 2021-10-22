@@ -23,4 +23,9 @@ public class BinarySerializer implements ValueSerializer {
   public String typeId() {
     return SerializerIDs.BINARY;
   }
+
+  @Override
+  public JsonToken startToken() {
+    return JsonToken.VALUE_STRING;
+  }
 }

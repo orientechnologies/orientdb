@@ -35,4 +35,9 @@ public class EmbeddedListSerializer extends AbstractEmbeddedCollectionSerializer
   public String typeId() {
     return SerializerIDs.EMBEDDED_LIST;
   }
+
+  @Override
+  public JsonToken startToken() {
+    return JsonToken.START_ARRAY;
+  }
 }

@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.serialization.serializer.record.json.v
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
 import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.json.ValueSerializer;
@@ -33,5 +34,10 @@ public class EmbeddedSetSerializer extends AbstractEmbeddedCollectionSerializer
   @Override
   public String typeId() {
     return SerializerIDs.EMBEDDED_SET;
+  }
+
+  @Override
+  public JsonToken startToken() {
+    return JsonToken.START_ARRAY;
   }
 }

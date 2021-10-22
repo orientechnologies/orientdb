@@ -34,7 +34,6 @@ public class EmbeddedMapSerializer implements ValueSerializer {
           serializer.toJSON(generator, item);
         }
       }
-
     } finally {
       generator.writeStartObject();
     }
@@ -42,11 +41,6 @@ public class EmbeddedMapSerializer implements ValueSerializer {
 
   @Override
   public Object fromJSON(JsonParser parser, ODocument owner) throws IOException {
-    JsonToken nextToken = parser.nextToken();
-    if (nextToken != JsonToken.START_OBJECT) {
-      throw new ODatabaseException("Invalid JSON format, start of object was expected");
-    }
-
     // we bound to use Object as a key for map because of broken type system
     // but key is always String
     final Map<Object, Object> map;
@@ -58,36 +52,27 @@ public class EmbeddedMapSerializer implements ValueSerializer {
 
     final SerializerFactory serializerFactory = SerializerFactory.INSTANCE;
 
-    nextToken = parser.nextToken();
-    while (nextToken != JsonToken.END_OBJECT) {
-      final String fieldName = parser.nextFieldName();
+    JsonToken token = parser.nextToken();
+    while (token != JsonToken.END_OBJECT) {
+      final String key = parser.getValueAsString();
 
       final JsonToken valueToken = parser.nextToken();
       final Object item;
-      if (valueToken == JsonToken.VALUE_NULL) {
+
+      final ValueSerializer serializer = serializerFactory.findSerializer(valueToken);
+      if (serializer == null) {
         item = null;
-      } else if (valueToken.isNumeric()) {
-        final ValueSerializer longSerializer = serializerFactory.findSerializer(OType.LONG);
-        item = longSerializer.fromJSON(parser, null);
-      } else if (valueToken.isBoolean()) {
-        final ValueSerializer booleanSerializer = serializerFactory.findSerializer(OType.BOOLEAN);
-        item = booleanSerializer.fromJSON(parser, null);
-      } else if (valueToken == JsonToken.START_OBJECT) {
-        final RecordSerializer recordSerializer = RecordSerializer.INSTANCE;
-        item = recordSerializer.fromJSON(parser, null);
-      } else if (valueToken == JsonToken.START_ARRAY) {
-        final ValueSerializer listSerializer = serializerFactory.findSerializer(OType.EMBEDDEDLIST);
-        item = listSerializer.fromJSON(parser, null);
-      } else if (valueToken == JsonToken.VALUE_STRING) {
-        final ValueSerializer stringSerializer = serializerFactory.findSerializer(OType.STRING);
-        item = stringSerializer.fromJSON(parser, null);
       } else {
-        throw new ODatabaseException("Invalid type of JSON token encountered " + nextToken);
+        item = serializer.fromJSON(parser, null);
       }
 
-      map.put(fieldName, item);
+      if (map instanceof OTrackedMap) {
+        ((OTrackedMap<Object>) map).putInternal(key, item);
+      } else {
+        map.put(key, item);
+      }
 
-      nextToken = parser.nextToken();
+      token = parser.nextToken();
     }
 
     return map;
@@ -96,5 +81,10 @@ public class EmbeddedMapSerializer implements ValueSerializer {
   @Override
   public String typeId() {
     return SerializerIDs.EMBEDDED_MAP;
+  }
+
+  @Override
+  public JsonToken startToken() {
+    return JsonToken.START_OBJECT;
   }
 }

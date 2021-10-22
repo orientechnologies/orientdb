@@ -45,4 +45,9 @@ public class CustomSerializer implements ValueSerializer {
   public String typeId() {
     return SerializerIDs.CUSTOM;
   }
+
+  @Override
+  public JsonToken startToken() {
+    return JsonToken.VALUE_STRING;
+  }
 }

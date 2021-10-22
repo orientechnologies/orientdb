@@ -11,26 +11,21 @@ import java.io.IOException;
 public final class StringSerializer implements ValueSerializer {
   @Override
   public void toJSON(JsonGenerator generator, Object value) throws IOException {
-    if (value == null) {
-      generator.writeNull();
-      return;
-    }
-
     generator.writeString(value.toString());
   }
 
   @Override
   public Object fromJSON(JsonParser parser, ODocument owner) throws IOException {
-    final JsonToken token = parser.nextToken();
-    if (token == JsonToken.VALUE_NULL) {
-      return null;
-    }
-
     return parser.getValueAsString();
   }
 
   @Override
   public String typeId() {
     return SerializerIDs.STRING;
+  }
+
+  @Override
+  public JsonToken startToken() {
+    return JsonToken.VALUE_STRING;
   }
 }

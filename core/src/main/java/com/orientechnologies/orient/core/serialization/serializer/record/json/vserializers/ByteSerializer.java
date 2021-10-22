@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.serialization.serializer.record.json.v
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.json.ValueSerializer;
 
@@ -21,5 +22,10 @@ public class ByteSerializer implements ValueSerializer {
   @Override
   public String typeId() {
     return SerializerIDs.BYTE;
+  }
+
+  @Override
+  public JsonToken startToken() {
+    return JsonToken.VALUE_NUMBER_INT;
   }
 }

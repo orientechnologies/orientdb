@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -44,38 +45,28 @@ public abstract class AbstractEmbeddedCollectionSerializer {
 
   protected static void readEmbeddedCollection(
       final JsonParser parser, final Collection<Object> collection) throws IOException {
-    JsonToken nextToken = parser.nextToken();
-    if (nextToken != JsonToken.START_ARRAY) {
-      throw new ODatabaseException("Invalid JSON format, start of array was expected");
-    }
-
     final SerializerFactory serializerFactory = SerializerFactory.INSTANCE;
 
-    nextToken = parser.nextToken();
+    final boolean trackedMultiValue = collection instanceof OTrackedMultiValue;
+
+    JsonToken nextToken = parser.nextToken();
     while (nextToken != JsonToken.END_ARRAY) {
+      final ValueSerializer serializer = serializerFactory.findSerializer(nextToken);
       final Object item;
-      if (nextToken == JsonToken.VALUE_NULL) {
+
+      if (serializer == null) {
         item = null;
-      } else if (nextToken.isNumeric()) {
-        final ValueSerializer longSerializer = serializerFactory.findSerializer(OType.LONG);
-        item = longSerializer.fromJSON(parser, null);
-      } else if (nextToken.isBoolean()) {
-        final ValueSerializer booleanSerializer = serializerFactory.findSerializer(OType.BOOLEAN);
-        item = booleanSerializer.fromJSON(parser, null);
-      } else if (nextToken == JsonToken.START_OBJECT) {
-        final RecordSerializer recordSerializer = RecordSerializer.INSTANCE;
-        item = recordSerializer.fromJSON(parser, null);
-      } else if (nextToken == JsonToken.START_ARRAY) {
-        final ValueSerializer listSerializer = serializerFactory.findSerializer(OType.EMBEDDEDLIST);
-        item = listSerializer.fromJSON(parser, null);
-      } else if (nextToken == JsonToken.VALUE_STRING) {
-        final ValueSerializer stringSerializer = serializerFactory.findSerializer(OType.STRING);
-        item = stringSerializer.fromJSON(parser, null);
       } else {
-        throw new ODatabaseException("Invalid type of JSON token encountered " + nextToken);
+        item = serializer.fromJSON(parser, null);
       }
 
-      collection.add(item);
+      if (trackedMultiValue) {
+        //noinspection unchecked
+        ((OTrackedMultiValue<?, Object>) collection).addInternal(item);
+      } else {
+        collection.add(item);
+      }
+
       nextToken = parser.nextToken();
     }
   }

@@ -25,4 +25,9 @@ public class DateSerializer implements ValueSerializer {
   public String typeId() {
     return SerializerIDs.DATE;
   }
+
+  @Override
+  public JsonToken startToken() {
+    return JsonToken.VALUE_NUMBER_INT;
+  }
 }

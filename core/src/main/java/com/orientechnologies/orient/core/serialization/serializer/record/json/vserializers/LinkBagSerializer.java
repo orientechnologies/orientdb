@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.serialization.serializer.record.json.v
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -34,5 +35,10 @@ public class LinkBagSerializer extends AbstractLinkedCollectionSerializer
   @Override
   public String typeId() {
     return SerializerIDs.LINK_BAG;
+  }
+
+  @Override
+  public JsonToken startToken() {
+    return JsonToken.START_ARRAY;
   }
 }

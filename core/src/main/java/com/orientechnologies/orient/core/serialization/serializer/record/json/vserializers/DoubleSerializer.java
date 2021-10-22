@@ -23,4 +23,9 @@ public class DoubleSerializer implements ValueSerializer {
   public String typeId() {
     return SerializerIDs.DOUBLE;
   }
+
+  @Override
+  public JsonToken startToken() {
+    return JsonToken.VALUE_NUMBER_FLOAT;
+  }
 }

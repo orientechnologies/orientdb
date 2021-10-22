@@ -24,4 +24,9 @@ public class DecimalSerializer implements ValueSerializer {
   public String typeId() {
     return SerializerIDs.DECIMAL;
   }
+
+  @Override
+  public JsonToken startToken() {
+    return JsonToken.VALUE_NUMBER_FLOAT;
+  }
 }
