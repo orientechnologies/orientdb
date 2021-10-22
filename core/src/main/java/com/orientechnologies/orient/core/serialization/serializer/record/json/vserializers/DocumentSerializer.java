@@ -54,11 +54,11 @@ public final class DocumentSerializer implements ValueSerializer {
 
     JsonToken token = parser.nextToken();
     while (JsonToken.END_OBJECT != token) {
-      final String fieldName = parser.nextFieldName();
+      final String fieldName = parser.getValueAsString();
 
-      if (isSpecialCharacter(fieldName)) {
+      if (isSpecialField(fieldName)) {
         final Optional<Map<String, String>> extractedFieldTypes =
-            processSpecialField(parser, owner, fieldName);
+            processSpecialField(parser, document, fieldName);
         if (extractedFieldTypes.isPresent()) {
           fieldTypeIDs = extractedFieldTypes.get();
         }
@@ -79,7 +79,8 @@ public final class DocumentSerializer implements ValueSerializer {
         if (fieldValueToken == JsonToken.VALUE_NULL) {
           document.field(fieldName, null, fieldType);
         } else {
-          final ValueSerializer valueSerializer = serializerFactory.findSerializer(fieldType, fieldValueToken);
+          final ValueSerializer valueSerializer =
+              serializerFactory.findSerializer(fieldType, fieldValueToken);
           final Object value = valueSerializer.fromJSON(parser, owner);
           document.field(fieldName, value, fieldType);
         }
@@ -88,11 +89,11 @@ public final class DocumentSerializer implements ValueSerializer {
       token = parser.nextToken();
     }
 
-    return owner;
+    return document;
   }
 
   private Optional<Map<String, String>> processSpecialField(
-      JsonParser parser, ODocument owner, String fieldName) throws IOException {
+      JsonParser parser, ODocument document, String fieldName) throws IOException {
     final JsonToken specialTokenValue = parser.nextToken();
 
     if (JsonToken.VALUE_STRING != specialTokenValue) {
@@ -106,27 +107,27 @@ public final class DocumentSerializer implements ValueSerializer {
 
     final String specialValue = parser.getValueAsString();
 
-    return handleMetadataField(owner, fieldName, specialValue);
+    return handleMetadataField(document, fieldName, specialValue);
   }
 
   private Optional<Map<String, String>> handleMetadataField(
-      final ODocument owner, final String fieldName, final String specialValue) {
+      final ODocument document, final String fieldName, final String specialValue) {
     switch (fieldName) {
       case ATTRIBUTE_CLASS:
         {
-          owner.setClassName(specialValue);
+          document.setClassName(specialValue);
           return Optional.empty();
         }
       case ATTRIBUTE_RID:
         {
           final ORecordId rid = new ORecordId(specialValue);
-          ORecordInternal.setIdentity(owner, rid);
+          ORecordInternal.setIdentity(document, rid);
           return Optional.empty();
         }
       case ATTRIBUTE_VERSION:
         {
           final int version = Integer.parseInt(specialValue);
-          ORecordInternal.setVersion(owner, version);
+          ORecordInternal.setVersion(document, version);
           return Optional.empty();
         }
       case ATTRIBUTE_RECORD_TYPE:
@@ -148,8 +149,8 @@ public final class DocumentSerializer implements ValueSerializer {
     }
   }
 
-  private static boolean isSpecialCharacter(final String fieldName) {
-    return fieldName.length() > 0 && fieldName.charAt(0) == '@';
+  private static boolean isSpecialField(final String fieldName) {
+    return fieldName != null && fieldName.length() > 0 && fieldName.charAt(0) == '@';
   }
 
   @Override
@@ -195,7 +196,7 @@ public final class DocumentSerializer implements ValueSerializer {
       final ODocument document,
       final SerializerFactory serializerFactory)
       throws IOException {
-    generator.writeNumberField(ATTRIBUTE_VERSION, document.getVersion());
+    generator.writeStringField(ATTRIBUTE_VERSION, Integer.toString(document.getVersion()));
     generator.writeStringField(
         ATTRIBUTE_RECORD_TYPE, Character.toString((char) ORecordInternal.getRecordType(document)));
 
@@ -222,12 +223,19 @@ public final class DocumentSerializer implements ValueSerializer {
 
       fieldTypes.append(fieldName).append("=").append(typeId).append(",");
     }
-    fieldTypes.deleteCharAt(fieldTypes.length() - 1);
+
+    if (fieldTypes.length() > 0) {
+      fieldTypes.deleteCharAt(fieldTypes.length() - 1);
+    }
 
     generator.writeStringField(ATTRIBUTE_FIELD_TYPES, fieldTypes.toString());
   }
 
   private HashMap<String, String> extractFieldTypes(final String fieldTypesStr) {
+    if (fieldTypesStr.length() == 0) {
+      return new HashMap<>();
+    }
+
     final String[] fieldTypesMerged = fieldTypesStr.split(":");
 
     final HashMap<String, String> fieldTypes = new HashMap<>();
