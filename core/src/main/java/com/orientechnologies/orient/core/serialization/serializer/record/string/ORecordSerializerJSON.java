@@ -19,7 +19,10 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
-import com.fasterxml.jackson.core.*;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
@@ -29,12 +32,7 @@ import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordLazyList;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
-import com.orientechnologies.orient.core.db.record.ORecordLazySet;
-import com.orientechnologies.orient.core.db.record.OTrackedList;
-import com.orientechnologies.orient.core.db.record.OTrackedSet;
+import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
@@ -49,24 +47,13 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordStringable;
-import com.orientechnologies.orient.core.record.impl.OBlob;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ODocumentEmbedded;
-import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
-import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.record.impl.*;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.util.ODateHelper;
 import java.io.*;
 import java.text.ParseException;
-import java.util.Base64;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @SuppressWarnings("serial")
 public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
@@ -304,20 +291,35 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     try {
       return this.fromStream(
           source, record, iOptions, needReload, maxRidbagSizeBeforeSkip, skippedPartsIndexes);
+      // TODO: fallback OR not?
+      /* } catch (final JsonParseException e) {
+        if (record == null) {
+          throw OException.wrapException(
+              new OSerializationException(
+                  "Error on unmarshalling JSON content for record null"
+                      + " failed fromStream "
+                      + e.getMessage()
+                      + " and failed fallback to fromString"),
+              e);
+        }
+        throw OException.wrapException(
+            new OSerializationException(
+                "Error on unmarshalling JSON content for record "
+                    + record.getIdentity()
+                    + " failed fromStream "
+                    + e.getMessage()
+                    + " and failed fallback to fromString"),
+            e);
+      }*/
     } catch (final JsonParseException e) {
-      throw OException.wrapException(
-          new OSerializationException(
-              "Error on unmarshalling JSON content for record "
-                  + record.getIdentity()
-                  + " failed fromStream "
-                  + e.getMessage()
-                  + " and failed fallback to fromString"),
-          e);
-    }
-    /*} catch (final JsonParseException e) {
       final OutputStream out = new ByteArrayOutputStream();
       try {
         OIOUtils.copyStream(source, out, -1);
+        OLogManager.instance()
+            .warn(
+                ORecordSerializerJSON.class,
+                "Falling back to fromString due to non-standard JSON: \n" + out.toString(),
+                e);
         return this.fromStringV0(
             out.toString(),
             record,
@@ -335,7 +337,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
                     + " and failed fallback to fromString"),
             ex);
       }
-    }*/
+    }
   }
 
   public ORecord fromString(
@@ -584,11 +586,9 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
       }
 
       if (value instanceof OTrackedSet<?>) {
-        if (OMultiValue.getFirstValue((Set<?>) value) instanceof OIdentifiable)
-          type = OType.LINKSET;
+        if (OMultiValue.getFirstValue(value) instanceof OIdentifiable) type = OType.LINKSET;
       } else if (value instanceof OTrackedList<?>) {
-        if (OMultiValue.getFirstValue((List<?>) value) instanceof OIdentifiable)
-          type = OType.LINKLIST;
+        if (OMultiValue.getFirstValue(value) instanceof OIdentifiable) type = OType.LINKLIST;
       }
 
       if (type != null) {
@@ -689,9 +689,9 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         type = ORecordSerializerStringAbstract.getType(fieldValue, fieldTypes.get(fieldName));
 
       if (v instanceof OTrackedSet<?>) {
-        if (OMultiValue.getFirstValue((Set<?>) v) instanceof OIdentifiable) type = OType.LINKSET;
+        if (OMultiValue.getFirstValue(v) instanceof OIdentifiable) type = OType.LINKSET;
       } else if (v instanceof OTrackedList<?>) {
-        if (OMultiValue.getFirstValue((List<?>) v) instanceof OIdentifiable) type = OType.LINKLIST;
+        if (OMultiValue.getFirstValue(v) instanceof OIdentifiable) type = OType.LINKLIST;
       }
 
       if (type != null) doc.setProperty(fieldName, v, type);
@@ -1424,9 +1424,9 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     if (iType == OType.LINKBAG) {
       final ORidBag bag = new ORidBag();
 
-      parseRidbag(
+      parseRidBag(
+          parser,
           iRecord,
-          iFieldValue,
           iType,
           OType.LINK,
           null,
@@ -1502,7 +1502,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     if (iType == OType.LINKBAG) {
       final ORidBag bag = new ORidBag();
 
-      parseRidbag(
+      parseRidBagV0(
           iRecord,
           iFieldValue,
           iType,
@@ -1672,7 +1672,63 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     return collection;
   }
 
-  private void parseRidbag(
+  private void parseRidBag(
+      JsonParser parser,
+      ODocument iRecord,
+      OType iType,
+      OType iLinkedType,
+      Map<String, Character> iFieldTypes,
+      boolean iNoMap,
+      String iOptions,
+      CollectionItemVisitor visitor)
+      throws IOException {
+    JsonToken jsonToken = parser.nextToken();
+    while (!JsonToken.END_ARRAY.equals(jsonToken)) {
+      // RidBags are of type String
+      if (JsonToken.VALUE_STRING.equals(jsonToken)) {
+        final String value = parser.getValueAsString();
+        if (!value.isEmpty()) {
+          int lastCommaPosition = -1;
+          for (int i = 1; i < value.length(); i++) {
+            if (value.charAt(i) == ',' || i == value.length() - 1) {
+              String item;
+              if (i == value.length() - 1) {
+                item = value.substring(lastCommaPosition + 1);
+              } else {
+                item = value.substring(lastCommaPosition + 1, i);
+              }
+              lastCommaPosition = i;
+              final String itemValue = item.trim();
+              if (itemValue.length() == 0) continue;
+
+              final Object collectionItem =
+                  getValue(
+                      parser,
+                      iRecord,
+                      null,
+                      itemValue,
+                      OIOUtils.getStringContent(itemValue),
+                      iLinkedType,
+                      null,
+                      iFieldTypes,
+                      iNoMap,
+                      iOptions);
+
+              // TODO: redundant in some cases, owner is already added by getValueV0 in some cases
+              if (shouldBeDeserializedAsEmbedded(collectionItem, iType)) {
+                ODocumentInternal.addOwner((ODocument) collectionItem, iRecord);
+              }
+              visitor.visitItem(collectionItem);
+            }
+          }
+        }
+      }
+      jsonToken = parser.nextToken();
+    }
+  }
+
+  @Deprecated
+  private void parseRidBagV0(
       ODocument iRecord,
       String iFieldValue,
       OType iType,

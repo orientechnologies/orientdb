@@ -149,18 +149,22 @@ public class ORecordInternal {
 
   public static void track(final ORecordElement pointer, final OIdentifiable pointed) {
     ORecordElement firstRecord = pointer;
-    while (!(firstRecord instanceof ORecord)) {
-      firstRecord = pointer.getOwner();
+    while (firstRecord != null && !(firstRecord instanceof ORecord)) {
+      firstRecord = firstRecord.getOwner();
     }
-    ((ORecordAbstract) firstRecord).track(pointed);
+    if (firstRecord instanceof ORecordAbstract) {
+      ((ORecordAbstract) firstRecord).track(pointed);
+    }
   }
 
   public static void unTrack(final ORecordElement pointer, final OIdentifiable pointed) {
     ORecordElement firstRecord = pointer;
-    while (!(firstRecord instanceof ORecord)) {
-      firstRecord = pointer.getOwner();
+    while (firstRecord != null && !(firstRecord instanceof ORecord)) {
+      firstRecord = firstRecord.getOwner();
     }
-    ((ORecordAbstract) firstRecord).unTrack(pointed);
+    if (firstRecord instanceof ORecordAbstract) {
+      ((ORecordAbstract) firstRecord).unTrack(pointed);
+    }
   }
 
   public static ORecordSerializer getRecordSerializer(ORecord iRecord) {

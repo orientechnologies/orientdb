@@ -46,9 +46,11 @@ node {
               }
 
               try{
-                  build job: "orientdb-gremlin-multibranch/${env.BRANCH_NAME}", wait: false
-                  build job: "orientdb-security-multibranch/${env.BRANCH_NAME}", wait: false
-                  build job: "orientdb-sap-enterprise-multibranch/${env.BRANCH_NAME}", wait: false
+                  if (!env.BRANCH_NAME.contains("dritter")){ // TODO: add "!env.BRANCH_NAME.startsWith("WIP") &&"
+                    build job: "orientdb-gremlin-multibranch/${env.BRANCH_NAME}", wait: false
+                    build job: "orientdb-security-multibranch/${env.BRANCH_NAME}", wait: false
+                    build job: "orientdb-sap-enterprise-multibranch/${env.BRANCH_NAME}", wait: false
+                  }
               } catch (ex){
                   slackSend(color: '#FFAAAA', channel: '#jenkins-failures', message: "Error scheduling downstream builds: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})\n${ex}")
               }

@@ -3,7 +3,6 @@ package com.orientechnologies.orient.server.distributed.asynch;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.server.OServer;
 import java.io.File;
@@ -14,7 +13,13 @@ public class BareBonesServer {
 
   public void createDB(String databaseName) {
     OLogManager.instance().info(this, "creating the database:" + databaseName);
-    server.getContext().createIfNotExists(databaseName, ODatabaseType.PLOCAL);
+    if (!server.getContext().exists(databaseName)) {
+      server
+          .getContext()
+          .execute(
+              "create database ? plocal users(admin identified by 'admin' role admin)",
+              databaseName);
+    }
     ODatabaseSession graph = server.getContext().open(databaseName, "admin", "admin");
 
     OSchema schema = graph.getMetadata().getSchema();

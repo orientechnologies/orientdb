@@ -939,7 +939,7 @@ public class WOWCacheTestIT {
     fileClassic.open();
     byte[] content = new byte[8 + ODurablePage.NEXT_FREE_POSITION];
     fileClassic.read(
-        pageIndex * (8 + ODurablePage.NEXT_FREE_POSITION),
+        (long) pageIndex * (8 + ODurablePage.NEXT_FREE_POSITION),
         ByteBuffer.wrap(content).order(ByteOrder.nativeOrder()),
         true);
 

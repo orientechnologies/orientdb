@@ -22,17 +22,17 @@ package com.orientechnologies.orient.server.config;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.JAXBException;
+import jakarta.xml.bind.Marshaller;
+import jakarta.xml.bind.Unmarshaller;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
-import javax.xml.bind.Unmarshaller;
 
 public class OServerConfigurationLoaderXml {
-  private Class<? extends OServerConfiguration> rootClass;
+  private final Class<? extends OServerConfiguration> rootClass;
   private JAXBContext context;
   private InputStream inputStream;
   private File file;

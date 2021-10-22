@@ -20,9 +20,7 @@
 
 package com.orientechnologies.orient.core.db.document;
 
-import static com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK;
-import static com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK;
-import static com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK;
+import static com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.*;
 
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
@@ -35,18 +33,11 @@ import com.orientechnologies.orient.client.remote.message.OLockRecordResponse;
 import com.orientechnologies.orient.client.remote.message.ORemoteResultSet;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.script.OCommandScriptException;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseListener;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.OHookReplacedRecordThreadLocal;
-import com.orientechnologies.orient.core.db.OLiveQueryMonitor;
-import com.orientechnologies.orient.core.db.OLiveQueryResultListener;
-import com.orientechnologies.orient.core.db.OSharedContext;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -64,17 +55,9 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaRemote;
-import com.orientechnologies.orient.core.metadata.security.OImmutableUser;
-import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.metadata.security.ORule;
-import com.orientechnologies.orient.core.metadata.security.OToken;
-import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.metadata.security.*;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceAction;
-import com.orientechnologies.orient.core.record.OEdge;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.ORecordVersionHelper;
-import com.orientechnologies.orient.core.record.OVertex;
+import com.orientechnologies.orient.core.record.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.record.impl.OEdgeDelegate;
@@ -83,21 +66,16 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37Client;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.storage.OBasicTransaction;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageInfo;
+import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.cluster.OOfflineClusterException;
-import com.orientechnologies.orient.core.tx.OTransaction;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
-import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
+import com.orientechnologies.orient.core.tx.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -694,7 +672,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
       // SEARCH IN LOCAL TX
       ORecord record = getTransaction().getRecord(rid);
-      if (record == OBasicTransaction.DELETED_RECORD)
+      if (record == OTransactionAbstract.DELETED_RECORD)
         // DELETED IN TX
         return null;
 
@@ -1078,5 +1056,141 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   @Override
   public boolean isRemote() {
     return true;
+  }
+
+  @Override
+  public String incrementalBackup(final String path) throws UnsupportedOperationException {
+    checkOpenness();
+    checkIfActive();
+    checkSecurity(ORule.ResourceGeneric.DATABASE, "backup", ORole.PERMISSION_EXECUTE);
+
+    return getStorage().incrementalBackup(path, null);
+  }
+
+  @Override
+  public ORecordMetadata getRecordMetadata(final ORID rid) {
+    checkIfActive();
+    return getStorage().getRecordMetadata(rid);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void freeze(final boolean throwException) {
+    checkOpenness();
+    OLogManager.instance()
+        .error(
+            this,
+            "Only local paginated storage supports freeze. If you are using remote client please use OrientDB instance instead",
+            null);
+
+    return;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void freeze() {
+    freeze(false);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void release() {
+    checkOpenness();
+    OLogManager.instance()
+        .error(
+            this,
+            "Only local paginated storage supports release. If you are using remote client please use OrientDB instance instead",
+            null);
+    return;
+  }
+
+  @Override
+  public List<String> backup(
+      final OutputStream out,
+      final Map<String, Object> options,
+      final Callable<Object> callable,
+      final OCommandOutputListener iListener,
+      final int compressionLevel,
+      final int bufferSize)
+      throws IOException {
+    throw new UnsupportedOperationException(
+        "backup is not supported against remote storage. Use OrientDB instance command instead");
+  }
+
+  @Override
+  public void restore(
+      final InputStream in,
+      final Map<String, Object> options,
+      final Callable<Object> callable,
+      final OCommandOutputListener iListener)
+      throws IOException {
+    throw new UnsupportedOperationException(
+        "restore is not supported against remote instance. Use OrientDB instance command instead");
+  }
+
+  /** {@inheritDoc} */
+  public OSBTreeCollectionManager getSbTreeCollectionManager() {
+    return getStorage().getSBtreeCollectionManager();
+  }
+
+  @Override
+  public void reload() {
+    checkIfActive();
+
+    if (this.isClosed()) {
+      throw new ODatabaseException("Cannot reload a closed db");
+    }
+    metadata.reload();
+    getStorage().reload();
+  }
+
+  @Override
+  public void internalCommit(OTransactionInternal transaction) {
+    this.getStorage().commit(transaction);
+  }
+
+  @Override
+  public boolean isClosed() {
+    return status == STATUS.CLOSED || getStorage().isClosed();
+  }
+
+  public void internalClose(boolean recycle) {
+    if (status != STATUS.OPEN) return;
+
+    checkIfActive();
+
+    try {
+      closeActiveQueries();
+      localCache.shutdown();
+
+      if (isClosed()) {
+        status = STATUS.CLOSED;
+        return;
+      }
+
+      try {
+        rollback(true);
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "Exception during commit of active transaction", e);
+      }
+
+      callOnCloseListeners();
+
+      if (currentIntent != null) {
+        currentIntent.end(this);
+        currentIntent = null;
+      }
+
+      status = STATUS.CLOSED;
+      if (!recycle) {
+        sharedContext = null;
+
+        if (getStorage() != null) getStorage().close();
+      }
+
+    } finally {
+      // ALWAYS RESET TL
+      ODatabaseRecordThreadLocal.instance().remove();
+    }
   }
 }

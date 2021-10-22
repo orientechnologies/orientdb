@@ -28,31 +28,16 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
-import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
-import com.orientechnologies.orient.core.db.ODatabaseListener;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
-import com.orientechnologies.orient.core.db.OSharedContext;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
-import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.exception.OSchemaException;
-import com.orientechnologies.orient.core.exception.OSecurityException;
-import com.orientechnologies.orient.core.exception.OTransactionBlockedException;
-import com.orientechnologies.orient.core.exception.OTransactionException;
-import com.orientechnologies.orient.core.exception.OValidationException;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -65,64 +50,24 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OView;
-import com.orientechnologies.orient.core.metadata.security.OImmutableUser;
-import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.metadata.security.ORule;
-import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
-import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
-import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
-import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.metadata.security.*;
 import com.orientechnologies.orient.core.query.OQuery;
-import com.orientechnologies.orient.core.record.ODirection;
-import com.orientechnologies.orient.core.record.OEdge;
-import com.orientechnologies.orient.core.record.OElement;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.OVertex;
-import com.orientechnologies.orient.core.record.impl.OBlob;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ODocumentEmbedded;
-import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.orientechnologies.orient.core.record.impl.OEdgeDelegate;
-import com.orientechnologies.orient.core.record.impl.OEdgeDocument;
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-import com.orientechnologies.orient.core.record.impl.OVertexDelegate;
-import com.orientechnologies.orient.core.record.impl.OVertexDocument;
+import com.orientechnologies.orient.core.record.*;
+import com.orientechnologies.orient.core.record.impl.*;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.storage.OBasicTransaction;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageInfo;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
-import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorageComponent;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
-import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
-import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.core.tx.OTransactionNoTx;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.Callable;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -257,34 +202,22 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   /** {@inheritDoc} */
   public <RET extends ORecord> RET getRecord(final OIdentifiable iIdentifiable) {
     if (iIdentifiable instanceof ORecord) return (RET) iIdentifiable;
-    return (RET) load(iIdentifiable.getIdentity());
-  }
-
-  @Override
-  public void reload() {
-    checkIfActive();
-
-    if (this.isClosed()) {
-      throw new ODatabaseException("Cannot reload a closed db");
-    }
-    metadata.reload();
-    getStorage().reload();
+    return load(iIdentifiable.getIdentity());
   }
 
   /** {@inheritDoc} */
   public <RET extends ORecord> RET load(
       final ORID iRecordId, final String iFetchPlan, final boolean iIgnoreCache) {
-    return (RET)
-        executeReadRecord(
-            (ORecordId) iRecordId,
-            null,
-            -1,
-            iFetchPlan,
-            iIgnoreCache,
-            !iIgnoreCache,
-            false,
-            OStorage.LOCKING_STRATEGY.DEFAULT,
-            new SimpleRecordReader(prefetchRecords));
+    return executeReadRecord(
+        (ORecordId) iRecordId,
+        null,
+        -1,
+        iFetchPlan,
+        iIgnoreCache,
+        !iIgnoreCache,
+        false,
+        OStorage.LOCKING_STRATEGY.DEFAULT,
+        new SimpleRecordReader(prefetchRecords));
   }
 
   /** Deletes the record checking the version. */
@@ -359,7 +292,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   public <RET extends List<?>> RET query(final OQuery<?> iCommand, final Object... iArgs) {
     checkIfActive();
     iCommand.reset();
-    return (RET) iCommand.execute(iArgs);
+    return iCommand.execute(iArgs);
   }
 
   /** {@inheritDoc} */
@@ -447,8 +380,8 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       final OMetadata metadata = getMetadata();
       if (metadata != null) {
         final OSecurityInternal security = sharedContext.getSecurity();
-        this.user = new OImmutableUser(security.getVersion(this), (OUser) user);
-      } else this.user = new OImmutableUser(-1, (OUser) user);
+        this.user = new OImmutableUser(security.getVersion(this), user);
+      } else this.user = new OImmutableUser(-1, user);
     } else this.user = (OImmutableUser) user;
   }
 
@@ -512,7 +445,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
   /** {@inheritDoc} */
   public <DB extends ODatabase<?>> DB registerHook(final ORecordHook iHookImpl) {
-    return (DB) registerHook(iHookImpl, ORecordHook.HOOK_POSITION.REGULAR);
+    return registerHook(iHookImpl, ORecordHook.HOOK_POSITION.REGULAR);
   }
 
   /** {@inheritDoc} */
@@ -637,46 +570,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     return currentIntent;
   }
 
-  public void internalClose(boolean recycle) {
-    if (status != STATUS.OPEN) return;
-
-    checkIfActive();
-
-    try {
-      closeActiveQueries();
-      localCache.shutdown();
-
-      if (isClosed()) {
-        status = STATUS.CLOSED;
-        return;
-      }
-
-      try {
-        rollback(true);
-      } catch (Exception e) {
-        OLogManager.instance().error(this, "Exception during commit of active transaction", e);
-      }
-
-      callOnCloseListeners();
-
-      if (currentIntent != null) {
-        currentIntent.end(this);
-        currentIntent = null;
-      }
-
-      status = STATUS.CLOSED;
-      if (!recycle) {
-        sharedContext = null;
-
-        if (getStorage() != null) getStorage().close();
-      }
-
-    } finally {
-      // ALWAYS RESET TL
-      ODatabaseRecordThreadLocal.instance().remove();
-    }
-  }
-
   @Override
   public void close() {
     internalClose(false);
@@ -735,11 +628,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
     checkIfActive();
     return getStorageInfo().getPhysicalClusterNameById(iClusterId);
-  }
-
-  @Override
-  public boolean isClosed() {
-    return status == STATUS.CLOSED || getStorage().isClosed();
   }
 
   public void checkForClusterPermissions(final String iClusterName) {
@@ -823,20 +711,9 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     return null;
   }
 
-  @Override
-  public ORecordMetadata getRecordMetadata(final ORID rid) {
-    checkIfActive();
-    return getStorage().getRecordMetadata(rid);
-  }
-
   public OTransaction getTransaction() {
     checkIfActive();
     return currentTx;
-  }
-
-  @Override
-  public OBasicTransaction getMicroOrRegularTransaction() {
-    return getTransaction();
   }
 
   @SuppressWarnings("unchecked")
@@ -980,17 +857,16 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   /** {@inheritDoc} */
   public <RET extends ORecord> RET load(
       final ORecord iRecord, final String iFetchPlan, final boolean iIgnoreCache) {
-    return (RET)
-        executeReadRecord(
-            (ORecordId) iRecord.getIdentity(),
-            iRecord,
-            -1,
-            iFetchPlan,
-            iIgnoreCache,
-            !iIgnoreCache,
-            false,
-            OStorage.LOCKING_STRATEGY.NONE,
-            new SimpleRecordReader(prefetchRecords));
+    return executeReadRecord(
+        (ORecordId) iRecord.getIdentity(),
+        iRecord,
+        -1,
+        iFetchPlan,
+        iIgnoreCache,
+        !iIgnoreCache,
+        false,
+        OStorage.LOCKING_STRATEGY.NONE,
+        new SimpleRecordReader(prefetchRecords));
   }
 
   @Override
@@ -1125,68 +1001,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   public void setDefaultTransactionMode(
       Map<ORID, OTransactionAbstract.LockedRecordMetadata> noTxLocks) {
     if (!(currentTx instanceof OTransactionNoTx)) currentTx = new OTransactionNoTx(this, noTxLocks);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void freeze(final boolean throwException) {
-    checkOpenness();
-    if (!(getStorage() instanceof OFreezableStorageComponent)) {
-      OLogManager.instance()
-          .error(
-              this,
-              "Only local paginated storage supports freeze. If you are using remote client please use OServerAdmin instead",
-              null);
-
-      return;
-    }
-
-    final long startTime = Orient.instance().getProfiler().startChrono();
-
-    final OFreezableStorageComponent storage = getFreezableStorage();
-    if (storage != null) {
-      storage.freeze(throwException);
-    }
-
-    Orient.instance()
-        .getProfiler()
-        .stopChrono(
-            "db." + getName() + ".freeze", "Time to freeze the database", startTime, "db.*.freeze");
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void freeze() {
-    freeze(false);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void release() {
-    checkOpenness();
-    if (!(getStorage() instanceof OFreezableStorageComponent)) {
-      OLogManager.instance()
-          .error(
-              this,
-              "Only local paginated storage supports release. If you are using remote client please use OServerAdmin instead",
-              null);
-      return;
-    }
-
-    final long startTime = Orient.instance().getProfiler().startChrono();
-
-    final OFreezableStorageComponent storage = getFreezableStorage();
-    if (storage != null) {
-      storage.release();
-    }
-
-    Orient.instance()
-        .getProfiler()
-        .stopChrono(
-            "db." + getName() + ".release",
-            "Time to release the database",
-            startTime,
-            "db.*.release");
   }
 
   /** Creates a new ODocument. */
@@ -1498,7 +1312,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
    */
   @Override
   public <RET extends ORecord> RET save(final ORecord iRecord) {
-    return (RET) save(iRecord, null, OPERATION_MODE.SYNCHRONOUS, false, null, null);
+    return save(iRecord, null, OPERATION_MODE.SYNCHRONOUS, false, null, null);
   }
 
   /**
@@ -1563,7 +1377,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
    */
   @Override
   public <RET extends ORecord> RET save(final ORecord iRecord, final String iClusterName) {
-    return (RET) save(iRecord, iClusterName, OPERATION_MODE.SYNCHRONOUS, false, null, null);
+    return save(iRecord, iClusterName, OPERATION_MODE.SYNCHRONOUS, false, null, null);
   }
 
   /**
@@ -1676,27 +1490,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
                 iRecordUpdatedCallback);
 
     return (RET) doc;
-  }
-
-  private <RET extends ORecord> RET saveGraph(
-      ORecord iRecord,
-      String iClusterName,
-      OPERATION_MODE iMode,
-      boolean iForceCreate,
-      ORecordCallback<? extends Number> iRecordCreatedCallback,
-      ORecordCallback<Integer> iRecordUpdatedCallback) {
-    begin();
-    try {
-      return saveInternal(
-          iRecord,
-          iClusterName,
-          iMode,
-          iForceCreate,
-          iRecordCreatedCallback,
-          iRecordUpdatedCallback);
-    } finally {
-      commit();
-    }
   }
 
   /** Returns the number of the records of the class iClassName. */
@@ -1819,8 +1612,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
                 this, "Error during transaction rollback `%08X`", re, System.identityHashCode(re));
       }
 
-      getLocalCache().clear();
-
       // WAKE UP ROLLBACK LISTENERS
       afterRollbackOperations();
       throw e;
@@ -1912,7 +1703,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       // WAKE UP LISTENERS
       afterRollbackOperations();
     }
-    getLocalCache().clear();
     return this;
   }
 
@@ -1923,42 +1713,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   @Override
   public <DB extends ODatabase> DB getUnderlying() {
     throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public List<String> backup(
-      final OutputStream out,
-      final Map<String, Object> options,
-      final Callable<Object> callable,
-      final OCommandOutputListener iListener,
-      final int compressionLevel,
-      final int bufferSize)
-      throws IOException {
-    checkOpenness();
-    checkSecurity(ORule.ResourceGeneric.DATABASE, "backup", ORole.PERMISSION_EXECUTE);
-    return getStorage().backup(out, options, callable, iListener, compressionLevel, bufferSize);
-  }
-
-  @Override
-  public void restore(
-      final InputStream in,
-      final Map<String, Object> options,
-      final Callable<Object> callable,
-      final OCommandOutputListener iListener)
-      throws IOException {
-    checkOpenness();
-
-    getStorage().restore(in, options, callable, iListener);
-
-    if (!isClosed()) {
-      loadMetadata();
-      sharedContext.reload(this);
-    }
-  }
-
-  /** {@inheritDoc} */
-  public OSBTreeCollectionManager getSbTreeCollectionManager() {
-    return getStorage().getSBtreeCollectionManager();
   }
 
   @Override
@@ -1989,15 +1743,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     close();
 
     initialized = false;
-  }
-
-  @Override
-  public String incrementalBackup(final String path) throws UnsupportedOperationException {
-    checkOpenness();
-    checkIfActive();
-    checkSecurity(ORule.ResourceGeneric.DATABASE, "backup", ORole.PERMISSION_EXECUTE);
-
-    return getStorage().incrementalBackup(path, null);
   }
 
   public void checkSecurity(final int operation, final OIdentifiable record, String cluster) {
@@ -2115,17 +1860,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
   protected void init() {
     currentTx = new OTransactionNoTx(this, null);
-  }
-
-  private OFreezableStorageComponent getFreezableStorage() {
-    OStorage s = getStorage();
-    if (s instanceof OFreezableStorageComponent) return (OFreezableStorageComponent) s;
-    else {
-      OLogManager.instance()
-          .error(
-              this, "Storage of type " + s.getType() + " does not support freeze operation", null);
-      return null;
-    }
   }
 
   public void checkIfActive() {
@@ -2282,29 +2016,21 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   }
 
   @Override
-  public void internalCommit(OTransactionInternal transaction) {
-    this.getStorage().commit(transaction);
-  }
-
-  @Override
   public boolean isClusterEdge(int cluster) {
     OClass clazz = getMetadata().getImmutableSchemaSnapshot().getClassByClusterId(cluster);
-    if (clazz != null && clazz.isEdgeType()) return true;
-    return false;
+    return clazz != null && clazz.isEdgeType();
   }
 
   @Override
   public boolean isClusterVertex(int cluster) {
     OClass clazz = getMetadata().getImmutableSchemaSnapshot().getClassByClusterId(cluster);
-    if (clazz != null && clazz.isVertexType()) return true;
-    return false;
+    return clazz != null && clazz.isVertexType();
   }
 
   @Override
   public boolean isClusterView(int cluster) {
     OView view = getViewFromCluster(cluster);
-    if (view != null) return true;
-    return false;
+    return view != null;
   }
 
   public OView getViewFromCluster(int cluster) {

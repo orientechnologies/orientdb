@@ -36,16 +36,11 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
-import com.orientechnologies.orient.core.storage.OBasicTransaction;
+import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.tx.OTransactionRecordIndexOperation;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 
 public class OTransactionOptimisticProxy extends OTransactionOptimistic {
@@ -57,7 +52,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
   private final short protocolVersion;
   private List<ORecordOperationRequest> operations;
   private final ODocument indexChanges;
-  private ORecordSerializer serializer;
+  private final ORecordSerializer serializer;
 
   public OTransactionOptimisticProxy(
       ODatabaseDocumentInternal database,
@@ -194,7 +189,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
   @Override
   public ORecord getRecord(final ORID rid) {
     ORecord record = super.getRecord(rid);
-    if (record == OBasicTransaction.DELETED_RECORD) return record;
+    if (record == OTransactionAbstract.DELETED_RECORD) return record;
     else if (record == null && rid.isNew())
       // SEARCH BETWEEN CREATED RECORDS
       record = createdRecords.get(rid);
@@ -235,7 +230,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
         } else key = null;
 
         for (final ODocument op : operations) {
-          final int operation = (Integer) op.rawField("o");
+          final int operation = op.rawField("o");
           final OTransactionIndexChanges.OPERATION indexOperation =
               OTransactionIndexChanges.OPERATION.values()[operation];
           final OIdentifiable value = op.field("v");

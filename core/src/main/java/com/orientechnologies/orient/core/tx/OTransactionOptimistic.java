@@ -49,19 +49,14 @@ import com.orientechnologies.orient.core.record.impl.ODirtyManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.schedule.OScheduledEvent;
-import com.orientechnologies.orient.core.storage.OBasicTransaction;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class OTransactionOptimistic extends OTransactionRealAbstract {
-  private static AtomicInteger txSerial = new AtomicInteger();
+  private static final AtomicInteger txSerial = new AtomicInteger();
   protected boolean changed = true;
   private boolean alreadyCleared = false;
   private boolean usingLog = true;
@@ -136,13 +131,12 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
   public void internalRollback() {
     status = TXSTATUS.ROLLBACKING;
-    // CLEAR THE CACHE
-    database.getLocalCache().clear();
 
     // REMOVE ALL THE DIRTY ENTRIES AND UNDO ANY DIRTY DOCUMENT IF POSSIBLE.
     for (final ORecordOperation v : allEntries.values()) {
       final ORecord rec = v.getRecord();
       rec.unload();
+      database.getLocalCache().deleteRecord(rec.getIdentity());
     }
     close();
     status = TXSTATUS.ROLLED_BACK;
@@ -199,7 +193,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     checkTransactionValid();
 
     final ORecord txRecord = getRecord(rid);
-    if (txRecord == OBasicTransaction.DELETED_RECORD) {
+    if (txRecord == OTransactionAbstract.DELETED_RECORD) {
       // DELETED IN TX
       return null;
     }
@@ -248,7 +242,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     checkTransactionValid();
 
     final ORecord txRecord = getRecord(rid);
-    if (txRecord == OBasicTransaction.DELETED_RECORD) {
+    if (txRecord == OTransactionAbstract.DELETED_RECORD) {
       // DELETED IN TX
       throw new ORecordNotFoundException(rid);
     }
@@ -295,7 +289,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     checkTransactionValid();
 
     final ORecord txRecord = getRecord(rid);
-    if (txRecord == OBasicTransaction.DELETED_RECORD) {
+    if (txRecord == OTransactionAbstract.DELETED_RECORD) {
       // DELETED IN TX
       return null;
     }

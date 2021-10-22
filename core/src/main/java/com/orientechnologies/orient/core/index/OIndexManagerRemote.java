@@ -28,18 +28,18 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLCreateIndex;
-import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageInfo;
 import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class OIndexManagerRemote extends OIndexManagerAbstract {
-  private AtomicBoolean skipPush = new AtomicBoolean(false);
+  private final AtomicBoolean skipPush = new AtomicBoolean(false);
   private static final String QUERY_DROP = "drop index `%s` if exists";
   private static final long serialVersionUID = -6570577338095096235L;
-  private OStorage storage;
+  private final OStorageInfo storage;
 
-  public OIndexManagerRemote(OStorage storage) {
+  public OIndexManagerRemote(OStorageInfo storage) {
     super();
     this.storage = storage;
   }
@@ -189,15 +189,14 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
           d.setLazyLoad(false);
           try {
             final boolean isMultiValue =
-                ODefaultIndexFactory.isMultiValueIndex(
-                    (String) d.field(OIndexInternal.CONFIG_TYPE));
+                ODefaultIndexFactory.isMultiValueIndex(d.field(OIndexInternal.CONFIG_TYPE));
 
             final OIndexMetadata newIndexMetadata =
                 OIndexAbstract.loadMetadataInternal(
                     d,
-                    (String) d.field(OIndexInternal.CONFIG_TYPE),
-                    d.<String>field(OIndexInternal.ALGORITHM),
-                    d.<String>field(OIndexInternal.VALUE_CONTAINER_ALGORITHM));
+                    d.field(OIndexInternal.CONFIG_TYPE),
+                    d.field(OIndexInternal.ALGORITHM),
+                    d.field(OIndexInternal.VALUE_CONTAINER_ALGORITHM));
 
             addIndexInternal(
                 getRemoteIndexInstance(
@@ -207,7 +206,7 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
                     newIndexMetadata.getAlgorithm(),
                     newIndexMetadata.getClustersToIndex(),
                     newIndexMetadata.getIndexDefinition(),
-                    (ORID) d.field(OIndexAbstract.CONFIG_MAP_RID),
+                    d.field(OIndexAbstract.CONFIG_MAP_RID),
                     d));
           } catch (Exception e) {
             OLogManager.instance()
@@ -246,7 +245,7 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
     }
   }
 
-  protected OStorage getStorage() {
+  protected OStorageInfo getStorage() {
     return storage;
   }
 }

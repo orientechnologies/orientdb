@@ -140,7 +140,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   @Override
-  public void drop(String name, String user, String password) {
+  public void internalDrop(String name) {
     synchronized (this) {
       checkOpen();
       // This is a temporary fix for distributed drop that avoid scheduled view update to re-open
@@ -153,7 +153,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
     ODatabaseDocumentInternal current = ODatabaseRecordThreadLocal.instance().getIfDefined();
     try {
-      ODatabaseDocumentInternal db = openNoAuthenticate(name, user);
+      ODatabaseDocumentInternal db = openNoAuthenticate(name, null);
       for (Iterator<ODatabaseLifecycleListener> it = orient.getDbLifecycleListeners();
           it.hasNext(); ) {
         it.next().onDrop(db);
@@ -164,7 +164,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     }
 
     synchronized (this) {
-      if (exists(name, user, password)) {
+      if (exists(name, null, null)) {
         OAbstractPaginatedStorage storage = getOrInitStorage(name);
         OSharedContext sharedContext = sharedContexts.get(name);
         if (sharedContext != null) {
@@ -180,6 +180,23 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     }
   }
 
+  @Override
+  public void drop(String name, String user, String password) {
+    if (getPlugin() != null && getPlugin().isEnabled()) {
+      plugin.executeInDistributedDatabaseLock(
+          name,
+          20000,
+          null,
+          (cfg) -> {
+            plugin.dropOnAllServers(name);
+            return null;
+          });
+      plugin.dropConfig(name);
+    } else {
+      super.drop(name, user, password);
+    }
+  }
+
   private boolean checkDbAvailable(String name) {
     if (getPlugin() == null || !getPlugin().isEnabled()) {
       return true;
@@ -187,12 +204,8 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     if (OSystemDatabase.SYSTEM_DB_NAME.equals(name)) return true;
     ODistributedServerManager.DB_STATUS dbStatus =
         plugin.getDatabaseStatus(plugin.getLocalNodeName(), name);
-    if (dbStatus != ODistributedServerManager.DB_STATUS.ONLINE
-        && dbStatus != ODistributedServerManager.DB_STATUS.BACKUP) {
-      return false;
-    } else {
-      return true;
-    }
+    return dbStatus == ODistributedServerManager.DB_STATUS.ONLINE
+        || dbStatus == ODistributedServerManager.DB_STATUS.BACKUP;
   }
 
   @Override

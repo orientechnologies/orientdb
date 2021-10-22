@@ -32,13 +32,7 @@ import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseType;
-import com.orientechnologies.orient.core.db.OSystemDatabase;
-import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
-import com.orientechnologies.orient.core.db.OrientDBConfigBuilder;
-import com.orientechnologies.orient.core.db.OrientDBInternal;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxInternal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -48,16 +42,7 @@ import com.orientechnologies.orient.core.metadata.security.auth.OTokenAuthInfo;
 import com.orientechnologies.orient.core.security.OInvalidPasswordException;
 import com.orientechnologies.orient.core.security.OParsedToken;
 import com.orientechnologies.orient.core.security.OSecuritySystem;
-import com.orientechnologies.orient.server.config.OServerConfiguration;
-import com.orientechnologies.orient.server.config.OServerConfigurationManager;
-import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
-import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
-import com.orientechnologies.orient.server.config.OServerNetworkListenerConfiguration;
-import com.orientechnologies.orient.server.config.OServerNetworkProtocolConfiguration;
-import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.config.OServerSocketFactoryConfiguration;
-import com.orientechnologies.orient.server.config.OServerStorageConfiguration;
-import com.orientechnologies.orient.server.config.OServerUserConfiguration;
+import com.orientechnologies.orient.server.config.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.config.ODistributedConfig;
 import com.orientechnologies.orient.server.handler.OConfigurableHooksManager;
@@ -76,13 +61,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.locks.ReentrantLock;
@@ -90,7 +69,8 @@ import java.util.concurrent.locks.ReentrantLock;
 public class OServer {
   private static final String ROOT_PASSWORD_VAR = "ORIENTDB_ROOT_PASSWORD";
   private static ThreadGroup threadGroup;
-  private static Map<String, OServer> distributedServers = new ConcurrentHashMap<String, OServer>();
+  private static final Map<String, OServer> distributedServers =
+      new ConcurrentHashMap<String, OServer>();
   private CountDownLatch startupLatch;
   private CountDownLatch shutdownLatch;
   private final boolean shutdownEngineOnExit;
@@ -110,7 +90,7 @@ public class OServer {
   protected OServerPluginManager pluginManager;
   protected OConfigurableHooksManager hookManager;
   protected ODistributedServerManager distributedManager;
-  private Map<String, Object> variables = new HashMap<String, Object>();
+  private final Map<String, Object> variables = new HashMap<String, Object>();
   private String serverRootDirectory;
   private String databaseDirectory;
   private OClientConnectionManager clientConnectionManager;
@@ -896,21 +876,15 @@ public class OServer {
   }
 
   protected void loadUsers() throws IOException {
-    try {
-      final OServerConfiguration configuration = serverCfg.getConfiguration();
+    final OServerConfiguration configuration = serverCfg.getConfiguration();
 
-      if (configuration.isAfterFirstTime) {
-        return;
-      }
-
-      configuration.isAfterFirstTime = true;
-
-      createDefaultServerUsers();
-
-    } finally {
-      // REMOVE THE ENV VARIABLE FOR SECURITY REASONS
-      OSystemVariableResolver.setEnv(ROOT_PASSWORD_VAR, "");
+    if (configuration.isAfterFirstTime) {
+      return;
     }
+
+    configuration.isAfterFirstTime = true;
+
+    createDefaultServerUsers();
   }
 
   /** Load configured storages. */

@@ -34,7 +34,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.io.OIOUtils;
-import com.orientechnologies.common.io.OUtils;
 import com.orientechnologies.common.log.OAnsiCode;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
@@ -113,7 +112,6 @@ import com.orientechnologies.orient.server.distributed.task.ODistributedDatabase
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastClusterMetadataManager;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
-import com.orientechnologies.orient.server.network.protocol.OBeforeDatabaseOpenNetworkEventListener;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 import java.io.File;
 import java.io.IOException;
@@ -152,10 +150,7 @@ import sun.misc.Signal;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ODistributedPlugin extends OServerPluginAbstract
-    implements ODistributedServerManager,
-        ODatabaseLifecycleListener,
-        OCommandOutputListener,
-        OBeforeDatabaseOpenNetworkEventListener {
+    implements ODistributedServerManager, ODatabaseLifecycleListener, OCommandOutputListener {
   public static final String REPLICATOR_USER = "_CrossServerTempUser";
 
   protected static final String PAR_DEF_DISTRIB_DB_CONFIG = "configuration.db.default";
@@ -187,7 +182,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
   private TimerTask healthCheckerTask = null;
   protected OSignalHandler.OSignalListener signalListener;
 
-  private OHazelcastClusterMetadataManager clusterManager;
+  private final OHazelcastClusterMetadataManager clusterManager;
 
   protected ODistributedPlugin() {
     clusterManager = new OHazelcastClusterMetadataManager(this);
@@ -253,12 +248,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
   @Override
   @Deprecated
   public String getCoordinatorServer() {
-    return getLockManagerServer();
-  }
-
-  @Override
-  public String getLockManagerServer() {
-    return clusterManager.getLockManagerServer();
+    return "";
   }
 
   public File getDefaultDatabaseConfigFile() {
@@ -332,9 +322,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
                     new OClusterHealthChecker(this, healthChecker), healthChecker, healthChecker);
       }
 
-      for (OServerNetworkListener nl : serverInstance.getNetworkListeners())
-        nl.registerBeforeConnectNetworkEventListener(this);
-
       // WAIT ALL THE MESSAGES IN QUEUE ARE PROCESSED OR MAX 10 SECONDS
       waitStartupIsCompleted();
 
@@ -373,13 +360,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
   }
 
   @Override
-  public void onBeforeDatabaseOpen(final String url) {
-    final ODistributedDatabaseImpl dDatabase =
-        getMessageService().getDatabase(OUtils.getDatabaseNameFromURL(url));
-    if (dDatabase != null) dDatabase.waitForOnline();
-  }
-
-  @Override
   public ODistributedPlugin registerLifecycleListener(
       final ODistributedLifecycleListener iListener) {
     if (iListener == null) {
@@ -401,9 +381,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
     if (!enabled) return;
     OSignalHandler signalHandler = Orient.instance().getSignalHandler();
     if (signalHandler != null) signalHandler.unregisterListener(signalListener);
-
-    for (OServerNetworkListener nl : serverInstance.getNetworkListeners())
-      nl.unregisterBeforeConnectNetworkEventListener(this);
 
     OLogManager.instance().warn(this, "Shutting down node '%s'...", nodeName);
     setNodeStatus(NODE_STATUS.SHUTTINGDOWN);
@@ -455,17 +432,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
     ODistributedServerLog.info(
         this, getLocalNodeName(), null, DIRECTION.NONE, "Dropping database %s...", dbName);
 
-    if (!((ODatabaseDocumentInternal) iDatabase).isLocalEnv()) {
-      executeInDistributedDatabaseLock(
-          dbName,
-          20000,
-          null,
-          (cfg) -> {
-            dropOnAllServers(dbName);
-            return null;
-          });
-    }
-
     final ODistributedMessageService msgService = getMessageService();
     if (msgService != null) {
       msgService.unregisterDatabase(iDatabase.getName());
@@ -474,7 +440,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
     clusterManager.removeDbFromClusterMetadata(iDatabase);
   }
 
-  private void dropOnAllServers(final String dbName) {
+  public void dropOnAllServers(final String dbName) {
     Set<String> servers = clusterManager.dropDbFromConfiguration(dbName);
     if (!servers.isEmpty() && messageService.getDatabase(dbName) != null) {
       sendRequest(
@@ -486,6 +452,10 @@ public class ODistributedPlugin extends OServerPluginAbstract
           ODistributedRequest.EXECUTION_MODE.RESPONSE,
           null);
     }
+  }
+
+  public void dropConfig(String dbName) {
+    clusterManager.dropDatabaseConfiguration(dbName);
   }
 
   @Override
@@ -2269,8 +2239,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
       final Set<String> availableNodes = getAvailableNodeNames(iDatabase.getName());
 
       iDatabase.activateOnCurrentThread();
-      final OSchema schema =
-          ((ODatabaseInternal<?>) iDatabase).getDatabaseOwner().getMetadata().getSchema();
+      final OSchema schema = iDatabase.getDatabaseOwner().getMetadata().getSchema();
 
       final Map<OClass, List<String>> cluster2CreateMap = new HashMap<OClass, List<String>>(1);
       for (final OClass clazz : schema.getClasses()) {
@@ -2634,8 +2603,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
           getLocalNodeName(),
           null,
           DIRECTION.NONE,
-          "Distributed servers status (*=current @=lockmgr[%s]):\n%s",
-          getLockManagerServer(),
+          "Distributed servers status (*=current):\n%s",
           ODistributedOutput.formatServerStatus(this, cfg));
     }
   }

@@ -14,7 +14,6 @@ import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OSystemDatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentAbstract;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -71,7 +70,7 @@ public class OHazelcastClusterMetadataManager
   private String nodeName = null;
   private OServer serverInstance;
 
-  private ODistributedPlugin distributedPlugin;
+  private final ODistributedPlugin distributedPlugin;
 
   public OHazelcastClusterMetadataManager(ODistributedPlugin distributedPlugin) {
     this.distributedPlugin = distributedPlugin;
@@ -400,10 +399,6 @@ public class OHazelcastClusterMetadataManager
     final ODistributedServerManager.DB_STATUS s = getDatabaseStatus(iNodeName, iDatabaseName);
     return s != ODistributedServerManager.DB_STATUS.OFFLINE
         && s != ODistributedServerManager.DB_STATUS.NOT_AVAILABLE;
-  }
-
-  public String getLockManagerServer() {
-    return "";
   }
 
   protected void publishLocalNodeConfiguration() {
@@ -945,8 +940,7 @@ public class OHazelcastClusterMetadataManager
           nodeName,
           null,
           ODistributedServerLog.DIRECTION.NONE,
-          "Server merged the existent cluster, lock=%s, merging databases...",
-          getLockManagerServer());
+          "Server merged the existent cluster, merging databases...");
 
       configurationMap.clearLocalCache();
 
@@ -982,35 +976,6 @@ public class OHazelcastClusterMetadataManager
                 @Override
                 public void run() {
                   try {
-                    // WAIT (MAX 10 SECS) THE LOCK MANAGER IS ONLINE
-                    ODistributedServerLog.info(
-                        this,
-                        nodeName,
-                        null,
-                        ODistributedServerLog.DIRECTION.NONE,
-                        "Merging networks, waiting for the lock %s to be reachable...",
-                        getLockManagerServer());
-
-                    for (int retry = 0;
-                        !getActiveServers().contains(getLockManagerServer()) && retry < 10;
-                        ++retry) {
-                      try {
-                        Thread.sleep(1000);
-                      } catch (InterruptedException e) {
-                        // IGNORE IT
-                      }
-                    }
-
-                    final String cs = getLockManagerServer();
-
-                    ODistributedServerLog.info(
-                        this,
-                        nodeName,
-                        null,
-                        ODistributedServerLog.DIRECTION.NONE,
-                        "Merging networks, lock=%s (active=%s)...",
-                        cs,
-                        getActiveServers().contains(getLockManagerServer()));
 
                     for (final String databaseName :
                         distributedPlugin.getMessageService().getDatabases()) {
@@ -1042,8 +1007,7 @@ public class OHazelcastClusterMetadataManager
                         nodeName,
                         null,
                         ODistributedServerLog.DIRECTION.NONE,
-                        "Network merged, lock=%s...",
-                        getLockManagerServer());
+                        "Network merged ...");
                     setNodeStatus(ODistributedServerManager.NODE_STATUS.ONLINE);
                   }
                 }
@@ -1058,20 +1022,20 @@ public class OHazelcastClusterMetadataManager
 
     if (configurationMap != null) {
       configurationMap.remove(CONFIG_DBSTATUS_PREFIX + nodeName + "." + dbName);
-
-      if (!OScenarioThreadLocal.INSTANCE.isRunModeDistributed()) {
-        // LAST NODE HOLDING THE DATABASE, DELETE DISTRIBUTED CFG TOO
-        configurationMap.remove(CONFIG_DATABASE_PREFIX + dbName);
-        configurationMap.remove(OAbstractSyncDatabaseTask.DEPLOYDB + dbName);
-        ODistributedServerLog.info(
-            this,
-            nodeName,
-            null,
-            ODistributedServerLog.DIRECTION.NONE,
-            "Dropped last copy of database '%s', removing it from the cluster",
-            dbName);
-      }
     }
+  }
+
+  public void dropDatabaseConfiguration(final String dbName) {
+    // LAST NODE HOLDING THE DATABASE, DELETE DISTRIBUTED CFG TOO
+    configurationMap.remove(CONFIG_DATABASE_PREFIX + dbName);
+    configurationMap.remove(OAbstractSyncDatabaseTask.DEPLOYDB + dbName);
+    ODistributedServerLog.info(
+        this,
+        nodeName,
+        null,
+        ODistributedServerLog.DIRECTION.NONE,
+        "Dropped last copy of database '%s', removing it from the cluster",
+        dbName);
   }
 
   // Remove the given distributed db from the current server's configuration and
@@ -1080,8 +1044,6 @@ public class OHazelcastClusterMetadataManager
     final ODistributedConfiguration dCfg = getDatabaseConfiguration(dbName);
 
     final Set<String> servers = dCfg.getAllConfiguredServers();
-    servers.remove(nodeName);
-
     final long start = System.currentTimeMillis();
 
     // WAIT ALL THE SERVERS BECOME ONLINE

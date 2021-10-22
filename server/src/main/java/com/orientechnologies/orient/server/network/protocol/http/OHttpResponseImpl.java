@@ -4,11 +4,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.server.OClientConnection;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.Socket;
 import java.util.Map;
 
@@ -78,7 +74,7 @@ public class OHttpResponseImpl extends OHttpResponse {
     }
 
     if (getSessionId() != null) {
-      String sameSite = (isSameSiteCookie() ? "SameSite=Strict; Secure" : "");
+      String sameSite = (isSameSiteCookie() ? "SameSite=Strict;" : "");
       writeLine(
           "Set-Cookie: "
               + OHttpUtils.OSESSIONID

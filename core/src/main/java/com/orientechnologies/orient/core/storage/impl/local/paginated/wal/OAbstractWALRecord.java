@@ -21,7 +21,6 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.kenai.jffi.MemoryIO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.OperationIdLSN;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.WriteableWALRecord;
 import java.nio.ByteBuffer;
 import java.util.Objects;
@@ -33,7 +32,7 @@ import java.util.Objects;
  * @since 12.12.13
  */
 public abstract class OAbstractWALRecord implements WriteableWALRecord {
-  protected volatile OperationIdLSN operationIdLSN;
+  protected volatile OLogSequenceNumber logSequenceNumber;
 
   private int distance = 0;
   private int diskSize = 0;
@@ -48,17 +47,12 @@ public abstract class OAbstractWALRecord implements WriteableWALRecord {
 
   @Override
   public OLogSequenceNumber getLsn() {
-    return operationIdLSN.lsn;
+    return logSequenceNumber;
   }
 
   @Override
-  public OperationIdLSN getOperationIdLSN() {
-    return operationIdLSN;
-  }
-
-  @Override
-  public void setOperationIdLsn(final OLogSequenceNumber lsn, int operationId) {
-    this.operationIdLSN = new OperationIdLSN(operationId, lsn);
+  public void setLsn(final OLogSequenceNumber lsn) {
+    this.logSequenceNumber = lsn;
   }
 
   @Override
@@ -127,26 +121,18 @@ public abstract class OAbstractWALRecord implements WriteableWALRecord {
   }
 
   @Override
-  public boolean trackOperationId() {
-    return false;
-  }
-
-  @Override
-  public boolean equals(final Object o) {
+  public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    final OAbstractWALRecord that = (OAbstractWALRecord) o;
-    if (operationIdLSN == null) {
-      return that.operationIdLSN == null;
-    }
+    OAbstractWALRecord that = (OAbstractWALRecord) o;
 
-    return Objects.equals(operationIdLSN.lsn, that.operationIdLSN.lsn);
+    return Objects.equals(logSequenceNumber, that.logSequenceNumber);
   }
 
   @Override
   public int hashCode() {
-    return operationIdLSN != null && operationIdLSN.lsn != null ? operationIdLSN.lsn.hashCode() : 0;
+    return logSequenceNumber != null ? logSequenceNumber.hashCode() : 0;
   }
 
   @Override
@@ -156,7 +142,7 @@ public abstract class OAbstractWALRecord implements WriteableWALRecord {
 
   protected String toString(final String iToAppend) {
     final StringBuilder buffer = new StringBuilder(getClass().getName());
-    buffer.append("{lsn_operation_id=").append(operationIdLSN);
+    buffer.append("{lsn =").append(logSequenceNumber);
 
     if (iToAppend != null) {
       buffer.append(", ");

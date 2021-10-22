@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.server.security;
 
-import java.io.*;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.security.*;
 import java.security.cert.CertificateException;
@@ -182,12 +182,14 @@ public class OSelfSignedCertificate<tmpLocalHost> {
       e.printStackTrace();
     } catch (IOException e) {
       e.printStackTrace();
+    } catch (NoSuchAlgorithmException e) {
+      e.printStackTrace();
     }
   }
 
   public static X509Certificate generateSelfSignedCertificate(
       KeyPair keypair, int validity, String ownerFDN, BigInteger certSN)
-      throws CertificateException, IOException {
+      throws CertificateException, IOException, NoSuchAlgorithmException {
 
     X509CertImpl cert;
 
@@ -238,8 +240,7 @@ public class OSelfSignedCertificate<tmpLocalHost> {
 
     // set certificate Signature ALGORITHM = RSA
     info.set(
-        X509CertInfo.ALGORITHM_ID,
-        new CertificateAlgorithmId(new AlgorithmId(AlgorithmId.sha256WithRSAEncryption_oid)));
+        X509CertInfo.ALGORITHM_ID, new CertificateAlgorithmId(AlgorithmId.get("SHA256WithRSA")));
 
     // Sign the cert to identify the algorithm that's used.
     cert = new X509CertImpl(info);

@@ -26,43 +26,9 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.NETW
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
-import com.orientechnologies.orient.client.remote.OBinaryRequest;
-import com.orientechnologies.orient.client.remote.OBinaryResponse;
-import com.orientechnologies.orient.client.remote.ORemoteConnectionManager;
-import com.orientechnologies.orient.client.remote.ORemoteQueryResult;
-import com.orientechnologies.orient.client.remote.ORemoteURLs;
-import com.orientechnologies.orient.client.remote.OStorageRemote;
+import com.orientechnologies.orient.client.remote.*;
 import com.orientechnologies.orient.client.remote.OStorageRemote.CONNECTION_STRATEGY;
-import com.orientechnologies.orient.client.remote.OStorageRemoteNodeSession;
-import com.orientechnologies.orient.client.remote.OStorageRemoteOperation;
-import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
-import com.orientechnologies.orient.client.remote.message.OConnect37Request;
-import com.orientechnologies.orient.client.remote.message.OConnectResponse;
-import com.orientechnologies.orient.client.remote.message.OCreateDatabaseRequest;
-import com.orientechnologies.orient.client.remote.message.OCreateDatabaseResponse;
-import com.orientechnologies.orient.client.remote.message.ODistributedStatusRequest;
-import com.orientechnologies.orient.client.remote.message.ODistributedStatusResponse;
-import com.orientechnologies.orient.client.remote.message.ODropDatabaseRequest;
-import com.orientechnologies.orient.client.remote.message.ODropDatabaseResponse;
-import com.orientechnologies.orient.client.remote.message.OExistsDatabaseRequest;
-import com.orientechnologies.orient.client.remote.message.OExistsDatabaseResponse;
-import com.orientechnologies.orient.client.remote.message.OFreezeDatabaseRequest;
-import com.orientechnologies.orient.client.remote.message.OFreezeDatabaseResponse;
-import com.orientechnologies.orient.client.remote.message.OGetGlobalConfigurationRequest;
-import com.orientechnologies.orient.client.remote.message.OGetGlobalConfigurationResponse;
-import com.orientechnologies.orient.client.remote.message.OListDatabasesRequest;
-import com.orientechnologies.orient.client.remote.message.OListDatabasesResponse;
-import com.orientechnologies.orient.client.remote.message.OListGlobalConfigurationsRequest;
-import com.orientechnologies.orient.client.remote.message.OListGlobalConfigurationsResponse;
-import com.orientechnologies.orient.client.remote.message.OReleaseDatabaseRequest;
-import com.orientechnologies.orient.client.remote.message.OReleaseDatabaseResponse;
-import com.orientechnologies.orient.client.remote.message.ORemoteResultSet;
-import com.orientechnologies.orient.client.remote.message.OServerInfoRequest;
-import com.orientechnologies.orient.client.remote.message.OServerInfoResponse;
-import com.orientechnologies.orient.client.remote.message.OServerQueryRequest;
-import com.orientechnologies.orient.client.remote.message.OServerQueryResponse;
-import com.orientechnologies.orient.client.remote.message.OSetGlobalConfigurationRequest;
-import com.orientechnologies.orient.client.remote.message.OSetGlobalConfigurationResponse;
+import com.orientechnologies.orient.client.remote.message.*;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -76,20 +42,12 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OCredentialInterceptor;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.security.OSecuritySystem;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37Client;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.OStorage;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
@@ -104,7 +62,7 @@ public class OrientDBRemote implements OrientDBInternal {
   private final OCachedDatabasePoolFactory cachedPoolFactory;
   protected volatile ORemoteConnectionManager connectionManager;
   private volatile boolean open = true;
-  private Timer timer;
+  private final Timer timer;
   private final ORemoteURLs urls;
 
   public OrientDBRemote(String[] hosts, OrientDBConfig configurations, Orient orient) {
@@ -265,7 +223,7 @@ public class OrientDBRemote implements OrientDBInternal {
 
   public void setGlobalConfiguration(
       String username, String password, OGlobalConfiguration config, String iConfigValue) {
-    String value = iConfigValue != null ? iConfigValue.toString() : "";
+    String value = iConfigValue != null ? iConfigValue : "";
     OSetGlobalConfigurationRequest request =
         new OSetGlobalConfigurationRequest(config.getKey(), value);
     OSetGlobalConfigurationResponse response = connectAndSend(null, username, password, request);
@@ -299,6 +257,11 @@ public class OrientDBRemote implements OrientDBInternal {
       sharedContexts.remove(name);
     }
     storages.remove(name);
+  }
+
+  @Override
+  public void internalDrop(String database) {
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -550,7 +513,7 @@ public class OrientDBRemote implements OrientDBInternal {
             statement,
             params,
             OServerQueryRequest.COMMAND,
-            ORecordSerializerNetworkV37.INSTANCE,
+            ORecordSerializerNetworkV37Client.INSTANCE,
             recordsPerPage);
 
     OServerQueryResponse response = connectAndSend(null, user, pw, request);
@@ -581,7 +544,7 @@ public class OrientDBRemote implements OrientDBInternal {
             statement,
             params,
             OServerQueryRequest.COMMAND,
-            ORecordSerializerNetworkV37.INSTANCE,
+            ORecordSerializerNetworkV37Client.INSTANCE,
             recordsPerPage);
 
     OServerQueryResponse response = connectAndSend(null, user, pw, request);

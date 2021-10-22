@@ -10,6 +10,7 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37Client;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
@@ -51,7 +52,8 @@ public class OBeginTransactionRequest implements OBinaryRequest<OBeginTransactio
         switch (txEntry.type) {
           case ORecordOperation.CREATED:
           case ORecordOperation.UPDATED:
-            request.setRecord(ORecordSerializerNetworkV37.INSTANCE.toStream(txEntry.getRecord()));
+            request.setRecord(
+                ORecordSerializerNetworkV37Client.INSTANCE.toStream(txEntry.getRecord()));
             request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
             break;
         }
@@ -69,7 +71,7 @@ public class OBeginTransactionRequest implements OBinaryRequest<OBeginTransactio
   @Override
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
     // from 3.0 the the serializer is bound to the protocol
-    ORecordSerializerNetworkV37 serializer = ORecordSerializerNetworkV37.INSTANCE;
+    ORecordSerializerNetworkV37Client serializer = ORecordSerializerNetworkV37Client.INSTANCE;
 
     network.writeInt(txId);
     network.writeBoolean(hasContent);

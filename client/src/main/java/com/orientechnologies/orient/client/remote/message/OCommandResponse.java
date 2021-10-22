@@ -36,7 +36,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37Client;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.sql.query.OBasicLegacyResultSet;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
@@ -44,17 +44,12 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProt
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public final class OCommandResponse implements OBinaryResponse {
-  private boolean asynch;
-  private OCommandResultListener listener;
-  private ODatabaseDocumentInternal database;
+  private final boolean asynch;
+  private final OCommandResultListener listener;
+  private final ODatabaseDocumentInternal database;
   private boolean live;
   private Object result;
   private boolean isRecordResultSet;
@@ -231,7 +226,7 @@ public final class OCommandResponse implements OBinaryResponse {
 
   @Override
   public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
-    ORecordSerializer serializer = ORecordSerializerNetworkV37.INSTANCE;
+    ORecordSerializer serializer = ORecordSerializerNetworkV37Client.INSTANCE;
     try {
       // Collection of prefetched temporary record (nested projection record), to refer for avoid
       // garbage collection.
@@ -325,7 +320,7 @@ public final class OCommandResponse implements OBinaryResponse {
       final ODatabaseDocument database,
       List<ORecord> temporaryResults)
       throws IOException {
-    ORecordSerializer serializer = ORecordSerializerNetworkV37.INSTANCE;
+    ORecordSerializer serializer = ORecordSerializerNetworkV37Client.INSTANCE;
     final Object result;
 
     final byte type = network.readByte();

@@ -35,24 +35,13 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.orientechnologies.orient.core.storage.OBasicTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.Set;
 
 public abstract class OTransactionRealAbstract extends OTransactionAbstract
     implements OTransactionInternal {
@@ -152,7 +141,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract
   public ORecord getRecord(final ORID rid) {
     final ORecordOperation e = getRecordEntry(rid);
     if (e != null)
-      if (e.type == ORecordOperation.DELETED) return OBasicTransaction.DELETED_RECORD;
+      if (e.type == ORecordOperation.DELETED) return OTransactionAbstract.DELETED_RECORD;
       else return e.getRecord();
     return null;
   }

@@ -110,16 +110,18 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
       int i = 0;
       List response = new ArrayList();
       TimerTask commandInterruptTimer = null;
-      if (db.getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
-        commandInterruptTimer = ((ODatabaseInternal) db).createInterruptTimerTask();
-        if (commandInterruptTimer != null) {
-          ((ODatabaseInternal) db)
-              .getSharedContext()
-              .getOrientDB()
-              .scheduleOnce(
-                  commandInterruptTimer,
-                  db.getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT));
-        }
+      if (db.getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0
+          && !language.equalsIgnoreCase("sql")) {
+        //        commandInterruptTimer = ((ODatabaseInternal) db).createInterruptTimerTask();
+        //        if (commandInterruptTimer != null) {
+        //          ((ODatabaseInternal) db)
+        //                  .getSharedContext()
+        //                  .getOrientDB()
+        //                  .scheduleOnce(
+        //                          commandInterruptTimer,
+        //
+        // db.getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT));
+        //        }
       }
       try {
         while (result.hasNext()) {

@@ -24,20 +24,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ODocumentSerializerDelta;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
-import com.orientechnologies.orient.core.storage.OBasicTransaction;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
-import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
-import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.Set;
-import java.util.TreeMap;
+import com.orientechnologies.orient.core.tx.*;
+import java.util.*;
 
 /** Created by tglman on 28/12/16. */
 public class OTransactionOptimisticServer extends OTransactionOptimistic {
@@ -265,7 +253,7 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
   @Override
   public ORecord getRecord(final ORID rid) {
     ORecord record = super.getRecord(rid);
-    if (record == OBasicTransaction.DELETED_RECORD) return record;
+    if (record == OTransactionAbstract.DELETED_RECORD) return record;
     else if (record == null && rid.isNew())
       // SEARCH BETWEEN CREATED RECORDS
       record = createdRecords.get(rid);
@@ -295,8 +283,7 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
   private boolean checkCallHooks(Map<ORID, ORecordOperation> oldTx, ORID id, byte type) {
     if (oldTx != null) {
       ORecordOperation entry = oldTx.get(id);
-      if (entry == null || entry.getType() != type) return true;
-      return false;
+      return entry == null || entry.getType() != type;
     } else {
       return true;
     }

@@ -80,7 +80,7 @@ public class JsonWebToken implements OJsonWebToken, OToken {
 
   @Override
   public ORID getUserId() {
-    return ((OrientJwtPayload) payload).getUserRid();
+    return payload.getUserRid();
   }
 
   @Override
@@ -90,7 +90,7 @@ public class JsonWebToken implements OJsonWebToken, OToken {
 
   @Override
   public OUser getUser(ODatabaseDocumentInternal db) {
-    ORID userRid = ((OrientJwtPayload) payload).getUserRid();
+    ORID userRid = payload.getUserRid();
     ODocument result;
     result = db.load(userRid, "roles:1");
     if (!result.getSchemaClass().isSubClassOf(OUser.CLASS_NAME)) {
@@ -108,5 +108,11 @@ public class JsonWebToken implements OJsonWebToken, OToken {
   public boolean isNowValid() {
     long now = System.currentTimeMillis();
     return getExpiry() > now && payload.getNotBefore() < now;
+  }
+
+  @Override
+  public boolean isCloseToExpire() {
+    long now = System.currentTimeMillis();
+    return getExpiry() - 120000 <= now;
   }
 }

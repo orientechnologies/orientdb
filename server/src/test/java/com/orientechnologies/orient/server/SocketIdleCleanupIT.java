@@ -6,11 +6,7 @@ import static org.junit.Assert.assertFalse;
 import com.orientechnologies.orient.client.remote.ORemoteConnectionManager;
 import com.orientechnologies.orient.client.remote.ORemoteConnectionPool;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
-import com.orientechnologies.orient.core.db.OrientDBInternal;
-import com.orientechnologies.orient.core.db.OrientDBRemote;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -31,6 +27,8 @@ public class SocketIdleCleanupIT {
       throws IOException, InstantiationException, InvocationTargetException, NoSuchMethodException,
           MBeanRegistrationException, IllegalAccessException, InstanceAlreadyExistsException,
           NotCompliantMBeanException, ClassNotFoundException, MalformedObjectNameException {
+    String classpath = System.getProperty("java.class.path");
+    System.out.println("Class path " + classpath);
     server =
         OServer.startFromStreamConfig(
             this.getClass().getResourceAsStream("orientdb-server-config.xml"));

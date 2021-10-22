@@ -19,13 +19,12 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
-import com.orientechnologies.common.exception.OException;
+import com.fasterxml.jackson.core.JsonParseException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -39,14 +38,9 @@ import com.orientechnologies.orient.core.serialization.serializer.string.OString
 import com.orientechnologies.orient.core.util.ODateHelper;
 import java.io.InputStream;
 import java.io.Serializable;
-import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
 @SuppressWarnings("serial")
 public abstract class ORecordSerializerStringAbstract implements ORecordSerializer, Serializable {
@@ -116,7 +110,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
   }
 
   public static Object convertValue(final String iValue, final OType iExpectedType) {
-    final Object v = getTypeValue((String) iValue);
+    final Object v = getTypeValue(iValue);
     return OType.convert(v, iExpectedType.getDefaultJavaType());
   }
 
@@ -602,44 +596,43 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
         break;
 
       case BOOLEAN:
-        iBuffer.append(String.valueOf(iValue));
+        iBuffer.append(iValue);
         break;
 
       case INTEGER:
-        iBuffer.append(String.valueOf(iValue));
+        iBuffer.append(iValue);
         break;
 
       case FLOAT:
-        iBuffer.append(String.valueOf(iValue));
+        iBuffer.append(iValue);
         iBuffer.append('f');
         break;
 
       case DECIMAL:
         if (iValue instanceof BigDecimal) iBuffer.append(((BigDecimal) iValue).toPlainString());
-        else iBuffer.append(String.valueOf(iValue));
+        else iBuffer.append(iValue);
         iBuffer.append('c');
         break;
 
       case LONG:
-        iBuffer.append(String.valueOf(iValue));
+        iBuffer.append(iValue);
         iBuffer.append('l');
         break;
 
       case DOUBLE:
-        iBuffer.append(String.valueOf(iValue));
+        iBuffer.append(iValue);
         iBuffer.append('d');
         break;
 
       case SHORT:
-        iBuffer.append(String.valueOf(iValue));
+        iBuffer.append(iValue);
         iBuffer.append('s');
         break;
 
       case BYTE:
         if (iValue instanceof Character) iBuffer.append((int) ((Character) iValue).charValue());
-        else if (iValue instanceof String)
-          iBuffer.append(String.valueOf((int) ((String) iValue).charAt(0)));
-        else iBuffer.append(String.valueOf(iValue));
+        else if (iValue instanceof String) iBuffer.append((int) ((String) iValue).charAt(0));
+        else iBuffer.append(iValue);
         iBuffer.append('b');
         break;
 
@@ -677,7 +670,8 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 
   public abstract ORecord fromString(String iContent, ORecord iRecord, String[] iFields);
 
-  public abstract ORecord fromStream(InputStream source, ORecord record, final String[] fields);
+  public abstract ORecord fromStream(InputStream source, ORecord record, final String[] fields)
+      throws JsonParseException;
 
   public StringBuilder toString(
       final ORecord iRecord, final StringBuilder iOutput, final String iFormat) {
@@ -685,8 +679,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
   }
 
   public ORecord fromString(final String iSource) {
-    return fromString(
-        iSource, (ORecord) ODatabaseRecordThreadLocal.instance().get().newInstance(), null);
+    return fromString(iSource, ODatabaseRecordThreadLocal.instance().get().newInstance(), null);
   }
 
   @Override
@@ -699,9 +692,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
     final long timer = PROFILER.startChrono();
 
     try {
-      return fromString(new String(iSource, "UTF-8"), iRecord, iFields);
-    } catch (UnsupportedEncodingException e) {
-      throw OException.wrapException(new OSchemaException("Error reading record"), e);
+      return fromString(new String(iSource, StandardCharsets.UTF_8), iRecord, iFields);
     } finally {
 
       PROFILER.stopChrono(
@@ -715,9 +706,9 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
     final long timer = PROFILER.startChrono();
 
     try {
-      return toString(iRecord, new StringBuilder(2048), null, true).toString().getBytes("UTF-8");
-    } catch (UnsupportedEncodingException e) {
-      throw OException.wrapException(new OSchemaException("error encoding string"), e);
+      return toString(iRecord, new StringBuilder(2048), null, true)
+          .toString()
+          .getBytes(StandardCharsets.UTF_8);
     } finally {
 
       PROFILER.stopChrono(

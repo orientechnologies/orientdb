@@ -26,16 +26,8 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.metadata.security.OImmutableUser;
-import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.metadata.security.ORule;
+import com.orientechnologies.orient.core.metadata.security.*;
 import com.orientechnologies.orient.core.metadata.security.ORule.ResourceGeneric;
-import com.orientechnologies.orient.core.metadata.security.OSecurity;
-import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
-import com.orientechnologies.orient.core.metadata.security.OSecurityRole;
-import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
-import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
-import com.orientechnologies.orient.core.metadata.security.OSystemUser;
 import com.orientechnologies.orient.core.metadata.security.auth.OAuthenticationInfo;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.authenticator.ODatabaseUserAuthenticator;
@@ -44,11 +36,7 @@ import com.orientechnologies.orient.core.security.authenticator.OSystemUserAuthe
 import com.orientechnologies.orient.core.security.authenticator.OTemporaryGlobalUser;
 import java.io.File;
 import java.io.FileInputStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -70,13 +58,13 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
   // default authentication mode if external authentication fails.
   private boolean allowDefault = true;
 
-  private Object passwordValidatorSynch = new Object();
+  private final Object passwordValidatorSynch = new Object();
   private OPasswordValidator passwordValidator;
 
-  private Object importLDAPSynch = new Object();
+  private final Object importLDAPSynch = new Object();
   private OSecurityComponent importLDAP;
 
-  private Object auditingSynch = new Object();
+  private final Object auditingSynch = new Object();
   private OAuditingService auditingService;
 
   private ODocument configDoc; // Holds the
@@ -95,7 +83,7 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
   private volatile List<OSecurityAuthenticator> authenticatorsList;
   private volatile List<OSecurityAuthenticator> enabledAuthenticators;
 
-  private ConcurrentHashMap<String, Class<?>> securityClassMap =
+  private final ConcurrentHashMap<String, Class<?>> securityClassMap =
       new ConcurrentHashMap<String, Class<?>>();
   private OTokenSign tokenSign;
   private final Map<String, OTemporaryGlobalUser> ephemeralUsers =
@@ -271,7 +259,7 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
     OSecurityUser user = getServerUser(username);
 
     if (user != null && user.getPassword() != null) {
-      if (OSecurityManager.checkPassword(password, user.getPassword())) {
+      if (OSecurityManager.checkPassword(password, user.getPassword().trim())) {
         return user;
       }
     }
@@ -440,9 +428,7 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
 
     if (user != null) {
       // TODO: to verify if this logic match previous logic
-      if (user.checkIfAllowed(resource, ORole.PERMISSION_ALL) != null) {
-        return true;
-      }
+      return user.checkIfAllowed(resource, ORole.PERMISSION_ALL) != null;
       /*
       if (user.getResources().equals("*"))
         // ACCESS TO ALL
@@ -871,7 +857,7 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
             final byte[] buffer = new byte[(int) file.length()];
             fis.read(buffer);
 
-            securityDoc = (ODocument) new ODocument().fromJSON(new String(buffer), "noMap");
+            securityDoc = new ODocument().fromJSON(new String(buffer), "noMap");
           } finally {
             if (fis != null) fis.close();
           }

@@ -66,7 +66,7 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate {
     long tot = delegate.size();
 
     final OTransactionIndexChanges indexChanges =
-        database.getMicroOrRegularTransaction().getIndexChanges(delegate.getName());
+        database.getTransaction().getIndexChanges(delegate.getName());
     if (indexChanges != null) {
       try (Stream<ORawPair<Object, ORID>> stream = stream()) {
         return stream.count();
@@ -92,36 +92,28 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate {
 
     key = getCollatingValue(key);
 
-    database
-        .getMicroOrRegularTransaction()
-        .addIndexEntry(delegate, super.getName(), OPERATION.PUT, key, value);
+    database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.PUT, key, value);
     return this;
   }
 
   @Override
   public boolean remove(Object key) {
     key = getCollatingValue(key);
-    database
-        .getMicroOrRegularTransaction()
-        .addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, key, null);
+    database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, key, null);
     return true;
   }
 
   @Override
   public boolean remove(Object key, final OIdentifiable rid) {
     key = getCollatingValue(key);
-    database
-        .getMicroOrRegularTransaction()
-        .addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, key, rid);
+    database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, key, rid);
     return true;
   }
 
   @SuppressWarnings("deprecation")
   @Override
   public OIndexTxAware<T> clear() {
-    database
-        .getMicroOrRegularTransaction()
-        .addIndexEntry(delegate, super.getName(), OPERATION.CLEAR, null, null);
+    database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.CLEAR, null, null);
     return this;
   }
 

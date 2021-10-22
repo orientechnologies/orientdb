@@ -5,6 +5,7 @@ import static javax.crypto.Cipher.DECRYPT_MODE;
 import static javax.crypto.Cipher.ENCRYPT_MODE;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.thread.NonDaemonThreadFactory;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.exception.OInvalidStorageEncryptionKeyException;
@@ -15,11 +16,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Base64;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import javax.crypto.AEADBadTagException;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -206,7 +203,8 @@ public class OAESGCMEncryption implements OEncryption {
   }
 
   private void assertNonBlocking(SecureRandom secureRandom) {
-    ExecutorService executor = Executors.newSingleThreadExecutor();
+    ExecutorService executor =
+        Executors.newSingleThreadExecutor(new NonDaemonThreadFactory("OAESGCMEncryption thread"));
     try {
       executor.submit(() -> secureRandom.nextInt()).get(1, TimeUnit.MINUTES);
     } catch (InterruptedException | ExecutionException e) {

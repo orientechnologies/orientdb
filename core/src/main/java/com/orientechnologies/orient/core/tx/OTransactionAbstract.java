@@ -26,8 +26,10 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import java.util.HashMap;
@@ -39,6 +41,12 @@ public abstract class OTransactionAbstract implements OTransaction {
   protected TXSTATUS status = TXSTATUS.INVALID;
   protected ISOLATION_LEVEL isolationLevel = ISOLATION_LEVEL.READ_COMMITTED;
   protected Map<ORID, LockedRecordMetadata> locks = new HashMap<ORID, LockedRecordMetadata>();
+  /**
+   * Indicates the record deleted in a transaction.
+   *
+   * @see #getRecord(ORID)
+   */
+  public static final ORecord DELETED_RECORD = new ORecordBytes();
 
   public static final class LockedRecordMetadata {
     private final OStorage.LOCKING_STRATEGY strategy;
@@ -138,8 +146,7 @@ public abstract class OTransactionAbstract implements OTransaction {
     final ORID rid = iRecord.getIdentity();
     final LockedRecordMetadata lockedRecordMetadata = locks.get(rid);
 
-    if (lockedRecordMetadata == null || lockedRecordMetadata.locksCount == 0) return false;
-    else return true;
+    return lockedRecordMetadata != null && lockedRecordMetadata.locksCount != 0;
   }
 
   @Override

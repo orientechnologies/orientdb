@@ -63,11 +63,12 @@ public class OFetchTransaction38Response implements OBinaryResponse {
             database.getStorage().readRecord((ORecordId) doc.getIdentity(), "", false, false, null);
         ODocument docFromPersistence = new ODocument(doc.getIdentity());
         docFromPersistence.fromStream(result.getResult().getBuffer());
-        request.setOriginal(ORecordSerializerNetworkV37.INSTANCE.toStream(docFromPersistence));
+        request.setOriginal(
+            ORecordSerializerNetworkV37Client.INSTANCE.toStream(docFromPersistence));
         ODocumentSerializerDelta delta = ODocumentSerializerDelta.instance();
         request.setRecord(delta.serializeDelta(doc));
       } else {
-        request.setRecord(ORecordSerializerNetworkV37.INSTANCE.toStream(txEntry.getRecord()));
+        request.setRecord(ORecordSerializerNetworkV37Client.INSTANCE.toStream(txEntry.getRecord()));
       }
       request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
       netOperations.add(request);

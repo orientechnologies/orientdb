@@ -27,32 +27,16 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OScriptExecutor;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
-import com.orientechnologies.orient.core.db.ODatabaseListener;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.ODatabaseStats;
-import com.orientechnologies.orient.core.db.OHookReplacedRecordThreadLocal;
-import com.orientechnologies.orient.core.db.OLiveQueryMonitor;
-import com.orientechnologies.orient.core.db.OLiveQueryResultListener;
-import com.orientechnologies.orient.core.db.OSharedContext;
-import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.exception.OSchemaException;
-import com.orientechnologies.orient.core.exception.OSecurityAccessException;
-import com.orientechnologies.orient.core.exception.OSecurityException;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
@@ -61,23 +45,8 @@ import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibraryImpl;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
-import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
-import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
-import com.orientechnologies.orient.core.metadata.schema.OView;
-import com.orientechnologies.orient.core.metadata.security.OImmutableUser;
-import com.orientechnologies.orient.core.metadata.security.OPropertyAccess;
-import com.orientechnologies.orient.core.metadata.security.OPropertyEncryptionNone;
-import com.orientechnologies.orient.core.metadata.security.ORestrictedAccessHook;
-import com.orientechnologies.orient.core.metadata.security.ORestrictedOperation;
-import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.metadata.security.ORule;
-import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
-import com.orientechnologies.orient.core.metadata.security.OSecurityPolicy;
-import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
-import com.orientechnologies.orient.core.metadata.security.OToken;
-import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.metadata.schema.*;
+import com.orientechnologies.orient.core.metadata.security.*;
 import com.orientechnologies.orient.core.metadata.security.auth.OAuthenticationInfo;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceAction;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryProxy;
@@ -96,33 +65,26 @@ import com.orientechnologies.orient.core.record.impl.OVertexDelegate;
 import com.orientechnologies.orient.core.schedule.OScheduledEvent;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
-import com.orientechnologies.orient.core.sql.executor.LiveQueryListenerImpl;
-import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
-import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.*;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSet;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
-import com.orientechnologies.orient.core.storage.OBasicTransaction;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageInfo;
+import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.cluster.OOfflineClusterException;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorageComponent;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
+import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
+import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.text.SimpleDateFormat;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.TimeZone;
-import java.util.TimerTask;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -140,7 +102,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
 
   protected class InterruptTimerTask extends TimerTask {
 
-    private Thread executionThread;
+    private final Thread executionThread;
     boolean canceled = false;
 
     protected InterruptTimerTask(Thread executionThread) {
@@ -591,12 +553,12 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
 
     InterruptTimerTask commandInterruptTimer = null;
     if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
-      commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
-      getSharedContext()
-          .getOrientDB()
-          .scheduleOnce(
-              commandInterruptTimer,
-              getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT));
+      //      commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
+      //      getSharedContext()
+      //          .getOrientDB()
+      //          .scheduleOnce(
+      //              commandInterruptTimer,
+      //              getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT));
     }
     try {
 
@@ -624,12 +586,12 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
 
     InterruptTimerTask commandInterruptTimer = null;
     if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
-      commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
-      getSharedContext()
-          .getOrientDB()
-          .scheduleOnce(
-              commandInterruptTimer,
-              getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT));
+      //      commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
+      //      getSharedContext()
+      //          .getOrientDB()
+      //          .scheduleOnce(
+      //              commandInterruptTimer,
+      //              getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT));
     }
     try {
 
@@ -657,12 +619,13 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
 
     InterruptTimerTask commandInterruptTimer = null;
     if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
-      commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
-      getSharedContext()
-          .getOrientDB()
-          .scheduleOnce(
-              commandInterruptTimer,
-              getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT));
+      //      commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
+      //      getSharedContext()
+      //              .getOrientDB()
+      //              .scheduleOnce(
+      //                      commandInterruptTimer,
+      //
+      // getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT));
     }
     try {
 
@@ -696,12 +659,12 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
 
     InterruptTimerTask commandInterruptTimer = null;
     if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
-      commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
-      getSharedContext()
-          .getOrientDB()
-          .scheduleOnce(
-              commandInterruptTimer,
-              getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT));
+      //      commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
+      //      getSharedContext()
+      //          .getOrientDB()
+      //          .scheduleOnce(
+      //              commandInterruptTimer,
+      //              getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT));
     }
     try {
 
@@ -738,12 +701,12 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
 
     InterruptTimerTask commandInterruptTimer = null;
     if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
-      commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
-      getSharedContext()
-          .getOrientDB()
-          .scheduleOnce(
-              commandInterruptTimer,
-              getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT));
+      //      commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
+      //      getSharedContext()
+      //          .getOrientDB()
+      //          .scheduleOnce(
+      //              commandInterruptTimer,
+      //              getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT));
     }
     try {
       OScriptExecutor executor =
@@ -781,12 +744,12 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
 
     InterruptTimerTask commandInterruptTimer = null;
     if (getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0) {
-      commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
-      getSharedContext()
-          .getOrientDB()
-          .scheduleOnce(
-              commandInterruptTimer,
-              getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT));
+      //      commandInterruptTimer = new InterruptTimerTask(Thread.currentThread());
+      //      getSharedContext()
+      //          .getOrientDB()
+      //          .scheduleOnce(
+      //              commandInterruptTimer,
+      //              getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT));
     }
     try {
       OScriptExecutor executor =
@@ -902,7 +865,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     ORecord record = identifiable.getRecord();
     if (record == null) return;
     if (record instanceof ODocument) {
-      if (((ODocument) record).getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
+      if (record.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
         ((ODocument) record).reload();
       }
     }
@@ -1379,7 +1342,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
 
       // SEARCH IN LOCAL TX
       ORecord record = getTransaction().getRecord(rid);
-      if (record == OBasicTransaction.DELETED_RECORD)
+      if (record == OTransactionAbstract.DELETED_RECORD)
         // DELETED IN TX
         return null;
 
@@ -1873,5 +1836,185 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
   @Override
   public TimerTask createInterruptTimerTask() {
     return new InterruptTimerTask(Thread.currentThread());
+  }
+
+  @Override
+  public String incrementalBackup(final String path) throws UnsupportedOperationException {
+    checkOpenness();
+    checkIfActive();
+    checkSecurity(ORule.ResourceGeneric.DATABASE, "backup", ORole.PERMISSION_EXECUTE);
+
+    return getStorage().incrementalBackup(path, null);
+  }
+
+  @Override
+  public ORecordMetadata getRecordMetadata(final ORID rid) {
+    checkIfActive();
+    return getStorage().getRecordMetadata(rid);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void freeze(final boolean throwException) {
+    checkOpenness();
+    if (!(getStorage() instanceof OFreezableStorageComponent)) {
+      OLogManager.instance()
+          .error(
+              this,
+              "Only local paginated storage supports freeze. If you are using remote client please use OServerAdmin instead",
+              null);
+
+      return;
+    }
+
+    final long startTime = Orient.instance().getProfiler().startChrono();
+
+    final OFreezableStorageComponent storage = getFreezableStorage();
+    if (storage != null) {
+      storage.freeze(throwException);
+    }
+
+    Orient.instance()
+        .getProfiler()
+        .stopChrono(
+            "db." + getName() + ".freeze", "Time to freeze the database", startTime, "db.*.freeze");
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void freeze() {
+    freeze(false);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void release() {
+    checkOpenness();
+    if (!(getStorage() instanceof OFreezableStorageComponent)) {
+      OLogManager.instance()
+          .error(
+              this,
+              "Only local paginated storage supports release. If you are using remote client please use OServerAdmin instead",
+              null);
+      return;
+    }
+
+    final long startTime = Orient.instance().getProfiler().startChrono();
+
+    final OFreezableStorageComponent storage = getFreezableStorage();
+    if (storage != null) {
+      storage.release();
+    }
+
+    Orient.instance()
+        .getProfiler()
+        .stopChrono(
+            "db." + getName() + ".release",
+            "Time to release the database",
+            startTime,
+            "db.*.release");
+  }
+
+  private OFreezableStorageComponent getFreezableStorage() {
+    OStorage s = getStorage();
+    if (s instanceof OFreezableStorageComponent) return (OFreezableStorageComponent) s;
+    else {
+      OLogManager.instance()
+          .error(
+              this, "Storage of type " + s.getType() + " does not support freeze operation", null);
+      return null;
+    }
+  }
+
+  @Override
+  public List<String> backup(
+      final OutputStream out,
+      final Map<String, Object> options,
+      final Callable<Object> callable,
+      final OCommandOutputListener iListener,
+      final int compressionLevel,
+      final int bufferSize)
+      throws IOException {
+    checkOpenness();
+    checkSecurity(ORule.ResourceGeneric.DATABASE, "backup", ORole.PERMISSION_EXECUTE);
+    return getStorage().backup(out, options, callable, iListener, compressionLevel, bufferSize);
+  }
+
+  @Override
+  public void restore(
+      final InputStream in,
+      final Map<String, Object> options,
+      final Callable<Object> callable,
+      final OCommandOutputListener iListener)
+      throws IOException {
+    checkOpenness();
+
+    getStorage().restore(in, options, callable, iListener);
+
+    if (!isClosed()) {
+      loadMetadata();
+      sharedContext.reload(this);
+    }
+  }
+
+  /** {@inheritDoc} */
+  public OSBTreeCollectionManager getSbTreeCollectionManager() {
+    return getStorage().getSBtreeCollectionManager();
+  }
+
+  @Override
+  public void reload() {
+    checkIfActive();
+
+    if (this.isClosed()) {
+      throw new ODatabaseException("Cannot reload a closed db");
+    }
+    metadata.reload();
+    getStorage().reload();
+  }
+
+  @Override
+  public void internalCommit(OTransactionInternal transaction) {
+    this.getStorage().commit(transaction);
+  }
+
+  public void internalClose(boolean recycle) {
+    if (status != STATUS.OPEN) return;
+
+    checkIfActive();
+
+    try {
+      closeActiveQueries();
+      localCache.shutdown();
+
+      if (isClosed()) {
+        status = STATUS.CLOSED;
+        return;
+      }
+
+      try {
+        rollback(true);
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "Exception during commit of active transaction", e);
+      }
+
+      callOnCloseListeners();
+
+      if (currentIntent != null) {
+        currentIntent.end(this);
+        currentIntent = null;
+      }
+
+      status = STATUS.CLOSED;
+      if (!recycle) {
+        sharedContext = null;
+
+        if (getStorage() != null) getStorage().close();
+      }
+
+    } finally {
+      // ALWAYS RESET TL
+      ODatabaseRecordThreadLocal.instance().remove();
+    }
   }
 }

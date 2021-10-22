@@ -321,7 +321,7 @@ public class OClusterHealthChecker implements Runnable {
                 dbName,
                 null,
                 servers,
-                new OGossipTask(manager.getLockManagerServer()),
+                new OGossipTask(),
                 manager.getNextMessageIdCounter(),
                 ODistributedRequest.EXECUTION_MODE.RESPONSE,
                 null);
@@ -329,23 +329,6 @@ public class OClusterHealthChecker implements Runnable {
         final Object payload = response != null ? response.getPayload() : null;
         if (payload instanceof Map) {
           final Map<String, Object> responses = (Map<String, Object>) payload;
-
-          final String lockManagerServer = manager.getLockManagerServer();
-          if (lockManagerServer != null)
-            for (Map.Entry<String, Object> r : responses.entrySet()) {
-              if (!lockManagerServer.equals(String.valueOf(r.getValue()))) {
-                ODistributedServerLog.warn(
-                    this,
-                    manager.getLocalNodeName(),
-                    null,
-                    ODistributedServerLog.DIRECTION.NONE,
-                    "Server '%s' is using server '%s' as lock, while current server is using '%s'",
-                    r.getKey(),
-                    r.getValue(),
-                    lockManagerServer);
-              }
-            }
-
           servers.removeAll(responses.keySet());
         }
       } catch (ODistributedException e) {

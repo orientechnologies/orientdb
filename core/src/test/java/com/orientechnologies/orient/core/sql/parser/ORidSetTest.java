@@ -99,7 +99,7 @@ public class ORidSetTest extends OParserTestAbstract {
   @Test
   public void testBigClusterPosition() {
     ORidSet set = new ORidSet();
-    ORID rid = new ORecordId(12, 20L * 1000 * 1000 * 1000);
+    ORID rid = new ORecordId(12, 200L * 1000 * 1000);
     Assert.assertFalse(set.contains(rid));
     set.add(rid);
     Assert.assertTrue(set.contains(rid));

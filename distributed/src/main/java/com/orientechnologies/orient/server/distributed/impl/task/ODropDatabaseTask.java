@@ -63,8 +63,7 @@ public class ODropDatabaseTask extends OAbstractRemoteTask {
         ODistributedServerLog.DIRECTION.IN,
         "Dropping database %s...",
         database.getName());
-
-    iServer.dropDatabase(database.getName());
+    iServer.getDatabases().internalDrop(database.getName());
 
     return true;
   }

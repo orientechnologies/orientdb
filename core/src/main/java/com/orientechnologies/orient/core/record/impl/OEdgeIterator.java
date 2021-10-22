@@ -26,11 +26,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.iterator.OLazyWrapperIterator;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.record.ODirection;
-import com.orientechnologies.orient.core.record.OEdge;
-import com.orientechnologies.orient.core.record.OElement;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.OVertex;
+import com.orientechnologies.orient.core.record.*;
 import java.util.Iterator;
 
 /** @author Luigi Dell'Aquila */
@@ -74,7 +70,6 @@ public class OEdgeIterator extends OLazyWrapperIterator<OEdge> {
 
     if (rec == null) {
       // SKIP IT
-      OLogManager.instance().warn(this, "Record (%s) is null", iObject);
       return null;
     }
 

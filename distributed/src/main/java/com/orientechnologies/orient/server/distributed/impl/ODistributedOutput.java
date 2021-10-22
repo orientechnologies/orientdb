@@ -67,9 +67,6 @@ public class ODistributedOutput {
         String serverLabel = serverName;
         if (manager.getLocalNodeName().equals(serverName)) serverLabel += "(*)";
 
-        final String lockManagerServer = manager.getLockManagerServer();
-        if (lockManagerServer != null && lockManagerServer.equals(serverName)) serverLabel += "(@)";
-
         serverRow.field("Name", serverLabel);
         serverRow.field("Status", (Object) m.field("status"));
         serverRow.field("Databases", (String) null);

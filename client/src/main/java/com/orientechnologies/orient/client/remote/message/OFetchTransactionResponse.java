@@ -50,7 +50,7 @@ public class OFetchTransactionResponse implements OBinaryResponse {
       ORID oldID = reversed.get(txEntry.getRID());
       request.setOldId(oldID != null ? oldID : txEntry.getRID());
       request.setRecordType(ORecordInternal.getRecordType(txEntry.getRecord()));
-      request.setRecord(ORecordSerializerNetworkV37.INSTANCE.toStream(txEntry.getRecord()));
+      request.setRecord(ORecordSerializerNetworkV37Client.INSTANCE.toStream(txEntry.getRecord()));
       request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
       netOperations.add(request);
     }

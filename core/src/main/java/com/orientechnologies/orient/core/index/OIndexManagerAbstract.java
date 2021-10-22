@@ -40,17 +40,8 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sharding.auto.OAutoShardingIndexFactory;
-import com.orientechnologies.orient.core.storage.OStorage;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import com.orientechnologies.orient.core.storage.OStorageInfo;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -72,8 +63,8 @@ public abstract class OIndexManagerAbstract implements OCloseable {
   protected Map<String, OIndex> indexes = new ConcurrentHashMap<>();
   protected String defaultClusterName = OMetadataDefault.CLUSTER_INDEX_NAME;
   protected String manualClusterName = OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME;
-  private AtomicInteger writeLockNesting = new AtomicInteger();
-  private ReadWriteLock lock = new ReentrantReadWriteLock();
+  private final AtomicInteger writeLockNesting = new AtomicInteger();
+  private final ReadWriteLock lock = new ReentrantReadWriteLock();
   protected ODocument document;
 
   public OIndexManagerAbstract() {
@@ -212,7 +203,6 @@ public abstract class OIndexManagerAbstract implements OCloseable {
 
   public OIndex getRawIndex(final String iName) {
     final OIndex index = indexes.get(iName);
-    if (index == null) return null;
     return index;
   }
 
@@ -278,7 +268,7 @@ public abstract class OIndexManagerAbstract implements OCloseable {
     if (idx == null) {
       idx = createDictionaryIfNeeded(database);
     }
-    return new ODictionary<>((OIndex) idx);
+    return new ODictionary<>(idx);
   }
 
   public ODocument getConfiguration() {
@@ -480,7 +470,7 @@ public abstract class OIndexManagerAbstract implements OCloseable {
     return ODatabaseRecordThreadLocal.instance().get();
   }
 
-  protected abstract OStorage getStorage();
+  protected abstract OStorageInfo getStorage();
 
   private static ODatabaseDocumentInternal getDatabaseIfDefined() {
     return ODatabaseRecordThreadLocal.instance().getIfDefined();
@@ -565,7 +555,7 @@ public abstract class OIndexManagerAbstract implements OCloseable {
   }
 
   Locale getServerLocale() {
-    OStorage storage = getStorage();
+    OStorageInfo storage = getStorage();
     OStorageConfiguration configuration = storage.getConfiguration();
     return configuration.getLocaleInstance();
   }
