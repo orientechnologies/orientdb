@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.serialization.serializer.record.json.v
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -81,7 +82,7 @@ public final class DocumentSerializer implements ValueSerializer {
         } else {
           final ValueSerializer valueSerializer =
               serializerFactory.findSerializer(fieldType, fieldValueToken);
-          final Object value = valueSerializer.fromJSON(parser, owner);
+          final Object value = valueSerializer.fromJSON(parser, document);
           document.field(fieldName, value, fieldType);
         }
       }
@@ -174,16 +175,22 @@ public final class DocumentSerializer implements ValueSerializer {
       }
 
       for (final String fieldName : document.fieldNames()) {
-        final Object filedValue = document.getProperty(fieldName);
-        if (filedValue == null) {
-          generator.writeNullField(fieldName);
-        } else {
-          final OType type = document.fieldType(fieldName);
-          assert type != null;
+        try {
+          final Object filedValue = document.getProperty(fieldName);
+          if (filedValue == null) {
+            generator.writeNullField(fieldName);
+          } else {
+            final OType type = document.fieldType(fieldName);
+            assert type != null;
 
-          final ValueSerializer serializer = serializerFactory.findSerializer(type);
-          generator.writeFieldName(fieldName);
-          serializer.toJSON(generator, filedValue);
+            final ValueSerializer serializer = serializerFactory.findSerializer(type);
+            generator.writeFieldName(fieldName);
+            serializer.toJSON(generator, filedValue);
+          }
+        } catch (RuntimeException | IOException e) {
+          OLogManager.instance()
+              .errorNoDb(this, "Error during serialization of field " + fieldName, e);
+          throw e;
         }
       }
     } finally {

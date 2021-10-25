@@ -69,7 +69,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
     this.size = size;
   }
 
-  private static enum Tombstone {
+  private enum Tombstone {
     TOMBSTONE
   }
 
@@ -497,6 +497,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
 
   public boolean addInternal(final OIdentifiable identifiable) {
     addEntry(identifiable);
+    size++;
     if (this.owner != null) ORecordInternal.track(this.owner, identifiable);
     return true;
   }
