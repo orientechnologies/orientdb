@@ -7,6 +7,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -41,15 +42,6 @@ public final class DocumentSerializer implements ValueSerializer {
   @Override
   public Object fromJSON(JsonParser parser, ODocument owner) throws IOException {
     final ODocument document = new ODocument();
-
-    if (owner == null) {
-      final JsonToken firstToken = parser.nextToken();
-      if (firstToken != JsonToken.START_OBJECT) {
-        throw new ODatabaseException(
-            "Invalid token " + firstToken + ". Start of the object expected.");
-      }
-    }
-
     Map<String, String> fieldTypeIDs = null;
     final SerializerFactory serializerFactory = SerializerFactory.INSTANCE;
 
@@ -69,17 +61,24 @@ public final class DocumentSerializer implements ValueSerializer {
               "Invalid JSON format, types of the fields should be defined first");
         }
 
-        final String fieldTypeId = fieldTypeIDs.get(fieldName);
-        if (fieldTypeId == null) {
-          throw new ODatabaseException("Type of the field " + fieldName + " was not provided");
-        }
-
         final JsonToken fieldValueToken = parser.nextToken();
-        final OType fieldType = serializerFactory.typeById(fieldTypeId);
+        final String fieldTypeId = fieldTypeIDs.get(fieldName);
 
         if (fieldValueToken == JsonToken.VALUE_NULL) {
-          document.field(fieldName, null, fieldType);
+          if (fieldTypeId == null) {
+            document.field(fieldName);
+          } else {
+            final OType fieldType = serializerFactory.typeById(fieldTypeId);
+            document.field(fieldName, fieldType);
+          }
+
         } else {
+          if (fieldTypeId == null) {
+            throw new ODatabaseException("Type of the field " + fieldName + " was not provided");
+          }
+
+          final OType fieldType = serializerFactory.typeById(fieldTypeId);
+
           final ValueSerializer valueSerializer =
               serializerFactory.findSerializer(fieldType, fieldValueToken);
           final Object value = valueSerializer.fromJSON(parser, document);
@@ -180,10 +179,14 @@ public final class DocumentSerializer implements ValueSerializer {
           if (filedValue == null) {
             generator.writeNullField(fieldName);
           } else {
-            final OType type = document.fieldType(fieldName);
-            assert type != null;
+            final Optional<OType> type = fieldType(document, fieldName);
 
-            final ValueSerializer serializer = serializerFactory.findSerializer(type);
+            final ValueSerializer serializer =
+                serializerFactory.findSerializer(
+                    type.orElseThrow(
+                        () ->
+                            new IllegalStateException(
+                                "Type of the field " + fieldName + " is undefined")));
             generator.writeFieldName(fieldName);
             serializer.toJSON(generator, filedValue);
           }
@@ -196,6 +199,24 @@ public final class DocumentSerializer implements ValueSerializer {
     } finally {
       generator.writeEndObject();
     }
+  }
+
+  private Optional<OType> fieldType(ODocument document, String fieldName) {
+    OType type = document.fieldType(fieldName);
+    Object filedValue = document.field(fieldName);
+
+    if (filedValue == null) {
+      return Optional.ofNullable(type);
+    }
+
+    if (type == null) {
+      type = OType.getTypeByValue(filedValue);
+    }
+
+    if (type == null) {
+      throw new IllegalStateException("Type of the field " + fieldName + " is undefined");
+    }
+    return Optional.of(type);
   }
 
   private void writeMetadata(
@@ -221,13 +242,13 @@ public final class DocumentSerializer implements ValueSerializer {
     final StringBuilder fieldTypes = new StringBuilder();
 
     for (final String fieldName : document.fieldNames()) {
-      final OType type = document.fieldType(fieldName);
-      if (type == null) {
+      final Optional<OType> type = fieldType(document, fieldName);
+
+      if (!type.isPresent()) {
         continue;
       }
 
-      final String typeId = serializerFactory.fieldTypeId(type);
-
+      final String typeId = serializerFactory.fieldTypeId(type.get());
       fieldTypes.append(fieldName).append("=").append(typeId).append(",");
     }
 

@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.serialization.serializer.record.json.v
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -28,13 +29,20 @@ public class EmbeddedMapSerializer implements ValueSerializer {
         if (item == null) {
           generator.writeNull();
         } else {
-          final OType type = OType.getTypeByValue(item);
+          OType type = OType.getTypeByValue(item);
+
+          if (type == OType.LINK
+                  && (item instanceof ODocument)
+                  && !((OIdentifiable) item).getIdentity().isValid()) {
+            type = OType.EMBEDDED;
+          }
+
           final ValueSerializer serializer = SerializerFactory.INSTANCE.findSerializer(type);
           serializer.toJSON(generator, item);
         }
       }
     } finally {
-      generator.writeStartObject();
+      generator.writeEndObject();
     }
   }
 
