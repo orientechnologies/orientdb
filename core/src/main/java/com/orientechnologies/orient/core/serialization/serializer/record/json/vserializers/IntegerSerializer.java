@@ -8,24 +8,24 @@ import com.orientechnologies.orient.core.serialization.serializer.record.json.Va
 
 import java.io.IOException;
 
-public final class StringSerializer implements ValueSerializer {
+public class IntegerSerializer implements ValueSerializer {
   @Override
   public void toJSON(JsonGenerator generator, Object value) throws IOException {
-    generator.writeString(value.toString());
+    generator.writeNumber((int) value);
   }
 
   @Override
   public Object fromJSON(JsonParser parser, ODocument owner) throws IOException {
-    return parser.getValueAsString();
+    return parser.getIntValue();
   }
 
   @Override
   public String typeId() {
-    return SerializerIDs.STRING;
+    return SerializerIDs.INTEGER;
   }
 
   @Override
   public JsonToken[] startTokens() {
-    return new JsonToken[] {JsonToken.VALUE_STRING};
+    return new JsonToken[] {JsonToken.VALUE_NUMBER_INT};
   }
 }

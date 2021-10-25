@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.serialization.serializer.record.json.vserializers;
 
 public interface SerializerIDs {
+  String BOOLEAN = "w";
   String DATE = "a";
   String BYTE = "b";
   String DECIMAL = "c";
@@ -15,6 +16,7 @@ public interface SerializerIDs {
   String EMBEDDED_MAP = "p";
   String STRING = "r";
   String SHORT = "s";
+  String INTEGER = "k";
   String DATE_TIME = "t";
   String EMBEDDED = "o";
   String CUSTOM = "u";

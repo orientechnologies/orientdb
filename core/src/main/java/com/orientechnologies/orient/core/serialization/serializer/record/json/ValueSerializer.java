@@ -13,5 +13,5 @@ public interface ValueSerializer {
 
     String typeId();
 
-    JsonToken startToken();
+    JsonToken[] startTokens();
 }

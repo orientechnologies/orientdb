@@ -25,7 +25,7 @@ public class ByteSerializer implements ValueSerializer {
   }
 
   @Override
-  public JsonToken startToken() {
-    return JsonToken.VALUE_NUMBER_INT;
+  public JsonToken[] startTokens() {
+    return new JsonToken[] {JsonToken.VALUE_NUMBER_INT};
   }
 }

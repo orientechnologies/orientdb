@@ -33,7 +33,7 @@ public class LinkListSerializer extends AbstractLinkedCollectionSerializer
   }
 
   @Override
-  public JsonToken startToken() {
-    return JsonToken.START_ARRAY;
+  public JsonToken[] startTokens() {
+    return new JsonToken[] {JsonToken.START_ARRAY};
   }
 }

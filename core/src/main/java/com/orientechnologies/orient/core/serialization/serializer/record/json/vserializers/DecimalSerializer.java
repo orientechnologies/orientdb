@@ -26,7 +26,7 @@ public class DecimalSerializer implements ValueSerializer {
   }
 
   @Override
-  public JsonToken startToken() {
-    return JsonToken.VALUE_NUMBER_FLOAT;
+  public JsonToken[] startTokens() {
+    return new JsonToken[] {JsonToken.VALUE_NUMBER_FLOAT, JsonToken.VALUE_NUMBER_INT};
   }
 }

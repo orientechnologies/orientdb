@@ -25,7 +25,7 @@ public class BinarySerializer implements ValueSerializer {
   }
 
   @Override
-  public JsonToken startToken() {
-    return JsonToken.VALUE_STRING;
+  public JsonToken[] startTokens() {
+    return new JsonToken[] {JsonToken.VALUE_STRING};
   }
 }

@@ -5,10 +5,7 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.record.json.vserializers.*;
 
-import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 public final class SerializerFactory {
   public static final SerializerFactory INSTANCE = new SerializerFactory();
@@ -19,6 +16,7 @@ public final class SerializerFactory {
   static {
     TYPE_SERIALIZERS.put(OType.BINARY, new BinarySerializer());
     TYPE_SERIALIZERS.put(OType.BYTE, new ByteSerializer());
+    TYPE_SERIALIZERS.put(OType.BOOLEAN, new BooleanSerializer());
     TYPE_SERIALIZERS.put(OType.CUSTOM, new CustomSerializer());
     TYPE_SERIALIZERS.put(OType.DATE, new DateSerializer());
     TYPE_SERIALIZERS.put(OType.DATETIME, new DateTimeSerializer());
@@ -31,6 +29,7 @@ public final class SerializerFactory {
     TYPE_SERIALIZERS.put(OType.LINKSET, new LinkSetSerializer());
     TYPE_SERIALIZERS.put(OType.LINKMAP, new LinkMapSerializer());
     TYPE_SERIALIZERS.put(OType.LINK, new LinkSerializer());
+    TYPE_SERIALIZERS.put(OType.INTEGER, new IntegerSerializer());
     TYPE_SERIALIZERS.put(OType.LONG, new LongSerializer());
     TYPE_SERIALIZERS.put(OType.EMBEDDEDSET, new EmbeddedSetSerializer());
     TYPE_SERIALIZERS.put(OType.SHORT, new ShortSerializer());
@@ -69,13 +68,23 @@ public final class SerializerFactory {
     final String errorMessage = "Invalid token %s for field type %s, expected %s";
 
     final ValueSerializer serializer = findSerializer(fieldType);
-    final JsonToken expectedJsonToken = serializer.startToken();
-    if (expectedJsonToken != token) {
+    final JsonToken[] expectedJsonTokens = serializer.startTokens();
+    if (!containsToken(expectedJsonTokens, token)) {
       throw new ODatabaseException(
-          String.format(errorMessage, token, fieldType, expectedJsonToken));
+          String.format(errorMessage, token, fieldType, Arrays.toString(expectedJsonTokens)));
     }
 
     return serializer;
+  }
+
+  private static boolean containsToken(final JsonToken[] tokens, JsonToken token) {
+    for (final JsonToken tk : tokens) {
+      if (tk == token) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   public ValueSerializer findSerializer(final JsonToken token) {

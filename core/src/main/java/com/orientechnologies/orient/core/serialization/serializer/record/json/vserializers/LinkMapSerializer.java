@@ -78,7 +78,7 @@ public class LinkMapSerializer implements ValueSerializer {
 
       if (valueToken == JsonToken.VALUE_NULL) {
         if (owner != null) {
-          ((OTrackedMap<OIdentifiable>)map).putInternal(key, null);
+          ((OTrackedMap<OIdentifiable>) map).putInternal(key, null);
         } else {
           map.put(key, null);
         }
@@ -86,12 +86,16 @@ public class LinkMapSerializer implements ValueSerializer {
         final ORID link = (ORID) linkSerializer.fromJSON(parser, null);
 
         if (owner != null) {
-          ((OTrackedMap<OIdentifiable>)map).putInternal(key, link);
+          ((OTrackedMap<OIdentifiable>) map).putInternal(key, link);
         } else {
           map.put(key, link);
         }
       } else {
-        throw new ODatabaseException("Unexpected JSON token " + valueToken + " , string was expected as a value of field " + key);
+        throw new ODatabaseException(
+            "Unexpected JSON token "
+                + valueToken
+                + " , string was expected as a value of field "
+                + key);
       }
 
       nextToken = parser.nextToken();
@@ -106,7 +110,7 @@ public class LinkMapSerializer implements ValueSerializer {
   }
 
   @Override
-  public JsonToken startToken() {
-    return JsonToken.START_OBJECT;
+  public JsonToken[] startTokens() {
+    return new JsonToken[] {JsonToken.START_OBJECT};
   }
 }

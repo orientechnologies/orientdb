@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.orientechnologies.orient.core.db.record.OTrackedMap;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.json.SerializerFactory;
@@ -84,7 +83,7 @@ public class EmbeddedMapSerializer implements ValueSerializer {
   }
 
   @Override
-  public JsonToken startToken() {
-    return JsonToken.START_OBJECT;
+  public JsonToken[] startTokens() {
+    return new JsonToken[] {JsonToken.START_OBJECT};
   }
 }

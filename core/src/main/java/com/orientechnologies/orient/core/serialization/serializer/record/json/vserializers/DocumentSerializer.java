@@ -159,8 +159,8 @@ public final class DocumentSerializer implements ValueSerializer {
   }
 
   @Override
-  public JsonToken startToken() {
-    return JsonToken.START_OBJECT;
+  public JsonToken[] startTokens() {
+    return new JsonToken[] {JsonToken.START_OBJECT};
   }
 
   private void toJSON(final JsonGenerator generator, final ODocument document) throws IOException {
@@ -236,11 +236,11 @@ public final class DocumentSerializer implements ValueSerializer {
       return new HashMap<>();
     }
 
-    final String[] fieldTypesMerged = fieldTypesStr.split(":");
+    final String[] fieldTypesMerged = fieldTypesStr.split(",");
 
     final HashMap<String, String> fieldTypes = new HashMap<>();
     for (final String filedTypeMerged : fieldTypesMerged) {
-      final int typeSeparatorIndex = filedTypeMerged.indexOf(':');
+      final int typeSeparatorIndex = filedTypeMerged.indexOf('=');
       if (typeSeparatorIndex < 0) {
         throw new ODatabaseException("Invalid value of field types metadata : " + fieldTypesStr);
       }
