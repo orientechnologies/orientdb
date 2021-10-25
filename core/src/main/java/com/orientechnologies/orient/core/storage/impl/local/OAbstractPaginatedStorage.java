@@ -24,10 +24,8 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.RID_
 
 
 import com.orientechnologies.common.concur.ONeedRetryException;
-import com.orientechnologies.common.concur.lock.OComparableLockManager;
-import com.orientechnologies.common.concur.lock.OLockManager;
-import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
-import com.orientechnologies.common.concur.lock.OPartitionedLockManager;
+import com.orientechnologies.common.concur.OTimeoutException;
+import com.orientechnologies.common.concur.lock.*;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OHighLevelException;
 import com.orientechnologies.common.io.OIOException;
@@ -835,12 +833,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           final long start = System.currentTimeMillis();
 
           final OPageDataVerificationError[] pageErrors =
-              writeCache.checkStoredPages(verbose ? listener : null);
+                  writeCache.checkStoredPages(verbose ? listener : null);
 
           listener.onMessage(
-              "Check of storage completed in " + (System.currentTimeMillis() - start) + "ms. " + (
-                  pageErrors.length > 0 ?
-                      pageErrors.length + " with errors." : " without errors."));
+                  "Check of storage completed in " + (System.currentTimeMillis() - start) + "ms. " + (
+                          pageErrors.length > 0 ?
+                                  pageErrors.length + " with errors." : " without errors."));
 
           return pageErrors.length == 0;
         } finally {
@@ -6511,7 +6509,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   protected final RuntimeException logAndPrepareForRethrow(final RuntimeException runtimeException) {
-    if (!(runtimeException instanceof OHighLevelException || runtimeException instanceof ONeedRetryException)) {
+    if (!(runtimeException instanceof OHighLevelException || runtimeException instanceof ONeedRetryException || runtimeException instanceof OInterruptedException)) {
       OLogManager.instance()
           .errorStorage(this, "Exception `%08X` in storage `%s`: %s", runtimeException, System.identityHashCode(runtimeException),
               getURL(), OConstants.getVersion());
@@ -6538,7 +6536,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   protected final RuntimeException logAndPrepareForRethrow(final Throwable throwable) {
-    if (!(throwable instanceof OHighLevelException || throwable instanceof ONeedRetryException)) {
+    if (!(throwable instanceof OHighLevelException || throwable instanceof ONeedRetryException || throwable instanceof OInterruptedException)) {
       OLogManager.instance()
           .errorStorage(this, "Exception `%08X` in storage `%s`: %s", throwable, System.identityHashCode(throwable), getURL(),
               OConstants.getVersion());
