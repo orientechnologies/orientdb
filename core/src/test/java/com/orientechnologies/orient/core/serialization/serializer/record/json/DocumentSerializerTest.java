@@ -81,7 +81,7 @@ public class DocumentSerializerTest {
   private void generateEmbeddedCollections(
       final ODocument document, final Random random, final int depth) {
     final List<ODocument> embeddedList = new ArrayList<>();
-    final int listSize = random.nextInt(12);
+    final int listSize = random.nextInt(12) + 6;
 
     for (int i = 0; i < listSize; i++) {
       final ODocument doc = new ODocument();
@@ -96,7 +96,7 @@ public class DocumentSerializerTest {
     }
 
     final Set<ODocument> embeddedSet = new HashSet<>();
-    final int setSize = random.nextInt(12);
+    final int setSize = random.nextInt(12) + 6;
 
     for (int i = 0; i < setSize; i++) {
       final ODocument doc = new ODocument();
@@ -111,7 +111,7 @@ public class DocumentSerializerTest {
     }
 
     final Map<String, ODocument> embeddedMap = new HashMap<>();
-    final int mapSize = random.nextInt(12);
+    final int mapSize = random.nextInt(12) + 6;
 
     for (int i = 0; i < mapSize; i++) {
       final ODocument doc = new ODocument();
@@ -163,21 +163,57 @@ public class DocumentSerializerTest {
 
   private void generatePrimitiveTypes(ODocument document, final Random random) {
     document.field("sVal", (short) random.nextInt(1 << 16), OType.SHORT);
+    document.field("sValNull", null, OType.SHORT);
+    document.field("sValNoType", (short) random.nextInt(1 << 16));
+
     document.field("iVal", random.nextInt(), OType.INTEGER);
+    document.field("iValNull", null, OType.INTEGER);
+    document.field("iValNoType", random.nextInt());
+
     document.field("lVal", random.nextLong(), OType.LONG);
+    document.field("lValNull", null, OType.LONG);
+    document.field("lValNoType", random.nextLong());
+
     document.field("strVal", "val" + random.nextInt(), OType.STRING);
+    document.field("strValNull", null, OType.STRING);
+    document.field("strValNoType", "val" + random.nextInt());
+
     document.field("fVal", random.nextFloat(), OType.FLOAT);
+    document.field("fValNull", null, OType.FLOAT);
+    document.field("fValNoType", random.nextFloat());
+
     document.field("dVal", random.nextDouble(), OType.DOUBLE);
+    document.field("dValNull", null, OType.DOUBLE);
+    document.field("dValNoType", random.nextDouble());
+
     document.field("bVal", (byte) random.nextInt(1 << 8), OType.BYTE);
+    document.field("bValNull", null, OType.BYTE);
+    document.field("bValNoType", (byte) random.nextInt(1 << 8));
+
     document.field("boolVal", random.nextBoolean(), OType.BOOLEAN);
+    document.field("boolValNull", null, OType.BOOLEAN);
+    document.field("boolValNoType", random.nextBoolean());
+
     document.field("linkVal", randomRecordId(random), OType.LINK);
+    document.field("linkValNull", null, OType.LINK);
+    document.field("linkValNoType", randomRecordId(random));
 
     final int arrayLen = random.nextInt(12);
-    final byte[] array = new byte[arrayLen];
+
+    byte[] array = new byte[arrayLen];
     random.nextBytes(array);
 
     document.field("binaryVal", array, OType.BINARY);
+    document.field("binaryValNull", null, OType.BINARY);
+
+    array = new byte[arrayLen];
+    random.nextBytes(array);
+
+    document.field("binaryValNoType", array);
+
     document.field("decVal", new BigDecimal("13241235467.960464"), OType.DECIMAL);
+    document.field("decValNull", null, OType.DECIMAL);
+    document.field("decValNoType", new BigDecimal("13241235467.960464"));
 
     final Calendar dtCalendar = Calendar.getInstance();
     dtCalendar.set(
@@ -189,9 +225,16 @@ public class DocumentSerializerTest {
         random.nextInt(60));
 
     document.field("dtVal", dtCalendar.getTime(), OType.DATETIME);
+    document.field("dtValNull", null, OType.DATETIME);
+    document.field("dtValNoType", dtCalendar.getTime());
+
     dtCalendar.set(random.nextInt(100) + 200, Calendar.NOVEMBER, random.nextInt(28));
 
     document.field("dateVal", dtCalendar.getTime(), OType.DATE);
+    document.field("dateValNull", null, OType.DATE);
+    document.field("dateValNoType", dtCalendar.getTime());
+
+    document.setProperty("nullValue", null);
   }
 
   private static ORID randomRecordId(final Random random) {

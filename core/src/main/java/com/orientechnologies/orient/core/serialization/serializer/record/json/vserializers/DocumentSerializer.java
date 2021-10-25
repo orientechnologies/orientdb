@@ -66,10 +66,10 @@ public final class DocumentSerializer implements ValueSerializer {
 
         if (fieldValueToken == JsonToken.VALUE_NULL) {
           if (fieldTypeId == null) {
-            document.field(fieldName);
+            document.setProperty(fieldName, null);
           } else {
             final OType fieldType = serializerFactory.typeById(fieldTypeId);
-            document.field(fieldName, fieldType);
+            document.setProperty(fieldName, null, fieldType);
           }
 
         } else {
