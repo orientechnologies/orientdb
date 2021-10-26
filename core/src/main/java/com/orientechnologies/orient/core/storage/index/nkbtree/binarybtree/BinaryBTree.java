@@ -822,45 +822,60 @@ public final class BinaryBTree extends ODurableComponent {
         final int leftKeyOffset = leftBucketPrefix.length - commonPrefix.length;
         final int rightKeyOffset = rightBucketPrefix.length - commonPrefix.length;
 
+        boolean added;
+        if (splitLeaf) {
+          added = bucketToSplit.setKeyPrefix(leftBucketPrefix);
+          assert added;
+
+          added = newRightBucket.setKeyPrefix(rightBucketPrefix);
+          assert added;
+        }
+
         for (int i = 0; i < leftEntries.size(); i++) {
           final Bucket.Entry entry = leftEntries.get(i);
 
           if (splitLeaf) {
-            bucketToSplit.addLeafEntry(
-                i,
-                entry.key,
-                leftKeyOffset,
-                entry.key.length - leftKeyOffset,
-                serializeValue(entry.value));
+            added =
+                bucketToSplit.addLeafEntry(
+                    i,
+                    entry.key,
+                    leftKeyOffset,
+                    entry.key.length - leftKeyOffset,
+                    serializeValue(entry.value));
           } else {
-            bucketToSplit.addNonLeafEntry(
-                i,
-                entry.leftChild,
-                entry.rightChild,
-                entry.key,
-                leftKeyOffset,
-                entry.key.length - leftKeyOffset);
+            added =
+                bucketToSplit.addNonLeafEntry(
+                    i,
+                    entry.leftChild,
+                    entry.rightChild,
+                    entry.key,
+                    leftKeyOffset,
+                    entry.key.length - leftKeyOffset);
           }
+          assert added;
         }
 
         for (int i = 0; i < rightEntries.size(); i++) {
           final Bucket.Entry entry = rightEntries.get(i);
           if (splitLeaf) {
-            newRightBucket.addLeafEntry(
-                i,
-                entry.key,
-                rightKeyOffset,
-                entry.key.length - rightKeyOffset,
-                serializeValue(entry.value));
+            added =
+                newRightBucket.addLeafEntry(
+                    i,
+                    entry.key,
+                    rightKeyOffset,
+                    entry.key.length - rightKeyOffset,
+                    serializeValue(entry.value));
           } else {
-            newRightBucket.addNonLeafEntry(
-                i,
-                entry.leftChild,
-                entry.rightChild,
-                entry.key,
-                rightKeyOffset,
-                entry.key.length - rightKeyOffset);
+            added =
+                newRightBucket.addNonLeafEntry(
+                    i,
+                    entry.leftChild,
+                    entry.rightChild,
+                    entry.key,
+                    rightKeyOffset,
+                    entry.key.length - rightKeyOffset);
           }
+          assert added;
         }
       } finally {
         releasePageFromWrite(atomicOperation, parentCacheEntry);
@@ -1006,28 +1021,34 @@ public final class BinaryBTree extends ODurableComponent {
       final Bucket newLeftBucket = new Bucket(leftBucketEntry);
       newLeftBucket.init(splitLeaf);
 
+      boolean added;
       for (int i = 0; i < leftEntries.size(); i++) {
         final Bucket.Entry entry = leftEntries.get(i);
         if (splitLeaf) {
-          newLeftBucket.addLeafEntry(
-              i,
-              entry.key,
-              leftPrefix.length,
-              entry.key.length - leftPrefix.length,
-              serializeValue(entry.value));
+          added =
+              newLeftBucket.addLeafEntry(
+                  i,
+                  entry.key,
+                  leftPrefix.length,
+                  entry.key.length - leftPrefix.length,
+                  serializeValue(entry.value));
         } else {
-          newLeftBucket.addNonLeafEntry(
-              i,
-              entry.leftChild,
-              entry.rightChild,
-              entry.key,
-              leftPrefix.length,
-              entry.key.length - leftPrefix.length);
+          added =
+              newLeftBucket.addNonLeafEntry(
+                  i,
+                  entry.leftChild,
+                  entry.rightChild,
+                  entry.key,
+                  leftPrefix.length,
+                  entry.key.length - leftPrefix.length);
         }
+        assert added;
       }
 
       if (splitLeaf) {
         newLeftBucket.setRightSibling(rightBucketEntry.getPageIndex());
+        added = newLeftBucket.setKeyPrefix(leftPrefix);
+        assert added;
       }
 
     } finally {
@@ -1038,28 +1059,34 @@ public final class BinaryBTree extends ODurableComponent {
       final Bucket newRightBucket = new Bucket(rightBucketEntry);
       newRightBucket.init(splitLeaf);
 
+      boolean added;
       for (int i = 0; i < rightEntries.size(); i++) {
         final Bucket.Entry entry = rightEntries.get(i);
         if (splitLeaf) {
-          newRightBucket.addLeafEntry(
-              i,
-              entry.key,
-              rightPrefix.length,
-              entry.key.length - rightPrefix.length,
-              serializeValue(entry.value));
+          added =
+              newRightBucket.addLeafEntry(
+                  i,
+                  entry.key,
+                  rightPrefix.length,
+                  entry.key.length - rightPrefix.length,
+                  serializeValue(entry.value));
         } else {
-          newRightBucket.addNonLeafEntry(
-              i,
-              entry.leftChild,
-              entry.rightChild,
-              entry.key,
-              rightPrefix.length,
-              entry.key.length - rightPrefix.length);
+          added =
+              newRightBucket.addNonLeafEntry(
+                  i,
+                  entry.leftChild,
+                  entry.rightChild,
+                  entry.key,
+                  rightPrefix.length,
+                  entry.key.length - rightPrefix.length);
         }
+        assert added;
       }
 
       if (splitLeaf) {
         newRightBucket.setLeftSibling(leftBucketEntry.getPageIndex());
+        added = newRightBucket.setKeyPrefix(rightPrefix);
+        assert added;
       }
     } finally {
       releasePageFromWrite(atomicOperation, rightBucketEntry);
@@ -1596,7 +1623,7 @@ public final class BinaryBTree extends ODurableComponent {
               }
             }
 
-            final NonLeafNodeDeletionResult  deletionResult = oNonLeafDeletionResult.get();
+            final NonLeafNodeDeletionResult deletionResult = oNonLeafDeletionResult.get();
             final byte[] newRightSiblingPrefix = deletionResult.newChildPrefix;
 
             final ArrayList<ORawPair<byte[], ORID>> leftOvers = new ArrayList<>();
@@ -1611,6 +1638,7 @@ public final class BinaryBTree extends ODurableComponent {
               }
 
               rightSiblingBucket.shrink(0);
+              rightSiblingBucket.setKeyPrefix(newRightSiblingPrefix);
 
               int pageIndex = 0;
               for (; pageIndex < rightSiblingSize; pageIndex++) {
@@ -1697,6 +1725,7 @@ public final class BinaryBTree extends ODurableComponent {
             }
 
             leftSiblingBucket.shrink(0);
+            leftSiblingBucket.setKeyPrefix(newLeftSiblingPrefix);
 
             int pageIndex = 0;
             for (; pageIndex < leftSiblingSize; pageIndex++) {
@@ -1834,7 +1863,7 @@ public final class BinaryBTree extends ODurableComponent {
                 parentItem,
                 parentBucket,
                 parentPrefix,
-                    bucket,
+                bucket,
                 rightSiblingBucket,
                 rightSiblingPrefix,
                 orphanPointer,
@@ -1882,7 +1911,7 @@ public final class BinaryBTree extends ODurableComponent {
                 parentItem,
                 parentBucket,
                 parentPrefix,
-                    bucket,
+                bucket,
                 leftSiblingBucket,
                 leftSiblingPrefix,
                 orphanPointer,
@@ -2205,18 +2234,18 @@ public final class BinaryBTree extends ODurableComponent {
   }
 
   private Optional<NonLeafNodeDeletionResult> mergeNoneLeafWithRightSiblingAndRemoveItem(
-          final OAtomicOperation atomicOperation,
-          final RemovalPathItem parentItem,
-          final Bucket parentBucket,
-          final byte[] parentBucketPrefix,
-          final Bucket bucket,
-          final Bucket rightSibling,
-          final byte[] rightSiblingPrefix,
-          final int orphanPointer,
-          final List<RemovalPathItem> path,
-          final List<byte[]> largestLowerBoundaries,
-          final List<byte[]> smallestUpperBoundaries,
-          final List<byte[]> keyPrefixes)
+      final OAtomicOperation atomicOperation,
+      final RemovalPathItem parentItem,
+      final Bucket parentBucket,
+      final byte[] parentBucketPrefix,
+      final Bucket bucket,
+      final Bucket rightSibling,
+      final byte[] rightSiblingPrefix,
+      final int orphanPointer,
+      final List<RemovalPathItem> path,
+      final List<byte[]> largestLowerBoundaries,
+      final List<byte[]> smallestUpperBoundaries,
+      final List<byte[]> keyPrefixes)
       throws IOException {
 
     if (rightSibling.size() != 1 || bucket.size() != 1) {
@@ -2282,26 +2311,27 @@ public final class BinaryBTree extends ODurableComponent {
       final byte[] leftChildKeyPrefix =
           extractCommonPrefix(leftChildLargestLowerBoundary, leftChildSmallestUpperBoundary);
 
-      return Optional.of(new NonLeafNodeDeletionResult(leftChildKeyPrefix,
-              leftChildLargestLowerBoundary, leftChildSmallestUpperBoundary));
+      return Optional.of(
+          new NonLeafNodeDeletionResult(
+              leftChildKeyPrefix, leftChildLargestLowerBoundary, leftChildSmallestUpperBoundary));
     }
 
     return Optional.empty();
   }
 
   private Optional<NonLeafNodeDeletionResult> mergeNoneLeafWithLeftSiblingAndRemoveItem(
-          final OAtomicOperation atomicOperation,
-          final RemovalPathItem parentItem,
-          final Bucket parentBucket,
-          final byte[] parentBucketPrefix,
-          final Bucket bucket,
-          final Bucket leftSibling,
-          final byte[] leftSiblingPrefix,
-          final int orphanPointer,
-          final List<RemovalPathItem> path,
-          final List<byte[]> largestLowerBounds,
-          final List<byte[]> smallestUpperBounds,
-          final List<byte[]> keyPrefixes)
+      final OAtomicOperation atomicOperation,
+      final RemovalPathItem parentItem,
+      final Bucket parentBucket,
+      final byte[] parentBucketPrefix,
+      final Bucket bucket,
+      final Bucket leftSibling,
+      final byte[] leftSiblingPrefix,
+      final int orphanPointer,
+      final List<RemovalPathItem> path,
+      final List<byte[]> largestLowerBounds,
+      final List<byte[]> smallestUpperBounds,
+      final List<byte[]> keyPrefixes)
       throws IOException {
 
     if (leftSibling.size() != 1 || bucket.size() != 1) {
@@ -2365,8 +2395,9 @@ public final class BinaryBTree extends ODurableComponent {
       final byte[] rightChildSmallestUpperBoundary = deletionResult.newChildSUB;
       final byte[] rightChildPrefix =
           extractCommonPrefix(rightChildLargestLowerBoundary, rightChildSmallestUpperBoundary);
-      return Optional.of(new NonLeafNodeDeletionResult(rightChildPrefix, rightChildLargestLowerBoundary,
-              rightChildSmallestUpperBoundary));
+      return Optional.of(
+          new NonLeafNodeDeletionResult(
+              rightChildPrefix, rightChildLargestLowerBoundary, rightChildSmallestUpperBoundary));
     }
 
     return Optional.empty();

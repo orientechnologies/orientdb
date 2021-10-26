@@ -186,7 +186,7 @@ public class BinaryBTreeTestIT {
           });
 
       if (prevKeysSize != keys.size()) {
-        if (keys.size() % 1_000 == 0) {
+        if (keys.size() % 10_000 == 0) {
           System.out.println(keys.size() + " keys were inserted.");
         }
       }
