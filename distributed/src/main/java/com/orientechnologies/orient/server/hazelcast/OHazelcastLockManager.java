@@ -69,12 +69,5 @@ public class OHazelcastLockManager implements ODistributedLockManager {
   public void handleUnreachableServer(String nodeLeftName) {}
 
   @Override
-  public void shutdown() {
-    synchronized (this) {
-      for (String resource : lockedResurces) {
-        hazelcast.getLock(resource).unlock();
-      }
-      lockedResurces.clear();
-    }
-  }
+  public void shutdown() {}
 }
