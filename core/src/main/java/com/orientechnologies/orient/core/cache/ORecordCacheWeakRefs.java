@@ -70,17 +70,13 @@ public class ORecordCacheWeakRefs extends OAbstractMapCache<WeakHashMap<ORID, We
       return value.get();
   }
 
-  public void clearRecords() {
-    for (WeakReference<ORecord> recRef: cache.values()) {
-      ORecord rec = recRef.get();
-      if (rec != null) {
-        rec.clear();
-      }
-    }
-  }
-  
   @Override
   public void shutdown() {
     cache = new WeakHashMap<ORID, WeakReference<ORecord>>();
+  }
+
+  @Override
+  public void clear() {
+    cache.clear();
   }
 }

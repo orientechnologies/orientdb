@@ -118,5 +118,4 @@ public class OLocalRecordCache extends OAbstractRecordCache {
   public String toString() {
     return "DB level cache records = " + getSize();
   }
-
 }
