@@ -10,6 +10,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.*;
 
 public final class Bucket extends ODurablePage {
@@ -66,7 +67,8 @@ public final class Bucket extends ODurablePage {
   }
 
   public int find(final byte[] key, int offset, int length) {
-    final ByteBuffer bufferKey = ByteBuffer.wrap(key, offset, length);
+    final ByteBuffer bufferKey =
+        ByteBuffer.wrap(key, offset, length).order(ByteOrder.nativeOrder());
 
     int low = 0;
     int high = size() - 1;
@@ -74,7 +76,10 @@ public final class Bucket extends ODurablePage {
     while (low <= high) {
       final int mid = (low + high) >>> 1;
       final ByteBuffer midVal = getKeyBuffer(mid);
-      final int cmp = midVal.compareTo(bufferKey);
+
+      bufferKey.position(offset);
+      final int cmp = compareUnsigned(midVal, bufferKey);
+
 
       if (cmp < 0) {
         low = mid + 1;
@@ -108,6 +113,40 @@ public final class Bucket extends ODurablePage {
 
     final int keySize = getShortValue(entryPosition);
     return getBinaryValueBuffer(entryPosition + OShortSerializer.SHORT_SIZE, keySize);
+  }
+
+  private static int compareUnsigned(final ByteBuffer bufferOne, final ByteBuffer bufferTwo) {
+    final int longSize = 8;
+    final int commonLen = Math.min(bufferOne.remaining(), bufferTwo.remaining());
+    final int WORDS = commonLen / longSize;
+
+    for (int i = 0; i < WORDS; i++) {
+      final long wordOne = bufferOne.getLong();
+      final long wordTwo = bufferTwo.getLong();
+
+      if (wordOne != wordTwo) {
+        if (ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN) {
+          return Long.compareUnsigned(Long.reverseBytes(wordOne), Long.reverseBytes(wordTwo));
+        }
+
+        return Long.compareUnsigned(wordOne, wordTwo);
+      }
+    }
+
+    for (int i = WORDS * longSize; i < commonLen; i++) {
+      int diff = compareUnsignedByte(bufferOne.get(), bufferTwo.get());
+      if (diff != 0) {
+        return diff;
+      }
+    }
+
+    return Integer.compare(bufferOne.remaining(), bufferTwo.remaining());
+  }
+
+  private static int compareUnsignedByte(byte byteOne, byte byteTwo) {
+    final int valOne = byteOne & 0xFF;
+    final int valTwo = byteTwo & 0xFF;
+    return valOne - valTwo;
   }
 
   public void addAll(final List<byte[]> rawEntries) {
@@ -388,7 +427,6 @@ public final class Bucket extends ODurablePage {
     setBinaryValue(entryPosition, value);
   }
 
-  @SuppressWarnings("BooleanMethodIsAlwaysInverted")
   public boolean updateKey(final int entryIndex, final byte[] key) {
     if (isLeaf()) {
       throw new IllegalStateException("Update key is applied to non-leaf buckets only");

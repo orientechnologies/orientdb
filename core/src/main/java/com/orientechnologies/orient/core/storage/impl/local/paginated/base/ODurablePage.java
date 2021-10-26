@@ -195,10 +195,11 @@ public class ODurablePage {
       buffer.position(pageOffset);
       buffer.limit(pageOffset + valLen);
 
-      return buffer.slice();
+      return buffer.slice().order(ByteOrder.nativeOrder());
     }
 
-    return ByteBuffer.wrap(changes.getBinaryValue(buffer, pageOffset, valLen));
+    return ByteBuffer.wrap(changes.getBinaryValue(buffer, pageOffset, valLen))
+        .order(ByteOrder.nativeOrder());
   }
 
   protected final byte[] getBinaryValue(final int pageOffset, final int valLen) {
