@@ -31,7 +31,6 @@ import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.serialization.types.OStringSerializer;
-import com.orientechnologies.common.thread.OThreadPoolExecutorWithLogging;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.compression.impl.OZIPCompressionUtil;
@@ -84,10 +83,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import net.jpountz.xxhash.XXHash64;
@@ -144,14 +140,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
   private static final int ONE_KB = 1024;
 
-  private static final OThreadPoolExecutorWithLogging segmentAdderExecutor;
-
-  static {
-    segmentAdderExecutor =
-        new OThreadPoolExecutorWithLogging(
-            0, 1, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<>(), new SegmentAppenderFactory());
-  }
-
   private final int deleteMaxRetries;
   private final int deleteWaitTime;
 
@@ -164,8 +152,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
   private final long walMaxSegSize;
   private final long doubleWriteLogMaxSegSize;
-
-  private final AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
 
   protected volatile byte[] iv;
 
@@ -390,6 +376,11 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
       }
 
       open(null, null, new OContextConfiguration());
+      atomicOperationsManager.executeInsideAtomicOperation(
+          null,
+          (atomicOperation) -> {
+            generateDatabaseInstanceId(atomicOperation);
+          });
     } catch (final RuntimeException e) {
       throw logAndPrepareForRethrow(e);
     } catch (final Error e) {
@@ -768,7 +759,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
       walPath = Paths.get(configWalPath);
     }
 
-    final CASDiskWriteAheadLog diskWriteAheadLog =
+    writeAheadLog =
         new CASDiskWriteAheadLog(
             name,
             storagePath,
@@ -792,28 +783,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
                 OGlobalConfiguration.STORAGE_PRINT_WAL_PERFORMANCE_STATISTICS),
             contextConfiguration.getValueAsInteger(
                 OGlobalConfiguration.STORAGE_PRINT_WAL_PERFORMANCE_INTERVAL));
-
-    writeAheadLog = diskWriteAheadLog;
     writeAheadLog.addCheckpointListener(this);
-
-    diskWriteAheadLog.addSegmentOverflowListener(
-        (segment) -> {
-          if (status != STATUS.OPEN) {
-            return;
-          }
-
-          final Future<Void> oldAppender = segmentAppender.get();
-          if (oldAppender == null || oldAppender.isDone()) {
-            final Future<Void> appender =
-                segmentAdderExecutor.submit(new SegmentAdder(segment, diskWriteAheadLog));
-
-            if (segmentAppender.compareAndSet(oldAppender, appender)) {
-              return;
-            }
-
-            appender.cancel(false);
-          }
-        });
 
     final int pageSize =
         contextConfiguration.getValueAsInteger(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE) * ONE_KB;
@@ -894,59 +864,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
       } catch (final RuntimeException e) {
         OLogManager.instance().error(this, "Error during fuzzy checkpoint", e);
       }
-    }
-  }
-
-  private final class SegmentAdder implements Callable<Void> {
-    private final long segment;
-    private final CASDiskWriteAheadLog wal;
-
-    private SegmentAdder(final long segment, final CASDiskWriteAheadLog wal) {
-      this.segment = segment;
-      this.wal = wal;
-    }
-
-    @Override
-    public Void call() {
-      try {
-        if (status != STATUS.OPEN) {
-          return null;
-        }
-
-        stateLock.acquireReadLock();
-        try {
-          if (status != STATUS.OPEN) {
-            return null;
-          }
-
-          final long freezeId = atomicOperationsManager.freezeComponentOperations();
-          try {
-            wal.appendSegment(segment + 1);
-          } finally {
-            atomicOperationsManager.releaseComponentOperations(freezeId);
-          }
-
-          atomicOperationsTable.compactTable();
-        } finally {
-          stateLock.releaseReadLock();
-        }
-
-      } catch (final Exception e) {
-        OLogManager.instance()
-            .errorNoDb(this, "Error during addition of new segment in storage %s.", e, getName());
-        throw e;
-      }
-
-      return null;
-    }
-  }
-
-  private static final class SegmentAppenderFactory implements ThreadFactory {
-    private SegmentAppenderFactory() {}
-
-    @Override
-    public Thread newThread(final Runnable r) {
-      return new Thread(OAbstractPaginatedStorage.storageThreadGroup, r, "Segment adder thread");
     }
   }
 }

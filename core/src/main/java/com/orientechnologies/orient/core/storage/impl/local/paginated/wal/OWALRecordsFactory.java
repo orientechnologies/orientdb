@@ -106,13 +106,8 @@ public final class OWALRecordsFactory {
     }
   }
 
-  public static void serializeRecordId(final ByteBuffer buffer, final int operationId) {
-    buffer.putInt(OPERATION_ID_OFFSET, operationId);
-  }
-
   public WriteableWALRecord fromStream(byte[] content) {
     int recordId = OShortSerializer.INSTANCE.deserializeNative(content, RECORD_ID_OFFSET);
-    int operationId = OIntegerSerializer.INSTANCE.deserializeNative(content, OPERATION_ID_OFFSET);
 
     if (recordId < 0) {
       final int originalLen =
@@ -133,7 +128,6 @@ public final class OWALRecordsFactory {
     final WriteableWALRecord walRecord = walRecordById(recordId);
 
     walRecord.fromStream(content, METADATA_SIZE);
-    walRecord.setOperationIdLsn(null, operationId);
 
     if (walRecord.getId() != recordId) {
       throw new IllegalStateException(
@@ -182,7 +176,6 @@ public final class OWALRecordsFactory {
       default:
         if (idToTypeMap.containsKey(recordId))
           try {
-            //noinspection unchecked
             walRecord =
                 (WriteableWALRecord)
                     idToTypeMap.get(recordId).getDeclaredConstructor().newInstance();

@@ -251,32 +251,6 @@ public class OTokenHandlerImpl implements OTokenHandler {
     return valid;
   }
 
-  @Override
-  public byte[] getDistributedToken(ONetworkProtocolData data) {
-    try {
-
-      final OBinaryToken token = new OBinaryToken();
-      final OrientJwtHeader header = new OrientJwtHeader();
-      header.setAlgorithm(algorithm);
-      header.setKeyId(keyProvider.getDefaultKey());
-      header.setType("node");
-      token.setHeader(header);
-      token.setServerUser(true);
-      token.setUserName(data.serverUsername);
-      token.setExpiry(0);
-      token.setProtocolVersion(data.protocolVersion);
-      token.setSerializer(data.getSerializationImpl());
-      token.setDriverName(data.driverName);
-      token.setDriverVersion(data.driverVersion);
-
-      return serializeSignedToken(token);
-    } catch (RuntimeException e) {
-      throw e;
-    } catch (Exception e) {
-      throw OException.wrapException(new OSystemException("Error on token parsing"), e);
-    }
-  }
-
   public byte[] getSignedBinaryToken(
       final ODatabaseDocumentInternal db,
       final OSecurityUser user,

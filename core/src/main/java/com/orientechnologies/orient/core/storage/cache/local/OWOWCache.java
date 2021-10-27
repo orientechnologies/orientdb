@@ -401,6 +401,8 @@ public final class OWOWCache extends OAbstractWriteCache
    */
   private final DoubleWriteLog doubleWriteLog;
 
+  private boolean closed;
+
   public OWOWCache(
       final int pageSize,
       final OByteBufferPool bufferPool,
@@ -460,6 +462,8 @@ public final class OWOWCache extends OAbstractWriteCache
 
       this.doubleWriteLog = doubleWriteLog;
 
+      this.closed = true;
+
       if (pagesFlushInterval > 0) {
         flushFuture =
             commitExecutor.schedule(
@@ -478,6 +482,8 @@ public final class OWOWCache extends OAbstractWriteCache
       initNameIdMapping();
 
       doubleWriteLog.open(storageName, storagePath, pageSize);
+
+      closed = false;
     } finally {
       filesLock.releaseWriteLock();
     }
@@ -592,6 +598,8 @@ public final class OWOWCache extends OAbstractWriteCache
   public long bookFileId(final String fileName) {
     filesLock.acquireWriteLock();
     try {
+      checkForClose();
+
       final Integer fileId = nameIdMap.get(fileName);
 
       if (fileId != null) {
@@ -626,6 +634,8 @@ public final class OWOWCache extends OAbstractWriteCache
   public long loadFile(final String fileName) throws IOException {
     filesLock.acquireWriteLock();
     try {
+      checkForClose();
+
       Integer fileId = nameIdMap.get(fileName);
       final OFile fileClassic;
 
@@ -692,6 +702,8 @@ public final class OWOWCache extends OAbstractWriteCache
   public long addFile(final String fileName) throws IOException {
     filesLock.acquireWriteLock();
     try {
+      checkForClose();
+
       Integer fileId = nameIdMap.get(fileName);
       final OFile fileClassic;
 
@@ -795,6 +807,8 @@ public final class OWOWCache extends OAbstractWriteCache
   public long addFile(final String fileName, long fileId) throws IOException {
     filesLock.acquireWriteLock();
     try {
+      checkForClose();
+
       OFile fileClassic;
 
       final Integer existingFileId = nameIdMap.get(fileName);
@@ -865,6 +879,8 @@ public final class OWOWCache extends OAbstractWriteCache
   public void syncDataFiles(final long segmentId, final byte[] lastMetadata) throws IOException {
     filesLock.acquireReadLock();
     try {
+      checkForClose();
+
       doubleWriteLog.startCheckpoint();
       try {
         if (lastMetadata != null) {
@@ -917,6 +933,8 @@ public final class OWOWCache extends OAbstractWriteCache
   public boolean exists(final String fileName) {
     filesLock.acquireReadLock();
     try {
+      checkForClose();
+
       final Integer intId = nameIdMap.get(fileName);
 
       if (intId != null && intId >= 0) {
@@ -939,6 +957,8 @@ public final class OWOWCache extends OAbstractWriteCache
   public boolean exists(long fileId) {
     filesLock.acquireReadLock();
     try {
+      checkForClose();
+
       final int intId = extractFileId(fileId);
       fileId = composeFileId(id, intId);
 
@@ -958,6 +978,8 @@ public final class OWOWCache extends OAbstractWriteCache
   public void restoreModeOn() throws IOException {
     filesLock.acquireWriteLock();
     try {
+      checkForClose();
+
       doubleWriteLog.restoreModeOn();
     } finally {
       filesLock.releaseWriteLock();
@@ -968,6 +990,8 @@ public final class OWOWCache extends OAbstractWriteCache
   public void restoreModeOff() {
     filesLock.acquireWriteLock();
     try {
+      checkForClose();
+
       doubleWriteLog.restoreModeOff();
     } finally {
       filesLock.releaseWriteLock();
@@ -995,6 +1019,8 @@ public final class OWOWCache extends OAbstractWriteCache
 
     filesLock.acquireReadLock();
     try {
+      checkForClose();
+
       final PageKey pageKey = new PageKey(intId, pageIndex);
 
       final Lock groupLock = lockManager.acquireExclusiveLock(pageKey);
@@ -1029,6 +1055,8 @@ public final class OWOWCache extends OAbstractWriteCache
   public Map<String, Long> files() {
     filesLock.acquireReadLock();
     try {
+      checkForClose();
+
       final Map<String, Long> result = new HashMap<>(1_000);
 
       for (final Map.Entry<String, Integer> entry : nameIdMap.entrySet()) {
@@ -1053,6 +1081,8 @@ public final class OWOWCache extends OAbstractWriteCache
     final int intId = extractFileId(fileId);
     filesLock.acquireReadLock();
     try {
+      checkForClose();
+
       final PageKey pageKey = new PageKey(intId, startPageIndex);
       final Lock pageLock = lockManager.acquireSharedLock(pageKey);
 
@@ -1162,6 +1192,8 @@ public final class OWOWCache extends OAbstractWriteCache
 
     filesLock.acquireReadLock();
     try {
+      checkForClose();
+
       final OClosableEntry<Long, OFile> entry = files.acquire(fileId);
       try {
         return entry.get().getFileSize() / pageSize;
@@ -1187,6 +1219,8 @@ public final class OWOWCache extends OAbstractWriteCache
 
     filesLock.acquireWriteLock();
     try {
+      checkForClose();
+
       final ORawPair<String, String> file;
       final Future<ORawPair<String, String>> future =
           commitExecutor.submit(new DeleteFileTask(fileId));
@@ -1215,6 +1249,8 @@ public final class OWOWCache extends OAbstractWriteCache
 
     filesLock.acquireWriteLock();
     try {
+      checkForClose();
+
       removeCachedPages(intId);
       final OClosableEntry<Long, OFile> entry = files.acquire(fileId);
       try {
@@ -1244,6 +1280,8 @@ public final class OWOWCache extends OAbstractWriteCache
 
     filesLock.acquireWriteLock();
     try {
+      checkForClose();
+
       final OClosableEntry<Long, OFile> entry = files.acquire(fileId);
 
       if (entry == null) {
@@ -1318,6 +1356,12 @@ public final class OWOWCache extends OAbstractWriteCache
 
     filesLock.acquireWriteLock();
     try {
+      if (closed) {
+        return new long[0];
+      }
+
+      closed = true;
+
       final Collection<Integer> fileIds = nameIdMap.values();
 
       final List<Long> closedIds = new ArrayList<>(1_000);
@@ -1397,6 +1441,8 @@ public final class OWOWCache extends OAbstractWriteCache
 
     filesLock.acquireWriteLock();
     try {
+      checkForClose();
+
       if (flush) {
         flush(intId);
       } else {
@@ -1417,6 +1463,8 @@ public final class OWOWCache extends OAbstractWriteCache
     final int intId = extractFileId(fileId);
     filesLock.acquireWriteLock();
     try {
+      checkForClose();
+
       for (final Map.Entry<String, Integer> entry : nameIdMap.entrySet()) {
         if (entry.getValue() == -intId) {
           addFile(entry.getKey(), fileId);
@@ -1439,6 +1487,8 @@ public final class OWOWCache extends OAbstractWriteCache
 
     filesLock.acquireWriteLock();
     try {
+      checkForClose();
+
       for (final Integer intId : nameIdMap.values()) {
         if (intId < 0) {
           continue;
@@ -1587,6 +1637,8 @@ public final class OWOWCache extends OAbstractWriteCache
     final List<Long> result = new ArrayList<>(1_024);
     filesLock.acquireWriteLock();
     try {
+      checkForClose();
+
       for (final int internalFileId : nameIdMap.values()) {
         if (internalFileId < 0) {
           continue;
@@ -3208,6 +3260,12 @@ public final class OWOWCache extends OAbstractWriteCache
     if (copiedPages != flushedPages) {
       throw new IllegalStateException(
           "Copied pages (" + copiedPages + " ) != flushed pages (" + flushedPages + ")");
+    }
+  }
+
+  private void checkForClose() {
+    if (closed) {
+      throw new OStorageException("Write cache is closed and can not be used");
     }
   }
 

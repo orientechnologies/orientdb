@@ -15,7 +15,10 @@ public abstract class OAbstractCollectionConverter<T> implements OValuesConverte
   }
 
   protected boolean convertSingleValue(final Object item, ResultCallback result, boolean updated) {
-    if (item == null) return false;
+    if (item == null) {
+      result.add(null);
+      return false;
+    }
 
     if (item instanceof OIdentifiable) {
       final OValuesConverter<OIdentifiable> converter =

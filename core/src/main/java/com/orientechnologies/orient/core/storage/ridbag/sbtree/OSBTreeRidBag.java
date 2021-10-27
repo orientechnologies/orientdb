@@ -416,10 +416,14 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     this.collectionPointer = pointer;
     this.changes.putAll(changes);
     this.size = -1;
+    assert !ODatabaseRecordThreadLocal.instance().isDefined()
+        || !ODatabaseRecordThreadLocal.instance().get().isRemote();
   }
 
   public OSBTreeRidBag() {
     collectionPointer = null;
+    assert !ODatabaseRecordThreadLocal.instance().isDefined()
+        || !ODatabaseRecordThreadLocal.instance().get().isRemote();
   }
 
   @Override

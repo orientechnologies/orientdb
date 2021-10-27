@@ -30,8 +30,6 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.OperationIdLSN;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
@@ -63,20 +61,7 @@ public class ODurablePage {
   protected static final int CRC32_OFFSET = MAGIC_NUMBER_OFFSET + OLongSerializer.LONG_SIZE;
 
   public static final int WAL_SEGMENT_OFFSET = CRC32_OFFSET + OIntegerSerializer.INT_SIZE;
-  public static final int WAL_POSITION_OFFSET;
-  public static final int WAL_OPERATION_ID_OFFSET;
-
-  static {
-    final ByteOrder byteOrder = ByteOrder.nativeOrder();
-
-    if (byteOrder.equals(ByteOrder.LITTLE_ENDIAN)) {
-      WAL_POSITION_OFFSET = WAL_SEGMENT_OFFSET + OLongSerializer.LONG_SIZE;
-      WAL_OPERATION_ID_OFFSET = WAL_POSITION_OFFSET + OIntegerSerializer.INT_SIZE;
-    } else {
-      WAL_OPERATION_ID_OFFSET = WAL_SEGMENT_OFFSET + OLongSerializer.LONG_SIZE;
-      WAL_POSITION_OFFSET = WAL_OPERATION_ID_OFFSET + OIntegerSerializer.INT_SIZE;
-    }
-  }
+  public static final int WAL_POSITION_OFFSET = WAL_SEGMENT_OFFSET + OLongSerializer.LONG_SIZE;
 
   public static final int MAX_PAGE_SIZE_BYTES =
       OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
@@ -101,10 +86,6 @@ public class ODurablePage {
     final int position = getIntValue(WAL_POSITION_OFFSET);
 
     return new OLogSequenceNumber(segment, position);
-  }
-
-  public final int getOperationId() {
-    return getIntValue(WAL_OPERATION_ID_OFFSET);
   }
 
   public static OLogSequenceNumber getLogSequenceNumberFromPage(final ByteBuffer buffer) {
@@ -385,10 +366,6 @@ public class ODurablePage {
     return changes;
   }
 
-  public void addPageOperation(PageOperationRecord pageOperation) {
-    cacheEntry.addPageOperationRecord(pageOperation);
-  }
-
   public final OCacheEntry getCacheEntry() {
     return cacheEntry;
   }
@@ -401,17 +378,14 @@ public class ODurablePage {
     changes.applyChanges(buffer);
   }
 
-  public final void setOperationIdLSN(final OperationIdLSN operationIdLSN) {
+  public final void setLsn(final OLogSequenceNumber lsn) {
     final ByteBuffer buffer = pointer.getBuffer();
     assert buffer != null;
 
     assert buffer.order() == ByteOrder.nativeOrder();
 
-    final OLogSequenceNumber lsn = operationIdLSN.lsn;
     buffer.putLong(WAL_SEGMENT_OFFSET, lsn.getSegment());
     buffer.putInt(WAL_POSITION_OFFSET, lsn.getPosition());
-
-    buffer.putInt(WAL_OPERATION_ID_OFFSET, operationIdLSN.operationId);
   }
 
   public static void setPageLSN(final OLogSequenceNumber lsn, final OCacheEntry cacheEntry) {
