@@ -166,6 +166,23 @@ public class ODurablePage {
     return changes.getLongValue(pointer.getBufferDuplicate(), pageOffset);
   }
 
+  protected final ByteBuffer getBinaryValueBuffer(final int pageOffset, final int valLen) {
+    final ByteBuffer buffer = pointer.getBufferDuplicate();
+
+    if (changes == null) {
+      assert buffer != null;
+      assert buffer.order() == ByteOrder.nativeOrder();
+
+      buffer.position(pageOffset);
+      buffer.limit(pageOffset + valLen);
+
+      return buffer.slice().order(ByteOrder.nativeOrder());
+    }
+
+    return ByteBuffer.wrap(changes.getBinaryValue(buffer, pageOffset, valLen))
+        .order(ByteOrder.nativeOrder());
+  }
+
   protected final byte[] getBinaryValue(final int pageOffset, final int valLen) {
     final ByteBuffer buffer = pointer.getBufferDuplicate();
 
@@ -245,7 +262,7 @@ public class ODurablePage {
     final ByteBuffer buffer = pointer.getBuffer();
 
     if (changes != null) {
-      changes.setIntValue(buffer, value, pageOffset);
+      changes.setShortValue(buffer, value, pageOffset);
     } else {
       assert buffer != null;
       assert buffer.order() == ByteOrder.nativeOrder();
@@ -299,6 +316,26 @@ public class ODurablePage {
       assert buffer.order() == ByteOrder.nativeOrder();
       buffer.position(pageOffset);
       buffer.put(value);
+    }
+
+    return value.length;
+  }
+
+  protected final int setBinaryValue(
+      final int pageOffset, final byte[] value, final int offset, final int len) {
+    if (len == 0) {
+      return 0;
+    }
+
+    final ByteBuffer buffer = pointer.getBuffer();
+
+    if (changes != null) {
+      changes.setBinaryValue(buffer, value, pageOffset, offset, len);
+    } else {
+      assert buffer != null;
+      assert buffer.order() == ByteOrder.nativeOrder();
+      buffer.position(pageOffset);
+      buffer.put(value, offset, len);
     }
 
     return value.length;
