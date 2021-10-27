@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.storage.index.nkbtree.binarybtree;
 
+import com.kenai.jffi.Platform;
 import com.orientechnologies.common.comparator.OComparatorFactory;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -472,6 +473,16 @@ public final class Bucket extends ODurablePage {
     }
 
     return true;
+  }
+
+  public byte[] getKeyPrefix() {
+    final int keyPrefixOffset = getIntValue(KEY_PREFIX_OFFSET);
+    if (keyPrefixOffset < 0) {
+      return null;
+    }
+
+    final int keyPrefixLength = getShortValue(keyPrefixOffset);
+    return getBinaryValue(keyPrefixOffset + OShortSerializer.SHORT_SIZE, keyPrefixLength);
   }
 
   public int getLeft(final int entryIndex) {

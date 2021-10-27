@@ -101,8 +101,8 @@ public class BinaryBTreeTestIT {
             }
           });
 
-      //      Assert.assertArrayEquals(stringToLexicalBytes("0"), binaryBTree.firstKey());
-      //      Assert.assertArrayEquals(stringToLexicalBytes(lastKey[0]), binaryBTree.lastKey());
+      Assert.assertArrayEquals(stringToLexicalBytes("0"), binaryBTree.firstKey());
+      Assert.assertArrayEquals(stringToLexicalBytes(lastKey[0]), binaryBTree.lastKey());
     }
 
     for (int i = 0; i < keysCount; i++) {
@@ -145,10 +145,8 @@ public class BinaryBTreeTestIT {
               System.out.println(keys.size() + " keys were added.");
             }
 
-            // Assert.assertArrayEquals(stringToLexicalBytes(keys.firstKey()),
-            // binaryBTree.firstKey());
-            //            Assert.assertArrayEquals(stringToLexicalBytes(keys.lastKey()),
-            // binaryBTree.lastKey());
+            Assert.assertArrayEquals(stringToLexicalBytes(keys.firstKey()), binaryBTree.firstKey());
+            Assert.assertArrayEquals(stringToLexicalBytes(keys.lastKey()), binaryBTree.lastKey());
           });
     }
 
@@ -192,8 +190,8 @@ public class BinaryBTreeTestIT {
       }
     }
 
-    //    Assert.assertArrayEquals(stringToLexicalBytes(keys.firstKey()), binaryBTree.firstKey());
-    //    Assert.assertArrayEquals(stringToLexicalBytes(keys.lastKey()), binaryBTree.lastKey());
+    Assert.assertArrayEquals(stringToLexicalBytes(keys.firstKey()), binaryBTree.firstKey());
+    Assert.assertArrayEquals(stringToLexicalBytes(keys.lastKey()), binaryBTree.lastKey());
 
     for (Map.Entry<String, ORID> entry : keys.entrySet()) {
       Assert.assertEquals(entry.getValue(), binaryBTree.get(stringToLexicalBytes(entry.getKey())));
@@ -330,9 +328,9 @@ public class BinaryBTreeTestIT {
         keysIterator.remove();
       }
     }
-    //
-    //    Assert.assertArrayEquals(stringToLexicalBytes(keys.firstKey()), binaryBTree.firstKey());
-    //    Assert.assertArrayEquals(stringToLexicalBytes(keys.lastKey()), binaryBTree.lastKey());
+
+    Assert.assertArrayEquals(stringToLexicalBytes(keys.firstKey()), binaryBTree.firstKey());
+    Assert.assertArrayEquals(stringToLexicalBytes(keys.lastKey()), binaryBTree.lastKey());
 
     for (final Map.Entry<String, ORID> entry : keys.entrySet()) {
       final int val = (int) entry.getValue().getClusterPosition();
@@ -648,7 +646,8 @@ public class BinaryBTreeTestIT {
         atomicOperationsManager.executeInsideAtomicOperation(
             null, atomicOperation -> binaryBTree.put(atomicOperation, key, value));
       } else {
-        final byte[] deletionCandidate = stringToLexicalBytes(Integer.toString(random.nextInt(Integer.MAX_VALUE)));
+        final byte[] deletionCandidate =
+            stringToLexicalBytes(Integer.toString(random.nextInt(Integer.MAX_VALUE)));
         byte[] deletionKey = keyMap.floorKey(deletionCandidate);
         if (deletionKey == null) {
           deletionKey = keyMap.lastKey();
@@ -664,7 +663,9 @@ public class BinaryBTreeTestIT {
       }
 
       if ((i + 1) % 100_000 == 0) {
-        System.out.printf("%,d operations are processed out of %,d. %,d keys in a tree%n", i + 1, operations, keyMap.size());
+        System.out.printf(
+            "%,d operations are processed out of %,d. %,d keys in a tree%n",
+            i + 1, operations, keyMap.size());
       }
     }
 

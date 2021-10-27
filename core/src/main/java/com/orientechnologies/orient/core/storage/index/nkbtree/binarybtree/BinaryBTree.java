@@ -1276,7 +1276,13 @@ public final class BinaryBTree extends ODurableComponent {
             loadPageForRead(atomicOperation, fileId, result.pageIndex, false);
         try {
           final Bucket bucket = new Bucket(cacheEntry);
-          return bucket.getKey(result.itemIndex);
+          final byte[] keyPrefix = bucket.getKeyPrefix();
+
+          if (keyPrefix == null) {
+            return bucket.getKey(result.itemIndex);
+          }
+
+          return restoreKey(keyPrefix, bucket.getKey(result.itemIndex));
         } finally {
           releasePageFromRead(atomicOperation, cacheEntry);
         }
@@ -1368,7 +1374,12 @@ public final class BinaryBTree extends ODurableComponent {
             loadPageForRead(atomicOperation, fileId, result.pageIndex, false);
         try {
           final Bucket bucket = new Bucket(cacheEntry);
-          return bucket.getKey(result.itemIndex);
+          final byte[] keyPrefix = bucket.getKeyPrefix();
+          if (keyPrefix == null) {
+            return bucket.getKey(result.itemIndex);
+          }
+
+          return restoreKey(keyPrefix, bucket.getKey(result.itemIndex));
         } finally {
           releasePageFromRead(atomicOperation, cacheEntry);
         }
@@ -2740,17 +2751,25 @@ public final class BinaryBTree extends ODurableComponent {
             for (; itemIndex < bucketSize && dataCache.size() < spliteratorCacheSize; itemIndex++) {
               final Bucket.Entry entry = bucket.getEntry(itemIndex);
 
+              final byte[] restoredKey;
+              final byte[] keyPrefix = bucket.getKeyPrefix();
+              if (keyPrefix == null) {
+                restoredKey = entry.key;
+              } else {
+                restoredKey = restoreKey(keyPrefix, entry.key);
+              }
+
               if (toKey != null) {
                 if (toKeyInclusive) {
-                  if (COMPARATOR.compare(entry.key, toKey) > 0) {
+                  if (COMPARATOR.compare(restoredKey, toKey) > 0) {
                     return true;
                   }
-                } else if (COMPARATOR.compare(entry.key, toKey) >= 0) {
+                } else if (COMPARATOR.compare(restoredKey, toKey) >= 0) {
                   return true;
                 }
               }
 
-              dataCache.add(new ORawPair<>(entry.key, entry.value));
+              dataCache.add(new ORawPair<>(restoredKey, entry.value));
             }
 
             if (dataCache.size() >= spliteratorCacheSize) {
@@ -2938,18 +2957,27 @@ public final class BinaryBTree extends ODurableComponent {
             for (; itemIndex >= 0 && dataCache.size() < spliteratorCacheSize; itemIndex--) {
               Bucket.Entry entry = bucket.getEntry(itemIndex);
 
+              final byte[] restoredKey;
+              final byte[] keyPrefix = bucket.getKeyPrefix();
+
+              if (keyPrefix == null) {
+                restoredKey = entry.key;
+              } else {
+                restoredKey = restoreKey(keyPrefix, entry.key);
+              }
+
               if (fromKey != null) {
                 if (fromKeyInclusive) {
-                  if (COMPARATOR.compare(entry.key, fromKey) < 0) {
+                  if (COMPARATOR.compare(restoredKey, fromKey) < 0) {
                     return true;
                   }
-                } else if (COMPARATOR.compare(entry.key, fromKey) <= 0) {
+                } else if (COMPARATOR.compare(restoredKey, fromKey) <= 0) {
                   return true;
                 }
               }
 
               //noinspection ObjectAllocationInLoop
-              dataCache.add(new ORawPair<>(entry.key, entry.value));
+              dataCache.add(new ORawPair<>(restoredKey, entry.value));
             }
 
             if (dataCache.size() >= spliteratorCacheSize) {
