@@ -29,6 +29,9 @@ public class BinaryBTreeTestIT {
 
   private String dbName;
 
+  private int diskCachePageSize;
+  private int btreeMaxKeySize;
+
   @BeforeClass
   public static void beforeClass() {
     keyNormalizers = new KeyNormalizers(Locale.ENGLISH, Collator.NO_DECOMPOSITION);
@@ -37,6 +40,9 @@ public class BinaryBTreeTestIT {
 
   @Before
   public void before() throws Exception {
+    diskCachePageSize = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger();
+    btreeMaxKeySize = OGlobalConfiguration.SBTREE_MAX_KEY_SIZE.getValueAsInteger();
+
     OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.setValue(4);
     OGlobalConfiguration.SBTREE_MAX_KEY_SIZE.setValue(512);
 
@@ -73,11 +79,14 @@ public class BinaryBTreeTestIT {
   public void afterMethod() {
     orientDB.drop(dbName);
     orientDB.close();
+
+    OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.setValue(diskCachePageSize);
+    OGlobalConfiguration.SBTREE_MAX_KEY_SIZE.setValue(btreeMaxKeySize);
   }
 
   @Test
   public void testKeyPut() throws Exception {
-    final int keysCount = 10_000_000;
+    final int keysCount = 1_000_000;
 
     String[] lastKey = new String[1];
     for (int i = 0; i < keysCount; i++) {
@@ -126,7 +135,7 @@ public class BinaryBTreeTestIT {
     final long seed = System.nanoTime();
     System.out.println("testKeyPutRandomUniform seed : " + seed);
     final Random random = new Random(seed);
-    final int keysCount = 10_000_000;
+    final int keysCount = 1_000_000;
 
     while (keys.size() < keysCount) {
       atomicOperationsManager.executeInsideAtomicOperation(
@@ -162,7 +171,7 @@ public class BinaryBTreeTestIT {
     System.out.println("testKeyPutRandomGaussian seed : " + seed);
 
     Random random = new Random(seed);
-    final int keysCount = 10_000_000;
+    final int keysCount = 1_000_000;
 
     while (keys.size() < keysCount) {
       int prevKeysSize = keys.size();
@@ -200,7 +209,7 @@ public class BinaryBTreeTestIT {
 
   @Test
   public void testKeyDelete() throws Exception {
-    final int keysCount = 10_000_000;
+    final int keysCount = 1_000_000;
 
     for (int i = 0; i < keysCount; i++) {
       final int k = i;
@@ -597,7 +606,7 @@ public class BinaryBTreeTestIT {
 
   @Test
   public void testRandomOperations() throws IOException {
-    final int maximumKeys = 5_000_000;
+    final int maximumKeys = 1_000_000;
     final int operations = 10 * maximumKeys;
 
     final TreeMap<byte[], ORID> keyMap =
