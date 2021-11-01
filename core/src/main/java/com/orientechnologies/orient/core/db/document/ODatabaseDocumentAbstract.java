@@ -2275,8 +2275,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
         OLogManager.instance().error(this, "Error during transaction rollback `%08X`", re, System.identityHashCode(re));
       }
 
-      getLocalCache().clear();
-
       // WAKE UP ROLLBACK LISTENERS
       afterRollbackOperations();
       throw e;
@@ -2361,8 +2359,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       // WAKE UP LISTENERS
       afterRollbackOperations();
     }
-
-    getLocalCache().clear();
 
     return this;
   }

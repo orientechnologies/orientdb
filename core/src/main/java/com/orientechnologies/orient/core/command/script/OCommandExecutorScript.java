@@ -397,7 +397,6 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract
       } catch (OTransactionException e) {
         // THIS CASE IS ON UPSERT
         context.setVariable("retries", retry);
-        getDatabase().getLocalCache().clear();
         if (retry >= maxRetry)
           throw e;
 
@@ -406,7 +405,6 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract
       } catch (ORecordDuplicatedException e) {
         // THIS CASE IS ON UPSERT
         context.setVariable("retries", retry);
-        getDatabase().getLocalCache().clear();
         if (retry >= maxRetry)
           throw e;
 
@@ -415,13 +413,11 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract
       } catch (ORecordNotFoundException e) {
         // THIS CASE IS ON UPSERT
         context.setVariable("retries", retry);
-        getDatabase().getLocalCache().clear();
         if (retry >= maxRetry)
           throw e;
 
       } catch (ONeedRetryException e) {
         context.setVariable("retries", retry);
-        getDatabase().getLocalCache().clear();
         if (retry >= maxRetry)
           throw e;
 

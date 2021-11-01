@@ -370,19 +370,20 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
   private void doRollback() {
     storage.rollback(this);
 
-    database.getLocalCache().clear();
-
     for (ORecordOperation recordOperation : recordOperations.values()) {
       final ORecord record = recordOperation.record.getRecord();
 
-      if (record.isDirty())
+      if (record.isDirty()) {
         if (record instanceof ODocument) {
           final ODocument document = (ODocument) record;
 
           if (document.isTrackingChanges())
             document.undo();
-        } else
+        } else {
           record.unload();
+        }
+        database.getLocalCache().deleteRecord(record.getIdentity());
+      }
     }
 
     reset();
