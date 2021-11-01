@@ -372,7 +372,10 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
 
         if (document.isTrackingChanges()) document.undo();
         else document.unload();
-      } else record.unload();
+      } else {
+        record.unload();
+      }
+      database.getLocalCache().deleteRecord(record.getIdentity());
     }
 
     reset();
