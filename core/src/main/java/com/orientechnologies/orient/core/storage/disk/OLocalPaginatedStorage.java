@@ -295,11 +295,11 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
         release();
       }
     } catch (final RuntimeException e) {
-      throw logAndPrepareForRethrow(e);
+      throw logAndPrepareForRethrow(e, false);
     } catch (final Error e) {
-      throw logAndPrepareForRethrow(e);
+      throw logAndPrepareForRethrow(e, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     } finally {
       stateLock.releaseReadLock();
     }
