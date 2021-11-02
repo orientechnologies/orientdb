@@ -1,9 +1,14 @@
 package com.orientechnologies.orient.core.db;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE_DELETE_DELAY;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE_DELETE_RETRY;
+
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -120,7 +125,25 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     try {
       storage.restoreFullIncrementalBackup(backupStream);
     } catch (RuntimeException e) {
-      storage.delete();
+      try {
+        if (storage != null) {
+          storage.delete();
+        }
+      } catch (Exception e1) {
+        OLogManager.instance()
+            .warn(this, "Error doing cleanups, should be safe do progress anyway", e1);
+      }
+      synchronized (this) {
+        sharedContexts.remove(dbName);
+        storages.remove(dbName);
+      }
+
+      OContextConfiguration configs = getConfigurations().getConfigurations();
+      OLocalPaginatedStorage.deleteFilesFromDisc(
+          dbName,
+          configs.getValueAsInteger(FILE_DELETE_RETRY),
+          configs.getValueAsInteger(FILE_DELETE_DELAY),
+          buildName(dbName));
       throw e;
     }
     // DROP AND CREATE THE SHARED CONTEXT SU HAS CORRECT INFORMATION.
