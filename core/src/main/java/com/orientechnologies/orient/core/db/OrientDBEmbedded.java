@@ -653,8 +653,8 @@ public class OrientDBEmbedded implements OrientDBInternal {
   @Override
   public void networkRestore(String name, InputStream in, Callable<Object> callable) {
     checkDatabaseName(name);
+    OAbstractPaginatedStorage storage = null;
     try {
-      OAbstractPaginatedStorage storage;
       OSharedContext context;
       synchronized (this) {
         context = sharedContexts.get(name);
@@ -668,6 +668,19 @@ public class OrientDBEmbedded implements OrientDBInternal {
     } catch (OModificationOperationProhibitedException e) {
       throw e;
     } catch (Exception e) {
+      try {
+        if (storage != null) {
+          storage.delete();
+        }
+      } catch (Exception e1) {
+        OLogManager.instance()
+            .warn(this, "Error doing cleanups, should be safe do progress anyway", e1);
+      }
+      synchronized (this) {
+        sharedContexts.remove(name);
+        storages.remove(name);
+      }
+
       OContextConfiguration configs = getConfigurations().getConfigurations();
       OLocalPaginatedStorage.deleteFilesFromDisc(
           name,
