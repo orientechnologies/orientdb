@@ -3,10 +3,7 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.OLiveQueryResultListener;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -126,36 +123,42 @@ public class LiveQueryListenerImpl implements OLiveQueryListenerV2 {
   }
 
   @Override
-  public void onLiveResult(OLiveQueryHookV2.OLiveQueryOp iRecord) {
+  public void onLiveResults(List<OLiveQueryHookV2.OLiveQueryOp> iRecords) {
     execDb.activateOnCurrentThread();
 
-    OResultInternal record;
-    if (iRecord.type == ORecordOperation.CREATED || iRecord.type == ORecordOperation.UPDATED) {
-      record = copy(iRecord.after);
-      if (iRecord.type == ORecordOperation.UPDATED) {
-        OResultInternal before = copy(iRecord.before);
-        record.setMetadata(BEFORE_METADATA_KEY, before);
+    for (OLiveQueryHookV2.OLiveQueryOp iRecord : iRecords) {
+      OResultInternal record;
+      if (iRecord.type == ORecordOperation.CREATED || iRecord.type == ORecordOperation.UPDATED) {
+        record = copy(iRecord.after);
+        if (iRecord.type == ORecordOperation.UPDATED) {
+          OResultInternal before = copy(iRecord.before);
+          record.setMetadata(BEFORE_METADATA_KEY, before);
+        }
+      } else {
+        record = copy(iRecord.before);
+        record.setMetadata(BEFORE_METADATA_KEY, record);
       }
-    } else {
-      record = copy(iRecord.before);
-      record.setMetadata(BEFORE_METADATA_KEY, record);
-    }
 
-    if (filter(record)) {
-      switch (iRecord.type) {
-        case ORecordOperation.DELETED:
-          record.setMetadata(BEFORE_METADATA_KEY, null);
-          clientListener.onDelete(execDb, applyProjections(record));
-          break;
-        case ORecordOperation.UPDATED:
-          OResult before = (OResult) record.getMetadata(BEFORE_METADATA_KEY);
-          record.setMetadata(BEFORE_METADATA_KEY, null);
-          clientListener.onUpdate(execDb, before, applyProjections(record));
-          break;
-        case ORecordOperation.CREATED:
-          clientListener.onCreate(execDb, applyProjections(record));
-          break;
+      if (filter(record)) {
+        switch (iRecord.type) {
+          case ORecordOperation.DELETED:
+            record.setMetadata(BEFORE_METADATA_KEY, null);
+            clientListener.onDelete(execDb, applyProjections(record));
+            break;
+          case ORecordOperation.UPDATED:
+            OResult before =
+                applyProjections((OResultInternal) record.getMetadata(BEFORE_METADATA_KEY));
+            record.setMetadata(BEFORE_METADATA_KEY, null);
+            clientListener.onUpdate(execDb, before, applyProjections(record));
+            break;
+          case ORecordOperation.CREATED:
+            clientListener.onCreate(execDb, applyProjections(record));
+            break;
+        }
       }
+    }
+    if (clientListener instanceof OLiveQueryBatchResultListener) {
+      ((OLiveQueryBatchResultListener) clientListener).onBatchEnd(execDb);
     }
   }
 
