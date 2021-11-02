@@ -528,6 +528,13 @@ public class OServer {
       lock.unlock();
       startupLatch.countDown();
     }
+    if (distributedManager != null) {
+      try {
+        distributedManager.waitUntilNodeOnline();
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
+    }
 
     return this;
   }
