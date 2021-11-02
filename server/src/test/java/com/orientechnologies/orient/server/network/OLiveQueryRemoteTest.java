@@ -13,6 +13,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -228,5 +229,38 @@ public class OLiveQueryRemoteTest {
 
     Integer integer = future.get();
     Assert.assertEquals(integer.intValue(), liveMatch);
+  }
+
+  @Test
+  public void testBatchWithTx() throws InterruptedException {
+
+    database.getMetadata().getSchema().createClass("test");
+    database.getMetadata().getSchema().createClass("test2");
+
+    int txSize = 100;
+
+    MyLiveQueryListener listener = new MyLiveQueryListener(new CountDownLatch(txSize));
+
+    OLiveQueryMonitor monitor = database.live("select from test", listener);
+    Assert.assertNotNull(monitor);
+
+    database.begin();
+    for (int i = 0; i < txSize; i++) {
+      OElement elem = database.newElement("test");
+      elem.setProperty("name", "foo");
+      elem.setProperty("surname", "bar" + i);
+      elem.save();
+    }
+    database.commit();
+
+    Assert.assertTrue(listener.latch.await(1, TimeUnit.MINUTES));
+
+    Assert.assertEquals(listener.ops.size(), txSize);
+    for (OResult doc : listener.ops) {
+      Assert.assertEquals(doc.getProperty("@class"), "test");
+      Assert.assertEquals(doc.getProperty("name"), "foo");
+      ORID rid = doc.getProperty("@rid");
+      Assert.assertTrue(rid.isPersistent());
+    }
   }
 }

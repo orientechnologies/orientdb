@@ -20,12 +20,17 @@
 package com.orientechnologies.orient.core.query.live;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.BlockingQueue;
 
 /** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OLiveQueryQueueThreadV2 extends Thread {
 
-  private final OLiveQueryHookV2.OLiveQueryOps ops;
+  private static final OLogManager logger = OLogManager.instance();
 
+  private final OLiveQueryHookV2.OLiveQueryOps ops;
   private boolean stopped = false;
 
   public OLiveQueryQueueThreadV2(OLiveQueryHookV2.OLiveQueryOps ops) {
@@ -40,23 +45,44 @@ public class OLiveQueryQueueThreadV2 extends Thread {
 
   @Override
   public void run() {
+    long totalEventsServed = 0;
     while (!stopped) {
       OLiveQueryHookV2.OLiveQueryOp next = null;
+      BlockingQueue<OLiveQueryHookV2.OLiveQueryOp> queue = ops.getQueue();
+      int batchSize =
+          Math.min(
+              queue.size(),
+              OGlobalConfiguration.QUERY_REMOTE_RESULTSET_PAGE_SIZE.getValueAsInteger());
+      List<OLiveQueryHookV2.OLiveQueryOp> items = new ArrayList<>(batchSize);
       try {
-        next = ops.getQueue().take();
+        for (int i = 0; i < batchSize; i++) {
+          if (totalEventsServed > 0 && totalEventsServed % 100_000 == 0) {
+            logger.info(
+                this.getClass(),
+                "LiveQuery events: %d served, %d in queue",
+                totalEventsServed,
+                queue.size());
+          }
+          next = queue.take();
+          if (next == null) {
+            break;
+          }
+          items.add(next);
+        }
       } catch (InterruptedException ignore) {
         break;
       }
-      if (next == null) {
+      if (items.isEmpty()) {
         continue;
       }
       for (OLiveQueryListenerV2 listener : ops.getSubscribers().values()) {
         try {
-          listener.onLiveResult(next);
+          listener.onLiveResults(items);
         } catch (Exception e) {
           OLogManager.instance().warn(this, "Error executing live query subscriber.", e);
         }
       }
+      totalEventsServed++;
     }
   }
 
