@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.core.storage.index.nkbtree.binarybtree;
 
-import com.kenai.jffi.Platform;
 import com.orientechnologies.common.comparator.OComparatorFactory;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
