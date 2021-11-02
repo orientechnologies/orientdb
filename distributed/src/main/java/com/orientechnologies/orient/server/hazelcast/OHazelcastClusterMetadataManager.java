@@ -216,9 +216,12 @@ public class OHazelcastClusterMetadataManager
 
     publishLocalNodeConfiguration();
 
-    distributedPlugin.installNewDatabasesFromCluster();
-
     distributedPlugin.loadLocalDatabases();
+    new Thread(
+            () -> {
+              distributedPlugin.installNewDatabasesFromCluster();
+            })
+        .start();
 
     membershipListenerMapRegistration =
         configurationMap.getHazelcastMap().addEntryListener(this, true);

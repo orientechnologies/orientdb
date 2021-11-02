@@ -322,9 +322,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
                     new OClusterHealthChecker(this, healthChecker), healthChecker, healthChecker);
       }
 
-      // WAIT ALL THE MESSAGES IN QUEUE ARE PROCESSED OR MAX 10 SECONDS
-      waitStartupIsCompleted();
-
       signalListener =
           new OSignalHandler.OSignalListener() {
             @Override
@@ -341,22 +338,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
     }
 
     dumpServersStatus();
-  }
-
-  protected void waitStartupIsCompleted() throws InterruptedException {
-    long totalReceivedRequests = getMessageService().getReceivedRequests();
-    long totalProcessedRequests = getMessageService().getProcessedRequests();
-
-    final long start = System.currentTimeMillis();
-    while (totalProcessedRequests < totalReceivedRequests - 2
-        && (System.currentTimeMillis() - start
-            < OGlobalConfiguration.DISTRIBUTED_MAX_STARTUP_DELAY.getValueAsInteger())) {
-      Thread.sleep(300);
-      totalProcessedRequests = getMessageService().getProcessedRequests();
-      totalReceivedRequests = getMessageService().getReceivedRequests();
-    }
-
-    serverStarted.countDown();
   }
 
   @Override
@@ -2784,6 +2765,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
             e.toString());
       }
     }
+    serverStarted.countDown();
   }
 
   protected void dumpStats() {
