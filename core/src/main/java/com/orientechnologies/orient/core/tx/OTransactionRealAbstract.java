@@ -611,8 +611,8 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract
       if (op.getValue().type == ORecordOperation.CREATED) {
         ORecordId oldNew =
             new ORecordId(op.getKey().getClusterId(), op.getKey().getClusterPosition());
-        updatedRids.remove(op.getValue().getRID());
         updateIdentityAfterCommit(op.getValue().getRID(), oldNew);
+        updatedRids.remove(op.getValue().getRID());
       }
     }
   }
