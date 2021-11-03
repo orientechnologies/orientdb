@@ -790,8 +790,8 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
       if (op.getValue().type == ORecordOperation.CREATED) {
         ORecordId oldNew =
             new ORecordId(op.getKey().getClusterId(), op.getKey().getClusterPosition());
-        updatedRids.remove(op.getValue().getRID());
         updateIdentityAfterRecordCommit(op.getValue().getRID(), oldNew);
+        updatedRids.remove(op.getValue().getRID());
       }
     }
   }
