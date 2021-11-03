@@ -425,10 +425,11 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
     return recordOperations.get(translateRid(rid));
   }
 
-  private ORID translateRid(ORID rid) {
+  private ORID translateRid(ORID ridPar) {
+    ORID rid = ridPar;
     while (true) {
       final ORID translatedRid = updatedRids.get(rid);
-      if (translatedRid == null) break;
+      if (translatedRid == null || rid.equals(ridPar)) break;
 
       rid = translatedRid;
     }
