@@ -127,14 +127,15 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract
     return allEntries.values();
   }
 
-  public ORecordOperation getRecordEntry(ORID rid) {
+  public ORecordOperation getRecordEntry(ORID ridPar) {
+    ORID rid = ridPar;
     ORecordOperation entry;
     do {
       entry = allEntries.get(rid);
       if (entry == null) {
         rid = updatedRids.get(rid);
       }
-    } while (entry == null && rid != null);
+    } while (entry == null && rid != null && !rid.equals(ridPar));
     return entry;
   }
 
