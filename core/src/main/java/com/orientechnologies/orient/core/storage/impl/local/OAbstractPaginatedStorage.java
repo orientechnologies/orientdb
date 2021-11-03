@@ -6477,7 +6477,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return logAndPrepareForRethrow(runtimeException, true);
   }
 
-  private RuntimeException logAndPrepareForRethrow(
+  protected RuntimeException logAndPrepareForRethrow(
       final RuntimeException runtimeException, final boolean putInReadOnlyMode) {
     if (!(runtimeException instanceof OHighLevelException
         || runtimeException instanceof ONeedRetryException)) {
@@ -6503,7 +6503,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return logAndPrepareForRethrow(error, true);
   }
 
-  private Error logAndPrepareForRethrow(final Error error, final boolean putInReadOnlyMode) {
+  protected Error logAndPrepareForRethrow(final Error error, final boolean putInReadOnlyMode) {
     if (!(error instanceof OHighLevelException)) {
       if (putInReadOnlyMode) {
         this.error = error;
@@ -6527,7 +6527,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return logAndPrepareForRethrow(throwable, true);
   }
 
-  private RuntimeException logAndPrepareForRethrow(
+  protected RuntimeException logAndPrepareForRethrow(
       final Throwable throwable, final boolean putInReadOnlyMode) {
     if (!(throwable instanceof OHighLevelException || throwable instanceof ONeedRetryException)) {
       if (putInReadOnlyMode) {
