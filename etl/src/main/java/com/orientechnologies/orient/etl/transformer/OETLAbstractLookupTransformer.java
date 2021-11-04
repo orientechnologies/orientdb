@@ -86,7 +86,11 @@ public abstract class OETLAbstractLookupTransformer extends OETLAbstractTransfor
         final OType idxFieldType = index.getDefinition().getTypes()[0];
         joinValue = OType.convert(joinValue, idxFieldType.getDefaultJavaType());
         //noinspection resource
-        result = index.getInternal().getRids(joinValue);
+        if (index.getInternal() != null) {
+          result = index.getInternal().getRids(joinValue);
+        } else {
+          result = index.get(joinValue);
+        }
       } else {
         if (sqlQuery instanceof OSQLSynchQuery) ((OSQLSynchQuery) sqlQuery).resetPagination();
 
