@@ -124,7 +124,8 @@ public class ONewDistributedTransactionManager {
           | ODistributedKeyLockedException
           | OInvalidSequentialException ex) {
 
-        if (ex instanceof OConcurrentCreateException) {
+        if (ex instanceof OConcurrentCreateException
+            || ex instanceof ODistributedRecordLockedException) {
           iTx.resetAllocatedIds();
         }
 
