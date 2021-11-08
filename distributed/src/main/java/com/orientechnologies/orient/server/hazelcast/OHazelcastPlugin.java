@@ -312,12 +312,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
       publishLocalNodeConfiguration();
 
-      loadLocalDatabases();
-
       new Thread(
               () -> {
                 try {
                   installNewDatabasesFromCluster();
+                  loadLocalDatabases();
                 } finally {
                   serverStarted.countDown();
                 }
