@@ -988,6 +988,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       Set<String> nodes = dManager.getAvailableNodeNames(getName());
       if (excludeLocal) {
         nodes.remove(getLocalNodeName());
+      } else {
+        nodes.add(getLocalNodeName());
       }
 
       final ODistributedResponse response =

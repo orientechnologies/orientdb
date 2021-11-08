@@ -2766,6 +2766,9 @@ public class ODistributedPlugin extends OServerPluginAbstract
             e.toString());
       }
     }
+  }
+
+  public void notifyStarted() {
     serverStarted.countDown();
   }
 

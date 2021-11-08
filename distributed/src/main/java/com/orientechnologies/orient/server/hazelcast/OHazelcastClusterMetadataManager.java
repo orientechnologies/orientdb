@@ -216,10 +216,11 @@ public class OHazelcastClusterMetadataManager
 
     publishLocalNodeConfiguration();
 
-    distributedPlugin.loadLocalDatabases();
     new Thread(
             () -> {
               distributedPlugin.installNewDatabasesFromCluster();
+              distributedPlugin.loadLocalDatabases();
+              distributedPlugin.notifyStarted();
             })
         .start();
 
@@ -470,7 +471,10 @@ public class OHazelcastClusterMetadataManager
 
     if (membershipListenerRegistration != null) {
       try {
-        hazelcastInstance.getCluster().removeMembershipListener(membershipListenerRegistration);
+        Cluster instance = hazelcastInstance.getCluster();
+        if (instance != null) {
+          instance.removeMembershipListener(membershipListenerRegistration);
+        }
       } catch (HazelcastInstanceNotActiveException e) {
         // HZ IS ALREADY DOWN, IGNORE IT
       }
