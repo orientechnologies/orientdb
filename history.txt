@@ -27,6 +27,10 @@
 This document contains the last changes of OrientDB Community Edition.
 
 -----------------------------------------------------------------------------------------------------------------------------------
+VERSION 3.1.15  - (November, 10 2021)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.1-Release-Notes#3115---10-november-2021
+
+-----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.1.14  - (October, 25 2021)
 - Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.1-Release-Notes#3114---25-october-2021
 
