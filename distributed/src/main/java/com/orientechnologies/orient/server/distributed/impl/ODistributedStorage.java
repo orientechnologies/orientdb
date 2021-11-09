@@ -371,13 +371,11 @@ public class ODistributedStorage
   }
 
   public boolean dropCluster(final String iClusterName) {
-    resetLastValidBackup();
     return wrapped.dropCluster(iClusterName);
   }
 
   @Override
   public boolean dropCluster(final int iId) {
-    resetLastValidBackup();
     return wrapped.dropCluster(iId);
   }
 
@@ -783,6 +781,7 @@ public class ODistributedStorage
 
   public void clearLastValidBackup() {
     if (lastValidBackup != null) {
+      lastValidBackup.invalidate();
       lastValidBackup = null;
     }
   }

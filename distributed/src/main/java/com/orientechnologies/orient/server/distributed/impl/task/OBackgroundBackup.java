@@ -32,7 +32,7 @@ public class OBackgroundBackup implements Runnable, OSyncSource {
   private OSyncDatabaseTask oSyncDatabaseTask;
   private final ODistributedServerManager iManager;
   private final ODatabaseDocumentInternal database;
-  private final File resultedBackupFile;
+  private volatile File resultedBackupFile;
   private final String finalBackupPath;
   private final AtomicBoolean incremental = new AtomicBoolean(false);
   private final ODistributedDatabase dDatabase;

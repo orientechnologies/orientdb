@@ -755,7 +755,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   public void internalBegin2pc(ONewDistributedTxContextImpl txContext, boolean local) {
-    getStorageDistributed().resetLastValidBackup();
     OTransactionInternal transaction = txContext.getTransaction();
     // This is moved before checks because also the coordinator first node allocate before checks
     if (!local) {
@@ -950,7 +949,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       super.command(command, new Object[] {}).close();
       return;
     }
-    getStorageDistributed().resetLastValidBackup();
 
     getStorageDistributed()
         .checkNodeIsMaster(

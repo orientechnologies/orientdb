@@ -107,10 +107,14 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
         OBackgroundBackup backup = null;
         OSyncSource last = ((ODistributedStorage) database.getStorage()).getLastValidBackup();
         if (last instanceof OBackgroundBackup) {
-          backup = (OBackgroundBackup) last;
+          if (last.isValid()
+              && ((OBackgroundBackup) last).getResultedBackupFile() != null
+              && ((OBackgroundBackup) last).getResultedBackupFile().exists()) {
+            backup = (OBackgroundBackup) last;
+          }
         }
 
-        if (backup == null || !last.isValid() || !backup.getResultedBackupFile().exists()) {
+        if (backup == null) {
           // CREATE A BACKUP OF DATABASE FROM SCRATCH
           File backupFile =
               new File(Orient.getTempPath() + "/backup_" + database.getName() + ".zip");
