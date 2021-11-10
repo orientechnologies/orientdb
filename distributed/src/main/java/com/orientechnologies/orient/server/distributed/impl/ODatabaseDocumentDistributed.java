@@ -790,7 +790,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       ONewDistributedTxContextImpl txContext, boolean isCoordinator, boolean force) {
     final ODistributedDatabaseImpl localDb = (ODistributedDatabaseImpl) getDistributedShared();
 
-    localDb.resetLastValidBackup();
     OTransactionInternal transaction = txContext.getTransaction();
     // This is moved before checks because also the coordinator first node allocate before checks
     if (!isCoordinator) {
@@ -977,7 +976,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       return;
     }
     ODistributedDatabaseImpl localDb = (ODistributedDatabaseImpl) getDistributedShared();
-    localDb.resetLastValidBackup();
 
     checkNodeIsMaster(
         getLocalNodeName(), getDistributedConfiguration(), "Command '" + command + "'");
@@ -1050,7 +1048,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       sendDDLCommand(cmd, false);
       return true;
     } else {
-      ((ODistributedDatabaseImpl) getDistributedShared()).resetLastValidBackup();
       return super.dropClusterInternal(clusterName);
     }
   }
@@ -1062,7 +1059,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       sendDDLCommand(cmd, false);
       return true;
     } else {
-      ((ODistributedDatabaseImpl) getDistributedShared()).resetLastValidBackup();
       return super.dropClusterInternal(clusterId);
     }
   }
