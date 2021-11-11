@@ -9,3 +9,5 @@ PPMS (develop) [![PPMS](https://gkesaporientdb.jaas-gcp.cloud.sap.corp/job/3.0.x
 OrientDB Enterprise Edition
 
 > Check out our Slack channel: [#sap-tech-orientdb](https://sap-hana-core.slack.com/archives/C01084WNMNC)
+> We are also on SAP's Stack Overflow: see https://sap.stackenterprise.co/articles/4587, https://sap.stackenterprise.co/articles/4740
+
