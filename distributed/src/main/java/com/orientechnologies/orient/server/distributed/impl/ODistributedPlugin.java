@@ -2727,7 +2727,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
   public void installNewDatabasesFromCluster() {
     if (getActiveServers().size() <= 1) {
       // NO OTHER NODES WHERE ALIGN
-      serverStarted.countDown();
       return;
     }
 
