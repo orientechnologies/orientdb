@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.index.OIndexManagerShared;
 import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -23,13 +22,12 @@ public class OIndexManagerDistributed extends OIndexManagerShared {
   }
 
   @Override
-  public OIndexManagerAbstract load(ODatabaseDocumentInternal database) {
+  public void load(ODatabaseDocumentInternal database) {
     OScenarioThreadLocal.executeAsDistributed(
         () -> {
           super.load(database);
           return null;
         });
-    return this;
   }
 
   public OIndex createIndex(

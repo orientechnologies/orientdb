@@ -21,27 +21,499 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OMultiKey;
+import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OMetadataUpdateListener;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sharding.auto.OAutoShardingIndexFactory;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLCreateIndex;
 import com.orientechnologies.orient.core.storage.OStorageInfo;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class OIndexManagerRemote extends OIndexManagerAbstract {
+public class OIndexManagerRemote implements OIndexManagerAbstract {
   private final AtomicBoolean skipPush = new AtomicBoolean(false);
   private static final String QUERY_DROP = "drop index `%s` if exists";
-  private static final long serialVersionUID = -6570577338095096235L;
   private final OStorageInfo storage;
+  // values of this Map should be IMMUTABLE !! for thread safety reasons.
+  protected final Map<String, Map<OMultiKey, Set<OIndex>>> classPropertyIndex =
+      new ConcurrentHashMap<>();
+  protected Map<String, OIndex> indexes = new ConcurrentHashMap<>();
+  protected String defaultClusterName = OMetadataDefault.CLUSTER_INDEX_NAME;
+  protected String manualClusterName = OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME;
+  protected final AtomicInteger writeLockNesting = new AtomicInteger();
+  protected final ReadWriteLock lock = new ReentrantReadWriteLock();
+  protected ODocument document;
 
   public OIndexManagerRemote(OStorageInfo storage) {
     super();
     this.storage = storage;
+    this.document = new ODocument().setTrackingChanges(false);
+  }
+
+  public void load(ODatabaseDocumentInternal database) {
+    if (!autoRecreateIndexesAfterCrash(database)) {
+      acquireExclusiveLock();
+      try {
+        if (database.getStorage().getConfiguration().getIndexMgrRecordId() == null)
+          // @COMPATIBILITY: CREATE THE INDEX MGR
+          create(database);
+
+        // RELOAD IT
+        ((ORecordId) document.getIdentity())
+            .fromString(database.getStorage().getConfiguration().getIndexMgrRecordId());
+        database.reload(document, "*:-1 index:0", true);
+        fromStream();
+      } finally {
+        releaseExclusiveLock();
+      }
+    }
+  }
+
+  public void reload() {
+    acquireExclusiveLock();
+    try {
+      ((ORecordId) document.getIdentity())
+          .fromString(getStorage().getConfiguration().getIndexMgrRecordId());
+      document.reload();
+      fromStream();
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
+  public void save() {
+
+    acquireExclusiveLock();
+
+    try {
+      boolean saved = false;
+      for (int retry = 0; retry < 10; retry++)
+        try {
+
+          toStream();
+          document.save();
+          saved = true;
+          break;
+
+        } catch (OConcurrentModificationException e) {
+          OLogManager.instance()
+              .debug(this, "concurrent modification while saving index manager configuration", e);
+          document.reload(null, true);
+        }
+
+      if (!saved)
+        OLogManager.instance()
+            .error(this, "failed to save the index manager configuration after 10 retries", null);
+
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
+  public void addClusterToIndex(final String clusterName, final String indexName) {
+    final OIndex index = indexes.get(indexName);
+    if (index == null)
+      throw new OIndexException("Index with name " + indexName + " does not exist.");
+
+    if (index.getInternal() == null)
+      throw new OIndexException("Index with name " + indexName + " has no internal presentation.");
+    if (!index.getInternal().getClusters().contains(clusterName)) {
+      index.getInternal().addCluster(clusterName);
+      save();
+    }
+  }
+
+  public void removeClusterFromIndex(final String clusterName, final String indexName) {
+    final OIndex index = indexes.get(indexName);
+    if (index == null)
+      throw new OIndexException("Index with name " + indexName + " does not exist.");
+    index.getInternal().removeCluster(clusterName);
+    save();
+  }
+
+  public void create(ODatabaseDocumentInternal database) {
+    acquireExclusiveLock();
+    try {
+      try {
+        database.save(document, OMetadataDefault.CLUSTER_INTERNAL_NAME);
+      } catch (Exception e) {
+        OLogManager.instance()
+            .error(
+                this,
+                "Error during storing of index manager metadata,"
+                    + " will try to allocate new document to store index manager metadata",
+                e);
+
+        // RESET RID TO ALLOCATE A NEW ONE
+        if (ORecordId.isPersistent(document.getIdentity().getClusterPosition())) {
+          document.getIdentity().reset();
+          database.save(document, OMetadataDefault.CLUSTER_INTERNAL_NAME);
+        }
+      }
+      database.getStorage().setIndexMgrRecordId(document.getIdentity().toString());
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
+  public Collection<? extends OIndex> getIndexes(ODatabaseDocumentInternal database) {
+    final Collection<OIndex> rawResult = indexes.values();
+    final List<OIndex> result = new ArrayList<>(rawResult.size());
+    for (final OIndex index : rawResult) {
+      result.add(index);
+    }
+    return result;
+  }
+
+  public OIndex getRawIndex(final String iName) {
+    final OIndex index = indexes.get(iName);
+    return index;
+  }
+
+  public OIndex getIndex(ODatabaseDocumentInternal database, final String iName) {
+    final OIndex index = indexes.get(iName);
+    if (index == null) return null;
+    return index;
+  }
+
+  public boolean existsIndex(final String iName) {
+    return indexes.containsKey(iName);
+  }
+
+  public String getDefaultClusterName() {
+    acquireSharedLock();
+    try {
+      return defaultClusterName;
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
+  public void setDefaultClusterName(
+      ODatabaseDocumentInternal database, final String defaultClusterName) {
+    acquireExclusiveLock();
+    try {
+      this.defaultClusterName = defaultClusterName;
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
+  public ODictionary<ORecord> getDictionary(ODatabaseDocumentInternal database) {
+    OIndex idx;
+    acquireSharedLock();
+    try {
+      idx = getIndex(database, DICTIONARY_NAME);
+    } finally {
+      releaseSharedLock();
+    }
+    // we lock exclusively only when ODictionary not found
+    if (idx == null) {
+      idx = createDictionaryIfNeeded(database);
+    }
+    return new ODictionary<>(idx);
+  }
+
+  public ODocument getConfiguration() {
+    acquireSharedLock();
+
+    try {
+      return getDocument();
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
+  @Override
+  public void close() {
+    indexes.clear();
+    classPropertyIndex.clear();
+  }
+
+  void setDirty() {
+    acquireExclusiveLock();
+    try {
+      document.setDirty();
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
+  public Set<OIndex> getClassInvolvedIndexes(
+      ODatabaseDocumentInternal database, final String className, Collection<String> fields) {
+    final OMultiKey multiKey = new OMultiKey(fields);
+
+    final Map<OMultiKey, Set<OIndex>> propertyIndex = getIndexOnProperty(className);
+
+    if (propertyIndex == null || !propertyIndex.containsKey(multiKey))
+      return Collections.emptySet();
+
+    final Set<OIndex> rawResult = propertyIndex.get(multiKey);
+    final Set<OIndex> transactionalResult = new HashSet<>(rawResult.size());
+    for (final OIndex index : rawResult) {
+      // ignore indexes that ignore null values on partial match
+      if (fields.size() == index.getDefinition().getFields().size()
+          || !index.getDefinition().isNullValuesIgnored()) {
+        transactionalResult.add(index);
+      }
+    }
+
+    return transactionalResult;
+  }
+
+  public Set<OIndex> getClassInvolvedIndexes(
+      ODatabaseDocumentInternal database, final String className, final String... fields) {
+    return getClassInvolvedIndexes(database, className, Arrays.asList(fields));
+  }
+
+  public boolean areIndexed(final String className, Collection<String> fields) {
+    final OMultiKey multiKey = new OMultiKey(fields);
+
+    final Map<OMultiKey, Set<OIndex>> propertyIndex = getIndexOnProperty(className);
+
+    if (propertyIndex == null) return false;
+
+    return propertyIndex.containsKey(multiKey) && !propertyIndex.get(multiKey).isEmpty();
+  }
+
+  public boolean areIndexed(final String className, final String... fields) {
+    return areIndexed(className, Arrays.asList(fields));
+  }
+
+  public Set<OIndex> getClassIndexes(ODatabaseDocumentInternal database, final String className) {
+    final HashSet<OIndex> coll = new HashSet<OIndex>(4);
+    getClassIndexes(database, className, coll);
+    return coll;
+  }
+
+  public void getClassIndexes(
+      ODatabaseDocumentInternal database,
+      final String className,
+      final Collection<OIndex> indexes) {
+    final Map<OMultiKey, Set<OIndex>> propertyIndex = getIndexOnProperty(className);
+
+    if (propertyIndex == null) return;
+
+    for (final Set<OIndex> propertyIndexes : propertyIndex.values())
+      for (final OIndex index : propertyIndexes) indexes.add(index);
+  }
+
+  public void getClassRawIndexes(final String className, final Collection<OIndex> indexes) {
+    final Map<OMultiKey, Set<OIndex>> propertyIndex = getIndexOnProperty(className);
+
+    if (propertyIndex == null) return;
+
+    for (final Set<OIndex> propertyIndexes : propertyIndex.values())
+      indexes.addAll(propertyIndexes);
+  }
+
+  public OIndexUnique getClassUniqueIndex(final String className) {
+    final Map<OMultiKey, Set<OIndex>> propertyIndex = getIndexOnProperty(className);
+
+    if (propertyIndex != null)
+      for (final Set<OIndex> propertyIndexes : propertyIndex.values())
+        for (final OIndex index : propertyIndexes)
+          if (index instanceof OIndexUnique) return (OIndexUnique) index;
+
+    return null;
+  }
+
+  public OIndex getClassIndex(
+      ODatabaseDocumentInternal database, String className, String indexName) {
+    final Locale locale = getServerLocale();
+    className = className.toLowerCase(locale);
+
+    final OIndex index = indexes.get(indexName);
+    if (index != null
+        && index.getDefinition() != null
+        && index.getDefinition().getClassName() != null
+        && className.equals(index.getDefinition().getClassName().toLowerCase(locale))) return index;
+    return null;
+  }
+
+  public OIndex getClassAutoShardingIndex(ODatabaseDocumentInternal database, String className) {
+    final Locale locale = getServerLocale();
+    className = className.toLowerCase(locale);
+
+    // LOOK FOR INDEX
+    for (OIndex index : indexes.values()) {
+      if (index != null
+          && OAutoShardingIndexFactory.AUTOSHARDING_ALGORITHM.equals(index.getAlgorithm())
+          && index.getDefinition() != null
+          && index.getDefinition().getClassName() != null
+          && className.equals(index.getDefinition().getClassName().toLowerCase(locale)))
+        return index;
+    }
+    return null;
+  }
+
+  private void acquireSharedLock() {
+    lock.readLock().lock();
+  }
+
+  private void releaseSharedLock() {
+    lock.readLock().unlock();
+  }
+
+  void internalAcquireExclusiveLock() {
+    final ODatabaseDocument databaseRecord = getDatabaseIfDefined();
+    if (databaseRecord != null && !databaseRecord.isClosed()) {
+      final OMetadataInternal metadata = (OMetadataInternal) databaseRecord.getMetadata();
+      if (metadata != null) metadata.makeThreadLocalSchemaSnapshot();
+    }
+
+    lock.writeLock().lock();
+  }
+
+  void internalReleaseExclusiveLock() {
+    lock.writeLock().unlock();
+
+    final ODatabaseDocument databaseRecord = getDatabaseIfDefined();
+    if (databaseRecord != null && !databaseRecord.isClosed()) {
+      final OMetadata metadata = databaseRecord.getMetadata();
+      if (metadata != null) ((OMetadataInternal) metadata).clearThreadLocalSchemaSnapshot();
+    }
+  }
+
+  void clearMetadata() {
+    acquireExclusiveLock();
+    try {
+      indexes.clear();
+      classPropertyIndex.clear();
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
+  protected static ODatabaseDocumentInternal getDatabase() {
+    return ODatabaseRecordThreadLocal.instance().get();
+  }
+
+  private static ODatabaseDocumentInternal getDatabaseIfDefined() {
+    return ODatabaseRecordThreadLocal.instance().getIfDefined();
+  }
+
+  void addIndexInternal(final OIndex index) {
+    acquireExclusiveLock();
+    try {
+      final Locale locale = getServerLocale();
+      indexes.put(index.getName(), index);
+
+      final OIndexDefinition indexDefinition = index.getDefinition();
+      if (indexDefinition == null || indexDefinition.getClassName() == null) return;
+
+      Map<OMultiKey, Set<OIndex>> propertyIndex =
+          getIndexOnProperty(indexDefinition.getClassName());
+
+      if (propertyIndex == null) {
+        propertyIndex = new HashMap<>();
+      } else {
+        propertyIndex = new HashMap<>(propertyIndex);
+      }
+
+      final int paramCount = indexDefinition.getParamCount();
+
+      for (int i = 1; i <= paramCount; i++) {
+        final List<String> fields = indexDefinition.getFields().subList(0, i);
+        final OMultiKey multiKey = new OMultiKey(fields);
+        Set<OIndex> indexSet = propertyIndex.get(multiKey);
+
+        if (indexSet == null) indexSet = new HashSet<>();
+        else indexSet = new HashSet<>(indexSet);
+
+        indexSet.add(index);
+        propertyIndex.put(multiKey, indexSet);
+      }
+
+      classPropertyIndex.put(
+          indexDefinition.getClassName().toLowerCase(locale), copyPropertyMap(propertyIndex));
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
+  static Map<OMultiKey, Set<OIndex>> copyPropertyMap(Map<OMultiKey, Set<OIndex>> original) {
+    final Map<OMultiKey, Set<OIndex>> result = new HashMap<>();
+
+    for (Map.Entry<OMultiKey, Set<OIndex>> entry : original.entrySet()) {
+      Set<OIndex> indexes = new HashSet<>(entry.getValue());
+      assert indexes.equals(entry.getValue());
+
+      result.put(entry.getKey(), Collections.unmodifiableSet(indexes));
+    }
+
+    assert result.equals(original);
+
+    return Collections.unmodifiableMap(result);
+  }
+
+  private OIndex createDictionaryIfNeeded(ODatabaseDocumentInternal database) {
+    acquireExclusiveLock();
+    try {
+      OIndex idx = getIndex(database, DICTIONARY_NAME);
+      return idx != null ? idx : createDictionary(database);
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
+  private OIndex createDictionary(ODatabaseDocumentInternal database) {
+    return createIndex(
+        database,
+        DICTIONARY_NAME,
+        OClass.INDEX_TYPE.DICTIONARY.toString(),
+        new OSimpleKeyIndexDefinition(OType.STRING),
+        null,
+        null,
+        null);
+  }
+
+  Locale getServerLocale() {
+    OStorageInfo storage = getStorage();
+    OStorageConfiguration configuration = storage.getConfiguration();
+    return configuration.getLocaleInstance();
+  }
+
+  private Map<OMultiKey, Set<OIndex>> getIndexOnProperty(final String className) {
+    final Locale locale = getServerLocale();
+
+    acquireSharedLock();
+    try {
+
+      return classPropertyIndex.get(className.toLowerCase(locale));
+
+    } finally {
+      releaseSharedLock();
+    }
   }
 
   public OIndex createIndex(
@@ -76,7 +548,7 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
 
       reload();
 
-      return preProcessBeforeReturn(database, indexes.get(iName));
+      return indexes.get(iName);
     } catch (OCommandExecutionException x) {
       throw new OIndexException(x.getMessage());
     } finally {
@@ -119,7 +591,6 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
     }
   }
 
-  @Override
   public ODocument toStream() {
     throw new UnsupportedOperationException("Remote index cannot be streamed");
   }
@@ -177,7 +648,6 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
         getStorage().getName());
   }
 
-  @Override
   protected void fromStream() {
     acquireExclusiveLock();
     try {
@@ -219,33 +689,57 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
     }
   }
 
-  public OIndex preProcessBeforeReturn(ODatabaseDocumentInternal database, final OIndex index) {
-    return index;
-  }
-
-  @Override
   protected void acquireExclusiveLock() {
     skipPush.set(true);
   }
 
-  @Override
   protected void releaseExclusiveLock() {
     skipPush.set(false);
   }
 
+  protected void realAcquireExclusiveLock() {
+    internalAcquireExclusiveLock();
+    writeLockNesting.incrementAndGet();
+  }
+
+  protected void realReleaseExclusiveLock() {
+    int val = writeLockNesting.decrementAndGet();
+    ODatabaseDocumentInternal database = getDatabaseIfDefined();
+    if (database != null) {
+      database
+          .getSharedContext()
+          .getSchema()
+          .forceSnapshot(ODatabaseRecordThreadLocal.instance().get());
+    }
+    internalReleaseExclusiveLock();
+    if (val == 0 && database != null) {
+      for (OMetadataUpdateListener listener : database.getSharedContext().browseListeners()) {
+        listener.onIndexManagerUpdate(database.getName(), this);
+      }
+    }
+  }
+
   public void update(ODocument indexManager) {
     if (!skipPush.get()) {
-      super.acquireExclusiveLock();
+      realAcquireExclusiveLock();
       try {
         this.document = indexManager;
         fromStream();
       } finally {
-        super.releaseExclusiveLock();
+        realReleaseExclusiveLock();
       }
     }
   }
 
   protected OStorageInfo getStorage() {
     return storage;
+  }
+
+  public ODocument getDocument() {
+    return document;
+  }
+
+  public OIndex preProcessBeforeReturn(ODatabaseDocumentInternal database, OIndex index) {
+    return index;
   }
 }
