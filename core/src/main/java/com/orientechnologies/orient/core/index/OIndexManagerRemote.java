@@ -29,14 +29,11 @@ import com.orientechnologies.orient.core.db.OMetadataUpdateListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -68,7 +65,6 @@ public class OIndexManagerRemote implements OIndexManagerAbstract {
       new ConcurrentHashMap<>();
   protected Map<String, OIndex> indexes = new ConcurrentHashMap<>();
   protected String defaultClusterName = OMetadataDefault.CLUSTER_INDEX_NAME;
-  protected String manualClusterName = OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME;
   protected final AtomicInteger writeLockNesting = new AtomicInteger();
   protected final ReadWriteLock lock = new ReentrantReadWriteLock();
   protected ODocument document;
@@ -111,78 +107,19 @@ public class OIndexManagerRemote implements OIndexManagerAbstract {
   }
 
   public void save() {
-
-    acquireExclusiveLock();
-
-    try {
-      boolean saved = false;
-      for (int retry = 0; retry < 10; retry++)
-        try {
-
-          toStream();
-          document.save();
-          saved = true;
-          break;
-
-        } catch (OConcurrentModificationException e) {
-          OLogManager.instance()
-              .debug(this, "concurrent modification while saving index manager configuration", e);
-          document.reload(null, true);
-        }
-
-      if (!saved)
-        OLogManager.instance()
-            .error(this, "failed to save the index manager configuration after 10 retries", null);
-
-    } finally {
-      releaseExclusiveLock();
-    }
+    throw new UnsupportedOperationException();
   }
 
   public void addClusterToIndex(final String clusterName, final String indexName) {
-    final OIndex index = indexes.get(indexName);
-    if (index == null)
-      throw new OIndexException("Index with name " + indexName + " does not exist.");
-
-    if (index.getInternal() == null)
-      throw new OIndexException("Index with name " + indexName + " has no internal presentation.");
-    if (!index.getInternal().getClusters().contains(clusterName)) {
-      index.getInternal().addCluster(clusterName);
-      save();
-    }
+    throw new UnsupportedOperationException();
   }
 
   public void removeClusterFromIndex(final String clusterName, final String indexName) {
-    final OIndex index = indexes.get(indexName);
-    if (index == null)
-      throw new OIndexException("Index with name " + indexName + " does not exist.");
-    index.getInternal().removeCluster(clusterName);
-    save();
+    throw new UnsupportedOperationException();
   }
 
   public void create(ODatabaseDocumentInternal database) {
-    acquireExclusiveLock();
-    try {
-      try {
-        database.save(document, OMetadataDefault.CLUSTER_INTERNAL_NAME);
-      } catch (Exception e) {
-        OLogManager.instance()
-            .error(
-                this,
-                "Error during storing of index manager metadata,"
-                    + " will try to allocate new document to store index manager metadata",
-                e);
-
-        // RESET RID TO ALLOCATE A NEW ONE
-        if (ORecordId.isPersistent(document.getIdentity().getClusterPosition())) {
-          document.getIdentity().reset();
-          database.save(document, OMetadataDefault.CLUSTER_INTERNAL_NAME);
-        }
-      }
-      database.getStorage().setIndexMgrRecordId(document.getIdentity().toString());
-    } finally {
-      releaseExclusiveLock();
-    }
+    throw new UnsupportedOperationException();
   }
 
   public Collection<? extends OIndex> getIndexes(ODatabaseDocumentInternal database) {
@@ -236,10 +173,7 @@ public class OIndexManagerRemote implements OIndexManagerAbstract {
     } finally {
       releaseSharedLock();
     }
-    // we lock exclusively only when ODictionary not found
-    if (idx == null) {
-      idx = createDictionaryIfNeeded(database);
-    }
+    assert idx != null;
     return new ODictionary<>(idx);
   }
 
@@ -319,12 +253,7 @@ public class OIndexManagerRemote implements OIndexManagerAbstract {
       ODatabaseDocumentInternal database,
       final String className,
       final Collection<OIndex> indexes) {
-    final Map<OMultiKey, Set<OIndex>> propertyIndex = getIndexOnProperty(className);
-
-    if (propertyIndex == null) return;
-
-    for (final Set<OIndex> propertyIndexes : propertyIndex.values())
-      for (final OIndex index : propertyIndexes) indexes.add(index);
+    getClassRawIndexes(className, indexes);
   }
 
   public void getClassRawIndexes(final String className, final Collection<OIndex> indexes) {
@@ -474,27 +403,6 @@ public class OIndexManagerRemote implements OIndexManagerAbstract {
     assert result.equals(original);
 
     return Collections.unmodifiableMap(result);
-  }
-
-  private OIndex createDictionaryIfNeeded(ODatabaseDocumentInternal database) {
-    acquireExclusiveLock();
-    try {
-      OIndex idx = getIndex(database, DICTIONARY_NAME);
-      return idx != null ? idx : createDictionary(database);
-    } finally {
-      releaseExclusiveLock();
-    }
-  }
-
-  private OIndex createDictionary(ODatabaseDocumentInternal database) {
-    return createIndex(
-        database,
-        DICTIONARY_NAME,
-        OClass.INDEX_TYPE.DICTIONARY.toString(),
-        new OSimpleKeyIndexDefinition(OType.STRING),
-        null,
-        null,
-        null);
   }
 
   Locale getServerLocale() {
