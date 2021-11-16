@@ -54,12 +54,10 @@ public class OIndexAbstractDelegate implements OIndexInternal {
   public OIndex create(
       final String name,
       final OIndexDefinition indexDefinition,
-      final String clusterIndexName,
       final Set<String> clustersToIndex,
       boolean rebuild,
       final OProgressListener progressListener) {
-    return delegate.create(
-        name, indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener);
+    return delegate.create(name, indexDefinition, clustersToIndex, rebuild, progressListener);
   }
 
   @Deprecated

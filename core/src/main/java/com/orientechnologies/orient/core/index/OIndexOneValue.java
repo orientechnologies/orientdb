@@ -116,14 +116,12 @@ public abstract class OIndexOneValue extends OIndexAbstract {
   public OIndexOneValue create(
       final String name,
       final OIndexDefinition indexDefinition,
-      final String clusterIndexName,
       final Set<String> clustersToIndex,
       boolean rebuild,
       final OProgressListener progressListener) {
     return (OIndexOneValue)
         super.create(
             indexDefinition,
-            clusterIndexName,
             clustersToIndex,
             rebuild,
             progressListener,

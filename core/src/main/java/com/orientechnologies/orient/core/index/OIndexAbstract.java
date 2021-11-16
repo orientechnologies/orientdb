@@ -190,7 +190,13 @@ public abstract class OIndexAbstract implements OIndexInternal {
     final Set<String> clusters = new HashSet<>(config.field(CONFIG_CLUSTERS, OType.EMBEDDEDSET));
 
     return new OIndexMetadata(
-        indexName, loadedIndexDefinition, clusters, type, algorithm, valueContainerAlgorithm);
+        indexName,
+        loadedIndexDefinition,
+        clusters,
+        type,
+        algorithm,
+        valueContainerAlgorithm,
+        config.field(OIndexInternal.METADATA));
   }
 
   @Override
@@ -209,14 +215,9 @@ public abstract class OIndexAbstract implements OIndexInternal {
     }
   }
 
-  /**
-   * Creates the index.
-   *
-   * @param clusterIndexName Cluster name where to place the TreeMap
-   */
+  /** Creates the index. */
   public OIndexInternal create(
       final OIndexDefinition indexDefinition,
-      final String clusterIndexName,
       final Set<String> clustersToIndex,
       boolean rebuild,
       final OProgressListener progressListener,

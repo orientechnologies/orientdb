@@ -38,7 +38,6 @@ public interface OIndex extends Comparable<OIndex> {
   OIndex create(
       String name,
       OIndexDefinition indexDefinition,
-      String clusterIndexName,
       Set<String> clustersToIndex,
       boolean rebuild,
       OProgressListener progressListener);

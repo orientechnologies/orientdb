@@ -341,14 +341,12 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
   public OLuceneIndexNotUnique create(
       String name,
       OIndexDefinition indexDefinition,
-      String clusterIndexName,
       Set<String> clustersToIndex,
       boolean rebuild,
       OProgressListener progressListener) {
     return (OLuceneIndexNotUnique)
         super.create(
             indexDefinition,
-            clusterIndexName,
             clustersToIndex,
             rebuild,
             progressListener,

@@ -261,7 +261,6 @@ public class OIndexFullText extends OIndexMultiValues {
   @Override
   public OIndexInternal create(
       OIndexDefinition indexDefinition,
-      String clusterIndexName,
       Set<String> clustersToIndex,
       boolean rebuild,
       OProgressListener progressListener,
@@ -272,27 +271,20 @@ public class OIndexFullText extends OIndexMultiValues {
     }
 
     return super.create(
-        indexDefinition,
-        clusterIndexName,
-        clustersToIndex,
-        rebuild,
-        progressListener,
-        valueSerializer);
+        indexDefinition, clustersToIndex, rebuild, progressListener, valueSerializer);
   }
 
   @Override
   public OIndexMultiValues create(
       String name,
       OIndexDefinition indexDefinition,
-      String clusterIndexName,
       Set<String> clustersToIndex,
       boolean rebuild,
       OProgressListener progressListener) {
     if (indexDefinition.getFields().size() > 1) {
       throw new OIndexException(type + " indexes cannot be used as composite ones.");
     }
-    return super.create(
-        name, indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener);
+    return super.create(name, indexDefinition, clustersToIndex, rebuild, progressListener);
   }
 
   @Override

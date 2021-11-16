@@ -441,7 +441,6 @@ public class OChainedIndexProxy<T> implements OIndexInternal {
   public OIndex create(
       String name,
       OIndexDefinition indexDefinition,
-      String clusterIndexName,
       Set<String> clustersToIndex,
       boolean rebuild,
       OProgressListener progressListener) {

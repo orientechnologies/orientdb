@@ -272,7 +272,6 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
   public OIndexMultiValues create(
       final String name,
       final OIndexDefinition indexDefinition,
-      final String clusterIndexName,
       final Set<String> clustersToIndex,
       boolean rebuild,
       final OProgressListener progressListener) {
@@ -280,7 +279,6 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
     return (OIndexMultiValues)
         super.create(
             indexDefinition,
-            clusterIndexName,
             clustersToIndex,
             rebuild,
             progressListener,

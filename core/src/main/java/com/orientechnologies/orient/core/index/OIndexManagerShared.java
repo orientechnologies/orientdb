@@ -677,13 +677,6 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
         if (metadata.field("trackMode") == null) metadata.field("trackMode", "FULL");
       }
 
-      index =
-          OIndexes.createIndex(
-              storage, iName, type, algorithm, valueContainerAlgorithm, metadata, -1);
-      if (progressListener == null)
-        // ASSIGN DEFAULT PROGRESS LISTENER
-        progressListener = new OIndexRebuildOutputListener(index);
-
       final Set<String> clustersToIndex = findClustersByIds(clusterIdsToIndex, database);
       Object ignoreNullValues =
           Optional.ofNullable(metadata)
@@ -695,22 +688,23 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
         indexDefinition.setNullValuesIgnored(false);
       } else {
         indexDefinition.setNullValuesIgnored(
-            database
+            storage
                 .getConfiguration()
+                .getContextConfiguration()
                 .getValueAsBoolean(OGlobalConfiguration.INDEX_IGNORE_NULL_VALUES_DEFAULT));
       }
 
-      // decide which cluster to use ("index" - for automatic and "manindex" for manual)
-      final String clusterName =
-          indexDefinition.getClassName() != null ? defaultClusterName : manualClusterName;
+      OIndexMetadata im =
+          new OIndexMetadata(
+              iName,
+              indexDefinition,
+              clustersToIndex,
+              type,
+              algorithm,
+              valueContainerAlgorithm,
+              metadata);
 
-      indexes.put(index.getName(), index);
-      try {
-        index.create(iName, indexDefinition, clusterName, clustersToIndex, true, progressListener);
-      } catch (Throwable e) {
-        indexes.remove(index.getName());
-        throw e;
-      }
+      index = createIndexFromMetadata(storage, im, progressListener);
 
       addIndexInternal(index);
 
@@ -728,6 +722,37 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
     notifyInvolvedClasses(database, clusterIdsToIndex);
 
     return preProcessBeforeReturn(database, index);
+  }
+
+  private OIndexInternal createIndexFromMetadata(
+      OStorage storage, OIndexMetadata indexMetadata, OProgressListener progressListener) {
+
+    OIndexInternal index =
+        OIndexes.createIndex(
+            storage,
+            indexMetadata.getName(),
+            indexMetadata.getType(),
+            indexMetadata.getAlgorithm(),
+            indexMetadata.getValueContainerAlgorithm(),
+            indexMetadata.getMetadata(),
+            -1);
+    if (progressListener == null)
+      // ASSIGN DEFAULT PROGRESS LISTENER
+      progressListener = new OIndexRebuildOutputListener(index);
+    indexes.put(index.getName(), index);
+    try {
+      index.create(
+          indexMetadata.getName(),
+          indexMetadata.getIndexDefinition(),
+          indexMetadata.getClustersToIndex(),
+          true,
+          progressListener);
+    } catch (Throwable e) {
+      indexes.remove(index.getName());
+      throw e;
+    }
+
+    return index;
   }
 
   private static void checkSecurityConstraintsForIndexCreate(
@@ -962,7 +987,7 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
                     newIndexMetadata.getType(),
                     newIndexMetadata.getAlgorithm(),
                     newIndexMetadata.getValueContainerAlgorithm(),
-                    d.field(OIndexInternal.METADATA),
+                    newIndexMetadata.getMetadata(),
                     indexVersion);
 
             final String normalizedName = newIndexMetadata.getName();
@@ -1222,12 +1247,7 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
       if (indexName != null && clusters != null && !clusters.isEmpty() && type != null) {
         OLogManager.instance().info(this, "Start creation of index '%s'", indexName);
         index.create(
-            indexName,
-            indexDefinition,
-            defaultClusterName,
-            clusters,
-            false,
-            new OIndexRebuildOutputListener(index));
+            indexName, indexDefinition, clusters, false, new OIndexRebuildOutputListener(index));
 
         addIndexInternal(index);
 

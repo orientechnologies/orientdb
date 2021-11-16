@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.Set;
 
 /**
@@ -33,6 +34,7 @@ public class OIndexMetadata {
   private final String type;
   private final String algorithm;
   private final String valueContainerAlgorithm;
+  private final ODocument metadata;
 
   public OIndexMetadata(
       String name,
@@ -40,13 +42,15 @@ public class OIndexMetadata {
       Set<String> clustersToIndex,
       String type,
       String algorithm,
-      String valueContainerAlgorithm) {
+      String valueContainerAlgorithm,
+      ODocument metadata) {
     this.name = name;
     this.indexDefinition = indexDefinition;
     this.clustersToIndex = clustersToIndex;
     this.type = type;
     this.algorithm = algorithm;
     this.valueContainerAlgorithm = valueContainerAlgorithm;
+    this.metadata = metadata;
   }
 
   public String getName() {
@@ -100,5 +104,9 @@ public class OIndexMetadata {
 
   String getValueContainerAlgorithm() {
     return valueContainerAlgorithm;
+  }
+
+  public ODocument getMetadata() {
+    return metadata;
   }
 }
