@@ -22,6 +22,7 @@ package com.orientechnologies.orient.client.remote;
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
+import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
@@ -31,7 +32,93 @@ import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.client.ONotSendRequestException;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
-import com.orientechnologies.orient.client.remote.message.*;
+import com.orientechnologies.orient.client.remote.message.OAddClusterRequest;
+import com.orientechnologies.orient.client.remote.message.OAddClusterResponse;
+import com.orientechnologies.orient.client.remote.message.OBeginTransaction38Request;
+import com.orientechnologies.orient.client.remote.message.OBeginTransactionResponse;
+import com.orientechnologies.orient.client.remote.message.OBinaryPushRequest;
+import com.orientechnologies.orient.client.remote.message.OBinaryPushResponse;
+import com.orientechnologies.orient.client.remote.message.OCeilingPhysicalPositionsRequest;
+import com.orientechnologies.orient.client.remote.message.OCeilingPhysicalPositionsResponse;
+import com.orientechnologies.orient.client.remote.message.OCleanOutRecordRequest;
+import com.orientechnologies.orient.client.remote.message.OCleanOutRecordResponse;
+import com.orientechnologies.orient.client.remote.message.OCloseQueryRequest;
+import com.orientechnologies.orient.client.remote.message.OCommandRequest;
+import com.orientechnologies.orient.client.remote.message.OCommandResponse;
+import com.orientechnologies.orient.client.remote.message.OCommit37Response;
+import com.orientechnologies.orient.client.remote.message.OCommit38Request;
+import com.orientechnologies.orient.client.remote.message.OCountRecordsRequest;
+import com.orientechnologies.orient.client.remote.message.OCountRecordsResponse;
+import com.orientechnologies.orient.client.remote.message.OCountRequest;
+import com.orientechnologies.orient.client.remote.message.OCountResponse;
+import com.orientechnologies.orient.client.remote.message.OCreateRecordRequest;
+import com.orientechnologies.orient.client.remote.message.OCreateRecordResponse;
+import com.orientechnologies.orient.client.remote.message.ODeleteRecordRequest;
+import com.orientechnologies.orient.client.remote.message.ODeleteRecordResponse;
+import com.orientechnologies.orient.client.remote.message.ODropClusterRequest;
+import com.orientechnologies.orient.client.remote.message.ODropClusterResponse;
+import com.orientechnologies.orient.client.remote.message.OExperimentalRequest;
+import com.orientechnologies.orient.client.remote.message.OExperimentalResponse;
+import com.orientechnologies.orient.client.remote.message.OFetchTransaction38Request;
+import com.orientechnologies.orient.client.remote.message.OFetchTransaction38Response;
+import com.orientechnologies.orient.client.remote.message.OFloorPhysicalPositionsRequest;
+import com.orientechnologies.orient.client.remote.message.OFloorPhysicalPositionsResponse;
+import com.orientechnologies.orient.client.remote.message.OGetClusterDataRangeRequest;
+import com.orientechnologies.orient.client.remote.message.OGetClusterDataRangeResponse;
+import com.orientechnologies.orient.client.remote.message.OGetRecordMetadataRequest;
+import com.orientechnologies.orient.client.remote.message.OGetRecordMetadataResponse;
+import com.orientechnologies.orient.client.remote.message.OGetSizeRequest;
+import com.orientechnologies.orient.client.remote.message.OGetSizeResponse;
+import com.orientechnologies.orient.client.remote.message.OHigherPhysicalPositionsRequest;
+import com.orientechnologies.orient.client.remote.message.OHigherPhysicalPositionsResponse;
+import com.orientechnologies.orient.client.remote.message.OImportRequest;
+import com.orientechnologies.orient.client.remote.message.OImportResponse;
+import com.orientechnologies.orient.client.remote.message.OIncrementalBackupRequest;
+import com.orientechnologies.orient.client.remote.message.OIncrementalBackupResponse;
+import com.orientechnologies.orient.client.remote.message.OLiveQueryPushRequest;
+import com.orientechnologies.orient.client.remote.message.OLockRecordRequest;
+import com.orientechnologies.orient.client.remote.message.OLockRecordResponse;
+import com.orientechnologies.orient.client.remote.message.OLowerPhysicalPositionsRequest;
+import com.orientechnologies.orient.client.remote.message.OLowerPhysicalPositionsResponse;
+import com.orientechnologies.orient.client.remote.message.OOpen37Request;
+import com.orientechnologies.orient.client.remote.message.OOpen37Response;
+import com.orientechnologies.orient.client.remote.message.OPushDistributedConfigurationRequest;
+import com.orientechnologies.orient.client.remote.message.OPushFunctionsRequest;
+import com.orientechnologies.orient.client.remote.message.OPushIndexManagerRequest;
+import com.orientechnologies.orient.client.remote.message.OPushSchemaRequest;
+import com.orientechnologies.orient.client.remote.message.OPushSequencesRequest;
+import com.orientechnologies.orient.client.remote.message.OPushStorageConfigurationRequest;
+import com.orientechnologies.orient.client.remote.message.OQueryNextPageRequest;
+import com.orientechnologies.orient.client.remote.message.OQueryRequest;
+import com.orientechnologies.orient.client.remote.message.OQueryResponse;
+import com.orientechnologies.orient.client.remote.message.OReadRecordIfVersionIsNotLatestRequest;
+import com.orientechnologies.orient.client.remote.message.OReadRecordIfVersionIsNotLatestResponse;
+import com.orientechnologies.orient.client.remote.message.OReadRecordRequest;
+import com.orientechnologies.orient.client.remote.message.OReadRecordResponse;
+import com.orientechnologies.orient.client.remote.message.ORebeginTransaction38Request;
+import com.orientechnologies.orient.client.remote.message.OReloadRequest37;
+import com.orientechnologies.orient.client.remote.message.OReloadResponse37;
+import com.orientechnologies.orient.client.remote.message.ORemoteResultSet;
+import com.orientechnologies.orient.client.remote.message.OReopenRequest;
+import com.orientechnologies.orient.client.remote.message.OReopenResponse;
+import com.orientechnologies.orient.client.remote.message.ORollbackTransactionRequest;
+import com.orientechnologies.orient.client.remote.message.ORollbackTransactionResponse;
+import com.orientechnologies.orient.client.remote.message.OServerQueryRequest;
+import com.orientechnologies.orient.client.remote.message.OServerQueryResponse;
+import com.orientechnologies.orient.client.remote.message.OSubscribeDistributedConfigurationRequest;
+import com.orientechnologies.orient.client.remote.message.OSubscribeFunctionsRequest;
+import com.orientechnologies.orient.client.remote.message.OSubscribeIndexManagerRequest;
+import com.orientechnologies.orient.client.remote.message.OSubscribeLiveQueryRequest;
+import com.orientechnologies.orient.client.remote.message.OSubscribeLiveQueryResponse;
+import com.orientechnologies.orient.client.remote.message.OSubscribeSchemaRequest;
+import com.orientechnologies.orient.client.remote.message.OSubscribeSequencesRequest;
+import com.orientechnologies.orient.client.remote.message.OSubscribeStorageConfigurationRequest;
+import com.orientechnologies.orient.client.remote.message.OUnlockRecordRequest;
+import com.orientechnologies.orient.client.remote.message.OUnlockRecordResponse;
+import com.orientechnologies.orient.client.remote.message.OUnsubscribeLiveQueryRequest;
+import com.orientechnologies.orient.client.remote.message.OUnsubscribeRequest;
+import com.orientechnologies.orient.client.remote.message.OUpdateRecordRequest;
+import com.orientechnologies.orient.client.remote.message.OUpdateRecordResponse;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestAsynch;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -40,7 +127,12 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OLiveQueryMonitor;
+import com.orientechnologies.orient.core.db.OSharedContext;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.OrientDBRemote;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentRemote;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxInternal;
 import com.orientechnologies.orient.core.db.document.OLiveQueryMonitorRemote;
@@ -56,13 +148,22 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.OTokenException;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OCredentialInterceptor;
 import com.orientechnologies.orient.core.security.OSecurityManager;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37Client;
 import com.orientechnologies.orient.core.sql.query.OLiveQuery;
-import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.ORecordMetadata;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
@@ -77,15 +178,25 @@ import com.orientechnologies.orient.enterprise.channel.binary.OTokenSecurityExce
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TimeZone;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /** This object is bound to each remote ODatabase instances. */
-public class OStorageRemote extends OStorageAbstract implements OStorageProxy, ORemotePushHandler {
+public class OStorageRemote implements OStorageProxy, ORemotePushHandler {
   @Deprecated public static final String PARAM_CONNECTION_STRATEGY = "connectionStrategy";
 
   public static final String DRIVER_NAME = "OrientDB Java";
@@ -121,6 +232,14 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   private volatile OStorageRemotePushThread pushThread;
   protected final OrientDBRemote context;
   protected OSharedContext sharedContext = null;
+  protected final String url;
+  protected final OReadersWriterSpinLock stateLock;
+
+  protected volatile OStorageConfiguration configuration;
+  protected volatile OCurrentStorageComponentsFactory componentsFactory;
+  protected String name;
+
+  protected volatile STATUS status = STATUS.CLOSED;
 
   public static final String ADDRESS_SEPARATOR = ";";
 
@@ -148,10 +267,15 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       final STATUS status,
       OrientDBConfig config)
       throws IOException {
-    super(
-        name,
-        buildUrl(hosts.getUrls().toArray(new String[] {}), name),
-        iMode); // NO TIMEOUT @SINCE 1.5
+
+    this.name = normalizeName(name);
+
+    if (OStringSerializerHelper.contains(this.name, ','))
+      throw new IllegalArgumentException("Invalid character in storage name: " + this.name);
+
+    url = buildUrl(hosts.getUrls().toArray(new String[] {}), name);
+
+    stateLock = new OReadersWriterSpinLock();
     if (status != null) this.status = status;
 
     configuration = null;
@@ -173,6 +297,40 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
     this.connectionManager = connectionManager;
     this.context = context;
+  }
+
+  private String normalizeName(String name) {
+    if (OStringSerializerHelper.contains(name, '/')) {
+      name = name.substring(name.lastIndexOf("/") + 1);
+
+      if (OStringSerializerHelper.contains(name, '\\'))
+        return name.substring(name.lastIndexOf("\\") + 1);
+      else return name;
+
+    } else if (OStringSerializerHelper.contains(name, '\\')) {
+      name = name.substring(name.lastIndexOf("\\") + 1);
+
+      if (OStringSerializerHelper.contains(name, '/'))
+        return name.substring(name.lastIndexOf("/") + 1);
+      else return name;
+    } else {
+      return name;
+    }
+  }
+
+  @Override
+  public OStorageConfiguration getConfiguration() {
+    return configuration;
+  }
+
+  @Override
+  public boolean checkForRecordValidity(final OPhysicalPosition ppos) {
+    return ppos != null && !ORecordVersionHelper.isTombstone(ppos.recordVersion);
+  }
+
+  @Override
+  public String getName() {
+    return name;
   }
 
   public void setSharedContext(OSharedContext sharedContext) {
@@ -554,7 +712,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       if (status == STATUS.CLOSED) return;
 
       status = STATUS.CLOSING;
-      super.close(true, false);
+      close(true, false);
     } finally {
       stateLock.releaseWriteLock();
     }
@@ -1106,11 +1264,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
             response.getExecutionPlan(),
             response.getQueryStats(),
             response.isHasNextPage());
-    //    if (response.isHasNextPage()) {
-    //      stickToSession();
-    //    } else {
-    //      db.queryClosed(response.getQueryId());
-    //    }
+    // if (response.isHasNextPage()) {
+    // stickToSession();
+    // } else {
+    // db.queryClosed(response.getQueryId());
+    // }
     return new ORemoteQueryResult(rs, response.isTxChanges(), response.isReloadMetadata());
   }
 
@@ -1137,11 +1295,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
             response.getExecutionPlan(),
             response.getQueryStats(),
             response.isHasNextPage());
-    //    if (response.isHasNextPage()) {
-    //      stickToSession();
-    //    } else {
-    //      db.queryClosed(response.getQueryId());
-    //    }
+    // if (response.isHasNextPage()) {
+    // stickToSession();
+    // } else {
+    // db.queryClosed(response.getQueryId());
+    // }
     return new ORemoteQueryResult(rs, response.isTxChanges(), response.isReloadMetadata());
   }
 
@@ -1432,8 +1590,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
         clusters[iClusterId] = null;
         clusterMap.remove(cluster.getName());
         ((OStorageConfigurationRemote) configuration)
-            .dropCluster(
-                iClusterId); // endResponse must be called before this line, which call updateRecord
+            .dropCluster(iClusterId); // endResponse must be called before this line, which
+        // call updateRecord
       }
     } finally {
       stateLock.releaseWriteLock();
@@ -1690,7 +1848,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
             this, "Client connected to %s with session id=%d", network.getServerURL(), sessionId);
 
     // READ CLUSTER CONFIGURATION
-    //    updateClusterConfiguration(network.getServerURL(),
+    // updateClusterConfiguration(network.getServerURL(),
     // response.getDistributedConfiguration());
 
     // This need to be protected by a lock for now, let's see in future
@@ -1977,7 +2135,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   @Override
   public boolean isClosed() {
-    if (super.isClosed()) return true;
+    if (status == STATUS.CLOSED) return true;
     final OStorageRemoteSession session = getCurrentSession();
     if (session == null) return false;
     return session.isClosed();
@@ -2377,5 +2535,35 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   public OSharedContext getSharedContext() {
     return sharedContext;
+  }
+
+  @Override
+  public boolean isDistributed() {
+    return false;
+  }
+
+  @Override
+  public STATUS getStatus() {
+    return status;
+  }
+
+  @Override
+  public void close() {
+    close(false, false);
+  }
+
+  @Override
+  public boolean dropCluster(final String iClusterName) {
+    return dropCluster(getClusterIdByName(iClusterName));
+  }
+
+  @Override
+  public OCurrentStorageComponentsFactory getComponentsFactory() {
+    return componentsFactory;
+  }
+
+  @Override
+  public OStorage getUnderlying() {
+    return this;
   }
 }
