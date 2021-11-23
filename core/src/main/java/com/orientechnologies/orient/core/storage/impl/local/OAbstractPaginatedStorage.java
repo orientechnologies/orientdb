@@ -5151,6 +5151,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
+  public void metadataOnly(byte[] metadata) {
+    try {
+      atomicOperationsManager.executeInsideAtomicOperation(metadata, (op) -> {});
+      this.lastMetadata = metadata;
+    } catch (IOException e) {
+      throw logAndPrepareForRethrow(e);
+    }
+  }
+
   private void recoverIfNeeded() throws Exception {
     if (isDirty()) {
       OLogManager.instance()
