@@ -27,7 +27,7 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
   private final Set<OTxPromise<ORID>> promisedRids = new HashSet<>();
   private final Set<OTxPromise<Object>> promisedKeys = new HashSet<>();
   private final OTransactionId transactionId;
-  private Status status;
+  private TxContextStatus status;
 
   public ONewDistributedTxContextImpl(
       ODistributedDatabaseImpl shared,
@@ -141,11 +141,11 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
     return tx;
   }
 
-  public Status getStatus() {
+  public TxContextStatus getStatus() {
     return status;
   }
 
-  public void setStatus(Status status) {
+  public void setStatus(TxContextStatus status) {
     this.status = status;
   }
 
@@ -162,9 +162,5 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
     return transactionId;
   }
 
-  public enum Status {
-    FAILED,
-    SUCCESS,
-    TIMEDOUT,
-  }
+
 }
