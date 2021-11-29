@@ -109,6 +109,12 @@ public class ODefaultRemoteTaskFactoryV3 implements ORemoteTaskFactory {
 
       case OUpdateDatabaseSequenceStatusTask.FACTORYID: // 58
         return new OUpdateDatabaseSequenceStatusTask();
+
+      case OSQLCommandTaskFirstPhase.FACTORYID: // 59
+        return new OSQLCommandTaskFirstPhase();
+
+      case OSQLCommandTaskSecondPhase.FACTORYID: // 60
+        return new OSQLCommandTaskSecondPhase();
     }
 
     throw new IllegalArgumentException("Task with code " + code + " is not supported");

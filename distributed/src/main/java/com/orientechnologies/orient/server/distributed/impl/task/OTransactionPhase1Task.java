@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.server.distributed.impl.task;
 
-import static com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl.Status.TIMEDOUT;
+import static com.orientechnologies.orient.server.distributed.impl.TxContextStatus.TIMEDOUT;
 
 import com.orientechnologies.orient.client.remote.message.OMessageHelper;
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;

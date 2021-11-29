@@ -25,19 +25,13 @@ import java.util.Set;
 
 public class ONewDistributedTxContextImpl implements ODistributedTxContext {
 
-  public enum Status {
-    FAILED,
-    SUCCESS,
-    TIMEDOUT,
-  }
-
   private final ODistributedDatabaseImpl shared;
   private final ODistributedRequestId id;
   private final OTransactionInternal tx;
   private final long startedOn;
   private final List<ORID> lockedRids = new ArrayList<>();
   private final List<Object> lockedKeys = new ArrayList<>();
-  private Status status;
+  private TxContextStatus status;
   private final OTransactionId transactionId;
 
   public ONewDistributedTxContextImpl(
@@ -165,11 +159,11 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
     return tx;
   }
 
-  public void setStatus(Status status) {
+  public void setStatus(TxContextStatus status) {
     this.status = status;
   }
 
-  public Status getStatus() {
+  public TxContextStatus getStatus() {
     return status;
   }
 

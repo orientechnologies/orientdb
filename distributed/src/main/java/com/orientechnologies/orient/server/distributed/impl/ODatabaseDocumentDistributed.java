@@ -3,9 +3,9 @@ package com.orientechnologies.orient.server.distributed.impl;
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY;
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY;
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_REPLICATION_PROTOCOL_VERSION;
-import static com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl.Status.FAILED;
-import static com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl.Status.SUCCESS;
-import static com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl.Status.TIMEDOUT;
+import static com.orientechnologies.orient.server.distributed.impl.TxContextStatus.FAILED;
+import static com.orientechnologies.orient.server.distributed.impl.TxContextStatus.SUCCESS;
+import static com.orientechnologies.orient.server.distributed.impl.TxContextStatus.TIMEDOUT;
 
 import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
@@ -57,6 +57,7 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
+import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
 import com.orientechnologies.orient.core.tx.ValidationResult;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
@@ -73,12 +74,14 @@ import com.orientechnologies.orient.server.distributed.impl.metadata.OClassDistr
 import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
 import com.orientechnologies.orient.server.distributed.impl.task.ONewSQLCommandTask;
 import com.orientechnologies.orient.server.distributed.impl.task.ORunQueryExecutionPlanTask;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionResultPayload;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxInvalidSequential;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxSuccess;
 import com.orientechnologies.orient.server.distributed.task.ODistributedKeyLockedException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
-import java.util.*;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -585,7 +588,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   public void register(
       ODistributedRequestId requestId,
       ODistributedDatabase localDistributedDatabase,
-      ONewDistributedTxContextImpl txContext) {
+      ODistributedTxContext txContext) {
     localDistributedDatabase.registerTxContext(requestId, txContext);
   }
 
@@ -1052,5 +1055,118 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           txContext.commit(this);
           return null;
         });
+  }
+
+  public OTransactionResultPayload firstPhaseDDL(
+      String query,
+      OTransactionId preChangeId,
+      OTransactionId afterChangeId,
+      ODistributedRequestId requestId) {
+    ODistributedDatabase localDistributedDatabase =
+        getStorageDistributed().getLocalDistributedDatabase();
+    ODDLContextImpl ddlContext = new ODDLContextImpl(query, preChangeId, afterChangeId, requestId);
+    ValidationResult first = localDistributedDatabase.validate(preChangeId);
+    ValidationResult second = localDistributedDatabase.validate(afterChangeId);
+    if ((first == ValidationResult.ALREADY_PROMISED || first == ValidationResult.MISSING_PREVIOUS)
+        && (second == ValidationResult.ALREADY_PROMISED
+            || second == ValidationResult.MISSING_PREVIOUS)) {
+      ddlContext.setStatus(TIMEDOUT);
+      return new OTxInvalidSequential();
+    } else if (first == ValidationResult.ALREADY_PRESENT
+        || second == ValidationResult.ALREADY_PRESENT) {
+      ddlContext.setStatus(TIMEDOUT);
+      return new OTxInvalidSequential();
+    }
+    ddlContext.setStatus(SUCCESS);
+    register(requestId, localDistributedDatabase, ddlContext);
+    return new OTxSuccess();
+  }
+
+  public void secondPhaseDDL(ODistributedRequestId confirmSentRequest, boolean apply) {
+    ODistributedDatabase localDistributedDatabase =
+        getStorageDistributed().getLocalDistributedDatabase();
+    ODDLContextImpl context =
+        (ODDLContextImpl) localDistributedDatabase.popTxContext(confirmSentRequest);
+    if (apply) {
+      if (context.getStatus() == SUCCESS) {
+        OTxMetadataHolder preMetadata = localDistributedDatabase.commit(context.getPreChangeId());
+        ((OAbstractPaginatedStorage) getStorage()).metadataOnly(preMetadata.metadata());
+        preMetadata.notifyMetadataRead();
+        String query = context.getQuery();
+        OScenarioThreadLocal.executeAsDistributed(
+            () -> {
+              command(query, new Object[] {});
+              return null;
+            });
+
+        OTxMetadataHolder afterMetadata =
+            localDistributedDatabase.commit(context.getAfterChangeId());
+        ((OAbstractPaginatedStorage) getStorage()).metadataOnly(afterMetadata.metadata());
+        afterMetadata.notifyMetadataRead();
+      } else {
+        int nretry = getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY);
+        int delay = getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY);
+
+        for (int i = 0; i < nretry; i++) {
+          try {
+            if (i > 0) {
+              try {
+                Thread.sleep(new Random().nextInt(delay));
+              } catch (InterruptedException e) {
+                OException.wrapException(new OInterruptedException(e.getMessage()), e);
+              }
+            }
+            OTransactionResultPayload firstPhase =
+                firstPhaseDDL(
+                    context.getQuery(),
+                    context.getPreChangeId(),
+                    context.getAfterChangeId(),
+                    context.getReqId());
+            context = (ODDLContextImpl) localDistributedDatabase.popTxContext(confirmSentRequest);
+            if (firstPhase instanceof OTxSuccess) {
+              break;
+            }
+          } catch (Exception ex) {
+            OLogManager.instance()
+                .warn(
+                    ODatabaseDocumentDistributed.this,
+                    "Error beginning timed out transaction: %s ",
+                    ex,
+                    context.getReqId());
+            break;
+          }
+        }
+        if (SUCCESS.equals(context.getStatus())) {
+          try {
+            String query = context.getQuery();
+            OScenarioThreadLocal.executeAsDistributed(
+                () -> {
+                  command(query, new Object[] {});
+                  return null;
+                });
+          } catch (RuntimeException | Error e) {
+            Orient.instance()
+                .submit(
+                    () -> {
+                      getDistributedManager().installDatabase(false, getName(), true, true);
+                    });
+            throw e;
+          }
+        } else {
+          ODistributedRequestId id = context.getReqId();
+          Orient.instance()
+              .submit(
+                  () -> {
+                    OLogManager.instance()
+                        .warn(
+                            ODatabaseDocumentDistributed.this,
+                            "Reached limit of retry for commit tx:%s forcing database re-install",
+                            id);
+                    distributedManager.installDatabase(
+                        false, ODatabaseDocumentDistributed.this.getName(), true, true);
+                  });
+        }
+      }
+    }
   }
 }
