@@ -1,16 +1,28 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
-import com.orientechnologies.orient.server.distributed.*;
-import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1Task;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+
+import com.orientechnologies.orient.server.distributed.ODistributedException;
+import com.orientechnologies.orient.server.distributed.ODistributedRequest;
+import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
+import com.orientechnologies.orient.server.distributed.ODistributedResponse;
+import com.orientechnologies.orient.server.distributed.ODistributedTxResponseManager;
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1TaskResult;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionResultPayload;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxException;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxStillRunning;
-import java.util.*;
+import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 public class ODistributedTxResponseManagerImpl implements ODistributedTxResponseManager {
 
-  private final OTransactionPhase1Task iRequest;
+  private final ORemoteTask iRequest;
   private final Collection<String> iNodes;
   private final Set<String> nodesConcurToTheQuorum;
   private final int availableNodes;
@@ -29,7 +41,7 @@ public class ODistributedTxResponseManagerImpl implements ODistributedTxResponse
   private volatile int stillRunningWaited = 0;
 
   public ODistributedTxResponseManagerImpl(
-      OTransactionPhase1Task iRequest,
+      ORemoteTask iRequest,
       Collection<String> iNodes,
       Set<String> nodesConcurToTheQuorum,
       int availableNodes,

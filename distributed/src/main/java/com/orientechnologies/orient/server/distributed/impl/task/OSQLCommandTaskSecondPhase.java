@@ -21,8 +21,9 @@ public class OSQLCommandTaskSecondPhase extends OAbstractReplicatedTask {
 
   public OSQLCommandTaskSecondPhase() {}
 
-  public OSQLCommandTaskSecondPhase(ODistributedRequestId confirmSentRequest) {
+  public OSQLCommandTaskSecondPhase(ODistributedRequestId confirmSentRequest, boolean apply) {
     this.confirmSentRequest = confirmSentRequest;
+    this.apply = apply;
   }
 
   @Override
