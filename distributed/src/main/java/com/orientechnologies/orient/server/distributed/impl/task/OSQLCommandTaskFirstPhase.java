@@ -8,6 +8,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionResultPayload;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -47,9 +48,10 @@ public class OSQLCommandTaskFirstPhase extends OAbstractReplicatedTask {
       ODistributedServerManager iManager,
       ODatabaseDocumentInternal database)
       throws Exception {
-    ((ODatabaseDocumentDistributed) database)
-        .firstPhaseDDL(query, preChangeId, afterChangeId, requestId);
-    return null;
+    OTransactionResultPayload res =
+        ((ODatabaseDocumentDistributed) database)
+            .firstPhaseDDL(query, preChangeId, afterChangeId, requestId);
+    return new OTransactionPhase1TaskResult(res);
   }
 
   @Override

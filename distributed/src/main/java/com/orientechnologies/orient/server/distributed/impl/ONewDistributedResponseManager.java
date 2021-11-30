@@ -5,11 +5,11 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedResponseManager;
-import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1Task;
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1TaskResult;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionResultPayload;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxException;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxStillRunning;
+import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -20,7 +20,7 @@ import java.util.Set;
 
 public class ONewDistributedResponseManager implements ODistributedResponseManager {
 
-  private final OTransactionPhase1Task iRequest;
+  private final ORemoteTask iRequest;
   private final Collection<String> iNodes;
   private final Set<String> nodesConcurToTheQuorum;
   private final int availableNodes;
@@ -39,7 +39,7 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
   private volatile int stillRunningWaited = 0;
 
   public ONewDistributedResponseManager(
-      OTransactionPhase1Task iRequest,
+      ORemoteTask iRequest,
       Collection<String> iNodes,
       Set<String> nodesConcurToTheQuorum,
       int availableNodes,

@@ -64,6 +64,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedConfiguration
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
+import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
@@ -74,21 +75,28 @@ import com.orientechnologies.orient.server.distributed.impl.metadata.OClassDistr
 import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
 import com.orientechnologies.orient.server.distributed.impl.task.ONewSQLCommandTask;
 import com.orientechnologies.orient.server.distributed.impl.task.ORunQueryExecutionPlanTask;
+import com.orientechnologies.orient.server.distributed.impl.task.OSQLCommandTaskFirstPhase;
+import com.orientechnologies.orient.server.distributed.impl.task.OSQLCommandTaskSecondPhase;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionResultPayload;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxException;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxInvalidSequential;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxSuccess;
 import com.orientechnologies.orient.server.distributed.task.ODistributedKeyLockedException;
+import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
@@ -986,6 +994,169 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           getLocalNodeName(),
           getName());
     }
+  }
+
+  public void twoPhaseDDL(String command, boolean excludeLocal) {
+    if (getStorageDistributed().isLocalEnv()) {
+      // ALREADY DISTRIBUTED
+      super.command(command, new Object[] {}).close();
+      return;
+    }
+
+    getStorageDistributed()
+        .checkNodeIsMaster(
+            getLocalNodeName(), getDistributedConfiguration(), "Command '" + command + "'");
+    ODistributedDatabase local = getStorageDistributed().getLocalDistributedDatabase();
+
+    Optional<OTransactionId> beforeId = local.nextId();
+    Optional<OTransactionId> afterId = local.nextId();
+
+    OSQLCommandTaskFirstPhase task =
+        new OSQLCommandTaskFirstPhase(command, beforeId.get(), afterId.get());
+    ODistributedServerManager dManager = getDistributedManager();
+    try {
+      Set<String> nodes = dManager.getAvailableNodeNames(getName());
+      nodes.remove(getLocalNodeName());
+      OTransactionResultPayload localResult = null;
+      long next = dManager.getNextMessageIdCounter();
+      if (excludeLocal) {
+        localResult =
+            firstPhaseDDL(
+                command,
+                beforeId.get(),
+                afterId.get(),
+                new ODistributedRequestId(dManager.getLocalNodeId(), next));
+      }
+
+      ONewDistributedResponseManager responseManager = sendTask(nodes, task, localResult, next);
+
+      if (responseManager.isQuorumReached()) {
+        List<OTransactionResultPayload> results =
+            (List<OTransactionResultPayload>) responseManager.getGenericFinalResponse();
+        assert results.size() > 0;
+        OTransactionResultPayload resultPayload = results.get(0);
+        switch (resultPayload.getResponseType()) {
+          case OTxSuccess.ID:
+            // Success send ok
+            confirmPhase2DDL(nodes, responseManager.getMessageId(), true);
+            break;
+          case OTxException.ID:
+            // Exception send ko and throws the exception
+            confirmPhase2DDL(nodes, responseManager.getMessageId(), false);
+            throw ((OTxException) resultPayload).getException();
+          case OTxInvalidSequential.ID:
+            confirmPhase2DDL(nodes, responseManager.getMessageId(), false);
+            throw new OInvalidSequentialException();
+        }
+
+        for (OTransactionResultPayload result : responseManager.getAllResponses()) {
+          if (result.getResponseType() == OTxException.ID) {
+            OLogManager.instance()
+                .warn(this, "One node on error", ((OTxException) result).getException());
+          }
+        }
+      } else {
+        List<OTransactionResultPayload> results = responseManager.getAllResponses();
+        // If quorum is not reached is enough on a Lock timeout to trigger a deadlock retry.
+        List<Exception> exceptions = new ArrayList<>();
+        List<String> messages = new ArrayList<>();
+        for (OTransactionResultPayload result : results) {
+          String node = responseManager.getNodeNameFromPayload(result);
+          switch (result.getResponseType()) {
+            case OTxSuccess.ID:
+              messages.add("node: " + node + " success");
+              break;
+            case OTxException.ID:
+              exceptions.add(((OTxException) result).getException());
+              OLogManager.instance()
+                  .debug(this, "distributed exception", ((OTxException) result).getException());
+              messages.add(
+                  String.format(
+                      "exception (node " + node + "): '%s'",
+                      ((OTxException) result).getException().getMessage()));
+              break;
+            case OTxInvalidSequential.ID:
+              confirmPhase2DDL(nodes, responseManager.getMessageId(), false);
+              throw new OInvalidSequentialException();
+          }
+        }
+        confirmPhase2DDL(nodes, responseManager.getMessageId(), false);
+
+        ODistributedOperationException ex =
+            new ODistributedOperationException(
+                String.format(
+                    "Request `%s` didn't reach the quorum of '%d', responses: [%s]",
+                    responseManager.getMessageId(),
+                    responseManager.getQuorum(),
+                    String.join(",", messages)));
+        for (Exception e : exceptions) {
+          ex.addSuppressed(e);
+        }
+        throw ex;
+      }
+
+    } catch (Exception e) {
+      ODistributedServerLog.debug(
+          this,
+          dManager.getLocalNodeName(),
+          getLocalNodeName(),
+          ODistributedServerLog.DIRECTION.OUT,
+          "Error on execution of command '%s' against server '%s', database '%s'",
+          command,
+          getLocalNodeName(),
+          getName());
+    }
+  }
+
+  private void confirmPhase2DDL(Set<String> nodes, ODistributedRequestId messageId, boolean apply) {
+    ODistributedServerManager dManager = getDistributedManager();
+    dManager.sendRequest(
+        getName(),
+        null,
+        nodes,
+        new OSQLCommandTaskSecondPhase(messageId, apply),
+        dManager.getNextMessageIdCounter(),
+        EXECUTION_MODE.RESPONSE,
+        "OK");
+  }
+
+  private ONewDistributedResponseManager sendTask(
+      Collection<String> nodes, ORemoteTask task, Object localResult, long next) {
+    ODistributedServerManager dManager = getDistributedManager();
+    final class HoldResponseManager {
+      ONewDistributedResponseManager responseManager;
+    };
+
+    final HoldResponseManager holder = new HoldResponseManager();
+    ((ODistributedAbstractPlugin) dManager)
+        .sendRequest(
+            getName(),
+            null,
+            nodes,
+            task,
+            next,
+            EXECUTION_MODE.RESPONSE,
+            localResult,
+            ((iRequest,
+                iNodes,
+                iTask,
+                nodesConcurToTheQuorum,
+                availableNodes,
+                expectedResponses,
+                quorum,
+                groupByResponse,
+                waitLocalNode) -> {
+              holder.responseManager =
+                  new ONewDistributedResponseManager(
+                      iTask,
+                      iNodes,
+                      nodesConcurToTheQuorum,
+                      availableNodes,
+                      expectedResponses,
+                      quorum);
+              return holder.responseManager;
+            }));
+    return holder.responseManager;
   }
 
   @Override
