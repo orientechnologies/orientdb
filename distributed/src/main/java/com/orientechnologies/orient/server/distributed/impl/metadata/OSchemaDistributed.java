@@ -34,22 +34,25 @@ public class OSchemaDistributed extends OSchemaEmbedded {
   }
 
   public void acquireSchemaWriteLock(ODatabaseDocumentInternal database) {
-    if (isRunLocal(database)) {
-      return;
-    }
+    //    if (isRunLocal(database)) {
+    //      return;
+    //    }
     if (executeThroughDistributedStorage(database)) {
       ((OAutoshardedStorage) database.getStorage()).acquireDistributedExclusiveLock(0);
+    } else {
+      super.acquireSchemaWriteLock(database);
     }
-    super.acquireSchemaWriteLock(database);
   }
 
   @Override
   public void releaseSchemaWriteLock(ODatabaseDocumentInternal database, final boolean iSave) {
-    if (isRunLocal(database)) {
-      return;
-    }
+    //    if (isRunLocal(database)) {
+    //      return;
+    //    }
     try {
-      super.releaseSchemaWriteLock(database, iSave);
+      if (!executeThroughDistributedStorage(database)) {
+        super.releaseSchemaWriteLock(database, iSave);
+      }
     } finally {
       if (executeThroughDistributedStorage(database)) {
         ((OAutoshardedStorage) database.getStorage()).releaseDistributedExclusiveLock();
@@ -216,11 +219,12 @@ public class OSchemaDistributed extends OSchemaEmbedded {
   }
 
   protected boolean isRunLocal(ODatabaseDocumentInternal database) {
-    return isDistributeVersionTwo(database) && executeThroughDistributedStorage(database);
+    // return isDistributeVersionTwo(database) && executeThroughDistributedStorage(database);
+    return true;
   }
 
   @Override
   public void sendCommand(ODatabaseDocumentInternal database, String command) {
-    ((ODatabaseDocumentDistributed) database).sendDDLCommand(command, true);
+    ((ODatabaseDocumentDistributed) database).sendDDLCommand(command, false);
   }
 }
