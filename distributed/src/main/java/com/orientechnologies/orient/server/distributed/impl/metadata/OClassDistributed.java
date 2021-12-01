@@ -110,11 +110,6 @@ public class OClassDistributed extends OClassEmbedded {
         }
 
         if (unsafe) cmd.append(" unsafe ");
-        if (!isRunLocal(database)) {
-          OScenarioThreadLocal.executeAsDistributed(
-              (Callable<OProperty>)
-                  () -> addPropertyInternal(propertyName, type, linkedType, linkedClass, unsafe));
-        }
 
         owner.sendCommand(database, cmd.toString());
 
@@ -139,9 +134,6 @@ public class OClassDistributed extends OClassEmbedded {
       if (isDistributedCommand(database)) {
         final String cmd = String.format("alter class `%s` encryption %s", name, iValue);
         owner.sendCommand(database, cmd);
-        if (!isRunLocal(database)) {
-          setEncryptionInternal(database, iValue);
-        }
       } else setEncryptionInternal(database, iValue);
     } finally {
       releaseSchemaWriteLock();
@@ -159,9 +151,6 @@ public class OClassDistributed extends OClassEmbedded {
       if (isDistributedCommand(database)) {
         final String cmd = String.format("alter class `%s` clusterselection '%s'", name, value);
         owner.sendCommand(database, cmd);
-        if (!isRunLocal(database)) {
-          setClusterSelectionInternal(value);
-        }
       } else setClusterSelectionInternal(value);
 
       return this;
@@ -179,9 +168,6 @@ public class OClassDistributed extends OClassEmbedded {
       if (isDistributedCommand(database)) {
         final String cmd = String.format("alter class `%s` custom `%s`=%s", getName(), name, value);
         owner.sendCommand(database, cmd);
-        if (!isRunLocal(database)) {
-          setCustomInternal(name, value);
-        }
       } else setCustomInternal(name, value);
 
       return this;
@@ -199,9 +185,6 @@ public class OClassDistributed extends OClassEmbedded {
       if (isDistributedCommand(database)) {
         final String cmd = String.format("alter class `%s` custom clear", getName());
         owner.sendCommand(database, cmd);
-        if (!isRunLocal(database)) {
-          clearCustomInternal();
-        }
       } else clearCustomInternal();
 
     } finally {
@@ -231,9 +214,6 @@ public class OClassDistributed extends OClassEmbedded {
 
         final String cmd = String.format("alter class `%s` superclasses %s", name, sb);
         owner.sendCommand(database, cmd);
-        if (!isRunLocal(database)) {
-          setSuperClassesInternal(classes);
-        }
       } else setSuperClassesInternal(classes);
 
     } finally {
@@ -255,9 +235,6 @@ public class OClassDistributed extends OClassEmbedded {
                 "alter class `%s` superclass +`%s`",
                 name, superClass != null ? superClass.getName() : null);
         owner.sendCommand(database, cmd);
-        if (!isRunLocal(database)) {
-          addSuperClassInternal(database, superClass);
-        }
       } else addSuperClassInternal(database, superClass);
 
     } finally {
@@ -278,9 +255,6 @@ public class OClassDistributed extends OClassEmbedded {
                 "alter class `%s` superclass -`%s`",
                 name, superClass != null ? superClass.getName() : null);
         owner.sendCommand(database, cmd);
-        if (!isRunLocal(database)) {
-          removeSuperClassInternal(superClass);
-        }
       } else removeSuperClassInternal(superClass);
 
     } finally {
@@ -314,9 +288,6 @@ public class OClassDistributed extends OClassEmbedded {
       if (isDistributedCommand(database)) {
         final String cmd = String.format("alter class `%s` name `%s`", this.name, name);
         owner.sendCommand(database, cmd);
-        if (!isRunLocal(database)) {
-          setNameInternal(database, name);
-        }
       } else setNameInternal(database, name);
 
     } finally {
@@ -340,9 +311,6 @@ public class OClassDistributed extends OClassEmbedded {
       if (isDistributedCommand(database)) {
         final String cmd = String.format("alter class `%s` shortname `%s`", name, shortName);
         owner.sendCommand(database, cmd);
-        if (!isRunLocal(database)) {
-          setShortNameInternal(database, shortName);
-        }
       } else setShortNameInternal(database, shortName);
     } finally {
       releaseSchemaWriteLock();
@@ -361,9 +329,6 @@ public class OClassDistributed extends OClassEmbedded {
       if (isDistributedCommand(database)) {
         final String cmd = String.format("truncate cluster %s", clusterName);
         owner.sendCommand(database, cmd);
-        if (!isRunLocal(database)) {
-          truncateClusterInternal(clusterName, database);
-        }
       } else truncateClusterInternal(clusterName, database);
     } finally {
       releaseSchemaReadLock();
@@ -382,9 +347,6 @@ public class OClassDistributed extends OClassEmbedded {
       if (isDistributedCommand(database)) {
         final String cmd = String.format("alter class `%s` strictmode %s", name, isStrict);
         owner.sendCommand(database, cmd);
-        if (!isRunLocal(database)) {
-          setStrictModeInternal(isStrict);
-        }
       } else setStrictModeInternal(isStrict);
 
     } finally {
@@ -407,9 +369,6 @@ public class OClassDistributed extends OClassEmbedded {
       if (isDistributedCommand(database)) {
         final String cmd = String.format("alter class `%s` description ?", name);
         owner.sendCommand(database, cmd);
-        if (!isRunLocal(database)) {
-          setDescriptionInternal(iDescription);
-        }
       } else setDescriptionInternal(iDescription);
     } finally {
       releaseSchemaWriteLock();
@@ -432,9 +391,6 @@ public class OClassDistributed extends OClassEmbedded {
 
         final String cmd = String.format("alter class `%s` addcluster %d", name, clusterId);
         owner.sendCommand(database, cmd);
-        if (!isRunLocal(database)) {
-          addClusterIdInternal(database, clusterId);
-        }
       } else addClusterIdInternal(database, clusterId);
 
     } finally {
@@ -459,9 +415,6 @@ public class OClassDistributed extends OClassEmbedded {
       if (isDistributedCommand(database)) {
         final String cmd = String.format("alter class `%s` removecluster %d", name, clusterId);
         owner.sendCommand(database, cmd);
-        if (!isRunLocal(database)) {
-          removeClusterIdInternal(database, clusterId);
-        }
       } else removeClusterIdInternal(database, clusterId);
     } finally {
       releaseSchemaWriteLock();
@@ -484,15 +437,6 @@ public class OClassDistributed extends OClassEmbedded {
             "Property '" + propertyName + "' not found in class " + name + "'");
 
       if (isDistributedCommand(database)) {
-        if (!isRunLocal(database)) {
-          OScenarioThreadLocal.executeAsDistributed(
-              (Callable<OProperty>)
-                  () -> {
-                    dropPropertyInternal(database, propertyName);
-                    return null;
-                  });
-        }
-
         owner.sendCommand(database, "drop property " + name + '.' + propertyName);
       } else
         OScenarioThreadLocal.executeAsDistributed(
@@ -520,11 +464,6 @@ public class OClassDistributed extends OClassEmbedded {
     try {
 
       if (isDistributedCommand(database)) {
-        if (!isRunLocal(database)) {
-          final int clusterId = owner.createClusterIfNeeded(database, clusterNameOrId);
-          addClusterIdInternal(database, clusterId);
-        }
-
         final String cmd = String.format("alter class `%s` addcluster `%s`", name, clusterNameOrId);
         owner.sendCommand(database, cmd);
       } else {
@@ -549,9 +488,6 @@ public class OClassDistributed extends OClassEmbedded {
         final String cmd =
             String.format("alter class `%s` oversize %s", name, new Float(overSize).toString());
         owner.sendCommand(database, cmd);
-        if (!isRunLocal(database)) {
-          setOverSizeInternal(database, overSize);
-        }
       } else setOverSizeInternal(database, overSize);
     } finally {
       releaseSchemaWriteLock();
@@ -570,9 +506,6 @@ public class OClassDistributed extends OClassEmbedded {
       if (isDistributedCommand(database)) {
         final String cmd = String.format("alter class `%s` abstract %s", name, isAbstract);
         owner.sendCommand(database, cmd);
-        if (!isRunLocal(database)) {
-          setAbstractInternal(database, isAbstract);
-        }
       } else setAbstractInternal(database, isAbstract);
     } finally {
       releaseSchemaWriteLock();
@@ -712,9 +645,5 @@ public class OClassDistributed extends OClassEmbedded {
 
   protected boolean isDistributedCommand(ODatabaseDocumentInternal database) {
     return !database.isLocalEnv();
-  }
-
-  private boolean isRunLocal(ODatabaseDocumentInternal database) {
-    return ((OSchemaDistributed) owner).isRunLocal(database);
   }
 }

@@ -1,10 +1,7 @@
 package com.orientechnologies.orient.server.distributed.impl.metadata;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_REPLICATION_PROTOCOL_VERSION;
-
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
@@ -61,13 +58,6 @@ public class OSchemaDistributed extends OSchemaEmbedded {
       cmd.append(" unsafe");
 
       sendCommand(database, cmd.toString());
-      if (!isRunLocal(database)) {
-        OScenarioThreadLocal.executeAsDistributed(
-            () -> {
-              dropClassInternal(database, className);
-              return null;
-            });
-      }
     } else dropClassInternal(database, className);
   }
 
@@ -153,9 +143,6 @@ public class OSchemaDistributed extends OSchemaEmbedded {
       }
 
       cmd.append("}");
-      if (!isRunLocal(database)) {
-        createViewInternal(database, config, clusterIds);
-      }
 
       sendCommand(database, cmd.toString());
 
@@ -196,23 +183,11 @@ public class OSchemaDistributed extends OSchemaEmbedded {
           }
         }
       }
-      if (!isRunLocal(database)) {
-        createClassInternal(database, className, clusterIds, superClassesList);
-      }
       sendCommand(database, cmd.toString());
 
     } else {
       createClassInternal(database, className, clusterIds, superClassesList);
     }
-  }
-
-  private boolean isDistributeVersionTwo(ODatabaseDocumentInternal database) {
-    return database.getConfiguration().getValueAsInteger(DISTRIBUTED_REPLICATION_PROTOCOL_VERSION)
-        == 2;
-  }
-
-  protected boolean isRunLocal(ODatabaseDocumentInternal database) {
-    return true;
   }
 
   @Override
