@@ -15,6 +15,7 @@ import com.orientechnologies.common.concur.lock.OModificationOperationProhibited
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OSharedContext;
@@ -67,13 +68,11 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
 import com.orientechnologies.orient.server.distributed.exception.OTransactionAlreadyPresentException;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OClassDistributed;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
-import com.orientechnologies.orient.server.distributed.impl.task.ONewSQLCommandTask;
 import com.orientechnologies.orient.server.distributed.impl.task.ORunQueryExecutionPlanTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OSQLCommandTaskFirstPhase;
 import com.orientechnologies.orient.server.distributed.impl.task.OSQLCommandTaskSecondPhase;
@@ -955,45 +954,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   public void sendDDLCommand(String command, boolean excludeLocal) {
-    if (getStorageDistributed().isLocalEnv()) {
-      // ALREADY DISTRIBUTED
-      super.command(command, new Object[] {}).close();
-      return;
-    }
-
-    getStorageDistributed()
-        .checkNodeIsMaster(
-            getLocalNodeName(), getDistributedConfiguration(), "Command '" + command + "'");
-
-    ONewSQLCommandTask task = new ONewSQLCommandTask(command);
-    ODistributedServerManager dManager = getDistributedManager();
-    try {
-      Set<String> nodes = dManager.getAvailableNodeNames(getName());
-      if (excludeLocal) {
-        nodes.remove(getLocalNodeName());
-      }
-
-      final ODistributedResponse response =
-          dManager.sendRequest(
-              getName(),
-              null,
-              nodes,
-              task,
-              dManager.getNextMessageIdCounter(),
-              ODistributedRequest.EXECUTION_MODE.RESPONSE,
-              null);
-
-    } catch (Exception e) {
-      ODistributedServerLog.debug(
-          this,
-          dManager.getLocalNodeName(),
-          getLocalNodeName(),
-          ODistributedServerLog.DIRECTION.OUT,
-          "Error on execution of command '%s' against server '%s', database '%s'",
-          command,
-          getLocalNodeName(),
-          getName());
-    }
+    twoPhaseDDL(command);
   }
 
   public void twoPhaseDDL(String command) {
@@ -1002,19 +963,22 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       super.command(command, new Object[] {}).close();
       return;
     }
-
     getStorageDistributed()
         .checkNodeIsMaster(
             getLocalNodeName(), getDistributedConfiguration(), "Command '" + command + "'");
     ODistributedDatabase local = getStorageDistributed().getLocalDistributedDatabase();
+    int nretry =
+        getConfiguration()
+            .getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY);
 
-    Optional<OTransactionId> beforeId = local.nextId();
-    Optional<OTransactionId> afterId = local.nextId();
+    retry:
+    for (int i = 0; i < nretry; i++) {
+      Optional<OTransactionId> beforeId = local.nextId();
+      Optional<OTransactionId> afterId = local.nextId();
 
-    OSQLCommandTaskFirstPhase task =
-        new OSQLCommandTaskFirstPhase(command, beforeId.get(), afterId.get());
-    ODistributedServerManager dManager = getDistributedManager();
-    try {
+      OSQLCommandTaskFirstPhase task =
+          new OSQLCommandTaskFirstPhase(command, beforeId.get(), afterId.get());
+      ODistributedServerManager dManager = getDistributedManager();
       Set<String> nodes = dManager.getAvailableNodeNames(getName());
       nodes.remove(getLocalNodeName());
       long next = dManager.getNextMessageIdCounter();
@@ -1036,14 +1000,14 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           case OTxSuccess.ID:
             // Success send ok
             confirmPhase2DDL(nodes, responseManager.getMessageId(), true);
-            break;
+            return;
           case OTxException.ID:
             // Exception send ko and throws the exception
             confirmPhase2DDL(nodes, responseManager.getMessageId(), false);
             throw ((OTxException) resultPayload).getException();
           case OTxInvalidSequential.ID:
             confirmPhase2DDL(nodes, responseManager.getMessageId(), false);
-            throw new OInvalidSequentialException();
+            continue retry;
         }
 
         for (OTransactionResultPayload result : responseManager.getAllResponses()) {
@@ -1074,7 +1038,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
               break;
             case OTxInvalidSequential.ID:
               confirmPhase2DDL(nodes, responseManager.getMessageId(), false);
-              throw new OInvalidSequentialException();
+              continue retry;
           }
         }
         confirmPhase2DDL(nodes, responseManager.getMessageId(), false);
@@ -1089,19 +1053,10 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         for (Exception e : exceptions) {
           ex.addSuppressed(e);
         }
-        throw ex;
+        if (i == nretry) {
+          throw ex;
+        }
       }
-
-    } catch (Exception e) {
-      ODistributedServerLog.debug(
-          this,
-          dManager.getLocalNodeName(),
-          getLocalNodeName(),
-          ODistributedServerLog.DIRECTION.OUT,
-          "Error on execution of command '%s' against server '%s', database '%s'",
-          command,
-          getLocalNodeName(),
-          getName());
     }
   }
 
