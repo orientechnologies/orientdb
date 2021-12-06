@@ -74,4 +74,16 @@ public class OSQLCommandTaskFirstPhase extends OAbstractReplicatedTask {
   public int getFactoryId() {
     return FACTORYID;
   }
+
+  public String getQuery() {
+    return query;
+  }
+
+  public OTransactionId getPreChangeId() {
+    return preChangeId;
+  }
+
+  public OTransactionId getAfterChangeId() {
+    return afterChangeId;
+  }
 }
