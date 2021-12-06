@@ -66,4 +66,12 @@ public class OSQLCommandTaskSecondPhase extends OAbstractReplicatedTask {
   public int getFactoryId() {
     return FACTORYID;
   }
+
+  public ODistributedRequestId getConfirmSentRequest() {
+    return confirmSentRequest;
+  }
+
+  public boolean isApply() {
+    return apply;
+  }
 }

@@ -1059,7 +1059,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     }
   }
 
-  public void twoPhaseDDL(String command, boolean excludeLocal) {
+  public void twoPhaseDDL(String command) {
     if (getStorageDistributed().isLocalEnv()) {
       // ALREADY DISTRIBUTED
       super.command(command, new Object[] {}).close();
@@ -1080,16 +1080,13 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     try {
       Set<String> nodes = dManager.getAvailableNodeNames(getName());
       nodes.remove(getLocalNodeName());
-      OTransactionResultPayload localResult = null;
       long next = dManager.getNextMessageIdCounter();
-      if (excludeLocal) {
-        localResult =
-            firstPhaseDDL(
-                command,
-                beforeId.get(),
-                afterId.get(),
-                new ODistributedRequestId(dManager.getLocalNodeId(), next));
-      }
+      OTransactionResultPayload localResult =
+          firstPhaseDDL(
+              command,
+              beforeId.get(),
+              afterId.get(),
+              new ODistributedRequestId(dManager.getLocalNodeId(), next));
 
       ONewDistributedResponseManager responseManager = sendTask(nodes, task, localResult, next);
 
@@ -1417,10 +1414,12 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         getStorageDistributed().getLocalDistributedDatabase();
     ODDLContextImpl context =
         (ODDLContextImpl) localDistributedDatabase.popTxContext(confirmSentRequest);
+    OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) getStorage().getUnderlying();
     if (apply) {
       if (context.getStatus() == SUCCESS) {
         OTxMetadataHolder preMetadata = localDistributedDatabase.commit(context.getPreChangeId());
-        ((OAbstractPaginatedStorage) getStorage()).metadataOnly(preMetadata.metadata());
+
+        storage.metadataOnly(preMetadata.metadata());
         preMetadata.notifyMetadataRead();
         String query = context.getQuery();
         OScenarioThreadLocal.executeAsDistributed(
@@ -1431,7 +1430,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
         OTxMetadataHolder afterMetadata =
             localDistributedDatabase.commit(context.getAfterChangeId());
-        ((OAbstractPaginatedStorage) getStorage()).metadataOnly(afterMetadata.metadata());
+        storage.metadataOnly(afterMetadata.metadata());
         afterMetadata.notifyMetadataRead();
       } else {
         int nretry = getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY);
