@@ -7,22 +7,6 @@ import static com.orientechnologies.orient.server.distributed.impl.TxContextStat
 import static com.orientechnologies.orient.server.distributed.impl.TxContextStatus.SUCCESS;
 import static com.orientechnologies.orient.server.distributed.impl.TxContextStatus.TIMEDOUT;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.stream.Stream;
-
 import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.orientechnologies.common.concur.OOfflineNodeException;
@@ -33,6 +17,7 @@ import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
@@ -106,6 +91,24 @@ import com.orientechnologies.orient.server.distributed.task.ODistributedOperatio
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Random;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.stream.Stream;
 
 /** Created by tglman on 30/03/17. */
 public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
@@ -1017,15 +1020,14 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   public void twoPhaseDDL(String command) {
-    if (getStorageDistributed().isLocalEnv()) {
+    if (isLocalEnv()) {
       // ALREADY DISTRIBUTED
       super.command(command, new Object[] {}).close();
       return;
     }
-    getStorageDistributed()
-        .checkNodeIsMaster(
-            getLocalNodeName(), getDistributedConfiguration(), "Command '" + command + "'");
-    ODistributedDatabase local = getStorageDistributed().getLocalDistributedDatabase();
+    checkNodeIsMaster(
+        getLocalNodeName(), getDistributedConfiguration(), "Command '" + command + "'");
+    ODistributedDatabase local = getDistributedShared();
     // The plus 1 is for make sure it runs once even if retry is 0
     int nretry =
         getConfiguration()
@@ -1044,11 +1046,11 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       long next = dManager.getNextMessageIdCounter();
 
       ODistributedRequestId reqId = new ODistributedRequestId(dManager.getLocalNodeId(), next);
-      ONewDistributedResponseManager responseManager = sendTask(nodes, task, null, next);
+      ODistributedTxResponseManagerImpl responseManager = sendTask(nodes, task, null, next);
 
       if (responseManager.isQuorumReached()) {
         List<OTransactionResultPayload> results =
-            (List<OTransactionResultPayload>) responseManager.getGenericFinalResponse();
+            (List<OTransactionResultPayload>) responseManager.getFinalResponse();
         assert results.size() > 0;
         OTransactionResultPayload resultPayload = results.get(0);
         switch (resultPayload.getResponseType()) {
@@ -1126,15 +1128,15 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         null);
   }
 
-  private ONewDistributedResponseManager sendTask(
+  private ODistributedTxResponseManagerImpl sendTask(
       Collection<String> nodes, ORemoteTask task, Object localResult, long next) {
     ODistributedServerManager dManager = getDistributedManager();
     final class HoldResponseManager {
-      ONewDistributedResponseManager responseManager;
+      ODistributedTxResponseManagerImpl responseManager;
     };
 
     final HoldResponseManager holder = new HoldResponseManager();
-    ((ODistributedAbstractPlugin) dManager)
+    ((ODistributedPlugin) dManager)
         .sendRequest(
             getName(),
             null,
@@ -1153,7 +1155,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
                 groupByResponse,
                 waitLocalNode) -> {
               holder.responseManager =
-                  new ONewDistributedResponseManager(
+                  new ODistributedTxResponseManagerImpl(
                       iTask,
                       iNodes,
                       nodesConcurToTheQuorum,
@@ -1335,8 +1337,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       OTransactionId preChangeId,
       OTransactionId afterChangeId,
       ODistributedRequestId requestId) {
-    ODistributedDatabase localDistributedDatabase =
-        getStorageDistributed().getLocalDistributedDatabase();
+    ODistributedDatabase localDistributedDatabase = getDistributedShared();
     ODDLContextImpl ddlContext = new ODDLContextImpl(query, preChangeId, afterChangeId, requestId);
     ValidationResult first = localDistributedDatabase.validate(preChangeId);
     ValidationResult second = localDistributedDatabase.validate(afterChangeId);
@@ -1356,8 +1357,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   public void secondPhaseDDL(ODistributedRequestId confirmSentRequest, boolean apply) {
-    ODistributedDatabase localDistributedDatabase =
-        getStorageDistributed().getLocalDistributedDatabase();
+    ODistributedDatabase localDistributedDatabase = getDistributedShared();
     ODDLContextImpl context =
         (ODDLContextImpl) localDistributedDatabase.popTxContext(confirmSentRequest);
     OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) getStorage().getUnderlying();

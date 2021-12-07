@@ -161,6 +161,4 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
   public OTransactionId getTransactionId() {
     return transactionId;
   }
-
-
 }

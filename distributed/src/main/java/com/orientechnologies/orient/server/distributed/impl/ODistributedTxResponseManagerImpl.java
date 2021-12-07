@@ -1,14 +1,5 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
@@ -19,6 +10,14 @@ import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTr
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxException;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxStillRunning;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 public class ODistributedTxResponseManagerImpl implements ODistributedTxResponseManager {
 

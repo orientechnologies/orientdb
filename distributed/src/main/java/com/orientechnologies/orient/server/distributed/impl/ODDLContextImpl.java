@@ -30,21 +30,6 @@ public class ODDLContextImpl implements ODistributedTxContext {
   }
 
   @Override
-  public void lock(ORID rid) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void lock(ORID rid, long timeout) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void lockIndexKey(Object rid) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public ODistributedRequestId getReqId() {
     return requestId;
   }
@@ -62,9 +47,6 @@ public class ODDLContextImpl implements ODistributedTxContext {
 
   @Override
   public void clearUndo() {}
-
-  @Override
-  public void unlock() {}
 
   @Override
   public long getStartedOn() {
@@ -110,5 +92,20 @@ public class ODDLContextImpl implements ODistributedTxContext {
 
   public String getQuery() {
     return query;
+  }
+
+  @Override
+  public OTransactionId acquirePromise(ORID rid, int version, boolean force) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public OTransactionId acquireIndexKeyPromise(Object key, int version, boolean force) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void releasePromises() {
+    throw new UnsupportedOperationException();
   }
 }
