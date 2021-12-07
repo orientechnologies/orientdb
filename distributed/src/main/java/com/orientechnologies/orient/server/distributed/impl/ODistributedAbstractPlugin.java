@@ -635,12 +635,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
           iClusterNames,
           req);
       throw new ODistributedException(
-          "No nodes configured for partition '"
-              + iDatabaseName
-              + "."
-              + iClusterNames
-              + "' request: "
-              + req);
+          "No nodes configured '" + iDatabaseName + "." + iClusterNames + "' request: " + req);
     }
 
     if (db == null) {
