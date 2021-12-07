@@ -25,7 +25,6 @@ import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTx
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -77,9 +76,20 @@ public class OTransactionPhase1TaskTest {
     operations.add(new ORecordOperation(rec1, ORecordOperation.UPDATED));
     operations.add(new ORecordOperation(id1.getIdentity(), ORecordOperation.DELETED));
     operations.add(new ORecordOperation(rec2, ORecordOperation.CREATED));
+    OTransactionId txId =
+        server
+            .getDistributedManager()
+            .getMessageService()
+            .getDatabase(session.getName())
+            .nextId()
+            .get();
+    server
+        .getDistributedManager()
+        .getMessageService()
+        .getDatabase(session.getName())
+        .rollback(txId);
 
-    OTransactionPhase1Task task =
-        new OTransactionPhase1Task(operations, new OTransactionId(Optional.empty(), 0, 1));
+    OTransactionPhase1Task task = new OTransactionPhase1Task(operations, txId);
     OTransactionPhase1TaskResult res =
         (OTransactionPhase1TaskResult)
             task.execute(
@@ -105,8 +115,15 @@ public class OTransactionPhase1TaskTest {
     old.field("first", "three");
     List<ORecordOperation> operations = new ArrayList<>();
     operations.add(new ORecordOperation(old, ORecordOperation.UPDATED));
-    OTransactionPhase1Task task =
-        new OTransactionPhase1Task(operations, new OTransactionId(Optional.empty(), 0, 1));
+    OTransactionId id =
+        server
+            .getDistributedManager()
+            .getMessageService()
+            .getDatabase(session.getName())
+            .nextId()
+            .get();
+    server.getDistributedManager().getMessageService().getDatabase(session.getName()).rollback(id);
+    OTransactionPhase1Task task = new OTransactionPhase1Task(operations, id);
     OTransactionPhase1TaskResult res =
         (OTransactionPhase1TaskResult)
             task.execute(
@@ -135,8 +152,16 @@ public class OTransactionPhase1TaskTest {
     List<ORecordOperation> operations = new ArrayList<>();
     operations.add(new ORecordOperation(old, ORecordOperation.DELETED));
 
-    OTransactionPhase1Task task =
-        new OTransactionPhase1Task(operations, new OTransactionId(Optional.empty(), 0, 1));
+    OTransactionId id =
+        server
+            .getDistributedManager()
+            .getMessageService()
+            .getDatabase(session.getName())
+            .nextId()
+            .get();
+    server.getDistributedManager().getMessageService().getDatabase(session.getName()).rollback(id);
+
+    OTransactionPhase1Task task = new OTransactionPhase1Task(operations, id);
     OTransactionPhase1TaskResult res =
         (OTransactionPhase1TaskResult)
             task.execute(
@@ -164,9 +189,16 @@ public class OTransactionPhase1TaskTest {
 
     List<ORecordOperation> operations = new ArrayList<>();
     operations.add(new ORecordOperation(doc1, ORecordOperation.CREATED));
+    OTransactionId id =
+        server
+            .getDistributedManager()
+            .getMessageService()
+            .getDatabase(session.getName())
+            .nextId()
+            .get();
+    server.getDistributedManager().getMessageService().getDatabase(session.getName()).rollback(id);
 
-    OTransactionPhase1Task task =
-        new OTransactionPhase1Task(operations, new OTransactionId(Optional.empty(), 0, 1));
+    OTransactionPhase1Task task = new OTransactionPhase1Task(operations, id);
     OTransactionPhase1TaskResult res =
         (OTransactionPhase1TaskResult)
             task.execute(
