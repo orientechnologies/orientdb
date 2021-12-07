@@ -91,8 +91,9 @@ public class OTransactionSequenceManager {
       }
     } else {
       if (this.sequentials[transactionId.getPosition()] + 1 == transactionId.getSequence()) {
-        if (this.promisedSequential[transactionId.getPosition()].getNodeOwner()
-            == transactionId.getNodeOwner()) {
+        if (this.promisedSequential[transactionId.getPosition()]
+            .getNodeOwner()
+            .equals(transactionId.getNodeOwner())) {
           return ValidationResult.VALID;
         } else {
           return ValidationResult.ALREADY_PROMISED;
