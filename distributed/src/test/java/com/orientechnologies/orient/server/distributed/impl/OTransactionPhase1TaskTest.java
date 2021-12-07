@@ -21,6 +21,8 @@ import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPha
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.*;
 import java.io.IOException;
 import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -70,10 +72,20 @@ public class OTransactionPhase1TaskTest {
     operations.add(new ORecordOperation(rec1, ORecordOperation.UPDATED));
     operations.add(new ORecordOperation(id1.getIdentity(), ORecordOperation.DELETED));
     operations.add(new ORecordOperation(rec2, ORecordOperation.CREATED));
+    OTransactionId txId =
+        server
+            .getDistributedManager()
+            .getMessageService()
+            .getDatabase(session.getName())
+            .nextId()
+            .get();
+    server
+        .getDistributedManager()
+        .getMessageService()
+        .getDatabase(session.getName())
+        .rollback(txId);
 
-    OTransactionPhase1Task task =
-        new OTransactionPhase1Task(
-            operations, new OTransactionId(Optional.empty(), 0, 1), new TreeSet<>());
+    OTransactionPhase1Task task = new OTransactionPhase1Task(operations, txId, new TreeSet<>());
     OTransactionPhase1TaskResult res =
         (OTransactionPhase1TaskResult)
             task.execute(
@@ -99,10 +111,17 @@ public class OTransactionPhase1TaskTest {
     old.field("first", "three");
     final List<ORecordOperation> operations = new ArrayList<>();
     operations.add(new ORecordOperation(old, ORecordOperation.UPDATED));
-    final OTransactionPhase1Task task =
-        new OTransactionPhase1Task(
-            operations, new OTransactionId(Optional.empty(), 0, 1), new TreeSet<>());
-    final OTransactionPhase1TaskResult res =
+
+    OTransactionId id =
+        server
+            .getDistributedManager()
+            .getMessageService()
+            .getDatabase(session.getName())
+            .nextId()
+            .get();
+    server.getDistributedManager().getMessageService().getDatabase(session.getName()).rollback(id);
+    OTransactionPhase1Task task = new OTransactionPhase1Task(operations, id, new TreeSet<>());
+    OTransactionPhase1TaskResult res =
         (OTransactionPhase1TaskResult)
             task.execute(
                 new ODistributedRequestId(10, 20),
@@ -129,10 +148,17 @@ public class OTransactionPhase1TaskTest {
     final List<ORecordOperation> operations = new ArrayList<>();
     operations.add(new ORecordOperation(old, ORecordOperation.DELETED));
 
-    final OTransactionPhase1Task task =
-        new OTransactionPhase1Task(
-            operations, new OTransactionId(Optional.empty(), 0, 1), new TreeSet<>());
-    final OTransactionPhase1TaskResult res =
+    OTransactionId id =
+        server
+            .getDistributedManager()
+            .getMessageService()
+            .getDatabase(session.getName())
+            .nextId()
+            .get();
+    server.getDistributedManager().getMessageService().getDatabase(session.getName()).rollback(id);
+
+    OTransactionPhase1Task task = new OTransactionPhase1Task(operations, id, new TreeSet<>());
+    OTransactionPhase1TaskResult res =
         (OTransactionPhase1TaskResult)
             task.execute(
                 new ODistributedRequestId(10, 20),
@@ -161,9 +187,16 @@ public class OTransactionPhase1TaskTest {
     final SortedSet<OTransactionUniqueKey> uniqueIndexKeys = new TreeSet<OTransactionUniqueKey>();
     uniqueIndexKeys.add(new OTransactionUniqueKey("TestClassInd.one", "value", 0));
 
-    final OTransactionPhase1Task task =
-        new OTransactionPhase1Task(
-            operations, new OTransactionId(Optional.empty(), 0, 1), uniqueIndexKeys);
+    OTransactionId id =
+        server
+            .getDistributedManager()
+            .getMessageService()
+            .getDatabase(session.getName())
+            .nextId()
+            .get();
+    server.getDistributedManager().getMessageService().getDatabase(session.getName()).rollback(id);
+
+    OTransactionPhase1Task task = new OTransactionPhase1Task(operations, id, uniqueIndexKeys);
     OTransactionPhase1TaskResult res =
         (OTransactionPhase1TaskResult)
             task.execute(
