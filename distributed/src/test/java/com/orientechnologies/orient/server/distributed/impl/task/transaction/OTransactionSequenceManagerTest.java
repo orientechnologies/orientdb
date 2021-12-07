@@ -148,6 +148,17 @@ public class OTransactionSequenceManagerTest {
   }
 
   @Test
+  public void sequenceValidSameSpotSameNode() {
+    OTransactionSequenceManager sequenceManager = new OTransactionSequenceManager("one", 1000);
+    OTransactionId one = sequenceManager.nextAt(1);
+    assertEquals(
+        sequenceManager.validateTransactionId(
+            new OTransactionId(Optional.of("one"), one.getPosition(), one.getSequence())),
+        VALID);
+    assertEquals(sequenceManager.notifySuccess(one), VALID);
+  }
+
+  @Test
   public void sequenceMissingSameSpotValidation() {
     OTransactionSequenceManager sequenceManager = new OTransactionSequenceManager("one", 1000);
     OTransactionId one = sequenceManager.nextAt(1);
