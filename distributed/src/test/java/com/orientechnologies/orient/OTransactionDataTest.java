@@ -28,7 +28,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Optional;
 import org.junit.Test;
 
@@ -137,10 +139,8 @@ public class OTransactionDataTest {
         imp.importDatabase();
         imp.close();
       }
-
-      OTransactionData data = new OTransactionData(new OTransactionId(Optional.empty(), 1, 1));
-      try (ODatabaseSession db =
-          orientDB.open("test", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD)) {
+      List<byte[]> changes = new ArrayList<>();
+      try (ODatabaseSession db = orientDB.open("test", "admin", "admin")) {
         db.begin();
         ODocument doc = new ODocument("test");
         doc.setProperty("field", "value2");
@@ -152,9 +152,16 @@ public class OTransactionDataTest {
         Iterator<byte[]> res =
             ((OTransactionInternal) db.getTransaction()).getSerializedOperations();
         while (res.hasNext()) {
-          data.addRecord(res.next());
+          changes.add(res.next());
         }
         db.commit();
+      }
+      OTransactionId id =
+          server0.getDistributedManager().getMessageService().getDatabase("test1").nextId().get();
+      server0.getDistributedManager().getMessageService().getDatabase("test1").rollback(id);
+      OTransactionData data = new OTransactionData(id);
+      for (byte[] change : changes) {
+        data.addRecord(change);
       }
       try (final ODatabaseSession db =
           orientDB.open("test1", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD)) {
