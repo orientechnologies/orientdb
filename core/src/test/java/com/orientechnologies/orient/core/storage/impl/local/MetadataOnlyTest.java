@@ -6,7 +6,6 @@ import static org.junit.Assert.assertTrue;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
@@ -27,7 +26,8 @@ public class MetadataOnlyTest {
             OrientDBConfig.builder()
                 .addConfig(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS, 1)
                 .build());
-    orientDb.create("testMetadataOnly", ODatabaseType.PLOCAL);
+    orientDb.execute(
+        "create database testMetadataOnly plocal users (admin identified by 'admin' role admin)");
   }
 
   @Test

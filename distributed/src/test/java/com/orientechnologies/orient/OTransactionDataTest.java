@@ -140,7 +140,8 @@ public class OTransactionDataTest {
         imp.close();
       }
       List<byte[]> changes = new ArrayList<>();
-      try (ODatabaseSession db = orientDB.open("test", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD)) {
+      try (ODatabaseSession db =
+          orientDB.open("test", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD)) {
         db.begin();
         ODocument doc = new ODocument("test");
         doc.setProperty("field", "value2");
