@@ -2,7 +2,6 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 
 import static org.junit.Assert.assertTrue;
 
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.server.OServer;
@@ -23,11 +22,12 @@ public class ODDLPhasesExecutionTests {
   public void before()
       throws ClassNotFoundException, InstantiationException, IOException, IllegalAccessException {
     server = new OServer(false);
-    server.startup(
-        getClass().getClassLoader().getResourceAsStream("orientdb-server-config-tx.xml"));
+    server.startup(getClass().getClassLoader().getResourceAsStream("orientdb-server-config.xml"));
     server.activate();
     OrientDB orientDB = server.getContext();
-    orientDB.create(ODDLPhasesExecutionTests.class.getSimpleName(), ODatabaseType.PLOCAL);
+    orientDB.execute(
+        "create database ? plocal users(admin identified by 'admin' role admin)",
+        ODDLPhasesExecutionTests.class.getSimpleName());
   }
 
   @Test

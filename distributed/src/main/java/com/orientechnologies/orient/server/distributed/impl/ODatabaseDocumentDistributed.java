@@ -1049,10 +1049,10 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       ODistributedTxResponseManagerImpl responseManager = sendTask(nodes, task, null, next);
 
       if (responseManager.isQuorumReached()) {
-        List<OTransactionResultPayload> results =
-            (List<OTransactionResultPayload>) responseManager.getFinalResponse();
-        assert results.size() > 0;
-        OTransactionResultPayload resultPayload = results.get(0);
+        Optional<OTransactionResultPayload> results =
+            responseManager.getDistributedTxFinalResponse();
+        assert results.isPresent();
+        OTransactionResultPayload resultPayload = results.get();
         switch (resultPayload.getResponseType()) {
           case OTxSuccess.ID:
             // Success send ok
