@@ -1207,6 +1207,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         (ODDLContextImpl) localDistributedDatabase.popTxContext(confirmSentRequest);
     OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) getStorage().getUnderlying();
     if (apply) {
+      getStorageDistributed().resetLastValidBackup();
       if (context.getStatus() == SUCCESS) {
         OTxMetadataHolder preMetadata = localDistributedDatabase.commit(context.getPreChangeId());
 
