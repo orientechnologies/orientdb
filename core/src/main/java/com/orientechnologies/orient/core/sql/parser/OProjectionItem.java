@@ -15,7 +15,6 @@ import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -34,7 +33,7 @@ public class OProjectionItem extends SimpleNode {
   protected ONestedProjection nestedProjection;
 
   public OProjectionItem(
-          OExpression expression, OIdentifier alias, ONestedProjection nestedProjection) {
+      OExpression expression, OIdentifier alias, ONestedProjection nestedProjection) {
     super(-1);
     this.expression = expression;
     this.alias = alias;
@@ -219,7 +218,7 @@ public class OProjectionItem extends SimpleNode {
    * @param aggregateSplit
    */
   public OProjectionItem splitForAggregation(
-          AggregateProjectionSplit aggregateSplit, OCommandContext ctx) {
+      AggregateProjectionSplit aggregateSplit, OCommandContext ctx) {
     if (isAggregate()) {
       OProjectionItem result = new OProjectionItem(-1);
       result.alias = getProjectionAlias();
@@ -255,11 +254,11 @@ public class OProjectionItem extends SimpleNode {
     if (o == null || getClass() != o.getClass()) return false;
     OProjectionItem that = (OProjectionItem) o;
     return exclude == that.exclude
-            && all == that.all
-            && Objects.equals(alias, that.alias)
-            && Objects.equals(expression, that.expression)
-            && Objects.equals(aggregate, that.aggregate)
-            && Objects.equals(nestedProjection, that.nestedProjection);
+        && all == that.all
+        && Objects.equals(alias, that.alias)
+        && Objects.equals(expression, that.expression)
+        && Objects.equals(aggregate, that.aggregate)
+        && Objects.equals(nestedProjection, that.nestedProjection);
   }
 
   @Override
