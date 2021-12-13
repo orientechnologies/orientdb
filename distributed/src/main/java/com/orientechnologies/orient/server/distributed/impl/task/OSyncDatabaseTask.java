@@ -72,9 +72,7 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
       if (database == null) throw new ODistributedException("Database instance is null");
 
       final String databaseName = database.getName();
-
-      final ODistributedDatabase dDatabase =
-          checkIfCurrentDatabaseIsNotOlder(iManager, databaseName, database);
+      final ODistributedDatabase dDatabase = iManager.getMessageService().getDatabase(databaseName);
 
       try {
         final Long lastDeployment =
