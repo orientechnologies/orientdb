@@ -39,7 +39,8 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIR
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseChunk;
-import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
+import com.orientechnologies.orient.server.distributed.task.ORemoteTask.RESULT_STRATEGY;
 import java.io.BufferedOutputStream;
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -56,7 +57,7 @@ import java.util.UUID;
  *
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
-public class OSyncClusterTask extends OAbstractReplicatedTask {
+public class OSyncClusterTask extends OAbstractRemoteTask {
   public static final int CHUNK_MAX_SIZE = 4194304; // 4MB
   public static final String DEPLOYCLUSTER = "deploycluster.";
   public static final int FACTORYID = 12;

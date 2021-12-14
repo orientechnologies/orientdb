@@ -141,12 +141,7 @@ public class OBackgroundBackup implements Runnable, OSyncSource {
                   return null;
                 };
             database.backup(
-                dest,
-                null,
-                startListener,
-                listener,
-                compression,
-                OAbstractSyncDatabaseTask.CHUNK_MAX_SIZE);
+                dest, null, startListener, listener, compression, OSyncDatabaseTask.CHUNK_MAX_SIZE);
           } finally {
             try {
               dest.close();

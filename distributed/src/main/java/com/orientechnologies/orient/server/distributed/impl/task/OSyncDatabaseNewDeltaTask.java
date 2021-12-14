@@ -14,14 +14,14 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseChunk;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl;
-import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
-public class OSyncDatabaseNewDeltaTask extends OAbstractReplicatedTask {
+public class OSyncDatabaseNewDeltaTask extends OAbstractRemoteTask {
   public static final int CHUNK_MAX_SIZE = 8388608; // 8MB
 
   public static final int FACTORYID = 57;

@@ -9,12 +9,12 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionResultPayload;
-import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public class OSQLCommandTaskFirstPhase extends OAbstractReplicatedTask {
+public class OSQLCommandTaskFirstPhase extends OAbstractRemoteTask {
 
   public static final int FACTORYID = 59;
 

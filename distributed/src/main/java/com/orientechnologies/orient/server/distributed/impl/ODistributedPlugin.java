@@ -106,7 +106,6 @@ import com.orientechnologies.orient.server.distributed.impl.task.OSyncDatabaseTa
 import com.orientechnologies.orient.server.distributed.impl.task.OUpdateDatabaseConfigurationTask;
 import com.orientechnologies.orient.server.distributed.sql.OCommandExecutorSQLHASyncCluster;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
-import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ODatabaseIsOldException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedDatabaseDeltaSyncException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
@@ -1669,7 +1668,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
         "Requesting deploy of database '%s' on local server...",
         databaseName);
     for (String noteToSend : selectedNodes) {
-      final OAbstractReplicatedTask deployTask = new OSyncDatabaseTask();
+      OSyncDatabaseTask deployTask = new OSyncDatabaseTask();
       List<String> singleNode = new ArrayList<>();
       singleNode.add(noteToSend);
       final Map<String, Object> results =

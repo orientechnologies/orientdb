@@ -24,6 +24,7 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.storage.impl.local.OSyncSource;
@@ -36,10 +37,13 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseChunk;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
+import com.orientechnologies.orient.server.distributed.task.ORemoteTask.RESULT_STRATEGY;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -47,10 +51,15 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
-public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
+public class OSyncDatabaseTask extends OAbstractRemoteTask {
   public static final int FACTORYID = 14;
+  protected long random;
+  public static final String DEPLOYDB = "deploydb.";
+  public static final int CHUNK_MAX_SIZE = 8388608; // 8MB
 
-  public OSyncDatabaseTask() {}
+  public OSyncDatabaseTask() {
+    random = UUID.randomUUID().getLeastSignificantBits();
+  }
 
   @Override
   public Object execute(
@@ -69,7 +78,7 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
 
       try {
         final Long lastDeployment =
-            (Long) iManager.getConfigurationMap().get(DEPLOYDB + databaseName);
+            (Long) iManager.getConfigurationMap().get(OSyncDatabaseTask.DEPLOYDB + databaseName);
         if (lastDeployment != null && lastDeployment.longValue() == random) {
           // SKIP IT
           ODistributedServerLog.debug(
@@ -82,7 +91,7 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
           return Boolean.FALSE;
         }
 
-        iManager.getConfigurationMap().put(DEPLOYDB + databaseName, random);
+        iManager.getConfigurationMap().put(OSyncDatabaseTask.DEPLOYDB + databaseName, random);
 
         iManager.setDatabaseStatus(
             getNodeSource(), databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
@@ -172,7 +181,7 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
         }
 
         final ODistributedDatabaseChunk chunk =
-            new ODistributedDatabaseChunk(backup, CHUNK_MAX_SIZE);
+            new ODistributedDatabaseChunk(backup, OSyncDatabaseTask.CHUNK_MAX_SIZE);
 
         ODistributedServerLog.info(
             this,
@@ -239,5 +248,32 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
   @Override
   public int getFactoryId() {
     return FACTORYID;
+  }
+
+  @Override
+  public RESULT_STRATEGY getResultStrategy() {
+    return RESULT_STRATEGY.UNION;
+  }
+
+  @Override
+  public OCommandDistributedReplicateRequest.QUORUM_TYPE getQuorumType() {
+    return OCommandDistributedReplicateRequest.QUORUM_TYPE.ALL;
+  }
+
+  @Override
+  public long getDistributedTimeout() {
+    return OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_SYNCH_TIMEOUT.getValueAsLong();
+  }
+
+  public void onMessage(String iText) {
+    if (iText.startsWith("\r\n")) iText = iText.substring(2);
+    if (iText.startsWith("\n")) iText = iText.substring(1);
+
+    OLogManager.instance().info(this, iText);
+  }
+
+  @Override
+  public boolean isNodeOnlineRequired() {
+    return false;
   }
 }

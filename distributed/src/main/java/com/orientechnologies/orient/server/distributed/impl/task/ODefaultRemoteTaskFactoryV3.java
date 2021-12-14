@@ -38,12 +38,6 @@ public class ODefaultRemoteTaskFactoryV3 implements ORemoteTaskFactory {
   @Override
   public ORemoteTask createTask(final int code) {
     switch (code) {
-      case OSQLCommandTask.FACTORYID: // 5
-        return new OSQLCommandTask();
-
-      case OScriptTask.FACTORYID: // 6
-        return new OScriptTask();
-
       case OStopServerTask.FACTORYID: // 9
         return new OStopServerTask();
 

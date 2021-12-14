@@ -48,7 +48,7 @@ import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTx
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxStillRunning;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxSuccess;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxUniqueIndex;
-import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedKeyLockedException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import java.io.DataInput;
@@ -62,7 +62,7 @@ import java.util.TimerTask;
 import java.util.TreeSet;
 
 /** @author luigi dell'aquila (l.dellaquila - at - orientdb.com) */
-public class OTransactionPhase1Task extends OAbstractReplicatedTask implements OLockKeySource {
+public class OTransactionPhase1Task extends OAbstractRemoteTask implements OLockKeySource {
   public static final int FACTORYID = 43;
   private volatile boolean hasResponse;
   private List<ORecordOperation> ops;

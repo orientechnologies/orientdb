@@ -32,7 +32,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseChunk;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl;
-import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -42,7 +42,7 @@ import java.io.IOException;
  *
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
-public class OCopyDatabaseChunkTask extends OAbstractReplicatedTask {
+public class OCopyDatabaseChunkTask extends OAbstractRemoteTask {
   private static final long serialVersionUID = 1L;
   public static final int FACTORYID = 15;
 

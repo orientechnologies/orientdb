@@ -18,7 +18,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionUniqueKey;
-import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -26,7 +26,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 /** @author Luigi Dell'Aquila (l.dellaquila - at - orientdb.com) */
-public class OTransactionPhase2Task extends OAbstractReplicatedTask implements OLockKeySource {
+public class OTransactionPhase2Task extends OAbstractRemoteTask implements OLockKeySource {
   public static final int FACTORYID = 44;
 
   private OTransactionId transactionId;

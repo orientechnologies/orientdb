@@ -26,10 +26,8 @@ import com.orientechnologies.orient.core.command.OCommandDistributedReplicateReq
 import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
-import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -770,11 +768,6 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
           this, dManager.getLocalNodeName(), null, DIRECTION.NONE, composeConflictMessage());
     }
 
-    if (!undoRequest()) {
-      // SKIP UNDO
-      return null;
-    }
-
     // CHECK IF THERE IS AT LEAST ONE ODistributedRecordLockedException or
     // OConcurrentCreateException
     for (Object r : responses.values()) {
@@ -843,80 +836,6 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
     }
 
     return msg.toString();
-  }
-
-  protected boolean undoRequest() {
-    final ORemoteTask task = request.getTask();
-
-    if (task.isIdempotent()) {
-      // NO UNDO IS NECESSARY
-      ODistributedServerLog.warn(
-          this,
-          dManager.getLocalNodeName(),
-          null,
-          DIRECTION.NONE,
-          "No undo because the task (%s) is idempotent",
-          task);
-      return false;
-    }
-
-    // DETERMINE IF ANY CREATE FAILED TO RESTORE RIDS
-    for (ODistributedResponse r : getReceivedResponses()) {
-      if (r.getPayload() instanceof Throwable)
-        // NO NEED TO UNDO AN OPERATION THAT RETURNED EXCEPTION
-        // TODO: CONSIDER DIFFERENT TYPE OF EXCEPTION, SOME OF THOSE COULD REQUIRE AN UNDO
-        continue;
-
-      if (r == localResponse)
-        // SKIP LOCAL SERVER (IT'S MANAGED APART)
-        continue;
-
-      final String targetNode = r.getExecutorNodeName();
-      if (targetNode.equals(dManager.getLocalNodeName()))
-        // AVOID TO UNDO LOCAL NODE BECAUSE THE OPERATION IS MANAGED APART
-        continue;
-
-      if (task instanceof OAbstractReplicatedTask) {
-        final List<String> servers = OMultiValue.getSingletonList(targetNode);
-        final ORemoteTask undoTask =
-            ((OAbstractReplicatedTask) task).getUndoTask(dManager, request.getId(), servers);
-
-        if (undoTask != null) {
-          ODistributedServerLog.debug(
-              this,
-              dManager.getLocalNodeName(),
-              targetNode,
-              DIRECTION.OUT,
-              "Sending undo message (%s) for request (%s) database '%s' to server %s",
-              undoTask,
-              request,
-              request.getDatabaseName(),
-              targetNode);
-
-          final ODistributedResponse result =
-              dManager.sendRequest(
-                  request.getDatabaseName(),
-                  null,
-                  servers,
-                  undoTask,
-                  dManager.getNextMessageIdCounter(),
-                  ODistributedRequest.EXECUTION_MODE.RESPONSE,
-                  null);
-
-          ODistributedServerLog.debug(
-              this,
-              dManager.getLocalNodeName(),
-              targetNode,
-              DIRECTION.OUT,
-              "Received response from undo message (%s) for request (%s) to server %s: %s",
-              undoTask,
-              request,
-              targetNode,
-              result);
-        }
-      }
-    }
-    return true;
   }
 
   protected boolean checkNoWinnerCase(final List<ODistributedResponse> bestResponsesGroup) {

@@ -25,7 +25,7 @@ import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
-import com.orientechnologies.orient.server.distributed.impl.task.OAbstractSyncDatabaseTask;
+import com.orientechnologies.orient.server.distributed.impl.task.OSyncDatabaseTask;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
@@ -1035,7 +1035,7 @@ public class OHazelcastClusterMetadataManager
   public void dropDatabaseConfiguration(final String dbName) {
     // LAST NODE HOLDING THE DATABASE, DELETE DISTRIBUTED CFG TOO
     configurationMap.remove(CONFIG_DATABASE_PREFIX + dbName);
-    configurationMap.remove(OAbstractSyncDatabaseTask.DEPLOYDB + dbName);
+    configurationMap.remove(OSyncDatabaseTask.DEPLOYDB + dbName);
     ODistributedServerLog.info(
         this,
         nodeName,
