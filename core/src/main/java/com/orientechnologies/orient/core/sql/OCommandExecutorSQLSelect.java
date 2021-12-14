@@ -1702,7 +1702,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     if (iTarget instanceof ORecordIteratorClusters) {
       if (clusterIds.length > 1) {
-        final long totalRecords = getDatabase().getStorage().count(clusterIds);
+        final long totalRecords = getDatabase().countClusterElements(clusterIds);
         if (totalRecords
             > getDatabase()
                 .getConfiguration()

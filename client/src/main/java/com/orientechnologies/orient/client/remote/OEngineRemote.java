@@ -21,6 +21,7 @@ package com.orientechnologies.orient.client.remote;
 
 import com.orientechnologies.orient.core.engine.OEngineAbstract;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.storage.OStorage;
 import java.util.Map;
 
 /**
@@ -34,7 +35,7 @@ public class OEngineRemote extends OEngineAbstract {
 
   public OEngineRemote() {}
 
-  public OStorageRemote createStorage(
+  public OStorage createStorage(
       final String iURL,
       final Map<String, String> iConfiguration,
       long maxWalSegSize,

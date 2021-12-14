@@ -1088,7 +1088,8 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
     @Override
     public void run() {
       try {
-        final ODatabaseDocumentEmbedded newDb = new ODatabaseDocumentEmbedded(ctx.getStorage());
+        final ODatabaseDocumentEmbedded newDb =
+            new ODatabaseDocumentEmbedded((OStorage) ctx.getStorage());
         newDb.activateOnCurrentThread();
         newDb.init(null, ctx);
         newDb.internalOpen("admin", "nopass", false);

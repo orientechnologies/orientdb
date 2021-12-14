@@ -15,7 +15,7 @@ public class OLiveQueryMonitorRemote implements OLiveQueryMonitor {
 
   @Override
   public void unSubscribe() {
-    database.getStorage().unsubscribeLive(database, this.monitorId);
+    database.getStorageRemote().unsubscribeLive(database, this.monitorId);
   }
 
   @Override

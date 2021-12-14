@@ -201,7 +201,7 @@ public class OSharedContextEmbedded extends OSharedContext {
             session.save(value);
           } else {
             ORID recordId = session.save(value, "internal").getIdentity();
-            storage.setProperty(propertyName, recordId.toString());
+            ((OStorage) storage).setProperty(propertyName, recordId.toString());
           }
           return null;
         });

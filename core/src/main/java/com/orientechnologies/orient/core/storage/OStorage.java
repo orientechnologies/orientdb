@@ -48,9 +48,9 @@ import java.util.TimeZone;
  * @see com.orientechnologies.orient.core.storage.memory.ODirectMemoryStorage
  */
 public interface OStorage extends OBackupable, OStorageInfo {
-  String CLUSTER_DEFAULT_NAME = "default";
+  public String CLUSTER_DEFAULT_NAME = "default";
 
-  enum STATUS {
+  public enum STATUS {
     CLOSED,
     OPEN,
     MIGRATION,
@@ -60,7 +60,7 @@ public interface OStorage extends OBackupable, OStorageInfo {
     INTERNAL_ERROR
   }
 
-  enum LOCKING_STRATEGY {
+  public enum LOCKING_STRATEGY {
     NONE,
     DEFAULT,
     SHARED_LOCK,

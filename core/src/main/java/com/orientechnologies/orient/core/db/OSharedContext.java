@@ -18,6 +18,7 @@ import com.orientechnologies.orient.core.sql.executor.OQueryStats;
 import com.orientechnologies.orient.core.sql.parser.OExecutionPlanCache;
 import com.orientechnologies.orient.core.sql.parser.OStatementCache;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageInfo;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -27,7 +28,7 @@ public abstract class OSharedContext extends OListenerManger<OMetadataUpdateList
   protected static final OProfiler PROFILER = Orient.instance().getProfiler();
 
   protected OrientDBInternal orientDB;
-  protected OStorage storage;
+  protected OStorageInfo storage;
   protected OSchemaShared schema;
   protected OSecurityInternal security;
   protected OIndexManagerAbstract indexManager;
@@ -96,7 +97,7 @@ public abstract class OSharedContext extends OListenerManger<OMetadataUpdateList
 
   public abstract void close();
 
-  public OStorage getStorage() {
+  public OStorageInfo getStorage() {
     return storage;
   }
 

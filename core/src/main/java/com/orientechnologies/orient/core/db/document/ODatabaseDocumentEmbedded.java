@@ -496,7 +496,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
    */
   public ODatabaseDocumentInternal copy() {
     ODatabaseDocumentEmbedded database =
-        new ODatabaseDocumentEmbedded(getSharedContext().getStorage());
+        new ODatabaseDocumentEmbedded((OStorage) getSharedContext().getStorage());
     database.init(config, this.sharedContext);
     String user;
     if (getUser() != null) {

@@ -162,6 +162,8 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY;
+import com.orientechnologies.orient.core.storage.OStorage.STATUS;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
@@ -196,7 +198,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /** This object is bound to each remote ODatabase instances. */
-public class OStorageRemote implements OStorageProxy, ORemotePushHandler {
+public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStorage {
   @Deprecated public static final String PARAM_CONNECTION_STRATEGY = "connectionStrategy";
 
   public static final String DRIVER_NAME = "OrientDB Java";
@@ -318,17 +320,14 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler {
     }
   }
 
-  @Override
   public OStorageConfiguration getConfiguration() {
     return configuration;
   }
 
-  @Override
   public boolean checkForRecordValidity(final OPhysicalPosition ppos) {
     return ppos != null && !ORecordVersionHelper.isTombstone(ppos.recordVersion);
   }
 
-  @Override
   public String getName() {
     return name;
   }
@@ -573,13 +572,11 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler {
     } while (true);
   }
 
-  @Override
   public boolean isAssigningClusterIds() {
     return false;
   }
 
   /** Supported only in embedded storage. Use <code>SELECT FROM metadata:storage</code> instead. */
-  @Override
   public String getCreatedAtVersion() {
     throw new UnsupportedOperationException(
         "Supported only in embedded storage. Use 'SELECT FROM metadata:storage' instead.");
@@ -643,7 +640,6 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler {
     }
   }
 
-  @Override
   public OSBTreeCollectionManager getSBtreeCollectionManager() {
     return sbTreeCollectionManager;
   }
@@ -746,17 +742,14 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler {
     return force || remainingUsers == 0;
   }
 
-  @Override
   public int getUsers() {
     return users.get();
   }
 
-  @Override
   public int addUser() {
     return users.incrementAndGet();
   }
 
-  @Override
   public int removeUser() {
     if (users.get() < 1)
       throw new IllegalStateException(
@@ -837,7 +830,6 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler {
     }
   }
 
-  @Override
   public ORecordMetadata getRecordMetadata(final ORID rid) {
 
     OGetRecordMetadataRequest request = new OGetRecordMetadataRequest(rid);
@@ -847,7 +839,6 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler {
     return response.getMetadata();
   }
 
-  @Override
   public OStorageOperationResult<ORawBuffer> readRecordIfVersionIsNotLatest(
       final ORecordId rid,
       final String fetchPlan,
@@ -883,7 +874,6 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler {
     return new OStorageOperationResult<ORawBuffer>(response.getResult());
   }
 
-  @Override
   public String incrementalBackup(final String backupDirectory, OCallable<Void, Void> started) {
     OIncrementalBackupRequest request = new OIncrementalBackupRequest(backupDirectory);
     OIncrementalBackupResponse response =
@@ -891,26 +881,22 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler {
     return response.getFileName();
   }
 
-  @Override
   public boolean supportIncremental() {
     // THIS IS FALSE HERE THOUGH WE HAVE SOME SUPPORT FOR SOME SPECIFIC CASES FROM REMOTE
     return false;
   }
 
-  @Override
   public void fullIncrementalBackup(final OutputStream stream)
       throws UnsupportedOperationException {
     throw new UnsupportedOperationException(
         "This operations is part of internal API and is not supported in remote storage");
   }
 
-  @Override
   public void restoreFromIncrementalBackup(final String filePath) {
     throw new UnsupportedOperationException(
         "This operations is part of internal API and is not supported in remote storage");
   }
 
-  @Override
   public void restoreFullIncrementalBackup(final InputStream stream)
       throws UnsupportedOperationException {
     throw new UnsupportedOperationException(
@@ -971,7 +957,6 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler {
     return new OStorageOperationResult<Boolean>(resDelete);
   }
 
-  @Override
   public boolean cleanOutRecord(
       final ORecordId recordId,
       final int recordVersion,
@@ -991,7 +976,6 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler {
     return result != null ? result : false;
   }
 
-  @Override
   public List<String> backup(
       OutputStream out,
       Map<String, Object> options,
@@ -1004,7 +988,6 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler {
         "backup is not supported against remote storage. Open the database with plocal or use the incremental backup in the Enterprise Edition");
   }
 
-  @Override
   public void restore(
       InputStream in,
       Map<String, Object> options,
@@ -1023,7 +1006,6 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler {
     return count(new int[] {iClusterId});
   }
 
-  @Override
   public long count(int iClusterId, boolean countTombstones) {
     return count(new int[] {iClusterId}, countTombstones);
   }
@@ -1036,7 +1018,6 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler {
     return response.getPos();
   }
 
-  @Override
   public OPhysicalPosition[] higherPhysicalPositions(
       final int iClusterId, final OPhysicalPosition iClusterPosition) {
     OHigherPhysicalPositionsRequest request =
@@ -1049,7 +1030,6 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler {
     return response.getNextPositions();
   }
 
-  @Override
   public OPhysicalPosition[] ceilingPhysicalPositions(
       final int clusterId, final OPhysicalPosition physicalPosition) {
 
@@ -1063,7 +1043,6 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler {
     return response.getPositions();
   }
 
-  @Override
   public OPhysicalPosition[] lowerPhysicalPositions(
       final int iClusterId, final OPhysicalPosition physicalPosition) {
     OLowerPhysicalPositionsRequest request =
@@ -1075,7 +1054,6 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler {
     return response.getPreviousPositions();
   }
 
-  @Override
   public OPhysicalPosition[] floorPhysicalPositions(
       final int clusterId, final OPhysicalPosition physicalPosition) {
     OFloorPhysicalPositionsRequest request =
@@ -1093,7 +1071,6 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler {
     return response.getSize();
   }
 
-  @Override
   public long countRecords() {
     OCountRecordsRequest request = new OCountRecordsRequest();
     OCountRecordsResponse response =
@@ -1427,7 +1404,6 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler {
     return null;
   }
 
-  @Override
   public void rollback(OTransactionInternal iTx) {
     try {
       if (((OTransactionOptimistic) iTx).isAlreadyCleared()
@@ -1478,7 +1454,6 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler {
     return response.getClusterId();
   }
 
-  @Override
   public String getClusterNameById(int clusterId) {
     stateLock.acquireReadLock();
     try {
@@ -1493,48 +1468,39 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler {
     }
   }
 
-  @Override
   public long getClusterRecordsSizeById(int clusterId) {
     throw new UnsupportedOperationException();
   }
 
-  @Override
   public long getClusterRecordsSizeByName(String clusterName) {
     throw new UnsupportedOperationException();
   }
 
-  @Override
   public boolean setClusterAttribute(
       String clusterName, OCluster.ATTRIBUTES attribute, Object value) {
     throw new UnsupportedOperationException();
   }
 
-  @Override
   public String getClusterRecordConflictStrategy(int clusterId) {
     throw new UnsupportedOperationException();
   }
 
-  @Override
   public String getClusterEncryption(int clusterId) {
     throw new UnsupportedOperationException();
   }
 
-  @Override
   public boolean isSystemCluster(int clusterId) {
     throw new UnsupportedOperationException();
   }
 
-  @Override
   public long getLastClusterPosition(int clusterId) {
     throw new UnsupportedOperationException();
   }
 
-  @Override
   public long getClusterNextPosition(int clusterId) {
     throw new UnsupportedOperationException();
   }
 
-  @Override
   public OPaginatedCluster.RECORD_STATUS getRecordStatus(ORID rid) {
     throw new UnsupportedOperationException();
   }
@@ -1549,7 +1515,6 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler {
     return response.getResult();
   }
 
-  @Override
   public String getClusterName(int clusterId) {
     final OCluster cluster;
     stateLock.acquireReadLock();
@@ -1575,7 +1540,6 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler {
     throw new OStorageException("Cluster " + clusterId + " is absent in storage.");
   }
 
-  @Override
   public boolean setClusterAttribute(int id, OCluster.ATTRIBUTES attribute, Object value) {
     return false;
   }
@@ -1634,7 +1598,6 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler {
     }
   }
 
-  @Override
   public long getVersion() {
     throw new UnsupportedOperationException("getVersion");
   }
@@ -1656,7 +1619,6 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler {
     iNetwork.endResponse();
   }
 
-  @Override
   public boolean isRemote() {
     return true;
   }
@@ -1665,17 +1627,14 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler {
     return false;
   }
 
-  @Override
   public ORecordConflictStrategy getRecordConflictStrategy() {
     throw new UnsupportedOperationException("getRecordConflictStrategy");
   }
 
-  @Override
   public void setConflictStrategy(final ORecordConflictStrategy iResolver) {
     throw new UnsupportedOperationException("setConflictStrategy");
   }
 
-  @Override
   public String getURL() {
     return OEngineRemote.NAME + ":" + url;
   }
@@ -1689,12 +1648,10 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler {
     }
   }
 
-  @Override
   public String getType() {
     return OEngineRemote.NAME;
   }
 
-  @Override
   public String getUserName() {
     final OStorageRemoteSession session = getCurrentSession();
     if (session == null) return null;
@@ -2110,8 +2067,9 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler {
       for (int i = 0; i < clusters.length; ++i) {
         if (clusters[i] != null) clusterMap.put(clusters[i].getName(), clusters[i]);
       }
-      final OCluster defaultCluster = clusterMap.get(CLUSTER_DEFAULT_NAME);
-      if (defaultCluster != null) defaultClusterId = clusterMap.get(CLUSTER_DEFAULT_NAME).getId();
+      final OCluster defaultCluster = clusterMap.get(OStorage.CLUSTER_DEFAULT_NAME);
+      if (defaultCluster != null)
+        defaultClusterId = clusterMap.get(OStorage.CLUSTER_DEFAULT_NAME).getId();
     } finally {
       stateLock.releaseWriteLock();
     }
@@ -2133,7 +2091,6 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler {
     return session;
   }
 
-  @Override
   public boolean isClosed() {
     if (status == STATUS.CLOSED) return true;
     final OStorageRemoteSession session = getCurrentSession();
@@ -2268,26 +2225,22 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler {
     return null;
   }
 
-  @Override
   public OBinaryPushResponse executeUpdateDistributedConfig(
       OPushDistributedConfigurationRequest request) {
     serverURLs.updateDistributedNodes(request.getHosts(), configuration.getContextConfiguration());
     return null;
   }
 
-  @Override
   public OBinaryPushResponse executeUpdateFunction(OPushFunctionsRequest request) {
     ODatabaseDocumentRemote.updateFunction(this);
     return null;
   }
 
-  @Override
   public OBinaryPushResponse executeUpdateSequences(OPushSequencesRequest request) {
     ODatabaseDocumentRemote.updateSequences(this);
     return null;
   }
 
-  @Override
   public OBinaryPushResponse executeUpdateStorageConfig(OPushStorageConfigurationRequest payload) {
     final OStorageConfiguration storageConfiguration =
         new OStorageConfigurationRemote(
@@ -2299,7 +2252,6 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler {
     return null;
   }
 
-  @Override
   public OBinaryPushResponse executeUpdateSchema(OPushSchemaRequest request) {
     ODocument schema = request.getSchema();
     ORecordInternal.setIdentity(schema, new ORecordId(getConfiguration().getSchemaRecordId()));
@@ -2307,7 +2259,6 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler {
     return null;
   }
 
-  @Override
   public OBinaryPushResponse executeUpdateIndexManager(OPushIndexManagerRequest request) {
     ODocument indexManager = request.getIndexManager();
     ORecordInternal.setIdentity(
@@ -2368,7 +2319,6 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler {
     return params;
   }
 
-  @Override
   public void executeLiveQueryPush(OLiveQueryPushRequest pushRequest) {
     OLiveQueryClientListener listener = liveQueryListener.get(pushRequest.getMonitorId());
     if (listener.onEvent(pushRequest)) {
@@ -2376,7 +2326,6 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler {
     }
   }
 
-  @Override
   public void onPushReconnect(String host) {
     if (status != STATUS.OPEN) {
       // AVOID RECONNECT ON CLOSE
@@ -2410,7 +2359,6 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler {
     }
   }
 
-  @Override
   public void onPushDisconnect(OChannelBinary network, Exception e) {
     if (this.connectionManager.getPool(((OChannelBinaryAsynchClient) network).getServerURL())
         != null) {
@@ -2449,82 +2397,66 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler {
     OUnlockRecordResponse realResponse = (OUnlockRecordResponse) response.getResponse();
   }
 
-  @Override
   public void returnSocket(OChannelBinary network) {
     this.connectionManager.remove((OChannelBinaryAsynchClient) network);
   }
 
-  @Override
   public void setSchemaRecordId(String schemaRecordId) {
     throw new UnsupportedOperationException();
   }
 
-  @Override
   public void setDateFormat(String dateFormat) {
     throw new UnsupportedOperationException();
   }
 
-  @Override
   public void setTimeZone(TimeZone timeZoneValue) {
     throw new UnsupportedOperationException();
   }
 
-  @Override
   public void setLocaleLanguage(String locale) {
     throw new UnsupportedOperationException();
   }
 
-  @Override
   public void setCharset(String charset) {
     throw new UnsupportedOperationException();
   }
 
-  @Override
   public void setIndexMgrRecordId(String indexMgrRecordId) {
     throw new UnsupportedOperationException();
   }
 
-  @Override
   public void setDateTimeFormat(String dateTimeFormat) {
     throw new UnsupportedOperationException();
   }
 
-  @Override
   public void setLocaleCountry(String localeCountry) {
     throw new UnsupportedOperationException();
   }
 
-  @Override
   public void setClusterSelection(String clusterSelection) {
     throw new UnsupportedOperationException();
   }
 
-  @Override
   public void setMinimumClusters(int minimumClusters) {
     throw new UnsupportedOperationException();
   }
 
-  @Override
   public void setValidation(boolean validation) {
     throw new UnsupportedOperationException();
   }
 
-  @Override
   public void removeProperty(String property) {
     throw new UnsupportedOperationException();
   }
 
-  @Override
   public void setProperty(String property, String value) {
     throw new UnsupportedOperationException();
   }
 
-  @Override
   public void setRecordSerializer(String recordSerializer, int version) {
     throw new UnsupportedOperationException();
   }
 
-  @Override
   public void clearProperties() {
     throw new UnsupportedOperationException();
   }
@@ -2537,33 +2469,28 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler {
     return sharedContext;
   }
 
-  @Override
   public boolean isDistributed() {
     return false;
   }
 
-  @Override
   public STATUS getStatus() {
     return status;
   }
 
-  @Override
   public void close() {
     close(false, false);
   }
 
-  @Override
   public boolean dropCluster(final String iClusterName) {
     return dropCluster(getClusterIdByName(iClusterName));
   }
 
-  @Override
   public OCurrentStorageComponentsFactory getComponentsFactory() {
     return componentsFactory;
   }
 
   @Override
   public OStorage getUnderlying() {
-    return this;
+    return null;
   }
 }

@@ -153,7 +153,8 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
         if ("clear".equalsIgnoreCase(stringValue)) {
           String query = "alter database CUSTOM 'clear'";
           // Bypass the database command for avoid transaction management
-          ORemoteQueryResult result = getStorage().command(this, query, new Object[] {iValue});
+          ORemoteQueryResult result =
+              getStorageRemote().command(this, query, new Object[] {iValue});
           result.getResult().close();
         } else
           throw new IllegalArgumentException(
@@ -166,9 +167,9 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     } else {
       String query = "alter database " + iAttribute.name() + " ? ";
       // Bypass the database command for avoid transaction management
-      ORemoteQueryResult result = getStorage().command(this, query, new Object[] {iValue});
+      ORemoteQueryResult result = getStorageRemote().command(this, query, new Object[] {iValue});
       result.getResult().close();
-      getStorage().reload();
+      getStorageRemote().reload();
     }
 
     return (DB) this;
@@ -179,14 +180,14 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     if ("clear".equals(name) && iValue == null) {
       String query = "alter database CUSTOM 'clear'";
       // Bypass the database command for avoid transaction management
-      ORemoteQueryResult result = getStorage().command(this, query, new Object[] {});
+      ORemoteQueryResult result = getStorageRemote().command(this, query, new Object[] {});
       result.getResult().close();
     } else {
       String query = "alter database CUSTOM  " + name + " = ?";
       // Bypass the database command for avoid transaction management
-      ORemoteQueryResult result = getStorage().command(this, query, new Object[] {iValue});
+      ORemoteQueryResult result = getStorageRemote().command(this, query, new Object[] {iValue});
       result.getResult().close();
-      getStorage().reload();
+      getStorageRemote().reload();
     }
     return (DB) this;
   }
@@ -251,7 +252,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     ORecordSerializerFactory serializerFactory = ORecordSerializerFactory.instance();
     serializer = serializerFactory.getFormat(ORecordSerializerNetworkV37Client.NAME);
     localCache.startup();
-    componentsFactory = getStorage().getComponentsFactory();
+    componentsFactory = getStorageRemote().getComponentsFactory();
     user = null;
 
     loadMetadata();
@@ -321,7 +322,11 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   }
 
   @Override
-  public OStorageRemote getStorage() {
+  public OStorage getStorage() {
+    return storage;
+  }
+
+  public OStorageRemote getStorageRemote() {
     return storage;
   }
 
@@ -764,7 +769,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
                 "Error on retrieving record "
                     + rid
                     + " (cluster: "
-                    + getStorage().getPhysicalClusterNameById(rid.getClusterId())
+                    + getStorageRemote().getPhysicalClusterNameById(rid.getClusterId())
                     + ")"),
             t);
     } finally {
@@ -780,14 +785,14 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   @Override
   public void internalLockRecord(OIdentifiable iRecord, OStorage.LOCKING_STRATEGY lockingStrategy) {
     checkAndSendTransaction();
-    OStorageRemote remote = getStorage();
+    OStorageRemote remote = getStorageRemote();
     // -1 value means default timeout
     remote.lockRecord(iRecord, lockingStrategy, -1);
   }
 
   @Override
   public void internalUnlockRecord(OIdentifiable iRecord) {
-    OStorageRemote remote = getStorage();
+    OStorageRemote remote = getStorageRemote();
     remote.unlockRecord(iRecord.getIdentity());
   }
 
@@ -797,7 +802,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     checkIfActive();
     pessimisticLockChecks(recordId);
     checkAndSendTransaction();
-    OStorageRemote remote = getStorage();
+    OStorageRemote remote = getStorageRemote();
     // -1 value means default timeout
     OLockRecordResponse response = remote.lockRecord(recordId, EXCLUSIVE_LOCK, -1);
     ORecord record =
@@ -813,7 +818,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     checkIfActive();
     pessimisticLockChecks(recordId);
     checkAndSendTransaction();
-    OStorageRemote remote = getStorage();
+    OStorageRemote remote = getStorageRemote();
     OLockRecordResponse response =
         remote.lockRecord(recordId, EXCLUSIVE_LOCK, timeoutUnit.toMillis(timeout));
     ORecord record =
@@ -886,13 +891,13 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   @Override
   public int addCluster(final String iClusterName, final Object... iParameters) {
     checkIfActive();
-    return getStorage().addCluster(iClusterName, iParameters);
+    return getStorageRemote().addCluster(iClusterName, iParameters);
   }
 
   @Override
   public int addCluster(final String iClusterName, final int iRequestedId) {
     checkIfActive();
-    return getStorage().addCluster(iClusterName, iRequestedId);
+    return getStorageRemote().addCluster(iClusterName, iRequestedId);
   }
 
   public ORecordConflictStrategy getConflictStrategy() {
@@ -902,7 +907,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
   public ODatabaseDocumentAbstract setConflictStrategy(final String iStrategyName) {
     checkIfActive();
-    getStorage()
+    getStorageRemote()
         .setConflictStrategy(
             Orient.instance().getRecordConflictStrategy().getStrategy(iStrategyName));
     return this;
@@ -910,7 +915,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
   public ODatabaseDocumentAbstract setConflictStrategy(final ORecordConflictStrategy iResolver) {
     checkIfActive();
-    getStorage().setConflictStrategy(iResolver);
+    getStorageRemote().setConflictStrategy(iResolver);
     return this;
   }
 
@@ -918,14 +923,14 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   @Override
   public long countClusterElements(int iClusterId, boolean countTombstones) {
     checkIfActive();
-    return getStorage().count(iClusterId, countTombstones);
+    return getStorageRemote().count(iClusterId, countTombstones);
   }
 
   /** {@inheritDoc} */
   @Override
   public long countClusterElements(int[] iClusterIds, boolean countTombstones) {
     checkIfActive();
-    return getStorage().count(iClusterIds, countTombstones);
+    return getStorageRemote().count(iClusterIds, countTombstones);
   }
 
   /** {@inheritDoc} */
@@ -936,14 +941,14 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     final int clusterId = getClusterIdByName(iClusterName);
     if (clusterId < 0)
       throw new IllegalArgumentException("Cluster '" + iClusterName + "' was not found");
-    return getStorage().count(clusterId);
+    return getStorageRemote().count(clusterId);
   }
 
   @Override
   public long getClusterRecordSizeByName(final String clusterName) {
     checkIfActive();
     try {
-      return getStorage().getClusterRecordsSizeByName(clusterName);
+      return getStorageRemote().getClusterRecordsSizeByName(clusterName);
     } catch (Exception e) {
       throw OException.wrapException(
           new ODatabaseException("Error on reading records size for cluster '" + clusterName + "'"),
@@ -961,7 +966,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     if (schema.getBlobClusters().contains(clusterId)) schema.removeBlobCluster(iClusterName);
     getLocalCache().freeCluster(clusterId);
     checkForClusterPermissions(iClusterName);
-    return getStorage().dropCluster(iClusterName);
+    return getStorageRemote().dropCluster(iClusterName);
   }
 
   @Override
@@ -992,18 +997,18 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
       document.delete();
     }
 
-    return getStorage().dropCluster(clusterId);
+    return getStorageRemote().dropCluster(clusterId);
   }
 
   public boolean dropClusterInternal(int clusterId) {
-    return getStorage().dropCluster(clusterId);
+    return getStorageRemote().dropCluster(clusterId);
   }
 
   @Override
   public long getClusterRecordSizeById(final int clusterId) {
     checkIfActive();
     try {
-      return getStorage().getClusterRecordsSizeById(clusterId);
+      return getStorageRemote().getClusterRecordsSizeById(clusterId);
     } catch (Exception e) {
       throw OException.wrapException(
           new ODatabaseException(
@@ -1015,7 +1020,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   @Override
   public long getSize() {
     checkIfActive();
-    return getStorage().getSize();
+    return getStorageRemote().getSize();
   }
 
   @Override
@@ -1064,13 +1069,13 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     checkIfActive();
     checkSecurity(ORule.ResourceGeneric.DATABASE, "backup", ORole.PERMISSION_EXECUTE);
 
-    return getStorage().incrementalBackup(path, null);
+    return getStorageRemote().incrementalBackup(path, null);
   }
 
   @Override
   public ORecordMetadata getRecordMetadata(final ORID rid) {
     checkIfActive();
-    return getStorage().getRecordMetadata(rid);
+    return getStorageRemote().getRecordMetadata(rid);
   }
 
   /** {@inheritDoc} */
@@ -1130,7 +1135,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
   /** {@inheritDoc} */
   public OSBTreeCollectionManager getSbTreeCollectionManager() {
-    return getStorage().getSBtreeCollectionManager();
+    return getStorageRemote().getSBtreeCollectionManager();
   }
 
   @Override
@@ -1141,17 +1146,17 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
       throw new ODatabaseException("Cannot reload a closed db");
     }
     metadata.reload();
-    getStorage().reload();
+    getStorageRemote().reload();
   }
 
   @Override
   public void internalCommit(OTransactionInternal transaction) {
-    this.getStorage().commit(transaction);
+    this.getStorageRemote().commit(transaction);
   }
 
   @Override
   public boolean isClosed() {
-    return status == STATUS.CLOSED || getStorage().isClosed();
+    return status == STATUS.CLOSED || getStorageRemote().isClosed();
   }
 
   public void internalClose(boolean recycle) {
@@ -1185,7 +1190,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
       if (!recycle) {
         sharedContext = null;
 
-        if (getStorage() != null) getStorage().close();
+        if (getStorageRemote() != null) getStorageRemote().close();
       }
 
     } finally {
