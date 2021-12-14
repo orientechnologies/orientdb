@@ -20,11 +20,7 @@ public interface ODistributedResponseManager {
 
   List<String> getRespondingNodes();
 
-  Set<String> getServersWithoutFollowup();
-
   ODistributedRequestId getMessageId();
-
-  ODistributedRequest getRequest();
 
   int getQuorum();
 

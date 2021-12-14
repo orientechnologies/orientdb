@@ -409,13 +409,6 @@ public class OTransactionPhase1Task extends OAbstractRemoteTask implements OLock
   }
 
   @Override
-  public int[] getPartitionKey() {
-    if (operations.size() > 0)
-      return operations.stream().mapToInt((x) -> x.getId().getClusterId()).toArray();
-    else return ops.stream().mapToInt((x) -> x.getRID().getClusterId()).toArray();
-  }
-
-  @Override
   public long getDistributedTimeout() {
     return super.getDistributedTimeout() + (operations.size() / 10);
   }

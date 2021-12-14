@@ -76,12 +76,6 @@ public class NodeOperationTask implements ORemoteTask {
   }
 
   @Override
-  public int[] getPartitionKey() {
-    // This should be the best number for this use case checking the execution implementation
-    return new int[-2];
-  }
-
-  @Override
   public long getDistributedTimeout() {
     return OGlobalConfiguration.DISTRIBUTED_HEARTBEAT_TIMEOUT.getValueAsLong();
   }
@@ -129,11 +123,6 @@ public class NodeOperationTask implements ORemoteTask {
   @Override
   public int getFactoryId() {
     return FACTORYID;
-  }
-
-  @Override
-  public void checkIsValid(ODistributedServerManager dManager) {
-    throw new UnsupportedOperationException();
   }
 
   @Override

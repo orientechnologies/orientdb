@@ -82,12 +82,6 @@ public class OGossipTask extends OAbstractRemoteTask {
     return lockManagerServer;
   }
 
-  /** Uses the UNLOCK queue that is never blocked. */
-  @Override
-  public int[] getPartitionKey() {
-    return FAST_NOLOCK;
-  }
-
   @Override
   public OCommandDistributedReplicateRequest.QUORUM_TYPE getQuorumType() {
     return OCommandDistributedReplicateRequest.QUORUM_TYPE.ALL;

@@ -19,12 +19,7 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
-import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -36,32 +31,11 @@ import java.io.IOException;
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public abstract class OAbstractRemoteTask implements ORemoteTask {
-  public static final int[] ALL = new int[] {-1};
-  protected static final int[] ANY = new int[] {-2};
-  protected static final int[] FAST_NOLOCK = new int[] {-4};
 
   protected transient String nodeSource;
 
   /** Constructor used from unmarshalling. */
   public OAbstractRemoteTask() {}
-
-  @Override
-  public abstract String getName();
-
-  public abstract OCommandDistributedReplicateRequest.QUORUM_TYPE getQuorumType();
-
-  @Override
-  public abstract Object execute(
-      ODistributedRequestId requestId,
-      OServer iServer,
-      ODistributedServerManager iManager,
-      ODatabaseDocumentInternal database)
-      throws Exception;
-
-  @Override
-  public int[] getPartitionKey() {
-    return ANY;
-  }
 
   @Override
   public long getDistributedTimeout() {
@@ -74,9 +48,6 @@ public abstract class OAbstractRemoteTask implements ORemoteTask {
 
     return getDistributedTimeout() * iSynchNodes;
   }
-
-  @Override
-  public void checkIsValid(final ODistributedServerManager dManager) {}
 
   @Override
   public long getTotalTimeout(final int iTotalNodes) {

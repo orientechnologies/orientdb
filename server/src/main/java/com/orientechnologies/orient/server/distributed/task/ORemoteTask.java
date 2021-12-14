@@ -57,8 +57,6 @@ public interface ORemoteTask {
       ODatabaseDocumentInternal database)
       throws Exception;
 
-  int[] getPartitionKey();
-
   long getDistributedTimeout();
 
   long getSynchronousTimeout(final int iSynchNodes);
@@ -78,9 +76,6 @@ public interface ORemoteTask {
   boolean isUsingDatabase();
 
   int getFactoryId();
-
-  /** Checks the request is still valid. */
-  void checkIsValid(ODistributedServerManager dManager);
 
   void toStream(DataOutput out) throws IOException;
 

@@ -30,7 +30,6 @@ import com.orientechnologies.orient.server.distributed.task.ODistributedOperatio
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -410,8 +409,6 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
             break;
           }
 
-          request.getTask().checkIsValid(dManager);
-
           if (missingActiveNodes == 0) {
             // NO MORE ACTIVE NODES TO WAIT
             ODistributedServerLog.debug(
@@ -585,19 +582,6 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
     }
   }
 
-  public Set<String> getServersWithoutFollowup() {
-    if (!groupResponsesByResult) return Collections.EMPTY_SET;
-
-    synchronousResponsesLock.lock();
-    try {
-      final HashSet<String> servers = new HashSet<String>(responses.keySet());
-      servers.removeAll(followupToNodes);
-      return servers;
-    } finally {
-      synchronousResponsesLock.unlock();
-    }
-  }
-
   /** Returns the list of node names that provided a response. */
   public List<String> getRespondingNodes() {
     final List<String> respondedNodes = new ArrayList<String>();
@@ -609,10 +593,6 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
       synchronousResponsesLock.unlock();
     }
     return respondedNodes;
-  }
-
-  public ODistributedRequest getRequest() {
-    return request;
   }
 
   /** Returns all the responses in conflict. */

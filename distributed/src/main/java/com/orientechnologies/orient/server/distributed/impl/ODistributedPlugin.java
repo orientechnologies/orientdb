@@ -1741,7 +1741,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
                 distrDatabase,
                 r.getKey(),
                 (ODistributedDatabaseChunk) value,
-                false,
                 uniqueClustersBackupDirectory,
                 cfg);
           } catch (OException e) {
@@ -1961,7 +1960,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
       final ODistributedDatabaseImpl distrDatabase,
       final String iNode,
       final ODistributedDatabaseChunk firstChunk,
-      final boolean delta,
       final File uniqueClustersBackupDirectory,
       final OModifiableDistributedConfiguration cfg) {
 
@@ -1974,7 +1972,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
         databaseName,
         dbPath,
         iNode,
-        delta,
         uniqueClustersBackupDirectory,
         cfg,
         firstChunk.incremental,
@@ -2341,7 +2338,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
       final String databaseName,
       final String dbPath,
       final String iNode,
-      final boolean delta,
       final File uniqueClustersBackupDirectory,
       final OModifiableDistributedConfiguration cfg,
       boolean incremental,
@@ -2432,10 +2428,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
                         iNode,
                         (ONewDeltaTaskResponse) response.getPayload());
                   }
-                }
-              } else if (delta) {
-                try (InputStream in = receiver.getInputStream()) {
-                  new OIncrementalServerSync().importDelta(serverInstance, databaseName, in, iNode);
                 }
               } else {
 

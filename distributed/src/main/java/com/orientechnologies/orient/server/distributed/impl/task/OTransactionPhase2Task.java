@@ -224,11 +224,6 @@ public class OTransactionPhase2Task extends OAbstractRemoteTask implements OLock
   }
 
   @Override
-  public int[] getPartitionKey() {
-    return null;
-  }
-
-  @Override
   public SortedSet<ORID> getRids() {
     return involvedRids;
   }

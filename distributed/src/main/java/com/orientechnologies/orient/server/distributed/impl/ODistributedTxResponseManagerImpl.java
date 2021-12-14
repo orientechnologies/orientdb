@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
 import com.orientechnologies.orient.server.distributed.ODistributedException;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedTxResponseManager;
@@ -125,17 +124,7 @@ public class ODistributedTxResponseManagerImpl implements ODistributedTxResponse
   }
 
   @Override
-  public Set<String> getServersWithoutFollowup() {
-    return null;
-  }
-
-  @Override
   public ODistributedRequestId getMessageId() {
-    return null;
-  }
-
-  @Override
-  public ODistributedRequest getRequest() {
     return null;
   }
 

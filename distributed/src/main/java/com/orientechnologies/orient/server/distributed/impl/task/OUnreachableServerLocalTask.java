@@ -47,12 +47,6 @@ public class OUnreachableServerLocalTask extends OAbstractRemoteTask {
     this.unreachableServer = unreachableServer;
   }
 
-  /** Execute the task with no concurrency. */
-  @Override
-  public int[] getPartitionKey() {
-    return ANY;
-  }
-
   @Override
   public Object execute(
       final ODistributedRequestId msgId,
