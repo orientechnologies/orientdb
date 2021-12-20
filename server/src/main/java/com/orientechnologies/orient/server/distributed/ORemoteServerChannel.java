@@ -134,7 +134,7 @@ public class ORemoteServerChannel {
   }
 
   public void checkReconnect() {
-    if (tokenInstance.isCloseToExpire()) {
+    if (tokenInstance == null || tokenInstance.isCloseToExpire()) {
       for (int retry = 1;
           retry <= MAX_RETRY && totalConsecutiveErrors < MAX_CONSECUTIVE_ERRORS;
           ++retry) {
