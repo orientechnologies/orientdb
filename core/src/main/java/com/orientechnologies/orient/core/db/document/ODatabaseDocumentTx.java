@@ -1620,11 +1620,31 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public OStorageInfo getStorageInfo() {
-    return getStorage();
+    return internal.getStorageInfo();
   }
 
   @Override
   public boolean dropClusterInternal(int clusterId) {
     return internal.dropClusterInternal(clusterId);
+  }
+
+  @Override
+  public long[] getClusterDataRange(int currentClusterId) {
+    return internal.getClusterDataRange(currentClusterId);
+  }
+
+  @Override
+  public long getLastClusterPosition(int clusterId) {
+    return internal.getLastClusterPosition(clusterId);
+  }
+
+  @Override
+  public void setDefaultClusterId(int addCluster) {
+    internal.setDefaultClusterId(addCluster);
+  }
+
+  @Override
+  public String getClusterRecordConflictStrategy(int clusterId) {
+    return internal.getClusterRecordConflictStrategy(clusterId);
   }
 }

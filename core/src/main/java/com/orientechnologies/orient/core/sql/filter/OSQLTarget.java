@@ -245,7 +245,7 @@ public class OSQLTarget extends OBaseParser {
                     new ORecordId(
                         ODatabaseRecordThreadLocal.instance()
                             .get()
-                            .getStorage()
+                            .getStorageInfo()
                             .getConfiguration()
                             .getSchemaRecordId()));
           } else if (metadataTarget.equals(OCommandExecutorSQLAbstract.METADATA_INDEXMGR)) {
@@ -254,7 +254,7 @@ public class OSQLTarget extends OBaseParser {
                     new ORecordId(
                         ODatabaseRecordThreadLocal.instance()
                             .get()
-                            .getStorage()
+                            .getStorageInfo()
                             .getConfiguration()
                             .getIndexMgrRecordId()));
           } else

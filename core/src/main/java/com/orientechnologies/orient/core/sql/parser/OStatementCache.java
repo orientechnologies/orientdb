@@ -123,7 +123,7 @@ public class OStatementCache {
         try {
           is =
               new ByteArrayInputStream(
-                  statement.getBytes(db.getStorage().getConfiguration().getCharset()));
+                  statement.getBytes(db.getStorageInfo().getConfiguration().getCharset()));
         } catch (UnsupportedEncodingException e2) {
           OLogManager.instance()
               .warn(
@@ -131,7 +131,7 @@ public class OStatementCache {
                   "Unsupported charset for database "
                       + db
                       + " "
-                      + db.getStorage().getConfiguration().getCharset());
+                      + db.getStorageInfo().getConfiguration().getCharset());
           is = new ByteArrayInputStream(statement.getBytes());
         }
       }
@@ -141,7 +141,7 @@ public class OStatementCache {
         osql = new OrientSql(is);
       } else {
         try {
-          osql = new OrientSql(is, db.getStorage().getConfiguration().getCharset());
+          osql = new OrientSql(is, db.getStorageInfo().getConfiguration().getCharset());
         } catch (UnsupportedEncodingException e2) {
           OLogManager.instance()
               .warn(
@@ -149,7 +149,7 @@ public class OStatementCache {
                   "Unsupported charset for database "
                       + db
                       + " "
-                      + db.getStorage().getConfiguration().getCharset());
+                      + db.getStorageInfo().getConfiguration().getCharset());
           osql = new OrientSql(is);
         }
       }

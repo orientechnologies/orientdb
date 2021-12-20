@@ -103,13 +103,13 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
     if (!autoRecreateIndexesAfterCrash(database)) {
       acquireExclusiveLock();
       try {
-        if (database.getStorage().getConfiguration().getIndexMgrRecordId() == null)
+        if (database.getStorageInfo().getConfiguration().getIndexMgrRecordId() == null)
           // @COMPATIBILITY: CREATE THE INDEX MGR
           create(database);
 
         // RELOAD IT
         ((ORecordId) document.getIdentity())
-            .fromString(database.getStorage().getConfiguration().getIndexMgrRecordId());
+            .fromString(database.getStorageInfo().getConfiguration().getIndexMgrRecordId());
         database.reload(document, "*:-1 index:0", true);
         fromStream();
       } finally {
@@ -871,7 +871,7 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
 
       document =
           database.load(
-              new ORecordId(database.getStorage().getConfiguration().getIndexMgrRecordId()));
+              new ORecordId(database.getStorageInfo().getConfiguration().getIndexMgrRecordId()));
 
       Runnable recreateIndexesTask = new RecreateIndexesTask(database.getSharedContext());
       recreateIndexesThread = new Thread(recreateIndexesTask, "OrientDB rebuild indexes");

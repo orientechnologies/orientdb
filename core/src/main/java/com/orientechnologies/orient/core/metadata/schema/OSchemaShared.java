@@ -349,7 +349,7 @@ public abstract class OSchemaShared implements OCloseable {
     rwSpinLock.acquireWriteLock();
     try {
       ((ORecordId) document.getIdentity())
-          .fromString(database.getStorage().getConfiguration().getSchemaRecordId());
+          .fromString(database.getStorageInfo().getConfiguration().getSchemaRecordId());
       //noinspection NonAtomicOperationOnVolatileField
       this.document = database.reload(this.document, null, true, true);
       fromStream();
@@ -794,11 +794,12 @@ public abstract class OSchemaShared implements OCloseable {
 
     rwSpinLock.acquireWriteLock();
     try {
-      if (!new ORecordId(database.getStorage().getConfiguration().getSchemaRecordId()).isValid())
+      if (!new ORecordId(database.getStorageInfo().getConfiguration().getSchemaRecordId())
+          .isValid())
         throw new OSchemaNotCreatedException("Schema is not created and cannot be loaded");
 
       ((ORecordId) document.getIdentity())
-          .fromString(database.getStorage().getConfiguration().getSchemaRecordId());
+          .fromString(database.getStorageInfo().getConfiguration().getSchemaRecordId());
       document = database.reload(document, "*:-1 index:0", true);
       fromStream();
 

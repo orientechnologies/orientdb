@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.exception.OClusterDoesNotExistException;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OCluster.ATTRIBUTES;
@@ -155,15 +156,21 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
     Object result = null;
 
     final ODatabaseDocumentInternal database = getDatabase();
-    final OStorage storage = database.getStorage();
 
     for (final int clusterId : getClusters()) {
       if (this.clusterId > -1 && clusterName.equals(String.valueOf(this.clusterId))) {
-        clusterName = storage.getClusterNameById(clusterId);
+        clusterName = database.getClusterNameById(clusterId);
+        if (clusterName == null) {
+          throw new OClusterDoesNotExistException(
+              "Cluster with id "
+                  + clusterId
+                  + " does not exist inside of storage "
+                  + database.getName());
+        }
       } else {
         this.clusterId = clusterId;
       }
-
+      final OStorage storage = database.getStorage();
       result = storage.setClusterAttribute(clusterId, attribute, value);
     }
 
@@ -185,7 +192,7 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
     if (clusterName.endsWith("*")) {
       final String toMatch =
           clusterName.substring(0, clusterName.length() - 1).toLowerCase(Locale.ENGLISH);
-      for (String cl : database.getStorage().getClusterNames()) {
+      for (String cl : database.getClusterNames()) {
         if (cl.startsWith(toMatch)) result.add(database.getStorage().getClusterIdByName(cl));
       }
     } else {

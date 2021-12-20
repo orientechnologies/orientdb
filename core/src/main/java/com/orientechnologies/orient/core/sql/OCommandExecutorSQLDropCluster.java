@@ -93,7 +93,7 @@ public class OCommandExecutorSQLDropCluster extends OCommandExecutorSQLAbstract
     final ODatabaseDocumentInternal database = getDatabase();
 
     // CHECK IF ANY CLASS IS USING IT
-    final int clusterId = database.getStorage().getClusterIdByName(clusterName);
+    final int clusterId = database.getClusterIdByName(clusterName);
     for (OClass iClass : database.getMetadata().getSchema().getClasses()) {
       for (int i : iClass.getClusterIds()) {
         if (i == clusterId)

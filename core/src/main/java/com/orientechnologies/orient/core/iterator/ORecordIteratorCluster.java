@@ -72,7 +72,7 @@ public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIt
     checkForSystemClusters(iDatabase, new int[] {iClusterId});
 
     current.setClusterId(iClusterId);
-    final long[] range = database.getStorage().getClusterDataRange(current.getClusterId());
+    final long[] range = database.getClusterDataRange(current.getClusterId());
 
     if (firstClusterEntry == ORID.CLUSTER_POS_INVALID) this.firstClusterEntry = range[0];
     else this.firstClusterEntry = firstClusterEntry > range[0] ? firstClusterEntry : range[0];
@@ -283,7 +283,7 @@ public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIt
       firstClusterEntry = 0L;
       lastClusterEntry = Long.MAX_VALUE;
     } else {
-      final long[] range = database.getStorage().getClusterDataRange(current.getClusterId());
+      final long[] range = database.getClusterDataRange(current.getClusterId());
       firstClusterEntry = range[0];
       lastClusterEntry = range[1];
     }
@@ -295,7 +295,7 @@ public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIt
 
   private void updateRangesOnLiveUpdate() {
     if (liveUpdated) {
-      final long[] range = database.getStorage().getClusterDataRange(current.getClusterId());
+      final long[] range = database.getClusterDataRange(current.getClusterId());
 
       firstClusterEntry = range[0];
       lastClusterEntry = range[1];

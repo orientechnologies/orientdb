@@ -240,7 +240,7 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
   }
 
   protected String preParse(final String queryText, final OCommandRequest iRequest) {
-    final boolean strict = getDatabase().getStorage().getConfiguration().isStrictSql();
+    final boolean strict = getDatabase().getStorageInfo().getConfiguration().isStrictSql();
 
     if (strict) {
       try {

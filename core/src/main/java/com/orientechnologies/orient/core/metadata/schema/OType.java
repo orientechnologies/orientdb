@@ -41,6 +41,7 @@ import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.util.ODateHelper;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -449,18 +450,11 @@ public enum OType {
           if (OIOUtils.isLong(iValue.toString()))
             return new Date(Long.parseLong(iValue.toString()));
           try {
-            return ODatabaseRecordThreadLocal.instance()
-                .get()
-                .getStorage()
-                .getConfiguration()
-                .getDateTimeFormatInstance()
+            return ODateHelper.getDateTimeFormatInstance(
+                    ODatabaseRecordThreadLocal.instance().get())
                 .parse((String) iValue);
           } catch (ParseException ignore) {
-            return ODatabaseRecordThreadLocal.instance()
-                .get()
-                .getStorage()
-                .getConfiguration()
-                .getDateFormatInstance()
+            return ODateHelper.getDateFormatInstance(ODatabaseRecordThreadLocal.instance().get())
                 .parse((String) iValue);
           }
         }

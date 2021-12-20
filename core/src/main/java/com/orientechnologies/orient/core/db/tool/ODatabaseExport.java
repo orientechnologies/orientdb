@@ -401,12 +401,15 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     writer.writeAttribute(2, true, "storage-config-version", OStorageConfiguration.CURRENT_VERSION);
     writer.writeAttribute(2, true, "schema-version", OSchemaShared.CURRENT_VERSION_NUMBER);
     writer.writeAttribute(
-        2, true, "schemaRecordId", database.getStorage().getConfiguration().getSchemaRecordId());
+        2,
+        true,
+        "schemaRecordId",
+        database.getStorageInfo().getConfiguration().getSchemaRecordId());
     writer.writeAttribute(
         2,
         true,
         "indexMgrRecordId",
-        database.getStorage().getConfiguration().getIndexMgrRecordId());
+        database.getStorageInfo().getConfiguration().getIndexMgrRecordId());
     writer.endObject(1, true);
 
     listener.onMessage("OK");

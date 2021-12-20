@@ -39,7 +39,6 @@ import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.parser.OHaSyncClusterStatement;
 import com.orientechnologies.orient.core.sql.parser.OStatementCache;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
@@ -257,7 +256,6 @@ public class OCommandExecutorSQLHASyncCluster extends OCommandExecutorSQLAbstrac
 
       try {
 
-        final OAbstractPaginatedStorage stg = (OAbstractPaginatedStorage) db.getStorage();
         db.getLocalCache().invalidate();
         int clusterId = db.getClusterIdByName(clusterName);
         OClass klass = db.getMetadata().getSchema().getClassByClusterId(clusterId);

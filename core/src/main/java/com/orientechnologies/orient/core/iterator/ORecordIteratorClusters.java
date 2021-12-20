@@ -398,7 +398,7 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
     else if (currentClusterIdx < 0) currentClusterIdx = 0;
 
     current.setClusterId(clusterIds[currentClusterIdx]);
-    final long[] range = database.getStorage().getClusterDataRange(current.getClusterId());
+    final long[] range = database.getClusterDataRange(current.getClusterId());
 
     if (beginRange != null
         && beginRange.getClusterId() == current.getClusterId()

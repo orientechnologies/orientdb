@@ -456,7 +456,9 @@ public class OSchemaEmbedded extends OSchemaShared {
       if (clusterIds == null || clusterIds.length == 0) {
         clusterIds =
             createClusters(
-                database, className, database.getStorage().getConfiguration().getMinimumClusters());
+                database,
+                className,
+                database.getStorageInfo().getConfiguration().getMinimumClusters());
       }
       List<OClass> superClassesList = new ArrayList<OClass>();
       if (superClasses != null && superClasses.length > 0) {
@@ -487,7 +489,7 @@ public class OSchemaEmbedded extends OSchemaShared {
 
   private int[] createClusters(ODatabaseDocumentInternal database, final String iClassName) {
     return createClusters(
-        database, iClassName, database.getStorage().getConfiguration().getMinimumClusters());
+        database, iClassName, database.getStorageInfo().getConfiguration().getMinimumClusters());
   }
 
   protected int[] createClusters(

@@ -2017,4 +2017,24 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
       ODatabaseRecordThreadLocal.instance().remove();
     }
   }
+
+  @Override
+  public long[] getClusterDataRange(int currentClusterId) {
+    return getStorage().getClusterDataRange(currentClusterId);
+  }
+
+  @Override
+  public void setDefaultClusterId(int addCluster) {
+    getStorage().setDefaultClusterId(addCluster);
+  }
+
+  @Override
+  public long getLastClusterPosition(int clusterId) {
+    return getStorage().getLastClusterPosition(clusterId);
+  }
+
+  @Override
+  public String getClusterRecordConflictStrategy(int clusterId) {
+    return storage.getClusterRecordConflictStrategy(clusterId);
+  }
 }

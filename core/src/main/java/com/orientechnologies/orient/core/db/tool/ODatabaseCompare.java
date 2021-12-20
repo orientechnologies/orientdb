@@ -777,9 +777,9 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
       }
 
       long countCluster1 =
-          makeDbCall(databaseOne, database -> database.getStorage().count(cluster1Id));
+          makeDbCall(databaseOne, database -> database.countClusterElements(cluster1Id));
       long countCluster2 =
-          makeDbCall(databaseOne, database -> database.getStorage().count(cluster2Id));
+          makeDbCall(databaseOne, database -> database.countClusterElements(cluster2Id));
 
       if (countCluster1 != countCluster2) {
         listener.onMessage(
@@ -820,11 +820,9 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
           makeDbCall(databaseOne, database -> database.getClusterIdByName(clusterName));
 
       final long[] db1Range =
-          makeDbCall(
-              databaseOne, database -> database.getStorage().getClusterDataRange(clusterId1));
+          makeDbCall(databaseOne, database -> database.getClusterDataRange(clusterId1));
       final long[] db2Range =
-          makeDbCall(
-              databaseTwo, database -> database.getStorage().getClusterDataRange(clusterId1));
+          makeDbCall(databaseTwo, database -> database.getClusterDataRange(clusterId1));
 
       final long db1Max = db1Range[1];
       final long db2Max = db2Range[1];
@@ -857,9 +855,9 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
                       .ceilingPhysicalPositions(clusterId1, new OPhysicalPosition(0)));
 
       OStorageConfiguration configuration1 =
-          makeDbCall(databaseOne, database -> database.getStorage().getConfiguration());
+          makeDbCall(databaseOne, database -> database.getStorageInfo().getConfiguration());
       OStorageConfiguration configuration2 =
-          makeDbCall(databaseTwo, database -> database.getStorage().getConfiguration());
+          makeDbCall(databaseTwo, database -> database.getStorageInfo().getConfiguration());
       String storageType1 = makeDbCall(databaseOne, database -> database.getStorage().getType());
       String storageType2 = makeDbCall(databaseTwo, database -> database.getStorage().getType());
 

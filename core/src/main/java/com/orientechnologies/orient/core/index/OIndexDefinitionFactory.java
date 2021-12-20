@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageInfo;
 import java.util.List;
 import java.util.Locale;
 import java.util.regex.Pattern;
@@ -243,7 +243,7 @@ public class OIndexDefinitionFactory {
 
   private static Locale getServerLocale() {
     ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
-    OStorage storage = db.getStorage();
+    OStorageInfo storage = db.getStorageInfo();
     OStorageConfiguration configuration = storage.getConfiguration();
     return configuration.getLocaleInstance();
   }

@@ -36,7 +36,6 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -152,9 +151,8 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
 
     if (db.getClusterNames() != null) {
       json.beginCollection(1, false, "clusters");
-      OStorage storage = db.getStorage();
       for (String clusterName : db.getClusterNames()) {
-        final int clusterId = storage.getClusterIdByName(clusterName);
+        final int clusterId = db.getClusterIdByName(clusterName);
         if (clusterId < 0) {
           continue;
         }
@@ -163,7 +161,7 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
           json.beginObject(2, true, null);
           json.writeAttribute(3, false, "id", clusterId);
           json.writeAttribute(3, false, "name", clusterName);
-          json.writeAttribute(3, false, "records", storage.count(clusterId));
+          json.writeAttribute(3, false, "records", db.countClusterElements(clusterId));
           json.writeAttribute(3, false, "size", "-");
           json.writeAttribute(3, false, "filled", "-");
           json.writeAttribute(3, false, "maxSize", "-");

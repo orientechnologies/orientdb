@@ -1316,7 +1316,7 @@ public abstract class OClassImpl implements OClass {
   public void fireDatabaseMigration(
       final ODatabaseDocument database, final String propertyName, final OType type) {
     final boolean strictSQL =
-        ((ODatabaseInternal) database).getStorage().getConfiguration().isStrictSql();
+        ((ODatabaseInternal) database).getStorageInfo().getConfiguration().isStrictSql();
 
     OCommandResultListener updateListener =
         new OCommandResultListener() {
@@ -1355,7 +1355,7 @@ public abstract class OClassImpl implements OClass {
       final String newPropertyName,
       final OType type) {
     final boolean strictSQL =
-        ((ODatabaseInternal) database).getStorage().getConfiguration().isStrictSql();
+        ((ODatabaseInternal) database).getStorageInfo().getConfiguration().isStrictSql();
 
     database.query(
         new OSQLAsynchQuery<Object>(
@@ -1393,7 +1393,7 @@ public abstract class OClassImpl implements OClass {
     if (OType.ANY.equals(type)) {
       return;
     }
-    final boolean strictSQL = database.getStorage().getConfiguration().isStrictSql();
+    final boolean strictSQL = database.getStorageInfo().getConfiguration().isStrictSql();
 
     final StringBuilder builder = new StringBuilder(256);
     builder.append("select from ");
@@ -1539,11 +1539,10 @@ public abstract class OClassImpl implements OClass {
     newName = newName.toLowerCase(Locale.ENGLISH);
 
     final ODatabaseDocumentInternal database = getDatabase();
-    final OStorage storage = database.getStorage();
 
-    if (storage.getClusterIdByName(newName) != -1) return;
+    if (database.getClusterIdByName(newName) != -1) return;
 
-    final int clusterId = storage.getClusterIdByName(oldName);
+    final int clusterId = database.getClusterIdByName(oldName);
     if (clusterId == -1) return;
 
     if (!hasClusterId(clusterId)) return;

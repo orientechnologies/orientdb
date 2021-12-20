@@ -290,4 +290,12 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
   }
 
   default void setCommandInterruptionDepth(int commandInterruptionDepth) {}
+
+  long[] getClusterDataRange(int currentClusterId);
+
+  void setDefaultClusterId(int addCluster);
+
+  long getLastClusterPosition(int clusterId);
+
+  String getClusterRecordConflictStrategy(int clusterId);
 }

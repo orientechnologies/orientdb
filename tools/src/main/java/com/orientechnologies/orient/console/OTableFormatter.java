@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.util.ODateHelper;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -338,8 +339,7 @@ public class OTableFormatter {
       }
     } else if (value instanceof Date) {
       final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
-      if (db != null)
-        value = db.getStorage().getConfiguration().getDateTimeFormatInstance().format((Date) value);
+      if (db != null) value = ODateHelper.getDateTimeFormatInstance(db).format((Date) value);
       else {
         value = DEF_DATEFORMAT.format((Date) value);
       }

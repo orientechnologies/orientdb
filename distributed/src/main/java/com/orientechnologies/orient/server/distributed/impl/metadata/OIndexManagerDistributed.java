@@ -113,7 +113,7 @@ public class OIndexManagerDistributed extends OIndexManagerShared {
 
     ORecordInternal.setIdentity(
         getDocument(),
-        new ORecordId(database.getStorage().getConfiguration().getIndexMgrRecordId()));
+        new ORecordId(database.getStorageInfo().getConfiguration().getIndexMgrRecordId()));
 
     if (progressListener != null) progressListener.onCompletition(this, true);
 
@@ -141,7 +141,7 @@ public class OIndexManagerDistributed extends OIndexManagerShared {
     sendCommand(database, dropIndexDDL);
     ORecordInternal.setIdentity(
         getDocument(),
-        new ORecordId(database.getStorage().getConfiguration().getIndexMgrRecordId()));
+        new ORecordId(database.getStorageInfo().getConfiguration().getIndexMgrRecordId()));
 
     reload();
   }

@@ -35,7 +35,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.util.ODateHelper;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -727,7 +727,7 @@ public abstract class OPropertyImpl implements OProperty {
   }
 
   public void checkEmbedded() {
-    if (!(getDatabase().getStorage() instanceof OAbstractPaginatedStorage))
+    if (getDatabase().isRemote())
       throw new OSchemaException(
           "'Internal' schema modification methods can be used only inside of embedded database");
   }
@@ -740,11 +740,7 @@ public abstract class OPropertyImpl implements OProperty {
     if (iDateAsString != null)
       if (globalRef.getType() == OType.DATE) {
         try {
-          getDatabase()
-              .getStorage()
-              .getConfiguration()
-              .getDateFormatInstance()
-              .parse(iDateAsString);
+          ODateHelper.getDateFormatInstance(getDatabase()).parse(iDateAsString);
         } catch (ParseException e) {
           throw OException.wrapException(
               new OSchemaException(
@@ -753,11 +749,7 @@ public abstract class OPropertyImpl implements OProperty {
         }
       } else if (globalRef.getType() == OType.DATETIME) {
         try {
-          getDatabase()
-              .getStorage()
-              .getConfiguration()
-              .getDateTimeFormatInstance()
-              .parse(iDateAsString);
+          ODateHelper.getDateTimeFormatInstance(getDatabase()).parse(iDateAsString);
         } catch (ParseException e) {
           throw OException.wrapException(
               new OSchemaException(

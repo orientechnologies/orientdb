@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.exception.OClusterDoesNotExistException;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.parser.OCreateClassStatement;
@@ -163,14 +164,21 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract
                 clusterIds[i] = Integer.parseInt(clusterIdsAsStrings[i]);
               else
                 // GET CLUSTER ID
-                clusterIds[i] = database.getStorage().getClusterIdByName(clusterIdsAsStrings[i]);
+                clusterIds[i] = database.getClusterIdByName(clusterIdsAsStrings[i]);
 
               if (clusterIds[i] == -1)
                 throw new OCommandSQLParsingException(
                     "Cluster with id " + clusterIds[i] + " does not exists", parserText, oldPos);
 
               try {
-                database.getStorage().getClusterNameById(clusterIds[i]);
+                String clusterName = database.getClusterNameById(clusterIds[i]);
+                if (clusterName == null) {
+                  throw new OClusterDoesNotExistException(
+                      "Cluster with id "
+                          + clusterIds[i]
+                          + " does not exist inside of storage "
+                          + database.getName());
+                }
               } catch (Exception e) {
                 throw OException.wrapException(
                     new OCommandSQLParsingException(
@@ -226,7 +234,7 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract
       }
 
       if (clusterIds == null) {
-        final int clusterId = database.getStorage().getClusterIdByName(className);
+        final int clusterId = database.getClusterIdByName(className);
         if (clusterId > -1) {
           clusterIds = new int[] {clusterId};
         }

@@ -107,7 +107,7 @@ public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbs
         String[] clusterNames = clusterName.substring(1, clusterName.length() - 1).split(",");
         OClass candidateClass = null;
         for (String cName : clusterNames) {
-          final int clusterId = db.getStorage().getClusterIdByName(cName.trim());
+          final int clusterId = db.getClusterIdByName(cName.trim());
           if (clusterId < 0) {
             return null;
           }
@@ -125,7 +125,7 @@ public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbs
         }
         return candidateClass;
       } else {
-        final int clusterId = db.getStorage().getClusterIdByName(clusterName);
+        final int clusterId = db.getClusterIdByName(clusterName);
         if (clusterId >= 0) {
           return db.getMetadata().getSchema().getClassByClusterId(clusterId);
         }

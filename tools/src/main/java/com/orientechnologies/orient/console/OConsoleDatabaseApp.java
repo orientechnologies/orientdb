@@ -52,6 +52,7 @@ import com.orientechnologies.orient.core.db.OrientDBConfigBuilder;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.OrientDBRemote;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentRemote;
 import com.orientechnologies.orient.core.db.document.SimpleRecordReader;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.tool.OBonsaiTreeRepair;
@@ -275,13 +276,8 @@ public class OConsoleDatabaseApp extends OrientConsole
     if (currentDatabase != null) {
       message("\nDisconnecting from the database [" + currentDatabaseName + "]...");
 
-      final OStorage stg = currentDatabase.getStorage();
-
       currentDatabase.activateOnCurrentThread();
       if (!currentDatabase.isClosed()) currentDatabase.close();
-
-      // FORCE CLOSING OF STORAGE: THIS CLEAN UP REMOTE CONNECTIONS
-      if (stg != null) stg.close(true, false);
 
       currentDatabase = null;
       currentDatabaseName = null;
@@ -1638,9 +1634,8 @@ public class OConsoleDatabaseApp extends OrientConsole
           "\nCurrent database: " + currentDatabaseName + " (url=" + currentDatabase.getURL() + ")");
 
       currentDatabase.getMetadata().reload();
-      final OStorage stg = currentDatabase.getStorage();
 
-      if (stg instanceof OStorageRemote) {
+      if (currentDatabase.isRemote()) {
         listServers();
       }
 
@@ -1655,9 +1650,7 @@ public class OConsoleDatabaseApp extends OrientConsole
   public void listProperties() {
     if (currentDatabase == null) return;
 
-    final OStorage stg = currentDatabase.getStorage();
-
-    final OStorageConfiguration dbCfg = stg.getConfiguration();
+    final OStorageConfiguration dbCfg = currentDatabase.getStorageInfo().getConfiguration();
 
     message("\n\nDATABASE PROPERTIES");
 
@@ -2087,10 +2080,10 @@ public class OConsoleDatabaseApp extends OrientConsole
           resultSet.add(row);
 
           clusterId = currentDatabase.getClusterIdByName(clusterName);
-          final OStorage storage = currentDatabase.getStorage();
 
           final String conflictStrategy =
-              Optional.ofNullable(storage.getClusterRecordConflictStrategy(clusterId)).orElse("");
+              Optional.ofNullable(currentDatabase.getClusterRecordConflictStrategy(clusterId))
+                  .orElse("");
 
           count = currentDatabase.countClusterElements(clusterName);
           totalElements += count;
@@ -2385,7 +2378,7 @@ public class OConsoleDatabaseApp extends OrientConsole
       throws IOException {
     checkForDatabase();
 
-    if (!(currentDatabase.getStorage() instanceof OAbstractPaginatedStorage)) {
+    if (currentDatabase.getStorage().isRemote()) {
       message("\nCannot check integrity of non-local database. Connect to it using local mode.");
       return;
     }
@@ -3245,9 +3238,9 @@ public class OConsoleDatabaseApp extends OrientConsole
   protected void dumpDistributedConfiguration(final boolean iForce) {
     if (currentDatabase == null) return;
 
-    final OStorage stg = currentDatabase.getStorage();
-    if (stg instanceof OStorageRemote) {
-      final ODocument distributedCfg = ((OStorageRemote) stg).getClusterConfiguration();
+    if (currentDatabase.isRemote()) {
+      final OStorageRemote stg = ((ODatabaseDocumentRemote) currentDatabase).getStorageRemote();
+      final ODocument distributedCfg = stg.getClusterConfiguration();
       if (distributedCfg != null && !distributedCfg.isEmpty()) {
         message("\n\nDISTRIBUTED CONFIGURATION:\n" + distributedCfg.toJSON("prettyPrint"));
       } else if (iForce)
@@ -3330,8 +3323,7 @@ public class OConsoleDatabaseApp extends OrientConsole
   }
 
   protected void updateDatabaseInfo() {
-    currentDatabase.getStorage().reload();
-    currentDatabase.getMetadata().reload();
+    currentDatabase.reload();
   }
 
   @Override

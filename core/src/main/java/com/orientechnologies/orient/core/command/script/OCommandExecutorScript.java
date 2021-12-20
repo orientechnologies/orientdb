@@ -129,7 +129,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract
 
   private String preParse(String parserText, final Map<Object, Object> iArgs)
       throws ParseException {
-    final boolean strict = getDatabase().getStorage().getConfiguration().isStrictSql();
+    final boolean strict = getDatabase().getStorageInfo().getConfiguration().isStrictSql();
     if (strict) {
       parserText = addSemicolons(parserText);
 
@@ -140,7 +140,8 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract
         if (db == null) {
           bytes = parserText.getBytes();
         } else {
-          bytes = parserText.getBytes(getDatabase().getStorage().getConfiguration().getCharset());
+          bytes =
+              parserText.getBytes(getDatabase().getStorageInfo().getConfiguration().getCharset());
         }
       } catch (UnsupportedEncodingException e) {
         OLogManager.instance()
@@ -149,7 +150,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract
                 "Invalid charset for database "
                     + getDatabase()
                     + " "
-                    + getDatabase().getStorage().getConfiguration().getCharset());
+                    + getDatabase().getStorageInfo().getConfiguration().getCharset());
 
         bytes = parserText.getBytes();
       }
@@ -162,7 +163,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract
         if (db == null) {
           osql = new OrientSql(is);
         } else {
-          osql = new OrientSql(is, db.getStorage().getConfiguration().getCharset());
+          osql = new OrientSql(is, db.getStorageInfo().getConfiguration().getCharset());
         }
       } catch (UnsupportedEncodingException e) {
         OLogManager.instance()
@@ -171,7 +172,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract
                 "Invalid charset for database "
                     + getDatabase()
                     + " "
-                    + getDatabase().getStorage().getConfiguration().getCharset());
+                    + getDatabase().getStorageInfo().getConfiguration().getCharset());
         osql = new OrientSql(is);
       }
       List<OStatement> statements = osql.parseScript();

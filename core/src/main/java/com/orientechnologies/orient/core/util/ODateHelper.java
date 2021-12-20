@@ -45,7 +45,7 @@ public class ODateHelper {
   }
 
   public static TimeZone getDatabaseTimeZone(final ODatabaseDocumentInternal db) {
-    if (db != null && !db.isClosed()) return db.getStorage().getConfiguration().getTimeZone();
+    if (db != null && !db.isClosed()) return db.getStorageInfo().getConfiguration().getTimeZone();
     return TimeZone.getDefault();
   }
 
@@ -55,7 +55,7 @@ public class ODateHelper {
 
   public static DateFormat getDateFormatInstance(final ODatabaseDocumentInternal db) {
     if (db != null && !db.isClosed())
-      return db.getStorage().getConfiguration().getDateFormatInstance();
+      return db.getStorageInfo().getConfiguration().getDateFormatInstance();
     else return new SimpleDateFormat(DEF_DATE_FORMAT);
   }
 
@@ -64,7 +64,7 @@ public class ODateHelper {
   }
 
   public static String getDateFormat(final ODatabaseDocumentInternal db) {
-    if (db != null && !db.isClosed()) return db.getStorage().getConfiguration().getDateFormat();
+    if (db != null && !db.isClosed()) return db.getStorageInfo().getConfiguration().getDateFormat();
     else return DEF_DATE_FORMAT;
   }
 
@@ -74,7 +74,7 @@ public class ODateHelper {
 
   public static DateFormat getDateTimeFormatInstance(final ODatabaseDocumentInternal db) {
     if (db != null && !db.isClosed())
-      return db.getStorage().getConfiguration().getDateTimeFormatInstance();
+      return db.getStorageInfo().getConfiguration().getDateTimeFormatInstance();
     else return new SimpleDateFormat(DEF_DATETIME_FORMAT);
   }
 
@@ -83,7 +83,8 @@ public class ODateHelper {
   }
 
   public static String getDateTimeFormat(final ODatabaseDocumentInternal db) {
-    if (db != null && !db.isClosed()) return db.getStorage().getConfiguration().getDateTimeFormat();
+    if (db != null && !db.isClosed())
+      return db.getStorageInfo().getConfiguration().getDateTimeFormat();
     else return DEF_DATETIME_FORMAT;
   }
 

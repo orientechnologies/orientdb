@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 import com.orientechnologies.orient.core.util.ODateHelper;
+import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -42,7 +43,7 @@ public class OSQLFunctionDate extends OSQLFunctionAbstract {
   public static final String NAME = "date";
 
   private Date date;
-  private SimpleDateFormat format;
+  private DateFormat format;
 
   /** Get the date at construction to have the same date for all the iteration. */
   public OSQLFunctionDate() {
@@ -67,12 +68,7 @@ public class OSQLFunctionDate extends OSQLFunctionAbstract {
         format = new SimpleDateFormat((String) iParams[1]);
         format.setTimeZone(ODateHelper.getDatabaseTimeZone());
       } else
-        format =
-            ODatabaseRecordThreadLocal.instance()
-                .get()
-                .getStorage()
-                .getConfiguration()
-                .getDateTimeFormatInstance();
+        format = ODateHelper.getDateTimeFormatInstance(ODatabaseRecordThreadLocal.instance().get());
 
       if (iParams.length == 3) format.setTimeZone(TimeZone.getTimeZone(iParams[2].toString()));
     }
@@ -85,7 +81,7 @@ public class OSQLFunctionDate extends OSQLFunctionAbstract {
               "Error on formatting date '"
                   + iParams[0]
                   + "' using the format: "
-                  + format.toPattern()),
+                  + ((SimpleDateFormat) format).toPattern()),
           e);
     }
   }

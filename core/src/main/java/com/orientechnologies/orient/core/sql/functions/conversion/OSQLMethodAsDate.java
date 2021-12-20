@@ -21,6 +21,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.method.misc.OAbstractSQLMethod;
+import com.orientechnologies.orient.core.util.ODateHelper;
 import java.text.ParseException;
 import java.util.Calendar;
 import java.util.Date;
@@ -72,11 +73,7 @@ public class OSQLMethodAsDate extends OAbstractSQLMethod {
         return cal.getTime();
       } else {
         try {
-          return ODatabaseRecordThreadLocal.instance()
-              .get()
-              .getStorage()
-              .getConfiguration()
-              .getDateFormatInstance()
+          return ODateHelper.getDateFormatInstance(ODatabaseRecordThreadLocal.instance().get())
               .parse(iThis.toString());
         } catch (ParseException e) {
           OLogManager.instance().error(this, "Error during %s execution", e, NAME);

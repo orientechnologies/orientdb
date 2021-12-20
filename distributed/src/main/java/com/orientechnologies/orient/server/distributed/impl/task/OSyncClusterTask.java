@@ -28,7 +28,6 @@ import com.orientechnologies.orient.core.command.OCommandDistributedReplicateReq
 import com.orientechnologies.orient.core.compression.impl.OZIPCompressionUtil;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.server.OServer;
@@ -137,7 +136,6 @@ public class OSyncClusterTask extends OAbstractRemoteTask {
             databaseName,
             backupFile.getAbsolutePath());
 
-        final OStorage storage = database.getStorage();
         switch (mode) {
           case MERGE:
             throw new IllegalArgumentException("Merge mode not supported");

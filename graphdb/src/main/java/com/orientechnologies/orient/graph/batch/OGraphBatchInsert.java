@@ -294,7 +294,7 @@ public class OGraphBatchInsert {
         nextVerticesToCreate[i] = i;
         // THERE IS NO PUBLIC API FOR RETRIEVE THE LAST CLUSTER POSITION
         lastClusterPositions[i] =
-            ((ODatabaseDocumentInternal) db).getStorage().getLastClusterPosition(clusterId);
+            ((ODatabaseDocumentInternal) db).getLastClusterPosition(clusterId);
       } catch (Exception e) {
         throw new RuntimeException(e);
       }

@@ -42,7 +42,7 @@ public class OSharedContextRemote extends OSharedContext {
       }
     } finally {
       PROFILER.stopChrono(
-          PROFILER.getDatabaseMetric(database.getStorage().getName(), "metadata.load"),
+          PROFILER.getDatabaseMetric(database.getName(), "metadata.load"),
           "Loading of database metadata",
           timer,
           "db.*.metadata.load");

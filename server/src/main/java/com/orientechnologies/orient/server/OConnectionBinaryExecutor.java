@@ -53,7 +53,6 @@ import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.cluster.OOfflineClusterException;
 import com.orientechnologies.orient.core.storage.config.OClusterBasedStorageConfiguration;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -123,15 +122,15 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
   @Override
   public OBinaryResponse executeDBReload(OReloadRequest request) {
-    final OStorage storage = connection.getDatabase().getStorage();
-    final Set<String> clusters = storage.getClusterNames();
+    final ODatabaseDocumentInternal db = connection.getDatabase();
+    final Collection<String> clusters = db.getClusterNames();
 
     String[] clusterNames = new String[clusters.size()];
     int[] clusterIds = new int[clusterNames.length];
 
     int counter = 0;
     for (final String name : clusters) {
-      final int clusterId = storage.getClusterIdByName(name);
+      final int clusterId = db.getClusterIdByName(name);
       if (clusterId >= 0) {
         clusterNames[counter] = name;
         clusterIds[counter] = clusterId;
@@ -242,8 +241,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
   @Override
   public OBinaryResponse executeClusterDataRange(OGetClusterDataRangeRequest request) {
-    final long[] pos =
-        connection.getDatabase().getStorage().getClusterDataRange(request.getClusterId());
+    final long[] pos = connection.getDatabase().getClusterDataRange(request.getClusterId());
     return new OGetClusterDataRangeResponse(pos);
   }
 
@@ -465,7 +463,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     if (currentRecord
         .getIdentity()
         .toString()
-        .equals(database.getStorage().getConfiguration().getIndexMgrRecordId())) {
+        .equals(database.getStorageInfo().getConfiguration().getIndexMgrRecordId())) {
       // FORCE INDEX MANAGER UPDATE. THIS HAPPENS FOR DIRECT CHANGES FROM REMOTE LIKE IN GRAPH
       database.getMetadata().getIndexManagerInternal().reload();
     }
@@ -1130,8 +1128,8 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       server.getClientConnectionManager().connect(connection.getProtocol(), connection, token);
     }
 
-    final OStorage storage = connection.getDatabase().getStorage();
-    final Set<String> clusters = storage.getClusterNames();
+    ODatabaseDocumentInternal db = connection.getDatabase();
+    final Collection<String> clusters = db.getClusterNames();
     final byte[] tokenToSend;
     if (Boolean.TRUE.equals(connection.getTokenBased())) {
       tokenToSend = token;
@@ -1158,7 +1156,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
     int counter = 0;
     for (String name : clusters) {
-      final int clusterId = storage.getClusterIdByName(name);
+      final int clusterId = db.getClusterIdByName(name);
       if (clusterId >= 0) {
         clusterNames[counter] = name;
         clusterIds[counter] = clusterId;

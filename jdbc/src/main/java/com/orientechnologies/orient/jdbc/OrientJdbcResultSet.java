@@ -161,7 +161,7 @@ public class OrientJdbcResultSet implements ResultSet {
             osql =
                 new OrientSql(
                     new ByteArrayInputStream(statement.sql.getBytes()),
-                    db.getStorage().getConfiguration().getCharset());
+                    db.getStorageInfo().getConfiguration().getCharset());
           }
         } catch (UnsupportedEncodingException e) {
           OLogManager.instance()
@@ -170,7 +170,7 @@ public class OrientJdbcResultSet implements ResultSet {
                   "Invalid charset for database "
                       + db
                       + " "
-                      + db.getStorage().getConfiguration().getCharset());
+                      + db.getStorageInfo().getConfiguration().getCharset());
           osql = new OrientSql(new ByteArrayInputStream(statement.sql.getBytes()));
         } catch (Exception e) {
           throw new RuntimeException(e);

@@ -147,7 +147,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     for (String server : distributedManager.getActiveServers()) {
       if (getClustersOnServer(cfg, server).contains("*")) {
         // TODO check this!!!
-        result.put(server, getStorage().getClusterNames());
+        result.put(server, new HashSet<String>(getClusterNames()));
       } else {
         result.put(server, getClustersOnServer(cfg, server));
       }
@@ -160,7 +160,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     if (result.contains("*")) {
       result.remove("*");
       HashSet<String> more = new HashSet<>();
-      more.addAll(getStorage().getClusterNames());
+      more.addAll(getClusterNames());
       for (String s : cfg.getClusterNames()) {
         if (!cfg.getServers(s, null).contains(s)) {
           more.remove(s);
@@ -1309,7 +1309,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     final Set<String> involvedClusters = new HashSet<>();
     for (ORecordOperation op : uResult) {
       final ORecord record = op.getRecord();
-      involvedClusters.add(getStorage().getClusterNameById(record.getIdentity().getClusterId()));
+      involvedClusters.add(getClusterNameById(record.getIdentity().getClusterId()));
     }
     return involvedClusters;
   }

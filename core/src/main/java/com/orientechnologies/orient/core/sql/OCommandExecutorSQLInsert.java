@@ -134,7 +134,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware
 
       if (clusterName != null && className == null) {
         ODatabaseDocumentInternal db = getDatabase();
-        final int clusterId = db.getStorage().getClusterIdByName(clusterName);
+        final int clusterId = db.getClusterIdByName(clusterName);
         if (clusterId >= 0) {
           clazz = db.getMetadata().getSchema().getClassByClusterId(clusterId);
           if (clazz != null) {

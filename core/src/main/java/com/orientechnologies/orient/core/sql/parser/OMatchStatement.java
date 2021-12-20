@@ -236,7 +236,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       if (db == null) {
         osql = new OrientSql(is);
       } else {
-        osql = new OrientSql(is, db.getStorage().getConfiguration().getCharset());
+        osql = new OrientSql(is, db.getStorageInfo().getConfiguration().getCharset());
       }
     } catch (UnsupportedEncodingException e) {
       OLogManager.instance()
@@ -245,7 +245,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
               "Invalid charset for database "
                   + getDatabase()
                   + " "
-                  + getDatabase().getStorage().getConfiguration().getCharset());
+                  + getDatabase().getStorageInfo().getConfiguration().getCharset());
       osql = new OrientSql(is);
     }
 

@@ -294,11 +294,12 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     }
 
     if (schemaRecordId == null) {
-      schemaRecordId = new ORecordId(database.getStorage().getConfiguration().getSchemaRecordId());
+      schemaRecordId =
+          new ORecordId(database.getStorageInfo().getConfiguration().getSchemaRecordId());
     }
     if (indexMgrRecordId == null) {
       indexMgrRecordId =
-          new ORecordId(database.getStorage().getConfiguration().getIndexMgrRecordId());
+          new ORecordId(database.getStorageInfo().getConfiguration().getIndexMgrRecordId());
     }
     listener.onMessage("OK");
   }
@@ -459,7 +460,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   }
 
   private void handleDatabaseLoadNull() {
-    if (database.load(new ORecordId(database.getStorage().getConfiguration().getIndexMgrRecordId()))
+    if (database.load(
+            new ORecordId(database.getStorageInfo().getConfiguration().getIndexMgrRecordId()))
         == null) {
       ODocument indexDocument = new ODocument();
       indexDocument.save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
@@ -770,7 +772,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
     database.dropCluster(OStorage.CLUSTER_DEFAULT_NAME);
 
-    database.getStorage().setDefaultClusterId(database.addCluster(OStorage.CLUSTER_DEFAULT_NAME));
+    database.setDefaultClusterId(database.addCluster(OStorage.CLUSTER_DEFAULT_NAME));
 
     // Starting from v4 schema has been moved to internal cluster.
     // Create a stub at #2:0 to prevent cluster position shifting.
@@ -796,11 +798,12 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     jsonReader.readNext(parser, JsonToken.END_OBJECT);
 
     if (schemaRecordId == null)
-      schemaRecordId = new ORecordId(database.getStorage().getConfiguration().getSchemaRecordId());
+      schemaRecordId =
+          new ORecordId(database.getStorageInfo().getConfiguration().getSchemaRecordId());
 
     if (indexMgrRecordId == null)
       indexMgrRecordId =
-          new ORecordId(database.getStorage().getConfiguration().getIndexMgrRecordId());
+          new ORecordId(database.getStorageInfo().getConfiguration().getIndexMgrRecordId());
 
     listener.onMessage("OK");
   }
@@ -823,11 +826,12 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
 
     if (schemaRecordId == null)
-      schemaRecordId = new ORecordId(database.getStorage().getConfiguration().getSchemaRecordId());
+      schemaRecordId =
+          new ORecordId(database.getStorageInfo().getConfiguration().getSchemaRecordId());
 
     if (indexMgrRecordId == null)
       indexMgrRecordId =
-          new ORecordId(database.getStorage().getConfiguration().getIndexMgrRecordId());
+          new ORecordId(database.getStorageInfo().getConfiguration().getIndexMgrRecordId());
 
     listener.onMessage("OK");
   }
@@ -1965,7 +1969,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     }
     listener.onMessage("\nDone. Imported " + total + " clusters");
 
-    if (database.load(new ORecordId(database.getStorage().getConfiguration().getIndexMgrRecordId()))
+    if (database.load(
+            new ORecordId(database.getStorageInfo().getConfiguration().getIndexMgrRecordId()))
         == null) {
       ODocument indexDocument = new ODocument();
       indexDocument.save(OMetadataDefault.CLUSTER_INTERNAL_NAME);

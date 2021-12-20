@@ -111,17 +111,17 @@ public class OAlterClusterStatement extends ODDLStatement {
   }
 
   private List<Integer> getClusters(OCommandContext ctx) {
-    OStorage storage = ((ODatabaseDocumentInternal) ctx.getDatabase()).getStorage();
+    ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
     if (starred) {
       List<Integer> result = new ArrayList<>();
-      for (String clusterName : storage.getClusterNames()) {
+      for (String clusterName : database.getClusterNames()) {
         if (clusterName.startsWith(name.getStringValue())) {
-          result.add(storage.getClusterIdByName(clusterName));
+          result.add(database.getClusterIdByName(clusterName));
         }
       }
       return result;
     } else {
-      final int clusterId = ctx.getDatabase().getClusterIdByName(name.getStringValue());
+      final int clusterId = database.getClusterIdByName(name.getStringValue());
       if (clusterId <= 0) {
         throw new OCommandExecutionException("Cannot find cluster " + name);
       }

@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.exception.OClusterDoesNotExistException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -99,7 +100,11 @@ public class OGraphBatchInsertBasic {
         final String inField =
             OrientEdgeType.CLASS_NAME.equals(edgeClass) ? "in_" : ("in_" + edgeClass);
 
-        String clusterName = db.getStorage().getClusterNameById(clusterId);
+        String clusterName = db.getClusterNameById(clusterId);
+        if (clusterName == null) {
+          throw new OClusterDoesNotExistException(
+              "Cluster with id " + clusterId + " does not exist inside of storage " + db.getName());
+        }
         // long firstAvailableClusterPosition = lastClusterPositions[mod] + 1;
 
         for (long i = mod; i <= last; i += parallel) {
@@ -206,7 +211,7 @@ public class OGraphBatchInsertBasic {
     for (int i = 0; i < clusterIds.length; i++) {
       int clusterId = clusterIds[i];
       try {
-        lastClusterPositions[i] = db.getStorage().getLastClusterPosition(clusterId);
+        lastClusterPositions[i] = db.getLastClusterPosition(clusterId);
       } catch (Exception e) {
         throw new RuntimeException(e);
       }

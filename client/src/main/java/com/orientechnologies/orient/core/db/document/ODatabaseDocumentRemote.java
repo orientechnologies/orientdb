@@ -1198,4 +1198,24 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
       ODatabaseRecordThreadLocal.instance().remove();
     }
   }
+
+  @Override
+  public long[] getClusterDataRange(int currentClusterId) {
+    return getStorageRemote().getClusterDataRange(currentClusterId);
+  }
+
+  @Override
+  public void setDefaultClusterId(int addCluster) {
+    getStorageRemote().setDefaultClusterId(addCluster);
+  }
+
+  @Override
+  public long getLastClusterPosition(int clusterId) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public String getClusterRecordConflictStrategy(int clusterId) {
+    throw new UnsupportedOperationException();
+  }
 }

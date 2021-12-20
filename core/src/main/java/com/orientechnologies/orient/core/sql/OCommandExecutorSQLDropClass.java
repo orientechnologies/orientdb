@@ -55,7 +55,7 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract
     try {
       queryText = preParse(queryText, iRequest);
       textRequest.setText(queryText);
-      final boolean strict = getDatabase().getStorage().getConfiguration().isStrictSql();
+      final boolean strict = getDatabase().getStorageInfo().getConfiguration().isStrictSql();
       if (strict) {
         this.className = ((ODropClassStatement) this.preParsedStatement).name.getStringValue();
         this.unsafe = ((ODropClassStatement) this.preParsedStatement).unsafe;

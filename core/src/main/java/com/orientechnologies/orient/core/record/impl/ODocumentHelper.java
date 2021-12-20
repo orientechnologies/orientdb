@@ -236,7 +236,7 @@ public class ODocumentHelper {
     } else if (Date.class.isAssignableFrom(iFieldType)) {
       if (iValue instanceof String && ODatabaseRecordThreadLocal.instance().isDefined()) {
         ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
-        final OStorageConfiguration config = db.getStorage().getConfiguration();
+        final OStorageConfiguration config = db.getStorageInfo().getConfiguration();
 
         DateFormat formatter;
 
@@ -849,11 +849,7 @@ public class ODocumentHelper {
       else
         try {
           result =
-              ODatabaseRecordThreadLocal.instance()
-                  .get()
-                  .getStorage()
-                  .getConfiguration()
-                  .getDateFormatInstance()
+              ODateHelper.getDateFormatInstance(ODatabaseRecordThreadLocal.instance().get())
                   .parse(currentValue.toString());
         } catch (ParseException ignore) {
         }
@@ -864,11 +860,7 @@ public class ODocumentHelper {
       else
         try {
           result =
-              ODatabaseRecordThreadLocal.instance()
-                  .get()
-                  .getStorage()
-                  .getConfiguration()
-                  .getDateTimeFormatInstance()
+              ODateHelper.getDateTimeFormatInstance(ODatabaseRecordThreadLocal.instance().get())
                   .parse(currentValue.toString());
         } catch (ParseException ignore) {
         }

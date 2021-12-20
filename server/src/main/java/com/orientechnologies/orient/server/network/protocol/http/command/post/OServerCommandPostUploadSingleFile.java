@@ -19,6 +19,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
+import com.orientechnologies.orient.core.util.ODateHelper;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -130,8 +131,7 @@ public class OServerCommandPostUploadSingleFile extends OHttpMultipartRequestCom
         fileType = headers.get(OHttpUtils.MULTIPART_CONTENT_TYPE);
 
         final Calendar cal = Calendar.getInstance();
-        final DateFormat formatter =
-            database.getStorage().getConfiguration().getDateFormatInstance();
+        final DateFormat formatter = ODateHelper.getDateFormatInstance(database);
         now = cal.getTimeInMillis();
 
         writer.beginObject("uploadedFile");

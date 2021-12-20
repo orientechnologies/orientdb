@@ -268,7 +268,7 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
 
   public static GRAPH_CONSISTENCY_MODE getConsistencyMode(final OrientBaseGraph graph) {
     final String consistencyMode =
-        graph.getRawGraph().getStorage().getConfiguration().getProperty("graphConsistencyMode");
+        graph.getRawGraph().getStorageInfo().getConfiguration().getProperty("graphConsistencyMode");
     if (consistencyMode == null) return GRAPH_CONSISTENCY_MODE.TX;
 
     return GRAPH_CONSISTENCY_MODE.valueOf(consistencyMode);
