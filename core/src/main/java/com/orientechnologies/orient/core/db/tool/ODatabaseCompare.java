@@ -849,10 +849,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
       OPhysicalPosition[] physicalPositions =
           makeDbCall(
               selectedDatabase,
-              database ->
-                  database
-                      .getStorage()
-                      .ceilingPhysicalPositions(clusterId1, new OPhysicalPosition(0)));
+              database -> database.ceilingPhysicalPositions(clusterId1, new OPhysicalPosition(0)));
 
       OStorageConfiguration configuration1 =
           makeDbCall(databaseOne, database -> database.getStorageInfo().getConfiguration());
@@ -1072,9 +1069,8 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
             makeDbCall(
                 selectedDatabase,
                 database ->
-                    database
-                        .getStorage()
-                        .higherPhysicalPositions(clusterId1, curPosition[curPosition.length - 1]));
+                    database.higherPhysicalPositions(
+                        clusterId1, curPosition[curPosition.length - 1]));
         if (recordsCounter % 10000 == 0)
           listener.onMessage(
               "\n"

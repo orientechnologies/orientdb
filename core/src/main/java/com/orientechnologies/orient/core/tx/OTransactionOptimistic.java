@@ -48,7 +48,6 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.schedule.OScheduledEvent;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -162,10 +161,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
           "Transaction was rolled back more times than it was started.");
     }
 
-    if (database.isRemote()) {
-      final OStorage storage = database.getStorage();
-      ((OStorageProxy) storage).rollback(OTransactionOptimistic.this);
-    }
+    database.internalRollback(OTransactionOptimistic.this);
     internalRollback();
   }
 

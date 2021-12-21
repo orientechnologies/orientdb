@@ -2137,4 +2137,36 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
   public String getClusterRecordConflictStrategy(int clusterId) {
     return storage.getClusterRecordConflictStrategy(clusterId);
   }
+
+  @Override
+  public boolean isUnderlyingClosed() {
+    return getStorage().isClosed();
+  }
+
+  @Override
+  public void internalRollback(OTransactionOptimistic tx) {}
+
+  @Override
+  public OPhysicalPosition[] higherPhysicalPositions(
+      int clusterId, OPhysicalPosition physicalPosition) {
+    return storage.higherPhysicalPositions(clusterId, physicalPosition);
+  }
+
+  @Override
+  public OPhysicalPosition[] ceilingPhysicalPositions(
+      int clusterId, OPhysicalPosition physicalPosition) {
+    return storage.ceilingPhysicalPositions(clusterId, physicalPosition);
+  }
+
+  @Override
+  public OPhysicalPosition[] lowerPhysicalPositions(
+      int clusterId, OPhysicalPosition physicalPosition) {
+    return storage.lowerPhysicalPositions(clusterId, physicalPosition);
+  }
+
+  @Override
+  public OPhysicalPosition[] floorPhysicalPositions(
+      int clusterId, OPhysicalPosition physicalPosition) {
+    return storage.floorPhysicalPositions(clusterId, physicalPosition);
+  }
 }

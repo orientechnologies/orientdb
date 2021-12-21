@@ -50,7 +50,6 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable>
     implements Iterator<REC>, Iterable<REC> {
   protected final ODatabaseDocumentInternal database;
   protected final ORecordId current = new ORecordId();
-  private final OStorage dbStorage;
   protected boolean liveUpdated = false;
   protected long limit = -1;
   protected long browsedRecords = 0;
@@ -85,7 +84,6 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable>
     database = iDatabase;
     lockingStrategy = iLockingStrategy;
 
-    dbStorage = database.getStorage();
     current.setClusterPosition(ORID.CLUSTER_POS_INVALID); // DEFAULT = START FROM THE BEGIN
   }
 
@@ -305,7 +303,7 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable>
   protected boolean nextPosition() {
     if (positionsToProcess == null) {
       positionsToProcess =
-          dbStorage.ceilingPhysicalPositions(
+          database.ceilingPhysicalPositions(
               current.getClusterId(), new OPhysicalPosition(firstClusterEntry));
       if (positionsToProcess == null) return false;
     } else {
@@ -315,7 +313,7 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable>
     incrementEntreePosition();
     while (positionsToProcess.length > 0 && currentEntryPosition >= positionsToProcess.length) {
       positionsToProcess =
-          dbStorage.higherPhysicalPositions(
+          database.higherPhysicalPositions(
               current.getClusterId(), positionsToProcess[positionsToProcess.length - 1]);
 
       currentEntryPosition = -1;
@@ -344,7 +342,7 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable>
   protected boolean prevPosition() {
     if (positionsToProcess == null) {
       positionsToProcess =
-          dbStorage.floorPhysicalPositions(
+          database.floorPhysicalPositions(
               current.getClusterId(), new OPhysicalPosition(lastClusterEntry));
       if (positionsToProcess == null) return false;
 
@@ -359,7 +357,7 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable>
 
     while (positionsToProcess.length > 0 && currentEntryPosition < 0) {
       positionsToProcess =
-          dbStorage.lowerPhysicalPositions(current.getClusterId(), positionsToProcess[0]);
+          database.lowerPhysicalPositions(current.getClusterId(), positionsToProcess[0]);
       currentEntryPosition = positionsToProcess.length;
 
       decrementEntreePosition();

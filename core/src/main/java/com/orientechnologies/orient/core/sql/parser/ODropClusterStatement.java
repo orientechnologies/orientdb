@@ -32,7 +32,7 @@ public class ODropClusterStatement extends ODDLStatement {
     if (id != null) {
       clusterId = id.getValue().intValue();
     } else {
-      clusterId = database.getStorage().getClusterIdByName(name.getStringValue());
+      clusterId = database.getClusterIdByName(name.getStringValue());
       if (clusterId < 0) {
         if (ifExists) {
           return new OInternalResultSet();

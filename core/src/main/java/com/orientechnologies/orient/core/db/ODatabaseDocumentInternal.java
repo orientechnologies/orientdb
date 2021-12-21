@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.OBinary
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
@@ -44,6 +45,7 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionData;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
+import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -301,4 +303,16 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
       final String fetchPlan,
       final boolean ignoreCache,
       final boolean iUpdateCache);
+
+  boolean isUnderlyingClosed();
+
+  void internalRollback(OTransactionOptimistic tx);
+
+  OPhysicalPosition[] higherPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition);
+
+  OPhysicalPosition[] ceilingPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition);
+
+  OPhysicalPosition[] lowerPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition);
+
+  OPhysicalPosition[] floorPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition);
 }

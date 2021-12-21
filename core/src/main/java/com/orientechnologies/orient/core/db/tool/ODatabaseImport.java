@@ -3225,10 +3225,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
       final int clusterId = database.getClusterIdByName(clusterName);
       final long clusterRecords = database.countClusterElements(clusterId);
-      OStorage storage = database.getStorage();
 
       OPhysicalPosition[] positions =
-          storage.ceilingPhysicalPositions(clusterId, new OPhysicalPosition(0));
+          database.ceilingPhysicalPositions(clusterId, new OPhysicalPosition(0));
       while (positions.length > 0) {
         for (OPhysicalPosition position : positions) {
           ORecord record = database.load(new ORecordId(clusterId, position.clusterPosition));
@@ -3257,7 +3256,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           }
         }
 
-        positions = storage.higherPhysicalPositions(clusterId, positions[positions.length - 1]);
+        positions = database.higherPhysicalPositions(clusterId, positions[positions.length - 1]);
       }
 
       listener.onMessage(

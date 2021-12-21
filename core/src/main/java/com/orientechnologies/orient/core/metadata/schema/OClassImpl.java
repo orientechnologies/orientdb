@@ -53,7 +53,6 @@ import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -1588,7 +1587,7 @@ public abstract class OClassImpl implements OClass {
 
   private void addClusterIdToIndexes(int iId) {
     ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.instance().getIfDefined();
-    if (database != null && database.getStorage() instanceof OAbstractPaginatedStorage) {
+    if (database != null && !database.isRemote()) {
       final String clusterName = getDatabase().getClusterNameById(iId);
       final List<String> indexesToAdd = new ArrayList<String>();
 
@@ -1700,7 +1699,7 @@ public abstract class OClassImpl implements OClass {
   }
 
   private void removeClusterFromIndexes(final int iId) {
-    if (getDatabase().getStorage() instanceof OAbstractPaginatedStorage) {
+    if (!getDatabase().isRemote()) {
       final String clusterName = getDatabase().getClusterNameById(iId);
       final List<String> indexesToRemove = new ArrayList<String>();
 
