@@ -29,7 +29,8 @@ public abstract class OSingleOrientDBServerBaseIT {
 
   @BeforeClass
   public static void beforeClass() throws Exception {
-    System.setProperty("java.util.logging.manager", "org.apache.logging.log4j.jul.LogManager");
+    //    System.setProperty("java.util.logging.manager",
+    // "org.apache.logging.log4j.jul.LogManager");
     Slf4jLogConsumer logConsumer = new Slf4jLogConsumer(LOGGER);
     container.followOutput(logConsumer);
   }
