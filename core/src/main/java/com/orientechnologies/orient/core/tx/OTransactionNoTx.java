@@ -23,7 +23,6 @@ import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.RecordReader;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -86,7 +85,6 @@ public class OTransactionNoTx extends OTransactionAbstract {
       ORID rid, ORecord record, String fetchPlan, boolean ignoreCache, boolean force) {
     if (rid.isNew()) return null;
 
-    final RecordReader recordReader;
     final ORecord loadedRecord;
     if (force) {
       loadedRecord =
