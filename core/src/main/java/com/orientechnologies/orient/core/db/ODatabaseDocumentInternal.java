@@ -20,7 +20,6 @@
 
 package com.orientechnologies.orient.core.db;
 
-import com.orientechnologies.orient.core.db.document.RecordReader;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -109,17 +108,6 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
   void afterDeleteOperations(final OIdentifiable id);
 
   ORecordHook.RESULT callbackHooks(final ORecordHook.TYPE type, final OIdentifiable id);
-
-  <RET extends ORecord> RET executeReadRecord(
-      final ORecordId rid,
-      ORecord iRecord,
-      final int recordVersion,
-      final String fetchPlan,
-      final boolean ignoreCache,
-      final boolean iUpdateCache,
-      final boolean loadTombstones,
-      final OStorage.LOCKING_STRATEGY lockingStrategy,
-      RecordReader recordReader);
 
   void executeDeleteRecord(
       OIdentifiable record,
@@ -298,4 +286,19 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
   long getLastClusterPosition(int clusterId);
 
   String getClusterRecordConflictStrategy(int clusterId);
+
+  <RET extends ORecord> RET executeReadRecordIfLatest(
+      final ORecordId rid,
+      ORecord iRecord,
+      final int recordVersion,
+      final String fetchPlan,
+      final boolean ignoreCache,
+      final boolean iUpdateCache);
+
+  <RET extends ORecord> RET executeReadRecordNormal(
+      final ORecordId rid,
+      ORecord iRecord,
+      final String fetchPlan,
+      final boolean ignoreCache,
+      final boolean iUpdateCache);
 }

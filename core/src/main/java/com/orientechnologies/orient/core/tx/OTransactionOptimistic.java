@@ -25,9 +25,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.LatestVersionRecordReader;
-import com.orientechnologies.orient.core.db.document.RecordReader;
-import com.orientechnologies.orient.core.db.document.SimpleRecordReader;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -217,16 +214,8 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
     // DELEGATE TO THE STORAGE, NO TOMBSTONES SUPPORT IN TX MODE
     final ORecord record =
-        database.executeReadRecord(
-            (ORecordId) rid,
-            iRecord,
-            -1,
-            fetchPlan,
-            ignoreCache,
-            iUpdateCache,
-            loadTombstone,
-            lockingStrategy,
-            new SimpleRecordReader(database.isPrefetchRecords()));
+        database.executeReadRecordNormal(
+            (ORecordId) rid, iRecord, fetchPlan, ignoreCache, iUpdateCache);
 
     if (record != null && isolationLevel == ISOLATION_LEVEL.REPEATABLE_READ) {
       // KEEP THE RECORD IN TX TO ASSURE REPEATABLE READS
@@ -260,16 +249,8 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
     // DELEGATE TO THE STORAGE, NO TOMBSTONES SUPPORT IN TX MODE
     final ORecord record =
-        database.executeReadRecord(
-            (ORecordId) rid,
-            null,
-            recordVersion,
-            fetchPlan,
-            ignoreCache,
-            !ignoreCache,
-            false,
-            OStorage.LOCKING_STRATEGY.NONE,
-            new SimpleRecordReader(database.isPrefetchRecords()));
+        database.executeReadRecordIfLatest(
+            (ORecordId) rid, null, recordVersion, fetchPlan, ignoreCache, !ignoreCache);
 
     if (record != null && isolationLevel == ISOLATION_LEVEL.REPEATABLE_READ) {
       // KEEP THE RECORD IN TX TO ASSURE REPEATABLE READS
@@ -314,24 +295,17 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     // DELEGATE TO THE STORAGE, NO TOMBSTONES SUPPORT IN TX MODE
     final ORecord record;
     try {
-      final RecordReader recordReader;
+      final ORecord loadedRecord;
       if (force) {
-        recordReader = new SimpleRecordReader(database.isPrefetchRecords());
-      } else {
-        recordReader = new LatestVersionRecordReader();
-      }
+        loadedRecord =
+            database.executeReadRecordNormal(
+                (ORecordId) rid, passedRecord, fetchPlan, ignoreCache, !ignoreCache);
 
-      final ORecord loadedRecord =
-          database.executeReadRecord(
-              (ORecordId) rid,
-              passedRecord,
-              -1,
-              fetchPlan,
-              ignoreCache,
-              !ignoreCache,
-              false,
-              OStorage.LOCKING_STRATEGY.NONE,
-              recordReader);
+      } else {
+        loadedRecord =
+            database.executeReadRecordIfLatest(
+                (ORecordId) rid, passedRecord, -1, fetchPlan, ignoreCache, !ignoreCache);
+      }
 
       if (force) {
         record = loadedRecord;

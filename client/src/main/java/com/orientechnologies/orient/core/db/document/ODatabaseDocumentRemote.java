@@ -655,20 +655,14 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     return iRecord;
   }
 
-  /**
-   * This method is internal, it can be subject to signature change or be removed, do not
-   * use. @Internal
-   */
-  public <RET extends ORecord> RET executeReadRecord(
-      final ORecordId rid,
+  @Override
+  public <RET extends ORecord> RET executeReadRecordIfLatest(
+      ORecordId rid,
       ORecord iRecord,
-      final int recordVersion,
-      final String fetchPlan,
-      final boolean ignoreCache,
-      final boolean iUpdateCache,
-      final boolean loadTombstones,
-      final OStorage.LOCKING_STRATEGY lockingStrategy,
-      RecordReader recordReader) {
+      int recordVersion,
+      String fetchPlan,
+      boolean ignoreCache,
+      boolean iUpdateCache) {
     checkOpenness();
     checkIfActive();
 
@@ -697,23 +691,6 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
         if (record.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) record.reload();
 
-        if (lockingStrategy == KEEP_SHARED_LOCK) {
-          OLogManager.instance()
-              .warn(
-                  this,
-                  "You use deprecated record locking strategy: %s it may lead to deadlocks "
-                      + lockingStrategy);
-          record.lock(false);
-
-        } else if (lockingStrategy == KEEP_EXCLUSIVE_LOCK) {
-          OLogManager.instance()
-              .warn(
-                  this,
-                  "You use deprecated record locking strategy: %s it may lead to deadlocks "
-                      + lockingStrategy);
-          record.lock(true);
-        }
-
         afterReadOperations(record);
         if (record instanceof ODocument) ODocumentInternal.checkClass((ODocument) record, this);
         return (RET) record;
@@ -728,7 +705,10 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
         if (iRecord != null) version = iRecord.getVersion();
         else version = recordVersion;
 
-        recordBuffer = recordReader.readRecord(getStorage(), rid, fetchPlan, ignoreCache, version);
+        recordBuffer =
+            storage
+                .readRecordIfVersionIsNotLatest(rid, fetchPlan, ignoreCache, version)
+                .getResult();
       }
 
       if (recordBuffer == null) return null;
@@ -745,7 +725,100 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
       if (iRecord instanceof ODocument) ODocumentInternal.checkClass((ODocument) iRecord, this);
 
-      if (ORecordVersionHelper.isTombstone(iRecord.getVersion())) return (RET) iRecord;
+      if (beforeReadOperations(iRecord)) return null;
+
+      iRecord.fromStream(recordBuffer.buffer);
+
+      afterReadOperations(iRecord);
+      if (iUpdateCache) getLocalCache().updateRecord(iRecord);
+
+      return (RET) iRecord;
+    } catch (OOfflineClusterException t) {
+      throw t;
+    } catch (ORecordNotFoundException t) {
+      throw t;
+    } catch (Exception t) {
+      if (rid.isTemporary())
+        throw OException.wrapException(
+            new ODatabaseException("Error on retrieving record using temporary RID: " + rid), t);
+      else
+        throw OException.wrapException(
+            new ODatabaseException(
+                "Error on retrieving record "
+                    + rid
+                    + " (cluster: "
+                    + getStorageRemote().getPhysicalClusterNameById(rid.getClusterId())
+                    + ")"),
+            t);
+    } finally {
+      getMetadata().clearThreadLocalSchemaSnapshot();
+    }
+  }
+  /**
+   * This method is internal, it can be subject to signature change or be removed, do not
+   * use. @Internal
+   */
+  public <RET extends ORecord> RET executeReadRecordNormal(
+      final ORecordId rid,
+      ORecord iRecord,
+      final String fetchPlan,
+      final boolean ignoreCache,
+      final boolean iUpdateCache) {
+    checkOpenness();
+    checkIfActive();
+
+    getMetadata().makeThreadLocalSchemaSnapshot();
+    try {
+
+      // SEARCH IN LOCAL TX
+      ORecord record = getTransaction().getRecord(rid);
+      if (record == OTransactionAbstract.DELETED_RECORD)
+        // DELETED IN TX
+        return null;
+
+      if (record == null && !ignoreCache)
+        // SEARCH INTO THE CACHE
+        record = getLocalCache().findRecord(rid);
+
+      if (record != null) {
+        if (iRecord != null) {
+          iRecord.fromStream(record.toStream());
+          ORecordInternal.setVersion(iRecord, record.getVersion());
+          record = iRecord;
+        }
+
+        OFetchHelper.checkFetchPlanValid(fetchPlan);
+        if (beforeReadOperations(record)) return null;
+
+        if (record.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) record.reload();
+
+        afterReadOperations(record);
+        if (record instanceof ODocument) ODocumentInternal.checkClass((ODocument) record, this);
+        return (RET) record;
+      }
+
+      final ORawBuffer recordBuffer;
+      if (!rid.isValid()) recordBuffer = null;
+      else {
+        OFetchHelper.checkFetchPlanValid(fetchPlan);
+
+        recordBuffer =
+            storage.readRecord(rid, fetchPlan, ignoreCache, iUpdateCache, null).getResult();
+      }
+
+      if (recordBuffer == null) return null;
+
+      if (iRecord == null || ORecordInternal.getRecordType(iRecord) != recordBuffer.recordType)
+        // NO SAME RECORD TYPE: CAN'T REUSE OLD ONE BUT CREATE A NEW ONE FOR IT
+        iRecord =
+            Orient.instance()
+                .getRecordFactoryManager()
+                .newInstance(recordBuffer.recordType, rid.getClusterId(), this);
+
+      ORecordInternal.setRecordSerializer(iRecord, getSerializer());
+      ORecordInternal.fill(iRecord, rid, recordBuffer.version, recordBuffer.buffer, false, this);
+
+      if (iRecord instanceof ODocument) ODocumentInternal.checkClass((ODocument) iRecord, this);
 
       if (beforeReadOperations(iRecord)) return null;
 

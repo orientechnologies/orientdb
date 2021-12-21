@@ -82,25 +82,6 @@ public interface OTransaction {
   @Deprecated
   void clearRecordEntries();
 
-  @Deprecated
-  ORecord loadRecord(
-      ORID iRid,
-      ORecord iRecord,
-      String iFetchPlan,
-      boolean ignoreCache,
-      boolean loadTombstone,
-      final OStorage.LOCKING_STRATEGY iLockingStrategy);
-
-  @Deprecated
-  ORecord loadRecord(
-      ORID iRid,
-      ORecord iRecord,
-      String iFetchPlan,
-      boolean ignoreCache,
-      boolean iUpdateCache,
-      boolean loadTombstone,
-      final OStorage.LOCKING_STRATEGY iLockingStrategy);
-
   ORecord loadRecord(ORID iRid, ORecord iRecord, String iFetchPlan, boolean ignoreCache);
 
   ORecord reloadRecord(ORID iRid, ORecord iRecord, String iFetchPlan, boolean ignoreCache);

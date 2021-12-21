@@ -240,30 +240,6 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   }
 
   @Override
-  public <RET extends ORecord> RET executeReadRecord(
-      ORecordId rid,
-      ORecord iRecord,
-      int recordVersion,
-      String fetchPlan,
-      boolean ignoreCache,
-      boolean iUpdateCache,
-      boolean loadTombstones,
-      OStorage.LOCKING_STRATEGY lockingStrategy,
-      RecordReader recordReader) {
-    checkOpenness();
-    return internal.executeReadRecord(
-        rid,
-        iRecord,
-        recordVersion,
-        fetchPlan,
-        ignoreCache,
-        iUpdateCache,
-        loadTombstones,
-        lockingStrategy,
-        recordReader);
-  }
-
-  @Override
   public void executeDeleteRecord(
       OIdentifiable record,
       int iVersion,
@@ -1646,5 +1622,23 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   @Override
   public String getClusterRecordConflictStrategy(int clusterId) {
     return internal.getClusterRecordConflictStrategy(clusterId);
+  }
+
+  @Override
+  public <RET extends ORecord> RET executeReadRecordIfLatest(
+      ORecordId rid,
+      ORecord iRecord,
+      int recordVersion,
+      String fetchPlan,
+      boolean ignoreCache,
+      boolean iUpdateCache) {
+    return internal.executeReadRecordIfLatest(
+        rid, iRecord, recordVersion, fetchPlan, ignoreCache, iUpdateCache);
+  }
+
+  @Override
+  public <RET extends ORecord> RET executeReadRecordNormal(
+      ORecordId rid, ORecord iRecord, String fetchPlan, boolean ignoreCache, boolean iUpdateCache) {
+    return internal.executeReadRecordNormal(rid, iRecord, fetchPlan, ignoreCache, iUpdateCache);
   }
 }
