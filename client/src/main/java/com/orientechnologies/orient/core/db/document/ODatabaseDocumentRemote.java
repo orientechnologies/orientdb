@@ -70,6 +70,7 @@ import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.cluster.OOfflineClusterException;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.tx.*;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -1324,5 +1325,13 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   public OPhysicalPosition[] floorPhysicalPositions(
       int clusterId, OPhysicalPosition physicalPosition) {
     return storage.floorPhysicalPositions(clusterId, physicalPosition);
+  }
+
+  public void importDatabase(
+      String options,
+      FileInputStream fileInputStream,
+      String name,
+      OCommandOutputListener listener) {
+    storage.importDatabase(options, fileInputStream, name, listener);
   }
 }

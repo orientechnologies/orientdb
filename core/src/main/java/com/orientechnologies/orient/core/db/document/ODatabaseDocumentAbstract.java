@@ -1674,7 +1674,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
    */
   @Override
   public <DB extends ODatabase> DB getUnderlying() {
-    throw new UnsupportedOperationException();
+    return (DB) this;
   }
 
   @Override

@@ -460,10 +460,6 @@ public abstract class OSchemaShared implements OCloseable {
       rwSpinLock.releaseWriteLock();
     }
     assert count >= 0;
-
-    if (count == 0 && database.isRemote()) {
-      database.getStorage().reload();
-    }
   }
 
   void changeClassName(
