@@ -15,13 +15,8 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import java.io.File;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.NavigableSet;
-import java.util.Random;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.io.IOException;
+import java.util.*;
 import java.util.stream.Stream;
 import org.junit.After;
 import org.junit.Assert;
@@ -554,6 +549,183 @@ public class CellBTreeSingleValueV3TestIT {
   }
 
   @Test
+  public void testKeyAddRandomDeleteAll() throws Exception {
+    final long seed = System.nanoTime();
+
+    System.out.println("testKeyAddRandomDeleteAll seed : " + seed);
+
+    final Random random = new Random(seed);
+
+    for (int iteration = 0; iteration < 4; iteration++) {
+      System.out.println("testKeyAddRandomDeleteAll iteration : " + (iteration + 1));
+
+      final TreeSet<Integer> keys = new TreeSet<>();
+
+      final int keysCount = 1_000_000;
+
+      while (keys.size() < keysCount) {
+        final int key = random.nextInt(Integer.MAX_VALUE);
+
+        atomicOperationsManager.executeInsideAtomicOperation(
+            null,
+            atomicOperation ->
+                singleValueTree.put(
+                    atomicOperation, Integer.toString(key), new ORecordId(key % 32000, key)));
+        final boolean added = keys.add(key);
+
+        if (added && keys.size() % 10_000 == 0) {
+          System.out.println(keys.size() + " keys were added");
+        }
+      }
+
+      final HashSet<Integer> allKeys = new HashSet<>(keys);
+
+      int counter = 0;
+      while (!keys.isEmpty()) {
+        final int firstKey = keys.first();
+        final int lastKey = keys.last();
+        final int key;
+        if (firstKey == lastKey) {
+          key = firstKey;
+        } else {
+          final int keyDirection = random.nextInt(lastKey - firstKey) + firstKey;
+          Integer keyCandidate = keys.ceiling(keyDirection);
+          if (keyCandidate == null) {
+            key = firstKey;
+          } else {
+            key = keyCandidate;
+          }
+        }
+
+        atomicOperationsManager.executeInsideAtomicOperation(
+            null,
+            atomicOperation -> singleValueTree.remove(atomicOperation, Integer.toString(key)));
+
+        final boolean removed = keys.remove(key);
+        Assert.assertTrue(removed);
+
+        counter++;
+
+        if (counter % (keysCount / 10) == 0) {
+          for (final int k : allKeys) {
+            if (keys.contains(k)) {
+              Assert.assertEquals(
+                  new ORecordId(k % 32000, k), singleValueTree.get(Integer.toString(k)));
+            } else {
+              Assert.assertNull(singleValueTree.get(Integer.toString(k)));
+            }
+          }
+        }
+      }
+
+      for (final int key : allKeys) {
+        Assert.assertNull(singleValueTree.get(Integer.toString(key)));
+      }
+
+      singleValueTree.assertFreePages();
+    }
+  }
+
+  @Test
+  public void testRandomOperations() throws IOException {
+    final int maximumKeys = 1_000_000;
+    final int operations = 10 * maximumKeys;
+
+    final TreeMap<String, ORID> keyMap = new TreeMap<>();
+
+    final long seed = System.nanoTime();
+    final Random random = new Random(seed);
+
+    System.out.println("testRandomOperations : seed " + seed);
+    boolean growInSize = true;
+
+    for (int i = 0; i < operations; i++) {
+      final Operation operation;
+
+      if (!keyMap.isEmpty()) {
+        if (keyMap.size() >= maximumKeys) {
+          operation = Operation.DELETE;
+          growInSize = false;
+        } else if (growInSize) {
+          if (keyMap.size() > 0.8 * maximumKeys) {
+            growInSize = false;
+          }
+
+          if (random.nextDouble() < 0.8) {
+            operation = Operation.INSERT;
+          } else {
+            operation = Operation.DELETE;
+          }
+        } else {
+          if (random.nextDouble() < 0.8) {
+            operation = Operation.DELETE;
+          } else {
+            operation = Operation.INSERT;
+          }
+        }
+      } else {
+        operation = Operation.INSERT;
+        growInSize = true;
+      }
+
+      final String key = Integer.toString(random.nextInt(Integer.MAX_VALUE));
+      if (operation == Operation.INSERT) {
+        final ORID value = new ORecordId(i % 32000, i);
+
+        keyMap.put(key, value);
+        atomicOperationsManager.executeInsideAtomicOperation(
+            null, atomicOperation -> singleValueTree.put(atomicOperation, key, value));
+      } else {
+        final String deletionCandidate = Integer.toString(random.nextInt(Integer.MAX_VALUE));
+        String deletionKey = keyMap.floorKey(deletionCandidate);
+        if (deletionKey == null) {
+          deletionKey = keyMap.lastKey();
+        }
+
+        final ORID expectedRemovedValue = keyMap.remove(deletionKey);
+
+        final String dKey = deletionKey;
+        final ORID removedValue =
+            atomicOperationsManager.calculateInsideAtomicOperation(
+                null, atomicOperation -> singleValueTree.remove(atomicOperation, dKey));
+        Assert.assertEquals(expectedRemovedValue, removedValue);
+      }
+
+      if ((i + 1) % 100_000 == 0) {
+        System.out.printf(
+            "%,d operations are processed out of %,d. %,d keys in a tree%n",
+            i + 1, operations, keyMap.size());
+      }
+    }
+
+    System.out.println("Checking tree consistency");
+    for (final Map.Entry<String, ORID> entry : keyMap.entrySet()) {
+      final String key = entry.getKey();
+      final ORID expectedValue = entry.getValue();
+
+      final ORID value = singleValueTree.get(key);
+      Assert.assertEquals(expectedValue, value);
+    }
+
+    singleValueTree.assertFreePages();
+
+    System.out.println("Remove all keys");
+
+    final int mapSize = keyMap.size();
+    int counter = 0;
+    for (final String key : keyMap.keySet()) {
+      atomicOperationsManager.executeInsideAtomicOperation(
+          null, atomicOperation -> singleValueTree.remove(atomicOperation, key));
+      counter++;
+      if (counter % 100_000 == 0) {
+        System.out.printf("%,d keys are removed out ouf %,d%n", counter, mapSize);
+      }
+    }
+
+    singleValueTree.assertFreePages();
+  }
+
+  @Test
   public void testKeyCursor() throws Exception {
     final int keysCount = 1_000_000;
 
@@ -1011,5 +1183,10 @@ public class CellBTreeSingleValueV3TestIT {
     public RollbackException(RollbackException exception) {
       super(exception);
     }
+  }
+
+  enum Operation {
+    INSERT,
+    DELETE
   }
 }

@@ -107,7 +107,7 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
     return -(low + 1); // key not found.
   }
 
-  public int removeLeafEntry(final int entryIndex, byte[] key, byte[] value) {
+  public int removeLeafEntry(final int entryIndex, byte[] key) {
     final int entryPosition =
         getIntValue(POSITIONS_ARRAY_OFFSET + entryIndex * OIntegerSerializer.INT_SIZE);
 
@@ -149,7 +149,7 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
     return size;
   }
 
-  public int removeNonLeafEntry(
+  public void removeNonLeafEntry(
       final int entryIndex,
       boolean removeLeftChildPointer,
       final OBinarySerializer<K> keySerializer) {
@@ -163,10 +163,10 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
         getObjectSizeInDirectMemory(keySerializer, entryPosition + 2 * OIntegerSerializer.INT_SIZE);
     final byte[] key = getBinaryValue(entryPosition + 2 * OIntegerSerializer.INT_SIZE, keySize);
 
-    return removeNonLeafEntry(entryIndex, key, removeLeftChildPointer);
+    removeNonLeafEntry(entryIndex, key, removeLeftChildPointer);
   }
 
-  public int removeNonLeafEntry(
+  public void removeNonLeafEntry(
       final int entryIndex, final byte[] key, boolean removeLeftChildPointer) {
     if (isLeaf()) {
       throw new IllegalStateException("Remove is applied to non-leaf buckets only");
@@ -221,8 +221,6 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
         setIntValue(nextEntryPosition, childPointer);
       }
     }
-
-    return size;
   }
 
   public int size() {
@@ -337,11 +335,22 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
     return deserializeFromDirectMemory(keySerializer, entryPosition);
   }
 
+  public byte[] getRawKey(final int index, final OBinarySerializer<K> keySerializer) {
+    int entryPosition = getIntValue(index * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
+
+    if (!isLeaf()) {
+      entryPosition += 2 * OIntegerSerializer.INT_SIZE;
+    }
+
+    final int keyLen = getObjectSizeInDirectMemory(keySerializer, entryPosition);
+    return getBinaryValue(entryPosition, keyLen);
+  }
+
   public boolean isLeaf() {
     return getByteValue(IS_LEAF_OFFSET) > 0;
   }
 
-  public void addAll(final List<byte[]> rawEntries, final OBinarySerializer<K> keySerializer) {
+  public void addAll(final List<byte[]> rawEntries) {
     final int currentSize = size();
     for (int i = 0; i < rawEntries.size(); i++) {
       appendRawEntry(i + currentSize, rawEntries.get(i));
@@ -351,16 +360,10 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
   }
 
   public void shrink(final int newSize, final OBinarySerializer<K> keySerializer) {
-    final int currentSize = size();
     final List<byte[]> rawEntries = new ArrayList<>(newSize);
-    final List<byte[]> removedEntries = new ArrayList<>(currentSize - newSize);
 
     for (int i = 0; i < newSize; i++) {
       rawEntries.add(getRawEntry(i, keySerializer));
-    }
-
-    for (int i = newSize; i < currentSize; i++) {
-      removedEntries.add(getRawEntry(i, keySerializer));
     }
 
     setIntValue(FREE_POINTER_OFFSET, MAX_PAGE_SIZE_BYTES);
@@ -456,6 +459,66 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
         setIntValue(nextEntryPosition, newRightChildIndex);
       }
     }
+
+    return true;
+  }
+
+  public boolean updateKey(
+      final int entryIndex, final byte[] key, final OBinarySerializer<K> keySerializer) {
+    if (isLeaf()) {
+      throw new IllegalStateException("Update key is applied to non-leaf buckets only");
+    }
+
+    final int entryPosition =
+        getIntValue(POSITIONS_ARRAY_OFFSET + entryIndex * OIntegerSerializer.INT_SIZE);
+    final int keySize = getObjectSizeInDirectMemory(keySerializer, entryPosition);
+
+    if (key.length == keySize) {
+      setBinaryValue(entryPosition + 2 * OIntegerSerializer.INT_SIZE, key);
+      return true;
+    }
+
+    int size = getIntValue(SIZE_OFFSET);
+    int freePointer = getIntValue(FREE_POINTER_OFFSET);
+
+    if (freePointer - key.length + keySize
+        < size * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET) {
+      return false;
+    }
+
+    final int entrySize = keySize + 2 * OIntegerSerializer.INT_SIZE;
+
+    final int leftChildIndex = getIntValue(entryPosition);
+    final int rightChildIndex = getIntValue(entryPosition + OIntegerSerializer.INT_SIZE);
+
+    if (size > 0 && entryPosition > freePointer) {
+      moveData(freePointer, freePointer + entrySize, entryPosition - freePointer);
+
+      int currentPositionOffset = POSITIONS_ARRAY_OFFSET;
+
+      for (int i = 0; i < size; i++) {
+        if (i == entryIndex) {
+          currentPositionOffset += OIntegerSerializer.INT_SIZE;
+          continue;
+        }
+
+        final int currentEntryPosition = getIntValue(currentPositionOffset);
+        if (currentEntryPosition < entryPosition) {
+          setIntValue(currentPositionOffset, currentEntryPosition + entrySize);
+        }
+        currentPositionOffset += OIntegerSerializer.INT_SIZE;
+      }
+    }
+
+    freePointer = freePointer - key.length + keySize;
+
+    setIntValue(FREE_POINTER_OFFSET, freePointer);
+    setIntValue(POSITIONS_ARRAY_OFFSET + entryIndex * OIntegerSerializer.INT_SIZE, freePointer);
+
+    freePointer += setIntValue(freePointer, leftChildIndex);
+    freePointer += setIntValue(freePointer, rightChildIndex);
+
+    setBinaryValue(freePointer, key);
 
     return true;
   }

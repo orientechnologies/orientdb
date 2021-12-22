@@ -26,7 +26,6 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.serialization.types.OShortSerializer;
 import com.orientechnologies.common.util.ORawPair;
-import com.orientechnologies.common.util.ORawTriple;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.exception.NotEmptyComponentCanNotBeRemovedException;
@@ -329,8 +328,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
                   releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
                   return true;
                 } else {
-                  keyBucket.removeLeafEntry(
-                      bucketSearchResult.itemIndex, serializedKey, serializedValue);
+                  keyBucket.removeLeafEntry(bucketSearchResult.itemIndex, serializedKey);
                   insertionIndex = bucketSearchResult.itemIndex;
                   sizeDiff = 0;
                 }
@@ -490,24 +488,19 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
     }
   }
 
-  public ORID remove(final OAtomicOperation atomicOperation, final K k) {
+  public ORID remove(final OAtomicOperation atomicOperation, final K key) {
     return calculateInsideComponentOperation(
         atomicOperation,
         operation -> {
           acquireExclusiveLock();
           try {
-            final ORID removedValue;
-            K key = k;
             if (key != null) {
-              key = keySerializer.preprocess(key, (Object[]) keyTypes);
+              final ORID removedValue;
 
               final Optional<RemoveSearchResult> bucketSearchResult =
                   findBucketForRemove(key, atomicOperation);
-
               if (bucketSearchResult.isPresent()) {
                 final RemoveSearchResult removeSearchResult = bucketSearchResult.get();
-                final byte[] serializedKey =
-                    keySerializer.serializeNativeAsWhole(key, (Object[]) keyTypes);
                 final OCacheEntry keyBucketCacheEntry =
                     loadPageForWrite(
                         atomicOperation, fileId, removeSearchResult.leafPageIndex, false, true);
@@ -519,9 +512,11 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
                       new CellBTreeSingleValueBucketV3<>(keyBucketCacheEntry);
                   rawValue =
                       keyBucket.getRawValue(removeSearchResult.leafEntryPageIndex, keySerializer);
+                  final byte[] serializedKey =
+                      keyBucket.getRawKey(removeSearchResult.leafEntryPageIndex, keySerializer);
                   bucketSize =
                       keyBucket.removeLeafEntry(
-                          removeSearchResult.leafEntryPageIndex, serializedKey, rawValue);
+                          removeSearchResult.leafEntryPageIndex, serializedKey);
                   updateSize(-1, atomicOperation);
 
                   final int clusterId = OShortSerializer.INSTANCE.deserializeNative(rawValue, 0);
@@ -530,112 +525,349 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
                           rawValue, OShortSerializer.SHORT_SIZE);
 
                   removedValue = new ORecordId(clusterId, clusterPosition);
-                } finally {
-                  releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
-                }
 
-                final List<ORawTriple<Long, Integer, Boolean>> path = removeSearchResult.path;
-                if (bucketSize == 0 && !path.isEmpty()) {
-                  final ORawPair<Boolean, Integer> freeListAllowance =
-                      removeNonLeafEntry(path, atomicOperation);
+                  // skip balancing of the tree if leaf is a root.
+                  if (bucketSize == 0 && removeSearchResult.path.size() > 0) {
+                    final boolean balanceResult =
+                        balanceLeafNodeAfterItemDelete(
+                            atomicOperation, removeSearchResult, keyBucket);
 
-                  if (freeListAllowance.first) {
-                    addToFreeList(atomicOperation, (int) removeSearchResult.leafPageIndex);
-                    if (freeListAllowance.second >= 0) {
-                      addToFreeList(atomicOperation, freeListAllowance.second);
+                    if (balanceResult) {
+                      addToFreeList(atomicOperation, (int) removeSearchResult.leafPageIndex);
                     }
                   }
+                } finally {
+                  releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
                 }
               } else {
                 return null;
               }
-            } else {
-              if (getFilledUpTo(atomicOperation, nullBucketFileId) == 0) {
-                return null;
-              }
 
-              removedValue = removeNullBucket(atomicOperation);
+              return removedValue;
+            } else {
+              return removeNullBucket(atomicOperation);
             }
-            return removedValue;
           } finally {
             releaseExclusiveLock();
           }
         });
   }
 
-  private ORawPair<Boolean, Integer> removeNonLeafEntry(
-      final List<ORawTriple<Long, Integer, Boolean>> path, final OAtomicOperation atomicOperation)
+  private boolean balanceLeafNodeAfterItemDelete(
+      final OAtomicOperation atomicOperation,
+      final RemoveSearchResult removeSearchResult,
+      final CellBTreeSingleValueBucketV3<K> keyBucket)
       throws IOException {
-    assert !path.isEmpty();
-
-    final ORawTriple<Long, Integer, Boolean> parentEntry = path.get(path.size() - 1);
-    final long pageIndex = parentEntry.first;
-    final int entryIndex = parentEntry.second;
-    final boolean leftDirection = parentEntry.third;
-
-    final int bucketSize;
-    final boolean entryRemoved;
-    final int siblingPageIndex;
-
-    final OCacheEntry cacheEntry =
-        loadPageForWrite(atomicOperation, fileId, pageIndex, false, true);
+    final RemovalPathItem parentItem =
+        removeSearchResult.path.get(removeSearchResult.path.size() - 1);
+    final OCacheEntry parentCacheEntry =
+        loadPageForWrite(atomicOperation, fileId, parentItem.pageIndex, true, true);
     try {
-      final CellBTreeSingleValueBucketV3<K> bucket = new CellBTreeSingleValueBucketV3<>(cacheEntry);
-      final int initialBucketSize = bucket.size();
+      final CellBTreeSingleValueBucketV3<K> parentBucket =
+          new CellBTreeSingleValueBucketV3<>(parentCacheEntry);
 
-      if (initialBucketSize == 1) {
-        assert entryIndex == 0;
+      if (parentItem.leftChild) {
+        final int rightSiblingPageIndex = parentBucket.getRight(parentItem.indexInsidePage);
 
-        final int siblingSize;
-        siblingPageIndex = leftDirection ? bucket.getRight(0) : bucket.getLeft(0);
-
-        final OCacheEntry siblingCacheEntry =
-            loadPageForRead(atomicOperation, fileId, siblingPageIndex, true);
+        // merge with left sibling
+        final OCacheEntry rightSiblingEntry =
+            loadPageForWrite(atomicOperation, fileId, rightSiblingPageIndex, true, true);
         try {
-          final CellBTreeSingleValueBucketV3<K> siblingBucket =
-              new CellBTreeSingleValueBucketV3<>(siblingCacheEntry);
-          siblingSize = siblingBucket.size();
-        } finally {
-          releasePageFromRead(atomicOperation, siblingCacheEntry);
-        }
+          final CellBTreeSingleValueBucketV3<K> rightSiblingBucket =
+              new CellBTreeSingleValueBucketV3<>(rightSiblingEntry);
+          final boolean success =
+              deleteFromNonLeafNode(atomicOperation, parentBucket, removeSearchResult.path);
 
-        if (siblingSize == 0) {
-          bucket.removeNonLeafEntry(entryIndex, leftDirection, keySerializer);
-          entryRemoved = true;
+          if (success) {
+            final long leftSiblingIndex = keyBucket.getLeftSibling();
+            assert rightSiblingBucket.getLeftSibling() == keyBucket.getCacheEntry().getPageIndex();
 
-          if (path.size() == 1) {
-            bucket.switchBucketType();
+            rightSiblingBucket.setLeftSibling(leftSiblingIndex);
+
+            if (leftSiblingIndex > 0) {
+              final OCacheEntry leftSiblingEntry =
+                  loadPageForWrite(atomicOperation, fileId, leftSiblingIndex, true, true);
+              try {
+                final CellBTreeSingleValueBucketV3<K> leftSiblingBucket =
+                    new CellBTreeSingleValueBucketV3<>(leftSiblingEntry);
+
+                leftSiblingBucket.setRightSibling(rightSiblingPageIndex);
+              } finally {
+                releasePageFromWrite(atomicOperation, leftSiblingEntry);
+              }
+            }
+
+            return true;
           }
 
-          bucketSize = 0;
-        } else {
-          entryRemoved = false;
-          bucketSize = 1;
+          return false;
+        } finally {
+          releasePageFromWrite(atomicOperation, rightSiblingEntry);
         }
-      } else {
-        siblingPageIndex = -1;
-        bucket.removeNonLeafEntry(entryIndex, leftDirection, keySerializer);
-        entryRemoved = true;
+      }
 
-        bucketSize = initialBucketSize - 1;
+      final int leftSiblingPageIndex = parentBucket.getLeft(parentItem.indexInsidePage);
+      final OCacheEntry leftSiblingEntry =
+          loadPageForWrite(atomicOperation, fileId, leftSiblingPageIndex, true, true);
+      try {
+        // merge with right sibling
+        final CellBTreeSingleValueBucketV3<K> leftSiblingBucket =
+            new CellBTreeSingleValueBucketV3<>(leftSiblingEntry);
+        final boolean success =
+            deleteFromNonLeafNode(atomicOperation, parentBucket, removeSearchResult.path);
+
+        if (success) {
+          final long rightSiblingIndex = keyBucket.getRightSibling();
+
+          assert leftSiblingBucket.getRightSibling() == keyBucket.getCacheEntry().getPageIndex();
+          leftSiblingBucket.setRightSibling(rightSiblingIndex);
+
+          if (rightSiblingIndex > 0) {
+            final OCacheEntry rightSiblingEntry =
+                loadPageForWrite(atomicOperation, fileId, rightSiblingIndex, true, true);
+            try {
+              final CellBTreeSingleValueBucketV3<K> rightSibling =
+                  new CellBTreeSingleValueBucketV3<>(rightSiblingEntry);
+              rightSibling.setLeftSibling(leftSiblingPageIndex);
+            } finally {
+              releasePageFromWrite(atomicOperation, rightSiblingEntry);
+            }
+          }
+
+          return true;
+        }
+
+        return false;
+      } finally {
+        releasePageFromWrite(atomicOperation, leftSiblingEntry);
       }
     } finally {
-      releasePageFromWrite(atomicOperation, cacheEntry);
+      releasePageFromWrite(atomicOperation, parentCacheEntry);
     }
+  }
 
-    if (entryRemoved && bucketSize == 0 && path.size() > 1) {
-      final ORawPair<Boolean, Integer> freeListAllowance =
-          removeNonLeafEntry(path.subList(0, path.size() - 1), atomicOperation);
-      if (freeListAllowance.first) {
-        addToFreeList(atomicOperation, (int) pageIndex);
+  private boolean deleteFromNonLeafNode(
+      final OAtomicOperation atomicOperation,
+      final CellBTreeSingleValueBucketV3<K> bucket,
+      final List<RemovalPathItem> path)
+      throws IOException {
+    final int bucketSize = bucket.size();
+    assert bucketSize > 0;
 
-        if (freeListAllowance.second >= 0) {
-          addToFreeList(atomicOperation, freeListAllowance.second);
-        }
+    // currently processed node is a root node
+    if (path.size() == 1) {
+      if (bucketSize == 1) {
+        return false;
       }
     }
 
-    return new ORawPair<>(entryRemoved, siblingPageIndex);
+    final RemovalPathItem currentItem = path.get(path.size() - 1);
+
+    if (bucketSize > 1) {
+      bucket.removeNonLeafEntry(currentItem.indexInsidePage, currentItem.leftChild, keySerializer);
+
+      return true;
+    }
+
+    final RemovalPathItem parentItem = path.get(path.size() - 2);
+
+    final OCacheEntry parentCacheEntry =
+        loadPageForWrite(atomicOperation, fileId, parentItem.pageIndex, true, true);
+    try {
+      final CellBTreeSingleValueBucketV3<K> parentBucket =
+          new CellBTreeSingleValueBucketV3<>(parentCacheEntry);
+
+      final int orphanPointer;
+      if (currentItem.leftChild) {
+        orphanPointer = bucket.getRight(currentItem.indexInsidePage);
+      } else {
+        orphanPointer = bucket.getLeft(currentItem.indexInsidePage);
+      }
+
+      if (parentItem.leftChild) {
+        final int rightSiblingPageIndex = parentBucket.getRight(parentItem.indexInsidePage);
+        final OCacheEntry rightSiblingEntry =
+            loadPageForWrite(atomicOperation, fileId, rightSiblingPageIndex, true, true);
+        try {
+          final CellBTreeSingleValueBucketV3<K> rightSiblingBucket =
+              new CellBTreeSingleValueBucketV3<>(rightSiblingEntry);
+
+          final int rightSiblingBucketSize = rightSiblingBucket.size();
+          if (rightSiblingBucketSize > 1) {
+            return rotateNoneLeafLeftAndRemoveItem(
+                parentItem, parentBucket, bucket, rightSiblingBucket, orphanPointer);
+          } else if (rightSiblingBucketSize == 1) {
+            return mergeNoneLeafWithRightSiblingAndRemoveItem(
+                atomicOperation,
+                parentItem,
+                parentBucket,
+                bucket,
+                rightSiblingBucket,
+                orphanPointer,
+                path);
+          }
+
+          return false;
+        } finally {
+          releasePageFromWrite(atomicOperation, rightSiblingEntry);
+        }
+      } else {
+        final int leftSiblingPageIndex = parentBucket.getLeft(parentItem.indexInsidePage);
+        final OCacheEntry leftSiblingEntry =
+            loadPageForWrite(atomicOperation, fileId, leftSiblingPageIndex, true, true);
+        try {
+          final CellBTreeSingleValueBucketV3<K> leftSiblingBucket =
+              new CellBTreeSingleValueBucketV3<>(leftSiblingEntry);
+          assert leftSiblingBucket.size() > 0;
+
+          final int leftSiblingBucketSize = leftSiblingBucket.size();
+          if (leftSiblingBucketSize > 1) {
+            return rotateNoneLeafRightAndRemoveItem(
+                parentItem, parentBucket, bucket, leftSiblingBucket, orphanPointer);
+          } else if (leftSiblingBucketSize == 1) {
+            return mergeNoneLeafWithLeftSiblingAndRemoveItem(
+                atomicOperation,
+                parentItem,
+                parentBucket,
+                bucket,
+                leftSiblingBucket,
+                orphanPointer,
+                path);
+          }
+
+          return false;
+        } finally {
+          releasePageFromWrite(atomicOperation, leftSiblingEntry);
+        }
+      }
+
+    } finally {
+      releasePageFromWrite(atomicOperation, parentCacheEntry);
+    }
+  }
+
+  private boolean rotateNoneLeafRightAndRemoveItem(
+      final RemovalPathItem parentItem,
+      final CellBTreeSingleValueBucketV3<K> parentBucket,
+      final CellBTreeSingleValueBucketV3<K> bucket,
+      final CellBTreeSingleValueBucketV3<K> leftSibling,
+      final int orhanPointer) {
+    if (bucket.size() != 1 || leftSibling.size() <= 1) {
+      throw new CellBTreeSingleValueV3Exception("BTree is broken", this);
+    }
+
+    final byte[] bucketKey = parentBucket.getRawKey(parentItem.indexInsidePage, keySerializer);
+    final int leftSiblingSize = leftSibling.size();
+
+    final byte[] separatorKey = leftSibling.getRawKey(leftSiblingSize - 1, keySerializer);
+
+    if (!parentBucket.updateKey(parentItem.indexInsidePage, separatorKey, keySerializer)) {
+      return false;
+    }
+
+    final int bucketLeft = leftSibling.getRight(leftSiblingSize - 1);
+
+    leftSibling.removeNonLeafEntry(leftSiblingSize - 1, false, keySerializer);
+
+    bucket.removeNonLeafEntry(0, true, keySerializer);
+
+    final boolean result = bucket.addNonLeafEntry(0, bucketLeft, orhanPointer, bucketKey);
+    assert result;
+
+    return true;
+  }
+
+  private boolean rotateNoneLeafLeftAndRemoveItem(
+      final RemovalPathItem parentItem,
+      final CellBTreeSingleValueBucketV3<K> parentBucket,
+      final CellBTreeSingleValueBucketV3<K> bucket,
+      final CellBTreeSingleValueBucketV3<K> rightSibling,
+      final int orphanPointer) {
+    if (bucket.size() != 1 || rightSibling.size() <= 1) {
+      throw new CellBTreeSingleValueV3Exception("BTree is broken", this);
+    }
+
+    final byte[] bucketKey = parentBucket.getRawKey(parentItem.indexInsidePage, keySerializer);
+
+    final byte[] separatorKey = rightSibling.getRawKey(0, keySerializer);
+
+    if (!parentBucket.updateKey(parentItem.indexInsidePage, separatorKey, keySerializer)) {
+      return false;
+    }
+
+    final int bucketRight = rightSibling.getLeft(0);
+    bucket.removeNonLeafEntry(0, true, keySerializer);
+
+    final boolean result = bucket.addNonLeafEntry(0, orphanPointer, bucketRight, bucketKey);
+    assert result;
+
+    rightSibling.removeNonLeafEntry(0, true, keySerializer);
+
+    return true;
+  }
+
+  private boolean mergeNoneLeafWithRightSiblingAndRemoveItem(
+      final OAtomicOperation atomicOperation,
+      final RemovalPathItem parentItem,
+      final CellBTreeSingleValueBucketV3<K> parentBucket,
+      final CellBTreeSingleValueBucketV3<K> bucket,
+      final CellBTreeSingleValueBucketV3<K> rightSibling,
+      final int orphanPointer,
+      final List<RemovalPathItem> path)
+      throws IOException {
+
+    if (rightSibling.size() != 1 || bucket.size() != 1) {
+      throw new CellBTreeSingleValueV3Exception("BTree is broken", this);
+    }
+
+    final byte[] key = parentBucket.getRawKey(parentItem.indexInsidePage, keySerializer);
+    final boolean success =
+        deleteFromNonLeafNode(atomicOperation, parentBucket, path.subList(0, path.size() - 1));
+
+    if (success) {
+      final int rightChild = rightSibling.getLeft(0);
+
+      final boolean result = rightSibling.addNonLeafEntry(0, orphanPointer, rightChild, key);
+      assert result;
+
+      addToFreeList(atomicOperation, bucket.getCacheEntry().getPageIndex());
+
+      return true;
+    }
+
+    return false;
+  }
+
+  private boolean mergeNoneLeafWithLeftSiblingAndRemoveItem(
+      final OAtomicOperation atomicOperation,
+      final RemovalPathItem parentItem,
+      final CellBTreeSingleValueBucketV3<K> parentBucket,
+      final CellBTreeSingleValueBucketV3<K> bucket,
+      final CellBTreeSingleValueBucketV3<K> leftSibling,
+      final int orphanPointer,
+      final List<RemovalPathItem> path)
+      throws IOException {
+
+    if (leftSibling.size() != 1 || bucket.size() != 1) {
+      throw new CellBTreeSingleValueV3Exception("BTree is broken", this);
+    }
+
+    final byte[] key = parentBucket.getRawKey(parentItem.indexInsidePage, keySerializer);
+
+    final boolean success =
+        deleteFromNonLeafNode(atomicOperation, parentBucket, path.subList(0, path.size() - 1));
+
+    if (success) {
+      final int leftChild = leftSibling.getRight(0);
+      final boolean result = leftSibling.addNonLeafEntry(1, leftChild, orphanPointer, key);
+      assert result;
+
+      addToFreeList(atomicOperation, bucket.getCacheEntry().getPageIndex());
+
+      return true;
+    }
+
+    return false;
   }
 
   private void removePagesStoredInFreeList(
@@ -1304,7 +1536,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
       final CellBTreeSingleValueBucketV3<K> newRightBucket =
           new CellBTreeSingleValueBucketV3<>(rightBucketEntry);
       newRightBucket.init(splitLeaf);
-      newRightBucket.addAll(rightEntries, keySerializer);
+      newRightBucket.addAll(rightEntries);
 
       bucketToSplit.shrink(indexToSplit, keySerializer);
 
@@ -1455,7 +1687,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
       final CellBTreeSingleValueBucketV3<K> newLeftBucket =
           new CellBTreeSingleValueBucketV3<>(leftBucketEntry);
       newLeftBucket.init(splitLeaf);
-      newLeftBucket.addAll(leftEntries, keySerializer);
+      newLeftBucket.addAll(leftEntries);
 
       if (splitLeaf) {
         newLeftBucket.setRightSibling(rightBucketEntry.getPageIndex());
@@ -1469,7 +1701,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
       final CellBTreeSingleValueBucketV3<K> newRightBucket =
           new CellBTreeSingleValueBucketV3<>(rightBucketEntry);
       newRightBucket.init(splitLeaf);
-      newRightBucket.addAll(rightEntries, keySerializer);
+      newRightBucket.addAll(rightEntries);
 
       if (splitLeaf) {
         newRightBucket.setLeftSibling(leftBucketEntry.getPageIndex());
@@ -1517,7 +1749,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
   private Optional<RemoveSearchResult> findBucketForRemove(
       final K key, final OAtomicOperation atomicOperation) throws IOException {
 
-    final ArrayList<ORawTriple<Long, Integer, Boolean>> path = new ArrayList<>(8);
+    final ArrayList<RemovalPathItem> path = new ArrayList<>(8);
 
     long pageIndex = ROOT_INDEX;
 
@@ -1547,17 +1779,17 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
         }
 
         if (index >= 0) {
-          path.add(new ORawTriple<>(pageIndex, index, false));
+          path.add(new RemovalPathItem(pageIndex, index, false));
 
           pageIndex = bucket.getRight(index);
         } else {
           final int insertionIndex = -index - 1;
           if (insertionIndex >= bucket.size()) {
-            path.add(new ORawTriple<>(pageIndex, insertionIndex - 1, false));
+            path.add(new RemovalPathItem(pageIndex, insertionIndex - 1, false));
 
             pageIndex = bucket.getRight(insertionIndex - 1);
           } else {
-            path.add(new ORawTriple<>(pageIndex, insertionIndex, true));
+            path.add(new RemovalPathItem(pageIndex, insertionIndex, true));
 
             pageIndex = bucket.getLeft(insertionIndex);
           }
@@ -1703,10 +1935,10 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
   private static final class RemoveSearchResult {
     private final long leafPageIndex;
     private final int leafEntryPageIndex;
-    private final List<ORawTriple<Long, Integer, Boolean>> path;
+    private final List<RemovalPathItem> path;
 
     private RemoveSearchResult(
-        long leafPageIndex, int leafEntryPageIndex, List<ORawTriple<Long, Integer, Boolean>> path) {
+        long leafPageIndex, int leafEntryPageIndex, List<RemovalPathItem> path) {
       this.leafPageIndex = leafPageIndex;
       this.leafEntryPageIndex = leafEntryPageIndex;
       this.path = path;
@@ -1747,6 +1979,18 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
     private PagePathItemUnit(final long pageIndex, final int itemIndex) {
       this.pageIndex = pageIndex;
       this.itemIndex = itemIndex;
+    }
+  }
+
+  private static final class RemovalPathItem {
+    private final long pageIndex;
+    private final int indexInsidePage;
+    private final boolean leftChild;
+
+    private RemovalPathItem(long pageIndex, int indexInsidePage, boolean leftChild) {
+      this.pageIndex = pageIndex;
+      this.indexInsidePage = indexInsidePage;
+      this.leftChild = leftChild;
     }
   }
 
