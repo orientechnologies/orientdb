@@ -112,7 +112,7 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
     return -(low + 1); // key not found.
   }
 
-  public int removeLeafEntry(final int entryIndex, byte[] key, byte[] value) {
+  public int removeLeafEntry(final int entryIndex, byte[] key) {
     final int entryPosition =
         getIntValue(POSITIONS_ARRAY_OFFSET + entryIndex * OIntegerSerializer.INT_SIZE);
 
@@ -150,8 +150,6 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
       }
       currentPositionOffset += OIntegerSerializer.INT_SIZE;
     }
-
-    addPageOperation(new CellBTreeBucketSingleValueV3RemoveLeafEntryPO(entryIndex, key, value));
 
     return size;
   }
@@ -348,6 +346,17 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
     return deserializeFromDirectMemory(keySerializer, entryPosition);
   }
 
+  public byte[] getRawKey(final int index, final OBinarySerializer<K> keySerializer) {
+    int entryPosition = getIntValue(index * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
+
+    if (!isLeaf()) {
+      entryPosition += 2 * OIntegerSerializer.INT_SIZE;
+    }
+
+    final int keyLen = getObjectSizeInDirectMemory(keySerializer, entryPosition);
+    return getBinaryValue(entryPosition, keyLen);
+  }
+
   public boolean isLeaf() {
     return getByteValue(IS_LEAF_OFFSET) > 0;
   }
@@ -480,6 +489,67 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
     addPageOperation(
         new CellBTreeBucketSingleValueV3AddNonLeafEntryPO(
             index, key, leftChildIndex, newRightChildIndex));
+
+    return true;
+  }
+
+  @SuppressWarnings("BooleanMethodIsAlwaysInverted")
+  public boolean updateKey(
+      final int entryIndex, final byte[] key, final OBinarySerializer<K> keySerializer) {
+    if (isLeaf()) {
+      throw new IllegalStateException("Update key is applied to non-leaf buckets only");
+    }
+
+    final int entryPosition =
+        getIntValue(POSITIONS_ARRAY_OFFSET + entryIndex * OIntegerSerializer.INT_SIZE);
+    final int keySize = getObjectSizeInDirectMemory(keySerializer, entryPosition);
+
+    if (key.length == keySize) {
+      setBinaryValue(entryPosition + 2 * OIntegerSerializer.INT_SIZE, key);
+      return true;
+    }
+
+    int size = getIntValue(SIZE_OFFSET);
+    int freePointer = getIntValue(FREE_POINTER_OFFSET);
+
+    if (freePointer - key.length + keySize
+        < size * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET) {
+      return false;
+    }
+
+    final int entrySize = keySize + 2 * OIntegerSerializer.INT_SIZE;
+
+    final int leftChildIndex = getIntValue(entryPosition);
+    final int rightChildIndex = getIntValue(entryPosition + OIntegerSerializer.INT_SIZE);
+
+    if (size > 0 && entryPosition > freePointer) {
+      moveData(freePointer, freePointer + entrySize, entryPosition - freePointer);
+
+      int currentPositionOffset = POSITIONS_ARRAY_OFFSET;
+
+      for (int i = 0; i < size; i++) {
+        if (i == entryIndex) {
+          currentPositionOffset += OIntegerSerializer.INT_SIZE;
+          continue;
+        }
+
+        final int currentEntryPosition = getIntValue(currentPositionOffset);
+        if (currentEntryPosition < entryPosition) {
+          setIntValue(currentPositionOffset, currentEntryPosition + entrySize);
+        }
+        currentPositionOffset += OIntegerSerializer.INT_SIZE;
+      }
+    }
+
+    freePointer = freePointer - key.length + keySize;
+
+    setIntValue(FREE_POINTER_OFFSET, freePointer);
+    setIntValue(POSITIONS_ARRAY_OFFSET + entryIndex * OIntegerSerializer.INT_SIZE, freePointer);
+
+    freePointer += setIntValue(freePointer, leftChildIndex);
+    freePointer += setIntValue(freePointer, rightChildIndex);
+
+    setBinaryValue(freePointer, key);
 
     return true;
   }

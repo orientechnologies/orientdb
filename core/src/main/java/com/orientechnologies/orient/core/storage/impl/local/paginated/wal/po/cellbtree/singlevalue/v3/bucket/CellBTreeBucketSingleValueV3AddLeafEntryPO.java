@@ -44,7 +44,7 @@ public final class CellBTreeBucketSingleValueV3AddLeafEntryPO extends PageOperat
   @Override
   public void undo(OCacheEntry cacheEntry) {
     final CellBTreeSingleValueBucketV3 bucket = new CellBTreeSingleValueBucketV3(cacheEntry);
-    bucket.removeLeafEntry(index, key, value);
+    bucket.removeLeafEntry(index, key);
   }
 
   @Override
