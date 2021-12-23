@@ -41,7 +41,6 @@ import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClust
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -445,10 +444,10 @@ public abstract class OSchemaShared implements OCloseable {
         // by sql commands and we need to reload local replica
 
         if (iSave) {
-          if (database.getStorage() instanceof OAbstractPaginatedStorage) {
-            saveInternal(database);
-          } else {
+          if (database.isRemote()) {
             reload(database);
+          } else {
+            saveInternal(database);
           }
         } else {
           snapshot = new OImmutableSchema(this, database);
@@ -461,10 +460,6 @@ public abstract class OSchemaShared implements OCloseable {
       rwSpinLock.releaseWriteLock();
     }
     assert count >= 0;
-
-    if (count == 0 && database.isRemote()) {
-      database.getStorage().reload();
-    }
   }
 
   void changeClassName(
@@ -659,7 +654,9 @@ public abstract class OSchemaShared implements OCloseable {
 
       if (!hasGlobalProperties) {
         ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.instance().get();
-        if (database.getStorage() instanceof OAbstractPaginatedStorage) saveInternal(database);
+        if (!database.isRemote()) {
+          saveInternal(database);
+        }
       }
 
     } finally {

@@ -51,9 +51,6 @@ import com.orientechnologies.orient.core.sharding.auto.OAutoShardingClusterSelec
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
-import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -1035,13 +1032,6 @@ public abstract class OClassImpl implements OClass {
 
   public abstract OClassImpl setEncryption(final String iValue);
 
-  protected void setEncryptionInternal(ODatabaseDocumentInternal database, final String value) {
-    for (int cl : getClusterIds()) {
-      final OStorage storage = database.getStorage();
-      storage.setClusterAttribute(cl, OCluster.ATTRIBUTES.ENCRYPTION, value);
-    }
-  }
-
   public OIndex createIndex(final String iName, final INDEX_TYPE iType, final String... fields) {
     return createIndex(iName, iType.name(), fields);
   }
@@ -1588,7 +1578,7 @@ public abstract class OClassImpl implements OClass {
 
   private void addClusterIdToIndexes(int iId) {
     ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.instance().getIfDefined();
-    if (database != null && database.getStorage() instanceof OAbstractPaginatedStorage) {
+    if (database != null && !database.isRemote()) {
       final String clusterName = getDatabase().getClusterNameById(iId);
       final List<String> indexesToAdd = new ArrayList<String>();
 
@@ -1700,7 +1690,7 @@ public abstract class OClassImpl implements OClass {
   }
 
   private void removeClusterFromIndexes(final int iId) {
-    if (getDatabase().getStorage() instanceof OAbstractPaginatedStorage) {
+    if (!getDatabase().isRemote()) {
       final String clusterName = getDatabase().getClusterNameById(iId);
       final List<String> indexesToRemove = new ArrayList<String>();
 

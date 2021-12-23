@@ -46,6 +46,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.shutdown.OShutdownHandler;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -55,6 +56,7 @@ import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollection
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
+import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.util.OURLConnection;
 import com.orientechnologies.orient.core.util.OURLHelper;
 import java.io.IOException;
@@ -237,30 +239,6 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   public ORecordHook.RESULT callbackHooks(ORecordHook.TYPE type, OIdentifiable id) {
     checkOpenness();
     return internal.callbackHooks(type, id);
-  }
-
-  @Override
-  public <RET extends ORecord> RET executeReadRecord(
-      ORecordId rid,
-      ORecord iRecord,
-      int recordVersion,
-      String fetchPlan,
-      boolean ignoreCache,
-      boolean iUpdateCache,
-      boolean loadTombstones,
-      OStorage.LOCKING_STRATEGY lockingStrategy,
-      RecordReader recordReader) {
-    checkOpenness();
-    return internal.executeReadRecord(
-        rid,
-        iRecord,
-        recordVersion,
-        fetchPlan,
-        ignoreCache,
-        iUpdateCache,
-        loadTombstones,
-        lockingStrategy,
-        recordReader);
   }
 
   @Override
@@ -1646,5 +1624,57 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   @Override
   public String getClusterRecordConflictStrategy(int clusterId) {
     return internal.getClusterRecordConflictStrategy(clusterId);
+  }
+
+  @Override
+  public <RET extends ORecord> RET executeReadRecordIfLatest(
+      ORecordId rid,
+      ORecord iRecord,
+      int recordVersion,
+      String fetchPlan,
+      boolean ignoreCache,
+      boolean iUpdateCache) {
+    return internal.executeReadRecordIfLatest(
+        rid, iRecord, recordVersion, fetchPlan, ignoreCache, iUpdateCache);
+  }
+
+  @Override
+  public <RET extends ORecord> RET executeReadRecordNormal(
+      ORecordId rid, ORecord iRecord, String fetchPlan, boolean ignoreCache, boolean iUpdateCache) {
+    return internal.executeReadRecordNormal(rid, iRecord, fetchPlan, ignoreCache, iUpdateCache);
+  }
+
+  @Override
+  public void internalRollback(OTransactionOptimistic tx) {
+    internal.internalRollback(tx);
+  }
+
+  @Override
+  public boolean isUnderlyingClosed() {
+    return internal.isUnderlyingClosed();
+  }
+
+  @Override
+  public OPhysicalPosition[] ceilingPhysicalPositions(
+      int clusterId, OPhysicalPosition physicalPosition) {
+    return internal.ceilingPhysicalPositions(clusterId, physicalPosition);
+  }
+
+  @Override
+  public OPhysicalPosition[] higherPhysicalPositions(
+      int clusterId, OPhysicalPosition physicalPosition) {
+    return internal.higherPhysicalPositions(clusterId, physicalPosition);
+  }
+
+  @Override
+  public OPhysicalPosition[] lowerPhysicalPositions(
+      int clusterId, OPhysicalPosition physicalPosition) {
+    return internal.lowerPhysicalPositions(clusterId, physicalPosition);
+  }
+
+  @Override
+  public OPhysicalPosition[] floorPhysicalPositions(
+      int clusterId, OPhysicalPosition physicalPosition) {
+    return internal.floorPhysicalPositions(clusterId, physicalPosition);
   }
 }

@@ -1315,20 +1315,14 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     return view;
   }
 
-  /**
-   * This method is internal, it can be subject to signature change or be removed, do not
-   * use. @Internal
-   */
-  public <RET extends ORecord> RET executeReadRecord(
+  public <RET extends ORecord> RET executeReadRecordIfLatest(
       final ORecordId rid,
       ORecord iRecord,
       final int recordVersion,
       final String fetchPlan,
       final boolean ignoreCache,
-      final boolean iUpdateCache,
-      final boolean loadTombstones,
-      final OStorage.LOCKING_STRATEGY lockingStrategy,
-      RecordReader recordReader) {
+      final boolean iUpdateCache) {
+
     checkOpenness();
     checkIfActive();
 
@@ -1362,23 +1356,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
 
         if (record.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) record.reload();
 
-        if (lockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK) {
-          OLogManager.instance()
-              .warn(
-                  this,
-                  "You use deprecated record locking strategy: %s it may lead to deadlocks "
-                      + lockingStrategy);
-          record.lock(false);
-
-        } else if (lockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK) {
-          OLogManager.instance()
-              .warn(
-                  this,
-                  "You use deprecated record locking strategy: %s it may lead to deadlocks "
-                      + lockingStrategy);
-          record.lock(true);
-        }
-
         afterReadOperations(record);
         if (record instanceof ODocument) ODocumentInternal.checkClass((ODocument) record, this);
         return (RET) record;
@@ -1397,7 +1374,130 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
           else version = recordVersion;
 
           recordBuffer =
-              recordReader.readRecord(getStorage(), rid, fetchPlan, ignoreCache, version);
+              storage
+                  .readRecordIfVersionIsNotLatest(rid, fetchPlan, ignoreCache, version)
+                  .getResult();
+        }
+
+        if (recordBuffer == null) return null;
+
+        if (iRecord == null || ORecordInternal.getRecordType(iRecord) != recordBuffer.recordType)
+          // NO SAME RECORD TYPE: CAN'T REUSE OLD ONE BUT CREATE A NEW ONE FOR IT
+          iRecord =
+              Orient.instance()
+                  .getRecordFactoryManager()
+                  .newInstance(recordBuffer.recordType, rid.getClusterId(), this);
+
+        ORecordInternal.setRecordSerializer(iRecord, getSerializer());
+        ORecordInternal.fill(iRecord, rid, recordBuffer.version, recordBuffer.buffer, false, this);
+
+        if (iRecord instanceof ODocument) ODocumentInternal.checkClass((ODocument) iRecord, this);
+
+        if (ORecordVersionHelper.isTombstone(iRecord.getVersion())) return (RET) iRecord;
+
+        if (beforeReadOperations(iRecord)) return null;
+
+        iRecord.fromStream(recordBuffer.buffer);
+
+        afterReadOperations(iRecord);
+        if (iUpdateCache) getLocalCache().updateRecord(iRecord);
+
+        return (RET) iRecord;
+      } finally {
+        long readTime = System.currentTimeMillis() - begin;
+        if (this.loadedRecordsCount == 1) {
+          this.minRecordLoadMs = readTime;
+          this.maxRecordLoadMs = readTime;
+        } else {
+          this.minRecordLoadMs = Math.min(this.minRecordLoadMs, readTime);
+          this.maxRecordLoadMs = Math.max(this.maxRecordLoadMs, readTime);
+        }
+        this.totalRecordLoadMs += readTime;
+      }
+
+    } catch (OOfflineClusterException t) {
+      throw t;
+    } catch (ORecordNotFoundException t) {
+      throw t;
+    } catch (Exception t) {
+      if (rid.isTemporary())
+        throw OException.wrapException(
+            new ODatabaseException("Error on retrieving record using temporary RID: " + rid), t);
+      else
+        throw OException.wrapException(
+            new ODatabaseException(
+                "Error on retrieving record "
+                    + rid
+                    + " (cluster: "
+                    + getStorage().getPhysicalClusterNameById(rid.getClusterId())
+                    + ")"),
+            t);
+    } finally {
+      ORecordSerializationContext.pullContext();
+      getMetadata().clearThreadLocalSchemaSnapshot();
+    }
+  }
+
+  /**
+   * This method is internal, it can be subject to signature change or be removed, do not
+   * use. @Internal
+   */
+  public <RET extends ORecord> RET executeReadRecordNormal(
+      final ORecordId rid,
+      ORecord iRecord,
+      final String fetchPlan,
+      final boolean ignoreCache,
+      final boolean iUpdateCache) {
+    checkOpenness();
+    checkIfActive();
+
+    getMetadata().makeThreadLocalSchemaSnapshot();
+    ORecordSerializationContext.pushContext();
+    try {
+      checkSecurity(
+          ORule.ResourceGeneric.CLUSTER,
+          ORole.PERMISSION_READ,
+          getClusterNameById(rid.getClusterId()));
+
+      // SEARCH IN LOCAL TX
+      ORecord record = getTransaction().getRecord(rid);
+      if (record == OTransactionAbstract.DELETED_RECORD)
+        // DELETED IN TX
+        return null;
+
+      if (record == null && !ignoreCache)
+        // SEARCH INTO THE CACHE
+        record = getLocalCache().findRecord(rid);
+
+      if (record != null) {
+        if (iRecord != null) {
+          iRecord.fromStream(record.toStream());
+          ORecordInternal.setVersion(iRecord, record.getVersion());
+          record = iRecord;
+        }
+
+        OFetchHelper.checkFetchPlanValid(fetchPlan);
+        if (beforeReadOperations(record)) return null;
+
+        if (record.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) record.reload();
+
+        afterReadOperations(record);
+        if (record instanceof ODocument) ODocumentInternal.checkClass((ODocument) record, this);
+        return (RET) record;
+      }
+
+      loadedRecordsCount++;
+      long begin = System.currentTimeMillis();
+      try {
+        final ORawBuffer recordBuffer;
+        if (!rid.isValid()) recordBuffer = null;
+        else {
+          OFetchHelper.checkFetchPlanValid(fetchPlan);
+
+          recordBuffer =
+              storage
+                  .readRecord(rid, fetchPlan, ignoreCache, isPrefetchRecords(), null)
+                  .getResult();
         }
 
         if (recordBuffer == null) return null;
@@ -2036,5 +2136,37 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
   @Override
   public String getClusterRecordConflictStrategy(int clusterId) {
     return storage.getClusterRecordConflictStrategy(clusterId);
+  }
+
+  @Override
+  public boolean isUnderlyingClosed() {
+    return getStorage().isClosed();
+  }
+
+  @Override
+  public void internalRollback(OTransactionOptimistic tx) {}
+
+  @Override
+  public OPhysicalPosition[] higherPhysicalPositions(
+      int clusterId, OPhysicalPosition physicalPosition) {
+    return storage.higherPhysicalPositions(clusterId, physicalPosition);
+  }
+
+  @Override
+  public OPhysicalPosition[] ceilingPhysicalPositions(
+      int clusterId, OPhysicalPosition physicalPosition) {
+    return storage.ceilingPhysicalPositions(clusterId, physicalPosition);
+  }
+
+  @Override
+  public OPhysicalPosition[] lowerPhysicalPositions(
+      int clusterId, OPhysicalPosition physicalPosition) {
+    return storage.lowerPhysicalPositions(clusterId, physicalPosition);
+  }
+
+  @Override
+  public OPhysicalPosition[] floorPhysicalPositions(
+      int clusterId, OPhysicalPosition physicalPosition) {
+    return storage.floorPhysicalPositions(clusterId, physicalPosition);
   }
 }

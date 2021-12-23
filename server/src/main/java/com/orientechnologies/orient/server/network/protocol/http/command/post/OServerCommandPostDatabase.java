@@ -223,25 +223,35 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
         true,
         null,
         new Object[] {
-          "name", "dateFormat", "value", db.getStorage().getConfiguration().getDateFormat()
+          "name", "dateFormat", "value", db.getStorageInfo().getConfiguration().getDateFormat()
         },
         new Object[] {
-          "name", "dateTimeFormat", "value", db.getStorage().getConfiguration().getDateTimeFormat()
+          "name",
+          "dateTimeFormat",
+          "value",
+          db.getStorageInfo().getConfiguration().getDateTimeFormat()
         },
         new Object[] {
-          "name", "localeCountry", "value", db.getStorage().getConfiguration().getLocaleCountry()
+          "name",
+          "localeCountry",
+          "value",
+          db.getStorageInfo().getConfiguration().getLocaleCountry()
         },
         new Object[] {
-          "name", "localeLanguage", "value", db.getStorage().getConfiguration().getLocaleLanguage()
+          "name",
+          "localeLanguage",
+          "value",
+          db.getStorageInfo().getConfiguration().getLocaleLanguage()
         },
         new Object[] {
-          "name", "definitionVersion", "value", db.getStorage().getConfiguration().getVersion()
+          "name", "definitionVersion", "value", db.getStorageInfo().getConfiguration().getVersion()
         });
     json.endCollection(2, true);
 
     json.beginCollection(2, true, "properties");
-    if (db.getStorage().getConfiguration().getProperties() != null)
-      for (OStorageEntryConfiguration entry : db.getStorage().getConfiguration().getProperties()) {
+    if (db.getStorageInfo().getConfiguration().getProperties() != null)
+      for (OStorageEntryConfiguration entry :
+          db.getStorageInfo().getConfiguration().getProperties()) {
         if (entry != null) {
           json.beginObject(3, true, null);
           json.writeAttribute(4, false, "name", entry.name);
