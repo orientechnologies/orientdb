@@ -4,11 +4,11 @@
     <parent>
         <groupId>com.orientechnologies</groupId>
         <artifactId>orientdb-parent</artifactId>
-        <version>3.2.3</version>
+        <version>3.2.4-SNAPSHOT</version>
         <relativePath/>
     </parent>
     <artifactId>orientdb-enterprise-parent</artifactId>
-    <version>3.2.3-sap-01</version>
+    <version>3.2.4-SNAPSHOT</version>
     <packaging>pom</packaging>
     <modules>
         <module>agent</module>
