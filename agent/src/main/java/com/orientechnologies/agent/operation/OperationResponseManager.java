@@ -1,7 +1,6 @@
 package com.orientechnologies.agent.operation;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedResponseManager;
@@ -76,18 +75,8 @@ public class OperationResponseManager implements ODistributedResponseManager {
   }
 
   @Override
-  public Set<String> getServersWithoutFollowup() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public ODistributedRequestId getMessageId() {
     return null;
-  }
-
-  @Override
-  public ODistributedRequest getRequest() {
-    throw new UnsupportedOperationException();
   }
 
   @Override
