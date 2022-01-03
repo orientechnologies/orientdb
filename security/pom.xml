@@ -27,7 +27,6 @@
         <groupId>com.orientechnologies</groupId>
         <artifactId>orientdb-parent</artifactId>
         <version>3.1.16-SNAPSHOT</version>
-        <relativePath/>
     </parent>
 
     <artifactId>orientdb-security</artifactId>
@@ -36,12 +35,12 @@
 
     <name>OrientDB Security Plugin</name>
     <description>OrientDB Security Plugin</description>
-    <url>http://maven.apache.org</url>
     <inceptionYear>2016</inceptionYear>
 
     <properties>
-        <!--Overrides parent pom's location-->
-        <license.location>https://github.com/orientechnologies/orientdb/raw/develop/ODB-ASL-LICENSE.txt</license.location>
+        <javac.src.version>1.8</javac.src.version>
+        <javac.target.version>1.8</javac.target.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
     <dependencies>
