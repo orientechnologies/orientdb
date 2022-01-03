@@ -1,0 +1,17 @@
+<assembly>
+	<id>dist</id>
+	<formats>
+		<format>jar</format>
+	</formats>
+	<includeBaseDirectory>false</includeBaseDirectory>
+	<dependencySets>
+		<dependencySet>
+			<outputDirectory/>
+			<unpack>true</unpack>
+			<includes>
+				<include>${groupId}:${artifactId}</include>
+				<include>com.cloudbees:syslog-java-client</include>
+			</includes>	
+		</dependencySet>
+	</dependencySets>	
+</assembly>
