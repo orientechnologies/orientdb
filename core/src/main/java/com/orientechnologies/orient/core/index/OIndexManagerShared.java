@@ -708,11 +708,6 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
 
       addIndexInternal(index);
 
-      if (metadata != null) {
-        final ODocument config = index.getConfiguration();
-        config.field("metadata", metadata, OType.EMBEDDED);
-      }
-
       setDirty();
       save();
     } finally {
