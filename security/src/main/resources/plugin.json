@@ -1,0 +1,10 @@
+{
+	"name" : "security",
+	"version" : "2.2",
+	"javaClass": "com.orientechnologies.security.OSecurityPlugin",
+	"parameters" : { },
+	"description" : "This is the OrientDB Security Plugin",
+	"web" : "http://www.orientdb.com",
+	"copyrights" : "OrientDB LTD",
+	"license" : "Apache 2"
+}
