@@ -18,7 +18,6 @@ import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -168,16 +167,17 @@ public class ODatabaseDocumentTxTest {
 
     db.save(doc);
 
-    List<ODocument> result =
-        db.query(new OSQLSynchQuery<Object>("select from testDocFromJsonEmbedded_Class0"));
-    Assert.assertEquals(result.size(), 0);
+    try (OResultSet result = db.query("select from testDocFromJsonEmbedded_Class0")) {
+      Assert.assertEquals(result.stream().count(), 0);
+    }
 
-    result = db.query(new OSQLSynchQuery<Object>("select from testDocFromJsonEmbedded_Class1"));
-    Assert.assertEquals(result.size(), 1);
-    ODocument item = result.get(0);
-    ODocument meta = item.field("meta");
-    Assert.assertEquals(meta.getClassName(), "testDocFromJsonEmbedded_Class0");
-    Assert.assertEquals(meta.field("ip"), "0:0:0:0:0:0:0:1");
+    try (OResultSet result = db.query("select from testDocFromJsonEmbedded_Class1")) {
+      Assert.assertTrue(result.hasNext());
+      OElement item = result.next().getElement().get();
+      ODocument meta = item.getProperty("meta");
+      Assert.assertEquals(meta.getClassName(), "testDocFromJsonEmbedded_Class0");
+      Assert.assertEquals(meta.field("ip"), "0:0:0:0:0:0:0:1");
+    }
   }
 
   @Test
