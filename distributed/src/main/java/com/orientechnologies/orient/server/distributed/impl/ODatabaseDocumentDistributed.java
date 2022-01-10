@@ -48,6 +48,7 @@ import com.orientechnologies.orient.core.metadata.sequence.OSequenceAction;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -492,7 +493,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     Set<OTransactionId> txsWithBrokenPromises = new HashSet<>();
     Set<OPair<ORID, Integer>> rids = new TreeSet<>();
     for (ORecordOperation entry : tx.getRecordOperations()) {
-      rids.add(new OPair<>(entry.getRID().copy(), entry.getRecord().getVersion()));
+      if (ORecordInternal.isContentChanged(entry.getRecord())) {
+        rids.add(new OPair<>(entry.getRID().copy(), entry.getRecord().getVersion()));
+      }
     }
     for (OPair<ORID, Integer> rid : rids) {
       OTransactionId txId = txContext.acquirePromise(rid.getKey(), rid.getValue(), force);
