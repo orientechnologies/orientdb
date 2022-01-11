@@ -45,6 +45,7 @@ import com.orientechnologies.orient.core.metadata.sequence.OSequenceAction;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -478,7 +479,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     // Sort and lock transaction entry in distributed environment
     Set<ORID> rids = new TreeSet<>();
     for (ORecordOperation entry : tx.getRecordOperations()) {
-      rids.add(entry.getRID().copy());
+      if (ORecordInternal.isContentChanged(entry.getRecord())) {
+        rids.add(entry.getRID().copy());
+      }
     }
     for (ORID rid : rids) {
       txContext.lock(rid);
