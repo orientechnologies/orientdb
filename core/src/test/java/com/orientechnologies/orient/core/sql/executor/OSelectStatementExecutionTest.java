@@ -4500,4 +4500,38 @@ public class OSelectStatementExecutionTest {
     printExecutionPlan(result);
     result.close();
   }
+
+  @Test
+  public void testOrderByLet() {
+    String className = "testOrderByLet";
+    db.getMetadata().getSchema().createClass(className);
+    ODocument doc = db.newInstance(className);
+    doc.setProperty("name", "abbb");
+    doc.save();
+
+    doc = db.newInstance(className);
+    doc.setProperty("name", "baaa");
+    doc.save();
+
+    try (OResultSet result =
+        db.query(
+            "select from "
+                + className
+                + " LET $order = name.substring(1) ORDER BY $order ASC LIMIT 1")) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Assert.assertEquals("baaa", item.getProperty("name"));
+    }
+    try (OResultSet result =
+        db.query(
+            "select from "
+                + className
+                + " LET $order = name.substring(1) ORDER BY $order DESC LIMIT 1")) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Assert.assertEquals("abbb", item.getProperty("name"));
+    }
+  }
 }
