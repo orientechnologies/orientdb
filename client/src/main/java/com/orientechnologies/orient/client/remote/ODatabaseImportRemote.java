@@ -4,9 +4,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentRemote;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImpExpAbstract;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImportException;
 import com.orientechnologies.orient.core.db.tool.ODatabaseTool;
@@ -40,14 +37,11 @@ public class ODatabaseImportRemote extends ODatabaseImpExpAbstract {
   }
 
   public void importDatabase() throws ODatabaseImportException {
+    OStorageRemote storage =
+        (OStorageRemote) ((ODatabaseDocumentInternal) getDatabase()).getStorage();
     File file = new File(getFileName());
     try {
-      ODatabaseDocument db = getDatabase();
-      if (db instanceof ODatabaseDocumentTx) {
-        db = ((ODatabaseDocumentTx) db).getUnderlying();
-      }
-      ((ODatabaseDocumentRemote) db)
-          .importDatabase(options, new FileInputStream(file), file.getName(), getListener());
+      storage.importDatabase(options, new FileInputStream(file), file.getName(), getListener());
     } catch (FileNotFoundException e) {
       throw OException.wrapException(
           new ODatabaseImportException("Error importing the database"), e);

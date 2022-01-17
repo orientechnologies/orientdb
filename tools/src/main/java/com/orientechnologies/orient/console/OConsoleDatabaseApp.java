@@ -53,6 +53,7 @@ import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.OrientDBRemote;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentRemote;
+import com.orientechnologies.orient.core.db.document.SimpleRecordReader;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.tool.OBonsaiTreeRepair;
 import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
@@ -2377,7 +2378,7 @@ public class OConsoleDatabaseApp extends OrientConsole
       throws IOException {
     checkForDatabase();
 
-    if (currentDatabase.isRemote()) {
+    if (currentDatabase.getStorage().isRemote()) {
       message("\nCannot check integrity of non-local database. Connect to it using local mode.");
       return;
     }
@@ -3011,8 +3012,16 @@ public class OConsoleDatabaseApp extends OrientConsole
     checkForDatabase();
 
     currentRecord =
-        currentDatabase.executeReadRecordNormal(
-            new ORecordId(iRecordId), null, iFetchPlan, true, false);
+        currentDatabase.executeReadRecord(
+            new ORecordId(iRecordId),
+            null,
+            -1,
+            iFetchPlan,
+            true,
+            false,
+            false,
+            OStorage.LOCKING_STRATEGY.NONE,
+            new SimpleRecordReader(false));
     displayRecord(null);
 
     message("\nOK");

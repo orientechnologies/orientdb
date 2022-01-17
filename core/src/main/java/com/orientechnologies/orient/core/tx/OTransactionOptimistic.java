@@ -25,6 +25,9 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.document.LatestVersionRecordReader;
+import com.orientechnologies.orient.core.db.document.RecordReader;
+import com.orientechnologies.orient.core.db.document.SimpleRecordReader;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -48,6 +51,7 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.schedule.OScheduledEvent;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -161,7 +165,10 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
           "Transaction was rolled back more times than it was started.");
     }
 
-    database.internalRollback(OTransactionOptimistic.this);
+    if (database.isRemote()) {
+      final OStorage storage = database.getStorage();
+      ((OStorageProxy) storage).rollback(OTransactionOptimistic.this);
+    }
     internalRollback();
   }
 
@@ -210,8 +217,16 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
     // DELEGATE TO THE STORAGE, NO TOMBSTONES SUPPORT IN TX MODE
     final ORecord record =
-        database.executeReadRecordNormal(
-            (ORecordId) rid, iRecord, fetchPlan, ignoreCache, iUpdateCache);
+        database.executeReadRecord(
+            (ORecordId) rid,
+            iRecord,
+            -1,
+            fetchPlan,
+            ignoreCache,
+            iUpdateCache,
+            loadTombstone,
+            lockingStrategy,
+            new SimpleRecordReader(database.isPrefetchRecords()));
 
     if (record != null && isolationLevel == ISOLATION_LEVEL.REPEATABLE_READ) {
       // KEEP THE RECORD IN TX TO ASSURE REPEATABLE READS
@@ -245,8 +260,16 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
     // DELEGATE TO THE STORAGE, NO TOMBSTONES SUPPORT IN TX MODE
     final ORecord record =
-        database.executeReadRecordIfLatest(
-            (ORecordId) rid, null, recordVersion, fetchPlan, ignoreCache, !ignoreCache);
+        database.executeReadRecord(
+            (ORecordId) rid,
+            null,
+            recordVersion,
+            fetchPlan,
+            ignoreCache,
+            !ignoreCache,
+            false,
+            OStorage.LOCKING_STRATEGY.NONE,
+            new SimpleRecordReader(database.isPrefetchRecords()));
 
     if (record != null && isolationLevel == ISOLATION_LEVEL.REPEATABLE_READ) {
       // KEEP THE RECORD IN TX TO ASSURE REPEATABLE READS
@@ -291,17 +314,24 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     // DELEGATE TO THE STORAGE, NO TOMBSTONES SUPPORT IN TX MODE
     final ORecord record;
     try {
-      final ORecord loadedRecord;
+      final RecordReader recordReader;
       if (force) {
-        loadedRecord =
-            database.executeReadRecordNormal(
-                (ORecordId) rid, passedRecord, fetchPlan, ignoreCache, !ignoreCache);
-
+        recordReader = new SimpleRecordReader(database.isPrefetchRecords());
       } else {
-        loadedRecord =
-            database.executeReadRecordIfLatest(
-                (ORecordId) rid, passedRecord, -1, fetchPlan, ignoreCache, !ignoreCache);
+        recordReader = new LatestVersionRecordReader();
       }
+
+      final ORecord loadedRecord =
+          database.executeReadRecord(
+              (ORecordId) rid,
+              passedRecord,
+              -1,
+              fetchPlan,
+              ignoreCache,
+              !ignoreCache,
+              false,
+              OStorage.LOCKING_STRATEGY.NONE,
+              recordReader);
 
       if (force) {
         record = loadedRecord;

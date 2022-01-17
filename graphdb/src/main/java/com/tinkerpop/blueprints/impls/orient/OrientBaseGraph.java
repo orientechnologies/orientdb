@@ -61,6 +61,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageRecoverListener;
 import com.tinkerpop.blueprints.Direction;
@@ -1118,7 +1119,13 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph
     try {
       if (!isClosed()) {
         if (commitTx) {
-          getDatabase().commit();
+          final OStorage storage = getDatabase().getStorage();
+          if (storage instanceof OAbstractPaginatedStorage) {
+            if (((OAbstractPaginatedStorage) storage).getWALInstance() != null)
+              getDatabase().commit();
+          } else {
+            getDatabase().commit();
+          }
         } else if (closeDb) {
           getDatabase().rollback();
         }

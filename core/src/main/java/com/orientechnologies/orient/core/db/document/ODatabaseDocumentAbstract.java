@@ -208,8 +208,16 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   /** {@inheritDoc} */
   public <RET extends ORecord> RET load(
       final ORID iRecordId, final String iFetchPlan, final boolean iIgnoreCache) {
-    return executeReadRecordNormal(
-        (ORecordId) iRecordId, null, iFetchPlan, iIgnoreCache, !iIgnoreCache);
+    return executeReadRecord(
+        (ORecordId) iRecordId,
+        null,
+        -1,
+        iFetchPlan,
+        iIgnoreCache,
+        !iIgnoreCache,
+        false,
+        OStorage.LOCKING_STRATEGY.DEFAULT,
+        new SimpleRecordReader(prefetchRecords));
   }
 
   /** Deletes the record checking the version. */
@@ -712,7 +720,14 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   @Override
   public <RET extends ORecord> RET load(final ORecord iRecord, final String iFetchPlan) {
     checkIfActive();
-    return (RET) currentTx.loadRecord(iRecord.getIdentity(), iRecord, iFetchPlan, false);
+    return (RET)
+        currentTx.loadRecord(
+            iRecord.getIdentity(),
+            iRecord,
+            iFetchPlan,
+            false,
+            false,
+            OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
   @SuppressWarnings("unchecked")
@@ -842,8 +857,16 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   /** {@inheritDoc} */
   public <RET extends ORecord> RET load(
       final ORecord iRecord, final String iFetchPlan, final boolean iIgnoreCache) {
-    return executeReadRecordNormal(
-        (ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache, !iIgnoreCache);
+    return executeReadRecord(
+        (ORecordId) iRecord.getIdentity(),
+        iRecord,
+        -1,
+        iFetchPlan,
+        iIgnoreCache,
+        !iIgnoreCache,
+        false,
+        OStorage.LOCKING_STRATEGY.NONE,
+        new SimpleRecordReader(prefetchRecords));
   }
 
   @Override
@@ -855,6 +878,21 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   public boolean isPrefetchRecords() {
     return prefetchRecords;
   }
+
+  /**
+   * This method is internal, it can be subject to signature change or be removed, do not
+   * use. @Internal
+   */
+  public abstract <RET extends ORecord> RET executeReadRecord(
+      final ORecordId rid,
+      ORecord iRecord,
+      final int recordVersion,
+      final String fetchPlan,
+      final boolean ignoreCache,
+      final boolean iUpdateCache,
+      final boolean loadTombstones,
+      final OStorage.LOCKING_STRATEGY lockingStrategy,
+      RecordReader recordReader);
 
   public int assignAndCheckCluster(ORecord record, String iClusterName) {
     ORecordId rid = (ORecordId) record.getIdentity();
@@ -1674,7 +1712,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
    */
   @Override
   public <DB extends ODatabase> DB getUnderlying() {
-    return (DB) this;
+    throw new UnsupportedOperationException();
   }
 
   @Override

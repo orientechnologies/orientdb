@@ -53,7 +53,7 @@ public class OZIPCompressionUtil {
       final String[] iSkipFileExtensions,
       final OCommandOutputListener iOutput)
       throws IOException {
-    final List<String> compressedFiles = new ArrayList<String>();
+    final List<String> compressedFiles = new ArrayList<>();
     addFolder(
         zos, sourceFolderName, sourceFolderName, iSkipFileExtensions, iOutput, compressedFiles);
     return compressedFiles;
@@ -66,8 +66,7 @@ public class OZIPCompressionUtil {
     final File outdir = new File(out);
     final String targetDirPath = outdir.getCanonicalPath() + File.separator;
 
-    final ZipInputStream zin = new ZipInputStream(in);
-    try {
+    try (ZipInputStream zin = new ZipInputStream(in)) {
       ZipEntry entry;
       String name;
       String dir;
@@ -96,8 +95,6 @@ public class OZIPCompressionUtil {
 
         extractFile(zin, outdir, name, iListener);
       }
-    } finally {
-      zin.close();
     }
   }
 
@@ -109,12 +106,9 @@ public class OZIPCompressionUtil {
       throws IOException {
     if (iListener != null) iListener.onMessage("\n- Uncompressing file " + name + "...");
 
-    final BufferedOutputStream out =
-        new BufferedOutputStream(new FileOutputStream(new File(outdir, name)));
-    try {
+    try (BufferedOutputStream out =
+        new BufferedOutputStream(new FileOutputStream(new File(outdir, name)))) {
       OIOUtils.copyStream(in, out, -1);
-    } finally {
-      out.close();
     }
   }
 
@@ -141,25 +135,38 @@ public class OZIPCompressionUtil {
       throws IOException {
 
     File f = new File(path);
+    if (!f.exists()) {
+      String entryName = path.substring(baseFolderName.length() + 1);
+      for (String skip : iSkipFileExtensions) {
+        if (entryName.endsWith(skip)) {
+          return;
+        }
+      }
+    }
     if (f.exists()) {
       if (f.isDirectory()) {
-        File[] f2 = f.listFiles();
-        for (int i = 0; i < f2.length; i++) {
-          addFolder(
-              zos,
-              f2[i].getAbsolutePath(),
-              baseFolderName,
-              iSkipFileExtensions,
-              iOutput,
-              iCompressedFiles);
+        final File[] files = f.listFiles();
+        if (files != null) {
+          for (File file : files) {
+            addFolder(
+                zos,
+                file.getAbsolutePath(),
+                baseFolderName,
+                iSkipFileExtensions,
+                iOutput,
+                iCompressedFiles);
+          }
         }
       } else {
         // add file
         // extract the relative name for entry purpose
-        String entryName = path.substring(baseFolderName.length() + 1, path.length());
+        String entryName = path.substring(baseFolderName.length() + 1);
 
         if (iSkipFileExtensions != null)
-          for (String skip : iSkipFileExtensions) if (entryName.endsWith(skip)) return;
+          for (String skip : iSkipFileExtensions)
+            if (entryName.endsWith(skip)) {
+              return;
+            }
 
         iCompressedFiles.add(path);
 
@@ -168,41 +175,6 @@ public class OZIPCompressionUtil {
 
     } else {
       throw new IllegalArgumentException("Directory " + path + " not found");
-    }
-  }
-
-  public static void compressFile(
-      final String folderName,
-      final String entryName,
-      final OutputStream output,
-      final OCommandOutputListener iOutput,
-      final int compressionLevel)
-      throws IOException {
-    final ZipOutputStream zos = new ZipOutputStream(output);
-    zos.setComment("OrientDB Backup executed on " + new Date());
-    try {
-      zos.setLevel(compressionLevel);
-      addFile(zos, folderName + "/" + entryName, entryName, iOutput);
-    } finally {
-      zos.close();
-    }
-  }
-
-  public static void compressFiles(
-      final String folderName,
-      final String[] entryNames,
-      final OutputStream output,
-      final OCommandOutputListener iOutput,
-      final int compressionLevel)
-      throws IOException {
-    final ZipOutputStream zos = new ZipOutputStream(output);
-    zos.setComment("OrientDB Backup executed on " + new Date());
-    try {
-      zos.setLevel(compressionLevel);
-      for (String entryName : entryNames)
-        addFile(zos, folderName + "/" + entryName, entryName, iOutput);
-    } finally {
-      zos.close();
     }
   }
 

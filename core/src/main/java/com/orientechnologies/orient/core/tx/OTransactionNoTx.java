@@ -23,6 +23,9 @@ import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.document.LatestVersionRecordReader;
+import com.orientechnologies.orient.core.db.document.RecordReader;
+import com.orientechnologies.orient.core.db.document.SimpleRecordReader;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -34,6 +37,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import java.util.Collection;
 import java.util.List;
@@ -67,12 +71,65 @@ public class OTransactionNoTx extends OTransactionAbstract {
 
   public void rollback() {}
 
+  @Deprecated
+  public ORecord loadRecord(
+      final ORID iRid,
+      final ORecord iRecord,
+      final String iFetchPlan,
+      final boolean ignoreCache,
+      final boolean loadTombstone,
+      final OStorage.LOCKING_STRATEGY iLockingStrategy) {
+    if (iRid.isNew()) return null;
+
+    return database.executeReadRecord(
+        (ORecordId) iRid,
+        iRecord,
+        -1,
+        iFetchPlan,
+        ignoreCache,
+        !ignoreCache,
+        loadTombstone,
+        iLockingStrategy,
+        new SimpleRecordReader(database.isPrefetchRecords()));
+  }
+
+  @Deprecated
+  public ORecord loadRecord(
+      final ORID iRid,
+      final ORecord iRecord,
+      final String iFetchPlan,
+      final boolean ignoreCache,
+      final boolean iUpdateCache,
+      final boolean loadTombstone,
+      final OStorage.LOCKING_STRATEGY iLockingStrategy) {
+    if (iRid.isNew()) return null;
+
+    return database.executeReadRecord(
+        (ORecordId) iRid,
+        iRecord,
+        -1,
+        iFetchPlan,
+        ignoreCache,
+        iUpdateCache,
+        loadTombstone,
+        iLockingStrategy,
+        new SimpleRecordReader(database.isPrefetchRecords()));
+  }
+
   public ORecord loadRecord(
       final ORID iRid, final ORecord iRecord, final String iFetchPlan, final boolean ignoreCache) {
     if (iRid.isNew()) return null;
 
-    return database.executeReadRecordNormal(
-        (ORecordId) iRid, iRecord, iFetchPlan, ignoreCache, !ignoreCache);
+    return database.executeReadRecord(
+        (ORecordId) iRid,
+        iRecord,
+        -1,
+        iFetchPlan,
+        ignoreCache,
+        !ignoreCache,
+        false,
+        OStorage.LOCKING_STRATEGY.NONE,
+        new SimpleRecordReader(database.isPrefetchRecords()));
   }
 
   @Override
@@ -85,16 +142,24 @@ public class OTransactionNoTx extends OTransactionAbstract {
       ORID rid, ORecord record, String fetchPlan, boolean ignoreCache, boolean force) {
     if (rid.isNew()) return null;
 
-    final ORecord loadedRecord;
+    final RecordReader recordReader;
     if (force) {
-      loadedRecord =
-          database.executeReadRecordNormal(
-              (ORecordId) rid.getIdentity(), record, fetchPlan, ignoreCache, !ignoreCache);
+      recordReader = new SimpleRecordReader(database.isPrefetchRecords());
     } else {
-      loadedRecord =
-          database.executeReadRecordIfLatest(
-              (ORecordId) rid.getIdentity(), record, -1, fetchPlan, ignoreCache, !ignoreCache);
+      recordReader = new LatestVersionRecordReader();
     }
+
+    final ORecord loadedRecord =
+        database.executeReadRecord(
+            (ORecordId) rid,
+            record,
+            -1,
+            fetchPlan,
+            ignoreCache,
+            !ignoreCache,
+            false,
+            OStorage.LOCKING_STRATEGY.NONE,
+            recordReader);
 
     if (force) {
       return loadedRecord;
@@ -110,8 +175,17 @@ public class OTransactionNoTx extends OTransactionAbstract {
       ORID rid, int recordVersion, String fetchPlan, boolean ignoreCache)
       throws ORecordNotFoundException {
     if (rid.isNew()) return null;
-    return database.executeReadRecordIfLatest(
-        (ORecordId) rid.getIdentity(), null, recordVersion, fetchPlan, ignoreCache, !ignoreCache);
+
+    return database.executeReadRecord(
+        (ORecordId) rid,
+        null,
+        recordVersion,
+        fetchPlan,
+        ignoreCache,
+        !ignoreCache,
+        false,
+        OStorage.LOCKING_STRATEGY.NONE,
+        new LatestVersionRecordReader());
   }
 
   /**

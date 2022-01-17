@@ -148,7 +148,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
   @Override
   public OBinaryResponse executeDBReload(OReloadRequest37 request) {
-    return new OReloadResponse37(connection.getDatabase().getStorageInfo().getConfiguration());
+    return new OReloadResponse37(connection.getDatabase().getStorage().getConfiguration());
   }
 
   @Override
@@ -297,7 +297,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
       final byte[] record =
           ((OClusterBasedStorageConfiguration)
-                  connection.getDatabase().getStorageInfo().getConfiguration())
+                  connection.getDatabase().getStorage().getConfiguration())
               .toStream(connection.getData().protocolVersion, StandardCharsets.UTF_8);
 
       response = new OReadRecordResponse(OBlob.RECORD_TYPE, 0, record, new HashSet<>());
@@ -356,7 +356,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
       final byte[] record =
           ((OClusterBasedStorageConfiguration)
-                  connection.getDatabase().getStorageInfo().getConfiguration())
+                  connection.getDatabase().getStorage().getConfiguration())
               .toStream(connection.getData().protocolVersion, StandardCharsets.UTF_8);
 
       response =
@@ -513,6 +513,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     OPhysicalPosition[] nextPositions =
         connection
             .getDatabase()
+            .getStorage()
             .higherPhysicalPositions(request.getClusterId(), request.getClusterPosition());
     return new OHigherPhysicalPositionsResponse(nextPositions);
   }
@@ -522,6 +523,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     final OPhysicalPosition[] previousPositions =
         connection
             .getDatabase()
+            .getStorage()
             .ceilingPhysicalPositions(request.getClusterId(), request.getPhysicalPosition());
     return new OCeilingPhysicalPositionsResponse(previousPositions);
   }
@@ -531,6 +533,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     final OPhysicalPosition[] previousPositions =
         connection
             .getDatabase()
+            .getStorage()
             .lowerPhysicalPositions(request.getiClusterId(), request.getPhysicalPosition());
     return new OLowerPhysicalPositionsResponse(previousPositions);
   }
@@ -540,6 +543,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     final OPhysicalPosition[] previousPositions =
         connection
             .getDatabase()
+            .getStorage()
             .floorPhysicalPositions(request.getClusterId(), request.getPhysicalPosition());
     return new OFloorPhysicalPositionsResponse(previousPositions);
   }

@@ -10,8 +10,6 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.OStorage;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -790,13 +788,6 @@ public class OClassEmbedded extends OClassImpl {
       if (getDatabase().countClusterElements(clusterId) == 0) {
         getDatabase().dropClusterInternal(clusterId);
       }
-    }
-  }
-
-  protected void setEncryptionInternal(ODatabaseDocumentInternal database, final String value) {
-    for (int cl : getClusterIds()) {
-      final OStorage storage = database.getStorage();
-      storage.setClusterAttribute(cl, OCluster.ATTRIBUTES.ENCRYPTION, value);
     }
   }
 }
