@@ -92,6 +92,10 @@ public class OOrderByItem {
       aVal = a.getProperty(alias);
       bVal = b.getProperty(alias);
     }
+    if (aVal == null && bVal == null) {
+      aVal = a.getMetadata(alias);
+      bVal = b.getMetadata(alias);
+    }
     if (modifier != null) {
       aVal = modifier.execute(a, aVal, ctx);
       bVal = modifier.execute(b, bVal, ctx);
