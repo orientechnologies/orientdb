@@ -27,10 +27,8 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.Assert;
@@ -218,47 +216,50 @@ public class OLuceneTransactionEmbeddedQueryTest extends OLuceneBaseTest {
     db.save(doc);
 
     String query = "select from C1 where p1 lucene \"abc\"";
-    @SuppressWarnings("deprecation")
-    List<ODocument> vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
-    Collection coll;
-    try (Stream<ORID> stream = index.getInternal().getRids("abc")) {
-      coll = stream.collect(Collectors.toList());
+
+    try (OResultSet vertices = db.query(query)) {
+      Collection coll;
+      try (Stream<ORID> stream = index.getInternal().getRids("abc")) {
+        coll = stream.collect(Collectors.toList());
+      }
+
+      Assert.assertEquals(vertices.stream().count(), 1);
+      Assert.assertEquals(coll.size(), 1);
+
+      Iterator iterator = coll.iterator();
+      int i = 0;
+      ORecordId rid = null;
+      while (iterator.hasNext()) {
+        rid = (ORecordId) iterator.next();
+        i++;
+      }
+
+      Assert.assertEquals(i, 1);
+      Assert.assertNotNull(rid);
+      Assert.assertEquals(doc1.getIdentity().toString(), rid.getIdentity().toString());
+      Assert.assertEquals(index.getInternal().size(), 2);
     }
-
-    Assert.assertEquals(vertices.size(), 1);
-    Assert.assertEquals(coll.size(), 1);
-
-    Iterator iterator = coll.iterator();
-    int i = 0;
-    ORecordId rid = null;
-    while (iterator.hasNext()) {
-      rid = (ORecordId) iterator.next();
-      i++;
-    }
-
-    Assert.assertEquals(i, 1);
-    Assert.assertNotNull(rid);
-    Assert.assertEquals(doc1.getIdentity().toString(), rid.getIdentity().toString());
-    Assert.assertEquals(index.getInternal().size(), 2);
 
     query = "select from C1 where p1 lucene \"removed\" ";
-    //noinspection deprecation
-    vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
-    try (Stream<ORID> stream = index.getInternal().getRids("removed")) {
-      coll = stream.collect(Collectors.toList());
+    try (OResultSet vertices = db.query(query)) {
+      Collection coll;
+      try (Stream<ORID> stream = index.getInternal().getRids("removed")) {
+        coll = stream.collect(Collectors.toList());
+      }
+
+      Assert.assertEquals(vertices.stream().count(), 1);
+      Assert.assertEquals(coll.size(), 1);
+
+      db.rollback();
     }
 
-    Assert.assertEquals(vertices.size(), 1);
-    Assert.assertEquals(coll.size(), 1);
-
-    db.rollback();
-
     query = "select from C1 where p1 lucene \"abc\" ";
-    //noinspection deprecation
-    vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
 
-    Assert.assertEquals(vertices.size(), 2);
+    try (OResultSet vertices = db.query(query)) {
 
-    Assert.assertEquals(index.getInternal().size(), 2);
+      Assert.assertEquals(vertices.stream().count(), 2);
+
+      Assert.assertEquals(index.getInternal().size(), 2);
+    }
   }
 }

@@ -7,11 +7,10 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import org.junit.After;
 import org.junit.Before;
@@ -57,12 +56,12 @@ public class DateBinaryComparatorTest {
   @Test
   public void testDateJavaClassPreparedStatement() throws ParseException {
     String str = "SELECT FROM Test WHERE date = :dateParam";
-    OSQLSynchQuery query = new OSQLSynchQuery(str);
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("dateParam", new SimpleDateFormat(dateFormat).parse(dateValue));
 
-    List<?> result = db.query(query, params);
-    assertTrue(result.size() == 1);
+    try (OResultSet result = db.query(str, params)) {
+      assertTrue(result.stream().count() == 1);
+    }
   }
 
   private void openDatabase() {
