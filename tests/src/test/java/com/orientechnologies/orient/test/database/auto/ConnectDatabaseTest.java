@@ -30,7 +30,7 @@ import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-@Test
+@Test(enabled = false)
 public class ConnectDatabaseTest {
   private final String url;
   private final String databaseName;
