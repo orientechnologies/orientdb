@@ -1,14 +1,37 @@
-SAP Enterprise OrientDB
+OrientDB Enterprise Agent
 =======================
 
-Fortify (develop) [![Fortify](https://gkesaporientdb.jaas-gcp.cloud.sap.corp/job/develop/job/orientdb-enterprise-fortify-3.1.x/badge/icon)](https://gkesaporientdb.jaas-gcp.cloud.sap.corp/job/develop/job/orientdb-enterprise-fortify-3.2.x/) |
-Whitesource (develop) [![Whitesource](https://gkesaporientdb.jaas-gcp.cloud.sap.corp/job/3.0.x/job/orientdb-enterprise-whitesource-3.1.x/badge/icon)](https://gkesaporientdb.jaas-gcp.cloud.sap.corp/job/3.0.x/job/orientdb-enterprise-whitesource-3.1.x/) |
-PPMS (develop) [![PPMS](https://gkesaporientdb.jaas-gcp.cloud.sap.corp/job/3.0.x/job/orientdb-enterprise-whitesource-ppms2-3.1.x//badge/icon)](https://gkesaporientdb.jaas-gcp.cloud.sap.corp/job/3.0.x/job/orientdb-enterprise-whitesource-ppms2-3.1.x/)
+OrientDB Enterprise Agent an add-on to OrientDB Community edition, designed specifically for applications seeking a scalable, robust, and secure multi-model database. It add professional enterprise tools such as support forAuditing Tools, Metrics recording, Non-Stop Incremental Backups and Delta Synchronization in distributed.
 
 
-OrientDB Enterprise Edition
+### Installation
 
-> Check out our Slack channel: [#sap-tech-orientdb](https://sap-hana-core.slack.com/archives/C01084WNMNC)
+OrientDB Enterprise Agent is an additional package which can be installed in the [Community Edition](../gettingstarted/Tutorial-Installation.md). Download the Enterprise Agent jar package (or build it from sources) and copy it into the `/<orientdb>/plugins` directory, then start the server.
 
-> We are also on SAP's Stack Overflow: see https://sap.stackenterprise.co/articles/4587, https://sap.stackenterprise.co/articles/4740
+At run-time, the Enterprise edition logs this message:
 
+```
+2016-08-04 09:38:26:589 INFO  ***************************************************************************** [OEnterpriseAgent]
+2016-08-04 09:38:26:589 INFO  *                     ORIENTDB  -  ENTERPRISE EDITION                       * [OEnterpriseAgent]
+2016-08-04 09:38:26:589 INFO  ***************************************************************************** [OEnterpriseAgent]
+2016-08-04 09:38:26:589 INFO  * If you are in Production or Test, you must purchase a commercial license. * [OEnterpriseAgent]
+2016-08-04 09:38:26:589 INFO  * For more information look at: http://orientdb.com/orientdb-enterprise/    * [OEnterpriseAgent]
+2016-08-04 09:38:26:590 INFO  ***************************************************************************** [OEnterpriseAgent]
+```
+
+
+## Accessing EE Features from Studio
+
+To access the Enterprise features from OrientDB Studio, from the login page, click on `SERVER MANAGEMENT` (top right corner) and enter root username and password
+
+
+## Building from sources
+
+To build OrientDB Enterprise Agent you need java (at least 8) and maven installed on your machine.
+From the mail directory, run the following command:
+
+```
+mvn clean install
+```
+
+You will find the agent jar file in the `/agent/target` directory
