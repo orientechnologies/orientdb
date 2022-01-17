@@ -1493,8 +1493,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         return;
       }
 
-      error = e;
-      status = STATUS.INTERNAL_ERROR;
+      if (!(e instanceof OInternalErrorException)) {
+        error = e;
+        status = STATUS.INTERNAL_ERROR;
+      }
 
       try {
         makeStorageDirty();
@@ -3927,7 +3929,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   public void moveToErrorStateIfNeeded(final Throwable error) {
     if (error != null
-        && !((error instanceof OHighLevelException) || (error instanceof ONeedRetryException))) {
+        && !((error instanceof OHighLevelException)
+            || (error instanceof ONeedRetryException)
+            || (error instanceof OInternalErrorException))) {
       this.error = error;
       status = STATUS.INTERNAL_ERROR;
     }
@@ -6489,7 +6493,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   protected RuntimeException logAndPrepareForRethrow(
       final RuntimeException runtimeException, final boolean putInReadOnlyMode) {
     if (!(runtimeException instanceof OHighLevelException
-        || runtimeException instanceof ONeedRetryException)) {
+        || runtimeException instanceof ONeedRetryException
+        || runtimeException instanceof OInternalErrorException)) {
       if (putInReadOnlyMode) {
         this.error = runtimeException;
         status = STATUS.INTERNAL_ERROR;
@@ -6538,7 +6543,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   protected RuntimeException logAndPrepareForRethrow(
       final Throwable throwable, final boolean putInReadOnlyMode) {
-    if (!(throwable instanceof OHighLevelException || throwable instanceof ONeedRetryException)) {
+    if (!(throwable instanceof OHighLevelException
+        || throwable instanceof ONeedRetryException
+        || throwable instanceof OInternalErrorException)) {
       if (putInReadOnlyMode) {
         this.error = throwable;
         status = STATUS.INTERNAL_ERROR;
