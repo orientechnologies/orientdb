@@ -1,7 +1,7 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: <YOUR-REPO-NAME>
-Upstream-Contact: <YOUR-CONTACT (MAIL ADDRESS ETC.)>
-Source: <https://github.com/sap/YOUR-REPO-NAME>
+Upstream-Name: OrientDB enterprise agent
+Upstream-Contact: orientdb_enquiries@sap.com
+Source: https://github.com/sap/orientdb-enterprise-agent
 Disclaimer: The code in this project may include calls to APIs ("API Calls") of
  SAP or third-party products or services developed outside of this project
  ("External Products").
@@ -24,14 +24,14 @@ Disclaimer: The code in this project may include calls to APIs ("API Calls") of
  you any rights to use or access any SAP External Product, or provide any third
  parties the right to use of access any SAP External Product, through API Calls.
 
-Files: <YOUR-FILE-OR-FOLDER-LIST>
-Copyright:  <YEARS-RELEVANT-FOR-YOUR-PROJECT> SAP SE or an SAP affiliate company and <YOUR-PROJECT-NAME> contributors
+Files: /agent/src/*
+Copyright:  2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors
 License: Apache-2.0
 
-Files: <THIRD-PARTY-FILE-OR-FOLDER-LIST>
-Copyright: <COPYRIGHT-OF-THIRD-PARTY-CODE>
-License: <LICENSE-OF-THIRD-PARTY-CODE>
+Files: /lucene-cross-class/src/*
+Copyright:  2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors
+License: Apache-2.0
 
-Files: <ANOTHER-THIRD-PARTY-FILE-OR-FOLDER-LIST>
-Copyright: <COPYRIGHT-OF-ANOTHER-THIRD-PARTY-CODE>
-License: <LICENSE-OF-ANOTHER- THIRD-PARTY-CODE>
+Files: /lucene-performance/src/*
+Copyright:  2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors
+License: Apache-2.0
