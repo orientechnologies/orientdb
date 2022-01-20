@@ -39,3 +39,8 @@ You will find the agent jar file in the `/agent/target` directory
 ## Documentation
 
 For further documentation, please refer to the official [OrientDB docs](https://orientdb.org/docs/3.2.x/ee/Enterprise-Edition.html)
+
+
+## Licensing
+
+Copyright 2022 SAP SE or an SAP affiliate company and OrientDB enterprise agent contributors. Please see our [LICENSE](LICENSE) for copyright and license information. Detailed information including third-party components and their licensing/copyright information is available via the REUSE tool (link to https://api.reuse.software/info/github.com/SAP/orientdb-enterprise-agent)
