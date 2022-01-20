@@ -28,10 +28,59 @@ Files: agent/src/*
 Copyright:  2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors
 License: Apache-2.0
 
+Files: agent/.gitignore
+Copyright:  2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors
+License: Apache-2.0
+
+Files: agent/pom.xml
+Copyright:  2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors
+License: Apache-2.0
+
+Files: agent/dependency-reduced-pom.xml
+Copyright:  2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors
+License: Apache-2.0
+
 Files: lucene-cross-class/src/*
+Copyright:  2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors
+License: Apache-2.0
+
+Files: lucene-cross-class/_base/orient_checks.xml
+Copyright:  2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors
+License: Apache-2.0
+
+Files: lucene-cross-class/pom.xml
 Copyright:  2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors
 License: Apache-2.0
 
 Files: lucene-performance/src/*
 Copyright:  2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors
 License: Apache-2.0
+
+Files: CONTRIBUTING.md
+Copyright:  2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors
+License: Apache-2.0
+
+Files: README.md
+Copyright:  2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors
+License: Apache-2.0
+
+Files: .gitignore
+Copyright:  2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors
+License: Apache-2.0
+
+Files: .gitmodules
+Copyright:  2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors
+License: Apache-2.0
+
+Files: _base/*
+Copyright:  2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors
+License: Apache-2.0
+
+Files: bin/*
+Copyright:  2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors
+License: Apache-2.0
+
+Files: pom.xml
+Copyright:  2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors
+License: Apache-2.0
+
