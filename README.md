@@ -35,3 +35,7 @@ mvn clean install
 ```
 
 You will find the agent jar file in the `/agent/target` directory
+
+## Documentation
+
+For further documentation, please refer to the official [OrientDB docs](https://orientdb.org/docs/3.2.x/ee/Enterprise-Edition.html)
