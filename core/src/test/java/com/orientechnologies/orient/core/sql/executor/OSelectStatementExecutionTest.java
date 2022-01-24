@@ -2694,7 +2694,7 @@ public class OSelectStatementExecutionTest {
     clazz.createProperty("surname", OType.STRING);
     clazz.createProperty("address", OType.STRING);
     db.command(
-            new OCommandSQL("create index " + className + ".name_surname on " + className + " (name, surname, address) NOTUNIQUE"))
+                    new OCommandSQL("create index " + className + ".name_surname on " + className + " (name, surname, address) NOTUNIQUE"))
             .execute();
 
     for (int i = 0; i < 10; i++) {
@@ -2733,7 +2733,7 @@ public class OSelectStatementExecutionTest {
     clazz.createProperty("surname", OType.STRING);
     clazz.createProperty("address", OType.STRING);
     db.command(
-            new OCommandSQL("create index " + className + ".name_surname on " + className + " (name, surname, address) NOTUNIQUE"))
+                    new OCommandSQL("create index " + className + ".name_surname on " + className + " (name, surname, address) NOTUNIQUE"))
             .execute();
 
     for (int i = 0; i < 10; i++) {
@@ -2772,7 +2772,7 @@ public class OSelectStatementExecutionTest {
     clazz.createProperty("surname", OType.STRING);
     clazz.createProperty("address", OType.STRING);
     db.command(
-            new OCommandSQL("create index " + className + ".name_surname on " + className + " (name, surname, address) NOTUNIQUE"))
+                    new OCommandSQL("create index " + className + ".name_surname on " + className + " (name, surname, address) NOTUNIQUE"))
             .execute();
 
     for (int i = 0; i < 10; i++) {
@@ -4083,7 +4083,7 @@ public class OSelectStatementExecutionTest {
   }
 
   @Test
-  public void testIndexWithSubquery(){
+  public void testIndexWithSubquery() {
     String classNamePrefix = "testIndexWithSubquery_";
     db.command("create class " + classNamePrefix + "Ownership extends V abstract;").close();
     db.command("create class " + classNamePrefix + "User extends V;").close();
@@ -4101,7 +4101,7 @@ public class OSelectStatementExecutionTest {
     db.command("create edge " + classNamePrefix + "hasOwnership from (select from " + classNamePrefix + "User) to (select from " + classNamePrefix + "Report);").close();
 
 
-    try(OResultSet rs = db.query("select from " + classNamePrefix + "Report where id in (select out('" + classNamePrefix + "hasOwnership').id from " + classNamePrefix + "User where id = 'admin');")){
+    try (OResultSet rs = db.query("select from " + classNamePrefix + "Report where id in (select out('" + classNamePrefix + "hasOwnership').id from " + classNamePrefix + "User where id = 'admin');")) {
       Assert.assertTrue(rs.hasNext());
       rs.next();
       Assert.assertTrue(rs.hasNext());
@@ -4111,14 +4111,26 @@ public class OSelectStatementExecutionTest {
 
     db.command("create index " + classNamePrefix + "Report.id ON " + classNamePrefix + "Report(id) unique;").close();
 
-    try(OResultSet rs = db.query("select from " + classNamePrefix + "Report where id in (select out('" + classNamePrefix + "hasOwnership').id from " + classNamePrefix + "User where id = 'admin');")){
+    try (OResultSet rs = db.query("select from " + classNamePrefix + "Report where id in (select out('" + classNamePrefix + "hasOwnership').id from " + classNamePrefix + "User where id = 'admin');")) {
       Assert.assertTrue(rs.hasNext());
       rs.next();
       Assert.assertTrue(rs.hasNext());
       rs.next();
       Assert.assertFalse(rs.hasNext());
     }
+  }
 
+  @Test
+  public void testMapToJson() {
+    String className = "testMapToJson";
+    db.command("create class " + className).close();
+    db.command("create property " + className + ".themap embeddedmap").close();
+    db.command("insert into " + className + " set name = 'foo', themap = {\"foo bar\":\"baz\", \"riz\":\"faz\"}").close();
+    try (OResultSet rs = db.query("select themap.tojson() as x from " + className)) {
+      Assert.assertTrue(rs.hasNext());
+      OResult item = rs.next();
+      Assert.assertTrue(((String) item.getProperty("x")).contains("foo bar"));
+    }
 
   }
 }

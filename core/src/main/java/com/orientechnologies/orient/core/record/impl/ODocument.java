@@ -1329,7 +1329,7 @@ public class ODocument extends ORecordAbstract
   public ODocument fromMap(final Map<String, ?> iMap) {
     if (iMap != null) {
       for (Entry<String, ?> entry : iMap.entrySet())
-        field(entry.getKey(), entry.getValue());
+        setProperty(entry.getKey(), entry.getValue());
     }
     return this;
   }
