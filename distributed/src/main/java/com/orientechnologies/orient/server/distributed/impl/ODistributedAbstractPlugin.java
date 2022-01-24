@@ -1683,6 +1683,13 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
       final File oldDirectory = new File(dbpath);
       if (oldDirectory.exists() && oldDirectory.isDirectory()) {
+        if (oldDirectory.getCanonicalPath().equals(backupFullPath.getCanonicalPath())) {
+          throw new ODistributedException(
+              String.format(
+                  "Backup folder configured as same of database folder:'%s'",
+                  oldDirectory.getAbsolutePath()));
+        }
+
         try {
           Files.move(
               oldDirectory.toPath(), backupFullPath.toPath(), StandardCopyOption.ATOMIC_MOVE);
