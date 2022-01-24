@@ -4534,4 +4534,21 @@ public class OSelectStatementExecutionTest {
       Assert.assertEquals("abbb", item.getProperty("name"));
     }
   }
+
+  @Test
+  public void testMapToJson() {
+    String className = "testMapToJson";
+    db.command("create class " + className).close();
+    db.command("create property " + className + ".themap embeddedmap").close();
+    db.command(
+            "insert into "
+                + className
+                + " set name = 'foo', themap = {\"foo bar\":\"baz\", \"riz\":\"faz\"}")
+        .close();
+    try (OResultSet rs = db.query("select themap.tojson() as x from " + className)) {
+      Assert.assertTrue(rs.hasNext());
+      OResult item = rs.next();
+      Assert.assertTrue(((String) item.getProperty("x")).contains("foo bar"));
+    }
+  }
 }
