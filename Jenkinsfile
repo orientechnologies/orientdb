@@ -59,6 +59,6 @@ def fetch(module) {
 
 def fetchInternal(module) {
     echo "checkout for $module"
-    checkout([$class: 'GitSCM', branches: [[name: env.BRANCH_NAME]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: "${module}"]], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '38719b3f-e300-4fe5-9d50-cfe2c10ce1f0', url: "https://github.com/orientdb-enterprise-agent/${module}.git"]]])
+    checkout([$class: 'GitSCM', branches: [[name: env.BRANCH_NAME]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: "${module}"]], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '38719b3f-e300-4fe5-9d50-cfe2c10ce1f0', url: "https://github.com/SAP/${module}.git"]]])
     sh "git -C $module checkout ${env.BRANCH_NAME}"
 }
