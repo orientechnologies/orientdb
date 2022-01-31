@@ -121,17 +121,17 @@
             </build>
         </profile>
         <profile>
-            <id>new-coordinator</id>
+            <id>secondary-tests</id>
             <build>
                 <plugins>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <artifactId>maven-surefire-plugin</artifactId>
                         <version>${surefire.version}</version>
                         <configuration>
-                            <systemPropertyVariables>
-                                <distributed.replicationProtocol.version>2</distributed.replicationProtocol.version>
-                            </systemPropertyVariables>
+                            <includes>
+                                <include>**/*ST.java</include>
+                            </includes>
                         </configuration>
                     </plugin>
                 </plugins>
