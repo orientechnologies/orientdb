@@ -270,6 +270,8 @@
                     <excludes>
                         <exclude>${exclude.test.distributed}</exclude>
                     </excludes>
+                    <reuseForks>false</reuseForks>
+                    <forkCount>1</forkCount>
                 </configuration>
 
                 <dependencies>
