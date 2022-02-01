@@ -42,7 +42,7 @@ public abstract class OEngineAbstract implements OEngine {
   }
 
   @Override
-  public void shutdown() {
+  public void shutdown(boolean clearReadCache) {
     this.running = false;
   }
 

@@ -123,7 +123,7 @@ public class PostponedEngineStartTest {
   // @Test(dependsOnMethods = "testGetRunningEngineShouldStartEngine")
   public void testEngineRestart() {
     OEngine engine = ORIENT.getRunningEngine(ENGINE1.getName());
-    engine.shutdown();
+    engine.shutdown(false);
     Assert.assertFalse(engine.isRunning());
 
     engine = ORIENT.getEngineIfRunning(ENGINE1.getName());
