@@ -784,7 +784,7 @@ public class Orient extends OListenerManger<OOrientListener> {
       OLogManager.instance().error(this, "Error during initialization of engine '%s', engine will be removed", e, name);
 
       try {
-        engine.shutdown(OGlobalConfiguration.STORAGE_CLEAR_DISK_CACHE_ON_SHUTDOWN.getValueAsBoolean());
+        engine.shutdown();
       } catch (Exception se) {
         OLogManager.instance().error(this, "Error during engine shutdown", se);
       }
@@ -961,10 +961,10 @@ public class Orient extends OListenerManger<OOrientListener> {
     if (factories.isEmpty()) {
       OEngine memory = engines.get("memory");
       if (memory.isRunning())
-        memory.shutdown(OGlobalConfiguration.STORAGE_CLEAR_DISK_CACHE_ON_SHUTDOWN.getValueAsBoolean());
+        memory.shutdown();
       OEngine disc = engines.get("plocal");
       if (disc.isRunning())
-        disc.shutdown(OGlobalConfiguration.STORAGE_CLEAR_DISK_CACHE_ON_SHUTDOWN.getValueAsBoolean());
+        disc.shutdown();
     }
   }
 

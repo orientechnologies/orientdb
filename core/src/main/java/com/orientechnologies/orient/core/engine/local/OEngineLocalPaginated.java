@@ -152,15 +152,12 @@ public class OEngineLocalPaginated extends OEngineAbstract {
   }
 
   @Override
-  public void shutdown(boolean clearReadCache) {
+  public void shutdown() {
     try {
-      if(clearReadCache) {
-        readCache.clear();
-      }
-
+      readCache.clear();
       files.clear();
     } finally {
-      super.shutdown(clearReadCache);
+      super.shutdown();
     }
   }
 }

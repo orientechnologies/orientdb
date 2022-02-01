@@ -30,7 +30,7 @@ public interface OEngine {
 
   void removeStorage(OStorage iStorage);
 
-  void shutdown(boolean clearReadCache);
+  void shutdown();
 
   /**
    * Performs initialization of engine.
