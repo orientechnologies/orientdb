@@ -51,6 +51,7 @@ public class ODDLPhasesExecutionTests {
     messageSecond.execute(
         new ODistributedRequestId(1, 11), server, session.getDistributedManager(), session);
     assertTrue(session.existsCluster("bla"));
+    session.close();
   }
 
   @After
