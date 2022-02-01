@@ -220,10 +220,6 @@ public enum OGlobalConfiguration {// ENVIRONMENT
       "Indicates whether a full checkpoint should be performed, if storage was opened. It is needed so fuzzy checkpoints can work properly",
       Boolean.class, true),
 
-  STORAGE_CLEAR_DISK_CACHE_ON_SHUTDOWN("storage.clearDiskCacheOnShutdown",
-          "Gives memory back to the OS on system shutdown",
-          Boolean.class, true),
-
   STORAGE_ATOMIC_OPERATIONS_TABLE_COMPACTION_INTERVAL("storage.atomicOperationsTable.compactionInterval",
       "Amount of atomic operations after which compaction of atomic operations table will be triggered on", Integer.class, 100_000),
 

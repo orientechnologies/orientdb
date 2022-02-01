@@ -53,8 +53,8 @@ public class OEngineRemote extends OEngineAbstract {
   }
 
   @Override
-  public void shutdown(boolean clearReadCache) {
-    super.shutdown(clearReadCache);
+  public void shutdown() {
+    super.shutdown();
   }
 
   @Override
