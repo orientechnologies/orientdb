@@ -787,7 +787,10 @@ public class ODistributedPlugin extends OServerPluginAbstract
             this, this.nodeName, iNodes.toString(), OUT, "Sent request %s", iRequest);
 
       if (databaseName != null) {
-        getMessageService().getDatabase(databaseName).incSentRequest();
+        ODistributedDatabaseImpl shared = getMessageService().getDatabase(databaseName);
+        if (shared != null) {
+          shared.incSentRequest();
+        }
       }
 
       if (iExecutionMode == ODistributedRequest.EXECUTION_MODE.RESPONSE)
