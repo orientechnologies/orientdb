@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Created by frank on 29/06/2016.
  */
-public class OPartitionedDatabasePoolTest {
+public class OPartitionedDatabasePoolST {
 
   @Rule
   public TestName name = new TestName();
