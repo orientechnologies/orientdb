@@ -106,7 +106,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
 import java.util.zip.CRC32;
 import javax.crypto.BadPaddingException;
@@ -308,12 +307,6 @@ public final class OWOWCache extends OAbstractWriteCache
 
   /** Amount of exclusive pages are hold by write cache. */
   private final AtomicLong exclusiveWriteCacheSize = new AtomicLong();
-
-  /**
-   * Amount of times when maximum limit of exclusive write pages allowed to be stored by write cache
-   * is reached
-   */
-  private final LongAdder cacheOverflowCountSum = new LongAdder();
 
   /** Serialized is used to encode/decode names of files are managed by write cache. */
   private final OBinarySerializer<String> stringSerializer;
@@ -1711,18 +1704,6 @@ public final class OWOWCache extends OAbstractWriteCache
     return id;
   }
 
-  public long getCacheOverflowCount() {
-    return cacheOverflowCountSum.sum();
-  }
-
-  public long getWriteCacheSize() {
-    return writeCacheSize.get();
-  }
-
-  public long getExclusiveWriteCacheSize() {
-    return exclusiveWriteCacheSize.get();
-  }
-
   private static void openFile(final OFile fileClassic) {
     if (fileClassic.exists()) {
       if (!fileClassic.isOpen()) {
@@ -2677,7 +2658,7 @@ public final class OWOWCache extends OAbstractWriteCache
 
           long ewcSize = exclusiveWriteCacheSize.get();
           if (ewcSize >= 0) {
-            flushExclusiveWriteCache(null, Math.min(ewcSize, 4 * chunkSize));
+            flushExclusiveWriteCache(null, Math.min(ewcSize, 4L * chunkSize));
 
             if (exclusiveWriteCacheSize.get() > 0) {
               flushInterval = 1;
@@ -2971,7 +2952,6 @@ public final class OWOWCache extends OAbstractWriteCache
             ODirectMemoryAllocator.instance()
                 .allocate(
                     chunk.size() * pageSize,
-                    -1,
                     false,
                     Intention.ALLOCATE_CHUNK_TO_WRITE_DATA_IN_BATCH);
         final ByteBuffer containerBuffer = containerPointer.getNativeByteBuffer();

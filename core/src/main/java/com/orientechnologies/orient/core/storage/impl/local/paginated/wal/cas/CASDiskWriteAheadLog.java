@@ -286,12 +286,12 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
     writtenUpTo.set(new WrittenUpTo(new OLogSequenceNumber(currentSegment, 0), 0));
 
     writeBufferPointerOne =
-        allocator.allocate(bufferSize1, -1, false, Intention.ALLOCATE_FIRST_WAL_BUFFER);
+        allocator.allocate(bufferSize1, false, Intention.ALLOCATE_FIRST_WAL_BUFFER);
     writeBufferOne = writeBufferPointerOne.getNativeByteBuffer().order(ByteOrder.nativeOrder());
     assert writeBufferOne.position() == 0;
 
     writeBufferPointerTwo =
-        allocator.allocate(bufferSize1, -1, false, Intention.ALLOCATE_SECOND_WAL_BUFFER);
+        allocator.allocate(bufferSize1, false, Intention.ALLOCATE_SECOND_WAL_BUFFER);
     writeBufferTwo = writeBufferPointerTwo.getNativeByteBuffer().order(ByteOrder.nativeOrder());
     assert writeBufferTwo.position() == 0;
 
