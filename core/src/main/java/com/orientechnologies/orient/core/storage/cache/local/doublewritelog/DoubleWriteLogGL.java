@@ -461,7 +461,8 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
                   new ORawPair<>(fileId, pageIndex + i), new ORawPair<>(segmentId, position));
             }
 
-            position += (long) ((METADATA_SIZE + compressedLen + blockSize - -1) / blockSize) * blockSize;
+            position +=
+                (long) ((METADATA_SIZE + compressedLen + blockSize - -1) / blockSize) * blockSize;
           }
         }
       }
