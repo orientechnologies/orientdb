@@ -289,10 +289,10 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
     writtenUpTo.set(new WrittenUpTo(new OLogSequenceNumber(currentSegment, 0), 0));
 
-    writeBufferPointerOne = allocator.allocate(bufferSize, -1);
+    writeBufferPointerOne = allocator.allocate(bufferSize);
     writeBufferOne = writeBufferPointerOne.getNativeByteBuffer().order(ByteOrder.nativeOrder());
 
-    writeBufferPointerTwo = allocator.allocate(bufferSize, -1);
+    writeBufferPointerTwo = allocator.allocate(bufferSize);
     writeBufferTwo = writeBufferPointerTwo.getNativeByteBuffer().order(ByteOrder.nativeOrder());
 
     this.recordsWriterFuture = commitExecutor
@@ -682,7 +682,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
             while (pageIndex * pageSize < chSize) {
               file.position(pageIndex * pageSize);
 
-              final OPointer ptr = allocator.allocate(pageSize, -1);
+              final OPointer ptr = allocator.allocate(pageSize);
               try {
                 final ByteBuffer buffer = ptr.getNativeByteBuffer().order(ByteOrder.nativeOrder());
                 file.readBuffer(buffer);
@@ -1769,7 +1769,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
         }
 
         final long ts = System.nanoTime();
-        final boolean makeFSync = forceSync || ts - lastFSyncTs > fsyncInterval * 1_000_000;
+        final boolean makeFSync = forceSync || ts - lastFSyncTs > fsyncInterval * 1_000_000L;
         final long qSize = queueSize.get();
 
         //even if queue is empty we need to write buffer content to the disk if needed

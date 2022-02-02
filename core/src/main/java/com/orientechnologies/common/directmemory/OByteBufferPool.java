@@ -140,7 +140,7 @@ public final class OByteBufferPool implements OByteBufferPoolMXBean {
     if (pointer != null) {
       pointersPoolSize.decrementAndGet();
     } else {
-      pointer = allocator.allocate(pageSize, -1);
+      pointer = allocator.allocate(pageSize);
     }
 
     if (clear) {
