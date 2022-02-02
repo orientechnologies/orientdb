@@ -3169,7 +3169,6 @@ public final class OWOWCache extends OAbstractWriteCache
             ODirectMemoryAllocator.instance()
                 .allocate(
                     chunk.size() * pageSize,
-                    -1,
                     false,
                     Intention.ALLOCATE_CHUNK_TO_WRITE_DATA_IN_BATCH);
         final ByteBuffer containerBuffer = containerPointer.getNativeByteBuffer();

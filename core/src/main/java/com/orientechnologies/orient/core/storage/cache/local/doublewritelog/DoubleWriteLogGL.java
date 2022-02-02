@@ -178,7 +178,7 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
 
       sizeToAllocate += buffers.length * METADATA_SIZE;
       final OPointer pageContainer =
-          ALLOCATOR.allocate(sizeToAllocate, -1, false, Intention.DWL_ALLOCATE_CHUNK);
+          ALLOCATOR.allocate(sizeToAllocate, false, Intention.DWL_ALLOCATE_CHUNK);
 
       try {
         final ByteBuffer containerBuffer;
@@ -193,8 +193,7 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
           final int maxCompressedLength = LZ_4_COMPRESSOR.maxCompressedLength(buffer.limit());
           final OPointer compressedPointer =
               ODirectMemoryAllocator.instance()
-                  .allocate(
-                      maxCompressedLength, -1, false, Intention.DWL_ALLOCATE_COMPRESSED_CHUNK);
+                  .allocate(maxCompressedLength, false, Intention.DWL_ALLOCATE_COMPRESSED_CHUNK);
           try {
             final ByteBuffer compressedBuffer = compressedPointer.getNativeByteBuffer();
             LZ_4_COMPRESSOR.compress(buffer, compressedBuffer);
@@ -462,7 +461,7 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
                   new ORawPair<>(fileId, pageIndex + i), new ORawPair<>(segmentId, position));
             }
 
-            position += ((METADATA_SIZE + compressedLen + blockSize - -1) / blockSize) * blockSize;
+            position += (long) ((METADATA_SIZE + compressedLen + blockSize - -1) / blockSize) * blockSize;
           }
         }
       }
