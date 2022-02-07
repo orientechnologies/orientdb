@@ -74,6 +74,17 @@ public class ODurablePage {
     this.cacheEntry = cacheEntry;
     this.pointer = cacheEntry.getCachePointer();
     this.changes = cacheEntry.getChanges();
+
+    if (cacheEntry.getInitialLSN() == null) {
+      final ByteBuffer buffer = pointer.getBuffer();
+
+      if (buffer != null) {
+        cacheEntry.setInitialLSN(getLogSequenceNumberFromPage(buffer));
+      } else {
+        // it is new a page
+        cacheEntry.setInitialLSN(new OLogSequenceNumber(0, 0));
+      }
+    }
   }
 
   public final int getPageIndex() {

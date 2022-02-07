@@ -21,27 +21,19 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.atomicope
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.ORawPair;
+import com.orientechnologies.common.util.ORawTriple;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
+import com.orientechnologies.orient.core.storage.cache.chm.PageKey;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFileCreatedWALRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFileDeletedWALRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Note: all atomic operations methods are designed in context that all operations on single files
@@ -450,6 +442,9 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
         writeAheadLog.log(new OFileDeletedWALRecord(operationUnitId, deletedFileId));
       }
 
+      final ArrayList<ORawTriple<PageKey, OLogSequenceNumber, OLogSequenceNumber>> pageLSNs =
+          new ArrayList<>();
+
       for (final Map.Entry<Long, FileChanges> fileChangesEntry : fileChanges.entrySet()) {
         final FileChanges fileChanges = fileChangesEntry.getValue();
         final long fileId = fileChangesEntry.getKey();
@@ -479,6 +474,13 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
                 new OUpdatePageRecord(pageIndex, fileId, operationUnitId, filePageChanges.changes);
             writeAheadLog.log(updatePageRecord);
             filePageChanges.setChangeLSN(updatePageRecord.getLsn());
+
+            final OLogSequenceNumber initialLSN = filePageChanges.getInitialLSN();
+            Objects.requireNonNull(initialLSN);
+
+            pageLSNs.add(
+                new ORawTriple<>(
+                    new PageKey(fileId, (int) pageIndex), initialLSN, updatePageRecord.getLsn()));
           } else {
             filePageChangesIterator.remove();
           }
@@ -486,8 +488,9 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
       }
 
       txEndLsn =
-          writeAheadLog.logAtomicOperationEndRecord(
-              operationUnitId, rollback, this.startLSN, getMetadata());
+          writeAheadLog.log(
+              new AtomicUnitEndRecordWithPageLSNs(
+                  operationUnitId, rollback, getMetadata(), pageLSNs));
 
       for (final long deletedFileId : deletedFiles) {
         readCache.deleteFile(deletedFileId, writeCache);

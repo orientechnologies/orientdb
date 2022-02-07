@@ -54,6 +54,8 @@ public abstract class OOperationUnitRecord extends OAbstractWALRecord {
 
   @Override
   public final void toStream(ByteBuffer buffer) {
+    assert buffer.order().equals(ByteOrder.nativeOrder());
+
     buffer.putLong(operationUnitId);
 
     serializeToByteBuffer(buffer);

@@ -184,4 +184,6 @@ public final class WALRecordTypes {
 
   public static final int CELL_BTREE_BUCKET_SINGLE_VALUE_V3_SET_NEXT_FREE_LIST_PAGE_PO = 198;
   public static final int PAGINATED_VERSION_STATE_V0_SET_FILE_SIZE_PO = 199;
+
+  public static final int ATOMIC_UNIT_END_RECORD_WITH_PAGE_LSNS = 200;
 }

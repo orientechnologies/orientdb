@@ -213,6 +213,9 @@ public final class OWALRecordsFactory {
       case ATOMIC_UNIT_END_RECORD:
         walRecord = new OAtomicUnitEndRecord();
         break;
+      case ATOMIC_UNIT_END_RECORD_WITH_PAGE_LSNS:
+        walRecord = new AtomicUnitEndRecordWithPageLSNs();
+        break;
       case FILE_CREATED_WAL_RECORD:
         walRecord = new OFileCreatedWALRecord();
         break;
