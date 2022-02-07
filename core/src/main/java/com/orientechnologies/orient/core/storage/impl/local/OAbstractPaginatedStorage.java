@@ -117,6 +117,7 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OPageDataVerificationError;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
+import com.orientechnologies.orient.core.storage.cache.chm.PageKey;
 import com.orientechnologies.orient.core.storage.cache.local.OBackgroundExceptionListener;
 import com.orientechnologies.orient.core.storage.cluster.OOfflineCluster;
 import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
@@ -127,21 +128,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.MetaDataRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitEndRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartMetadataRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFileCreatedWALRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFileDeletedWALRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OHighLevelTransactionChangeRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ONonTxOperationPerformedWALRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OPaginatedClusterFactory;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPageBrokenException;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.EmptyWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.WriteableWALRecord;
 import com.orientechnologies.orient.core.storage.index.engine.OHashTableIndexEngine;
@@ -167,6 +154,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -788,6 +776,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
+  @SuppressWarnings("unused")
   protected void checkDatabaseInstanceId(UUID backupUUID) {
     UUID dbUUID = readDatabaseInstanceId();
     if (backupUUID == null) {
@@ -5184,7 +5173,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                   + ". Please use correct version to restore database.");
         }
 
-        wereDataRestoredAfterOpen = restoreFromWAL() != null;
+        wereDataRestoredAfterOpen = true;
+        restoreFromWAL();
 
         if (recoverListener != null) {
           recoverListener.onStorageRecover();
@@ -6005,19 +5995,19 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private OLogSequenceNumber restoreFromWAL() throws IOException {
+  private void restoreFromWAL() throws IOException {
     final OLogSequenceNumber begin = writeAheadLog.begin();
     if (begin == null) {
       OLogManager.instance()
           .error(this, "Restore is not possible because write ahead log is empty.", null);
-      return null;
+      return;
     }
 
     OLogManager.instance().info(this, "Looking for last checkpoint...");
 
     writeAheadLog.addCutTillLimit(begin);
     try {
-      return restoreFromBeginning();
+      restoreFromBeginning();
     } finally {
       writeAheadLog.removeCutTillLimit(begin);
     }
@@ -6057,22 +6047,21 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         "Incremental backup is supported only in enterprise version");
   }
 
-  private OLogSequenceNumber restoreFromBeginning() throws IOException {
+  private void restoreFromBeginning() throws IOException {
     OLogManager.instance().info(this, "Data restore procedure is started.");
 
     final OLogSequenceNumber lsn = writeAheadLog.begin();
 
     writeCache.restoreModeOn();
     try {
-      return restoreFrom(writeAheadLog, lsn);
+      restoreFrom(writeAheadLog, lsn);
     } finally {
       writeCache.restoreModeOff();
     }
   }
 
-  protected OLogSequenceNumber restoreFrom(OWriteAheadLog writeAheadLog, OLogSequenceNumber lsn)
+  protected void restoreFrom(OWriteAheadLog writeAheadLog, OLogSequenceNumber lsn)
       throws IOException {
-    OLogSequenceNumber logSequenceNumber = null;
     final OModifiableBoolean atLeastOnePageUpdate = new OModifiableBoolean();
 
     long recordsProcessed = 0;
@@ -6089,8 +6078,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       while (!records.isEmpty()) {
         for (final WriteableWALRecord walRecord : records) {
-          logSequenceNumber = walRecord.getLsn();
-
           if (walRecord instanceof OAtomicUnitEndRecord) {
             final OAtomicUnitEndRecord atomicUnitEndRecord = (OAtomicUnitEndRecord) walRecord;
             final List<OWALRecord> atomicUnit =
@@ -6100,7 +6087,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             // flushed to the disk
             if (atomicUnit != null) {
               atomicUnit.add(walRecord);
-              restoreAtomicUnit(atomicUnit, atLeastOnePageUpdate);
+              if (!restoreAtomicUnit(atomicUnit, atLeastOnePageUpdate)) {
+                return;
+              }
             }
             byte[] metadata = operationMetadata.remove(atomicUnitEndRecord.getOperationUnitId());
             if (metadata != null) {
@@ -6186,18 +6175,110 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               "Data restore was paused because of exception. The rest of changes will be rolled back.",
               e);
     }
-
-    if (atLeastOnePageUpdate.getValue()) {
-      return logSequenceNumber;
-    }
-
-    return null;
   }
 
-  protected final void restoreAtomicUnit(
+  protected final boolean restoreAtomicUnit(
       final List<OWALRecord> atomicUnit, final OModifiableBoolean atLeastOnePageUpdate)
       throws IOException {
     assert atomicUnit.get(atomicUnit.size() - 1) instanceof OAtomicUnitEndRecord;
+
+    final HashSet<PageKey> pages = new HashSet<>();
+    boolean integrityCheckPassed = true;
+    AtomicUnitEndRecordWithPageLSNs atomicUnitEndRecord = null;
+
+    for (final OWALRecord walRecord : atomicUnit) {
+      if (walRecord instanceof OUpdatePageRecord) {
+        final OUpdatePageRecord record = (OUpdatePageRecord) walRecord;
+
+        final long fileId = record.getFileId();
+        final long pageIndex = record.getPageIndex();
+
+        pages.add(new PageKey(fileId, (int) pageIndex));
+      } else if (walRecord instanceof AtomicUnitEndRecordWithPageLSNs) {
+        atomicUnitEndRecord = (AtomicUnitEndRecordWithPageLSNs) walRecord;
+        final ArrayList<ORawTriple<PageKey, OLogSequenceNumber, OLogSequenceNumber>> pageLSNs =
+            atomicUnitEndRecord.getPageLSNs();
+
+        for (final ORawTriple<PageKey, OLogSequenceNumber, OLogSequenceNumber> triple : pageLSNs) {
+          // page does not exist in restored transaction snippet
+          if (!pages.contains(triple.first)) {
+            // page doest not exist at all
+            if (!writeCache.exists(triple.first.getFileId())) {
+              integrityCheckPassed = false;
+              break;
+            } else {
+              final OCacheEntry cacheEntry =
+                  readCache.loadForRead(
+                      triple.first.getFileId(),
+                      triple.first.getPageIndex(),
+                      true,
+                      writeCache,
+                      true);
+              // page doest not exist at all
+              if (cacheEntry == null) {
+                integrityCheckPassed = false;
+                break;
+              }
+
+              try {
+                final ByteBuffer buffer = cacheEntry.getCachePointer().getBuffer();
+                assert buffer != null;
+
+                final OLogSequenceNumber lsn = ODurablePage.getLogSequenceNumberFromPage(buffer);
+                // page exists but does not contain changes are done inside of the transaction
+                if (lsn.compareTo(triple.third) < 0) {
+                  integrityCheckPassed = false;
+                  break;
+                }
+              } finally {
+                readCache.releaseFromRead(cacheEntry, writeCache);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    if (!integrityCheckPassed) {
+      final String errorMessage =
+          "Transaction is stored only partially but its changes already present in storage. "
+              + this.name
+              + "Such storage can not be restored after crash.";
+
+      final ArrayList<ORawTriple<PageKey, OLogSequenceNumber, OLogSequenceNumber>> pageLSNs =
+          atomicUnitEndRecord.getPageLSNs();
+
+      for (final ORawTriple<PageKey, OLogSequenceNumber, OLogSequenceNumber> triple : pageLSNs) {
+        final OLogSequenceNumber initialLSN = triple.second;
+
+        if (writeCache.exists(triple.first.getFileId())) {
+          final OCacheEntry cacheEntry =
+              readCache.loadForRead(
+                  triple.first.getFileId(), triple.first.getPageIndex(), true, writeCache, true);
+          if (cacheEntry != null) {
+            try {
+              final ByteBuffer buffer = cacheEntry.getCachePointer().getBuffer();
+              assert buffer != null;
+
+              final OLogSequenceNumber lsn = ODurablePage.getLogSequenceNumberFromPage(buffer);
+              if (lsn.compareTo(initialLSN) > 0) {
+                throw new OStorageException(errorMessage);
+              }
+            } finally {
+              readCache.releaseFromRead(cacheEntry, writeCache);
+            }
+          }
+        }
+      }
+
+      OLogManager.instance()
+          .warn(
+              this,
+              "Transaction can be restored only partially for storage "
+                  + this.name
+                  + ", restore process is aborted.");
+      return false;
+    }
 
     for (final OWALRecord walRecord : atomicUnit) {
       if (walRecord instanceof OFileDeletedWALRecord) {
@@ -6282,6 +6363,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         assert false : "Invalid WAL record type was passed " + walRecord.getClass().getName();
       }
     }
+
+    return true;
   }
 
   @SuppressWarnings("unused")

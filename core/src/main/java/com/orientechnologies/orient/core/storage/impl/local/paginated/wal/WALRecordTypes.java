@@ -14,4 +14,6 @@ public final class WALRecordTypes {
   public static final int TX_METADATA = 194;
   public static final int FREE_SPACE_MAP_INIT = 195;
   public static final int FREE_SPACE_MAP_UPDATE = 196;
+
+  public static final int ATOMIC_UNIT_END_RECORD_WITH_PAGE_LSNS = 200;
 }
