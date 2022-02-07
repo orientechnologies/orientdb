@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.record.impl;
 import com.orientechnologies.orient.core.collate.OCaseInsensitiveCollate;
 import com.orientechnologies.orient.core.collate.ODefaultCollate;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.OBinaryField;
@@ -11,9 +12,15 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 public class BinaryComparatorEqualsTest extends AbstractComparatorTest {
+
+  @Before
+  public void before() {
+    ODatabaseRecordThreadLocal.instance().remove();
+  }
 
   @Test
   public void testInteger() {

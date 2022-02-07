@@ -792,6 +792,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
+  @SuppressWarnings("unused")
   protected void checkDatabaseInstanceId(UUID backupUUID) {
     UUID dbUUID = readDatabaseInstanceId();
     if (backupUUID == null) {
@@ -4954,10 +4955,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  /* public long getFullCheckpointCount() {
-    return fullCheckpointCount;
-  } */
-
   protected StartupMetadata checkIfStorageDirty() throws IOException {
     return new StartupMetadata(-1, null);
   }
@@ -5176,7 +5173,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                   + ". Please use correct version to restore database.");
         }
 
-        wereDataRestoredAfterOpen = restoreFromWAL() != null;
+        wereDataRestoredAfterOpen = true;
+        restoreFromWAL();
 
         if (recoverListener != null) {
           recoverListener.onStorageRecover();
@@ -5996,19 +5994,19 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private OLogSequenceNumber restoreFromWAL() throws IOException {
+  private void restoreFromWAL() throws IOException {
     final OLogSequenceNumber begin = writeAheadLog.begin();
     if (begin == null) {
       OLogManager.instance()
           .error(this, "Restore is not possible because write ahead log is empty.", null);
-      return null;
+      return;
     }
 
     OLogManager.instance().info(this, "Looking for last checkpoint...");
 
     writeAheadLog.addCutTillLimit(begin);
     try {
-      return restoreFromBeginning();
+      restoreFromBeginning();
     } finally {
       writeAheadLog.removeCutTillLimit(begin);
     }
@@ -6048,22 +6046,21 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         "Incremental backup is supported only in enterprise version");
   }
 
-  private OLogSequenceNumber restoreFromBeginning() throws IOException {
+  private void restoreFromBeginning() throws IOException {
     OLogManager.instance().info(this, "Data restore procedure is started.");
 
     final OLogSequenceNumber lsn = writeAheadLog.begin();
 
     writeCache.restoreModeOn();
     try {
-      return restoreFrom(writeAheadLog, lsn);
+      restoreFrom(writeAheadLog, lsn);
     } finally {
       writeCache.restoreModeOff();
     }
   }
 
-  protected OLogSequenceNumber restoreFrom(OWriteAheadLog writeAheadLog, OLogSequenceNumber lsn)
+  protected void restoreFrom(OWriteAheadLog writeAheadLog, OLogSequenceNumber lsn)
       throws IOException {
-    OLogSequenceNumber logSequenceNumber = null;
     final OModifiableBoolean atLeastOnePageUpdate = new OModifiableBoolean();
 
     long recordsProcessed = 0;
@@ -6080,8 +6077,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       while (!records.isEmpty()) {
         for (final WriteableWALRecord walRecord : records) {
-          logSequenceNumber = walRecord.getLsn();
-
           if (walRecord instanceof OAtomicUnitEndRecord) {
             final OAtomicUnitEndRecord atomicUnitEndRecord = (OAtomicUnitEndRecord) walRecord;
             final List<OWALRecord> atomicUnit =
@@ -6092,9 +6087,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             if (atomicUnit != null) {
               atomicUnit.add(walRecord);
               if (!restoreAtomicUnit(atomicUnit, atLeastOnePageUpdate)) {
-                if (atLeastOnePageUpdate.getValue()) {
-                  return logSequenceNumber;
-                }
+                return;
               }
             }
             byte[] metadata = operationMetadata.remove(atomicUnitEndRecord.getOperationUnitId());
@@ -6181,12 +6174,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               "Data restore was paused because of exception. The rest of changes will be rolled back.",
               e);
     }
-
-    if (atLeastOnePageUpdate.getValue()) {
-      return logSequenceNumber;
-    }
-
-    return null;
   }
 
   protected final boolean restoreAtomicUnit(
