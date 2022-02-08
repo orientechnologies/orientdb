@@ -20,26 +20,19 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.ORawTriple;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
+import com.orientechnologies.orient.core.storage.cache.chm.PageKey;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFileCreatedWALRecordV2;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFileDeletedWALRecordV2;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecordV2;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
+
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Note: all atomic operations methods are designed in context that all operations on single files will be wrapped in shared lock.
@@ -409,6 +402,9 @@ public final class OAtomicOperation {
         writeAheadLog.log(new OFileDeletedWALRecordV2(operationUnitId, deletedFileId));
       }
 
+      final ArrayList<ORawTriple<PageKey, OLogSequenceNumber, OLogSequenceNumber>> pageLSNs =
+              new ArrayList<>();
+
       for (final Map.Entry<Long, FileChanges> fileChangesEntry : fileChanges.entrySet()) {
         final FileChanges fileChanges = fileChangesEntry.getValue();
         final long fileId = fileChangesEntry.getKey();
@@ -433,13 +429,24 @@ public final class OAtomicOperation {
             final OLogSequenceNumber changesLSN = writeAheadLog
                 .log(new OUpdatePageRecordV2(pageIndex, fileId, operationUnitId, filePageChanges.changes));
             filePageChanges.setChangeLSN(changesLSN);
+
+
+            final OLogSequenceNumber initialLSN = filePageChanges.getInitialLSN();
+            Objects.requireNonNull(initialLSN);
+
+            pageLSNs.add(
+                    new ORawTriple<>(
+                            new PageKey(fileId, (int) pageIndex), initialLSN, changesLSN));
           } else {
             filePageChangesIterator.remove();
           }
         }
       }
 
-      txEndLsn = writeAheadLog.logAtomicOperationEndRecord(operationUnitId, rollback, this.startLSN, getMetadata());
+      txEndLsn =
+              writeAheadLog.log(
+                      new AtomicUnitEndRecordWithPageLSNs(
+                              operationUnitId, rollback, getMetadata(), pageLSNs));
 
       for (final long deletedFileId : deletedFiles) {
         readCache.deleteFile(deletedFileId, writeCache);

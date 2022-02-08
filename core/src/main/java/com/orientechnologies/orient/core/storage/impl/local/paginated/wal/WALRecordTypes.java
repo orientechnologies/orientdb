@@ -77,4 +77,6 @@ public final class WALRecordTypes {
   public static final byte FILE_CREATED_WAL_RECORD_V2   = 69;
   public static final byte UPDATE_PAGE_RECORD_V2        = 70;
   public static final byte ATOMIC_UNIT_START_RECORD_V2  = 71;
+
+  public static final byte ATOMIC_UNIT_END_RECORD_WITH_PAGE_LSNS = 72;
 }

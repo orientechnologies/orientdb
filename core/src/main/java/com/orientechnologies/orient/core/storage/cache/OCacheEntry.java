@@ -66,6 +66,10 @@ public interface OCacheEntry {
 
   void setEndLSN(OLogSequenceNumber endLSN);
 
+  OLogSequenceNumber getInitialLSN();
+
+  void setInitialLSN(OLogSequenceNumber lsn);
+
   boolean acquireEntry();
 
   void releaseEntry();

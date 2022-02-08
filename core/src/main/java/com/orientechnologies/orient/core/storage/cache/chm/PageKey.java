@@ -6,7 +6,7 @@ public final class PageKey {
 
   private int hash;
 
-  PageKey(final long fileId, final int pageIndex) {
+  public PageKey(final long fileId, final int pageIndex) {
     this.fileId = fileId;
     this.pageIndex = pageIndex;
   }

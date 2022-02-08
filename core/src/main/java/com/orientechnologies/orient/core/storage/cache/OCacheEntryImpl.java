@@ -131,6 +131,14 @@ public class OCacheEntryImpl implements OCacheEntry {
   }
 
   @Override
+  public OLogSequenceNumber getInitialLSN() {
+    return null;
+  }
+
+  @Override
+  public void setInitialLSN(OLogSequenceNumber lsn) {}
+
+  @Override
   public boolean insideCache() {
     return insideCache;
   }

@@ -15,6 +15,8 @@ public class OCacheEntryChanges implements OCacheEntry {
   OCacheEntry delegate;
   final OWALChanges changes = new OWALPageChangesPortion();
 
+  private OLogSequenceNumber initialLSN;
+
   boolean isNew;
   boolean pinPage;
 
@@ -199,5 +201,15 @@ public class OCacheEntryChanges implements OCacheEntry {
 
   void setChangeLSN(final OLogSequenceNumber walLSN) {
     this.changeLSN = walLSN;
+  }
+
+  @Override
+  public OLogSequenceNumber getInitialLSN() {
+    return initialLSN;
+  }
+
+  @Override
+  public void setInitialLSN(OLogSequenceNumber lsn) {
+    this.initialLSN = lsn;
   }
 }
