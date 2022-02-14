@@ -1028,20 +1028,13 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
 
       final OWriteAheadLog restoreLog =
           createWalFromIBUFiles(walTempDir, contextConfiguration, locale, walIv);
-      OLogSequenceNumber restoreLsn = null;
 
       if (restoreLog != null) {
         final OLogSequenceNumber beginLsn = restoreLog.begin();
-        restoreLsn = restoreFrom(restoreLog, beginLsn);
-
-        restoreLog.delete();
+        restoreFrom(restoreLog, beginLsn);
       }
 
       if (maxLsn != null && writeAheadLog != null) {
-        if (restoreLsn != null && restoreLsn.compareTo(maxLsn) > 0) {
-          maxLsn = restoreLsn;
-        }
-
         writeAheadLog.moveLsnAfter(maxLsn);
       }
 
