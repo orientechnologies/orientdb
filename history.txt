@@ -27,6 +27,27 @@
 This document contains the last changes of OrientDB Community Edition.
 
 -----------------------------------------------------------------------------------------------------------------------------------
+VERSION 3.2.5 - (December, 14 2022)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#325---14-february-2022
+
+# Changes
+
+## Core
+- Restore flag is triggered once physical restore is started.
+- Tracking of consistency of atomic operation on restore was added.
+- If Unsafe is present it is used for memory allocation/de-allocation.
+- Fix toJson() with spaces in map key names.
+- Prevention of recursive flow of exception is case of internal error.
+- DWL files do not trigger errors during the database backup.
+- Fix ORDER BY with LET
+
+## Distributed
+- Minor fix in distributed stat collecting logic
+- Check to avoid distributed backup path to be in the same location of databases
+- Minor refactor to avoid to do version promises for not changed records
+
+
+-----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.4 - (December, 28 2021)
 - Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#324---28-december-2021
 
