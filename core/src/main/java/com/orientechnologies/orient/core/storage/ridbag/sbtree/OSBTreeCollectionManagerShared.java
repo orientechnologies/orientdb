@@ -246,7 +246,9 @@ public final class OSBTreeCollectionManagerShared
     final long fileId = atomicOperation.fileIdByName(generateLockName(clusterId));
     final int intFileId = OWOWCache.extractFileId(fileId);
     final BTree bTree = fileIdBTreeMap.remove(intFileId);
-    bTree.delete(atomicOperation);
+    if (bTree != null) {
+      bTree.delete(atomicOperation);
+    }
   }
 
   private BTreeBonsaiGlobal doCreateRidBag(OAtomicOperation atomicOperation, int clusterId) {
