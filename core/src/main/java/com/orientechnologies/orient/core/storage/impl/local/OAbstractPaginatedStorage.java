@@ -5995,8 +5995,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     restoreFrom(lsn, writeAheadLog);
   }
 
-  @SuppressWarnings("WeakerAccess")
-  protected final void restoreFrom(final OLogSequenceNumber lsn, final OWriteAheadLog writeAheadLog)
+  @SuppressWarnings({"WeakerAccess", "UnusedReturnValue"})
+  protected final OLogSequenceNumber restoreFrom(final OLogSequenceNumber lsn, final OWriteAheadLog writeAheadLog)
       throws IOException {
     final OModifiableBoolean atLeastOnePageUpdate = new OModifiableBoolean();
 
@@ -6009,6 +6009,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     long lastReportTime = 0;
 
+    OLogSequenceNumber lastUpdatedLSN = null;
     OLogSequenceNumber currentLSN;
     try {
       List<OWriteableWALRecord> records = writeAheadLog.read(lsn, 1_000);
@@ -6031,7 +6032,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               if (atomicUnit != null) {
                 atomicUnit.add(walRecord);
                 if(!restoreAtomicUnit(atomicUnit, atLeastOnePageUpdate)) {
-                  return;
+                  return lastUpdatedLSN;
+                } else {
+                  lastUpdatedLSN = walRecord.getLsn();
                 }
               }
             } else if (walRecord instanceof OAtomicUnitStartRecord) {
@@ -6093,6 +6096,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           .errorNoDb(this, "Data restore was paused because of exception. The rest of changes will be rolled back.", e);
       throw e;
     }
+
+    return lastUpdatedLSN;
   }
 
   private static <T> List<OWALRecord> removeAtomicUnitOperation(final Map<T, List<OWALRecord>> operationUnitsById,
