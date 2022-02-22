@@ -5161,6 +5161,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               "Storage '"
                   + name
                   + "' was not closed properly. Will try to recover from write ahead log");
+      final OLogSequenceNumber lastAppliedLSN;
       try {
         final String openedAtVersion = getOpenedAtVersion();
 
@@ -6060,7 +6061,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  protected void restoreFrom(OWriteAheadLog writeAheadLog, OLogSequenceNumber lsn)
+  @SuppressWarnings("UnusedReturnValue")
+  protected OLogSequenceNumber restoreFrom(OWriteAheadLog writeAheadLog, OLogSequenceNumber lsn)
       throws IOException {
     final OModifiableBoolean atLeastOnePageUpdate = new OModifiableBoolean();
 
@@ -6073,6 +6075,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     long lastReportTime = 0;
 
+    OLogSequenceNumber lastAppliedLSN = null;
     try {
       List<WriteableWALRecord> records = writeAheadLog.read(lsn, 1_000);
 
@@ -6088,7 +6091,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             if (atomicUnit != null) {
               atomicUnit.add(walRecord);
               if (!restoreAtomicUnit(atomicUnit, atLeastOnePageUpdate)) {
-                return;
+                return lastAppliedLSN;
+              } else {
+                lastAppliedLSN = walRecord.getLsn();
               }
             }
             byte[] metadata = operationMetadata.remove(atomicUnitEndRecord.getOperationUnitId());
@@ -6139,6 +6144,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           } else if (walRecord instanceof MetaDataRecord) {
             final MetaDataRecord metaDataRecord = (MetaDataRecord) walRecord;
             this.lastMetadata = metaDataRecord.getMetadata();
+            lastAppliedLSN = walRecord.getLsn();
           } else {
             OLogManager.instance()
                 .warnNoDb(this, "Record %s will be skipped during data restore", walRecord);
@@ -6175,6 +6181,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               "Data restore was paused because of exception. The rest of changes will be rolled back.",
               e);
     }
+
+    return lastAppliedLSN;
   }
 
   protected final boolean restoreAtomicUnit(
