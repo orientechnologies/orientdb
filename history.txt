@@ -27,6 +27,32 @@
 This document contains the last changes of OrientDB Community Edition.
 
 -----------------------------------------------------------------------------------------------------------------------------------
+VERSION 3.1.17  - (February, 22 2022)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.1-Release-Notes#3116---22-february-2022
+
+# Changes
+
+## Core
+- Updated jnr-posix version for m1 support
+- Tracking of consistency of atomic operation on restore was added.
+- If Unsafe is present it is used for memory allocation/de-allocation.
+- Prevention of recursive flow of exception is case of internal error.
+- Bug during removal of items inside BTree is fixed.
+
+## Distributed
+- Add check to avoid distributed backup path to be in the same location of databases
+- Avoid to lock record with no content changes in distributed
+- Fix NPE on network reconnect
+- Add reset of previous sync backup on ddl execution
+- Add new two phase operations for DDL
+- Minor fix in the distributed sequence manager
+- Minor fix on sync backup reset
+
+## SQL
+- Fix ORDER BY with LET
+
+
+-----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.1.15  - (November, 10 2021)
 - Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.1-Release-Notes#3115---10-november-2021
 
