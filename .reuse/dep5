@@ -88,3 +88,6 @@ Files: Jenkinsfile
 Copyright:  2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors
 License: Apache-2.0
 
+Files: .github/*
+Copyright:  2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors
+License: Apache-2.0
