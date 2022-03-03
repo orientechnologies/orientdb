@@ -70,11 +70,7 @@ public class OOfflineCluster implements OCluster {
 
   }
 
-  @Override
-  public void close() throws IOException {
-  }
-
-  @Override
+    @Override
   public void close(boolean flush) throws IOException {
   }
 

@@ -195,11 +195,6 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
   }
 
   @Override
-  public void close() throws IOException {
-    close(true);
-  }
-
-  @Override
   public void close(final boolean flush) throws IOException {
     acquireExclusiveLock();
     try {

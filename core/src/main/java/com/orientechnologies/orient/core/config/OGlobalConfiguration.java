@@ -188,6 +188,11 @@ public enum OGlobalConfiguration {// ENVIRONMENT
       + " 'storeAndSwitchReadOnlyMode' (default) - Same as 'storeAndVerify' with addition that storage will be switched in read only mode "
       + "till it will not be repaired.", OChecksumMode.class, OChecksumMode.StoreAndSwitchReadOnlyMode, false),
 
+  STORAGE_FILE_CLOSE_PARALLELIZATION_LIMIT("storage.fileClose.parallelizationLimit",
+          "Maximum amount of pages which can be flushed simultaniously during closing of storage. " +
+                  "On some OS that is realized by creation of additonal threads, so numbers of pages has to be limited",
+          Integer.class, 1024),
+
   STORAGE_EXCLUSIVE_FILE_ACCESS("storage.exclusiveFileAccess", "Limit access to the datafiles to the single API user, set to "
       + "true to prevent concurrent modification files by different instances of storage", Boolean.class, true),
 

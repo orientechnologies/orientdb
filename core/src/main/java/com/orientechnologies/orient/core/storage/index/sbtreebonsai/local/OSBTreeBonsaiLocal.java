@@ -863,20 +863,6 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     }
   }
 
-  public void flush() {
-    atomicOperationsManager.acquireReadLock(this);
-    try {
-      final Lock lock = FILE_LOCK_MANAGER.acquireSharedLock(fileId);
-      try {
-        writeCache.flush();
-      } finally {
-        lock.unlock();
-      }
-    } finally {
-      atomicOperationsManager.releaseReadLock(this);
-    }
-  }
-
   private BucketSearchResult splitBucket(final List<OBonsaiBucketPointer> path, final int keyIndex, final K keyToInsert,
       final OAtomicOperation atomicOperation) throws IOException {
     final OBonsaiBucketPointer bucketPointer = path.get(path.size() - 1);

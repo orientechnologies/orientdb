@@ -37,6 +37,8 @@ import com.orientechnologies.common.thread.OScheduledThreadPoolExecutorWithLoggi
 import com.orientechnologies.common.thread.OThreadPoolExecutorWithLogging;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.OQuarto;
+import com.orientechnologies.common.util.ORawPair;
+import com.orientechnologies.common.util.ORawTriple;
 import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -1234,21 +1236,29 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
   @Override
   public void flush(final long fileId) {
-    final Future<Void> future = commitExecutor.submit(new FileFlushTask(Collections.singleton(extractFileId(fileId))));
+    final Future<Void> future =
+        commitExecutor.submit(
+            new FileFlushTask(
+                Collections.singleton(extractFileId(fileId)),
+                false,
+                OGlobalConfiguration.STORAGE_FILE_CLOSE_PARALLELIZATION_LIMIT.getValueAsInteger()));
     try {
       future.get();
     } catch (final InterruptedException e) {
       Thread.currentThread().interrupt();
       throw OException.wrapException(new OInterruptedException("File flush was interrupted"), e);
     } catch (final Exception e) {
-      throw OException.wrapException(new OWriteCacheException("File flush was abnormally terminated"), e);
+      throw OException.wrapException(
+          new OWriteCacheException("File flush was abnormally terminated"), e);
     }
   }
 
   @Override
   public void flush() {
 
-    final Future<Void> future = commitExecutor.submit(new FileFlushTask(nameIdMap.values()));
+    final Future<Void> future = commitExecutor.submit(new FileFlushTask(nameIdMap.values(),
+            true,
+            OGlobalConfiguration.STORAGE_FILE_CLOSE_PARALLELIZATION_LIMIT.getValueAsInteger()));
     try {
       future.get();
     } catch (final InterruptedException e) {
@@ -2311,60 +2321,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     OLogManager.instance().error(this, stringWriter.toString(), null);
   }
 
-  private void flushPage(final int fileId, final long pageIndex, final ByteBuffer buffer, final OLogSequenceNumber endLSN)
-      throws InterruptedException, IOException {
-    long startTs = 0;
-    if (printCacheStatistics) {
-      startTs = System.nanoTime();
-    }
-
-    boolean waitedForWALFlush = false;
-
-    if (endLSN != null && writeAheadLog != null) {
-      OLogSequenceNumber flushedLSN = writeAheadLog.getFlushedLsn();
-
-      while (flushedLSN == null || flushedLSN.compareTo(endLSN) < 0) {
-        writeAheadLog.flush();
-        flushedLSN = writeAheadLog.getFlushedLsn();
-        waitedForWALFlush = true;
-      }
-    }
-
-    long walTs = startTs;
-    if (printCacheStatistics && waitedForWALFlush) {
-      walTs = System.nanoTime();
-    }
-
-    long flushTs = 0;
-    if (printCacheStatistics) {
-      flushTs = System.nanoTime();
-    }
-
-    final long externalId = composeFileId(id, fileId);
-    final OClosableEntry<Long, OFileClassic> entry = files.acquire(externalId);
-    try {
-      final OFileClassic fileClassic = entry.get();
-
-      addMagicAndChecksum(buffer);
-      buffer.position(0);
-      fileClassic.write(pageIndex * pageSize, buffer);
-    } finally {
-      files.release(entry);
-    }
-
-    if (printCacheStatistics) {
-      flushedPagesSum++;
-
-      final long endTs = System.nanoTime();
-      flushedPagesTime += endTs - flushTs;
-
-      if (waitedForWALFlush) {
-        walFlushTime += walTs - startTs;
-        walFlushCount++;
-      }
-    }
-  }
-
   private void printReport() {
     if (statisticTs == -1) {
       statisticTs = System.nanoTime();
@@ -3282,64 +3238,122 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
   private final class FileFlushTask implements Callable<Void> {
     private final Set<Integer> fileIdSet;
+    private final boolean throwAnExceptionOnLockFailure;
+    private final int maxScheduledWrites;
 
-    private FileFlushTask(final Collection<Integer> fileIds) {
+    private FileFlushTask(
+        final Collection<Integer> fileIds, final boolean throwAnExceptionOnLockFailure, final int maxScheduledWrites) {
       this.fileIdSet = new HashSet<>(fileIds);
+      this.throwAnExceptionOnLockFailure = throwAnExceptionOnLockFailure;
+      this.maxScheduledWrites = maxScheduledWrites;
     }
 
     @Override
     public Void call() throws Exception {
       if (flushError != null) {
         OLogManager.instance()
-            .errorNoDb(this, "Can not flush file data because of issue during data write, %s", null, flushError.getMessage());
+            .errorNoDb(
+                this,
+                "Can not flush file data because of issue during data write, %s",
+                null,
+                flushError.getMessage());
         return null;
       }
 
-      final Iterator<Map.Entry<PageKey, OCachePointer>> entryIterator = writeCachePages.
-          entrySet().iterator();
+      final Iterator<Map.Entry<PageKey, OCachePointer>> entryIterator =
+          writeCachePages.entrySet().iterator();
 
-      while (entryIterator.hasNext()) {
-        final Map.Entry<PageKey, OCachePointer> entry = entryIterator.next();
-        final PageKey pageKey = entry.getKey();
-        if (fileIdSet.contains(pageKey.fileId)) {
-          final OCachePointer pagePointer = entry.getValue();
-          final Lock groupLock = lockManager.acquireExclusiveLock(pageKey);
-          try {
+      final HashMap<Integer, ArrayList<ORawPair<Long, ByteBuffer>>> pagesToWrite = new HashMap<>();
+      final ArrayList<ORawTriple<PageKey, OCachePointer, Lock>> postProcessingResources =
+          new ArrayList<>();
+
+      boolean success = false;
+      OLogSequenceNumber maxLSN = null;
+
+      try {
+        while (entryIterator.hasNext()) {
+          final Map.Entry<PageKey, OCachePointer> entry = entryIterator.next();
+          final PageKey pageKey = entry.getKey();
+          if (fileIdSet.contains(pageKey.fileId)) {
+            final OCachePointer pagePointer = entry.getValue();
+            final Lock groupLock = lockManager.acquireExclusiveLock(pageKey);
+
+            postProcessingResources.add(new ORawTriple<>(pageKey, pagePointer, groupLock));
+
             if (!pagePointer.tryAcquireSharedLock()) {
+              if (throwAnExceptionOnLockFailure) {
+                throw new OStorageException("Can not acquire page lock to flush data to the file");
+              }
+
               continue;
             }
 
-            try {
-              final ByteBuffer buffer = pagePointer.getBufferDuplicate();
+            final ByteBuffer buffer = pagePointer.getBufferDuplicate();
+            assert buffer != null;
 
-              final OPointer directPointer = bufferPool.acquireDirect(false);
-              try {
-                final ByteBuffer copy = directPointer.getNativeByteBuffer();
-
-                assert buffer != null;
-                buffer.position(0);
-                copy.put(buffer);
-
-                final OLogSequenceNumber endLSN = pagePointer.getEndLSN();
-                flushPage(pageKey.fileId, pageKey.pageIndex, copy, endLSN);
-              } finally {
-                bufferPool.release(directPointer);
-              }
-
-              removeFromDirtyPages(pageKey);
-            } finally {
-              pagePointer.releaseSharedLock();
+            final OLogSequenceNumber endLSN = pagePointer.getEndLSN();
+            if (maxLSN == null || maxLSN.compareTo(endLSN) < 0) {
+              maxLSN = endLSN;
             }
 
-            pagePointer.decrementWritersReferrer();
-            pagePointer.setWritersListener(null);
+            addMagicAndChecksum(buffer);
 
-            entryIterator.remove();
+            final ArrayList<ORawPair<Long, ByteBuffer>> pages =
+                pagesToWrite.computeIfAbsent(pageKey.fileId, k-> new ArrayList<>());
+
+            buffer.position(0);
+            pages.add(new ORawPair<>(pageKey.pageIndex * pageSize, buffer));
+          }
+        }
+
+        if (maxLSN != null && writeAheadLog != null) {
+          OLogSequenceNumber flushedLSN = writeAheadLog.getFlushedLsn();
+
+          while (flushedLSN == null || flushedLSN.compareTo(maxLSN) < 0) {
+            writeAheadLog.flush();
+            flushedLSN = writeAheadLog.getFlushedLsn();
+          }
+        }
+
+        for (Map.Entry<Integer, ArrayList<ORawPair<Long, ByteBuffer>>> dataEntry :
+            pagesToWrite.entrySet()) {
+          final long externalId = composeFileId(id, dataEntry.getKey());
+          final OClosableEntry<Long, OFileClassic> entry = files.acquire(externalId);
+          try {
+            final OFileClassic fileClassic = entry.get();
+            fileClassic.write(dataEntry.getValue(), maxScheduledWrites);
           } finally {
-            groupLock.unlock();
+            files.release(entry);
+          }
+        }
+
+        success = true;
+
+      } finally {
+        for (final ORawTriple<PageKey, OCachePointer, Lock> postProcessingTriple :
+            postProcessingResources) {
+          final OCachePointer pagePointer = postProcessingTriple.second;
+          final PageKey pageKey = postProcessingTriple.first;
+          final Lock groupLock = postProcessingTriple.third;
+
+          if (success) {
+            removeFromDirtyPages(pageKey);
           }
 
-          writeCacheSize.decrementAndGet();
+          pagePointer.releaseSharedLock();
+
+          if (success) {
+            pagePointer.setWritersListener(null);
+            pagePointer.decrementWritersReferrer();
+
+            writeCachePages.remove(pageKey);
+          }
+
+          groupLock.unlock();
+
+          if (success) {
+            writeCacheSize.decrementAndGet();
+          }
         }
       }
 

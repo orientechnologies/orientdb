@@ -719,20 +719,6 @@ public class OSBTree<K, V> extends ODurableComponent {
     }
   }
 
-  public void flush() {
-    atomicOperationsManager.acquireReadLock(this);
-    try {
-      acquireSharedLock();
-      try {
-        writeCache.flush();
-      } finally {
-        releaseSharedLock();
-      }
-    } finally {
-      atomicOperationsManager.releaseReadLock(this);
-    }
-  }
-
   /**
    * Acquires exclusive lock in the active atomic operation running on the current thread for this SB-tree.
    */

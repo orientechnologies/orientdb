@@ -41,9 +41,7 @@ public interface OCluster {
 
   void open() throws IOException;
 
-  void close() throws IOException;
-
-  void close(boolean flush) throws IOException;
+    void close(boolean flush) throws IOException;
 
   void delete(OAtomicOperation atomicOperation) throws IOException;
 

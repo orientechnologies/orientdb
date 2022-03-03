@@ -79,9 +79,6 @@ public class OClusterRemote implements OCluster {
   public void open() throws IOException {
   }
 
-  public void close() throws IOException {
-  }
-
   @Override
   public void close(boolean flush) throws IOException {
   }

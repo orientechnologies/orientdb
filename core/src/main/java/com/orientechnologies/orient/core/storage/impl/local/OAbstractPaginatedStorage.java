@@ -5814,6 +5814,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       if (lastCheckPoint == null) {
         OLogManager.instance().info(this, "Checkpoints are absent, the restore will start from the beginning.");
         restoreFromBeginning();
+        return;
       }
 
       List<OWriteableWALRecord> checkPointRecord;
@@ -5826,6 +5827,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       if (checkPointRecord.isEmpty()) {
         OLogManager.instance().info(this, "Checkpoints are absent, the restore will start from the beginning.");
         restoreFromBeginning();
+        return;
       }
 
       if (checkPointRecord.get(0) instanceof OFuzzyCheckpointStartRecord) {
@@ -5853,6 +5855,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         } else {
           restoreFromCheckPoint((OAbstractCheckPointStartRecord) checkPointRecord.get(0));
         }
+        return;
       }
 
       if (checkPointRecord.get(0) instanceof OFullCheckpointStartRecord) {
@@ -5879,6 +5882,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         } else {
           restoreFromCheckPoint((OAbstractCheckPointStartRecord) checkPointRecord.get(0));
         }
+        return;
       }
 
       throw new OStorageException("Unknown checkpoint record type " + checkPointRecord.get(0).getClass().getName());
@@ -5958,10 +5962,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private void restoreFromCheckPoint(final OAbstractCheckPointStartRecord checkPointRecord) throws IOException {
     if (checkPointRecord instanceof OFuzzyCheckpointStartRecord) {
       restoreFromFuzzyCheckPoint((OFuzzyCheckpointStartRecord) checkPointRecord);
+      return;
     }
 
     if (checkPointRecord instanceof OFullCheckpointStartRecord) {
       restoreFromFullCheckPoint((OFullCheckpointStartRecord) checkPointRecord);
+      return;
     }
 
     throw new OStorageException("Unknown checkpoint record type " + checkPointRecord.getClass().getName());

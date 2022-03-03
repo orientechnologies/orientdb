@@ -43,14 +43,17 @@ import java.io.OutputStreamWriter;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousChannel;
 import java.nio.channels.AsynchronousFileChannel;
+import java.nio.channels.CompletionHandler;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class OIOUtils {
   public static final long SECOND = 1000;
@@ -478,7 +481,95 @@ public class OIOUtils {
   }
 
   public static void writeByteBuffers(
-      final long position, final ByteBuffer[] buffers,final AsynchronousFileChannel channel) {
+      final Iterable<ORawPair<Long, ByteBuffer>> data,
+      final AsynchronousFileChannel channel,
+      final int maxScheduledWrites) {
+
+    final LinkedBlockingQueue<ORawTriple<ByteBuffer, Long, Throwable>> completionQueue =
+        new LinkedBlockingQueue<>();
+
+    int scheduledWrites = 0;
+    for (final ORawPair<Long, ByteBuffer> datum : data) {
+      scheduleSingleCompletableWrite(channel, completionQueue, datum.second, datum.first);
+      scheduledWrites++;
+
+      // max amount of writes is scheduled wait till completion at least of single write
+      while (scheduledWrites == maxScheduledWrites) {
+        scheduledWrites = handleCompletionSingleWrite(channel, completionQueue, scheduledWrites);
+      }
+    }
+
+    while (scheduledWrites > 0) {
+      scheduledWrites = handleCompletionSingleWrite(channel, completionQueue, scheduledWrites);
+    }
+  }
+
+  private static int handleCompletionSingleWrite(
+      final AsynchronousFileChannel channel,
+      final LinkedBlockingQueue<ORawTriple<ByteBuffer, Long, Throwable>> completionQueue,
+      int scheduledWrites) {
+    try {
+      final ORawTriple<ByteBuffer, Long, Throwable> completedItem = completionQueue.take();
+
+      if (completedItem.third != null) {
+        throw OException.wrapException(
+            new OStorageException("Error during writing of data to file"), completedItem.third);
+      }
+
+      final ByteBuffer processedBuffer = completedItem.first;
+
+      if (processedBuffer.remaining() > 0) {
+        final long startPosition = completedItem.second;
+        scheduleSingleCompletableWrite(
+            channel, completionQueue, processedBuffer, startPosition + processedBuffer.position());
+      } else {
+        scheduledWrites--;
+      }
+    } catch (InterruptedException e) {
+      throw OException.wrapException(
+          new OInterruptedException("Waiting for completion of file write was interrupted"), e);
+    }
+    return scheduledWrites;
+  }
+
+  private static void scheduleSingleCompletableWrite(
+      final AsynchronousFileChannel channel,
+      final LinkedBlockingQueue<ORawTriple<ByteBuffer, Long, Throwable>> completionQueue,
+      final ByteBuffer buffer,
+      final long writePosition) {
+    channel.write(
+        buffer,
+        writePosition,
+        null,
+        new CompletionHandler<Integer, Object>() {
+          @Override
+          public void completed(Integer result, Object attachment) {
+            try {
+              completionQueue.put(new ORawTriple<>(buffer, writePosition, null));
+            } catch (InterruptedException e) {
+              throw OException.wrapException(
+                  new OInterruptedException(
+                      "Indication of completion of file write was interrupted"),
+                  e);
+            }
+          }
+
+          @Override
+          public void failed(Throwable exc, Object attachment) {
+            try {
+              completionQueue.put(new ORawTriple<>(null, null, exc));
+            } catch (InterruptedException e) {
+              throw OException.wrapException(
+                  new OInterruptedException(
+                      "Indication of completion of file write was interrupted"),
+                  e);
+            }
+          }
+        });
+  }
+
+  public static void writeByteBuffers(
+      final long position, final ByteBuffer[] buffers, final AsynchronousFileChannel channel) {
     for (ByteBuffer buffer : buffers) {
       buffer.position(0);
     }
