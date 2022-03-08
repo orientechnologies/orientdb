@@ -3292,7 +3292,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
             assert buffer != null;
 
             final OLogSequenceNumber endLSN = pagePointer.getEndLSN();
-            if (maxLSN == null || maxLSN.compareTo(endLSN) < 0) {
+            if (endLSN != null && (maxLSN == null || maxLSN.compareTo(endLSN) < 0)) {
               maxLSN = endLSN;
             }
 
