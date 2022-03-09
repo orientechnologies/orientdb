@@ -48,7 +48,7 @@ node {
                 try {
                                 //skip integration test for now
 
-                       sh "cd orientdb && mvn  --batch-mode -V -U -fae  -pl !distribution,!distribution-tp2,!distributed,!crashtests clean jacoco:prepare-agent  package failsafe:integration-test -Dstorage.diskCache.bufferSize=4096  -Dorientdb.test.env=ci -Dsurefire.useFile=false -DskipTests"
+                       sh "cd orientdb && mvn  -P coverage --batch-mode -V -U -fae  -pl !distribution,!distribution-tp2,!distributed clean jacoco:prepare-agent  package failsafe:integration-test -Dstorage.diskCache.bufferSize=4096  -Dorientdb.test.env=ci -Dsurefire.useFile=false -DskipTests"
                        sh "cd orientdb && mvn -f ./distributed/pom.xml --batch-mode -V -U -e -fae -Dmaven.test.failure.ignore=true  clean jacoco:prepare-agent package  -Dsurefire.useFile=false -DskipTests=false"
                        //sh "${mvnHome}/bin/mvn --batch-mode -V -U -e -pl crashtests -am -P crash-tests clean jacoco:prepare-agent test-compile package  failsafe:integration-test -Dsurefire.useFile=false"
 
