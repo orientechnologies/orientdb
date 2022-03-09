@@ -22,6 +22,7 @@ import com.orientechnologies.orient.server.OServer;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -153,6 +154,7 @@ public class OLiveQueryRemoteTest {
   }
 
   @Test
+  @Ignore
   public void testRestrictedLiveInsert() throws ExecutionException, InterruptedException {
     OSchema schema = database.getMetadata().getSchema();
     OClass oRestricted = schema.getClass("ORestricted");
