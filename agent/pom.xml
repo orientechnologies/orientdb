@@ -15,7 +15,7 @@
         <orientdb.version>3.2.6-SNAPSHOT</orientdb.version>
         <surefire.version>2.19.1</surefire.version>
         <metrics.version>4.1.6</metrics.version>
-        <jackson.version>2.10.5.1</jackson.version>
+        <jackson.version>2.13.2.1</jackson.version>
         <exclude.kerberos.tests>%regex[com.orientechnologies.security.kerberos.*Test.*]</exclude.kerberos.tests>
         <project.rootdir>${project.basedir}/../</project.rootdir>
     </properties>
