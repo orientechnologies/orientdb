@@ -774,44 +774,56 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
       stateLock.acquireWriteLock();
       try {
         this.interruptionManager.enterCriticalPath();
+        UUID restoreUUID = extractDbInstanceUUID(backupDirectory, files[0]);
         for (String file : files) {
-          final File ibuFile = new File(backupDirectory, file);
+          UUID fileUUID = extractDbInstanceUUID(backupDirectory, files[0]);
+          if ((restoreUUID == null && fileUUID == null)
+              || (restoreUUID != null && restoreUUID.equals(fileUUID))) {
+            final File ibuFile = new File(backupDirectory, file);
 
-          RandomAccessFile rndIBUFile = new RandomAccessFile(ibuFile, "rw");
-          try {
-            final FileChannel ibuChannel = rndIBUFile.getChannel();
-            final ByteBuffer versionBuffer = ByteBuffer.allocate(OIntegerSerializer.INT_SIZE);
-            OIOUtils.readByteBuffer(versionBuffer, ibuChannel);
-            versionBuffer.rewind();
-
-            final int backupVersion = versionBuffer.getInt();
-            if (backupVersion != INCREMENTAL_BACKUP_VERSION) {
-              throw new OStorageException(
-                  "Invalid version of incremental backup version was provided. Expected "
-                      + INCREMENTAL_BACKUP_VERSION
-                      + " , provided "
-                      + backupVersion);
-            }
-
-            ibuChannel.position(2 * OIntegerSerializer.INT_SIZE + 2 * OLongSerializer.LONG_SIZE);
-            final ByteBuffer buffer = ByteBuffer.allocate(1);
-            ibuChannel.read(buffer);
-            buffer.rewind();
-
-            final boolean fullBackup = buffer.get() == 1;
-
-            final InputStream inputStream = Channels.newInputStream(ibuChannel);
+            RandomAccessFile rndIBUFile = new RandomAccessFile(ibuFile, "rw");
             try {
-              restoreFromIncrementalBackup(inputStream, fullBackup);
+              final FileChannel ibuChannel = rndIBUFile.getChannel();
+              final ByteBuffer versionBuffer = ByteBuffer.allocate(OIntegerSerializer.INT_SIZE);
+              OIOUtils.readByteBuffer(versionBuffer, ibuChannel);
+              versionBuffer.rewind();
+
+              final int backupVersion = versionBuffer.getInt();
+              if (backupVersion != INCREMENTAL_BACKUP_VERSION) {
+                throw new OStorageException(
+                    "Invalid version of incremental backup version was provided. Expected "
+                        + INCREMENTAL_BACKUP_VERSION
+                        + " , provided "
+                        + backupVersion);
+              }
+
+              ibuChannel.position(2 * OIntegerSerializer.INT_SIZE + 2 * OLongSerializer.LONG_SIZE);
+              final ByteBuffer buffer = ByteBuffer.allocate(1);
+              ibuChannel.read(buffer);
+              buffer.rewind();
+
+              final boolean fullBackup = buffer.get() == 1;
+
+              final InputStream inputStream = Channels.newInputStream(ibuChannel);
+              try {
+                restoreFromIncrementalBackup(inputStream, fullBackup);
+              } finally {
+                Utils.safeClose(this, inputStream);
+              }
             } finally {
-              Utils.safeClose(this, inputStream);
+              try {
+                rndIBUFile.close();
+              } catch (IOException e) {
+                OLogManager.instance().warn(this, "Failed to close resource " + rndIBUFile);
+              }
             }
-          } finally {
-            try {
-              rndIBUFile.close();
-            } catch (IOException e) {
-              OLogManager.instance().warn(this, "Failed to close resource " + rndIBUFile);
-            }
+          } else {
+            OLogManager.instance()
+                .warn(
+                    this,
+                    "Skipped file '"
+                        + file
+                        + "' is not a backup of the same database of previous backups");
           }
         }
       } finally {
