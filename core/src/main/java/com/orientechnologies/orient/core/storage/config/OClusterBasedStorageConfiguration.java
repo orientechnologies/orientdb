@@ -143,7 +143,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     cluster =
         OPaginatedClusterFactory.createCluster(
             COMPONENT_NAME,
-            OPaginatedCluster.getLatestBinaryVersion(),
+            OGlobalConfiguration.STORAGE_CLUSTER_VERSION.getValueAsInteger(),
             storage,
             DATA_FILE_EXTENSION,
             MAP_FILE_EXTENSION,

@@ -40,7 +40,15 @@ public final class CellBTreeSingleValueEntryPointV3<K> extends ODurablePage {
   }
 
   public int getFreeListHead() {
-    return getIntValue(FREE_LIST_HEAD_OFFSET);
+    final int head = getIntValue(FREE_LIST_HEAD_OFFSET);
+
+    // fix of binary compatibility.
+    // in previous version free list head is absent so 0 is considered as invalid value
+    if (head == 0) {
+      return -1;
+    }
+
+    return head;
   }
 
   public void setFreeListHead(int freeListHead) {
