@@ -103,7 +103,7 @@ public class OEngineLocalPaginated extends OEngineAbstract {
       final List<OPointer> pages = new ArrayList<>(pageCount);
 
       for (int i = 0; i < pageCount; i++) {
-        pages.add(bufferPool.acquireDirect(false, Intention.PAGE_PRE_ALLOCATION));
+        pages.add(bufferPool.acquireDirect(true, Intention.PAGE_PRE_ALLOCATION));
       }
 
       for (final OPointer pointer : pages) {
