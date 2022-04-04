@@ -106,6 +106,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -1689,22 +1690,41 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                   "Backup folder configured as same of database folder:'%s'",
                   oldDirectory.getAbsolutePath()));
         }
-
         try {
-          Files.move(
-              oldDirectory.toPath(), backupFullPath.toPath(), StandardCopyOption.ATOMIC_MOVE);
-        } catch (AtomicMoveNotSupportedException e) {
+          try {
+            Files.move(
+                oldDirectory.toPath(), backupFullPath.toPath(), StandardCopyOption.ATOMIC_MOVE);
+          } catch (AtomicMoveNotSupportedException e) {
+            OLogManager.instance()
+                .errorNoDb(
+                    this,
+                    "Atomic moves not supported during database backup, will try not atomic move",
+                    null);
+            if (backupFullPath.exists()) {
+              deleteRecursively(backupFullPath);
+            }
+            Files.createDirectories(backupFullPath.toPath());
+
+            Files.move(oldDirectory.toPath(), Paths.get(backupPath, oldDirectory.getName()));
+          }
+        } catch (DirectoryNotEmptyException e) {
           OLogManager.instance()
               .errorNoDb(
                   this,
-                  "Atomic moves not supported during database backup, will try not atomic move",
+                  "File rename not supported during database backup, will try coping files",
                   null);
           if (backupFullPath.exists()) {
             deleteRecursively(backupFullPath);
           }
           Files.createDirectories(backupFullPath.toPath());
-
-          Files.move(oldDirectory.toPath(), Paths.get(backupPath, oldDirectory.getName()));
+          try {
+            OFileUtils.copyDirectory(
+                oldDirectory, Paths.get(backupPath, oldDirectory.getName()).toFile());
+            deleteRecursively(oldDirectory);
+          } catch (IOException ioe) {
+            OLogManager.instance().errorNoDb(this, "Error moving old database removing it", ioe);
+            deleteRecursively(oldDirectory);
+          }
         }
       }
     } catch (IOException e) {
