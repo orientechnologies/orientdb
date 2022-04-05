@@ -23,6 +23,36 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DIST
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_MAX_STARTUP_DELAY;
 import static com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl.DISTRIBUTED_SYNC_JSON_FILENAME;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.DirectoryNotEmptyException;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TimerTask;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
@@ -104,35 +134,6 @@ import com.orientechnologies.orient.server.distributed.task.ODistributedDatabase
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.AtomicMoveNotSupportedException;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimerTask;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Abstract plugin to manage the distributed environment.
@@ -1595,20 +1596,32 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       final File oldDirectory = new File(dbpath);
       if (oldDirectory.exists() && oldDirectory.isDirectory()) {
         try {
-          Files.move(
-              oldDirectory.toPath(), backupFullPath.toPath(), StandardCopyOption.ATOMIC_MOVE);
-        } catch (AtomicMoveNotSupportedException e) {
-          OLogManager.instance()
-              .errorNoDb(
-                  this,
-                  "Atomic moves not supported during database backup, will try not atomic move",
-                  null);
+          try {
+            Files.move(oldDirectory.toPath(), backupFullPath.toPath(), StandardCopyOption.ATOMIC_MOVE);
+          } catch (AtomicMoveNotSupportedException e) {
+            OLogManager.instance().errorNoDb(this, "Atomic moves not supported during database backup, will try not atomic move",
+                null);
+            if (backupFullPath.exists()) {
+              deleteRecursively(backupFullPath);
+            }
+            Files.createDirectories(backupFullPath.toPath());
+
+            Files.move(oldDirectory.toPath(), backupFullPath.toPath());
+          }
+
+        } catch (DirectoryNotEmptyException e) {
+          OLogManager.instance().errorNoDb(this, "File rename not supported during database backup, will try coping files", null);
           if (backupFullPath.exists()) {
             deleteRecursively(backupFullPath);
           }
           Files.createDirectories(backupFullPath.toPath());
-
-          Files.move(oldDirectory.toPath(), backupFullPath.toPath());
+          try {
+            OFileUtils.copyDirectory(oldDirectory, backupFullPath);
+            deleteRecursively(oldDirectory);
+          } catch (IOException ioe) {
+            OLogManager.instance().errorNoDb(this, "Error moving old database removing it", ioe);
+            deleteRecursively(oldDirectory);
+          }
         }
       }
     } catch (IOException e) {
