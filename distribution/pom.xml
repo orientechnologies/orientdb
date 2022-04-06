@@ -168,6 +168,7 @@
                             <workingDirectory>${project.basedir}</workingDirectory>
                             <arguments>
                                 <argument>-Xmx${heapSize}</argument>
+                                <argument>-Dmemory.directMemory.preallocate=false</argument>
                                 <argument>-DridBag.embeddedToSbtreeBonsaiThreshold=10000000</argument>
                                 <argument>-classpath</argument>
                                 <classpath/>

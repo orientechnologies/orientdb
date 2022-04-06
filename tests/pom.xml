@@ -35,6 +35,7 @@
             -Dstorage.diskCache.checksumMode=storeAndThrow
             -Dindex.allowManualIndexes=false
             -Dsecurity.warningDefaultUsers=false
+            -Dmemory.directMemory.preallocate=false
         </argLine>
         <project.rootdir>${project.basedir}/../</project.rootdir>
     </properties>
@@ -155,6 +156,7 @@
                         <orient.server.port>${orient.server.port}</orient.server.port>
                         <storage.diskCache.bufferSize>4096</storage.diskCache.bufferSize>
                         <memory.directMemory.trackMode>true</memory.directMemory.trackMode>
+                        <memory.directMemory.preallocate>false</memory.directMemory.preallocate>
                     </systemPropertyVariables>
                     <properties>
                         <property>
@@ -222,6 +224,7 @@
                         <orientdb.test.keepDatabase>true</orientdb.test.keepDatabase>
                         <storage.diskCache.bufferSize>4096</storage.diskCache.bufferSize>
                         <memory.directMemory.trackMode>true</memory.directMemory.trackMode>
+                        <memory.directMemory.preallocate>false</memory.directMemory.preallocate>
                     </systemPropertyVariables>
                     <properties>
                         <property>
