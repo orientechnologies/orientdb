@@ -4,10 +4,14 @@ import com.orientechnologies.common.concur.lock.OModificationOperationProhibited
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.OrientDBEmbedded;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -16,7 +20,12 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.*;
+import java.util.Stack;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -25,16 +34,25 @@ import org.junit.Test;
  * @since 9/17/2015
  */
 public class StorageBackupMTTest {
-  private final CountDownLatch latch = new CountDownLatch(1);
-  private volatile boolean stop = false;
+  private final CountDownLatch started = new CountDownLatch(1);
+  private final Stack<CountDownLatch> backupIterationRecordCount = new Stack<>();
+  private final CountDownLatch finished = new CountDownLatch(1);
+
   private OrientDB orientDB;
   private String dbName;
 
   @Test
   public void testParallelBackup() throws Exception {
-    final String buildDirectory = System.getProperty("buildDirectory", ".");
+    backupIterationRecordCount.clear();
+    for (int i = 0; i < 100; i++) {
+      CountDownLatch latch = new CountDownLatch(4);
+      backupIterationRecordCount.add(latch);
+    }
+    String buildDirectory = System.getProperty("buildDirectory", "./target") + "/backupTest";
+    OFileUtils.createDirectoryTree(buildDirectory);
     dbName = StorageBackupMTTest.class.getSimpleName();
     final String dbDirectory = buildDirectory + File.separator + dbName;
+
     final File backupDir = new File(buildDirectory, "backupDir");
     final String backupDbName = StorageBackupMTTest.class.getSimpleName() + "BackUp";
 
@@ -63,16 +81,18 @@ public class StorageBackupMTTest {
       final List<Future<Void>> futures = new ArrayList<>();
 
       for (int i = 0; i < 4; i++) {
-        futures.add(executor.submit(new DataWriterCallable()));
+        Stack<CountDownLatch> producerIterationRecordCount = new Stack<>();
+        for (CountDownLatch l : backupIterationRecordCount) {
+          producerIterationRecordCount.add(l);
+        }
+        futures.add(executor.submit(new DataWriterCallable(producerIterationRecordCount, 1000)));
       }
 
       futures.add(executor.submit(new DBBackupCallable(backupDir.getAbsolutePath())));
 
-      latch.countDown();
+      started.countDown();
 
-      TimeUnit.MINUTES.sleep(3);
-
-      stop = true;
+      finished.await();
 
       for (Future<Void> future : futures) {
         future.get();
@@ -142,7 +162,14 @@ public class StorageBackupMTTest {
 
   @Test
   public void testParallelBackupEncryption() throws Exception {
-    final String buildDirectory = System.getProperty("buildDirectory", ".");
+    backupIterationRecordCount.clear();
+    for (int i = 0; i < 100; i++) {
+      CountDownLatch latch = new CountDownLatch(4);
+      backupIterationRecordCount.add(latch);
+    }
+    String buildDirectory = System.getProperty("buildDirectory", "./target") + "/backupTest";
+    OFileUtils.createDirectoryTree(buildDirectory);
+
     final String backupDbName = StorageBackupMTTest.class.getSimpleName() + "BackUp";
     final String backedUpDbDirectory = buildDirectory + File.separator + backupDbName;
     final File backupDir = new File(buildDirectory, "backupDir");
@@ -181,16 +208,18 @@ public class StorageBackupMTTest {
       final List<Future<Void>> futures = new ArrayList<>();
 
       for (int i = 0; i < 4; i++) {
-        futures.add(executor.submit(new DataWriterCallable()));
+        Stack<CountDownLatch> producerIterationRecordCount = new Stack<>();
+        for (CountDownLatch l : backupIterationRecordCount) {
+          producerIterationRecordCount.add(l);
+        }
+        futures.add(executor.submit(new DataWriterCallable(producerIterationRecordCount, 1000)));
       }
 
       futures.add(executor.submit(new DBBackupCallable(backupDir.getAbsolutePath())));
 
-      latch.countDown();
+      started.countDown();
 
-      TimeUnit.MINUTES.sleep(2);
-
-      stop = true;
+      finished.await();
 
       for (Future<Void> future : futures) {
         future.get();
@@ -252,39 +281,72 @@ public class StorageBackupMTTest {
   }
 
   private final class DataWriterCallable implements Callable<Void> {
+    private final Stack<CountDownLatch> producerIterationRecordCount;
+    private int count;
+
+    public DataWriterCallable(Stack<CountDownLatch> producerIterationRecordCount, int count) {
+      this.producerIterationRecordCount = producerIterationRecordCount;
+      this.count = count;
+    }
+
     @Override
     public Void call() throws Exception {
-      latch.await();
+      started.await();
 
       System.out.println(Thread.currentThread() + " - start writing");
 
       try (ODatabaseDocument db = orientDB.open(dbName, "admin", "admin")) {
-        final Random random = new Random();
-        while (!stop) {
-          try {
-            final byte[] data = new byte[16];
-            random.nextBytes(data);
 
-            final int num = random.nextInt();
+        Random random = new Random();
+        List<ORID> ids = new ArrayList<>();
+        while (!producerIterationRecordCount.isEmpty()) {
 
-            final ODocument document = new ODocument("BackupClass");
-            document.field("num", num);
-            document.field("data", data);
+          for (int i = 0; i < count; i++) {
+            try {
+              final byte[] data = new byte[random.nextInt(1024)];
+              random.nextBytes(data);
 
-            document.save();
-          } catch (OModificationOperationProhibitedException e) {
-            System.out.println("Modification prohibited ... wait ...");
-            Thread.sleep(1000);
-          } catch (Exception | Error e) {
-            OLogManager.instance().error(this, "", e);
-            throw e;
+              final int num = random.nextInt();
+              if (!ids.isEmpty() && i % 8 == 0) {
+                ORID id = ids.remove(0);
+                db.delete(id);
+              } else if (!ids.isEmpty() && i % 4 == 0) {
+                ORID id = ids.remove(0);
+                final ODocument document = db.load(id);
+                document.field("data", data);
+              } else {
+                final ODocument document = new ODocument("BackupClass");
+                document.field("num", num);
+                document.field("data", data);
+
+                ORID id = document.save().getIdentity();
+                if (ids.size() < 100) {
+                  ids.add(id);
+                }
+              }
+
+            } catch (OModificationOperationProhibitedException e) {
+              System.out.println("Modification prohibited ... wait ...");
+              Thread.sleep(1000);
+            } catch (RuntimeException e) {
+              e.printStackTrace();
+              throw e;
+            } catch (Exception e) {
+              e.printStackTrace();
+              throw e;
+            } catch (Error e) {
+              e.printStackTrace();
+              throw e;
+            }
           }
+          producerIterationRecordCount.pop().countDown();
+          System.out.println(Thread.currentThread() + " writing of a batch done");
         }
+
+        System.out.println(Thread.currentThread() + " - done writing");
+        finished.countDown();
+        return null;
       }
-
-      System.out.println(Thread.currentThread() + " - done writing");
-
-      return null;
     }
   }
 
@@ -297,15 +359,16 @@ public class StorageBackupMTTest {
 
     @Override
     public Void call() throws Exception {
-      latch.await();
+      started.await();
 
       final ODatabaseDocument db = orientDB.open(dbName, "admin", "admin");
 
       System.out.println(Thread.currentThread() + " - start backup");
 
       try {
-        while (!stop) {
-          TimeUnit.MINUTES.sleep(1);
+        while (!backupIterationRecordCount.isEmpty()) {
+          CountDownLatch latch = backupIterationRecordCount.pop();
+          latch.await();
 
           System.out.println(Thread.currentThread() + " do inc backup");
           db.incrementalBackup(backupPath);
@@ -323,6 +386,7 @@ public class StorageBackupMTTest {
       } finally {
         db.close();
       }
+      finished.countDown();
 
       System.out.println(Thread.currentThread() + " - stop backup");
 

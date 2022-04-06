@@ -1,9 +1,8 @@
 target/
 
-*/.project
-*/.classpath
+.project
+.classpath
 *.prefs
-*/.idea
 *.iml
 .idea
 agent/generated/*
