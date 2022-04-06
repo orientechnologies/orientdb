@@ -277,6 +277,7 @@
                     -Dindex.allowManualIndexes=false
                     -Dsecurity.warningDefaultUsers=false
                     -Dsecurity.createDefaultUsers=false
+                    -Dmemory.directMemory.preallocate=false
                 </argLine>
             </properties>
         </profile>
@@ -301,6 +302,7 @@
                     -Dsecurity.createDefaultUsers=false
                     --add-opens jdk.unsupported/sun.misc=ALL-UNNAMED
                     --add-opens java.base/sun.security.x509=ALL-UNNAMED
+                    -Dmemory.directMemory.preallocate=false
                 </argLine>
             </properties>
         </profile>
