@@ -30,6 +30,7 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.common.util.OQuarto;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -743,11 +744,50 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
   public void restoreFullIncrementalBackup(final InputStream stream)
       throws UnsupportedOperationException {
     try {
-      restoreFromIncrementalBackup(stream, true);
+      final String aesKeyEncoded =
+              getConfiguration()
+                      .getContextConfiguration()
+                      .getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY);
+      final byte[] aesKey = aesKeyEncoded == null ? null : Base64.getDecoder().decode(aesKeyEncoded);
+
+      if (aesKey != null && aesKey.length != 16 && aesKey.length != 24 && aesKey.length != 32) {
+        throw new OInvalidStorageEncryptionKeyException(
+                "Invalid length of the encryption key, provided size is " + aesKey.length);
+      }
+
+      final OQuarto<Locale, OContextConfiguration, String, Locale> quarto = preprocessingIncrementalRestore();
+      final Locale serverLocale = quarto.one;
+      final OContextConfiguration contextConfiguration = quarto.two;
+      final String charset = quarto.three;
+      final Locale locale = quarto.four;
+
+      restoreFromIncrementalBackup(charset, serverLocale, locale, contextConfiguration, aesKey, stream, true);
+
+      postProcessIncrementalRestore(contextConfiguration);
     } catch (IOException e) {
       throw OException.wrapException(
           new OStorageException("Error during restore from incremental backup"), e);
     }
+  }
+
+  private OQuarto<Locale, OContextConfiguration, String, Locale> preprocessingIncrementalRestore()
+      throws IOException {
+    final Locale serverLocale = configuration.getLocaleInstance();
+    final OContextConfiguration contextConfiguration = configuration.getContextConfiguration();
+    final String charset = configuration.getCharset();
+    final Locale locale = configuration.getLocaleInstance();
+
+    atomicOperationsManager.executeInsideAtomicOperation(
+        null,
+        atomicOperation -> {
+          closeClusters(false);
+          closeIndexes(atomicOperation, false);
+          ((OClusterBasedStorageConfiguration) configuration).close(atomicOperation);
+        });
+
+    configuration = null;
+
+    return new OQuarto<>(serverLocale, contextConfiguration, charset, locale);
   }
 
   private void restoreFromIncrementalBackup(final File backupDirectory) {
@@ -774,6 +814,24 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
       stateLock.acquireWriteLock();
       try {
         this.interruptionManager.enterCriticalPath();
+
+        final String aesKeyEncoded =
+                getConfiguration()
+                        .getContextConfiguration()
+                        .getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY);
+        final byte[] aesKey = aesKeyEncoded == null ? null : Base64.getDecoder().decode(aesKeyEncoded);
+
+        if (aesKey != null && aesKey.length != 16 && aesKey.length != 24 && aesKey.length != 32) {
+          throw new OInvalidStorageEncryptionKeyException(
+                  "Invalid length of the encryption key, provided size is " + aesKey.length);
+        }
+
+        final OQuarto<Locale, OContextConfiguration, String, Locale> quarto = preprocessingIncrementalRestore();
+        final Locale serverLocale = quarto.one;
+        final OContextConfiguration contextConfiguration = quarto.two;
+        final String charset = quarto.three;
+        final Locale locale = quarto.four;
+
         for (String file : files) {
           final File ibuFile = new File(backupDirectory, file);
 
@@ -802,7 +860,8 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
 
             final InputStream inputStream = Channels.newInputStream(ibuChannel);
             try {
-              restoreFromIncrementalBackup(inputStream, fullBackup);
+              restoreFromIncrementalBackup(charset, serverLocale, locale, contextConfiguration, aesKey,
+                      inputStream, fullBackup);
             } finally {
               Utils.safeClose(this, inputStream);
             }
@@ -814,6 +873,8 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
             }
           }
         }
+
+        postProcessIncrementalRestore(contextConfiguration);
       } finally {
         stateLock.releaseWriteLock();
         this.interruptionManager.exitCriticalPath();
@@ -824,37 +885,62 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
     }
   }
 
-  private void restoreFromIncrementalBackup(final InputStream inputStream, final boolean isFull)
-      throws IOException {
-    final String aesKeyEncoded =
-        getConfiguration()
-            .getContextConfiguration()
-            .getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY);
-    final byte[] aesKey = aesKeyEncoded == null ? null : Base64.getDecoder().decode(aesKeyEncoded);
+  private void postProcessIncrementalRestore(OContextConfiguration contextConfiguration) throws IOException {
+    if (OClusterBasedStorageConfiguration.exists(writeCache)) {
+      configuration = new OClusterBasedStorageConfiguration(this);
+      atomicOperationsManager.executeInsideAtomicOperation(
+              null,
+              atomicOperation ->
+                      ((OClusterBasedStorageConfiguration) configuration)
+                              .load(contextConfiguration, atomicOperation));
+    } else {
+      if (Files.exists(getStoragePath().resolve("database.ocf"))) {
+        final OStorageConfigurationSegment oldConfig = new OStorageConfigurationSegment(this);
+        oldConfig.load(contextConfiguration);
 
-    if (aesKey != null && aesKey.length != 16 && aesKey.length != 24 && aesKey.length != 32) {
-      throw new OInvalidStorageEncryptionKeyException(
-          "Invalid length of the encryption key, provided size is " + aesKey.length);
+        final OClusterBasedStorageConfiguration atomicConfiguration =
+                new OClusterBasedStorageConfiguration(this);
+        atomicOperationsManager.executeInsideAtomicOperation(
+                null,
+                atomicOperation ->
+                        atomicConfiguration.create(atomicOperation, contextConfiguration, oldConfig));
+        configuration = atomicConfiguration;
+
+        oldConfig.close();
+        Files.deleteIfExists(getStoragePath().resolve("database.ocf"));
+      }
+
+      if (configuration == null) {
+        configuration = new OClusterBasedStorageConfiguration(this);
+        atomicOperationsManager.executeInsideAtomicOperation(
+                null,
+                atomicOperation ->
+                        ((OClusterBasedStorageConfiguration) configuration)
+                                .load(contextConfiguration, atomicOperation));
+      }
     }
 
+    atomicOperationsManager.executeInsideAtomicOperation(null, this::openClusters);
+    openIndexes();
+
+    flushAllData();
+
+    atomicOperationsManager.executeInsideAtomicOperation(
+            null,
+            atomicOperation2 -> {
+              generateDatabaseInstanceId(atomicOperation2);
+            });
+  }
+
+  private void restoreFromIncrementalBackup(final String charset, final Locale serverLocale,
+                                            final Locale locale, final OContextConfiguration contextConfiguration,
+                                            final byte[] aesKey,  final InputStream inputStream, final boolean isFull)
+      throws IOException {
     stateLock.acquireWriteLock();
     try {
       this.interruptionManager.enterCriticalPath();
+
       final List<String> currentFiles = new ArrayList<>(writeCache.files().keySet());
-      final Locale serverLocale = configuration.getLocaleInstance();
-      final OContextConfiguration contextConfiguration = configuration.getContextConfiguration();
-      final String charset = configuration.getCharset();
-      final Locale locale = configuration.getLocaleInstance();
-
-      atomicOperationsManager.executeInsideAtomicOperation(
-          null,
-          atomicOperation -> {
-            closeClusters(false);
-            closeIndexes(atomicOperation, false);
-            ((OClusterBasedStorageConfiguration) configuration).close(atomicOperation);
-          });
-
-      configuration = null;
 
       final BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
       final ZipInputStream zipInputStream =
@@ -1052,51 +1138,6 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
                 "Can not remove temporary backup directory " + walTempDir.getAbsolutePath(),
                 null);
       }
-
-      if (OClusterBasedStorageConfiguration.exists(writeCache)) {
-        configuration = new OClusterBasedStorageConfiguration(this);
-        atomicOperationsManager.executeInsideAtomicOperation(
-            null,
-            atomicOperation ->
-                ((OClusterBasedStorageConfiguration) configuration)
-                    .load(contextConfiguration, atomicOperation));
-      } else {
-        if (Files.exists(getStoragePath().resolve("database.ocf"))) {
-          final OStorageConfigurationSegment oldConfig = new OStorageConfigurationSegment(this);
-          oldConfig.load(contextConfiguration);
-
-          final OClusterBasedStorageConfiguration atomicConfiguration =
-              new OClusterBasedStorageConfiguration(this);
-          atomicOperationsManager.executeInsideAtomicOperation(
-              null,
-              atomicOperation ->
-                  atomicConfiguration.create(atomicOperation, contextConfiguration, oldConfig));
-          configuration = atomicConfiguration;
-
-          oldConfig.close();
-          Files.deleteIfExists(getStoragePath().resolve("database.ocf"));
-        }
-
-        if (configuration == null) {
-          configuration = new OClusterBasedStorageConfiguration(this);
-          atomicOperationsManager.executeInsideAtomicOperation(
-              null,
-              atomicOperation ->
-                  ((OClusterBasedStorageConfiguration) configuration)
-                      .load(contextConfiguration, atomicOperation));
-        }
-      }
-
-      atomicOperationsManager.executeInsideAtomicOperation(null, this::openClusters);
-      openIndexes();
-
-      flushAllData();
-
-      atomicOperationsManager.executeInsideAtomicOperation(
-          null,
-          atomicOperation2 -> {
-            generateDatabaseInstanceId(atomicOperation2);
-          });
     } finally {
       stateLock.releaseWriteLock();
       this.interruptionManager.exitCriticalPath();
