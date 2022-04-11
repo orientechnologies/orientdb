@@ -102,6 +102,7 @@
                     -Dstorage.diskCache.checksumMode=storeAndThrow
                     -Dindex.allowManualIndexes=false
                     -Dsecurity.warningDefaultUsers=false
+                    -Dmemory.directMemory.preallocate=false
                 </argLine>
             </properties>
         </profile>
@@ -121,6 +122,7 @@
                     -Dsecurity.warningDefaultUsers=false
                     --add-opens jdk.unsupported/sun.misc=ALL-UNNAMED
                     --add-opens java.base/sun.security.x509=ALL-UNNAMED
+                    -Dmemory.directMemory.preallocate=false
                 </argLine>
             </properties>
         </profile>

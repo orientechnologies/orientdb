@@ -16,6 +16,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <argLine>-Xmx${heapSize} --add-opens jdk.unsupported/sun.misc=ALL-UNNAMED
             --add-opens java.base/sun.security.x509=ALL-UNNAMED
+            -Dmemory.directMemory.preallocate=false
         </argLine>
         <project.rootdir>${project.basedir}/../</project.rootdir>
     </properties>
@@ -51,7 +52,9 @@
                 <jdk>1.8</jdk>
             </activation>
             <properties>
-                <argLine>-Xmx${heapSize}</argLine>
+                <argLine>-Xmx${heapSize}
+                    -Dmemory.directMemory.preallocate=false
+                </argLine>
             </properties>
         </profile>
         <profile>
@@ -62,6 +65,7 @@
             <properties>
                 <argLine>-Xmx${heapSize} --add-opens jdk.unsupported/sun.misc=ALL-UNNAMED
                     --add-opens java.base/sun.security.x509=ALL-UNNAMED
+                    -Dmemory.directMemory.preallocate=false
                 </argLine>
             </properties>
         </profile>
