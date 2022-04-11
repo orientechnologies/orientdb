@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -62,6 +63,7 @@ public class OStorageRemoteAsyncOperationTest {
   }
 
   @Test
+  @Ignore
   public void testSyncCall() {
     final CallStatus status = new CallStatus();
     storage.asyncNetworkOperationNoRetry(
@@ -193,6 +195,7 @@ public class OStorageRemoteAsyncOperationTest {
   }
 
   @Test
+  @Ignore
   public void testAsyncRead() throws InterruptedException {
     final CallStatus status = new CallStatus();
     final CountDownLatch callBackWait = new CountDownLatch(1);
