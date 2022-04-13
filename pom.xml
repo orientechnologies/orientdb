@@ -329,7 +329,7 @@
                         <pushChanges>false</pushChanges>
                         <tagNameFormat>@{project.version}</tagNameFormat>
                         <scmCommentPrefix>OrientDB</scmCommentPrefix>
-                        <localCheckout>true<localCheckout>
+                        <localCheckout>true</localCheckout>
                     </configuration>
                 </plugin>
 
