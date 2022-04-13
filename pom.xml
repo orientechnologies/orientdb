@@ -328,7 +328,8 @@
                         <allowTimestampedSnapshots>true</allowTimestampedSnapshots>
                         <pushChanges>false</pushChanges>
                         <tagNameFormat>@{project.version}</tagNameFormat>
-                        <scmCommentPrefix></scmCommentPrefix>
+                        <scmCommentPrefix>OrientDB</scmCommentPrefix>
+                        <localCheckout>true<localCheckout>
                     </configuration>
                 </plugin>
 
