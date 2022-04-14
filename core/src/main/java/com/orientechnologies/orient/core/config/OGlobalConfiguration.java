@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.ORecordCacheWeakRefs;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.engine.v1.OCellBTreeIndexEngine;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.storage.OChecksumMode;
@@ -432,6 +433,12 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       "Binary version of cluster which will be used inside of storage",
       Integer.class,
       OPaginatedCluster.getLatestBinaryVersion()),
+
+  STORAGE_INDEX_VERSION(
+      "storage.index.version",
+      "Version of implementation of index which will be used be default in database",
+      Integer.class,
+      OCellBTreeIndexEngine.VERSION),
 
   STORAGE_PRINT_WAL_PERFORMANCE_STATISTICS(
       "storage.printWALPerformanceStatistics",

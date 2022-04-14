@@ -16,9 +16,9 @@
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
-import com.orientechnologies.orient.core.index.engine.v1.OCellBTreeIndexEngine;
 import com.orientechnologies.orient.core.index.engine.v1.OCellBTreeMultiValueIndexEngine;
 import com.orientechnologies.orient.core.index.engine.v1.OCellBTreeSingleValueIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -194,7 +194,7 @@ public class ODefaultIndexFactory implements OIndexFactory {
       case SBTREE_ALGORITHM:
         return OSBTreeIndexEngine.VERSION;
       case CELL_BTREE_ALGORITHM:
-        return OCellBTreeIndexEngine.VERSION;
+        return OGlobalConfiguration.STORAGE_INDEX_VERSION.getValueAsInteger();
     }
 
     throw new IllegalStateException("Invalid algorithm name " + algorithm);
