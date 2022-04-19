@@ -1,7 +1,5 @@
 package com.orientechnologies.orient.core.sql.functions.graph;
 
-import static java.util.stream.Collectors.toList;
-
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -28,6 +26,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Shortest path algorithm to find the shortest path from one node to another node in a directed
@@ -130,15 +129,18 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
 
     ctx.edgeType = null;
     if (iParams.length > 3) {
-      ctx.edgeType = iParams[3] == null ? null : "" + iParams[3];
-    }
 
-    if (iParams.length > 2 && iParams[3] instanceof Collection) {
-      Collection<?> coll = (Collection<?>) iParams[3];
-      ctx.edgeTypeParam =
-          coll.stream().map(String::valueOf).collect(toList()).toArray(new String[] {});
+      Object param = iParams[3];
+      if (param instanceof Collection
+          && ((Collection) param).stream().allMatch(x -> x instanceof String)) {
+        ctx.edgeType = ((Collection<String>) param).stream().collect(Collectors.joining(","));
+        ctx.edgeTypeParam = (String[]) ((Collection) param).toArray(new String[0]);
+      } else {
+        ctx.edgeType = param == null ? null : "" + param;
+        ctx.edgeTypeParam = new String[] {ctx.edgeType};
+      }
     } else {
-      ctx.edgeTypeParam = new String[] {ctx.edgeType};
+      ctx.edgeTypeParam = new String[] {null};
     }
 
     if (iParams.length > 4) {
