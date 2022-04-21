@@ -208,6 +208,7 @@ public class ORemoteServerChannel {
   }
 
   public void connect() throws IOException {
+    networkClose();
     channel =
         new OChannelBinarySynchClient(
             remoteHost,
