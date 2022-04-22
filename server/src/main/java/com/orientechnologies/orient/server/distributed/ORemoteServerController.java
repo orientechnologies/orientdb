@@ -79,7 +79,7 @@ public class ORemoteServerController {
   public void sendRequest(final ODistributedRequest req) {
     int idx = requestChannelIndex++;
     if (idx < 0) idx = 0;
-    requestChannels[idx % responseChannels.length].sendRequest(req);
+    requestChannels[idx % requestChannels.length].sendRequest(req);
   }
 
   public void sendResponse(final ODistributedResponse response) {
@@ -101,6 +101,6 @@ public class ORemoteServerController {
   public void sendBinaryRequest(OBinaryRequest request) {
     int idx = requestChannelIndex++;
     if (idx < 0) idx = 0;
-    requestChannels[idx % responseChannels.length].sendBinaryRequest(request);
+    requestChannels[idx % requestChannels.length].sendBinaryRequest(request);
   }
 }
