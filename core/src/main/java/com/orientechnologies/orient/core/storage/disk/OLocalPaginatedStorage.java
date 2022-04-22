@@ -40,7 +40,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -146,7 +145,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   @Override
   public void create(final OContextConfiguration contextConfiguration) {
     try {
-      stateLock.acquireWriteLock();
+     stateLock.writeLock().lock();
       try {
         final Path storageFolder = storagePath;
         if (!Files.exists(storageFolder))
@@ -154,7 +153,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
         super.create(contextConfiguration);
       } finally {
-        stateLock.releaseWriteLock();
+        stateLock.writeLock().unlock();
       }
     } catch (final RuntimeException e) {
       throw logAndPrepareForRethrow(e);
@@ -271,7 +270,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
       if (!isClosed())
         close(true, false);
       try {
-        stateLock.acquireWriteLock();
+       stateLock.writeLock().lock();
         final File dbDir = new File(OIOUtils.getPathFromDatabaseName(OSystemVariableResolver.resolveSystemVariables(url)));
         final File[] storageFiles = dbDir.listFiles();
         if (storageFiles != null) {
@@ -312,7 +311,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
             OLogManager.instance().error(this, "Error on calling callback on database restore", e);
           }
       } finally {
-        stateLock.releaseWriteLock();
+        stateLock.writeLock().unlock();
       }
 
       open(null, null, new OContextConfiguration());
@@ -687,7 +686,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
           return null;
         }
 
-        stateLock.acquireReadLock();
+        stateLock.readLock().lock();
         try {
           if (status != STATUS.OPEN) {
             return null;
@@ -701,7 +700,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
           }
           atomicOperationsTable.compactTable();
         } finally {
-          stateLock.releaseReadLock();
+          stateLock.readLock().unlock();
         }
 
       } catch (final Exception e) {
