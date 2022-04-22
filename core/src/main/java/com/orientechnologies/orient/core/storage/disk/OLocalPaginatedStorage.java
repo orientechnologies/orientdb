@@ -175,7 +175,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   @Override
   public void create(final OContextConfiguration contextConfiguration) {
     try {
-      stateLock.acquireWriteLock();
+      stateLock.writeLock().lock();
       try {
         final Path storageFolder = storagePath;
         if (!Files.exists(storageFolder)) {
@@ -184,7 +184,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
         super.create(contextConfiguration);
       } finally {
-        stateLock.releaseWriteLock();
+        stateLock.writeLock().unlock();
       }
     } catch (final RuntimeException e) {
       throw logAndPrepareForRethrow(e);
@@ -243,7 +243,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
       final OCommandOutputListener iOutput,
       final int compressionLevel,
       final int bufferSize) {
-    stateLock.acquireReadLock();
+    stateLock.readLock().lock();
     try {
       if (out == null) throw new IllegalArgumentException("Backup output is null");
 
@@ -301,7 +301,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     } catch (final Throwable t) {
       throw logAndPrepareForRethrow(t, false);
     } finally {
-      stateLock.releaseReadLock();
+      stateLock.readLock().unlock();
     }
   }
 
@@ -312,7 +312,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
       final Callable<Object> callable,
       final OCommandOutputListener iListener) {
     try {
-      stateLock.acquireWriteLock();
+      stateLock.writeLock().lock();
       try {
         if (!isClosed()) {
           close(true, false);
@@ -365,7 +365,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
             OLogManager.instance().error(this, "Error on calling callback on database restore", e);
           }
       } finally {
-        stateLock.releaseWriteLock();
+        stateLock.writeLock().unlock();
       }
 
       open(null, null, new OContextConfiguration());

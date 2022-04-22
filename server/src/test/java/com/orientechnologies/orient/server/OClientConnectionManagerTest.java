@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -52,6 +53,7 @@ public class OClientConnectionManagerTest {
   }
 
   @Test
+  @Ignore
   public void testTokenConnectDisconnect() throws IOException {
     byte[] atoken = new byte[] {};
 

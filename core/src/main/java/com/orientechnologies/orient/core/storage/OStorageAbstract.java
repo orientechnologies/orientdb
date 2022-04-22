@@ -19,13 +19,13 @@
  */
 package com.orientechnologies.orient.core.storage;
 
-import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public abstract class OStorageAbstract implements OStorage {
   public static final ThreadGroup storageThreadGroup;
@@ -52,7 +52,7 @@ public abstract class OStorageAbstract implements OStorage {
 
   protected final String url;
   protected final String mode;
-  protected final OReadersWriterSpinLock stateLock;
+  protected final ReentrantReadWriteLock stateLock;
 
   protected volatile OStorageConfiguration configuration;
   protected volatile OCurrentStorageComponentsFactory componentsFactory;
@@ -71,7 +71,7 @@ public abstract class OStorageAbstract implements OStorage {
     url = iURL;
     this.mode = mode;
 
-    stateLock = new OReadersWriterSpinLock();
+    stateLock = new ReentrantReadWriteLock();
   }
 
   protected String normalizeName(String name) {
