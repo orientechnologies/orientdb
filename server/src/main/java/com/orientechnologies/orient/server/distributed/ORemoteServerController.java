@@ -30,10 +30,10 @@ import java.io.IOException;
  */
 public class ORemoteServerController {
   private final ORemoteServerChannel[] requestChannels;
-  private volatile int requestChannelIndex = 0;
+  private int requestChannelIndex = 0;
 
   private final ORemoteServerChannel[] responseChannels;
-  private volatile int responseChannelIndex = 0;
+  private int responseChannelIndex = 0;
 
   private int protocolVersion = -1;
   public static final int CURRENT_PROTOCOL_VERSION = 2;
@@ -77,15 +77,23 @@ public class ORemoteServerController {
   }
 
   public void sendRequest(final ODistributedRequest req) {
-    int idx = requestChannelIndex++;
-    if (idx < 0) idx = 0;
-    requestChannels[idx % requestChannels.length].sendRequest(req);
+    int idx;
+    synchronized (requestChannels) {
+      requestChannelIndex++;
+      if (requestChannelIndex < 0) requestChannelIndex = 0;
+      idx = requestChannelIndex % requestChannels.length;
+    }
+    requestChannels[idx].sendRequest(req);
   }
 
   public void sendResponse(final ODistributedResponse response) {
-    int idx = responseChannelIndex++;
-    if (idx < 0) idx = 0;
-    responseChannels[idx % responseChannels.length].sendResponse(response);
+    int idx;
+    synchronized (responseChannels) {
+      responseChannelIndex++;
+      if (responseChannelIndex < 0) responseChannelIndex = 0;
+      idx = responseChannelIndex % responseChannels.length;
+    }
+    responseChannels[idx].sendResponse(response);
   }
 
   public void close() {
@@ -98,9 +106,13 @@ public class ORemoteServerController {
     return protocolVersion;
   }
 
-  public void sendBinaryRequest(OBinaryRequest request) {
-    int idx = requestChannelIndex++;
-    if (idx < 0) idx = 0;
-    requestChannels[idx % requestChannels.length].sendBinaryRequest(request);
+  public void sendBinaryRequest(OBinaryRequest<?> request) {
+    int idx;
+    synchronized (requestChannels) {
+      requestChannelIndex++;
+      if (requestChannelIndex < 0) requestChannelIndex = 0;
+      idx = requestChannelIndex % requestChannels.length;
+    }
+    requestChannels[idx].sendBinaryRequest(request);
   }
 }
