@@ -687,14 +687,14 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     }
     liveQueryListener.clear();
 
-    stateLock.acquireWriteLock();
+    stateLock.writeLock().lock();
     try {
       if (status == STATUS.CLOSED) return;
 
       status = STATUS.CLOSING;
       super.close(true, false);
     } finally {
-      stateLock.releaseWriteLock();
+      stateLock.writeLock().unlock();
     }
     if (pushThread != null) {
       pushThread.shutdown();
@@ -704,7 +704,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
         Thread.currentThread().interrupt();
       }
     }
-    stateLock.acquireWriteLock();
+    stateLock.writeLock().lock();
     try {
       // CLOSE ALL THE SOCKET POOLS
       for (String url : serverURLs) {
@@ -715,7 +715,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       status = STATUS.CLOSED;
 
     } finally {
-      stateLock.releaseWriteLock();
+      stateLock.writeLock().unlock();
     }
   }
 
@@ -756,13 +756,13 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   public Set<String> getClusterNames() {
-    stateLock.acquireReadLock();
+    stateLock.readLock().lock();
     try {
 
       return new HashSet<String>(clusterMap.keySet());
 
     } finally {
-      stateLock.releaseReadLock();
+      stateLock.readLock().unlock();
     }
   }
 
@@ -1364,7 +1364,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   public int getClusterIdByName(final String iClusterName) {
-    stateLock.acquireReadLock();
+    stateLock.readLock().lock();
     try {
 
       if (iClusterName == null) return -1;
@@ -1376,7 +1376,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
       return cluster.getId();
     } finally {
-      stateLock.releaseReadLock();
+      stateLock.readLock().unlock();
     }
   }
 
@@ -1401,7 +1401,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   @Override
   public String getClusterNameById(int clusterId) {
-    stateLock.acquireReadLock();
+    stateLock.readLock().lock();
     try {
       if (clusterId < 0 || clusterId >= clusters.length) {
         throw new OStorageException("Cluster with id " + clusterId + " does not exist");
@@ -1410,7 +1410,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       final OCluster cluster = clusters[clusterId];
       return cluster.getName();
     } finally {
-      stateLock.releaseReadLock();
+      stateLock.readLock().unlock();
     }
   }
 
@@ -1473,7 +1473,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   @Override
   public String getClusterName(int clusterId) {
     final OCluster cluster;
-    stateLock.acquireReadLock();
+    stateLock.readLock().lock();
     try {
 
       if (clusterId == ORID.CLUSTER_ID_INVALID)
@@ -1481,16 +1481,16 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
         clusterId = defaultClusterId;
 
       if (clusterId >= clusters.length) {
-        stateLock.releaseReadLock();
+        stateLock.readLock().unlock();
         reload();
-        stateLock.acquireReadLock();
+        stateLock.readLock().lock();
       }
 
       if (clusterId < clusters.length) {
         return clusters[clusterId].getName();
       }
     } finally {
-      stateLock.releaseReadLock();
+      stateLock.readLock().unlock();
     }
 
     throw new OStorageException("Cluster " + clusterId + " is absent in storage.");
@@ -1502,7 +1502,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   public void removeClusterFromConfiguration(int iClusterId) {
-    stateLock.acquireWriteLock();
+    stateLock.writeLock().lock();
     try {
       // If this is false the clusters may be already update by a push
       if (clusters.length > iClusterId && clusters[iClusterId] != null) {
@@ -1515,14 +1515,14 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
                 iClusterId); // endResponse must be called before this line, which call updateRecord
       }
     } finally {
-      stateLock.releaseWriteLock();
+      stateLock.writeLock().unlock();
     }
   }
 
   public void synch() {}
 
   public String getPhysicalClusterNameById(final int iClusterId) {
-    stateLock.acquireReadLock();
+    stateLock.readLock().lock();
     try {
 
       if (iClusterId >= clusters.length) return null;
@@ -1531,27 +1531,27 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       return cluster != null ? cluster.getName() : null;
 
     } finally {
-      stateLock.releaseReadLock();
+      stateLock.readLock().unlock();
     }
   }
 
   public int getClusterMap() {
-    stateLock.acquireReadLock();
+    stateLock.readLock().lock();
     try {
       return clusterMap.size();
     } finally {
-      stateLock.releaseReadLock();
+      stateLock.readLock().unlock();
     }
   }
 
   public Collection<OCluster> getClusterInstances() {
-    stateLock.acquireReadLock();
+    stateLock.readLock().lock();
     try {
 
       return Arrays.asList(clusters);
 
     } finally {
-      stateLock.releaseReadLock();
+      stateLock.readLock().unlock();
     }
   }
 
@@ -1628,11 +1628,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   public int getClusters() {
-    stateLock.acquireReadLock();
+    stateLock.readLock().lock();
     try {
       return clusterMap.size();
     } finally {
-      stateLock.releaseReadLock();
+      stateLock.readLock().unlock();
     }
   }
 
@@ -1801,17 +1801,17 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     // response.getDistributedConfiguration());
 
     // This need to be protected by a lock for now, let's see in future
-    stateLock.acquireWriteLock();
+    stateLock.writeLock().lock();
     try {
       status = STATUS.OPEN;
     } finally {
-      stateLock.releaseWriteLock();
+      stateLock.writeLock().unlock();
     }
   }
 
   private void initPush(OStorageRemoteSession session) {
     if (pushThread == null) {
-      stateLock.acquireWriteLock();
+      stateLock.writeLock().lock();
       try {
         if (pushThread == null) {
           pushThread =
@@ -1831,7 +1831,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
           subscribeSequences(session);
         }
       } finally {
-        stateLock.releaseWriteLock();
+        stateLock.writeLock().unlock();
       }
     }
   }
@@ -2276,7 +2276,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   public void updateStorageConfiguration(OStorageConfiguration storageConfiguration) {
     if (status != STATUS.OPEN) return;
-    stateLock.acquireWriteLock();
+    stateLock.writeLock().lock();
     try {
       if (status != STATUS.OPEN) return;
       this.configuration = storageConfiguration;
@@ -2304,7 +2304,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       final OCluster defaultCluster = clusterMap.get(CLUSTER_DEFAULT_NAME);
       if (defaultCluster != null) defaultClusterId = clusterMap.get(CLUSTER_DEFAULT_NAME).getId();
     } finally {
-      stateLock.releaseWriteLock();
+      stateLock.writeLock().unlock();
     }
   }
 
@@ -2381,7 +2381,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   public void addNewClusterToConfiguration(int clusterId, String iClusterName) {
-    stateLock.acquireWriteLock();
+    stateLock.writeLock().lock();
     try {
       // If this if is false maybe the content was already update by the push
       if (clusters.length <= clusterId || clusters[clusterId] == null) {
@@ -2394,7 +2394,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
         clusterMap.put(cluster.getName().toLowerCase(Locale.ENGLISH), cluster);
       }
     } finally {
-      stateLock.releaseWriteLock();
+      stateLock.writeLock().unlock();
     }
   }
 
@@ -2590,12 +2590,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
               "Cannot find a valid session for subscribe for event to host '%s' forward the subscribe for the next session open ",
               host);
       OStorageRemotePushThread old;
-      stateLock.acquireWriteLock();
+      stateLock.writeLock().lock();
       try {
         old = pushThread;
         pushThread = null;
       } finally {
-        stateLock.releaseWriteLock();
+        stateLock.writeLock().unlock();
       }
       old.shutdown();
     }

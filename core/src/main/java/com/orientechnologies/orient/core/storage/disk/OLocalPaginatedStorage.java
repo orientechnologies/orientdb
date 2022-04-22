@@ -189,7 +189,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   @Override
   public void create(final OContextConfiguration contextConfiguration) {
     try {
-      stateLock.acquireWriteLock();
+      stateLock.writeLock().lock();
       try {
         final Path storageFolder = storagePath;
         if (!Files.exists(storageFolder)) {
@@ -198,7 +198,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
         super.create(contextConfiguration);
       } finally {
-        stateLock.releaseWriteLock();
+        stateLock.writeLock().unlock();
       }
     } catch (final RuntimeException e) {
       throw logAndPrepareForRethrow(e);
@@ -324,7 +324,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     try {
       if (!isClosed()) close(true, false);
       try {
-        stateLock.acquireWriteLock();
+        stateLock.writeLock().lock();
         final java.io.File dbDir =
             new java.io.File(
                 OIOUtils.getPathFromDatabaseName(
@@ -372,7 +372,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
             OLogManager.instance().error(this, "Error on calling callback on database restore", e);
           }
       } finally {
-        stateLock.releaseWriteLock();
+        stateLock.writeLock().unlock();
       }
 
       open(null, null, new OContextConfiguration());
