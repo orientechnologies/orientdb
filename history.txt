@@ -26,6 +26,18 @@
 
 This document contains the last changes of OrientDB Community Edition.
 
+
+-----------------------------------------------------------------------------------------------------------------------------------
+VERSION 3.1.17  - (April, 25 2022)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.1-Release-Notes#3117---25-april-2022
+
+## Core
+- Binary compatibility issue was fixed.
+- Storage state lock was replaced by standard JDK lock
+
+## Distributed
+- minor fix for distributed on deploy database backup in case of source folder and dest folder in different volumes issue #9770
+
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.1.17  - (February, 22 2022)
 - Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.1-Release-Notes#3116---22-february-2022
