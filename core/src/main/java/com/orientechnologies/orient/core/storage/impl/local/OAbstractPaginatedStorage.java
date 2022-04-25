@@ -471,7 +471,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  /** @inheritDoc */
+  /**
+   * @inheritDoc
+   */
   @Override
   public final String getCreatedAtVersion() {
     return configuration.getCreatedAtVersion();
@@ -4249,7 +4251,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return mode;
   }
 
-  /** @inheritDoc */
+  /**
+   * @inheritDoc
+   */
   @Override
   public final void pageIsBroken(final String fileName, final long pageIndex) {
     stateLock.writeLock().lock();
@@ -4787,7 +4791,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     // check every 1 ms.
     while (true) {
       try {
-        if (!stateLock.readLock().tryLock(1, TimeUnit.MILLISECONDS)) break;
+        if (stateLock.readLock().tryLock(1, TimeUnit.MILLISECONDS)) {
+          break;
+        }
       } catch (InterruptedException e) {
         throw OException.wrapException(
             new OInterruptedException("Making of fuzzy checkpoint was interrupted"), e);
