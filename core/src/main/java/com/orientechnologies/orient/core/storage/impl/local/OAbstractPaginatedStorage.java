@@ -4840,7 +4840,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     // check every 1 ms.
     while (true) {
       try {
-        if (!stateLock.readLock().tryLock(1, TimeUnit.MILLISECONDS)) {
+        if (stateLock.readLock().tryLock(1, TimeUnit.MILLISECONDS)) {
           break;
         }
       } catch (InterruptedException e) {
