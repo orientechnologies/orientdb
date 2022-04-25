@@ -143,6 +143,17 @@ public abstract class OChannelBinary extends OChannel
       OLogManager.instance()
           .info(this, "%s - Reading string (4+N bytes)...", socket.getRemoteSocketAddress());
       final int len = in.readInt();
+      if (len > maxChunkSize) {
+        throw new IOException(
+            "Impossible to read a string chunk of length:"
+                + len
+                + " max allowed chunk length:"
+                + maxChunkSize
+                + " see NETWORK_BINARY_MAX_CONTENT_LENGTH settings ");
+      }
+      if (debug)
+        OLogManager.instance()
+            .info(this, "%s - Read string chunk length: %d", socket.getRemoteSocketAddress(), len);
       if (len < 0) return null;
 
       // REUSE STATIC BUFFER?
