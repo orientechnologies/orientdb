@@ -32,7 +32,6 @@
     <packaging>jar</packaging>
 
     <properties>
-        <orientdb.version>${project.version}</orientdb.version>
         <lucene.version>7.3.0</lucene.version>
         <geotools.version>13.2</geotools.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -131,13 +130,13 @@
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-test-commons</artifactId>
-            <version>${orientdb.version}</version>
+            <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-core</artifactId>
-            <version>${orientdb.version}</version>
+            <version>${project.version}</version>
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>
@@ -145,13 +144,13 @@
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-core</artifactId>
-            <version>${orientdb.version}</version>
+            <version>${project.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-client</artifactId>
-            <version>${orientdb.version}</version>
+            <version>${project.version}</version>
             <scope>compile</scope>
         </dependency>
 
@@ -159,14 +158,14 @@
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-server</artifactId>
-            <version>${orientdb.version}</version>
+            <version>${project.version}</version>
             <scope>compile</scope>
         </dependency>
 
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-distributed</artifactId>
-            <version>${orientdb.version}</version>
+            <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
