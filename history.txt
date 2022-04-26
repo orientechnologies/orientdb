@@ -27,6 +27,26 @@
 This document contains the last changes of OrientDB Community Edition.
 
 -----------------------------------------------------------------------------------------------------------------------------------
+VERSION 3.0.43 - (April, 26 2022)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.0-Release-Notes#3043---26-april-2022
+- Issues: https://github.com/orientechnologies/orientdb/issues?q=is%3Aissue+milestone%3A3.0.43+is%3Aclosed  
+
+# Changes
+## Core 
+
+- Storage state lock was replaced by standard JDK lock.
+- Fix of locking error during making of fuzzy checkpoint.
+- Speed up of files flush.
+- LSN of latest applied record returned during restore.
+- If Unsafe is present it is used for memory allocation/de-allocation
+- Flag to skip releasing memory back on shutdown is added
+ 
+ 
+## Distributed
+
+- fix for distributed on deploy database backup in case of source folder and dest folder in different volumes
+
+-----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.0.42 - (January, 26 2022)
 - Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.0-Release-Notes#3042---26-january-2021
 - Issues: https://github.com/orientechnologies/orientdb/issues?q=is%3Aissue+milestone%3A3.0.42+is%3Aclosed
