@@ -466,7 +466,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
           OErrorCode.BACKUP_IN_PROGRESS);
     }
 
-    stateLock.acquireReadLock();
+    stateLock.readLock().lock();
     try {
 
       this.interruptionManager.enterCriticalPath();
@@ -593,7 +593,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
       }
     } finally {
       try {
-        stateLock.releaseReadLock();
+        stateLock.readLock().unlock();
 
         if (singleThread) {
           backupInProgress.set(false);
@@ -817,7 +817,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
                 + "'");
       }
 
-      stateLock.acquireWriteLock();
+      stateLock.writeLock().lock();
       try {
         this.interruptionManager.enterCriticalPath();
 
@@ -903,7 +903,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
           postProcessIncrementalRestore(contextConfiguration);
         }
       } finally {
-        stateLock.releaseWriteLock();
+        stateLock.writeLock().unlock();
         this.interruptionManager.exitCriticalPath();
       }
     } catch (IOException e) {
@@ -969,7 +969,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
       final InputStream inputStream,
       final boolean isFull)
       throws IOException {
-    stateLock.acquireWriteLock();
+    stateLock.writeLock().lock();
     try {
       this.interruptionManager.enterCriticalPath();
 
@@ -1165,7 +1165,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
                 null);
       }
     } finally {
-      stateLock.releaseWriteLock();
+      stateLock.writeLock().unlock();
       this.interruptionManager.exitCriticalPath();
     }
   }
