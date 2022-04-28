@@ -9,13 +9,12 @@
     OF ANY KIND, either express or implied. ~ See the License for the specific 
     language governing permissions and ~ limitations under the License. -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.orientechnologies</groupId>
     <artifactId>orientdb-parent</artifactId>
-    <version>3.2.6-SNAPSHOT</version>
+    <version>3.2.6</version>
     <packaging>pom</packaging>
 
     <name>OrientDB</name>
@@ -93,7 +92,8 @@
         <connection>scm:git:git@github.com:orientechnologies/orientdb.git</connection>
         <developerConnection>scm:git:git@github.com:orientechnologies/orientdb.git</developerConnection>
         <url>scm:git:git@github.com:orientechnologies/orientdb.git</url>
-    </scm>
+      <tag>3.2.6</tag>
+  </scm>
     <issueManagement>
         <system>GitHub Issues</system>
         <url>https://github.com/orientechnologies/orientdb/issues</url>
@@ -145,11 +145,11 @@
         <implementation.build>${scmBranch}@r${buildNumber}</implementation.build>
         <blueprints.version>2.6.0</blueprints.version>
         <!-- | Configuration properties for the OSGi maven-bundle-plugin -->
-        <osgi.fragment.host/>
+        <osgi.fragment.host />
         <osgi.export>${project.groupId}.*;version=${project.version};-noimport:=true</osgi.export>
         <osgi.import>*</osgi.import>
-        <osgi.dynamicImport/>
-        <osgi.private/>
+        <osgi.dynamicImport />
+        <osgi.private />
         <!-- | shared build/report plugins version -->
         <surefire.version>3.0.0-M5</surefire.version>
         <sonatypeOssDistMgmtSnapshotsUrl>https://oss.sonatype.org/content/repositories/snapshots/
@@ -436,7 +436,7 @@
                 <artifactId>maven-site-plugin</artifactId>
                 <configuration>
                     <moduleExcludes>
-                        <distribution/>
+                        <distribution />
                     </moduleExcludes>
                 </configuration>
             </plugin>
