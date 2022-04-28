@@ -236,6 +236,7 @@ public class OServerNetworkListener extends Thread {
           }
 
           socket.setPerformancePreferences(0, 2, 1);
+          socket.setKeepAlive(true);
           if (socketBufferSize > 0) {
             socket.setSendBufferSize(socketBufferSize);
             socket.setReceiveBufferSize(socketBufferSize);

@@ -27,7 +27,27 @@
 This document contains the last changes of OrientDB Community Edition.
 
 -----------------------------------------------------------------------------------------------------------------------------------
-VERSION 3.2.5 - (December, 14 2022)
+VERSION 3.2.6 - (April, 28 2022)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#326---28-April-2022
+
+# Changes
+
+## Core
+- LSN of latest applied record returned during restore
+- Binary compatibility issue was fixed
+- Update jackson dependency to the latest release
+- Disabled memory pre-allocation by default
+- Ported fix for shortest path, issue #9774
+- Minor update of dependency version
+- Storage state lock was replaced by standard JDK lock
+
+## Distributed
+
+- Minor fix for distributed on deploy database backup in case of source folder and dest folder in different volumes
+- Fixes on network layer between nodes
+
+-----------------------------------------------------------------------------------------------------------------------------------
+VERSION 3.2.5 - (February, 14 2022)
 - Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#325---14-february-2022
 
 # Changes
