@@ -15,17 +15,33 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.hook.ORecordHook;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+import com.orientechnologies.orient.core.sql.parser.ORid;
+import org.apache.pdfbox.io.IOUtils;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -117,6 +133,90 @@ public class DbImportExportTest extends DocumentDBBaseTest implements OCommandOu
     databaseCompare.setCompareIndexMetadata(true);
 
     Assert.assertTrue(databaseCompare.compare());
+  }
+
+  @Test
+  public void embeddedListMigration() throws Exception {
+    if ("remote".equals(getStorageType()) || url.startsWith("remote:")) {
+      return;
+    }
+
+    final File localTesPath = new File(testPath + "/target", "embeddedListMigration");
+    OFileUtils.deleteRecursively(localTesPath);
+    Assert.assertTrue(localTesPath.mkdirs());
+
+    final File exportPath = new File(localTesPath, "export.json.gz");
+
+    final OrientDBConfig config =
+        new OrientDBConfigBuilder()
+            .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, true)
+            .build();
+    try (final OrientDB orientDB = new OrientDB("embedded:" + localTesPath.getPath(), config)) {
+      orientDB.create("original", ODatabaseType.PLOCAL);
+
+      try (final ODatabaseSession session = orientDB.open("original", "admin", "admin")) {
+        final OSchema schema = session.getMetadata().getSchema();
+
+        final OClass rootCls = schema.createClass("RootClass");
+        rootCls.createProperty("embeddedList", OType.EMBEDDEDLIST);
+
+        final OClass childCls = schema.createClass("ChildClass");
+
+        final List<ORID> ridsToDelete = new ArrayList<>();
+        for (int i = 0; i < 100; i++) {
+          final ODocument document = new ODocument(childCls);
+          document.save();
+          ridsToDelete.add(document.getIdentity());
+        }
+
+        for (final ORID rid : ridsToDelete) {
+          rid.getRecord().delete();
+        }
+
+        final ODocument rootDocument = new ODocument(rootCls);
+        final ArrayList<ODocument> documents = new ArrayList<>();
+
+        for (int i = 0; i < 10; i++) {
+          final ODocument embeddedDocument = new ODocument();
+
+          final ODocument doc = new ODocument(childCls);
+          doc.save();
+
+          embeddedDocument.field("link", doc.getIdentity());
+          documents.add(embeddedDocument);
+        }
+
+        rootDocument.field("embeddedList", documents);
+        rootDocument.save();
+
+        final ODatabaseExport databaseExport =
+            new ODatabaseExport(
+                (ODatabaseDocumentInternal) session, exportPath.getPath(), System.out::println);
+        databaseExport.exportDatabase();
+      }
+
+      orientDB.create("imported", ODatabaseType.PLOCAL);
+      try (final ODatabaseSession session = orientDB.open("imported", "admin", "admin")) {
+        final ODatabaseImport databaseImport =
+            new ODatabaseImport(
+                (ODatabaseDocumentInternal) session, exportPath.getPath(), System.out::println);
+        databaseImport.run();
+
+        final Iterator<ODocument> classIterator = session.browseClass("RootClass");
+        final ODocument rootDocument = classIterator.next();
+
+        final List<ODocument> documents = rootDocument.field("embeddedList");
+        for (int i = 0; i < 10; i++) {
+          final ODocument embeddedDocument = documents.get(i);
+
+          embeddedDocument.setLazyLoad(false);
+          final ORecordId link = embeddedDocument.getProperty("link");
+
+          Assert.assertNotNull(link);
+          Assert.assertNotNull(link.getRecord());
+        }
+      }
+    }
   }
 
   @Override
