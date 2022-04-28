@@ -141,9 +141,36 @@ public class OLuceneQueryBuilder {
     try {
       return queryParser.parse(query);
     } catch (final org.apache.lucene.queryparser.classic.ParseException e) {
-      OLogManager.instance().error(this, "Exception is suppressed, original exception is ", e);
+      final Throwable cause = prepareParseError(e, metadata);
+      OLogManager.instance().error(this, "Exception is suppressed, original exception is ", cause);
       //noinspection ThrowInsideCatchBlockWhichIgnoresCaughtException
-      throw new ParseException(e.getMessage());
+      throw new ParseException(cause.getMessage());
     }
+  }
+
+  /**
+   * Produces a Lucene {@link ParseException} that can be reported in logs.
+   *
+   * <p>If the metadata contains a `reportQueryAs` parameter, that will be reported as the text of
+   * the query that failed to parse.
+   *
+   * <p>This is generally useful when the contents of a Lucene query contain privileged information
+   * (e.g.Personally Identifiable Information in privacy sensitive settings) that should not be
+   * persisted in logs.
+   */
+  private static Throwable prepareParseError(
+      org.apache.lucene.queryparser.classic.ParseException e, ODocument metadata) {
+    final Throwable cause;
+    final String reportAs = metadata.getProperty("reportQueryAs");
+    if (reportAs == null) {
+      cause = e;
+    } else {
+      cause =
+          new org.apache.lucene.queryparser.classic.ParseException(
+              String.format("Cannot parse '%s'", reportAs));
+      cause.initCause(e.getCause());
+      cause.setStackTrace(e.getStackTrace());
+    }
+    return cause;
   }
 }
