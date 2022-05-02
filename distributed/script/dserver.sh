@@ -77,7 +77,7 @@ if [ -z "$ORIENTDB_WWW_PATH" ] ; then
 fi
 
 if [ -z "$ORIENTDB_PID" ] ; then
-ORIENTDB_PID=$ORIENTDB_HOME/bin/orient.pid
+    ORIENTDB_PID=$ORIENTDB_HOME/bin/orient.pid
 fi
 
 if [ -f "$ORIENTDB_PID" ]; then
