@@ -675,7 +675,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
     }
   }
 
-  private void doDelete() {
+  protected void doDelete() {
     while (true)
       try {
         //noinspection ObjectAllocationInLoop

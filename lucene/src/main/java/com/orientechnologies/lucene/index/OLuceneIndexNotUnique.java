@@ -192,25 +192,14 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
       }
   }
 
-  public OLuceneIndexNotUnique delete() {
-    acquireExclusiveLock();
-
-    try {
-      while (true)
-        try {
-          storage.deleteIndexEngine(indexId);
-          break;
-        } catch (OInvalidIndexEngineIdException ignore) {
-          doReloadIndexEngine();
-        }
-
-      // REMOVE THE INDEX ALSO FROM CLASS MAP
-      if (getDatabase().getMetadata() != null)
-        getDatabase().getMetadata().getIndexManagerInternal().removeClassPropertyIndex(this);
-      return this;
-    } finally {
-      releaseExclusiveLock();
-    }
+  public void doDelete() {
+    while (true)
+      try {
+        storage.deleteIndexEngine(indexId);
+        break;
+      } catch (OInvalidIndexEngineIdException ignore) {
+        doReloadIndexEngine();
+      }
   }
 
   protected Object decodeKey(Object key) {
