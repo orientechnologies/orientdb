@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.storage.cache.chm.LRUList;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -359,7 +360,7 @@ public class OCacheEntryImpl implements OCacheEntry {
   }
 
   @Override
-  public void close() throws Exception {
+  public void close() throws IOException {
     this.readCache.releaseFromRead(this);
   }
 }

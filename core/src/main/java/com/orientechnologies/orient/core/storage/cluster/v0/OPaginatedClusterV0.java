@@ -565,17 +565,14 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
     }
 
     int recordVersion;
-    final OCacheEntry cacheEntry =
-        loadPageForRead(atomicOperation, fileId, pageIndex, false, pageCount);
-    try {
+    try (final OCacheEntry cacheEntry =
+        loadPageForRead(atomicOperation, fileId, pageIndex, false, pageCount)) {
       final OClusterPage localPage = new OClusterPage(cacheEntry);
       if (localPage.isDeleted(recordPosition)) {
         return null;
       }
 
       recordVersion = localPage.getRecordVersion(recordPosition);
-    } finally {
-      releasePageFromRead(atomicOperation, cacheEntry);
     }
 
     final byte[] fullContent =
@@ -1450,9 +1447,8 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
     long nextPagePointer;
     boolean firstEntry = true;
     do {
-      final OCacheEntry cacheEntry =
-          loadPageForRead(atomicOperation, fileId, pageIndex, false, pageCount);
-      try {
+      try (final OCacheEntry cacheEntry =
+          loadPageForRead(atomicOperation, fileId, pageIndex, false, pageCount); ) {
         final OClusterPage localPage = new OClusterPage(cacheEntry);
 
         if (localPage.isDeleted(recordPosition)) {
@@ -1482,8 +1478,6 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
         contentSize += content.length - OLongSerializer.LONG_SIZE - OByteSerializer.BYTE_SIZE;
 
         firstEntry = false;
-      } finally {
-        releasePageFromRead(atomicOperation, cacheEntry);
       }
 
       pageIndex = getPageIndex(nextPagePointer);

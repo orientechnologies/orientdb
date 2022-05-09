@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPageChangesPortion;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
+import java.io.IOException;
 import java.util.List;
 
 /** Created by tglman on 23/06/16. */
@@ -241,7 +242,7 @@ public class OCacheEntryChanges implements OCacheEntry {
   }
 
   @Override
-  public void close() throws Exception {
+  public void close() throws IOException {
     atomicOp.releasePageFromWrite(this);
   }
 }
