@@ -259,7 +259,7 @@ public class AsyncReadCacheTestIT {
 
         final OCacheEntry cacheEntry =
             readCache.loadForRead(fileId, pageIndex, true, writeCache, true);
-        readCache.releaseFromRead(cacheEntry, writeCache);
+        readCache.releaseFromRead(cacheEntry);
         pageCounter++;
       }
 
@@ -330,7 +330,7 @@ public class AsyncReadCacheTestIT {
         final int pageIndex = random.nextInt();
         assert pageIndex < pageLimit;
         final OCacheEntry cacheEntry = readCache.loadForRead(0, pageIndex, true, writeCache, true);
-        readCache.releaseFromRead(cacheEntry, writeCache);
+        readCache.releaseFromRead(cacheEntry);
         pageCounter++;
       }
 

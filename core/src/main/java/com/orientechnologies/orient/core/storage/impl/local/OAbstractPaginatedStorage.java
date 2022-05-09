@@ -6247,7 +6247,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                   break;
                 }
               } finally {
-                readCache.releaseFromRead(cacheEntry, writeCache);
+                readCache.releaseFromRead(cacheEntry);
               }
             }
           }
@@ -6281,7 +6281,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                 throw new OStorageException(errorMessage);
               }
             } finally {
-              readCache.releaseFromRead(cacheEntry, writeCache);
+              readCache.releaseFromRead(cacheEntry);
             }
           }
         }

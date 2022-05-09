@@ -122,7 +122,7 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
               readCache.loadForRead(
                   fileId, pageIndex, checkPinnedPages, writeCache, verifyChecksum);
           if (delegate != null) {
-            pageChangesContainer = new OCacheEntryChanges(verifyChecksum);
+            pageChangesContainer = new OCacheEntryChanges(verifyChecksum, this);
             changesContainer.pageChangesMap.put(pageIndex, pageChangesContainer);
             pageChangesContainer.delegate = delegate;
             return pageChangesContainer;
@@ -240,7 +240,7 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
     OCacheEntryChanges pageChangesContainer = changesContainer.pageChangesMap.get(filledUpTo);
     assert pageChangesContainer == null;
 
-    pageChangesContainer = new OCacheEntryChanges(false);
+    pageChangesContainer = new OCacheEntryChanges(false, this);
     pageChangesContainer.isNew = true;
 
     changesContainer.pageChangesMap.put(filledUpTo, pageChangesContainer);
@@ -250,7 +250,8 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
             fileId,
             (int) filledUpTo,
             new OCachePointer(null, null, fileId, (int) filledUpTo),
-            false);
+            false,
+            readCache);
     return pageChangesContainer;
   }
 
@@ -259,7 +260,7 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
     if (cacheEntry instanceof OCacheEntryChanges) {
       releasePageFromWrite(cacheEntry);
     } else {
-      readCache.releaseFromRead(cacheEntry, writeCache);
+      readCache.releaseFromRead(cacheEntry);
     }
   }
 
@@ -272,7 +273,7 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
     }
 
     if (cacheEntry.getCachePointer().getBuffer() != null) {
-      readCache.releaseFromRead(real.getDelegate(), writeCache);
+      readCache.releaseFromRead(real.getDelegate());
     } else {
       assert real.isNew || !cacheEntry.isLockAcquiredByCurrentThread();
     }

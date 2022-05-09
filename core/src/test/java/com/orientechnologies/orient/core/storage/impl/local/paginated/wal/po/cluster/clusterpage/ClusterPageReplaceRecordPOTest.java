@@ -22,7 +22,7 @@ public class ClusterPageReplaceRecordPOTest {
     try {
       final OPointer pointer = byteBufferPool.acquireDirect(false, Intention.TEST);
       final OCachePointer cachePointer = new OCachePointer(pointer, byteBufferPool, 0, 0);
-      final OCacheEntry entry = new OCacheEntryImpl(0, 0, cachePointer, false);
+      final OCacheEntry entry = new OCacheEntryImpl(0, 0, cachePointer, false, null);
 
       OClusterPage clusterPage = new OClusterPage(entry);
       clusterPage.init();
@@ -35,7 +35,8 @@ public class ClusterPageReplaceRecordPOTest {
       final OPointer restoredPointer = byteBufferPool.acquireDirect(false, Intention.TEST);
       final OCachePointer restoredCachePointer =
           new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
-      final OCacheEntry restoredCacheEntry = new OCacheEntryImpl(0, 0, restoredCachePointer, false);
+      final OCacheEntry restoredCacheEntry =
+          new OCacheEntryImpl(0, 0, restoredCachePointer, false, null);
 
       final ByteBuffer originalBuffer = cachePointer.getBufferDuplicate();
       final ByteBuffer restoredBuffer = restoredCachePointer.getBufferDuplicate();
@@ -91,7 +92,7 @@ public class ClusterPageReplaceRecordPOTest {
     try {
       final OPointer pointer = byteBufferPool.acquireDirect(false, Intention.TEST);
       final OCachePointer cachePointer = new OCachePointer(pointer, byteBufferPool, 0, 0);
-      final OCacheEntry entry = new OCacheEntryImpl(0, 0, cachePointer, false);
+      final OCacheEntry entry = new OCacheEntryImpl(0, 0, cachePointer, false, null);
 
       OClusterPage clusterPage = new OClusterPage(entry);
       clusterPage.init();

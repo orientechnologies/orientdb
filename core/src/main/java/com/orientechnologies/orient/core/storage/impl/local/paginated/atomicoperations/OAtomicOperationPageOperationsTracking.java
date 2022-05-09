@@ -83,7 +83,7 @@ final class OAtomicOperationPageOperationsTracking implements OAtomicOperation {
 
   @Override
   public void releasePageFromRead(final OCacheEntry cacheEntry) {
-    readCache.releaseFromRead(cacheEntry, writeCache);
+    readCache.releaseFromRead(cacheEntry);
   }
 
   @Override

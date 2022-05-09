@@ -15,6 +15,7 @@ public class OCacheEntryChanges implements OCacheEntry {
   protected OCacheEntry delegate;
   protected final OWALChanges changes = new OWALPageChangesPortion();
   private OLogSequenceNumber initialLSN;
+  private final OAtomicOperation atomicOp;
 
   protected boolean isNew;
 
@@ -22,13 +23,10 @@ public class OCacheEntryChanges implements OCacheEntry {
 
   protected boolean verifyCheckSum;
 
-  public OCacheEntryChanges(final OCacheEntry entry) {
-    delegate = entry;
-  }
-
   @SuppressWarnings("WeakerAccess")
-  public OCacheEntryChanges(final boolean verifyCheckSum) {
+  public OCacheEntryChanges(final boolean verifyCheckSum, OAtomicOperation atomicOp) {
     this.verifyCheckSum = verifyCheckSum;
+    this.atomicOp = atomicOp;
   }
 
   @Override
@@ -240,5 +238,10 @@ public class OCacheEntryChanges implements OCacheEntry {
   @Override
   public void setInitialLSN(OLogSequenceNumber lsn) {
     this.initialLSN = lsn;
+  }
+
+  @Override
+  public void close() throws Exception {
+    atomicOp.releasePageFromWrite(this);
   }
 }

@@ -176,7 +176,7 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
   protected void releasePageFromRead(
       final OAtomicOperation atomicOperation, final OCacheEntry cacheEntry) {
     if (atomicOperation == null) {
-      readCache.releaseFromRead(cacheEntry, writeCache);
+      readCache.releaseFromRead(cacheEntry);
     } else {
       atomicOperation.releasePageFromRead(cacheEntry);
     }

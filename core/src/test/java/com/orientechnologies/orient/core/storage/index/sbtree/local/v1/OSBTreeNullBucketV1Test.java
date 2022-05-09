@@ -23,7 +23,7 @@ public class OSBTreeNullBucketV1Test {
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
 
-    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false);
+    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false, null);
     cacheEntry.acquireExclusiveLock();
 
     OSBTreeNullBucketV1<String> bucket = new OSBTreeNullBucketV1<>(cacheEntry);
@@ -44,7 +44,7 @@ public class OSBTreeNullBucketV1Test {
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
 
-    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false);
+    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false, null);
     cacheEntry.acquireExclusiveLock();
 
     OSBTreeNullBucketV1<String> bucket = new OSBTreeNullBucketV1<>(cacheEntry);
@@ -69,7 +69,7 @@ public class OSBTreeNullBucketV1Test {
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
 
-    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false);
+    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false, null);
     cacheEntry.acquireExclusiveLock();
 
     OSBTreeNullBucketV1<String> bucket = new OSBTreeNullBucketV1<>(cacheEntry);
@@ -95,7 +95,7 @@ public class OSBTreeNullBucketV1Test {
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
 
-    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false);
+    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false, null);
     cacheEntry.acquireExclusiveLock();
 
     OSBTreeNullBucketV1<String> bucket = new OSBTreeNullBucketV1<>(cacheEntry);

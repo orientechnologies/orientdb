@@ -30,7 +30,7 @@ import java.util.List;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 7/23/13
  */
-public interface OCacheEntry {
+public interface OCacheEntry extends AutoCloseable {
   OCachePointer getCachePointer();
 
   void clearCachePointer();

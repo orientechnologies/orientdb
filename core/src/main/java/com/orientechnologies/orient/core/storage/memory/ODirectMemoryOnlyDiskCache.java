@@ -243,7 +243,7 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache
     final int intId = extractFileId(fileId);
 
     final MemoryFile memoryFile = getFile(intId);
-    final OCacheEntry cacheEntry = memoryFile.addNewPage();
+    final OCacheEntry cacheEntry = memoryFile.addNewPage(this);
 
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (cacheEntry) {
@@ -278,7 +278,7 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache
   }
 
   @Override
-  public final void releaseFromRead(final OCacheEntry cacheEntry, final OWriteCache writeCache) {
+  public final void releaseFromRead(final OCacheEntry cacheEntry) {
     cacheEntry.releaseSharedLock();
 
     doRelease(cacheEntry);
@@ -486,7 +486,7 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache
       }
     }
 
-    private OCacheEntry addNewPage() {
+    private OCacheEntry addNewPage(OReadCache readCache) {
       clearLock.readLock().lock();
       try {
         OCacheEntry cacheEntry;
@@ -509,7 +509,8 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache
           cachePointer.incrementReferrer();
 
           cacheEntry =
-              new OCacheEntryImpl(composeFileId(storageId, id), (int) index, cachePointer, true);
+              new OCacheEntryImpl(
+                  composeFileId(storageId, id), (int) index, cachePointer, true, readCache);
 
           final OCacheEntry oldCacheEntry = content.putIfAbsent(index, cacheEntry);
 
