@@ -200,13 +200,11 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
           }
 
           V result;
-          final OCacheEntry cacheEntry =
-              loadPageForRead(atomicOperation, nullBucketFileId, 0, false);
-          try {
+
+          try (final OCacheEntry cacheEntry =
+              loadPageForRead(atomicOperation, nullBucketFileId, 0, false)) {
             final ONullBucket<V> nullBucket = new ONullBucket<>(cacheEntry, valueSerializer, false);
             result = nullBucket.getValue();
-          } finally {
-            releasePageFromRead(atomicOperation, cacheEntry);
           }
 
           return result;
@@ -228,8 +226,8 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
 
           final long pageIndex = getPageIndex(bucketPointer);
 
-          final OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
-          try {
+          try (final OCacheEntry cacheEntry =
+              loadPageForRead(atomicOperation, fileId, pageIndex, false)) {
             final OHashIndexBucket<K, V> bucket =
                 new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes);
 
@@ -239,8 +237,6 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
             }
 
             return entry.value;
-          } finally {
-            releasePageFromRead(atomicOperation, cacheEntry);
           }
         }
 
@@ -427,7 +423,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
               return OCommonConst.EMPTY_BUCKET_ENTRY_ARRAY;
             }
 
-            releasePageFromRead(atomicOperation, cacheEntry);
+            cacheEntry.close();
 
             final long nextPointer =
                 directory.getNodePointer(
@@ -458,7 +454,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
 
           return convertBucketToEntries(bucket, startIndex, endIndex);
         } finally {
-          releasePageFromRead(atomicOperation, cacheEntry);
+          cacheEntry.close();
         }
 
       } finally {
@@ -501,11 +497,9 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
       directory = new OHashTableDirectory(treeStateFileExtension, name, getFullName(), storage);
       directory.open(atomicOperation);
 
-      final OCacheEntry hashStateEntry = loadPageForRead(atomicOperation, fileStateId, 0, true);
-      try {
+      try (final OCacheEntry hashStateEntry =
+          loadPageForRead(atomicOperation, fileStateId, 0, true)) {
         hashStateEntryIndex = hashStateEntry.getPageIndex();
-      } finally {
-        releasePageFromRead(atomicOperation, hashStateEntry);
       }
 
       nullBucketFileId = openFile(atomicOperation, name + nullBucketFileExtension);
@@ -721,7 +715,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
               return OCommonConst.EMPTY_BUCKET_ENTRY_ARRAY;
             }
 
-            releasePageFromRead(atomicOperation, cacheEntry);
+            cacheEntry.close();
             final long nextPointer =
                 directory.getNodePointer(
                     bucketPath.nodeIndex,
@@ -745,7 +739,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
           final int endIndex = bucket.size();
           return convertBucketToEntries(bucket, startIndex, endIndex);
         } finally {
-          releasePageFromRead(atomicOperation, cacheEntry);
+          cacheEntry.close();
         }
       } finally {
         releaseSharedLock();
@@ -783,7 +777,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
               return null;
             }
 
-            releasePageFromRead(atomicOperation, cacheEntry);
+            cacheEntry.close();
             final long nextPointer =
                 directory.getNodePointer(
                     bucketPath.nodeIndex,
@@ -798,7 +792,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
 
           return bucket.getEntry(0);
         } finally {
-          releasePageFromRead(atomicOperation, cacheEntry);
+          cacheEntry.close();
         }
       } finally {
         releaseSharedLock();
@@ -840,7 +834,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
               return null;
             }
 
-            releasePageFromRead(atomicOperation, cacheEntry);
+            cacheEntry.close();
             final long prevPointer =
                 directory.getNodePointer(
                     prevBucketPath.nodeIndex,
@@ -858,7 +852,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
 
           return bucket.getEntry(bucket.size() - 1);
         } finally {
-          releasePageFromRead(atomicOperation, cacheEntry);
+          cacheEntry.close();
         }
       } finally {
         releaseSharedLock();
@@ -904,7 +898,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
               return OCommonConst.EMPTY_BUCKET_ENTRY_ARRAY;
             }
 
-            releasePageFromRead(atomicOperation, cacheEntry);
+            cacheEntry.close();
 
             final long prevPointer =
                 directory.getNodePointer(
@@ -932,7 +926,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
 
           return convertBucketToEntries(bucket, startIndex, endIndex);
         } finally {
-          releasePageFromRead(atomicOperation, cacheEntry);
+          cacheEntry.close();
         }
       } finally {
         releaseSharedLock();
@@ -977,7 +971,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
               return OCommonConst.EMPTY_BUCKET_ENTRY_ARRAY;
             }
 
-            releasePageFromRead(atomicOperation, cacheEntry);
+            cacheEntry.close();
 
             final long prevPointer =
                 directory.getNodePointer(
@@ -1006,7 +1000,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
 
           return convertBucketToEntries(bucket, startIndex, endIndex);
         } finally {
-          releasePageFromRead(atomicOperation, cacheEntry);
+          cacheEntry.close();
         }
       } finally {
         releaseSharedLock();
@@ -1164,14 +1158,12 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
       acquireSharedLock();
       try {
         final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
-        final OCacheEntry hashStateEntry =
-            loadPageForRead(atomicOperation, fileStateId, hashStateEntryIndex, true);
-        try {
+
+        try (final OCacheEntry hashStateEntry =
+            loadPageForRead(atomicOperation, fileStateId, hashStateEntryIndex, true)) {
           final OHashIndexFileLevelMetadataPage metadataPage =
               new OHashIndexFileLevelMetadataPage(hashStateEntry, false);
           return metadataPage.getRecordsCount();
-        } finally {
-          releasePageFromRead(atomicOperation, hashStateEntry);
         }
       } finally {
         releaseSharedLock();

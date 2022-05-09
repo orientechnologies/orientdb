@@ -81,10 +81,9 @@ public class HashTableDirectory extends ODurableComponent {
     final int filledUpTo = (int) getFilledUpTo(atomicOperation, fileId);
 
     for (int i = 0; i < filledUpTo; i++) {
-      final OCacheEntry entry = loadPageForRead(atomicOperation, fileId, i, true);
-      assert entry != null;
-
-      releasePageFromRead(atomicOperation, entry);
+      try (final OCacheEntry entry = loadPageForRead(atomicOperation, fileId, i, true)) {
+        assert entry != null;
+      }
     }
   }
 

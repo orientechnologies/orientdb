@@ -49,26 +49,21 @@ public final class FreeSpaceMap extends ODurableComponent {
 
     final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
     final int localSecondLevelPageIndex;
-    final OCacheEntry firstLevelEntry = loadPageForRead(atomicOperation, fileId, 0, true);
-    try {
+
+    try (final OCacheEntry firstLevelEntry = loadPageForRead(atomicOperation, fileId, 0, true)) {
       final FreeSpaceMapPage page = new FreeSpaceMapPage(firstLevelEntry);
       localSecondLevelPageIndex = page.findPage(normalizedSize);
       if (localSecondLevelPageIndex < 0) {
         return -1;
       }
-    } finally {
-      releasePageFromRead(atomicOperation, firstLevelEntry);
     }
 
     final int secondLevelPageIndex = localSecondLevelPageIndex + 1;
-    final OCacheEntry leafEntry =
-        loadPageForRead(atomicOperation, fileId, secondLevelPageIndex, true);
-    try {
+    try (final OCacheEntry leafEntry =
+        loadPageForRead(atomicOperation, fileId, secondLevelPageIndex, true)) {
       final FreeSpaceMapPage page = new FreeSpaceMapPage(leafEntry);
       return page.findPage(normalizedSize)
           + localSecondLevelPageIndex * FreeSpaceMapPage.CELLS_PER_PAGE;
-    } finally {
-      releasePageFromRead(atomicOperation, leafEntry);
     }
   }
 

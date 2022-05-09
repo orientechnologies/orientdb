@@ -160,12 +160,9 @@ public final class OClusterPositionMapV2 extends OClusterPositionMap {
 
   private long getLastPage(final OAtomicOperation atomicOperation) throws IOException {
     long lastPage;
-    final OCacheEntry entryPointEntry = loadPageForRead(atomicOperation, fileId, 0, false);
-    try {
+    try (final OCacheEntry entryPointEntry = loadPageForRead(atomicOperation, fileId, 0, false)) {
       final MapEntryPoint mapEntryPoint = new MapEntryPoint(entryPointEntry);
       lastPage = mapEntryPoint.getFileSize();
-    } finally {
-      releasePageFromRead(atomicOperation, entryPointEntry);
     }
     return lastPage;
   }
@@ -333,7 +330,6 @@ public final class OClusterPositionMapV2 extends OClusterPositionMap {
         final int resultSize = bucket.getSize() - index;
 
         if (resultSize <= 0) {
-          releasePageFromRead(atomicOperation, cacheEntry);
           pageIndex++;
           index = 0;
         } else {
@@ -359,8 +355,6 @@ public final class OClusterPositionMapV2 extends OClusterPositionMap {
           } else {
             result = Arrays.copyOf(result, entriesCount);
           }
-
-          releasePageFromRead(atomicOperation, cacheEntry);
         }
       }
     } while (result == null && pageIndex <= lastPage);

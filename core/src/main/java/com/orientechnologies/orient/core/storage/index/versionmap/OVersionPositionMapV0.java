@@ -116,12 +116,11 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     acquireSharedLock();
     try {
       final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
-      final OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
-      try {
+
+      try (final OCacheEntry cacheEntry =
+          loadPageForRead(atomicOperation, fileId, pageIndex, false)) {
         final OVersionPositionMapBucket bucket = new OVersionPositionMapBucket(cacheEntry);
         return bucket.getVersion(hash);
-      } finally {
-        releasePageFromRead(atomicOperation, cacheEntry);
       }
     } catch (final IOException e) {
       throw OException.wrapException(

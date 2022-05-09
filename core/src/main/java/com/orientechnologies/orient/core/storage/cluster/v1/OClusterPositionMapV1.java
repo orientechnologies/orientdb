@@ -162,12 +162,9 @@ public final class OClusterPositionMapV1 extends OClusterPositionMap {
 
   private long getLastPage(final OAtomicOperation atomicOperation) throws IOException {
     long lastPage;
-    final OCacheEntry entryPointEntry = loadPageForRead(atomicOperation, fileId, 0, false);
-    try {
+    try (final OCacheEntry entryPointEntry = loadPageForRead(atomicOperation, fileId, 0, false)) {
       final MapEntryPoint mapEntryPoint = new MapEntryPoint(entryPointEntry);
       lastPage = mapEntryPoint.getFileSize();
-    } finally {
-      releasePageFromRead(atomicOperation, entryPointEntry);
     }
     return lastPage;
   }

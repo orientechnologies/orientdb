@@ -112,13 +112,11 @@ public final class BTree extends ODurableComponent {
         }
 
         final long pageIndex = bucketSearchResult.pageIndex;
-        final OCacheEntry keyBucketCacheEntry =
-            loadPageForRead(atomicOperation, fileId, pageIndex, false);
-        try {
+
+        try (final OCacheEntry keyBucketCacheEntry =
+            loadPageForRead(atomicOperation, fileId, pageIndex, false)) {
           final Bucket keyBucket = new Bucket(keyBucketCacheEntry);
           return keyBucket.getValue(bucketSearchResult.itemIndex);
-        } finally {
-          releasePageFromRead(atomicOperation, keyBucketCacheEntry);
         }
       } finally {
         releaseSharedLock();
@@ -233,13 +231,11 @@ public final class BTree extends ODurableComponent {
         }
 
         final BucketSearchResult result = searchResult.get();
-        final OCacheEntry cacheEntry =
-            loadPageForRead(atomicOperation, fileId, result.pageIndex, false);
-        try {
+
+        try (final OCacheEntry cacheEntry =
+            loadPageForRead(atomicOperation, fileId, result.pageIndex, false)) {
           final Bucket bucket = new Bucket(cacheEntry);
           return bucket.getKey(result.itemIndex);
-        } finally {
-          releasePageFromRead(atomicOperation, cacheEntry);
         }
       } finally {
         releaseSharedLock();
@@ -301,14 +297,14 @@ public final class BTree extends ODurableComponent {
           }
         }
 
-        releasePageFromRead(atomicOperation, cacheEntry);
+        cacheEntry.close();
 
         cacheEntry = loadPageForRead(atomicOperation, fileId, bucketIndex, false);
         //noinspection ObjectAllocationInLoop
         bucket = new Bucket(cacheEntry);
       }
     } finally {
-      releasePageFromRead(atomicOperation, cacheEntry);
+      cacheEntry.close();
     }
   }
 
@@ -325,13 +321,11 @@ public final class BTree extends ODurableComponent {
         }
 
         final BucketSearchResult result = searchResult.get();
-        final OCacheEntry cacheEntry =
-            loadPageForRead(atomicOperation, fileId, result.pageIndex, false);
-        try {
+
+        try (final OCacheEntry cacheEntry =
+            loadPageForRead(atomicOperation, fileId, result.pageIndex, false)) {
           final Bucket bucket = new Bucket(cacheEntry);
           return bucket.getKey(result.itemIndex);
-        } finally {
-          releasePageFromRead(atomicOperation, cacheEntry);
         }
       } finally {
         releaseSharedLock();
@@ -394,7 +388,7 @@ public final class BTree extends ODurableComponent {
           }
         }
 
-        releasePageFromRead(atomicOperation, cacheEntry);
+        cacheEntry.close();
 
         cacheEntry = loadPageForRead(atomicOperation, fileId, bucketIndex, false);
 
@@ -405,7 +399,7 @@ public final class BTree extends ODurableComponent {
         }
       }
     } finally {
-      releasePageFromRead(atomicOperation, cacheEntry);
+      cacheEntry.close();
     }
   }
 
@@ -722,8 +716,9 @@ public final class BTree extends ODurableComponent {
       }
 
       path.add(pageIndex);
-      final OCacheEntry bucketEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
-      try {
+
+      try (final OCacheEntry bucketEntry =
+          loadPageForRead(atomicOperation, fileId, pageIndex, false)) {
         final Bucket keyBucket = new Bucket(bucketEntry);
         final int index = keyBucket.find(key);
 
@@ -746,8 +741,6 @@ public final class BTree extends ODurableComponent {
 
           itemIndexes.add(insertionIndex);
         }
-      } finally {
-        releasePageFromRead(atomicOperation, bucketEntry);
       }
     }
   }
@@ -764,8 +757,8 @@ public final class BTree extends ODurableComponent {
             "We reached max level of depth of SBTree but still found nothing, seems like tree is in corrupted state. You should rebuild index related to given query.");
       }
 
-      final OCacheEntry bucketEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
-      try {
+      try (final OCacheEntry bucketEntry =
+          loadPageForRead(atomicOperation, fileId, pageIndex, false)) {
         final Bucket keyBucket = new Bucket(bucketEntry);
         final int index = keyBucket.find(key);
 
@@ -783,8 +776,6 @@ public final class BTree extends ODurableComponent {
             pageIndex = keyBucket.getLeft(insertionIndex);
           }
         }
-      } finally {
-        releasePageFromRead(atomicOperation, bucketEntry);
       }
     }
   }
@@ -1059,7 +1050,7 @@ public final class BTree extends ODurableComponent {
               }
 
               itemIndex = 0;
-              releasePageFromRead(atomicOperation, cacheEntry);
+              cacheEntry.close();
 
               cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
               bucket = new Bucket(cacheEntry);
@@ -1093,7 +1084,7 @@ public final class BTree extends ODurableComponent {
           }
         }
       } finally {
-        releasePageFromRead(atomicOperation, cacheEntry);
+        cacheEntry.close();
       }
 
       return false;
@@ -1259,7 +1250,7 @@ public final class BTree extends ODurableComponent {
                 return true;
               }
 
-              releasePageFromRead(atomicOperation, cacheEntry);
+              cacheEntry.close();
 
               cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
               bucket = new Bucket(cacheEntry);
@@ -1293,7 +1284,7 @@ public final class BTree extends ODurableComponent {
           }
         }
       } finally {
-        releasePageFromRead(atomicOperation, cacheEntry);
+        cacheEntry.close();
       }
 
       return false;

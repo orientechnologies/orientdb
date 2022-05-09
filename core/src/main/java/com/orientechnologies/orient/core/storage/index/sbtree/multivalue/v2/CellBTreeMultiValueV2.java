@@ -229,8 +229,9 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
           long rightSibling = -1;
 
           final List<ORID> result = new ArrayList<>(8);
-          OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
-          try {
+
+          try (OCacheEntry cacheEntry =
+              loadPageForRead(atomicOperation, fileId, pageIndex, false)) {
             final CellBTreeMultiValueV2Bucket<K> bucket =
                 new CellBTreeMultiValueV2Bucket<>(cacheEntry);
             fetchValues(itemIndex, result, bucket);
@@ -242,13 +243,12 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
             if (itemIndex == bucket.size() - 1) {
               rightSibling = bucket.getRightSibling();
             }
-          } finally {
-            releasePageFromRead(atomicOperation, cacheEntry);
           }
 
           while (leftSibling >= 0) {
-            cacheEntry = loadPageForRead(atomicOperation, fileId, leftSibling, false);
-            try {
+
+            try (OCacheEntry cacheEntry =
+                loadPageForRead(atomicOperation, fileId, leftSibling, false)) {
               @SuppressWarnings("ObjectAllocationInLoop")
               final CellBTreeMultiValueV2Bucket<K> bucket =
                   new CellBTreeMultiValueV2Bucket<>(cacheEntry);
@@ -269,14 +269,13 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
               } else {
                 leftSibling = bucket.getLeftSibling();
               }
-            } finally {
-              releasePageFromRead(atomicOperation, cacheEntry);
             }
           }
 
           while (rightSibling >= 0) {
-            cacheEntry = loadPageForRead(atomicOperation, fileId, rightSibling, false);
-            try {
+
+            try (OCacheEntry cacheEntry =
+                loadPageForRead(atomicOperation, fileId, rightSibling, false)) {
               final CellBTreeMultiValueV2Bucket<K> bucket =
                   new CellBTreeMultiValueV2Bucket<>(cacheEntry);
               final int size = bucket.size();
@@ -296,16 +295,14 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
               } else {
                 rightSibling = bucket.getRightSibling();
               }
-            } finally {
-              releasePageFromRead(atomicOperation, cacheEntry);
             }
           }
 
           return result.stream();
         } else {
-          final OCacheEntry nullCacheEntry =
-              loadPageForRead(atomicOperation, nullBucketFileId, 0, false);
-          try {
+
+          try (final OCacheEntry nullCacheEntry =
+              loadPageForRead(atomicOperation, nullBucketFileId, 0, false)) {
             final CellBTreeMultiValueV2NullBucket nullBucket =
                 new CellBTreeMultiValueV2NullBucket(nullCacheEntry);
             final int size = nullBucket.getSize();
@@ -331,8 +328,6 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
               }
             }
             return values.stream();
-          } finally {
-            releasePageFromRead(atomicOperation, nullCacheEntry);
           }
         }
       } finally {
@@ -638,14 +633,11 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
           false,
           null);
 
-      final OCacheEntry entryPointCacheEntry =
-          loadPageForRead(atomicOperation, fileId, ENTRY_POINT_INDEX, false);
-      try {
+      try (final OCacheEntry entryPointCacheEntry =
+          loadPageForRead(atomicOperation, fileId, ENTRY_POINT_INDEX, false)) {
         final CellBTreeMultiValueV2EntryPoint<K> entryPoint =
             new CellBTreeMultiValueV2EntryPoint<>(entryPointCacheEntry);
         mIdCounter.setValue(entryPoint.getEntryId());
-      } finally {
-        releasePageFromRead(atomicOperation, entryPointCacheEntry);
       }
 
     } catch (final IOException e) {
@@ -663,14 +655,11 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
       try {
         final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
-        final OCacheEntry entryPointCacheEntry =
-            loadPageForRead(atomicOperation, fileId, ENTRY_POINT_INDEX, false);
-        try {
+        try (final OCacheEntry entryPointCacheEntry =
+            loadPageForRead(atomicOperation, fileId, ENTRY_POINT_INDEX, false)) {
           final CellBTreeMultiValueV2EntryPoint<K> entryPoint =
               new CellBTreeMultiValueV2EntryPoint<>(entryPointCacheEntry);
           return entryPoint.getTreeSize();
-        } finally {
-          releasePageFromRead(atomicOperation, entryPointCacheEntry);
         }
       } finally {
         releaseSharedLock();
@@ -897,14 +886,11 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
           return null;
         }
 
-        final OCacheEntry cacheEntry =
-            loadPageForRead(atomicOperation, fileId, searchResult.pageIndex, false);
-        try {
+        try (final OCacheEntry cacheEntry =
+            loadPageForRead(atomicOperation, fileId, searchResult.pageIndex, false)) {
           final CellBTreeMultiValueV2Bucket<K> bucket =
               new CellBTreeMultiValueV2Bucket<>(cacheEntry);
           return bucket.getKey(searchResult.itemIndex, keySerializer, encryption);
-        } finally {
-          releasePageFromRead(atomicOperation, cacheEntry);
         }
       } finally {
         releaseSharedLock();
@@ -931,14 +917,11 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
           return null;
         }
 
-        final OCacheEntry cacheEntry =
-            loadPageForRead(atomicOperation, fileId, searchResult.pageIndex, false);
-        try {
+        try (final OCacheEntry cacheEntry =
+            loadPageForRead(atomicOperation, fileId, searchResult.pageIndex, false)) {
           final CellBTreeMultiValueV2Bucket<K> bucket =
               new CellBTreeMultiValueV2Bucket<>(cacheEntry);
           return bucket.getKey(searchResult.itemIndex, keySerializer, encryption);
-        } finally {
-          releasePageFromRead(atomicOperation, cacheEntry);
         }
       } finally {
         releaseSharedLock();
@@ -1153,14 +1136,14 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
           }
         }
 
-        releasePageFromRead(atomicOperation, cacheEntry);
+        cacheEntry.close();
 
         cacheEntry = loadPageForRead(atomicOperation, fileId, bucketIndex, false);
 
         bucket = new CellBTreeMultiValueV2Bucket<>(cacheEntry);
       }
     } finally {
-      releasePageFromRead(atomicOperation, cacheEntry);
+      cacheEntry.close();
     }
   }
 
@@ -1212,7 +1195,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
           }
         }
 
-        releasePageFromRead(atomicOperation, cacheEntry);
+        cacheEntry.close();
 
         cacheEntry = loadPageForRead(atomicOperation, fileId, bucketIndex, false);
 
@@ -1222,7 +1205,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
         }
       }
     } finally {
-      releasePageFromRead(atomicOperation, cacheEntry);
+      cacheEntry.close();
     }
   }
 
@@ -1729,8 +1712,8 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
             this);
       }
 
-      final OCacheEntry bucketEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
-      try {
+      try (final OCacheEntry bucketEntry =
+          loadPageForRead(atomicOperation, fileId, pageIndex, false)) {
         final CellBTreeMultiValueV2Bucket<K> keyBucket =
             new CellBTreeMultiValueV2Bucket<>(bucketEntry);
         final int index = keyBucket.find(key, keySerializer, encryption);
@@ -1749,8 +1732,6 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
             pageIndex = keyBucket.getLeft(insertionIndex);
           }
         }
-      } finally {
-        releasePageFromRead(atomicOperation, bucketEntry);
       }
     }
   }
@@ -1770,8 +1751,10 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
       }
 
       path.add(pageIndex);
-      final OCacheEntry bucketEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
-      try {
+
+      try (final OCacheEntry bucketEntry =
+          loadPageForRead(atomicOperation, fileId, pageIndex, false)) {
+
         final CellBTreeMultiValueV2Bucket<K> keyBucket =
             new CellBTreeMultiValueV2Bucket<>(bucketEntry);
         final int index = keyBucket.find(key, keySerializer, encryption);
@@ -1795,8 +1778,6 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
 
           insertionIndexes.add(insertionIndex);
         }
-      } finally {
-        releasePageFromRead(atomicOperation, bucketEntry);
       }
     }
   }
@@ -1921,22 +1902,18 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
               break;
             }
 
-            final OCacheEntry entryPointCacheEntry =
-                loadPageForRead(atomicOperation, fileId, ENTRY_POINT_INDEX, false);
-            try {
+            try (final OCacheEntry entryPointCacheEntry =
+                loadPageForRead(atomicOperation, fileId, ENTRY_POINT_INDEX, false)) {
               final CellBTreeMultiValueV2EntryPoint<K> entryPoint =
                   new CellBTreeMultiValueV2EntryPoint<>(entryPointCacheEntry);
               if (pageIndex >= entryPoint.getPagesSize() + 1) {
                 pageIndex = -1;
                 break;
               }
-            } finally {
-              releasePageFromRead(atomicOperation, entryPointCacheEntry);
             }
 
-            final OCacheEntry cacheEntry =
-                loadPageForRead(atomicOperation, fileId, pageIndex, false);
-            try {
+            try (final OCacheEntry cacheEntry =
+                loadPageForRead(atomicOperation, fileId, pageIndex, false)) {
               final CellBTreeMultiValueV2Bucket<K> bucket =
                   new CellBTreeMultiValueV2Bucket<>(cacheEntry);
 
@@ -1952,8 +1929,6 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
                     deserializeKey(bucket.getRawKey(itemIndex, keySerializer, encryption)));
                 itemIndex++;
               }
-            } finally {
-              releasePageFromRead(atomicOperation, cacheEntry);
             }
           }
         } finally {
@@ -2083,9 +2058,8 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
               break;
             }
 
-            final OCacheEntry cacheEntry =
-                loadPageForRead(atomicOperation, fileId, pageIndex, false);
-            try {
+            try (final OCacheEntry cacheEntry =
+                loadPageForRead(atomicOperation, fileId, pageIndex, false)) {
               final CellBTreeMultiValueV2Bucket<K> bucket =
                   new CellBTreeMultiValueV2Bucket<>(cacheEntry);
               if (firstTry
@@ -2094,37 +2068,36 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
                   && bucketSearchResult.itemIndex == 0) {
                 int leftSibling = (int) bucket.getLeftSibling();
                 while (leftSibling > 0) {
-                  final OCacheEntry siblingCacheEntry =
-                      loadPageForRead(atomicOperation, fileId, leftSibling, false);
-                  final CellBTreeMultiValueV2Bucket<K> siblingBucket =
-                      new CellBTreeMultiValueV2Bucket<>(siblingCacheEntry);
+                  try (final OCacheEntry siblingCacheEntry =
+                      loadPageForRead(atomicOperation, fileId, leftSibling, false)) {
+                    final CellBTreeMultiValueV2Bucket<K> siblingBucket =
+                        new CellBTreeMultiValueV2Bucket<>(siblingCacheEntry);
 
-                  final int bucketSize = siblingBucket.size();
-                  if (bucketSize == 0) {
-                    leftSibling = (int) siblingBucket.getLeftSibling();
-                  } else if (bucketSize == 1) {
-                    final K key = siblingBucket.getKey(0, keySerializer, encryption);
-
-                    if (key.equals(fromKey)) {
-                      lastKey = key;
-
-                      fetchMapEntries(0, key, dataCache, siblingBucket);
-
+                    final int bucketSize = siblingBucket.size();
+                    if (bucketSize == 0) {
                       leftSibling = (int) siblingBucket.getLeftSibling();
+                    } else if (bucketSize == 1) {
+                      final K key = siblingBucket.getKey(0, keySerializer, encryption);
+
+                      if (key.equals(fromKey)) {
+                        lastKey = key;
+
+                        fetchMapEntries(0, key, dataCache, siblingBucket);
+
+                        leftSibling = (int) siblingBucket.getLeftSibling();
+                      } else {
+                        leftSibling = -1;
+                      }
                     } else {
+                      final K key = siblingBucket.getKey(bucketSize - 1, keySerializer, encryption);
+                      if (key.equals(fromKey)) {
+                        lastKey = key;
+
+                        fetchMapEntries(0, key, dataCache, siblingBucket);
+                      }
                       leftSibling = -1;
                     }
-                  } else {
-                    final K key = siblingBucket.getKey(bucketSize - 1, keySerializer, encryption);
-                    if (key.equals(fromKey)) {
-                      lastKey = key;
-
-                      fetchMapEntries(0, key, dataCache, siblingBucket);
-                    }
-                    leftSibling = -1;
                   }
-
-                  releasePageFromRead(atomicOperation, siblingCacheEntry);
                 }
               }
 
@@ -2169,9 +2142,6 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
                 lastKey = key;
                 fetchMapEntriesFromLeafEntry(key, dataCache, leafEntry);
               }
-
-            } finally {
-              releasePageFromRead(atomicOperation, cacheEntry);
             }
           }
         } finally {
@@ -2303,9 +2273,8 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
               break;
             }
 
-            final OCacheEntry cacheEntry =
-                loadPageForRead(atomicOperation, fileId, pageIndex, false);
-            try {
+            try (final OCacheEntry cacheEntry =
+                loadPageForRead(atomicOperation, fileId, pageIndex, false)) {
               final CellBTreeMultiValueV2Bucket<K> bucket =
                   new CellBTreeMultiValueV2Bucket<>(cacheEntry);
               if (firstTry
@@ -2314,36 +2283,35 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
                   && bucketSearchResult.itemIndex == 0) {
                 int rightSibling = (int) bucket.getRightSibling();
                 while (rightSibling > 0) {
-                  final OCacheEntry siblingCacheEntry =
-                      loadPageForRead(atomicOperation, fileId, rightSibling, false);
-                  final CellBTreeMultiValueV2Bucket<K> siblingBucket =
-                      new CellBTreeMultiValueV2Bucket<>(siblingCacheEntry);
+                  try (final OCacheEntry siblingCacheEntry =
+                      loadPageForRead(atomicOperation, fileId, rightSibling, false)) {
+                    final CellBTreeMultiValueV2Bucket<K> siblingBucket =
+                        new CellBTreeMultiValueV2Bucket<>(siblingCacheEntry);
 
-                  final int bucketSize = siblingBucket.size();
-                  if (bucketSize == 0) {
-                    rightSibling = (int) siblingBucket.getRightSibling();
-                  } else if (bucketSize == 1) {
-                    final K key = siblingBucket.getKey(0, keySerializer, encryption);
-
-                    if (key.equals(fromKey)) {
-                      lastKey = key;
-
-                      fetchMapEntries(0, key, dataCache, siblingBucket);
+                    final int bucketSize = siblingBucket.size();
+                    if (bucketSize == 0) {
                       rightSibling = (int) siblingBucket.getRightSibling();
-                    } else {
-                      rightSibling = -1;
-                    }
-                  } else {
-                    final K key = siblingBucket.getKey(0, keySerializer, encryption);
-                    if (key.equals(fromKey)) {
-                      lastKey = key;
+                    } else if (bucketSize == 1) {
+                      final K key = siblingBucket.getKey(0, keySerializer, encryption);
 
-                      fetchMapEntries(0, key, dataCache, siblingBucket);
-                    } else {
-                      rightSibling = -1;
-                    }
+                      if (key.equals(fromKey)) {
+                        lastKey = key;
 
-                    releasePageFromRead(atomicOperation, siblingCacheEntry);
+                        fetchMapEntries(0, key, dataCache, siblingBucket);
+                        rightSibling = (int) siblingBucket.getRightSibling();
+                      } else {
+                        rightSibling = -1;
+                      }
+                    } else {
+                      final K key = siblingBucket.getKey(0, keySerializer, encryption);
+                      if (key.equals(fromKey)) {
+                        lastKey = key;
+
+                        fetchMapEntries(0, key, dataCache, siblingBucket);
+                      } else {
+                        rightSibling = -1;
+                      }
+                    }
                   }
                 }
               }
@@ -2394,8 +2362,6 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
 
                 fetchMapEntriesFromLeafEntry(key, dataCache, leafEntry);
               }
-            } finally {
-              releasePageFromRead(atomicOperation, cacheEntry);
             }
           }
         } finally {
