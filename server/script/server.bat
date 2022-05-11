@@ -3,12 +3,12 @@ rem
 rem Copyright (c) OrientDB LTD (http://www.orientdb.com)
 rem
 
-echo            .                                          
-echo           .`        `                                 
-echo           ,      `:.                                  
-echo          `,`    ,:`                                   
-echo          .,.   :,,                                    
-echo          .,,  ,,,                                     
+echo            .
+echo           .`        `
+echo           ,      `:.
+echo          `,`    ,:`
+echo          .,.   :,,
+echo          .,,  ,,,
 echo     .    .,.:::::  ````                                 :::::::::     :::::::::
 echo     ,`   .::,,,,::.,,,,,,`;;                      .:    ::::::::::    :::    :::
 echo     `,.  ::,,,,,,,:.,,.`  `                       .:    :::      :::  :::     :::
@@ -21,12 +21,12 @@ echo   `,...,,:,,,,,,,,,: .:,. ,, ,,         :     :   .:    :::      :::  :::  
 echo     .,,,,::,,,,,,,:  `: , ,,  :     `   :     :   .:    :::      :::  :::     :::
 echo       ...,::,,,,::.. `:  .,,  :,    :   :     :   .:    :::::::::::   :::     :::
 echo            ,::::,,,. `:   ,,   :::::    :     :   .:    :::::::::     ::::::::::
-echo            ,,:` `,,.                                  
-echo           ,,,    .,`                                  
+echo            ,,:` `,,.
+echo           ,,,    .,`
 echo          ,,.     `,                                              VELOCE
-echo        ``        `.                                         
+echo        ``        `.
 echo                  ``                                         www.orientdb.com
-echo                  `                                    
+echo                  `
 
 rem Guess ORIENTDB_HOME if not defined
 set CURRENT_DIR=%cd%
@@ -63,7 +63,6 @@ shift
 goto setArgs
 
 :doneSetArgs
-
 
 if NOT exist "%CONFIG_FILE%" set CONFIG_FILE=%ORIENTDB_HOME%/config/orientdb-server-config.xml
 

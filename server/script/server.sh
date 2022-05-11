@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) OrientDB LTD (http://http://orientdb.com/)
+# Copyright (c) OrientDB LTD (http://orientdb.com/)
 #
 
 echo "           .                                          "
@@ -61,7 +61,7 @@ fi
 export JAVA_OPTS
 
 # Set JavaHome if it exists
-if [ -f "${JAVA_HOME}/bin/java" ]; then 
+if [ -f "${JAVA_HOME}/bin/java" ]; then
    JAVA=${JAVA_HOME}/bin/java
 else
    JAVA=java

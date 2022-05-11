@@ -77,7 +77,7 @@ if [ -z "$ORIENTDB_WWW_PATH" ] ; then
 fi
 
 if [ -z "$ORIENTDB_PID" ] ; then
-ORIENTDB_PID=$ORIENTDB_HOME/bin/orient.pid
+    ORIENTDB_PID=$ORIENTDB_HOME/bin/orient.pid
 fi
 
 if [ -f "$ORIENTDB_PID" ]; then
@@ -119,6 +119,7 @@ exec "$JAVA" $JAVA_OPTS \
     $ORIENTDB_SETTINGS \
     $DEBUG_OPTS \
     -Ddistributed=true \
+    -Djava.util.logging.manager=com.orientechnologies.common.log.ShutdownLogManager \
     -Djava.util.logging.config.file="$ORIENTDB_LOG_CONF" \
     -Dorientdb.config.file="$CONFIG_FILE" \
     -Dorientdb.www.path="$ORIENTDB_WWW_PATH" \
