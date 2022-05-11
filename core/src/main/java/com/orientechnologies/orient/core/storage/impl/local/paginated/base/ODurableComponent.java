@@ -124,6 +124,21 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     return atomicOperation.loadPageForWrite(fileId, pageIndex, checkPinnedPages, 1, verifyCheckSum);
   }
 
+  protected OCacheEntry loadOrAddPageForWrite(
+      final OAtomicOperation atomicOperation,
+      final long fileId,
+      final long pageIndex,
+      final boolean checkPinnedPages,
+      final boolean verifyCheckSum)
+      throws IOException {
+    OCacheEntry entry =
+        atomicOperation.loadPageForWrite(fileId, pageIndex, checkPinnedPages, 1, verifyCheckSum);
+    if (entry == null) {
+      entry = addPage(atomicOperation, fileId);
+    }
+    return entry;
+  }
+
   protected OCacheEntry loadPageForRead(
       final OAtomicOperation atomicOperation,
       final long fileId,

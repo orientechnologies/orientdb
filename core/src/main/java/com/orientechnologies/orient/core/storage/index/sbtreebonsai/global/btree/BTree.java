@@ -52,20 +52,14 @@ public final class BTree extends ODurableComponent {
           try {
             fileId = addFile(atomicOperation, getFullName());
 
-            final OCacheEntry entryPointCacheEntry = addPage(atomicOperation, fileId);
-            try {
+            try (final OCacheEntry entryPointCacheEntry = addPage(atomicOperation, fileId)) {
               final EntryPoint entryPoint = new EntryPoint(entryPointCacheEntry);
               entryPoint.init();
-            } finally {
-              releasePageFromWrite(atomicOperation, entryPointCacheEntry);
             }
 
-            final OCacheEntry rootCacheEntry = addPage(atomicOperation, fileId);
-            try {
+            try (final OCacheEntry rootCacheEntry = addPage(atomicOperation, fileId)) {
               final Bucket rootBucket = new Bucket(rootCacheEntry);
               rootBucket.init(true);
-            } finally {
-              releasePageFromWrite(atomicOperation, rootCacheEntry);
             }
           } finally {
             releaseExclusiveLock();
@@ -167,7 +161,7 @@ public final class BTree extends ODurableComponent {
               if (oldRawValue.length == serializedValue.length) {
                 keyBucket.updateValue(
                     bucketSearchResult.itemIndex, serializedValue, serializedKey.length);
-                releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
+                keyBucketCacheEntry.close();
                 return false;
               } else {
                 keyBucket.removeLeafEntry(
@@ -195,7 +189,7 @@ public final class BTree extends ODurableComponent {
               final long pageIndex = bucketSearchResult.getLastPathItem();
 
               if (pageIndex != keyBucketCacheEntry.getPageIndex()) {
-                releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
+                keyBucketCacheEntry.close();
 
                 keyBucketCacheEntry =
                     loadPageForWrite(atomicOperation, fileId, pageIndex, false, true);
@@ -205,7 +199,7 @@ public final class BTree extends ODurableComponent {
               keyBucket = new Bucket(keyBucketCacheEntry);
             }
 
-            releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
+            keyBucketCacheEntry.close();
 
             if (sizeDiff != 0) {
               updateSize(sizeDiff, atomicOperation);
@@ -463,9 +457,8 @@ public final class BTree extends ODurableComponent {
       throws IOException {
 
     final OCacheEntry rightBucketEntry;
-    final OCacheEntry entryPointCacheEntry =
-        loadPageForWrite(atomicOperation, fileId, ENTRY_POINT_INDEX, false, true);
-    try {
+    try (final OCacheEntry entryPointCacheEntry =
+        loadPageForWrite(atomicOperation, fileId, ENTRY_POINT_INDEX, false, true)) {
       final EntryPoint entryPoint = new EntryPoint(entryPointCacheEntry);
       int pageSize = entryPoint.getPagesSize();
 
@@ -479,8 +472,6 @@ public final class BTree extends ODurableComponent {
         rightBucketEntry = addPage(atomicOperation, fileId);
         entryPoint.setPagesSize(rightBucketEntry.getPageIndex());
       }
-    } finally {
-      releasePageFromWrite(atomicOperation, entryPointCacheEntry);
     }
 
     try {
@@ -499,13 +490,11 @@ public final class BTree extends ODurableComponent {
         bucketToSplit.setRightSibling(rightBucketEntry.getPageIndex());
 
         if (rightSiblingPageIndex >= 0) {
-          final OCacheEntry rightSiblingBucketEntry =
-              loadPageForWrite(atomicOperation, fileId, rightSiblingPageIndex, false, true);
-          final Bucket rightSiblingBucket = new Bucket(rightSiblingBucketEntry);
-          try {
+
+          try (final OCacheEntry rightSiblingBucketEntry =
+              loadPageForWrite(atomicOperation, fileId, rightSiblingPageIndex, false, true)) {
+            final Bucket rightSiblingBucket = new Bucket(rightSiblingBucketEntry);
             rightSiblingBucket.setLeftSibling(rightBucketEntry.getPageIndex());
-          } finally {
-            releasePageFromWrite(atomicOperation, rightSiblingBucketEntry);
           }
         }
       }
@@ -535,7 +524,7 @@ public final class BTree extends ODurableComponent {
           insertionIndex = bucketSearchResult.itemIndex;
 
           if (parentIndex != parentCacheEntry.getPageIndex()) {
-            releasePageFromWrite(atomicOperation, parentCacheEntry);
+            parentCacheEntry.close();
 
             parentCacheEntry = loadPageForWrite(atomicOperation, fileId, parentIndex, false, true);
           }
@@ -545,11 +534,11 @@ public final class BTree extends ODurableComponent {
         }
 
       } finally {
-        releasePageFromWrite(atomicOperation, parentCacheEntry);
+        parentCacheEntry.close();
       }
 
     } finally {
-      releasePageFromWrite(atomicOperation, rightBucketEntry);
+      rightBucketEntry.close();
     }
 
     final ArrayList<Integer> resultPath = new ArrayList<>(path.subList(0, path.size() - 1));
@@ -596,9 +585,8 @@ public final class BTree extends ODurableComponent {
     final OCacheEntry leftBucketEntry;
     final OCacheEntry rightBucketEntry;
 
-    final OCacheEntry entryPointCacheEntry =
-        loadPageForWrite(atomicOperation, fileId, ENTRY_POINT_INDEX, false, true);
-    try {
+    try (final OCacheEntry entryPointCacheEntry =
+        loadPageForWrite(atomicOperation, fileId, ENTRY_POINT_INDEX, false, true)) {
       final EntryPoint entryPoint = new EntryPoint(entryPointCacheEntry);
       int pageSize = entryPoint.getPagesSize();
 
@@ -623,8 +611,6 @@ public final class BTree extends ODurableComponent {
       }
 
       entryPoint.setPagesSize(pageSize);
-    } finally {
-      releasePageFromWrite(atomicOperation, entryPointCacheEntry);
     }
 
     try {
@@ -637,7 +623,7 @@ public final class BTree extends ODurableComponent {
       }
 
     } finally {
-      releasePageFromWrite(atomicOperation, leftBucketEntry);
+      leftBucketEntry.close();
     }
 
     try {
@@ -649,7 +635,7 @@ public final class BTree extends ODurableComponent {
         newRightBucket.setLeftSibling(leftBucketEntry.getPageIndex());
       }
     } finally {
-      releasePageFromWrite(atomicOperation, rightBucketEntry);
+      rightBucketEntry.close();
     }
 
     bucketToSplit = new Bucket(bucketEntry);
@@ -692,13 +678,10 @@ public final class BTree extends ODurableComponent {
 
   private void updateSize(final long diffSize, final OAtomicOperation atomicOperation)
       throws IOException {
-    final OCacheEntry entryPointCacheEntry =
-        loadPageForWrite(atomicOperation, fileId, ENTRY_POINT_INDEX, false, true);
-    try {
+    try (final OCacheEntry entryPointCacheEntry =
+        loadPageForWrite(atomicOperation, fileId, ENTRY_POINT_INDEX, false, true)) {
       final EntryPoint entryPoint = new EntryPoint(entryPointCacheEntry);
       entryPoint.setTreeSize(entryPoint.getTreeSize() + diffSize);
-    } finally {
-      releasePageFromWrite(atomicOperation, entryPointCacheEntry);
     }
   }
 
@@ -794,18 +777,15 @@ public final class BTree extends ODurableComponent {
             }
 
             final byte[] serializedKey = EdgeKeySerializer.INSTANCE.serializeNativeAsWhole(key);
-            final OCacheEntry keyBucketCacheEntry =
-                loadPageForWrite(
-                    atomicOperation, fileId, bucketSearchResult.pageIndex, false, true);
             final byte[] rawValue;
-            try {
+            try (final OCacheEntry keyBucketCacheEntry =
+                loadPageForWrite(
+                    atomicOperation, fileId, bucketSearchResult.pageIndex, false, true)) {
               final Bucket keyBucket = new Bucket(keyBucketCacheEntry);
               rawValue = keyBucket.getRawValue(bucketSearchResult.itemIndex);
               keyBucket.removeLeafEntry(
                   bucketSearchResult.itemIndex, serializedKey.length, rawValue.length);
               updateSize(-1, atomicOperation);
-            } finally {
-              releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
             }
 
             removedValue = IntSerializer.INSTANCE.deserializeNativeObject(rawValue, 0);

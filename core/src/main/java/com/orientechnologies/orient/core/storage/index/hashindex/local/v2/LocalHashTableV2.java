@@ -169,15 +169,12 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
 
             directory.create(atomicOperation);
 
-            final OCacheEntry hashStateEntry = addPage(atomicOperation, fileStateId);
-            try {
+            try (final OCacheEntry hashStateEntry = addPage(atomicOperation, fileStateId)) {
               @SuppressWarnings("unused")
               final HashIndexMetadataPageV2 page = new HashIndexMetadataPageV2(hashStateEntry);
               page.init();
 
               hashStateEntryIndex = hashStateEntry.getPageIndex();
-            } finally {
-              releasePageFromWrite(atomicOperation, hashStateEntry);
             }
 
             final String fileName = getFullName();
@@ -313,9 +310,8 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
               final V removed;
               final boolean found;
 
-              final OCacheEntry cacheEntry =
-                  loadPageForWrite(atomicOperation, fileId, pageIndex, false, true);
-              try {
+              try (final OCacheEntry cacheEntry =
+                  loadPageForWrite(atomicOperation, fileId, pageIndex, false, true)) {
                 final HashIndexBucketV2<K, V> bucket = new HashIndexBucketV2<>(cacheEntry);
                 final int positionIndex = bucket.getIndex(hashCode, key, encryption, keySerializer);
                 found = positionIndex >= 0;
@@ -330,8 +326,6 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
                 } else {
                   removed = null;
                 }
-              } finally {
-                releasePageFromWrite(atomicOperation, cacheEntry);
               }
 
               if (found) {
@@ -375,7 +369,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
                   removed = null;
                 }
               } finally {
-                releasePageFromWrite(atomicOperation, cacheEntry);
+                cacheEntry.close();
               }
 
               changeSize(sizeDiff, atomicOperation);
@@ -409,14 +403,11 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
   private void changeSize(final int sizeDiff, final OAtomicOperation atomicOperation)
       throws IOException {
     if (sizeDiff != 0) {
-      final OCacheEntry hashStateEntry =
-          loadPageForWrite(atomicOperation, fileStateId, hashStateEntryIndex, true, true);
-      try {
+      try (final OCacheEntry hashStateEntry =
+          loadPageForWrite(atomicOperation, fileStateId, hashStateEntryIndex, true, true)) {
         final HashIndexMetadataPageV2 page = new HashIndexMetadataPageV2(hashStateEntry);
 
         page.setRecordsCount(page.getRecordsCount() + sizeDiff);
-      } finally {
-        releasePageFromWrite(atomicOperation, hashStateEntry);
       }
     }
   }
@@ -1420,7 +1411,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
         nullBucket.setValue(rawValue, oldRawValue);
         sizeDiff++;
       } finally {
-        releasePageFromWrite(atomicOperation, cacheEntry);
+        cacheEntry.close();
       }
 
       changeSize(sizeDiff, atomicOperation);
@@ -1591,7 +1582,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
           }
         }
       } finally {
-        releasePageFromWrite(atomicOperation, cacheEntry);
+        cacheEntry.close();
       }
 
       changeSize(sizeDiff, atomicOperation);
@@ -2013,9 +2004,8 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
 
     @SuppressWarnings("UnnecessaryLocalVariable")
     final long updatedBucketIndex = pageIndex;
-    final OCacheEntry newBucketCacheEntry = addPage(atomicOperation, fileId);
 
-    try {
+    try (final OCacheEntry newBucketCacheEntry = addPage(atomicOperation, fileId)) {
       final HashIndexBucketV2<K, V> newBucket = new HashIndexBucketV2<>(newBucketCacheEntry);
       newBucket.init(newBucketDepth);
 
@@ -2026,8 +2016,6 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
 
       return new OHashTable.BucketSplitResult(
           updatedBucketPointer, newBucketPointer, newBucketDepth);
-    } finally {
-      releasePageFromWrite(atomicOperation, newBucketCacheEntry);
     }
   }
 
@@ -2077,15 +2065,12 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
     truncateFile(atomicOperation, fileId);
 
     for (long pageIndex = 0; pageIndex < MAX_LEVEL_SIZE; pageIndex++) {
-      final OCacheEntry cacheEntry = addPage(atomicOperation, fileId);
-      assert cacheEntry.getPageIndex() == pageIndex;
 
-      try {
+      try (final OCacheEntry cacheEntry = addPage(atomicOperation, fileId)) {
+        assert cacheEntry.getPageIndex() == pageIndex;
         @SuppressWarnings("unused")
         final HashIndexBucketV2<K, V> emptyBucket = new HashIndexBucketV2<>(cacheEntry);
         emptyBucket.init(MAX_LEVEL_DEPTH);
-      } finally {
-        releasePageFromWrite(atomicOperation, cacheEntry);
       }
     }
 
@@ -2097,13 +2082,10 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
     directory.clear(atomicOperation);
     directory.addNewNode((byte) 0, (byte) 0, (byte) MAX_LEVEL_DEPTH, rootTree, atomicOperation);
 
-    final OCacheEntry hashStateEntry =
-        loadPageForWrite(atomicOperation, fileStateId, hashStateEntryIndex, true, true);
-    try {
+    try (final OCacheEntry hashStateEntry =
+        loadPageForWrite(atomicOperation, fileStateId, hashStateEntryIndex, true, true)) {
       final HashIndexMetadataPageV2 metadataPage = new HashIndexMetadataPageV2(hashStateEntry);
       metadataPage.setRecordsCount(0);
-    } finally {
-      releasePageFromWrite(atomicOperation, hashStateEntry);
     }
   }
 
