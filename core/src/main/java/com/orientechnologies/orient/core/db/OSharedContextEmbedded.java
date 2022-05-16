@@ -29,12 +29,16 @@ import java.util.Map;
 /** Created by tglman on 13/06/17. */
 public class OSharedContextEmbedded extends OSharedContext {
 
-  private Map<String, DistributedQueryContext> activeDistributedQueries;
+  protected Map<String, DistributedQueryContext> activeDistributedQueries;
   protected ViewManager viewManager;
 
   public OSharedContextEmbedded(OStorage storage, OrientDBEmbedded orientDB) {
     this.orientDB = orientDB;
     this.storage = storage;
+    init(storage);
+  }
+
+  protected void init(OStorage storage) {
     schema = new OSchemaEmbedded(this);
     security = orientDB.getSecuritySystem().newSecurity(storage.getName());
     indexManager = new OIndexManagerShared(storage);
@@ -160,6 +164,14 @@ public class OSharedContextEmbedded extends OSharedContext {
 
   public ViewManager getViewManager() {
     return viewManager;
+  }
+
+  public synchronized void reInit(
+      OAbstractPaginatedStorage storage2, ODatabaseDocumentInternal database) {
+    this.close();
+    this.storage = storage2;
+    this.init(storage2);
+    this.load(database);
   }
 
   public synchronized ODocument loadConfig(ODatabaseSession session, String name) {

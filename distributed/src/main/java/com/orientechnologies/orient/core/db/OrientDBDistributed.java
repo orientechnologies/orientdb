@@ -90,6 +90,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   public OStorage fullSync(String dbName, InputStream backupStream, OrientDBConfig config) {
     OAbstractPaginatedStorage storage = null;
+    ODatabaseDocumentEmbedded embedded;
     synchronized (this) {
       try {
         storage = storages.get(dbName);
@@ -109,7 +110,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
                     maxWALSegmentSize,
                     doubleWriteLogMaxSegSize,
                     generateStorageId());
-        internalCreate(config, storage);
+        embedded = internalCreate(config, storage);
         storages.put(dbName, storage);
       } catch (OModificationOperationProhibitedException e) {
         throw e;
@@ -146,11 +147,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
           buildName(dbName));
       throw e;
     }
-    // DROP AND CREATE THE SHARED CONTEXT SU HAS CORRECT INFORMATION.
-    synchronized (this) {
-      OSharedContext context = sharedContexts.remove(dbName);
-      context.close();
-    }
+    embedded.getSharedContext().reInit(storage, embedded);
     ODatabaseRecordThreadLocal.instance().remove();
     return storage;
   }
