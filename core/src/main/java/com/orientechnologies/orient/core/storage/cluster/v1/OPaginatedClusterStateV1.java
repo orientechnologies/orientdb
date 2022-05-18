@@ -23,10 +23,6 @@ package com.orientechnologies.orient.core.storage.cluster.v1;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v1.paginatedclusterstate.PaginatedClusterStateV1SetFileSizePO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v1.paginatedclusterstate.PaginatedClusterStateV1SetFreeListPagePO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v1.paginatedclusterstate.PaginatedClusterStateV1SetRecordsSizePO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v1.paginatedclusterstate.PaginatedClusterStateV1SetSizePO;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -43,10 +39,7 @@ public final class OPaginatedClusterStateV1 extends ODurablePage {
   }
 
   public void setSize(int size) {
-    final int oldSize = getIntValue(SIZE_OFFSET);
     setIntValue(SIZE_OFFSET, size);
-
-    addPageOperation(new PaginatedClusterStateV1SetSizePO(oldSize, size));
   }
 
   public int getSize() {
@@ -54,11 +47,7 @@ public final class OPaginatedClusterStateV1 extends ODurablePage {
   }
 
   public void setRecordsSize(int recordsSize) {
-    final int oldRecordsSize = getIntValue(RECORDS_SIZE_OFFSET);
-
     setIntValue(RECORDS_SIZE_OFFSET, recordsSize);
-
-    addPageOperation(new PaginatedClusterStateV1SetRecordsSizePO(oldRecordsSize, recordsSize));
   }
 
   public int getRecordsSize() {
@@ -66,10 +55,7 @@ public final class OPaginatedClusterStateV1 extends ODurablePage {
   }
 
   public void setFileSize(int size) {
-    final int oldFileSize = getIntValue(FILE_SIZE_OFFSET);
     setIntValue(FILE_SIZE_OFFSET, size);
-
-    addPageOperation(new PaginatedClusterStateV1SetFileSizePO(oldFileSize, size));
   }
 
   public int getFileSize() {
@@ -78,11 +64,7 @@ public final class OPaginatedClusterStateV1 extends ODurablePage {
 
   public void setFreeListPage(int index, int pageIndex) {
     final int pageOffset = FREE_LIST_OFFSET + index * OIntegerSerializer.INT_SIZE;
-    final int oldPage = getIntValue(pageOffset);
-
     setIntValue(pageOffset, pageIndex);
-
-    addPageOperation(new PaginatedClusterStateV1SetFreeListPagePO(index, oldPage, pageIndex));
   }
 
   public int getFreeListPage(int index) {
