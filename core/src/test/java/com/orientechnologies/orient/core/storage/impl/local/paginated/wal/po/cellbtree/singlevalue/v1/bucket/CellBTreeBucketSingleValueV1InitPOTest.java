@@ -20,7 +20,7 @@ public class CellBTreeBucketSingleValueV1InitPOTest {
     try {
       final OPointer pointer = byteBufferPool.acquireDirect(false, Intention.TEST);
       final OCachePointer cachePointer = new OCachePointer(pointer, byteBufferPool, 0, 0);
-      final OCacheEntry entry = new OCacheEntryImpl(0, 0, cachePointer, false);
+      final OCacheEntry entry = new OCacheEntryImpl(0, 0, cachePointer, false, null);
 
       CellBTreeBucketSingleValueV1 bucket = new CellBTreeBucketSingleValueV1(entry);
       bucket.init(true);
@@ -36,7 +36,8 @@ public class CellBTreeBucketSingleValueV1InitPOTest {
       final OPointer restoredPointer = byteBufferPool.acquireDirect(false, Intention.TEST);
       final OCachePointer restoredCachePointer =
           new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
-      final OCacheEntry restoredCacheEntry = new OCacheEntryImpl(0, 0, restoredCachePointer, false);
+      final OCacheEntry restoredCacheEntry =
+          new OCacheEntryImpl(0, 0, restoredCachePointer, false, null);
 
       pageOperation.redo(restoredCacheEntry);
 

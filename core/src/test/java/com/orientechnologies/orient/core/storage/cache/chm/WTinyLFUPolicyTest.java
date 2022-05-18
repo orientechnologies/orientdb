@@ -679,7 +679,7 @@ public class WTinyLFUPolicyTest {
     for (int i = 0; i < cacheEntries.length; i++) {
       final OCachePointer cachePointer =
           new OCachePointer(pool.acquireDirect(true, Intention.TEST), pool, 1, i);
-      final OCacheEntry cacheEntry = new OCacheEntryImpl(1, i, cachePointer, false);
+      final OCacheEntry cacheEntry = new OCacheEntryImpl(1, i, cachePointer, false, null);
 
       cachePointer.incrementReadersReferrer();
       cacheEntries[i] = cacheEntry;

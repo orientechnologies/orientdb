@@ -22,7 +22,7 @@ public class LocalHashTableV2BucketDeleteEntryPOTest {
     try {
       final OPointer pointer = byteBufferPool.acquireDirect(false, Intention.TEST);
       final OCachePointer cachePointer = new OCachePointer(pointer, byteBufferPool, 0, 0);
-      final OCacheEntry entry = new OCacheEntryImpl(0, 0, cachePointer, false);
+      final OCacheEntry entry = new OCacheEntryImpl(0, 0, cachePointer, false, null);
 
       HashIndexBucketV2<Byte, Byte> bucket = new HashIndexBucketV2<>(entry);
       bucket.init(2);
@@ -34,7 +34,8 @@ public class LocalHashTableV2BucketDeleteEntryPOTest {
       final OPointer restoredPointer = byteBufferPool.acquireDirect(false, Intention.TEST);
       final OCachePointer restoredCachePointer =
           new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
-      final OCacheEntry restoredCacheEntry = new OCacheEntryImpl(0, 0, restoredCachePointer, false);
+      final OCacheEntry restoredCacheEntry =
+          new OCacheEntryImpl(0, 0, restoredCachePointer, false, null);
 
       final ByteBuffer originalBuffer = cachePointer.getBufferDuplicate();
       final ByteBuffer restoredBuffer = restoredCachePointer.getBufferDuplicate();
@@ -79,7 +80,7 @@ public class LocalHashTableV2BucketDeleteEntryPOTest {
     try {
       final OPointer pointer = byteBufferPool.acquireDirect(false, Intention.TEST);
       final OCachePointer cachePointer = new OCachePointer(pointer, byteBufferPool, 0, 0);
-      final OCacheEntry entry = new OCacheEntryImpl(0, 0, cachePointer, false);
+      final OCacheEntry entry = new OCacheEntryImpl(0, 0, cachePointer, false, null);
 
       HashIndexBucketV2<Byte, Byte> bucket = new HashIndexBucketV2<>(entry);
 

@@ -23,7 +23,7 @@ public class FreeSpaceMapPageTest {
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
 
-    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false);
+    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false, null);
     cacheEntry.acquireExclusiveLock();
     try {
       final FreeSpaceMapPage page = new FreeSpaceMapPage(cacheEntry);
@@ -43,7 +43,7 @@ public class FreeSpaceMapPageTest {
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
 
-    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false);
+    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false, null);
     cacheEntry.acquireExclusiveLock();
     try {
       final FreeSpaceMapPage page = new FreeSpaceMapPage(cacheEntry);
@@ -63,7 +63,7 @@ public class FreeSpaceMapPageTest {
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
 
-    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false);
+    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false, null);
     cacheEntry.acquireExclusiveLock();
     try {
       final FreeSpaceMapPage page = new FreeSpaceMapPage(cacheEntry);
@@ -83,7 +83,7 @@ public class FreeSpaceMapPageTest {
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
 
-    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false);
+    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false, null);
     cacheEntry.acquireExclusiveLock();
     try {
       final FreeSpaceMapPage page = new FreeSpaceMapPage(cacheEntry);
@@ -103,7 +103,7 @@ public class FreeSpaceMapPageTest {
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
 
-    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false);
+    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false, null);
     cacheEntry.acquireExclusiveLock();
     try {
       final FreeSpaceMapPage page = new FreeSpaceMapPage(cacheEntry);
@@ -124,7 +124,7 @@ public class FreeSpaceMapPageTest {
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
 
-    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false);
+    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false, null);
     cacheEntry.acquireExclusiveLock();
     try {
       final FreeSpaceMapPage page = new FreeSpaceMapPage(cacheEntry);
@@ -145,7 +145,7 @@ public class FreeSpaceMapPageTest {
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
 
-    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false);
+    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false, null);
     cacheEntry.acquireExclusiveLock();
     try {
       final FreeSpaceMapPage page = new FreeSpaceMapPage(cacheEntry);
@@ -166,7 +166,7 @@ public class FreeSpaceMapPageTest {
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
 
-    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false);
+    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false, null);
     cacheEntry.acquireExclusiveLock();
     try {
       final FreeSpaceMapPage page = new FreeSpaceMapPage(cacheEntry);
@@ -187,7 +187,7 @@ public class FreeSpaceMapPageTest {
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
 
-    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false);
+    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false, null);
     cacheEntry.acquireExclusiveLock();
     try {
       final FreeSpaceMapPage page = new FreeSpaceMapPage(cacheEntry);
@@ -211,7 +211,7 @@ public class FreeSpaceMapPageTest {
     OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
 
-    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false);
+    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false, null);
     cacheEntry.acquireExclusiveLock();
     try {
       final FreeSpaceMapPage page = new FreeSpaceMapPage(cacheEntry);
@@ -244,7 +244,7 @@ public class FreeSpaceMapPageTest {
     final HashMap<Integer, Integer> spacePageMap = new HashMap<>();
     int maxFreeSpace = -1;
 
-    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false);
+    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false, null);
     cacheEntry.acquireExclusiveLock();
     try {
       final FreeSpaceMapPage page = new FreeSpaceMapPage(cacheEntry);
@@ -294,7 +294,7 @@ public class FreeSpaceMapPageTest {
 
     final Random random = new Random(seed);
 
-    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false);
+    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false, null);
     cacheEntry.acquireExclusiveLock();
     try {
       final FreeSpaceMapPage page = new FreeSpaceMapPage(cacheEntry);
