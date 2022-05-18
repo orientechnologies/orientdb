@@ -729,7 +729,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
           }
         } finally {
           cacheEntry.releaseSharedLock();
-          readCache.releaseFromRead(cacheEntry, writeCache);
+          readCache.releaseFromRead(cacheEntry);
         }
       }
 
