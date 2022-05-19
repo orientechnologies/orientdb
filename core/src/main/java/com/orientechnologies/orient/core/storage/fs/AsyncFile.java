@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.storage.fs;
 
+import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.ScalableRWLock;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -63,7 +64,10 @@ public final class AsyncFile implements OFile {
         final Future<Integer> writeFuture = fileChannel.write(buffer, written);
         try {
           written += writeFuture.get();
-        } catch (InterruptedException | ExecutionException e) {
+        } catch (InterruptedException e) {
+          throw OException.wrapException(
+              new OInterruptedException("File write was interrupted"), e);
+        } catch (ExecutionException e) {
           throw OException.wrapException(
               new OStorageException("Error during write operation to the file " + osFile), e);
         }
@@ -168,7 +172,10 @@ public final class AsyncFile implements OFile {
             fileChannel.write(buffer, offset + HEADER_SIZE + written);
         try {
           written += writeFuture.get();
-        } catch (InterruptedException | ExecutionException e) {
+        } catch (InterruptedException e) {
+          throw OException.wrapException(
+              new OInterruptedException("File write was interrupted"), e);
+        } catch (ExecutionException e) {
           throw OException.wrapException(
               new OStorageException("Error during write operation to the file " + osFile), e);
         }
@@ -220,7 +227,10 @@ public final class AsyncFile implements OFile {
         final int bytesRead;
         try {
           bytesRead = readFuture.get();
-        } catch (InterruptedException | ExecutionException e) {
+        } catch (InterruptedException e) {
+          throw OException.wrapException(
+              new OInterruptedException("File write was interrupted"), e);
+        } catch (ExecutionException e) {
           throw OException.wrapException(
               new OStorageException("Error during read operation from the file " + osFile), e);
         }
@@ -419,9 +429,8 @@ public final class AsyncFile implements OFile {
       try {
         latch.await();
       } catch (InterruptedException e) {
-        throw OException.wrapException(new OStorageException("IO operation was interrupted"), e);
+        throw OException.wrapException(new OInterruptedException("File write was interrupted"), e);
       }
-
       if (exc != null) {
         throw OException.wrapException(new OStorageException("Error during IO operation"), exc);
       }
