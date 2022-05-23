@@ -136,8 +136,6 @@ public interface ODatabaseInternal<T> extends ODatabase<T> {
     return null;
   }
 
-  default void interruptExecution(Thread thread) {}
-
   default ODatabaseStats getStats() {
     return new ODatabaseStats();
   }
