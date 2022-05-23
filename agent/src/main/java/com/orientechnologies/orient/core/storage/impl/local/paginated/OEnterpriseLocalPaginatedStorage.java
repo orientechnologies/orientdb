@@ -469,7 +469,6 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
     stateLock.readLock().lock();
     try {
 
-      this.interruptionManager.enterCriticalPath();
       checkOpennessAndMigration();
       final long freezeId;
 
@@ -592,14 +591,10 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
           atomicOperationsManager.releaseAtomicOperations(freezeId);
       }
     } finally {
-      try {
-        stateLock.readLock().unlock();
+      stateLock.readLock().unlock();
 
-        if (singleThread) {
-          backupInProgress.set(false);
-        }
-      } finally {
-        this.interruptionManager.exitCriticalPath();
+      if (singleThread) {
+        backupInProgress.set(false);
       }
     }
 
@@ -819,7 +814,6 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
 
       stateLock.writeLock().lock();
       try {
-        this.interruptionManager.enterCriticalPath();
 
         final String aesKeyEncoded =
             getConfiguration()
@@ -904,7 +898,6 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
         }
       } finally {
         stateLock.writeLock().unlock();
-        this.interruptionManager.exitCriticalPath();
       }
     } catch (IOException e) {
       throw OException.wrapException(
@@ -971,7 +964,6 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
       throws IOException {
     stateLock.writeLock().lock();
     try {
-      this.interruptionManager.enterCriticalPath();
 
       final List<String> currentFiles = new ArrayList<>(writeCache.files().keySet());
 
@@ -1166,7 +1158,6 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
       }
     } finally {
       stateLock.writeLock().unlock();
-      this.interruptionManager.exitCriticalPath();
     }
   }
 
