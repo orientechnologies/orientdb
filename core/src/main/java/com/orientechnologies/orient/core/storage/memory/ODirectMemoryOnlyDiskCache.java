@@ -271,7 +271,6 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache
   @Override
   public final void releaseFromWrite(
       final OCacheEntry cacheEntry, final OWriteCache writeCache, boolean changed) {
-    cacheEntry.clearPageOperations();
     cacheEntry.releaseExclusiveLock();
 
     doRelease(cacheEntry);

@@ -59,7 +59,6 @@ public class OAtomicOperationsManager {
   private final Object segmentLock = new Object();
   private final AtomicOperationIdGen idGen;
 
-  private final boolean trackPageOperations;
   private final int operationsCacheLimit;
 
   private final OperationsFreezer atomicOperationsFreezer = new OperationsFreezer();
@@ -68,7 +67,6 @@ public class OAtomicOperationsManager {
 
   public OAtomicOperationsManager(
       OAbstractPaginatedStorage storage,
-      boolean trackPageOperations,
       int operationsCacheLimit,
       AtomicOperationsTable atomicOperationsTable) {
     this.storage = storage;
@@ -76,7 +74,6 @@ public class OAtomicOperationsManager {
     this.readCache = storage.getReadCache();
     this.writeCache = storage.getWriteCache();
 
-    this.trackPageOperations = trackPageOperations;
     this.operationsCacheLimit = operationsCacheLimit;
     this.idGen = storage.getIdGen();
     this.atomicOperationsTable = atomicOperationsTable;
@@ -109,14 +106,8 @@ public class OAtomicOperationsManager {
       lsn = writeAheadLog.logAtomicOperationStartRecord(true, unitId);
     }
 
-    if (!trackPageOperations) {
-      operation =
-          new OAtomicOperationBinaryTracking(lsn, unitId, readCache, writeCache, storage.getId());
-    } else {
-      operation =
-          new OAtomicOperationPageOperationsTracking(
-              readCache, writeCache, writeAheadLog, unitId, operationsCacheLimit, lsn);
-    }
+    operation =
+        new OAtomicOperationBinaryTracking(lsn, unitId, readCache, writeCache, storage.getId());
 
     currentOperation.set(operation);
 
@@ -327,9 +318,7 @@ public class OAtomicOperationsManager {
 
       try {
         final OLogSequenceNumber lsn;
-        if (trackPageOperations) {
-          lsn = operation.commitChanges(writeAheadLog);
-        } else if (!operation.isRollbackInProgress()) {
+        if (!operation.isRollbackInProgress()) {
           lsn = operation.commitChanges(writeAheadLog);
         } else {
           lsn = null;

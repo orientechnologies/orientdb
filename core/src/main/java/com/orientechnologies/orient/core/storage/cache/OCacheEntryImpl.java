@@ -3,11 +3,7 @@ package com.orientechnologies.orient.core.storage.cache;
 import com.orientechnologies.orient.core.storage.cache.chm.LRUList;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
 public class OCacheEntryImpl implements OCacheEntry {
@@ -38,9 +34,6 @@ public class OCacheEntryImpl implements OCacheEntry {
   /** Protected by page lock inside disk cache */
   private boolean allocatedPage;
 
-  /** Protected by page lock inside disk cache */
-  private List<PageOperationRecord> pageOperationRecords;
-
   private int hash;
   private final boolean insideCache;
   private final OReadCache readCache;
@@ -66,29 +59,6 @@ public class OCacheEntryImpl implements OCacheEntry {
     this.dataPointer = dataPointer;
     this.insideCache = insideCache;
     this.readCache = readCache;
-  }
-
-  @Override
-  public List<PageOperationRecord> getPageOperations() {
-    if (pageOperationRecords == null) {
-      return Collections.emptyList();
-    }
-
-    return pageOperationRecords;
-  }
-
-  @Override
-  public void clearPageOperations() {
-    pageOperationRecords = null;
-  }
-
-  @Override
-  public void addPageOperationRecord(PageOperationRecord pageOperationRecord) {
-    if (pageOperationRecords == null) {
-      pageOperationRecords = new ArrayList<>();
-    }
-
-    pageOperationRecords.add(pageOperationRecord);
   }
 
   public boolean isNewlyAllocatedPage() {

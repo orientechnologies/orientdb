@@ -416,6 +416,7 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       Integer.class,
       256),
 
+  @Deprecated
   STORAGE_TRACK_PAGE_OPERATIONS_IN_TX(
       "storage.trackOperationsInTx",
       "If this flag switched on, transaction features will be implemented "

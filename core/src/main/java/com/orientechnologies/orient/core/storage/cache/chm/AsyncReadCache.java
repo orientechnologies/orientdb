@@ -334,8 +334,6 @@ public final class AsyncReadCache implements OReadCache {
             return entry; // may be absent if page in pinned pages, in such case we use map as
             // virtual lock
           });
-
-      cacheEntry.clearPageOperations();
     }
 
     // We need to release exclusive lock from cache pointer after we put it into the write cache so
@@ -370,7 +368,6 @@ public final class AsyncReadCache implements OReadCache {
 
     cacheEntry.acquireExclusiveLock();
     cacheEntry.markAllocated();
-    cacheEntry.clearPageOperations();
     writeCache.updateDirtyPagesTable(cacheEntry.getCachePointer(), startLSN);
     return cacheEntry;
   }

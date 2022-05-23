@@ -23,9 +23,7 @@ package com.orientechnologies.orient.core.storage.cache;
 import com.orientechnologies.orient.core.storage.cache.chm.LRUList;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import java.io.Closeable;
-import java.util.List;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -106,12 +104,6 @@ public interface OCacheEntry extends Closeable {
   void markAllocated();
 
   void clearAllocationFlag();
-
-  List<PageOperationRecord> getPageOperations();
-
-  void clearPageOperations();
-
-  void addPageOperationRecord(PageOperationRecord pageOperationRecord);
 
   boolean insideCache();
 }

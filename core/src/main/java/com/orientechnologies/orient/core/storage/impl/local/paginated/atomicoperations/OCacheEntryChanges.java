@@ -6,9 +6,7 @@ import com.orientechnologies.orient.core.storage.cache.chm.LRUList;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPageChangesPortion;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import java.io.IOException;
-import java.util.List;
 
 /** Created by tglman on 23/06/16. */
 public class OCacheEntryChanges implements OCacheEntry {
@@ -171,21 +169,6 @@ public class OCacheEntryChanges implements OCacheEntry {
   @Override
   public void clearAllocationFlag() {
     delegate.clearAllocationFlag();
-  }
-
-  @Override
-  public List<PageOperationRecord> getPageOperations() {
-    return delegate.getPageOperations();
-  }
-
-  @Override
-  public void clearPageOperations() {
-    delegate.clearPageOperations();
-  }
-
-  @Override
-  public void addPageOperationRecord(PageOperationRecord pageOperationRecord) {
-    delegate.addPageOperationRecord(pageOperationRecord);
   }
 
   @Override
