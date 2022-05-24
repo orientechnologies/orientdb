@@ -26,6 +26,20 @@
 
 This document contains the last changes of OrientDB Community Edition.
 
+-----------------------------------------------------------------------------------------------------------------------------------
+VERSION 3.1.18  - (May, 25 2022)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.1-Release-Notes#3118---25-may-2022
+
+## Core
+handle thread interruption while data read and write with correct exception
+Lucene index fix on delete and rebuild.
+Exceptions inside the reads do not put storage in read mode. Reads are interrupted by interruption of thread.
+Support masking of Lucene query in log/exceptions
+
+## Distributed
+Install ShutdownLogManager in distributed mode
+Correct failure when distributed lock not obtained
+Improvements in between node network to better handle keep alive retries and errors
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.1.17  - (April, 25 2022)
@@ -39,7 +53,7 @@ VERSION 3.1.17  - (April, 25 2022)
 - minor fix for distributed on deploy database backup in case of source folder and dest folder in different volumes issue #9770
 
 -----------------------------------------------------------------------------------------------------------------------------------
-VERSION 3.1.17  - (February, 22 2022)
+VERSION 3.1.16  - (February, 22 2022)
 - Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.1-Release-Notes#3116---22-february-2022
 
 # Changes
