@@ -236,8 +236,7 @@ public class OScriptManager {
    * @return ScriptEngine instance with the function library already parsed
    * @see #releaseDatabaseEngine(String, String, OPartitionedObjectPool.PoolEntry)
    */
-  public OPartitionedObjectPool.PoolEntry<ScriptEngine> acquireDatabaseEngine(
-      final String databaseName, final String language) {
+  public ScriptEngine acquireDatabaseEngine(final String databaseName, final String language) {
     ODatabaseScriptManager dbManager = dbManagers.get(databaseName);
     if (dbManager == null) {
       // CREATE A NEW DATABASE SCRIPT MANAGER
@@ -263,9 +262,7 @@ public class OScriptManager {
    * @see #acquireDatabaseEngine(String, String)
    */
   public void releaseDatabaseEngine(
-      final String iLanguage,
-      final String iDatabaseName,
-      final OPartitionedObjectPool.PoolEntry<ScriptEngine> poolEntry) {
+      final String iLanguage, final String iDatabaseName, final ScriptEngine poolEntry) {
     final ODatabaseScriptManager dbManager = dbManagers.get(iDatabaseName);
     // We check if there is still a valid pool because it could be removed by the function reload
     if (dbManager != null) {

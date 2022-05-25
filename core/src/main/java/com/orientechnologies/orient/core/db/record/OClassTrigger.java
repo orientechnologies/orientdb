@@ -16,7 +16,6 @@
 
 package com.orientechnologies.orient.core.db.record;
 
-import com.orientechnologies.common.concur.resource.OPartitionedObjectPool;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCommonConst;
@@ -256,9 +255,8 @@ public class OClassTrigger {
     final OScriptManager scriptManager =
         database.getSharedContext().getOrientDB().getScriptManager();
 
-    final OPartitionedObjectPool.PoolEntry<ScriptEngine> entry =
+    final ScriptEngine scriptEngine =
         scriptManager.acquireDatabaseEngine(database.getName(), func.getLanguage());
-    final ScriptEngine scriptEngine = entry.object;
     try {
       final Bindings binding = scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE);
 
@@ -304,7 +302,7 @@ public class OClassTrigger {
       return ORecordHook.RESULT.valueOf(result);
 
     } finally {
-      scriptManager.releaseDatabaseEngine(func.getLanguage(), database.getName(), entry);
+      scriptManager.releaseDatabaseEngine(func.getLanguage(), database.getName(), scriptEngine);
     }
   }
 }

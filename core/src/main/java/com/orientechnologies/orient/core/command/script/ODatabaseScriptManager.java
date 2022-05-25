@@ -19,8 +19,8 @@
  */
 package com.orientechnologies.orient.core.command.script;
 
-import com.orientechnologies.common.concur.resource.OPartitionedObjectPool;
-import com.orientechnologies.common.concur.resource.OPartitionedObjectPoolFactory;
+import com.orientechnologies.common.concur.resource.OResourcePoolFactory;
+import com.orientechnologies.common.concur.resource.OResourcePoolListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import javax.script.ScriptEngine;
@@ -35,20 +35,19 @@ import javax.script.ScriptException;
  */
 public class ODatabaseScriptManager {
   private final OScriptManager scriptManager;
-  protected OPartitionedObjectPoolFactory<String, ScriptEngine> pooledEngines;
+  protected OResourcePoolFactory<String, ScriptEngine> pooledEngines;
 
   public ODatabaseScriptManager(final OScriptManager iScriptManager, final String iDatabaseName) {
     scriptManager = iScriptManager;
 
     pooledEngines =
-        new OPartitionedObjectPoolFactory<String, ScriptEngine>(
-            new OPartitionedObjectPoolFactory.ObjectFactoryFactory<String, ScriptEngine>() {
+        new OResourcePoolFactory<String, ScriptEngine>(
+            new OResourcePoolFactory.ObjectFactoryFactory<String, ScriptEngine>() {
               @Override
-              public OPartitionedObjectPool.ObjectFactory<ScriptEngine> create(
-                  final String language) {
-                return new OPartitionedObjectPool.ObjectFactory<ScriptEngine>() {
+              public OResourcePoolListener<String, ScriptEngine> create(final String language) {
+                return new OResourcePoolListener<String, ScriptEngine>() {
                   @Override
-                  public ScriptEngine create() {
+                  public ScriptEngine createNewResource(String key, Object... args) {
                     final ScriptEngine scriptEngine = scriptManager.getEngine(language);
                     final String library =
                         scriptManager.getLibrary(
@@ -65,17 +64,12 @@ public class ODatabaseScriptManager {
                   }
 
                   @Override
-                  public void init(ScriptEngine object) {}
-
-                  @Override
-                  public void close(ScriptEngine object) {}
-
-                  @Override
-                  public boolean isValid(ScriptEngine object) {
+                  public boolean reuseResource(
+                      String iKey, Object[] iAdditionalArgs, ScriptEngine iValue) {
                     if (language.equals("sql")) {
-                      if (!language.equals(object.getFactory().getLanguageName())) return false;
+                      if (!language.equals(iValue.getFactory().getLanguageName())) return false;
                     } else {
-                      if ((object.getFactory().getLanguageName()).equals("sql")) return false;
+                      if ((iValue.getFactory().getLanguageName()).equals("sql")) return false;
                     }
                     return true;
                   }
@@ -86,13 +80,12 @@ public class ODatabaseScriptManager {
     pooledEngines.setMaxPartitions(1);
   }
 
-  public OPartitionedObjectPool.PoolEntry<ScriptEngine> acquireEngine(final String language) {
-    return pooledEngines.get(language).acquire();
+  public ScriptEngine acquireEngine(final String language) {
+    return pooledEngines.get(language).getResource(language, 0);
   }
 
-  public void releaseEngine(
-      final String language, final OPartitionedObjectPool.PoolEntry<ScriptEngine> entry) {
-    pooledEngines.get(language).release(entry);
+  public void releaseEngine(final String language, ScriptEngine entry) {
+    pooledEngines.get(language).returnResource(entry);
   }
 
   public void close() {

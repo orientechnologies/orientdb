@@ -21,7 +21,6 @@ package com.orientechnologies.orient.core.command.script;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.ONeedRetryException;
-import com.orientechnologies.common.concur.resource.OPartitionedObjectPool;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -215,9 +214,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract
     final OScriptManager scriptManager = db.getSharedContext().getOrientDB().getScriptManager();
     CompiledScript compiledScript = request.getCompiledScript();
 
-    final OPartitionedObjectPool.PoolEntry<ScriptEngine> entry =
-        scriptManager.acquireDatabaseEngine(db.getName(), language);
-    final ScriptEngine scriptEngine = entry.object;
+    final ScriptEngine scriptEngine = scriptManager.acquireDatabaseEngine(db.getName(), language);
     try {
 
       if (compiledScript == null) {
@@ -257,7 +254,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract
         scriptManager.unbind(scriptEngine, binding, iContext, iArgs);
       }
     } finally {
-      scriptManager.releaseDatabaseEngine(language, db.getName(), entry);
+      scriptManager.releaseDatabaseEngine(language, db.getName(), scriptEngine);
     }
   }
 

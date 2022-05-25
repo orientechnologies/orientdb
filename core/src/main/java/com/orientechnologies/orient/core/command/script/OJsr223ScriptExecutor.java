@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.core.command.script;
 
-import com.orientechnologies.common.concur.resource.OPartitionedObjectPool;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.script.transformer.OScriptTransformer;
 import com.orientechnologies.orient.core.command.traverse.OAbstractScriptExecutor;
@@ -43,9 +42,8 @@ public class OJsr223ScriptExecutor extends OAbstractScriptExecutor {
         database.getSharedContext().getOrientDB().getScriptManager();
     CompiledScript compiledScript = null;
 
-    final OPartitionedObjectPool.PoolEntry<ScriptEngine> entry =
+    final ScriptEngine scriptEngine =
         scriptManager.acquireDatabaseEngine(database.getName(), language);
-    final ScriptEngine scriptEngine = entry.object;
     try {
 
       if (!(scriptEngine instanceof Compilable))
@@ -80,7 +78,7 @@ public class OJsr223ScriptExecutor extends OAbstractScriptExecutor {
         scriptManager.unbind(scriptEngine, binding, null, params);
       }
     } finally {
-      scriptManager.releaseDatabaseEngine(language, database.getName(), entry);
+      scriptManager.releaseDatabaseEngine(language, database.getName(), scriptEngine);
     }
   }
 }
