@@ -21,7 +21,6 @@ package com.orientechnologies.orient.core.command.script;
 
 import static com.orientechnologies.common.util.OClassLoaderHelper.lookupProviderWithOrientClassLoader;
 
-import com.orientechnologies.common.concur.resource.OPartitionedObjectPool;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -234,7 +233,7 @@ public class OScriptManager {
    * @param databaseName Database name
    * @param language Script language
    * @return ScriptEngine instance with the function library already parsed
-   * @see #releaseDatabaseEngine(String, String, OPartitionedObjectPool.PoolEntry)
+   * @see #releaseDatabaseEngine(String, String, ScriptEngine)
    */
   public ScriptEngine acquireDatabaseEngine(final String databaseName, final String language) {
     ODatabaseScriptManager dbManager = dbManagers.get(databaseName);
