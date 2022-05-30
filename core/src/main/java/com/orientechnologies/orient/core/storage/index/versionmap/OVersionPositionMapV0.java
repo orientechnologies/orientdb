@@ -148,7 +148,11 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
               "VPM missing with fileId:%s: fileName = %s. A new VPM will be created.",
               fileId,
               getFullName());
-      createVPM(atomicOperation);
+      if (atomicOperation != null) {
+        createVPM(atomicOperation);
+      } else {
+        atomicOperationsManager.executeInsideAtomicOperation(null, this::createVPM);
+      }
     }
     fileId = openFile(atomicOperation, getFullName());
     OLogManager.instance().debug(this, "VPM open fileId:%s: fileName = %s", fileId, getFullName());
