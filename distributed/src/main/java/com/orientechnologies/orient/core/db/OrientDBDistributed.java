@@ -96,11 +96,16 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         storage = storages.get(dbName);
 
         if (storage != null) {
+          // The underlying storage instance will be closed so no need to closed it
+          ODatabaseDocumentEmbedded deleteInstance = newSessionInstance(storage);
+          deleteInstance.init(config, getOrCreateSharedContext(storage));
           dropStorageFiles((OLocalPaginatedStorage) storage);
           OSharedContext context = sharedContexts.remove(dbName);
           context.close();
+
           storage.delete();
           storages.remove(dbName);
+          ODatabaseRecordThreadLocal.instance().remove();
         }
         storage =
             (OAbstractPaginatedStorage)
