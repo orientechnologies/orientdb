@@ -23,6 +23,7 @@ import com.orientechnologies.common.collection.closabledictionary.OClosableLinke
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OErrorCode;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
@@ -942,6 +943,8 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
     }
 
     atomicOperationsManager.executeInsideAtomicOperation(null, this::openClusters);
+    sbTreeCollectionManager.close();
+    sbTreeCollectionManager.load();
     openIndexes();
 
     flushAllData();
@@ -1149,13 +1152,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
         writeAheadLog.moveLsnAfter(maxLsn);
       }
 
-      if (!walTempDir.delete()) {
-        OLogManager.instance()
-            .error(
-                this,
-                "Can not remove temporary backup directory " + walTempDir.getAbsolutePath(),
-                null);
-      }
+      OFileUtils.deleteRecursively(walTempDir);
     } finally {
       stateLock.writeLock().unlock();
     }
