@@ -766,7 +766,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     }
     storage.restoreFromIncrementalBackup(path);
     embedded.callOnCreateListeners();
-    embedded.getSharedContext().reload(embedded);
+    embedded.getSharedContext().reInit(storage, embedded);
     ODatabaseRecordThreadLocal.instance().remove();
   }
 

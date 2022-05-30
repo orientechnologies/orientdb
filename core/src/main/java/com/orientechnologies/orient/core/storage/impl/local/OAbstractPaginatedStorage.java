@@ -317,8 +317,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           atomicOperationsManager =
               new OAtomicOperationsManager(
                   this,
-                  contextConfiguration.getValueAsBoolean(
-                      OGlobalConfiguration.STORAGE_TRACK_PAGE_OPERATIONS_IN_TX),
                   contextConfiguration.getValueAsInteger(
                           OGlobalConfiguration.STORAGE_PAGE_OPERATIONS_CACHE_SIZE)
                       * 1024
@@ -678,8 +676,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         atomicOperationsManager =
             new OAtomicOperationsManager(
                 this,
-                contextConfiguration.getValueAsBoolean(
-                    OGlobalConfiguration.STORAGE_TRACK_PAGE_OPERATIONS_IN_TX),
                 contextConfiguration.getValueAsInteger(
                         OGlobalConfiguration.STORAGE_PAGE_OPERATIONS_CACHE_SIZE)
                     * 1024
@@ -6247,7 +6243,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                   break;
                 }
               } finally {
-                readCache.releaseFromRead(cacheEntry, writeCache);
+                readCache.releaseFromRead(cacheEntry);
               }
             }
           }
@@ -6281,7 +6277,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                 throw new OStorageException(errorMessage);
               }
             } finally {
-              readCache.releaseFromRead(cacheEntry, writeCache);
+              readCache.releaseFromRead(cacheEntry);
             }
           }
         }

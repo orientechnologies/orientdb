@@ -3,13 +3,10 @@ package com.orientechnologies.orient.core.storage.cache;
 import com.orientechnologies.orient.core.storage.cache.chm.LRUList;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.io.IOException;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
-public final class OCacheEntryImpl implements OCacheEntry {
+public class OCacheEntryImpl implements OCacheEntry {
   private static final AtomicIntegerFieldUpdater<OCacheEntryImpl> USAGES_COUNT_UPDATER;
   private static final AtomicIntegerFieldUpdater<OCacheEntryImpl> STATE_UPDATER;
 
@@ -37,17 +34,17 @@ public final class OCacheEntryImpl implements OCacheEntry {
   /** Protected by page lock inside disk cache */
   private boolean allocatedPage;
 
-  /** Protected by page lock inside disk cache */
-  private List<PageOperationRecord> pageOperationRecords;
-
   private int hash;
   private final boolean insideCache;
+  private final OReadCache readCache;
 
   public OCacheEntryImpl(
       final long fileId,
       final int pageIndex,
       final OCachePointer dataPointer,
-      final boolean insideCache) {
+      final boolean insideCache,
+      OReadCache readCache) {
+
     if (fileId < 0) {
       throw new IllegalStateException("File id has invalid value " + fileId);
     }
@@ -61,29 +58,7 @@ public final class OCacheEntryImpl implements OCacheEntry {
 
     this.dataPointer = dataPointer;
     this.insideCache = insideCache;
-  }
-
-  @Override
-  public List<PageOperationRecord> getPageOperations() {
-    if (pageOperationRecords == null) {
-      return Collections.emptyList();
-    }
-
-    return pageOperationRecords;
-  }
-
-  @Override
-  public void clearPageOperations() {
-    pageOperationRecords = null;
-  }
-
-  @Override
-  public void addPageOperationRecord(PageOperationRecord pageOperationRecord) {
-    if (pageOperationRecords == null) {
-      pageOperationRecords = new ArrayList<>();
-    }
-
-    pageOperationRecords.add(pageOperationRecord);
+    this.readCache = readCache;
   }
 
   public boolean isNewlyAllocatedPage() {
@@ -352,5 +327,10 @@ public final class OCacheEntryImpl implements OCacheEntry {
         + ", usagesCount="
         + usagesCount
         + '}';
+  }
+
+  @Override
+  public void close() throws IOException {
+    this.readCache.releaseFromRead(this);
   }
 }

@@ -69,7 +69,7 @@ public interface OReadCache {
       final OWriteCache writeCache,
       final boolean verifyChecksums);
 
-  void releaseFromRead(OCacheEntry cacheEntry, OWriteCache writeCache);
+  void releaseFromRead(OCacheEntry cacheEntry);
 
   void releaseFromWrite(OCacheEntry cacheEntry, OWriteCache writeCache, boolean changed);
 

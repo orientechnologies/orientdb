@@ -6,8 +6,7 @@ import com.orientechnologies.orient.core.storage.cache.chm.LRUList;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPageChangesPortion;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
-import java.util.List;
+import java.io.IOException;
 
 /** Created by tglman on 23/06/16. */
 public class OCacheEntryChanges implements OCacheEntry {
@@ -15,6 +14,7 @@ public class OCacheEntryChanges implements OCacheEntry {
   protected OCacheEntry delegate;
   protected final OWALChanges changes = new OWALPageChangesPortion();
   private OLogSequenceNumber initialLSN;
+  private final OAtomicOperation atomicOp;
 
   protected boolean isNew;
 
@@ -22,13 +22,10 @@ public class OCacheEntryChanges implements OCacheEntry {
 
   protected boolean verifyCheckSum;
 
-  public OCacheEntryChanges(final OCacheEntry entry) {
-    delegate = entry;
-  }
-
   @SuppressWarnings("WeakerAccess")
-  public OCacheEntryChanges(final boolean verifyCheckSum) {
+  public OCacheEntryChanges(final boolean verifyCheckSum, OAtomicOperation atomicOp) {
     this.verifyCheckSum = verifyCheckSum;
+    this.atomicOp = atomicOp;
   }
 
   @Override
@@ -175,21 +172,6 @@ public class OCacheEntryChanges implements OCacheEntry {
   }
 
   @Override
-  public List<PageOperationRecord> getPageOperations() {
-    return delegate.getPageOperations();
-  }
-
-  @Override
-  public void clearPageOperations() {
-    delegate.clearPageOperations();
-  }
-
-  @Override
-  public void addPageOperationRecord(PageOperationRecord pageOperationRecord) {
-    delegate.addPageOperationRecord(pageOperationRecord);
-  }
-
-  @Override
   public boolean insideCache() {
     return delegate.insideCache();
   }
@@ -240,5 +222,10 @@ public class OCacheEntryChanges implements OCacheEntry {
   @Override
   public void setInitialLSN(OLogSequenceNumber lsn) {
     this.initialLSN = lsn;
+  }
+
+  @Override
+  public void close() throws IOException {
+    atomicOp.releasePageFromWrite(this);
   }
 }

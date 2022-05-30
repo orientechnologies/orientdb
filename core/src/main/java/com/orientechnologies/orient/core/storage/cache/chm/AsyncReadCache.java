@@ -158,7 +158,7 @@ public final class AsyncReadCache implements OReadCache {
 
                       updatedEntry[0] =
                           new OCacheEntryImpl(
-                              page.getFileId(), page.getPageIndex(), pointer, false);
+                              page.getFileId(), page.getPageIndex(), pointer, false, this);
                       return null;
                     } catch (final IOException e) {
                       throw OException.wrapException(
@@ -233,7 +233,7 @@ public final class AsyncReadCache implements OReadCache {
 
                       cacheSize.incrementAndGet();
                       return new OCacheEntryImpl(
-                          page.getFileId(), page.getPageIndex(), pointer, true);
+                          page.getFileId(), page.getPageIndex(), pointer, true, this);
                     } catch (final IOException e) {
                       throw OException.wrapException(
                           new OStorageException(
@@ -281,7 +281,7 @@ public final class AsyncReadCache implements OReadCache {
     final OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, fileId, pageIndex);
     cachePointer.incrementReadersReferrer();
 
-    final OCacheEntry cacheEntry = new OCacheEntryImpl(fileId, pageIndex, cachePointer, true);
+    final OCacheEntry cacheEntry = new OCacheEntryImpl(fileId, pageIndex, cachePointer, true, this);
     cacheEntry.acquireEntry();
 
     final OCacheEntry oldCacheEntry = data.putIfAbsent(pageKey, cacheEntry);
@@ -306,7 +306,7 @@ public final class AsyncReadCache implements OReadCache {
   }
 
   @Override
-  public final void releaseFromRead(final OCacheEntry cacheEntry, final OWriteCache writeCache) {
+  public final void releaseFromRead(final OCacheEntry cacheEntry) {
     cacheEntry.releaseEntry();
 
     if (!cacheEntry.insideCache()) {
@@ -334,8 +334,6 @@ public final class AsyncReadCache implements OReadCache {
             return entry; // may be absent if page in pinned pages, in such case we use map as
             // virtual lock
           });
-
-      cacheEntry.clearPageOperations();
     }
 
     // We need to release exclusive lock from cache pointer after we put it into the write cache so
@@ -370,7 +368,6 @@ public final class AsyncReadCache implements OReadCache {
 
     cacheEntry.acquireExclusiveLock();
     cacheEntry.markAllocated();
-    cacheEntry.clearPageOperations();
     writeCache.updateDirtyPagesTable(cacheEntry.getCachePointer(), startLSN);
     return cacheEntry;
   }

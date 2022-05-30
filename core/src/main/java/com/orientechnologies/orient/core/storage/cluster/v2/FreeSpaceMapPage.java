@@ -2,8 +2,6 @@ package com.orientechnologies.orient.core.storage.cluster.v2;
 
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v2.freespacemap.InitFreeSpaceMapPO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.v2.freespacemap.UpdateMaxFreeSpacePO;
 
 public final class FreeSpaceMapPage extends ODurablePage {
 
@@ -31,8 +29,6 @@ public final class FreeSpaceMapPage extends ODurablePage {
   public void init() {
     final byte[] zeros = new byte[MAX_PAGE_SIZE_BYTES - NEXT_FREE_POSITION];
     setBinaryValue(NEXT_FREE_POSITION, zeros);
-
-    addPageOperation(new InitFreeSpaceMapPO());
   }
 
   public int findPage(int requiredSize) {
@@ -86,13 +82,11 @@ public final class FreeSpaceMapPage extends ODurablePage {
     for (int level = LEVELS; level > 0; level--) {
       final int prevValue = 0xFF & getByteValue(nodeOffset);
       if (prevValue == nodeValue) {
-        addPageOperation(new UpdateMaxFreeSpacePO(pageIndex, oldFreeSpace, freeSpace));
         return 0xFF & getByteValue(nodeOffset(1, 0));
       }
 
       setByteValue(nodeOffset, (byte) nodeValue);
       if (level == 1) {
-        addPageOperation(new UpdateMaxFreeSpacePO(pageIndex, oldFreeSpace, freeSpace));
         return nodeValue;
       }
 

@@ -95,13 +95,10 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
           try {
             final int startPositionWithOffset = OVersionPositionMapBucket.entryPosition(hash);
             final int pageIndex = calculatePageIndex(startPositionWithOffset);
-            final OCacheEntry cacheEntry =
-                loadPageForWrite(atomicOperation, fileId, pageIndex, false, true);
-            try {
+            try (final OCacheEntry cacheEntry =
+                loadPageForWrite(atomicOperation, fileId, pageIndex, false, true)) {
               final OVersionPositionMapBucket bucket = new OVersionPositionMapBucket(cacheEntry);
               bucket.incrementVersion(hash);
-            } finally {
-              releasePageFromWrite(atomicOperation, cacheEntry);
             }
           } finally {
             releaseExclusiveLock();
@@ -116,12 +113,11 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     acquireSharedLock();
     try {
       final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
-      final OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
-      try {
+
+      try (final OCacheEntry cacheEntry =
+          loadPageForRead(atomicOperation, fileId, pageIndex, false)) {
         final OVersionPositionMapBucket bucket = new OVersionPositionMapBucket(cacheEntry);
         return bucket.getVersion(hash);
-      } finally {
-        releasePageFromRead(atomicOperation, cacheEntry);
       }
     } catch (final IOException e) {
       throw OException.wrapException(
@@ -179,23 +175,18 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
         addInitializedPage(atomicOperation);
       }
     } else {
-      final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, 0, false, false);
-      try {
+      try (final OCacheEntry cacheEntry =
+          loadPageForWrite(atomicOperation, fileId, 0, false, false)) {
         final MapEntryPoint mapEntryPoint = new MapEntryPoint(cacheEntry);
         mapEntryPoint.setFileSize(0);
-      } finally {
-        releasePageFromWrite(atomicOperation, cacheEntry);
       }
     }
   }
 
   private void addInitializedPage(final OAtomicOperation atomicOperation) throws IOException {
-    final OCacheEntry cacheEntry = addPage(atomicOperation, fileId);
-    try {
+    try (final OCacheEntry cacheEntry = addPage(atomicOperation, fileId)) {
       final MapEntryPoint mapEntryPoint = new MapEntryPoint(cacheEntry);
       mapEntryPoint.setFileSize(0);
-    } finally {
-      releasePageFromWrite(atomicOperation, cacheEntry);
     }
   }
 

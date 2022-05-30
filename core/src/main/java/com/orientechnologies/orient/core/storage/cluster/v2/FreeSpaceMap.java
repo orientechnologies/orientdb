@@ -35,12 +35,9 @@ public final class FreeSpaceMap extends ODurableComponent {
   }
 
   private void init(final OAtomicOperation atomicOperation) throws IOException {
-    final OCacheEntry firstLevelCacheEntry = addPage(atomicOperation, fileId);
-    try {
+    try (final OCacheEntry firstLevelCacheEntry = addPage(atomicOperation, fileId)) {
       final FreeSpaceMapPage page = new FreeSpaceMapPage(firstLevelCacheEntry);
       page.init();
-    } finally {
-      releasePageFromWrite(atomicOperation, firstLevelCacheEntry);
     }
   }
 
@@ -49,26 +46,21 @@ public final class FreeSpaceMap extends ODurableComponent {
 
     final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
     final int localSecondLevelPageIndex;
-    final OCacheEntry firstLevelEntry = loadPageForRead(atomicOperation, fileId, 0, true);
-    try {
+
+    try (final OCacheEntry firstLevelEntry = loadPageForRead(atomicOperation, fileId, 0, true)) {
       final FreeSpaceMapPage page = new FreeSpaceMapPage(firstLevelEntry);
       localSecondLevelPageIndex = page.findPage(normalizedSize);
       if (localSecondLevelPageIndex < 0) {
         return -1;
       }
-    } finally {
-      releasePageFromRead(atomicOperation, firstLevelEntry);
     }
 
     final int secondLevelPageIndex = localSecondLevelPageIndex + 1;
-    final OCacheEntry leafEntry =
-        loadPageForRead(atomicOperation, fileId, secondLevelPageIndex, true);
-    try {
+    try (final OCacheEntry leafEntry =
+        loadPageForRead(atomicOperation, fileId, secondLevelPageIndex, true)) {
       final FreeSpaceMapPage page = new FreeSpaceMapPage(leafEntry);
       return page.findPage(normalizedSize)
           + localSecondLevelPageIndex * FreeSpaceMapPage.CELLS_PER_PAGE;
-    } finally {
-      releasePageFromRead(atomicOperation, leafEntry);
     }
   }
 
@@ -85,34 +77,26 @@ public final class FreeSpaceMap extends ODurableComponent {
     final long filledUpTo = getFilledUpTo(atomicOperation, fileId);
 
     for (int i = 0; i < secondLevelPageIndex - filledUpTo + 1; i++) {
-      final OCacheEntry cacheEntry = addPage(atomicOperation, fileId);
-      try {
+      try (final OCacheEntry cacheEntry = addPage(atomicOperation, fileId)) {
         final FreeSpaceMapPage page = new FreeSpaceMapPage(cacheEntry);
         page.init();
-      } finally {
-        releasePageFromWrite(atomicOperation, cacheEntry);
       }
     }
 
     final int maxFreeSpaceSecondLevel;
     final int localSecondLevelPageIndex = pageIndex % FreeSpaceMapPage.CELLS_PER_PAGE;
-    final OCacheEntry leafEntry =
-        loadPageForWrite(atomicOperation, fileId, secondLevelPageIndex, true, true);
-    try {
+    try (final OCacheEntry leafEntry =
+        loadPageForWrite(atomicOperation, fileId, secondLevelPageIndex, true, true)) {
+
       final FreeSpaceMapPage page = new FreeSpaceMapPage(leafEntry);
       maxFreeSpaceSecondLevel =
           page.updatePageMaxFreeSpace(localSecondLevelPageIndex, normalizedSpace);
-    } finally {
-      releasePageFromWrite(atomicOperation, leafEntry);
     }
 
-    final OCacheEntry firstLevelCacheEntry =
-        loadPageForWrite(atomicOperation, fileId, 0, true, true);
-    try {
+    try (final OCacheEntry firstLevelCacheEntry =
+        loadPageForWrite(atomicOperation, fileId, 0, true, true); ) {
       final FreeSpaceMapPage page = new FreeSpaceMapPage(firstLevelCacheEntry);
       page.updatePageMaxFreeSpace(secondLevelPageIndex - 1, maxFreeSpaceSecondLevel);
-    } finally {
-      releasePageFromWrite(atomicOperation, firstLevelCacheEntry);
     }
   }
 

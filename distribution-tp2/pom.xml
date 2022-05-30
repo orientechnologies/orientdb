@@ -9,15 +9,14 @@
     OR CONDITIONS OF ANY KIND, either express or implied. ~ See the License for 
     the specific language governing permissions and ~ limitations under the License. -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
         <groupId>com.orientechnologies</groupId>
         <artifactId>orientdb-parent</artifactId>
-        <version>3.2.6-SNAPSHOT</version>
+        <version>3.2.7-SNAPSHOT</version>
         <relativePath>../</relativePath>
     </parent>
 
@@ -169,7 +168,7 @@
                                 <descriptor>${basedir}/src/main/assembly/archive.xml</descriptor>
                             </descriptors>
                             <filters>
-                                <filter></filter>
+                                <filter />
                             </filters>
                             <ignoreDirFormatExtensions>false</ignoreDirFormatExtensions>
                             <tarLongFileMode>posix</tarLongFileMode>
@@ -238,9 +237,8 @@
                                 </goals>
                                 <configuration>
                                     <target name="start OrientDB server on localhost">
-                                        <exec executable="${project.build.directory}/${project.build.finalName}.dir/${project.build.finalName}/bin/server.sh"
-                                              spawn="true">
-                                            <env key="ORIENTDB_ROOT_PASSWORD" value="root"/>
+                                        <exec executable="${project.build.directory}/${project.build.finalName}.dir/${project.build.finalName}/bin/server.sh" spawn="true">
+                                            <env key="ORIENTDB_ROOT_PASSWORD" value="root" />
                                         </exec>
                                     </target>
                                 </configuration>
@@ -254,8 +252,7 @@
                                 </goals>
                                 <configuration>
                                     <target name="stop the running OrientDB server on localhost">
-                                        <exec executable="${project.build.directory}/${project.build.finalName}.dir/${project.build.finalName}/bin/shutdown.sh"
-                                              spawn="false">
+                                        <exec executable="${project.build.directory}/${project.build.finalName}.dir/${project.build.finalName}/bin/shutdown.sh" spawn="false">
                                         </exec>
                                     </target>
                                 </configuration>

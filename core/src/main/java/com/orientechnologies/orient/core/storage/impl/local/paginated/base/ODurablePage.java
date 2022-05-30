@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
@@ -333,10 +332,6 @@ public class ODurablePage {
 
   public OWALChanges getChanges() {
     return changes;
-  }
-
-  public void addPageOperation(PageOperationRecord pageOperation) {
-    cacheEntry.addPageOperationRecord(pageOperation);
   }
 
   public final OCacheEntry getCacheEntry() {
