@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.clu
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpage.ClusterPageSetNextPagePO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpage.ClusterPageSetPrevPagePO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpage.ClusterPageSetRecordLongValuePO;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -111,6 +112,40 @@ public final class OClusterPage extends ODurablePage {
     }
 
     if (freePosition - entrySize < lastEntryIndexPosition + INDEX_ITEM_SIZE) {
+      if (requestedPosition < 0) {
+        final int[] findHole = findHole(entrySize, freePosition);
+
+        if (findHole != null) {
+          final int entryPosition = findHole[0];
+          final int holeSize = findHole[1];
+
+          final ORawPair<Integer, Boolean> entry =
+              findFirstEmptySlot(
+                  recordVersion,
+                  entryPosition,
+                  indexesLength,
+                  entrySize,
+                  freeListHeader,
+                  true,
+                  bookedRecordPositions);
+
+          if (entry != null) {
+            assert entry.second; // allocated from free list
+
+            final int entryIndex = entry.first;
+
+            assert holeSize >= entrySize;
+            if (holeSize != entrySize) {
+              setIntValue(entryPosition + entrySize, -(holeSize - entrySize));
+            }
+
+            writeEntry(record, entryPosition, entrySize, entryIndex);
+
+            return entryIndex;
+          }
+        }
+      }
+
       doDefragmentation();
     }
 
@@ -128,7 +163,9 @@ public final class OClusterPage extends ODurablePage {
               indexesLength,
               entrySize,
               freeListHeader,
+              false,
               bookedRecordPositions);
+      Objects.requireNonNull(entry);
       entryIndex = entry.first;
       allocatedFromFreeList = entry.second;
     } else {
@@ -138,7 +175,22 @@ public final class OClusterPage extends ODurablePage {
       entryIndex = requestedPosition;
     }
 
-    int entryPosition = freePosition;
+    writeEntry(record, freePosition, entrySize, entryIndex);
+
+    setIntValue(FREE_POSITION_OFFSET, freePosition);
+
+    if (entryIndex >= 0) {
+      addPageOperation(
+          new ClusterPageAppendRecordPO(
+              recordVersion, record, requestedPosition, entryIndex, allocatedFromFreeList));
+    }
+
+    return entryIndex;
+  }
+
+  private void writeEntry(byte[] record, int entryPosition, int entrySize, int entryIndex) {
+    assert entryPosition + entrySize <= PAGE_SIZE;
+
     setIntValue(entryPosition, entrySize);
     entryPosition += OIntegerSerializer.INT_SIZE;
 
@@ -150,17 +202,54 @@ public final class OClusterPage extends ODurablePage {
 
     setBinaryValue(entryPosition, record);
 
-    setIntValue(FREE_POSITION_OFFSET, freePosition);
-
     incrementEntriesCount();
+  }
 
-    if (entryIndex >= 0) {
-      addPageOperation(
-          new ClusterPageAppendRecordPO(
-              recordVersion, record, requestedPosition, entryIndex, allocatedFromFreeList));
+  /**
+   * Finds the hole position and its size which is equal or bigger than requested size.
+   *
+   * @return position and size of the hole.
+   */
+  private int[] findHole(int requestedSize, int freePosition) {
+    int currentPosition = freePosition;
+
+    int holeSize = 0;
+    int initialHolePosition = 0;
+
+    while (currentPosition < PAGE_SIZE) {
+      final int size = getIntValue(currentPosition);
+
+      if (size < 0) {
+        final int currentSize = -size;
+
+        if (initialHolePosition == 0) {
+          initialHolePosition = currentPosition;
+          holeSize = currentSize;
+        } else {
+          holeSize += currentSize;
+        }
+
+        if (holeSize >= requestedSize) {
+          if (holeSize > requestedSize) {
+            if (holeSize - requestedSize > Integer.BYTES) {
+              return new int[] {initialHolePosition, holeSize};
+            } else {
+              currentPosition += Math.abs(size);
+              continue;
+            }
+          }
+
+          return new int[] {initialHolePosition, holeSize};
+        }
+      } else {
+        holeSize = 0;
+        initialHolePosition = 0;
+      }
+
+      currentPosition += Math.abs(size);
     }
 
-    return entryIndex;
+    return null;
   }
 
   private boolean insertIntoRequestedSlot(
@@ -239,10 +328,11 @@ public final class OClusterPage extends ODurablePage {
 
   private ORawPair<Integer, Boolean> findFirstEmptySlot(
       int recordVersion,
-      int freePosition,
+      int entryPosition,
       int indexesLength,
       int entrySize,
       int freeListHeader,
+      boolean useOnlyFreeList,
       Set<Integer> bookedRecordPositions) {
     boolean allocatedFromFreeList = false;
     int entryIndex;
@@ -280,16 +370,24 @@ public final class OClusterPage extends ODurablePage {
         setIntValue(FREE_SPACE_COUNTER_OFFSET, getFreeSpace() - entrySize);
 
         int entryIndexPosition = PAGE_INDEXES_OFFSET + entryIndex * INDEX_ITEM_SIZE;
-        setIntValue(entryIndexPosition, freePosition);
+        setIntValue(entryIndexPosition, entryPosition);
 
         setIntValue(entryIndexPosition + OIntegerSerializer.INT_SIZE, recordVersion);
 
         allocatedFromFreeList = true;
       } else {
-        entryIndex = appendEntry(recordVersion, freePosition, indexesLength, entrySize);
+        if (useOnlyFreeList) {
+          return null;
+        }
+
+        entryIndex = appendEntry(recordVersion, entryPosition, indexesLength, entrySize);
       }
     } else {
-      entryIndex = appendEntry(recordVersion, freePosition, indexesLength, entrySize);
+      if (useOnlyFreeList) {
+        return null;
+      }
+
+      entryIndex = appendEntry(recordVersion, entryPosition, indexesLength, entrySize);
     }
 
     return new ORawPair<>(entryIndex, allocatedFromFreeList);
@@ -402,7 +500,10 @@ public final class OClusterPage extends ODurablePage {
     }
 
     final int entrySize = getIntValue(entryPosition);
+    assert entrySize + entryPosition <= PAGE_SIZE;
     assert entrySize > 0;
+
+    final int recordSize = getIntValue(entryPosition + 2 * OIntegerSerializer.INT_SIZE);
 
     setIntValue(entryPosition, -entrySize);
     setIntValue(FREE_SPACE_COUNTER_OFFSET, getFreeSpace() + entrySize);
@@ -410,9 +511,7 @@ public final class OClusterPage extends ODurablePage {
     decrementEntriesCount();
 
     final byte[] oldRecord =
-        getBinaryValue(
-            entryPosition + 3 * OIntegerSerializer.INT_SIZE,
-            entrySize - 3 * OIntegerSerializer.INT_SIZE);
+        getBinaryValue(entryPosition + 3 * OIntegerSerializer.INT_SIZE, recordSize);
 
     addPageOperation(
         new ClusterPageDeleteRecordPO(position, oldVersion, oldRecord, preserveFreeListPointer));
@@ -445,6 +544,9 @@ public final class OClusterPage extends ODurablePage {
     }
 
     final int entryPosition = entryPointer & POSITION_MASK;
+    assert getIntValue(entryPosition) + entryPosition <= PAGE_SIZE;
+    assert getIntValue(entryPosition + 2 * OIntegerSerializer.INT_SIZE) <= PAGE_SIZE;
+
     return getIntValue(entryPosition + 2 * OIntegerSerializer.INT_SIZE);
   }
 

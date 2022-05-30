@@ -863,7 +863,6 @@ public class ClusterPageTest {
       localPage.init();
 
       addFullPageDeleteAndAddAgain(localPage);
-      assertChangesTracking(localPage, bufferPool);
     } finally {
       cacheEntry.releaseExclusiveLock();
       cachePointer.decrementReferrer();
