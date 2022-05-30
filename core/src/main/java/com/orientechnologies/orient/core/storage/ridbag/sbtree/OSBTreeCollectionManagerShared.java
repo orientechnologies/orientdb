@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
+import com.orientechnologies.orient.core.storage.cache.OAbstractWriteCache;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
@@ -82,8 +83,7 @@ public final class OSBTreeCollectionManagerShared
                 fileName.substring(0, fileName.length() - FILE_EXTENSION.length()),
                 FILE_EXTENSION);
         bTree.load();
-
-        fileIdBTreeMap.put(OWOWCache.extractFileId(entry.getValue()), bTree);
+        fileIdBTreeMap.put(OAbstractWriteCache.extractFileId(entry.getValue()), bTree);
         final EdgeKey edgeKey = bTree.firstKey();
 
         if (edgeKey != null && edgeKey.ridBagId < 0 && ridBagIdCounter.get() < -edgeKey.ridBagId) {
@@ -244,7 +244,7 @@ public final class OSBTreeCollectionManagerShared
     // lock is already acquired on storage level, during cluster drop
 
     final long fileId = atomicOperation.fileIdByName(generateLockName(clusterId));
-    final int intFileId = OWOWCache.extractFileId(fileId);
+    final int intFileId = OAbstractWriteCache.extractFileId(fileId);
     final BTree bTree = fileIdBTreeMap.remove(intFileId);
     if (bTree != null) {
       bTree.delete(atomicOperation);
@@ -263,13 +263,13 @@ public final class OSBTreeCollectionManagerShared
       fileId = bTree.getFileId();
       final long nextRidBagId = -ridBagIdCounter.incrementAndGet();
 
-      final int intFileId = OWOWCache.extractFileId(fileId);
+      final int intFileId = OAbstractWriteCache.extractFileId(fileId);
       fileIdBTreeMap.put(intFileId, bTree);
 
       return new BTreeBonsaiGlobal(
           bTree, intFileId, nextRidBagId, OLinkSerializer.INSTANCE, OIntegerSerializer.INSTANCE);
     } else {
-      final int intFileId = OWOWCache.extractFileId(fileId);
+      final int intFileId = OAbstractWriteCache.extractFileId(fileId);
       final BTree bTree = fileIdBTreeMap.get(intFileId);
       final long nextRidBagId = -ridBagIdCounter.incrementAndGet();
 
@@ -281,7 +281,7 @@ public final class OSBTreeCollectionManagerShared
   @Override
   public OSBTreeBonsai<OIdentifiable, Integer> loadSBTree(
       OBonsaiCollectionPointer collectionPointer) {
-    final int intFileId = (int) collectionPointer.getFileId();
+    final int intFileId = OAbstractWriteCache.extractFileId(collectionPointer.getFileId());
 
     final BTree bTree = fileIdBTreeMap.get(intFileId);
 
