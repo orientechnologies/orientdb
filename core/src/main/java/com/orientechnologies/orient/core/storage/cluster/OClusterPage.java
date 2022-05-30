@@ -29,13 +29,6 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpage.ClusterPageAppendRecordPO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpage.ClusterPageDeleteRecordPO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpage.ClusterPageInitPO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpage.ClusterPageReplaceRecordPO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpage.ClusterPageSetNextPagePO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpage.ClusterPageSetPrevPagePO;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpage.ClusterPageSetRecordLongValuePO;
 import java.util.Objects;
 import java.util.Set;
 
@@ -151,7 +144,6 @@ public final class OClusterPage extends ODurablePage {
     freePosition -= entrySize;
 
     int entryIndex;
-    boolean allocatedFromFreeList;
 
     if (requestedPosition < 0) {
       final ORawPair<Integer, Boolean> entry =
@@ -165,23 +157,15 @@ public final class OClusterPage extends ODurablePage {
               bookedRecordPositions);
       Objects.requireNonNull(entry);
       entryIndex = entry.first;
-      allocatedFromFreeList = entry.second;
     } else {
-      allocatedFromFreeList =
-          insertIntoRequestedSlot(
-              recordVersion, freePosition, entrySize, requestedPosition, freeListHeader);
+      insertIntoRequestedSlot(
+          recordVersion, freePosition, entrySize, requestedPosition, freeListHeader);
       entryIndex = requestedPosition;
     }
 
     writeEntry(record, freePosition, entrySize, entryIndex);
 
     setIntValue(FREE_POSITION_OFFSET, freePosition);
-
-    if (entryIndex >= 0) {
-      addPageOperation(
-          new ClusterPageAppendRecordPO(
-              recordVersion, record, requestedPosition, entryIndex, allocatedFromFreeList));
-    }
 
     return entryIndex;
   }
