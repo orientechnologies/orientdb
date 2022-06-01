@@ -279,18 +279,6 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
     return getName();
   }
 
-  default boolean isCommandInterrupted() {
-    return false;
-  }
-
-  default void setCommandInterrupted(boolean commandInterrupted) {}
-
-  default int getCommandInterruptionDepth() {
-    return 0;
-  }
-
-  default void setCommandInterruptionDepth(int commandInterruptionDepth) {}
-
   long[] getClusterDataRange(int currentClusterId);
 
   void setDefaultClusterId(int addCluster);
