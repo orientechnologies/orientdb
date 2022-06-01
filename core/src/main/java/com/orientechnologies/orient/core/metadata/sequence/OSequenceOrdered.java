@@ -45,7 +45,7 @@ public class OSequenceOrdered extends OSequence {
   }
 
   @Override
-  public synchronized long nextWork() throws OSequenceLimitReachedException {
+  public long nextWork() throws OSequenceLimitReachedException {
     ODatabaseDocumentInternal mainDb = getDatabase();
     boolean tx = mainDb.getTransaction().isActive();
     try {
