@@ -386,7 +386,7 @@ public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
   /** {@inheritDoc} */
   public String toCreateIndexDDL(final String indexName, final String indexType, String engine) {
     final StringBuilder ddl = new StringBuilder("create index ");
-    ddl.append(indexName).append(" on ").append(className).append(" ( ");
+    ddl.append('`').append(indexName).append('`').append(" on ").append(className).append(" ( ");
 
     final Iterator<String> fieldIterator = getFieldsToIndex().iterator();
     if (fieldIterator.hasNext()) {
