@@ -34,7 +34,8 @@ public final class OLocalKeySource implements OLockKeySource {
                       index, database.getMetadata().getIndexManagerInternal(), database);
               if (resolvedIndex.isUnique()) {
                 for (Object keyWithChange : changes.changesPerKey.keySet()) {
-                  uniqueIndexKeys.add(new OTransactionUniqueKey(index, keyWithChange, 0));
+                  Object keyChange = OTransactionPhase1Task.mapKey(keyWithChange);
+                  uniqueIndexKeys.add(new OTransactionUniqueKey(index, keyChange, 0));
                 }
                 if (!changes.nullKeyChanges.isEmpty()) {
                   uniqueIndexKeys.add(new OTransactionUniqueKey(index, null, 0));

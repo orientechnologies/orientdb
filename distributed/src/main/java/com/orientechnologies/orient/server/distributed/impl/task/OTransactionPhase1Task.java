@@ -13,6 +13,7 @@ import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -393,7 +394,8 @@ public class OTransactionPhase1Task extends OAbstractRemoteTask implements OLock
               if (resolvedIndex != null && resolvedIndex.isUnique()) {
                 for (final Object keyWithChange : changes.changesPerKey.keySet()) {
                   int version = storage.getVersionForKey(index, keyWithChange);
-                  uniqueIndexKeys.add(new OTransactionUniqueKey(index, keyWithChange, version));
+                  Object keyChange = OTransactionPhase1Task.mapKey(keyWithChange);
+                  uniqueIndexKeys.add(new OTransactionUniqueKey(index, keyChange, version));
                 }
                 if (!changes.nullKeyChanges.isEmpty()) {
                   int version = storage.getVersionForKey(index, null);
@@ -506,5 +508,24 @@ public class OTransactionPhase1Task extends OAbstractRemoteTask implements OLock
       set.add(new ORecordId(operation.getRID().getClusterId(), -1));
     }
     set.add(operation.getRID().copy());
+  }
+
+  public static Object mapKey(Object key) {
+    if (key instanceof ORID) {
+      if (((ORID) key).isNew()) {
+        return new ORecordId(((ORID) key).getClusterId(), -1);
+      } else {
+        return ((ORID) key).getIdentity().copy();
+      }
+    } else if (key instanceof OCompositeKey) {
+      OCompositeKey cKey = (OCompositeKey) key;
+      OCompositeKey newKey = new OCompositeKey();
+      for (Object subKey : cKey.getKeys()) {
+        newKey.addKey(mapKey(subKey));
+      }
+      return newKey;
+    } else {
+      return key;
+    }
   }
 }
