@@ -347,6 +347,9 @@ public class OWALPageChangesPortion implements OWALChanges {
     }
 
     int portionIndex = offset / PORTION_BYTES;
+    assert portionIndex < pageChunks.length;
+    assert (pageChunks.length - portionIndex) * PORTION_BYTES >= data.length
+        : "wrong portionIndex:" + portionIndex + " data:" + data.length;
 
     if (pageChunks[portionIndex] == null) {
       pageChunks[portionIndex] = new byte[PORTION_SIZE][];
