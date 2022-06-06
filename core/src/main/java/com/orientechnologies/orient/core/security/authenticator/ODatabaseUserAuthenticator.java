@@ -9,10 +9,20 @@ import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.metadata.security.auth.OAuthenticationInfo;
 import com.orientechnologies.orient.core.metadata.security.auth.OTokenAuthInfo;
 import com.orientechnologies.orient.core.metadata.security.auth.OUserPasswordAuthInfo;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OParsedToken;
+import com.orientechnologies.orient.core.security.OSecuritySystem;
+import com.orientechnologies.orient.core.security.OTokenSign;
 import com.orientechnologies.orient.enterprise.channel.binary.OTokenSecurityException;
 
 public class ODatabaseUserAuthenticator extends OSecurityAuthenticatorAbstract {
+  private OTokenSign tokenSign;
+
+  @Override
+  public void config(ODocument jsonConfig, OSecuritySystem security) {
+    super.config(jsonConfig, security);
+    tokenSign = security.getTokenSign();
+  }
 
   @Override
   public OSecurityUser authenticate(ODatabaseSession session, OAuthenticationInfo info) {
@@ -23,7 +33,8 @@ public class ODatabaseUserAuthenticator extends OSecurityAuthenticatorAbstract {
           ((OUserPasswordAuthInfo) info).getPassword());
     } else if (info instanceof OTokenAuthInfo) {
       OParsedToken token = ((OTokenAuthInfo) info).getToken();
-      if (!getSecurity().getTokenSign().verifyTokenSign(token)) {
+
+      if (tokenSign != null && !tokenSign.verifyTokenSign(token)) {
         throw new OTokenSecurityException("The token provided is expired");
       }
       if (token.getToken().getIsValid() != true) {
