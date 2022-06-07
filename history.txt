@@ -26,6 +26,25 @@
 
 This document contains the last changes of OrientDB Community Edition.
 
+
+-----------------------------------------------------------------------------------------------------------------------------------
+VERSION 3.2.7 - (June, 8 2022)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#327---8-June-2022
+
+# Core
+- fixed delete of lucene indexes 
+- make sure to do a clean metadata re-init after incremental backup database restore
+- handle thread interruption while data read and write with correct exception
+- Speed up of record updates.
+- remove edges with in or out null during bonsai repair,issue  #9806
+- minor correction in composite index creation query
+
+# Distributed
+- cloned distributed lock keys that may contain a record id for avoid mutation
+- properly handle database instance used by lucene indexes while distributed sync
+- Install ShutdownLogManager in distributed mode
+
+
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.6 - (April, 28 2022)
 - Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#326---28-April-2022
