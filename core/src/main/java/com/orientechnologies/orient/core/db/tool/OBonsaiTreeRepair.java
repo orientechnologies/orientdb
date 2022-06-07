@@ -50,8 +50,14 @@ public class OBonsaiTreeRepair {
             continue;
           }
 
-          final ODocument inVertex = edge.<OIdentifiable>field("in").getRecord();
-          final ODocument outVertex = edge.<OIdentifiable>field("out").getRecord();
+          OIdentifiable inId = edge.<OIdentifiable>field("in");
+          OIdentifiable outId = edge.<OIdentifiable>field("out");
+          if (inId == null || outId == null) {
+            db.delete(edge);
+            continue;
+          }
+          final ODocument inVertex = inId.getRecord();
+          final ODocument outVertex = outId.getRecord();
 
           final String inVertexName =
               OVertexDocument.getConnectionFieldName(ODirection.IN, label, true);
