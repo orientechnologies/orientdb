@@ -1627,6 +1627,9 @@ public class ODocumentHelper {
       ORID convertedValue = ridMapper.map((ORID) myValue);
       if (convertedValue != null) myValue = convertedValue;
     }
+    if (myValue instanceof Date && otherValue instanceof Date) {
+      return ((Date) myValue).getTime() / 1000 == ((Date) otherValue).getTime() / 1000;
+    }
 
     return myValue.equals(otherValue);
   }

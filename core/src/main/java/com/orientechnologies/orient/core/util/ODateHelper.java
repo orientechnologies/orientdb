@@ -55,7 +55,11 @@ public class ODateHelper {
   public static DateFormat getDateFormatInstance(final ODatabaseDocumentInternal db) {
     if (db != null && !db.isClosed())
       return db.getStorageInfo().getConfiguration().getDateFormatInstance();
-    else return new SimpleDateFormat(OStorageConfiguration.DEFAULT_DATE_FORMAT);
+    else {
+      SimpleDateFormat format = new SimpleDateFormat(OStorageConfiguration.DEFAULT_DATE_FORMAT);
+      format.setTimeZone(getDatabaseTimeZone());
+      return format;
+    }
   }
 
   public static String getDateFormat() {
@@ -74,7 +78,11 @@ public class ODateHelper {
   public static DateFormat getDateTimeFormatInstance(final ODatabaseDocumentInternal db) {
     if (db != null && !db.isClosed())
       return db.getStorageInfo().getConfiguration().getDateTimeFormatInstance();
-    else return new SimpleDateFormat(OStorageConfiguration.DEFAULT_DATE_FORMAT);
+    else {
+      SimpleDateFormat format = new SimpleDateFormat(OStorageConfiguration.DEFAULT_DATE_FORMAT);
+      format.setTimeZone(getDatabaseTimeZone());
+      return format;
+    }
   }
 
   public static String getDateTimeFormat() {
