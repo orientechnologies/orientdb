@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
@@ -29,7 +30,6 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.core.util.ODateHelper;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -291,7 +291,8 @@ public class JSONTest extends DocumentDBBaseTest {
   @Test
   public void testMultiLevelTypes() {
     String oldDataTimeFormat = database.get(ODatabase.ATTRIBUTES.DATETIMEFORMAT).toString();
-    database.set(ODatabase.ATTRIBUTES.DATETIMEFORMAT, ODateHelper.DEF_DATETIME_FORMAT);
+    database.set(
+        ODatabase.ATTRIBUTES.DATETIMEFORMAT, OStorageConfiguration.DEFAULT_DATETIME_FORMAT);
     try {
       ODocument newDoc = new ODocument();
       newDoc.field("long", 100000000000l);

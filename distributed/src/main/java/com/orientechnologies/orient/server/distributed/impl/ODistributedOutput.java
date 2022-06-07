@@ -22,11 +22,11 @@ package com.orientechnologies.orient.server.distributed.impl;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OAnsiCode;
 import com.orientechnologies.orient.console.OTableFormatter;
+import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.util.ODateHelper;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
@@ -671,7 +671,8 @@ public class ODistributedOutput {
       for (Map.Entry<ODistributedRequestId, ODistributedTxContext> entries :
           activeTxContexts.entrySet()) {
 
-        SimpleDateFormat dateFormat = new SimpleDateFormat(ODateHelper.DEF_DATETIME_FORMAT);
+        SimpleDateFormat dateFormat =
+            new SimpleDateFormat(OStorageConfiguration.DEFAULT_DATETIME_FORMAT);
 
         ODistributedRequestId key = entries.getKey();
         ODistributedTxContext value = entries.getValue();

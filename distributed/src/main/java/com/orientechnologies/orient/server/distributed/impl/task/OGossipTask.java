@@ -21,8 +21,8 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.util.ODateHelper;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
@@ -52,7 +52,7 @@ public class OGossipTask extends OAbstractRemoteTask {
   private String lockManagerServer;
 
   private static final SimpleDateFormat dateFormat =
-      new SimpleDateFormat(ODateHelper.DEF_DATETIME_FORMAT);
+      new SimpleDateFormat(OStorageConfiguration.DEFAULT_DATETIME_FORMAT);
 
   public OGossipTask() {
     this.lockManagerServer = "";
