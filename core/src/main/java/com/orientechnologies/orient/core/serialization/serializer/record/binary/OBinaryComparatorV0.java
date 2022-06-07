@@ -1278,30 +1278,14 @@ public class OBinaryComparatorV0 implements OBinaryComparator {
                     final long value2 = Long.parseLong(value2AsString);
                     return (value1 < value2) ? -1 : ((value1 == value2) ? 0 : 1);
                   }
-
-                  final ODatabaseDocumentInternal db =
-                      ODatabaseRecordThreadLocal.instance().getIfDefined();
                   try {
-                    final DateFormat dateFormat;
-                    if (db != null) {
-                      dateFormat = ODateHelper.getDateTimeFormatInstance(db);
-                    } else {
-                      dateFormat =
-                          new SimpleDateFormat(OStorageConfiguration.DEFAULT_DATETIME_FORMAT);
-                    }
-
+                    final DateFormat dateFormat = ODateHelper.getDateTimeFormatInstance();
                     final Date value2AsDate = dateFormat.parse(value2AsString);
                     final long value2 = value2AsDate.getTime();
                     return (value1 < value2) ? -1 : ((value1 == value2) ? 0 : 1);
                   } catch (ParseException ignored) {
                     try {
-                      final DateFormat dateFormat;
-                      if (db != null) {
-                        dateFormat = ODateHelper.getDateFormatInstance(db);
-                      } else {
-                        dateFormat =
-                            new SimpleDateFormat(OStorageConfiguration.DEFAULT_DATE_FORMAT);
-                      }
+                      DateFormat dateFormat = ODateHelper.getDateFormatInstance();
 
                       final Date value2AsDate = dateFormat.parse(value2AsString);
                       final long value2 = value2AsDate.getTime();

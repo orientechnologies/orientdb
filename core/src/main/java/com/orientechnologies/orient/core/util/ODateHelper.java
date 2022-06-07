@@ -79,7 +79,7 @@ public class ODateHelper {
     if (db != null && !db.isClosed())
       return db.getStorageInfo().getConfiguration().getDateTimeFormatInstance();
     else {
-      SimpleDateFormat format = new SimpleDateFormat(OStorageConfiguration.DEFAULT_DATE_FORMAT);
+      SimpleDateFormat format = new SimpleDateFormat(OStorageConfiguration.DEFAULT_DATETIME_FORMAT);
       format.setTimeZone(getDatabaseTimeZone());
       return format;
     }
