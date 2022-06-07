@@ -53,6 +53,7 @@ public abstract class OStorageAbstract implements OStorage {
   protected final String url;
   protected final String mode;
   protected final ReentrantReadWriteLock stateLock;
+  protected final ReentrantReadWriteLock errorLock;
 
   protected volatile OStorageConfiguration configuration;
   protected volatile OCurrentStorageComponentsFactory componentsFactory;
@@ -60,7 +61,9 @@ public abstract class OStorageAbstract implements OStorage {
   private final AtomicLong version = new AtomicLong();
 
   protected volatile STATUS status = STATUS.CLOSED;
+
   protected Throwable error = null;
+  protected volatile boolean inError = false;
 
   public OStorageAbstract(final String name, final String iURL, final String mode) {
     this.name = normalizeName(name);
@@ -72,6 +75,7 @@ public abstract class OStorageAbstract implements OStorage {
     this.mode = mode;
 
     stateLock = new ReentrantReadWriteLock();
+    errorLock = new ReentrantReadWriteLock();
   }
 
   protected String normalizeName(String name) {

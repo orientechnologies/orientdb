@@ -57,7 +57,6 @@ public interface OStorage extends OBackupable, OStorageInfo {
     CLOSING,
     @Deprecated
     OPENING,
-    INTERNAL_ERROR
   }
 
   public enum LOCKING_STRATEGY {

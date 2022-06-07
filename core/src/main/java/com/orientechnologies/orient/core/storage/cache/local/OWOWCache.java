@@ -3172,10 +3172,10 @@ public final class OWOWCache extends OAbstractWriteCache
                     false,
                     Intention.ALLOCATE_CHUNK_TO_WRITE_DATA_IN_BATCH);
         final ByteBuffer containerBuffer = containerPointer.getNativeByteBuffer();
-        assert containerBuffer.position() == 0;
 
         containerPointers[i] = containerPointer;
         containerBuffers[i] = containerBuffer;
+        assert containerBuffer.position() == 0;
 
         for (final OQuarto<Long, ByteBuffer, OPointer, OCachePointer> quarto : chunk) {
           final ByteBuffer buffer = quarto.two;
@@ -3266,7 +3266,9 @@ public final class OWOWCache extends OAbstractWriteCache
 
     } finally {
       for (final OPointer containerPointer : containerPointers) {
-        ODirectMemoryAllocator.instance().deallocate(containerPointer);
+        if (containerPointer != null) {
+          ODirectMemoryAllocator.instance().deallocate(containerPointer);
+        }
       }
     }
 

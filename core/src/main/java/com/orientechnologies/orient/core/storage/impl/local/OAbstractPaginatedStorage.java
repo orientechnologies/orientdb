@@ -261,7 +261,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       stateLock.readLock().lock();
       try {
-        if (status == STATUS.OPEN || status == STATUS.INTERNAL_ERROR)
+        if (status == STATUS.OPEN || isInError())
         // ALREADY OPENED: THIS IS THE CASE WHEN A STORAGE INSTANCE IS
         // REUSED
         {
@@ -275,7 +275,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         stateLock.writeLock().lock();
         try {
-          if (status == STATUS.OPEN || status == STATUS.INTERNAL_ERROR)
+          if (status == STATUS.OPEN || isInError())
           // ALREADY OPENED: THIS IS THE CASE WHEN A STORAGE INSTANCE IS
           // REUSED
           {
@@ -1495,32 +1495,37 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   @Override
   public final void onException(final Throwable e) {
-    stateLock.writeLock().lock();
+
+    OLogManager.instance()
+        .errorStorage(
+            this,
+            "Error in data flush background thread, for storage %s ,"
+                + "please restart database and send full stack trace inside of bug report",
+            e,
+            name);
+
+    if (status == STATUS.CLOSED) {
+      return;
+    }
+
+    if (!(e instanceof OInternalErrorException)) {
+      setInError(e);
+    }
+
     try {
-      OLogManager.instance()
-          .errorStorage(
-              this,
-              "Error in data flush background thread, for storage %s ,"
-                  + "please restart database and send full stack trace inside of bug report",
-              e,
-              name);
+      makeStorageDirty();
+    } catch (IOException ioException) {
+      // ignore
+    }
+  }
 
-      if (status == STATUS.CLOSED) {
-        return;
-      }
-
-      if (!(e instanceof OInternalErrorException)) {
-        error = e;
-        status = STATUS.INTERNAL_ERROR;
-      }
-
-      try {
-        makeStorageDirty();
-      } catch (IOException ioException) {
-        // ignore
-      }
+  private void setInError(final Throwable e) {
+    this.errorLock.writeLock().lock();
+    try {
+      error = e;
+      this.inError = true;
     } finally {
-      stateLock.writeLock().unlock();
+      this.errorLock.writeLock().unlock();
     }
   }
 
@@ -3888,8 +3893,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         && !((error instanceof OHighLevelException)
             || (error instanceof ONeedRetryException)
             || (error instanceof OInternalErrorException))) {
-      this.error = error;
-      status = STATUS.INTERNAL_ERROR;
+      setInError(error);
     }
   }
 
@@ -3918,7 +3922,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           checkOpennessAndMigration();
           checkIfThreadIsBlocked();
 
-          if (status != STATUS.INTERNAL_ERROR) {
+          if (!isInError()) {
             for (final OBaseIndexEngine indexEngine : indexEngines) {
               try {
                 if (indexEngine != null) {
@@ -4222,31 +4226,25 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   /** @inheritDoc */
   @Override
   public final void pageIsBroken(final String fileName, final long pageIndex) {
-    stateLock.writeLock().lock();
+    OLogManager.instance()
+        .errorStorage(
+            this,
+            "In storage %s file with name '%s' has broken page under the index %d",
+            null,
+            name,
+            fileName,
+            pageIndex);
+
+    if (status == STATUS.CLOSED) {
+      return;
+    }
+
+    setInError(new OStorageException("Page " + pageIndex + " is broken in file " + fileName));
+
     try {
-      OLogManager.instance()
-          .errorStorage(
-              this,
-              "In storage %s file with name '%s' has broken page under the index %d",
-              null,
-              name,
-              fileName,
-              pageIndex);
-
-      if (status == STATUS.CLOSED) {
-        return;
-      }
-
-      this.error = new OStorageException("Page " + pageIndex + " is broken in file " + fileName);
-      status = STATUS.INTERNAL_ERROR;
-
-      try {
-        makeStorageDirty();
-      } catch (final IOException e) {
-        // ignore
-      }
-    } finally {
-      stateLock.writeLock().unlock();
+      makeStorageDirty();
+    } catch (final IOException e) {
+      // ignore
     }
   }
 
@@ -4698,14 +4696,29 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
+  protected boolean isInError() {
+    errorLock.readLock().lock();
+    try {
+      return inError;
+    } finally {
+      errorLock.readLock().unlock();
+    }
+  }
+
   public void checkErrorState() {
-    if (status == STATUS.INTERNAL_ERROR) {
-      throw OException.wrapException(
-          new OStorageException(
-              "Internal error happened in storage "
-                  + name
-                  + " please restart the server or re-open the storage to undergo the restore process and fix the error."),
-          this.error);
+    errorLock.readLock().lock();
+    try {
+      if (this.error != null) {
+        throw OException.wrapException(
+            new OStorageException(
+                "Internal error happened in storage "
+                    + name
+                    + " please restart the server or re-open the storage to undergo the restore process and fix the error."),
+            this.error);
+      }
+
+    } finally {
+      errorLock.readLock().unlock();
     }
   }
 
@@ -5628,7 +5641,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         return;
       }
 
-      if (status != STATUS.OPEN && status != STATUS.INTERNAL_ERROR) {
+      if (status != STATUS.OPEN && !isInError()) {
         throw OException.wrapException(
             new OStorageException("Storage " + name + " was not opened, so can not be closed"),
             this.error);
@@ -5636,7 +5649,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       status = STATUS.CLOSING;
 
-      if (status != STATUS.INTERNAL_ERROR) {
+      if (!isInError()) {
         if (!onDelete) {
           flushAllData();
         }
@@ -5707,7 +5720,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           writeAheadLog.close();
         }
 
-        postCloseSteps(onDelete, status == STATUS.INTERNAL_ERROR, idGen.getLastId());
+        postCloseSteps(onDelete, isInError(), idGen.getLastId());
         transaction = null;
         lastMetadata = null;
       } else {
@@ -6529,8 +6542,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         || runtimeException instanceof ONeedRetryException
         || runtimeException instanceof OInternalErrorException)) {
       if (putInReadOnlyMode) {
-        this.error = runtimeException;
-        status = STATUS.INTERNAL_ERROR;
+        setInError(runtimeException);
       }
 
       OLogManager.instance()
@@ -6553,8 +6565,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   protected Error logAndPrepareForRethrow(final Error error, final boolean putInReadOnlyMode) {
     if (!(error instanceof OHighLevelException)) {
       if (putInReadOnlyMode) {
-        this.error = error;
-        status = STATUS.INTERNAL_ERROR;
+        setInError(error);
       }
 
       OLogManager.instance()
@@ -6580,8 +6591,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         || throwable instanceof ONeedRetryException
         || throwable instanceof OInternalErrorException)) {
       if (putInReadOnlyMode) {
-        this.error = throwable;
-        status = STATUS.INTERNAL_ERROR;
+        setInError(throwable);
       }
       OLogManager.instance()
           .errorStorage(
