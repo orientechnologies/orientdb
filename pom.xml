@@ -14,11 +14,11 @@
         <groupId>com.orientechnologies</groupId>
         <artifactId>orientdb-parent</artifactId>
         <version>3.2.7</version>
-        <relativePath/>
+        <relativePath />
     </parent>
     <name>OrientDB Gremlin</name>
     <artifactId>orientdb-gremlin-parent</artifactId>
-  <version>3.2.7-SNAPSHOT</version>
+  <version>3.2.7</version>
     <packaging>pom</packaging>
 
     <modules>
