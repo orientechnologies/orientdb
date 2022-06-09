@@ -62,8 +62,6 @@ import java.util.Optional;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Stream;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
@@ -108,9 +106,6 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
   private long flushIndexInterval;
   private long closeAfterInterval;
   private long firstFlushAfter;
-
-  private final Lock openCloseLock;
-
   private final int id;
 
   public OLuceneIndexEngineAbstract(int id, OStorage storage, String name) {
@@ -123,8 +118,6 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
     lastAccess = new AtomicLong(System.currentTimeMillis());
 
     closed = new AtomicBoolean(true);
-
-    openCloseLock = new ReentrantLock();
   }
 
   @Override
@@ -185,15 +178,10 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
             .scheduleTask(
                 () -> {
                   if (shouldClose()) {
-
-                    try {
-                      openCloseLock.lock();
-
+                    synchronized (OLuceneIndexEngineAbstract.this) {
                       // while on lock the index was opened
                       if (!shouldClose()) return;
-                      close();
-                    } finally {
-                      openCloseLock.unlock();
+                      doClose(false);
                     }
                   }
                   if (!closed.get()) {
@@ -244,36 +232,28 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
     return ODatabaseRecordThreadLocal.instance().get();
   }
 
-  private void open(OStorage storage) throws IOException {
+  private synchronized void open(OStorage storage) throws IOException {
 
-    try {
+    if (!closed.get()) return;
 
-      openCloseLock.lock();
+    OLuceneDirectoryFactory directoryFactory = new OLuceneDirectoryFactory();
 
-      if (!closed.get()) return;
+    directory = directoryFactory.createDirectory(storage, name, metadata);
 
-      OLuceneDirectoryFactory directoryFactory = new OLuceneDirectoryFactory();
+    indexWriter = createIndexWriter(directory.getDirectory());
+    searcherManager = new SearcherManager(indexWriter, true, true, null);
 
-      directory = directoryFactory.createDirectory(storage, name, metadata);
+    reopenToken = 0;
 
-      indexWriter = createIndexWriter(directory.getDirectory());
-      searcherManager = new SearcherManager(indexWriter, true, true, null);
+    startNRT();
 
-      reopenToken = 0;
+    closed.set(false);
 
-      startNRT();
+    flush();
 
-      closed.set(false);
+    scheduleCommitTask();
 
-      flush();
-
-      scheduleCommitTask();
-
-      addMetadataDocumentIfNotPresent();
-    } finally {
-
-      openCloseLock.unlock();
-    }
+    addMetadataDocumentIfNotPresent();
   }
 
   private void addMetadataDocumentIfNotPresent() {
@@ -339,8 +319,7 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
   protected abstract IndexWriter createIndexWriter(Directory directory) throws IOException;
 
   @Override
-  public void flush() {
-
+  public synchronized void flush() {
     try {
       if (!closed.get() && indexWriter != null && indexWriter.isOpen()) indexWriter.commit();
     } catch (Exception e) {
@@ -367,7 +346,9 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
       openIfClosed(storage);
 
       if (indexWriter != null && indexWriter.isOpen()) {
-        doClose(true);
+        synchronized (this) {
+          doClose(true);
+        }
       }
 
       final OAbstractPaginatedStorage storageLocalAbstract =
@@ -445,7 +426,6 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
 
   void deleteDocument(Query query) {
     try {
-
       reopenToken = indexWriter.deleteDocuments(query);
       if (!indexWriter.hasDeletions()) {
         OLogManager.instance()
@@ -469,7 +449,7 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
     return collectionDelete;
   }
 
-  protected void openIfClosed(OStorage storage) {
+  protected synchronized void openIfClosed(OStorage storage) {
     if (closed.get()) {
       try {
         reOpen(storage);
@@ -577,7 +557,7 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
   }
 
   @Override
-  public void close() {
+  public synchronized void close() {
     doClose(false);
   }
 
@@ -646,8 +626,7 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
   }
 
   @Override
-  public void freeze(boolean throwException) {
-
+  public synchronized void freeze(boolean throwException) {
     try {
       closeNRT();
       cancelCommitTask();
