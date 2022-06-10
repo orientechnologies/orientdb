@@ -302,6 +302,15 @@ public abstract class OChannelBinary extends OChannel
       updateMetricTransmittedBytes(OBinaryProtocol.SIZE_INT);
     } else {
       final byte[] buffer = iContent.getBytes("UTF-8");
+      if (buffer.length > maxChunkSize) {
+        throw new OInvalidBinaryChunkException(
+            "Impossible to write a chunk of length:"
+                + buffer.length
+                + " max allowed chunk length:"
+                + maxChunkSize
+                + " see NETWORK_BINARY_MAX_CONTENT_LENGTH settings ");
+      }
+
       out.writeInt(buffer.length);
       out.write(buffer, 0, buffer.length);
       updateMetricTransmittedBytes(OBinaryProtocol.SIZE_INT + buffer.length);
