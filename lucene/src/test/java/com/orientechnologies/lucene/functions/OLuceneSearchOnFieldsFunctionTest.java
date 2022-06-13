@@ -54,7 +54,7 @@ public class OLuceneSearchOnFieldsFunctionTest extends BaseLuceneTest {
   }
 
   @Test
-  public void shouldSearhOnTwoFieldsInAND() throws Exception {
+  public void shouldSearchOnTwoFieldsInAND() throws Exception {
     final OResultSet resultSet =
         db.query(
             "SELECT from Song where SEARCH_FIELDS(['title'], 'tambourine') = true AND SEARCH_FIELDS(['author'], 'Bob') = true ");
