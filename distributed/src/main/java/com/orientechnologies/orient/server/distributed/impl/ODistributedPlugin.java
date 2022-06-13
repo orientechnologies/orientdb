@@ -1408,6 +1408,10 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
                 databaseInstalled = true;
                 distrDatabase.resume();
+              } catch (RuntimeException e) {
+                // UNLOCK ACCEPTING REQUESTS EVEN IN CASE OF ERROR.
+                distrDatabase.resume();
+                throw e;
               }
 
               return databaseInstalled;
