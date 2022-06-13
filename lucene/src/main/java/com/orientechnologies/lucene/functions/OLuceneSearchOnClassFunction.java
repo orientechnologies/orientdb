@@ -119,7 +119,7 @@ public class OLuceneSearchOnClassFunction extends OLuceneSearchFunctionTemplate 
 
     if (index != null) {
 
-      ODocument metadata = getMetadata(args);
+      ODocument metadata = getMetadata(args, ctx);
 
       List<OIdentifiable> luceneResultSet;
       try (Stream<ORID> rids =
@@ -136,9 +136,9 @@ public class OLuceneSearchOnClassFunction extends OLuceneSearchFunctionTemplate 
     return Collections.emptySet();
   }
 
-  private ODocument getMetadata(OExpression[] args) {
+  private ODocument getMetadata(OExpression[] args, OCommandContext ctx) {
     if (args.length == 2) {
-      return new ODocument().fromJSON(args[1].toString());
+      return getMetadata(args[1], ctx);
     }
     return OLuceneQueryBuilder.EMPTY_METADATA;
   }
