@@ -4,10 +4,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.orientechnologies.lucene.test.BaseLuceneTest;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -145,5 +148,17 @@ public class OLuceneSearchOnFieldsFunctionTest extends BaseLuceneTest {
     assertThat((Object) item.getProperty("theList")).isInstanceOf(List.class);
     assertThat((List) item.getProperty("theList")).hasSize(3);
     result.close();
+  }
+
+  @Test
+  public void shouldSupportParameterizedMetadata() throws Exception {
+    final String query = "SELECT from Song where SEARCH_FIELDS(['title'], '*EVE*', ?) = true";
+
+    db.query(query, "{'allowLeadingWildcard': true}").close();
+    db.query(query, new ODocument("allowLeadingWildcard", Boolean.TRUE)).close();
+
+    Map<String, Object> mdMap = new HashMap();
+    mdMap.put("allowLeadingWildcard", true);
+    db.query(query, new Object[] {mdMap}).close();
   }
 }

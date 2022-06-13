@@ -4,8 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.orientechnologies.lucene.tests.OLuceneBaseTest;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -119,5 +122,17 @@ public class OLuceneSearchOnClassFunctionTest extends OLuceneBaseTest {
                 assertThat(r.<String>getProperty("$description_hl"))
                     .containsIgnoringCase("<span>shouldHighlightWithNullValues</span>"));
     resultSet.close();
+  }
+
+  @Test
+  public void shouldSupportParameterizedMetadata() throws Exception {
+    final String query = "SELECT from Song where SEARCH_CLASS('*EVE*', ?) = true";
+
+    db.query(query, "{'allowLeadingWildcard': true}").close();
+    db.query(query, new ODocument("allowLeadingWildcard", Boolean.TRUE)).close();
+
+    Map<String, Object> mdMap = new HashMap();
+    mdMap.put("allowLeadingWildcard", true);
+    db.query(query, new Object[] {mdMap}).close();
   }
 }

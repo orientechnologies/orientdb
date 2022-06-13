@@ -122,7 +122,7 @@ public class OLuceneSearchOnIndexFunction extends OLuceneSearchFunctionTemplate 
     String query = (String) expression.execute((OIdentifiable) null, ctx);
     if (index != null && query != null) {
 
-      ODocument meta = getMetadata(index, query, args);
+      ODocument meta = getMetadata(args, ctx);
 
       List<OIdentifiable> luceneResultSet;
       try (Stream<ORID> rids =
@@ -139,13 +139,11 @@ public class OLuceneSearchOnIndexFunction extends OLuceneSearchFunctionTemplate 
     return Collections.emptyList();
   }
 
-  private ODocument getMetadata(OLuceneFullTextIndex index, String query, OExpression[] args) {
+  private ODocument getMetadata(OExpression[] args, OCommandContext ctx) {
     if (args.length == 3) {
-      ODocument metadata = new ODocument().fromJSON(args[2].toString());
-
-      return metadata;
+      return getMetadata(args[2], ctx);
     }
-    return new ODocument();
+    return OLuceneQueryBuilder.EMPTY_METADATA;
   }
 
   @Override
