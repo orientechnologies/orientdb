@@ -1991,29 +1991,31 @@ public class OConsoleDatabaseApp extends OrientConsole
       final List<ODocument> resultSet = new ArrayList<>();
 
       int totalIndexes = 0;
-      long totalRecords = 0;
+      long totalIndexedRecords = 0;
 
       final List<OIndex> indexes =
           new ArrayList<OIndex>(
               currentDatabase.getMetadata().getIndexManagerInternal().getIndexes(currentDatabase));
       indexes.sort((o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
 
-      long totalIndexedRecords = 0;
-
       for (final OIndex index : indexes) {
         final ODocument row = new ODocument();
         resultSet.add(row);
 
-        final long indexSize = index.getInternal().size();
-        totalIndexedRecords += indexSize;
-
+        // Remote indexes do not expose internals
+        final long indexSize;
+        if (index.getInternal() != null) {
+          indexSize = index.getInternal().size();
+        } else {
+          // Remote indexes do not have internals, so use old API
+          indexSize = index.getSize();
+        }
         row.field("NAME", index.getName());
         row.field("TYPE", index.getType());
         row.field("RECORDS", indexSize);
 
         try {
           final OIndexDefinition indexDefinition = index.getDefinition();
-          final long size = index.getInternal().size();
           if (indexDefinition != null) {
             row.field("CLASS", indexDefinition.getClassName());
             row.field("COLLATE", indexDefinition.getCollate().getName());
@@ -2033,7 +2035,7 @@ public class OConsoleDatabaseApp extends OrientConsole
           }
 
           totalIndexes++;
-          totalRecords += size;
+          totalIndexedRecords += indexSize;
         } catch (Exception ignored) {
         }
       }
