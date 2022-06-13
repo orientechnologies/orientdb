@@ -39,7 +39,7 @@ public class OLuceneSearchOnFieldsFunctionTest extends BaseLuceneTest {
     // TODO: metadata still not used
     final OResultSet resultSet =
         db.query(
-            "SELECT from Song where SEARCH_INDEX('Song.title', '*EVE*', {'allowLeadingWildcard': true}) = true");
+            "SELECT from Song where SEARCH_FIELDS(['title'], '*EVE*', {'allowLeadingWildcard': true}) = true");
     assertThat(resultSet).hasSize(14);
     resultSet.close();
   }
