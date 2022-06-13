@@ -90,7 +90,7 @@ public class OLuceneSearchOnIndexFunctionTest extends BaseLuceneTest {
   }
 
   @Test
-  public void shouldSearhOnTwoIndexesInAND() throws Exception {
+  public void shouldSearchOnTwoIndexesInAND() throws Exception {
 
     OResultSet resultSet =
         db.query(
@@ -101,7 +101,7 @@ public class OLuceneSearchOnIndexFunctionTest extends BaseLuceneTest {
   }
 
   @Test
-  public void shouldSearhOnTwoIndexesWithLeadingWildcardInAND() throws Exception {
+  public void shouldSearchOnTwoIndexesWithLeadingWildcardInAND() throws Exception {
 
     OResultSet resultSet =
         db.query(
