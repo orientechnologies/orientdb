@@ -50,6 +50,7 @@ import com.orientechnologies.orient.core.storage.cluster.v2.FreeSpaceMap;
 import com.orientechnologies.orient.core.storage.config.OClusterBasedStorageConfiguration;
 import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OStartupMetadata;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.StorageStartupMetadata;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
@@ -507,14 +508,14 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
-  protected StartupMetadata checkIfStorageDirty() throws IOException {
+  protected OStartupMetadata checkIfStorageDirty() throws IOException {
     if (startupMetadata.exists()) startupMetadata.open(OConstants.getVersion());
     else {
       startupMetadata.create(OConstants.getVersion());
       startupMetadata.makeDirty(OConstants.getVersion());
     }
 
-    return new StartupMetadata(startupMetadata.getLastTxId(), startupMetadata.getTxMetadata());
+    return new OStartupMetadata(startupMetadata.getLastTxId(), startupMetadata.getTxMetadata());
   }
 
   @Override
@@ -733,7 +734,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
     fuzzyCheckpointTask =
         fuzzyCheckpointExecutor.scheduleWithFixedDelay(
-            new PeriodicFuzzyCheckpoint(),
+            new OPeriodicFuzzyCheckpoint(this),
             contextConfiguration.getValueAsInteger(
                 OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL),
             contextConfiguration.getValueAsInteger(
@@ -843,17 +844,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     } catch (final IOException e) {
       throw OException.wrapException(
           new OStorageException("Error during fetching list of files"), e);
-    }
-  }
-
-  private class PeriodicFuzzyCheckpoint implements Runnable {
-    @Override
-    public final void run() {
-      try {
-        makeFuzzyCheckpoint();
-      } catch (final RuntimeException e) {
-        OLogManager.instance().error(this, "Error during fuzzy checkpoint", e);
-      }
     }
   }
 }

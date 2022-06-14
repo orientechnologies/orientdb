@@ -118,7 +118,6 @@ import com.orientechnologies.orient.core.tx.*;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.util.*;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -149,7 +148,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   static {
     fuzzyCheckpointExecutor =
-        new OScheduledThreadPoolExecutorWithLogging(1, new FuzzyCheckpointThreadFactory());
+        new OScheduledThreadPoolExecutorWithLogging(1, new OFuzzyCheckpointThreadFactory());
     fuzzyCheckpointExecutor.setMaximumPoolSize(1);
   }
 
@@ -299,7 +298,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           initWalAndDiskCache(contextConfiguration);
           transaction = new ThreadLocal<>();
 
-          final StartupMetadata startupMetadata = checkIfStorageDirty();
+          final OStartupMetadata startupMetadata = checkIfStorageDirty();
           final long lastTxId = startupMetadata.lastTxId;
           if (lastTxId > 0) {
             idGen.setStartId(lastTxId + 1);
@@ -4252,7 +4251,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public final void requestCheckpoint() {
     try {
       if (!walVacuumInProgress.get() && walVacuumInProgress.compareAndSet(false, true)) {
-        fuzzyCheckpointExecutor.submit(new WALVacuum());
+        fuzzyCheckpointExecutor.submit(new OWALVacuum(this));
       }
     } catch (final RuntimeException ee) {
       throw logAndPrepareForRethrow(ee);
@@ -4754,7 +4753,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  protected final void makeFuzzyCheckpoint() {
+  public final void makeFuzzyCheckpoint() {
     // check every 1 ms.
     while (true) {
       try {
@@ -4913,8 +4912,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  protected StartupMetadata checkIfStorageDirty() throws IOException {
-    return new StartupMetadata(-1, null);
+  protected OStartupMetadata checkIfStorageDirty() throws IOException {
+    return new OStartupMetadata(-1, null);
   }
 
   protected void initConfiguration(
@@ -7031,78 +7030,61 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return Optional.ofNullable(lastMetadata);
   }
 
-  private static final class FuzzyCheckpointThreadFactory implements ThreadFactory {
-    @Override
-    public Thread newThread(final Runnable r) {
-      final Thread thread = new Thread(storageThreadGroup, r);
-      thread.setDaemon(true);
-      thread.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
-      return thread;
-    }
-  }
+  void runWALVacuum() {
+    stateLock.readLock().lock();
+    try {
 
-  private final class WALVacuum implements Runnable {
-
-    private WALVacuum() {}
-
-    @Override
-    public void run() {
-      stateLock.readLock().lock();
-      try {
-
-        if (status == STATUS.CLOSED) {
-          return;
-        }
-
-        final long[] nonActiveSegments = writeAheadLog.nonActiveSegments();
-        if (nonActiveSegments.length == 0) {
-          return;
-        }
-
-        long flushTillSegmentId;
-        if (nonActiveSegments.length == 1) {
-          flushTillSegmentId = writeAheadLog.activeSegment();
-        } else {
-          flushTillSegmentId =
-              (nonActiveSegments[0] + nonActiveSegments[nonActiveSegments.length - 1]) / 2;
-        }
-
-        long minDirtySegment;
-        do {
-          writeCache.flushTillSegment(flushTillSegmentId);
-
-          // we should take active segment BEFORE min write cache LSN call
-          // to avoid case when new data are changed before call
-          final long activeSegment = writeAheadLog.activeSegment();
-          final Long minLSNSegment = writeCache.getMinimalNotFlushedSegment();
-
-          if (minLSNSegment == null) {
-            minDirtySegment = activeSegment;
-          } else {
-            minDirtySegment = minLSNSegment;
-          }
-        } while (minDirtySegment < flushTillSegmentId);
-
-        atomicOperationsTable.compactTable();
-        final long operationSegment =
-            atomicOperationsTable.getSegmentEarliestNotPersistedOperation();
-        if (operationSegment >= 0 && minDirtySegment > operationSegment) {
-          minDirtySegment = operationSegment;
-        }
-
-        if (minDirtySegment <= nonActiveSegments[0]) {
-          return;
-        }
-
-        writeCache.syncDataFiles(minDirtySegment, lastMetadata);
-      } catch (final Exception e) {
-        OLogManager.instance()
-            .error(
-                this, "Error during flushing of data for fuzzy checkpoint, in storage %s", e, name);
-      } finally {
-        stateLock.readLock().unlock();
-        walVacuumInProgress.set(false);
+      if (status == STATUS.CLOSED) {
+        return;
       }
+
+      final long[] nonActiveSegments = writeAheadLog.nonActiveSegments();
+      if (nonActiveSegments.length == 0) {
+        return;
+      }
+
+      long flushTillSegmentId;
+      if (nonActiveSegments.length == 1) {
+        flushTillSegmentId = writeAheadLog.activeSegment();
+      } else {
+        flushTillSegmentId =
+            (nonActiveSegments[0] + nonActiveSegments[nonActiveSegments.length - 1]) / 2;
+      }
+
+      long minDirtySegment;
+      do {
+        writeCache.flushTillSegment(flushTillSegmentId);
+
+        // we should take active segment BEFORE min write cache LSN call
+        // to avoid case when new data are changed before call
+        final long activeSegment = writeAheadLog.activeSegment();
+        final Long minLSNSegment = writeCache.getMinimalNotFlushedSegment();
+
+        if (minLSNSegment == null) {
+          minDirtySegment = activeSegment;
+        } else {
+          minDirtySegment = minLSNSegment;
+        }
+      } while (minDirtySegment < flushTillSegmentId);
+
+      atomicOperationsTable.compactTable();
+      final long operationSegment = atomicOperationsTable.getSegmentEarliestNotPersistedOperation();
+      if (operationSegment >= 0 && minDirtySegment > operationSegment) {
+        minDirtySegment = operationSegment;
+      }
+
+      if (minDirtySegment <= nonActiveSegments[0]) {
+        return;
+      }
+
+      writeCache.syncDataFiles(minDirtySegment, lastMetadata);
+    } catch (final Exception e) {
+      OLogManager.instance()
+          .error(
+              this, "Error during flushing of data for fuzzy checkpoint, in storage %s", e, name);
+    } finally {
+      stateLock.readLock().unlock();
+      walVacuumInProgress.set(false);
     }
   }
 
@@ -7121,16 +7103,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   public long getLastCloseTime() {
     return lastCloseTime.get();
-  }
-
-  protected static final class StartupMetadata {
-    private final long lastTxId;
-    private final byte[] txMetadata;
-
-    public StartupMetadata(long lastTxId, byte[] txMetadata) {
-      this.lastTxId = lastTxId;
-      this.txMetadata = txMetadata;
-    }
   }
 
   public int getVersionForKey(final String indexName, final Object key) {
