@@ -471,7 +471,8 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
 
     final int entryPosition =
         getIntValue(POSITIONS_ARRAY_OFFSET + entryIndex * OIntegerSerializer.INT_SIZE);
-    final int keySize = getObjectSizeInDirectMemory(keySerializer, entryPosition);
+    final int keySize =
+        getObjectSizeInDirectMemory(keySerializer, entryPosition + 2 * OIntegerSerializer.INT_SIZE);
 
     if (key.length == keySize) {
       setBinaryValue(entryPosition + 2 * OIntegerSerializer.INT_SIZE, key);
@@ -523,9 +524,12 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
     return true;
   }
 
-  public void updateValue(final int index, final byte[] value, final int keySize) {
-    final int entryPosition =
-        getIntValue(index * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET) + keySize;
+  public void updateValue(final int index, final byte[] value) {
+    int entryPosition = getIntValue(index * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
+
+    if (!isLeaf()) {
+      entryPosition += 2 * OIntegerSerializer.INT_SIZE;
+    }
 
     setBinaryValue(entryPosition, value);
   }
