@@ -87,6 +87,34 @@ public class OConsoleDatabaseAppTest {
   }
 
   @Test
+  public void testOldCreateDatabase() {
+    StringBuilder builder = new StringBuilder();
+
+    builder.append(
+        "create database memory:./target/OConsoleDatabaseAppTest2 admin adminpwd memory\n");
+
+    builder.append("create class foo;\n");
+    builder.append("insert into foo set name = 'foo';\n");
+    builder.append("insert into foo set name = 'bla';\n");
+    ConsoleTest c = new ConsoleTest(new String[] {builder.toString()});
+    OConsoleDatabaseApp console = c.console();
+
+    try {
+      console.run();
+
+      ODatabaseDocument db = console.getCurrentDatabase();
+      try {
+        long size = db.query("select from foo where name = 'foo'").stream().count();
+        Assert.assertEquals(1, size);
+      } finally {
+        db.close();
+      }
+    } finally {
+      console.close();
+    }
+  }
+
+  @Test
   public void testDumpRecordDetails() {
     ConsoleTest c = new ConsoleTest();
     try {

@@ -1242,4 +1242,13 @@ public class OrientDBEmbedded implements OrientDBInternal {
     dbs.remove(OSystemDatabase.SYSTEM_DB_NAME);
     return dbs;
   }
+
+  @Override
+  public String getConnectionUrl() {
+    String connectionUrl = "embedded:";
+    if (basePath != null) {
+      connectionUrl += basePath;
+    }
+    return connectionUrl;
+  }
 }

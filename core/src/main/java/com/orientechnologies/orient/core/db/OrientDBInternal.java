@@ -312,6 +312,10 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
     return orientDB.internal;
   }
 
+  static String extractUser(OrientDB orientDB) {
+    return orientDB.serverUser;
+  }
+
   ODatabaseDocumentInternal openNoAuthenticate(String iDbUrl, String user);
 
   ODatabaseDocumentInternal openNoAuthorization(String name);
@@ -381,4 +385,6 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
   default Set<String> listLodadedDatabases() {
     throw new UnsupportedOperationException();
   }
+
+  String getConnectionUrl();
 }

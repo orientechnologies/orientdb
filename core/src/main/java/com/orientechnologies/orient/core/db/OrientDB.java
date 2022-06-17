@@ -95,7 +95,7 @@ public class OrientDB implements AutoCloseable {
   // time when it is requested
 
   protected OrientDBInternal internal;
-  private String serverUser;
+  protected String serverUser;
   private String serverPassword;
 
   /**

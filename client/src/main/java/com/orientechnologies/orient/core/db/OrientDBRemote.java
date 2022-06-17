@@ -707,4 +707,9 @@ public class OrientDBRemote implements OrientDBInternal {
       ODatabaseTask<Void> createOps) {
     throw new UnsupportedOperationException();
   }
+
+  @Override
+  public String getConnectionUrl() {
+    return "remote:" + String.join(OStorageRemote.ADDRESS_SEPARATOR, this.urls.getUrls());
+  }
 }

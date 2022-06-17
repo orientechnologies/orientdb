@@ -354,13 +354,21 @@ public class OConsoleDatabaseApp extends OrientConsole
     }
 
     message("\nCreating database [" + databaseURL + "] using the storage type [" + type + "]...");
-
-    orientDB =
-        new OrientDB(
-            urlConnection.getType() + ":" + urlConnection.getPath(),
-            currentDatabaseUserName,
-            currentDatabaseUserPassword,
-            config.build());
+    String conn = urlConnection.getType() + ":" + urlConnection.getPath();
+    if (orientDB != null) {
+      OrientDBInternal contectSession = OrientDBInternal.extract(orientDB);
+      String user = OrientDBInternal.extractUser(orientDB);
+      if (!contectSession.getConnectionUrl().equals(conn)
+          || user == null
+          || !user.equals(userName)) {
+        orientDB =
+            new OrientDB(
+                conn, currentDatabaseUserName, currentDatabaseUserPassword, config.build());
+      }
+    } else {
+      orientDB =
+          new OrientDB(conn, currentDatabaseUserName, currentDatabaseUserPassword, config.build());
+    }
 
     final String backupPath = omap.remove("-restore");
 
@@ -374,7 +382,16 @@ public class OConsoleDatabaseApp extends OrientConsole
           backupPath,
           config.build());
     } else {
-      orientDB.create(urlConnection.getDbName(), type);
+      OrientDBInternal internal = OrientDBInternal.extract(orientDB);
+      if (internal.isEmbedded()) {
+        orientDB.execute(
+            "create database ? " + type + " users (? identified by ? role admin) ",
+            urlConnection.getDbName(),
+            currentDatabaseUserName,
+            currentDatabaseUserPassword);
+      } else {
+        orientDB.create(urlConnection.getDbName(), urlConnection.getDbType().get());
+      }
     }
     currentDatabase =
         (ODatabaseDocumentInternal)
