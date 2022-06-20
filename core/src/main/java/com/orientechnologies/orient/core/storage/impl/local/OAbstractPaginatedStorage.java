@@ -3063,11 +3063,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } catch (final OInvalidIndexEngineIdException ie) {
       throw logAndPrepareForRethrow(ie);
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
