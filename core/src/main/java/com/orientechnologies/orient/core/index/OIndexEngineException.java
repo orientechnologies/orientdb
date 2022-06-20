@@ -18,9 +18,10 @@
 
 package com.orientechnologies.orient.core.index;
 
+import com.orientechnologies.common.exception.OHighLevelException;
 import com.orientechnologies.orient.core.exception.OCoreException;
 
-public class OIndexEngineException extends OCoreException {
+public class OIndexEngineException extends OCoreException implements OHighLevelException {
 
   public OIndexEngineException(OIndexEngineException exception) {
     super(exception);
