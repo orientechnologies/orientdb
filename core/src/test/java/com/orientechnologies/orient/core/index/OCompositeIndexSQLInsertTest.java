@@ -6,9 +6,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import java.util.List;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -54,56 +52,57 @@ public class OCompositeIndexSQLInsertTest {
     clazz.createProperty("name", OType.STRING);
 
     db.command(
-            new OCommandSQL(
-                "create index CompositeIndexWithRangeAndConditions_id_tags_name on CompositeIndexWithRangeAndConditions (id, tags, name) NOTUNIQUE"))
-        .execute();
+            "create index CompositeIndexWithRangeAndConditions_id_tags_name on CompositeIndexWithRangeAndConditions (id, tags, name) NOTUNIQUE")
+        .close();
 
     db.command(
-            new OCommandSQL(
-                "insert into CompositeIndexWithRangeAndConditions set id = 1, tags = [\"green\",\"yellow\"] , name = \"Foo\", bar = 1"))
-        .execute();
+            "insert into CompositeIndexWithRangeAndConditions set id = 1, tags = [\"green\",\"yellow\"] , name = \"Foo\", bar = 1")
+        .close();
     db.command(
-            new OCommandSQL(
-                "insert into CompositeIndexWithRangeAndConditions set id = 1, tags = [\"blue\",\"black\"] , name = \"Foo\", bar = 14"))
-        .execute();
+            "insert into CompositeIndexWithRangeAndConditions set id = 1, tags = [\"blue\",\"black\"] , name = \"Foo\", bar = 14")
+        .close();
     db.command(
-            new OCommandSQL(
-                "insert into CompositeIndexWithRangeAndConditions set id = 1, tags = [\"white\"] , name = \"Foo\""))
-        .execute();
+            "insert into CompositeIndexWithRangeAndConditions set id = 1, tags = [\"white\"] , name = \"Foo\"")
+        .close();
     db.command(
-            new OCommandSQL(
-                "insert into CompositeIndexWithRangeAndConditions set id = 1, tags = [\"green\",\"yellow\"], name = \"Foo1\", bar = 14"))
-        .execute();
+            "insert into CompositeIndexWithRangeAndConditions set id = 1, tags = [\"green\",\"yellow\"], name = \"Foo1\", bar = 14")
+        .close();
 
-    List<ODocument> r =
-        db.query(
-            new OSQLSynchQuery<Object>(
-                "select from CompositeIndexWithRangeAndConditions where id > 0 and bar = 1"));
-    Assert.assertEquals(1, r.size());
+    OResultSet res =
+        db.query("select from CompositeIndexWithRangeAndConditions where id > 0 and bar = 1");
 
-    List<ODocument> r1 =
-        db.query(
-            new OSQLSynchQuery<Object>(
-                "select from CompositeIndexWithRangeAndConditions where id = 1 and tags CONTAINS \"white\""));
-    Assert.assertEquals(r1.size(), 1);
+    long count = res.stream().count();
+    Assert.assertEquals(1, count);
 
-    List<ODocument> r2 =
-        db.query(
-            new OSQLSynchQuery<Object>(
-                "select from CompositeIndexWithRangeAndConditions where id > 0 and tags CONTAINS \"white\""));
-    Assert.assertEquals(r2.size(), 1);
+    long count1 =
+        db
+            .query(
+                "select from CompositeIndexWithRangeAndConditions where id = 1 and tags CONTAINS \"white\"")
+            .stream()
+            .count();
+    Assert.assertEquals(count1, 1);
 
-    List<ODocument> r3 =
-        db.query(
-            new OSQLSynchQuery<Object>(
-                "select from CompositeIndexWithRangeAndConditions where id > 0 and bar = 1"));
+    long count2 =
+        db
+            .query(
+                "select from CompositeIndexWithRangeAndConditions where id > 0 and tags CONTAINS \"white\"")
+            .stream()
+            .count();
+    Assert.assertEquals(count2, 1);
 
-    Assert.assertEquals(r3.size(), 1);
+    long count3 =
+        db.query("select from CompositeIndexWithRangeAndConditions where id > 0 and bar = 1")
+            .stream()
+            .count();
 
-    List<ODocument> r4 =
-        db.query(
-            new OSQLSynchQuery<Object>(
-                "select from CompositeIndexWithRangeAndConditions where tags CONTAINS \"white\" and id > 0"));
-    Assert.assertEquals(r4.size(), 1);
+    Assert.assertEquals(count3, 1);
+
+    long count4 =
+        db
+            .query(
+                "select from CompositeIndexWithRangeAndConditions where tags CONTAINS \"white\" and id > 0")
+            .stream()
+            .count();
+    Assert.assertEquals(count4, 1);
   }
 }

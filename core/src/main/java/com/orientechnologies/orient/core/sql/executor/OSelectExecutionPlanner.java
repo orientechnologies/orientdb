@@ -12,6 +12,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexAbstract;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -1975,7 +1976,8 @@ public class OSelectExecutionPlanner {
                     .toArray();
           }
           subPlan.chain(new GetValueFromIndexEntryStep(ctx, filterClusterIds, profilingEnabled));
-          if (requiresMultipleIndexLookups(bestIndex.keyCondition)) {
+          if (requiresMultipleIndexLookups(bestIndex.keyCondition)
+              || duplicateResultsForRecord(bestIndex)) {
             subPlan.chain(new DistinctExecutionStep(ctx, profilingEnabled));
           }
           if (!block.getSubBlocks().isEmpty()) {
@@ -2106,6 +2108,16 @@ public class OSelectExecutionPlanner {
     } else {
       return false;
     }
+  }
+
+  private boolean duplicateResultsForRecord(IndexSearchDescriptor bestIndex) {
+    if (bestIndex.idx.getDefinition() instanceof OCompositeIndexDefinition) {
+      if (((OCompositeIndexDefinition) bestIndex.idx.getDefinition()).getMultiValueDefinition()
+          != null) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private boolean refersToLet(List<OBooleanExpression> subBlocks) {
@@ -2402,7 +2414,7 @@ public class OSelectExecutionPlanner {
                 .toArray();
       }
       result.add(new GetValueFromIndexEntryStep(ctx, filterClusterIds, profilingEnabled));
-      if (requiresMultipleIndexLookups(desc.keyCondition)) {
+      if (requiresMultipleIndexLookups(desc.keyCondition) || duplicateResultsForRecord(desc)) {
         result.add(new DistinctExecutionStep(ctx, profilingEnabled));
       }
       if (orderAsc != null
@@ -2557,7 +2569,7 @@ public class OSelectExecutionPlanner {
                 .toArray();
       }
       subPlan.chain(new GetValueFromIndexEntryStep(ctx, filterClusterIds, profilingEnabled));
-      if (requiresMultipleIndexLookups(desc.keyCondition)) {
+      if (requiresMultipleIndexLookups(desc.keyCondition) || duplicateResultsForRecord(desc)) {
         subPlan.chain(new DistinctExecutionStep(ctx, profilingEnabled));
       }
       if (desc.remainingCondition != null && !desc.remainingCondition.isEmpty()) {
