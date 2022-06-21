@@ -840,11 +840,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         stateLock.readLock().unlock();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -921,11 +921,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         stateLock.readLock().unlock();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -1082,11 +1082,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       }
 
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -1110,11 +1110,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         stateLock.readLock().unlock();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -1140,11 +1140,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         stateLock.readLock().unlock();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -1170,11 +1170,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         stateLock.readLock().unlock();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -1198,11 +1198,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         stateLock.readLock().unlock();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -1226,11 +1226,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         stateLock.readLock().unlock();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -1254,11 +1254,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         stateLock.readLock().unlock();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -1282,11 +1282,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         stateLock.readLock().unlock();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -1311,11 +1311,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         stateLock.readLock().unlock();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -1431,11 +1431,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         stateLock.readLock().unlock();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -1467,11 +1467,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         stateLock.readLock().unlock();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -1479,11 +1479,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       return writeAheadLog.end();
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -1652,11 +1652,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         stateLock.readLock().unlock();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -1740,11 +1740,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       return null;
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     } finally {
 
     }
@@ -1775,11 +1775,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       return false;
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -1828,11 +1828,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         stateLock.readLock().unlock();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -1849,11 +1849,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         stateLock.readLock().unlock();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -1877,11 +1877,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       return new OStorageOperationResult<>(readRecord(rid, prefetchRecords));
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -1895,11 +1895,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       return new OStorageOperationResult<>(readRecordIfNotLatest(rid, recordVersion));
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -2014,11 +2014,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         stateLock.readLock().unlock();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -2052,11 +2052,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         stateLock.readLock().unlock();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -2479,11 +2479,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         stateLock.readLock().unlock();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -2586,11 +2586,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         stateLock.writeLock().unlock();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -3112,11 +3112,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } catch (final OInvalidIndexEngineIdException ie) {
       throw logAndPrepareForRethrow(ie);
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     } finally {
 
     }
@@ -3153,11 +3153,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } catch (final OInvalidIndexEngineIdException ie) {
       throw logAndPrepareForRethrow(ie);
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -3229,11 +3229,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } catch (final OInvalidIndexEngineIdException ie) {
       throw logAndPrepareForRethrow(ie);
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -3546,11 +3546,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } catch (final OInvalidIndexEngineIdException ie) {
       throw logAndPrepareForRethrow(ie);
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -3599,11 +3599,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } catch (final OInvalidIndexEngineIdException ie) {
       throw logAndPrepareForRethrow(ie);
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -3649,11 +3649,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } catch (final OInvalidIndexEngineIdException ie) {
       throw logAndPrepareForRethrow(ie);
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -3695,11 +3695,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } catch (final OInvalidIndexEngineIdException ie) {
       throw logAndPrepareForRethrow(ie);
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -3737,11 +3737,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } catch (final OInvalidIndexEngineIdException ie) {
       throw logAndPrepareForRethrow(ie);
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -3777,11 +3777,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } catch (final OInvalidIndexEngineIdException ie) {
       throw logAndPrepareForRethrow(ie);
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -3817,11 +3817,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } catch (final OInvalidIndexEngineIdException ie) {
       throw logAndPrepareForRethrow(ie);
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -3857,11 +3857,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } catch (final OInvalidIndexEngineIdException ie) {
       throw logAndPrepareForRethrow(ie);
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -3901,11 +3901,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       return ppos != null && !ORecordVersionHelper.isTombstone(ppos.recordVersion);
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -3983,11 +3983,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         stateLock.readLock().unlock();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -4016,11 +4016,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       return doGetAndCheckCluster(clusterId).getName();
 
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     } finally {
       stateLock.readLock().unlock();
     }
@@ -4052,11 +4052,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         throw OException.wrapException(new OStorageException("Cannot calculate records size"), ioe);
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -4074,11 +4074,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         stateLock.readLock().unlock();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -4106,11 +4106,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         stateLock.readLock().unlock();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -4209,11 +4209,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       close();
       open(null, null, null);
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -4384,11 +4384,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         stateLock.readLock().unlock();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -4417,11 +4417,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         stateLock.readLock().unlock();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -4451,11 +4451,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         stateLock.readLock().unlock();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
@@ -4485,11 +4485,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         stateLock.readLock().unlock();
       }
     } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
+      throw logAndPrepareForRethrow(t, false);
     }
   }
 
