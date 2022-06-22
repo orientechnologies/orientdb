@@ -4,11 +4,13 @@ import com.orientechnologies.lucene.collections.OLuceneResultSet;
 import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.functions.OIndexableSQLFunction;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 import com.orientechnologies.orient.core.sql.parser.OBinaryCompareOperator;
 import com.orientechnologies.orient.core.sql.parser.OExpression;
 import com.orientechnologies.orient.core.sql.parser.OFromClause;
+import java.util.Map;
 
 /** Created by frank on 25/05/2017. */
 public abstract class OLuceneSearchFunctionTemplate extends OSQLFunctionAbstract
@@ -67,6 +69,19 @@ public abstract class OLuceneSearchFunctionTemplate extends OSQLFunctionAbstract
     }
 
     return count;
+  }
+
+  protected ODocument getMetadata(OExpression metadata, OCommandContext ctx) {
+    final Object md = metadata.execute((OIdentifiable) null, ctx);
+    if (md instanceof ODocument) {
+      return (ODocument) md;
+    } else if (md instanceof Map) {
+      return new ODocument().fromMap((Map<String, ?>) md);
+    } else if (md instanceof String) {
+      return new ODocument().fromJSON((String) md);
+    } else {
+      return new ODocument().fromJSON(metadata.toString());
+    }
   }
 
   protected abstract OLuceneFullTextIndex searchForIndex(

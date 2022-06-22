@@ -4,8 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.orientechnologies.lucene.test.BaseLuceneTest;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -87,7 +90,7 @@ public class OLuceneSearchOnIndexFunctionTest extends BaseLuceneTest {
   }
 
   @Test
-  public void shouldSearhOnTwoIndexesInAND() throws Exception {
+  public void shouldSearchOnTwoIndexesInAND() throws Exception {
 
     OResultSet resultSet =
         db.query(
@@ -98,7 +101,7 @@ public class OLuceneSearchOnIndexFunctionTest extends BaseLuceneTest {
   }
 
   @Test
-  public void shouldSearhOnTwoIndexesWithLeadingWildcardInAND() throws Exception {
+  public void shouldSearchOnTwoIndexesWithLeadingWildcardInAND() throws Exception {
 
     OResultSet resultSet =
         db.query(
@@ -112,5 +115,17 @@ public class OLuceneSearchOnIndexFunctionTest extends BaseLuceneTest {
   public void shouldFailWithWrongIndexName() throws Exception {
 
     db.query("SELECT from Song where SEARCH_INDEX('Song.wrongName', 'tambourine') = true ").close();
+  }
+
+  @Test
+  public void shouldSupportParameterizedMetadata() throws Exception {
+    final String query = "SELECT from Song where SEARCH_INDEX('Song.title', '*EVE*', ?) = true";
+
+    db.query(query, "{'allowLeadingWildcard': true}").close();
+    db.query(query, new ODocument("allowLeadingWildcard", Boolean.TRUE)).close();
+
+    Map<String, Object> mdMap = new HashMap();
+    mdMap.put("allowLeadingWildcard", true);
+    db.query(query, new Object[] {mdMap}).close();
   }
 }
