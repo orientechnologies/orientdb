@@ -285,6 +285,7 @@ public class OModifier extends SimpleNode {
 
   private void doSetValue(OResult currentRecord, Object target, Object value, OCommandContext ctx) {
     value = OUpdateItem.convertResultToDocument(value);
+    value = OUpdateItem.cleanValue(value);
     if (methodCall != null) {
       // do nothing
     } else if (suffix != null) {

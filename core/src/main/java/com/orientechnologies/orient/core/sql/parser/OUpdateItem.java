@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -181,7 +182,7 @@ public class OUpdateItem extends SimpleNode {
       case OPERATOR_EQ:
         Object newValue = convertResultToDocument(rightValue);
         newValue = convertToPropertyType(doc, attrName, newValue, ctx);
-        doc.setProperty(attrName.getStringValue(), newValue);
+        doc.setProperty(attrName.getStringValue(), cleanValue(newValue));
         break;
       case OPERATOR_MINUSASSIGN:
         doc.setProperty(
@@ -200,6 +201,18 @@ public class OUpdateItem extends SimpleNode {
             attrName.getStringValue(), calculateNewValue(doc, ctx, OMathExpression.Operator.STAR));
         break;
     }
+  }
+
+  @SuppressWarnings("unchecked")
+  public static Object cleanValue(Object newValue) {
+    if (newValue instanceof Iterator) {
+      List<Object> value = new ArrayList<Object>();
+      while (((Iterator<Object>) newValue).hasNext()) {
+        value.add(((Iterator<Object>) newValue).next());
+      }
+      return value;
+    }
+    return newValue;
   }
 
   public static Object convertToPropertyType(
