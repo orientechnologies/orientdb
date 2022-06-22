@@ -5857,7 +5857,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           break;
         case ORecordOperation.CREATED:
           {
-            final byte[] stream = serializer.toStream(rec);
+            final byte[] stream;
+            try {
+              stream = serializer.toStream(rec);
+            } catch (RuntimeException e) {
+              throw OException.wrapException(
+                  new OCommitSerializationException("Error During Record Serialization"), e);
+            }
             if (allocated != null) {
               final OPhysicalPosition ppos;
               final byte recordType = ORecordInternal.getRecordType(rec);
@@ -5896,7 +5902,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           }
         case ORecordOperation.UPDATED:
           {
-            final byte[] stream = serializer.toStream(rec);
+            final byte[] stream;
+            try {
+              stream = serializer.toStream(rec);
+            } catch (RuntimeException e) {
+              throw OException.wrapException(
+                  new OCommitSerializationException("Error During Record Serialization"), e);
+            }
 
             final OStorageOperationResult<Integer> updateRes =
                 doUpdateRecord(
