@@ -28,8 +28,7 @@ import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfilerStub;
-import com.orientechnologies.common.thread.NonDaemonThreadFactory;
-import com.orientechnologies.common.thread.OThreadPoolExecutorWithLogging;
+import com.orientechnologies.common.thread.OThreadPoolExecutors;
 import com.orientechnologies.common.util.OClassLoaderHelper;
 import com.orientechnologies.orient.core.cache.OLocalRecordCacheFactory;
 import com.orientechnologies.orient.core.cache.OLocalRecordCacheFactoryImpl;
@@ -64,8 +63,8 @@ import java.util.TimerTask;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
@@ -133,7 +132,7 @@ public class Orient extends OListenerManger<OOrientListener> {
   private volatile OAbstractProfiler profiler;
   private ODatabaseThreadLocalFactory databaseThreadFactory;
   private volatile boolean active = false;
-  private ThreadPoolExecutor workers;
+  private ExecutorService workers;
   private OSignalHandler signalHandler;
 
   /** Indicates that engine is initialized inside of web application container. */
@@ -269,25 +268,8 @@ public class Orient extends OListenerManger<OOrientListener> {
       final int cores = Runtime.getRuntime().availableProcessors();
 
       workers =
-          new OThreadPoolExecutorWithLogging(
-              cores,
-              cores * 3,
-              10,
-              TimeUnit.SECONDS,
-              new LinkedBlockingQueue<Runnable>(cores * 500) {
-                @Override
-                public boolean offer(Runnable e) {
-                  // turn offer() and add() into a blocking calls (unless interrupted)
-                  try {
-                    put(e);
-                    return true;
-                  } catch (InterruptedException ignore) {
-                    Thread.currentThread().interrupt();
-                  }
-                  return false;
-                }
-              },
-              new NonDaemonThreadFactory("Orient worker"));
+          OThreadPoolExecutors.newScalingThreadPool(
+              "Orient Worker", threadGroup, cores, cores * 3, cores * 100, 10, TimeUnit.SECONDS);
 
       registerEngines();
 
@@ -512,7 +494,7 @@ public class Orient extends OListenerManger<OOrientListener> {
    */
   @Deprecated
   public ThreadPoolExecutor getWorkers() {
-    return workers;
+    return (ThreadPoolExecutor) workers;
   }
 
   public Future<?> submit(final Runnable runnable) {

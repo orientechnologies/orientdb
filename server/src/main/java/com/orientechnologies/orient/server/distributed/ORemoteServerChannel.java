@@ -19,7 +19,15 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.common.thread.NonDaemonThreadFactory;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.util.Date;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.RejectedExecutionHandler;
+import java.util.concurrent.TimeUnit;
+
+import com.orientechnologies.common.thread.OThreadPoolExecutors;
 import com.orientechnologies.orient.client.binary.OChannelBinarySynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.message.ODistributedConnectRequest;
@@ -29,10 +37,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.binary.OBinaryTokenSerializer;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.util.Date;
-import java.util.concurrent.*;
 
 /**
  * Remote server channel.
@@ -94,20 +98,15 @@ public class ORemoteServerChannel {
           try {
             if (!executor.getQueue().offer(task, timeout, TimeUnit.MILLISECONDS)) {
               check.nodeDisconnected(server);
+              throw new RejectedExecutionException("Unable to enqueue task");
             }
           } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+            throw new RejectedExecutionException("Unable to enqueue task");
           }
         };
-    executor =
-        new ThreadPoolExecutor(
-            1,
-            1,
-            0L,
-            TimeUnit.MILLISECONDS,
-            new LinkedBlockingQueue<>(10),
-            new NonDaemonThreadFactory("Remote server channel thread"),
-            reject);
+
+    executor = OThreadPoolExecutors.newSingleThreadPool("ORemoteServerChannel", 10, reject);
 
     connect();
   }

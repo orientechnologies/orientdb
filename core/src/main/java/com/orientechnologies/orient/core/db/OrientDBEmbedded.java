@@ -19,13 +19,15 @@
  */
 package com.orientechnologies.orient.core.db;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.*;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE_DELETE_DELAY;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE_DELETE_RETRY;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.WARNING_DEFAULT_USERS;
 
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.thread.NonDaemonThreadFactory;
+import com.orientechnologies.common.thread.OThreadPoolExecutors;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
@@ -55,9 +57,27 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
-import java.nio.file.*;
-import java.util.*;
-import java.util.concurrent.*;
+import java.nio.file.DirectoryStream;
+import java.nio.file.FileStore;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import org.apache.commons.lang.NullArgumentException;
@@ -142,13 +162,13 @@ public class OrientDBEmbedded implements OrientDBInternal {
     orient.addOrientDB(this);
 
     executor =
-        new ThreadPoolExecutor(
+        OThreadPoolExecutors.newScalingThreadPool(
+            "OrientDBEmbedded",
             1,
             Runtime.getRuntime().availableProcessors(),
+            100,
             30,
-            TimeUnit.MINUTES,
-            new LinkedBlockingQueue<>(),
-            new NonDaemonThreadFactory("OrientDBEmbedded thread"));
+            TimeUnit.MINUTES);
     timer = new Timer();
 
     cachedPoolFactory = createCachedDatabasePoolFactory(this.configurations);

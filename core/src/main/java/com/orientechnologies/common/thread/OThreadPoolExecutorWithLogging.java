@@ -41,7 +41,7 @@ public class OThreadPoolExecutorWithLogging extends ThreadPoolExecutor {
   protected void afterExecute(Runnable r, Throwable t) {
     super.afterExecute(r, t);
 
-    if (r instanceof Future<?>) {
+    if ((t == null) && (r instanceof Future<?>)) {
       final Future<?> future = (Future<?>) r;
       try {
         future.get();

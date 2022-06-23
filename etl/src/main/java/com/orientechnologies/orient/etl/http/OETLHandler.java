@@ -1,10 +1,5 @@
 package com.orientechnologies.orient.etl.http;
 
-import com.orientechnologies.common.thread.NonDaemonThreadFactory;
-import com.orientechnologies.common.thread.OThreadPoolExecutorWithLogging;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.etl.util.OMigrationConfigManager;
-import com.orientechnologies.orient.server.OServer;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -12,20 +7,17 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
+
+import com.orientechnologies.common.thread.OThreadPoolExecutors;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.etl.util.OMigrationConfigManager;
+import com.orientechnologies.orient.server.OServer;
 
 /** Created by gabriele on 27/02/17. */
 public class OETLHandler {
 
-  private ExecutorService pool =
-      new OThreadPoolExecutorWithLogging(
-          1,
-          1,
-          0L,
-          TimeUnit.MILLISECONDS,
-          new LinkedBlockingQueue<>(),
-          new NonDaemonThreadFactory("ETL handler pool thread"));
+  private ExecutorService pool = OThreadPoolExecutors.newSingleThreadPool("OETLHandler");
+
   private OETLJob currentJob = null;
   private OETLListener listener;
 

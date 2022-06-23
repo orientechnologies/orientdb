@@ -35,12 +35,10 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.common.thread.OScheduledThreadPoolExecutorWithLogging;
-import com.orientechnologies.common.thread.OThreadPoolExecutorWithLogging;
+import com.orientechnologies.common.thread.OThreadPoolExecutors;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.OQuarto;
 import com.orientechnologies.common.util.ORawPair;
-import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -91,20 +89,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.zip.CRC32;
@@ -230,23 +215,18 @@ public final class OWOWCache extends OAbstractWriteCache
   private static final int CHUNK_SIZE = 64 * 1024 * 1024;
 
   /** Executor which runs in single thread all tasks are related to flush of write cache data. */
-  private static final OScheduledThreadPoolExecutorWithLogging commitExecutor;
+  private static final ScheduledExecutorService commitExecutor;
 
   /** Executor which is used to call event listeners in background thread */
   private static final ExecutorService cacheEventsPublisher;
 
   static {
     cacheEventsPublisher =
-        new OThreadPoolExecutorWithLogging(
-            0,
-            Integer.MAX_VALUE,
-            60L,
-            TimeUnit.SECONDS,
-            new SynchronousQueue<>(),
-            new CacheEventsPublisherFactory());
-
-    commitExecutor = new OScheduledThreadPoolExecutorWithLogging(1, new FlushThreadFactory());
-    commitExecutor.setMaximumPoolSize(1);
+        OThreadPoolExecutors.newCachedThreadPool(
+            "OrientDB Write Cache Event Publisher", OStorageAbstract.storageThreadGroup);
+    commitExecutor =
+        OThreadPoolExecutors.newSingleThreadScheduledPool(
+            "OrientDB Write Cache Flush Task", OStorageAbstract.storageThreadGroup);
   }
 
   /** Limit of free space on disk after which database will be switched to "read only" mode */
@@ -3614,36 +3594,6 @@ public final class OWOWCache extends OAbstractWriteCache
       }
 
       return null;
-    }
-  }
-
-  private static final class FlushThreadFactory implements ThreadFactory {
-
-    private FlushThreadFactory() {}
-
-    @Override
-    public final Thread newThread(final Runnable r) {
-      final Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
-      thread.setDaemon(true);
-      thread.setName("OrientDB Write Cache Flush Task");
-      thread.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
-      return thread;
-    }
-  }
-
-  private static final class CacheEventsPublisherFactory implements ThreadFactory {
-
-    private CacheEventsPublisherFactory() {}
-
-    @Override
-    public final Thread newThread(final Runnable r) {
-      final Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
-
-      thread.setDaemon(true);
-      thread.setName("OrientDB Write Cache Event Publisher");
-      thread.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
-
-      return thread;
     }
   }
 }

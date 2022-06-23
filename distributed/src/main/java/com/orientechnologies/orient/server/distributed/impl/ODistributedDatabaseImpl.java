@@ -26,8 +26,12 @@ import static com.orientechnologies.orient.server.distributed.ODistributedServer
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.concur.lock.OSimpleLockManager;
+import com.orientechnologies.common.concur.lock.OSimpleLockManagerImpl;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.common.thread.OThreadPoolExecutors;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -66,7 +70,6 @@ import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -745,31 +748,15 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
     synchronized (this) {
       this.requestExecutor =
-          new ThreadPoolExecutor(
-              0,
-              totalWorkers,
-              1,
-              TimeUnit.HOURS,
-              new LinkedBlockingQueue<>(),
-              new ThreadFactory() {
-                @Override
-                public Thread newThread(Runnable r) {
-                  Thread thread = new Thread(r);
-                  thread.setName(
-                      "OrientDB DistributedWorker node="
-                          + getLocalNodeName()
-                          + " db="
-                          + databaseName);
-                  thread.setUncaughtExceptionHandler(
-                      new Thread.UncaughtExceptionHandler() {
-                        @Override
-                        public void uncaughtException(Thread t, Throwable e) {
-                          OLogManager.instance().error(t, "Exception in distributed executor", e);
-                        }
-                      });
-                  return thread;
-                }
-              });
+          (ThreadPoolExecutor)
+              OThreadPoolExecutors.newScalingThreadPool(
+                  String.format(
+                      "OrientDB DistributedWorker node=%s db=%s", getLocalNodeName(), databaseName),
+                  0,
+                  totalWorkers,
+                  0,
+                  1,
+                  TimeUnit.HOURS);
     }
   }
 
