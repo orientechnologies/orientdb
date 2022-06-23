@@ -28,6 +28,29 @@ This document contains the last changes of OrientDB Community Edition.
 
 
 -----------------------------------------------------------------------------------------------------------------------------------
+VERSION 3.2.8 - (June, 26 2022)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#328---26-June-2022
+
+# Core
+- avoid to make the storage read only in case of error in record serialization
+- correct iterable value set during update operations issue #9781
+- avoid to put storage in read only in case of errors during read operations
+- fixed multivalue composite index queries to not return duplicates
+- correct indexes rebalancing causing error on delete operations
+
+# Console
+- local creation of a database in plocal with console old command will create a admin user
+
+# Distributed 
+- unblock distributed request handling in case of install error, issue #9815
+- Cap string length in binary channels
+
+# Lucene
+- Support parameterised metadata in Lucene queries
+- make sure that lucene parsing exception do not set the storage in read only mode, issue #9498
+- Fix the locking in the Lucene indexer
+
+-----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.7 - (June, 8 2022)
 - Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#327---8-June-2022
 
