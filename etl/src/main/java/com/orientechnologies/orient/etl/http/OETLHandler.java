@@ -1,5 +1,9 @@
 package com.orientechnologies.orient.etl.http;
 
+import com.orientechnologies.common.thread.OThreadPoolExecutors;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.etl.util.OMigrationConfigManager;
+import com.orientechnologies.orient.server.OServer;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -7,11 +11,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
-
-import com.orientechnologies.common.thread.OThreadPoolExecutors;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.etl.util.OMigrationConfigManager;
-import com.orientechnologies.orient.server.OServer;
 
 /** Created by gabriele on 27/02/17. */
 public class OETLHandler {

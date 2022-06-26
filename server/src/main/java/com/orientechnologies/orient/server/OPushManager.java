@@ -1,15 +1,5 @@
 package com.orientechnologies.orient.server;
 
-import java.io.IOException;
-import java.lang.ref.WeakReference;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.RejectedExecutionException;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.thread.OThreadPoolExecutors;
 import com.orientechnologies.orient.client.remote.message.OBinaryPushRequest;
@@ -27,6 +17,15 @@ import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.index.OIndexManagerShared;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
+import java.io.IOException;
+import java.lang.ref.WeakReference;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.RejectedExecutionException;
 
 public class OPushManager implements OMetadataUpdateListener {
 

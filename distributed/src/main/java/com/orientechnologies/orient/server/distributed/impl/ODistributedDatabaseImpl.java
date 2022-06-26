@@ -25,10 +25,6 @@ import static com.orientechnologies.orient.server.distributed.ODistributedServer
 
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.concur.lock.OSimpleLockManager;
-import com.orientechnologies.common.concur.lock.OSimpleLockManagerImpl;
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.thread.OThreadPoolExecutors;

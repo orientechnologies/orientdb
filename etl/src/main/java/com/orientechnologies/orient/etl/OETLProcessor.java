@@ -18,18 +18,6 @@
 
 package com.orientechnologies.orient.etl;
 
-import java.util.List;
-import java.util.Locale;
-import java.util.TimerTask;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.logging.Level;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.thread.OThreadPoolExecutors;
@@ -47,6 +35,17 @@ import com.orientechnologies.orient.etl.extractor.OETLExtractor;
 import com.orientechnologies.orient.etl.loader.OETLLoader;
 import com.orientechnologies.orient.etl.source.OETLSource;
 import com.orientechnologies.orient.etl.transformer.OETLTransformer;
+import java.util.List;
+import java.util.Locale;
+import java.util.TimerTask;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.logging.Level;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * ETL processor class.

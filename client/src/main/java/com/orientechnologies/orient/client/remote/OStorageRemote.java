@@ -26,8 +26,6 @@ import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.thread.NonDaemonThreadFactory;
-import com.orientechnologies.common.thread.OScheduledThreadPoolExecutorWithLogging;
 import com.orientechnologies.common.thread.OThreadPoolExecutors;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OCommonConst;

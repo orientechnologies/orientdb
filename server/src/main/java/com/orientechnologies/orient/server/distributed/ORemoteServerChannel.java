@@ -19,14 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.util.Date;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.RejectedExecutionHandler;
-import java.util.concurrent.TimeUnit;
-
 import com.orientechnologies.common.thread.OThreadPoolExecutors;
 import com.orientechnologies.orient.client.binary.OChannelBinarySynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
@@ -37,6 +29,13 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.binary.OBinaryTokenSerializer;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.util.Date;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.RejectedExecutionHandler;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Remote server channel.

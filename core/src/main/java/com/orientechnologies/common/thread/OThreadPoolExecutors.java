@@ -130,5 +130,4 @@ public class OThreadPoolExecutors {
     return new OScheduledThreadPoolExecutorWithLogging(
         1, new SingletonNamedThreadFactory(threadName, parentThreadGroup));
   }
-
 }
