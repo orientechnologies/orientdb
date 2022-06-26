@@ -271,8 +271,9 @@ public class Orient extends OListenerManger<OOrientListener> {
       final int cores = Runtime.getRuntime().availableProcessors();
 
       workers =
-          OThreadPoolExecutors.newScalingThreadPool(
-              "Orient Worker", threadGroup, cores, cores * 3, cores * 100, 10, TimeUnit.SECONDS);
+          OThreadPoolExecutors.newBlockingScalingThreadPool(
+              "Orient Worker", threadGroup, cores, cores * 3, cores * 100, cores * 500, 10,
+              TimeUnit.SECONDS);
 
       registerEngines();
 
