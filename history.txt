@@ -27,13 +27,14 @@
 This document contains the last changes of OrientDB Community Edition.
 
 -----------------------------------------------------------------------------------------------------------------------------------
-VERSION 3.0.43 - (April, 26 2022)
-- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.0-Release-Notes#3043---26-april-2022
+VERSION 3.0.43 - (June, 28 2022)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.0-Release-Notes#3043---28-june-2022
 - Issues: https://github.com/orientechnologies/orientdb/issues?q=is%3Aissue+milestone%3A3.0.43+is%3Aclosed  
 
 # Changes
 ## Core 
-
+- fixed multivalue composite index queries to not return duplicates
+- remove edges with in or out null during bonsai repair
 - Storage state lock was replaced by standard JDK lock.
 - Fix of locking error during making of fuzzy checkpoint.
 - Speed up of files flush.
