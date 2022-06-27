@@ -222,7 +222,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   @Override
   public final boolean exists() {
     try {
-      if (status == STATUS.OPEN || status == STATUS.INTERNAL_ERROR) return true;
+      if (status == STATUS.OPEN || isInError()) return true;
 
       return exists(storagePath);
     } catch (final RuntimeException e) {
@@ -659,7 +659,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
   @Override
   protected void clearStorageDirty() throws IOException {
-    if (status != STATUS.INTERNAL_ERROR) {
+    if (!isInError()) {
       startupMetadata.clearDirty();
     }
   }
