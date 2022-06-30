@@ -4809,7 +4809,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       error = e;
       this.inError = true;
     } finally {
-      stateLock.writeLock().unlock();
       this.errorLock.writeLock().unlock();
     }
   }
