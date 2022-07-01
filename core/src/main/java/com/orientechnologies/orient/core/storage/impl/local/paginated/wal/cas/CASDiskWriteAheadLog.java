@@ -8,11 +8,9 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.common.thread.OScheduledThreadPoolExecutorWithLogging;
-import com.orientechnologies.common.thread.OThreadPoolExecutorWithLogging;
+import com.orientechnologies.common.thread.OThreadPoolExecutors;
 import com.orientechnologies.common.types.OModifiableLong;
 import com.orientechnologies.common.util.OPair;
-import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.exception.EncryptionKeyAbsentException;
 import com.orientechnologies.orient.core.exception.OInvalidStorageEncryptionKeyException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
@@ -61,37 +59,17 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
 
   protected static final int DEFAULT_MAX_CACHE_SIZE = Integer.MAX_VALUE;
 
-  private static final OScheduledThreadPoolExecutorWithLogging commitExecutor;
-  private static final OThreadPoolExecutorWithLogging writeExecutor;
+  private static final ScheduledExecutorService commitExecutor;
+  private static final ExecutorService writeExecutor;
 
   static {
     commitExecutor =
-        new OScheduledThreadPoolExecutorWithLogging(
-            1,
-            r -> {
-              final Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
-              thread.setDaemon(true);
-              thread.setName("OrientDB WAL Flush Task");
-              thread.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
-              return thread;
-            });
+        OThreadPoolExecutors.newSingleThreadScheduledPool(
+            "OrientDB WAL Flush Task", OStorageAbstract.storageThreadGroup);
 
     writeExecutor =
-        new OThreadPoolExecutorWithLogging(
-            1,
-            1,
-            60L,
-            TimeUnit.SECONDS,
-            new LinkedBlockingQueue<>(),
-            r -> {
-              final Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
-              thread.setDaemon(true);
-              thread.setName("OrientDB WAL Write Task Thread)");
-              thread.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
-              return thread;
-            });
-
-    commitExecutor.setMaximumPoolSize(1);
+        OThreadPoolExecutors.newSingleThreadPool(
+            "OrientDB WAL Write Task Thread", OStorageAbstract.storageThreadGroup);
   }
 
   private final boolean keepSingleWALSegment;

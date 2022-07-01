@@ -37,7 +37,7 @@ public class OScheduledThreadPoolExecutorWithLogging extends ScheduledThreadPool
   protected void afterExecute(Runnable r, Throwable t) {
     super.afterExecute(r, t);
 
-    if (r instanceof Future<?>) {
+    if ((t == null) && r instanceof Future<?>) {
       final Future<?> future = (Future<?>) r;
       // scheduled futures can block execution forever if they are not done
       if (future.isDone()) {

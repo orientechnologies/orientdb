@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.common.thread.OThreadPoolExecutors;
 import com.orientechnologies.orient.client.binary.OChannelBinarySynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.message.ODistributedConnectRequest;
@@ -32,9 +33,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Date;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.RejectedExecutionHandler;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -97,14 +97,14 @@ public class ORemoteServerChannel {
           try {
             if (!executor.getQueue().offer(task, timeout, TimeUnit.MILLISECONDS)) {
               check.nodeDisconnected(server);
+              throw new RejectedExecutionException("Unable to enqueue task");
             }
           } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+            throw new RejectedExecutionException("Unable to enqueue task");
           }
         };
-    executor =
-        new ThreadPoolExecutor(
-            1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(10), reject);
+    executor = OThreadPoolExecutors.newSingleThreadPool("ORemoteServerChannel", 10, reject);
 
     connect();
   }

@@ -33,7 +33,7 @@ import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OUTF8Serializer;
-import com.orientechnologies.common.thread.OScheduledThreadPoolExecutorWithLogging;
+import com.orientechnologies.common.thread.OThreadPoolExecutors;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.types.OModifiableLong;
 import com.orientechnologies.common.util.*;
@@ -61,19 +61,6 @@ import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.encryption.OEncryptionFactory;
 import com.orientechnologies.orient.core.encryption.impl.ONothingEncryption;
 import com.orientechnologies.orient.core.exception.*;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
-import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
-import com.orientechnologies.orient.core.exception.OInvalidDatabaseNameException;
-import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
-import com.orientechnologies.orient.core.exception.OInvalidInstanceIdException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.exception.ORetryQueryException;
-import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.exception.OStorageExistsException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndexAbstract;
@@ -176,7 +163,7 @@ import java.util.TimeZone;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.UUID;
-import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -202,12 +189,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private static final Comparator<ORecordOperation> COMMIT_RECORD_OPERATION_COMPARATOR =
       Comparator.comparing(o -> o.getRecord().getIdentity());
 
-  protected static final OScheduledThreadPoolExecutorWithLogging fuzzyCheckpointExecutor;
+  protected static final ScheduledExecutorService fuzzyCheckpointExecutor;
 
   static {
     fuzzyCheckpointExecutor =
-        new OScheduledThreadPoolExecutorWithLogging(1, new FuzzyCheckpointThreadFactory());
-    fuzzyCheckpointExecutor.setMaximumPoolSize(1);
+        OThreadPoolExecutors.newSingleThreadScheduledPool("Fuzzy Checkpoint", storageThreadGroup);
   }
 
   private final OSimpleRWLockManager<ORID> lockManager;
@@ -7116,16 +7102,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   public Optional<byte[]> getLastMetadata() {
     return Optional.ofNullable(lastMetadata);
-  }
-
-  private static final class FuzzyCheckpointThreadFactory implements ThreadFactory {
-    @Override
-    public final Thread newThread(final Runnable r) {
-      final Thread thread = new Thread(storageThreadGroup, r);
-      thread.setDaemon(true);
-      thread.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
-      return thread;
-    }
   }
 
   private final class WALVacuum implements Runnable {

@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.thread.OThreadPoolExecutors;
 import com.orientechnologies.orient.client.remote.message.OBinaryPushRequest;
 import com.orientechnologies.orient.client.remote.message.OBinaryPushResponse;
 import com.orientechnologies.orient.client.remote.message.OPushDistributedConfigurationRequest;
@@ -25,10 +26,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 public class OPushManager implements OMetadataUpdateListener {
 
@@ -44,8 +41,8 @@ public class OPushManager implements OMetadataUpdateListener {
 
   public OPushManager() {
     executor =
-        new ThreadPoolExecutor(
-            0, 5, 1, TimeUnit.MINUTES, new SynchronousQueue<Runnable>(), new PushThreadFactory());
+        OThreadPoolExecutors.newCachedThreadPool(
+            "Push Requests", Thread.currentThread().getThreadGroup(), 5, 0);
   }
 
   public synchronized void pushDistributedConfig(String database, List<String> hosts) {
@@ -207,15 +204,6 @@ public class OPushManager implements OMetadataUpdateListener {
     } catch (RejectedExecutionException e) {
       OLogManager.instance()
           .info(this, "Cannot send push request to client for database '%s'", database);
-    }
-  }
-
-  private static class PushThreadFactory implements ThreadFactory {
-    @Override
-    public Thread newThread(Runnable r) {
-      Thread th = new Thread(r);
-      th.setName("Push Requests");
-      return th;
     }
   }
 }
