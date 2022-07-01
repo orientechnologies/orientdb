@@ -146,7 +146,7 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       "memory.directMemory.preallocate",
       "Preallocate amount of direct memory which is needed for the disk cache",
       Boolean.class,
-      true),
+      false),
 
   DIRECT_MEMORY_TRACK_MODE(
       "memory.directMemory.trackMode",
