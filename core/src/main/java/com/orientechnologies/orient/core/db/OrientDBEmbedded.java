@@ -869,19 +869,19 @@ public class OrientDBEmbedded implements OrientDBInternal {
       db.close();
     } finally {
       ODatabaseRecordThreadLocal.instance().set(current);
-    }
-    synchronized (this) {
-      if (exists(name, user, password)) {
-        OAbstractPaginatedStorage storage = getOrInitStorage(name);
-        OSharedContext sharedContext = sharedContexts.get(name);
-        if (sharedContext != null) {
-          sharedContext.close();
+      synchronized (this) {
+        if (exists(name, user, password)) {
+          OAbstractPaginatedStorage storage = getOrInitStorage(name);
+          OSharedContext sharedContext = sharedContexts.get(name);
+          if (sharedContext != null) {
+            sharedContext.close();
+          }
+          final int storageId = storage.getId();
+          storage.delete();
+          storages.remove(name);
+          currentStorageIds.remove(storageId);
+          sharedContexts.remove(name);
         }
-        final int storageId = storage.getId();
-        storage.delete();
-        storages.remove(name);
-        currentStorageIds.remove(storageId);
-        sharedContexts.remove(name);
       }
     }
   }
