@@ -194,13 +194,7 @@ public final class OWOWCache extends OAbstractWriteCache
   /** Executor which runs in single thread all tasks are related to flush of write cache data. */
   private static final ScheduledExecutorService commitExecutor;
 
-  /** Executor which is used to call event listeners in background thread */
-  private static final ExecutorService cacheEventsPublisher;
-
   static {
-    cacheEventsPublisher =
-        OThreadPoolExecutors.newCachedThreadPool(
-            "OrientDB Write Cache Event Publisher", OStorageAbstract.storageThreadGroup);
     commitExecutor =
         OThreadPoolExecutors.newSingleThreadScheduledPool(
             "OrientDB Write Cache Flush Task", OStorageAbstract.storageThreadGroup);
@@ -544,27 +538,21 @@ public final class OWOWCache extends OAbstractWriteCache
   }
 
   private void callPageIsBrokenListeners(final String fileName, final long pageIndex) {
-    cacheEventsPublisher.execute(
-        new Runnable() {
-          @Override
-          public void run() {
-            for (final WeakReference<OPageIsBrokenListener> pageIsBrokenListenerWeakReference :
-                pageIsBrokenListeners) {
-              final OPageIsBrokenListener listener = pageIsBrokenListenerWeakReference.get();
-              if (listener != null) {
-                try {
-                  listener.pageIsBroken(fileName, pageIndex);
-                } catch (final Exception e) {
-                  OLogManager.instance()
-                      .error(
-                          this,
-                          "Error during notification of page is broken for storage " + storageName,
-                          e);
-                }
-              }
-            }
-          }
-        });
+    for (final WeakReference<OPageIsBrokenListener> pageIsBrokenListenerWeakReference :
+        pageIsBrokenListeners) {
+      final OPageIsBrokenListener listener = pageIsBrokenListenerWeakReference.get();
+      if (listener != null) {
+        try {
+          listener.pageIsBroken(fileName, pageIndex);
+        } catch (final Exception e) {
+          OLogManager.instance()
+              .error(
+                  this,
+                  "Error during notification of page is broken for storage " + storageName,
+                  e);
+        }
+      }
+    }
   }
 
   @Override
