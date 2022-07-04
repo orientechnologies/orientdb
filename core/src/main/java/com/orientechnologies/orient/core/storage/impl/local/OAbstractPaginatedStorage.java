@@ -5803,9 +5803,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           writeAheadLog.close();
         }
 
-        postCloseSteps(onDelete, isInError(), idGen.getLastId());
-        transaction = null;
-        lastMetadata = null;
       } else {
         OLogManager.instance()
             .errorNoDb(
@@ -5813,6 +5810,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                 "Because of JVM error happened inside of storage it can not be properly closed",
                 null);
       }
+      postCloseSteps(onDelete, isInError(), idGen.getLastId());
+      transaction = null;
+      lastMetadata = null;
 
       status = STATUS.CLOSED;
     } catch (final IOException e) {
