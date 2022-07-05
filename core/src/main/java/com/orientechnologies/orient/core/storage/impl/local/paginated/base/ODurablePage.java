@@ -248,11 +248,11 @@ public class ODurablePage {
 
   protected final int setShortValue(final int pageOffset, final short value) {
     final ByteBuffer buffer = pointer.getBuffer();
-    assert buffer != null;
 
     if (changes != null) {
       changes.setIntValue(buffer, value, pageOffset);
     } else {
+      assert buffer != null;
       assert buffer.order() == ByteOrder.nativeOrder();
       buffer.putShort(pageOffset, value);
     }
