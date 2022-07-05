@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.sql.parser.OCollection;
 import com.orientechnologies.orient.core.sql.parser.OContainsAnyCondition;
 import com.orientechnologies.orient.core.sql.parser.OContainsKeyOperator;
 import com.orientechnologies.orient.core.sql.parser.OContainsTextCondition;
+import com.orientechnologies.orient.core.sql.parser.OContainsValueCondition;
 import com.orientechnologies.orient.core.sql.parser.OContainsValueOperator;
 import com.orientechnologies.orient.core.sql.parser.OEqualsCompareOperator;
 import com.orientechnologies.orient.core.sql.parser.OExpression;
@@ -633,6 +634,10 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
               newValue.put("", result.get(j));
               result.set(j, newValue);
             }
+          } else if (subExp instanceof OContainsValueCondition) {
+            Map<Object, Object> newValue = new HashMap<>();
+            newValue.put("", result.get(j));
+            result.set(j, newValue);
           }
         }
       }
@@ -808,6 +813,8 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
           throw new UnsupportedOperationException("Cannot execute index query with " + exp);
         }
 
+      } else if (exp instanceof OContainsValueCondition) {
+        result.add(((OContainsValueCondition) exp).getExpression());
       } else {
         throw new UnsupportedOperationException("Cannot execute index query with " + exp);
       }
@@ -853,6 +860,8 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
       } else if (exp instanceof OContainsTextCondition) {
         result.add(((OContainsTextCondition) exp).getRight());
+      } else if (exp instanceof OContainsValueCondition) {
+        result.add(((OContainsValueCondition) exp).getExpression());
       } else {
         throw new UnsupportedOperationException("Cannot execute index query with " + exp);
       }
@@ -877,6 +886,13 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
           || (isIncludeOperator(additionalOperator) && isGreaterOperator(additionalOperator));
     } else if (exp instanceof OContainsTextCondition) {
       return true;
+    } else if (exp instanceof OContainsValueCondition) {
+      OBinaryCompareOperator operator = ((OContainsValueCondition) exp).getOperator();
+      if (isGreaterOperator(operator)) {
+        return isIncludeOperator(operator);
+      } else
+        return additionalOperator == null
+            || (isIncludeOperator(additionalOperator) && isGreaterOperator(additionalOperator));
     } else {
       throw new UnsupportedOperationException("Cannot execute index query with " + exp);
     }
@@ -920,6 +936,13 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
           || (isIncludeOperator(additionalOperator) && isLessOperator(additionalOperator));
     } else if (exp instanceof OContainsTextCondition) {
       return true;
+    } else if (exp instanceof OContainsValueCondition) {
+      OBinaryCompareOperator operator = ((OContainsValueCondition) exp).getOperator();
+      if (isLessOperator(operator)) {
+        return isIncludeOperator(operator);
+      } else
+        return additionalOperator == null
+            || (isIncludeOperator(additionalOperator) && isLessOperator(additionalOperator));
     } else {
       throw new UnsupportedOperationException("Cannot execute index query with " + exp);
     }
