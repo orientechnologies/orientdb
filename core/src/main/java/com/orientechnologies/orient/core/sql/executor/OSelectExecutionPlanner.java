@@ -2775,109 +2775,72 @@ public class OSelectExecutionPlanner {
       while (blockIterator.hasNext()) {
         OBooleanExpression singleExp = blockIterator.next();
         if (singleExp instanceof OBinaryCondition) {
-          OExpression left = ((OBinaryCondition) singleExp).getLeft();
-          if (left.isBaseIdentifier()) {
-            String fieldName = left.getDefaultAlias().getStringValue();
-            if (indexField.equals(fieldName)) {
-              OBinaryCompareOperator operator = ((OBinaryCondition) singleExp).getOperator();
-              if (!((OBinaryCondition) singleExp).getRight().isEarlyCalculated(ctx)) {
-                continue; // this cannot be used because the value depends on single record
-              }
-              if (operator instanceof OEqualsCompareOperator) {
-                found = true;
-                indexFieldFound = true;
-                indexKeyValue.getSubBlocks().add(singleExp.copy());
-                blockIterator.remove();
-                break;
-              } else if (operator instanceof OContainsKeyOperator
-                  && isMap(clazz, indexField)
-                  && isIndexByKey(index, indexField)) {
-                found = true;
-                indexFieldFound = true;
-                indexKeyValue.getSubBlocks().add(singleExp.copy());
-                blockIterator.remove();
-                break;
-              } else if (allowsRange && operator.isRangeOperator()) {
-                found = true;
-                indexFieldFound = true;
-                breakHere =
-                    true; // this is last element, no other fields can be added to the key because
-                // this is a range condition
-                indexKeyValue.getSubBlocks().add(singleExp.copy());
-                blockIterator.remove();
-                // look for the opposite condition, on the same field, for range queries (the other
-                // side of the range)
-                while (blockIterator.hasNext()) {
-                  OBooleanExpression next = blockIterator.next();
-                  if (createsRangeWith((OBinaryCondition) singleExp, next)) {
-                    result.additionalRangeCondition = (OBinaryCondition) next;
-                    blockIterator.remove();
-                    break;
-                  }
+          if (singleExp.isIndexAware(indexField, ctx)) {
+            OBinaryCompareOperator operator = ((OBinaryCondition) singleExp).getOperator();
+            if (operator instanceof OEqualsCompareOperator) {
+              indexFieldFound = true;
+              indexKeyValue.getSubBlocks().add(singleExp.copy());
+              blockIterator.remove();
+              break;
+            } else if (operator instanceof OContainsKeyOperator
+                && isMap(clazz, indexField)
+                && isIndexByKey(index, indexField)) {
+              indexFieldFound = true;
+              indexKeyValue.getSubBlocks().add(singleExp.copy());
+              blockIterator.remove();
+              break;
+            } else if (allowsRange && operator.isRangeOperator()) {
+              indexFieldFound = true;
+              breakHere =
+                  true; // this is last element, no other fields can be added to the key because
+              // this is a range condition
+              indexKeyValue.getSubBlocks().add(singleExp.copy());
+              blockIterator.remove();
+              // look for the opposite condition, on the same field, for range queries (the other
+              // side of the range)
+              while (blockIterator.hasNext()) {
+                OBooleanExpression next = blockIterator.next();
+                if (createsRangeWith((OBinaryCondition) singleExp, next)) {
+                  result.additionalRangeCondition = (OBinaryCondition) next;
+                  blockIterator.remove();
+                  break;
                 }
-                break;
               }
+              break;
             }
           }
         } else if (singleExp instanceof OContainsValueCondition
             && ((OContainsValueCondition) singleExp).getExpression() != null
             && isMap(clazz, indexField)
             && isIndexByValue(index, indexField)) {
-          OExpression left = ((OContainsValueCondition) singleExp).getLeft();
-          if (left.isBaseIdentifier()) {
-            String fieldName = left.getDefaultAlias().getStringValue();
-            if (indexField.equals(fieldName)) {
-              found = true;
-              indexFieldFound = true;
-              OBinaryCondition condition = new OBinaryCondition(-1);
-              condition.setLeft(left);
-              condition.setOperator(new OContainsValueOperator(-1));
-              condition.setRight(((OContainsValueCondition) singleExp).getExpression().copy());
-              indexKeyValue.getSubBlocks().add(condition);
-              blockIterator.remove();
-              break;
-            }
+          if (singleExp.isIndexAware(indexField, ctx)) {
+            indexFieldFound = true;
+            OBinaryCondition condition = new OBinaryCondition(-1);
+            condition.setLeft(((OContainsValueCondition) singleExp).getLeft());
+            condition.setOperator(new OContainsValueOperator(-1));
+            condition.setRight(((OContainsValueCondition) singleExp).getExpression().copy());
+            indexKeyValue.getSubBlocks().add(condition);
+            blockIterator.remove();
+            break;
           }
         } else if (singleExp instanceof OContainsAnyCondition) {
-          OExpression left = ((OContainsAnyCondition) singleExp).getLeft();
-          if (left.isBaseIdentifier()) {
-            String fieldName = left.getDefaultAlias().getStringValue();
-            if (indexField.equals(fieldName)) {
-              if (!((OContainsAnyCondition) singleExp).getRight().isEarlyCalculated(ctx)) {
-                continue; // this cannot be used because the value depends on single record
-              }
-              found = true;
-              indexFieldFound = true;
-              indexKeyValue.getSubBlocks().add(singleExp.copy());
-              blockIterator.remove();
-              break;
-            }
+          if (singleExp.isIndexAware(indexField, ctx)) {
+            indexFieldFound = true;
+            indexKeyValue.getSubBlocks().add(singleExp.copy());
+            blockIterator.remove();
+            break;
           }
         } else if (singleExp instanceof OInCondition) {
-          OExpression left = ((OInCondition) singleExp).getLeft();
-          if (left.isBaseIdentifier()) {
-            String fieldName = left.getDefaultAlias().getStringValue();
-            if (indexField.equals(fieldName)) {
-              if (((OInCondition) singleExp).getRightMathExpression() != null) {
-
-                if (!((OInCondition) singleExp).getRightMathExpression().isEarlyCalculated(ctx)) {
-                  continue; // this cannot be used because the value depends on single record
-                }
-                found = true;
-                indexFieldFound = true;
-                indexKeyValue.getSubBlocks().add(singleExp.copy());
-                blockIterator.remove();
-                break;
-              } else if (((OInCondition) singleExp).getRightParam() != null) {
-                found = true;
-                indexFieldFound = true;
-                indexKeyValue.getSubBlocks().add(singleExp.copy());
-                blockIterator.remove();
-                break;
-              }
-            }
+          if (singleExp.isIndexAware(indexField, ctx)) {
+            indexFieldFound = true;
+            indexKeyValue.getSubBlocks().add(singleExp.copy());
+            blockIterator.remove();
+            break;
           }
         }
+      }
+      if (indexFieldFound) {
+        found = true;
       }
       if (breakHere || !indexFieldFound) {
         break;

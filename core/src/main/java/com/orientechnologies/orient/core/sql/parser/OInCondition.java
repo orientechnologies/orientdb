@@ -375,5 +375,18 @@ public class OInCondition extends OBooleanExpression {
   public void setRightMathExpression(OMathExpression rightMathExpression) {
     this.rightMathExpression = rightMathExpression;
   }
+
+  public boolean isIndexAware(String fieldName, OCommandContext ctx) {
+    if (left.isBaseIdentifier()) {
+      if (fieldName.equals(left.getDefaultAlias().getStringValue())) {
+        if (rightMathExpression != null) {
+          return rightMathExpression.isEarlyCalculated(ctx);
+        } else if (rightParam != null) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
 }
 /* JavaCC - OriginalChecksum=00df7cb1877c0a12d24205c1700653c7 (do not edit this line) */

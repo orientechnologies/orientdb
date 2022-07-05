@@ -488,5 +488,16 @@ public class OBinaryCondition extends OBooleanExpression {
 
     return result;
   }
+
+  public boolean isIndexAware(String fieldName, OCommandContext ctx) {
+    if (left.isBaseIdentifier()) {
+      if (fieldName.equals(left.getDefaultAlias().getStringValue())) {
+        if (right.isEarlyCalculated(ctx)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
 }
 /* JavaCC - OriginalChecksum=99ed1dd2812eb730de8e1931b1764da5 (do not edit this line) */
