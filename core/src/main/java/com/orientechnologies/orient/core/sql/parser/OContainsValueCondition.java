@@ -278,6 +278,10 @@ public class OContainsValueCondition extends OBooleanExpression {
     return left;
   }
 
+  public OContainsValueOperator getOperator() {
+    return operator;
+  }
+
   public boolean isIndexAware(String fieldName, OCommandContext ctx) {
     if (left.isBaseIdentifier()) {
       if (fieldName.equals(left.getDefaultAlias().getStringValue())) {

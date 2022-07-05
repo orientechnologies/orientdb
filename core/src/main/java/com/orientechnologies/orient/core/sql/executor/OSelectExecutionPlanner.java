@@ -2815,11 +2815,7 @@ public class OSelectExecutionPlanner {
             && isIndexByValue(index, indexField)) {
           if (singleExp.isIndexAware(indexField, ctx)) {
             indexFieldFound = true;
-            OBinaryCondition condition = new OBinaryCondition(-1);
-            condition.setLeft(((OContainsValueCondition) singleExp).getLeft());
-            condition.setOperator(new OContainsValueOperator(-1));
-            condition.setRight(((OContainsValueCondition) singleExp).getExpression().copy());
-            indexKeyValue.getSubBlocks().add(condition);
+            indexKeyValue.getSubBlocks().add(singleExp.copy());
             blockIterator.remove();
             break;
           }
