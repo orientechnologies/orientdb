@@ -2786,11 +2786,7 @@ public class OSelectExecutionPlanner {
               if (operator instanceof OEqualsCompareOperator) {
                 found = true;
                 indexFieldFound = true;
-                OBinaryCondition condition = new OBinaryCondition(-1);
-                condition.setLeft(left);
-                condition.setOperator(operator);
-                condition.setRight(((OBinaryCondition) singleExp).getRight().copy());
-                indexKeyValue.getSubBlocks().add(condition);
+                indexKeyValue.getSubBlocks().add(singleExp.copy());
                 blockIterator.remove();
                 break;
               } else if (operator instanceof OContainsKeyOperator
@@ -2798,11 +2794,7 @@ public class OSelectExecutionPlanner {
                   && isIndexByKey(index, indexField)) {
                 found = true;
                 indexFieldFound = true;
-                OBinaryCondition condition = new OBinaryCondition(-1);
-                condition.setLeft(left);
-                condition.setOperator(operator);
-                condition.setRight(((OBinaryCondition) singleExp).getRight().copy());
-                indexKeyValue.getSubBlocks().add(condition);
+                indexKeyValue.getSubBlocks().add(singleExp.copy());
                 blockIterator.remove();
                 break;
               } else if (allowsRange && operator.isRangeOperator()) {
@@ -2811,11 +2803,7 @@ public class OSelectExecutionPlanner {
                 breakHere =
                     true; // this is last element, no other fields can be added to the key because
                 // this is a range condition
-                OBinaryCondition condition = new OBinaryCondition(-1);
-                condition.setLeft(left);
-                condition.setOperator(operator);
-                condition.setRight(((OBinaryCondition) singleExp).getRight().copy());
-                indexKeyValue.getSubBlocks().add(condition);
+                indexKeyValue.getSubBlocks().add(singleExp.copy());
                 blockIterator.remove();
                 // look for the opposite condition, on the same field, for range queries (the other
                 // side of the range)
@@ -2860,10 +2848,7 @@ public class OSelectExecutionPlanner {
               }
               found = true;
               indexFieldFound = true;
-              OContainsAnyCondition condition = new OContainsAnyCondition(-1);
-              condition.setLeft(left);
-              condition.setRight(((OContainsAnyCondition) singleExp).getRight().copy());
-              indexKeyValue.getSubBlocks().add(condition);
+              indexKeyValue.getSubBlocks().add(singleExp.copy());
               blockIterator.remove();
               break;
             }
@@ -2880,20 +2865,13 @@ public class OSelectExecutionPlanner {
                 }
                 found = true;
                 indexFieldFound = true;
-                OInCondition condition = new OInCondition(-1);
-                condition.setLeft(left);
-                condition.setRightMathExpression(
-                    ((OInCondition) singleExp).getRightMathExpression().copy());
-                indexKeyValue.getSubBlocks().add(condition);
+                indexKeyValue.getSubBlocks().add(singleExp.copy());
                 blockIterator.remove();
                 break;
               } else if (((OInCondition) singleExp).getRightParam() != null) {
                 found = true;
                 indexFieldFound = true;
-                OInCondition condition = new OInCondition(-1);
-                condition.setLeft(left);
-                condition.setRightParam(((OInCondition) singleExp).getRightParam().copy());
-                indexKeyValue.getSubBlocks().add(condition);
+                indexKeyValue.getSubBlocks().add(singleExp.copy());
                 blockIterator.remove();
                 break;
               }
@@ -2957,10 +2935,7 @@ public class OSelectExecutionPlanner {
             if (indexField.equals(fieldName)) {
               found = true;
               indexFieldFound = true;
-              OContainsTextCondition condition = new OContainsTextCondition(-1);
-              condition.setLeft(left);
-              condition.setRight(((OContainsTextCondition) singleExp).getRight().copy());
-              indexKeyValue.getSubBlocks().add(condition);
+              indexKeyValue.getSubBlocks().add(singleExp.copy());
               blockIterator.remove();
               break;
             }
