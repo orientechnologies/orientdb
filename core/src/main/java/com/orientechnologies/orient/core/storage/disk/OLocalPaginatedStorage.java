@@ -59,6 +59,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWrite
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.CASDiskWriteAheadLog;
 import com.orientechnologies.orient.core.storage.index.engine.OHashTableIndexEngine;
 import com.orientechnologies.orient.core.storage.index.engine.OSBTreeIndexEngine;
+import com.orientechnologies.orient.core.storage.index.versionmap.OVersionPositionMap;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManagerShared;
 import java.io.*;
@@ -122,7 +123,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     OCellBTreeMultiValueIndexEngine.DATA_FILE_EXTENSION,
     OCellBTreeMultiValueIndexEngine.M_CONTAINER_EXTENSION,
     DoubleWriteLogGL.EXTENSION,
-    FreeSpaceMap.DEF_EXTENSION
+    FreeSpaceMap.DEF_EXTENSION,
+    OVersionPositionMap.DEF_EXTENSION
   };
 
   private static final int ONE_KB = 1024;
