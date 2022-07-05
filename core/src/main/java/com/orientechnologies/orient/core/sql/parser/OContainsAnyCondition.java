@@ -351,5 +351,17 @@ public class OContainsAnyCondition extends OBooleanExpression {
     }
     return true;
   }
+
+  @Override
+  public boolean isIndexAware(String fieldName, OCommandContext ctx) {
+    if (left.isBaseIdentifier()) {
+      if (fieldName.equals(left.getDefaultAlias().getStringValue())) {
+        if (right.isEarlyCalculated(ctx)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
 }
 /* JavaCC - OriginalChecksum=7992ab9e8e812c6d9358ede8b67b4506 (do not edit this line) */

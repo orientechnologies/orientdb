@@ -286,4 +286,8 @@ public abstract class OBooleanExpression extends SimpleNode {
   public boolean isAlwaysTrue() {
     return false;
   }
+
+  public boolean isIndexAware(String fieldName, OCommandContext ctx) {
+    return false;
+  }
 }

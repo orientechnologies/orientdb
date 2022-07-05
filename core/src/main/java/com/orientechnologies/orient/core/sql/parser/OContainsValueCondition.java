@@ -277,5 +277,16 @@ public class OContainsValueCondition extends OBooleanExpression {
   public OExpression getLeft() {
     return left;
   }
+
+  public boolean isIndexAware(String fieldName, OCommandContext ctx) {
+    if (left.isBaseIdentifier()) {
+      if (fieldName.equals(left.getDefaultAlias().getStringValue())) {
+        if (expression != null && expression.isEarlyCalculated(ctx)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
 }
 /* JavaCC - OriginalChecksum=6fda752f10c8d8731f43efa706e39459 (do not edit this line) */
