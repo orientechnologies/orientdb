@@ -483,40 +483,43 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
   void addIndexInternal(final OIndex index) {
     acquireExclusiveLock();
     try {
-      final Locale locale = getServerLocale();
-      indexes.put(index.getName(), index);
-
-      final OIndexDefinition indexDefinition = index.getDefinition();
-      if (indexDefinition == null || indexDefinition.getClassName() == null) return;
-
-      Map<OMultiKey, Set<OIndex>> propertyIndex =
-          getIndexOnProperty(indexDefinition.getClassName());
-
-      if (propertyIndex == null) {
-        propertyIndex = new HashMap<>();
-      } else {
-        propertyIndex = new HashMap<>(propertyIndex);
-      }
-
-      final int paramCount = indexDefinition.getParamCount();
-
-      for (int i = 1; i <= paramCount; i++) {
-        final List<String> fields = indexDefinition.getFields().subList(0, i);
-        final OMultiKey multiKey = new OMultiKey(fields);
-        Set<OIndex> indexSet = propertyIndex.get(multiKey);
-
-        if (indexSet == null) indexSet = new HashSet<>();
-        else indexSet = new HashSet<>(indexSet);
-
-        indexSet.add(index);
-        propertyIndex.put(multiKey, indexSet);
-      }
-
-      classPropertyIndex.put(
-          indexDefinition.getClassName().toLowerCase(locale), copyPropertyMap(propertyIndex));
+      addIndexInternalNoLock(index);
     } finally {
       releaseExclusiveLock();
     }
+  }
+
+  private void addIndexInternalNoLock(final OIndex index) {
+    final Locale locale = getServerLocale();
+    indexes.put(index.getName(), index);
+
+    final OIndexDefinition indexDefinition = index.getDefinition();
+    if (indexDefinition == null || indexDefinition.getClassName() == null) return;
+
+    Map<OMultiKey, Set<OIndex>> propertyIndex = getIndexOnProperty(indexDefinition.getClassName());
+
+    if (propertyIndex == null) {
+      propertyIndex = new HashMap<>();
+    } else {
+      propertyIndex = new HashMap<>(propertyIndex);
+    }
+
+    final int paramCount = indexDefinition.getParamCount();
+
+    for (int i = 1; i <= paramCount; i++) {
+      final List<String> fields = indexDefinition.getFields().subList(0, i);
+      final OMultiKey multiKey = new OMultiKey(fields);
+      Set<OIndex> indexSet = propertyIndex.get(multiKey);
+
+      if (indexSet == null) indexSet = new HashSet<>();
+      else indexSet = new HashSet<>(indexSet);
+
+      indexSet.add(index);
+      propertyIndex.put(multiKey, indexSet);
+    }
+
+    classPropertyIndex.put(
+        indexDefinition.getClassName().toLowerCase(locale), copyPropertyMap(propertyIndex));
   }
 
   static Map<OMultiKey, Set<OIndex>> copyPropertyMap(Map<OMultiKey, Set<OIndex>> original) {
@@ -968,14 +971,14 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
               }
 
               if (index.loadFromConfiguration(d)) {
-                addIndexInternal(index);
+                addIndexInternalNoLock(index);
               } else {
                 indexConfigurationIterator.remove();
                 configUpdated = true;
               }
             } else {
               if (index.loadFromConfiguration(d)) {
-                addIndexInternal(index);
+                addIndexInternalNoLock(index);
               } else {
                 indexConfigurationIterator.remove();
                 configUpdated = true;
