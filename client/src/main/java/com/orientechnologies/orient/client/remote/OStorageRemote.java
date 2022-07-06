@@ -670,12 +670,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       if (!checkForClose(iForce)) return;
     }
 
-    // In backward compatible code the context is missing check if is there.
-    // we need to check the status closing here for avoid deadlocks (in future flow refactor this
-    // may be removed)
-    if (context != null && status != STATUS.CLOSED && status != STATUS.CLOSING) {
-      context.closeStorage(this);
-    }
   }
 
   public void shutdown() {
