@@ -25,7 +25,9 @@ import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxInternal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import java.io.File;
 import java.io.FileReader;
@@ -84,7 +86,11 @@ public class ODatabaseHelper {
   public static void dropDatabase(
       final ODatabase database, final String directory, String storageType) throws IOException {
     if (existsDatabase(database, storageType)) {
-      if (database.getURL().startsWith("remote:")) {
+      if (database instanceof ODatabaseDocumentTx) {
+        OrientDBInternal factory =
+            ODatabaseDocumentTxInternal.getFactory((ODatabaseDocumentTx) database);
+        factory.drop(database.getName(), "root", getServerRootPassword());
+      } else if (database.getURL().startsWith("remote:")) {
         database.activateOnCurrentThread();
         database.close();
         OServerAdmin admin =
@@ -103,7 +109,11 @@ public class ODatabaseHelper {
   public static boolean existsDatabase(final ODatabase database, String storageType)
       throws IOException {
     database.activateOnCurrentThread();
-    if (database.getURL().startsWith("remote")) {
+    if (database instanceof ODatabaseDocumentTx) {
+      OrientDBInternal factory =
+          ODatabaseDocumentTxInternal.getFactory((ODatabaseDocumentTx) database);
+      return factory.exists(database.getName(), "root", getServerRootPassword());
+    } else if (database.getURL().startsWith("remote")) {
       OServerAdmin admin =
           new OServerAdmin(database.getURL()).connect("root", getServerRootPassword());
       boolean exist = admin.existsDatabase(storageType);
