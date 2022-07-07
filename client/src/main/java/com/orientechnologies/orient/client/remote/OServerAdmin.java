@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.client.remote;
 
-import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
@@ -55,11 +54,10 @@ public class OServerAdmin {
     if (url.startsWith(OEngineRemote.NAME)) url = url.substring(OEngineRemote.NAME.length() + 1);
 
     if (!url.contains("/")) url += "/";
-    urls = new ORemoteURLs(new String[] {}, new OContextConfiguration());
-    String name = urls.parseServerUrls(url, new OContextConfiguration());
-    remote =
-        (OrientDBRemote)
-            ODatabaseDocumentTxInternal.getOrCreateRemoteFactory(urls.getUrls().get(0));
+
+    remote = (OrientDBRemote) ODatabaseDocumentTxInternal.getOrCreateRemoteFactory(url);
+    urls = new ORemoteURLs(new String[] {}, remote.getContextConfiguration());
+    String name = urls.parseServerUrls(url, remote.getContextConfiguration());
     if (name != null && name.length() != 0) {
       this.database = Optional.of(name);
     } else {
