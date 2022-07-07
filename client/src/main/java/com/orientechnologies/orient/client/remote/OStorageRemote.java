@@ -669,7 +669,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       }
       if (!checkForClose(iForce)) return;
     }
-
   }
 
   public void shutdown() {
