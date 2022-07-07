@@ -98,7 +98,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   protected ODatabaseDocumentInternal internal;
   private final String url;
-  private OrientDBInternal factory;
+  protected OrientDBInternal factory;
   private final String type;
   private final String dbName;
   private final String baseUrl;

@@ -14,6 +14,10 @@ public class ODatabaseDocumentTxInternal {
     return db;
   }
 
+  public static OrientDBInternal getFactory(ODatabaseDocumentTx db) {
+    return db.factory;
+  }
+
   public static ODatabaseDocumentTx wrap(ODatabaseDocumentInternal database) {
     return new ODatabaseDocumentTx(database, null);
   }

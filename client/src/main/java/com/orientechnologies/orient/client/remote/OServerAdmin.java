@@ -19,6 +19,9 @@
  */
 package com.orientechnologies.orient.client.remote;
 
+import java.io.IOException;
+import java.util.Map;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
@@ -57,8 +60,6 @@ import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.util.OURLConnection;
 import com.orientechnologies.orient.core.util.OURLHelper;
-import java.io.IOException;
-import java.util.Map;
 
 /** Remote administration class of OrientDB Server instances. */
 @Deprecated
