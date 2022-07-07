@@ -171,7 +171,7 @@ public class MultipleDBTest extends DocumentDBBaseTest {
 
   @Test
   public void testDocumentMultipleDBsThreaded() throws Exception {
-
+    ODatabaseDocumentTx.closeAll();
     final int operations_write = 1000;
     final int operations_read = 1;
     final int dbs = 10;
