@@ -682,7 +682,6 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
       sessions.remove(session);
       if (!checkForClose(iForce)) return;
     }
-
   }
 
   public void shutdown() {
