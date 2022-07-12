@@ -241,7 +241,7 @@ public class SimpleConnectionStrategiesIT {
       session2.close();
     }
 
-    assertEquals(urls.stream().filter((x) -> x.contains("2424")).count(), 1);
+    assertTrue(urls.stream().filter((x) -> x.contains("2424")).count() >= 1);
 
     remote1.close();
     server1.startup(

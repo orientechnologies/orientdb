@@ -2023,6 +2023,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   protected void onDatabaseEvent(
       final String nodeName, final String databaseName, final DB_STATUS status) {
+    notifyClients(databaseName);
     updateLastClusterChange();
     dumpServersStatus();
   }

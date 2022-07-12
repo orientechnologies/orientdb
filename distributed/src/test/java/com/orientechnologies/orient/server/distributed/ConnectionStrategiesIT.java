@@ -2,6 +2,7 @@ package com.orientechnologies.orient.server.distributed;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.CLIENT_CONNECTION_STRATEGY;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
@@ -78,9 +79,9 @@ public class ConnectionStrategiesIT {
     urls.add(((ODatabaseDocumentRemote) session3).getSessionMetadata().getDebugLastHost());
     session3.close();
 
-    assertEquals(urls.stream().filter((x) -> x.contains("2424")).count(), 1);
-    assertEquals(urls.stream().filter((x) -> x.contains("2425")).count(), 1);
-    assertEquals(urls.stream().filter((x) -> x.contains("2426")).count(), 1);
+    assertTrue(urls.stream().filter((x) -> x.contains("2424")).count() >= 1);
+    assertTrue(urls.stream().filter((x) -> x.contains("2425")).count() >= 1);
+    assertTrue(urls.stream().filter((x) -> x.contains("2426")).count() >= 1);
 
     server1.shutdown();
     server1.waitForShutdown();
@@ -96,8 +97,8 @@ public class ConnectionStrategiesIT {
       session2.close();
     }
 
-    assertEquals(urls.stream().filter((x) -> x.contains("2424")).count(), 1);
-    assertEquals(urls.stream().filter((x) -> x.contains("2426")).count(), 1);
+    assertTrue(urls.stream().filter((x) -> x.contains("2424")).count() >= 1);
+    assertTrue(urls.stream().filter((x) -> x.contains("2426")).count() >= 1);
 
     server1.startup(
         Thread.currentThread()
@@ -121,9 +122,9 @@ public class ConnectionStrategiesIT {
       session2.close();
     }
 
-    assertEquals(urls.stream().filter((x) -> x.contains("2424")).count(), 1);
-    assertEquals(urls.stream().filter((x) -> x.contains("2425")).count(), 1);
-    assertEquals(urls.stream().filter((x) -> x.contains("2426")).count(), 1);
+    assertTrue(urls.stream().filter((x) -> x.contains("2424")).count() >= 1);
+    assertTrue(urls.stream().filter((x) -> x.contains("2425")).count() >= 1);
+    assertTrue(urls.stream().filter((x) -> x.contains("2426")).count() >= 1);
     remote1.close();
   }
 
@@ -160,9 +161,9 @@ public class ConnectionStrategiesIT {
     urls.add(((ODatabaseDocumentRemote) session1).getSessionMetadata().getDebugLastHost());
     session1.close();
 
-    assertEquals(urls.stream().filter((x) -> x.contains("2424")).count(), 1);
-    assertEquals(urls.stream().filter((x) -> x.contains("2425")).count(), 1);
-    assertEquals(urls.stream().filter((x) -> x.contains("2426")).count(), 1);
+    assertTrue(urls.stream().filter((x) -> x.contains("2424")).count() >= 1);
+    assertTrue(urls.stream().filter((x) -> x.contains("2425")).count() >= 1);
+    assertTrue(urls.stream().filter((x) -> x.contains("2426")).count() >= 1);
 
     server1.shutdown();
     server1.waitForShutdown();
@@ -178,7 +179,7 @@ public class ConnectionStrategiesIT {
       session2.close();
     }
 
-    assertEquals(urls.stream().filter((x) -> x.contains("2424")).count(), 1);
+    assertTrue(urls.stream().filter((x) -> x.contains("2424")).count() >= 1);
 
     server1.startup(
         Thread.currentThread()
@@ -196,9 +197,9 @@ public class ConnectionStrategiesIT {
       session2.close();
     }
 
-    assertEquals(urls.stream().filter((x) -> x.contains("2424")).count(), 1);
-    assertEquals(urls.stream().filter((x) -> x.contains("2425")).count(), 1);
-    assertEquals(urls.stream().filter((x) -> x.contains("2426")).count(), 1);
+    assertTrue(urls.stream().filter((x) -> x.contains("2424")).count() >= 1);
+    assertTrue(urls.stream().filter((x) -> x.contains("2425")).count() >= 1);
+    assertTrue(urls.stream().filter((x) -> x.contains("2426")).count() >= 1);
     remote1.close();
   }
 
