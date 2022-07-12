@@ -26,6 +26,37 @@
 
 This document contains the last changes of OrientDB Community Edition.
 
+
+-----------------------------------------------------------------------------------------------------------------------------------
+VERSION 3.1.19  - (July, 18 2022)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.1-Release-Notes#3119---18-July-2022
+
+# Core
+- Changed update value of index entry to use the correct offset in all cases
+- Fixed multivalue composite index queries to not return duplicates
+- Fix thread pool executors to operate as intended.
+- Changed storage failed state management to avoid deadlock on fail
+- Disable pre-allocation of whole this cache on startup
+- Make sure to drop the database also when drop listeners fail
+- Make sure to release lock on close of failed storage
+- Avoid that wrong validation value stop opening a database
+
+# Distributed
+- Size check on string write in network protocol
+- Unblock distributed request handling in case of install error, issue #9815
+
+# Lucene
+- Support parameterised metadata in Lucene queries
+- Use correct search function  in SEARCH_FIELDS test
+- Make sure that lucene parsing exception do not set the storage in read only mode, issue #9498
+
+# Client
+- Avoid NPE running LIST INDEXES on remote db
+
+# Tools
+- Remove edges with in or out null during bonsai repair, issue #9806
+
+
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.1.18  - (May, 25 2022)
 - Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.1-Release-Notes#3118---25-may-2022
