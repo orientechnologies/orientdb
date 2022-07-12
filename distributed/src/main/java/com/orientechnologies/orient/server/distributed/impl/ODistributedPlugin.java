@@ -2205,6 +2205,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
   public void onDatabaseEvent(
       final String nodeName, final String databaseName, final DB_STATUS status) {
+    notifyClients(databaseName);
     updateLastClusterChange();
     dumpServersStatus();
   }

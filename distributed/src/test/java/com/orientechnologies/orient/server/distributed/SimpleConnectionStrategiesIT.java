@@ -240,6 +240,7 @@ public class SimpleConnectionStrategiesIT {
     }
 
     assertEquals(urls.stream().filter((x) -> x.contains("2425")).count(), 0);
+    assertTrue(urls.stream().filter((x) -> x.contains("2424")).count() >= 1);
 
     remote1.close();
     toStop.startServer("orientdb-simple-dserver-config-1.xml");
