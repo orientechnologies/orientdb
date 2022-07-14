@@ -377,6 +377,7 @@ public class OPropertyEmbedded extends OPropertyImpl {
 
   public OPropertyImpl setMax(final String max) {
     getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
+    checkCorrectLimitValue(max);
 
     acquireSchemaWriteLock();
     try {
@@ -386,6 +387,33 @@ public class OPropertyEmbedded extends OPropertyImpl {
     }
 
     return this;
+  }
+
+  private void checkCorrectLimitValue(final String value) {
+    if (value != null) {
+      if (this.getType().equals(OType.STRING)
+          || this.getType().equals(OType.LINKBAG)
+          || this.getType().equals(OType.BINARY)
+          || this.getType().equals(OType.EMBEDDEDLIST)
+          || this.getType().equals(OType.EMBEDDEDSET)
+          || this.getType().equals(OType.LINKLIST)
+          || this.getType().equals(OType.LINKSET)
+          || this.getType().equals(OType.LINKBAG)
+          || this.getType().equals(OType.EMBEDDEDMAP)
+          || this.getType().equals(OType.LINKMAP)) {
+        OType.convert(value, Integer.class);
+      } else if (this.getType().equals(OType.DATE)
+          || this.getType().equals(OType.BYTE)
+          || this.getType().equals(OType.SHORT)
+          || this.getType().equals(OType.INTEGER)
+          || this.getType().equals(OType.LONG)
+          || this.getType().equals(OType.FLOAT)
+          || this.getType().equals(OType.DOUBLE)
+          || this.getType().equals(OType.DECIMAL)
+          || this.getType().equals(OType.DATETIME)) {
+        OType.convert(value, this.getType().getDefaultJavaType());
+      }
+    }
   }
 
   protected void setMaxInternal(final String max) {
@@ -404,6 +432,7 @@ public class OPropertyEmbedded extends OPropertyImpl {
 
   public OPropertyImpl setMin(final String min) {
     getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
+    checkCorrectLimitValue(min);
 
     acquireSchemaWriteLock();
     try {
