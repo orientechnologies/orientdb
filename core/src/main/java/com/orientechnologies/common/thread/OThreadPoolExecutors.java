@@ -6,7 +6,7 @@ public class OThreadPoolExecutors {
 
   private OThreadPoolExecutors() {}
 
-  public static ExecutorService newScalingThreadPool(
+  public static TracingExecutorService newScalingThreadPool(
       String threadName,
       int corePoolSize,
       int maxPoolSize,
@@ -23,7 +23,7 @@ public class OThreadPoolExecutors {
         timeoutUnit);
   }
 
-  public static ExecutorService newScalingThreadPool(
+  public static TracingExecutorService newScalingThreadPool(
       String threadName,
       ThreadGroup parentThreadGroup,
       int corePoolSize,
@@ -40,7 +40,7 @@ public class OThreadPoolExecutors {
         new NamedThreadFactory(threadName, parentThreadGroup));
   }
 
-  public static ExecutorService newBlockingScalingThreadPool(
+  public static TracingExecutorService newBlockingScalingThreadPool(
       String threadName,
       ThreadGroup parentThreadGroup,
       int corePoolSize,
@@ -59,11 +59,11 @@ public class OThreadPoolExecutors {
         new NamedThreadFactory(threadName, parentThreadGroup));
   }
 
-  public static ExecutorService newFixedThreadPool(String threadName, int poolSize) {
+  public static TracingExecutorService newFixedThreadPool(String threadName, int poolSize) {
     return newFixedThreadPool(threadName, Thread.currentThread().getThreadGroup(), poolSize);
   }
 
-  public static ExecutorService newFixedThreadPool(
+  public static TracingExecutorService newFixedThreadPool(
       String threadName, ThreadGroup parentThreadGroup, int poolSize) {
     return new OThreadPoolExecutorWithLogging(
         poolSize,
@@ -74,16 +74,16 @@ public class OThreadPoolExecutors {
         new NamedThreadFactory(threadName, parentThreadGroup));
   }
 
-  public static ExecutorService newCachedThreadPool(String threadName) {
+  public static TracingExecutorService newCachedThreadPool(String threadName) {
     return newCachedThreadPool(threadName, Thread.currentThread().getThreadGroup());
   }
 
-  public static ExecutorService newCachedThreadPool(
+  public static TracingExecutorService newCachedThreadPool(
       String threadName, ThreadGroup parentThreadGroup) {
     return newCachedThreadPool(threadName, parentThreadGroup, Integer.MAX_VALUE, 0);
   }
 
-  public static ExecutorService newCachedThreadPool(
+  public static TracingExecutorService newCachedThreadPool(
       String threadName, ThreadGroup parentThreadGroup, int maxThreads, int maxQueue) {
     return new OThreadPoolExecutorWithLogging(
         0,
@@ -94,11 +94,11 @@ public class OThreadPoolExecutors {
         new NamedThreadFactory(threadName, parentThreadGroup));
   }
 
-  public static ExecutorService newSingleThreadPool(String threadName) {
+  public static TracingExecutorService newSingleThreadPool(String threadName) {
     return newSingleThreadPool(threadName, Thread.currentThread().getThreadGroup());
   }
 
-  public static ExecutorService newSingleThreadPool(
+  public static TracingExecutorService newSingleThreadPool(
       String threadName, ThreadGroup parentThreadGroup) {
     return new OThreadPoolExecutorWithLogging(
         1,
@@ -109,7 +109,7 @@ public class OThreadPoolExecutors {
         new SingletonNamedThreadFactory(threadName, parentThreadGroup));
   }
 
-  public static ExecutorService newSingleThreadPool(
+  public static TracingExecutorService newSingleThreadPool(
       String threadName, int maxQueue, RejectedExecutionHandler rejectHandler) {
     return new OThreadPoolExecutorWithLogging(
         1,
