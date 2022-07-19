@@ -414,82 +414,54 @@ public class OrientDBEmbedded implements OrientDBInternal {
     return maxSegSize;
   }
 
+  private ODatabaseDocumentEmbedded doOpen(
+      String name, String user, String password, boolean checkPassword, OrientDBConfig config) {
+    checkDatabaseName(name);
+    checkOpen();
+    try {
+      final ODatabaseDocumentEmbedded embedded;
+      config = solveConfig(config);
+      synchronized (this) {
+        OAbstractPaginatedStorage storage = getAndOpenStorage(name, config);
+        storage.incOnOpen();
+        embedded = newSessionInstance(storage);
+        embedded.init(config, getOrCreateSharedContext(storage));
+      }
+      embedded.rebuildIndexes();
+      if (user != null) {
+        embedded.internalOpen(user, password, checkPassword);
+      }
+      embedded.callOnOpenListeners();
+      return embedded;
+    } catch (Exception e) {
+      throw OException.wrapException(
+          new ODatabaseException("Cannot open database '" + name + "'"), e);
+    }
+  }
+
   @Override
-  public ODatabaseDocumentInternal open(String name, String user, String password) {
+  public final ODatabaseDocumentInternal open(String name, String user, String password) {
     return open(name, user, password, null);
-  }
-
-  public ODatabaseDocumentEmbedded openNoAuthenticate(String name, String user) {
-    checkDatabaseName(name);
-    try {
-      final ODatabaseDocumentEmbedded embedded;
-      OrientDBConfig config = solveConfig(null);
-      synchronized (this) {
-        checkOpen();
-        OAbstractPaginatedStorage storage = getAndOpenStorage(name, config);
-        storage.incOnOpen();
-        embedded = newSessionInstance(storage);
-        embedded.init(config, getOrCreateSharedContext(storage));
-      }
-      embedded.rebuildIndexes();
-      embedded.internalOpen(user, "nopwd", false);
-      embedded.callOnOpenListeners();
-      return embedded;
-    } catch (Exception e) {
-      throw OException.wrapException(
-          new ODatabaseException("Cannot open database '" + name + "'"), e);
-    }
-  }
-
-  protected ODatabaseDocumentEmbedded newSessionInstance(OAbstractPaginatedStorage storage) {
-    return new ODatabaseDocumentEmbedded(storage);
-  }
-
-  public ODatabaseDocumentEmbedded openNoAuthorization(String name) {
-    checkDatabaseName(name);
-    try {
-      final ODatabaseDocumentEmbedded embedded;
-      OrientDBConfig config = solveConfig(null);
-      synchronized (this) {
-        checkOpen();
-        OAbstractPaginatedStorage storage = getAndOpenStorage(name, config);
-        storage.incOnOpen();
-        embedded = newSessionInstance(storage);
-        embedded.init(config, getOrCreateSharedContext(storage));
-      }
-      embedded.rebuildIndexes();
-      embedded.callOnOpenListeners();
-      return embedded;
-    } catch (Exception e) {
-      throw OException.wrapException(
-          new ODatabaseException("Cannot open database '" + name + "'"), e);
-    }
   }
 
   @Override
   public ODatabaseDocumentInternal open(
       String name, String user, String password, OrientDBConfig config) {
-    checkDatabaseName(name);
     checkDefaultPassword(name, user, password);
-    try {
-      final ODatabaseDocumentEmbedded embedded;
-      synchronized (this) {
-        checkOpen();
-        config = solveConfig(config);
-        OAbstractPaginatedStorage storage = getAndOpenStorage(name, config);
+    return doOpen(name, user, password, true, config);
+  }
 
-        embedded = newSessionInstance(storage);
-        embedded.init(config, getOrCreateSharedContext(storage));
-        storage.incOnOpen();
-      }
-      embedded.rebuildIndexes();
-      embedded.internalOpen(user, password);
-      embedded.callOnOpenListeners();
-      return embedded;
-    } catch (Exception e) {
-      throw OException.wrapException(
-          new ODatabaseException("Cannot open database '" + name + "'"), e);
-    }
+  public ODatabaseDocumentEmbedded openNoAuthenticate(String name, String user) {
+    return doOpen(name, user, null, false, null);
+  }
+
+  @Override
+  public ODatabaseDocumentEmbedded openNoAuthorization(String name) {
+    return doOpen(name, null, null, false, null);
+  }
+
+  protected ODatabaseDocumentEmbedded newSessionInstance(OAbstractPaginatedStorage storage) {
+    return new ODatabaseDocumentEmbedded(storage);
   }
 
   private OAbstractPaginatedStorage getAndOpenStorage(String name, OrientDBConfig config) {
