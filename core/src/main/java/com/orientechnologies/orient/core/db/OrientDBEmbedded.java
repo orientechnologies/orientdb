@@ -539,6 +539,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
       String name, String user, String password, ODatabasePoolInternal pool) {
     final ODatabaseDocumentEmbedded embedded;
     synchronized (this) {
+      checkDatabaseName(name);
       checkOpen();
       OAbstractPaginatedStorage storage = getAndOpenStorage(name, pool.getConfig());
       embedded = newPooledSessionInstance(pool, storage);
@@ -810,10 +811,8 @@ public class OrientDBEmbedded implements OrientDBInternal {
 
   @Override
   public void drop(String name, String user, String password) {
-    synchronized (this) {
-      checkOpen();
-    }
     checkDatabaseName(name);
+    checkOpen();
     ODatabaseDocumentInternal current = ODatabaseRecordThreadLocal.instance().getIfDefined();
     try {
       ODatabaseDocumentInternal db = openNoAuthenticate(name, user);
