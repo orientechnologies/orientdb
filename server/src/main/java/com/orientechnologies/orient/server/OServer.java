@@ -977,7 +977,7 @@ public class OServer {
     // TODO: final String path = getStoragePath(iDbUrl); it use to resolve the path in some way
     boolean serverAuth = false;
     if (iBypassAccess) {
-      database = databases.openNoAuthenticate(iDbUrl, user);
+      database = databases.openInternal(iDbUrl, user);
       serverAuth = true;
     } else {
       OServerUserConfiguration serverUser = serverLogin(user, password, "database.passthrough");
