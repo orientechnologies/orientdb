@@ -163,7 +163,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   public void startup() {
     if (!enabled) return;
 
-    running = true;
     if (serverInstance.getDatabases() instanceof OrientDBDistributed)
       ((OrientDBDistributed) serverInstance.getDatabases()).setPlugin(this);
 
@@ -372,6 +371,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           new ODistributedStartupException("Error on starting distributed plugin"), e);
     }
 
+    running = true;
     dumpServersStatus();
   }
 
