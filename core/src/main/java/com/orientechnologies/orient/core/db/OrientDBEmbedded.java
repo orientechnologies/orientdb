@@ -28,6 +28,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.thread.OThreadPoolExecutors;
+import com.orientechnologies.common.thread.TracingExecutorService;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
@@ -67,7 +68,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -92,7 +92,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   protected final Orient orient;
   protected final OCachedDatabasePoolFactory cachedPoolFactory;
   private volatile boolean open = true;
-  private ExecutorService executor;
+  private TracingExecutorService executor;
   private Timer timer;
   private TimerTask autoCloseTimer = null;
   private final OScriptManager scriptManager = new OScriptManager();
@@ -1063,9 +1063,31 @@ public class OrientDBEmbedded implements OrientDBInternal {
         });
   }
 
+  public <X> Future<X> executeInternalNoAuthorization(
+      String taskName, String database, ODatabaseTask<X> task) {
+    return executeInternal(taskName, database, null, task);
+  }
+
+  public <X> Future<X> executeInternal(
+      String taskName, String database, String user, ODatabaseTask<X> task) {
+    return executor.submit(
+        taskName,
+        () -> {
+          try (ODatabaseSession session = openInternal(database, null)) {
+            return task.call(session);
+          }
+        });
+  }
+
   @Override
   public <X> Future<X> executeNoAuthorization(String database, ODatabaseTask<X> task) {
+    return executeNoAuthorization(null, database, task);
+  }
+
+  public <X> Future<X> executeNoAuthorization(
+      String taskName, String database, ODatabaseTask<X> task) {
     return executor.submit(
+        taskName,
         () -> {
           try (ODatabaseSession session = openNoAuthorization(database)) {
             return task.call(session);
@@ -1074,7 +1096,11 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   public <X> Future<X> executeNoDb(Callable<X> callable) {
-    return executor.submit(callable);
+    return executeNoDb(null, callable);
+  }
+
+  public <X> Future<X> executeNoDb(String taskName, Callable<X> callable) {
+    return executor.submit(taskName, callable);
   }
 
   public OScriptManager getScriptManager() {
