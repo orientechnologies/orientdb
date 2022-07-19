@@ -121,11 +121,11 @@ public class OThreadPoolExecutors {
         rejectHandler);
   }
 
-  public static ScheduledExecutorService newSingleThreadScheduledPool(String threadName) {
+  public static TracingScheduledExecutorService newSingleThreadScheduledPool(String threadName) {
     return newSingleThreadScheduledPool(threadName, Thread.currentThread().getThreadGroup());
   }
 
-  public static ScheduledExecutorService newSingleThreadScheduledPool(
+  public static TracingScheduledExecutorService newSingleThreadScheduledPool(
       String threadName, ThreadGroup parentThreadGroup) {
     return new OScheduledThreadPoolExecutorWithLogging(
         1, new SingletonNamedThreadFactory(threadName, parentThreadGroup));
