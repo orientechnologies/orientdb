@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.db.viewmanager;
 
+import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -10,6 +11,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OLiveQueryResultListener;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
+import com.orientechnologies.orient.core.db.OrientDBEmbedded;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
@@ -148,12 +150,22 @@ public class ViewManager {
           public void run() {
             if (closed) return;
             lastTask =
-                orientDB.executeNoAuthorization(
-                    dbName,
-                    (db) -> {
-                      ViewManager.this.updateViews((ODatabaseDocumentInternal) db);
-                      return null;
-                    });
+                ((OrientDBEmbedded) orientDB)
+                    .executeNoDb(
+                        "ViewManager.updateViews",
+                        () -> {
+                          try (ODatabaseDocumentInternal db =
+                              orientDB.openNoAuthorization(dbName)) {
+                            ViewManager.this.updateViews(db);
+                          } catch (OOfflineNodeException e) {
+                            OLogManager.instance()
+                                .debug(this, "Node offline when updating views", e);
+                          } finally {
+                            // When the run is finished schedule the next run.
+                            schedule();
+                          }
+                          return null;
+                        });
           }
         };
     this.orientDB.scheduleOnce(timerTask, 1000);
@@ -167,8 +179,6 @@ public class ViewManager {
       if (view != null) {
         updateView(view, db);
       }
-      // When the run is finished schedule the next run.
-      schedule();
     } catch (Exception e) {
       OLogManager.instance().warn(this, "Failed to update views", e);
     }
