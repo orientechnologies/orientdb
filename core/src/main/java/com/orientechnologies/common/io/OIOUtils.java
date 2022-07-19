@@ -183,14 +183,11 @@ public class OIOUtils {
     }
   }
 
-  public static long copyStream(final InputStream in, final OutputStream out, long iMax)
-      throws IOException {
-    if (iMax < 0) iMax = Long.MAX_VALUE;
-
+  public static long copyStream(final InputStream in, final OutputStream out) throws IOException {
     final byte[] buf = new byte[8192];
     int byteRead = 0;
     long byteTotal = 0;
-    while ((byteRead = in.read(buf, 0, (int) Math.min(buf.length, iMax - byteTotal))) > 0) {
+    while ((byteRead = in.read(buf)) != -1) {
       out.write(buf, 0, byteRead);
       byteTotal += byteRead;
     }

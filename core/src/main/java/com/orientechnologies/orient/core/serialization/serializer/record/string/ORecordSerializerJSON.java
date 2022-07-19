@@ -314,7 +314,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     } catch (final JsonParseException e) {
       final OutputStream out = new ByteArrayOutputStream();
       try {
-        OIOUtils.copyStream(source, out, -1);
+        OIOUtils.copyStream(source, out);
         OLogManager.instance()
             .warn(
                 ORecordSerializerJSON.class,
