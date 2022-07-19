@@ -849,7 +849,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     }
   }
 
-  public ODatabasePoolInternal openPool(String name, String user, String password) {
+  public final ODatabasePoolInternal openPool(String name, String user, String password) {
     return openPool(name, user, password, null);
   }
 
@@ -864,7 +864,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   @Override
-  public ODatabasePoolInternal cachedPool(String database, String user, String password) {
+  public final ODatabasePoolInternal cachedPool(String database, String user, String password) {
     return cachedPool(database, user, password, null);
   }
 

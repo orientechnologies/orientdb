@@ -48,6 +48,13 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     this.server = server;
   }
 
+  private boolean isDistributedEnabled() {
+    if (server == null) {
+      return false;
+    }
+    return server.isDistributedPluginEnabled();
+  }
+
   public synchronized OHazelcastPlugin getPlugin() {
     if (plugin == null) {
       if (server != null && server.isActive()) plugin = server.getPlugin("cluster");
@@ -56,19 +63,18 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   protected OSharedContext createSharedContext(OAbstractPaginatedStorage storage) {
-    if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName())
-        || getPlugin() == null
-        || !getPlugin().isRunning()) {
+    if (!isDistributedEnabled() || OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName())) {
       return new OSharedContextEmbedded(storage, this);
     }
     return new OSharedContextDistributed(storage, this);
   }
 
   protected ODatabaseDocumentEmbedded newSessionInstance(OAbstractPaginatedStorage storage) {
-    if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName())
-        || getPlugin() == null
-        || !getPlugin().isRunning()) {
+    if (!isDistributedEnabled() || OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName())) {
       return new ODatabaseDocumentEmbedded(storage);
+    }
+    if (plugin == null) {
+      throw new OOfflineNodeException("Distributed plugin is not active");
     }
     plugin.registerNewDatabaseIfNeeded(
         storage.getName(), plugin.getDatabaseConfiguration(storage.getName()));
@@ -77,10 +83,11 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   protected ODatabaseDocumentEmbedded newPooledSessionInstance(
       ODatabasePoolInternal pool, OAbstractPaginatedStorage storage) {
-    if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName())
-        || getPlugin() == null
-        || !getPlugin().isRunning()) {
+    if (!isDistributedEnabled() || OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName())) {
       return new ODatabaseDocumentEmbeddedPooled(pool, storage);
+    }
+    if (plugin == null) {
+      throw new OOfflineNodeException("Distributed plugin is not active");
     }
     plugin.registerNewDatabaseIfNeeded(
         storage.getName(), plugin.getDatabaseConfiguration(storage.getName()));
@@ -163,8 +170,22 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   @Override
   public ODatabaseDocumentInternal poolOpen(
       String name, String user, String password, ODatabasePoolInternal pool) {
-    ODatabaseDocumentInternal session = super.poolOpen(name, user, password, pool);
-    return session;
+    checkDbAvailable(name);
+    return super.poolOpen(name, user, password, pool);
+  }
+
+  @Override
+  public ODatabasePoolInternal openPool(
+      String name, String user, String password, OrientDBConfig config) {
+    checkDbAvailable(name);
+    return super.openPool(name, user, password, config);
+  }
+
+  @Override
+  public ODatabasePoolInternal cachedPool(
+      String name, String user, String password, OrientDBConfig config) {
+    checkDbAvailable(name);
+    return super.cachedPool(name, user, password, config);
   }
 
   @Override
@@ -204,10 +225,14 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   private void checkDbAvailable(String name) {
-    if (getPlugin() == null || !getPlugin().isRunning()) {
+    if (!isDistributedEnabled() || OSystemDatabase.SYSTEM_DB_NAME.equals(name)) {
       return;
     }
-    if (OSystemDatabase.SYSTEM_DB_NAME.equals(name)) return;
+    if (getPlugin() == null || !getPlugin().isRunning()) {
+      // The configuration specifies distributed mode, but the distributed plugin has not
+      // started yet (and a client has requested database access before the server is up)
+      throw new OOfflineNodeException("Distributed server is not yet ONLINE");
+    }
     ODistributedServerManager.DB_STATUS dbStatus =
         plugin.getDatabaseStatus(plugin.getLocalNodeName(), name);
     if (dbStatus != ODistributedServerManager.DB_STATUS.ONLINE
@@ -218,16 +243,22 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   @Override
-  public ODatabaseDocumentInternal open(String name, String user, String password) {
-    checkDbAvailable(name);
-    return super.open(name, user, password);
-  }
-
-  @Override
   public ODatabaseDocumentInternal open(
       String name, String user, String password, OrientDBConfig config) {
     checkDbAvailable(name);
     return super.open(name, user, password, config);
+  }
+
+  @Override
+  public ODatabaseDocumentEmbedded openNoAuthenticate(String name, String user) {
+    checkDbAvailable(name);
+    return super.openNoAuthenticate(name, user);
+  }
+
+  @Override
+  public ODatabaseDocumentEmbedded openNoAuthorization(String name) {
+    checkDbAvailable(name);
+    return super.openNoAuthorization(name);
   }
 
   @Override
