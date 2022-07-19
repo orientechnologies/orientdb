@@ -164,6 +164,17 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   public void startup() {
     if (!enabled) return;
 
+    try {
+      final String delayEnv = System.getenv("HAZELCAST_PLUGIN_STARTUP_DELAY");
+      if (delayEnv != null) {
+        long delay = Long.parseLong(delayEnv);
+        OLogManager.instance().info(this, "Delaying HazelcastPlugin startup by '%d' ms", delay);
+        Thread.sleep(delay);
+      }
+    } catch (Throwable t) {
+      t.printStackTrace();
+    }
+
     if (serverInstance.getDatabases() instanceof OrientDBDistributed)
       ((OrientDBDistributed) serverInstance.getDatabases()).setPlugin(this);
 
