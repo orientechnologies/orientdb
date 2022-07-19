@@ -178,18 +178,20 @@ public class ViewManager {
     }
     if (lastTask != null) {
       try {
-        try {
+        // Try to cancel last task before it runs, otherwise wait for completion
+        if (!lastTask.cancel(false)) {
           lastTask.get(20, TimeUnit.SECONDS);
-        } catch (TimeoutException e) {
-          lastTask.cancel(true);
-          lastTask.get();
         }
-
+      } catch (TimeoutException e) {
+        OLogManager.instance()
+            .warn(
+                this,
+                "Timeout waiting for last task to complete view update background operations");
       } catch (InterruptedException e) {
         throw OException.wrapException(
             new OInterruptedException("Terminated while waiting update view to finis"), e);
       } catch (ExecutionException e) {
-        OLogManager.instance().warn(this, "Issue terminating view update background operations", e);
+        // Will already have been logged by thread pool executor
       }
     }
 
