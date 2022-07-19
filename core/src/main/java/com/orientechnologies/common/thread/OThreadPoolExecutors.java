@@ -130,4 +130,21 @@ public class OThreadPoolExecutors {
     return new OScheduledThreadPoolExecutorWithLogging(
         1, new SingletonNamedThreadFactory(threadName, parentThreadGroup));
   }
+
+  private static final TracingExecutorService GLOBAL_EXECUTOR =
+      newCachedThreadPool("OrientDB-Global");
+
+  public static void executeUnbound(Runnable task, String name) {
+    GLOBAL_EXECUTOR.submit(
+        name,
+        () -> {
+          final String poolThreadName = Thread.currentThread().getName();
+          try {
+            Thread.currentThread().setName(name);
+            task.run();
+          } finally {
+            Thread.currentThread().setName(poolThreadName);
+          }
+        });
+  }
 }
