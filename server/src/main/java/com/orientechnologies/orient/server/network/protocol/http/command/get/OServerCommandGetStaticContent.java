@@ -150,7 +150,7 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
         ByteArrayOutputStream bytesOutput = new ByteArrayOutputStream();
         GZIPOutputStream stream = new GZIPOutputStream(bytesOutput, 16384);
         try {
-          OIOUtils.copyStream(staticContent.is, stream, -1);
+          OIOUtils.copyStream(staticContent.is, stream);
           stream.finish();
           byte[] compressedBytes = bytesOutput.toByteArray();
           iResponse.sendStream(

@@ -178,7 +178,7 @@ public class ODocument extends ORecordAbstract
    */
   public ODocument(final InputStream iSource) throws IOException {
     final ByteArrayOutputStream out = new ByteArrayOutputStream();
-    OIOUtils.copyStream(iSource, out, -1);
+    OIOUtils.copyStream(iSource, out);
     source = out.toByteArray();
     setup(ODatabaseRecordThreadLocal.instance().getIfDefined());
   }
