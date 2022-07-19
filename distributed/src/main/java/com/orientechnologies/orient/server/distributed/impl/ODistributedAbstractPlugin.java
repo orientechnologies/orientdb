@@ -20,6 +20,8 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_MAX_STARTUP_DELAY;
+import static com.orientechnologies.orient.server.distributed.ODistributedServerManager.NODE_STATUS.OFFLINE;
+import static com.orientechnologies.orient.server.distributed.ODistributedServerManager.NODE_STATUS.SHUTTINGDOWN;
 
 import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
@@ -1978,6 +1980,10 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       OModifiableDistributedConfiguration lastCfg,
       final OCallable<T, OModifiableDistributedConfiguration> iCallback) {
 
+    if (getNodeStatus() == SHUTTINGDOWN || getNodeStatus() == OFFLINE) {
+      throw new OOfflineNodeException(
+          String.format("Node %s is shutting down or offline.", nodeName));
+    }
     boolean updated;
     T result;
     getLockManagerExecutor().acquireExclusiveLock(databaseName, nodeName, timeoutLocking);
