@@ -44,6 +44,7 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
+import com.orientechnologies.common.thread.OThreadPoolExecutors;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OCallableNoParamNoReturn;
 import com.orientechnologies.common.util.OCallableUtils;
@@ -311,17 +312,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
       publishLocalNodeConfiguration();
 
-      new Thread(
-              () -> {
-                try {
-                  installNewDatabasesFromCluster();
-                  loadLocalDatabases();
-                } finally {
-                  serverStarted.countDown();
-                }
-              })
-          .start();
-
       membershipListenerMapRegistration =
           configurationMap.getHazelcastMap().addEntryListener(this, true);
       membershipListenerRegistration = hazelcastInstance.getCluster().addMembershipListener(this);
@@ -372,6 +362,19 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     }
 
     running = true;
+    OThreadPoolExecutors.executeUnbound(
+        () -> {
+          try {
+            installNewDatabasesFromCluster();
+
+            // FIXME: installNewDatabasesFromCluster catches exceptions, and loadLocalDatabases
+            //  fails with same exception
+            loadLocalDatabases();
+          } finally {
+            serverStarted.countDown();
+          }
+        },
+        "OHazelcastPlugin InstallDBs");
     dumpServersStatus();
   }
 
