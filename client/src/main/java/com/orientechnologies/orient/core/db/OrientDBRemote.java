@@ -446,6 +446,11 @@ public class OrientDBRemote implements OrientDBInternal {
   }
 
   @Override
+  public ODatabaseDocumentInternal openInternal(String iDbUrl, String user) {
+    throw new UnsupportedOperationException("Open for internal use is not supported in remote");
+  }
+
+  @Override
   public ODatabaseDocumentInternal openNoAuthenticate(String iDbUrl, String user) {
     throw new UnsupportedOperationException(
         "Open with no authentication is not supported in remote");

@@ -288,6 +288,8 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
     return orientDB.internal;
   }
 
+  ODatabaseDocumentInternal openInternal(String iDbUrl, String user);
+
   ODatabaseDocumentInternal openNoAuthenticate(String iDbUrl, String user);
 
   ODatabaseDocumentInternal openNoAuthorization(String name);

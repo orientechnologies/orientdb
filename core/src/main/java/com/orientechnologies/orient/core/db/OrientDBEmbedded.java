@@ -451,6 +451,11 @@ public class OrientDBEmbedded implements OrientDBInternal {
     return doOpen(name, user, password, true, config);
   }
 
+  @Override
+  public final ODatabaseDocumentEmbedded openInternal(String name, String user) {
+    return doOpen(name, user, null, false, null);
+  }
+
   public ODatabaseDocumentEmbedded openNoAuthenticate(String name, String user) {
     return doOpen(name, user, null, false, null);
   }
