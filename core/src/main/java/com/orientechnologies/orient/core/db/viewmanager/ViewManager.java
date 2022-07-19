@@ -97,15 +97,17 @@ public class ViewManager {
   }
 
   protected void init() {
-    orientDB.executeNoAuthorization(
-        dbName,
-        (db) -> {
-          // do this to make sure that the storage is already initialized and so is the shared
-          // context.
-          // you just don't need the db passed as a param here
-          registerLiveUpdates(db);
-          return null;
-        });
+    ((OrientDBEmbedded) orientDB)
+        .executeInternalNoAuthorization(
+            "ViewManager.registerLiveUpdates",
+            dbName,
+            (db) -> {
+              // do this to make sure that the storage is already initialized and so is the shared
+              // context.
+              // you just don't need the db passed as a param here
+              registerLiveUpdates(db);
+              return null;
+            });
   }
 
   private synchronized void registerLiveUpdates(ODatabaseSession db) {
