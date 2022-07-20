@@ -2768,73 +2768,43 @@ public class OSelectExecutionPlanner {
     IndexSearchDescriptor result = new IndexSearchDescriptor();
     result.idx = index;
     result.keyCondition = indexKeyValue;
+
     for (String indexField : indexFields) {
+      OIndexSearchInfo info =
+          new OIndexSearchInfo(
+              indexField,
+              allowsRangeQueries(index),
+              isMap(clazz, indexField),
+              isIndexByKey(index, indexField),
+              isIndexByValue(index, indexField),
+              ctx);
       blockIterator = blockCopy.getSubBlocks().iterator();
       boolean breakHere = false;
       boolean indexFieldFound = false;
       while (blockIterator.hasNext()) {
         OBooleanExpression singleExp = blockIterator.next();
-        if (singleExp instanceof OBinaryCondition) {
-          if (singleExp.isIndexAware(indexField, ctx)) {
-            OBinaryCompareOperator operator = ((OBinaryCondition) singleExp).getOperator();
-            if (operator instanceof OEqualsCompareOperator) {
-              indexFieldFound = true;
-              indexKeyValue.getSubBlocks().add(singleExp.copy());
-              blockIterator.remove();
-              break;
-            } else if (operator instanceof OContainsKeyOperator
-                && isMap(clazz, indexField)
-                && isIndexByKey(index, indexField)) {
-              indexFieldFound = true;
-              indexKeyValue.getSubBlocks().add(singleExp.copy());
-              blockIterator.remove();
-              break;
-            } else if (allowsRange && operator.isRangeOperator()) {
-              indexFieldFound = true;
-              breakHere =
-                  true; // this is last element, no other fields can be added to the key because
-              // this is a range condition
-              indexKeyValue.getSubBlocks().add(singleExp.copy());
-              blockIterator.remove();
-              // look for the opposite condition, on the same field, for range queries (the other
-              // side of the range)
-              while (blockIterator.hasNext()) {
-                OBooleanExpression next = blockIterator.next();
-                if (createsRangeWith((OBinaryCondition) singleExp, next)) {
-                  result.additionalRangeCondition = (OBinaryCondition) next;
-                  blockIterator.remove();
-                  break;
-                }
+        if (singleExp.isIndexAware(info)) {
+          indexFieldFound = true;
+          indexKeyValue.getSubBlocks().add(singleExp.copy());
+          blockIterator.remove();
+          if (singleExp instanceof OBinaryCondition
+              && info.allowsRange()
+              && ((OBinaryCondition) singleExp).getOperator().isRangeOperator()) {
+            // look for the opposite condition, on the same field, for range queries (the other
+            // side of the range)
+            while (blockIterator.hasNext()) {
+              OBooleanExpression next = blockIterator.next();
+              if (createsRangeWith((OBinaryCondition) singleExp, next)) {
+                result.additionalRangeCondition = (OBinaryCondition) next;
+                blockIterator.remove();
+                break;
               }
-              break;
             }
           }
-        } else if (singleExp instanceof OContainsValueCondition
-            && ((OContainsValueCondition) singleExp).getExpression() != null
-            && isMap(clazz, indexField)
-            && isIndexByValue(index, indexField)) {
-          if (singleExp.isIndexAware(indexField, ctx)) {
-            indexFieldFound = true;
-            indexKeyValue.getSubBlocks().add(singleExp.copy());
-            blockIterator.remove();
-            break;
-          }
-        } else if (singleExp instanceof OContainsAnyCondition) {
-          if (singleExp.isIndexAware(indexField, ctx)) {
-            indexFieldFound = true;
-            indexKeyValue.getSubBlocks().add(singleExp.copy());
-            blockIterator.remove();
-            break;
-          }
-        } else if (singleExp instanceof OInCondition) {
-          if (singleExp.isIndexAware(indexField, ctx)) {
-            indexFieldFound = true;
-            indexKeyValue.getSubBlocks().add(singleExp.copy());
-            blockIterator.remove();
-            break;
-          }
+          break;
         }
       }
+
       if (indexFieldFound) {
         found = true;
       }

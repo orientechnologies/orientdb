@@ -9,6 +9,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.sql.executor.OIndexSearchInfo;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import java.util.ArrayList;
@@ -489,11 +490,20 @@ public class OBinaryCondition extends OBooleanExpression {
     return result;
   }
 
-  public boolean isIndexAware(String fieldName, OCommandContext ctx) {
+  public boolean isIndexAware(OIndexSearchInfo info) {
     if (left.isBaseIdentifier()) {
-      if (fieldName.equals(left.getDefaultAlias().getStringValue())) {
-        if (right.isEarlyCalculated(ctx)) {
-          return true;
+      if (info.getField().equals(left.getDefaultAlias().getStringValue())) {
+        if (right.isEarlyCalculated(info.getCtx())) {
+          if (operator instanceof OEqualsCompareOperator) {
+            return true;
+          } else if (operator instanceof OContainsKeyOperator
+              && info.isMap()
+              && info.isIndexByKey()) {
+            return true;
+          } else if (info.allowsRange() && operator.isRangeOperator()) {
+            return true;
+          }
+          return false;
         }
       }
     }

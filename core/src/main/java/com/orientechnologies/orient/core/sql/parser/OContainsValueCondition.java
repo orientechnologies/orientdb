@@ -4,6 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.executor.OIndexSearchInfo;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -282,10 +283,13 @@ public class OContainsValueCondition extends OBooleanExpression {
     return operator;
   }
 
-  public boolean isIndexAware(String fieldName, OCommandContext ctx) {
+  public boolean isIndexAware(OIndexSearchInfo info) {
     if (left.isBaseIdentifier()) {
-      if (fieldName.equals(left.getDefaultAlias().getStringValue())) {
-        if (expression != null && expression.isEarlyCalculated(ctx)) {
+      if (info.getField().equals(left.getDefaultAlias().getStringValue())) {
+        if (expression != null
+            && expression.isEarlyCalculated(info.getCtx())
+            && info.isMap()
+            && info.isIndexByValue()) {
           return true;
         }
       }

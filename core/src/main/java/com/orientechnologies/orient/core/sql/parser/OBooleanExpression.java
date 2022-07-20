@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.sql.executor.OIndexSearchInfo;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import java.util.Collections;
@@ -287,7 +288,7 @@ public abstract class OBooleanExpression extends SimpleNode {
     return false;
   }
 
-  public boolean isIndexAware(String fieldName, OCommandContext ctx) {
+  public boolean isIndexAware(OIndexSearchInfo info) {
     return false;
   }
 }
