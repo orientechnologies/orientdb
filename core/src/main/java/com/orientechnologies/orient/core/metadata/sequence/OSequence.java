@@ -170,27 +170,27 @@ public abstract class OSequence {
     this.tlDocument.set(iDocument);
   }
 
-  protected synchronized long getValue() {
+  protected long getValue() {
     return tlDocument.get().field(FIELD_VALUE, OType.LONG);
   }
 
-  protected synchronized void setValue(long value) {
+  protected void setValue(long value) {
     tlDocument.get().field(FIELD_VALUE, value);
   }
 
-  protected synchronized int getIncrement() {
+  protected int getIncrement() {
     return tlDocument.get().field(FIELD_INCREMENT, OType.INTEGER);
   }
 
-  protected synchronized void setIncrement(int value) {
+  protected void setIncrement(int value) {
     tlDocument.get().field(FIELD_INCREMENT, value);
   }
 
-  protected synchronized long getStart() {
+  protected long getStart() {
     return tlDocument.get().field(FIELD_START, OType.LONG);
   }
 
-  protected synchronized void setStart(long value) {
+  protected void setStart(long value) {
     tlDocument.get().field(FIELD_START, value);
   }
 
@@ -202,20 +202,20 @@ public abstract class OSequence {
     this.maxRetry = maxRetry;
   }
 
-  public synchronized String getName() {
+  public String getName() {
     return getSequenceName(tlDocument.get());
   }
 
-  public synchronized OSequence setName(final String name) {
+  public OSequence setName(final String name) {
     tlDocument.get().field(FIELD_NAME, name);
     return this;
   }
 
-  private synchronized void setSequenceType() {
+  private void setSequenceType() {
     tlDocument.get().field(FIELD_TYPE, getSequenceType());
   }
 
-  protected synchronized ODatabaseDocumentInternal getDatabase() {
+  protected ODatabaseDocumentInternal getDatabase() {
     return ODatabaseRecordThreadLocal.instance().get();
   }
 
