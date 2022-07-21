@@ -509,5 +509,25 @@ public class OBinaryCondition extends OBooleanExpression {
     }
     return false;
   }
+
+  @Override
+  public boolean createRangeWith(OBooleanExpression match) {
+    if (!(match instanceof OBinaryCondition)) {
+      return false;
+    }
+    OBinaryCondition metchingCondition = (OBinaryCondition) match;
+    if (!metchingCondition.getLeft().equals(this.getLeft())) {
+      return false;
+    }
+    OBinaryCompareOperator leftOperator = metchingCondition.getOperator();
+    OBinaryCompareOperator rightOperator = this.getOperator();
+    if (leftOperator instanceof OGeOperator || leftOperator instanceof OGtOperator) {
+      return rightOperator instanceof OLeOperator || rightOperator instanceof OLtOperator;
+    }
+    if (leftOperator instanceof OLeOperator || leftOperator instanceof OLtOperator) {
+      return rightOperator instanceof OGeOperator || rightOperator instanceof OGtOperator;
+    }
+    return false;
+  }
 }
 /* JavaCC - OriginalChecksum=99ed1dd2812eb730de8e1931b1764da5 (do not edit this line) */
