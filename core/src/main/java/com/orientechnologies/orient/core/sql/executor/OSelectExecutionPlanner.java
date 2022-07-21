@@ -2758,7 +2758,6 @@ public class OSelectExecutionPlanner {
     OBinaryCondition keyCondition = new OBinaryCondition(-1);
     OIdentifier key = new OIdentifier("key");
     keyCondition.setLeft(new OExpression(key));
-    boolean allowsRange = allowsRangeQueries(index);
     boolean found = false;
 
     OAndBlock blockCopy = block.copy();
@@ -2779,7 +2778,6 @@ public class OSelectExecutionPlanner {
               isIndexByValue(index, indexField),
               ctx);
       blockIterator = blockCopy.getSubBlocks().iterator();
-      boolean breakHere = false;
       boolean indexFieldFound = false;
       while (blockIterator.hasNext()) {
         OBooleanExpression singleExp = blockIterator.next();
@@ -2794,7 +2792,7 @@ public class OSelectExecutionPlanner {
             // side of the range)
             while (blockIterator.hasNext()) {
               OBooleanExpression next = blockIterator.next();
-              if (createsRangeWith((OBinaryCondition) singleExp, next)) {
+              if (next.createRangeWith(singleExp)) {
                 result.additionalRangeCondition = (OBinaryCondition) next;
                 blockIterator.remove();
                 break;
@@ -2808,7 +2806,7 @@ public class OSelectExecutionPlanner {
       if (indexFieldFound) {
         found = true;
       }
-      if (breakHere || !indexFieldFound) {
+      if (!indexFieldFound) {
         break;
       }
     }
@@ -2915,25 +2913,6 @@ public class OSelectExecutionPlanner {
       return false;
     }
     return prop.getType() == OType.EMBEDDEDMAP;
-  }
-
-  private boolean createsRangeWith(OBinaryCondition left, OBooleanExpression next) {
-    if (!(next instanceof OBinaryCondition)) {
-      return false;
-    }
-    OBinaryCondition right = (OBinaryCondition) next;
-    if (!left.getLeft().equals(right.getLeft())) {
-      return false;
-    }
-    OBinaryCompareOperator leftOperator = left.getOperator();
-    OBinaryCompareOperator rightOperator = right.getOperator();
-    if (leftOperator instanceof OGeOperator || leftOperator instanceof OGtOperator) {
-      return rightOperator instanceof OLeOperator || rightOperator instanceof OLtOperator;
-    }
-    if (leftOperator instanceof OLeOperator || leftOperator instanceof OLtOperator) {
-      return rightOperator instanceof OGeOperator || rightOperator instanceof OGtOperator;
-    }
-    return false;
   }
 
   private boolean allowsRangeQueries(OIndex index) {

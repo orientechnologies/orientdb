@@ -291,4 +291,8 @@ public abstract class OBooleanExpression extends SimpleNode {
   public boolean isIndexAware(OIndexSearchInfo info) {
     return false;
   }
+
+  public boolean createRangeWith(OBooleanExpression match) {
+    return false;
+  }
 }
