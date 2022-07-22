@@ -295,4 +295,8 @@ public abstract class OBooleanExpression extends SimpleNode {
   public boolean createRangeWith(OBooleanExpression match) {
     return false;
   }
+
+  public boolean isFullTextIndexAware(String indexField) {
+    return false;
+  }
 }

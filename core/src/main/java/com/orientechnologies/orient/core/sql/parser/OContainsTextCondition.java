@@ -223,5 +223,16 @@ public class OContainsTextCondition extends OBooleanExpression {
   public OExpression getRight() {
     return right;
   }
+
+  @Override
+  public boolean isFullTextIndexAware(String indexField) {
+    if (left.isBaseIdentifier()) {
+      String fieldName = left.getDefaultAlias().getStringValue();
+      if (indexField.equals(fieldName)) {
+        return true;
+      }
+    }
+    return false;
+  }
 }
 /* JavaCC - OriginalChecksum=b588492ba2cbd0f932055f1f64bbbecd (do not edit this line) */
