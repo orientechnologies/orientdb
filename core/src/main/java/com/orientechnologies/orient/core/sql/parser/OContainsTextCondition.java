@@ -234,5 +234,19 @@ public class OContainsTextCondition extends OBooleanExpression {
     }
     return false;
   }
+
+  @Override
+  public OExpression resolveKeyFrom(OBinaryCondition additional) {
+    if (getRight() != null) {
+      return getRight();
+    } else {
+      throw new UnsupportedOperationException("Cannot execute index query with " + this);
+    }
+  }
+
+  @Override
+  public OExpression resolveKeyTo(OBinaryCondition additional) {
+    return getRight();
+  }
 }
 /* JavaCC - OriginalChecksum=b588492ba2cbd0f932055f1f64bbbecd (do not edit this line) */

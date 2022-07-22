@@ -22,7 +22,6 @@ import com.orientechnologies.orient.core.index.OIndexDefinitionMultiValue;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.parser.OAndBlock;
-import com.orientechnologies.orient.core.sql.parser.OBaseExpression;
 import com.orientechnologies.orient.core.sql.parser.OBetweenCondition;
 import com.orientechnologies.orient.core.sql.parser.OBinaryCompareOperator;
 import com.orientechnologies.orient.core.sql.parser.OBinaryCondition;
@@ -773,50 +772,9 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   private static OCollection indexKeyFrom(OAndBlock keyCondition, OBinaryCondition additional) {
     OCollection result = new OCollection(-1);
     for (OBooleanExpression exp : keyCondition.getSubBlocks()) {
-      if (exp instanceof OBinaryCondition) {
-        OBinaryCondition binaryCond = ((OBinaryCondition) exp);
-        OBinaryCompareOperator operator = binaryCond.getOperator();
-        if ((operator instanceof OEqualsCompareOperator)
-            || (operator instanceof OGtOperator)
-            || (operator instanceof OGeOperator)
-            || (operator instanceof OContainsKeyOperator)
-            || (operator instanceof OContainsValueOperator)) {
-          result.add(binaryCond.getRight());
-        } else if (additional != null) {
-          result.add(additional.getRight());
-        }
-      } else if (exp instanceof OInCondition) {
-        OExpression item = new OExpression(-1);
-        if (((OInCondition) exp).getRightMathExpression() != null) {
-          item.setMathExpression(((OInCondition) exp).getRightMathExpression());
-          result.add(item);
-        } else if (((OInCondition) exp).getRightParam() != null) {
-          OBaseExpression e = new OBaseExpression(-1);
-          e.setInputParam(((OInCondition) exp).getRightParam().copy());
-          item.setMathExpression(e);
-          result.add(item);
-        } else {
-          throw new UnsupportedOperationException("Cannot execute index query with " + exp);
-        }
-
-      } else if (exp instanceof OContainsAnyCondition) {
-        if (((OContainsAnyCondition) exp).getRight() != null) {
-          result.add(((OContainsAnyCondition) exp).getRight());
-        } else {
-          throw new UnsupportedOperationException("Cannot execute index query with " + exp);
-        }
-
-      } else if (exp instanceof OContainsTextCondition) {
-        if (((OContainsTextCondition) exp).getRight() != null) {
-          result.add(((OContainsTextCondition) exp).getRight());
-        } else {
-          throw new UnsupportedOperationException("Cannot execute index query with " + exp);
-        }
-
-      } else if (exp instanceof OContainsValueCondition) {
-        result.add(((OContainsValueCondition) exp).getExpression());
-      } else {
-        throw new UnsupportedOperationException("Cannot execute index query with " + exp);
+      OExpression res = exp.resolveKeyFrom(additional);
+      if (res != null) {
+        result.add(res);
       }
     }
     return result;
@@ -825,45 +783,9 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   private static OCollection indexKeyTo(OAndBlock keyCondition, OBinaryCondition additional) {
     OCollection result = new OCollection(-1);
     for (OBooleanExpression exp : keyCondition.getSubBlocks()) {
-      if (exp instanceof OBinaryCondition) {
-        OBinaryCondition binaryCond = ((OBinaryCondition) exp);
-        OBinaryCompareOperator operator = binaryCond.getOperator();
-        if ((operator instanceof OEqualsCompareOperator)
-            || (operator instanceof OLtOperator)
-            || (operator instanceof OLeOperator)
-            || (operator instanceof OContainsKeyOperator)
-            || (operator instanceof OContainsValueOperator)) {
-          result.add(binaryCond.getRight());
-        } else if (additional != null) {
-          result.add(additional.getRight());
-        }
-      } else if (exp instanceof OInCondition) {
-        OExpression item = new OExpression(-1);
-        if (((OInCondition) exp).getRightMathExpression() != null) {
-          item.setMathExpression(((OInCondition) exp).getRightMathExpression());
-          result.add(item);
-        } else if (((OInCondition) exp).getRightParam() != null) {
-          OBaseExpression e = new OBaseExpression(-1);
-          e.setInputParam(((OInCondition) exp).getRightParam().copy());
-          item.setMathExpression(e);
-          result.add(item);
-        } else {
-          throw new UnsupportedOperationException("Cannot execute index query with " + exp);
-        }
-
-      } else if (exp instanceof OContainsAnyCondition) {
-        if (((OContainsAnyCondition) exp).getRight() != null) {
-          result.add(((OContainsAnyCondition) exp).getRight());
-        } else {
-          throw new UnsupportedOperationException("Cannot execute index query with " + exp);
-        }
-
-      } else if (exp instanceof OContainsTextCondition) {
-        result.add(((OContainsTextCondition) exp).getRight());
-      } else if (exp instanceof OContainsValueCondition) {
-        result.add(((OContainsValueCondition) exp).getExpression());
-      } else {
-        throw new UnsupportedOperationException("Cannot execute index query with " + exp);
+      OExpression res = exp.resolveKeyTo(additional);
+      if (res != null) {
+        result.add(res);
       }
     }
     return result;

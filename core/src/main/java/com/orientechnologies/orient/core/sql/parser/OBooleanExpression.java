@@ -299,4 +299,12 @@ public abstract class OBooleanExpression extends SimpleNode {
   public boolean isFullTextIndexAware(String indexField) {
     return false;
   }
+
+  public OExpression resolveKeyFrom(OBinaryCondition additional) {
+    throw new UnsupportedOperationException("Cannot execute index query with " + this);
+  }
+
+  public OExpression resolveKeyTo(OBinaryCondition additional) {
+    throw new UnsupportedOperationException("Cannot execute index query with " + this);
+  }
 }

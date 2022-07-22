@@ -1415,7 +1415,7 @@ public class OSelectExecutionPlanner {
     if (booleanExpression instanceof OBinaryCondition) {
       OBinaryCondition cond = ((OBinaryCondition) booleanExpression);
       OBinaryCompareOperator operator = cond.getOperator();
-      if (isRangeOperator(operator) && cond.getLeft().toString().equalsIgnoreCase("@rid")) {
+      if (operator.isRangeOperator() && cond.getLeft().toString().equalsIgnoreCase("@rid")) {
         Object obj;
         if (cond.getRight().getRid() != null) {
           obj = cond.getRight().getRid().toRecordId((OResult) null, ctx);
@@ -1426,13 +1426,6 @@ public class OSelectExecutionPlanner {
       }
     }
     return false;
-  }
-
-  private boolean isRangeOperator(OBinaryCompareOperator operator) {
-    return operator instanceof OLtOperator
-        || operator instanceof OLeOperator
-        || operator instanceof OGtOperator
-        || operator instanceof OGeOperator;
   }
 
   private void handleInputParamAsTarget(
