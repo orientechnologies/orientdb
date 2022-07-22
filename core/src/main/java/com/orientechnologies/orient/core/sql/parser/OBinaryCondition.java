@@ -529,5 +529,39 @@ public class OBinaryCondition extends OBooleanExpression {
     }
     return false;
   }
+
+  @Override
+  public OExpression resolveKeyFrom(OBinaryCondition additional) {
+    OBinaryCompareOperator operator = getOperator();
+    if ((operator instanceof OEqualsCompareOperator)
+        || (operator instanceof OGtOperator)
+        || (operator instanceof OGeOperator)
+        || (operator instanceof OContainsKeyOperator)
+        || (operator instanceof OContainsValueOperator)) {
+      return getRight();
+    } else if (additional != null) {
+      return additional.getRight();
+    } else {
+      return null;
+      //      throw new UnsupportedOperationException("Cannot execute index query with " + this);
+    }
+  }
+
+  @Override
+  public OExpression resolveKeyTo(OBinaryCondition additional) {
+    OBinaryCompareOperator operator = this.getOperator();
+    if ((operator instanceof OEqualsCompareOperator)
+        || (operator instanceof OLtOperator)
+        || (operator instanceof OLeOperator)
+        || (operator instanceof OContainsKeyOperator)
+        || (operator instanceof OContainsValueOperator)) {
+      return getRight();
+    } else if (additional != null) {
+      return additional.getRight();
+    } else {
+      return null;
+      //      throw new UnsupportedOperationException("Cannot execute index query with " + this);
+    }
+  }
 }
 /* JavaCC - OriginalChecksum=99ed1dd2812eb730de8e1931b1764da5 (do not edit this line) */

@@ -296,5 +296,15 @@ public class OContainsValueCondition extends OBooleanExpression {
     }
     return false;
   }
+
+  @Override
+  public OExpression resolveKeyFrom(OBinaryCondition additional) {
+    return getExpression();
+  }
+
+  @Override
+  public OExpression resolveKeyTo(OBinaryCondition additional) {
+    return getExpression();
+  }
 }
 /* JavaCC - OriginalChecksum=6fda752f10c8d8731f43efa706e39459 (do not edit this line) */
