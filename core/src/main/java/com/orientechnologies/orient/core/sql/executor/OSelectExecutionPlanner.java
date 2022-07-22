@@ -2755,9 +2755,6 @@ public class OSelectExecutionPlanner {
   private IndexSearchDescriptor buildIndexSearchDescriptor(
       OCommandContext ctx, OIndex index, OAndBlock block, OClass clazz) {
     List<String> indexFields = index.getDefinition().getFields();
-    OBinaryCondition keyCondition = new OBinaryCondition(-1);
-    OIdentifier key = new OIdentifier("key");
-    keyCondition.setLeft(new OExpression(key));
     boolean found = false;
 
     OAndBlock blockCopy = block.copy();
@@ -2837,9 +2834,6 @@ public class OSelectExecutionPlanner {
   private IndexSearchDescriptor buildIndexSearchDescriptorForFulltext(
       OCommandContext ctx, OIndex index, OAndBlock block, OClass clazz) {
     List<String> indexFields = index.getDefinition().getFields();
-    OBinaryCondition keyCondition = new OBinaryCondition(-1);
-    OIdentifier key = new OIdentifier("key");
-    keyCondition.setLeft(new OExpression(key));
     boolean found = false;
 
     OAndBlock blockCopy = block.copy();
@@ -2851,25 +2845,18 @@ public class OSelectExecutionPlanner {
     result.keyCondition = indexKeyValue;
     for (String indexField : indexFields) {
       blockIterator = blockCopy.getSubBlocks().iterator();
-      boolean breakHere = false;
       boolean indexFieldFound = false;
       while (blockIterator.hasNext()) {
         OBooleanExpression singleExp = blockIterator.next();
-        if (singleExp instanceof OContainsTextCondition) {
-          OExpression left = ((OContainsTextCondition) singleExp).getLeft();
-          if (left.isBaseIdentifier()) {
-            String fieldName = left.getDefaultAlias().getStringValue();
-            if (indexField.equals(fieldName)) {
-              found = true;
-              indexFieldFound = true;
-              indexKeyValue.getSubBlocks().add(singleExp.copy());
-              blockIterator.remove();
-              break;
-            }
-          }
+        if (singleExp.isFullTextIndexAware(indexField)) {
+          found = true;
+          indexFieldFound = true;
+          indexKeyValue.getSubBlocks().add(singleExp.copy());
+          blockIterator.remove();
+          break;
         }
       }
-      if (breakHere || !indexFieldFound) {
+      if (!indexFieldFound) {
         break;
       }
     }
