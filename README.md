@@ -67,3 +67,20 @@ References:
 --------
 
 [![security status](https://www.meterian.io/badge/gh/orientechnologies/orientdb/security)](https://www.meterian.io/report/gh/orientechnologies/orientdb) | [![stability status](https://www.meterian.io/badge/gh/orientechnologies/orientdb/stability)](https://www.meterian.io/report/gh/orientechnologies/orientdb)
+
+
+### Reference
+
+Recent architecture re-factoring and improvements are described in our [BICOD 2021](http://ceur-ws.org/Vol-3163/BICOD21_paper_3.pdf) paper:
+
+```@inproceedings{DBLP:conf/bncod/Ritter21,
+  author    = {Daniel Ritter and Luigi Dell'Aquila and Andrii Lomakin and Emanuele Tagliaferri},
+  title     = {OrientDB: A NoSQL, Open Source MMDMS},
+  booktitle = {{BICOD} 2021},
+  series    = {Lecture Notes in Computer Science},
+  volume    = {3163},
+  pages     = {10--19},
+  publisher = {Springer},
+  year      = {2021}
+}```
+
