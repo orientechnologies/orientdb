@@ -44,23 +44,9 @@ import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
 import com.orientechnologies.orient.core.tx.ValidationResult;
-import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OSystemDatabase;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
-import com.orientechnologies.orient.server.distributed.ODistributedException;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest;
-import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedResponse;
-import com.orientechnologies.orient.server.distributed.ODistributedResponseManager;
-import com.orientechnologies.orient.server.distributed.ODistributedResponseManagerImpl;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.ODistributedSyncConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
-import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 import com.orientechnologies.orient.server.distributed.impl.lock.OFreezeGuard;
 import com.orientechnologies.orient.server.distributed.impl.lock.OLockGuard;
 import com.orientechnologies.orient.server.distributed.impl.lock.OLockManager;
@@ -74,16 +60,7 @@ import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
@@ -107,8 +84,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   protected Map<ODistributedRequestId, ODistributedTxContext> activeTxContexts =
       new ConcurrentHashMap<>(64);
-  private AtomicLong totalSentRequests = new AtomicLong();
-  private AtomicLong totalReceivedRequests = new AtomicLong();
+  private final AtomicLong totalSentRequests = new AtomicLong();
+  private final AtomicLong totalReceivedRequests = new AtomicLong();
   private TimerTask txTimeoutTask = null;
   private volatile boolean running = true;
   private volatile boolean parsing = true;
@@ -116,12 +93,12 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private final String localNodeName;
   private final OSimpleLockManager<ORID> recordLockManager;
   private final OSimpleLockManager<Object> indexKeyLockManager;
-  private AtomicLong operationsRunnig = new AtomicLong(0);
-  private ODistributedSynchronizedSequence sequenceManager;
+  private final AtomicLong operationsRunnig = new AtomicLong(0);
+  private final ODistributedSynchronizedSequence sequenceManager;
   private final AtomicLong pending = new AtomicLong();
-  private ThreadPoolExecutor requestExecutor;
-  private OLockManager lockManager = new OLockManagerImpl();
-  private Set<OTransactionId> inQueue = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private final ThreadPoolExecutor requestExecutor;
+  private final OLockManager lockManager = new OLockManagerImpl();
+  private final Set<OTransactionId> inQueue = Collections.newSetFromMap(new ConcurrentHashMap<>());
   private OFreezeGuard freezeGuard;
 
   public static boolean sendResponseBack(
@@ -186,34 +163,50 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     operationsRunnig.decrementAndGet();
   }
 
-  public ODistributedDatabaseImpl(
+  ODistributedDatabaseImpl(
       final OHazelcastPlugin manager,
       final ODistributedMessageServiceImpl msgService,
-      final String iDatabaseName,
-      final ODistributedConfiguration cfg,
-      OServer server) {
+      final String iDatabaseName) {
     this.manager = manager;
     this.msgService = msgService;
     this.databaseName = iDatabaseName;
     this.localNodeName = manager.getLocalNodeName();
 
-    // SELF REGISTERING ITSELF HERE BECAUSE IT'S NEEDED FURTHER IN THE CALL CHAIN
-    final ODistributedDatabaseImpl prev = msgService.databases.put(iDatabaseName, this);
-    if (prev != null) {
-      // KILL THE PREVIOUS ONE
-      prev.shutdown();
-    }
-
-    startAcceptingRequests();
+    this.requestExecutor =
+        (ThreadPoolExecutor)OThreadPoolExecutors.newScalingThreadPool(
+            String.format(
+                "OrientDB DistributedWorker node=%s db=%s", getLocalNodeName(), databaseName),
+            0,
+            calculateWorkers(manager.getManagedDatabases().size()),
+            0,
+            1,
+            TimeUnit.HOURS);
 
     if (iDatabaseName.equals(OSystemDatabase.SYSTEM_DB_NAME)) {
       recordLockManager = null;
       indexKeyLockManager = null;
-      return;
+      sequenceManager = null;
+    } else {
+      long timeout =
+          manager
+              .getServerInstance()
+              .getContextConfiguration()
+              .getValueAsLong(DISTRIBUTED_ATOMIC_LOCK_TIMEOUT);
+      int sequenceSize =
+          manager
+              .getServerInstance()
+              .getContextConfiguration()
+              .getValueAsInteger(DISTRIBUTED_TRANSACTION_SEQUENCE_SET_SIZE);
+      recordLockManager = new OSimpleLockManagerImpl<>(timeout);
+      indexKeyLockManager = new OSimpleLockManagerImpl<>(timeout);
+      sequenceManager = new ODistributedSynchronizedSequence(localNodeName, sequenceSize);
+
+      startTxTimeoutTimerTask();
+      registerHooks();
     }
+  }
 
-    startTxTimeoutTimerTask();
-
+  private void registerHooks() {
     Orient.instance()
         .getProfiler()
         .registerHookValue(
@@ -283,20 +276,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
               }
             },
             "distributed.db.*.recordLocks");
-
-    long timeout =
-        manager
-            .getServerInstance()
-            .getContextConfiguration()
-            .getValueAsLong(DISTRIBUTED_ATOMIC_LOCK_TIMEOUT);
-    int sequenceSize =
-        manager
-            .getServerInstance()
-            .getContextConfiguration()
-            .getValueAsInteger(DISTRIBUTED_TRANSACTION_SEQUENCE_SET_SIZE);
-    recordLockManager = new OSimpleLockManagerImpl<>(timeout);
-    indexKeyLockManager = new OSimpleLockManagerImpl<>(timeout);
-    sequenceManager = new ODistributedSynchronizedSequence(localNodeName, sequenceSize);
   }
 
   @Override
@@ -1163,15 +1142,14 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     return localNodeName;
   }
 
-  private void startAcceptingRequests() {
-    // START ALL THE WORKER THREADS (CONFIGURABLE)
+  private static int calculateWorkers(int managedDbCount) {
     int totalWorkers = OGlobalConfiguration.DISTRIBUTED_DB_WORKERTHREADS.getValueAsInteger();
     if (totalWorkers < 0)
       throw new ODistributedException(
           "Cannot create configured distributed workers (" + totalWorkers + ")");
     else if (totalWorkers == 0) {
       // AUTOMATIC
-      final int totalDatabases = manager.getManagedDatabases().size() + 1;
+      final int totalDatabases = managedDbCount + 1;
 
       final int cpus = Runtime.getRuntime().availableProcessors();
 
@@ -1179,19 +1157,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
       if (totalWorkers == 0) totalWorkers = 1;
     }
-
-    synchronized (this) {
-      this.requestExecutor =
-          (ThreadPoolExecutor)
-              OThreadPoolExecutors.newScalingThreadPool(
-                  String.format(
-                      "OrientDB DistributedWorker node=%s db=%s", getLocalNodeName(), databaseName),
-                  0,
-                  totalWorkers,
-                  0,
-                  1,
-                  TimeUnit.HOURS);
-    }
+    return totalWorkers;
   }
 
   @Override

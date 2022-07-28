@@ -57,7 +57,7 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
   private final ConcurrentHashMap<Long, ODistributedResponseManager> responsesByRequestIds;
   private final TimerTask asynchMessageManager;
   protected final ConcurrentHashMap<String, ODistributedDatabaseImpl> databases =
-      new ConcurrentHashMap<String, ODistributedDatabaseImpl>();
+      new ConcurrentHashMap<>();
   private Thread responseThread;
   private long[] responseTimeMetrics = new long[10];
   private volatile boolean running = true;
@@ -153,11 +153,8 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
   /** Creates a distributed database instance if not defined yet. */
   public ODistributedDatabaseImpl registerDatabase(
       final String iDatabaseName, ODistributedConfiguration cfg) {
-    final ODistributedDatabaseImpl ddb = databases.get(iDatabaseName);
-    if (ddb != null) return ddb;
-
-    return new ODistributedDatabaseImpl(
-        manager, this, iDatabaseName, cfg, manager.getServerInstance());
+    return databases.computeIfAbsent(
+        iDatabaseName, db -> new ODistributedDatabaseImpl(manager, this, iDatabaseName));
   }
 
   public ODistributedDatabaseImpl unregisterDatabase(final String iDatabaseName) {
