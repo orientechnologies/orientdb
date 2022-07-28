@@ -411,6 +411,11 @@ public class Orient extends OListenerManger<OOrientListener> {
   }
 
   public TimerTask scheduleTask(final Runnable task, final long delay, final long period) {
+    return scheduleTask(task.getClass().getSimpleName(), task, delay, period);
+  }
+
+  public TimerTask scheduleTask(
+      final String taskName, final Runnable task, final long delay, final long period) {
     engineLock.readLock().lock();
     try {
       final TimerTask timerTask =
@@ -421,16 +426,10 @@ public class Orient extends OListenerManger<OOrientListener> {
                 task.run();
               } catch (Exception e) {
                 OLogManager.instance()
-                    .error(
-                        this,
-                        "Error during execution of task " + task.getClass().getSimpleName(),
-                        e);
+                    .error(Orient.this, "Error during execution of task " + taskName, e);
               } catch (Error e) {
                 OLogManager.instance()
-                    .error(
-                        this,
-                        "Error during execution of task " + task.getClass().getSimpleName(),
-                        e);
+                    .error(Orient.this, "Error during execution of task " + taskName, e);
                 throw e;
               }
             }

@@ -31,6 +31,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.thread.OThreadPoolExecutors;
+import com.orientechnologies.common.thread.TracingExecutorService;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
@@ -96,7 +97,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private final AtomicLong operationsRunnig = new AtomicLong(0);
   private final ODistributedSynchronizedSequence sequenceManager;
   private final AtomicLong pending = new AtomicLong();
-  private final ThreadPoolExecutor requestExecutor;
+  private final TracingExecutorService requestExecutor;
   private final OLockManager lockManager = new OLockManagerImpl();
   private final Set<OTransactionId> inQueue = Collections.newSetFromMap(new ConcurrentHashMap<>());
   private OFreezeGuard freezeGuard;
@@ -173,7 +174,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     this.localNodeName = manager.getLocalNodeName();
 
     this.requestExecutor =
-        (ThreadPoolExecutor)OThreadPoolExecutors.newScalingThreadPool(
+        OThreadPoolExecutors.newScalingThreadPool(
             String.format(
                 "OrientDB DistributedWorker node=%s db=%s", getLocalNodeName(), databaseName),
             0,
@@ -258,7 +259,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
             new OAbstractProfiler.OProfilerHookValue() {
               @Override
               public Object getValue() {
-                return (long) requestExecutor.getPoolSize();
+                return (long) ((ThreadPoolExecutor) requestExecutor).getPoolSize();
               }
             },
             "distributed.db.*.workerThreads");
@@ -305,6 +306,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     pending.incrementAndGet();
     Orient.instance()
         .scheduleTask(
+            String.format("DistributedDatabase[%s].reEnqueue", databaseName),
             () -> {
               try {
                 processRequest(
@@ -343,6 +345,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
                 + "' discarding");
       }
     }
+    final String taskName =
+        String.format(
+            "DistributedDatabase[%s].processRequest.%s", getDatabaseName(), task.getName());
     synchronized (this) {
       task.received(request, this);
       manager.messageReceived(request);
@@ -364,7 +369,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
                     }
                   };
               try {
-                this.requestExecutor.submit(executeTask);
+                this.requestExecutor.submit(taskName, executeTask);
               } catch (RejectedExecutionException e) {
                 task.finished(this);
                 this.lockManager.unlock(guards);
@@ -380,6 +385,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       } else {
         try {
           this.requestExecutor.submit(
+              taskName,
               () -> {
                 execute(request);
               });
@@ -892,7 +898,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   @Override
   public long getProcessedRequests() {
-    return requestExecutor.getCompletedTaskCount();
+    return ((ThreadPoolExecutor) requestExecutor).getCompletedTaskCount();
   }
 
   public void onDropShutdown() {
@@ -1310,7 +1316,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         "\n\nDATABASE '" + databaseName + "' ON SERVER '" + manager.getLocalNodeName() + "'");
 
     buffer.append("\n- MESSAGES IN QUEUES");
-    buffer.append(" (" + (requestExecutor.getPoolSize()) + " WORKERS):");
+    buffer.append(" (" + (((ThreadPoolExecutor) requestExecutor).getPoolSize()) + " WORKERS):");
 
     return buffer.toString();
   }
