@@ -326,7 +326,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
                   this, "I/O Error on client clientId=%d reqType=%d", clientTxId, requestType, e);
           sendShutdown();
           return;
-        } catch (Exception | Error e) {
+        } catch (Throwable e) {
           if (connection != null) {
             connection.endOperation();
           }
@@ -361,7 +361,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
               if (collectionManager != null) collectionManager.clearChangedIds();
             }
             exception = t;
-          } catch (Error err) {
+          } catch (Throwable err) {
             sendShutdown();
             if (connection != null) {
               connection.release();
@@ -578,7 +578,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       connection.statsUpdate();
       OServerPluginHelper.invokeHandlerCallbackOnBeforeClientRequest(
           server, connection, (byte) requestType);
-    } catch (RuntimeException e) {
+    } catch (Throwable e) {
       if (connection != null) {
         connection.endOperation();
         server.getClientConnectionManager().disconnect(connection);
