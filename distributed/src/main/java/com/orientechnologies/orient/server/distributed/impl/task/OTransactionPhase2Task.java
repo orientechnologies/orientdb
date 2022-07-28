@@ -135,7 +135,8 @@ public class OTransactionPhase2Task extends OAbstractRemoteTask implements OLock
           OLogManager.instance()
               .info(
                   OTransactionPhase2Task.this,
-                  "Received second phase but not yet first phase, re-enqueue second phase");
+                  "Received second phase but not yet first phase for commit tx:%s, re-enqueue second phase",
+                  firstPhaseId);
           ((ODatabaseDocumentDistributed) database)
               .getDistributedShared()
               .reEnqueue(
