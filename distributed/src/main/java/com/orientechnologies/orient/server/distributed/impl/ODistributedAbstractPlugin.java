@@ -1006,7 +1006,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       // DON'T REPLICATE SYSTEM BECAUSE IS DIFFERENT AND PER SERVER
       return false;
 
-    if (installingDatabases.contains(databaseName)) {
+    if (!installingDatabases.add(databaseName)) {
       return false;
     }
 
@@ -1014,7 +1014,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         messageService.registerDatabase(databaseName, null);
 
     try {
-      installingDatabases.add(databaseName);
       return executeInDistributedDatabaseLock(
           databaseName,
           20000,
