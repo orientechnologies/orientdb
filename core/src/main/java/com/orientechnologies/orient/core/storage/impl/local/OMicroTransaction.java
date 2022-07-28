@@ -210,7 +210,7 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
       final OIndex index = indexManager.getIndex(database, entry.getKey());
       if (index == null)
         throw new OTransactionException(
-            "Cannot find index '" + entry.getValue() + "' while committing transaction");
+            "Cannot find index '" + entry.getKey() + "' while committing transaction");
 
       final Dependency[] fieldRidDependencies = getIndexFieldRidDependencies(index);
       if (!isIndexMayDependOnRids(fieldRidDependencies)) continue;
