@@ -910,7 +910,10 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     shutdown(true);
   }
 
-  public void shutdown(boolean wait) {
+  public synchronized void shutdown(boolean wait) {
+    if (!running) {
+      return;
+    }
     waitPending();
     running = false;
 
