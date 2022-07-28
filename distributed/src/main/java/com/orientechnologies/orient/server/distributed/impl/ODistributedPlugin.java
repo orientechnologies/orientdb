@@ -1280,14 +1280,13 @@ public class ODistributedPlugin extends OServerPluginAbstract
       // DON'T REPLICATE SYSTEM BECAUSE IS DIFFERENT AND PER SERVER
       return false;
 
-    if (installingDatabases.contains(databaseName)) {
+    if (!installingDatabases.add(databaseName)) {
       return false;
     }
 
     final ODistributedDatabaseImpl distrDatabase = messageService.registerDatabase(databaseName);
 
     try {
-      installingDatabases.add(databaseName);
       return executeInDistributedDatabaseLock(
           databaseName,
           20000,
