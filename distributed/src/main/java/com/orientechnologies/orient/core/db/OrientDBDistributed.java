@@ -33,7 +33,7 @@ import java.util.Iterator;
 /** Created by tglman on 08/08/17. */
 public class OrientDBDistributed extends OrientDBEmbedded implements OServerAware {
 
-  private OServer server;
+  private volatile OServer server;
   private volatile ODistributedPlugin plugin;
 
   public OrientDBDistributed(String directoryPath, OrientDBConfig config, Orient instance) {
