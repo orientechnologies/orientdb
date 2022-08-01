@@ -24,6 +24,7 @@ import com.orientechnologies.lucene.OLuceneIndex;
 import com.orientechnologies.lucene.OLuceneTxOperations;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import com.orientechnologies.lucene.tx.OLuceneTxChanges;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -104,11 +105,6 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
       }
     }
     return true;
-  }
-
-  @Override
-  public boolean remove(Object key) {
-    return super.remove(key);
   }
 
   @Override
@@ -241,6 +237,14 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
     indexTxSnapshot.indexSnapshot.clear();
   }
 
+  protected void populateIndex(ODocument doc, Object fieldValue) {
+    if (fieldValue instanceof Collection) {
+      for (final Object fieldValueItem : (Collection<?>) fieldValue) {
+        put(fieldValueItem, doc);
+      }
+    } else put(fieldValue, doc);
+  }
+
   @Override
   protected void onIndexEngineChange(int indexId) {
     while (true)
@@ -361,7 +365,8 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
   public OLuceneIndexNotUnique put(final Object key, final OIdentifiable value) {
 
     if (key != null) {
-      OTransaction transaction = getDatabase().getTransaction();
+      ODatabaseDocumentInternal db = getDatabase();
+      OTransaction transaction = db.getTransaction();
 
       if (transaction.isActive()) {
         OLuceneTxChanges transactionChanges = getTransactionChanges(transaction);
@@ -388,14 +393,11 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
         transactionChanges.put(key, value, luceneDoc);
 
       } else {
-        while (true) {
-          try {
-            storage.putIndexValue(indexId, key, Collections.singletonList(value));
-            break;
-          } catch (OInvalidIndexEngineIdException e) {
-            doReloadIndexEngine();
-          }
-        }
+        db.begin();
+        OTransaction singleTx = db.getTransaction();
+        singleTx.addIndexEntry(
+            this, super.getName(), OTransactionIndexChanges.OPERATION.PUT, encodeKey(key), value);
+        db.commit();
       }
     }
     return this;

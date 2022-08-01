@@ -51,6 +51,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -612,17 +613,11 @@ public abstract class OIndexAbstract implements OIndexInternal {
   public boolean remove(Object key) {
     key = getCollatingValue(key);
 
-    acquireSharedLock();
-    try {
-      while (true)
-        try {
-          return doRemove(storage, key);
-        } catch (OInvalidIndexEngineIdException ignore) {
-          doReloadIndexEngine();
-        }
-    } finally {
-      releaseSharedLock();
-    }
+    ODatabaseDocumentInternal database = getDatabase();
+    database.begin();
+    database.getTransaction().addIndexEntry(this, getName(), OPERATION.REMOVE, key, null);
+    database.commit();
+    return true;
   }
 
   @Override
@@ -942,12 +937,42 @@ public abstract class OIndexAbstract implements OIndexInternal {
 
   protected abstract OBinarySerializer determineValueSerializer();
 
-  private void populateIndex(ODocument doc, Object fieldValue) {
-    if (fieldValue instanceof Collection) {
-      for (final Object fieldValueItem : (Collection<?>) fieldValue) {
-        put(fieldValueItem, doc);
+  protected void populateIndex(ODocument doc, Object fieldValue) {
+    acquireSharedLock();
+    try {
+
+      if (fieldValue instanceof Collection) {
+        for (final Object fieldValueItem : (Collection<?>) fieldValue) {
+          Object key = getCollatingValue(fieldValueItem);
+
+          final ORID identity = doc.getIdentity();
+
+          while (true) {
+            try {
+              doPut(storage, key, identity);
+              return;
+            } catch (OInvalidIndexEngineIdException e) {
+              doReloadIndexEngine();
+            }
+          }
+        }
+      } else {
+        Object key = getCollatingValue(fieldValue);
+
+        final ORID identity = doc.getIdentity();
+
+        while (true) {
+          try {
+            doPut(storage, key, identity);
+            return;
+          } catch (OInvalidIndexEngineIdException e) {
+            doReloadIndexEngine();
+          }
+        }
       }
-    } else put(fieldValue, doc);
+    } finally {
+      releaseSharedLock();
+    }
   }
 
   public Object getCollatingValue(final Object key) {

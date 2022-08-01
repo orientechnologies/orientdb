@@ -385,6 +385,7 @@ public class ViewManager {
       String viewName,
       String clusterName,
       List<OIndex> indexes) {
+    db.begin();
     OElement newRow = copyElement(item, db);
     if (originRidField != null) {
       newRow.setProperty(originRidField, item.getIdentity().orElse(item.getProperty("@rid")));
@@ -393,6 +394,7 @@ public class ViewManager {
     db.save(newRow, clusterName);
 
     indexes.forEach(idx -> idx.put(indexedKeyFor(idx, newRow), newRow));
+    db.commit();
   }
 
   private Object indexedKeyFor(OIndex idx, OElement newRow) {

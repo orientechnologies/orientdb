@@ -704,7 +704,13 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
       final String clusterName =
           indexDefinition.getClassName() != null ? defaultClusterName : manualClusterName;
 
-      index.create(iName, indexDefinition, clusterName, clustersToIndex, true, progressListener);
+      indexes.put(index.getName(), index);
+      try {
+        index.create(iName, indexDefinition, clusterName, clustersToIndex, true, progressListener);
+      } catch (Throwable e) {
+        indexes.remove(index.getName());
+        throw e;
+      }
 
       addIndexInternal(index);
 
@@ -822,7 +828,7 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
 
     OIndex idx;
     try {
-      idx = indexes.remove(iIndexName);
+      idx = indexes.get(iIndexName);
       if (idx != null) {
         final Set<String> clusters = idx.getClusters();
         if (clusters != null && !clusters.isEmpty()) {
@@ -836,6 +842,7 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
         removeClassPropertyIndex(idx);
 
         idx.delete();
+        indexes.remove(iIndexName);
         setDirty();
         save();
 

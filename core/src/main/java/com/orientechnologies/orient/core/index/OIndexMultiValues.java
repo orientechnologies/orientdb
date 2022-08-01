@@ -24,6 +24,7 @@ import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.ORawPair;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -36,6 +37,9 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainerSBTree;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OMixedIndexRIDContainer;
+import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -124,26 +128,13 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
   public OIndexMultiValues put(Object key, final OIdentifiable singleValue) {
     key = getCollatingValue(key);
 
-    acquireSharedLock();
-
-    try {
-      if (!singleValue.getIdentity().isValid()) {
-        (singleValue.getRecord()).save();
-      }
-
-      final ORID identity = singleValue.getIdentity();
-
-      while (true) {
-        try {
-          doPut(storage, key, identity);
-          return this;
-        } catch (OInvalidIndexEngineIdException e) {
-          doReloadIndexEngine();
-        }
-      }
-    } finally {
-      releaseSharedLock();
-    }
+    ODatabaseDocumentInternal database = getDatabase();
+    database.begin();
+    OTransaction singleTx = database.getTransaction();
+    singleTx.addIndexEntry(
+        this, super.getName(), OTransactionIndexChanges.OPERATION.PUT, key, singleValue);
+    database.commit();
+    return this;
   }
 
   @Override
@@ -231,18 +222,11 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
   public boolean remove(Object key, final OIdentifiable value) {
     key = getCollatingValue(key);
 
-    acquireSharedLock();
-    try {
-      while (true) {
-        try {
-          return doRemove(storage, key, value.getIdentity());
-        } catch (OInvalidIndexEngineIdException e) {
-          doReloadIndexEngine();
-        }
-      }
-    } finally {
-      releaseSharedLock();
-    }
+    ODatabaseDocumentInternal database = getDatabase();
+    database.begin();
+    database.getTransaction().addIndexEntry(this, super.getName(), OPERATION.REMOVE, key, value);
+    database.commit();
+    return true;
   }
 
   @Override
