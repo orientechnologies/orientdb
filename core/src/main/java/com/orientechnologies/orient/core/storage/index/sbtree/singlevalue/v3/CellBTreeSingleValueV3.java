@@ -2065,8 +2065,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
                 itemIndex < bucketSize && dataCache.size() < SPLITERATOR_CACHE_SIZE;
                 itemIndex++) {
               @SuppressWarnings("ObjectAllocationInLoop")
-              CellBTreeSingleValueBucketV3.CellBTreeEntry<K> entry =
-                  bucket.getEntry(itemIndex, keySerializer);
+              CellBTreeSingleValueEntryV3<K> entry = bucket.getEntry(itemIndex, keySerializer);
 
               if (toKey != null) {
                 if (toKeyInclusive) {
@@ -2268,8 +2267,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
 
             for (; itemIndex >= 0 && dataCache.size() < SPLITERATOR_CACHE_SIZE; itemIndex--) {
               @SuppressWarnings("ObjectAllocationInLoop")
-              CellBTreeSingleValueBucketV3.CellBTreeEntry<K> entry =
-                  bucket.getEntry(itemIndex, keySerializer);
+              CellBTreeSingleValueEntryV3<K> entry = bucket.getEntry(itemIndex, keySerializer);
 
               if (fromKey != null) {
                 if (fromKeyInclusive) {

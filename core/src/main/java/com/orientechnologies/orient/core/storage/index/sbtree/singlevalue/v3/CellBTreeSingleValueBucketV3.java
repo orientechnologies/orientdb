@@ -33,7 +33,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -229,7 +228,7 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
     return getIntValue(SIZE_OFFSET);
   }
 
-  public CellBTreeEntry<K> getEntry(
+  public CellBTreeSingleValueEntryV3<K> getEntry(
       final int entryIndex, final OBinarySerializer<K> keySerializer) {
     int entryPosition =
         getIntValue(entryIndex * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
@@ -244,7 +243,8 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
       final int clusterId = getShortValue(entryPosition);
       final long clusterPosition = getLongValue(entryPosition + OShortSerializer.SHORT_SIZE);
 
-      return new CellBTreeEntry<>(-1, -1, key, new ORecordId(clusterId, clusterPosition));
+      return new CellBTreeSingleValueEntryV3<>(
+          -1, -1, key, new ORecordId(clusterId, clusterPosition));
     } else {
       final int leftChild = getIntValue(entryPosition);
       entryPosition += OIntegerSerializer.INT_SIZE;
@@ -254,7 +254,7 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
 
       final K key = deserializeFromDirectMemory(keySerializer, entryPosition);
 
-      return new CellBTreeEntry<>(leftChild, rightChild, key, null);
+      return new CellBTreeSingleValueEntryV3<>(leftChild, rightChild, key, null);
     }
   }
 
@@ -563,61 +563,5 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
 
   public long getRightSibling() {
     return getLongValue(RIGHT_SIBLING_OFFSET);
-  }
-
-  public static final class CellBTreeEntry<K> implements Comparable<CellBTreeEntry<K>> {
-    private final Comparator<? super K> comparator = ODefaultComparator.INSTANCE;
-
-    protected final int leftChild;
-    protected final int rightChild;
-    public final K key;
-    public final ORID value;
-
-    public CellBTreeEntry(
-        final int leftChild, final int rightChild, final K key, final ORID value) {
-      this.leftChild = leftChild;
-      this.rightChild = rightChild;
-      this.key = key;
-      this.value = value;
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-      final CellBTreeEntry<?> that = (CellBTreeEntry<?>) o;
-      return leftChild == that.leftChild
-          && rightChild == that.rightChild
-          && Objects.equals(key, that.key)
-          && Objects.equals(value, that.value);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(leftChild, rightChild, key, value);
-    }
-
-    @Override
-    public String toString() {
-      return "CellBTreeEntry{"
-          + "leftChild="
-          + leftChild
-          + ", rightChild="
-          + rightChild
-          + ", key="
-          + key
-          + ", value="
-          + value
-          + '}';
-    }
-
-    @Override
-    public int compareTo(final CellBTreeEntry<K> other) {
-      return comparator.compare(key, other.key);
-    }
   }
 }
