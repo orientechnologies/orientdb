@@ -161,7 +161,11 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
                 OLuceneTxOperations operations = (OLuceneTxOperations) snapshotEntry.getValue();
 
                 for (OIdentifiable oIdentifiable : operations.removed) {
-                  indexEngine.remove(decodeKey(key), oIdentifiable);
+                  if (oIdentifiable == null) {
+                    indexEngine.remove(decodeKey(key));
+                  } else {
+                    indexEngine.remove(decodeKey(key), oIdentifiable);
+                  }
                 }
               }
               try {
@@ -228,6 +232,18 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
       snapshot.put(key, operations);
     }
     operations.removed.add(value.getIdentity());
+    snapshot.put(key, operations);
+  }
+
+  protected void removeFromSnapshot(Object key, Map<Object, Object> snapshot) {
+    key = getCollatingValue(key);
+
+    OLuceneTxOperations operations = (OLuceneTxOperations) snapshot.get(key);
+    if (operations == null) {
+      operations = new OLuceneTxOperations();
+      snapshot.put(key, operations);
+    }
+    operations.removed.add(null);
     snapshot.put(key, operations);
   }
 

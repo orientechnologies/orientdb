@@ -995,7 +995,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
     remove(key, value);
   }
 
-  private void removeFromSnapshot(Object key, Map<Object, Object> snapshot) {
+  protected void removeFromSnapshot(Object key, Map<Object, Object> snapshot) {
     // storage will delay real operations till the end of tx
     remove(key);
   }

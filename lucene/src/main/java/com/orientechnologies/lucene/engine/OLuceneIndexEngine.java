@@ -50,6 +50,8 @@ public interface OLuceneIndexEngine extends OIndexEngine, OFreezableStorageCompo
 
   boolean remove(Object key, OIdentifiable value);
 
+  boolean remove(Object key);
+
   IndexSearcher searcher();
 
   void release(IndexSearcher searcher);

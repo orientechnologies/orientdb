@@ -130,7 +130,9 @@ public class OLuceneIndexType {
 
   public static Query createDeleteQuery(OIdentifiable value, List<String> fields, Object key) {
     final BooleanQuery.Builder queryBuilder = new BooleanQuery.Builder();
-    queryBuilder.add(createQueryId(value), BooleanClause.Occur.MUST);
+    if (value != null) {
+      queryBuilder.add(createQueryId(value), BooleanClause.Occur.MUST);
+    }
     Map<String, String> values = new HashMap<>();
     // TODO Implementation of Composite keys with Collection
     if (!(key instanceof OCompositeKey)) {

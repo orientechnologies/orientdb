@@ -53,7 +53,6 @@ import java.util.stream.Stream;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
@@ -120,16 +119,7 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
   @Override
   public boolean remove(final OAtomicOperation atomicOperation, final Object key) {
-    updateLastAccess();
-    openIfClosed();
-    try {
-      final Query query = new QueryParser("", queryAnalyzer()).parse((String) key);
-      deleteDocument(query);
-      return true;
-    } catch (org.apache.lucene.queryparser.classic.ParseException e) {
-      OLogManager.instance().error(this, "Lucene parsing exception", e);
-    }
-    return false;
+    return remove(key);
   }
 
   @Override

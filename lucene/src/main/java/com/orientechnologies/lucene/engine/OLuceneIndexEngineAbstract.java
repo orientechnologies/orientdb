@@ -70,6 +70,7 @@ import org.apache.lucene.document.StringField;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.ControlledRealTimeReopenThread;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
@@ -421,6 +422,20 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
     Query query = deleteQuery(key, value);
     if (query != null) deleteDocument(query);
     return true;
+  }
+
+  @Override
+  public boolean remove(Object key) {
+    updateLastAccess();
+    openIfClosed();
+    try {
+      final Query query = new QueryParser("", queryAnalyzer()).parse((String) key);
+      deleteDocument(query);
+      return true;
+    } catch (org.apache.lucene.queryparser.classic.ParseException e) {
+      OLogManager.instance().error(this, "Lucene parsing exception", e);
+    }
+    return false;
   }
 
   void deleteDocument(Query query) {

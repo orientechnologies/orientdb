@@ -282,6 +282,11 @@ public class OLuceneSpatialIndexEngineDelegator
   }
 
   @Override
+  public boolean remove(Object key) {
+    return delegate.remove(key);
+  }
+
+  @Override
   public boolean remove(Object key, OIdentifiable value) {
     return delegate.remove(key, value);
   }
