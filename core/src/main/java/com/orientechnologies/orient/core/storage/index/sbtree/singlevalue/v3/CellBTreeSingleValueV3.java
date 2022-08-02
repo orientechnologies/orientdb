@@ -41,11 +41,9 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.OCellBTreeSingleValue;
 import java.io.IOException;
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -1060,7 +1058,8 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
       acquireSharedLock();
       try {
         //noinspection resource
-        return StreamSupport.stream(new SpliteratorForward(null, null, false, false), false)
+        return StreamSupport.stream(
+                new SpliteratorForward<K>(this, null, null, false, false), false)
             .map((entry) -> entry.first);
       } finally {
         releaseSharedLock();
@@ -1076,7 +1075,8 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
       acquireSharedLock();
       try {
         //noinspection resource
-        return StreamSupport.stream(new SpliteratorForward(null, null, false, false), false);
+        return StreamSupport.stream(
+            new SpliteratorForward<K>(this, null, null, false, false), false);
       } finally {
         releaseSharedLock();
       }
@@ -1139,7 +1139,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
     key = keySerializer.preprocess(key, (Object[]) keyTypes);
     key = enhanceCompositeKeyMinorAsc(key, inclusive);
 
-    return new SpliteratorForward(null, key, false, inclusive);
+    return new SpliteratorForward<K>(this, null, key, false, inclusive);
   }
 
   private K enhanceCompositeKeyMinorDesc(K key, final boolean inclusive) {
@@ -1170,7 +1170,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
     key = keySerializer.preprocess(key, (Object[]) keyTypes);
     key = enhanceCompositeKeyMajorAsc(key, inclusive);
 
-    return new SpliteratorForward(key, null, inclusive, false);
+    return new SpliteratorForward<K>(this, key, null, inclusive, false);
   }
 
   private Spliterator<ORawPair<K, ORID>> iterateEntriesMajorDesc(K key, final boolean inclusive) {
@@ -1343,7 +1343,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
     keyFrom = enhanceFromCompositeKeyBetweenAsc(keyFrom, fromInclusive);
     keyTo = enhanceToCompositeKeyBetweenAsc(keyTo, toInclusive);
 
-    return new SpliteratorForward(keyFrom, keyTo, fromInclusive, toInclusive);
+    return new SpliteratorForward<K>(this, keyFrom, keyTo, fromInclusive, toInclusive);
   }
 
   private Spliterator<ORawPair<K, ORID>> iterateEntriesBetweenDescOrder(
@@ -1853,214 +1853,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
     LOWEST_BOUNDARY
   }
 
-  private final class SpliteratorForward implements Spliterator<ORawPair<K, ORID>> {
-    private final K fromKey;
-    private final K toKey;
-    private final boolean fromKeyInclusive;
-    private final boolean toKeyInclusive;
-
-    private int pageIndex = -1;
-    private int itemIndex = -1;
-
-    private OLogSequenceNumber lastLSN = null;
-
-    private final List<ORawPair<K, ORID>> dataCache = new ArrayList<>();
-    private Iterator<ORawPair<K, ORID>> cacheIterator = Collections.emptyIterator();
-
-    private SpliteratorForward(
-        final K fromKey,
-        final K toKey,
-        final boolean fromKeyInclusive,
-        final boolean toKeyInclusive) {
-      this.fromKey = fromKey;
-      this.toKey = toKey;
-
-      this.toKeyInclusive = toKeyInclusive;
-      this.fromKeyInclusive = fromKeyInclusive;
-    }
-
-    @Override
-    public boolean tryAdvance(Consumer<? super ORawPair<K, ORID>> action) {
-      if (cacheIterator == null) {
-        return false;
-      }
-
-      if (cacheIterator.hasNext()) {
-        action.accept(cacheIterator.next());
-        return true;
-      }
-
-      fetchNextCachePortion();
-
-      cacheIterator = dataCache.iterator();
-
-      if (cacheIterator.hasNext()) {
-        action.accept(cacheIterator.next());
-        return true;
-      }
-
-      cacheIterator = null;
-
-      return false;
-    }
-
-    private void fetchNextCachePortion() {
-      final K lastKey;
-      if (!dataCache.isEmpty()) {
-        lastKey = dataCache.get(dataCache.size() - 1).first;
-      } else {
-        lastKey = null;
-      }
-
-      dataCache.clear();
-      cacheIterator = Collections.emptyIterator();
-
-      atomicOperationsManager.acquireReadLock(CellBTreeSingleValueV3.this);
-      try {
-        acquireSharedLock();
-        try {
-          final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
-          if (pageIndex > -1) {
-            if (readKeysFromBuckets(atomicOperation)) {
-              return;
-            }
-          }
-
-          // this can only happen if page LSN does not equal to stored LSN or index of current
-          // iterated page equals to -1
-          // so we only started iteration
-          if (dataCache.isEmpty()) {
-            // iteration just started
-            if (lastKey == null) {
-              if (this.fromKey != null) {
-                final BucketSearchResult searchResult = findBucket(fromKey, atomicOperation);
-                pageIndex = (int) searchResult.getPageIndex();
-
-                if (searchResult.getItemIndex() >= 0) {
-                  if (fromKeyInclusive) {
-                    itemIndex = searchResult.getItemIndex();
-                  } else {
-                    itemIndex = searchResult.getItemIndex() + 1;
-                  }
-                } else {
-                  itemIndex = -searchResult.getItemIndex() - 1;
-                }
-              } else {
-                final Optional<BucketSearchResult> bucketSearchResult = firstItem(atomicOperation);
-                if (bucketSearchResult.isPresent()) {
-                  final BucketSearchResult searchResult = bucketSearchResult.get();
-                  pageIndex = (int) searchResult.getPageIndex();
-                  itemIndex = searchResult.getItemIndex();
-                } else {
-                  return;
-                }
-              }
-
-            } else {
-              final BucketSearchResult bucketSearchResult = findBucket(lastKey, atomicOperation);
-
-              pageIndex = (int) bucketSearchResult.getPageIndex();
-              if (bucketSearchResult.getItemIndex() >= 0) {
-                itemIndex = bucketSearchResult.getItemIndex() + 1;
-              } else {
-                itemIndex = -bucketSearchResult.getItemIndex() - 1;
-              }
-            }
-            lastLSN = null;
-            readKeysFromBuckets(atomicOperation);
-          }
-        } finally {
-          releaseSharedLock();
-        }
-      } catch (final IOException e) {
-        throw OException.wrapException(
-            new CellBTreeSingleValueV3Exception(
-                "Error during element iteration", CellBTreeSingleValueV3.this),
-            e);
-      } finally {
-        atomicOperationsManager.releaseReadLock(CellBTreeSingleValueV3.this);
-      }
-    }
-
-    private boolean readKeysFromBuckets(OAtomicOperation atomicOperation) throws IOException {
-      OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
-      try {
-        CellBTreeSingleValueBucketV3<K> bucket = new CellBTreeSingleValueBucketV3<>(cacheEntry);
-        if (lastLSN == null || bucket.getLSN().equals(lastLSN)) {
-          while (true) {
-            int bucketSize = bucket.size();
-            if (itemIndex >= bucketSize) {
-              pageIndex = (int) bucket.getRightSibling();
-
-              if (pageIndex < 0) {
-                return true;
-              }
-
-              itemIndex = 0;
-              cacheEntry.close();
-
-              cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
-              bucket = new CellBTreeSingleValueBucketV3<>(cacheEntry);
-
-              bucketSize = bucket.size();
-            }
-
-            lastLSN = bucket.getLSN();
-
-            for (;
-                itemIndex < bucketSize && dataCache.size() < SPLITERATOR_CACHE_SIZE;
-                itemIndex++) {
-              @SuppressWarnings("ObjectAllocationInLoop")
-              CellBTreeSingleValueEntryV3<K> entry = bucket.getEntry(itemIndex, keySerializer);
-
-              if (toKey != null) {
-                if (toKeyInclusive) {
-                  if (comparator.compare(entry.key, toKey) > 0) {
-                    return true;
-                  }
-                } else if (comparator.compare(entry.key, toKey) >= 0) {
-                  return true;
-                }
-              }
-
-              //noinspection ObjectAllocationInLoop
-              dataCache.add(new ORawPair<>(entry.key, entry.value));
-            }
-
-            if (dataCache.size() >= SPLITERATOR_CACHE_SIZE) {
-              return true;
-            }
-          }
-        }
-      } finally {
-        cacheEntry.close();
-      }
-
-      return false;
-    }
-
-    @Override
-    public Spliterator<ORawPair<K, ORID>> trySplit() {
-      return null;
-    }
-
-    @Override
-    public long estimateSize() {
-      return Long.MAX_VALUE;
-    }
-
-    @Override
-    public int characteristics() {
-      return SORTED | NONNULL | ORDERED;
-    }
-
-    @Override
-    public Comparator<? super ORawPair<K, ORID>> getComparator() {
-      return (pairOne, pairTwo) -> comparator.compare(pairOne.first, pairTwo.first);
-    }
-  }
-
-  void fetchBackwardNextCachePortion(SpliteratorBackward<K> iter) {
+  public void fetchBackwardNextCachePortion(SpliteratorBackward<K> iter) {
     final K lastKey;
     if (iter.getDataCache().isEmpty()) {
       lastKey = null;
@@ -2071,7 +1864,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
     iter.getDataCache().clear();
     iter.setCacheIterator(Collections.emptyIterator());
 
-    atomicOperationsManager.acquireReadLock(CellBTreeSingleValueV3.this);
+    atomicOperationsManager.acquireReadLock(this);
     try {
       acquireSharedLock();
       try {
@@ -2130,12 +1923,149 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
       }
     } catch (final IOException e) {
       throw OException.wrapException(
+          new CellBTreeSingleValueV3Exception("Error during element iteration", this), e);
+    } finally {
+      atomicOperationsManager.releaseReadLock(this);
+    }
+  }
+
+  void fetchNextForwardCachePortion(SpliteratorForward<K> iter) {
+    final K lastKey;
+    if (!iter.getDataCache().isEmpty()) {
+      lastKey = iter.getDataCache().get(iter.getDataCache().size() - 1).first;
+    } else {
+      lastKey = null;
+    }
+
+    iter.getDataCache().clear();
+    iter.setCacheIterator(Collections.emptyIterator());
+
+    atomicOperationsManager.acquireReadLock(CellBTreeSingleValueV3.this);
+    try {
+      acquireSharedLock();
+      try {
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
+        if (iter.getPageIndex() > -1) {
+          if (readKeysFromBucketsForward(atomicOperation, iter)) {
+            return;
+          }
+        }
+
+        // this can only happen if page LSN does not equal to stored LSN or index of current
+        // iterated page equals to -1
+        // so we only started iteration
+        if (iter.getDataCache().isEmpty()) {
+          // iteration just started
+          if (lastKey == null) {
+            if (iter.getFromKey() != null) {
+              final BucketSearchResult searchResult =
+                  findBucket(iter.getFromKey(), atomicOperation);
+              iter.setPageIndex((int) searchResult.getPageIndex());
+
+              if (searchResult.getItemIndex() >= 0) {
+                if (iter.isFromKeyInclusive()) {
+                  iter.setItemIndex(searchResult.getItemIndex());
+                } else {
+                  iter.setItemIndex(searchResult.getItemIndex() + 1);
+                }
+              } else {
+                iter.setItemIndex(-searchResult.getItemIndex() - 1);
+              }
+            } else {
+              final Optional<BucketSearchResult> bucketSearchResult = firstItem(atomicOperation);
+              if (bucketSearchResult.isPresent()) {
+                final BucketSearchResult searchResult = bucketSearchResult.get();
+                iter.setPageIndex((int) searchResult.getPageIndex());
+                iter.setItemIndex(searchResult.getItemIndex());
+              } else {
+                return;
+              }
+            }
+
+          } else {
+            final BucketSearchResult bucketSearchResult = findBucket(lastKey, atomicOperation);
+
+            iter.setPageIndex((int) bucketSearchResult.getPageIndex());
+            if (bucketSearchResult.getItemIndex() >= 0) {
+              iter.setItemIndex(bucketSearchResult.getItemIndex() + 1);
+            } else {
+              iter.setItemIndex(-bucketSearchResult.getItemIndex() - 1);
+            }
+          }
+          iter.setLastLSN(null);
+          readKeysFromBucketsForward(atomicOperation, iter);
+        }
+      } finally {
+        releaseSharedLock();
+      }
+    } catch (final IOException e) {
+      throw OException.wrapException(
           new CellBTreeSingleValueV3Exception(
               "Error during element iteration", CellBTreeSingleValueV3.this),
           e);
     } finally {
       atomicOperationsManager.releaseReadLock(CellBTreeSingleValueV3.this);
     }
+  }
+
+  private boolean readKeysFromBucketsForward(
+      OAtomicOperation atomicOperation, SpliteratorForward<K> iter) throws IOException {
+    OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, iter.getPageIndex(), false);
+    try {
+      CellBTreeSingleValueBucketV3<K> bucket = new CellBTreeSingleValueBucketV3<>(cacheEntry);
+      if (iter.getLastLSN() == null || bucket.getLSN().equals(iter.getLastLSN())) {
+        while (true) {
+          int bucketSize = bucket.size();
+          if (iter.getItemIndex() >= bucketSize) {
+            iter.setPageIndex((int) bucket.getRightSibling());
+
+            if (iter.getPageIndex() < 0) {
+              return true;
+            }
+
+            iter.setItemIndex(0);
+            cacheEntry.close();
+
+            cacheEntry = loadPageForRead(atomicOperation, fileId, iter.getPageIndex(), false);
+            bucket = new CellBTreeSingleValueBucketV3<>(cacheEntry);
+
+            bucketSize = bucket.size();
+          }
+
+          iter.setLastLSN(bucket.getLSN());
+
+          for (;
+              iter.getItemIndex() < bucketSize
+                  && iter.getDataCache().size() < SPLITERATOR_CACHE_SIZE;
+              iter.setItemIndex(iter.getItemIndex() + 1)) {
+            @SuppressWarnings("ObjectAllocationInLoop")
+            CellBTreeSingleValueEntryV3<K> entry =
+                bucket.getEntry(iter.getItemIndex(), keySerializer);
+
+            if (iter.getToKey() != null) {
+              if (iter.isToKeyInclusive()) {
+                if (comparator.compare(entry.key, iter.getToKey()) > 0) {
+                  return true;
+                }
+              } else if (comparator.compare(entry.key, iter.getToKey()) >= 0) {
+                return true;
+              }
+            }
+
+            //noinspection ObjectAllocationInLoop
+            iter.getDataCache().add(new ORawPair<>(entry.key, entry.value));
+          }
+
+          if (iter.getDataCache().size() >= SPLITERATOR_CACHE_SIZE) {
+            return true;
+          }
+        }
+      }
+    } finally {
+      cacheEntry.close();
+    }
+
+    return false;
   }
 
   private boolean readKeysFromBucketsBackward(
