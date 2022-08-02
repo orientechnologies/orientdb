@@ -62,6 +62,15 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     return plugin;
   }
 
+  @Override
+  public void create(
+      String name, String user, String password, ODatabaseType type, OrientDBConfig config) {
+    if (isDistributedEnabled() && (plugin == null)) {
+      throw new OOfflineNodeException("Distributed plugin is not active");
+    }
+    super.create(name, user, password, type, config);
+  }
+
   protected OSharedContext createSharedContext(OAbstractPaginatedStorage storage) {
     if (!isDistributedEnabled() || OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName())) {
       return new OSharedContextEmbedded(storage, this);

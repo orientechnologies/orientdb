@@ -581,7 +581,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     return basePath + "/" + name;
   }
 
-  public void create(String name, String user, String password, ODatabaseType type) {
+  public final void create(String name, String user, String password, ODatabaseType type) {
     create(name, user, password, type, null);
   }
 
