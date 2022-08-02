@@ -175,17 +175,17 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
           key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
           final BucketSearchResult bucketSearchResult = findBucket(key, atomicOperation);
-          if (bucketSearchResult.itemIndex < 0) {
+          if (bucketSearchResult.getItemIndex() < 0) {
             return null;
           }
 
-          final long pageIndex = bucketSearchResult.pageIndex;
+          final long pageIndex = bucketSearchResult.getPageIndex();
 
           try (final OCacheEntry keyBucketCacheEntry =
               loadPageForRead(atomicOperation, fileId, pageIndex, false)) {
             final CellBTreeSingleValueBucketV3<K> keyBucket =
                 new CellBTreeSingleValueBucketV3<>(keyBucketCacheEntry);
-            return keyBucket.getValue(bucketSearchResult.itemIndex, keySerializer);
+            return keyBucket.getValue(bucketSearchResult.getItemIndex(), keySerializer);
           }
         } else {
 
@@ -255,8 +255,8 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
               CellBTreeSingleValueBucketV3<K> keyBucket =
                   new CellBTreeSingleValueBucketV3<>(keyBucketCacheEntry);
               final byte[] oldRawValue;
-              if (bucketSearchResult.itemIndex > -1) {
-                oldRawValue = keyBucket.getRawValue(bucketSearchResult.itemIndex, keySerializer);
+              if (bucketSearchResult.getItemIndex() > -1) {
+                oldRawValue = keyBucket.getRawValue(bucketSearchResult.getItemIndex(), keySerializer);
               } else {
                 oldRawValue = null;
               }
@@ -302,21 +302,20 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
 
               int insertionIndex;
               final int sizeDiff;
-              if (bucketSearchResult.itemIndex >= 0) {
+              if (bucketSearchResult.getItemIndex() >= 0) {
                 assert oldRawValue != null;
 
                 if (oldRawValue.length == serializedValue.length) {
-                  keyBucket.updateValue(
-                      bucketSearchResult.itemIndex, serializedValue, serializedKey.length);
+                  keyBucket.updateValue(bucketSearchResult.getItemIndex(), serializedValue, serializedKey.length);
                   keyBucketCacheEntry.close();
                   return true;
                 } else {
-                  keyBucket.removeLeafEntry(bucketSearchResult.itemIndex, serializedKey);
-                  insertionIndex = bucketSearchResult.itemIndex;
+                  keyBucket.removeLeafEntry(bucketSearchResult.getItemIndex(), serializedKey);
+                  insertionIndex = bucketSearchResult.getItemIndex();
                   sizeDiff = 0;
                 }
               } else {
-                insertionIndex = -bucketSearchResult.itemIndex - 1;
+                insertionIndex = -bucketSearchResult.getItemIndex() - 1;
                 sizeDiff = 1;
               }
 
@@ -325,12 +324,12 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
                     splitBucket(
                         keyBucket,
                         keyBucketCacheEntry,
-                        bucketSearchResult.path,
-                        bucketSearchResult.insertionIndexes,
+                        bucketSearchResult.getPath(),
+                        bucketSearchResult.getInsertionIndexes(),
                         insertionIndex,
                         atomicOperation);
 
-                insertionIndex = bucketSearchResult.itemIndex;
+                insertionIndex = bucketSearchResult.getItemIndex();
 
                 final long pageIndex = bucketSearchResult.getLastPathItem();
 
@@ -483,16 +482,16 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
                 final int bucketSize;
                 try (final OCacheEntry keyBucketCacheEntry =
                     loadPageForWrite(
-                        atomicOperation, fileId, removeSearchResult.leafPageIndex, false, true)) {
+                        atomicOperation, fileId, removeSearchResult.getLeafPageIndex(), false, true)) {
                   final CellBTreeSingleValueBucketV3<K> keyBucket =
                       new CellBTreeSingleValueBucketV3<>(keyBucketCacheEntry);
                   rawValue =
-                      keyBucket.getRawValue(removeSearchResult.leafEntryPageIndex, keySerializer);
+                      keyBucket.getRawValue(removeSearchResult.getLeafEntryPageIndex(), keySerializer);
                   final byte[] serializedKey =
-                      keyBucket.getRawKey(removeSearchResult.leafEntryPageIndex, keySerializer);
+                      keyBucket.getRawKey(removeSearchResult.getLeafEntryPageIndex(), keySerializer);
                   bucketSize =
                       keyBucket.removeLeafEntry(
-                          removeSearchResult.leafEntryPageIndex, serializedKey);
+                          removeSearchResult.getLeafEntryPageIndex(), serializedKey);
                   updateSize(-1, atomicOperation);
 
                   final int clusterId = OShortSerializer.INSTANCE.deserializeNative(rawValue, 0);
@@ -503,13 +502,13 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
                   removedValue = new ORecordId(clusterId, clusterPosition);
 
                   // skip balancing of the tree if leaf is a root.
-                  if (bucketSize == 0 && removeSearchResult.path.size() > 0) {
+                  if (bucketSize == 0 && removeSearchResult.getPath().size() > 0) {
                     final boolean balanceResult =
                         balanceLeafNodeAfterItemDelete(
                             atomicOperation, removeSearchResult, keyBucket);
 
                     if (balanceResult) {
-                      addToFreeList(atomicOperation, (int) removeSearchResult.leafPageIndex);
+                      addToFreeList(atomicOperation, (int) removeSearchResult.getLeafPageIndex());
                     }
                   }
                 }
@@ -533,15 +532,15 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
       final CellBTreeSingleValueBucketV3<K> keyBucket)
       throws IOException {
     final RemovalPathItem parentItem =
-        removeSearchResult.path.get(removeSearchResult.path.size() - 1);
+        removeSearchResult.getPath().get(removeSearchResult.getPath().size() - 1);
 
     try (final OCacheEntry parentCacheEntry =
-        loadPageForWrite(atomicOperation, fileId, parentItem.pageIndex, true, true)) {
+        loadPageForWrite(atomicOperation, fileId, parentItem.getPageIndex(), true, true)) {
       final CellBTreeSingleValueBucketV3<K> parentBucket =
           new CellBTreeSingleValueBucketV3<>(parentCacheEntry);
 
-      if (parentItem.leftChild) {
-        final int rightSiblingPageIndex = parentBucket.getRight(parentItem.indexInsidePage);
+      if (parentItem.isLeftChild()) {
+        final int rightSiblingPageIndex = parentBucket.getRight(parentItem.getIndexInsidePage());
 
         // merge with left sibling
         try (final OCacheEntry rightSiblingEntry =
@@ -549,7 +548,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
           final CellBTreeSingleValueBucketV3<K> rightSiblingBucket =
               new CellBTreeSingleValueBucketV3<>(rightSiblingEntry);
           final boolean success =
-              deleteFromNonLeafNode(atomicOperation, parentBucket, removeSearchResult.path);
+              deleteFromNonLeafNode(atomicOperation, parentBucket, removeSearchResult.getPath());
 
           if (success) {
             final long leftSiblingIndex = keyBucket.getLeftSibling();
@@ -574,14 +573,14 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
         }
       }
 
-      final int leftSiblingPageIndex = parentBucket.getLeft(parentItem.indexInsidePage);
+      final int leftSiblingPageIndex = parentBucket.getLeft(parentItem.getIndexInsidePage());
       try (final OCacheEntry leftSiblingEntry =
           loadPageForWrite(atomicOperation, fileId, leftSiblingPageIndex, true, true)) {
         // merge with right sibling
         final CellBTreeSingleValueBucketV3<K> leftSiblingBucket =
             new CellBTreeSingleValueBucketV3<>(leftSiblingEntry);
         final boolean success =
-            deleteFromNonLeafNode(atomicOperation, parentBucket, removeSearchResult.path);
+            deleteFromNonLeafNode(atomicOperation, parentBucket, removeSearchResult.getPath());
 
         if (success) {
           final long rightSiblingIndex = keyBucket.getRightSibling();
@@ -624,7 +623,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
     final RemovalPathItem currentItem = path.get(path.size() - 1);
 
     if (bucketSize > 1) {
-      bucket.removeNonLeafEntry(currentItem.indexInsidePage, currentItem.leftChild, keySerializer);
+      bucket.removeNonLeafEntry(currentItem.getIndexInsidePage(), currentItem.isLeftChild(), keySerializer);
 
       return true;
     }
@@ -632,19 +631,19 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
     final RemovalPathItem parentItem = path.get(path.size() - 2);
 
     try (final OCacheEntry parentCacheEntry =
-        loadPageForWrite(atomicOperation, fileId, parentItem.pageIndex, true, true)) {
+        loadPageForWrite(atomicOperation, fileId, parentItem.getPageIndex(), true, true)) {
       final CellBTreeSingleValueBucketV3<K> parentBucket =
           new CellBTreeSingleValueBucketV3<>(parentCacheEntry);
 
       final int orphanPointer;
-      if (currentItem.leftChild) {
-        orphanPointer = bucket.getRight(currentItem.indexInsidePage);
+      if (currentItem.isLeftChild()) {
+        orphanPointer = bucket.getRight(currentItem.getIndexInsidePage());
       } else {
-        orphanPointer = bucket.getLeft(currentItem.indexInsidePage);
+        orphanPointer = bucket.getLeft(currentItem.getIndexInsidePage());
       }
 
-      if (parentItem.leftChild) {
-        final int rightSiblingPageIndex = parentBucket.getRight(parentItem.indexInsidePage);
+      if (parentItem.isLeftChild()) {
+        final int rightSiblingPageIndex = parentBucket.getRight(parentItem.getIndexInsidePage());
         try (final OCacheEntry rightSiblingEntry =
             loadPageForWrite(atomicOperation, fileId, rightSiblingPageIndex, true, true)) {
           final CellBTreeSingleValueBucketV3<K> rightSiblingBucket =
@@ -668,7 +667,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
           return false;
         }
       } else {
-        final int leftSiblingPageIndex = parentBucket.getLeft(parentItem.indexInsidePage);
+        final int leftSiblingPageIndex = parentBucket.getLeft(parentItem.getIndexInsidePage());
         try (final OCacheEntry leftSiblingEntry =
             loadPageForWrite(atomicOperation, fileId, leftSiblingPageIndex, true, true)) {
           final CellBTreeSingleValueBucketV3<K> leftSiblingBucket =
@@ -706,12 +705,12 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
       throw new CellBTreeSingleValueV3Exception("BTree is broken", this);
     }
 
-    final byte[] bucketKey = parentBucket.getRawKey(parentItem.indexInsidePage, keySerializer);
+    final byte[] bucketKey = parentBucket.getRawKey(parentItem.getIndexInsidePage(), keySerializer);
     final int leftSiblingSize = leftSibling.size();
 
     final byte[] separatorKey = leftSibling.getRawKey(leftSiblingSize - 1, keySerializer);
 
-    if (!parentBucket.updateKey(parentItem.indexInsidePage, separatorKey, keySerializer)) {
+    if (!parentBucket.updateKey(parentItem.getIndexInsidePage(), separatorKey, keySerializer)) {
       return false;
     }
 
@@ -737,11 +736,11 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
       throw new CellBTreeSingleValueV3Exception("BTree is broken", this);
     }
 
-    final byte[] bucketKey = parentBucket.getRawKey(parentItem.indexInsidePage, keySerializer);
+    final byte[] bucketKey = parentBucket.getRawKey(parentItem.getIndexInsidePage(), keySerializer);
 
     final byte[] separatorKey = rightSibling.getRawKey(0, keySerializer);
 
-    if (!parentBucket.updateKey(parentItem.indexInsidePage, separatorKey, keySerializer)) {
+    if (!parentBucket.updateKey(parentItem.getIndexInsidePage(), separatorKey, keySerializer)) {
       return false;
     }
 
@@ -770,7 +769,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
       throw new CellBTreeSingleValueV3Exception("BTree is broken", this);
     }
 
-    final byte[] key = parentBucket.getRawKey(parentItem.indexInsidePage, keySerializer);
+    final byte[] key = parentBucket.getRawKey(parentItem.getIndexInsidePage(), keySerializer);
     final boolean success =
         deleteFromNonLeafNode(atomicOperation, parentBucket, path.subList(0, path.size() - 1));
 
@@ -802,7 +801,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
       throw new CellBTreeSingleValueV3Exception("BTree is broken", this);
     }
 
-    final byte[] key = parentBucket.getRawKey(parentItem.indexInsidePage, keySerializer);
+    final byte[] key = parentBucket.getRawKey(parentItem.getIndexInsidePage(), keySerializer);
 
     final boolean success =
         deleteFromNonLeafNode(atomicOperation, parentBucket, path.subList(0, path.size() - 1));
@@ -997,10 +996,10 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
         final BucketSearchResult result = searchResult.get();
 
         try (final OCacheEntry cacheEntry =
-            loadPageForRead(atomicOperation, fileId, result.pageIndex, false)) {
+            loadPageForRead(atomicOperation, fileId, result.getPageIndex(), false)) {
           final CellBTreeSingleValueBucketV3<K> bucket =
               new CellBTreeSingleValueBucketV3<>(cacheEntry);
-          return bucket.getKey(result.itemIndex, keySerializer);
+          return bucket.getKey(result.getItemIndex(), keySerializer);
         }
       } finally {
         releaseSharedLock();
@@ -1029,10 +1028,10 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
 
         final BucketSearchResult result = searchResult.get();
         try (final OCacheEntry cacheEntry =
-            loadPageForRead(atomicOperation, fileId, result.pageIndex, false)) {
+            loadPageForRead(atomicOperation, fileId, result.getPageIndex(), false)) {
           final CellBTreeSingleValueBucketV3<K> bucket =
               new CellBTreeSingleValueBucketV3<>(cacheEntry);
-          return bucket.getKey(result.itemIndex, keySerializer);
+          return bucket.getKey(result.getItemIndex(), keySerializer);
         }
       } finally {
         releaseSharedLock();
@@ -1220,8 +1219,8 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
             if (!path.isEmpty()) {
               final PagePathItemUnit pagePathItemUnit = path.removeLast();
 
-              bucketIndex = pagePathItemUnit.pageIndex;
-              itemIndex = pagePathItemUnit.itemIndex + 1;
+              bucketIndex = pagePathItemUnit.getPageIndex();
+              itemIndex = pagePathItemUnit.getItemIndex() + 1;
             } else {
               return Optional.empty();
             }
@@ -1242,8 +1241,8 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
             if (!path.isEmpty()) {
               final PagePathItemUnit pagePathItemUnit = path.removeLast();
 
-              bucketIndex = pagePathItemUnit.pageIndex;
-              itemIndex = pagePathItemUnit.itemIndex + 1;
+              bucketIndex = pagePathItemUnit.getPageIndex();
+              itemIndex = pagePathItemUnit.getItemIndex() + 1;
             } else {
               return Optional.empty();
             }
@@ -1281,8 +1280,8 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
             if (!path.isEmpty()) {
               final PagePathItemUnit pagePathItemUnit = path.removeLast();
 
-              bucketIndex = pagePathItemUnit.pageIndex;
-              itemIndex = pagePathItemUnit.itemIndex - 1;
+              bucketIndex = pagePathItemUnit.getPageIndex();
+              itemIndex = pagePathItemUnit.getItemIndex() - 1;
             } else {
               return Optional.empty();
             }
@@ -1303,8 +1302,8 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
             if (!path.isEmpty()) {
               final PagePathItemUnit pagePathItemUnit = path.removeLast();
 
-              bucketIndex = pagePathItemUnit.pageIndex;
-              itemIndex = pagePathItemUnit.itemIndex - 1;
+              bucketIndex = pagePathItemUnit.getPageIndex();
+              itemIndex = pagePathItemUnit.getItemIndex() - 1;
             } else {
               return Optional.empty();
             }
@@ -1506,7 +1505,7 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
                   atomicOperation);
 
           parentIndex = bucketSearchResult.getLastPathItem();
-          insertionIndex = bucketSearchResult.itemIndex;
+          insertionIndex = bucketSearchResult.getItemIndex();
 
           if (parentIndex != parentCacheEntry.getPageIndex()) {
             parentCacheEntry.close();
@@ -1846,68 +1845,6 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
     LOWEST_BOUNDARY
   }
 
-  private static final class RemoveSearchResult {
-    private final long leafPageIndex;
-    private final int leafEntryPageIndex;
-    private final List<RemovalPathItem> path;
-
-    private RemoveSearchResult(
-        long leafPageIndex, int leafEntryPageIndex, List<RemovalPathItem> path) {
-      this.leafPageIndex = leafPageIndex;
-      this.leafEntryPageIndex = leafEntryPageIndex;
-      this.path = path;
-    }
-  }
-
-  private static final class BucketSearchResult {
-    private final int itemIndex;
-    private final long pageIndex;
-
-    private BucketSearchResult(final int itemIndex, final long pageIndex) {
-      this.itemIndex = itemIndex;
-      this.pageIndex = pageIndex;
-    }
-  }
-
-  private static final class UpdateBucketSearchResult {
-    private final List<Integer> insertionIndexes;
-    private final ArrayList<Long> path;
-    private final int itemIndex;
-
-    private UpdateBucketSearchResult(
-        final List<Integer> insertionIndexes, final ArrayList<Long> path, final int itemIndex) {
-      this.insertionIndexes = insertionIndexes;
-      this.path = path;
-      this.itemIndex = itemIndex;
-    }
-
-    private long getLastPathItem() {
-      return path.get(path.size() - 1);
-    }
-  }
-
-  private static final class PagePathItemUnit {
-    private final long pageIndex;
-    private final int itemIndex;
-
-    private PagePathItemUnit(final long pageIndex, final int itemIndex) {
-      this.pageIndex = pageIndex;
-      this.itemIndex = itemIndex;
-    }
-  }
-
-  private static final class RemovalPathItem {
-    private final long pageIndex;
-    private final int indexInsidePage;
-    private final boolean leftChild;
-
-    private RemovalPathItem(long pageIndex, int indexInsidePage, boolean leftChild) {
-      this.pageIndex = pageIndex;
-      this.indexInsidePage = indexInsidePage;
-      this.leftChild = leftChild;
-    }
-  }
-
   private final class SpliteratorForward implements Spliterator<ORawPair<K, ORID>> {
     private final K fromKey;
     private final K toKey;
@@ -1989,23 +1926,23 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
             if (lastKey == null) {
               if (this.fromKey != null) {
                 final BucketSearchResult searchResult = findBucket(fromKey, atomicOperation);
-                pageIndex = (int) searchResult.pageIndex;
+                pageIndex = (int) searchResult.getPageIndex();
 
-                if (searchResult.itemIndex >= 0) {
+                if (searchResult.getItemIndex() >= 0) {
                   if (fromKeyInclusive) {
-                    itemIndex = searchResult.itemIndex;
+                    itemIndex = searchResult.getItemIndex();
                   } else {
-                    itemIndex = searchResult.itemIndex + 1;
+                    itemIndex = searchResult.getItemIndex() + 1;
                   }
                 } else {
-                  itemIndex = -searchResult.itemIndex - 1;
+                  itemIndex = -searchResult.getItemIndex() - 1;
                 }
               } else {
                 final Optional<BucketSearchResult> bucketSearchResult = firstItem(atomicOperation);
                 if (bucketSearchResult.isPresent()) {
                   final BucketSearchResult searchResult = bucketSearchResult.get();
-                  pageIndex = (int) searchResult.pageIndex;
-                  itemIndex = searchResult.itemIndex;
+                  pageIndex = (int) searchResult.getPageIndex();
+                  itemIndex = searchResult.getItemIndex();
                 } else {
                   return;
                 }
@@ -2014,11 +1951,11 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
             } else {
               final BucketSearchResult bucketSearchResult = findBucket(lastKey, atomicOperation);
 
-              pageIndex = (int) bucketSearchResult.pageIndex;
-              if (bucketSearchResult.itemIndex >= 0) {
-                itemIndex = bucketSearchResult.itemIndex + 1;
+              pageIndex = (int) bucketSearchResult.getPageIndex();
+              if (bucketSearchResult.getItemIndex() >= 0) {
+                itemIndex = bucketSearchResult.getItemIndex() + 1;
               } else {
-                itemIndex = -bucketSearchResult.itemIndex - 1;
+                itemIndex = -bucketSearchResult.getItemIndex() - 1;
               }
             }
             lastLSN = null;
@@ -2195,23 +2132,23 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
             if (lastKey == null) {
               if (this.toKey != null) {
                 final BucketSearchResult searchResult = findBucket(toKey, atomicOperation);
-                pageIndex = (int) searchResult.pageIndex;
+                pageIndex = (int) searchResult.getPageIndex();
 
-                if (searchResult.itemIndex >= 0) {
+                if (searchResult.getItemIndex() >= 0) {
                   if (toKeyInclusive) {
-                    itemIndex = searchResult.itemIndex;
+                    itemIndex = searchResult.getItemIndex();
                   } else {
-                    itemIndex = searchResult.itemIndex - 1;
+                    itemIndex = searchResult.getItemIndex() - 1;
                   }
                 } else {
-                  itemIndex = -searchResult.itemIndex - 2;
+                  itemIndex = -searchResult.getItemIndex() - 2;
                 }
               } else {
                 final Optional<BucketSearchResult> bucketSearchResult = lastItem(atomicOperation);
                 if (bucketSearchResult.isPresent()) {
                   final BucketSearchResult searchResult = bucketSearchResult.get();
-                  pageIndex = (int) searchResult.pageIndex;
-                  itemIndex = searchResult.itemIndex;
+                  pageIndex = (int) searchResult.getPageIndex();
+                  itemIndex = searchResult.getItemIndex();
                 } else {
                   return;
                 }
@@ -2220,11 +2157,11 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
             } else {
               final BucketSearchResult bucketSearchResult = findBucket(lastKey, atomicOperation);
 
-              pageIndex = (int) bucketSearchResult.pageIndex;
-              if (bucketSearchResult.itemIndex >= 0) {
-                itemIndex = bucketSearchResult.itemIndex - 1;
+              pageIndex = (int) bucketSearchResult.getPageIndex();
+              if (bucketSearchResult.getItemIndex() >= 0) {
+                itemIndex = bucketSearchResult.getItemIndex() - 1;
               } else {
-                itemIndex = -bucketSearchResult.itemIndex - 2;
+                itemIndex = -bucketSearchResult.getItemIndex() - 2;
               }
             }
             lastLSN = null;
