@@ -299,6 +299,7 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
 
   byte[] getRawValue(final int entryIndex, final OBinarySerializer<K> keySerializer) {
     assert isLeaf();
+    assert entryIndex < getSize();
 
     int entryPosition = getPointer(entryIndex);
 
@@ -309,6 +310,7 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
   }
 
   public K getKey(final int index, final OBinarySerializer<K> keySerializer) {
+    assert index < getSize();
     int entryPosition = getPointer(index);
 
     if (!isLeaf()) {
