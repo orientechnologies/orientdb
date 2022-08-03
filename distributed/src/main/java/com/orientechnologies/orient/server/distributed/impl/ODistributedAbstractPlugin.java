@@ -499,6 +499,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     cluster.field("members", members, OType.EMBEDDEDLIST);
     for (Member member : activeNodes.values()) {
       final ODocument memberConfig = getNodeConfigurationByUuid(member.getUuid(), true).copy();
+      if (memberConfig == null) {
+        continue;
+      }
       members.add(memberConfig);
 
       final String nodeName = getNodeName(member);
