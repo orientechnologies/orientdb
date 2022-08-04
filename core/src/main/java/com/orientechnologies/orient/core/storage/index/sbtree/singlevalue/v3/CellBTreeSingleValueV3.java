@@ -306,7 +306,8 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
                 assert oldRawValue != null;
 
                 if (oldRawValue.length == serializedValue.length) {
-                  keyBucket.updateValue(bucketSearchResult.itemIndex, serializedValue);
+                  keyBucket.updateValue(
+                      bucketSearchResult.itemIndex, serializedValue, serializedKey.length);
                   keyBucketCacheEntry.close();
                   return true;
                 } else {
