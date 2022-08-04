@@ -524,14 +524,14 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
     return true;
   }
 
-  public void updateValue(final int index, final byte[] value) {
+  public void updateValue(final int index, final byte[] value, int keyLength) {
     int entryPosition = getIntValue(index * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
 
     if (!isLeaf()) {
       entryPosition += 2 * OIntegerSerializer.INT_SIZE;
     }
 
-    setBinaryValue(entryPosition, value);
+    setBinaryValue(entryPosition + keyLength, value);
   }
 
   public void setLeftSibling(final long pageIndex) {
