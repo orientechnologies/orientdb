@@ -453,14 +453,6 @@ public class OrientDBEmbedded implements OrientDBInternal {
     }
   }
 
-  @Override
-  public void rollbackOperationsFromThread(Thread thread) {
-    synchronized (this) {
-      final Thread currentThread = Thread.currentThread();
-      currentThread.interrupt();
-    }
-  }
-
   protected ODatabaseDocumentEmbedded internalCreate(OrientDBConfig config,
       OAbstractPaginatedStorage storage) {
     storage.create(config.getConfigurations());

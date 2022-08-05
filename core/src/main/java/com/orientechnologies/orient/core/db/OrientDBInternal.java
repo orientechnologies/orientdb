@@ -283,10 +283,6 @@ public interface OrientDBInternal extends AutoCloseable {
 
   OEmbeddedDatabaseInstanceFactory getFactory();
 
-  default void rollbackOperationsFromThread(final Thread thread) {
-    throw new UnsupportedOperationException();
-  }
-
   default OStorage fullSync(String dbName, InputStream backupStream, OrientDBConfig config) {
     throw new UnsupportedOperationException();
   }

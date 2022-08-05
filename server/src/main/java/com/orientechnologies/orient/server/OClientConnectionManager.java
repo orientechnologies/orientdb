@@ -252,8 +252,7 @@ public class OClientConnectionManager {
       final ONetworkProtocol protocol = connection.getProtocol();
 
       try {
-        //noinspection resource
-        protocol.getServer().getDatabases().rollbackOperationsFromThread(protocol);
+        protocol.interrupt();
       } catch (Exception e) {
         OLogManager.instance().error(this, "Error during interruption of binary protocol", e);
       }
