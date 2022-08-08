@@ -27,6 +27,16 @@
 This document contains the last changes of OrientDB Community Edition.
 
 -----------------------------------------------------------------------------------------------------------------------------------
+VERSION 3.0.44 - (August, 9 2022)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.0-Release-Notes#3044---09-August-2022
+- Issues: https://github.com/orientechnologies/orientdb/issues?q=is%3Aissue+milestone%3A3.0.44+is%3Aclosed  
+
+# Core
+- Removed some not needed synchronize for sequence logic
+- Release session lock in any case of error
+- Session kill now interrupt the correct thread
+
+-----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.0.43 - (June, 28 2022)
 - Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.0-Release-Notes#3043---28-june-2022
 - Issues: https://github.com/orientechnologies/orientdb/issues?q=is%3Aissue+milestone%3A3.0.43+is%3Aclosed  
