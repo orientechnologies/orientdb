@@ -28,6 +28,28 @@ This document contains the last changes of OrientDB Community Edition.
 
 
 -----------------------------------------------------------------------------------------------------------------------------------
+VERSION 3.2.9 - (August, 11 2022)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#329---11-August-2022
+
+# Core
+- Make sure to drop the database also when drop listeners fail
+- Improve thread pool executors to scale up and down properly
+- Make sure to release lock on close of failed storage
+- Removed background thread to mark storage broken not needed anymore
+- Add missing file extension from list of database files extensions to allow proper cleanup on delete
+- Remove no needed refresh of immutable metadata during index metadata load
+- Avoid that wrong validation value make a database read only
+- Corrected regression on btree v3 value replace
+- Refactor to  simplify  index v3 logic
+- Prevent Live Query thread hot looping on idle queue.
+
+# Distributed
+- Improved distributed hosts change notification after client optimization
+
+# Remote
+- Release session lock in any case of error
+
+-----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.8 - (June, 26 2022)
 - Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#328---26-June-2022
 
