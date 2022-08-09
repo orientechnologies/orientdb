@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.index;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.types.OModifiableBoolean;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -31,6 +32,8 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainerSBTree;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OMixedIndexRIDContainer;
+import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -107,22 +110,14 @@ public class OIndexFullText extends OIndexMultiValues {
 
     final Set<String> words = splitIntoWords(key.toString());
 
-    // FOREACH WORD CREATE THE LINK TO THE CURRENT DOCUMENT
-    for (final String word : words) {
-      acquireSharedLock();
-      try {
-        if (apiVersion == 0) {
-          doPutV0(value, word);
-        } else if (apiVersion == 1) {
-          doPutV1(value, word);
-        } else {
-          throw new IllegalStateException("Invalid API version, " + apiVersion);
-        }
-
-      } finally {
-        releaseSharedLock();
-      }
+    ODatabaseDocumentInternal database = getDatabase();
+    database.begin();
+    OTransaction singleTx = database.getTransaction();
+    for (String word : words) {
+      singleTx.addIndexEntry(
+          this, super.getName(), OTransactionIndexChanges.OPERATION.PUT, word, value);
     }
+    database.commit();
 
     return this;
   }

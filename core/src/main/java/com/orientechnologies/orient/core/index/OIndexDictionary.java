@@ -19,12 +19,15 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
+import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 
 /**
@@ -58,22 +61,15 @@ public class OIndexDictionary extends OIndexOneValue {
   }
 
   public OIndexOneValue put(Object key, final OIdentifiable value) {
-
     key = getCollatingValue(key);
 
-    acquireSharedLock();
-    try {
-      while (true) {
-        try {
-          doPut(storage, key, value.getIdentity());
-          return this;
-        } catch (OInvalidIndexEngineIdException e) {
-          doReloadIndexEngine();
-        }
-      }
-    } finally {
-      releaseSharedLock();
-    }
+    ODatabaseDocumentInternal database = getDatabase();
+    database.begin();
+    OTransaction singleTx = database.getTransaction();
+    singleTx.addIndexEntry(
+        this, super.getName(), OTransactionIndexChanges.OPERATION.PUT, key, value.getIdentity());
+    database.commit();
+    return this;
   }
 
   @Override
