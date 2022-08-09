@@ -981,28 +981,23 @@ public abstract class OIndexAbstract implements OIndexInternal {
   }
 
   protected void commitSnapshot(Map<Object, Object> snapshot) {
-    // do nothing by default
-    // storage will delay real operations till the end of tx
+    throw new UnsupportedOperationException();
   }
 
   protected void putInSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot) {
-    // storage will delay real operations till the end of tx
-    put(key, value);
+    throw new UnsupportedOperationException();
   }
 
   protected void removeFromSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot) {
-    // storage will delay real operations till the end of tx
-    remove(key, value);
+    throw new UnsupportedOperationException();
   }
 
   protected void removeFromSnapshot(Object key, Map<Object, Object> snapshot) {
-    // storage will delay real operations till the end of tx
-    remove(key);
+    throw new UnsupportedOperationException();
   }
 
   protected void clearSnapshot(IndexTxSnapshot indexTxSnapshot) {
-    // storage will delay real operations till the end of tx
-    clear();
+    throw new UnsupportedOperationException();
   }
 
   @Override
