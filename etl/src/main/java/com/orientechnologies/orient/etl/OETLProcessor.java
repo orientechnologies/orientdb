@@ -121,6 +121,7 @@ public class OETLProcessor {
     final OETLProcessor processor = new OETLProcessorConfigurator().parseConfigAndParameters(args);
 
     processor.execute();
+    processor.close();
   }
 
   protected void configRunBehaviour(OCommandContext context) {

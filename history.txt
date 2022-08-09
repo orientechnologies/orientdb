@@ -49,6 +49,9 @@ VERSION 3.2.9 - (August, 11 2022)
 # Remote
 - Release session lock in any case of error
 
+# Etl
+- Make sure to close context on process shutdown
+
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.8 - (June, 26 2022)
 - Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#328---26-June-2022
