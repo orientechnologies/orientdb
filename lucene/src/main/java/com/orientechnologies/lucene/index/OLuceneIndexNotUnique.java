@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -138,7 +139,30 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
 
   @Override
   public void doPut(OAbstractPaginatedStorage storage, Object key, ORID rid) {
-    // do nothing
+
+    while (true)
+      try {
+        storage.callIndexEngine(
+            false,
+            indexId,
+            engine -> {
+              try {
+                OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
+
+                OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
+                Set<OIdentifiable> set = new HashSet<>();
+                set.add(rid);
+                indexEngine.put(atomicOperation, decodeKey(key), set);
+                return null;
+              } catch (IOException e) {
+                throw OException.wrapException(
+                    new OIndexException("Error during commit of index changes"), e);
+              }
+            });
+        break;
+      } catch (OInvalidIndexEngineIdException e) {
+        doReloadIndexEngine();
+      }
   }
 
   @Override
