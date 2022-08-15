@@ -23,5 +23,6 @@ public class OLuceneFunctionsFactory extends OSQLFunctionFactoryTemplate {
     register(new OLuceneSearchOnFieldsFunction());
     register(new OLuceneSearchOnClassFunction());
     register(new OLuceneSearchMoreLikeThisFunction());
+    register(new OLuceneSearchOnCrossClassFunction());
   }
 }
