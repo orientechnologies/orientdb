@@ -153,6 +153,16 @@ public class ODurablePage {
     return changes.getIntValue(buffer, pageOffset);
   }
 
+  protected final int[] getIntArray(final int pageOffset, int size) {
+    int[] values = new int[size];
+    byte[] bytes = getBinaryValue(pageOffset, size * OIntegerSerializer.INT_SIZE);
+    for (int i = 0; i < size; i++) {
+      values[i] =
+          OIntegerSerializer.INSTANCE.deserializeNative(bytes, i * OIntegerSerializer.INT_SIZE);
+    }
+    return values;
+  }
+
   protected short getShortValue(final int pageOffset) {
     if (changes == null) {
       assert buffer != null;

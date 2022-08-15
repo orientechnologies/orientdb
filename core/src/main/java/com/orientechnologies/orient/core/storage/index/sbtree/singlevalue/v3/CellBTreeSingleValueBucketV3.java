@@ -540,11 +540,11 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
   }
 
   private void updatePointers(int size, int basePosition, int shiftSize, int toIgnore) {
+    int[] pointers = getIntArray(POSITIONS_ARRAY_OFFSET, size);
     for (int i = 0; i < size; i++) {
       if (toIgnore == i) continue;
-      int currentPointer = getPointer(i);
-      if (currentPointer < basePosition) {
-        setPointer(i, currentPointer + shiftSize);
+      if (pointers[i] < basePosition) {
+        setPointer(i, pointers[i] + shiftSize);
       }
     }
   }
