@@ -67,12 +67,14 @@ public class ODurablePage {
   private final OWALChanges changes;
   private final OCacheEntry cacheEntry;
   private final OCachePointer pointer;
+  private final ByteBuffer buffer;
 
   public ODurablePage(final OCacheEntry cacheEntry) {
     assert cacheEntry != null;
     this.cacheEntry = cacheEntry;
     this.pointer = cacheEntry.getCachePointer();
     this.changes = cacheEntry.getChanges();
+    this.buffer = pointer.getBufferDuplicate();
 
     if (cacheEntry.getInitialLSN() == null) {
       final ByteBuffer buffer = pointer.getBuffer();
@@ -141,43 +143,39 @@ public class ODurablePage {
 
   protected final int getIntValue(final int pageOffset) {
     if (changes == null) {
-      final ByteBuffer buffer = pointer.getBuffer();
+
       assert buffer != null;
 
       assert buffer.order() == ByteOrder.nativeOrder();
       return buffer.getInt(pageOffset);
     }
 
-    return changes.getIntValue(pointer.getBufferDuplicate(), pageOffset);
+    return changes.getIntValue(buffer, pageOffset);
   }
 
   protected short getShortValue(final int pageOffset) {
     if (changes == null) {
-      final ByteBuffer buffer = pointer.getBuffer();
       assert buffer != null;
 
       assert buffer.order() == ByteOrder.nativeOrder();
       return buffer.getShort(pageOffset);
     }
 
-    return changes.getShortValue(pointer.getBufferDuplicate(), pageOffset);
+    return changes.getShortValue(buffer, pageOffset);
   }
 
   protected final long getLongValue(final int pageOffset) {
     if (changes == null) {
-      final ByteBuffer buffer = pointer.getBuffer();
       assert buffer != null;
 
       assert buffer.order() == ByteOrder.nativeOrder();
       return buffer.getLong(pageOffset);
     }
 
-    return changes.getLongValue(pointer.getBufferDuplicate(), pageOffset);
+    return changes.getLongValue(buffer, pageOffset);
   }
 
   protected final byte[] getBinaryValue(final int pageOffset, final int valLen) {
-    final ByteBuffer buffer = pointer.getBufferDuplicate();
-
     if (changes == null) {
       assert buffer != null;
       assert buffer.order() == ByteOrder.nativeOrder();
@@ -194,8 +192,6 @@ public class ODurablePage {
 
   protected int getObjectSizeInDirectMemory(
       final OBinarySerializer<?> binarySerializer, final int offset) {
-    final ByteBuffer buffer = pointer.getBufferDuplicate();
-
     if (changes == null) {
       assert buffer != null;
       assert buffer.order() == ByteOrder.nativeOrder();
@@ -209,8 +205,6 @@ public class ODurablePage {
 
   protected <T> T deserializeFromDirectMemory(
       final OBinarySerializer<T> binarySerializer, final int offset) {
-    final ByteBuffer buffer = pointer.getBufferDuplicate();
-
     if (changes == null) {
       assert buffer != null;
       assert buffer.order() == ByteOrder.nativeOrder();
@@ -222,18 +216,17 @@ public class ODurablePage {
 
   protected final byte getByteValue(final int pageOffset) {
     if (changes == null) {
-      final ByteBuffer buffer = pointer.getBuffer();
+
       assert buffer != null;
 
       assert buffer.order() == ByteOrder.nativeOrder();
       return buffer.get(pageOffset);
     }
-    return changes.getByteValue(pointer.getBufferDuplicate(), pageOffset);
+    return changes.getByteValue(buffer, pageOffset);
   }
 
   @SuppressWarnings("SameReturnValue")
   protected final int setIntValue(final int pageOffset, final int value) {
-    final ByteBuffer buffer = pointer.getBuffer();
 
     if (changes != null) {
       changes.setIntValue(buffer, value, pageOffset);
@@ -247,7 +240,6 @@ public class ODurablePage {
   }
 
   protected final int setShortValue(final int pageOffset, final short value) {
-    final ByteBuffer buffer = pointer.getBuffer();
 
     if (changes != null) {
       changes.setIntValue(buffer, value, pageOffset);
@@ -262,8 +254,6 @@ public class ODurablePage {
 
   @SuppressWarnings("SameReturnValue")
   protected final int setByteValue(final int pageOffset, final byte value) {
-    final ByteBuffer buffer = pointer.getBuffer();
-
     if (changes != null) {
       changes.setByteValue(buffer, value, pageOffset);
     } else {
@@ -277,8 +267,6 @@ public class ODurablePage {
 
   @SuppressWarnings("SameReturnValue")
   protected final int setLongValue(final int pageOffset, final long value) {
-    final ByteBuffer buffer = pointer.getBuffer();
-
     if (changes != null) {
       changes.setLongValue(buffer, value, pageOffset);
     } else {
@@ -294,8 +282,6 @@ public class ODurablePage {
     if (value.length == 0) {
       return 0;
     }
-
-    final ByteBuffer buffer = pointer.getBuffer();
 
     if (changes != null) {
       changes.setBinaryValue(buffer, value, pageOffset);
@@ -313,8 +299,6 @@ public class ODurablePage {
     if (len == 0) {
       return;
     }
-
-    final ByteBuffer buffer = pointer.getBuffer();
 
     if (changes != null) {
       changes.moveData(buffer, from, to, len);
@@ -347,7 +331,6 @@ public class ODurablePage {
   }
 
   public final void setLsn(final OLogSequenceNumber lsn) {
-    final ByteBuffer buffer = pointer.getBuffer();
     assert buffer != null;
 
     assert buffer.order() == ByteOrder.nativeOrder();
