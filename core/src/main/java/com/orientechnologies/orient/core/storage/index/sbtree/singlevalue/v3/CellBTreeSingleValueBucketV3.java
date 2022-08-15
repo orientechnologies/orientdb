@@ -130,13 +130,7 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
     }
 
     setFreePointer(freePointer + entrySize);
-
-    for (int i = 0; i < size; i++) {
-      int currentPointer = getPointer(i);
-      if (currentPointer < entryPosition) {
-        setPointer(i, currentPointer + entrySize);
-      }
-    }
+    updatePointers(size, entryPosition, entrySize, -1);
 
     return size;
   }
@@ -188,12 +182,7 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
 
     setFreePointer(freePointer + entrySize);
 
-    for (int i = 0; i < size; i++) {
-      int currentPointer = getPointer(i);
-      if (currentPointer < entryPosition) {
-        setPointer(i, currentPointer + entrySize);
-      }
-    }
+    updatePointers(size, entryPosition, entrySize, -1);
 
     if (size > 0) {
       final int childPointer = removeLeftChildPointer ? rightChild : leftChild;
@@ -502,16 +491,7 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
 
     if (size > 0 && entryPosition > freePointer) {
       moveData(freePointer, freePointer + entrySize, entryPosition - freePointer);
-
-      for (int i = 0; i < size; i++) {
-        if (i == entryIndex) {
-          continue;
-        }
-        final int currentPointer = getPointer(i);
-        if (currentPointer < entryPosition) {
-          setPointer(i, currentPointer + entrySize);
-        }
-      }
+      updatePointers(size, entryPosition, entrySize, entryIndex);
     }
 
     freePointer = freePointer - key.length + keySize;
@@ -557,6 +537,16 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
 
   public long getRightSibling() {
     return getLongValue(RIGHT_SIBLING_OFFSET);
+  }
+
+  private void updatePointers(int size, int basePosition, int shiftSize, int toIgnore) {
+    for (int i = 0; i < size; i++) {
+      if (toIgnore == i) continue;
+      int currentPointer = getPointer(i);
+      if (currentPointer < basePosition) {
+        setPointer(i, currentPointer + shiftSize);
+      }
+    }
   }
 
   private boolean doesOverflow(int requiredDataSpace, int requirePointerSpace) {
