@@ -23,6 +23,7 @@ public class OWALPageChangesPortion implements OWALChanges {
   private byte[][][] pageChunks;
 
   private final int pageSize;
+  private final int chunksCount;
 
   public OWALPageChangesPortion() {
     this(PAGE_SIZE);
@@ -30,6 +31,7 @@ public class OWALPageChangesPortion implements OWALChanges {
 
   OWALPageChangesPortion(int pageSize) {
     this.pageSize = pageSize;
+    this.chunksCount = (pageSize + (PORTION_BYTES - 1)) / PORTION_BYTES;
     if (pageSize % PORTION_BYTES != 0) {
       throw new IllegalArgumentException("Page size should be a multiple of " + PORTION_BYTES);
     }
@@ -343,7 +345,7 @@ public class OWALPageChangesPortion implements OWALChanges {
 
   private void updateData(ByteBuffer pointer, int offset, byte[] data) {
     if (pageChunks == null) {
-      pageChunks = new byte[(pageSize + (PORTION_BYTES - 1)) / PORTION_BYTES][][];
+      pageChunks = new byte[this.chunksCount][][];
     }
 
     int portionIndex = offset / PORTION_BYTES;
@@ -368,7 +370,7 @@ public class OWALPageChangesPortion implements OWALChanges {
 
         // pointer can be null for new pages
         if (pointer != null) {
-          pointer.position(portionIndex * PORTION_BYTES + (chunkIndex) * CHUNK_SIZE);
+          pointer.position(portionIndex * PORTION_BYTES + chunkIndex * CHUNK_SIZE);
           pointer.get(chunk);
         }
 
