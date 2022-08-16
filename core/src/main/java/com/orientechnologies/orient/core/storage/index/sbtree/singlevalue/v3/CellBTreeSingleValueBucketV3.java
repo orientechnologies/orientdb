@@ -116,11 +116,23 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
       throw new IllegalStateException("Remove is applies to leaf buckets only");
     }
 
-    int size = getSize();
+    int[] pointers = getPointers();
+    int size = pointers.length;
+    int startChanging = size;
     if (entryIndex < size - 1) {
-      shiftPointers(entryIndex + 1, entryIndex, (size - entryIndex - 1));
+      for (int i = entryIndex + 1; i < size; i++) {
+        if (pointers[i] < entryPosition) {
+          pointers[i] += entrySize;
+        }
+      }
+      setPointersOffset(entryIndex, pointers, entryIndex + 1);
+      startChanging = entryIndex;
     }
-
+    for (int i = 0; i < startChanging; i++) {
+      if (pointers[i] < entryPosition) {
+        setPointer(i, pointers[i] + entrySize);
+      }
+    }
     size--;
     setSize(size);
 
@@ -130,7 +142,6 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
     }
 
     setFreePointer(freePointer + entrySize);
-    updatePointers(size, entryPosition, entrySize, -1);
 
     return size;
   }
@@ -163,15 +174,27 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
 
     final int entryPosition = getPointer(entryIndex);
     final int entrySize = key.length + 2 * OIntegerSerializer.INT_SIZE;
-    int size = getSize();
 
     final int leftChild = getIntValue(entryPosition);
     final int rightChild = getIntValue(entryPosition + OIntegerSerializer.INT_SIZE);
 
+    int[] pointers = getPointers();
+    int size = pointers.length;
+    int startChanging = size;
     if (entryIndex < size - 1) {
-      shiftPointers(entryIndex + 1, entryIndex, (size - entryIndex - 1));
+      for (int i = entryIndex + 1; i < size; i++) {
+        if (pointers[i] < entryPosition) {
+          pointers[i] += entrySize;
+        }
+      }
+      setPointersOffset(entryIndex, pointers, entryIndex + 1);
+      startChanging = entryIndex;
     }
-
+    for (int i = 0; i < startChanging; i++) {
+      if (pointers[i] < entryPosition) {
+        setPointer(i, pointers[i] + entrySize);
+      }
+    }
     size--;
     setSize(size);
 
@@ -181,8 +204,6 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
     }
 
     setFreePointer(freePointer + entrySize);
-
-    updatePointers(size, entryPosition, entrySize, -1);
 
     if (size > 0) {
       final int childPointer = removeLeftChildPointer ? rightChild : leftChild;
@@ -198,6 +219,16 @@ public final class CellBTreeSingleValueBucketV3<K> extends ODurablePage {
     }
 
     return size;
+  }
+
+  public int[] getPointers() {
+    int size = getSize();
+    return getIntArray(POSITIONS_ARRAY_OFFSET, size);
+  }
+
+  public void setPointersOffset(int position, int[] pointers, int pointersOffset) {
+    setIntArray(
+        POSITIONS_ARRAY_OFFSET + position * OIntegerSerializer.INT_SIZE, pointers, pointersOffset);
   }
 
   public int size() {
