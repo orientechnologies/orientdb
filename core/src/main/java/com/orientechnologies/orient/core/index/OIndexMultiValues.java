@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.comparator.ODefaultComparator;
-import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.ORawPair;
@@ -267,22 +266,6 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
       int indexId, OAbstractPaginatedStorage storage, Object key, OIdentifiable value)
       throws OInvalidIndexEngineIdException {
     return storage.removeRidIndexEntry(indexId, key, value.getIdentity());
-  }
-
-  public OIndexMultiValues create(
-      final String name,
-      final OIndexDefinition indexDefinition,
-      final Set<String> clustersToIndex,
-      boolean rebuild,
-      final OProgressListener progressListener) {
-
-    return (OIndexMultiValues)
-        super.create(
-            indexDefinition,
-            clustersToIndex,
-            rebuild,
-            progressListener,
-            determineValueSerializer());
   }
 
   protected OBinarySerializer<?> determineValueSerializer() {

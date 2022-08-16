@@ -337,22 +337,6 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
     return changes;
   }
 
-  @Override
-  public OLuceneIndexNotUnique create(
-      String name,
-      OIndexDefinition indexDefinition,
-      Set<String> clustersToIndex,
-      boolean rebuild,
-      OProgressListener progressListener) {
-    return (OLuceneIndexNotUnique)
-        super.create(
-            indexDefinition,
-            clustersToIndex,
-            rebuild,
-            progressListener,
-            determineValueSerializer());
-  }
-
   @Deprecated
   @Override
   public Collection<OIdentifiable> get(final Object key) {

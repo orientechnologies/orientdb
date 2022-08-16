@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.listener.OProgressListener;
-import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -259,32 +258,13 @@ public class OIndexFullText extends OIndexMultiValues {
   }
 
   @Override
-  public OIndexInternal create(
-      OIndexDefinition indexDefinition,
-      Set<String> clustersToIndex,
-      boolean rebuild,
-      OProgressListener progressListener,
-      OBinarySerializer valueSerializer) {
-
-    if (indexDefinition.getFields().size() > 1) {
-      throw new OIndexException(type + " indexes cannot be used as composite ones.");
-    }
-
-    return super.create(
-        indexDefinition, clustersToIndex, rebuild, progressListener, valueSerializer);
-  }
-
-  @Override
   public OIndexMultiValues create(
-      String name,
-      OIndexDefinition indexDefinition,
-      Set<String> clustersToIndex,
-      boolean rebuild,
-      OProgressListener progressListener) {
-    if (indexDefinition.getFields().size() > 1) {
+      OIndexMetadata metadata, boolean rebuild, OProgressListener progressListener) {
+    if (metadata.getIndexDefinition().getFields().size() > 1) {
       throw new OIndexException(type + " indexes cannot be used as composite ones.");
     }
-    return super.create(name, indexDefinition, clustersToIndex, rebuild, progressListener);
+    super.create(metadata, rebuild, progressListener);
+    return this;
   }
 
   @Override

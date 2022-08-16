@@ -35,12 +35,7 @@ import java.util.Set;
 public interface OIndex extends Comparable<OIndex> {
   String MERGE_KEYS = "mergeKeys";
 
-  OIndex create(
-      String name,
-      OIndexDefinition indexDefinition,
-      Set<String> clustersToIndex,
-      boolean rebuild,
-      OProgressListener progressListener);
+  OIndex create(OIndexMetadata metadata, boolean rebuild, OProgressListener progressListener);
 
   String getDatabaseName();
 

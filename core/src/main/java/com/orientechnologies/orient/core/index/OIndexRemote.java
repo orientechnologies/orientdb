@@ -102,12 +102,10 @@ public abstract class OIndexRemote implements OIndex {
   }
 
   public OIndexRemote create(
-      final String name,
-      final OIndexDefinition indexDefinition,
-      final Set<String> clustersToIndex,
+      final OIndexMetadata indexMetadata,
       boolean rebuild,
       final OProgressListener progressListener) {
-    this.name = name;
+    this.name = indexMetadata.getName();
     return this;
   }
 

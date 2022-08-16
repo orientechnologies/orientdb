@@ -439,11 +439,7 @@ public class OChainedIndexProxy<T> implements OIndexInternal {
 
   @Override
   public OIndex create(
-      String name,
-      OIndexDefinition indexDefinition,
-      Set<String> clustersToIndex,
-      boolean rebuild,
-      OProgressListener progressListener) {
+      OIndexMetadata indexMetadat, boolean rebuild, OProgressListener progressListener) {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 

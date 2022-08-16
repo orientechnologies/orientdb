@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.comparator.ODefaultComparator;
-import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
@@ -36,7 +35,6 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Stream;
 
 /**
@@ -111,21 +109,6 @@ public abstract class OIndexOneValue extends OIndexAbstract {
     } finally {
       releaseSharedLock();
     }
-  }
-
-  public OIndexOneValue create(
-      final String name,
-      final OIndexDefinition indexDefinition,
-      final Set<String> clustersToIndex,
-      boolean rebuild,
-      final OProgressListener progressListener) {
-    return (OIndexOneValue)
-        super.create(
-            indexDefinition,
-            clustersToIndex,
-            rebuild,
-            progressListener,
-            determineValueSerializer());
   }
 
   @Override

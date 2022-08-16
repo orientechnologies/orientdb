@@ -217,16 +217,15 @@ public abstract class OIndexAbstract implements OIndexInternal {
 
   /** Creates the index. */
   public OIndexInternal create(
-      final OIndexDefinition indexDefinition,
-      final Set<String> clustersToIndex,
+      final OIndexMetadata indexMetadata,
       boolean rebuild,
-      final OProgressListener progressListener,
-      final OBinarySerializer valueSerializer) {
+      final OProgressListener progressListener) {
+    final OBinarySerializer valueSerializer = determineValueSerializer();
     acquireExclusiveLock();
     try {
       configuration = indexConfigurationInstance(new ODocument().setTrackingChanges(false));
-
-      this.indexDefinition = indexDefinition;
+      Set<String> clustersToIndex = indexMetadata.getClustersToIndex();
+      this.indexDefinition = indexMetadata.getIndexDefinition();
 
       if (clustersToIndex != null) this.clustersToIndex = new HashSet<>(clustersToIndex);
       else this.clustersToIndex = new HashSet<>();
@@ -238,6 +237,12 @@ public abstract class OIndexAbstract implements OIndexInternal {
         }
       } catch (Exception e) {
         OLogManager.instance().error(this, "Error during deletion of index '%s'", e, name);
+      }
+      // this property is used for autosharded index
+      if (metadata != null && metadata.containsField("partitions")) {
+        engineProperties.put("partitions", metadata.field("partitions"));
+      } else {
+        engineProperties.put("partitions", Integer.toString(clustersToIndex.size()));
       }
 
       indexId =
@@ -253,7 +258,6 @@ public abstract class OIndexAbstract implements OIndexInternal {
               1,
               this instanceof OIndexMultiValues,
               engineProperties,
-              clustersToIndex,
               metadata);
       apiVersion = OAbstractPaginatedStorage.extractEngineAPIVersion(indexId);
 
@@ -529,7 +533,6 @@ public abstract class OIndexAbstract implements OIndexInternal {
               1,
               this instanceof OIndexMultiValues,
               engineProperties,
-              clustersToIndex,
               metadata);
       apiVersion = OAbstractPaginatedStorage.extractEngineAPIVersion(indexId);
 

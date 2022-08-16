@@ -2687,7 +2687,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final int apiVersion,
       final boolean multivalue,
       final Map<String, String> engineProperties,
-      final Set<String> clustersToIndex,
       final ODocument metadata) {
     try {
       if (indexDefinition == null) {
@@ -2739,13 +2738,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                 serializerId = valueSerializer.getId();
               } else {
                 serializerId = -1;
-              }
-
-              // this property is used for autosharded index
-              if (metadata != null && metadata.containsField("partitions")) {
-                engineProperties.put("partitions", metadata.field("partitions"));
-              } else {
-                engineProperties.put("partitions", Integer.toString(clustersToIndex.size()));
               }
 
               final OBaseIndexEngine engine =

@@ -736,12 +736,7 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
       progressListener = new OIndexRebuildOutputListener(index);
     indexes.put(index.getName(), index);
     try {
-      index.create(
-          indexMetadata.getName(),
-          indexMetadata.getIndexDefinition(),
-          indexMetadata.getClustersToIndex(),
-          true,
-          progressListener);
+      index.create(indexMetadata, true, progressListener);
     } catch (Throwable e) {
       indexes.remove(index.getName());
       throw e;
@@ -1241,8 +1236,7 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
 
       if (indexName != null && clusters != null && !clusters.isEmpty() && type != null) {
         OLogManager.instance().info(this, "Start creation of index '%s'", indexName);
-        index.create(
-            indexName, indexDefinition, clusters, false, new OIndexRebuildOutputListener(index));
+        index.create(indexMetadata, false, new OIndexRebuildOutputListener(index));
 
         addIndexInternal(index);
 
