@@ -74,14 +74,18 @@ References:
 Recent architecture re-factoring and improvements are described in our [BICOD 2021](http://ceur-ws.org/Vol-3163/BICOD21_paper_3.pdf) paper:
 
 ```
-@inproceedings{DBLP:conf/bncod/Ritter21,
-  author    = {Daniel Ritter and Luigi Dell'Aquila and Andrii Lomakin and Emanuele Tagliaferri},
-  title     = {OrientDB: A NoSQL, Open Source MMDMS},
-  booktitle = {{BICOD} 2021},
-  series    = {Lecture Notes in Computer Science},
+@inproceedings{DBLP:conf/bncod/0001DLT21,
+  author    = {Daniel Ritter and
+               Luigi Dell'Aquila and
+               Andrii Lomakin and
+               Emanuele Tagliaferri},
+  title     = {OrientDB: {A} NoSQL, Open Source {MMDMS}},
+  booktitle = {Proceedings of the The British International Conference on Databases
+               2021, London, United Kingdom, March 28, 2022},
+  series    = {{CEUR} Workshop Proceedings},
   volume    = {3163},
   pages     = {10--19},
-  publisher = {Springer},
+  publisher = {CEUR-WS.org},
   year      = {2021}
 }
 ```
