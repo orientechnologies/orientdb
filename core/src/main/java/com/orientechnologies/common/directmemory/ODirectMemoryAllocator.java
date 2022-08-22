@@ -353,8 +353,6 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
             new TrackedPointerReference(pointer, trackedPointersQueue);
         trackedReferences.add(reference);
         trackedBuffers.put(new TrackedPointerKey(pointer), reference);
-
-        checkTrackedPointerLeaks();
       }
     }
 
@@ -406,8 +404,6 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
           trackedReferences.remove(reference);
           reference.clear();
         }
-
-        checkTrackedPointerLeaks();
       }
     }
   }
