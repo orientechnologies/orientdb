@@ -1218,4 +1218,14 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   public String getClusterRecordConflictStrategy(int clusterId) {
     throw new UnsupportedOperationException();
   }
+
+  public OTransactionOptimisticClient getActiveTx() {
+    if (currentTx.isActive()) {
+      return (OTransactionOptimisticClient) currentTx;
+    } else {
+      currentTx = new OTransactionOptimisticClient(this);
+      currentTx.begin();
+      return (OTransactionOptimisticClient) currentTx;
+    }
+  }
 }

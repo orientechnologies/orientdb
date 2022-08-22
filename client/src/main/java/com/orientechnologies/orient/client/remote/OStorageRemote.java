@@ -2187,8 +2187,7 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
   }
 
   public void fetchTransaction(ODatabaseDocumentRemote remote) {
-    OTransactionOptimisticClient transaction =
-        (OTransactionOptimisticClient) remote.getTransaction();
+    OTransactionOptimisticClient transaction = remote.getActiveTx();
     OFetchTransaction38Request request = new OFetchTransaction38Request(transaction.getId());
     OFetchTransaction38Response response =
         networkOperation(request, "Error fetching transaction from server side");
