@@ -509,6 +509,7 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
             .debug(
                 this,
                 "Redirecting the request from server '%s' to the server '%s' because %s",
+                e,
                 e.getFromServer(),
                 e.toString(),
                 e.getMessage());

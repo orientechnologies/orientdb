@@ -2782,6 +2782,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
             null,
             DIRECTION.IN,
             "Error on installing database '%s' on local node (error=%s)",
+            e, 
             databaseName,
             e.toString());
       }

@@ -250,6 +250,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           sender,
           OUT,
           "Error on sending response '%s' back (reqId=%s err=%s)",
+          e,
           response,
           iRequestId,
           e.toString());
