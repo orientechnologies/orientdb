@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.*;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager.DB_STATUS;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
 import com.orientechnologies.orient.server.distributed.impl.task.OSyncDatabaseTask;
@@ -1420,7 +1421,21 @@ public class OHazelcastClusterMetadataManager
     final List<ODocument> members = new ArrayList<ODocument>();
     cluster.field("members", members, OType.EMBEDDEDLIST);
     for (Member member : activeNodes.values()) {
-      members.add(getNodeConfigurationByUuid(member.getUuid(), true));
+      final ODocument memberConfig = getNodeConfigurationByUuid(member.getUuid(), true).copy();
+      if (memberConfig == null) {
+        continue;
+      }
+
+      members.add(memberConfig);
+
+      final String nodeName = getNodeName(member, true);
+      final Map<String, String> dbStatus = new HashMap<>();
+      memberConfig.field("databasesStatus", dbStatus, OType.EMBEDDEDMAP);
+      // Member DB status
+      for (String db : distributedPlugin.getManagedDatabases()) {
+        final DB_STATUS nodeDbState = getDatabaseStatus(nodeName, db);
+        dbStatus.put(db, nodeDbState.toString());
+      }
     }
 
     return cluster;
