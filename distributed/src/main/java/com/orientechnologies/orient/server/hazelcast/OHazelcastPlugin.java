@@ -1663,6 +1663,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
               null,
               DIRECTION.IN,
               "Error on installing database '%s' on local node (error=%s)",
+              e,
               databaseName,
               e.toString());
         }

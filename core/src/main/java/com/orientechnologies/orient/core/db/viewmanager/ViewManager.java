@@ -168,8 +168,7 @@ public class ViewManager {
       // When the run is finished schedule the next run.
       schedule();
     } catch (Exception e) {
-      OLogManager.instance().warn(this, "Failed to update views");
-      e.printStackTrace();
+      OLogManager.instance().warn(this, "Failed to update views", e);
     }
   }
 
@@ -424,7 +423,8 @@ public class ViewManager {
       }
       return result;
     } catch (Exception e) {
-      e.printStackTrace();
+      OLogManager.instance()
+          .warn(this, "Failed to create new indexes for view %s", e, view.getName());
       return null;
     }
   }
