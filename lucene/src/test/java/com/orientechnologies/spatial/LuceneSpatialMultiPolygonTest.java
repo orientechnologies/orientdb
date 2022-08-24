@@ -103,7 +103,7 @@ public class LuceneSpatialMultiPolygonTest extends BaseSpatialLuceneTest {
 
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
-    OIOUtils.copyStream(systemResourceAsStream, outputStream, -1);
+    OIOUtils.copyStream(systemResourceAsStream, outputStream);
     db.command(
             new OCommandSQL(
                 "insert into Place set name = 'TestInsert' , location = ST_GeomFromText('"
@@ -132,7 +132,7 @@ public class LuceneSpatialMultiPolygonTest extends BaseSpatialLuceneTest {
 
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
-    OIOUtils.copyStream(systemResourceAsStream, outputStream, -1);
+    OIOUtils.copyStream(systemResourceAsStream, outputStream);
 
     JtsSpatialContext.GEO.getWktShapeParser().parse(outputStream.toString());
   }

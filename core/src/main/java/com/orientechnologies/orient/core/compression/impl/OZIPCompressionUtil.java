@@ -112,7 +112,7 @@ public class OZIPCompressionUtil {
     final BufferedOutputStream out =
         new BufferedOutputStream(new FileOutputStream(new File(outdir, name)));
     try {
-      OIOUtils.copyStream(in, out, -1);
+      OIOUtils.copyStream(in, out);
     } finally {
       out.close();
     }
@@ -249,7 +249,7 @@ public class OZIPCompressionUtil {
     try {
       final FileInputStream in = new FileInputStream(folderName);
       try {
-        OIOUtils.copyStream(in, zos, -1);
+        OIOUtils.copyStream(in, zos);
       } finally {
         in.close();
       }

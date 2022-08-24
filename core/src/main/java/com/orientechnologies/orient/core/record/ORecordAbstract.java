@@ -165,7 +165,7 @@ public abstract class ORecordAbstract implements ORecord {
 
   public <RET extends ORecord> RET fromJSON(final InputStream iContentResult) throws IOException {
     final ByteArrayOutputStream out = new ByteArrayOutputStream();
-    OIOUtils.copyStream(iContentResult, out, -1);
+    OIOUtils.copyStream(iContentResult, out);
     ORecordSerializerJSON.INSTANCE.fromString(out.toString(), this, null);
     return (RET) this;
   }
