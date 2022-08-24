@@ -498,7 +498,20 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     final List<ODocument> members = new ArrayList<ODocument>();
     cluster.field("members", members, OType.EMBEDDEDLIST);
     for (Member member : activeNodes.values()) {
-      members.add(getNodeConfigurationByUuid(member.getUuid(), true));
+      final ODocument memberConfig = getNodeConfigurationByUuid(member.getUuid(), true).copy();
+      if (memberConfig == null) {
+        continue;
+      }
+      members.add(memberConfig);
+
+      final String nodeName = getNodeName(member);
+      final Map<String, String> dbStatus = new HashMap<>();
+      memberConfig.field("databasesStatus", dbStatus, OType.EMBEDDEDMAP);
+      // Member DB status
+      for (String db : getManagedDatabases()) {
+        final DB_STATUS nodeDbState = getDatabaseStatus(nodeName, db);
+        dbStatus.put(db, nodeDbState.toString());
+      }
     }
 
     return cluster;
