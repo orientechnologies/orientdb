@@ -44,29 +44,20 @@ public class OLogFormatter extends Formatter {
 
   @Override
   public String format(final LogRecord record) {
-    if (record.getThrown() == null) {
-      return customFormatMessage(record);
+    final String formattedMessage = customFormatMessage(record);
+    final Throwable error = record.getThrown();
+    if (error == null) {
+      return formattedMessage;
     }
 
     // FORMAT THE STACK TRACE
-    final StringBuilder buffer = new StringBuilder(512);
-    buffer.append(record.getMessage());
+    final StringWriter writer = new StringWriter();
+    final PrintWriter printWriter = new PrintWriter(writer);
+    printWriter.println(formattedMessage);
+    error.printStackTrace(printWriter);
+    printWriter.close();
 
-    final Throwable current = record.getThrown();
-    if (current != null) {
-      buffer.append(EOL);
-
-      StringWriter writer = new StringWriter();
-      PrintWriter printWriter = new PrintWriter(writer);
-
-      current.printStackTrace(printWriter);
-      printWriter.flush();
-
-      buffer.append(writer.getBuffer());
-      printWriter.close();
-    }
-
-    return buffer.toString();
+    return writer.toString();
   }
 
   protected String customFormatMessage(final LogRecord iRecord) {
