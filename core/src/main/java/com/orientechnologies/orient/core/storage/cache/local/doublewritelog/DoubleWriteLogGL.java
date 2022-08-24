@@ -269,7 +269,7 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
                   OLogManager.instance()
                       .errorNoDb(
                           this,
-                          "Can not delete segment of double write log - %d in storage %s",
+                          "Can not delete segment of double write log - %s in storage %s",
                           e,
                           segment,
                           storageName);
