@@ -208,7 +208,7 @@ public class OrientStandardGraph implements OGraph {
   }
 
   public boolean isOpen() {
-    return factory.isOpen();
+    return factory.isOpen() && graphInternal.get() != null && !graphInternal.get().isClosed();
   }
 
   @Override
