@@ -19,7 +19,6 @@
  */
 package org.apache.tinkerpop.gremlin.orientdb.executor;
 
-import com.orientechnologies.common.concur.resource.OPartitionedObjectPool;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.script.OScriptInjection;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
@@ -111,10 +110,9 @@ public class OCommandGremlinExecutor extends OAbstractScriptExecutor
   public OResultSet execute(
       final ODatabaseDocumentInternal iDatabase, final String iText, final Map params) {
     preExecute(iDatabase, iText, params);
-    OPartitionedObjectPool.PoolEntry<ScriptEngine> entry = null;
+    ScriptEngine engine = null;
     try {
-      entry = acquireGremlinEngine(acquireGraph(iDatabase));
-      ScriptEngine engine = entry.object;
+      engine = acquireGremlinEngine(acquireGraph(iDatabase));
       bindParameters(engine, params);
 
       Object eval = engine.eval(iText);
@@ -150,8 +148,8 @@ public class OCommandGremlinExecutor extends OAbstractScriptExecutor
       throw OException.wrapException(
           new OCommandExecutionException("Error on execution of the GREMLIN script"), e);
     } finally {
-      if (entry != null) {
-        releaseGremlinEngine(iDatabase.getName(), entry);
+      if (engine != null) {
+        releaseGremlinEngine(iDatabase.getName(), engine);
       }
     }
   }
@@ -171,19 +169,16 @@ public class OCommandGremlinExecutor extends OAbstractScriptExecutor
     return isGroovyException(throwable.getCause());
   }
 
-  protected final OPartitionedObjectPool.PoolEntry<ScriptEngine> acquireGremlinEngine(
-      final OrientGraph graph) {
+  protected final ScriptEngine acquireGremlinEngine(final OrientGraph graph) {
 
-    final OPartitionedObjectPool.PoolEntry<ScriptEngine> entry =
+    final ScriptEngine engine =
         scriptManager.acquireDatabaseEngine(graph.getRawDatabase().getName(), GREMLIN_GROOVY);
-    final ScriptEngine engine = entry.object;
     Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
     bindGraph(graph, bindings);
-    return entry;
+    return engine;
   }
 
-  protected void releaseGremlinEngine(
-      String dbName, OPartitionedObjectPool.PoolEntry<ScriptEngine> engine) {
+  protected void releaseGremlinEngine(String dbName, ScriptEngine engine) {
     scriptManager.releaseDatabaseEngine(GREMLIN_GROOVY, dbName, engine);
   }
 
