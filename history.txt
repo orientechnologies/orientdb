@@ -28,6 +28,22 @@ This document contains the last changes of OrientDB Community Edition.
 
 
 -----------------------------------------------------------------------------------------------------------------------------------
+VERSION 3.1.20  - (September, 1 2022)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.1-Release-Notes#3120---1-September-2022
+
+# Core
+- Fix release session lock in any case of error
+- Prevent Live Query thread hot looping on idle queue.
+- Fix corrected regression on btree v3 value replace
+- Fix copyStream to not terminate on 0 byte read.
+- Reduce buffer duplicate calls for improve performances
+- Fixes in logging messages and exceptions
+
+# Distributed
+- Mark HA STATUS idempotent so it can be used from SQL API.
+- Include individual DB status across cluster in HA STATUS result
+
+-----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.1.19  - (July, 18 2022)
 - Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.1-Release-Notes#3119---18-July-2022
 
