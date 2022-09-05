@@ -100,9 +100,6 @@ public class OJSONFetchContext implements OFetchContext {
       final Iterable<?> iterable) {
     try {
       manageTypes(fieldName, iterable, null);
-      if (settings.earlyTypes) {
-        onAfterFetch(rootRecord);
-      }
       jsonWriter.beginCollection(++settings.indentLevel, true, fieldName);
       collectionStack.add(rootRecord);
     } catch (final IOException e) {

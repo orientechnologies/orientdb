@@ -643,9 +643,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
         if (useLineFeedForRecords) writer.append("\n");
         if (recordExported > 0) writer.append(",");
 
-        // `earlyTypes` from version `13`
-        // "rid,type,version,class,attribSameRow,keepTypes,alwaysFetchEmbedded,earlyTypes,dateAsLong"
-        final String format = ORecordAbstract.BASE_FORMAT + "," + "earlyTypes,dateAsLong";
+        final String format = ORecordAbstract.BASE_FORMAT + ", dateAsLong";
         ORecordSerializerJSON.INSTANCE.toString(rec, writer, format == null ? "" : format, true);
 
         recordExported++;

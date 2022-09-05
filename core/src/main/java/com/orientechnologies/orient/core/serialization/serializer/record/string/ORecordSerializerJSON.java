@@ -95,8 +95,6 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     public boolean keepTypes;
     public boolean dateAsLong = false;
     public boolean prettyPrint = false;
-    // '@fieldTypes' become part of the signature
-    public boolean earlyTypes;
 
     public FormatSettings(final String iFormat) {
       if (iFormat == null) {
@@ -109,7 +107,6 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         fetchPlan = "";
         keepTypes = true;
         alwaysFetchEmbeddedDocuments = true;
-        earlyTypes = true;
       } else {
         includeType = false;
         includeVer = false;
@@ -119,7 +116,6 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         alwaysFetchEmbeddedDocuments = false;
         indentLevel = 0;
         keepTypes = false;
-        earlyTypes = false;
 
         if (iFormat != null && !iFormat.isEmpty()) {
           final String[] format = iFormat.split(",");
@@ -139,7 +135,6 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
             else if (f.startsWith("graph") || f.startsWith("shallow"))
               // SUPPORTED IN OTHER PARTS
               ;
-            else if (f.startsWith("earlyTypes")) earlyTypes = true;
             else throw new IllegalArgumentException("Unrecognized JSON formatting option: " + f);
         }
       }

@@ -439,7 +439,7 @@ public class OFetchHelper {
 
     // Pre-process to gather fieldTypes
     fetchContext.onBeforeFetch(record);
-    if (settings.keepTypes && settings.earlyTypes) {
+    if (settings.keepTypes) {
       for (final String fieldName : record.getPropertyNames()) {
         processFieldTypes(
             record,
@@ -477,7 +477,7 @@ public class OFetchHelper {
     for (final String fieldName : toRemove) {
       fetchListener.skipStandardField(record, fieldName, fetchContext, userObject, format);
     }
-    if (settings.keepTypes && !settings.earlyTypes) {
+    if (settings.keepTypes) {
       fetchContext.onAfterFetch(record);
     }
   }
@@ -590,9 +590,7 @@ public class OFetchHelper {
                 || Array.getLength(fieldValue) == 0
                 || !(Array.get(fieldValue, 0) instanceof OIdentifiable))
             && !containsIdentifiers(fieldValue)) {
-      if (!settings.earlyTypes) {
-        fetchContext.onBeforeStandardField(fieldValue, fieldName, userObject, fieldType);
-      }
+      fetchContext.onBeforeStandardField(fieldValue, fieldName, userObject, fieldType);
       fetchListener.processStandardField(
           record, fieldValue, fieldName, fetchContext, userObject, format, fieldType);
       fetchContext.onAfterStandardField(fieldValue, fieldName, userObject, fieldType);
@@ -800,7 +798,7 @@ public class OFetchHelper {
                   iFieldPathFromRoot,
                   iListener,
                   iContext,
-                  getTypesFormat(settings.keepTypes, settings.earlyTypes)); // ""
+                  getTypesFormat(settings.keepTypes)); // ""
               iContext.onAfterDocument(iRootRecord, d, key.toString(), iUserObject);
             } else {
               iListener.parseLinked(iRootRecord, d, iUserObject, key.toString(), iContext);
@@ -885,7 +883,7 @@ public class OFetchHelper {
               iFieldPathFromRoot,
               iListener,
               context,
-              getTypesFormat(settings.keepTypes, settings.earlyTypes)); // ""
+              getTypesFormat(settings.keepTypes)); // ""
           context.onAfterDocument(rootRecord, document, fieldName, iUserObject);
         } else {
           iListener.parseLinkedCollectionValue(
@@ -972,7 +970,7 @@ public class OFetchHelper {
                   iFieldPathFromRoot,
                   iListener,
                   context,
-                  getTypesFormat(settings.keepTypes, settings.earlyTypes)); // ""
+                  getTypesFormat(settings.keepTypes)); // ""
               context.onAfterDocument(
                   iRootRecord, (ODocument) identifiable, fieldName, iUserObject);
             }
@@ -1070,7 +1068,7 @@ public class OFetchHelper {
           iFieldPathFromRoot,
           iListener,
           iContext,
-          getTypesFormat(settings.keepTypes, settings.earlyTypes)); // ""
+          getTypesFormat(settings.keepTypes)); // ""
       iContext.onAfterDocument(iRootRecord, linked, fieldName, iUserObject);
     } else {
       iContext.onBeforeStandardField(fieldValue, fieldName, iRootRecord, null);
@@ -1079,10 +1077,9 @@ public class OFetchHelper {
     }
   }
 
-  private static String getTypesFormat(final boolean keepTypes, final boolean earlyTypes) {
+  private static String getTypesFormat(final boolean keepTypes) {
     final StringBuilder sb = new StringBuilder();
     if (keepTypes) sb.append("keepTypes");
-    if (keepTypes && earlyTypes) sb.append(",earlyTypes");
     return sb.toString();
   }
 
