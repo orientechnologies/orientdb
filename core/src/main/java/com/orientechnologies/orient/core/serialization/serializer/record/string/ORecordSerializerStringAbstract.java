@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
@@ -36,7 +35,6 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerAnyStreamable;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerEmbedded;
 import com.orientechnologies.orient.core.util.ODateHelper;
-import java.io.InputStream;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
@@ -669,9 +667,6 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
   }
 
   public abstract ORecord fromString(String iContent, ORecord iRecord, String[] iFields);
-
-  public abstract ORecord fromStream(InputStream source, ORecord record, final String[] fields)
-      throws JsonParseException;
 
   public StringBuilder toString(
       final ORecord iRecord, final StringBuilder iOutput, final String iFormat) {

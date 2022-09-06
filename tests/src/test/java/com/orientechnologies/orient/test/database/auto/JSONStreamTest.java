@@ -19,19 +19,24 @@ import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
-import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -832,19 +837,6 @@ public class JSONStreamTest extends DocumentDBBaseTest {
   }
 
   @Test
-  public void shouldDeserializeFieldWithCurlyBraces() {
-    final String json = "{\"a\":\"{dd}\",\"bl\":{\"b\":\"c\",\"a\":\"d\"}}";
-    final ODocument in =
-        (ODocument)
-            ORecordSerializerJSON.INSTANCE.fromStream(
-                new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)),
-                database.newInstance(),
-                new String[] {});
-    Assert.assertEquals(in.field("a"), "{dd}");
-    Assert.assertTrue(in.field("bl") instanceof Map);
-  }
-
-  @Test
   public void testList() throws IOException {
     final ODocument documentSource = new ODocument();
     documentSource.fromJSON(
@@ -858,9 +850,8 @@ public class JSONStreamTest extends DocumentDBBaseTest {
     Assert.assertEquals(list.get(1), 42);
   }
 
-  // TODO: fallback to legacy parser for invalid JSON
   @Test
-  /*public void testEmbeddedRIDBagDeserialisationWhenFieldTypeIsProvided() throws Exception {
+  public void testEmbeddedRIDBagDeserialisationWhenFieldTypeIsProvided() throws Exception {
     final ODocument documentSource = new ODocument();
     documentSource.fromJSON(
         new ByteArrayInputStream(
@@ -871,7 +862,7 @@ public class JSONStreamTest extends DocumentDBBaseTest {
     final OIdentifiable rid = bag.rawIterator().next();
     Assert.assertTrue(rid.getIdentity().getClusterId() == 57);
     Assert.assertTrue(rid.getIdentity().getClusterPosition() == 0);
-  }*/
+  }
 
   public void testNestedLinkCreation() throws IOException {
     ODocument jaimeDoc = new ODocument("NestedLinkCreation");

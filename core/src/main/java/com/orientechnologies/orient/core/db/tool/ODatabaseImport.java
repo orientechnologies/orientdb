@@ -195,51 +195,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     else super.parseSetting(option, items);
   }
 
-  private void addCluster(String name, int id) {
-    listener.onMessage(
-        "\n- Creating cluster " + (name != null ? "'" + name + "'" : "NULL") + "...");
-
-    int clusterId = name != null ? database.getClusterIdByName(name) : -1;
-    if (clusterId == -1) {
-      // CREATE IT
-      if (!preserveClusterIDs) clusterId = database.addCluster(name);
-      else {
-        clusterId = database.addCluster(name, id, null);
-        assert clusterId == id;
-      }
-    }
-
-    if (clusterId != id) {
-      if (!preserveClusterIDs) {
-        if (database.countClusterElements(clusterId - 1) == 0) {
-          listener.onMessage("Found previous version: migrating old clusters...");
-          database.dropCluster(name);
-          database.addCluster("temp_" + clusterId, null);
-          clusterId = database.addCluster(name);
-        } else
-          throw new OConfigurationException(
-              "Imported cluster '"
-                  + name
-                  + "' has id="
-                  + clusterId
-                  + " different from the original: "
-                  + id
-                  + ". To continue the import drop the cluster '"
-                  + database.getClusterNameById(clusterId - 1)
-                  + "' that has "
-                  + database.countClusterElements(clusterId - 1)
-                  + " records");
-      } else {
-        final OClass clazz = database.getMetadata().getSchema().getClassByClusterId(clusterId);
-        if (clazz != null && clazz instanceof OClassEmbedded)
-          ((OClassEmbedded) clazz).removeClusterId(clusterId, true);
-        database.dropCluster(clusterId);
-        database.addCluster(name, id, null);
-      }
-    }
-    listener.onMessage("OK, assigned id=" + clusterId);
-  }
-
   public ODatabaseImport importDatabase() {
     final boolean preValidation = database.isValidationEnabled();
     try {
