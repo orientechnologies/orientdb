@@ -198,7 +198,6 @@ public final class OIndexes {
       final String name,
       final String algorithm,
       final String type,
-      final Boolean durableInNonTxMode,
       final OStorage storage,
       final int version,
       int apiVersion,
@@ -208,15 +207,7 @@ public final class OIndexes {
     final OIndexFactory factory = findFactoryByAlgorithmAndType(algorithm, type);
 
     return factory.createIndexEngine(
-        indexId,
-        algorithm,
-        name,
-        durableInNonTxMode,
-        storage,
-        version,
-        apiVersion,
-        multivalue,
-        indexProperties);
+        indexId, algorithm, name, storage, version, apiVersion, multivalue, indexProperties);
   }
 
   public static String chooseDefaultIndexAlgorithm(String type) {

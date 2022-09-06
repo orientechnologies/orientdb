@@ -60,7 +60,6 @@ public interface OIndexFactory {
       int indexId,
       String algorithm,
       String name,
-      Boolean durableInNonTxMode,
       OStorage storage,
       int version,
       int apiVersion,

@@ -157,7 +157,6 @@ public class OAutoShardingIndexFactory implements OIndexFactory {
       int indexId,
       final String algorithm,
       final String name,
-      final Boolean durableInNonTxMode,
       final OStorage storage,
       final int version,
       int apiVersion,

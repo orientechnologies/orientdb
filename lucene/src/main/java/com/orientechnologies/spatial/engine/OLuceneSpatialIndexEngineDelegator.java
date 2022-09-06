@@ -53,8 +53,7 @@ public class OLuceneSpatialIndexEngineDelegator
   private OLuceneSpatialIndexEngineAbstract delegate;
   private final int id;
 
-  public OLuceneSpatialIndexEngineDelegator(
-      int id, String name, Boolean durableInNonTxMode, OStorage storage, int version) {
+  public OLuceneSpatialIndexEngineDelegator(int id, String name, OStorage storage, int version) {
     this.id = id;
 
     this.indexName = name;

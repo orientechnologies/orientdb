@@ -121,7 +121,6 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
       int indexId,
       String algorithm,
       String indexName,
-      Boolean durableInNonTxMode,
       OStorage storage,
       int version,
       int apiVersion,

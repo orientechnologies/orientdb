@@ -91,7 +91,11 @@ public interface OStorageConfiguration {
     private final String name;
     private final String algorithm;
     private final String indexType;
+
+    @Deprecated
+    // Needed only for disk backward compatibility
     private final Boolean durableInNonTxMode;
+
     private final int version;
     private final int apiVersion;
     private final boolean multivalue;
