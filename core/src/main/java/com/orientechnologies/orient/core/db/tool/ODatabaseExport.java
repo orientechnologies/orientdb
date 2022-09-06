@@ -66,7 +66,6 @@ import java.util.zip.GZIPOutputStream;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class ODatabaseExport extends ODatabaseImpExpAbstract {
-  /* from version `13` with `earlyTypes` settings */
   public static final int EXPORTER_VERSION = 13;
 
   protected OJSONWriter writer;
@@ -643,7 +642,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
         if (useLineFeedForRecords) writer.append("\n");
         if (recordExported > 0) writer.append(",");
 
-        final String format = ORecordAbstract.BASE_FORMAT + ", dateAsLong";
+        final String format = ORecordAbstract.BASE_FORMAT + ",dateAsLong";
         ORecordSerializerJSON.INSTANCE.toString(rec, writer, format == null ? "" : format, true);
 
         recordExported++;

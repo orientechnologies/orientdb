@@ -44,9 +44,8 @@ import java.util.zip.GZIPOutputStream;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public abstract class OHttpResponse {
-  // from exporter version 13, `earlyTypes` is enabled
   public static final String JSON_FORMAT =
-      "type,indent:-1,rid,version,attribSameRow,class,keepTypes,alwaysFetchEmbeddedDocuments,earlyTypes";
+      "type,indent:-1,rid,version,attribSameRow,class,keepTypes,alwaysFetchEmbeddedDocuments";
   public static final char[] URL_SEPARATOR = {'/'};
   protected static final Charset utf8 = StandardCharsets.UTF_8;
 

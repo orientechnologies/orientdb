@@ -73,7 +73,6 @@ import com.orientechnologies.orient.core.sql.executor.ORidSet;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
 import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -1219,28 +1218,15 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
     try {
       try {
-        if (exporterVersion >= 13) {
-          record =
-              ORecordSerializerJSON.INSTANCE.fromStream(
-                  // FIXME: adapt e2e stream handling will require new APIs
-                  new ByteArrayInputStream(value.getBytes()),
-                  record,
-                  null,
-                  null,
-                  false,
-                  maxRidbagStringSizeBeforeLazyImport,
-                  skippedPartsIndexes);
-        } else {
-          record =
-              ORecordSerializerJSON.INSTANCE.fromString(
-                  value,
-                  record,
-                  null,
-                  null,
-                  false,
-                  maxRidbagStringSizeBeforeLazyImport,
-                  skippedPartsIndexes);
-        }
+        record =
+            ORecordSerializerJSON.INSTANCE.fromString(
+                value,
+                record,
+                null,
+                null,
+                false,
+                maxRidbagStringSizeBeforeLazyImport,
+                skippedPartsIndexes);
       } catch (final OSerializationException e) {
         if (e.getCause() instanceof OSchemaException) {
           // EXTRACT CLASS NAME If ANY

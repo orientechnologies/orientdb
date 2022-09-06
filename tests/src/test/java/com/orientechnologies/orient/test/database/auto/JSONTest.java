@@ -23,7 +23,6 @@ import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
@@ -138,27 +137,6 @@ public class JSONTest extends DocumentDBBaseTest {
   }
 
   @Test
-  public void testNanOldFormat() {
-    ODocument doc = new ODocument();
-    String input =
-        "{\"@type\":\"d\",\"@version\":0,\"nan\":null,\"p_infinity\":null,\"n_infinity\":null,\"@fieldTypes\":\"nan=d,p_infinity=d,n_infinity=d\"}";
-    doc.field("nan", Double.NaN);
-    doc.field("p_infinity", Double.POSITIVE_INFINITY);
-    doc.field("n_infinity", Double.NEGATIVE_INFINITY);
-    String json = doc.toJSON(ORecordAbstract.OLD_FORMAT_WITH_LATE_TYPES);
-    Assert.assertEquals(json, input);
-
-    doc = new ODocument();
-    input =
-        "{\"@type\":\"d\",\"@version\":0,\"nan\":null,\"p_infinity\":null,\"n_infinity\":null,\"@fieldTypes\":\"nan=f,p_infinity=f,n_infinity=f\"}";
-    doc.field("nan", Float.NaN);
-    doc.field("p_infinity", Float.POSITIVE_INFINITY);
-    doc.field("n_infinity", Float.NEGATIVE_INFINITY);
-    json = doc.toJSON(ORecordAbstract.OLD_FORMAT_WITH_LATE_TYPES);
-    Assert.assertEquals(json, input);
-  }
-
-  @Test
   public void testNanNoTypes() {
     ODocument doc = new ODocument();
     String input =
@@ -176,27 +154,6 @@ public class JSONTest extends DocumentDBBaseTest {
     doc.field("n_infinity", Float.NEGATIVE_INFINITY);
     json = doc.toJSON(FORMAT_WITHOUT_TYPES);
     Assert.assertEquals(json, input);
-  }
-
-  @Test
-  public void testNanEarlyTypes() {
-    ODocument doc = new ODocument();
-    String input =
-        "{\"@type\":\"d\",\"@version\":0,\"@fieldTypes\":\"nan=d,p_infinity=d,n_infinity=d\",\"nan\":null,\"p_infinity\":null,\"n_infinity\":null}";
-    doc.field("nan", Double.NaN);
-    doc.field("p_infinity", Double.POSITIVE_INFINITY);
-    doc.field("n_infinity", Double.NEGATIVE_INFINITY);
-    String json = doc.toJSON();
-    Assert.assertEquals(input, json);
-
-    doc = new ODocument();
-    input =
-        "{\"@type\":\"d\",\"@version\":0,\"@fieldTypes\":\"nan=f,p_infinity=f,n_infinity=f\",\"nan\":null,\"p_infinity\":null,\"n_infinity\":null}";
-    doc.field("nan", Float.NaN);
-    doc.field("p_infinity", Float.POSITIVE_INFINITY);
-    doc.field("n_infinity", Float.NEGATIVE_INFINITY);
-    json = doc.toJSON();
-    Assert.assertEquals(input, json);
   }
 
   @Test
