@@ -30,7 +30,6 @@ import com.orientechnologies.orient.core.storage.index.engine.ORemoteIndexEngine
 import com.orientechnologies.orient.core.storage.index.engine.OSBTreeIndexEngine;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -213,9 +212,7 @@ public class ODefaultIndexFactory implements OIndexFactory {
       String name,
       OStorage storage,
       int version,
-      int apiVersion,
-      @SuppressWarnings("SpellCheckingInspection") boolean multiValue,
-      Map<String, String> engineProperties) {
+      @SuppressWarnings("SpellCheckingInspection") boolean multiValue) {
 
     if (algorithm == null) {
       throw new OIndexException("Name of algorithm is not specified");

@@ -31,7 +31,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.storage.index.engine.ORemoteIndexEngine;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -159,9 +158,7 @@ public class OAutoShardingIndexFactory implements OIndexFactory {
       final String name,
       final OStorage storage,
       final int version,
-      int apiVersion,
-      boolean multiValue,
-      final Map<String, String> engineProperties) {
+      boolean multiValue) {
 
     final OIndexEngine indexEngine;
 

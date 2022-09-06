@@ -254,7 +254,6 @@ public abstract class OIndexAbstract implements OIndexInternal {
               valueSerializer,
               isAutomatic(),
               version,
-              1,
               this instanceof OIndexMultiValues,
               engineProperties,
               metadata);
@@ -527,7 +526,6 @@ public abstract class OIndexAbstract implements OIndexInternal {
               determineValueSerializer(),
               isAutomatic(),
               version,
-              1,
               this instanceof OIndexMultiValues,
               engineProperties,
               metadata);

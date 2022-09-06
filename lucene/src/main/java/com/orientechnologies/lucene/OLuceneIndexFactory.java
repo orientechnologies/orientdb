@@ -35,7 +35,6 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 
@@ -123,9 +122,7 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
       String indexName,
       OStorage storage,
       int version,
-      int apiVersion,
-      boolean multiValue,
-      Map<String, String> engineProperties) {
+      boolean multiValue) {
 
     return new OLuceneFullTextIndexEngine(storage, indexName, indexId);
   }

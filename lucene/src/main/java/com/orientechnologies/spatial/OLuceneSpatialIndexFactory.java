@@ -39,7 +39,6 @@ import com.orientechnologies.spatial.index.OLuceneSpatialIndex;
 import com.orientechnologies.spatial.shape.OShapeFactory;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 
@@ -140,9 +139,7 @@ public class OLuceneSpatialIndexFactory implements OIndexFactory, ODatabaseLifec
       String name,
       OStorage storage,
       int version,
-      int apiVersion,
-      boolean multiValue,
-      Map<String, String> engineProperties) {
+      boolean multiValue) {
 
     return new OLuceneSpatialIndexEngineDelegator(indexId, name, storage, version);
   }

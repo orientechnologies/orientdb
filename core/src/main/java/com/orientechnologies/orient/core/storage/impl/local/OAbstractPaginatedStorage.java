@@ -587,9 +587,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               engineData.getIndexType(),
               this,
               engineData.getVersion(),
-              engineData.getApiVersion(),
-              engineData.isMultivalue(),
-              engineData.getEngineProperties());
+              engineData.isMultivalue());
 
       final OEncryption encryption;
       if (engineData.getEncryption() == null
@@ -2604,15 +2602,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         final boolean nullValuesSupport = !indexDefinition.isNullValuesIgnored();
         final OBaseIndexEngine engine =
             OIndexes.createIndexEngine(
-                indexEngines.size(),
-                engineName,
-                algorithm,
-                indexType,
-                this,
-                version,
-                apiVersion,
-                multivalue,
-                engineProperties);
+                indexEngines.size(), engineName, algorithm, indexType, this, version, multivalue);
         final OStorageConfiguration.IndexEngineData engineData =
             new OStorageConfigurationImpl.IndexEngineData(
                 engine.getId(),
@@ -2680,7 +2670,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final OBinarySerializer<?> valueSerializer,
       final boolean isAutomatic,
       final int version,
-      final int apiVersion,
       final boolean multivalue,
       final Map<String, String> engineProperties,
       final ODocument metadata) {
@@ -2745,7 +2734,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                       valueSerializer,
                       isAutomatic,
                       version,
-                      apiVersion,
                       multivalue,
                       engineProperties,
                       keySerializer,
@@ -2816,7 +2804,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final OBinarySerializer<?> valueSerializer,
       final boolean isAutomatic,
       final int version,
-      final int apiVersion,
       final boolean multivalue,
       final Map<String, String> engineProperties,
       final OBinarySerializer<?> keySerializer,
@@ -2827,15 +2814,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     final OBaseIndexEngine engine;
     engine =
         OIndexes.createIndexEngine(
-            indexEngines.size(),
-            engineName,
-            algorithm,
-            indexType,
-            this,
-            version,
-            apiVersion,
-            multivalue,
-            engineProperties);
+            indexEngines.size(), engineName, algorithm, indexType, this, version, multivalue);
     final OContextConfiguration ctxCfg = configuration.getContextConfiguration();
     @SuppressWarnings("deprecation")
     final String cfgEncryption =

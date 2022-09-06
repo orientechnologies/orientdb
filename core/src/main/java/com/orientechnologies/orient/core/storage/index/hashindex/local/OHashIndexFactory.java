@@ -38,7 +38,6 @@ import com.orientechnologies.orient.core.storage.index.engine.OHashTableIndexEng
 import com.orientechnologies.orient.core.storage.index.engine.ORemoteIndexEngine;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 /** @author Artem Orobets (enisher-at-gmail.com) */
@@ -151,9 +150,7 @@ public final class OHashIndexFactory implements OIndexFactory {
       final String name,
       final OStorage storage,
       final int version,
-      final int apiVersion,
-      final boolean multiValue,
-      final Map<String, String> engineProperties) {
+      final boolean multiValue) {
     final OIndexEngine indexEngine;
 
     final String storageType = storage.getType();

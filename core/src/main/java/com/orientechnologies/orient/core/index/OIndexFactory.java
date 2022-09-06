@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
-import java.util.Map;
 import java.util.Set;
 
 public interface OIndexFactory {
@@ -62,7 +61,5 @@ public interface OIndexFactory {
       String name,
       OStorage storage,
       int version,
-      int apiVersion,
-      boolean multiValue,
-      Map<String, String> engineProperties);
+      boolean multiValue);
 }

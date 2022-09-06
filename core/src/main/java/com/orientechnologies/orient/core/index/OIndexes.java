@@ -29,7 +29,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -200,14 +199,11 @@ public final class OIndexes {
       final String type,
       final OStorage storage,
       final int version,
-      int apiVersion,
-      boolean multivalue,
-      final Map<String, String> indexProperties) {
+      boolean multivalue) {
 
     final OIndexFactory factory = findFactoryByAlgorithmAndType(algorithm, type);
 
-    return factory.createIndexEngine(
-        indexId, algorithm, name, storage, version, apiVersion, multivalue, indexProperties);
+    return factory.createIndexEngine(indexId, algorithm, name, storage, version, multivalue);
   }
 
   public static String chooseDefaultIndexAlgorithm(String type) {
