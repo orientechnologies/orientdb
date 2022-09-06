@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
@@ -74,8 +73,7 @@ public class OIndexUnique extends OIndexOneValue {
       OAbstractPaginatedStorage storage,
       String valueContainerAlgorithm,
       ODocument metadata,
-      int binaryFormatVersion,
-      OAtomicOperationsManager atomicOperationsManager) {
+      int binaryFormatVersion) {
     super(
         name,
         typeId,
@@ -84,8 +82,7 @@ public class OIndexUnique extends OIndexOneValue {
         storage,
         valueContainerAlgorithm,
         metadata,
-        binaryFormatVersion,
-        atomicOperationsManager);
+        binaryFormatVersion);
   }
 
   @Override

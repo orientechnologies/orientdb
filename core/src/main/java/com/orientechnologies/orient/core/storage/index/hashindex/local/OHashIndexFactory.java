@@ -33,7 +33,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.index.engine.OHashTableIndexEngine;
 import com.orientechnologies.orient.core.storage.index.engine.ORemoteIndexEngine;
 import java.util.Collections;
@@ -87,8 +86,7 @@ public final class OHashIndexFactory implements OIndexFactory {
       final String algorithm,
       String valueContainerAlgorithm,
       final ODocument metadata,
-      int version,
-      OAtomicOperationsManager atomicOperationsManager)
+      int version)
       throws OConfigurationException {
 
     if (version < 0) {
@@ -109,8 +107,7 @@ public final class OHashIndexFactory implements OIndexFactory {
           (OAbstractPaginatedStorage) storage,
           valueContainerAlgorithm,
           metadata,
-          binaryFormatVersion,
-          atomicOperationsManager);
+          binaryFormatVersion);
     } else if (OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString().equals(indexType)) {
       return new OIndexNotUnique(
           name,
@@ -120,8 +117,7 @@ public final class OHashIndexFactory implements OIndexFactory {
           (OAbstractPaginatedStorage) storage,
           valueContainerAlgorithm,
           metadata,
-          binaryFormatVersion,
-          atomicOperationsManager);
+          binaryFormatVersion);
     } else if (OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString().equals(indexType)) {
       return new OIndexDictionary(
           name,
@@ -131,8 +127,7 @@ public final class OHashIndexFactory implements OIndexFactory {
           (OAbstractPaginatedStorage) storage,
           valueContainerAlgorithm,
           metadata,
-          binaryFormatVersion,
-          atomicOperationsManager);
+          binaryFormatVersion);
     }
 
     throw new OConfigurationException("Unsupported type: " + indexType);

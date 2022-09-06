@@ -48,7 +48,6 @@ import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
@@ -99,7 +98,6 @@ public abstract class OIndexAbstract implements OIndexInternal {
   private volatile OIndexDefinition indexDefinition;
   private final Map<String, String> engineProperties = new HashMap<>();
   protected final int binaryFormatVersion;
-  protected final OAtomicOperationsManager atomicOperationsManager;
 
   public OIndexAbstract(
       String name,
@@ -109,10 +107,8 @@ public abstract class OIndexAbstract implements OIndexInternal {
       final ODocument metadata,
       final int version,
       final OStorage storage,
-      int binaryFormatVersion,
-      OAtomicOperationsManager atomicOperationsManager) {
+      int binaryFormatVersion) {
     this.binaryFormatVersion = binaryFormatVersion;
-    this.atomicOperationsManager = atomicOperationsManager;
     acquireExclusiveLock();
     try {
       databaseName = storage.getName();
@@ -1118,7 +1114,8 @@ public abstract class OIndexAbstract implements OIndexInternal {
   private void removeValuesContainer() {
     if (valueContainerAlgorithm.equals(ODefaultIndexFactory.SBTREE_BONSAI_VALUE_CONTAINER)) {
 
-      final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
+      final OAtomicOperation atomicOperation =
+          storage.getAtomicOperationsManager().getCurrentOperation();
 
       final OReadCache readCache = storage.getReadCache();
       final OWriteCache writeCache = storage.getWriteCache();

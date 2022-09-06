@@ -32,7 +32,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OMixedIndexRIDContainerSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerSBTreeIndexRIDContainer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainerSBTree;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OMixedIndexRIDContainer;
@@ -65,8 +64,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
       OAbstractPaginatedStorage storage,
       String valueContainerAlgorithm,
       final ODocument metadata,
-      final int binaryFormatVersion,
-      OAtomicOperationsManager atomicOperationsManager) {
+      final int binaryFormatVersion) {
     super(
         name,
         type,
@@ -75,8 +73,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
         metadata,
         version,
         storage,
-        binaryFormatVersion,
-        atomicOperationsManager);
+        binaryFormatVersion);
   }
 
   @Deprecated

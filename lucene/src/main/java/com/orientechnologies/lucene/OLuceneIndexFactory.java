@@ -32,7 +32,6 @@ import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -87,8 +86,7 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
       String algorithm,
       String valueContainerAlgorithm,
       ODocument metadata,
-      int version,
-      OAtomicOperationsManager atomicOperationsManager)
+      int version)
       throws OConfigurationException {
 
     OAbstractPaginatedStorage pagStorage = (OAbstractPaginatedStorage) storage;
@@ -107,8 +105,7 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
               pagStorage,
               valueContainerAlgorithm,
               metadata,
-              binaryFormatVersion,
-              atomicOperationsManager);
+              binaryFormatVersion);
 
       return index;
     }

@@ -33,7 +33,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerSBTreeIndexRIDContainer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
@@ -58,8 +57,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
       OAbstractPaginatedStorage storage,
       String valueContainerAlgorithm,
       ODocument metadata,
-      final int binaryFormatVersion,
-      OAtomicOperationsManager atomicOperationsManager) {
+      final int binaryFormatVersion) {
     super(
         name,
         typeId,
@@ -68,8 +66,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
         metadata,
         version,
         storage,
-        binaryFormatVersion,
-        atomicOperationsManager);
+        binaryFormatVersion);
   }
 
   @Override
@@ -149,7 +146,8 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
               try {
                 OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
 
-                OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
+                OAtomicOperation atomicOperation =
+                    storage.getAtomicOperationsManager().getCurrentOperation();
                 Set<OIdentifiable> set = new HashSet<>();
                 set.add(rid);
                 indexEngine.put(atomicOperation, decodeKey(key), set);
@@ -197,7 +195,8 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
                   Object key = snapshotEntry.getKey();
                   OLuceneTxOperations operations = (OLuceneTxOperations) snapshotEntry.getValue();
 
-                  OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
+                  OAtomicOperation atomicOperation =
+                      storage.getAtomicOperationsManager().getCurrentOperation();
                   indexEngine.put(atomicOperation, decodeKey(key), operations.added);
                 }
                 OTransaction transaction = getDatabase().getTransaction();

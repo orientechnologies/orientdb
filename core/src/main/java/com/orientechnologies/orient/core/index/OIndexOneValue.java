@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerRID;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -52,8 +51,7 @@ public abstract class OIndexOneValue extends OIndexAbstract {
       OAbstractPaginatedStorage storage,
       String valueContainerAlgorithm,
       ODocument metadata,
-      final int binaryFormatVersion,
-      OAtomicOperationsManager atomicOperationsManager) {
+      final int binaryFormatVersion) {
     super(
         name,
         type,
@@ -62,8 +60,7 @@ public abstract class OIndexOneValue extends OIndexAbstract {
         metadata,
         version,
         storage,
-        binaryFormatVersion,
-        atomicOperationsManager);
+        binaryFormatVersion);
   }
 
   @Deprecated
