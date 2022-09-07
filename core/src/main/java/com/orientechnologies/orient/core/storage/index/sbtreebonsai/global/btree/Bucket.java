@@ -26,8 +26,8 @@ final class Bucket extends ODurablePage {
   }
 
   public void init(boolean isLeaf) {
-    setIntValue(FREE_POINTER_OFFSET, MAX_PAGE_SIZE_BYTES);
-    setIntValue(SIZE_OFFSET, 0);
+    setFreePointer(MAX_PAGE_SIZE_BYTES);
+    setSize(0);
 
     setByteValue(IS_LEAF_OFFSET, (byte) (isLeaf ? 1 : 0));
     setLongValue(LEFT_SIBLING_OFFSET, -1);
@@ -53,7 +53,7 @@ final class Bucket extends ODurablePage {
   }
 
   public int size() {
-    return getIntValue(SIZE_OFFSET);
+    return getSize();
   }
 
   public boolean isLeaf() {
@@ -82,7 +82,7 @@ final class Bucket extends ODurablePage {
   }
 
   public EdgeKey getKey(final int index) {
-    int entryPosition = getIntValue(index * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
+    int entryPosition = getPointer(index);
 
     if (!isLeaf()) {
       entryPosition += 2 * OIntegerSerializer.INT_SIZE;
@@ -92,7 +92,7 @@ final class Bucket extends ODurablePage {
   }
 
   private byte[] getRawKey(final int index) {
-    int entryPosition = getIntValue(index * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
+    int entryPosition = getPointer(index);
 
     if (!isLeaf()) {
       entryPosition += 2 * OIntegerSerializer.INT_SIZE;
@@ -103,8 +103,7 @@ final class Bucket extends ODurablePage {
   }
 
   public void removeLeafEntry(final int entryIndex, final int keySize, final int valueSize) {
-    final int entryPosition =
-        getIntValue(POSITIONS_ARRAY_OFFSET + entryIndex * OIntegerSerializer.INT_SIZE);
+    final int entryPosition = getPointer(entryIndex);
 
     final int entrySize;
     if (isLeaf()) {
@@ -113,35 +112,29 @@ final class Bucket extends ODurablePage {
       throw new IllegalStateException("Remove is applies to leaf buckets only");
     }
 
-    final int freePointer = getIntValue(FREE_POINTER_OFFSET);
+    final int freePointer = getFreePointer();
     assert freePointer <= ODurablePage.MAX_PAGE_SIZE_BYTES;
     assert freePointer + entrySize <= ODurablePage.MAX_PAGE_SIZE_BYTES;
 
-    int size = getIntValue(SIZE_OFFSET);
+    int size = getSize();
     if (entryIndex < size - 1) {
-      moveData(
-          POSITIONS_ARRAY_OFFSET + (entryIndex + 1) * OIntegerSerializer.INT_SIZE,
-          POSITIONS_ARRAY_OFFSET + entryIndex * OIntegerSerializer.INT_SIZE,
-          (size - entryIndex - 1) * OIntegerSerializer.INT_SIZE);
+      shiftPointers(entryIndex + 1, entryIndex, size - entryIndex - 1);
     }
 
     size--;
-    setIntValue(SIZE_OFFSET, size);
+    setSize(size);
 
     if (size > 0 && entryPosition > freePointer) {
       moveData(freePointer, freePointer + entrySize, entryPosition - freePointer);
     }
 
-    setIntValue(FREE_POINTER_OFFSET, freePointer + entrySize);
-
-    int currentPositionOffset = POSITIONS_ARRAY_OFFSET;
+    setFreePointer(freePointer + entrySize);
 
     for (int i = 0; i < size; i++) {
-      final int currentEntryPosition = getIntValue(currentPositionOffset);
+      final int currentEntryPosition = getPointer(i);
       if (currentEntryPosition < entryPosition) {
-        setIntValue(currentPositionOffset, currentEntryPosition + entrySize);
+        setPointer(i, currentEntryPosition + entrySize);
       }
-      currentPositionOffset += OIntegerSerializer.INT_SIZE;
     }
   }
 
@@ -150,25 +143,21 @@ final class Bucket extends ODurablePage {
       throw new IllegalStateException("Remove is applied to non-leaf buckets only");
     }
 
-    final int entryPosition =
-        getIntValue(POSITIONS_ARRAY_OFFSET + entryIndex * OIntegerSerializer.INT_SIZE);
+    final int entryPosition = getPointer(entryIndex);
     final int entrySize = key.length + 2 * OIntegerSerializer.INT_SIZE;
-    int size = getIntValue(SIZE_OFFSET);
+    int size = getSize();
 
     final int leftChild = getIntValue(entryPosition);
     final int rightChild = getIntValue(entryPosition + OIntegerSerializer.INT_SIZE);
 
     if (entryIndex < size - 1) {
-      moveData(
-          POSITIONS_ARRAY_OFFSET + (entryIndex + 1) * OIntegerSerializer.INT_SIZE,
-          POSITIONS_ARRAY_OFFSET + entryIndex * OIntegerSerializer.INT_SIZE,
-          (size - entryIndex - 1) * OIntegerSerializer.INT_SIZE);
+      shiftPointers(entryIndex + 1, entryIndex, size - entryIndex - 1);
     }
 
     size--;
-    setIntValue(SIZE_OFFSET, size);
+    setSize(size);
 
-    final int freePointer = getIntValue(FREE_POINTER_OFFSET);
+    final int freePointer = getFreePointer();
     assert freePointer <= ODurablePage.MAX_PAGE_SIZE_BYTES;
 
     if (size > 0 && entryPosition > freePointer) {
@@ -176,36 +165,30 @@ final class Bucket extends ODurablePage {
     }
 
     assert freePointer + entrySize <= ODurablePage.MAX_PAGE_SIZE_BYTES;
-    setIntValue(FREE_POINTER_OFFSET, freePointer + entrySize);
-
-    int currentPositionOffset = POSITIONS_ARRAY_OFFSET;
+    setFreePointer(freePointer + entrySize);
 
     for (int i = 0; i < size; i++) {
-      final int currentEntryPosition = getIntValue(currentPositionOffset);
+      final int currentEntryPosition = getPointer(i);
       if (currentEntryPosition < entryPosition) {
-        setIntValue(currentPositionOffset, currentEntryPosition + entrySize);
+        setPointer(i, currentEntryPosition + entrySize);
       }
-      currentPositionOffset += OIntegerSerializer.INT_SIZE;
     }
 
     if (prevChild >= 0) {
       if (entryIndex > 0) {
-        final int prevEntryPosition =
-            getIntValue(POSITIONS_ARRAY_OFFSET + (entryIndex - 1) * OIntegerSerializer.INT_SIZE);
+        final int prevEntryPosition = getPointer(entryIndex - 1);
         setIntValue(prevEntryPosition + OIntegerSerializer.INT_SIZE, prevChild);
       }
 
       if (entryIndex < size) {
-        final int nextEntryPosition =
-            getIntValue(POSITIONS_ARRAY_OFFSET + entryIndex * OIntegerSerializer.INT_SIZE);
+        final int nextEntryPosition = getPointer(entryIndex);
         setIntValue(nextEntryPosition, prevChild);
       }
     }
   }
 
   public TreeEntry getEntry(final int entryIndex) {
-    int entryPosition =
-        getIntValue(entryIndex * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
+    int entryPosition = getPointer(entryIndex);
 
     if (isLeaf()) {
       final EdgeKey key;
@@ -233,8 +216,7 @@ final class Bucket extends ODurablePage {
   public int getLeft(final int entryIndex) {
     assert !isLeaf();
 
-    final int entryPosition =
-        getIntValue(entryIndex * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
+    final int entryPosition = getPointer(entryIndex);
 
     return getIntValue(entryPosition);
   }
@@ -242,8 +224,7 @@ final class Bucket extends ODurablePage {
   public int getRight(final int entryIndex) {
     assert !isLeaf();
 
-    final int entryPosition =
-        getIntValue(entryIndex * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
+    final int entryPosition = getPointer(entryIndex);
 
     return getIntValue(entryPosition + OIntegerSerializer.INT_SIZE);
   }
@@ -251,8 +232,7 @@ final class Bucket extends ODurablePage {
   public int getValue(final int entryIndex) {
     assert isLeaf();
 
-    int entryPosition =
-        getIntValue(entryIndex * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
+    int entryPosition = getPointer(entryIndex);
 
     // skip key
     entryPosition += getObjectSizeInDirectMemory(EdgeKeySerializer.INSTANCE, entryPosition);
@@ -262,8 +242,7 @@ final class Bucket extends ODurablePage {
   byte[] getRawValue(final int entryIndex) {
     assert isLeaf();
 
-    int entryPosition =
-        getIntValue(entryIndex * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
+    int entryPosition = getPointer(entryIndex);
 
     // skip key
     entryPosition += getObjectSizeInDirectMemory(EdgeKeySerializer.INSTANCE, entryPosition);
@@ -278,19 +257,19 @@ final class Bucket extends ODurablePage {
       appendRawEntry(i + currentSize, rawEntries.get(i));
     }
 
-    setIntValue(SIZE_OFFSET, rawEntries.size() + currentSize);
+    setSize(rawEntries.size() + currentSize);
   }
 
   private void appendRawEntry(final int index, final byte[] rawEntry) {
-    int freePointer = getIntValue(FREE_POINTER_OFFSET);
+    int freePointer = getFreePointer();
     assert freePointer <= ODurablePage.MAX_PAGE_SIZE_BYTES;
 
     freePointer -= rawEntry.length;
 
     assert freePointer <= ODurablePage.MAX_PAGE_SIZE_BYTES;
 
-    setIntValue(FREE_POINTER_OFFSET, freePointer);
-    setIntValue(POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE, freePointer);
+    setFreePointer(freePointer);
+    setPointer(index, freePointer);
 
     setBinaryValue(freePointer, rawEntry);
   }
@@ -302,18 +281,17 @@ final class Bucket extends ODurablePage {
       rawEntries.add(getRawEntry(i));
     }
 
-    setIntValue(FREE_POINTER_OFFSET, MAX_PAGE_SIZE_BYTES);
+    setFreePointer(MAX_PAGE_SIZE_BYTES);
 
     for (int i = 0; i < newSize; i++) {
       appendRawEntry(i, rawEntries.get(i));
     }
 
-    setIntValue(SIZE_OFFSET, newSize);
+    setSize(newSize);
   }
 
   public byte[] getRawEntry(final int entryIndex) {
-    int entryPosition =
-        getIntValue(entryIndex * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
+    int entryPosition = getPointer(entryIndex);
     final int startEntryPosition = entryPosition;
 
     if (isLeaf()) {
@@ -335,30 +313,26 @@ final class Bucket extends ODurablePage {
     final int entrySize = serializedKey.length + serializedValue.length;
 
     assert isLeaf();
-    final int size = getIntValue(SIZE_OFFSET);
+    final int size = getSize();
 
-    int freePointer = getIntValue(FREE_POINTER_OFFSET);
+    int freePointer = getFreePointer();
     assert freePointer <= ODurablePage.MAX_PAGE_SIZE_BYTES;
 
-    if (freePointer - entrySize
-        < (size + 1) * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET) {
+    if (doesOverflow(entrySize, 1)) {
       return false;
     }
 
     if (index <= size - 1) {
-      moveData(
-          POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE,
-          POSITIONS_ARRAY_OFFSET + (index + 1) * OIntegerSerializer.INT_SIZE,
-          (size - index) * OIntegerSerializer.INT_SIZE);
+      shiftPointers(index, index + 1, size - index);
     }
 
     freePointer -= entrySize;
 
     assert freePointer <= ODurablePage.MAX_PAGE_SIZE_BYTES;
 
-    setIntValue(FREE_POINTER_OFFSET, freePointer);
-    setIntValue(POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE, freePointer);
-    setIntValue(SIZE_OFFSET, size + 1);
+    setFreePointer(freePointer);
+    setPointer(index, freePointer);
+    setSize(size + 1);
 
     setBinaryValue(freePointer, serializedKey);
     setBinaryValue(freePointer + serializedKey.length, serializedValue);
@@ -379,28 +353,24 @@ final class Bucket extends ODurablePage {
     final int entrySize = keySize + 2 * OIntegerSerializer.INT_SIZE;
 
     int size = size();
-    int freePointer = getIntValue(FREE_POINTER_OFFSET);
+    int freePointer = getFreePointer();
     assert freePointer <= ODurablePage.MAX_PAGE_SIZE_BYTES;
 
-    if (freePointer - entrySize
-        < (size + 1) * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET) {
+    if (doesOverflow(entrySize, 1)) {
       return false;
     }
 
     if (index <= size - 1) {
-      moveData(
-          POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE,
-          POSITIONS_ARRAY_OFFSET + (index + 1) * OIntegerSerializer.INT_SIZE,
-          (size - index) * OIntegerSerializer.INT_SIZE);
+      shiftPointers(index, index + 1, size - index);
     }
 
     freePointer -= entrySize;
 
     assert freePointer <= ODurablePage.MAX_PAGE_SIZE_BYTES;
 
-    setIntValue(FREE_POINTER_OFFSET, freePointer);
-    setIntValue(POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE, freePointer);
-    setIntValue(SIZE_OFFSET, size + 1);
+    setFreePointer(freePointer);
+    setPointer(index, freePointer);
+    setSize(size + 1);
 
     freePointer += setIntValue(freePointer, leftChild);
     freePointer += setIntValue(freePointer, rightChild);
@@ -411,14 +381,12 @@ final class Bucket extends ODurablePage {
 
     if (updateNeighbors && size > 1) {
       if (index < size - 1) {
-        final int nextEntryPosition =
-            getIntValue(POSITIONS_ARRAY_OFFSET + (index + 1) * OIntegerSerializer.INT_SIZE);
+        final int nextEntryPosition = getPointer(index + 1);
         setIntValue(nextEntryPosition, rightChild);
       }
 
       if (index > 0) {
-        final int prevEntryPosition =
-            getIntValue(POSITIONS_ARRAY_OFFSET + (index - 1) * OIntegerSerializer.INT_SIZE);
+        final int prevEntryPosition = getPointer(index - 1);
         setIntValue(prevEntryPosition + OIntegerSerializer.INT_SIZE, leftChild);
       }
     }
@@ -443,8 +411,7 @@ final class Bucket extends ODurablePage {
   }
 
   public void updateValue(final int index, final byte[] value, final int keySize) {
-    final int entryPosition =
-        getIntValue(index * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET) + keySize;
+    final int entryPosition = getPointer(index) + keySize;
 
     final int valueSize = getObjectSizeInDirectMemory(IntSerializer.INSTANCE, entryPosition);
     if (valueSize == value.length) {
@@ -455,5 +422,43 @@ final class Bucket extends ODurablePage {
       removeLeafEntry(index, keySize, valueSize);
       addLeafEntry(index, rawKey, value);
     }
+  }
+
+  public void setFreePointer(int value) {
+    setIntValue(FREE_POINTER_OFFSET, value);
+  }
+
+  public int getFreePointer() {
+    return getIntValue(FREE_POINTER_OFFSET);
+  }
+
+  public int getSize() {
+    return getIntValue(SIZE_OFFSET);
+  }
+
+  public void setSize(int value) {
+    setIntValue(SIZE_OFFSET, value);
+  }
+
+  public int getPointer(final int index) {
+    return getIntValue(index * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
+  }
+
+  public void setPointer(final int index, int value) {
+    setIntValue(index * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET, value);
+  }
+
+  public void shiftPointers(int from, int to, int size) {
+    moveData(
+        POSITIONS_ARRAY_OFFSET + from * OIntegerSerializer.INT_SIZE,
+        POSITIONS_ARRAY_OFFSET + to * OIntegerSerializer.INT_SIZE,
+        size * OIntegerSerializer.INT_SIZE);
+  }
+
+  private boolean doesOverflow(int requiredDataSpace, int requirePointerSpace) {
+    int size = getSize();
+    int freePointer = getFreePointer();
+    return freePointer - requiredDataSpace
+        < (size + requirePointerSpace) * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET;
   }
 }
