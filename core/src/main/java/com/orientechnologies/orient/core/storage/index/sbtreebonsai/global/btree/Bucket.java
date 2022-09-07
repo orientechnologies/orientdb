@@ -117,8 +117,22 @@ final class Bucket extends ODurablePage {
     assert freePointer + entrySize <= ODurablePage.MAX_PAGE_SIZE_BYTES;
 
     int size = getSize();
+    int[] pointers = getPointers();
+    int startChanging = size;
     if (entryIndex < size - 1) {
-      shiftPointers(entryIndex + 1, entryIndex, size - entryIndex - 1);
+      for (int i = entryIndex + 1; i < size; i++) {
+        if (pointers[i] < entryPosition) {
+          pointers[i] += entrySize;
+        }
+      }
+      setPointersOffset(entryIndex, pointers, entryIndex + 1);
+      startChanging = entryIndex;
+    }
+
+    for (int i = 0; i < startChanging; i++) {
+      if (pointers[i] < entryPosition) {
+        setPointer(i, pointers[i] + entrySize);
+      }
     }
 
     size--;
@@ -129,13 +143,6 @@ final class Bucket extends ODurablePage {
     }
 
     setFreePointer(freePointer + entrySize);
-
-    for (int i = 0; i < size; i++) {
-      final int currentEntryPosition = getPointer(i);
-      if (currentEntryPosition < entryPosition) {
-        setPointer(i, currentEntryPosition + entrySize);
-      }
-    }
   }
 
   public void removeNonLeafEntry(final int entryIndex, final byte[] key, final int prevChild) {
@@ -150,12 +157,26 @@ final class Bucket extends ODurablePage {
     final int leftChild = getIntValue(entryPosition);
     final int rightChild = getIntValue(entryPosition + OIntegerSerializer.INT_SIZE);
 
+    int[] pointers = getPointers();
+    int endSize = size - 1;
     if (entryIndex < size - 1) {
-      shiftPointers(entryIndex + 1, entryIndex, size - entryIndex - 1);
+      for (int i = entryIndex + 1; i < size; i++) {
+        if (pointers[i] < entryPosition) {
+          pointers[i] += entrySize;
+        }
+      }
+      setPointersOffset(entryIndex, pointers, entryIndex + 1);
+      endSize = entryIndex;
     }
 
     size--;
     setSize(size);
+
+    for (int i = 0; i < endSize; i++) {
+      if (pointers[i] < entryPosition) {
+        setPointer(i, pointers[i] + entrySize);
+      }
+    }
 
     final int freePointer = getFreePointer();
     assert freePointer <= ODurablePage.MAX_PAGE_SIZE_BYTES;
@@ -166,13 +187,6 @@ final class Bucket extends ODurablePage {
 
     assert freePointer + entrySize <= ODurablePage.MAX_PAGE_SIZE_BYTES;
     setFreePointer(freePointer + entrySize);
-
-    for (int i = 0; i < size; i++) {
-      final int currentEntryPosition = getPointer(i);
-      if (currentEntryPosition < entryPosition) {
-        setPointer(i, currentEntryPosition + entrySize);
-      }
-    }
 
     if (prevChild >= 0) {
       if (entryIndex > 0) {
@@ -444,8 +458,18 @@ final class Bucket extends ODurablePage {
     return getIntValue(index * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
   }
 
+  public int[] getPointers() {
+    int size = getSize();
+    return getIntArray(POSITIONS_ARRAY_OFFSET, size);
+  }
+
   public void setPointer(final int index, int value) {
     setIntValue(index * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET, value);
+  }
+
+  public void setPointersOffset(int position, int[] pointers, int pointersOffset) {
+    setIntArray(
+        POSITIONS_ARRAY_OFFSET + position * OIntegerSerializer.INT_SIZE, pointers, pointersOffset);
   }
 
   public void shiftPointers(int from, int to, int size) {
