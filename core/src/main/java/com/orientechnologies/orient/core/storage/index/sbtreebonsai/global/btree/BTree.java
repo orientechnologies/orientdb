@@ -8,20 +8,14 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.global.EntryPoint;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.global.IntSerializer;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Spliterator;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -101,16 +95,16 @@ public final class BTree extends ODurableComponent {
       try {
         final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
         final BucketSearchResult bucketSearchResult = findBucket(key, atomicOperation);
-        if (bucketSearchResult.itemIndex < 0) {
+        if (bucketSearchResult.getItemIndex() < 0) {
           return -1;
         }
 
-        final long pageIndex = bucketSearchResult.pageIndex;
+        final long pageIndex = bucketSearchResult.getPageIndex();
 
         try (final OCacheEntry keyBucketCacheEntry =
             loadPageForRead(atomicOperation, fileId, pageIndex, false)) {
           final Bucket keyBucket = new Bucket(keyBucketCacheEntry);
-          return keyBucket.getValue(bucketSearchResult.itemIndex);
+          return keyBucket.getValue(bucketSearchResult.getItemIndex());
         }
       } finally {
         releaseSharedLock();
@@ -142,8 +136,8 @@ public final class BTree extends ODurableComponent {
             Bucket keyBucket = new Bucket(keyBucketCacheEntry);
             final byte[] oldRawValue;
 
-            if (bucketSearchResult.itemIndex > -1) {
-              oldRawValue = keyBucket.getRawValue(bucketSearchResult.itemIndex);
+            if (bucketSearchResult.getItemIndex() > -1) {
+              oldRawValue = keyBucket.getRawValue(bucketSearchResult.getItemIndex());
               result = false;
             } else {
               oldRawValue = null;
@@ -155,22 +149,22 @@ public final class BTree extends ODurableComponent {
 
             int insertionIndex;
             final int sizeDiff;
-            if (bucketSearchResult.itemIndex >= 0) {
+            if (bucketSearchResult.getItemIndex() >= 0) {
               assert oldRawValue != null;
 
               if (oldRawValue.length == serializedValue.length) {
                 keyBucket.updateValue(
-                    bucketSearchResult.itemIndex, serializedValue, serializedKey.length);
+                    bucketSearchResult.getItemIndex(), serializedValue, serializedKey.length);
                 keyBucketCacheEntry.close();
                 return false;
               } else {
                 keyBucket.removeLeafEntry(
-                    bucketSearchResult.itemIndex, serializedKey.length, oldRawValue.length);
-                insertionIndex = bucketSearchResult.itemIndex;
+                    bucketSearchResult.getItemIndex(), serializedKey.length, oldRawValue.length);
+                insertionIndex = bucketSearchResult.getItemIndex();
                 sizeDiff = 0;
               }
             } else {
-              insertionIndex = -bucketSearchResult.itemIndex - 1;
+              insertionIndex = -bucketSearchResult.getItemIndex() - 1;
               sizeDiff = 1;
             }
 
@@ -179,12 +173,12 @@ public final class BTree extends ODurableComponent {
                   splitBucket(
                       keyBucket,
                       keyBucketCacheEntry,
-                      bucketSearchResult.path,
-                      bucketSearchResult.insertionIndexes,
+                      bucketSearchResult.getPath(),
+                      bucketSearchResult.getInsertionIndexes(),
                       insertionIndex,
                       atomicOperation);
 
-              insertionIndex = bucketSearchResult.itemIndex;
+              insertionIndex = bucketSearchResult.getItemIndex();
 
               final long pageIndex = bucketSearchResult.getLastPathItem();
 
@@ -227,9 +221,9 @@ public final class BTree extends ODurableComponent {
         final BucketSearchResult result = searchResult.get();
 
         try (final OCacheEntry cacheEntry =
-            loadPageForRead(atomicOperation, fileId, result.pageIndex, false)) {
+            loadPageForRead(atomicOperation, fileId, result.getPageIndex(), false)) {
           final Bucket bucket = new Bucket(cacheEntry);
-          return bucket.getKey(result.itemIndex);
+          return bucket.getKey(result.getItemIndex());
         }
       } finally {
         releaseSharedLock();
@@ -259,8 +253,8 @@ public final class BTree extends ODurableComponent {
             if (!path.isEmpty()) {
               final PagePathItemUnit pagePathItemUnit = path.removeLast();
 
-              bucketIndex = pagePathItemUnit.pageIndex;
-              itemIndex = pagePathItemUnit.itemIndex + 1;
+              bucketIndex = pagePathItemUnit.getPageIndex();
+              itemIndex = pagePathItemUnit.getItemIndex() + 1;
             } else {
               return Optional.empty();
             }
@@ -281,8 +275,8 @@ public final class BTree extends ODurableComponent {
             if (!path.isEmpty()) {
               final PagePathItemUnit pagePathItemUnit = path.removeLast();
 
-              bucketIndex = pagePathItemUnit.pageIndex;
-              itemIndex = pagePathItemUnit.itemIndex + 1;
+              bucketIndex = pagePathItemUnit.getPageIndex();
+              itemIndex = pagePathItemUnit.getItemIndex() + 1;
             } else {
               return Optional.empty();
             }
@@ -317,9 +311,9 @@ public final class BTree extends ODurableComponent {
         final BucketSearchResult result = searchResult.get();
 
         try (final OCacheEntry cacheEntry =
-            loadPageForRead(atomicOperation, fileId, result.pageIndex, false)) {
+            loadPageForRead(atomicOperation, fileId, result.getPageIndex(), false)) {
           final Bucket bucket = new Bucket(cacheEntry);
-          return bucket.getKey(result.itemIndex);
+          return bucket.getKey(result.getItemIndex());
         }
       } finally {
         releaseSharedLock();
@@ -350,8 +344,8 @@ public final class BTree extends ODurableComponent {
             if (!path.isEmpty()) {
               final PagePathItemUnit pagePathItemUnit = path.removeLast();
 
-              bucketIndex = pagePathItemUnit.pageIndex;
-              itemIndex = pagePathItemUnit.itemIndex - 1;
+              bucketIndex = pagePathItemUnit.getPageIndex();
+              itemIndex = pagePathItemUnit.getItemIndex() - 1;
             } else {
               return Optional.empty();
             }
@@ -372,8 +366,8 @@ public final class BTree extends ODurableComponent {
             if (!path.isEmpty()) {
               final PagePathItemUnit pagePathItemUnit = path.removeLast();
 
-              bucketIndex = pagePathItemUnit.pageIndex;
-              itemIndex = pagePathItemUnit.itemIndex - 1;
+              bucketIndex = pagePathItemUnit.getPageIndex();
+              itemIndex = pagePathItemUnit.getItemIndex() - 1;
             } else {
               return Optional.empty();
             }
@@ -521,7 +515,7 @@ public final class BTree extends ODurableComponent {
                   atomicOperation);
 
           parentIndex = bucketSearchResult.getLastPathItem();
-          insertionIndex = bucketSearchResult.itemIndex;
+          insertionIndex = bucketSearchResult.getItemIndex();
 
           if (parentIndex != parentCacheEntry.getPageIndex()) {
             parentCacheEntry.close();
@@ -772,7 +766,7 @@ public final class BTree extends ODurableComponent {
             final int removedValue;
             final BucketSearchResult bucketSearchResult = findBucket(key, atomicOperation);
 
-            if (bucketSearchResult.itemIndex < 0) {
+            if (bucketSearchResult.getItemIndex() < 0) {
               return -1;
             }
 
@@ -780,11 +774,11 @@ public final class BTree extends ODurableComponent {
             final byte[] rawValue;
             try (final OCacheEntry keyBucketCacheEntry =
                 loadPageForWrite(
-                    atomicOperation, fileId, bucketSearchResult.pageIndex, false, true)) {
+                    atomicOperation, fileId, bucketSearchResult.getPageIndex(), false, true)) {
               final Bucket keyBucket = new Bucket(keyBucketCacheEntry);
-              rawValue = keyBucket.getRawValue(bucketSearchResult.itemIndex);
+              rawValue = keyBucket.getRawValue(bucketSearchResult.getItemIndex());
               keyBucket.removeLeafEntry(
-                  bucketSearchResult.itemIndex, serializedKey.length, rawValue.length);
+                  bucketSearchResult.getItemIndex(), serializedKey.length, rawValue.length);
               updateSize(-1, atomicOperation);
             }
 
@@ -860,529 +854,294 @@ public final class BTree extends ODurableComponent {
 
   private Spliterator<ORawPair<EdgeKey, Integer>> iterateEntriesMinorDesc(
       EdgeKey key, final boolean inclusive) {
-    return new SpliteratorBackward(null, key, false, inclusive);
+    return new SpliteratorBackward(this, null, key, false, inclusive);
   }
 
   private Spliterator<ORawPair<EdgeKey, Integer>> iterateEntriesMinorAsc(
       EdgeKey key, final boolean inclusive) {
-    return new SpliteratorForward(null, key, false, inclusive);
+    return new SpliteratorForward(this, null, key, false, inclusive);
   }
 
   private Spliterator<ORawPair<EdgeKey, Integer>> iterateEntriesMajorAsc(
       EdgeKey key, final boolean inclusive) {
-    return new SpliteratorForward(key, null, inclusive, false);
+    return new SpliteratorForward(this, key, null, inclusive, false);
   }
 
   private Spliterator<ORawPair<EdgeKey, Integer>> iterateEntriesMajorDesc(
       EdgeKey key, final boolean inclusive) {
-    return new SpliteratorBackward(key, null, inclusive, false);
+    return new SpliteratorBackward(this, key, null, inclusive, false);
   }
 
   private Spliterator<ORawPair<EdgeKey, Integer>> iterateEntriesBetweenAscOrder(
       EdgeKey keyFrom, final boolean fromInclusive, EdgeKey keyTo, final boolean toInclusive) {
-    return new SpliteratorForward(keyFrom, keyTo, fromInclusive, toInclusive);
+    return new SpliteratorForward(this, keyFrom, keyTo, fromInclusive, toInclusive);
   }
 
   private Spliterator<ORawPair<EdgeKey, Integer>> iterateEntriesBetweenDescOrder(
       EdgeKey keyFrom, final boolean fromInclusive, EdgeKey keyTo, final boolean toInclusive) {
-    return new SpliteratorBackward(keyFrom, keyTo, fromInclusive, toInclusive);
+    return new SpliteratorBackward(this, keyFrom, keyTo, fromInclusive, toInclusive);
   }
 
-  private final class SpliteratorForward implements Spliterator<ORawPair<EdgeKey, Integer>> {
-
-    private final EdgeKey fromKey;
-    private final EdgeKey toKey;
-    private final boolean fromKeyInclusive;
-    private final boolean toKeyInclusive;
-
-    private int pageIndex = -1;
-    private int itemIndex = -1;
-
-    private OLogSequenceNumber lastLSN = null;
-
-    private final List<ORawPair<EdgeKey, Integer>> dataCache = new ArrayList<>();
-    private Iterator<ORawPair<EdgeKey, Integer>> cacheIterator = Collections.emptyIterator();
-
-    private SpliteratorForward(
-        final EdgeKey fromKey,
-        final EdgeKey toKey,
-        final boolean fromKeyInclusive,
-        final boolean toKeyInclusive) {
-      this.fromKey = fromKey;
-      this.toKey = toKey;
-
-      this.toKeyInclusive = toKeyInclusive;
-      this.fromKeyInclusive = fromKeyInclusive;
+  public void fetchNextCachePortionForward(SpliteratorForward iter) {
+    final EdgeKey lastKey;
+    if (!iter.getDataCache().isEmpty()) {
+      lastKey = iter.getDataCache().get(iter.getDataCache().size() - 1).first;
+    } else {
+      lastKey = null;
     }
 
-    @Override
-    public boolean tryAdvance(Consumer<? super ORawPair<EdgeKey, Integer>> action) {
-      if (cacheIterator == null) {
-        return false;
-      }
+    iter.clearCache();
 
-      if (cacheIterator.hasNext()) {
-        action.accept(cacheIterator.next());
-        return true;
-      }
-
-      fetchNextCachePortion();
-
-      cacheIterator = dataCache.iterator();
-
-      if (cacheIterator.hasNext()) {
-        action.accept(cacheIterator.next());
-        return true;
-      }
-
-      cacheIterator = null;
-
-      return false;
-    }
-
-    private void fetchNextCachePortion() {
-      final EdgeKey lastKey;
-      if (!dataCache.isEmpty()) {
-        lastKey = dataCache.get(dataCache.size() - 1).first;
-      } else {
-        lastKey = null;
-      }
-
-      dataCache.clear();
-      cacheIterator = Collections.emptyIterator();
-
-      atomicOperationsManager.acquireReadLock(BTree.this);
+    atomicOperationsManager.acquireReadLock(BTree.this);
+    try {
+      acquireSharedLock();
       try {
-        acquireSharedLock();
-        try {
-          final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
-          if (pageIndex > -1) {
-            if (readKeysFromBuckets(atomicOperation)) {
-              return;
-            }
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
+        if (iter.getPageIndex() > -1) {
+          if (readKeysFromBucketsForward(iter, atomicOperation)) {
+            return;
           }
-
-          // this can only happen if page LSN does not equal to stored LSN or index of current
-          // iterated page equals to -1
-          // so we only started iteration
-          if (dataCache.isEmpty()) {
-            // iteration just started
-            if (lastKey == null) {
-              if (this.fromKey != null) {
-                final BucketSearchResult searchResult = findBucket(fromKey, atomicOperation);
-                pageIndex = (int) searchResult.pageIndex;
-
-                if (searchResult.itemIndex >= 0) {
-                  if (fromKeyInclusive) {
-                    itemIndex = searchResult.itemIndex;
-                  } else {
-                    itemIndex = searchResult.itemIndex + 1;
-                  }
-                } else {
-                  itemIndex = -searchResult.itemIndex - 1;
-                }
-              } else {
-                final Optional<BucketSearchResult> bucketSearchResult = firstItem(atomicOperation);
-                if (bucketSearchResult.isPresent()) {
-                  final BucketSearchResult searchResult = bucketSearchResult.get();
-                  pageIndex = (int) searchResult.pageIndex;
-                  itemIndex = searchResult.itemIndex;
-                } else {
-                  return;
-                }
-              }
-
-            } else {
-              final BucketSearchResult bucketSearchResult = findBucket(lastKey, atomicOperation);
-
-              pageIndex = (int) bucketSearchResult.pageIndex;
-              if (bucketSearchResult.itemIndex >= 0) {
-                itemIndex = bucketSearchResult.itemIndex + 1;
-              } else {
-                itemIndex = -bucketSearchResult.itemIndex - 1;
-              }
-            }
-            lastLSN = null;
-            readKeysFromBuckets(atomicOperation);
-          }
-        } finally {
-          releaseSharedLock();
         }
-      } catch (final IOException e) {
-        throw OException.wrapException(new OStorageException("Error during element iteration"), e);
-      } finally {
-        atomicOperationsManager.releaseReadLock(BTree.this);
-      }
-    }
 
-    private boolean readKeysFromBuckets(OAtomicOperation atomicOperation) throws IOException {
-      OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
-      try {
-        Bucket bucket = new Bucket(cacheEntry);
-        if (lastLSN == null || bucket.getLSN().equals(lastLSN) && atomicOperation == null) {
-          while (true) {
-            int bucketSize = bucket.size();
-            if (itemIndex >= bucketSize) {
-              pageIndex = (int) bucket.getRightSibling();
+        // this can only happen if page LSN does not equal to stored LSN or index of current
+        // iterated page equals to -1
+        // so we only started iteration
+        if (iter.getDataCache().isEmpty()) {
+          // iteration just started
+          if (lastKey == null) {
+            if (iter.getFromKey() != null) {
+              final BucketSearchResult searchResult =
+                  findBucket(iter.getFromKey(), atomicOperation);
+              iter.setPageIndex((int) searchResult.getPageIndex());
 
-              if (pageIndex < 0) {
-                return true;
-              }
-
-              itemIndex = 0;
-              cacheEntry.close();
-
-              cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
-              bucket = new Bucket(cacheEntry);
-
-              bucketSize = bucket.size();
-            }
-
-            lastLSN = bucket.getLSN();
-
-            for (; itemIndex < bucketSize && dataCache.size() < 10; itemIndex++) {
-              @SuppressWarnings("ObjectAllocationInLoop")
-              TreeEntry entry = bucket.getEntry(itemIndex);
-
-              if (toKey != null) {
-                if (toKeyInclusive) {
-                  if (entry.key.compareTo(toKey) > 0) {
-                    return true;
-                  }
-                } else if (entry.key.compareTo(toKey) >= 0) {
-                  return true;
+              if (searchResult.getItemIndex() >= 0) {
+                if (iter.isFromKeyInclusive()) {
+                  iter.setItemIndex(searchResult.getItemIndex());
+                } else {
+                  iter.setItemIndex(searchResult.getItemIndex() + 1);
                 }
+              } else {
+                iter.setItemIndex(-searchResult.getItemIndex() - 1);
               }
-
-              //noinspection ObjectAllocationInLoop
-              dataCache.add(new ORawPair<>(entry.key, entry.value));
+            } else {
+              final Optional<BucketSearchResult> bucketSearchResult = firstItem(atomicOperation);
+              if (bucketSearchResult.isPresent()) {
+                final BucketSearchResult searchResult = bucketSearchResult.get();
+                iter.setPageIndex((int) searchResult.getPageIndex());
+                iter.setItemIndex(searchResult.getItemIndex());
+              } else {
+                return;
+              }
             }
 
-            if (dataCache.size() >= 10) {
+          } else {
+            final BucketSearchResult bucketSearchResult = findBucket(lastKey, atomicOperation);
+
+            iter.setPageIndex((int) bucketSearchResult.getPageIndex());
+            if (bucketSearchResult.getItemIndex() >= 0) {
+              iter.setItemIndex(bucketSearchResult.getItemIndex() + 1);
+            } else {
+              iter.setItemIndex(-bucketSearchResult.getItemIndex() - 1);
+            }
+          }
+          iter.setLastLSN(null);
+          readKeysFromBucketsForward(iter, atomicOperation);
+        }
+      } finally {
+        releaseSharedLock();
+      }
+    } catch (final IOException e) {
+      throw OException.wrapException(new OStorageException("Error during element iteration"), e);
+    } finally {
+      atomicOperationsManager.releaseReadLock(BTree.this);
+    }
+  }
+
+  private boolean readKeysFromBucketsForward(
+      SpliteratorForward iter, OAtomicOperation atomicOperation) throws IOException {
+    OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, iter.getPageIndex(), false);
+    try {
+      Bucket bucket = new Bucket(cacheEntry);
+      if (iter.getLastLSN() == null
+          || bucket.getLSN().equals(iter.getLastLSN()) && atomicOperation == null) {
+        while (true) {
+          int bucketSize = bucket.size();
+          if (iter.getItemIndex() >= bucketSize) {
+            iter.setPageIndex((int) bucket.getRightSibling());
+
+            if (iter.getPageIndex() < 0) {
               return true;
             }
-          }
-        }
-      } finally {
-        cacheEntry.close();
-      }
 
-      return false;
-    }
+            iter.setItemIndex(0);
+            cacheEntry.close();
 
-    @Override
-    public Spliterator<ORawPair<EdgeKey, Integer>> trySplit() {
-      return null;
-    }
+            cacheEntry = loadPageForRead(atomicOperation, fileId, iter.getPageIndex(), false);
+            bucket = new Bucket(cacheEntry);
 
-    @Override
-    public long estimateSize() {
-      return Long.MAX_VALUE;
-    }
-
-    @Override
-    public int characteristics() {
-      return SORTED | NONNULL | ORDERED;
-    }
-
-    @Override
-    public Comparator<? super ORawPair<EdgeKey, Integer>> getComparator() {
-      return Comparator.comparing(pair -> pair.first);
-    }
-  }
-
-  private final class SpliteratorBackward implements Spliterator<ORawPair<EdgeKey, Integer>> {
-
-    private final EdgeKey fromKey;
-    private final EdgeKey toKey;
-    private final boolean fromKeyInclusive;
-    private final boolean toKeyInclusive;
-
-    private int pageIndex = -1;
-    private int itemIndex = -1;
-
-    private OLogSequenceNumber lastLSN = null;
-
-    private final List<ORawPair<EdgeKey, Integer>> dataCache = new ArrayList<>();
-    private Iterator<ORawPair<EdgeKey, Integer>> cacheIterator = Collections.emptyIterator();
-
-    private SpliteratorBackward(
-        final EdgeKey fromKey,
-        final EdgeKey toKey,
-        final boolean fromKeyInclusive,
-        final boolean toKeyInclusive) {
-      this.fromKey = fromKey;
-      this.toKey = toKey;
-      this.fromKeyInclusive = fromKeyInclusive;
-      this.toKeyInclusive = toKeyInclusive;
-    }
-
-    @Override
-    public boolean tryAdvance(Consumer<? super ORawPair<EdgeKey, Integer>> action) {
-      if (cacheIterator == null) {
-        return false;
-      }
-
-      if (cacheIterator.hasNext()) {
-        action.accept(cacheIterator.next());
-        return true;
-      }
-
-      fetchNextCachePortion();
-
-      cacheIterator = dataCache.iterator();
-
-      if (cacheIterator.hasNext()) {
-        action.accept(cacheIterator.next());
-        return true;
-      }
-
-      cacheIterator = null;
-
-      return false;
-    }
-
-    private void fetchNextCachePortion() {
-      final EdgeKey lastKey;
-      if (dataCache.isEmpty()) {
-        lastKey = null;
-      } else {
-        lastKey = dataCache.get(dataCache.size() - 1).first;
-      }
-
-      dataCache.clear();
-      cacheIterator = Collections.emptyIterator();
-
-      atomicOperationsManager.acquireReadLock(BTree.this);
-      try {
-        acquireSharedLock();
-        try {
-          final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
-          if (pageIndex > -1) {
-            if (readKeysFromBuckets(atomicOperation)) {
-              return;
-            }
+            bucketSize = bucket.size();
           }
 
-          // this can only happen if page LSN does not equal to stored LSN or index of current
-          // iterated page equals to -1
-          // so we only started iteration
-          if (dataCache.isEmpty()) {
-            // iteration just started
-            if (lastKey == null) {
-              if (this.toKey != null) {
-                final BucketSearchResult searchResult = findBucket(toKey, atomicOperation);
-                pageIndex = (int) searchResult.pageIndex;
+          iter.setLastLSN(bucket.getLSN());
 
-                if (searchResult.itemIndex >= 0) {
-                  if (toKeyInclusive) {
-                    itemIndex = searchResult.itemIndex;
-                  } else {
-                    itemIndex = searchResult.itemIndex - 1;
-                  }
-                } else {
-                  itemIndex = -searchResult.itemIndex - 2;
-                }
-              } else {
-                final Optional<BucketSearchResult> bucketSearchResult = lastItem(atomicOperation);
-                if (bucketSearchResult.isPresent()) {
-                  final BucketSearchResult searchResult = bucketSearchResult.get();
-                  pageIndex = (int) searchResult.pageIndex;
-                  itemIndex = searchResult.itemIndex;
-                } else {
-                  return;
-                }
-              }
+          for (;
+              iter.getItemIndex() < bucketSize && iter.getDataCache().size() < 10;
+              iter.incrementItemIndex()) {
+            @SuppressWarnings("ObjectAllocationInLoop")
+            TreeEntry entry = bucket.getEntry(iter.getItemIndex());
 
-            } else {
-              final BucketSearchResult bucketSearchResult = findBucket(lastKey, atomicOperation);
-
-              pageIndex = (int) bucketSearchResult.pageIndex;
-              if (bucketSearchResult.itemIndex >= 0) {
-                itemIndex = bucketSearchResult.itemIndex - 1;
-              } else {
-                itemIndex = -bucketSearchResult.itemIndex - 2;
-              }
-            }
-            lastLSN = null;
-            readKeysFromBuckets(atomicOperation);
-          }
-        } finally {
-          releaseSharedLock();
-        }
-      } catch (final IOException e) {
-        throw OException.wrapException(new OStorageException("Error during element iteration"), e);
-      } finally {
-        atomicOperationsManager.releaseReadLock(BTree.this);
-      }
-    }
-
-    private boolean readKeysFromBuckets(OAtomicOperation atomicOperation) throws IOException {
-      OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
-      try {
-        Bucket bucket = new Bucket(cacheEntry);
-        if (lastLSN == null || bucket.getLSN().equals(lastLSN) && atomicOperation == null) {
-          while (true) {
-            if (itemIndex < 0) {
-              pageIndex = (int) bucket.getLeftSibling();
-
-              if (pageIndex < 0) {
-                return true;
-              }
-
-              cacheEntry.close();
-
-              cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
-              bucket = new Bucket(cacheEntry);
-              final int bucketSize = bucket.size();
-              itemIndex = bucketSize - 1;
-            }
-
-            lastLSN = bucket.getLSN();
-
-            for (; itemIndex >= 0 && dataCache.size() < 10; itemIndex--) {
-              @SuppressWarnings("ObjectAllocationInLoop")
-              TreeEntry entry = bucket.getEntry(itemIndex);
-
-              if (fromKey != null) {
-                if (fromKeyInclusive) {
-                  if (entry.key.compareTo(fromKey) < 0) {
-                    return true;
-                  }
-                } else if (entry.key.compareTo(fromKey) <= 0) {
+            if (iter.getToKey() != null) {
+              if (iter.isToKeyInclusive()) {
+                if (entry.getKey().compareTo(iter.getToKey()) > 0) {
                   return true;
                 }
+              } else if (entry.getKey().compareTo(iter.getToKey()) >= 0) {
+                return true;
               }
-
-              //noinspection ObjectAllocationInLoop
-              dataCache.add(new ORawPair<>(entry.key, entry.value));
             }
 
-            if (dataCache.size() >= 10) {
-              return true;
-            }
+            //noinspection ObjectAllocationInLoop
+            iter.getDataCache().add(new ORawPair<>(entry.getKey(), entry.getValue()));
+          }
+
+          if (iter.getDataCache().size() >= 10) {
+            return true;
           }
         }
+      }
+    } finally {
+      cacheEntry.close();
+    }
+
+    return false;
+  }
+
+  public void fetchNextCachePortionBackward(SpliteratorBackward iter) {
+    final EdgeKey lastKey;
+    if (iter.getDataCache().isEmpty()) {
+      lastKey = null;
+    } else {
+      lastKey = iter.getDataCache().get(iter.getDataCache().size() - 1).first;
+    }
+
+    iter.clearCache();
+
+    atomicOperationsManager.acquireReadLock(BTree.this);
+    try {
+      acquireSharedLock();
+      try {
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
+        if (iter.getPageIndex() > -1) {
+          if (readKeysFromBucketsBackward(iter, atomicOperation)) {
+            return;
+          }
+        }
+
+        // this can only happen if page LSN does not equal to stored LSN or index of current
+        // iterated page equals to -1
+        // so we only started iteration
+        if (iter.getDataCache().isEmpty()) {
+          // iteration just started
+          if (lastKey == null) {
+            if (iter.getToKey() != null) {
+              final BucketSearchResult searchResult = findBucket(iter.getToKey(), atomicOperation);
+              iter.setPageIndex((int) searchResult.getPageIndex());
+
+              if (searchResult.getItemIndex() >= 0) {
+                if (iter.isToKeyInclusive()) {
+                  iter.setItemIndex(searchResult.getItemIndex());
+                } else {
+                  iter.setItemIndex(searchResult.getItemIndex() - 1);
+                }
+              } else {
+                iter.setItemIndex(-searchResult.getItemIndex() - 2);
+              }
+            } else {
+              final Optional<BucketSearchResult> bucketSearchResult = lastItem(atomicOperation);
+              if (bucketSearchResult.isPresent()) {
+                final BucketSearchResult searchResult = bucketSearchResult.get();
+                iter.setPageIndex((int) searchResult.getPageIndex());
+                iter.setItemIndex(searchResult.getItemIndex());
+              } else {
+                return;
+              }
+            }
+
+          } else {
+            final BucketSearchResult bucketSearchResult = findBucket(lastKey, atomicOperation);
+
+            iter.setPageIndex((int) bucketSearchResult.getPageIndex());
+            if (bucketSearchResult.getItemIndex() >= 0) {
+              iter.setItemIndex(bucketSearchResult.getItemIndex() - 1);
+            } else {
+              iter.setPageIndex(-bucketSearchResult.getItemIndex() - 2);
+            }
+          }
+          iter.setLastLSN(null);
+          readKeysFromBucketsBackward(iter, atomicOperation);
+        }
       } finally {
-        cacheEntry.close();
+        releaseSharedLock();
       }
-
-      return false;
-    }
-
-    @Override
-    public Spliterator<ORawPair<EdgeKey, Integer>> trySplit() {
-      return null;
-    }
-
-    @Override
-    public long estimateSize() {
-      return Long.MAX_VALUE;
-    }
-
-    @Override
-    public int characteristics() {
-      return SORTED | NONNULL | ORDERED;
-    }
-
-    @Override
-    public Comparator<? super ORawPair<EdgeKey, Integer>> getComparator() {
-      return (pairOne, pairTwo) -> -pairOne.first.compareTo(pairTwo.first);
+    } catch (final IOException e) {
+      throw OException.wrapException(new OStorageException("Error during element iteration"), e);
+    } finally {
+      atomicOperationsManager.releaseReadLock(BTree.this);
     }
   }
 
-  static final class TreeEntry implements Comparable<TreeEntry> {
+  private boolean readKeysFromBucketsBackward(
+      SpliteratorBackward iter, OAtomicOperation atomicOperation) throws IOException {
+    OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, iter.getPageIndex(), false);
+    try {
+      Bucket bucket = new Bucket(cacheEntry);
+      if (iter.getLastLSN() == null
+          || bucket.getLSN().equals(iter.getLastLSN()) && atomicOperation == null) {
+        while (true) {
+          if (iter.getItemIndex() < 0) {
+            iter.setPageIndex((int) bucket.getLeftSibling());
 
-    protected final int leftChild;
-    protected final int rightChild;
-    public final EdgeKey key;
-    public final int value;
+            if (iter.getPageIndex() < 0) {
+              return true;
+            }
 
-    public TreeEntry(
-        final int leftChild, final int rightChild, final EdgeKey key, final int value) {
-      this.leftChild = leftChild;
-      this.rightChild = rightChild;
-      this.key = key;
-      this.value = value;
-    }
+            cacheEntry.close();
 
-    @Override
-    public boolean equals(final Object o) {
-      if (this == o) {
-        return true;
+            cacheEntry = loadPageForRead(atomicOperation, fileId, iter.getPageIndex(), false);
+            bucket = new Bucket(cacheEntry);
+            final int bucketSize = bucket.size();
+            iter.setItemIndex(bucketSize - 1);
+          }
+
+          iter.setLastLSN(bucket.getLSN());
+
+          for (; iter.getItemIndex() >= 0 && iter.getDataCache().size() < 10; iter.decItemIndex()) {
+            @SuppressWarnings("ObjectAllocationInLoop")
+            TreeEntry entry = bucket.getEntry(iter.getItemIndex());
+
+            if (iter.getFromKey() != null) {
+              if (iter.isFromKeyInclusive()) {
+                if (entry.getKey().compareTo(iter.getFromKey()) < 0) {
+                  return true;
+                }
+              } else if (entry.getKey().compareTo(iter.getFromKey()) <= 0) {
+                return true;
+              }
+            }
+
+            //noinspection ObjectAllocationInLoop
+            iter.getDataCache().add(new ORawPair<>(entry.getKey(), entry.getValue()));
+          }
+
+          if (iter.getDataCache().size() >= 10) {
+            return true;
+          }
+        }
       }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-      final TreeEntry that = (TreeEntry) o;
-      return leftChild == that.leftChild
-          && rightChild == that.rightChild
-          && Objects.equals(key, that.key)
-          && Objects.equals(value, that.value);
+    } finally {
+      cacheEntry.close();
     }
 
-    @Override
-    public int hashCode() {
-      return Objects.hash(leftChild, rightChild, key, value);
-    }
-
-    @Override
-    public String toString() {
-      return "CellBTreeEntry{"
-          + "leftChild="
-          + leftChild
-          + ", rightChild="
-          + rightChild
-          + ", key="
-          + key
-          + ", value="
-          + value
-          + '}';
-    }
-
-    @Override
-    public int compareTo(final TreeEntry other) {
-      return key.compareTo(other.key);
-    }
-  }
-
-  private static final class BucketSearchResult {
-
-    private final int itemIndex;
-    private final long pageIndex;
-
-    private BucketSearchResult(final int itemIndex, final long pageIndex) {
-      this.itemIndex = itemIndex;
-      this.pageIndex = pageIndex;
-    }
-  }
-
-  private static final class UpdateBucketSearchResult {
-
-    private final List<Integer> insertionIndexes;
-    private final ArrayList<Integer> path;
-    private final int itemIndex;
-
-    private UpdateBucketSearchResult(
-        final List<Integer> insertionIndexes, final ArrayList<Integer> path, final int itemIndex) {
-      this.insertionIndexes = insertionIndexes;
-      this.path = path;
-      this.itemIndex = itemIndex;
-    }
-
-    private long getLastPathItem() {
-      return path.get(path.size() - 1);
-    }
-  }
-
-  private static final class PagePathItemUnit {
-
-    private final long pageIndex;
-    private final int itemIndex;
-
-    private PagePathItemUnit(final long pageIndex, final int itemIndex) {
-      this.pageIndex = pageIndex;
-      this.itemIndex = itemIndex;
-    }
+    return false;
   }
 }

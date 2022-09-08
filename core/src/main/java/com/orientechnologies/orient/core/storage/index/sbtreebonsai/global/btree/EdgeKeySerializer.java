@@ -6,7 +6,7 @@ import com.orientechnologies.orient.core.storage.index.sbtreebonsai.global.IntSe
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.global.LongSerializer;
 import java.nio.ByteBuffer;
 
-final class EdgeKeySerializer implements OBinarySerializer<EdgeKey> {
+public final class EdgeKeySerializer implements OBinarySerializer<EdgeKey> {
 
   static final EdgeKeySerializer INSTANCE = new EdgeKeySerializer();
 
