@@ -369,7 +369,7 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
             final int nextPageOffset = result[1];
             assert result[2] == 0;
 
-            updateClusterState(1, atomicOperation);
+            updateClusterState(1, content.length, atomicOperation);
 
             final long clusterPosition;
             if (allocatedPosition != null) {
@@ -606,6 +606,11 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
     return contentSize + OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE;
   }
 
+  private static int calculateContentSizeFromClusterEntrySize(final int contentSize) {
+    // content + record type + content size
+    return contentSize - OByteSerializer.BYTE_SIZE - OIntegerSerializer.INT_SIZE;
+  }
+
   private static int calculateChunkSize(final int entrySize) {
     // entry content + first entry flag + next entry pointer
     return entrySize + OByteSerializer.BYTE_SIZE + OLongSerializer.LONG_SIZE;
@@ -776,6 +781,7 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
 
             long nextPagePointer;
             int removedContentSize = 0;
+            int removeRecordSize = 0;
 
             do {
               boolean cacheEntryReleased = false;
@@ -809,6 +815,7 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
                 atomicOperation.addDeletedRecordPosition(
                     id, cacheEntry.getPageIndex(), recordPosition);
                 assert content != null;
+                removeRecordSize = calculateContentSizeFromClusterEntrySize(content.length);
 
                 maxRecordSize = localPage.getMaxRecordSize();
                 removedContentSize += localPage.getFreeSpace() - initialFreeSpace;
@@ -827,7 +834,7 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
               recordPosition = getRecordPosition(nextPagePointer);
             } while (nextPagePointer >= 0);
 
-            updateClusterState(-1, atomicOperation);
+            updateClusterState(-1, -removeRecordSize, atomicOperation);
 
             clusterPositionMap.remove(clusterPosition, atomicOperation);
             return true;
@@ -855,6 +862,7 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
               return;
             }
 
+            int oldContentSize = 0;
             int nextPageIndex = (int) positionEntry.getPageIndex();
             int nextRecordPosition = positionEntry.getRecordPosition();
 
@@ -868,7 +876,7 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
               final OClusterPage page = new OClusterPage(cacheEntry);
               final byte[] deletedRecord = page.deleteRecord(nextRecordPosition, true);
               assert deletedRecord != null;
-
+              oldContentSize = calculateContentSizeFromClusterEntrySize(deletedRecord.length);
               nextPagePointer =
                   OLongSerializer.INSTANCE.deserializeNative(
                       deletedRecord, deletedRecord.length - OLongSerializer.LONG_SIZE);
@@ -946,6 +954,7 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
             }
 
             assert result[2] == 0;
+            updateClusterState(0, content.length - oldContentSize, atomicOperation);
 
             if (nextPageIndex != positionEntry.getPageIndex()
                 || nextRecordPosition != positionEntry.getRecordPosition()) {
@@ -1266,13 +1275,20 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
     }
   }
 
-  private void updateClusterState(final long sizeDiff, final OAtomicOperation atomicOperation)
+  private void updateClusterState(
+      final long sizeDiff, long recordSizeDiff, final OAtomicOperation atomicOperation)
       throws IOException {
     try (final OCacheEntry pinnedStateEntry =
         loadPageForWrite(atomicOperation, fileId, STATE_ENTRY_INDEX, false, true)) {
       final OPaginatedClusterStateV2 paginatedClusterState =
           new OPaginatedClusterStateV2(pinnedStateEntry);
-      paginatedClusterState.setSize((int) (paginatedClusterState.getSize() + sizeDiff));
+      if (sizeDiff != 0) {
+        paginatedClusterState.setSize((int) (paginatedClusterState.getSize() + sizeDiff));
+      }
+      if (recordSizeDiff != 0) {
+        paginatedClusterState.setRecordsSize(
+            (int) (paginatedClusterState.getRecordsSize() + recordSizeDiff));
+      }
     }
   }
 

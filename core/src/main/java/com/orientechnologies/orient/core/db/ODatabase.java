@@ -203,8 +203,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   @Deprecated
   <DB extends ODatabase> DB setStatus(STATUS iStatus);
 
-  /** Returns the total size of database as used space. */
-  @Deprecated
+  /** Returns the total size of the records in the database. */
   long getSize();
 
   /**
