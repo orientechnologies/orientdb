@@ -21,7 +21,6 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.concur.lock.OOneEntryPerKeyLockManager;
 import com.orientechnologies.common.concur.lock.OPartitionedLockManager;
-import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
@@ -65,6 +64,7 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Stream;
 
 /**
@@ -84,7 +84,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
   protected final OAbstractPaginatedStorage storage;
   private final String databaseName;
   private final String name;
-  private final OReadersWriterSpinLock rwLock = new OReadersWriterSpinLock();
+  private final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
   private final AtomicLong rebuildVersion = new AtomicLong();
   private final int version;
   protected volatile IndexConfiguration configuration;
@@ -1096,19 +1096,19 @@ public abstract class OIndexAbstract implements OIndexInternal {
   }
 
   protected void releaseExclusiveLock() {
-    rwLock.releaseWriteLock();
+    rwLock.writeLock().unlock();
   }
 
   protected void acquireExclusiveLock() {
-    rwLock.acquireWriteLock();
+    rwLock.writeLock().lock();
   }
 
   protected void releaseSharedLock() {
-    rwLock.releaseReadLock();
+    rwLock.readLock().unlock();
   }
 
   protected void acquireSharedLock() {
-    rwLock.acquireReadLock();
+    rwLock.readLock().lock();
   }
 
   private void removeValuesContainer() {
