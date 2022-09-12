@@ -41,6 +41,7 @@ public class OResultInternal implements OResult {
   }
 
   public void setProperty(String name, Object value) {
+    assert element == null;
     if (value instanceof Optional) {
       value = ((Optional) value).orElse(null);
     }
