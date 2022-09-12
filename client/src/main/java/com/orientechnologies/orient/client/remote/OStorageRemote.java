@@ -22,7 +22,6 @@ package com.orientechnologies.orient.client.remote;
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
-import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
@@ -161,8 +160,6 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY;
-import com.orientechnologies.orient.core.storage.OStorage.STATUS;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
@@ -195,6 +192,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /** This object is bound to each remote ODatabase instances. */
 public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStorage {
@@ -234,7 +232,7 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
   protected final OrientDBRemote context;
   protected OSharedContext sharedContext = null;
   protected final String url;
-  protected final OReadersWriterSpinLock stateLock;
+  protected final ReentrantReadWriteLock stateLock;
 
   protected volatile OStorageConfiguration configuration;
   protected volatile OCurrentStorageComponentsFactory componentsFactory;
@@ -276,7 +274,7 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
 
     url = buildUrl(hosts.getUrls().toArray(new String[] {}), name);
 
-    stateLock = new OReadersWriterSpinLock();
+    stateLock = new ReentrantReadWriteLock();
     if (status != null) this.status = status;
 
     configuration = null;
@@ -694,14 +692,14 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
     }
     liveQueryListener.clear();
 
-    stateLock.acquireWriteLock();
+    stateLock.writeLock().lock();
     try {
       if (status == STATUS.CLOSED) return;
 
       status = STATUS.CLOSING;
       close(true, false);
     } finally {
-      stateLock.releaseWriteLock();
+      stateLock.writeLock().unlock();
     }
     if (pushThread != null) {
       pushThread.shutdown();
@@ -711,7 +709,7 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
         Thread.currentThread().interrupt();
       }
     }
-    stateLock.acquireWriteLock();
+    stateLock.writeLock().lock();
     try {
       // CLOSE ALL THE SOCKET POOLS
       sbTreeCollectionManager.close();
@@ -719,7 +717,8 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
       status = STATUS.CLOSED;
 
     } finally {
-      stateLock.releaseWriteLock();
+      stateLock.writeLock().unlock();
+      ;
     }
   }
 
@@ -757,13 +756,14 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
   }
 
   public Set<String> getClusterNames() {
-    stateLock.acquireReadLock();
+    stateLock.readLock().lock();
     try {
 
       return new HashSet<String>(clusterMap.keySet());
 
     } finally {
-      stateLock.releaseReadLock();
+      stateLock.readLock().unlock();
+      ;
     }
   }
 
@@ -1410,7 +1410,7 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
   }
 
   public int getClusterIdByName(final String iClusterName) {
-    stateLock.acquireReadLock();
+    stateLock.readLock().lock();
     try {
 
       if (iClusterName == null) return -1;
@@ -1422,7 +1422,8 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
 
       return cluster.getId();
     } finally {
-      stateLock.releaseReadLock();
+      stateLock.readLock().unlock();
+      ;
     }
   }
 
@@ -1446,7 +1447,7 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
   }
 
   public String getClusterNameById(int clusterId) {
-    stateLock.acquireReadLock();
+    stateLock.readLock().lock();
     try {
       if (clusterId < 0 || clusterId >= clusters.length) {
         throw new OStorageException("Cluster with id " + clusterId + " does not exist");
@@ -1455,7 +1456,7 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
       final OCluster cluster = clusters[clusterId];
       return cluster.getName();
     } finally {
-      stateLock.releaseReadLock();
+      stateLock.readLock().unlock();
     }
   }
 
@@ -1508,7 +1509,7 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
 
   public String getClusterName(int clusterId) {
     final OCluster cluster;
-    stateLock.acquireReadLock();
+    stateLock.readLock().lock();
     try {
 
       if (clusterId == ORID.CLUSTER_ID_INVALID)
@@ -1516,16 +1517,16 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
         clusterId = defaultClusterId;
 
       if (clusterId >= clusters.length) {
-        stateLock.releaseReadLock();
+        stateLock.readLock().unlock();
         reload();
-        stateLock.acquireReadLock();
+        stateLock.readLock().lock();
       }
 
       if (clusterId < clusters.length) {
         return clusters[clusterId].getName();
       }
     } finally {
-      stateLock.releaseReadLock();
+      stateLock.readLock().unlock();
     }
 
     throw new OStorageException("Cluster " + clusterId + " is absent in storage.");
@@ -1536,7 +1537,7 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
   }
 
   public void removeClusterFromConfiguration(int iClusterId) {
-    stateLock.acquireWriteLock();
+    stateLock.writeLock().lock();
     try {
       // If this is false the clusters may be already update by a push
       if (clusters.length > iClusterId && clusters[iClusterId] != null) {
@@ -1549,14 +1550,14 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
         // call updateRecord
       }
     } finally {
-      stateLock.releaseWriteLock();
+      stateLock.writeLock().unlock();
     }
   }
 
   public void synch() {}
 
   public String getPhysicalClusterNameById(final int iClusterId) {
-    stateLock.acquireReadLock();
+    stateLock.readLock().lock();
     try {
 
       if (iClusterId >= clusters.length) return null;
@@ -1565,27 +1566,27 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
       return cluster != null ? cluster.getName() : null;
 
     } finally {
-      stateLock.releaseReadLock();
+      stateLock.readLock().unlock();
     }
   }
 
   public int getClusterMap() {
-    stateLock.acquireReadLock();
+    stateLock.readLock().lock();
     try {
       return clusterMap.size();
     } finally {
-      stateLock.releaseReadLock();
+      stateLock.readLock().unlock();
     }
   }
 
   public Collection<OCluster> getClusterInstances() {
-    stateLock.acquireReadLock();
+    stateLock.readLock().lock();
     try {
 
       return Arrays.asList(clusters);
 
     } finally {
-      stateLock.releaseReadLock();
+      stateLock.readLock().unlock();
     }
   }
 
@@ -1631,11 +1632,11 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
   }
 
   public int getClusters() {
-    stateLock.acquireReadLock();
+    stateLock.readLock().lock();
     try {
       return clusterMap.size();
     } finally {
-      stateLock.releaseReadLock();
+      stateLock.readLock().unlock();
     }
   }
 
@@ -1800,17 +1801,17 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
     // response.getDistributedConfiguration());
 
     // This need to be protected by a lock for now, let's see in future
-    stateLock.acquireWriteLock();
+    stateLock.writeLock().lock();
     try {
       status = STATUS.OPEN;
     } finally {
-      stateLock.releaseWriteLock();
+      stateLock.writeLock().unlock();
     }
   }
 
   private void initPush(OStorageRemoteSession session) {
     if (pushThread == null) {
-      stateLock.acquireWriteLock();
+      stateLock.writeLock().lock();
       try {
         if (pushThread == null) {
           pushThread =
@@ -1830,7 +1831,7 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
           subscribeSequences(session);
         }
       } finally {
-        stateLock.releaseWriteLock();
+        stateLock.writeLock().unlock();
       }
     }
   }
@@ -2033,7 +2034,7 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
 
   public void updateStorageConfiguration(OStorageConfiguration storageConfiguration) {
     if (status != STATUS.OPEN) return;
-    stateLock.acquireWriteLock();
+    stateLock.writeLock().lock();
     try {
       if (status != STATUS.OPEN) return;
       this.configuration = storageConfiguration;
@@ -2062,7 +2063,7 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
       if (defaultCluster != null)
         defaultClusterId = clusterMap.get(OStorage.CLUSTER_DEFAULT_NAME).getId();
     } finally {
-      stateLock.releaseWriteLock();
+      stateLock.writeLock().unlock();
     }
   }
 
@@ -2138,7 +2139,7 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
   }
 
   public void addNewClusterToConfiguration(int clusterId, String iClusterName) {
-    stateLock.acquireWriteLock();
+    stateLock.writeLock().lock();
     try {
       // If this if is false maybe the content was already update by the push
       if (clusters.length <= clusterId || clusters[clusterId] == null) {
@@ -2151,7 +2152,7 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
         clusterMap.put(cluster.getName().toLowerCase(Locale.ENGLISH), cluster);
       }
     } finally {
-      stateLock.releaseWriteLock();
+      stateLock.writeLock().unlock();
     }
   }
 
@@ -2338,12 +2339,12 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
               "Cannot find a valid session for subscribe for event to host '%s' forward the subscribe for the next session open ",
               host);
       OStorageRemotePushThread old;
-      stateLock.acquireWriteLock();
+      stateLock.writeLock().lock();
       try {
         old = pushThread;
         pushThread = null;
       } finally {
-        stateLock.releaseWriteLock();
+        stateLock.writeLock().unlock();
       }
       old.shutdown();
     }
