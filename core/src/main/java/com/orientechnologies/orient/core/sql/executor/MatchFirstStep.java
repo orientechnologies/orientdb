@@ -92,9 +92,7 @@ public class MatchFirstStep extends AbstractExecutionStep {
   }
 
   private Object toResult(OIdentifiable nextElement) {
-    OResultInternal result = new OResultInternal();
-    result.setElement(nextElement);
-    return result;
+    return new OResultInternal(nextElement);
   }
 
   private void init(OCommandContext ctx) {

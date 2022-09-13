@@ -124,8 +124,7 @@ public class GetValueFromIndexEntryStep extends AbstractExecutionStep {
               }
             }
             if (finalVal instanceof OIdentifiable) {
-              OResultInternal res = new OResultInternal();
-              res.setElement((OIdentifiable) finalVal);
+              OResultInternal res = new OResultInternal((OIdentifiable) finalVal);
               nextItem = res;
             } else if (finalVal instanceof OResult) {
               nextItem = (OResult) finalVal;

@@ -64,8 +64,7 @@ public class FetchFromIndexedFunctionStep extends AbstractExecutionStep {
           if (!fullResult.hasNext()) {
             throw new IllegalStateException();
           }
-          OResultInternal result = new OResultInternal();
-          result.setElement(fullResult.next());
+          OResultInternal result = new OResultInternal(fullResult.next());
           ctx.setVariable("$current", result);
           localCount++;
           return result;

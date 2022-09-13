@@ -75,9 +75,7 @@ public class MatchEdgeTraverser {
   }
 
   protected Object toResult(OIdentifiable nextElement) {
-    OResultInternal result = new OResultInternal();
-    result.setElement(nextElement);
-    return result;
+    return new OResultInternal(nextElement);
   }
 
   protected String getStartingPointAlias() {

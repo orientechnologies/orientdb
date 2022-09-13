@@ -62,14 +62,12 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
     if (item instanceof OTraverseResult) {
       res = (OTraverseResult) item;
     } else if (item.isElement() && item.getElement().get().getIdentity().isValid()) {
-      res = new OTraverseResult();
-      res.setElement(item.getElement().get());
+      res = new OTraverseResult(item.getElement().get());
       res.depth = 0;
     } else if (item.getPropertyNames().size() == 1) {
       Object val = item.getProperty(item.getPropertyNames().iterator().next());
       if (val instanceof OIdentifiable) {
-        res = new OTraverseResult();
-        res.setElement((OIdentifiable) val);
+        res = new OTraverseResult((OIdentifiable) val);
         res.depth = 0;
         res.setMetadata("$depth", 0);
       }
@@ -152,8 +150,7 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
     if (this.traversed.contains(nextStep.getIdentity())) {
       return;
     }
-    OTraverseResult res = new OTraverseResult();
-    res.setElement(nextStep);
+    OTraverseResult res = new OTraverseResult(nextStep);
     res.depth = depth;
     res.setMetadata("$depth", depth);
 
@@ -201,8 +198,7 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
 
       tryAddEntryPoint(nextStep, ctx);
     } else {
-      OTraverseResult res = new OTraverseResult();
-      res.setElement(nextStep.getElement().get());
+      OTraverseResult res = new OTraverseResult(nextStep.getElement().get());
       res.depth = depth;
       res.setMetadata("$depth", depth);
       List<OIdentifiable> newPath = new ArrayList<>();

@@ -50,8 +50,7 @@ public class CopyDocumentStep extends AbstractExecutionStep {
               resultDoc.setDirty();
             } else if (docToCopy instanceof OBlob) {
               ORecordBytes newBlob = ((ORecordBytes) docToCopy).copy();
-              OResultInternal result = new OResultInternal();
-              result.setElement(newBlob);
+              OResultInternal result = new OResultInternal(newBlob);
               return result;
             }
           } else {

@@ -95,8 +95,7 @@ public class ExpandStep extends AbstractExecutionStep {
             if (record == null) {
               continue;
             }
-            nextElement = new OResultInternal();
-            ((OResultInternal) nextElement).setElement(record);
+            nextElement = new OResultInternal(record);
           } else {
             nextElement = new OResultInternal();
             ((OResultInternal) nextElement).setProperty("value", nextElementObj);
@@ -138,8 +137,7 @@ public class ExpandStep extends AbstractExecutionStep {
           if (rec == null) {
             continue;
           }
-          OResultInternal res = new OResultInternal();
-          res.setElement(rec);
+          OResultInternal res = new OResultInternal(rec);
 
           nextSubsequence = Collections.singleton(res).iterator();
         } else if (projValue instanceof OResult) {

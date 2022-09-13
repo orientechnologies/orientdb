@@ -1,8 +1,16 @@
 package com.orientechnologies.orient.core.sql.executor;
 
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+
 /** Created by luigidellaquila on 02/11/16. */
 public class OTraverseResult extends OResultInternal {
   protected Integer depth;
+
+  public OTraverseResult() {}
+
+  public OTraverseResult(OIdentifiable element) {
+    super(element);
+  }
 
   @Override
   public <T> T getProperty(String name) {

@@ -52,8 +52,7 @@ public class FetchFromRidsStep extends AbstractExecutionStep {
           if (nextDoc == null) {
             continue;
           }
-          nextResult = new OResultInternal();
-          ((OResultInternal) nextResult).setElement(nextDoc);
+          nextResult = new OResultInternal(nextDoc);
           return;
         }
         return;

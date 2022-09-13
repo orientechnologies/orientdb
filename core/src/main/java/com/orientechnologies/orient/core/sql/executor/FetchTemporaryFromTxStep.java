@@ -74,8 +74,7 @@ public class FetchTemporaryFromTxStep extends AbstractExecutionStep {
           ORecord record = txEntries.next();
 
           currentElement++;
-          OResultInternal result = new OResultInternal();
-          result.setElement(record);
+          OResultInternal result = new OResultInternal(record);
           ctx.setVariable("$current", result);
           return result;
         } finally {

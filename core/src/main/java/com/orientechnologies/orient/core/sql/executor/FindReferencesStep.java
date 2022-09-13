@@ -105,8 +105,7 @@ public class FindReferencesStep extends AbstractExecutionStep {
 
       ORecord rec = currentIterator.next();
       if (rec instanceof ODocument) {
-        OResultInternal x = new OResultInternal();
-        x.setElement(rec);
+        OResultInternal x = new OResultInternal(rec);
         for (ORID rid : ridsToFind) {
           List<String> resultForRecord = checkObject(Collections.singleton(rid), x, rec, "");
           if (resultForRecord.size() > 0) {

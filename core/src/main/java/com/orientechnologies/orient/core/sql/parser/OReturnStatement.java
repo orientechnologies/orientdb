@@ -29,8 +29,7 @@ public class OReturnStatement extends OSimpleExecStatement {
     if (result instanceof OResult) {
       rs.add((OResult) result);
     } else if (result instanceof OIdentifiable) {
-      OResultInternal res = new OResultInternal();
-      res.setElement((OIdentifiable) result);
+      OResultInternal res = new OResultInternal((OIdentifiable) result);
       rs.add(res);
     } else if (result instanceof OResultSet) {
       if (!((OResultSet) result).hasNext()) {

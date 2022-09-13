@@ -477,8 +477,7 @@ public class OMessageHelper {
 
   private static OResultInternal readBlob(OChannelDataInput channel) throws IOException {
     ORecordSerializer serializer = ORecordSerializerNetworkV37.INSTANCE;
-    OResultInternal result = new OResultInternal();
-    result.setElement(readIdentifiable(channel, serializer));
+    OResultInternal result = new OResultInternal(readIdentifiable(channel, serializer));
     return result;
   }
 
@@ -500,21 +499,15 @@ public class OMessageHelper {
   }
 
   private static OResultInternal readElement(OChannelDataInput channel) throws IOException {
-    OResultInternal result = new OResultInternal();
-    result.setElement(readDocument(channel));
-    return result;
+    return new OResultInternal(readDocument(channel));
   }
 
   private static OResultInternal readVertex(OChannelDataInput channel) throws IOException {
-    OResultInternal result = new OResultInternal();
-    result.setElement(readDocument(channel));
-    return result;
+    return new OResultInternal(readDocument(channel));
   }
 
   private static OResultInternal readEdge(OChannelDataInput channel) throws IOException {
-    OResultInternal result = new OResultInternal();
-    result.setElement(readDocument(channel));
-    return result;
+    return new OResultInternal(readDocument(channel));
   }
 
   private static ORecord readDocument(OChannelDataInput channel) throws IOException {

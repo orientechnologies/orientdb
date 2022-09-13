@@ -11,6 +11,7 @@ public class OUpdatableResult extends OResultInternal {
   private final OElement element;
 
   public OUpdatableResult(OElement element) {
+    super(element);
     this.element = element;
   }
 

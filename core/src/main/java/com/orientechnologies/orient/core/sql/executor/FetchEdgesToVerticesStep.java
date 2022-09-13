@@ -56,8 +56,7 @@ public class FetchEdgesToVerticesStep extends AbstractExecutionStep {
         }
         OEdge edge = nextEdge;
         fetchNextEdge();
-        OResultInternal result = new OResultInternal();
-        result.setElement(edge);
+        OResultInternal result = new OResultInternal(edge);
         return result;
       }
 

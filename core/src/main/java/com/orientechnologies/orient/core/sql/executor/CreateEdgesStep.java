@@ -104,7 +104,6 @@ public class CreateEdgesStep extends AbstractExecutionStep {
                   : currentFrom.addEdge(currentTo, targetClass.getStringValue());
 
           OUpdatableResult result = new OUpdatableResult(edge);
-          result.setElement(edge);
           currentTo = null;
           currentBatch++;
           return result;

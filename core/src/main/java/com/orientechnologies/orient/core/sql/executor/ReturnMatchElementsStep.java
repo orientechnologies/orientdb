@@ -20,8 +20,7 @@ public class ReturnMatchElementsStep extends AbstractUnrollStep {
       if (!s.startsWith(OMatchExecutionPlanner.DEFAULT_ALIAS_PREFIX)) {
         Object elem = doc.getProperty(s);
         if (elem instanceof OIdentifiable) {
-          OResultInternal newelem = new OResultInternal();
-          newelem.setElement((OIdentifiable) elem);
+          OResultInternal newelem = new OResultInternal((OIdentifiable) elem);
           elem = newelem;
         }
         if (elem instanceof OResult) {

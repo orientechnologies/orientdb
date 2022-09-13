@@ -63,8 +63,7 @@ public class ConvertToResultInternalStep extends AbstractExecutionStep {
             if (nextItem instanceof OUpdatableResult) {
               ORecord element = nextItem.getElement().get().getRecord();
               if (element != null && element instanceof ODocument) {
-                nextItem = new OResultInternal();
-                ((OResultInternal) nextItem).setElement(element);
+                nextItem = new OResultInternal(element);
               }
               break;
             }
