@@ -1647,4 +1647,9 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   public String getClusterRecordConflictStrategy(int clusterId) {
     return internal.getClusterRecordConflictStrategy(clusterId);
   }
+
+  @Override
+  public int[] getClustersIds(Set<String> filterClusters) {
+    return internal.getClustersIds(filterClusters);
+  }
 }

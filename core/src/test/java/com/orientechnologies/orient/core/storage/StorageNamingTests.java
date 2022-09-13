@@ -454,5 +454,10 @@ public class StorageNamingTests {
 
     @Override
     public void clearProperties() {}
+
+    @Override
+    public int[] getClustersIds(Set<String> filterClusters) {
+      return null;
+    }
   }
 }

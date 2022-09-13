@@ -1228,4 +1228,10 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
       return (OTransactionOptimisticClient) currentTx;
     }
   }
+
+  @Override
+  public int[] getClustersIds(Set<String> filterClusters) {
+    checkIfActive();
+    return filterClusters.stream().map((c) -> getClusterIdByName(c)).mapToInt(i -> i).toArray();
+  }
 }

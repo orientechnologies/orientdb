@@ -1877,4 +1877,10 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
   public String getClusterRecordConflictStrategy(int clusterId) {
     return storage.getClusterRecordConflictStrategy(clusterId);
   }
+
+  @Override
+  public int[] getClustersIds(Set<String> filterClusters) {
+    checkIfActive();
+    return getStorage().getClustersIds(filterClusters);
+  }
 }

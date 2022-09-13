@@ -289,4 +289,6 @@ public interface OStorage extends OBackupable, OStorageInfo {
   void setRecordSerializer(String recordSerializer, int version);
 
   void clearProperties();
+
+  int[] getClustersIds(Set<String> filterClusters);
 }

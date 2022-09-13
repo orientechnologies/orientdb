@@ -2484,4 +2484,9 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
   public OStorage getUnderlying() {
     return null;
   }
+
+  @Override
+  public int[] getClustersIds(Set<String> filterClusters) {
+    throw new UnsupportedOperationException();
+  }
 }

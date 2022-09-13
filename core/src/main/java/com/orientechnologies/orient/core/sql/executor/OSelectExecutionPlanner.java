@@ -257,6 +257,19 @@ public class OSelectExecutionPlanner {
     info.distributedFetchExecutionPlans = new LinkedHashMap<>();
 
     String localNode = db.getLocalNodeName();
+    Collection<String> readClusterNames = db.getClusterNames();
+    Set<String> clusterNames;
+    if (readClusterNames instanceof Set) {
+      clusterNames = (Set<String>) readClusterNames;
+    } else {
+      clusterNames = new HashSet<>(readClusterNames);
+    }
+    if (!db.isSharded()) {
+      info.serverToClusters = new LinkedHashMap<>();
+      info.serverToClusters.put(localNode, clusterNames);
+      info.distributedFetchExecutionPlans.put(localNode, new OSelectExecutionPlan(ctx));
+      return;
+    }
 
     //    Map<String, Set<String>> clusterMap = db.getActiveClusterMap();
     Map<String, Set<String>> clusterMap = new HashMap<>();
@@ -1538,8 +1551,7 @@ public class OSelectExecutionPlanner {
 
     int[] filterClusterIds = null;
     if (filterClusters != null) {
-      filterClusterIds =
-          filterClusters.stream().map(database::getClusterIdByName).mapToInt(i -> i).toArray();
+      filterClusterIds = database.getClustersIds(filterClusters);
     }
 
     switch (indexIdentifier.getType()) {
@@ -1963,10 +1975,7 @@ public class OSelectExecutionPlanner {
           int[] filterClusterIds = null;
           if (filterClusters != null) {
             filterClusterIds =
-                filterClusters.stream()
-                    .map(name -> ctx.getDatabase().getClusterIdByName(name))
-                    .mapToInt(i -> i)
-                    .toArray();
+                ((ODatabaseDocumentInternal) ctx.getDatabase()).getClustersIds(filterClusters);
           }
           subPlan.chain(new GetValueFromIndexEntryStep(ctx, filterClusterIds, profilingEnabled));
           if (requiresMultipleIndexLookups(bestIndex.keyCondition)
@@ -2205,10 +2214,7 @@ public class OSelectExecutionPlanner {
         int[] filterClusterIds = null;
         if (filterClusters != null) {
           filterClusterIds =
-              filterClusters.stream()
-                  .map(name -> ctx.getDatabase().getClusterIdByName(name))
-                  .mapToInt(i -> i)
-                  .toArray();
+              ((ODatabaseDocumentInternal) ctx.getDatabase()).getClustersIds(filterClusters);
         }
         plan.chain(new GetValueFromIndexEntryStep(ctx, filterClusterIds, profilingEnabled));
         if (info.serverToClusters.size() == 1) {
@@ -2401,10 +2407,7 @@ public class OSelectExecutionPlanner {
       int[] filterClusterIds = null;
       if (filterClusters != null) {
         filterClusterIds =
-            filterClusters.stream()
-                .map(name -> ctx.getDatabase().getClusterIdByName(name))
-                .mapToInt(i -> i)
-                .toArray();
+            ((ODatabaseDocumentInternal) ctx.getDatabase()).getClustersIds(filterClusters);
       }
       result.add(new GetValueFromIndexEntryStep(ctx, filterClusterIds, profilingEnabled));
       if (requiresMultipleIndexLookups(desc.keyCondition) || duplicateResultsForRecord(desc)) {
@@ -2556,10 +2559,7 @@ public class OSelectExecutionPlanner {
       int[] filterClusterIds = null;
       if (filterClusters != null) {
         filterClusterIds =
-            filterClusters.stream()
-                .map(name -> ctx.getDatabase().getClusterIdByName(name))
-                .mapToInt(i -> i)
-                .toArray();
+            ((ODatabaseDocumentInternal) ctx.getDatabase()).getClustersIds(filterClusters);
       }
       subPlan.chain(new GetValueFromIndexEntryStep(ctx, filterClusterIds, profilingEnabled));
       if (requiresMultipleIndexLookups(desc.keyCondition) || duplicateResultsForRecord(desc)) {

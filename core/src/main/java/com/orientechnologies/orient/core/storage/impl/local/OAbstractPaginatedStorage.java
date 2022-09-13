@@ -7203,4 +7203,47 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       indexEngine.updateUniqueIndexVersion(key);
     }
   }
+
+  @Override
+  public int[] getClustersIds(Set<String> filterClusters) {
+    try {
+
+      stateLock.readLock().lock();
+      try {
+
+        checkOpennessAndMigration();
+        checkIfThreadIsBlocked();
+        Locale locale = configuration.getLocaleInstance();
+        int[] result = new int[filterClusters.size()];
+        int i = 0;
+        for (String clusterName : filterClusters) {
+          if (clusterName == null) {
+            throw new IllegalArgumentException("Cluster name is null");
+          }
+
+          if (clusterName.length() == 0) {
+            throw new IllegalArgumentException("Cluster name is empty");
+          }
+
+          // SEARCH IT BETWEEN PHYSICAL CLUSTERS
+          final OCluster segment = clusterMap.get(clusterName.toLowerCase(locale));
+          if (segment != null) {
+            result[i] = segment.getId();
+          } else {
+            result[i] = -1;
+          }
+          i++;
+        }
+        return result;
+      } finally {
+        stateLock.readLock().unlock();
+      }
+    } catch (final RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee, false);
+    } catch (final Error ee) {
+      throw logAndPrepareForRethrow(ee, false);
+    } catch (final Throwable t) {
+      throw logAndPrepareForRethrow(t, false);
+    }
+  }
 }

@@ -46,6 +46,7 @@ import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionData;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
@@ -286,4 +287,6 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
   long getLastClusterPosition(int clusterId);
 
   String getClusterRecordConflictStrategy(int clusterId);
+
+  int[] getClustersIds(Set<String> filterClusters);
 }

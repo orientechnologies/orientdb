@@ -639,6 +639,11 @@ public class PostponedEngineStartTest {
 
         @Override
         public void clearProperties() {}
+
+        @Override
+        public int[] getClustersIds(Set<String> filterClusters) {
+          return null;
+        }
       };
     }
 
