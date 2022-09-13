@@ -2087,7 +2087,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         checkOpennessAndMigration();
         checkIfThreadIsBlocked();
 
-        return new HashSet<>(clusterMap.keySet());
+        return Collections.unmodifiableSet(clusterMap.keySet());
       } finally {
         stateLock.readLock().unlock();
       }
