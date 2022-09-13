@@ -946,8 +946,9 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
           // TODO redundant in some cases, owner is already added by getValue in some cases
           if (shouldBeDeserializedAsEmbedded(collectionItem, iType))
             ODocumentInternal.addOwner((ODocument) collectionItem, iRecord);
-
-          visitor.visitItem(collectionItem);
+          if (collectionItem != null) {
+            visitor.visitItem(collectionItem);
+          }
         }
       }
     }
