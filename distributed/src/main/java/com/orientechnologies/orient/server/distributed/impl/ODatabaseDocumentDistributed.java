@@ -100,7 +100,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -196,6 +195,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   @Override
   public boolean isSharded() {
+    /*
     Map<String, Set<String>> clusterMap = getActiveClusterMap();
     Iterator<Set<String>> iter = clusterMap.values().iterator();
     Set<String> firstClusterSet = null;
@@ -207,6 +207,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         return true;
       }
     }
+    */
     return false;
   }
 
