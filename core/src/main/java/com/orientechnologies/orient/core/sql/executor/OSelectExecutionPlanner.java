@@ -255,7 +255,6 @@ public class OSelectExecutionPlanner {
   private void calculateShardingStrategy(QueryPlanningInfo info, OCommandContext ctx) {
     ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) ctx.getDatabase();
     info.distributedFetchExecutionPlans = new LinkedHashMap<>();
-
     String localNode = db.getLocalNodeName();
     Collection<String> readClusterNames = db.getClusterNames();
     Set<String> clusterNames;
@@ -273,7 +272,7 @@ public class OSelectExecutionPlanner {
 
     //    Map<String, Set<String>> clusterMap = db.getActiveClusterMap();
     Map<String, Set<String>> clusterMap = new HashMap<>();
-    clusterMap.put(localNode, new HashSet<>(db.getClusterNames()));
+    clusterMap.put(localNode, new HashSet<>(clusterNames));
 
     Set<String> queryClusters = calculateTargetClusters(info, ctx);
     if (queryClusters == null || queryClusters.size() == 0) { // no target
