@@ -28,6 +28,38 @@ This document contains the last changes of OrientDB Community Edition.
 
 
 -----------------------------------------------------------------------------------------------------------------------------------
+VERSION 3.2.10 - (September, 15 2022)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#329---15-September-2022
+
+# Core
+ - Make put of index everytime transactional
+ - Converted all left put operations to use transaction directly
+ - Fix logging of log messages with exceptions
+ - Refactor for simplify index creation logic
+ - Optimization in index write logic
+ - Optimization in ridbag write logic
+ - Optimization in page write logic
+ - Optimization in script pool 
+ - Disabled write operations without atomic operation
+ - Fixes in Json parsing
+ - Re-enabled computation of record sizes for cluster issue #9870
+ - Replaced custom lock implementation with jdk implementation
+ - Avoid to read null values from json for ridbags
+
+# Client
+ - Automatically start a transaction in the client side if a script started it server side
+
+# Lucene
+ - Correct lucene remove after transactional index operations refactor
+ - Make sure rebuild of lucene works after refactor
+
+# Distributed
+ - Fix copyStream to not terminate on 0 byte read
+ - Mark HA STATUS idempotent so it can be used from SQL API.
+ - Include individual DB status across cluster in HA STATUS result
+ - Add exception details to some logging that lost stack traces.
+
+-----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.9 - (August, 11 2022)
 - Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#329---11-August-2022
 
