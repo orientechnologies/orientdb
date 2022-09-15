@@ -211,7 +211,7 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
   private CONNECTION_STRATEGY connectionStrategy = CONNECTION_STRATEGY.STICKY;
 
   private final OSBTreeCollectionManagerRemote sbTreeCollectionManager =
-      new OSBTreeCollectionManagerRemote(this);
+      new OSBTreeCollectionManagerRemote();
   private final ORemoteURLs serverURLs;
   private final Map<String, OCluster> clusterMap = new ConcurrentHashMap<String, OCluster>();
   private final ExecutorService asynchExecutor;
