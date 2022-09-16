@@ -45,6 +45,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -52,7 +53,6 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Consumer;
-import org.eclipse.collections.impl.set.mutable.primitive.LongHashSet;
 
 /**
  * Tree-based dictionary algorithm. Similar to {@link OSBTreeV1} but uses subpages of disk cache
@@ -345,8 +345,8 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
         final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
         final int filledUpTo = (int) getFilledUpTo(atomicOperation, fileId);
 
-        final LongHashSet children = new LongHashSet();
-        final LongHashSet roots = new LongHashSet();
+        final HashSet<Long> children = new HashSet<Long>();
+        final HashSet<Long> roots = new HashSet<Long>();
 
         for (int pageIndex = 0; pageIndex < filledUpTo; pageIndex++) {
 
