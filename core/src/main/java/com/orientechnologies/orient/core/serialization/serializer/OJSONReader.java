@@ -19,12 +19,6 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.orientechnologies.common.util.OPair;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.sql.executor.ORidSet;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
@@ -35,6 +29,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.sql.executor.ORidSet;
 
 public class OJSONReader {
   public static final char NEW_LINE = '\n';
@@ -85,11 +84,6 @@ public class OJSONReader {
     return readNumber(iUntil, false);
   }
 
-  public int readInteger(final JsonParser parser) throws IOException, ParseException {
-    while (!JsonToken.VALUE_NUMBER_INT.equals(parser.nextToken())) {}
-    return parser.getValueAsInt();
-  }
-
   public int readNumber(final char[] iUntil, final boolean iInclude)
       throws IOException, ParseException {
     if (readNext(iUntil, iInclude) == null) throw new ParseException("Expected integer", cursor);
@@ -99,12 +93,6 @@ public class OJSONReader {
 
   public String readString(final char[] iUntil) throws IOException, ParseException {
     return readString(iUntil, false);
-  }
-
-  public String readString(final JsonParser parser, final JsonToken until)
-      throws IOException, ParseException {
-    while (!until.equals(parser.nextToken())) {}
-    return parser.getValueAsString();
   }
 
   public String readString(final char[] iUntil, final boolean iInclude)
@@ -174,14 +162,6 @@ public class OJSONReader {
   public OJSONReader readNext(final char[] iUntil) throws IOException, ParseException {
     readNext(iUntil, false);
     return this;
-  }
-
-  public JsonToken readNext(final JsonParser parser, final JsonToken until) throws IOException {
-    JsonToken jsonToken = parser.nextToken();
-    while (!until.equals(jsonToken)) {
-      jsonToken = parser.nextToken();
-    }
-    return jsonToken;
   }
 
   public OJSONReader readNext(final char[] iUntil, final boolean iInclude)
