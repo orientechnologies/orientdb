@@ -177,7 +177,8 @@ public class OFunctionLibraryImpl {
   }
 
   public void updatedFunction(ODocument function) {
-    reloadIfNeeded(ODatabaseRecordThreadLocal.instance().get());
+    ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.instance().get();
+    reloadIfNeeded(database);
     String oldName = (String) function.getOriginalValue("name");
     if (oldName != null) {
       functions.remove(oldName.toUpperCase(Locale.ENGLISH));
@@ -193,6 +194,7 @@ public class OFunctionLibraryImpl {
       f.setCallback(callBack);
     }
     functions.put(metadataCopy.field("name").toString().toUpperCase(Locale.ENGLISH), f);
+    onFunctionsChanged(database);
   }
 
   private void reloadIfNeeded(ODatabaseDocumentInternal database) {
@@ -206,6 +208,7 @@ public class OFunctionLibraryImpl {
     for (OMetadataUpdateListener listener : database.getSharedContext().browseListeners()) {
       listener.onFunctionLibraryUpdate(database.getName());
     }
+    database.getSharedContext().getOrientDB().getScriptManager().close(database.getName());
   }
 
   public synchronized void update() {

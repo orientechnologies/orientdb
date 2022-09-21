@@ -1,8 +1,12 @@
 package com.orientechnologies.orient.core.command;
 
+import com.orientechnologies.orient.core.command.script.OCommandExecutorScript;
+import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.command.traverse.OAbstractScriptExecutor;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
@@ -124,5 +128,22 @@ public class OSqlScriptExecutor extends OAbstractScriptExecutor {
       }
     }
     return new OLocalResultSet(plan);
+  }
+
+  @Override
+  public Object executeFunction(
+      OCommandContext context, final String functionName, final Map<Object, Object> iArgs) {
+
+    Object result;
+    ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) context.getDatabase();
+    if (db == null) {
+      db = ODatabaseRecordThreadLocal.instance().get();
+    }
+    final OFunction f = db.getMetadata().getFunctionLibrary().getFunction(functionName);
+
+    final OCommandExecutorScript command = new OCommandExecutorScript();
+    command.parse(new OCommandScript(language, f.getCode()));
+    result = command.execute(iArgs);
+    return result;
   }
 }

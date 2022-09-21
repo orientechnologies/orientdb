@@ -971,7 +971,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
         OClassIndexManager.checkIndexesAfterCreate(doc, this);
         if (clazz.isFunction()) {
           this.getSharedContext().getFunctionLibrary().createdFunction(doc);
-          sharedContext.getOrientDB().getScriptManager().close(this.getName());
         }
         if (clazz.isOuser()
             || clazz.isOrole()
@@ -1005,7 +1004,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
         OClassIndexManager.checkIndexesAfterUpdate((ODocument) id, this);
         if (clazz.isFunction()) {
           this.getSharedContext().getFunctionLibrary().updatedFunction(doc);
-          sharedContext.getOrientDB().getScriptManager().close(this.getName());
         }
         if (clazz.isOuser()
             || clazz.isOrole()
@@ -1037,7 +1035,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
         OClassIndexManager.checkIndexesAfterDelete(doc, this);
         if (clazz.isFunction()) {
           this.getSharedContext().getFunctionLibrary().droppedFunction(doc);
-          sharedContext.getOrientDB().getScriptManager().close(this.getName());
         }
         if (clazz.isSequence()) {
           ((OSequenceLibraryProxy) getMetadata().getSequenceLibrary())

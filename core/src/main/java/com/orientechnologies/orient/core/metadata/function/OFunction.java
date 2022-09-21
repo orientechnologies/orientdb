@@ -22,11 +22,10 @@ package com.orientechnologies.orient.core.metadata.function;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.command.script.OCommandExecutorFunction;
-import com.orientechnologies.orient.core.command.script.OCommandExecutorScript;
-import com.orientechnologies.orient.core.command.script.OCommandFunction;
-import com.orientechnologies.orient.core.command.script.OCommandScript;
+import com.orientechnologies.orient.core.command.OScriptExecutor;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.ORetryQueryException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -155,10 +154,20 @@ public class OFunction extends ODocumentWrapper {
       return callback.call(args);
     }
 
-    // EXECUTE DB FUNCTION
-    final OCommandExecutorFunction command = new OCommandExecutorFunction();
-    command.parse(new OCommandFunction(getName()));
-    return command.executeInContext(iContext, args);
+    ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) iContext.getDatabase();
+    if (database == null) {
+      database = ODatabaseRecordThreadLocal.instance().get();
+    }
+
+    OScriptExecutor executor =
+        database
+            .getSharedContext()
+            .getOrientDB()
+            .getScriptManager()
+            .getCommandManager()
+            .getScriptExecutor(getLanguage());
+
+    return executor.executeFunction(iContext, getName(), args);
   }
 
   @Deprecated
@@ -179,24 +188,43 @@ public class OFunction extends ODocumentWrapper {
       return callback.call(args);
     }
 
-    // EXECUTE DB FUNCTION
-    final OCommandExecutorFunction command = new OCommandExecutorFunction();
-    command.parse(new OCommandFunction(getName()));
-    return command.executeInContext(iContext, args);
+    ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) iContext.getDatabase();
+    if (database == null) {
+      database = ODatabaseRecordThreadLocal.instance().get();
+    }
+
+    OScriptExecutor executor =
+        database
+            .getSharedContext()
+            .getOrientDB()
+            .getScriptManager()
+            .getCommandManager()
+            .getScriptExecutor(getLanguage());
+
+    return executor.executeFunction(iContext, getName(), args);
   }
 
   @Deprecated
   public Object execute(final Map<Object, Object> iArgs) {
     final long start = Orient.instance().getProfiler().startChrono();
-
+    ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.instance().get();
     Object result;
     while (true) {
       try {
         if (callback != null) return callback.call(iArgs);
 
-        final OCommandExecutorScript command = new OCommandExecutorScript();
-        command.parse(new OCommandScript(getLanguage(), getCode()));
-        result = command.execute(iArgs);
+        OScriptExecutor executor =
+            database
+                .getSharedContext()
+                .getOrientDB()
+                .getScriptManager()
+                .getCommandManager()
+                .getScriptExecutor(getLanguage());
+
+        OBasicCommandContext context = new OBasicCommandContext();
+        context.setDatabase(database);
+        result = executor.executeFunction(context, getName(), iArgs);
+
         break;
 
       } catch (ONeedRetryException | ORetryQueryException ignore) {

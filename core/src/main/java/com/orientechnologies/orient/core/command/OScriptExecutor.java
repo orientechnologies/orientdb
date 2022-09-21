@@ -11,6 +11,9 @@ public interface OScriptExecutor {
 
   OResultSet execute(ODatabaseDocumentInternal database, String script, Map params);
 
+  public Object executeFunction(
+      OCommandContext context, final String functionName, final Map<Object, Object> iArgs);
+
   void registerInterceptor(OScriptInterceptor interceptor);
 
   void unregisterInterceptor(OScriptInterceptor interceptor);

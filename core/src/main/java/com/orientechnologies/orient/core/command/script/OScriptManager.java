@@ -282,7 +282,7 @@ public class OScriptManager {
       final OCommandContext iContext,
       final Map<Object, Object> iArgs) {
 
-    binding.put("db", new OScriptDatabaseWrapper(db));
+    bindDatabase(binding, db);
 
     bindInjectors(engine, binding, db);
 
