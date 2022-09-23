@@ -19,4 +19,6 @@ public interface OScriptExecutor {
   void unregisterInterceptor(OScriptInterceptor interceptor);
 
   default void close(String iDatabaseName) {}
+
+  default void closeAll() {}
 }

@@ -546,6 +546,7 @@ public class OScriptManager {
 
   public void closeAll() {
     dbManagers.entrySet().forEach(e -> e.getValue().close());
+    commandManager.closeAll();
   }
 
   public OCommandManager getCommandManager() {
