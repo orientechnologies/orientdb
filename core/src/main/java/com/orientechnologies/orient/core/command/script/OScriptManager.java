@@ -541,6 +541,7 @@ public class OScriptManager {
   public void close(final String iDatabaseName) {
     final ODatabaseScriptManager dbPool = dbManagers.remove(iDatabaseName);
     if (dbPool != null) dbPool.close();
+    commandManager.close(iDatabaseName);
   }
 
   public void closeAll() {
