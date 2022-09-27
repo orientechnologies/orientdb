@@ -10,8 +10,6 @@ public class OElementTransformer implements OResultTransformer<OrientElement> {
 
   @Override
   public OResult transform(OrientElement element) {
-    OResultInternal internal = new OResultInternal();
-    internal.setElement(element.getRawElement());
-    return internal;
+    return new OResultInternal(element.getRawElement());
   }
 }
