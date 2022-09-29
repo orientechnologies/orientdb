@@ -315,8 +315,8 @@ public class OUpdateItem extends SimpleNode {
       ((OBaseExpression) leftEx.mathExpression).modifier = leftModifier.copy();
     }
     OMathExpression mathExp = new OMathExpression(-1);
-    mathExp.getChildExpressions().add(leftEx.getMathExpression());
-    mathExp.getChildExpressions().add(new OParenthesisExpression(right.copy()));
+    mathExp.addChildExpressions(leftEx.getMathExpression());
+    mathExp.addChildExpressions(new OParenthesisExpression(right.copy()));
     mathExp.getOperators().add(explicitOperator);
     return mathExp.execute(doc, ctx);
   }

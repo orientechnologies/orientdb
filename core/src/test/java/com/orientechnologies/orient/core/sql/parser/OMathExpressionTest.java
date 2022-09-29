@@ -72,17 +72,17 @@ public class OMathExpressionTest {
   @Test
   public void testPriority() {
     OMathExpression exp = new OMathExpression(-1);
-    exp.childExpressions.add(integer(10));
+    exp.addChildExpressions(integer(10));
     exp.operators.add(OMathExpression.Operator.PLUS);
-    exp.childExpressions.add(integer(5));
+    exp.addChildExpressions(integer(5));
     exp.operators.add(OMathExpression.Operator.STAR);
-    exp.childExpressions.add(integer(8));
+    exp.addChildExpressions(integer(8));
     exp.operators.add(OMathExpression.Operator.PLUS);
-    exp.childExpressions.add(integer(2));
+    exp.addChildExpressions(integer(2));
     exp.operators.add(OMathExpression.Operator.LSHIFT);
-    exp.childExpressions.add(integer(1));
+    exp.addChildExpressions(integer(1));
     exp.operators.add(OMathExpression.Operator.PLUS);
-    exp.childExpressions.add(integer(1));
+    exp.addChildExpressions(integer(1));
 
     Object result = exp.execute((OResult) null, null);
     Assert.assertTrue(result instanceof Integer);
@@ -92,23 +92,23 @@ public class OMathExpressionTest {
   @Test
   public void testPriority2() {
     OMathExpression exp = new OMathExpression(-1);
-    exp.childExpressions.add(integer(1));
+    exp.addChildExpressions(integer(1));
     exp.operators.add(OMathExpression.Operator.PLUS);
-    exp.childExpressions.add(integer(2));
+    exp.addChildExpressions(integer(2));
     exp.operators.add(OMathExpression.Operator.STAR);
-    exp.childExpressions.add(integer(3));
+    exp.addChildExpressions(integer(3));
     exp.operators.add(OMathExpression.Operator.STAR);
-    exp.childExpressions.add(integer(4));
+    exp.addChildExpressions(integer(4));
     exp.operators.add(OMathExpression.Operator.PLUS);
-    exp.childExpressions.add(integer(8));
+    exp.addChildExpressions(integer(8));
     exp.operators.add(OMathExpression.Operator.RSHIFT);
-    exp.childExpressions.add(integer(2));
+    exp.addChildExpressions(integer(2));
     exp.operators.add(OMathExpression.Operator.PLUS);
-    exp.childExpressions.add(integer(1));
+    exp.addChildExpressions(integer(1));
     exp.operators.add(OMathExpression.Operator.MINUS);
-    exp.childExpressions.add(integer(3));
+    exp.addChildExpressions(integer(3));
     exp.operators.add(OMathExpression.Operator.PLUS);
-    exp.childExpressions.add(integer(1));
+    exp.addChildExpressions(integer(1));
 
     Object result = exp.execute((OResult) null, null);
     Assert.assertTrue(result instanceof Integer);
@@ -118,11 +118,11 @@ public class OMathExpressionTest {
   @Test
   public void testPriority3() {
     OMathExpression exp = new OMathExpression(-1);
-    exp.childExpressions.add(integer(3));
+    exp.addChildExpressions(integer(3));
     exp.operators.add(OMathExpression.Operator.RSHIFT);
-    exp.childExpressions.add(integer(1));
+    exp.addChildExpressions(integer(1));
     exp.operators.add(OMathExpression.Operator.LSHIFT);
-    exp.childExpressions.add(integer(1));
+    exp.addChildExpressions(integer(1));
 
     Object result = exp.execute((OResult) null, null);
     Assert.assertTrue(result instanceof Integer);
@@ -132,11 +132,11 @@ public class OMathExpressionTest {
   @Test
   public void testPriority4() {
     OMathExpression exp = new OMathExpression(-1);
-    exp.childExpressions.add(integer(3));
+    exp.addChildExpressions(integer(3));
     exp.operators.add(OMathExpression.Operator.LSHIFT);
-    exp.childExpressions.add(integer(1));
+    exp.addChildExpressions(integer(1));
     exp.operators.add(OMathExpression.Operator.RSHIFT);
-    exp.childExpressions.add(integer(1));
+    exp.addChildExpressions(integer(1));
 
     Object result = exp.execute((OResult) null, null);
     Assert.assertTrue(result instanceof Integer);
@@ -146,9 +146,9 @@ public class OMathExpressionTest {
   @Test
   public void testAnd() {
     OMathExpression exp = new OMathExpression(-1);
-    exp.childExpressions.add(integer(5));
+    exp.addChildExpressions(integer(5));
     exp.operators.add(OMathExpression.Operator.BIT_AND);
-    exp.childExpressions.add(integer(1));
+    exp.addChildExpressions(integer(1));
 
     Object result = exp.execute((OResult) null, null);
     Assert.assertTrue(result instanceof Integer);
@@ -158,9 +158,9 @@ public class OMathExpressionTest {
   @Test
   public void testAnd2() {
     OMathExpression exp = new OMathExpression(-1);
-    exp.childExpressions.add(integer(5));
+    exp.addChildExpressions(integer(5));
     exp.operators.add(OMathExpression.Operator.BIT_AND);
-    exp.childExpressions.add(integer(4));
+    exp.addChildExpressions(integer(4));
 
     Object result = exp.execute((OResult) null, null);
     Assert.assertTrue(result instanceof Integer);
@@ -170,9 +170,9 @@ public class OMathExpressionTest {
   @Test
   public void testOr() {
     OMathExpression exp = new OMathExpression(-1);
-    exp.childExpressions.add(integer(4));
+    exp.addChildExpressions(integer(4));
     exp.operators.add(OMathExpression.Operator.BIT_OR);
-    exp.childExpressions.add(integer(1));
+    exp.addChildExpressions(integer(1));
 
     Object result = exp.execute((OResult) null, null);
     Assert.assertTrue(result instanceof Integer);
@@ -224,9 +224,9 @@ public class OMathExpressionTest {
   private void testNullCoalescingGeneric(
       OMathExpression left, OMathExpression right, Object expected) {
     OMathExpression exp = new OMathExpression(-1);
-    exp.childExpressions.add(left);
+    exp.addChildExpressions(left);
     exp.operators.add(Operator.NULL_COALESCING);
-    exp.childExpressions.add(right);
+    exp.addChildExpressions(right);
 
     Object result = exp.execute((OResult) null, null);
     //    Assert.assertTrue(result instanceof Integer);

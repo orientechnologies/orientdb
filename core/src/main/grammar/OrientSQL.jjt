@@ -2450,11 +2450,10 @@ OArrayConcatExpressionElement ArrayConcatExpressionElement():
 OMathExpression MathExpression():
 {
     OMathExpression sub;
-    jjtThis.setChildExpressions(new java.util.ArrayList());
 }
 {
     (
-	    sub = FirstLevelExpression() { jjtThis.getChildExpressions().add(sub); }
+	    sub = FirstLevelExpression() { jjtThis.addChildExpressions(sub); }
 	    (
 	        LOOKAHEAD( 2 )
 	        (
@@ -2482,15 +2481,11 @@ OMathExpression MathExpression():
 	            |
 	            <XOR> { jjtThis.operators.add(OMathExpression.Operator.XOR); }
 	        )
-	        sub = FirstLevelExpression() { jjtThis.getChildExpressions().add(sub); }
+	        sub = FirstLevelExpression() { jjtThis.addChildExpressions(sub); }
 	    )*
 	)
 	{
-	    if(jjtThis.getChildExpressions().size() != 1){
-	        return jjtThis;
-	    }else{
-	        return jjtThis.getChildExpressions().get(0);
-	    }
+		return jjtThis.unwrapIfNeeded();
 	}
 }
 

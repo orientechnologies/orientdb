@@ -4406,13 +4406,12 @@ OMathExpression MathExpression():
     jjtn000.jjtSetFirstToken(getToken(1));
 /*@egen*/
     OMathExpression sub;
-    jjtn000.setChildExpressions(new java.util.ArrayList());
 }
 {/*@bgen(jjtree) MathExpression */
     try {
 /*@egen*/
     (
-	    sub = FirstLevelExpression() { jjtn000.getChildExpressions().add(sub); }
+	    sub = FirstLevelExpression() { jjtn000.addChildExpressions(sub); }
 	    (
 	        LOOKAHEAD( 2 )
 	        (
