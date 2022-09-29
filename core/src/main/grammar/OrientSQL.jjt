@@ -2453,35 +2453,35 @@ OMathExpression MathExpression():
 }
 {
     (
-	    sub = FirstLevelExpression() { jjtThis.addChildExpressions(sub); }
+	    sub = FirstLevelExpression() { jjtThis.addChildExpression(sub); }
 	    (
 	        LOOKAHEAD( 2 )
 	        (
-                <STAR> { jjtThis.operators.add( OMathExpression.Operator.STAR); }
+                <STAR> { jjtThis.addOperator( OMathExpression.Operator.STAR); }
                 |
-                <SLASH> { jjtThis.operators.add( OMathExpression.Operator.SLASH); }
+                <SLASH> { jjtThis.addOperator( OMathExpression.Operator.SLASH); }
                 |
-                <REM> { jjtThis.operators.add( OMathExpression.Operator.REM); }
+                <REM> { jjtThis.addOperator( OMathExpression.Operator.REM); }
                 |
-	            <PLUS> { jjtThis.operators.add( OMathExpression.Operator.PLUS); }
+	            <PLUS> { jjtThis.addOperator( OMathExpression.Operator.PLUS); }
 	            |
-	            <MINUS> { jjtThis.operators.add(OMathExpression.Operator.MINUS); }
+	            <MINUS> { jjtThis.addOperator(OMathExpression.Operator.MINUS); }
 	            |
-	            <LSHIFT> { jjtThis.operators.add(OMathExpression.Operator.LSHIFT); }
+	            <LSHIFT> { jjtThis.addOperator(OMathExpression.Operator.LSHIFT); }
 	            |
-	            <RSHIFT> { jjtThis.operators.add(OMathExpression.Operator.RSHIFT); }
+	            <RSHIFT> { jjtThis.addOperator(OMathExpression.Operator.RSHIFT); }
 	            |
-	            <RUNSIGNEDSHIFT> { jjtThis.operators.add(OMathExpression.Operator.RUNSIGNEDSHIFT); }
+	            <RUNSIGNEDSHIFT> { jjtThis.addOperator(OMathExpression.Operator.RUNSIGNEDSHIFT); }
 	            |
-	            <BIT_AND> { jjtThis.operators.add(OMathExpression.Operator.BIT_AND); }
+	            <BIT_AND> { jjtThis.addOperator(OMathExpression.Operator.BIT_AND); }
 	            |
-	            <NULL_COALESCING> { jjtThis.operators.add(OMathExpression.Operator.NULL_COALESCING); }
+	            <NULL_COALESCING> { jjtThis.addOperator(OMathExpression.Operator.NULL_COALESCING); }
 	            |
-	            <BIT_OR> { jjtThis.operators.add(OMathExpression.Operator.BIT_OR); }
+	            <BIT_OR> { jjtThis.addOperator(OMathExpression.Operator.BIT_OR); }
 	            |
-	            <XOR> { jjtThis.operators.add(OMathExpression.Operator.XOR); }
+	            <XOR> { jjtThis.addOperator(OMathExpression.Operator.XOR); }
 	        )
-	        sub = FirstLevelExpression() { jjtThis.addChildExpressions(sub); }
+	        sub = FirstLevelExpression() { jjtThis.addChildExpression(sub); }
 	    )*
 	)
 	{

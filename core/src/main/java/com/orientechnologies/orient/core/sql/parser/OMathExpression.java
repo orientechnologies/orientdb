@@ -604,7 +604,7 @@ public class OMathExpression extends SimpleNode {
   }
 
   protected List<OMathExpression> childExpressions;
-  protected List<Operator> operators = new ArrayList<>();
+  protected List<Operator> operators;
 
   public OMathExpression(int id) {
     super(id);
@@ -626,7 +626,7 @@ public class OMathExpression extends SimpleNode {
   }
 
   public Object execute(OIdentifiable iCurrentRecord, OCommandContext ctx) {
-    if (childExpressions == null) {
+    if (childExpressions == null || operators == null) {
       return null;
     }
 
@@ -647,7 +647,7 @@ public class OMathExpression extends SimpleNode {
   }
 
   public Object execute(OResult iCurrentRecord, OCommandContext ctx) {
-    if (childExpressions == null) {
+    if (childExpressions == null || operators == null) {
       return null;
     }
     if (childExpressions.size() == 0) {
@@ -669,7 +669,7 @@ public class OMathExpression extends SimpleNode {
   private Object calculateWithOpPriority(OResult iCurrentRecord, OCommandContext ctx) {
     Deque valuesStack = new ArrayDeque<>();
     Deque<Operator> operatorsStack = new ArrayDeque<Operator>();
-    if (childExpressions != null) {
+    if (childExpressions != null && operators != null) {
       OMathExpression nextExpression = childExpressions.get(0);
       Object val = nextExpression.execute(iCurrentRecord, ctx);
       valuesStack.push(val == null ? NULL_VALUE : val);
@@ -699,7 +699,7 @@ public class OMathExpression extends SimpleNode {
   private Object calculateWithOpPriority(OIdentifiable iCurrentRecord, OCommandContext ctx) {
     Deque valuesStack = new ArrayDeque<>();
     Deque<Operator> operatorsStack = new ArrayDeque<Operator>();
-    if (childExpressions != null) {
+    if (childExpressions != null && operators != null) {
       OMathExpression nextExpression = childExpressions.get(0);
       Object val = nextExpression.execute(iCurrentRecord, ctx);
       valuesStack.push(val == null ? NULL_VALUE : val);
@@ -777,7 +777,7 @@ public class OMathExpression extends SimpleNode {
     this.childExpressions = childExpressions;
   }
 
-  public void addChildExpressions(OMathExpression expression) {
+  public void addChildExpression(OMathExpression expression) {
     if (this.childExpressions == null) {
       this.childExpressions = new ArrayList<>();
     }
@@ -795,8 +795,15 @@ public class OMathExpression extends SimpleNode {
     return operators;
   }
 
+  public void addOperator(Operator operator) {
+    if (this.operators == null) {
+      this.operators = new ArrayList<>();
+    }
+    this.operators.add(operator);
+  }
+
   public void toString(Map<Object, Object> params, StringBuilder builder) {
-    if (childExpressions == null) return;
+    if (childExpressions == null || operators == null) return;
     for (int i = 0; i < childExpressions.size(); i++) {
       if (i > 0) {
         builder.append(" ");
@@ -1048,23 +1055,23 @@ public class OMathExpression extends SimpleNode {
       AggregateProjectionSplit aggregateProj, OCommandContext ctx) {
     if (isAggregate()) {
       OMathExpression result = new OMathExpression(-1);
-      if (this.childExpressions != null) {
+      if (this.childExpressions != null && this.operators != null) {
         int i = 0;
         for (OMathExpression expr : this.childExpressions) {
           if (i > 0) {
-            result.operators.add(operators.get(i - 1));
+            result.addOperator(operators.get(i - 1));
           }
           SimpleNode splitResult = expr.splitForAggregation(aggregateProj, ctx);
           if (splitResult instanceof OMathExpression) {
             OMathExpression res = (OMathExpression) splitResult;
             if (res.isEarlyCalculated(ctx) || res.isAggregate()) {
-              result.addChildExpressions(res);
+              result.addChildExpression(res);
             } else {
               throw new OCommandExecutionException(
                   "Cannot mix aggregate and single record attribute values in the same projection");
             }
           } else if (splitResult instanceof OExpression) {
-            result.addChildExpressions(
+            result.addChildExpression(
                 ((OExpression) splitResult)
                     .mathExpression); // this comes from a splitted aggregate function
           }
@@ -1093,7 +1100,9 @@ public class OMathExpression extends SimpleNode {
       result.childExpressions =
           childExpressions.stream().map(x -> x.copy()).collect(Collectors.toList());
     }
-    result.operators.addAll(operators);
+    if (operators != null) {
+      result.operators = new ArrayList<>(operators);
+    }
     return result;
   }
 

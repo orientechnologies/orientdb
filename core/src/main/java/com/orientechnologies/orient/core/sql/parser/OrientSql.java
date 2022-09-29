@@ -7265,7 +7265,7 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
     OMathExpression sub;
     try {
       sub = FirstLevelExpression();
-      jjtn000.addChildExpressions(sub);
+      jjtn000.addChildExpression(sub);
       label_24:
       while (true) {
         if (jj_2_97(2)) {;
@@ -7275,51 +7275,51 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
         switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
           case STAR:
             jj_consume_token(STAR);
-            jjtn000.operators.add(OMathExpression.Operator.STAR);
+            jjtn000.addOperator(OMathExpression.Operator.STAR);
             break;
           case SLASH:
             jj_consume_token(SLASH);
-            jjtn000.operators.add(OMathExpression.Operator.SLASH);
+            jjtn000.addOperator(OMathExpression.Operator.SLASH);
             break;
           case REM:
             jj_consume_token(REM);
-            jjtn000.operators.add(OMathExpression.Operator.REM);
+            jjtn000.addOperator(OMathExpression.Operator.REM);
             break;
           case PLUS:
             jj_consume_token(PLUS);
-            jjtn000.operators.add(OMathExpression.Operator.PLUS);
+            jjtn000.addOperator(OMathExpression.Operator.PLUS);
             break;
           case MINUS:
             jj_consume_token(MINUS);
-            jjtn000.operators.add(OMathExpression.Operator.MINUS);
+            jjtn000.addOperator(OMathExpression.Operator.MINUS);
             break;
           case LSHIFT:
             jj_consume_token(LSHIFT);
-            jjtn000.operators.add(OMathExpression.Operator.LSHIFT);
+            jjtn000.addOperator(OMathExpression.Operator.LSHIFT);
             break;
           case RSHIFT:
             jj_consume_token(RSHIFT);
-            jjtn000.operators.add(OMathExpression.Operator.RSHIFT);
+            jjtn000.addOperator(OMathExpression.Operator.RSHIFT);
             break;
           case RUNSIGNEDSHIFT:
             jj_consume_token(RUNSIGNEDSHIFT);
-            jjtn000.operators.add(OMathExpression.Operator.RUNSIGNEDSHIFT);
+            jjtn000.addOperator(OMathExpression.Operator.RUNSIGNEDSHIFT);
             break;
           case BIT_AND:
             jj_consume_token(BIT_AND);
-            jjtn000.operators.add(OMathExpression.Operator.BIT_AND);
+            jjtn000.addOperator(OMathExpression.Operator.BIT_AND);
             break;
           case NULL_COALESCING:
             jj_consume_token(NULL_COALESCING);
-            jjtn000.operators.add(OMathExpression.Operator.NULL_COALESCING);
+            jjtn000.addOperator(OMathExpression.Operator.NULL_COALESCING);
             break;
           case BIT_OR:
             jj_consume_token(BIT_OR);
-            jjtn000.operators.add(OMathExpression.Operator.BIT_OR);
+            jjtn000.addOperator(OMathExpression.Operator.BIT_OR);
             break;
           case XOR:
             jj_consume_token(XOR);
-            jjtn000.operators.add(OMathExpression.Operator.XOR);
+            jjtn000.addOperator(OMathExpression.Operator.XOR);
             break;
           default:
             jj_la1[185] = jj_gen;
@@ -7327,7 +7327,7 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
             throw new ParseException();
         }
         sub = FirstLevelExpression();
-        jjtn000.addChildExpressions(sub);
+        jjtn000.addChildExpression(sub);
       }
       jjtree.closeNodeScope(jjtn000, true);
       jjtc000 = false;
