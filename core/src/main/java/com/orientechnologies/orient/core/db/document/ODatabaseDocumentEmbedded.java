@@ -31,12 +31,29 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OScriptExecutor;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
+import com.orientechnologies.orient.core.db.ODatabaseListener;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.ODatabaseStats;
+import com.orientechnologies.orient.core.db.OHookReplacedRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OLiveQueryMonitor;
+import com.orientechnologies.orient.core.db.OLiveQueryResultListener;
+import com.orientechnologies.orient.core.db.OSharedContext;
+import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.exception.*;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.exception.OSchemaException;
+import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
@@ -45,8 +62,23 @@ import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibraryImpl;
-import com.orientechnologies.orient.core.metadata.schema.*;
-import com.orientechnologies.orient.core.metadata.security.*;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
+import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
+import com.orientechnologies.orient.core.metadata.schema.OView;
+import com.orientechnologies.orient.core.metadata.security.OImmutableUser;
+import com.orientechnologies.orient.core.metadata.security.OPropertyAccess;
+import com.orientechnologies.orient.core.metadata.security.OPropertyEncryptionNone;
+import com.orientechnologies.orient.core.metadata.security.ORestrictedAccessHook;
+import com.orientechnologies.orient.core.metadata.security.ORestrictedOperation;
+import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.ORule;
+import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
+import com.orientechnologies.orient.core.metadata.security.OSecurityPolicy;
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
+import com.orientechnologies.orient.core.metadata.security.OToken;
+import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.metadata.security.auth.OAuthenticationInfo;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceAction;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryProxy;
@@ -65,11 +97,19 @@ import com.orientechnologies.orient.core.record.impl.OVertexDelegate;
 import com.orientechnologies.orient.core.schedule.OScheduledEvent;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
-import com.orientechnologies.orient.core.sql.executor.*;
+import com.orientechnologies.orient.core.sql.executor.LiveQueryListenerImpl;
+import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
+import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
+import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSet;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
-import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.ORecordMetadata;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageInfo;
 import com.orientechnologies.orient.core.storage.cluster.OOfflineClusterException;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorageComponent;
@@ -82,8 +122,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TimeZone;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -538,17 +586,21 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
   public OResultSet query(String query, Map args) {
     checkOpenness();
     checkIfActive();
-
-    OStatement statement = OSQLEngine.parse(query, this);
-    if (!statement.isIdempotent()) {
-      throw new OCommandExecutionException(
-          "Cannot execute query on non idempotent statement: " + query);
+    getSharedContext().getOrientDB().startCommand(Optional.empty());
+    try {
+      OStatement statement = OSQLEngine.parse(query, this);
+      if (!statement.isIdempotent()) {
+        throw new OCommandExecutionException(
+            "Cannot execute query on non idempotent statement: " + query);
+      }
+      OResultSet original = statement.execute(this, args, true);
+      OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
+      this.queryStarted(result.getQueryId(), result);
+      result.addLifecycleListener(this);
+      return result;
+    } finally {
+      getSharedContext().getOrientDB().endCommand();
     }
-    OResultSet original = statement.execute(this, args, true);
-    OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
-    this.queryStarted(result.getQueryId(), result);
-    result.addLifecycleListener(this);
-    return result;
   }
 
   @Override
@@ -556,22 +608,27 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     checkOpenness();
     checkIfActive();
 
-    OStatement statement = OSQLEngine.parse(query, this);
-    OResultSet original = statement.execute(this, args, true);
-    OLocalResultSetLifecycleDecorator result;
-    if (!statement.isIdempotent()) {
-      // fetch all, close and detach
-      OInternalResultSet prefetched = new OInternalResultSet();
-      original.forEachRemaining(x -> prefetched.add(x));
-      original.close();
-      result = new OLocalResultSetLifecycleDecorator(prefetched);
-    } else {
-      // stream, keep open and attach to the current DB
-      result = new OLocalResultSetLifecycleDecorator(original);
-      this.queryStarted(result.getQueryId(), result);
-      result.addLifecycleListener(this);
+    getSharedContext().getOrientDB().startCommand(Optional.empty());
+    try {
+      OStatement statement = OSQLEngine.parse(query, this);
+      OResultSet original = statement.execute(this, args, true);
+      OLocalResultSetLifecycleDecorator result;
+      if (!statement.isIdempotent()) {
+        // fetch all, close and detach
+        OInternalResultSet prefetched = new OInternalResultSet();
+        original.forEachRemaining(x -> prefetched.add(x));
+        original.close();
+        result = new OLocalResultSetLifecycleDecorator(prefetched);
+      } else {
+        // stream, keep open and attach to the current DB
+        result = new OLocalResultSetLifecycleDecorator(original);
+        this.queryStarted(result.getQueryId(), result);
+        result.addLifecycleListener(this);
+      }
+      return result;
+    } finally {
+      getSharedContext().getOrientDB().endCommand();
     }
-    return result;
   }
 
   @Override
@@ -579,22 +636,29 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     checkOpenness();
     checkIfActive();
 
-    OStatement statement = OSQLEngine.parse(query, this);
-    OResultSet original = statement.execute(this, args, true);
-    OLocalResultSetLifecycleDecorator result;
-    if (!statement.isIdempotent()) {
-      // fetch all, close and detach
-      OInternalResultSet prefetched = new OInternalResultSet();
-      original.forEachRemaining(x -> prefetched.add(x));
-      original.close();
-      result = new OLocalResultSetLifecycleDecorator(prefetched);
-    } else {
-      // stream, keep open and attach to the current DB
-      result = new OLocalResultSetLifecycleDecorator(original);
-      this.queryStarted(result.getQueryId(), result);
-      result.addLifecycleListener(this);
+    getSharedContext().getOrientDB().startCommand(Optional.empty());
+    try {
+
+      OStatement statement = OSQLEngine.parse(query, this);
+      OResultSet original = statement.execute(this, args, true);
+      OLocalResultSetLifecycleDecorator result;
+      if (!statement.isIdempotent()) {
+        // fetch all, close and detach
+        OInternalResultSet prefetched = new OInternalResultSet();
+        original.forEachRemaining(x -> prefetched.add(x));
+        original.close();
+        result = new OLocalResultSetLifecycleDecorator(prefetched);
+      } else {
+        // stream, keep open and attach to the current DB
+        result = new OLocalResultSetLifecycleDecorator(original);
+        this.queryStarted(result.getQueryId(), result);
+        result.addLifecycleListener(this);
+      }
+
+      return result;
+    } finally {
+      getSharedContext().getOrientDB().endCommand();
     }
-    return result;
   }
 
   @Override
@@ -604,25 +668,30 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     if (!"sql".equalsIgnoreCase(language)) {
       checkSecurity(ORule.ResourceGeneric.COMMAND, ORole.PERMISSION_EXECUTE, language);
     }
-
-    OScriptExecutor executor =
-        getSharedContext()
-            .getOrientDB()
-            .getScriptManager()
-            .getCommandManager()
-            .getScriptExecutor(language);
-
-    ((OAbstractPaginatedStorage) this.storage).pauseConfigurationUpdateNotifications();
-    OResultSet original;
+    getSharedContext().getOrientDB().startCommand(Optional.empty());
     try {
-      original = executor.execute(this, script, args);
+
+      OScriptExecutor executor =
+          getSharedContext()
+              .getOrientDB()
+              .getScriptManager()
+              .getCommandManager()
+              .getScriptExecutor(language);
+
+      ((OAbstractPaginatedStorage) this.storage).pauseConfigurationUpdateNotifications();
+      OResultSet original;
+      try {
+        original = executor.execute(this, script, args);
+      } finally {
+        ((OAbstractPaginatedStorage) this.storage).fireConfigurationUpdateNotifications();
+      }
+      OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
+      this.queryStarted(result.getQueryId(), result);
+      result.addLifecycleListener(this);
+      return result;
     } finally {
-      ((OAbstractPaginatedStorage) this.storage).fireConfigurationUpdateNotifications();
+      getSharedContext().getOrientDB().endCommand();
     }
-    OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
-    this.queryStarted(result.getQueryId(), result);
-    result.addLifecycleListener(this);
-    return result;
   }
 
   @Override
@@ -632,42 +701,52 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     if (!"sql".equalsIgnoreCase(language)) {
       checkSecurity(ORule.ResourceGeneric.COMMAND, ORole.PERMISSION_EXECUTE, language);
     }
-
-    OScriptExecutor executor =
-        sharedContext
-            .getOrientDB()
-            .getScriptManager()
-            .getCommandManager()
-            .getScriptExecutor(language);
-    OResultSet original;
-
-    ((OAbstractPaginatedStorage) this.storage).pauseConfigurationUpdateNotifications();
+    getSharedContext().getOrientDB().startCommand(Optional.empty());
     try {
-      original = executor.execute(this, script, args);
-    } finally {
-      ((OAbstractPaginatedStorage) this.storage).fireConfigurationUpdateNotifications();
-    }
 
-    OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
-    this.queryStarted(result.getQueryId(), result);
-    result.addLifecycleListener(this);
-    return result;
+      OScriptExecutor executor =
+          sharedContext
+              .getOrientDB()
+              .getScriptManager()
+              .getCommandManager()
+              .getScriptExecutor(language);
+      OResultSet original;
+
+      ((OAbstractPaginatedStorage) this.storage).pauseConfigurationUpdateNotifications();
+      try {
+        original = executor.execute(this, script, args);
+      } finally {
+        ((OAbstractPaginatedStorage) this.storage).fireConfigurationUpdateNotifications();
+      }
+
+      OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
+      this.queryStarted(result.getQueryId(), result);
+      result.addLifecycleListener(this);
+      return result;
+    } finally {
+      getSharedContext().getOrientDB().endCommand();
+    }
   }
 
   public OLocalResultSetLifecycleDecorator query(OExecutionPlan plan, Map<Object, Object> params) {
     checkOpenness();
     checkIfActive();
+    getSharedContext().getOrientDB().startCommand(Optional.empty());
+    try {
 
-    OBasicCommandContext ctx = new OBasicCommandContext();
-    ctx.setDatabase(this);
-    ctx.setInputParameters(params);
+      OBasicCommandContext ctx = new OBasicCommandContext();
+      ctx.setDatabase(this);
+      ctx.setInputParameters(params);
 
-    OLocalResultSet result = new OLocalResultSet((OInternalExecutionPlan) plan);
-    OLocalResultSetLifecycleDecorator decorator = new OLocalResultSetLifecycleDecorator(result);
-    this.queryStarted(decorator.getQueryId(), decorator);
-    decorator.addLifecycleListener(this);
+      OLocalResultSet result = new OLocalResultSet((OInternalExecutionPlan) plan);
+      OLocalResultSetLifecycleDecorator decorator = new OLocalResultSetLifecycleDecorator(result);
+      this.queryStarted(decorator.getQueryId(), decorator);
+      decorator.addLifecycleListener(this);
 
-    return decorator;
+      return decorator;
+    } finally {
+      getSharedContext().getOrientDB().endCommand();
+    }
   }
 
   public OrientDBConfig getConfig() {

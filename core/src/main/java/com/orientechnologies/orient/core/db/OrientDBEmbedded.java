@@ -70,6 +70,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -107,6 +108,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   private final OScriptManager scriptManager = new OScriptManager();
   private final OSystemDatabase systemDatabase;
   private final ODefaultSecuritySystem securitySystem;
+  private final OCommandTimeoutChecker timeoutChecker;
 
   protected final long maxWALSegmentSize;
   protected final long doubleWriteLogMaxSegSize;
@@ -188,6 +190,11 @@ public class OrientDBEmbedded implements OrientDBInternal {
     systemDatabase = new OSystemDatabase(this);
     securitySystem = new ODefaultSecuritySystem();
     securitySystem.activate(this, this.configurations.getSecurityConfig());
+    long timeout =
+        this.configurations
+            .getConfigurations()
+            .getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT);
+    timeoutChecker = new OCommandTimeoutChecker(timeout, this);
   }
 
   protected OCachedDatabasePoolFactory createCachedDatabasePoolFactory(OrientDBConfig config) {
@@ -974,6 +981,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   @Override
   public void close() {
     if (!open) return;
+    timeoutChecker.close();
     timer.cancel();
     securitySystem.shutdown();
     executor.shutdown();
@@ -1261,6 +1269,14 @@ public class OrientDBEmbedded implements OrientDBInternal {
     }
     dbs.remove(OSystemDatabase.SYSTEM_DB_NAME);
     return dbs;
+  }
+
+  public void startCommand(Optional<Long> timeout) {
+    timeoutChecker.startCommand(timeout);
+  }
+
+  public void endCommand() {
+    timeoutChecker.endCommand();
   }
 
   @Override

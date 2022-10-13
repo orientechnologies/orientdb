@@ -34,6 +34,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
@@ -387,4 +388,8 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
   }
 
   String getConnectionUrl();
+
+  public default void startCommand(Optional<Long> timeout) {}
+
+  public default void endCommand() {}
 }
