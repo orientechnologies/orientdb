@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <!--
   ~ /*
    ~  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
@@ -18,9 +17,7 @@
    ~  *
    ~  * For more information: http://www.orientechnologies.com
    ~  */
-   -->
-
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+   --><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
@@ -36,7 +33,7 @@
     <name>OrientDB Distributed Server</name>
 
     <properties>
-        <hz.version>3.12.8</hz.version>
+        <hz.version>5.1</hz.version>
         <javac.src.version>1.6</javac.src.version>
         <javac.target.version>1.6</javac.target.version>
         <jar.manifest.mainclass>com.orientechnologies.orient.server.OServerMain</jar.manifest.mainclass>
@@ -157,15 +154,15 @@
                                 <include>**/UniqueCompositeIndexDistributedIT.java</include>
                             </includes>
                             <systemPropertyVariables>
-                                <kubeConfig />
+                                <kubeConfig/>
                                 <orientdbLabel>orientdb</orientdbLabel>
                                 <orientdbHttpPort>2480</orientdbHttpPort>
                                 <orientdbBinaryPort>2424</orientdbBinaryPort>
                                 <orientdbHazelcastPort>2434</orientdbHazelcastPort>
-                                <orientdbDockerImage />
+                                <orientdbDockerImage/>
                                 <orientdbVolumeSize>2</orientdbVolumeSize>
-                                <databaseVolumeStorageClass />
-                                <configVolumeStorageClass />
+                                <databaseVolumeStorageClass/>
+                                <configVolumeStorageClass/>
                                 <kubernetesNamespace>orientdb</kubernetesNamespace>
                             </systemPropertyVariables>
                         </configuration>
