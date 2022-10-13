@@ -19,7 +19,7 @@ package com.orientechnologies.lucene.engine;
 import static com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory.AnalyzerKind.INDEX;
 import static com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory.AnalyzerKind.QUERY;
 
-import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
+import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -82,7 +82,7 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.Version;
 
-public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptiveExternal
+public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
     implements OLuceneIndexEngine {
 
   public static final String RID = "RID";
