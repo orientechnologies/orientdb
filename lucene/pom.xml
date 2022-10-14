@@ -33,7 +33,7 @@
     <inceptionYear>2013</inceptionYear>
 
     <properties>
-        <lucene.version>7.3.0</lucene.version> <!-- latest version 8.5.1+ -->
+        <lucene.version>7.7.3</lucene.version> <!-- latest version 8.5.1+ -->
         <!--<geotools.version>13.2</geotools.version>-->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>

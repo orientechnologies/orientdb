@@ -151,7 +151,7 @@
         <osgi.dynamicImport />
         <osgi.private />
         <!-- | shared build/report plugins version -->
-        <surefire.version>3.0.0-M5</surefire.version>
+        <surefire.version>3.0.0-M7</surefire.version>
         <sonatypeOssDistMgmtSnapshotsUrl>https://oss.sonatype.org/content/repositories/snapshots/
         </sonatypeOssDistMgmtSnapshotsUrl>
 
@@ -162,7 +162,7 @@
         <javaassist.version>3.28.0-GA</javaassist.version>
         <jaxb.api.version>2.3.0</jaxb.api.version>
         <project.rootdir>${project.basedir}/</project.rootdir>
-        <graalvm.version>20.2.0</graalvm.version>
+        <graalvm.version>20.3.7.1</graalvm.version>
     </properties>
 
     <build>
