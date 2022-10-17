@@ -28,8 +28,24 @@ This document contains the last changes of OrientDB Community Edition.
 
 
 -----------------------------------------------------------------------------------------------------------------------------------
+VERSION 3.2.11 - (October, 19 2022)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3211---19-October-2022
+
+# Core 
+ - Use correct configuration to run javascript functions on truffle script engine of graal
+ - Minimize duplicate logic in index searching for query engine
+ - Add caching of graal Context with relative database functions
+ - Reduced allocations in query engine
+ - Add possibility to unload cached information for specific script executor
+ - Optimized the cluster computation in query engine
+ - Disabled the sharding check logic for distributed
+ - Removed dependencies not used anymore
+ - Correct query interrupt based on command timeout configuration
+ - Minor updates of dependencies 
+
+-----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.10 - (September, 15 2022)
-- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#329---15-September-2022
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3210---15-September-2022
 
 # Core
  - Make put of index everytime transactional
