@@ -15,5 +15,9 @@ public class OGremlinExecutorRegister implements OScriptExecutorRegister {
         "gremlin",
         new OCommandGremlinExecutor(
             scriptManager, new OGremlinTransformer(new OScriptTransformerImpl())));
+    commandManager.registerScriptExecutor(
+        "gremlin-groovy",
+        new OCommandGremlinExecutor(
+            scriptManager, new OGremlinTransformer(new OScriptTransformerImpl())));
   }
 }
