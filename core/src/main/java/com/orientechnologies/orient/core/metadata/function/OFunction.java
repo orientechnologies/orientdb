@@ -131,7 +131,10 @@ public class OFunction extends ODocumentWrapper {
   }
 
   @Deprecated
-  public Object executeInContext(final OCommandContext iContext, final Object... iArgs) {
+  public Object executeInContext(OCommandContext iContext, final Object... iArgs) {
+    if (iContext == null) {
+      iContext = new OBasicCommandContext();
+    }
     final List<String> params = getParameters();
 
     // CONVERT PARAMETERS IN A MAP
@@ -171,7 +174,10 @@ public class OFunction extends ODocumentWrapper {
   }
 
   @Deprecated
-  public Object executeInContext(final OCommandContext iContext, final Map<String, Object> iArgs) {
+  public Object executeInContext(OCommandContext iContext, final Map<String, Object> iArgs) {
+    if (iContext == null) {
+      iContext = new OBasicCommandContext();
+    }
     // CONVERT PARAMETERS IN A MAP
     final Map<Object, Object> args = new LinkedHashMap<Object, Object>();
 
