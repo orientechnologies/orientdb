@@ -7,7 +7,7 @@
         <relativePath />
     </parent>
     <artifactId>orientdb-enterprise-parent</artifactId>
-  <version>3.2.11</version>
+  <version>3.2.12-SNAPSHOT</version>
     <packaging>pom</packaging>
     <modules>
         <module>agent</module>
