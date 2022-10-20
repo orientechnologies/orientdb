@@ -1391,9 +1391,10 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
   @Override
   public OBinaryResponse executeQueryNextPage(OQueryNextPageRequest request) {
+    ODatabaseDocumentInternal database = connection.getDatabase();
+    OrientDBInternal orientDB = database.getSharedContext().getOrientDB();
     OLocalResultSetLifecycleDecorator rs =
-        (OLocalResultSetLifecycleDecorator)
-            connection.getDatabase().getActiveQuery(request.getQueryId());
+        (OLocalResultSetLifecycleDecorator) database.getActiveQuery(request.getQueryId());
 
     if (rs == null) {
       throw new ODatabaseException(
@@ -1401,18 +1402,30 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
               "No query with id '%s' found probably expired session", request.getQueryId()));
     }
 
-    // copy the result-set to make sure that the execution is successful
-    List<OResultInternal> rsCopy = new ArrayList<>(request.getRecordsPerPage());
-    int i = 0;
-    // if it's OInternalResultSet it means that it's a Command, not a Query, so the result has to be
-    // sent as it is, not streamed
-    while (rs.hasNext() && (rs.isDetached() || i < request.getRecordsPerPage())) {
-      rsCopy.add((OResultInternal) rs.next());
-      i++;
+    try {
+      orientDB.startCommand(Optional.empty());
+      // copy the result-set to make sure that the execution is successful
+      List<OResultInternal> rsCopy = new ArrayList<>(request.getRecordsPerPage());
+      int i = 0;
+      // if it's OInternalResultSet it means that it's a Command, not a Query, so the result has to
+      // be
+      // sent as it is, not streamed
+      while (rs.hasNext() && (rs.isDetached() || i < request.getRecordsPerPage())) {
+        rsCopy.add((OResultInternal) rs.next());
+        i++;
+      }
+      boolean hasNext = rs.hasNext();
+      return new OQueryResponse(
+          rs.getQueryId(),
+          false,
+          rsCopy,
+          rs.getExecutionPlan(),
+          hasNext,
+          rs.getQueryStats(),
+          false);
+    } finally {
+      orientDB.endCommand();
     }
-    boolean hasNext = rs.hasNext();
-    return new OQueryResponse(
-        rs.getQueryId(), false, rsCopy, rs.getExecutionPlan(), hasNext, rs.getQueryStats(), false);
   }
 
   @Override
