@@ -90,7 +90,7 @@ class MetricService {
 
   calculateGauges(stats) {
 
-    if (!stats["gauges"]) {
+    if (!stats["gauges"] || Object.keys(stats["gauges"]).length === 0) {
       return {
             "cpuValue":0,
             "cpuPercent":0,

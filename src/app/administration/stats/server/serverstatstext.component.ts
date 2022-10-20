@@ -47,11 +47,20 @@ class ServerStatsText implements OnInit, OnChanges {
 
   changeStats() {
     this.status = this.stats.status || "ONLINE";
-    this.sessions = this.stats["gauges"]["server.network.sessions"].value;
 
-    this.networkRequestEmitter.emit(
-      this.stats["meters"]["server.network.requests"].count
-    );
+    if (!this.stats["gauges"] || Object.keys(this.stats["gauges"]).length === 0) {
+        this.sessions = 0;
+    } else {
+        this.sessions = this.stats["gauges"]["server.network.sessions"].value;
+    }
+
+    if (!this.stats["meters"] || Object.keys(this.stats["meters"]).length === 0) {
+        this.networkRequestEmitter.emit(0);
+    } else {
+        this.networkRequestEmitter.emit(
+          this.stats["meters"]["server.network.requests"].count
+        );
+    }
 
     this.opsEmitter.emit(this.countOps(this.stats["meters"]));
   }
