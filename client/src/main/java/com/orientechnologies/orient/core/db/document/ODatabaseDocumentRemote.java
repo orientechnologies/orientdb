@@ -1176,7 +1176,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
       try {
         rollback(true);
       } catch (Exception e) {
-        OLogManager.instance().error(this, "Exception during commit of active transaction", e);
+        OLogManager.instance().error(this, "Exception during rollback of active transaction", e);
       }
 
       callOnCloseListeners();
