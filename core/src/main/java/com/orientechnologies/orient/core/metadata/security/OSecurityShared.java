@@ -37,6 +37,7 @@ import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ORule.ResourceGeneric;
@@ -46,6 +47,7 @@ import com.orientechnologies.orient.core.metadata.sequence.OSequence;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.security.OGlobalUser;
 import com.orientechnologies.orient.core.security.OSecuritySystem;
 import com.orientechnologies.orient.core.sql.executor.OResult;
@@ -1269,13 +1271,14 @@ public class OSecurityShared implements OSecurityInternal {
         .getValueAsBoolean(OGlobalConfiguration.SECURITY_ADVANCED_POLICY)) {
       return Collections.emptySet();
     }
-    String className = document.getClassName();
-    if (OSecurityPolicy.class.getSimpleName().equalsIgnoreCase(className)) {
+    OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass((ODocument) document);
+    if (clazz == null) {
       return Collections.emptySet();
     }
-    if (className == null) {
+    if (clazz.isSecurityPolicy()) {
       return Collections.emptySet();
     }
+
     if (roleHasPredicateSecurityForClass != null) {
       for (OSecurityRole role : session.getUser().getRoles()) {
 
@@ -1283,7 +1286,7 @@ public class OSecurityShared implements OSecurityInternal {
         if (roleMap == null) {
           return Collections.emptySet(); // TODO hierarchy...?
         }
-        Boolean val = roleMap.get(className);
+        Boolean val = roleMap.get(clazz.getName());
         if (!(Boolean.TRUE.equals(val))) {
           return Collections.emptySet(); // TODO hierarchy...?
         }
@@ -1297,19 +1300,17 @@ public class OSecurityShared implements OSecurityInternal {
           OSecurityEngine.getPredicateForSecurityResource(
               session,
               this,
-              "database.class.`" + className + "`.`" + prop + "`",
+              "database.class.`" + clazz.getName() + "`.`" + prop + "`",
               OSecurityPolicy.Scope.READ);
       if (!OSecurityEngine.evaluateSecuirtyPolicyPredicate(session, predicate, document)) {
         result.add(prop);
       }
     }
     return result;
-    //    return Collections.emptySet();
   }
 
   @Override
   public boolean isAllowedWrite(ODatabaseSession session, ODocument document, String propertyName) {
-    //    return true; //TODO
 
     if (session.getUser() == null) {
       // executeNoAuth
@@ -1448,12 +1449,11 @@ public class OSecurityShared implements OSecurityInternal {
     }
 
     if (record instanceof OElement) {
-      if (OSecurityPolicy.class
-          .getSimpleName()
-          .equalsIgnoreCase(((ODocument) record).getClassName())) {
+      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass((ODocument) record);
+      if (clazz == null) {
         return true;
       }
-      if (((ODocument) record).getClassName() == null) {
+      if (clazz.isSecurityPolicy()) {
         return true;
       }
 
