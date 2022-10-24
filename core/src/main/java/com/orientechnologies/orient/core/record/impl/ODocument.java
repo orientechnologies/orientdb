@@ -269,7 +269,7 @@ public class ODocument extends ORecordAbstract
   @Override
   public boolean isVertex() {
     if (this instanceof OVertex) return true;
-    OClass type = this.getSchemaClass();
+    OClass type = this.getImmutableSchemaClass();
     if (type == null) {
       return false;
     }
@@ -279,7 +279,7 @@ public class ODocument extends ORecordAbstract
   @Override
   public boolean isEdge() {
     if (this instanceof OEdge) return true;
-    OClass type = this.getSchemaClass();
+    OClass type = this.getImmutableSchemaClass();
     if (type == null) {
       return false;
     }
