@@ -1,9 +1,9 @@
 package com.orientechnologies.orient.core.storage.index.nkbtree.normalizers;
 
-import com.ibm.icu.text.CollationKey;
-import com.ibm.icu.text.Collator;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.text.CollationKey;
+import java.text.Collator;
 import org.apache.commons.lang.ArrayUtils;
 
 public class StringKeyNormalizer implements KeyNormalizers {
