@@ -204,15 +204,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract
     OLogManager.instance()
         .info(
             this, "*****************************************************************************");
-    OLogManager.instance()
-        .info(
-            this, "* If you are in Production or Test, you must purchase a commercial license. *");
-    OLogManager.instance()
-        .info(
-            this, "* For more information look at: http://orientdb.com/orientdb-enterprise/    *");
-    OLogManager.instance()
-        .info(
-            this, "*****************************************************************************");
     OLogManager.instance().info(this, "");
     Orient.instance()
         .getProfiler()
