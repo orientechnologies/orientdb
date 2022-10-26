@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.storage.index.nkbtree.normalizers;
 
 import static com.orientechnologies.common.serialization.types.OLongSerializer.LONG_SIZE;
 
-import com.ibm.icu.text.Collator;
 import com.orientechnologies.common.serialization.types.OBinaryTypeSerializer;
 import com.orientechnologies.common.serialization.types.OBooleanSerializer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
@@ -21,9 +20,17 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteOrder;
+import java.text.Collator;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.knowm.xchart.XYChart;
 import org.knowm.xchart.style.Styler;

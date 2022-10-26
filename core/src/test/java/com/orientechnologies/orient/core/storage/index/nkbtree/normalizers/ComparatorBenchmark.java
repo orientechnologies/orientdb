@@ -1,10 +1,10 @@
 package com.orientechnologies.orient.core.storage.index.nkbtree.normalizers;
 
-import com.ibm.icu.text.Collator;
 import com.orientechnologies.common.comparator.OByteArrayComparator;
 import com.orientechnologies.common.comparator.OUnsafeByteArrayComparator;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import java.text.Collator;
 import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.openjdk.jmh.annotations.Benchmark;

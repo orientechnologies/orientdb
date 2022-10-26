@@ -1,10 +1,10 @@
 package com.orientechnologies.orient.core.storage.index.nkbtree.normalizers;
 
-import com.ibm.icu.text.Collator;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.text.Collator;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Calendar;
