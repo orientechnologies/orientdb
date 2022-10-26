@@ -62,7 +62,7 @@ import java.util.UUID;
 
 /** @author mdjurovi */
 public class HelperClasses {
-  protected static final String CHARSET_UTF_8 = "UTF-8";
+  public static final String CHARSET_UTF_8 = "UTF-8";
   protected static final ORecordId NULL_RECORD_ID = new ORecordId(-2, ORID.CLUSTER_POS_INVALID);
   public static final long MILLISEC_PER_DAY = 86400000;
 
@@ -167,6 +167,18 @@ public class HelperClasses {
   public static String stringFromBytes(final byte[] bytes, final int offset, final int len) {
     try {
       return new String(bytes, offset, len, CHARSET_UTF_8);
+    } catch (UnsupportedEncodingException e) {
+      throw OException.wrapException(new OSerializationException("Error on string decoding"), e);
+    }
+  }
+
+  public static String stringFromBytesIntern(final byte[] bytes, final int offset, final int len) {
+    try {
+      ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
+      if (db != null && !db.isClosed()) {
+        return db.getSharedContext().getStringCache().getString(bytes, offset, len);
+      }
+      return new String(bytes, offset, len, CHARSET_UTF_8).intern();
     } catch (UnsupportedEncodingException e) {
       throw OException.wrapException(new OSerializationException("Error on string decoding"), e);
     }

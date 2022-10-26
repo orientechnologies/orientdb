@@ -40,6 +40,12 @@ public class OSharedContextEmbedded extends OSharedContext {
   }
 
   protected void init(OStorage storage) {
+    stringCache =
+        new OStringCache(
+            storage
+                .getConfiguration()
+                .getContextConfiguration()
+                .getValueAsInteger(OGlobalConfiguration.DB_STRING_CAHCE_SIZE));
     schema = new OSchemaEmbedded(this);
     security = orientDB.getSecuritySystem().newSecurity(storage.getName());
     indexManager = new OIndexManagerShared(storage);
@@ -105,6 +111,7 @@ public class OSharedContextEmbedded extends OSharedContext {
 
   @Override
   public synchronized void close() {
+    stringCache.close();
     viewManager.close();
     schema.close();
     security.close();

@@ -1,7 +1,9 @@
 package com.orientechnologies.orient.core.db.document;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OSharedContext;
+import com.orientechnologies.orient.core.db.OStringCache;
 import com.orientechnologies.orient.core.db.OrientDBRemote;
 import com.orientechnologies.orient.core.index.OIndexManagerRemote;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibraryImpl;
@@ -15,6 +17,11 @@ import com.orientechnologies.orient.core.storage.OStorageInfo;
 public class OSharedContextRemote extends OSharedContext {
 
   public OSharedContextRemote(OStorageInfo storage, OrientDBRemote orientDBRemote) {
+    stringCache =
+        new OStringCache(
+            orientDBRemote
+                .getContextConfiguration()
+                .getValueAsInteger(OGlobalConfiguration.DB_STRING_CAHCE_SIZE));
     this.orientDB = orientDBRemote;
     this.storage = storage;
     schema = new OSchemaRemote();
@@ -51,6 +58,7 @@ public class OSharedContextRemote extends OSharedContext {
 
   @Override
   public synchronized void close() {
+    stringCache.close();
     schema.close();
     security.close();
     indexManager.close();

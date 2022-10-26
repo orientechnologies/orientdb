@@ -21,10 +21,7 @@
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
 import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.MILLISEC_PER_DAY;
-import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.MapRecordInfo;
 import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.NULL_RECORD_ID;
-import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.RecordInfo;
-import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.Tuple;
 import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.bytesFromString;
 import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.convertDayToTimezone;
 import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.getGlobalProperty;
@@ -37,7 +34,7 @@ import static com.orientechnologies.orient.core.serialization.serializer.record.
 import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.readOType;
 import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.readOptimizedLink;
 import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.readString;
-import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.stringFromBytes;
+import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.stringFromBytesIntern;
 import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.writeBinary;
 import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.writeLinkCollection;
 import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.writeNullLink;
@@ -77,6 +74,9 @@ import com.orientechnologies.orient.core.record.impl.ODocumentEntry;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.MapRecordInfo;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.RecordInfo;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.Tuple;
 import com.orientechnologies.orient.core.util.ODateHelper;
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -283,7 +283,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         break;
       } else if (len > 0) {
         // PARSE FIELD NAME
-        fieldName = stringFromBytes(bytes.bytes, bytes.offset, len).intern();
+        fieldName = stringFromBytesIntern(bytes.bytes, bytes.offset, len);
         bytes.skip(len);
         Tuple<Integer, OType> pointerAndType = getPointerAndTypeFromCurrentPosition(bytes);
         valuePos = pointerAndType.getFirstVal();
@@ -333,7 +333,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         break;
       } else if (len > 0) {
         // PARSE FIELD NAME
-        fieldName = stringFromBytes(bytes.bytes, bytes.offset, len).intern();
+        fieldName = stringFromBytesIntern(bytes.bytes, bytes.offset, len);
         result.add(fieldName);
 
         // SKIP THE REST
@@ -1212,7 +1212,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
           break;
         } else if (len > 0) {
           // PARSE FIELD NAME
-          fieldName = stringFromBytes(bytes.bytes, bytes.offset, len).intern();
+          fieldName = stringFromBytesIntern(bytes.bytes, bytes.offset, len);
           bytes.skip(len);
 
           Tuple<Integer, OType> valuePositionAndType = getPointerAndTypeFromCurrentPosition(bytes);

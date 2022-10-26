@@ -101,6 +101,7 @@ public class OSharedContextDistributed extends OSharedContextEmbedded {
 
   @Override
   public synchronized void close() {
+    stringCache.close();
     viewManager.close();
     schema.close();
     security.close();
@@ -112,6 +113,7 @@ public class OSharedContextDistributed extends OSharedContextEmbedded {
     executionPlanCache.invalidate();
     liveQueryOps.close();
     liveQueryOpsV2.close();
+    activeDistributedQueries.values().forEach(x -> x.close());
     loaded = false;
   }
 

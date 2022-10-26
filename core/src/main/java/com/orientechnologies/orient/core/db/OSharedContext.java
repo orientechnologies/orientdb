@@ -43,6 +43,7 @@ public abstract class OSharedContext extends OListenerManger<OMetadataUpdateList
   protected OQueryStats queryStats;
   protected volatile boolean loaded = false;
   protected Map<String, Object> resources;
+  protected OStringCache stringCache;
 
   public OSharedContext() {
     super(true);
@@ -135,5 +136,9 @@ public abstract class OSharedContext extends OListenerManger<OMetadataUpdateList
   public synchronized void reInit(
       OAbstractPaginatedStorage storage2, ODatabaseDocumentInternal database) {
     throw new UnsupportedOperationException();
+  }
+
+  public OStringCache getStringCache() {
+    return this.stringCache;
   }
 }

@@ -734,6 +734,12 @@ public enum OGlobalConfiguration { // ENVIRONMENT
   DB_CACHED_POOL_CAPACITY(
       "db.cached.pool.capacity", "Default database cached pools capacity", Integer.class, 100),
 
+  DB_STRING_CAHCE_SIZE(
+      "db.string.cache.size",
+      "Number of common string to keep in memory cache",
+      Integer.class,
+      5000),
+
   DB_CACHED_POOL_CLEAN_UP_TIMEOUT(
       "db.cached.pool.cleanUpTimeout",
       "Default timeout for clean up cache from unused or closed database pools, value in milliseconds",
