@@ -837,7 +837,9 @@ public abstract class OClassImpl implements OClass {
     try {
 
       for (int id : clusterIds) {
+        if (id < 0) continue;
         final String clusterName = db.getClusterNameById(id);
+        if (clusterName == null) continue;
         db.checkForClusterPermissions(clusterName);
 
         final ORecordIteratorCluster<ORecord> iteratorCluster = db.browseCluster(clusterName);

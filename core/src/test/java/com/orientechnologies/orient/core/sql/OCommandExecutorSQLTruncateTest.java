@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.io.IOException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -38,6 +39,24 @@ public class OCommandExecutorSQLTruncateTest {
     Number ret = database.command(new OCommandSQL("truncate class A ")).execute();
 
     assertEquals(ret.intValue(), 1);
+  }
+
+  @Test
+  public void testTruncateAPI() throws IOException {
+    OClass vcl = database.getMetadata().getSchema().createClass("A");
+
+    ODocument doc = new ODocument("A");
+    database.save(doc);
+    database.getMetadata().getSchema().getClasses().stream()
+        .filter(oClass -> !oClass.getName().startsWith("OSecurity")) //
+        .forEach(
+            oClass -> {
+              if (oClass.count() > 0) {
+                database
+                    .command("truncate class " + oClass.getName() + " POLYMORPHIC UNSAFE")
+                    .close();
+              }
+            });
   }
 
   @Test
