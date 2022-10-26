@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContaine
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OMixedIndexRIDContainer;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -198,24 +199,14 @@ public class OIndexFullText extends OIndexMultiValues {
     key = getCollatingValue(key);
 
     final Set<String> words = splitIntoWords(key.toString());
-    final OModifiableBoolean removed = new OModifiableBoolean(false);
-
+    ODatabaseDocumentInternal database = getDatabase();
+    database.begin();
     for (final String word : words) {
-      acquireSharedLock();
-      try {
-        if (apiVersion == 0) {
-          removeV0(rid, removed, word);
-        } else if (apiVersion == 1) {
-          removeV1(rid, removed, word);
-        } else {
-          throw new IllegalStateException("Invalid API version, " + apiVersion);
-        }
-      } finally {
-        releaseSharedLock();
-      }
+      database.getTransaction().addIndexEntry(this, super.getName(), OPERATION.REMOVE, word, rid);
     }
+    database.commit();
 
-    return removed.getValue();
+    return true;
   }
 
   private void removeV0(OIdentifiable value, OModifiableBoolean removed, String word) {
