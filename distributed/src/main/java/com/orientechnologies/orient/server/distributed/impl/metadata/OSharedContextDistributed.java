@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.OMetadataUpdateListener;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
+import com.orientechnologies.orient.core.db.OStringCache;
 import com.orientechnologies.orient.core.db.OrientDBDistributed;
 import com.orientechnologies.orient.core.db.viewmanager.ViewManager;
 import com.orientechnologies.orient.core.index.OIndexException;
@@ -32,6 +33,12 @@ public class OSharedContextDistributed extends OSharedContextEmbedded {
   }
 
   protected void init(OStorage storage) {
+    stringCache =
+        new OStringCache(
+            storage
+                .getConfiguration()
+                .getContextConfiguration()
+                .getValueAsInteger(OGlobalConfiguration.DB_STRING_CAHCE_SIZE));
     schema = new OSchemaDistributed(this);
     security = orientDB.getSecuritySystem().newSecurity(storage.getName());
     indexManager = new OIndexManagerDistributed(storage);
