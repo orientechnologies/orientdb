@@ -2,7 +2,7 @@ package com.orientechnologies.common.directmemory;
 
 import com.kenai.jffi.MemoryIO;
 import com.orientechnologies.common.directmemory.ODirectMemoryAllocator.Intention;
-import java.lang.ref.WeakReference;
+import java.lang.ref.SoftReference;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
@@ -12,7 +12,7 @@ public final class OPointer {
   private final int size;
   private final Intention intention;
 
-  private WeakReference<ByteBuffer> byteBuffer;
+  private SoftReference<ByteBuffer> byteBuffer;
   private int hash = 0;
 
   OPointer(long pointer, int size, Intention intention) {
@@ -29,12 +29,12 @@ public final class OPointer {
     ByteBuffer buffer;
     if (byteBuffer == null) {
       buffer = createNativeBuffer();
-      byteBuffer = new WeakReference<>(buffer);
+      byteBuffer = new SoftReference<>(buffer);
     } else {
       buffer = byteBuffer.get();
       if (buffer == null) {
         buffer = createNativeBuffer();
-        byteBuffer = new WeakReference<>(buffer);
+        byteBuffer = new SoftReference<>(buffer);
       }
     }
 
