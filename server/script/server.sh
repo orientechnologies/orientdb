@@ -96,6 +96,18 @@ for var in "$@"; do
     fi
 done
 
+# PROFILE OPTS, SIMPLY USE 'server.sh profile'
+PROFILE_OPTS=""
+ARGS='';
+for var in "$@"; do
+    if [ "$var" = "profile" ]; then
+        PROFILE_OPTS="-agentlib:hprof=cpu=samples,depth=200,file=$ORIENTDB_HOME/log/profile.hprof"
+    else
+        ARGS="$ARGS $var"
+    fi
+done
+
+
 # ORIENTDB memory options, default to 2GB of heap.
 
 if [ -z "$ORIENTDB_OPTS_MEMORY" ] ; then
@@ -118,6 +130,7 @@ exec "$JAVA" $JAVA_OPTS \
     $JAVA_OPTS_SCRIPT \
     $ORIENTDB_SETTINGS \
     $DEBUG_OPTS \
+    $PROFILE_OPTS \
     -Djava.util.logging.manager=com.orientechnologies.common.log.ShutdownLogManager \
     -Djava.util.logging.config.file="$ORIENTDB_LOG_CONF" \
     -Dorientdb.config.file="$CONFIG_FILE" \
