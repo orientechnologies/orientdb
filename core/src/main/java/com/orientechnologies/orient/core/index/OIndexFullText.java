@@ -171,17 +171,6 @@ public class OIndexFullText extends OIndexMultiValues {
     }
   }
 
-  private void doPutV1(OIdentifiable singleValue, String word) {
-    while (true) {
-      try {
-        storage.putRidIndexEntry(indexId, word, singleValue.getIdentity());
-        break;
-      } catch (OInvalidIndexEngineIdException ignore) {
-        doReloadIndexEngine();
-      }
-    }
-  }
-
   /**
    * Splits passed in key on several words and remove records with keys equals to any item of split
    * result and values equals to passed in value.
@@ -229,18 +218,6 @@ public class OIndexFullText extends OIndexMultiValues {
         } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
-      }
-    }
-  }
-
-  private void removeV1(OIdentifiable value, OModifiableBoolean removed, String word) {
-    while (true) {
-      try {
-        final boolean rm = storage.removeRidIndexEntry(indexId, word, value.getIdentity());
-        removed.setValue(rm);
-        break;
-      } catch (OInvalidIndexEngineIdException ignore) {
-        doReloadIndexEngine();
       }
     }
   }
