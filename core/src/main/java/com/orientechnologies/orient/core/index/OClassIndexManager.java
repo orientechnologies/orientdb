@@ -76,6 +76,13 @@ public class OClassIndexManager {
     applyChanges(ops);
   }
 
+  public static void reIndex(ODocument document, ODatabaseDocumentInternal database, OIndex index) {
+    document = checkForLoading(document);
+    List<IndexChange> ops = new ArrayList<>();
+    addIndexEntry(document, document.getIdentity(), getTransactionalIndex(database, index), ops);
+    applyChanges(ops);
+  }
+
   public static void processIndexOnCreate(
       ODatabaseDocumentInternal database, ODocument document, List<IndexChange> ops) {
     final OImmutableClass cls = ODocumentInternal.getImmutableSchemaClass(database, document);

@@ -34,7 +34,6 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.exception.OManualIndexesAreProhibited;
-import com.orientechnologies.orient.core.exception.OTooBigIndexKeyException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
@@ -60,7 +59,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
@@ -932,44 +930,6 @@ public abstract class OIndexAbstract implements OIndexInternal {
 
   protected abstract OBinarySerializer determineValueSerializer();
 
-  protected void populateIndex(ODocument doc, Object fieldValue) {
-    acquireSharedLock();
-    try {
-
-      if (fieldValue instanceof Collection) {
-        for (final Object fieldValueItem : (Collection<?>) fieldValue) {
-          Object key = getCollatingValue(fieldValueItem);
-
-          final ORID identity = doc.getIdentity();
-
-          while (true) {
-            try {
-              doPut(storage, key, identity);
-              return;
-            } catch (OInvalidIndexEngineIdException e) {
-              doReloadIndexEngine();
-            }
-          }
-        }
-      } else {
-        Object key = getCollatingValue(fieldValue);
-
-        final ORID identity = doc.getIdentity();
-
-        while (true) {
-          try {
-            doPut(storage, key, identity);
-            return;
-          } catch (OInvalidIndexEngineIdException e) {
-            doReloadIndexEngine();
-          }
-        }
-      }
-    } finally {
-      releaseSharedLock();
-    }
-  }
-
   public Object getCollatingValue(final Object key) {
     if (key != null && indexDefinition != null) return indexDefinition.getCollate().transform(key);
     return key;
@@ -1047,50 +1007,34 @@ public abstract class OIndexAbstract implements OIndexInternal {
       long documentNum,
       long documentIndexed,
       long documentTotal) {
-    try {
-      for (final ORecord record : getDatabase().browseCluster(clusterName)) {
-        if (Thread.interrupted())
-          throw new OCommandExecutionException("The index rebuild has been interrupted");
+    if (indexDefinition == null)
+      throw new OConfigurationException(
+          "Index '"
+              + name
+              + "' cannot be rebuilt because has no a valid definition ("
+              + indexDefinition
+              + ")");
+    ODatabaseDocumentInternal database = getDatabase();
+    database.begin();
+    for (final ORecord record : database.browseCluster(clusterName)) {
+      if (Thread.interrupted())
+        throw new OCommandExecutionException("The index rebuild has been interrupted");
 
-        if (record instanceof ODocument) {
-          final ODocument doc = (ODocument) record;
-
-          if (indexDefinition == null)
-            throw new OConfigurationException(
-                "Index '"
-                    + name
-                    + "' cannot be rebuilt because has no a valid definition ("
-                    + indexDefinition
-                    + ")");
-
-          final Object fieldValue = indexDefinition.getDocumentValueToIndex(doc);
-
-          if (fieldValue != null || !indexDefinition.isNullValuesIgnored()) {
-            try {
-              populateIndex(doc, fieldValue);
-            } catch (OTooBigIndexKeyException | OIndexException e) {
-              OLogManager.instance()
-                  .error(
-                      this,
-                      "Exception during index rebuild. Exception was caused by following key/ value pair - key %s, value %s."
-                          + " Rebuild will continue from this point",
-                      e,
-                      fieldValue,
-                      doc.getIdentity());
-            }
-
-            ++documentIndexed;
-          }
-        }
-        documentNum++;
-
-        if (iProgressListener != null)
-          iProgressListener.onProgress(
-              this, documentNum, (float) (documentNum * 100.0 / documentTotal));
+      if (record instanceof ODocument) {
+        final ODocument doc = (ODocument) record;
+        OClassIndexManager.reIndex(doc, database, this);
+        ++documentIndexed;
       }
-    } catch (NoSuchElementException ignore) {
-      // END OF CLUSTER REACHED, IGNORE IT
+      if (documentIndexed % 1000 == 0) {
+        database.commit();
+      }
+      documentNum++;
+
+      if (iProgressListener != null)
+        iProgressListener.onProgress(
+            this, documentNum, (float) (documentNum * 100.0 / documentTotal));
     }
+    database.commit();
 
     return new long[] {documentNum, documentIndexed};
   }
