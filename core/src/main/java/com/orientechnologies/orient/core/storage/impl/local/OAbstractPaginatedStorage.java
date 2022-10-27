@@ -2985,25 +2985,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     final int internalIndexId = extractInternalId(indexId);
 
     try {
-      if (transaction.get() != null) {
-        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
-        return removeKeyFromIndexInternal(atomicOperation, internalIndexId, key);
-      }
-
-      stateLock.readLock().lock();
-      try {
-
-        checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
-
-        makeStorageDirty();
-
-        return atomicOperationsManager.calculateInsideAtomicOperation(
-            null,
-            atomicOperation -> removeKeyFromIndexInternal(atomicOperation, internalIndexId, key));
-      } finally {
-        stateLock.readLock().unlock();
-      }
+      assert transaction.get() != null;
+      final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
+      return removeKeyFromIndexInternal(atomicOperation, internalIndexId, key);
     } catch (final OInvalidIndexEngineIdException ie) {
       throw logAndPrepareForRethrow(ie);
     } catch (final RuntimeException ee) {
@@ -3210,7 +3194,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       int indexId, final Object key, final OIndexKeyUpdater<Object> valueCreator)
       throws OInvalidIndexEngineIdException {
     final int engineAPIVersion = extractEngineAPIVersion(indexId);
-    final int internalIndexId = extractInternalId(indexId);
 
     if (engineAPIVersion != 0) {
       throw new IllegalStateException(
@@ -3218,28 +3201,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
 
     try {
-      if (transaction.get() != null) {
-        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
-        assert atomicOperation != null;
-        doUpdateIndexEntry(atomicOperation, indexId, key, valueCreator);
-        return;
-      }
-
-      stateLock.readLock().lock();
-      try {
-
-        checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
-
-        makeStorageDirty();
-
-        atomicOperationsManager.executeInsideAtomicOperation(
-            null,
-            atomicOperation ->
-                doUpdateIndexEntry(atomicOperation, internalIndexId, key, valueCreator));
-      } finally {
-        stateLock.readLock().unlock();
-      }
+      assert transaction.get() != null;
+      final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
+      assert atomicOperation != null;
+      doUpdateIndexEntry(atomicOperation, indexId, key, valueCreator);
     } catch (final OInvalidIndexEngineIdException ie) {
       throw logAndPrepareForRethrow(ie);
     } catch (final RuntimeException ee) {
@@ -3316,28 +3281,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
 
     try {
-      if (transaction.get() != null) {
-        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
-        assert atomicOperation != null;
-        putRidIndexEntryInternal(atomicOperation, internalIndexId, key, value);
-        return;
-      }
-
-      stateLock.readLock().lock();
-      try {
-
-        checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
-
-        makeStorageDirty();
-
-        atomicOperationsManager.executeInsideAtomicOperation(
-            null,
-            atomicOperation ->
-                putRidIndexEntryInternal(atomicOperation, internalIndexId, key, value));
-      } finally {
-        stateLock.readLock().unlock();
-      }
+      assert transaction.get() != null;
+      final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
+      assert atomicOperation != null;
+      putRidIndexEntryInternal(atomicOperation, internalIndexId, key, value);
     } catch (final OInvalidIndexEngineIdException ie) {
       throw logAndPrepareForRethrow(ie);
     } catch (final RuntimeException ee) {
@@ -3371,27 +3318,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
 
     try {
-      if (transaction.get() != null) {
-        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
-        assert atomicOperation != null;
-        return removeRidIndexEntryInternal(atomicOperation, internalIndexId, key, value);
-      }
+      assert transaction.get() != null;
+      final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
+      assert atomicOperation != null;
+      return removeRidIndexEntryInternal(atomicOperation, internalIndexId, key, value);
 
-      stateLock.readLock().lock();
-      try {
-
-        checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
-
-        makeStorageDirty();
-
-        return atomicOperationsManager.calculateInsideAtomicOperation(
-            null,
-            atomicOperation ->
-                removeRidIndexEntryInternal(atomicOperation, internalIndexId, key, value));
-      } finally {
-        stateLock.readLock().unlock();
-      }
     } catch (final OInvalidIndexEngineIdException ie) {
       throw logAndPrepareForRethrow(ie);
     } catch (final RuntimeException ee) {
@@ -3417,7 +3348,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public void putIndexValue(int indexId, final Object key, final Object value)
       throws OInvalidIndexEngineIdException {
     final int engineAPIVersion = extractEngineAPIVersion(indexId);
-    final int internalIndexId = extractInternalId(indexId);
 
     if (engineAPIVersion != 0) {
       throw new IllegalStateException(
@@ -3425,27 +3355,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
 
     try {
-      if (transaction.get() != null) {
-        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
-        assert atomicOperation != null;
-        putIndexValueInternal(atomicOperation, indexId, key, value);
-        return;
-      }
+      assert transaction.get() != null;
+      final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
+      assert atomicOperation != null;
+      putIndexValueInternal(atomicOperation, indexId, key, value);
 
-      stateLock.readLock().lock();
-      try {
-
-        checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
-
-        makeStorageDirty();
-
-        atomicOperationsManager.executeInsideAtomicOperation(
-            null,
-            atomicOperation -> putIndexValueInternal(atomicOperation, internalIndexId, key, value));
-      } finally {
-        stateLock.readLock().unlock();
-      }
     } catch (final OInvalidIndexEngineIdException ie) {
       throw logAndPrepareForRethrow(ie);
     } catch (final RuntimeException ee) {
@@ -3496,27 +3410,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     final int internalIndexId = extractInternalId(indexId);
 
     try {
-      if (transaction.get() != null) {
-        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
-        assert atomicOperation != null;
-        return doValidatedPutIndexValue(atomicOperation, internalIndexId, key, value, validator);
-      }
-
-      stateLock.readLock().lock();
-      try {
-
-        checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
-
-        makeStorageDirty();
-
-        return atomicOperationsManager.calculateInsideAtomicOperation(
-            null,
-            atomicOperation ->
-                doValidatedPutIndexValue(atomicOperation, internalIndexId, key, value, validator));
-      } finally {
-        stateLock.readLock().unlock();
-      }
+      assert transaction.get() != null;
+      final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
+      assert atomicOperation != null;
+      return doValidatedPutIndexValue(atomicOperation, internalIndexId, key, value, validator);
     } catch (final OInvalidIndexEngineIdException ie) {
       throw logAndPrepareForRethrow(ie);
     } catch (final RuntimeException ee) {
