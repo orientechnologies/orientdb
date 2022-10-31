@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OPropertyAccess;
 import com.orientechnologies.orient.core.metadata.security.OPropertyEncryption;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -137,5 +138,9 @@ public class ODocumentInternal {
 
   public static void clearTransactionTrackData(ODocument doc) {
     doc.clearTransactionTrackData();
+  }
+
+  public static Iterator<String> iteratePropertieNames(ODocument doc) {
+    return doc.calculatePropertyNames().iterator();
   }
 }

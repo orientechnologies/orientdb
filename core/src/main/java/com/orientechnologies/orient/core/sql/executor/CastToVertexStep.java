@@ -38,9 +38,7 @@ public class CastToVertexStep extends AbstractExecutionStep {
             if (result instanceof OResultInternal) {
               ((OResultInternal) result).setElement(result.getElement().get().asVertex().get());
             } else {
-              OResultInternal r = new OResultInternal();
-              r.setElement(result.getElement().get().asVertex().get());
-              result = r;
+              result = new OResultInternal(result.getElement().get().asVertex().get());
             }
           } else {
             throw new OCommandExecutionException("Current element is not a vertex: " + result);

@@ -31,13 +31,11 @@ public class ConvertToUpdatableResultStepTest extends TestUtilsFixture {
             OInternalResultSet result = new OInternalResultSet();
             if (!done) {
               for (int i = 0; i < 10; i++) {
-                OResultInternal item = new OResultInternal();
                 ODocument document = new ODocument();
                 document.setProperty(STRING_PROPERTY, RandomStringUtils.randomAlphanumeric(10));
                 document.setProperty(INTEGER_PROPERTY, new Random().nextInt());
                 documents.add(document);
-                item.setElement(document);
-                result.add(item);
+                result.add(new OResultInternal(document));
               }
               done = true;
             }

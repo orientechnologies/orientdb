@@ -431,6 +431,7 @@ public class OResultInternal implements OResult {
     if (element instanceof OContextualRecordId) {
       this.addMetadata(((OContextualRecordId) element).getContext());
     }
+    this.content = null;
   }
 
   @Override

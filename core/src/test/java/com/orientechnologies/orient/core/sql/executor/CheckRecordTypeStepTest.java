@@ -26,9 +26,7 @@ public class CheckRecordTypeStepTest extends TestUtilsFixture {
             OInternalResultSet result = new OInternalResultSet();
             if (!done) {
               for (int i = 0; i < 10; i++) {
-                OResultInternal item = new OResultInternal();
-                item.setElement(new ODocument(className));
-                result.add(item);
+                result.add(new OResultInternal(new ODocument(className)));
               }
               done = true;
             }
@@ -57,9 +55,8 @@ public class CheckRecordTypeStepTest extends TestUtilsFixture {
             OInternalResultSet result = new OInternalResultSet();
             if (!done) {
               for (int i = 0; i < 10; i++) {
-                OResultInternal item = new OResultInternal();
-                item.setElement(new ODocument(i % 2 == 0 ? parentClass : childClass));
-                result.add(item);
+                result.add(
+                    new OResultInternal(new ODocument(i % 2 == 0 ? parentClass : childClass)));
               }
               done = true;
             }
@@ -88,9 +85,9 @@ public class CheckRecordTypeStepTest extends TestUtilsFixture {
             OInternalResultSet result = new OInternalResultSet();
             if (!done) {
               for (int i = 0; i < 10; i++) {
-                OResultInternal item = new OResultInternal();
-                item.setElement(new ODocument(i % 2 == 0 ? firstClassName : secondClassName));
-                result.add(item);
+                result.add(
+                    new OResultInternal(
+                        new ODocument(i % 2 == 0 ? firstClassName : secondClassName)));
               }
               done = true;
             }

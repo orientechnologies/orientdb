@@ -26,10 +26,11 @@ public class OIteratorResultSet implements OResultSet {
       return (OResult) val;
     }
 
-    OResultInternal result = new OResultInternal();
+    OResultInternal result;
     if (val instanceof OIdentifiable) {
-      result.setElement((OIdentifiable) val);
+      result = new OResultInternal((OIdentifiable) val);
     } else {
+      result = new OResultInternal();
       result.setProperty("value", val);
     }
     return result;

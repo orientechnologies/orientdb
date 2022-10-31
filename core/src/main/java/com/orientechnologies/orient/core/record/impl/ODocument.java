@@ -291,7 +291,7 @@ public class ODocument extends ORecordAbstract
     return Optional.ofNullable(getSchemaClass());
   }
 
-  private Stream<String> calculatePropertyNames() {
+  protected Stream<String> calculatePropertyNames() {
     checkForLoading();
 
     if (status == ORecordElement.STATUS.LOADED
@@ -315,7 +315,6 @@ public class ODocument extends ORecordAbstract
 
     return fields.entrySet().stream()
         .filter(
-            // s.getValue().property.getType() returns OType
             s ->
                 s.getValue().exists()
                     && (propertyAccess == null || propertyAccess.isReadable(s.getKey())))

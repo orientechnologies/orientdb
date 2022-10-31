@@ -76,8 +76,9 @@ public class OVertexDocument extends ODocument implements OVertex {
     }
 
     Set<String> candidateClasses = new HashSet<>();
-    String[] fieldNames = fieldNames();
-    for (String fieldName : fieldNames) {
+    Iterator<String> fieldNames = calculatePropertyNames().iterator();
+    while (fieldNames.hasNext()) {
+      String fieldName = fieldNames.next();
       prefixes.stream()
           .filter(prefix -> fieldName.startsWith(prefix))
           .forEach(
@@ -98,20 +99,22 @@ public class OVertexDocument extends ODocument implements OVertex {
         new OMultiCollectionIterator<OEdge>().setEmbedded(true);
 
     labels = resolveAliases(labels);
-    Set<String> fieldNames = null;
+    Iterator<String> fieldNames = null;
     if (labels != null && labels.length > 0) {
       // EDGE LABELS: CREATE FIELD NAME TABLE (FASTER THAN EXTRACT FIELD NAMES FROM THE DOCUMENT)
-      fieldNames = getEdgeFieldNames(direction, labels);
+      Set<String> toLoadFieldNames = getEdgeFieldNames(direction, labels);
 
-      if (fieldNames != null)
+      if (toLoadFieldNames != null) {
         // EARLY FETCH ALL THE FIELDS THAT MATTERS
-        deserializeFields(fieldNames.toArray(new String[] {}));
+        deserializeFields(toLoadFieldNames.toArray(new String[] {}));
+        fieldNames = toLoadFieldNames.iterator();
+      }
     }
 
-    if (fieldNames == null) fieldNames = getPropertyNames();
+    if (fieldNames == null) fieldNames = calculatePropertyNames().iterator();
 
-    for (String fieldName : fieldNames) {
-
+    while (fieldNames.hasNext()) {
+      String fieldName = fieldNames.next();
       final OPair<ODirection, String> connection = getConnection(direction, fieldName, labels);
       if (connection == null)
         // SKIP THIS FIELD
