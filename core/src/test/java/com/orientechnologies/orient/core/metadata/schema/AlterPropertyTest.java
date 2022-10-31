@@ -7,7 +7,6 @@ import static org.junit.Assert.fail;
 
 import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.exception.OSchemaException;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -88,9 +87,7 @@ public class AlterPropertyTest extends BaseMemoryDatabase {
     OClass classLinked = schema.createClass("LinkedClass");
     OProperty prop = classA.createProperty("propertyLink", OType.LINK, classLinked);
     assertNotNull(prop.getLinkedClass());
-    db.command(
-            new OCommandSQL("alter property TestRemoveLinkedClass.propertyLink linkedclass null"))
-        .execute();
+    db.command("alter property TestRemoveLinkedClass.propertyLink linkedclass null").close();
     assertNull(prop.getLinkedClass());
   }
 
@@ -100,10 +97,10 @@ public class AlterPropertyTest extends BaseMemoryDatabase {
     OClass classA = schema.createClass("TestWrongMax");
     OProperty prop = classA.createProperty("dates", OType.EMBEDDEDLIST, OType.DATE);
 
-    db.command(new OCommandSQL("alter property TestWrongMax.dates max 2016-05-25")).execute();
+    db.command("alter property TestWrongMax.dates max 2016-05-25").close();
 
     try {
-      db.command(new OCommandSQL("alter property TestWrongMax.dates max '2016-05-25'")).execute();
+      db.command("alter property TestWrongMax.dates max '2016-05-25'").close();
       Assert.fail();
     } catch (Exception e) {
     }
@@ -113,11 +110,11 @@ public class AlterPropertyTest extends BaseMemoryDatabase {
   public void testAlterPropertyWithDot() {
 
     OSchema schema = db.getMetadata().getSchema();
-    db.command(new OCommandSQL("create class testAlterPropertyWithDot")).execute();
-    db.command(new OCommandSQL("create property testAlterPropertyWithDot.`a.b` STRING")).execute();
+    db.command("create class testAlterPropertyWithDot").close();
+    db.command("create property testAlterPropertyWithDot.`a.b` STRING").close();
     schema.reload();
     Assert.assertNotNull(schema.getClass("testAlterPropertyWithDot").getProperty("a.b"));
-    db.command(new OCommandSQL("alter property testAlterPropertyWithDot.`a.b` name c")).execute();
+    db.command("alter property testAlterPropertyWithDot.`a.b` name c").close();
     schema.reload();
     Assert.assertNull(schema.getClass("testAlterPropertyWithDot").getProperty("a.b"));
     Assert.assertNotNull(schema.getClass("testAlterPropertyWithDot").getProperty("c"));

@@ -21,17 +21,20 @@ package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.OLiveQueryMonitor;
+import com.orientechnologies.orient.core.db.OLiveQueryResultListener;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OLegacyResultSet;
-import com.orientechnologies.orient.core.sql.query.OLiveQuery;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,13 +46,33 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 /** Created by luigidellaquila on 13/04/15. */
 public class OLiveQueryTest {
 
-  class MyLiveQueryListener implements OLiveResultListener {
+  private OrientDB odb;
+  private ODatabaseSession db;
+
+  @Before
+  public void before() {
+    odb = new OrientDB("memory:", OrientDBConfig.defaultConfig());
+    odb.execute(
+        "create database OLiveQueryTest memory users ( admin identified by 'admin' role admin, reader identified by 'reader' role reader)");
+    db = odb.open("OLiveQueryTest", "admin", "admin");
+  }
+
+  @After
+  public void after() {
+    db.close();
+    odb.drop("OLiveQueryTest");
+    odb.close();
+  }
+
+  class MyLiveQueryListener implements OLiveResultListener, OLiveQueryResultListener {
 
     public CountDownLatch latch;
 
@@ -58,6 +81,7 @@ public class OLiveQueryTest {
     }
 
     public List<ORecordOperation> ops = new ArrayList<ORecordOperation>();
+    public List<OResult> created = new ArrayList<OResult>();
 
     @Override
     public void onLiveResult(int iLiveToken, ORecordOperation iOp) throws OException {
@@ -70,164 +94,161 @@ public class OLiveQueryTest {
 
     @Override
     public void onUnsubscribe(int iLiveToken) {}
+
+    @Override
+    public void onCreate(ODatabaseDocument database, OResult data) {
+      created.add(data);
+      latch.countDown();
+    }
+
+    @Override
+    public void onUpdate(ODatabaseDocument database, OResult before, OResult after) {}
+
+    @Override
+    public void onDelete(ODatabaseDocument database, OResult data) {}
+
+    @Override
+    public void onError(ODatabaseDocument database, OException exception) {}
+
+    @Override
+    public void onEnd(ODatabaseDocument database) {}
   }
 
   @Test
   public void testLiveInsert() throws InterruptedException {
 
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OLiveQueryTest");
-    db.activateOnCurrentThread();
-    db.create();
-    try {
-      db.getMetadata().getSchema().createClass("test");
-      db.getMetadata().getSchema().createClass("test2");
-      MyLiveQueryListener listener = new MyLiveQueryListener(new CountDownLatch(2));
+    db.getMetadata().getSchema().createClass("test");
+    db.getMetadata().getSchema().createClass("test2");
+    MyLiveQueryListener listener = new MyLiveQueryListener(new CountDownLatch(2));
 
-      OLegacyResultSet<ODocument> tokens =
-          db.query(new OLiveQuery<ODocument>("live select from test", listener));
-      Assert.assertEquals(tokens.size(), 1);
+    OLiveQueryMonitor tokens = db.live("live select from test", listener);
+    Integer token = tokens.getMonitorId();
+    Assert.assertNotNull(token);
 
-      ODocument tokenDoc = tokens.get(0);
-      Integer token = tokenDoc.field("token");
-      Assert.assertNotNull(token);
+    db.command("insert into test set name = 'foo', surname = 'bar'").close();
+    db.command("insert into test set name = 'foo', surname = 'baz'").close();
+    db.command("insert into test2 set name = 'foo'").close();
 
-      db.command(new OCommandSQL("insert into test set name = 'foo', surname = 'bar'")).execute();
-      db.command(new OCommandSQL("insert into test set name = 'foo', surname = 'baz'")).execute();
-      db.command(new OCommandSQL("insert into test2 set name = 'foo'")).execute();
+    Assert.assertTrue(listener.latch.await(1, TimeUnit.MINUTES));
 
-      Assert.assertTrue(listener.latch.await(1, TimeUnit.MINUTES));
+    tokens.unSubscribe();
 
-      db.command(new OCommandSQL("live unsubscribe " + token)).execute();
+    db.command("insert into test set name = 'foo', surname = 'bax'").close();
+    db.command("insert into test2 set name = 'foo'").close();
+    db.command("insert into test set name = 'foo', surname = 'baz'").close();
 
-      db.command(new OCommandSQL("insert into test set name = 'foo', surname = 'bax'")).execute();
-      db.command(new OCommandSQL("insert into test2 set name = 'foo'"));
-      db.command(new OCommandSQL("insert into test set name = 'foo', surname = 'baz'")).execute();
-
-      Assert.assertEquals(listener.ops.size(), 2);
-      for (ORecordOperation doc : listener.ops) {
-        Assert.assertEquals(doc.type, ORecordOperation.CREATED);
-        Assert.assertEquals(((ODocument) doc.record).field("name"), "foo");
-      }
-    } finally {
-
-      db.drop();
+    Assert.assertEquals(listener.created.size(), 2);
+    for (OResult res : listener.created) {
+      Assert.assertEquals(res.getProperty("name"), "foo");
     }
   }
 
   @Test
   public void testLiveInsertOnCluster() {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OLiveQueryTest");
-    db.activateOnCurrentThread();
-    db.create();
+
+    OClass clazz = db.getMetadata().getSchema().createClass("test");
+
+    int defaultCluster = clazz.getDefaultClusterId();
+    final OStorage storage = ((ODatabaseDocumentInternal) db).getStorage();
+
+    MyLiveQueryListener listener = new MyLiveQueryListener(new CountDownLatch(1));
+
+    db.live("live select from cluster:" + storage.getClusterNameById(defaultCluster), listener);
+
+    db.command(
+            "insert into cluster:"
+                + storage.getClusterNameById(defaultCluster)
+                + " set name = 'foo', surname = 'bar'")
+        .close();
+
     try {
-      OClass clazz = db.getMetadata().getSchema().createClass("test");
-
-      int defaultCluster = clazz.getDefaultClusterId();
-      final OStorage storage = ((ODatabaseDocumentInternal) db).getStorage();
-
-      MyLiveQueryListener listener = new MyLiveQueryListener(new CountDownLatch(1));
-
-      db.query(
-          new OLiveQuery<ODocument>(
-              "live select from cluster:" + storage.getClusterNameById(defaultCluster), listener));
-
-      db.command(
-              new OCommandSQL(
-                  "insert into cluster:"
-                      + storage.getClusterNameById(defaultCluster)
-                      + " set name = 'foo', surname = 'bar'"))
-          .execute();
-
-      try {
-        Assert.assertTrue(listener.latch.await(1, TimeUnit.MINUTES));
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-      Assert.assertEquals(listener.ops.size(), 1);
-      for (ORecordOperation doc : listener.ops) {
-        Assert.assertEquals(doc.type, ORecordOperation.CREATED);
-        Assert.assertEquals(((ODocument) doc.record).field("name"), "foo");
-        ORID rid = ((ODocument) doc.record).getProperty("@rid");
-        Assert.assertNotNull(rid);
-        //        Assert.assertTrue(rid.getClusterPosition() >= 0); //TODO fix live queries with
-        // microtx!
-      }
-    } finally {
-      db.drop();
+      Assert.assertTrue(listener.latch.await(1, TimeUnit.MINUTES));
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+    Assert.assertEquals(listener.created.size(), 1);
+    for (OResult doc : listener.created) {
+      Assert.assertEquals(doc.getProperty("name"), "foo");
+      ORID rid = doc.getProperty("@rid");
+      Assert.assertNotNull(rid);
+      Assert.assertTrue(rid.getClusterPosition() >= 0);
     }
   }
 
   @Test
   public void testRestrictedLiveInsert() throws ExecutionException, InterruptedException {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OLiveQueryTest");
-    db.activateOnCurrentThread();
-    db.create();
-    try {
-      OSchema schema = db.getMetadata().getSchema();
-      OClass oRestricted = schema.getClass("ORestricted");
-      schema.createClass("test", oRestricted);
 
-      int liveMatch = 1;
-      List<ODocument> query =
-          db.query(new OSQLSynchQuery("select from OUSer where name = 'reader'"));
+    OSchema schema = db.getMetadata().getSchema();
+    OClass oRestricted = schema.getClass("ORestricted");
+    schema.createClass("test", oRestricted);
 
-      final OIdentifiable reader = query.iterator().next().getIdentity();
-      final OIdentifiable current = db.getUser().getIdentity();
+    int liveMatch = 1;
+    OResultSet query = db.query("select from OUSer where name = 'reader'");
 
-      ExecutorService executorService = Executors.newSingleThreadExecutor();
+    final OIdentifiable reader = query.next().getIdentity().get();
+    final OIdentifiable current = db.getUser().getIdentity();
 
-      final CountDownLatch latch = new CountDownLatch(1);
-      final CountDownLatch dataArrived = new CountDownLatch(1);
-      Future<Integer> future =
-          executorService.submit(
-              new Callable<Integer>() {
-                @Override
-                public Integer call() throws Exception {
-                  ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OLiveQueryTest");
-                  db.open("reader", "reader");
+    ExecutorService executorService = Executors.newSingleThreadExecutor();
 
-                  final AtomicInteger integer = new AtomicInteger(0);
-                  db.query(
-                      new OLiveQuery<ODocument>(
-                          "live select from test",
-                          new OLiveResultListener() {
-                            @Override
-                            public void onLiveResult(int iLiveToken, ORecordOperation iOp)
-                                throws OException {
-                              integer.incrementAndGet();
-                              dataArrived.countDown();
-                            }
+    final CountDownLatch latch = new CountDownLatch(1);
+    final CountDownLatch dataArrived = new CountDownLatch(1);
+    Future<Integer> future =
+        executorService.submit(
+            new Callable<Integer>() {
+              @Override
+              public Integer call() throws Exception {
+                ODatabaseSession otherDb = odb.open("OLiveQueryTest", "reader", "reader");
 
-                            @Override
-                            public void onError(int iLiveToken) {}
+                final AtomicInteger integer = new AtomicInteger(0);
+                try {
+                  otherDb.live(
+                      "live select from test",
+                      new OLiveQueryResultListener() {
 
-                            @Override
-                            public void onUnsubscribe(int iLiveToken) {}
-                          }));
+                        @Override
+                        public void onCreate(ODatabaseDocument database, OResult data) {
+                          integer.incrementAndGet();
+                          dataArrived.countDown();
+                        }
 
-                  latch.countDown();
-                  Assert.assertTrue(dataArrived.await(1, TimeUnit.MINUTES));
-                  return integer.get();
+                        @Override
+                        public void onUpdate(
+                            ODatabaseDocument database, OResult before, OResult after) {}
+
+                        @Override
+                        public void onDelete(ODatabaseDocument database, OResult data) {}
+
+                        @Override
+                        public void onError(ODatabaseDocument database, OException exception) {}
+
+                        @Override
+                        public void onEnd(ODatabaseDocument database) {}
+                      });
+                } catch (RuntimeException e) {
+                  e.printStackTrace();
                 }
-              });
 
-      latch.await();
+                latch.countDown();
+                Assert.assertTrue(dataArrived.await(1, TimeUnit.MINUTES));
+                return integer.get();
+              }
+            });
 
-      db.command(new OCommandSQL("insert into test set name = 'foo', surname = 'bar'")).execute();
+    latch.await();
 
-      db.command(new OCommandSQL("insert into test set name = 'foo', surname = 'bar', _allow=?"))
-          .execute(
-              new ArrayList<OIdentifiable>() {
-                {
-                  add(current);
-                  add(reader);
-                }
-              });
+    db.command("insert into test set name = 'foo', surname = 'bar'").close();
 
-      Integer integer = future.get();
-      Assert.assertEquals(integer.intValue(), liveMatch);
-    } finally {
-      db.drop();
-    }
+    db.command(
+            "insert into test set name = 'foo', surname = 'bar', _allow=?",
+            new ArrayList<OIdentifiable>() {
+              {
+                add(current);
+                add(reader);
+              }
+            })
+        .close();
+
+    Integer integer = future.get();
+    Assert.assertEquals(integer.intValue(), liveMatch);
   }
 }
