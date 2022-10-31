@@ -241,14 +241,13 @@ public class OResultInternal implements OResult {
   }
 
   public Set<String> getPropertyNames() {
-    Set<String> result = new LinkedHashSet<>();
     if (element != null && !(element instanceof ORecordBytes)) {
-      result.addAll(((ODocument) element.getRecord()).getPropertyNames());
+      return ((ODocument) element.getRecord()).getPropertyNames();
+    } else if (content != null) {
+      return new LinkedHashSet<>(content.keySet());
+    } else {
+      return Collections.emptySet();
     }
-    if (content != null) {
-      result.addAll(content.keySet());
-    }
-    return result;
   }
 
   public boolean hasProperty(String propName) {

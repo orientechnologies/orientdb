@@ -4,6 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
@@ -96,6 +97,14 @@ public class OProjection extends SimpleNode {
         continue;
       }
       if (item.isAll()) {
+        iRecord
+            .getElement()
+            .ifPresent(
+                (e) -> {
+                  if (e.getRecord() instanceof ODocument) {
+                    ((ODocument) e.getRecord()).deserializeFields();
+                  }
+                });
         for (String alias : iRecord.getPropertyNames()) {
           if (this.excludes.contains(alias)) {
             continue;
