@@ -17,8 +17,9 @@ package com.orientechnologies.orient.core.serialization.serializer.binary.impl;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -27,7 +28,6 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.OResultBinary;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.OVarIntSerializer;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -47,9 +47,10 @@ import org.junit.runners.Parameterized;
 @RunWith(Parameterized.class)
 public class ORecordSerializerBinaryTest {
 
-  private static ODatabaseDocumentInternal db = null;
+  private static ODatabaseSession db = null;
   private static ORecordSerializerBinary serializer;
   private final int serializerVersion;
+  private OrientDB odb;
 
   @Parameterized.Parameters
   public static Collection<Object[]> generateParams() {
@@ -69,20 +70,20 @@ public class ORecordSerializerBinaryTest {
 
   @Before
   public void before() {
-    if (db != null) {
-      db.drop();
-    }
-    db = new ODatabaseDocumentTx("memory:test").create();
+    odb = new OrientDB("memory:", OrientDBConfig.defaultConfig());
+    odb.execute("create database test memory users ( admin identified by 'admin' role admin)");
+    db = odb.open("test", "admin", "admin");
     db.createClass("TestClass");
-    db.command(new OCommandSQL("create property TestClass.TestEmbedded EMBEDDED")).execute();
-    db.command(new OCommandSQL("create property TestClass.TestPropAny ANY")).execute();
+    db.command("create property TestClass.TestEmbedded EMBEDDED").close();
+    db.command("create property TestClass.TestPropAny ANY").close();
     serializer = new ORecordSerializerBinary((byte) serializerVersion);
   }
 
   @After
   public void after() {
-    db.drop();
-    db = null;
+    db.close();
+    odb.drop("test");
+    odb.close();
   }
 
   @Test

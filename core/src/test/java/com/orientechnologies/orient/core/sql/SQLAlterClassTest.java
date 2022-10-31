@@ -1,8 +1,7 @@
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.BaseMemoryDatabase;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import java.util.List;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -13,7 +12,7 @@ public class SQLAlterClassTest extends BaseMemoryDatabase {
     db.getMetadata().getSchema().createClass("TestClass");
 
     try {
-      db.command(new OCommandSQL("alter class TestClass name = 'test_class'")).execute();
+      db.command("alter class TestClass name = 'test_class'").close();
       Assert.fail("the rename should fail for wrong syntax");
     } catch (OCommandSQLParsingException ex) {
 
@@ -24,12 +23,11 @@ public class SQLAlterClassTest extends BaseMemoryDatabase {
   @Test
   public void testQuoted() {
     try {
-      db.command(new OCommandSQL("create class `Client-Type`")).execute();
-      db.command(new OCommandSQL("alter class `Client-Type` addcluster `client-type_usa`"))
-          .execute();
-      db.command(new OCommandSQL("insert into `Client-Type` set foo = 'bar'")).execute();
-      List<?> result = db.query(new OSQLSynchQuery<Object>("Select from `Client-Type`"));
-      Assert.assertEquals(result.size(), 1);
+      db.command("create class `Client-Type`").close();
+      db.command("alter class `Client-Type` addcluster `client-type_usa`").close();
+      db.command("insert into `Client-Type` set foo = 'bar'").close();
+      OResultSet result = db.query("Select from `Client-Type`");
+      Assert.assertEquals(result.stream().count(), 1);
     } catch (OCommandSQLParsingException ex) {
       Assert.fail();
     }
