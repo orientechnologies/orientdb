@@ -33,19 +33,53 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.*;
+import com.orientechnologies.orient.core.db.record.OAutoConvertToRecord;
+import com.orientechnologies.orient.core.db.record.ODetachable;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.record.ORecordLazyList;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
+import com.orientechnologies.orient.core.db.record.OTrackedList;
+import com.orientechnologies.orient.core.db.record.OTrackedMap;
+import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
+import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.exception.*;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OQueryParsingException;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.exception.OSchemaException;
+import com.orientechnologies.orient.core.exception.OSecurityException;
+import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.OEmptyMapEntryIterator;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
-import com.orientechnologies.orient.core.metadata.schema.*;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableProperty;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OIdentity;
 import com.orientechnologies.orient.core.metadata.security.OPropertyAccess;
 import com.orientechnologies.orient.core.metadata.security.OPropertyEncryption;
 import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
-import com.orientechnologies.orient.core.record.*;
+import com.orientechnologies.orient.core.record.OEdge;
+import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordAbstract;
+import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.ORecordSchemaAware;
+import com.orientechnologies.orient.core.record.ORecordVersionHelper;
+import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
@@ -54,13 +88,30 @@ import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.tx.OTransaction;
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.lang.ref.WeakReference;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Document representation to handle values dynamically. Can be used in schema-less, schema-mixed
@@ -290,7 +341,7 @@ public class ODocument extends ORecordAbstract
     return Optional.ofNullable(getSchemaClass());
   }
 
-  protected Stream<String> calculatePropertyNames() {
+  protected Set<String> calculatePropertyNames() {
     checkForLoading();
 
     if (status == ORecordElement.STATUS.LOADED
@@ -300,29 +351,47 @@ public class ODocument extends ORecordAbstract
       // DESERIALIZE FIELD NAMES ONLY (SUPPORTED ONLY BY BINARY SERIALIZER)
       final String[] fieldNames = recordFormat.getFieldNames(this, source);
       if (fieldNames != null) {
-        if (propertyAccess != null) {
-          return Arrays.stream(fieldNames).filter((e) -> propertyAccess.isReadable(e));
+        Set<String> fields = new LinkedHashSet<>();
+        if (propertyAccess != null && propertyAccess.hasFilters()) {
+          for (String fieldName : fieldNames) {
+            if (propertyAccess.isReadable(fieldName)) {
+              fields.add(fieldName);
+            }
+          }
         } else {
-          return Arrays.stream(fieldNames);
+
+          for (String fieldName : fieldNames) {
+            fields.add(fieldName);
+          }
         }
+        return fields;
       }
     }
 
     checkForFields();
 
-    if (fields == null || fields.size() == 0) return Stream.empty();
+    if (fields == null || fields.size() == 0) return Collections.emptySet();
 
-    return fields.entrySet().stream()
-        .filter(
-            s ->
-                s.getValue().exists()
-                    && (propertyAccess == null || propertyAccess.isReadable(s.getKey())))
-        .map(Entry::getKey);
+    Set<String> fields = new LinkedHashSet<>();
+    if (propertyAccess != null && propertyAccess.hasFilters()) {
+      for (Map.Entry<String, ODocumentEntry> entry : this.fields.entrySet()) {
+        if (entry.getValue().exists() && propertyAccess.isReadable(entry.getKey())) {
+          fields.add(entry.getKey());
+        }
+      }
+    } else {
+      for (Map.Entry<String, ODocumentEntry> entry : this.fields.entrySet()) {
+        if (entry.getValue().exists()) {
+          fields.add(entry.getKey());
+        }
+      }
+    }
+    return fields;
   }
 
   @Override
   public Set<String> getPropertyNames() {
-    return calculatePropertyNames().collect(Collectors.toSet());
+    return calculatePropertyNames();
   }
 
   /**
@@ -1215,7 +1284,7 @@ public class ODocument extends ORecordAbstract
 
   /** Returns the set of field names. */
   public String[] fieldNames() {
-    return calculatePropertyNames().collect(Collectors.toList()).toArray(new String[] {});
+    return calculatePropertyNames().toArray(new String[] {});
   }
 
   /** Returns the array of field values. */

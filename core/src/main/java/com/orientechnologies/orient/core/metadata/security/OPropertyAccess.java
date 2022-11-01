@@ -16,6 +16,10 @@ public class OPropertyAccess {
     this.filtered = filtered;
   }
 
+  public boolean hasFilters() {
+    return filtered != null && !filtered.isEmpty();
+  }
+
   public boolean isReadable(String property) {
     return filtered == null || !filtered.contains(property);
   }
