@@ -113,7 +113,6 @@ import com.orientechnologies.orient.core.storage.OStorageInfo;
 import com.orientechnologies.orient.core.storage.cluster.OOfflineClusterException;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorageComponent;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
@@ -1285,7 +1284,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     checkIfActive();
 
     getMetadata().makeThreadLocalSchemaSnapshot();
-    ORecordSerializationContext.pushContext();
     try {
       checkSecurity(
           ORule.ResourceGeneric.CLUSTER,
@@ -1406,7 +1404,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
                     + ")"),
             t);
     } finally {
-      ORecordSerializationContext.pullContext();
       getMetadata().clearThreadLocalSchemaSnapshot();
     }
   }
