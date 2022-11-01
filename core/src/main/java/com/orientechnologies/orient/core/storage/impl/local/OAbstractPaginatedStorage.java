@@ -5052,7 +5052,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   private ORawBuffer readRecord(final ORecordId rid, final boolean prefetchRecords) {
-    checkOpennessAndMigration();
 
     if (!rid.isPersistent()) {
       throw new ORecordNotFoundException(
@@ -5065,6 +5064,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
 
     if (transaction.get() != null) {
+      checkOpennessAndMigration();
       final OCluster cluster;
       try {
         cluster = doGetAndCheckCluster(rid.getClusterId());
@@ -5078,7 +5078,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     stateLock.readLock().lock();
     try {
-
+      checkOpennessAndMigration();
+      checkIfThreadIsBlocked();
       if (readLock) {
         final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
         if (db == null
@@ -5086,8 +5087,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           acquireReadLock(rid);
         }
       }
-      checkOpennessAndMigration();
-      checkIfThreadIsBlocked();
+
       final OCluster cluster;
       try {
         cluster = doGetAndCheckCluster(rid.getClusterId());
