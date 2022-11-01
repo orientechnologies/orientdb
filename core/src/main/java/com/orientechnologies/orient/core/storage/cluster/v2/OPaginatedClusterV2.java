@@ -664,8 +664,8 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
 
   private ORawBuffer internalReadRecord(
       final long clusterPosition,
-      final long pageIndex,
-      final int recordPosition,
+      long pageIndex,
+      int recordPosition,
       int pageCount,
       final OAtomicOperation atomicOperation)
       throws IOException {
@@ -678,16 +678,56 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
       }
     }
 
-    int recordVersion;
+    int recordVersion = 0;
 
-    try (final OCacheEntry cacheEntry =
-        loadPageForRead(atomicOperation, fileId, pageIndex, false, pageCount)) {
-      final OClusterPage localPage = new OClusterPage(cacheEntry);
-      recordVersion = localPage.getRecordVersion(recordPosition);
-    }
+    final List<byte[]> recordChunks = new ArrayList<>(2);
+    int contentSize = 0;
 
-    final byte[] fullContent =
-        readFullEntry(clusterPosition, pageIndex, recordPosition, atomicOperation, pageCount);
+    long nextPagePointer;
+    boolean firstEntry = true;
+    do {
+      try (final OCacheEntry cacheEntry =
+          loadPageForRead(atomicOperation, fileId, pageIndex, false, pageCount)) {
+        final OClusterPage localPage = new OClusterPage(cacheEntry);
+        if (firstEntry) {
+          recordVersion = localPage.getRecordVersion(recordPosition);
+        }
+
+        if (localPage.isDeleted(recordPosition)) {
+          if (recordChunks.isEmpty()) {
+            return null;
+          } else {
+            throw new OPaginatedClusterException(
+                "Content of record " + new ORecordId(id, clusterPosition) + " was broken", this);
+          }
+        }
+
+        final byte[] content =
+            localPage.getRecordBinaryValue(
+                recordPosition, 0, localPage.getRecordSize(recordPosition));
+        assert content != null;
+
+        if (firstEntry
+            && content[content.length - OLongSerializer.LONG_SIZE - OByteSerializer.BYTE_SIZE]
+                == 0) {
+          return null;
+        }
+
+        recordChunks.add(content);
+        nextPagePointer =
+            OLongSerializer.INSTANCE.deserializeNative(
+                content, content.length - OLongSerializer.LONG_SIZE);
+        contentSize += content.length - OLongSerializer.LONG_SIZE - OByteSerializer.BYTE_SIZE;
+
+        firstEntry = false;
+      }
+
+      pageIndex = getPageIndex(nextPagePointer);
+      recordPosition = getRecordPosition(nextPagePointer);
+    } while (nextPagePointer >= 0);
+
+    byte[] fullContent = convertRecordChunksToSingleChunk(recordChunks, contentSize);
+
     if (fullContent == null) {
       return null;
     }
@@ -1334,68 +1374,6 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
     physicalPosition.clusterPosition = clusterPosition;
     physicalPosition.recordVersion = version;
     return physicalPosition;
-  }
-
-  private byte[] readFullEntry(
-      final long clusterPosition,
-      long pageIndex,
-      int recordPosition,
-      final OAtomicOperation atomicOperation,
-      int pageCount)
-      throws IOException {
-    final List<byte[]> recordChunks = new ArrayList<>(2);
-    int contentSize = 0;
-
-    if (pageCount > 1) {
-      try (final OCacheEntry stateCacheEntry =
-          loadPageForRead(atomicOperation, fileId, STATE_ENTRY_INDEX, false)) {
-        final OPaginatedClusterStateV2 state = new OPaginatedClusterStateV2(stateCacheEntry);
-        pageCount = (int) Math.min(state.getFileSize() + 1 - pageIndex, pageCount);
-      }
-    }
-
-    long nextPagePointer;
-    boolean firstEntry = true;
-    do {
-
-      try (final OCacheEntry cacheEntry =
-          loadPageForRead(atomicOperation, fileId, pageIndex, false, pageCount)) {
-        final OClusterPage localPage = new OClusterPage(cacheEntry);
-
-        if (localPage.isDeleted(recordPosition)) {
-          if (recordChunks.isEmpty()) {
-            return null;
-          } else {
-            throw new OPaginatedClusterException(
-                "Content of record " + new ORecordId(id, clusterPosition) + " was broken", this);
-          }
-        }
-
-        final byte[] content =
-            localPage.getRecordBinaryValue(
-                recordPosition, 0, localPage.getRecordSize(recordPosition));
-        assert content != null;
-
-        if (firstEntry
-            && content[content.length - OLongSerializer.LONG_SIZE - OByteSerializer.BYTE_SIZE]
-                == 0) {
-          return null;
-        }
-
-        recordChunks.add(content);
-        nextPagePointer =
-            OLongSerializer.INSTANCE.deserializeNative(
-                content, content.length - OLongSerializer.LONG_SIZE);
-        contentSize += content.length - OLongSerializer.LONG_SIZE - OByteSerializer.BYTE_SIZE;
-
-        firstEntry = false;
-      }
-
-      pageIndex = getPageIndex(nextPagePointer);
-      recordPosition = getRecordPosition(nextPagePointer);
-    } while (nextPagePointer >= 0);
-
-    return convertRecordChunksToSingleChunk(recordChunks, contentSize);
   }
 
   private static byte[] convertRecordChunksToSingleChunk(
