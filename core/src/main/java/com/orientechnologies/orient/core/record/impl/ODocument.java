@@ -585,11 +585,6 @@ public class ODocument extends ORecordAbstract
     if (internal == null) {
       return;
     }
-    if (!internal
-        .getConfiguration()
-        .getValueAsBoolean(OGlobalConfiguration.SECURITY_ADVANCED_POLICY)) {
-      return;
-    }
     OSecurityInternal security = internal.getSharedContext().getSecurity();
     for (Entry<String, ODocumentEntry> mapEntry : iRecord.fields.entrySet()) {
       ODocumentEntry entry = mapEntry.getValue();
@@ -3297,7 +3292,7 @@ public class ODocument extends ORecordAbstract
 
   private void fetchSchemaIfCan(ODatabaseDocumentInternal db) {
     if (schema == null) {
-      if (db != null && !db.isClosed()) {
+      if (db != null) {
         OMetadataInternal metadata = db.getMetadata();
         schema = metadata.getImmutableSchemaSnapshot();
       }
