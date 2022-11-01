@@ -608,10 +608,6 @@ public class OrientDBEmbedded implements OrientDBInternal {
   protected OAbstractPaginatedStorage getOrInitStorage(String name) {
     OAbstractPaginatedStorage storage = storages.get(name);
     if (storage == null) {
-      if (basePath == null) {
-        throw new ODatabaseException(
-            "Cannot open database '" + name + "' because it does not exists");
-      }
       Path storagePath = Paths.get(buildName(name));
       if (OLocalPaginatedStorage.exists(storagePath)) {
         name = storagePath.getFileName().toString();
