@@ -227,9 +227,7 @@ public class OFunction extends ODocumentWrapper {
                 .getCommandManager()
                 .getScriptExecutor(getLanguage());
 
-        OBasicCommandContext context = new OBasicCommandContext();
-        context.setDatabase(database);
-        result = executor.executeFunction(context, getName(), iArgs);
+        result = executor.execute(database, getCode(), iArgs);
 
         break;
 
