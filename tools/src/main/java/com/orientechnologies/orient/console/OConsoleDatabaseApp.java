@@ -390,7 +390,7 @@ public class OConsoleDatabaseApp extends OrientConsole
             currentDatabaseUserName,
             currentDatabaseUserPassword);
       } else {
-        orientDB.create(urlConnection.getDbName(), urlConnection.getDbType().get());
+        orientDB.create(urlConnection.getDbName(), type);
       }
     }
     currentDatabase =
