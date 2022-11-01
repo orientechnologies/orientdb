@@ -1427,7 +1427,7 @@ public class OSecurityShared implements OSecurityInternal {
       // executeNoAuth
       return true;
     }
-   
+
     if (record instanceof OElement) {
       OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass((ODocument) record);
       if (clazz == null) {
