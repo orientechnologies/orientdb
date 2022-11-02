@@ -202,9 +202,9 @@ public class OrientJdbcResultSetMetaDataTest extends OrientJdbcDbPerClassTemplat
 
     ResultSetMetaData metaData = rs.getMetaData();
 
-    assertThat(metaData.getColumnName(1)).isEqualTo("intKey");
-    assertThat(metaData.getColumnTypeName(1)).isEqualTo("INTEGER");
-    assertThat(rs.getObject(1)).isInstanceOf(Integer.class);
+    assertThat(metaData.getColumnName(1)).isEqualTo("stringKey");
+    assertThat(metaData.getColumnTypeName(1)).isEqualTo("STRING");
+    assertThat(rs.getObject(1)).isInstanceOf(String.class);
   }
 
   @Test
