@@ -35,9 +35,6 @@ public class ODatabaseDocumentTxInternal {
       ODatabaseDocumentTx.embedded.clear();
     }
     synchronized (ODatabaseDocumentTx.remote) {
-      for (OrientDBInternal factory : ODatabaseDocumentTx.remote.values()) {
-        factory.internalClose();
-      }
       ODatabaseDocumentTx.remote.clear();
     }
   }
