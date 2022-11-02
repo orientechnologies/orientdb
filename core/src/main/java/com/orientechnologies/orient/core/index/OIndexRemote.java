@@ -110,7 +110,7 @@ public abstract class OIndexRemote implements OIndex {
   }
 
   public OIndexRemote delete() {
-    getDatabase().indexQuery(getName(), String.format(QUERY_DROP, name));
+    getDatabase().indexQuery(getName(), String.format(QUERY_DROP, name)).close();
     return this;
   }
 
@@ -124,7 +124,7 @@ public abstract class OIndexRemote implements OIndex {
   }
 
   public boolean contains(final Object iKey) {
-    try (final OResultSet result =
+    try (OResultSet result =
         getDatabase().indexQuery(getName(), String.format(QUERY_CONTAINS, name), iKey)) {
       if (!result.hasNext()) {
         return false;
@@ -134,7 +134,7 @@ public abstract class OIndexRemote implements OIndex {
   }
 
   public long count(final Object iKey) {
-    try (final OResultSet result =
+    try (OResultSet result =
         getDatabase().indexQuery(getName(), String.format(QUERY_COUNT, name), iKey)) {
       if (!result.hasNext()) {
         return 0;
@@ -197,17 +197,18 @@ public abstract class OIndexRemote implements OIndex {
         throw new OIndexException(
             "Cannot remove values in manual indexes against remote protocol during a transaction. Temporary RID cannot be managed at server side");
 
-      OResultSet result = getDatabase().command(String.format(QUERY_REMOVE2, name), key, rid);
-      if (!result.hasNext()) {
-        deleted = 0;
-      } else deleted = result.next().getProperty("count");
-      result.close();
+      try (OResultSet result =
+          getDatabase().command(String.format(QUERY_REMOVE2, name), key, rid)) {
+        if (!result.hasNext()) {
+          deleted = 0;
+        } else deleted = result.next().getProperty("count");
+      }
     } else {
-      OResultSet result = getDatabase().command(String.format(QUERY_REMOVE, name), key);
-      if (!result.hasNext()) {
-        deleted = 0;
-      } else deleted = result.next().getProperty("count");
-      result.close();
+      try (OResultSet result = getDatabase().command(String.format(QUERY_REMOVE, name), key)) {
+        if (!result.hasNext()) {
+          deleted = 0;
+        } else deleted = result.next().getProperty("count");
+      }
     }
     return deleted > 0;
   }
@@ -394,17 +395,17 @@ public abstract class OIndexRemote implements OIndex {
       }
     }
 
-    final OResultSet res =
+    final OInternalResultSet copy = new OInternalResultSet(); // TODO a raw array instead...?
+    try (OResultSet res =
         getDatabase()
             .indexQuery(
                 getName(),
                 String.format(
                     QUERY_ITERATE_ENTRIES, name, params.toString(), ascSortOrder ? "ASC" : "DESC"),
-                keys.toArray());
+                keys.toArray())) {
 
-    final OInternalResultSet copy = new OInternalResultSet(); // TODO a raw array instead...?
-    res.forEachRemaining(x -> copy.add(x));
-    res.close();
+      res.forEachRemaining(x -> copy.add(x));
+    }
 
     return new OIndexAbstractCursor() {
 
@@ -439,10 +440,11 @@ public abstract class OIndexRemote implements OIndex {
 
   @Override
   public OIndexCursor cursor() {
-    OResultSet result = getDatabase().indexQuery(getName(), String.format(QUERY_ENTRIES, name));
     final OInternalResultSet copy = new OInternalResultSet(); // TODO a raw array instead...?
-    result.forEachRemaining(x -> copy.add(x));
-    result.close();
+    try (OResultSet result =
+        getDatabase().indexQuery(getName(), String.format(QUERY_ENTRIES, name))) {
+      result.forEachRemaining(x -> copy.add(x));
+    }
 
     return new OIndexAbstractCursor() {
 
@@ -474,11 +476,11 @@ public abstract class OIndexRemote implements OIndex {
 
   @Override
   public OIndexCursor descCursor() {
-    final OResultSet result =
-        getDatabase().indexQuery(getName(), String.format(QUERY_ENTRIES_DESC, name));
     final OInternalResultSet copy = new OInternalResultSet(); // TODO a raw array instead...?
-    result.forEachRemaining(x -> copy.add(x));
-    result.close();
+    try (OResultSet result =
+        getDatabase().indexQuery(getName(), String.format(QUERY_ENTRIES_DESC, name))) {
+      result.forEachRemaining(x -> copy.add(x));
+    }
 
     return new OIndexAbstractCursor() {
 
@@ -510,10 +512,11 @@ public abstract class OIndexRemote implements OIndex {
 
   @Override
   public OIndexKeyCursor keyCursor() {
-    final OResultSet result = getDatabase().indexQuery(getName(), String.format(QUERY_KEYS, name));
     final OInternalResultSet copy = new OInternalResultSet(); // TODO a raw array instead...?
-    result.forEachRemaining(x -> copy.add(x));
-    result.close();
+    try (final OResultSet result =
+        getDatabase().indexQuery(getName(), String.format(QUERY_KEYS, name))) {
+      result.forEachRemaining(x -> copy.add(x));
+    }
     return new OIndexKeyCursor() {
 
       @Override

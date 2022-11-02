@@ -57,7 +57,7 @@ public class OIndexRemoteMultiValue extends OIndexRemote {
 
   @Deprecated
   public Collection<OIdentifiable> get(final Object key) {
-    try (final OResultSet result =
+    try (OResultSet result =
         getDatabase().indexQuery(getName(), String.format(QUERY_GET, name), key)) {
       //noinspection resource
       return result.stream()

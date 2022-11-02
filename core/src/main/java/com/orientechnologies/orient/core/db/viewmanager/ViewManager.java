@@ -332,12 +332,12 @@ public class ViewManager {
           @Override
           public Object call() {
 
-            OResultSet rs = db.query(query);
-            while (rs.hasNext()) {
-              OResult item = rs.next();
-              addItemToView(item, db, originRidField, viewName, clusterName, indexes);
+            try (OResultSet rs = db.query(query)) {
+              while (rs.hasNext()) {
+                OResult item = rs.next();
+                addItemToView(item, db, originRidField, viewName, clusterName, indexes);
+              }
             }
-
             return null;
           }
         });

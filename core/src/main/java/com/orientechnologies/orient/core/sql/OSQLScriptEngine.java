@@ -86,10 +86,11 @@ public class OSQLScriptEngine implements ScriptEngine {
     } else {
       queryResult = db.execute("sql", script, (Map) params);
     }
-    OLegacyResultSet finalResult = new OBasicLegacyResultSet();
-    queryResult.stream().forEach(x -> finalResult.add(x));
-    queryResult.close();
-    return finalResult;
+    try (OResultSet res = queryResult) {
+      OLegacyResultSet finalResult = new OBasicLegacyResultSet();
+      res.stream().forEach(x -> finalResult.add(x));
+      return finalResult;
+    }
   }
 
   @SuppressWarnings("unchecked")

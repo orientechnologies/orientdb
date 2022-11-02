@@ -133,9 +133,9 @@ public class OCreateLinkStatement extends OSimpleExecStatement {
               if (((String) value).length() == 0) value = null;
               else value = "'" + value + "'";
 
-            OResultSet rs = database.query(cmd + value);
-            result = toList(rs);
-            rs.close();
+            try (OResultSet rs = database.query(cmd + value)) {
+              result = toList(rs);
+            }
 
             if (result == null || result.size() == 0) value = null;
             else if (result.size() > 1)

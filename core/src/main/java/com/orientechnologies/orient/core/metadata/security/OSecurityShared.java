@@ -360,8 +360,11 @@ public class OSecurityShared implements OSecurityInternal {
   }
 
   public boolean dropUser(final ODatabaseSession session, final String iUserName) {
-    final Number removed =
-        session.command("delete from OUser where name = ?", iUserName).next().getProperty("count");
+
+    final Number removed;
+    try (OResultSet res = session.command("delete from OUser where name = ?", iUserName)) {
+      removed = res.next().getProperty("count");
+    }
 
     return removed != null && removed.intValue() > 0;
   }
@@ -415,11 +418,11 @@ public class OSecurityShared implements OSecurityInternal {
   }
 
   public boolean dropRole(final ODatabaseSession session, final String iRoleName) {
-    final Number removed =
-        session
-            .command("delete from ORole where name = '" + iRoleName + "'")
-            .next()
-            .getProperty("count");
+    final Number removed;
+    try (OResultSet result =
+        session.command("delete from ORole where name = '" + iRoleName + "'")) {
+      removed = result.next().getProperty("count");
+    }
 
     return removed != null && removed.intValue() > 0;
   }
@@ -549,8 +552,9 @@ public class OSecurityShared implements OSecurityInternal {
 
   @Override
   public void deleteSecurityPolicy(ODatabaseSession session, String name) {
-    session.command(
-        "DELETE FROM " + OSecurityPolicy.class.getSimpleName() + " WHERE name = ?", name);
+    session
+        .command("DELETE FROM " + OSecurityPolicy.class.getSimpleName() + " WHERE name = ?", name)
+        .close();
   }
 
   @Override
@@ -1198,32 +1202,32 @@ public class OSecurityShared implements OSecurityInternal {
       return;
     }
     synchronized (this) {
-      OResultSet rs = session.query("select name, policies from ORole");
-      while (rs.hasNext()) {
-        OResult item = rs.next();
-        String roleName = item.getProperty("name");
+      try (OResultSet rs = session.query("select name, policies from ORole")) {
+        while (rs.hasNext()) {
+          OResult item = rs.next();
+          String roleName = item.getProperty("name");
 
-        Map<String, OIdentifiable> policies = item.getProperty("policies");
-        if (policies != null) {
-          for (Map.Entry<String, OIdentifiable> policyEntry : policies.entrySet()) {
-            OSecurityResource res = OSecurityResource.getInstance(policyEntry.getKey());
-            OElement policy = policyEntry.getValue().getRecord();
-            if (policy != null) {
-              for (OClass clazz : allClasses) {
-                if (isClassInvolved(clazz, res)
-                    && !isAllAllowed(
-                        session, new OImmutableSecurityPolicy(new OSecurityPolicyImpl(policy)))) {
-                  Map<String, Boolean> roleMap = result.get(roleName);
-                  if (roleMap == null) {
-                    roleMap = new HashMap<>();
-                    result.put(roleName, roleMap);
+          Map<String, OIdentifiable> policies = item.getProperty("policies");
+          if (policies != null) {
+            for (Map.Entry<String, OIdentifiable> policyEntry : policies.entrySet()) {
+              OSecurityResource res = OSecurityResource.getInstance(policyEntry.getKey());
+              OElement policy = policyEntry.getValue().getRecord();
+              if (policy != null) {
+                for (OClass clazz : allClasses) {
+                  if (isClassInvolved(clazz, res)
+                      && !isAllAllowed(
+                          session, new OImmutableSecurityPolicy(new OSecurityPolicyImpl(policy)))) {
+                    Map<String, Boolean> roleMap = result.get(roleName);
+                    if (roleMap == null) {
+                      roleMap = new HashMap<>();
+                      result.put(roleName, roleMap);
+                    }
+                    roleMap.put(clazz.getName(), true);
                   }
-                  roleMap.put(clazz.getName(), true);
                 }
               }
             }
           }
-          rs.close();
         }
       }
       this.roleHasPredicateSecurityForClass = result;
@@ -1708,31 +1712,31 @@ public class OSecurityShared implements OSecurityInternal {
     if (session.getClass("ORole") == null) {
       return Collections.emptySet();
     }
-    OResultSet rs = session.query("select policies from ORole");
-    while (rs.hasNext()) {
-      OResult item = rs.next();
-      Map<String, OIdentifiable> policies = item.getProperty("policies");
-      if (policies != null) {
-        for (Map.Entry<String, OIdentifiable> policyEntry : policies.entrySet()) {
-          try {
-            OSecurityResource res = OSecurityResource.getInstance(policyEntry.getKey());
-            if (res instanceof OSecurityResourceProperty) {
-              final OElement element = policyEntry.getValue().getRecord();
-              if (element != null) {
-                final OSecurityPolicy policy =
-                    new OImmutableSecurityPolicy(new OSecurityPolicyImpl(element));
-                final String readRule = policy.getReadRule();
-                if (readRule != null && !readRule.trim().equalsIgnoreCase("true")) {
-                  result.add((OSecurityResourceProperty) res);
+    try (OResultSet rs = session.query("select policies from ORole")) {
+      while (rs.hasNext()) {
+        OResult item = rs.next();
+        Map<String, OIdentifiable> policies = item.getProperty("policies");
+        if (policies != null) {
+          for (Map.Entry<String, OIdentifiable> policyEntry : policies.entrySet()) {
+            try {
+              OSecurityResource res = OSecurityResource.getInstance(policyEntry.getKey());
+              if (res instanceof OSecurityResourceProperty) {
+                final OElement element = policyEntry.getValue().getRecord();
+                if (element != null) {
+                  final OSecurityPolicy policy =
+                      new OImmutableSecurityPolicy(new OSecurityPolicyImpl(element));
+                  final String readRule = policy.getReadRule();
+                  if (readRule != null && !readRule.trim().equalsIgnoreCase("true")) {
+                    result.add((OSecurityResourceProperty) res);
+                  }
                 }
               }
+            } catch (Exception e) {
             }
-          } catch (Exception e) {
           }
         }
       }
     }
-    rs.close();
     return result;
   }
 

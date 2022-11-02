@@ -93,14 +93,10 @@ public class OSystemDatabase {
     try {
       // BYPASS SECURITY
       final ODatabase<?> db = openSystemDatabase();
-      try {
-        final OResultSet result = db.command(sql, args);
+      try (OResultSet result = db.command(sql, args)) {
 
         if (callback != null) return callback.call(result);
         else return result;
-
-      } finally {
-        db.close();
       }
 
     } finally {

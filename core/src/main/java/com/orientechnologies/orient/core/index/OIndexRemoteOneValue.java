@@ -55,7 +55,7 @@ public class OIndexRemoteOneValue extends OIndexRemote {
 
   @Deprecated
   public OIdentifiable get(final Object key) {
-    try (final OResultSet result =
+    try (OResultSet result =
         getDatabase().indexQuery(getName(), String.format(QUERY_GET, name), key)) {
       if (result != null && result.hasNext())
         return ((OIdentifiable) result.next().getProperty("rid"));
