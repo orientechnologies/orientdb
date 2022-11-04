@@ -1997,7 +1997,7 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       "emterprise.metrics.max",
       "Top limit of number of metrics that the enterprise edition can keep in memory",
       Integer.class,
-      10000,
+      2500,
       false,
       false),
   ;
