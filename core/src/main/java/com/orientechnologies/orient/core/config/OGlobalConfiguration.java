@@ -1992,7 +1992,15 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       "distributed.autoCreateClusters",
       "if true enable auto creation of cluster when a new node join",
       Boolean.class,
-      true);
+      true),
+  ENTERPRISE_METRICS_MAX(
+      "emterprise.metrics.max",
+      "Top limit of number of metrics that the enterprise edition can keep in memory",
+      Integer.class,
+      10000,
+      false,
+      false),
+  ;
 
   static {
     readConfiguration();
