@@ -8,6 +8,7 @@ import com.codahale.metrics.jvm.GarbageCollectorMetricSet;
 import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import com.orientechnologies.agent.profiler.metrics.*;
 import com.orientechnologies.agent.profiler.metrics.dropwizard.*;
 import com.orientechnologies.agent.profiler.source.CSVAggregateReporter;
@@ -17,13 +18,15 @@ import com.orientechnologies.agent.services.metrics.reporters.ConsoleReporterCon
 import com.orientechnologies.agent.services.metrics.reporters.JMXReporter;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
+import com.orientechnologies.orient.core.cache.OSoftRefsHashMap;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.dropwizard.DropwizardExports;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
@@ -33,8 +36,8 @@ import java.util.function.Supplier;
 /** Created by Enrico Risa on 09/07/2018. */
 public class ODropWizardMetricsRegistry implements OMetricsRegistry {
 
-  private final MetricRegistry registry = new MetricRegistry();
-  private ConcurrentMap<String, OMetric> metrics = new ConcurrentHashMap<>();
+  private final MetricRegistry registry;
+  private Map<String, OMetric> metrics = new OSoftRefsHashMap<>();
   private ConsoleReporter consoleReporter = null;
   private CsvReporter csvReporter = null;
   private JmxReporter jmxReporter = null;
@@ -52,6 +55,20 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
   public ODropWizardMetricsRegistry(OEnterpriseServer server, OrientDBMetricsSettings settings) {
     this.server = server;
     this.settings = settings;
+    this.registry =
+        new MetricRegistry() {
+          @Override
+          protected ConcurrentMap<String, Metric> buildMap() {
+            return new ConcurrentLinkedHashMap.Builder<String, Metric>()
+                .maximumWeightedCapacity(
+                    server
+                        .getDatabases()
+                        .getConfigurations()
+                        .getConfigurations()
+                        .getValueAsLong(OGlobalConfiguration.ENTERPRISE_METRICS_MAX))
+                .build();
+          }
+        };
     configureProfiler(settings);
 
     initFactories(settings);
@@ -240,6 +257,18 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
 
   private <T extends OMetric> T registerOrGetMetric(String name, Function<String, OMetric> metric) {
     return (T) metrics.computeIfAbsent(name, metric);
+  }
+
+  @Override
+  public void removeStartWith(String startWith) {
+    Iterator<Entry<String, OMetric>> iterator = metrics.entrySet().iterator();
+    while (iterator.hasNext()) {
+      Entry<String, OMetric> entry = iterator.next();
+      if (entry.getKey().startsWith(startWith)) {
+        iterator.remove();
+      }
+    }
+    registry.removeMatching(MetricFilter.startsWith(startWith));
   }
 
   @Override

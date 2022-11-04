@@ -54,4 +54,6 @@ public interface OMetricsRegistry {
   boolean remove(String name);
 
   void toJSON(OutputStream outputStream) throws IOException;
+
+  void removeStartWith(String name);
 }

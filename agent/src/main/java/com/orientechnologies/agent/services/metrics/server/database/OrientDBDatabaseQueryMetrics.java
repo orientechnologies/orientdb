@@ -6,8 +6,6 @@ import com.orientechnologies.agent.services.metrics.OGlobalMetrics;
 import com.orientechnologies.agent.services.metrics.OrientDBMetric;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /** Created by Enrico Risa on 20/07/2018. */
 public class OrientDBDatabaseQueryMetrics implements OrientDBMetric {
@@ -15,8 +13,6 @@ public class OrientDBDatabaseQueryMetrics implements OrientDBMetric {
   private final OEnterpriseServer server;
   private final OMetricsRegistry registry;
   private String storage;
-
-  private Map<String, OHistogram> queries = new ConcurrentHashMap<>();
 
   public OrientDBDatabaseQueryMetrics(
       OEnterpriseServer server, OMetricsRegistry registry, String database) {
@@ -29,14 +25,9 @@ public class OrientDBDatabaseQueryMetrics implements OrientDBMetric {
   public void start() {}
 
   @Override
-  public void stop() {
-    queries.forEach(
-        (s, v) -> {
-          String[] split = s.split("\\.", 2);
-          registry.remove(
-              String.format(
-                  OGlobalMetrics.DATABASE_QUERY_STATS.name, this.storage, split[0], split[1]));
-        });
+  public synchronized void stop() {
+
+    registry.removeStartWith(String.format("db.%s.query", this.storage));
   }
 
   public void onResultSet(OResultSet resultSet) {
@@ -46,16 +37,13 @@ public class OrientDBDatabaseQueryMetrics implements OrientDBMetric {
         .ifPresent(
             (it) -> {
               OHistogram histogram =
-                  queries.computeIfAbsent(
-                      it.getLanguage() + "." + it.getStatement(),
-                      (k) ->
-                          registry.histogram(
-                              String.format(
-                                  OGlobalMetrics.DATABASE_QUERY_STATS.name,
-                                  this.storage,
-                                  it.getLanguage(),
-                                  it.getStatement()),
-                              OGlobalMetrics.DATABASE_CREATE_OPS.description));
+                  registry.histogram(
+                      String.format(
+                          OGlobalMetrics.DATABASE_QUERY_STATS.name,
+                          this.storage,
+                          it.getLanguage(),
+                          it.getStatement()),
+                      OGlobalMetrics.DATABASE_CREATE_OPS.description);
               histogram.update(it.getElapsedTimeMillis());
             });
   }
