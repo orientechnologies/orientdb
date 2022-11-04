@@ -166,7 +166,7 @@ public class OClassDistributed extends OClassEmbedded {
     acquireSchemaWriteLock();
     try {
       if (isDistributedCommand(database)) {
-        final String cmd = String.format("alter class `%s` custom `%s`=%s", getName(), name, value);
+        final String cmd = String.format("alter class `%s` custom `%s`='%s'", getName(), name, value);
         owner.sendCommand(database, cmd);
       } else setCustomInternal(name, value);
 
