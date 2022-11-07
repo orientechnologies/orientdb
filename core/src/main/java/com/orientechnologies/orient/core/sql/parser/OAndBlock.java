@@ -74,7 +74,7 @@ public class OAndBlock extends OBooleanExpression {
   }
 
   @Override
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     if (subBlocks == null || subBlocks.size() == 0) {
       return;
     }
@@ -83,7 +83,7 @@ public class OAndBlock extends OBooleanExpression {
       if (!first) {
         builder.append(" AND ");
       }
-      expr.toGenericStatement(params, builder);
+      expr.toGenericStatement(builder);
       first = false;
     }
   }

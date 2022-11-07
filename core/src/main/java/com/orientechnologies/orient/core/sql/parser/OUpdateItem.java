@@ -68,10 +68,10 @@ public class OUpdateItem extends SimpleNode {
     right.toString(params, builder);
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
-    left.toGenericStatement(params, builder);
+  public void toGenericStatement(StringBuilder builder) {
+    left.toGenericStatement(builder);
     if (leftModifier != null) {
-      leftModifier.toGenericStatement(params, builder);
+      leftModifier.toGenericStatement(builder);
     }
     switch (operator) {
       case OPERATOR_EQ:
@@ -90,7 +90,7 @@ public class OUpdateItem extends SimpleNode {
         builder.append(" /= ");
         break;
     }
-    right.toGenericStatement(params, builder);
+    right.toGenericStatement(builder);
   }
 
   public OUpdateItem copy() {

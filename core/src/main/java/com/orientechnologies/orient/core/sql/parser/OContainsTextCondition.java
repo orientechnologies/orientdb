@@ -102,10 +102,10 @@ public class OContainsTextCondition extends OBooleanExpression {
     right.toString(params, builder);
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
-    left.toGenericStatement(params, builder);
+  public void toGenericStatement(StringBuilder builder) {
+    left.toGenericStatement(builder);
     builder.append(" CONTAINSTEXT ");
-    right.toGenericStatement(params, builder);
+    right.toGenericStatement(builder);
   }
 
   @Override

@@ -34,11 +34,11 @@ public class OArrayNumberSelector extends SimpleNode {
   }
 
   @Override
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     if (inputValue != null) {
-      inputValue.toGenericStatement(params, builder);
+      inputValue.toGenericStatement(builder);
     } else if (expressionValue != null) {
-      expressionValue.toGenericStatement(params, builder);
+      expressionValue.toGenericStatement(builder);
     } else if (integer != null) {
       builder.append(PARAMETER_PLACEHOLDER);
     }

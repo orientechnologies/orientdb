@@ -85,8 +85,8 @@ public class OIsNotDefinedCondition extends OBooleanExpression {
     builder.append(" is not defined");
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
-    expression.toGenericStatement(params, builder);
+  public void toGenericStatement(StringBuilder builder) {
+    expression.toGenericStatement(builder);
     builder.append(" is not defined");
   }
 

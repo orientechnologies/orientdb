@@ -126,26 +126,26 @@ public class OCreatePropertyStatement extends ODDLStatement {
   }
 
   @Override
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append("CREATE PROPERTY ");
-    className.toGenericStatement(params, builder);
+    className.toGenericStatement(builder);
     builder.append(".");
-    propertyName.toGenericStatement(params, builder);
+    propertyName.toGenericStatement(builder);
     if (ifNotExists) {
       builder.append(" IF NOT EXISTS");
     }
     builder.append(" ");
-    propertyType.toGenericStatement(params, builder);
+    propertyType.toGenericStatement(builder);
     if (linkedType != null) {
       builder.append(" ");
-      linkedType.toGenericStatement(params, builder);
+      linkedType.toGenericStatement(builder);
     }
 
     if (!attributes.isEmpty()) {
       builder.append(" (");
       for (int i = 0; i < attributes.size(); i++) {
         OCreatePropertyAttributeStatement att = attributes.get(i);
-        att.toGenericStatement(params, builder);
+        att.toGenericStatement(builder);
 
         if (i < attributes.size() - 1) {
           builder.append(", ");

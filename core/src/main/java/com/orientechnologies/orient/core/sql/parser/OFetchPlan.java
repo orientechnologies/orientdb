@@ -35,7 +35,7 @@ public class OFetchPlan extends SimpleNode {
   }
 
   @Override
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append("FETCHPLAN ");
     boolean first = true;
     for (OFetchPlanItem item : items) {
@@ -43,7 +43,7 @@ public class OFetchPlan extends SimpleNode {
         builder.append(" ");
       }
 
-      item.toGenericStatement(params, builder);
+      item.toGenericStatement(builder);
       first = false;
     }
   }

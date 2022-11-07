@@ -154,19 +154,19 @@ public class OIfStatement extends OStatement {
   }
 
   @Override
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append("IF(");
-    expression.toGenericStatement(params, builder);
+    expression.toGenericStatement(builder);
     builder.append("){\n");
     for (OStatement stm : statements) {
-      stm.toGenericStatement(params, builder);
+      stm.toGenericStatement(builder);
       builder.append(";\n");
     }
     builder.append("}");
     if (elseStatements.size() > 0) {
       builder.append("\nELSE {\n");
       for (OStatement stm : elseStatements) {
-        stm.toGenericStatement(params, builder);
+        stm.toGenericStatement(builder);
         builder.append(";\n");
       }
       builder.append("}");

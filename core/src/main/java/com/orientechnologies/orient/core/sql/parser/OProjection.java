@@ -80,7 +80,7 @@ public class OProjection extends SimpleNode {
   }
 
   @Override
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     if (items == null) {
       return;
     }
@@ -96,7 +96,7 @@ public class OProjection extends SimpleNode {
           builder.append(", ");
         }
 
-        item.toGenericStatement(params, builder);
+        item.toGenericStatement(builder);
         first = false;
       }
     }
@@ -108,7 +108,7 @@ public class OProjection extends SimpleNode {
           builder.append(", ");
         }
 
-        item.toGenericStatement(params, builder);
+        item.toGenericStatement(builder);
         first = false;
       }
     }

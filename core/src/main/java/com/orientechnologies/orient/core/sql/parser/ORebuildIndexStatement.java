@@ -67,12 +67,12 @@ public class ORebuildIndexStatement extends OSimpleExecStatement {
   }
 
   @Override
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append("REBUILD INDEX ");
     if (all) {
       builder.append("*");
     } else {
-      name.toGenericStatement(params, builder);
+      name.toGenericStatement(builder);
     }
   }
 

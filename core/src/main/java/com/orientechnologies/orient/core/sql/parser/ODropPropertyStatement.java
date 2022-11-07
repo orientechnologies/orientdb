@@ -121,11 +121,11 @@ public class ODropPropertyStatement extends ODDLStatement {
   }
 
   @Override
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append("DROP PROPERTY ");
-    className.toGenericStatement(params, builder);
+    className.toGenericStatement(builder);
     builder.append(".");
-    propertyName.toGenericStatement(params, builder);
+    propertyName.toGenericStatement(builder);
     if (ifExists) {
       builder.append(" IF EXISTS");
     }

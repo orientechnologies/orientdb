@@ -65,30 +65,30 @@ public class OModifier extends SimpleNode {
     }
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
 
     if (squareBrackets) {
       builder.append("[");
 
       if (arrayRange != null) {
-        arrayRange.toGenericStatement(params, builder);
+        arrayRange.toGenericStatement(builder);
       } else if (condition != null) {
-        condition.toGenericStatement(params, builder);
+        condition.toGenericStatement(builder);
       } else if (arraySingleValues != null) {
-        arraySingleValues.toGenericStatement(params, builder);
+        arraySingleValues.toGenericStatement(builder);
       } else if (rightBinaryCondition != null) {
-        rightBinaryCondition.toGenericStatement(params, builder);
+        rightBinaryCondition.toGenericStatement(builder);
       }
 
       builder.append("]");
     } else if (methodCall != null) {
-      methodCall.toGenericStatement(params, builder);
+      methodCall.toGenericStatement(builder);
     } else if (suffix != null) {
       builder.append(".");
-      suffix.toGenericStatement(params, builder);
+      suffix.toGenericStatement(builder);
     }
     if (next != null) {
-      next.toGenericStatement(params, builder);
+      next.toGenericStatement(builder);
     }
   }
 

@@ -31,13 +31,13 @@ public class OGroupBy extends SimpleNode {
     }
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append("GROUP BY ");
     for (int i = 0; i < items.size(); i++) {
       if (i > 0) {
         builder.append(", ");
       }
-      items.get(i).toGenericStatement(params, builder);
+      items.get(i).toGenericStatement(builder);
     }
   }
 

@@ -155,35 +155,35 @@ public class OTraverseStatement extends OStatement {
     }
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append("TRAVERSE ");
     boolean first = true;
     for (OTraverseProjectionItem item : projections) {
       if (!first) {
         builder.append(", ");
       }
-      item.toGenericStatement(params, builder);
+      item.toGenericStatement(builder);
       first = false;
     }
 
     if (target != null) {
       builder.append(" FROM ");
-      target.toGenericStatement(params, builder);
+      target.toGenericStatement(builder);
     }
 
     if (maxDepth != null) {
       builder.append(" MAXDEPTH ");
-      maxDepth.toGenericStatement(params, builder);
+      maxDepth.toGenericStatement(builder);
     }
 
     if (whileClause != null) {
       builder.append(" WHILE ");
-      whileClause.toGenericStatement(params, builder);
+      whileClause.toGenericStatement(builder);
     }
 
     if (limit != null) {
       builder.append(" ");
-      limit.toGenericStatement(params, builder);
+      limit.toGenericStatement(builder);
     }
 
     if (strategy != null) {

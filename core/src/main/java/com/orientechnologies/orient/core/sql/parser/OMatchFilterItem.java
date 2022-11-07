@@ -99,55 +99,55 @@ public class OMatchFilterItem extends SimpleNode {
     }
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     if (className != null) {
       builder.append("class: ");
-      className.toGenericStatement(params, builder);
+      className.toGenericStatement(builder);
       return;
     }
     if (classNames != null) {
       builder.append("classes: ");
-      classNames.toGenericStatement(params, builder);
+      classNames.toGenericStatement(builder);
       return;
     }
     if (clusterName != null) {
       builder.append("cluster: ");
-      clusterName.toGenericStatement(params, builder);
+      clusterName.toGenericStatement(builder);
       return;
     }
     if (clusterId != null) {
       builder.append("cluster: ");
-      clusterId.toGenericStatement(params, builder);
+      clusterId.toGenericStatement(builder);
       return;
     }
     if (rid != null) {
       builder.append("rid: ");
-      rid.toGenericStatement(params, builder);
+      rid.toGenericStatement(builder);
       return;
     }
 
     if (alias != null) {
       builder.append("as: ");
-      alias.toGenericStatement(params, builder);
+      alias.toGenericStatement(builder);
       return;
     }
 
     if (maxDepth != null) {
       builder.append("maxdepth: ");
-      maxDepth.toGenericStatement(params, builder);
+      maxDepth.toGenericStatement(builder);
       return;
     }
 
     if (filter != null) {
       builder.append("where: (");
-      filter.toGenericStatement(params, builder);
+      filter.toGenericStatement(builder);
       builder.append(")");
       return;
     }
 
     if (whileCondition != null) {
       builder.append("while: (");
-      whileCondition.toGenericStatement(params, builder);
+      whileCondition.toGenericStatement(builder);
       builder.append(")");
       return;
     }
@@ -160,13 +160,13 @@ public class OMatchFilterItem extends SimpleNode {
 
     if (depthAlias != null) {
       builder.append("depthAlias: ");
-      depthAlias.toGenericStatement(params, builder);
+      depthAlias.toGenericStatement(builder);
       return;
     }
 
     if (pathAlias != null) {
       builder.append("pathAlias: ");
-      pathAlias.toGenericStatement(params, builder);
+      pathAlias.toGenericStatement(builder);
       return;
     }
   }

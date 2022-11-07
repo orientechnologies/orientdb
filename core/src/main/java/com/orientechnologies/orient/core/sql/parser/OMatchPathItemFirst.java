@@ -30,10 +30,10 @@ public class OMatchPathItemFirst extends OMatchPathItem {
     }
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
-    function.toGenericStatement(params, builder);
+  public void toGenericStatement(StringBuilder builder) {
+    function.toGenericStatement(builder);
     if (filter != null) {
-      filter.toGenericStatement(params, builder);
+      filter.toGenericStatement(builder);
     }
   }
 

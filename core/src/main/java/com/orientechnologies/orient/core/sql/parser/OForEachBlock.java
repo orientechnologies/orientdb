@@ -138,14 +138,14 @@ public class OForEachBlock extends OStatement {
     builder.append("}");
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append("FOREACH (");
-    loopVariable.toGenericStatement(params, builder);
+    loopVariable.toGenericStatement(builder);
     builder.append(" IN ");
-    loopValues.toGenericStatement(params, builder);
+    loopValues.toGenericStatement(builder);
     builder.append(") {\n");
     for (OStatement stm : statements) {
-      stm.toGenericStatement(params, builder);
+      stm.toGenericStatement(builder);
       builder.append("\n");
     }
     builder.append("}");

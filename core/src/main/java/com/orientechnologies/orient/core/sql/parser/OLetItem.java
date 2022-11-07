@@ -32,14 +32,14 @@ public class OLetItem extends SimpleNode {
     }
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
-    varName.toGenericStatement(params, builder);
+  public void toGenericStatement(StringBuilder builder) {
+    varName.toGenericStatement(builder);
     builder.append(" = ");
     if (expression != null) {
-      expression.toGenericStatement(params, builder);
+      expression.toGenericStatement(builder);
     } else if (query != null) {
       builder.append("(");
-      query.toGenericStatement(params, builder);
+      query.toGenericStatement(builder);
       builder.append(")");
     }
   }

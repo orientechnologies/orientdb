@@ -33,9 +33,9 @@ public class OHaSyncClusterStatement extends OSimpleExecStatement {
   }
 
   @Override
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append("HA SYNC CLUSTER ");
-    clusterName.toGenericStatement(params, builder);
+    clusterName.toGenericStatement(builder);
   }
 }
 /* JavaCC - OriginalChecksum=fbf0df8004d889ebc80f39be85008720 (do not edit this line) */

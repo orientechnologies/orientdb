@@ -24,9 +24,9 @@ public class OFromClause extends SimpleNode {
     }
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     if (item != null) {
-      item.toGenericStatement(params, builder);
+      item.toGenericStatement(builder);
     }
   }
 

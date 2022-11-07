@@ -45,14 +45,14 @@ public class OOrderBy extends SimpleNode {
     }
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     if (items != null && items.size() > 0) {
       builder.append("ORDER BY ");
       for (int i = 0; i < items.size(); i++) {
         if (i > 0) {
           builder.append(", ");
         }
-        items.get(i).toGenericStatement(params, builder);
+        items.get(i).toGenericStatement(builder);
       }
     }
   }

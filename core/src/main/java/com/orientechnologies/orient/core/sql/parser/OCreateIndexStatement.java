@@ -334,12 +334,12 @@ public class OCreateIndexStatement extends ODDLStatement {
   }
 
   @Override
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append("CREATE INDEX ");
-    name.toGenericStatement(params, builder);
+    name.toGenericStatement(builder);
     if (className != null) {
       builder.append(" ON ");
-      className.toGenericStatement(params, builder);
+      className.toGenericStatement(builder);
       builder.append(" (");
       boolean first = true;
       for (Property prop : propertyList) {
@@ -347,9 +347,9 @@ public class OCreateIndexStatement extends ODDLStatement {
           builder.append(", ");
         }
         if (prop.name != null) {
-          prop.name.toGenericStatement(params, builder);
+          prop.name.toGenericStatement(builder);
         } else {
-          prop.recordAttribute.toGenericStatement(params, builder);
+          prop.recordAttribute.toGenericStatement(builder);
         }
         if (prop.byKey) {
           builder.append(" BY KEY");
@@ -358,17 +358,17 @@ public class OCreateIndexStatement extends ODDLStatement {
         }
         if (prop.collate != null) {
           builder.append(" COLLATE ");
-          prop.collate.toGenericStatement(params, builder);
+          prop.collate.toGenericStatement(builder);
         }
         first = false;
       }
       builder.append(")");
     }
     builder.append(" ");
-    type.toGenericStatement(params, builder);
+    type.toGenericStatement(builder);
     if (engine != null) {
       builder.append(" ENGINE ");
-      engine.toGenericStatement(params, builder);
+      engine.toGenericStatement(builder);
     }
     if (keyTypes != null && keyTypes.size() > 0) {
       boolean first = true;
@@ -377,13 +377,13 @@ public class OCreateIndexStatement extends ODDLStatement {
         if (!first) {
           builder.append(",");
         }
-        keyType.toGenericStatement(params, builder);
+        keyType.toGenericStatement(builder);
         first = false;
       }
     }
     if (metadata != null) {
       builder.append(" METADATA ");
-      metadata.toGenericStatement(params, builder);
+      metadata.toGenericStatement(builder);
     }
   }
 

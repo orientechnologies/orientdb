@@ -230,9 +230,9 @@ public class OAlterSecurityPolicyStatement extends OSimpleExecStatement {
   }
 
   @Override
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append("ALTER SECURITY POLICY ");
-    name.toGenericStatement(params, builder);
+    name.toGenericStatement(builder);
 
     boolean firstSet = true;
     if (create != null) {
@@ -242,7 +242,7 @@ public class OAlterSecurityPolicyStatement extends OSimpleExecStatement {
         builder.append(", ");
       }
       builder.append("CREATE = (");
-      create.toGenericStatement(params, builder);
+      create.toGenericStatement(builder);
       builder.append(")");
       firstSet = false;
     }
@@ -254,7 +254,7 @@ public class OAlterSecurityPolicyStatement extends OSimpleExecStatement {
         builder.append(", ");
       }
       builder.append("READ = (");
-      read.toGenericStatement(params, builder);
+      read.toGenericStatement(builder);
       builder.append(")");
       firstSet = false;
     }
@@ -265,7 +265,7 @@ public class OAlterSecurityPolicyStatement extends OSimpleExecStatement {
         builder.append(", ");
       }
       builder.append("BEFORE UPDATE = (");
-      beforeUpdate.toGenericStatement(params, builder);
+      beforeUpdate.toGenericStatement(builder);
       builder.append(")");
       firstSet = false;
     }
@@ -277,7 +277,7 @@ public class OAlterSecurityPolicyStatement extends OSimpleExecStatement {
         builder.append(", ");
       }
       builder.append("AFTER UPDATE = (");
-      afterUpdate.toGenericStatement(params, builder);
+      afterUpdate.toGenericStatement(builder);
       builder.append(")");
       firstSet = false;
     }
@@ -288,7 +288,7 @@ public class OAlterSecurityPolicyStatement extends OSimpleExecStatement {
         builder.append(", ");
       }
       builder.append("DELETE = (");
-      delete.toGenericStatement(params, builder);
+      delete.toGenericStatement(builder);
       builder.append(")");
       firstSet = false;
     }
@@ -299,7 +299,7 @@ public class OAlterSecurityPolicyStatement extends OSimpleExecStatement {
         builder.append(", ");
       }
       builder.append("EXECUTE = (");
-      execute.toGenericStatement(params, builder);
+      execute.toGenericStatement(builder);
       builder.append(")");
       firstSet = false;
     }

@@ -37,9 +37,9 @@ public class OParenthesisBlock extends OBooleanExpression {
     builder.append(" )");
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append("(");
-    subElement.toGenericStatement(params, builder);
+    subElement.toGenericStatement(builder);
     builder.append(" )");
   }
 

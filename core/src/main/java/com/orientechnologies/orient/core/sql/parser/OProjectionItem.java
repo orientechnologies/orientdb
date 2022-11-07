@@ -100,7 +100,7 @@ public class OProjectionItem extends SimpleNode {
     }
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     if (all) {
       builder.append("*");
     } else {
@@ -108,16 +108,16 @@ public class OProjectionItem extends SimpleNode {
         builder.append("!");
       }
       if (expression != null) {
-        expression.toGenericStatement(params, builder);
+        expression.toGenericStatement(builder);
       }
       if (nestedProjection != null) {
         builder.append(" ");
-        nestedProjection.toGenericStatement(params, builder);
+        nestedProjection.toGenericStatement(builder);
       }
       if (alias != null) {
 
         builder.append(" AS ");
-        alias.toGenericStatement(params, builder);
+        alias.toGenericStatement(builder);
       }
     }
   }

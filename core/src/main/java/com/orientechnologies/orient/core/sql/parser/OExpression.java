@@ -219,21 +219,21 @@ public class OExpression extends SimpleNode {
   }
 
   @Override
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     if (isNull) {
       builder.append("null");
     } else if (rid != null) {
-      rid.toGenericStatement(params, builder);
+      rid.toGenericStatement(builder);
     } else if (mathExpression != null) {
-      mathExpression.toGenericStatement(params, builder);
+      mathExpression.toGenericStatement(builder);
     } else if (arrayConcatExpression != null) {
-      arrayConcatExpression.toGenericStatement(params, builder);
+      arrayConcatExpression.toGenericStatement(builder);
     } else if (json != null) {
-      json.toGenericStatement(params, builder);
+      json.toGenericStatement(builder);
     } else if (booleanValue != null) {
       builder.append(PARAMETER_PLACEHOLDER);
     } else if (value instanceof SimpleNode) {
-      ((SimpleNode) value).toGenericStatement(params, builder);
+      ((SimpleNode) value).toGenericStatement(builder);
     } else if (value instanceof String) {
       builder.append(PARAMETER_PLACEHOLDER);
     } else {

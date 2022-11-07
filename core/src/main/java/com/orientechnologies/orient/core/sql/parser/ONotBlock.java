@@ -71,11 +71,11 @@ public class ONotBlock extends OBooleanExpression {
     sub.toString(params, builder);
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     if (negate) {
       builder.append("NOT ");
     }
-    sub.toGenericStatement(params, builder);
+    sub.toGenericStatement(builder);
   }
 
   @Override

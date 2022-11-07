@@ -40,12 +40,12 @@ public class ORid extends SimpleNode {
     }
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     if (legacy || (expression == null && cluster != null && position != null)) {
       builder.append(PARAMETER_PLACEHOLDER);
     } else {
       builder.append("{\"@rid\":");
-      expression.toGenericStatement(params, builder);
+      expression.toGenericStatement(builder);
       builder.append("}");
     }
   }

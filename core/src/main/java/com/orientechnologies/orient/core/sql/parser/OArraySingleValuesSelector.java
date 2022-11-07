@@ -41,13 +41,13 @@ public class OArraySingleValuesSelector extends SimpleNode {
   }
 
   @Override
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     boolean first = true;
     for (OArraySelector item : items) {
       if (!first) {
         builder.append(",");
       }
-      item.toGenericStatement(params, builder);
+      item.toGenericStatement(builder);
       first = false;
     }
   }

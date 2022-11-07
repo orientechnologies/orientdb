@@ -62,16 +62,16 @@ public class OMethodCall extends SimpleNode {
     builder.append(")");
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append(".");
-    methodName.toGenericStatement(params, builder);
+    methodName.toGenericStatement(builder);
     builder.append("(");
     boolean first = true;
     for (OExpression param : this.params) {
       if (!first) {
         builder.append(", ");
       }
-      param.toGenericStatement(params, builder);
+      param.toGenericStatement(builder);
       first = false;
     }
     builder.append(")");

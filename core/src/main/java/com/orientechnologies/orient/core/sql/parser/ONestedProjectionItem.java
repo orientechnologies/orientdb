@@ -92,7 +92,7 @@ public class ONestedProjectionItem extends SimpleNode {
   }
 
   @Override
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     if (exclude) {
       builder.append("!");
     }
@@ -100,17 +100,17 @@ public class ONestedProjectionItem extends SimpleNode {
       builder.append("*");
     }
     if (expression != null) {
-      expression.toGenericStatement(params, builder);
+      expression.toGenericStatement(builder);
       if (rightWildcard) {
         builder.append("*");
       }
     }
     if (expansion != null) {
-      expansion.toGenericStatement(params, builder);
+      expansion.toGenericStatement(builder);
     }
     if (alias != null) {
       builder.append(" AS ");
-      alias.toGenericStatement(params, builder);
+      alias.toGenericStatement(builder);
     }
   }
 

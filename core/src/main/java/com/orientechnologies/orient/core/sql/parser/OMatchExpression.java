@@ -26,10 +26,10 @@ public class OMatchExpression extends SimpleNode {
     }
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
-    origin.toGenericStatement(params, builder);
+  public void toGenericStatement(StringBuilder builder) {
+    origin.toGenericStatement(builder);
     for (OMatchPathItem item : items) {
-      item.toGenericStatement(params, builder);
+      item.toGenericStatement(builder);
     }
   }
 

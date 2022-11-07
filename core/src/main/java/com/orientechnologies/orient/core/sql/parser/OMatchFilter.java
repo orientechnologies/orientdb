@@ -172,14 +172,14 @@ public class OMatchFilter extends SimpleNode {
     builder.append("}");
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append("{");
     boolean first = true;
     for (OMatchFilterItem item : items) {
       if (!first) {
         builder.append(", ");
       }
-      item.toGenericStatement(params, builder);
+      item.toGenericStatement(builder);
       first = false;
     }
     builder.append("}");

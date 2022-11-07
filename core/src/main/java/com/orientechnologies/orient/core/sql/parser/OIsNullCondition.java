@@ -73,8 +73,8 @@ public class OIsNullCondition extends OBooleanExpression {
     builder.append(" is null");
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
-    expression.toGenericStatement(params, builder);
+  public void toGenericStatement(StringBuilder builder) {
+    expression.toGenericStatement(builder);
     builder.append(" is null");
   }
 

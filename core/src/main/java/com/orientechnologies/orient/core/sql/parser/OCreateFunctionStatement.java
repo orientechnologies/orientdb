@@ -82,9 +82,9 @@ public class OCreateFunctionStatement extends OSimpleExecStatement {
   }
 
   @Override
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append("CREATE FUNCTION ");
-    name.toGenericStatement(params, builder);
+    name.toGenericStatement(builder);
     builder.append(" ");
     builder.append(codeQuoted);
     if (parameters != null) {
@@ -94,7 +94,7 @@ public class OCreateFunctionStatement extends OSimpleExecStatement {
         if (!first) {
           builder.append(", ");
         }
-        param.toGenericStatement(params, builder);
+        param.toGenericStatement(builder);
         first = false;
       }
       builder.append("]");
@@ -105,7 +105,7 @@ public class OCreateFunctionStatement extends OSimpleExecStatement {
     }
     if (language != null) {
       builder.append(" LANGUAGE ");
-      language.toGenericStatement(params, builder);
+      language.toGenericStatement(builder);
     }
   }
 

@@ -70,9 +70,9 @@ public class ODropViewStatement extends ODDLStatement {
   }
 
   @Override
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append("DROP VIEW ");
-    name.toGenericStatement(params, builder);
+    name.toGenericStatement(builder);
     if (ifExists) {
       builder.append(" IF EXISTS");
     }

@@ -36,7 +36,7 @@ public class OServerStatement extends SimpleNode {
   }
 
   @Override
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     throw new UnsupportedOperationException();
   }
 

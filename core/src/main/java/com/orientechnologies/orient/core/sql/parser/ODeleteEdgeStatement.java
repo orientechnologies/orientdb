@@ -137,21 +137,21 @@ public class ODeleteEdgeStatement extends OStatement {
     }
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append("DELETE EDGE");
 
     if (className != null) {
       builder.append(" ");
-      className.toGenericStatement(params, builder);
+      className.toGenericStatement(builder);
       if (targetClusterName != null) {
         builder.append(" CLUSTER ");
-        targetClusterName.toGenericStatement(params, builder);
+        targetClusterName.toGenericStatement(builder);
       }
     }
 
     if (rid != null) {
       builder.append(" ");
-      rid.toGenericStatement(params, builder);
+      rid.toGenericStatement(builder);
     }
     if (rids != null) {
       builder.append(" [");
@@ -160,30 +160,30 @@ public class ODeleteEdgeStatement extends OStatement {
         if (!first) {
           builder.append(", ");
         }
-        rid.toGenericStatement(params, builder);
+        rid.toGenericStatement(builder);
         first = false;
       }
       builder.append("]");
     }
     if (leftExpression != null) {
       builder.append(" FROM ");
-      leftExpression.toGenericStatement(params, builder);
+      leftExpression.toGenericStatement(builder);
     }
     if (rightExpression != null) {
       builder.append(" TO ");
-      rightExpression.toGenericStatement(params, builder);
+      rightExpression.toGenericStatement(builder);
     }
 
     if (whereClause != null) {
       builder.append(" WHERE ");
-      whereClause.toGenericStatement(params, builder);
+      whereClause.toGenericStatement(builder);
     }
 
     if (limit != null) {
-      limit.toGenericStatement(params, builder);
+      limit.toGenericStatement(builder);
     }
     if (batch != null) {
-      batch.toGenericStatement(params, builder);
+      batch.toGenericStatement(builder);
     }
   }
 

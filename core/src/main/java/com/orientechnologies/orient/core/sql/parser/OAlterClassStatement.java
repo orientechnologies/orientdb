@@ -136,9 +136,9 @@ public class OAlterClassStatement extends ODDLStatement {
   }
 
   @Override
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append("ALTER CLASS ");
-    name.toGenericStatement(params, builder);
+    name.toGenericStatement(builder);
     if (property != null) {
       builder.append(" " + property.name() + " ");
       switch (property) {
@@ -149,16 +149,16 @@ public class OAlterClassStatement extends ODDLStatement {
         case DESCRIPTION:
         case ENCRYPTION:
           if (numberValue != null) {
-            numberValue.toGenericStatement(params, builder); // clusters only
+            numberValue.toGenericStatement(builder); // clusters only
           } else if (identifierValue != null) {
-            identifierValue.toGenericStatement(params, builder);
+            identifierValue.toGenericStatement(builder);
           } else {
             builder.append(PARAMETER_PLACEHOLDER);
           }
           break;
         case CLUSTERSELECTION:
           if (identifierValue != null) {
-            identifierValue.toGenericStatement(params, builder);
+            identifierValue.toGenericStatement(builder);
           } else {
             builder.append(PARAMETER_PLACEHOLDER);
           }
@@ -172,7 +172,7 @@ public class OAlterClassStatement extends ODDLStatement {
           if (identifierValue == null) {
             builder.append(PARAMETER_PLACEHOLDER);
           } else {
-            identifierValue.toGenericStatement(params, builder);
+            identifierValue.toGenericStatement(builder);
           }
           break;
         case SUPERCLASSES:
@@ -184,34 +184,34 @@ public class OAlterClassStatement extends ODDLStatement {
               if (!first) {
                 builder.append(", ");
               }
-              ident.toGenericStatement(params, builder);
+              ident.toGenericStatement(builder);
               first = false;
             }
           }
           break;
         case OVERSIZE:
-          numberValue.toGenericStatement(params, builder);
+          numberValue.toGenericStatement(builder);
           break;
         case STRICTMODE:
         case ABSTRACT:
           builder.append(booleanValue.booleanValue());
           break;
         case CUSTOM:
-          customKey.toGenericStatement(params, builder);
+          customKey.toGenericStatement(builder);
           builder.append("=");
           if (customValue == null) {
             builder.append("null");
           } else {
-            customValue.toGenericStatement(params, builder);
+            customValue.toGenericStatement(builder);
           }
           break;
       }
     } else if (defaultClusterId != null) {
       builder.append(" DEFAULTCLUSTER ");
-      defaultClusterId.toGenericStatement(params, builder);
+      defaultClusterId.toGenericStatement(builder);
     } else if (defaultClusterName != null) {
       builder.append(" DEFAULTCLUSTER ");
-      defaultClusterName.toGenericStatement(params, builder);
+      defaultClusterName.toGenericStatement(builder);
     }
     if (unsafe) {
       builder.append(" UNSAFE");

@@ -89,12 +89,12 @@ public class ODropClusterStatement extends ODDLStatement {
   }
 
   @Override
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append("DROP CLUSTER ");
     if (name != null) {
-      name.toGenericStatement(params, builder);
+      name.toGenericStatement(builder);
     } else {
-      id.toGenericStatement(params, builder);
+      id.toGenericStatement(builder);
     }
     if (ifExists) {
       builder.append(" IF EXISTS");

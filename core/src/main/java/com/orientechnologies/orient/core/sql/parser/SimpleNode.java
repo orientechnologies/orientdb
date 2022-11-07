@@ -136,11 +136,11 @@ public abstract class SimpleNode implements Node {
 
   public abstract void toString(Map<Object, Object> params, StringBuilder builder);
 
-  public abstract void toGenericStatement(Map<Object, Object> params, StringBuilder builder);
+  public abstract void toGenericStatement(StringBuilder builder);
 
   public String toGenericStatement() {
     StringBuilder builder = new StringBuilder();
-    toGenericStatement(null, builder);
+    toGenericStatement(builder);
     return builder.toString();
   }
 

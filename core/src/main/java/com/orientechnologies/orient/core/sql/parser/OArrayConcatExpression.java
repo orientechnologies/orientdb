@@ -191,12 +191,12 @@ public class OArrayConcatExpression extends SimpleNode {
   }
 
   @Override
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     for (int i = 0; i < childExpressions.size(); i++) {
       if (i > 0) {
         builder.append(" || ");
       }
-      childExpressions.get(i).toGenericStatement(params, builder);
+      childExpressions.get(i).toGenericStatement(builder);
     }
   }
 

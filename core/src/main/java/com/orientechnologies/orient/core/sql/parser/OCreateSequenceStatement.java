@@ -177,9 +177,9 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
   }
 
   @Override
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append("CREATE SEQUENCE ");
-    name.toGenericStatement(params, builder);
+    name.toGenericStatement(builder);
     if (ifNotExists) {
       builder.append(" IF NOT EXISTS");
     }
@@ -197,19 +197,19 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
 
     if (start != null) {
       builder.append(" START ");
-      start.toGenericStatement(params, builder);
+      start.toGenericStatement(builder);
     }
     if (increment != null) {
       builder.append(" INCREMENT ");
-      increment.toGenericStatement(params, builder);
+      increment.toGenericStatement(builder);
     }
     if (cache != null) {
       builder.append(" CACHE ");
-      cache.toGenericStatement(params, builder);
+      cache.toGenericStatement(builder);
     }
     if (limitValue != null) {
       builder.append(" LIMIT ");
-      limitValue.toGenericStatement(params, builder);
+      limitValue.toGenericStatement(builder);
     }
     if (cyclic != OSequence.DEFAULT_RECYCLABLE_VALUE) {
       builder.append(" CYCLE ").append(Boolean.toString(cyclic).toUpperCase());

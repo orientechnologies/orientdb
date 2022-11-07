@@ -150,12 +150,12 @@ public class OBetweenCondition extends OBooleanExpression {
     third.toString(params, builder);
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
-    first.toGenericStatement(params, builder);
+  public void toGenericStatement(StringBuilder builder) {
+    first.toGenericStatement(builder);
     builder.append(" BETWEEN ");
-    second.toGenericStatement(params, builder);
+    second.toGenericStatement(builder);
     builder.append(" AND ");
-    third.toGenericStatement(params, builder);
+    third.toGenericStatement(builder);
   }
 
   @Override

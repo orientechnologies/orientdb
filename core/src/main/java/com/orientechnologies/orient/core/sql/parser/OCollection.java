@@ -38,14 +38,14 @@ public class OCollection extends SimpleNode {
     builder.append("]");
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append("[");
     boolean first = true;
     for (OExpression expr : expressions) {
       if (!first) {
         builder.append(", ");
       }
-      expr.toGenericStatement(params, builder);
+      expr.toGenericStatement(builder);
       first = false;
     }
     builder.append("]");

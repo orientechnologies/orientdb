@@ -57,11 +57,11 @@ public class OOptimizeDatabaseStatement extends OSimpleExecStatement {
   }
 
   @Override
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append("OPTIMIZE DATABASE");
     for (OCommandLineOption option : options) {
       builder.append(" ");
-      option.toGenericStatement(params, builder);
+      option.toGenericStatement(builder);
     }
   }
 

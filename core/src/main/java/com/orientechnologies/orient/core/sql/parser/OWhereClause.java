@@ -63,11 +63,11 @@ public class OWhereClause extends SimpleNode {
     baseExpression.toString(params, builder);
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     if (baseExpression == null) {
       return;
     }
-    baseExpression.toGenericStatement(params, builder);
+    baseExpression.toGenericStatement(builder);
   }
 
   /**

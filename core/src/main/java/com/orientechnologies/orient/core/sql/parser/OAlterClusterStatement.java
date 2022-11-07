@@ -48,16 +48,16 @@ public class OAlterClusterStatement extends ODDLStatement {
   }
 
   @Override
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append("ALTER CLUSTER ");
-    name.toGenericStatement(params, builder);
+    name.toGenericStatement(builder);
     if (starred) {
       builder.append("*");
     }
     builder.append(" ");
-    attributeName.toGenericStatement(params, builder);
+    attributeName.toGenericStatement(builder);
     builder.append(" ");
-    attributeValue.toGenericStatement(params, builder);
+    attributeValue.toGenericStatement(builder);
   }
 
   @Override

@@ -34,13 +34,13 @@ public class OLevelZeroIdentifier extends SimpleNode {
     }
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     if (functionCall != null) {
-      functionCall.toGenericStatement(params, builder);
+      functionCall.toGenericStatement(builder);
     } else if (Boolean.TRUE.equals(self)) {
       builder.append("@this");
     } else if (collection != null) {
-      collection.toGenericStatement(params, builder);
+      collection.toGenericStatement(builder);
     }
   }
 

@@ -106,28 +106,28 @@ public class OCreateVertexStatement extends OStatement {
     }
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
 
     builder.append("CREATE VERTEX ");
     if (targetClass != null) {
-      targetClass.toGenericStatement(params, builder);
+      targetClass.toGenericStatement(builder);
       if (targetClusterName != null) {
         builder.append(" CLUSTER ");
-        targetClusterName.toGenericStatement(params, builder);
+        targetClusterName.toGenericStatement(builder);
       }
     }
     if (targetCluster != null) {
-      targetCluster.toGenericStatement(params, builder);
+      targetCluster.toGenericStatement(builder);
     }
     if (returnStatement != null) {
       builder.append(" RETURN ");
-      returnStatement.toGenericStatement(params, builder);
+      returnStatement.toGenericStatement(builder);
     }
     if (insertBody != null) {
       if (targetClass != null || targetCluster != null || returnStatement != null) {
         builder.append(" ");
       }
-      insertBody.toGenericStatement(params, builder);
+      insertBody.toGenericStatement(builder);
     }
   }
 

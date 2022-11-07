@@ -101,15 +101,15 @@ public class OUpdateStatement extends OStatement {
     }
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append(getStatementType());
     if (target != null) {
-      target.toGenericStatement(params, builder);
+      target.toGenericStatement(builder);
     }
 
     for (OUpdateOperations ops : this.operations) {
       builder.append(" ");
-      ops.toGenericStatement(params, builder);
+      ops.toGenericStatement(builder);
     }
 
     if (upsert) {
@@ -127,12 +127,12 @@ public class OUpdateStatement extends OStatement {
       }
       if (returnProjection != null) {
         builder.append(" ");
-        returnProjection.toGenericStatement(params, builder);
+        returnProjection.toGenericStatement(builder);
       }
     }
     if (whereClause != null) {
       builder.append(" WHERE ");
-      whereClause.toGenericStatement(params, builder);
+      whereClause.toGenericStatement(builder);
     }
 
     if (lockRecord != null) {
@@ -153,10 +153,10 @@ public class OUpdateStatement extends OStatement {
       }
     }
     if (limit != null) {
-      limit.toGenericStatement(params, builder);
+      limit.toGenericStatement(builder);
     }
     if (timeout != null) {
-      timeout.toGenericStatement(params, builder);
+      timeout.toGenericStatement(builder);
     }
   }
 

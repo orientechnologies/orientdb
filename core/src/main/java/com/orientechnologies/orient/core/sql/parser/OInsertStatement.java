@@ -73,28 +73,28 @@ public class OInsertStatement extends OStatement {
     }
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append("INSERT INTO ");
     if (targetClass != null) {
-      targetClass.toGenericStatement(params, builder);
+      targetClass.toGenericStatement(builder);
       if (targetClusterName != null) {
         builder.append(" CLUSTER ");
-        targetClusterName.toGenericStatement(params, builder);
+        targetClusterName.toGenericStatement(builder);
       }
     }
     if (targetCluster != null) {
-      targetCluster.toGenericStatement(params, builder);
+      targetCluster.toGenericStatement(builder);
     }
     if (targetIndex != null) {
-      targetIndex.toGenericStatement(params, builder);
+      targetIndex.toGenericStatement(builder);
     }
     if (insertBody != null) {
       builder.append(" ");
-      insertBody.toGenericStatement(params, builder);
+      insertBody.toGenericStatement(builder);
     }
     if (returnStatement != null) {
       builder.append(" RETURN ");
-      returnStatement.toGenericStatement(params, builder);
+      returnStatement.toGenericStatement(builder);
     }
     if (selectStatement != null) {
       builder.append(" ");
@@ -104,7 +104,7 @@ public class OInsertStatement extends OStatement {
       if (selectInParentheses) {
         builder.append("(");
       }
-      selectStatement.toGenericStatement(params, builder);
+      selectStatement.toGenericStatement(builder);
       if (selectInParentheses) {
         builder.append(")");
       }

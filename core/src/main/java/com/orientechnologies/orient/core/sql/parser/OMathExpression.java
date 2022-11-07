@@ -848,7 +848,7 @@ public class OMathExpression extends SimpleNode {
     }
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     if (childExpressions == null || operators == null) return;
     for (int i = 0; i < childExpressions.size(); i++) {
       if (i > 0) {
@@ -890,7 +890,7 @@ public class OMathExpression extends SimpleNode {
         }
         builder.append(" ");
       }
-      childExpressions.get(i).toGenericStatement(params, builder);
+      childExpressions.get(i).toGenericStatement(builder);
     }
   }
 

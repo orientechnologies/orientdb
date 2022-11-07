@@ -102,15 +102,15 @@ public class OMatchesCondition extends OBooleanExpression {
     }
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
-    expression.toGenericStatement(params, builder);
+  public void toGenericStatement(StringBuilder builder) {
+    expression.toGenericStatement(builder);
     builder.append(" MATCHES ");
     if (right != null) {
       builder.append(PARAMETER_PLACEHOLDER);
     } else if (rightExpression != null) {
-      rightExpression.toGenericStatement(params, builder);
+      rightExpression.toGenericStatement(builder);
     } else {
-      rightParam.toGenericStatement(params, builder);
+      rightParam.toGenericStatement(builder);
     }
   }
 

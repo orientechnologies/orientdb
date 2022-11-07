@@ -288,14 +288,14 @@ public class OContainsCondition extends OBooleanExpression {
   }
 
   @Override
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
-    left.toGenericStatement(params, builder);
+  public void toGenericStatement(StringBuilder builder) {
+    left.toGenericStatement(builder);
     builder.append(" CONTAINS ");
     if (right != null) {
-      right.toGenericStatement(params, builder);
+      right.toGenericStatement(builder);
     } else if (condition != null) {
       builder.append("(");
-      condition.toGenericStatement(params, builder);
+      condition.toGenericStatement(builder);
       builder.append(")");
     }
   }

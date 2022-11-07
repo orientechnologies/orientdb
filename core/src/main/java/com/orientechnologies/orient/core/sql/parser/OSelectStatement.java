@@ -218,49 +218,49 @@ public class OSelectStatement extends OStatement {
     }
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
 
     builder.append("SELECT");
     if (projection != null) {
       builder.append(" ");
-      projection.toGenericStatement(params, builder);
+      projection.toGenericStatement(builder);
     }
     if (target != null) {
       builder.append(" FROM ");
-      target.toGenericStatement(params, builder);
+      target.toGenericStatement(builder);
     }
 
     if (letClause != null) {
       builder.append(" ");
-      letClause.toGenericStatement(params, builder);
+      letClause.toGenericStatement(builder);
     }
 
     if (whereClause != null) {
       builder.append(" WHERE ");
-      whereClause.toGenericStatement(params, builder);
+      whereClause.toGenericStatement(builder);
     }
 
     if (groupBy != null) {
       builder.append(" ");
-      groupBy.toGenericStatement(params, builder);
+      groupBy.toGenericStatement(builder);
     }
 
     if (orderBy != null) {
       builder.append(" ");
-      orderBy.toGenericStatement(params, builder);
+      orderBy.toGenericStatement(builder);
     }
 
     if (unwind != null) {
       builder.append(" ");
-      unwind.toGenericStatement(params, builder);
+      unwind.toGenericStatement(builder);
     }
 
     if (skip != null) {
-      skip.toGenericStatement(params, builder);
+      skip.toGenericStatement(builder);
     }
 
     if (limit != null) {
-      limit.toGenericStatement(params, builder);
+      limit.toGenericStatement(builder);
     }
 
     if (lockRecord != null) {
@@ -283,11 +283,11 @@ public class OSelectStatement extends OStatement {
 
     if (fetchPlan != null) {
       builder.append(" ");
-      fetchPlan.toGenericStatement(params, builder);
+      fetchPlan.toGenericStatement(builder);
     }
 
     if (timeout != null) {
-      timeout.toGenericStatement(params, builder);
+      timeout.toGenericStatement(builder);
     }
 
     if (Boolean.TRUE.equals(parallel)) {

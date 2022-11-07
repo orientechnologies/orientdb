@@ -1646,7 +1646,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     }
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append(KEYWORD_MATCH);
     builder.append(" ");
     boolean first = true;
@@ -1654,7 +1654,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       if (!first) {
         builder.append(", ");
       }
-      expr.toGenericStatement(params, builder);
+      expr.toGenericStatement(builder);
       first = false;
     }
     builder.append(" RETURN ");
@@ -1667,38 +1667,38 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       if (!first) {
         builder.append(", ");
       }
-      expr.toGenericStatement(params, builder);
+      expr.toGenericStatement(builder);
       if (returnNestedProjections != null
           && i < returnNestedProjections.size()
           && returnNestedProjections.get(i) != null) {
-        returnNestedProjections.get(i).toGenericStatement(params, builder);
+        returnNestedProjections.get(i).toGenericStatement(builder);
       }
       if (returnAliases != null && i < returnAliases.size() && returnAliases.get(i) != null) {
         builder.append(" AS ");
-        returnAliases.get(i).toGenericStatement(params, builder);
+        returnAliases.get(i).toGenericStatement(builder);
       }
       i++;
       first = false;
     }
     if (groupBy != null) {
       builder.append(" ");
-      groupBy.toGenericStatement(params, builder);
+      groupBy.toGenericStatement(builder);
     }
     if (orderBy != null) {
       builder.append(" ");
-      orderBy.toGenericStatement(params, builder);
+      orderBy.toGenericStatement(builder);
     }
     if (unwind != null) {
       builder.append(" ");
-      unwind.toGenericStatement(params, builder);
+      unwind.toGenericStatement(builder);
     }
     if (skip != null) {
       builder.append(" ");
-      skip.toGenericStatement(params, builder);
+      skip.toGenericStatement(builder);
     }
     if (limit != null) {
       builder.append(" ");
-      limit.toGenericStatement(params, builder);
+      limit.toGenericStatement(builder);
     }
   }
 

@@ -46,9 +46,9 @@ public class OSleepStatement extends OSimpleExecStatement {
   }
 
   @Override
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append("SLEEP ");
-    millis.toGenericStatement(params, builder);
+    millis.toGenericStatement(builder);
   }
 
   @Override

@@ -53,11 +53,11 @@ public class OSuffixIdentifier extends SimpleNode {
     }
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     if (identifier != null) {
-      identifier.toGenericStatement(params, builder);
+      identifier.toGenericStatement(builder);
     } else if (recordAttribute != null) {
-      recordAttribute.toGenericStatement(params, builder);
+      recordAttribute.toGenericStatement(builder);
     } else if (star) {
       builder.append("*");
     }

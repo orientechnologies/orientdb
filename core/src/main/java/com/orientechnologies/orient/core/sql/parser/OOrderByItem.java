@@ -254,24 +254,24 @@ public class OOrderByItem {
     return collate;
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
 
     if (alias != null) {
       builder.append(alias);
       if (modifier != null) {
-        modifier.toGenericStatement(params, builder);
+        modifier.toGenericStatement(builder);
       }
     } else if (recordAttr != null) {
       builder.append(recordAttr);
     } else if (rid != null) {
-      rid.toGenericStatement(params, builder);
+      rid.toGenericStatement(builder);
     }
     if (type != null) {
       builder.append(" " + type);
     }
     if (collate != null) {
       builder.append(" COLLATE ");
-      collate.toGenericStatement(params, builder);
+      collate.toGenericStatement(builder);
     }
   }
 }

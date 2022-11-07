@@ -38,14 +38,14 @@ public class OMultiMatchPathItem extends OMatchPathItem {
     }
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append(".(");
     for (OMatchPathItem item : items) {
-      item.toGenericStatement(params, builder);
+      item.toGenericStatement(builder);
     }
     builder.append(")");
     if (filter != null) {
-      filter.toGenericStatement(params, builder);
+      filter.toGenericStatement(builder);
     }
   }
 

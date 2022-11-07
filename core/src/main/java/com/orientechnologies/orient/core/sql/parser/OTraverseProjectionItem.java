@@ -96,11 +96,11 @@ public class OTraverseProjectionItem extends SimpleNode {
     }
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
 
-    base.toGenericStatement(params, builder);
+    base.toGenericStatement(builder);
     if (modifier != null) {
-      modifier.toGenericStatement(params, builder);
+      modifier.toGenericStatement(builder);
     }
   }
 

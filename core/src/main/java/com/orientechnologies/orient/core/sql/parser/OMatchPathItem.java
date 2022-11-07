@@ -45,10 +45,10 @@ public class OMatchPathItem extends SimpleNode {
     }
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
-    method.toGenericStatement(params, builder);
+  public void toGenericStatement(StringBuilder builder) {
+    method.toGenericStatement(builder);
     if (filter != null) {
-      filter.toGenericStatement(params, builder);
+      filter.toGenericStatement(builder);
     }
   }
 

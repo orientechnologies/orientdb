@@ -84,18 +84,18 @@ public class OBaseExpression extends OMathExpression {
     }
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     if (number != null) {
-      number.toGenericStatement(params, builder);
+      number.toGenericStatement(builder);
     } else if (identifier != null) {
-      identifier.toGenericStatement(params, builder);
+      identifier.toGenericStatement(builder);
     } else if (string != null) {
       builder.append(PARAMETER_PLACEHOLDER);
     } else if (inputParam != null) {
-      inputParam.toGenericStatement(params, builder);
+      inputParam.toGenericStatement(builder);
     }
     if (modifier != null) {
-      modifier.toGenericStatement(params, builder);
+      modifier.toGenericStatement(builder);
     }
   }
 

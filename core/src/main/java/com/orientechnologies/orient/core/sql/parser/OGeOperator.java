@@ -67,7 +67,7 @@ public class OGeOperator extends SimpleNode implements OBinaryCompareOperator {
   }
 
   @Override
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append(">=");
   }
 

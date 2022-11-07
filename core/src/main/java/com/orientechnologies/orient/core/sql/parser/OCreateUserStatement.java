@@ -137,16 +137,16 @@ public class OCreateUserStatement extends OSimpleExecStatement {
   }
 
   @Override
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append("CREATE USER ");
-    name.toGenericStatement(params, builder);
+    name.toGenericStatement(builder);
     builder.append(" IDENTIFIED BY ");
     if (passwordIdentifier != null) {
-      passwordIdentifier.toGenericStatement(params, builder);
+      passwordIdentifier.toGenericStatement(builder);
     } else if (passwordString != null) {
       builder.append(PARAMETER_PLACEHOLDER);
     } else {
-      passwordParam.toGenericStatement(params, builder);
+      passwordParam.toGenericStatement(builder);
     }
     if (!roles.isEmpty()) {
       builder.append("ROLE [");
@@ -155,7 +155,7 @@ public class OCreateUserStatement extends OSimpleExecStatement {
         if (!first) {
           builder.append(", ");
         }
-        role.toGenericStatement(params, builder);
+        role.toGenericStatement(builder);
         first = false;
       }
       builder.append("]");

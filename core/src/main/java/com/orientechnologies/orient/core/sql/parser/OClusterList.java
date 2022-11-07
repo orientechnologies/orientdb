@@ -35,14 +35,14 @@ public class OClusterList extends SimpleNode {
     builder.append("]");
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append("cluster:[");
     boolean first = true;
     for (OIdentifier id : clusters) {
       if (!first) {
         builder.append(",");
       }
-      id.toGenericStatement(params, builder);
+      id.toGenericStatement(builder);
       first = false;
     }
     builder.append("]");

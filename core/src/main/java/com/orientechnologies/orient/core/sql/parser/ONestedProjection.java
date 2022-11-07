@@ -232,32 +232,32 @@ public class ONestedProjection extends SimpleNode {
   }
 
   @Override
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append(":{");
     boolean first = true;
     if (starItem != null) {
-      starItem.toGenericStatement(params, builder);
+      starItem.toGenericStatement(builder);
       first = false;
     }
     for (ONestedProjectionItem item : includeItems) {
       if (!first) {
         builder.append(", ");
       }
-      item.toGenericStatement(params, builder);
+      item.toGenericStatement(builder);
       first = false;
     }
     for (ONestedProjectionItem item : excludeItems) {
       if (!first) {
         builder.append(", ");
       }
-      item.toGenericStatement(params, builder);
+      item.toGenericStatement(builder);
       first = false;
     }
 
     builder.append("}");
     if (recursion != null) {
       builder.append("[");
-      recursion.toGenericStatement(params, builder);
+      recursion.toGenericStatement(builder);
       builder.append("]");
     }
   }

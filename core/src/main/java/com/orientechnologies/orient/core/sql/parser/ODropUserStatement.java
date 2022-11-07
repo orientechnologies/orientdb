@@ -41,9 +41,9 @@ public class ODropUserStatement extends OSimpleExecStatement {
   }
 
   @Override
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append("DROP USER ");
-    name.toGenericStatement(params, builder);
+    name.toGenericStatement(builder);
   }
 
   @Override

@@ -39,7 +39,7 @@ public class ONamedParameter extends OInputParameter {
     }
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append(":" + paramName);
   }
 

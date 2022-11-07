@@ -30,7 +30,7 @@ public class OWithinOperator extends SimpleNode implements OBinaryCompareOperato
   }
 
   @Override
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append("WITHIN");
   }
 

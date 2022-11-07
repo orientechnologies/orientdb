@@ -34,15 +34,15 @@ public class OLimit extends SimpleNode {
     }
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     if (num == null && inputParam == null) {
       return;
     }
     builder.append(" LIMIT ");
     if (num != null) {
-      num.toGenericStatement(params, builder);
+      num.toGenericStatement(builder);
     } else {
-      inputParam.toGenericStatement(params, builder);
+      inputParam.toGenericStatement(builder);
     }
   }
 

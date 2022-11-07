@@ -133,28 +133,28 @@ public class OCreateEdgeStatement extends OStatement {
   }
 
   @Override
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append("CREATE EDGE");
     if (targetClass != null) {
       builder.append(" ");
-      targetClass.toGenericStatement(params, builder);
+      targetClass.toGenericStatement(builder);
       if (targetClusterName != null) {
         builder.append(" CLUSTER ");
-        targetClusterName.toGenericStatement(params, builder);
+        targetClusterName.toGenericStatement(builder);
       }
     }
     if (upsert) {
       builder.append(" UPSERT");
     }
     builder.append(" FROM ");
-    leftExpression.toGenericStatement(params, builder);
+    leftExpression.toGenericStatement(builder);
 
     builder.append(" TO ");
-    rightExpression.toGenericStatement(params, builder);
+    rightExpression.toGenericStatement(builder);
 
     if (body != null) {
       builder.append(" ");
-      body.toGenericStatement(params, builder);
+      body.toGenericStatement(builder);
     }
     if (retry != null) {
       builder.append(" RETRY ");
@@ -165,7 +165,7 @@ public class OCreateEdgeStatement extends OStatement {
       builder.append(PARAMETER_PLACEHOLDER);
     }
     if (batch != null) {
-      batch.toGenericStatement(params, builder);
+      batch.toGenericStatement(builder);
     }
   }
 

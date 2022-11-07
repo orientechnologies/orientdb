@@ -47,11 +47,11 @@ public class OBaseIdentifier extends SimpleNode {
     }
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     if (levelZero != null) {
-      levelZero.toGenericStatement(params, builder);
+      levelZero.toGenericStatement(builder);
     } else if (suffix != null) {
-      suffix.toGenericStatement(params, builder);
+      suffix.toGenericStatement(builder);
     }
   }
 

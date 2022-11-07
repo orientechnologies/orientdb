@@ -60,11 +60,11 @@ public class OConsoleStatement extends OSimpleExecStatement {
   }
 
   @Override
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append("CONSOLE.");
-    logLevel.toGenericStatement(params, builder);
+    logLevel.toGenericStatement(builder);
     builder.append(" ");
-    message.toGenericStatement(params, builder);
+    message.toGenericStatement(builder);
   }
 
   @Override

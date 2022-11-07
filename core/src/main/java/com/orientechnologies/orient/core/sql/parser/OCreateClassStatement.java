@@ -140,9 +140,9 @@ public class OCreateClassStatement extends ODDLStatement {
   }
 
   @Override
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append("CREATE CLASS ");
-    name.toGenericStatement(params, builder);
+    name.toGenericStatement(builder);
     if (ifNotExists) {
       builder.append(" IF NOT EXISTS");
     }
@@ -153,7 +153,7 @@ public class OCreateClassStatement extends ODDLStatement {
         if (!first) {
           builder.append(", ");
         }
-        sup.toGenericStatement(params, builder);
+        sup.toGenericStatement(builder);
         first = false;
       }
     }
@@ -164,13 +164,13 @@ public class OCreateClassStatement extends ODDLStatement {
         if (!first) {
           builder.append(",");
         }
-        cluster.toGenericStatement(params, builder);
+        cluster.toGenericStatement(builder);
         first = false;
       }
     }
     if (totalClusterNo != null) {
       builder.append(" CLUSTERS ");
-      totalClusterNo.toGenericStatement(params, builder);
+      totalClusterNo.toGenericStatement(builder);
     }
     if (abstractClass) {
       builder.append(" ABSTRACT");

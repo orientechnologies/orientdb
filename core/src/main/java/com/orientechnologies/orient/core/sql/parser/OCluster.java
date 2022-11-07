@@ -36,7 +36,7 @@ public class OCluster extends SimpleNode {
     }
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     if (clusterName != null) {
       builder.append("cluster:" + clusterName);
     } else {

@@ -107,13 +107,13 @@ public class OFindReferencesStatement extends OStatement {
   }
 
   @Override
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append("FIND REFERENCES ");
     if (rid != null) {
-      rid.toGenericStatement(params, builder);
+      rid.toGenericStatement(builder);
     } else {
       builder.append(" ( ");
-      subQuery.toGenericStatement(params, builder);
+      subQuery.toGenericStatement(builder);
       builder.append(" )");
     }
     if (targets != null) {
@@ -123,7 +123,7 @@ public class OFindReferencesStatement extends OStatement {
         if (!first) {
           builder.append(",");
         }
-        node.toGenericStatement(params, builder);
+        node.toGenericStatement(builder);
         first = false;
       }
       builder.append("]");

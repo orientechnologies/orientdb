@@ -55,11 +55,11 @@ public class OArrayRangeSelector extends SimpleNode {
   }
 
   @Override
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     if (from != null) {
       builder.append(from);
     } else {
-      fromSelector.toGenericStatement(params, builder);
+      fromSelector.toGenericStatement(builder);
     }
     if (newRange) {
       builder.append("..");
@@ -72,7 +72,7 @@ public class OArrayRangeSelector extends SimpleNode {
     if (to != null) {
       builder.append(to);
     } else {
-      toSelector.toGenericStatement(params, builder);
+      toSelector.toGenericStatement(builder);
     }
   }
 

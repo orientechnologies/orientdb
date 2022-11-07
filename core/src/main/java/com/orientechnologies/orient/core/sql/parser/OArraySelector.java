@@ -41,15 +41,15 @@ public class OArraySelector extends SimpleNode {
   }
 
   @Override
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     if (rid != null) {
-      rid.toGenericStatement(params, builder);
+      rid.toGenericStatement(builder);
     } else if (inputParam != null) {
-      inputParam.toGenericStatement(params, builder);
+      inputParam.toGenericStatement(builder);
     } else if (expression != null) {
-      expression.toGenericStatement(params, builder);
+      expression.toGenericStatement(builder);
     } else if (integer != null) {
-      integer.toGenericStatement(params, builder);
+      integer.toGenericStatement(builder);
     }
   }
 

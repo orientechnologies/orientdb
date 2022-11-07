@@ -34,9 +34,9 @@ public class OProfileStatement extends OStatement {
   }
 
   @Override
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append("PROFILE ");
-    statement.toGenericStatement(params, builder);
+    statement.toGenericStatement(builder);
   }
 
   @Override

@@ -33,9 +33,9 @@ public class OInsertSetExpression {
     return right.isCacheable();
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
-    left.toGenericStatement(params, builder);
+  public void toGenericStatement(StringBuilder builder) {
+    left.toGenericStatement(builder);
     builder.append(" = ");
-    right.toGenericStatement(params, builder);
+    right.toGenericStatement(builder);
   }
 }

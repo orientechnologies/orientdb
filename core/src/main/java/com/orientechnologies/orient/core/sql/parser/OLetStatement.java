@@ -66,14 +66,14 @@ public class OLetStatement extends OSimpleExecStatement {
   }
 
   @Override
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append("LET ");
-    name.toGenericStatement(params, builder);
+    name.toGenericStatement(builder);
     builder.append(" = ");
     if (statement != null) {
-      statement.toGenericStatement(params, builder);
+      statement.toGenericStatement(builder);
     } else {
-      expression.toGenericStatement(params, builder);
+      expression.toGenericStatement(builder);
     }
   }
 

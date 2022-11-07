@@ -97,10 +97,10 @@ public class OFromItem extends SimpleNode {
     }
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     if (rids != null && rids.size() > 0) {
       if (rids.size() == 1) {
-        rids.get(0).toGenericStatement(params, builder);
+        rids.get(0).toGenericStatement(builder);
         return;
       } else {
         builder.append("[");
@@ -109,7 +109,7 @@ public class OFromItem extends SimpleNode {
           if (!first) {
             builder.append(", ");
           }
-          rid.toGenericStatement(params, builder);
+          rid.toGenericStatement(builder);
           first = false;
         }
         builder.append("]");
@@ -117,7 +117,7 @@ public class OFromItem extends SimpleNode {
       }
     } else if (inputParams != null && inputParams.size() > 0) {
       if (inputParams.size() == 1) {
-        inputParams.get(0).toGenericStatement(params, builder);
+        inputParams.get(0).toGenericStatement(builder);
         return;
       } else {
         builder.append("[");
@@ -126,38 +126,38 @@ public class OFromItem extends SimpleNode {
           if (!first) {
             builder.append(", ");
           }
-          rid.toGenericStatement(params, builder);
+          rid.toGenericStatement(builder);
           first = false;
         }
         builder.append("]");
         return;
       }
     } else if (cluster != null) {
-      cluster.toGenericStatement(params, builder);
+      cluster.toGenericStatement(builder);
       return;
     } else if (clusterList != null) {
-      clusterList.toGenericStatement(params, builder);
+      clusterList.toGenericStatement(builder);
       return;
     } else if (metadata != null) {
-      metadata.toGenericStatement(params, builder);
+      metadata.toGenericStatement(builder);
       return;
     } else if (statement != null) {
       builder.append("(");
-      statement.toGenericStatement(params, builder);
+      statement.toGenericStatement(builder);
       builder.append(")");
       return;
     } else if (index != null) {
-      index.toGenericStatement(params, builder);
+      index.toGenericStatement(builder);
       return;
     } else if (inputParam != null) {
-      inputParam.toGenericStatement(params, builder);
+      inputParam.toGenericStatement(builder);
     } else if (functionCall != null) {
-      functionCall.toGenericStatement(params, builder);
+      functionCall.toGenericStatement(builder);
     } else if (identifier != null) {
-      identifier.toGenericStatement(params, builder);
+      identifier.toGenericStatement(builder);
     }
     if (modifier != null) {
-      modifier.toGenericStatement(params, builder);
+      modifier.toGenericStatement(builder);
     }
   }
 

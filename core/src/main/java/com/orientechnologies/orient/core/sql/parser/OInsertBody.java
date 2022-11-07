@@ -79,7 +79,7 @@ public class OInsertBody extends SimpleNode {
     }
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
 
     if (identifierList != null) {
       builder.append("(");
@@ -88,7 +88,7 @@ public class OInsertBody extends SimpleNode {
         if (!first) {
           builder.append(", ");
         }
-        item.toGenericStatement(params, builder);
+        item.toGenericStatement(builder);
         first = false;
       }
       builder.append(") VALUES ");
@@ -105,7 +105,7 @@ public class OInsertBody extends SimpleNode {
             if (!first) {
               builder.append(", ");
             }
-            item.toGenericStatement(params, builder);
+            item.toGenericStatement(builder);
             first = false;
           }
           firstList = false;
@@ -121,17 +121,17 @@ public class OInsertBody extends SimpleNode {
         if (!first) {
           builder.append(", ");
         }
-        item.toGenericStatement(params, builder);
+        item.toGenericStatement(builder);
         first = false;
       }
     }
 
     if (content != null) {
       builder.append("CONTENT ");
-      content.toGenericStatement(params, builder);
+      content.toGenericStatement(builder);
     } else if (contentInputParam != null) {
       builder.append("CONTENT ");
-      contentInputParam.toGenericStatement(params, builder);
+      contentInputParam.toGenericStatement(builder);
     }
   }
 

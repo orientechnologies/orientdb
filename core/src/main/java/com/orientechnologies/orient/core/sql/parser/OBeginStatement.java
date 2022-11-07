@@ -46,11 +46,11 @@ public class OBeginStatement extends OSimpleExecStatement {
   }
 
   @Override
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append("BEGIN");
     if (isolation != null) {
       builder.append(" ISOLATION ");
-      isolation.toGenericStatement(params, builder);
+      isolation.toGenericStatement(builder);
     }
   }
 

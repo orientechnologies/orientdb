@@ -100,7 +100,7 @@ public class OUpdateOperations extends SimpleNode {
     }
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     boolean first = true;
     switch (type) {
       case TYPE_SET:
@@ -109,7 +109,7 @@ public class OUpdateOperations extends SimpleNode {
           if (!first) {
             builder.append(", ");
           }
-          item.toGenericStatement(params, builder);
+          item.toGenericStatement(builder);
           first = false;
         }
         break;
@@ -119,17 +119,17 @@ public class OUpdateOperations extends SimpleNode {
           if (!first) {
             builder.append(", ");
           }
-          item.toGenericStatement(params, builder);
+          item.toGenericStatement(builder);
           first = false;
         }
         break;
       case TYPE_MERGE:
         builder.append("MERGE ");
-        json.toGenericStatement(params, builder);
+        json.toGenericStatement(builder);
         break;
       case TYPE_CONTENT:
         builder.append("CONTENT ");
-        json.toGenericStatement(params, builder);
+        json.toGenericStatement(builder);
         break;
       case TYPE_INCREMENT:
         builder.append("INCREMENT ");
@@ -137,7 +137,7 @@ public class OUpdateOperations extends SimpleNode {
           if (!first) {
             builder.append(", ");
           }
-          item.toGenericStatement(params, builder);
+          item.toGenericStatement(builder);
           first = false;
         }
         break;
@@ -147,7 +147,7 @@ public class OUpdateOperations extends SimpleNode {
           if (!first) {
             builder.append(", ");
           }
-          item.toGenericStatement(params, builder);
+          item.toGenericStatement(builder);
           first = false;
         }
         break;
@@ -157,7 +157,7 @@ public class OUpdateOperations extends SimpleNode {
           if (!first) {
             builder.append(", ");
           }
-          item.toGenericStatement(params, builder);
+          item.toGenericStatement(builder);
           first = false;
         }
         break;

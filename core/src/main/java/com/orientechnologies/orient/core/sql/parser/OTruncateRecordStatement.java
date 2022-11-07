@@ -82,10 +82,10 @@ public class OTruncateRecordStatement extends OSimpleExecStatement {
   }
 
   @Override
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append("TRUNCATE RECORD ");
     if (record != null) {
-      record.toGenericStatement(params, builder);
+      record.toGenericStatement(builder);
     } else {
       builder.append("[");
       boolean first = true;
@@ -93,7 +93,7 @@ public class OTruncateRecordStatement extends OSimpleExecStatement {
         if (!first) {
           builder.append(",");
         }
-        r.toGenericStatement(params, builder);
+        r.toGenericStatement(builder);
         first = false;
       }
       builder.append("]");

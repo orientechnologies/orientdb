@@ -137,12 +137,12 @@ public class OWhileBlock extends OStatement {
     builder.append("}");
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append("WHILE (");
-    condition.toGenericStatement(params, builder);
+    condition.toGenericStatement(builder);
     builder.append(") {\n");
     for (OStatement stm : statements) {
-      stm.toGenericStatement(params, builder);
+      stm.toGenericStatement(builder);
       builder.append("\n");
     }
     builder.append("}");

@@ -55,7 +55,7 @@ public class OIndexIdentifier extends SimpleNode {
     }
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     switch (type) {
       case INDEX:
         builder.append("INDEX");
@@ -74,7 +74,7 @@ public class OIndexIdentifier extends SimpleNode {
     if (indexNameString != null) {
       builder.append(indexNameString);
     } else {
-      indexName.toGenericStatement(params, builder);
+      indexName.toGenericStatement(builder);
     }
   }
 

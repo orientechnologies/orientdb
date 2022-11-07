@@ -34,7 +34,7 @@ public class OBothPathItem extends OMatchPathItem {
   }
 
   @Override
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append("-");
     boolean first = true;
     if (this.method.params != null) {
@@ -42,13 +42,13 @@ public class OBothPathItem extends OMatchPathItem {
         if (!first) {
           builder.append(", ");
         }
-        exp.toGenericStatement(params, builder);
+        exp.toGenericStatement(builder);
         first = false;
       }
     }
     builder.append("-");
     if (filter != null) {
-      filter.toGenericStatement(params, builder);
+      filter.toGenericStatement(builder);
     }
   }
 }

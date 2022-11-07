@@ -31,9 +31,9 @@ public class OExplainStatement extends OStatement {
   }
 
   @Override
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append("EXPLAIN ");
-    statement.toGenericStatement(params, builder);
+    statement.toGenericStatement(builder);
   }
 
   @Override

@@ -36,11 +36,11 @@ public class OFieldMatchPathItem extends OMatchPathItem {
     }
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append(".");
-    field.toGenericStatement(params, builder);
+    field.toGenericStatement(builder);
     if (filter != null) {
-      filter.toGenericStatement(params, builder);
+      filter.toGenericStatement(builder);
     }
   }
 

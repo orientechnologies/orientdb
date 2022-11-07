@@ -29,9 +29,9 @@ public class OHaRemoveServerStatement extends OStatement {
   }
 
   @Override
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append("HA REMOVE SERVER ");
-    serverName.toGenericStatement(params, builder);
+    serverName.toGenericStatement(builder);
   }
 
   @Override

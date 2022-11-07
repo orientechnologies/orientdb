@@ -78,15 +78,15 @@ public class OFunctionCall extends SimpleNode {
     builder.append(")");
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
-    name.toGenericStatement(params, builder);
+  public void toGenericStatement(StringBuilder builder) {
+    name.toGenericStatement(builder);
     builder.append("(");
     boolean first = true;
     for (OExpression expr : this.params) {
       if (!first) {
         builder.append(", ");
       }
-      expr.toGenericStatement(params, builder);
+      expr.toGenericStatement(builder);
       first = false;
     }
     builder.append(")");

@@ -26,12 +26,12 @@ public class OUpdatePutItem extends SimpleNode {
     value.toString(params, builder);
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
-    left.toGenericStatement(params, builder);
+  public void toGenericStatement(StringBuilder builder) {
+    left.toGenericStatement(builder);
     builder.append(" = ");
-    key.toGenericStatement(params, builder);
+    key.toGenericStatement(builder);
     builder.append(", ");
-    value.toGenericStatement(params, builder);
+    value.toGenericStatement(builder);
   }
 
   public OUpdatePutItem copy() {

@@ -70,7 +70,7 @@ public class OInOperator extends SimpleNode implements OBinaryCompareOperator {
     builder.append("IN");
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append("IN");
   }
 

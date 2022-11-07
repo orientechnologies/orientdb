@@ -63,7 +63,7 @@ public class OProfileStorageStatement extends OSimpleExecStatement {
     builder.append(on ? "ON" : "OFF");
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append("PROFILE STORAGE ");
     builder.append(on ? "ON" : "OFF");
   }

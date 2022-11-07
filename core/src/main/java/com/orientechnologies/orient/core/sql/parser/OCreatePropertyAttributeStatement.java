@@ -31,11 +31,11 @@ public class OCreatePropertyAttributeStatement extends SimpleNode {
   }
 
   @Override
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
-    settingName.toGenericStatement(params, builder);
+  public void toGenericStatement(StringBuilder builder) {
+    settingName.toGenericStatement(builder);
     if (settingValue != null) {
       builder.append(" ");
-      settingValue.toGenericStatement(params, builder);
+      settingValue.toGenericStatement(builder);
     }
   }
 

@@ -103,19 +103,19 @@ public class OAlterRoleStatement extends OSimpleExecStatement {
   }
 
   @Override
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append("ALTER ROLE ");
-    name.toGenericStatement(params, builder);
+    name.toGenericStatement(builder);
 
     for (Op operation : operations) {
       if (operation.type == Op.TYPE_ADD) {
         builder.append(" SET POLICY ");
-        operation.policyName.toGenericStatement(params, builder);
+        operation.policyName.toGenericStatement(builder);
         builder.append(" ON ");
-        operation.resource.toGenericStatement(params, builder);
+        operation.resource.toGenericStatement(builder);
       } else {
         builder.append(" REMOVE POLICY ON ");
-        operation.resource.toGenericStatement(params, builder);
+        operation.resource.toGenericStatement(builder);
       }
     }
   }

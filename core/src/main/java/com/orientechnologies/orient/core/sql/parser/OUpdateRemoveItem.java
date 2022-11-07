@@ -32,11 +32,11 @@ public class OUpdateRemoveItem extends SimpleNode {
     }
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
-    left.toGenericStatement(params, builder);
+  public void toGenericStatement(StringBuilder builder) {
+    left.toGenericStatement(builder);
     if (right != null) {
       builder.append(" = ");
-      right.toGenericStatement(params, builder);
+      right.toGenericStatement(builder);
     }
   }
 

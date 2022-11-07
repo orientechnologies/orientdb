@@ -45,18 +45,18 @@ public class ODeleteStatement extends OStatement {
     }
   }
 
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append("DELETE FROM ");
-    fromClause.toGenericStatement(params, builder);
+    fromClause.toGenericStatement(builder);
     if (returnBefore) {
       builder.append(" RETURN BEFORE");
     }
     if (whereClause != null) {
       builder.append(" WHERE ");
-      whereClause.toGenericStatement(params, builder);
+      whereClause.toGenericStatement(builder);
     }
     if (limit != null) {
-      limit.toGenericStatement(params, builder);
+      limit.toGenericStatement(builder);
     }
     if (unsafe) {
       builder.append(" UNSAFE");

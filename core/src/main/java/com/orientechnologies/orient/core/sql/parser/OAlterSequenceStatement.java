@@ -164,21 +164,21 @@ public class OAlterSequenceStatement extends ODDLStatement {
   }
 
   @Override
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     builder.append("ALTER SEQUENCE ");
-    name.toGenericStatement(params, builder);
+    name.toGenericStatement(builder);
 
     if (start != null) {
       builder.append(" START ");
-      start.toGenericStatement(params, builder);
+      start.toGenericStatement(builder);
     }
     if (increment != null) {
       builder.append(" INCREMENT ");
-      increment.toGenericStatement(params, builder);
+      increment.toGenericStatement(builder);
     }
     if (cache != null) {
       builder.append(" CACHE ");
-      cache.toGenericStatement(params, builder);
+      cache.toGenericStatement(builder);
     }
     if (positive != null) {
       String appendString;
@@ -190,7 +190,7 @@ public class OAlterSequenceStatement extends ODDLStatement {
     }
     if (limitValue != null) {
       builder.append(" LIMIT ");
-      limitValue.toGenericStatement(params, builder);
+      limitValue.toGenericStatement(builder);
     }
     if (turnLimitOff) {
       builder.append(" NOLIMIT");

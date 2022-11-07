@@ -45,15 +45,15 @@ public class OSecurityResourceSegment extends SimpleNode {
   }
 
   @Override
-  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+  public void toGenericStatement(StringBuilder builder) {
     if (this.star) {
       builder.append("*");
     } else {
-      identifier.toGenericStatement(params, builder);
+      identifier.toGenericStatement(builder);
     }
     if (next != null) {
       builder.append(".");
-      next.toGenericStatement(params, builder);
+      next.toGenericStatement(builder);
     }
   }
 
