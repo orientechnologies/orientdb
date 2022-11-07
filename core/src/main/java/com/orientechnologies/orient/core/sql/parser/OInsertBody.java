@@ -79,6 +79,62 @@ public class OInsertBody extends SimpleNode {
     }
   }
 
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+
+    if (identifierList != null) {
+      builder.append("(");
+      boolean first = true;
+      for (OIdentifier item : identifierList) {
+        if (!first) {
+          builder.append(", ");
+        }
+        item.toGenericStatement(params, builder);
+        first = false;
+      }
+      builder.append(") VALUES ");
+      if (valueExpressions != null) {
+        boolean firstList = true;
+        for (List<OExpression> itemList : valueExpressions) {
+          if (firstList) {
+            builder.append("(");
+          } else {
+            builder.append("),(");
+          }
+          first = true;
+          for (OExpression item : itemList) {
+            if (!first) {
+              builder.append(", ");
+            }
+            item.toGenericStatement(params, builder);
+            first = false;
+          }
+          firstList = false;
+        }
+      }
+      builder.append(")");
+    }
+
+    if (setExpressions != null) {
+      builder.append("SET ");
+      boolean first = true;
+      for (OInsertSetExpression item : setExpressions) {
+        if (!first) {
+          builder.append(", ");
+        }
+        item.toGenericStatement(params, builder);
+        first = false;
+      }
+    }
+
+    if (content != null) {
+      builder.append("CONTENT ");
+      content.toGenericStatement(params, builder);
+    } else if (contentInputParam != null) {
+      builder.append("CONTENT ");
+      contentInputParam.toGenericStatement(params, builder);
+    }
+  }
+
   public OInsertBody copy() {
     OInsertBody result = new OInsertBody(-1);
     result.identifierList =

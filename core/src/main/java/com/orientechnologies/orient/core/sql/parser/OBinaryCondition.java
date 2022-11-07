@@ -95,6 +95,14 @@ public class OBinaryCondition extends OBooleanExpression {
     right.toString(params, builder);
   }
 
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    left.toGenericStatement(params, builder);
+    builder.append(" ");
+    operator.toGenericStatement(params, builder);
+    builder.append(" ");
+    right.toGenericStatement(params, builder);
+  }
+
   protected boolean supportsBasicCalculation() {
     if (!operator.supportsBasicCalculation()) {
       return false;

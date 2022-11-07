@@ -62,6 +62,21 @@ public class OMethodCall extends SimpleNode {
     builder.append(")");
   }
 
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append(".");
+    methodName.toGenericStatement(params, builder);
+    builder.append("(");
+    boolean first = true;
+    for (OExpression param : this.params) {
+      if (!first) {
+        builder.append(", ");
+      }
+      param.toGenericStatement(params, builder);
+      first = false;
+    }
+    builder.append(")");
+  }
+
   public boolean isBidirectional() {
     return bidirectionalMethods.contains(methodName.getStringValue().toLowerCase(Locale.ENGLISH));
   }

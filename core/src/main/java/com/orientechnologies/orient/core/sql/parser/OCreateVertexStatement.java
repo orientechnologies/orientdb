@@ -77,6 +77,7 @@ public class OCreateVertexStatement extends OStatement {
     OCreateVertexExecutionPlanner planner = new OCreateVertexExecutionPlanner(this);
     OInternalExecutionPlan result = planner.createExecutionPlan(ctx, enableProfiling);
     result.setStatement(this.originalStatement);
+    result.setGenericStatement(this.toGenericStatement());
     return result;
   }
 
@@ -102,6 +103,31 @@ public class OCreateVertexStatement extends OStatement {
         builder.append(" ");
       }
       insertBody.toString(params, builder);
+    }
+  }
+
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+
+    builder.append("CREATE VERTEX ");
+    if (targetClass != null) {
+      targetClass.toGenericStatement(params, builder);
+      if (targetClusterName != null) {
+        builder.append(" CLUSTER ");
+        targetClusterName.toGenericStatement(params, builder);
+      }
+    }
+    if (targetCluster != null) {
+      targetCluster.toGenericStatement(params, builder);
+    }
+    if (returnStatement != null) {
+      builder.append(" RETURN ");
+      returnStatement.toGenericStatement(params, builder);
+    }
+    if (insertBody != null) {
+      if (targetClass != null || targetCluster != null || returnStatement != null) {
+        builder.append(" ");
+      }
+      insertBody.toGenericStatement(params, builder);
     }
   }
 

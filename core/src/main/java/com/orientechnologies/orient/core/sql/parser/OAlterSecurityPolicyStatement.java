@@ -228,5 +228,139 @@ public class OAlterSecurityPolicyStatement extends OSimpleExecStatement {
       firstRemove = false;
     }
   }
+
+  @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("ALTER SECURITY POLICY ");
+    name.toGenericStatement(params, builder);
+
+    boolean firstSet = true;
+    if (create != null) {
+      if (firstSet) {
+        builder.append(" SET ");
+      } else {
+        builder.append(", ");
+      }
+      builder.append("CREATE = (");
+      create.toGenericStatement(params, builder);
+      builder.append(")");
+      firstSet = false;
+    }
+
+    if (read != null) {
+      if (firstSet) {
+        builder.append(" SET ");
+      } else {
+        builder.append(", ");
+      }
+      builder.append("READ = (");
+      read.toGenericStatement(params, builder);
+      builder.append(")");
+      firstSet = false;
+    }
+    if (beforeUpdate != null) {
+      if (firstSet) {
+        builder.append(" SET ");
+      } else {
+        builder.append(", ");
+      }
+      builder.append("BEFORE UPDATE = (");
+      beforeUpdate.toGenericStatement(params, builder);
+      builder.append(")");
+      firstSet = false;
+    }
+
+    if (afterUpdate != null) {
+      if (firstSet) {
+        builder.append(" SET ");
+      } else {
+        builder.append(", ");
+      }
+      builder.append("AFTER UPDATE = (");
+      afterUpdate.toGenericStatement(params, builder);
+      builder.append(")");
+      firstSet = false;
+    }
+    if (delete != null) {
+      if (firstSet) {
+        builder.append(" SET ");
+      } else {
+        builder.append(", ");
+      }
+      builder.append("DELETE = (");
+      delete.toGenericStatement(params, builder);
+      builder.append(")");
+      firstSet = false;
+    }
+    if (execute != null) {
+      if (firstSet) {
+        builder.append(" SET ");
+      } else {
+        builder.append(", ");
+      }
+      builder.append("EXECUTE = (");
+      execute.toGenericStatement(params, builder);
+      builder.append(")");
+      firstSet = false;
+    }
+
+    boolean firstRemove = true;
+    if (removeCreate) {
+      if (firstRemove) {
+        builder.append(" REMOVE ");
+      } else {
+        builder.append(", ");
+      }
+      builder.append("CREATE");
+      firstRemove = false;
+    }
+
+    if (removeRead) {
+      if (firstRemove) {
+        builder.append(" REMOVE ");
+      } else {
+        builder.append(", ");
+      }
+      builder.append("READ");
+      firstRemove = false;
+    }
+    if (removeBeforeUpdate) {
+      if (firstRemove) {
+        builder.append(" REMOVE ");
+      } else {
+        builder.append(", ");
+      }
+      builder.append("BEFORE UPDATE");
+      firstRemove = false;
+    }
+
+    if (removeAfterUpdate) {
+      if (firstRemove) {
+        builder.append(" REMOVE ");
+      } else {
+        builder.append(", ");
+      }
+      builder.append("AFTER UPDATE");
+      firstRemove = false;
+    }
+    if (removeDelete) {
+      if (firstRemove) {
+        builder.append(" REMOVE ");
+      } else {
+        builder.append(", ");
+      }
+      builder.append("DELETE");
+      firstRemove = false;
+    }
+    if (removeExecute) {
+      if (firstRemove) {
+        builder.append(" REMOVE ");
+      } else {
+        builder.append(", ");
+      }
+      builder.append("EXECUTE");
+      firstRemove = false;
+    }
+  }
 }
 /* JavaCC - OriginalChecksum=849f284b6e4057d1f554daf024534423 (do not edit this line) */

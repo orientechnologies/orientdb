@@ -38,6 +38,16 @@ public class OContainsValueOperator extends SimpleNode implements OBinaryCompare
   }
 
   @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("CONTAINSVALUE");
+  }
+
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("CONTAINSVALUE");
+  }
+
+  @Override
   public boolean equals(Object obj) {
     return obj != null && obj.getClass().equals(this.getClass());
   }

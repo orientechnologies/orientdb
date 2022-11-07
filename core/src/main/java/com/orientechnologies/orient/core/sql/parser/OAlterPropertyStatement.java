@@ -133,6 +133,25 @@ public class OAlterPropertyStatement extends ODDLStatement {
   }
 
   @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("ALTER PROPERTY ");
+    className.toGenericStatement(params, builder);
+    builder.append(".");
+    propertyName.toGenericStatement(params, builder);
+    if (customPropertyName != null) {
+      builder.append(" CUSTOM ");
+      customPropertyName.toGenericStatement(params, builder);
+      builder.append(" = ");
+      customPropertyValue.toGenericStatement(params, builder);
+    } else {
+      builder.append(" ");
+      settingName.toGenericStatement(params, builder);
+      builder.append(" ");
+      settingValue.toGenericStatement(params, builder);
+    }
+  }
+
+  @Override
   public OAlterPropertyStatement copy() {
     OAlterPropertyStatement result = new OAlterPropertyStatement(-1);
     result.className = className == null ? null : className.copy();

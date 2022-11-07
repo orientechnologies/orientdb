@@ -47,6 +47,14 @@ public class OBaseIdentifier extends SimpleNode {
     }
   }
 
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    if (levelZero != null) {
+      levelZero.toGenericStatement(params, builder);
+    } else if (suffix != null) {
+      suffix.toGenericStatement(params, builder);
+    }
+  }
+
   public Object execute(OIdentifiable iCurrentRecord, OCommandContext ctx) {
     if (levelZero != null) {
       return levelZero.execute(iCurrentRecord, ctx);

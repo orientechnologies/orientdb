@@ -45,6 +45,19 @@ public class OSecurityResourceSegment extends SimpleNode {
   }
 
   @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    if (this.star) {
+      builder.append("*");
+    } else {
+      identifier.toGenericStatement(params, builder);
+    }
+    if (next != null) {
+      builder.append(".");
+      next.toGenericStatement(params, builder);
+    }
+  }
+
+  @Override
   public OSecurityResourceSegment copy() {
     OSecurityResourceSegment result = new OSecurityResourceSegment(-1);
     result.star = this.star;

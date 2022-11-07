@@ -38,6 +38,10 @@ public class OPositionalParameter extends OInputParameter {
     }
   }
 
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append(PARAMETER_PLACEHOLDER);
+  }
+
   public Object getValue(Map<Object, Object> params) {
     Object result = null;
     if (params != null) {

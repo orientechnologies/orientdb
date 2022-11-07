@@ -2,6 +2,8 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import java.util.Map;
+
 public class ONearOperator extends SimpleNode implements OBinaryCompareOperator {
   public ONearOperator(int id) {
     super(id);
@@ -20,6 +22,16 @@ public class ONearOperator extends SimpleNode implements OBinaryCompareOperator 
   @Override
   public String toString() {
     return "NEAR";
+  }
+
+  @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("NEAR");
+  }
+
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("NEAR");
   }
 
   @Override

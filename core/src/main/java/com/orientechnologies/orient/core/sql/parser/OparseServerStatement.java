@@ -2,6 +2,8 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import java.util.Map;
+
 public class OparseServerStatement extends SimpleNode {
   public OparseServerStatement(int id) {
     super(id);
@@ -14,6 +16,16 @@ public class OparseServerStatement extends SimpleNode {
   /** Accept the visitor. */
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
+  }
+
+  @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    throw new UnsupportedOperationException();
   }
 }
 /* JavaCC - OriginalChecksum=9104b2fdf32d043622d196ed9a74f00c (do not edit this line) */

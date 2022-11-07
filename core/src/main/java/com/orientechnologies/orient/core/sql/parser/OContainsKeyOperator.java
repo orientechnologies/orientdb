@@ -31,6 +31,16 @@ public class OContainsKeyOperator extends SimpleNode implements OBinaryCompareOp
   }
 
   @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("CONTAINSKEY");
+  }
+
+  @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("CONTAINSKEY");
+  }
+
+  @Override
   public boolean supportsBasicCalculation() {
     return true;
   }

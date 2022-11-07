@@ -83,6 +83,7 @@ public class OCreateEdgeStatement extends OStatement {
     OCreateEdgeExecutionPlanner planner = new OCreateEdgeExecutionPlanner(this);
     OInsertExecutionPlan result = planner.createExecutionPlan(ctx, enableProfiling, true);
     result.setStatement(this.originalStatement);
+    result.setGenericStatement(this.toGenericStatement());
     return result;
   }
 
@@ -91,6 +92,7 @@ public class OCreateEdgeStatement extends OStatement {
     OCreateEdgeExecutionPlanner planner = new OCreateEdgeExecutionPlanner(this);
     OInsertExecutionPlan result = planner.createExecutionPlan(ctx, enableProfiling, false);
     result.setStatement(this.originalStatement);
+    result.setGenericStatement(this.toGenericStatement());
     return result;
   }
 
@@ -127,6 +129,43 @@ public class OCreateEdgeStatement extends OStatement {
     }
     if (batch != null) {
       batch.toString(params, builder);
+    }
+  }
+
+  @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("CREATE EDGE");
+    if (targetClass != null) {
+      builder.append(" ");
+      targetClass.toGenericStatement(params, builder);
+      if (targetClusterName != null) {
+        builder.append(" CLUSTER ");
+        targetClusterName.toGenericStatement(params, builder);
+      }
+    }
+    if (upsert) {
+      builder.append(" UPSERT");
+    }
+    builder.append(" FROM ");
+    leftExpression.toGenericStatement(params, builder);
+
+    builder.append(" TO ");
+    rightExpression.toGenericStatement(params, builder);
+
+    if (body != null) {
+      builder.append(" ");
+      body.toGenericStatement(params, builder);
+    }
+    if (retry != null) {
+      builder.append(" RETRY ");
+      builder.append(PARAMETER_PLACEHOLDER);
+    }
+    if (wait != null) {
+      builder.append(" WAIT ");
+      builder.append(PARAMETER_PLACEHOLDER);
+    }
+    if (batch != null) {
+      batch.toGenericStatement(params, builder);
     }
   }
 

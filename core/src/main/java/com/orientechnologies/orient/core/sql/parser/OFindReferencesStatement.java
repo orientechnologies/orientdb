@@ -107,6 +107,30 @@ public class OFindReferencesStatement extends OStatement {
   }
 
   @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("FIND REFERENCES ");
+    if (rid != null) {
+      rid.toGenericStatement(params, builder);
+    } else {
+      builder.append(" ( ");
+      subQuery.toGenericStatement(params, builder);
+      builder.append(" )");
+    }
+    if (targets != null) {
+      builder.append(" [");
+      boolean first = true;
+      for (SimpleNode node : targets) {
+        if (!first) {
+          builder.append(",");
+        }
+        node.toGenericStatement(params, builder);
+        first = false;
+      }
+      builder.append("]");
+    }
+  }
+
+  @Override
   public OFindReferencesStatement copy() {
     OFindReferencesStatement result = new OFindReferencesStatement(-1);
     result.rid = rid == null ? null : rid.copy();

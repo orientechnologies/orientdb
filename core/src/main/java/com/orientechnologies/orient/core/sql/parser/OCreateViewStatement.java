@@ -205,6 +205,22 @@ public class OCreateViewStatement extends ODDLStatement {
   }
 
   @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("CREATE VIEW ");
+    name.toGenericStatement(params, builder);
+    if (ifNotExists) {
+      builder.append(" IF NOT EXISTS");
+    }
+    builder.append(" FROM (");
+    statement.toGenericStatement(params, builder);
+    builder.append(")");
+    if (metadata != null) {
+      builder.append(" METADATA ");
+      metadata.toGenericStatement(params, builder);
+    }
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;

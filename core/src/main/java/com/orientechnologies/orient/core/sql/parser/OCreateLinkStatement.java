@@ -268,6 +268,33 @@ public class OCreateLinkStatement extends OSimpleExecStatement {
   }
 
   @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("CREATE LINK ");
+    name.toGenericStatement(params, builder);
+    builder.append(" TYPE ");
+    type.toGenericStatement(params, builder);
+    builder.append(" FROM ");
+    sourceClass.toGenericStatement(params, builder);
+    builder.append(".");
+    if (sourceField != null) {
+      sourceField.toGenericStatement(params, builder);
+    } else {
+      sourceRecordAttr.toGenericStatement(params, builder);
+    }
+    builder.append(" TO ");
+    destClass.toGenericStatement(params, builder);
+    builder.append(".");
+    if (destField != null) {
+      destField.toGenericStatement(params, builder);
+    } else {
+      destRecordAttr.toGenericStatement(params, builder);
+    }
+    if (inverse) {
+      builder.append(" INVERSE");
+    }
+  }
+
+  @Override
   public OCreateLinkStatement copy() {
     OCreateLinkStatement result = new OCreateLinkStatement(-1);
     result.name = name == null ? null : name.copy();

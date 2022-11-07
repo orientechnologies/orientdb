@@ -34,6 +34,20 @@ public class OFetchPlan extends SimpleNode {
     }
   }
 
+  @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("FETCHPLAN ");
+    boolean first = true;
+    for (OFetchPlanItem item : items) {
+      if (!first) {
+        builder.append(" ");
+      }
+
+      item.toGenericStatement(params, builder);
+      first = false;
+    }
+  }
+
   public OFetchPlan copy() {
     OFetchPlan result = new OFetchPlan(-1);
     result.items = items.stream().map(x -> x.copy()).collect(Collectors.toList());

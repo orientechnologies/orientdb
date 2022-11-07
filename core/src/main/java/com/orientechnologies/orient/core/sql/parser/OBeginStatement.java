@@ -46,6 +46,15 @@ public class OBeginStatement extends OSimpleExecStatement {
   }
 
   @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("BEGIN");
+    if (isolation != null) {
+      builder.append(" ISOLATION ");
+      isolation.toGenericStatement(params, builder);
+    }
+  }
+
+  @Override
   public OBeginStatement copy() {
     OBeginStatement result = new OBeginStatement(-1);
     result.isolation = isolation == null ? null : isolation.copy();

@@ -42,4 +42,10 @@ public interface OInternalExecutionPlan extends OExecutionPlan {
   }
 
   default void setStatement(String stm) {}
+
+  default String getGenericStatement() {
+    return null;
+  }
+
+  default void setGenericStatement(String stm) {}
 }

@@ -105,6 +105,22 @@ public class OAlterDatabaseStatement extends ODDLStatement {
   }
 
   @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("ALTER DATABASE ");
+
+    if (customPropertyName != null) {
+      builder.append("CUSTOM ");
+      customPropertyName.toGenericStatement(params, builder);
+      builder.append(" = ");
+      customPropertyValue.toGenericStatement(params, builder);
+    } else {
+      settingName.toGenericStatement(params, builder);
+      builder.append(" ");
+      settingValue.toGenericStatement(params, builder);
+    }
+  }
+
+  @Override
   public OAlterDatabaseStatement copy() {
     OAlterDatabaseStatement result = new OAlterDatabaseStatement(-1);
     result.customPropertyName = customPropertyName == null ? null : customPropertyName.copy();

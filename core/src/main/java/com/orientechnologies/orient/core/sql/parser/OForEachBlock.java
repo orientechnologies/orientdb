@@ -138,6 +138,19 @@ public class OForEachBlock extends OStatement {
     builder.append("}");
   }
 
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("FOREACH (");
+    loopVariable.toGenericStatement(params, builder);
+    builder.append(" IN ");
+    loopValues.toGenericStatement(params, builder);
+    builder.append(") {\n");
+    for (OStatement stm : statements) {
+      stm.toGenericStatement(params, builder);
+      builder.append("\n");
+    }
+    builder.append("}");
+  }
+
   public boolean containsReturn() {
     for (OStatement stm : this.statements) {
       if (stm instanceof OReturnStatement) {

@@ -100,6 +100,28 @@ public class OProjectionItem extends SimpleNode {
     }
   }
 
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    if (all) {
+      builder.append("*");
+    } else {
+      if (exclude) {
+        builder.append("!");
+      }
+      if (expression != null) {
+        expression.toGenericStatement(params, builder);
+      }
+      if (nestedProjection != null) {
+        builder.append(" ");
+        nestedProjection.toGenericStatement(params, builder);
+      }
+      if (alias != null) {
+
+        builder.append(" AS ");
+        alias.toGenericStatement(params, builder);
+      }
+    }
+  }
+
   public Object execute(OIdentifiable iCurrentRecord, OCommandContext ctx) {
     Object result;
     if (all) {

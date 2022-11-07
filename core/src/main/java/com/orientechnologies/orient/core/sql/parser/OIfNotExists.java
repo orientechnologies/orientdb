@@ -2,6 +2,8 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import java.util.Map;
+
 public class OIfNotExists extends SimpleNode {
   public OIfNotExists(int id) {
     super(id);
@@ -9,6 +11,16 @@ public class OIfNotExists extends SimpleNode {
 
   public OIfNotExists(OrientSql p, int id) {
     super(p, id);
+  }
+
+  @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    throw new UnsupportedOperationException();
   }
 }
 /* JavaCC - OriginalChecksum=5990db905ac7259f864fa5c62f123bcc (do not edit this line) */

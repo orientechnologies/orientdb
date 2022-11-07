@@ -35,6 +35,11 @@ public class OServerStatement extends SimpleNode {
         "missing implementation in " + getClass().getSimpleName());
   }
 
+  @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    throw new UnsupportedOperationException();
+  }
+
   public void validate() throws OCommandSQLParsingException {}
 
   @Override

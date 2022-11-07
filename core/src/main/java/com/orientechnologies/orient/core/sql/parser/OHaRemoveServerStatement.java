@@ -29,6 +29,12 @@ public class OHaRemoveServerStatement extends OStatement {
   }
 
   @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("HA REMOVE SERVER ");
+    serverName.toGenericStatement(params, builder);
+  }
+
+  @Override
   public OResultSet execute(
       ODatabase db, Object[] args, OCommandContext parentContext, boolean usePlanCache) {
     ODatabaseDocumentInternal internalDb = (ODatabaseDocumentInternal) db;

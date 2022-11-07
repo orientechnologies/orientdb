@@ -135,6 +135,89 @@ public class OAlterClassStatement extends ODDLStatement {
     }
   }
 
+  @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("ALTER CLASS ");
+    name.toGenericStatement(params, builder);
+    if (property != null) {
+      builder.append(" " + property.name() + " ");
+      switch (property) {
+        case NAME:
+        case SHORTNAME:
+        case ADDCLUSTER:
+        case REMOVECLUSTER:
+        case DESCRIPTION:
+        case ENCRYPTION:
+          if (numberValue != null) {
+            numberValue.toGenericStatement(params, builder); // clusters only
+          } else if (identifierValue != null) {
+            identifierValue.toGenericStatement(params, builder);
+          } else {
+            builder.append(PARAMETER_PLACEHOLDER);
+          }
+          break;
+        case CLUSTERSELECTION:
+          if (identifierValue != null) {
+            identifierValue.toGenericStatement(params, builder);
+          } else {
+            builder.append(PARAMETER_PLACEHOLDER);
+          }
+          break;
+        case SUPERCLASS:
+          if (Boolean.TRUE.equals(add)) {
+            builder.append("+");
+          } else if (Boolean.TRUE.equals(remove)) {
+            builder.append("-");
+          }
+          if (identifierValue == null) {
+            builder.append(PARAMETER_PLACEHOLDER);
+          } else {
+            identifierValue.toGenericStatement(params, builder);
+          }
+          break;
+        case SUPERCLASSES:
+          if (identifierListValue == null) {
+            builder.append(PARAMETER_PLACEHOLDER);
+          } else {
+            boolean first = true;
+            for (OIdentifier ident : identifierListValue) {
+              if (!first) {
+                builder.append(", ");
+              }
+              ident.toGenericStatement(params, builder);
+              first = false;
+            }
+          }
+          break;
+        case OVERSIZE:
+          numberValue.toGenericStatement(params, builder);
+          break;
+        case STRICTMODE:
+        case ABSTRACT:
+          builder.append(booleanValue.booleanValue());
+          break;
+        case CUSTOM:
+          customKey.toGenericStatement(params, builder);
+          builder.append("=");
+          if (customValue == null) {
+            builder.append("null");
+          } else {
+            customValue.toGenericStatement(params, builder);
+          }
+          break;
+      }
+    } else if (defaultClusterId != null) {
+      builder.append(" DEFAULTCLUSTER ");
+      defaultClusterId.toGenericStatement(params, builder);
+    } else if (defaultClusterName != null) {
+      builder.append(" DEFAULTCLUSTER ");
+      defaultClusterName.toGenericStatement(params, builder);
+    }
+    if (unsafe) {
+      builder.append(" UNSAFE");
+    }
+  }
+
   public OStatement copy() {
     OAlterClassStatement result = new OAlterClassStatement(-1);
     result.name = name == null ? null : name.copy();

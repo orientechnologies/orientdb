@@ -88,6 +88,21 @@ public class OGrantStatement extends OSimpleExecStatement {
   }
 
   @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("GRANT ");
+    if (permission != null) {
+      permission.toGenericStatement(params, builder);
+    } else {
+      builder.append("POLICY ");
+      policyName.toGenericStatement(params, builder);
+    }
+    builder.append(" ON ");
+    securityResource.toGenericStatement(params, builder);
+    builder.append(" TO ");
+    actor.toGenericStatement(params, builder);
+  }
+
+  @Override
   public OGrantStatement copy() {
     OGrantStatement result = new OGrantStatement(-1);
     result.permission = permission == null ? null : permission.copy();

@@ -4,6 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.query.OQueryHelper;
+import java.util.Map;
 
 public class OLikeOperator extends SimpleNode implements OBinaryCompareOperator {
   public OLikeOperator(int id) {
@@ -27,6 +28,16 @@ public class OLikeOperator extends SimpleNode implements OBinaryCompareOperator 
   @Override
   public String toString() {
     return "LIKE";
+  }
+
+  @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("LIKE");
+  }
+
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("LIKE");
   }
 
   @Override

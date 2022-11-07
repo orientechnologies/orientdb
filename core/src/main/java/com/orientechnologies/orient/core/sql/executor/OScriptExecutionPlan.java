@@ -18,6 +18,7 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
   private OExecutionStepInternal lastStep = null;
   private OResultSet finalResult = null;
   private String statement;
+  private String genericStatement;
 
   public OScriptExecutionPlan(OCommandContext ctx) {
     this.ctx = ctx;
@@ -226,5 +227,15 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
   @Override
   public void setStatement(String statement) {
     this.statement = statement;
+  }
+
+  @Override
+  public String getGenericStatement() {
+    return this.genericStatement;
+  }
+
+  @Override
+  public void setGenericStatement(String stm) {
+    this.genericStatement = stm;
   }
 }

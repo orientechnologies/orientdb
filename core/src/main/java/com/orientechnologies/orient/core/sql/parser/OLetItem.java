@@ -32,6 +32,18 @@ public class OLetItem extends SimpleNode {
     }
   }
 
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    varName.toGenericStatement(params, builder);
+    builder.append(" = ");
+    if (expression != null) {
+      expression.toGenericStatement(params, builder);
+    } else if (query != null) {
+      builder.append("(");
+      query.toGenericStatement(params, builder);
+      builder.append(")");
+    }
+  }
+
   public OLetItem copy() {
     OLetItem result = new OLetItem(-1);
     result.varName = varName.copy();

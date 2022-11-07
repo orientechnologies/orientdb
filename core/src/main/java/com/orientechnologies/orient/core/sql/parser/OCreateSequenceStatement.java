@@ -177,6 +177,51 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
   }
 
   @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("CREATE SEQUENCE ");
+    name.toGenericStatement(params, builder);
+    if (ifNotExists) {
+      builder.append(" IF NOT EXISTS");
+    }
+    builder.append(" TYPE ");
+    switch (type) {
+      case TYPE_CACHED:
+        builder.append(" CACHED");
+        break;
+      case TYPE_ORDERED:
+        builder.append(" ORDERED");
+        break;
+      default:
+        throw new IllegalStateException("Invalid type for CREATE SEQUENCE: " + type);
+    }
+
+    if (start != null) {
+      builder.append(" START ");
+      start.toGenericStatement(params, builder);
+    }
+    if (increment != null) {
+      builder.append(" INCREMENT ");
+      increment.toGenericStatement(params, builder);
+    }
+    if (cache != null) {
+      builder.append(" CACHE ");
+      cache.toGenericStatement(params, builder);
+    }
+    if (limitValue != null) {
+      builder.append(" LIMIT ");
+      limitValue.toGenericStatement(params, builder);
+    }
+    if (cyclic != OSequence.DEFAULT_RECYCLABLE_VALUE) {
+      builder.append(" CYCLE ").append(Boolean.toString(cyclic).toUpperCase());
+    }
+    if (positive) {
+      builder.append(" ASC");
+    } else {
+      builder.append(" DESC");
+    }
+  }
+
+  @Override
   public OCreateSequenceStatement copy() {
     OCreateSequenceStatement result = new OCreateSequenceStatement(-1);
     result.name = name == null ? null : name.copy();

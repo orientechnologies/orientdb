@@ -78,6 +78,20 @@ public class OFunctionCall extends SimpleNode {
     builder.append(")");
   }
 
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    name.toGenericStatement(params, builder);
+    builder.append("(");
+    boolean first = true;
+    for (OExpression expr : this.params) {
+      if (!first) {
+        builder.append(", ");
+      }
+      expr.toGenericStatement(params, builder);
+      first = false;
+    }
+    builder.append(")");
+  }
+
   public Object execute(Object targetObjects, OCommandContext ctx) {
     return execute(targetObjects, ctx, name.getStringValue());
   }

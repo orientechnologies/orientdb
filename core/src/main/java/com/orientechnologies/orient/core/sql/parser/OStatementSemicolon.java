@@ -2,6 +2,8 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import java.util.Map;
+
 public class OStatementSemicolon extends SimpleNode {
   public OStatementSemicolon(int id) {
     super(id);
@@ -9,6 +11,16 @@ public class OStatementSemicolon extends SimpleNode {
 
   public OStatementSemicolon(OrientSql p, int id) {
     super(p, id);
+  }
+
+  @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    throw new UnsupportedOperationException();
   }
 }
 /* JavaCC - OriginalChecksum=dd666171278492fc7540b6aed7c08733 (do not edit this line) */

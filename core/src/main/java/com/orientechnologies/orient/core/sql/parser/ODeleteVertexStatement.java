@@ -76,6 +76,7 @@ public class ODeleteVertexStatement extends OStatement {
     ODeleteVertexExecutionPlanner planner = new ODeleteVertexExecutionPlanner(this);
     ODeleteExecutionPlan result = planner.createExecutionPlan(ctx, enableProfiling);
     result.setStatement(this.originalStatement);
+    result.setGenericStatement(this.toGenericStatement());
     return result;
   }
 
@@ -97,6 +98,27 @@ public class ODeleteVertexStatement extends OStatement {
     }
     if (batch != null) {
       batch.toString(params, builder);
+    }
+  }
+
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("DELETE VERTEX ");
+    if (from) {
+      builder.append("FROM ");
+    }
+    fromClause.toGenericStatement(params, builder);
+    if (returnBefore) {
+      builder.append(" RETURN BEFORE");
+    }
+    if (whereClause != null) {
+      builder.append(" WHERE ");
+      whereClause.toGenericStatement(params, builder);
+    }
+    if (limit != null) {
+      limit.toGenericStatement(params, builder);
+    }
+    if (batch != null) {
+      batch.toGenericStatement(params, builder);
     }
   }
 

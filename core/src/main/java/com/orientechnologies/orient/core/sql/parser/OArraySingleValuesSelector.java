@@ -40,6 +40,18 @@ public class OArraySingleValuesSelector extends SimpleNode {
     }
   }
 
+  @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    boolean first = true;
+    for (OArraySelector item : items) {
+      if (!first) {
+        builder.append(",");
+      }
+      item.toGenericStatement(params, builder);
+      first = false;
+    }
+  }
+
   public Object execute(OIdentifiable iCurrentRecord, Object iResult, OCommandContext ctx) {
     List<Object> result = new ArrayList<Object>();
     for (OArraySelector item : items) {

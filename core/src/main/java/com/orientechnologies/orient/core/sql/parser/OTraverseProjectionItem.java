@@ -96,6 +96,14 @@ public class OTraverseProjectionItem extends SimpleNode {
     }
   }
 
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+
+    base.toGenericStatement(params, builder);
+    if (modifier != null) {
+      modifier.toGenericStatement(params, builder);
+    }
+  }
+
   public OTraverseProjectionItem copy() {
     OTraverseProjectionItem result = new OTraverseProjectionItem(-1);
     result.base = base == null ? null : base.copy();

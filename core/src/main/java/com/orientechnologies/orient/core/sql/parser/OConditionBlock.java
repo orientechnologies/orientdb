@@ -2,6 +2,8 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import java.util.Map;
+
 public class OConditionBlock extends SimpleNode {
   public OConditionBlock(int id) {
     super(id);
@@ -9,6 +11,16 @@ public class OConditionBlock extends SimpleNode {
 
   public OConditionBlock(OrientSql p, int id) {
     super(p, id);
+  }
+
+  @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    throw new UnsupportedOperationException();
   }
 }
 /* JavaCC - OriginalChecksum=d3e0589119a7b64cf9891d6baaf9e449 (do not edit this line) */

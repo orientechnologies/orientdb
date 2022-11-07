@@ -2,6 +2,8 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import java.util.Map;
+
 public class ORetry extends SimpleNode {
   public ORetry(int id) {
     super(id);
@@ -19,6 +21,16 @@ public class ORetry extends SimpleNode {
   @Override
   public int hashCode() {
     return getClass().hashCode();
+  }
+
+  @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    throw new UnsupportedOperationException();
   }
 }
 /* JavaCC - OriginalChecksum=2a27e5f409442f80d26204c901e017c1 (do not edit this line) */

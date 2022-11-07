@@ -32,5 +32,24 @@ public class OInPathItem extends OMatchPathItem {
       filter.toString(params, builder);
     }
   }
+
+  @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("<-");
+    boolean first = true;
+    if (this.method.params != null) {
+      for (OExpression exp : this.method.params) {
+        if (!first) {
+          builder.append(", ");
+        }
+        exp.toGenericStatement(params, builder);
+        first = false;
+      }
+    }
+    builder.append("-");
+    if (filter != null) {
+      filter.toGenericStatement(params, builder);
+    }
+  }
 }
 /* JavaCC - OriginalChecksum=a1d80718c0b913e46b7b6a1c38e0dc98 (do not edit this line) */

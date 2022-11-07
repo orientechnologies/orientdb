@@ -107,6 +107,7 @@ public class OTraverseStatement extends OStatement {
     OTraverseExecutionPlanner planner = new OTraverseExecutionPlanner(this);
     OInternalExecutionPlan result = planner.createExecutionPlan(ctx, enableProfiling);
     result.setStatement(originalStatement);
+    result.setGenericStatement(this.toGenericStatement());
     return result;
   }
 
@@ -139,6 +140,50 @@ public class OTraverseStatement extends OStatement {
     if (limit != null) {
       builder.append(" ");
       limit.toString(params, builder);
+    }
+
+    if (strategy != null) {
+      builder.append(" strategy ");
+      switch (strategy) {
+        case BREADTH_FIRST:
+          builder.append("breadth_first");
+          break;
+        case DEPTH_FIRST:
+          builder.append("depth_first");
+          break;
+      }
+    }
+  }
+
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("TRAVERSE ");
+    boolean first = true;
+    for (OTraverseProjectionItem item : projections) {
+      if (!first) {
+        builder.append(", ");
+      }
+      item.toGenericStatement(params, builder);
+      first = false;
+    }
+
+    if (target != null) {
+      builder.append(" FROM ");
+      target.toGenericStatement(params, builder);
+    }
+
+    if (maxDepth != null) {
+      builder.append(" MAXDEPTH ");
+      maxDepth.toGenericStatement(params, builder);
+    }
+
+    if (whileClause != null) {
+      builder.append(" WHILE ");
+      whileClause.toGenericStatement(params, builder);
+    }
+
+    if (limit != null) {
+      builder.append(" ");
+      limit.toGenericStatement(params, builder);
     }
 
     if (strategy != null) {

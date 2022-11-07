@@ -48,6 +48,11 @@ public class OIsDefinedCondition extends OBooleanExpression implements OSimpleBo
     builder.append(" is defined");
   }
 
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    expression.toGenericStatement(params, builder);
+    builder.append(" is defined");
+  }
+
   @Override
   public boolean supportsBasicCalculation() {
     return true;

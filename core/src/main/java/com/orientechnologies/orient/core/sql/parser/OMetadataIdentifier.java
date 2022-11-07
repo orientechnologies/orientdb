@@ -23,6 +23,11 @@ public class OMetadataIdentifier extends SimpleNode {
     builder.append(name);
   }
 
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("metadata:");
+    builder.append(name);
+  }
+
   public String getName() {
     return name;
   }

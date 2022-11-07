@@ -82,6 +82,34 @@ public class OCreateFunctionStatement extends OSimpleExecStatement {
   }
 
   @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("CREATE FUNCTION ");
+    name.toGenericStatement(params, builder);
+    builder.append(" ");
+    builder.append(codeQuoted);
+    if (parameters != null) {
+      boolean first = true;
+      builder.append(" PARAMETERS [");
+      for (OIdentifier param : parameters) {
+        if (!first) {
+          builder.append(", ");
+        }
+        param.toGenericStatement(params, builder);
+        first = false;
+      }
+      builder.append("]");
+    }
+    if (idempotent != null) {
+      builder.append(" IDEMPOTENT ");
+      builder.append(idempotent ? "true" : "false");
+    }
+    if (language != null) {
+      builder.append(" LANGUAGE ");
+      language.toGenericStatement(params, builder);
+    }
+  }
+
+  @Override
   public OCreateFunctionStatement copy() {
     OCreateFunctionStatement result = new OCreateFunctionStatement(-1);
     result.name = name == null ? null : name.copy();

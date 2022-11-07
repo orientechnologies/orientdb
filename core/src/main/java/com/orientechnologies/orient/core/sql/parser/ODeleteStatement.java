@@ -45,6 +45,24 @@ public class ODeleteStatement extends OStatement {
     }
   }
 
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("DELETE FROM ");
+    fromClause.toGenericStatement(params, builder);
+    if (returnBefore) {
+      builder.append(" RETURN BEFORE");
+    }
+    if (whereClause != null) {
+      builder.append(" WHERE ");
+      whereClause.toGenericStatement(params, builder);
+    }
+    if (limit != null) {
+      limit.toGenericStatement(params, builder);
+    }
+    if (unsafe) {
+      builder.append(" UNSAFE");
+    }
+  }
+
   @Override
   public ODeleteStatement copy() {
     ODeleteStatement result = new ODeleteStatement(-1);
@@ -132,6 +150,7 @@ public class ODeleteStatement extends OStatement {
     ODeleteExecutionPlanner planner = new ODeleteExecutionPlanner(this);
     ODeleteExecutionPlan result = planner.createExecutionPlan(ctx, enableProfiling);
     result.setStatement(this.originalStatement);
+    result.setGenericStatement(this.toGenericStatement());
     return result;
   }
 

@@ -61,6 +61,32 @@ public class OHaStatusStatement extends OSimpleExecStatement {
   }
 
   @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("HA STATUS");
+    if (servers) {
+      builder.append(" -servers");
+    }
+    if (db) {
+      builder.append(" -db");
+    }
+    if (latency) {
+      builder.append(" -latency");
+    }
+    if (messages) {
+      builder.append(" -messages");
+    }
+    if (locks) {
+      builder.append(" -locks");
+    }
+    if (outputText) {
+      builder.append(" -output=text");
+    }
+    if (servers) {
+      builder.append(" -servers");
+    }
+  }
+
+  @Override
   public OResultSet executeSimple(OCommandContext ctx) {
     if (outputText) {
       OLogManager.instance().info(this, "HA STATUS with text output is deprecated");

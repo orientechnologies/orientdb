@@ -30,6 +30,15 @@ public class OCreatePropertyAttributeStatement extends SimpleNode {
     }
   }
 
+  @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    settingName.toGenericStatement(params, builder);
+    if (settingValue != null) {
+      builder.append(" ");
+      settingValue.toGenericStatement(params, builder);
+    }
+  }
+
   public OCreatePropertyAttributeStatement copy() {
     OCreatePropertyAttributeStatement result = new OCreatePropertyAttributeStatement(-1);
     result.settingName = settingName == null ? null : settingName.copy();

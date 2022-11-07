@@ -79,6 +79,41 @@ public class OProjection extends SimpleNode {
     }
   }
 
+  @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    if (items == null) {
+      return;
+    }
+    boolean first = true;
+
+    if (distinct) {
+      builder.append("DISTINCT ");
+    }
+    // print * before
+    for (OProjectionItem item : items) {
+      if (item.isAll()) {
+        if (!first) {
+          builder.append(", ");
+        }
+
+        item.toGenericStatement(params, builder);
+        first = false;
+      }
+    }
+
+    // and then the rest of the projections
+    for (OProjectionItem item : items) {
+      if (!item.isAll()) {
+        if (!first) {
+          builder.append(", ");
+        }
+
+        item.toGenericStatement(params, builder);
+        first = false;
+      }
+    }
+  }
+
   public OResult calculateSingle(OCommandContext iContext, OResult iRecord) {
     initExcludes(iContext);
     if (isExpand()) {

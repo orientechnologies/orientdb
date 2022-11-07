@@ -78,6 +78,11 @@ public abstract class OBooleanExpression extends SimpleNode {
         }
 
         @Override
+        public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+          builder.append(PARAMETER_PLACEHOLDER);
+        }
+
+        @Override
         public boolean isEmpty() {
           return false;
         }
@@ -153,6 +158,11 @@ public abstract class OBooleanExpression extends SimpleNode {
 
         public void toString(Map<Object, Object> params, StringBuilder builder) {
           builder.append("false");
+        }
+
+        @Override
+        public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+          builder.append(PARAMETER_PLACEHOLDER);
         }
 
         @Override

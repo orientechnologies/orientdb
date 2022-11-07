@@ -140,6 +140,44 @@ public class OCreateClassStatement extends ODDLStatement {
   }
 
   @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("CREATE CLASS ");
+    name.toGenericStatement(params, builder);
+    if (ifNotExists) {
+      builder.append(" IF NOT EXISTS");
+    }
+    if (superclasses != null && superclasses.size() > 0) {
+      builder.append(" EXTENDS ");
+      boolean first = true;
+      for (OIdentifier sup : superclasses) {
+        if (!first) {
+          builder.append(", ");
+        }
+        sup.toGenericStatement(params, builder);
+        first = false;
+      }
+    }
+    if (clusters != null && clusters.size() > 0) {
+      builder.append(" CLUSTER ");
+      boolean first = true;
+      for (OInteger cluster : clusters) {
+        if (!first) {
+          builder.append(",");
+        }
+        cluster.toGenericStatement(params, builder);
+        first = false;
+      }
+    }
+    if (totalClusterNo != null) {
+      builder.append(" CLUSTERS ");
+      totalClusterNo.toGenericStatement(params, builder);
+    }
+    if (abstractClass) {
+      builder.append(" ABSTRACT");
+    }
+  }
+
+  @Override
   public OCreateClassStatement copy() {
     OCreateClassStatement result = new OCreateClassStatement(-1);
     result.name = name == null ? null : name.copy();

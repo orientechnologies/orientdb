@@ -95,7 +95,20 @@ public class OTruncateClassStatement extends ODDLStatement {
 
   @Override
   public void toString(Map<Object, Object> params, StringBuilder builder) {
-    builder.append("TRUNCATE CLASS " + className.toString());
+    builder.append("TRUNCATE CLASS ");
+    className.toString(params, builder);
+    if (polymorphic) {
+      builder.append(" POLYMORPHIC");
+    }
+    if (unsafe) {
+      builder.append(" UNSAFE");
+    }
+  }
+
+  @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("TRUNCATE CLASS ");
+    className.toGenericStatement(params, builder);
     if (polymorphic) {
       builder.append(" POLYMORPHIC");
     }

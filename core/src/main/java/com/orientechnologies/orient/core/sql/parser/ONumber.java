@@ -22,6 +22,11 @@ public class ONumber extends SimpleNode {
     builder.append(value);
   }
 
+  @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append(PARAMETER_PLACEHOLDER);
+  }
+
   public ONumber copy() {
     ONumber result = new ONumber(-1);
     result.value = value;

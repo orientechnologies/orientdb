@@ -66,6 +66,38 @@ public class ODatabaseUserData extends SimpleNode {
   }
 
   @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    if (name != null) {
+      name.toGenericStatement(params, builder);
+    } else {
+      nameParam.toGenericStatement(params, builder);
+    }
+
+    builder.append(" IDENTIFIED BY ");
+
+    if (passwordIdentifier != null) {
+      passwordIdentifier.toGenericStatement(params, builder);
+    } else if (passwordString != null) {
+      builder.append(PARAMETER_PLACEHOLDER);
+    } else {
+      passwordParam.toGenericStatement(params, builder);
+    }
+
+    if (!roles.isEmpty()) {
+      builder.append("ROLE [");
+      boolean first = true;
+      for (OIdentifier role : roles) {
+        if (!first) {
+          builder.append(", ");
+        }
+        role.toGenericStatement(params, builder);
+        first = false;
+      }
+      builder.append("]");
+    }
+  }
+
+  @Override
   public ODatabaseUserData copy() {
     ODatabaseUserData result = new ODatabaseUserData(-1);
     if (name != null) {

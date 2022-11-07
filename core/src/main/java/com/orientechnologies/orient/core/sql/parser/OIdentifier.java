@@ -121,6 +121,10 @@ public class OIdentifier extends SimpleNode {
     }
   }
 
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append(value);
+  }
+
   private void setQuoted(boolean quoted) {
     this.quoted = quoted;
   }

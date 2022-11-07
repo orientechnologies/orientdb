@@ -139,6 +139,19 @@ public class OContainsValueCondition extends OBooleanExpression {
   }
 
   @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    left.toGenericStatement(params, builder);
+    builder.append(" CONTAINSVALUE ");
+    if (condition != null) {
+      builder.append("(");
+      condition.toGenericStatement(params, builder);
+      builder.append(")");
+    } else {
+      expression.toGenericStatement(params, builder);
+    }
+  }
+
+  @Override
   public boolean supportsBasicCalculation() {
     return true;
   }

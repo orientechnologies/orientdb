@@ -32,8 +32,12 @@ public class OStatement extends SimpleNode {
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
-    throw new UnsupportedOperationException(
-        "missing implementation in " + getClass().getSimpleName());
+    builder.append(originalStatement);
+  }
+
+  @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append(originalStatement);
   }
 
   public void validate() throws OCommandSQLParsingException {}

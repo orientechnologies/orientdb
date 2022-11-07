@@ -162,6 +162,16 @@ public class OInputParameter extends SimpleNode {
     return null;
   }
 
+  @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    throw new UnsupportedOperationException();
+  }
+
   public OResult serialize() {
     OResultInternal result = new OResultInternal();
     result.setProperty("__class", getClass().getName());

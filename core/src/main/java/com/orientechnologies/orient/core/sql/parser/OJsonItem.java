@@ -27,6 +27,21 @@ public class OJsonItem {
     right.toString(params, builder);
   }
 
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    if (leftIdentifier != null) {
+      builder.append("\"");
+      leftIdentifier.toGenericStatement(params, builder);
+      builder.append("\"");
+    }
+    if (leftString != null) {
+      builder.append("\"");
+      builder.append(OExpression.encode(leftString));
+      builder.append("\"");
+    }
+    builder.append(": ");
+    right.toGenericStatement(params, builder);
+  }
+
   public String getLeftValue() {
     if (leftString != null) {
       return leftString;

@@ -36,6 +36,14 @@ public class OFieldMatchPathItem extends OMatchPathItem {
     }
   }
 
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append(".");
+    field.toGenericStatement(params, builder);
+    if (filter != null) {
+      filter.toGenericStatement(params, builder);
+    }
+  }
+
   protected Iterable<OIdentifiable> traversePatternEdge(
       OMatchStatement.MatchContext matchContext,
       OIdentifiable startingPoint,

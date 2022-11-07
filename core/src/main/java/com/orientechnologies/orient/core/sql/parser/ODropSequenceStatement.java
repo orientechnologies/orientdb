@@ -65,6 +65,15 @@ public class ODropSequenceStatement extends ODDLStatement {
   }
 
   @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("DROP SEQUENCE ");
+    name.toGenericStatement(params, builder);
+    if (ifExists) {
+      builder.append(" IF EXISTS");
+    }
+  }
+
+  @Override
   public ODropSequenceStatement copy() {
     ODropSequenceStatement result = new ODropSequenceStatement(-1);
     result.name = name == null ? null : name.copy();

@@ -19,6 +19,7 @@ public class OSelectExecutionPlan implements OInternalExecutionPlan {
   private OExecutionStepInternal lastStep = null;
 
   private String statement;
+  private String genericStatement;
 
   public OSelectExecutionPlan(OCommandContext ctx) {
     this.ctx = ctx;
@@ -165,5 +166,15 @@ public class OSelectExecutionPlan implements OInternalExecutionPlan {
   @Override
   public void setStatement(String statement) {
     this.statement = statement;
+  }
+
+  @Override
+  public String getGenericStatement() {
+    return this.genericStatement;
+  }
+
+  @Override
+  public void setGenericStatement(String stm) {
+    this.genericStatement = stm;
   }
 }

@@ -253,4 +253,25 @@ public class OOrderByItem {
   public OExpression getCollate() {
     return collate;
   }
+
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+
+    if (alias != null) {
+      builder.append(alias);
+      if (modifier != null) {
+        modifier.toGenericStatement(params, builder);
+      }
+    } else if (recordAttr != null) {
+      builder.append(recordAttr);
+    } else if (rid != null) {
+      rid.toGenericStatement(params, builder);
+    }
+    if (type != null) {
+      builder.append(" " + type);
+    }
+    if (collate != null) {
+      builder.append(" COLLATE ");
+      collate.toGenericStatement(params, builder);
+    }
+  }
 }

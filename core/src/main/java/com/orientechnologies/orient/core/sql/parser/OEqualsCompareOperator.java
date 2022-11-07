@@ -3,6 +3,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
+import java.util.Map;
 
 public class OEqualsCompareOperator extends SimpleNode implements OBinaryCompareOperator {
   protected boolean doubleEquals = false;
@@ -28,6 +29,16 @@ public class OEqualsCompareOperator extends SimpleNode implements OBinaryCompare
   @Override
   public String toString() {
     return doubleEquals ? "==" : "=";
+  }
+
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    builder.append(toString());
+  }
+
+  @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append(toString());
   }
 
   @Override

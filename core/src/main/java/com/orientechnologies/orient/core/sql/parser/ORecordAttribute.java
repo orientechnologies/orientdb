@@ -26,6 +26,11 @@ public class ORecordAttribute extends SimpleNode {
     builder.append(name);
   }
 
+  @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append(name);
+  }
+
   public ORecordAttribute copy() {
     ORecordAttribute result = new ORecordAttribute(-1);
     result.name = name;

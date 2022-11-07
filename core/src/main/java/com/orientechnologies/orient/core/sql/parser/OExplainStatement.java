@@ -31,6 +31,12 @@ public class OExplainStatement extends OStatement {
   }
 
   @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("EXPLAIN ");
+    statement.toGenericStatement(params, builder);
+  }
+
+  @Override
   public OResultSet execute(
       ODatabase db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();

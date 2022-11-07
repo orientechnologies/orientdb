@@ -22,6 +22,12 @@ public class OCommandLineOption extends SimpleNode {
     name.toString(params, builder);
   }
 
+  @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("-");
+    name.toGenericStatement(params, builder);
+  }
+
   public OCommandLineOption copy() {
     OCommandLineOption result = new OCommandLineOption(-1);
     result.name = name == null ? null : name.copy();

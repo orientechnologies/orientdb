@@ -218,6 +218,87 @@ public class OSelectStatement extends OStatement {
     }
   }
 
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+
+    builder.append("SELECT");
+    if (projection != null) {
+      builder.append(" ");
+      projection.toGenericStatement(params, builder);
+    }
+    if (target != null) {
+      builder.append(" FROM ");
+      target.toGenericStatement(params, builder);
+    }
+
+    if (letClause != null) {
+      builder.append(" ");
+      letClause.toGenericStatement(params, builder);
+    }
+
+    if (whereClause != null) {
+      builder.append(" WHERE ");
+      whereClause.toGenericStatement(params, builder);
+    }
+
+    if (groupBy != null) {
+      builder.append(" ");
+      groupBy.toGenericStatement(params, builder);
+    }
+
+    if (orderBy != null) {
+      builder.append(" ");
+      orderBy.toGenericStatement(params, builder);
+    }
+
+    if (unwind != null) {
+      builder.append(" ");
+      unwind.toGenericStatement(params, builder);
+    }
+
+    if (skip != null) {
+      skip.toGenericStatement(params, builder);
+    }
+
+    if (limit != null) {
+      limit.toGenericStatement(params, builder);
+    }
+
+    if (lockRecord != null) {
+      builder.append(" LOCK ");
+      switch (lockRecord) {
+        case DEFAULT:
+          builder.append("DEFAULT");
+          break;
+        case EXCLUSIVE_LOCK:
+          builder.append("RECORD");
+          break;
+        case SHARED_LOCK:
+          builder.append("SHARED");
+          break;
+        case NONE:
+          builder.append("NONE");
+          break;
+      }
+    }
+
+    if (fetchPlan != null) {
+      builder.append(" ");
+      fetchPlan.toGenericStatement(params, builder);
+    }
+
+    if (timeout != null) {
+      timeout.toGenericStatement(params, builder);
+    }
+
+    if (Boolean.TRUE.equals(parallel)) {
+      builder.append(" PARALLEL");
+    }
+
+    if (Boolean.TRUE.equals(noCache)) {
+      builder.append(" NOCACHE");
+    }
+  }
+
   public void validate() throws OCommandSQLParsingException {
     if (projection != null) {
       projection.validate();
@@ -301,6 +382,7 @@ public class OSelectStatement extends OStatement {
     OSelectExecutionPlanner planner = new OSelectExecutionPlanner(this);
     OInternalExecutionPlan result = planner.createExecutionPlan(ctx, enableProfiling, true);
     result.setStatement(this.originalStatement);
+    result.setGenericStatement(this.toGenericStatement());
     return result;
   }
 
@@ -309,6 +391,7 @@ public class OSelectStatement extends OStatement {
     OSelectExecutionPlanner planner = new OSelectExecutionPlanner(this);
     OInternalExecutionPlan result = planner.createExecutionPlan(ctx, enableProfiling, false);
     result.setStatement(this.originalStatement);
+    result.setGenericStatement(this.toGenericStatement());
     return result;
   }
 

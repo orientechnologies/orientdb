@@ -74,6 +74,7 @@ public class ODeleteEdgeStatement extends OStatement {
     ODeleteEdgeExecutionPlanner planner = new ODeleteEdgeExecutionPlanner(this);
     OInternalExecutionPlan result = planner.createExecutionPlan(ctx, enableProfiling, true);
     result.setStatement(this.originalStatement);
+    result.setGenericStatement(this.toGenericStatement());
     return result;
   }
 
@@ -82,6 +83,7 @@ public class ODeleteEdgeStatement extends OStatement {
     ODeleteEdgeExecutionPlanner planner = new ODeleteEdgeExecutionPlanner(this);
     OInternalExecutionPlan result = planner.createExecutionPlan(ctx, enableProfiling, false);
     result.setStatement(this.originalStatement);
+    result.setGenericStatement(this.toGenericStatement());
     return result;
   }
 
@@ -132,6 +134,56 @@ public class ODeleteEdgeStatement extends OStatement {
     }
     if (batch != null) {
       batch.toString(params, builder);
+    }
+  }
+
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("DELETE EDGE");
+
+    if (className != null) {
+      builder.append(" ");
+      className.toGenericStatement(params, builder);
+      if (targetClusterName != null) {
+        builder.append(" CLUSTER ");
+        targetClusterName.toGenericStatement(params, builder);
+      }
+    }
+
+    if (rid != null) {
+      builder.append(" ");
+      rid.toGenericStatement(params, builder);
+    }
+    if (rids != null) {
+      builder.append(" [");
+      boolean first = true;
+      for (ORid rid : rids) {
+        if (!first) {
+          builder.append(", ");
+        }
+        rid.toGenericStatement(params, builder);
+        first = false;
+      }
+      builder.append("]");
+    }
+    if (leftExpression != null) {
+      builder.append(" FROM ");
+      leftExpression.toGenericStatement(params, builder);
+    }
+    if (rightExpression != null) {
+      builder.append(" TO ");
+      rightExpression.toGenericStatement(params, builder);
+    }
+
+    if (whereClause != null) {
+      builder.append(" WHERE ");
+      whereClause.toGenericStatement(params, builder);
+    }
+
+    if (limit != null) {
+      limit.toGenericStatement(params, builder);
+    }
+    if (batch != null) {
+      batch.toGenericStatement(params, builder);
     }
   }
 

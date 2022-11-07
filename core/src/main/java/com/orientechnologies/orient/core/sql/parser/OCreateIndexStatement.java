@@ -334,6 +334,60 @@ public class OCreateIndexStatement extends ODDLStatement {
   }
 
   @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("CREATE INDEX ");
+    name.toGenericStatement(params, builder);
+    if (className != null) {
+      builder.append(" ON ");
+      className.toGenericStatement(params, builder);
+      builder.append(" (");
+      boolean first = true;
+      for (Property prop : propertyList) {
+        if (!first) {
+          builder.append(", ");
+        }
+        if (prop.name != null) {
+          prop.name.toGenericStatement(params, builder);
+        } else {
+          prop.recordAttribute.toGenericStatement(params, builder);
+        }
+        if (prop.byKey) {
+          builder.append(" BY KEY");
+        } else if (prop.byValue) {
+          builder.append(" BY VALUE");
+        }
+        if (prop.collate != null) {
+          builder.append(" COLLATE ");
+          prop.collate.toGenericStatement(params, builder);
+        }
+        first = false;
+      }
+      builder.append(")");
+    }
+    builder.append(" ");
+    type.toGenericStatement(params, builder);
+    if (engine != null) {
+      builder.append(" ENGINE ");
+      engine.toGenericStatement(params, builder);
+    }
+    if (keyTypes != null && keyTypes.size() > 0) {
+      boolean first = true;
+      builder.append(" ");
+      for (OIdentifier keyType : keyTypes) {
+        if (!first) {
+          builder.append(",");
+        }
+        keyType.toGenericStatement(params, builder);
+        first = false;
+      }
+    }
+    if (metadata != null) {
+      builder.append(" METADATA ");
+      metadata.toGenericStatement(params, builder);
+    }
+  }
+
+  @Override
   public OCreateIndexStatement copy() {
     OCreateIndexStatement result = new OCreateIndexStatement(-1);
     result.name = name == null ? null : name.copy();

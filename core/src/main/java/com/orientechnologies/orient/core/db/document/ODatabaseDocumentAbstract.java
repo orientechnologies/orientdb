@@ -1992,7 +1992,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     getListeners().forEach((it) -> it.onCommandStart(this, rs));
   }
 
-  public synchronized void queryClosed(String id) {
+  public void queryClosed(String id) {
     OResultSet removed = this.activeQueries.remove(id);
     getListeners().forEach((it) -> it.onCommandEnd(this, removed));
   }

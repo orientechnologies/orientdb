@@ -60,6 +60,14 @@ public class OConsoleStatement extends OSimpleExecStatement {
   }
 
   @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("CONSOLE.");
+    logLevel.toGenericStatement(params, builder);
+    builder.append(" ");
+    message.toGenericStatement(params, builder);
+  }
+
+  @Override
   public OConsoleStatement copy() {
     OConsoleStatement result = new OConsoleStatement(-1);
     result.logLevel = logLevel == null ? null : logLevel.copy();

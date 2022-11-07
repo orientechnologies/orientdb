@@ -45,6 +45,18 @@ public class OOrderBy extends SimpleNode {
     }
   }
 
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    if (items != null && items.size() > 0) {
+      builder.append("ORDER BY ");
+      for (int i = 0; i < items.size(); i++) {
+        if (i > 0) {
+          builder.append(", ");
+        }
+        items.get(i).toGenericStatement(params, builder);
+      }
+    }
+  }
+
   public int compare(OResult a, OResult b, OCommandContext ctx) {
     for (OOrderByItem item : items) {
       int result = item.compare(a, b, ctx);

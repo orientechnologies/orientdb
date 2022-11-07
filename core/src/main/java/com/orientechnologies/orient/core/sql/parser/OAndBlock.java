@@ -63,16 +63,27 @@ public class OAndBlock extends OBooleanExpression {
     if (subBlocks == null || subBlocks.size() == 0) {
       return;
     }
-    // if (subBlocks.size() == 1) {
-    // subBlocks.get(0).toString(params, builder);
-    // }
-
     boolean first = true;
     for (OBooleanExpression expr : subBlocks) {
       if (!first) {
         builder.append(" AND ");
       }
       expr.toString(params, builder);
+      first = false;
+    }
+  }
+
+  @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    if (subBlocks == null || subBlocks.size() == 0) {
+      return;
+    }
+    boolean first = true;
+    for (OBooleanExpression expr : subBlocks) {
+      if (!first) {
+        builder.append(" AND ");
+      }
+      expr.toGenericStatement(params, builder);
       first = false;
     }
   }

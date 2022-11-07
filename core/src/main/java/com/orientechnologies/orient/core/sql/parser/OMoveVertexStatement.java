@@ -84,6 +84,28 @@ public class OMoveVertexStatement extends OStatement {
     }
   }
 
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("MOVE VERTEX ");
+    source.toGenericStatement(params, builder);
+    builder.append(" TO ");
+    if (targetCluster != null) {
+      targetCluster.toGenericStatement(params, builder);
+    } else {
+      builder.append("CLASS:");
+      targetClass.toGenericStatement(params, builder);
+    }
+
+    if (updateOperations != null) {
+      builder.append(" ");
+      updateOperations.toGenericStatement(params, builder);
+    }
+
+    if (batch != null) {
+      builder.append(" ");
+      batch.toGenericStatement(params, builder);
+    }
+  }
+
   @Override
   public OMoveVertexStatement copy() {
     OMoveVertexStatement result = new OMoveVertexStatement(-1);

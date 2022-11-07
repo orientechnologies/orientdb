@@ -3,6 +3,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
+import java.util.Map;
 
 public class ONeOperator extends SimpleNode implements OBinaryCompareOperator {
   public ONeOperator(int id) {
@@ -21,6 +22,16 @@ public class ONeOperator extends SimpleNode implements OBinaryCompareOperator {
   @Override
   public String toString() {
     return "!=";
+  }
+
+  @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("!=");
+  }
+
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("!=");
   }
 
   @Override

@@ -97,6 +97,70 @@ public class OFromItem extends SimpleNode {
     }
   }
 
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    if (rids != null && rids.size() > 0) {
+      if (rids.size() == 1) {
+        rids.get(0).toGenericStatement(params, builder);
+        return;
+      } else {
+        builder.append("[");
+        boolean first = true;
+        for (ORid rid : rids) {
+          if (!first) {
+            builder.append(", ");
+          }
+          rid.toGenericStatement(params, builder);
+          first = false;
+        }
+        builder.append("]");
+        return;
+      }
+    } else if (inputParams != null && inputParams.size() > 0) {
+      if (inputParams.size() == 1) {
+        inputParams.get(0).toGenericStatement(params, builder);
+        return;
+      } else {
+        builder.append("[");
+        boolean first = true;
+        for (OInputParameter rid : inputParams) {
+          if (!first) {
+            builder.append(", ");
+          }
+          rid.toGenericStatement(params, builder);
+          first = false;
+        }
+        builder.append("]");
+        return;
+      }
+    } else if (cluster != null) {
+      cluster.toGenericStatement(params, builder);
+      return;
+    } else if (clusterList != null) {
+      clusterList.toGenericStatement(params, builder);
+      return;
+    } else if (metadata != null) {
+      metadata.toGenericStatement(params, builder);
+      return;
+    } else if (statement != null) {
+      builder.append("(");
+      statement.toGenericStatement(params, builder);
+      builder.append(")");
+      return;
+    } else if (index != null) {
+      index.toGenericStatement(params, builder);
+      return;
+    } else if (inputParam != null) {
+      inputParam.toGenericStatement(params, builder);
+    } else if (functionCall != null) {
+      functionCall.toGenericStatement(params, builder);
+    } else if (identifier != null) {
+      identifier.toGenericStatement(params, builder);
+    }
+    if (modifier != null) {
+      modifier.toGenericStatement(params, builder);
+    }
+  }
+
   public OIdentifier getIdentifier() {
     return identifier;
   }

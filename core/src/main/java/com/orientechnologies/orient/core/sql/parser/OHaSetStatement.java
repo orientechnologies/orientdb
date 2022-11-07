@@ -99,5 +99,15 @@ public class OHaSetStatement extends OSimpleExecStatement {
     builder.append(" = ");
     value.toString(params, builder);
   }
+
+  @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("HA SET ");
+    operation.toGenericStatement(params, builder);
+    builder.append(" ");
+    key.toGenericStatement(params, builder);
+    builder.append(" = ");
+    value.toGenericStatement(params, builder);
+  }
 }
 /* JavaCC - OriginalChecksum=21dffd729680550a5deb24492465084d (do not edit this line) */

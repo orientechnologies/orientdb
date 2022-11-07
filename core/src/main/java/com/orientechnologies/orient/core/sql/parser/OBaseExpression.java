@@ -84,6 +84,21 @@ public class OBaseExpression extends OMathExpression {
     }
   }
 
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    if (number != null) {
+      number.toGenericStatement(params, builder);
+    } else if (identifier != null) {
+      identifier.toGenericStatement(params, builder);
+    } else if (string != null) {
+      builder.append(PARAMETER_PLACEHOLDER);
+    } else if (inputParam != null) {
+      inputParam.toGenericStatement(params, builder);
+    }
+    if (modifier != null) {
+      modifier.toGenericStatement(params, builder);
+    }
+  }
+
   public Object execute(OIdentifiable iCurrentRecord, OCommandContext ctx) {
     Object result = null;
     if (number != null) {

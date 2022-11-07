@@ -68,6 +68,19 @@ public class ODropIndexStatement extends ODDLStatement {
   }
 
   @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("DROP INDEX ");
+    if (all) {
+      builder.append("*");
+    } else {
+      name.toGenericStatement(params, builder);
+    }
+    if (ifExists) {
+      builder.append(" IF EXISTS");
+    }
+  }
+
+  @Override
   public ODropIndexStatement copy() {
     ODropIndexStatement result = new ODropIndexStatement(-1);
     result.all = all;

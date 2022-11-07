@@ -45,6 +45,13 @@ public class OMatchPathItem extends SimpleNode {
     }
   }
 
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    method.toGenericStatement(params, builder);
+    if (filter != null) {
+      filter.toGenericStatement(params, builder);
+    }
+  }
+
   public Iterable<OIdentifiable> executeTraversal(
       OMatchStatement.MatchContext matchContext,
       OCommandContext iCommandContext,

@@ -73,6 +73,47 @@ public class OInsertStatement extends OStatement {
     }
   }
 
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("INSERT INTO ");
+    if (targetClass != null) {
+      targetClass.toGenericStatement(params, builder);
+      if (targetClusterName != null) {
+        builder.append(" CLUSTER ");
+        targetClusterName.toGenericStatement(params, builder);
+      }
+    }
+    if (targetCluster != null) {
+      targetCluster.toGenericStatement(params, builder);
+    }
+    if (targetIndex != null) {
+      targetIndex.toGenericStatement(params, builder);
+    }
+    if (insertBody != null) {
+      builder.append(" ");
+      insertBody.toGenericStatement(params, builder);
+    }
+    if (returnStatement != null) {
+      builder.append(" RETURN ");
+      returnStatement.toGenericStatement(params, builder);
+    }
+    if (selectStatement != null) {
+      builder.append(" ");
+      if (selectWithFrom) {
+        builder.append("FROM ");
+      }
+      if (selectInParentheses) {
+        builder.append("(");
+      }
+      selectStatement.toGenericStatement(params, builder);
+      if (selectInParentheses) {
+        builder.append(")");
+      }
+    }
+    if (unsafe) {
+      builder.append(" UNSAFE");
+    }
+  }
+
   @Override
   public OInsertStatement copy() {
     OInsertStatement result = new OInsertStatement(-1);
@@ -137,6 +178,7 @@ public class OInsertStatement extends OStatement {
     OInsertExecutionPlanner planner = new OInsertExecutionPlanner(this);
     OInsertExecutionPlan result = planner.createExecutionPlan(ctx, enableProfiling);
     result.setStatement(originalStatement);
+    result.setGenericStatement(this.toGenericStatement());
     return result;
   }
 

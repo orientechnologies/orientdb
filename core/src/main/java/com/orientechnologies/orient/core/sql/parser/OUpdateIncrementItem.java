@@ -26,6 +26,15 @@ public class OUpdateIncrementItem extends SimpleNode {
     right.toString(params, builder);
   }
 
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    left.toGenericStatement(params, builder);
+    if (leftModifier != null) {
+      leftModifier.toGenericStatement(params, builder);
+    }
+    builder.append(" = ");
+    right.toGenericStatement(params, builder);
+  }
+
   public OUpdateIncrementItem copy() {
     OUpdateIncrementItem result = new OUpdateIncrementItem(-1);
     result.left = left == null ? null : left.copy();

@@ -57,6 +57,15 @@ public class OOptimizeDatabaseStatement extends OSimpleExecStatement {
   }
 
   @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("OPTIMIZE DATABASE");
+    for (OCommandLineOption option : options) {
+      builder.append(" ");
+      option.toGenericStatement(params, builder);
+    }
+  }
+
+  @Override
   public OOptimizeDatabaseStatement copy() {
     OOptimizeDatabaseStatement result = new OOptimizeDatabaseStatement(-1);
     result.options =

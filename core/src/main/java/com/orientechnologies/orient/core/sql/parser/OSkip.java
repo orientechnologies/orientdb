@@ -34,6 +34,18 @@ public class OSkip extends SimpleNode {
     }
   }
 
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    if (num == null && inputParam == null) {
+      return;
+    }
+    builder.append(" SKIP ");
+    if (num != null) {
+      num.toGenericStatement(params, builder);
+    } else {
+      inputParam.toGenericStatement(params, builder);
+    }
+  }
+
   public int getValue(OCommandContext ctx) {
     if (num != null) {
       return num.getValue().intValue();

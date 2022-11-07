@@ -57,6 +57,25 @@ public class ORightBinaryCondition extends SimpleNode {
     }
   }
 
+  @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    if (operator != null) {
+      if (operator instanceof SimpleNode) {
+        ((SimpleNode) operator).toGenericStatement(params, builder);
+      } else {
+        builder.append(operator.toString());
+      }
+      builder.append(" ");
+      right.toGenericStatement(params, builder);
+    } else if (inOperator != null) {
+      if (not) {
+        builder.append("NOT ");
+      }
+      builder.append("IN ");
+      right.toGenericStatement(params, builder);
+    }
+  }
+
   public Object execute(OResult iCurrentRecord, Object elementToFilter, OCommandContext ctx) {
     if (elementToFilter == null) {
       return null;

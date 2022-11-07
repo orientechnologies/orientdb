@@ -46,6 +46,19 @@ public class OBatch extends SimpleNode {
     }
   }
 
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    if (num == null && inputParam == null) {
+      return;
+    }
+
+    builder.append(" BATCH ");
+    if (num != null) {
+      num.toGenericStatement(params, builder);
+    } else {
+      inputParam.toGenericStatement(params, builder);
+    }
+  }
+
   public OBatch copy() {
     OBatch result = new OBatch(-1);
     result.inputParam = inputParam == null ? null : inputParam.copy();

@@ -100,6 +100,70 @@ public class OUpdateOperations extends SimpleNode {
     }
   }
 
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    boolean first = true;
+    switch (type) {
+      case TYPE_SET:
+        builder.append("SET ");
+        for (OUpdateItem item : this.updateItems) {
+          if (!first) {
+            builder.append(", ");
+          }
+          item.toGenericStatement(params, builder);
+          first = false;
+        }
+        break;
+      case TYPE_PUT:
+        builder.append("PUT ");
+        for (OUpdatePutItem item : this.updatePutItems) {
+          if (!first) {
+            builder.append(", ");
+          }
+          item.toGenericStatement(params, builder);
+          first = false;
+        }
+        break;
+      case TYPE_MERGE:
+        builder.append("MERGE ");
+        json.toGenericStatement(params, builder);
+        break;
+      case TYPE_CONTENT:
+        builder.append("CONTENT ");
+        json.toGenericStatement(params, builder);
+        break;
+      case TYPE_INCREMENT:
+        builder.append("INCREMENT ");
+        for (OUpdateIncrementItem item : this.updateIncrementItems) {
+          if (!first) {
+            builder.append(", ");
+          }
+          item.toGenericStatement(params, builder);
+          first = false;
+        }
+        break;
+      case TYPE_ADD:
+        builder.append("ADD ");
+        for (OUpdateIncrementItem item : this.updateIncrementItems) {
+          if (!first) {
+            builder.append(", ");
+          }
+          item.toGenericStatement(params, builder);
+          first = false;
+        }
+        break;
+      case TYPE_REMOVE:
+        builder.append("REMOVE ");
+        for (OUpdateRemoveItem item : this.updateRemoveItems) {
+          if (!first) {
+            builder.append(", ");
+          }
+          item.toGenericStatement(params, builder);
+          first = false;
+        }
+        break;
+    }
+  }
+
   public OUpdateOperations copy() {
 
     OUpdateOperations result = new OUpdateOperations(-1);

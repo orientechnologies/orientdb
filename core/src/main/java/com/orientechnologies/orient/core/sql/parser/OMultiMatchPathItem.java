@@ -38,6 +38,17 @@ public class OMultiMatchPathItem extends OMatchPathItem {
     }
   }
 
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append(".(");
+    for (OMatchPathItem item : items) {
+      item.toGenericStatement(params, builder);
+    }
+    builder.append(")");
+    if (filter != null) {
+      filter.toGenericStatement(params, builder);
+    }
+  }
+
   protected Iterable<OIdentifiable> traversePatternEdge(
       OMatchStatement.MatchContext matchContext,
       OIdentifiable startingPoint,

@@ -848,6 +848,52 @@ public class OMathExpression extends SimpleNode {
     }
   }
 
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    if (childExpressions == null || operators == null) return;
+    for (int i = 0; i < childExpressions.size(); i++) {
+      if (i > 0) {
+        builder.append(" ");
+        switch (operators.get(i - 1)) {
+          case PLUS:
+            builder.append("+");
+            break;
+          case MINUS:
+            builder.append("-");
+            break;
+          case STAR:
+            builder.append("*");
+            break;
+          case SLASH:
+            builder.append("/");
+            break;
+          case REM:
+            builder.append("%");
+            break;
+          case LSHIFT:
+            builder.append("<<");
+            break;
+          case RSHIFT:
+            builder.append(">>");
+            break;
+          case RUNSIGNEDSHIFT:
+            builder.append(">>>");
+            break;
+          case BIT_AND:
+            builder.append("&");
+            break;
+          case BIT_OR:
+            builder.append("|");
+            break;
+          case XOR:
+            builder.append("^");
+            break;
+        }
+        builder.append(" ");
+      }
+      childExpressions.get(i).toGenericStatement(params, builder);
+    }
+  }
+
   protected boolean supportsBasicCalculation() {
     if (this.childExpressions != null) {
       for (OMathExpression expr : this.childExpressions) {

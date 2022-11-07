@@ -29,8 +29,14 @@ public class OProfileStatement extends OStatement {
 
   @Override
   public void toString(Map<Object, Object> params, StringBuilder builder) {
-    builder.append("EXPLAIN ");
+    builder.append("PROFILE ");
     statement.toString(params, builder);
+  }
+
+  @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("PROFILE ");
+    statement.toGenericStatement(params, builder);
   }
 
   @Override

@@ -98,6 +98,16 @@ public class OInstanceofCondition extends OBooleanExpression {
     }
   }
 
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    left.toGenericStatement(params, builder);
+    builder.append(" instanceof ");
+    if (right != null) {
+      right.toGenericStatement(params, builder);
+    } else if (rightString != null) {
+      builder.append(rightString);
+    }
+  }
+
   @Override
   public boolean supportsBasicCalculation() {
     return left.supportsBasicCalculation();

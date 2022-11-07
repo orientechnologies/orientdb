@@ -83,6 +83,16 @@ public class OParenthesisExpression extends OMathExpression {
     builder.append(")");
   }
 
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("(");
+    if (expression != null) {
+      expression.toGenericStatement(params, builder);
+    } else if (statement != null) {
+      statement.toGenericStatement(params, builder);
+    }
+    builder.append(")");
+  }
+
   @Override
   protected boolean supportsBasicCalculation() {
     if (expression != null) {

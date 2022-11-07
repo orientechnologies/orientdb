@@ -68,6 +68,31 @@ public class OUpdateItem extends SimpleNode {
     right.toString(params, builder);
   }
 
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    left.toGenericStatement(params, builder);
+    if (leftModifier != null) {
+      leftModifier.toGenericStatement(params, builder);
+    }
+    switch (operator) {
+      case OPERATOR_EQ:
+        builder.append(" = ");
+        break;
+      case OPERATOR_PLUSASSIGN:
+        builder.append(" += ");
+        break;
+      case OPERATOR_MINUSASSIGN:
+        builder.append(" -= ");
+        break;
+      case OPERATOR_STARASSIGN:
+        builder.append(" *= ");
+        break;
+      case OPERATOR_SLASHASSIGN:
+        builder.append(" /= ");
+        break;
+    }
+    right.toGenericStatement(params, builder);
+  }
+
   public OUpdateItem copy() {
     OUpdateItem result = new OUpdateItem(-1);
     result.left = left == null ? null : left.copy();

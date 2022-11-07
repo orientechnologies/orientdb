@@ -66,6 +66,36 @@ public class OCommitStatement extends OSimpleExecStatement {
   }
 
   @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("COMMIT");
+    if (retry != null) {
+      builder.append(" RETRY ");
+      retry.toGenericStatement(params, builder);
+      if (elseFail != null || elseStatements != null) {
+        builder.append(" ELSE ");
+      }
+      if (elseStatements != null) {
+        builder.append("{\n");
+        for (OStatement stm : elseStatements) {
+          stm.toGenericStatement(params, builder);
+          builder.append(";\n");
+        }
+        builder.append("}");
+      }
+      if (elseFail != null) {
+        if (elseStatements != null) {
+          builder.append(" AND");
+        }
+        if (elseFail) {
+          builder.append(" FAIL");
+        } else {
+          builder.append(" CONTINUE");
+        }
+      }
+    }
+  }
+
+  @Override
   public OCommitStatement copy() {
     OCommitStatement result = new OCommitStatement(-1);
     result.retry = retry == null ? null : retry.copy();

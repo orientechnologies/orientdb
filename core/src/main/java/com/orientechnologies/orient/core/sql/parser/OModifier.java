@@ -65,6 +65,33 @@ public class OModifier extends SimpleNode {
     }
   }
 
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+
+    if (squareBrackets) {
+      builder.append("[");
+
+      if (arrayRange != null) {
+        arrayRange.toGenericStatement(params, builder);
+      } else if (condition != null) {
+        condition.toGenericStatement(params, builder);
+      } else if (arraySingleValues != null) {
+        arraySingleValues.toGenericStatement(params, builder);
+      } else if (rightBinaryCondition != null) {
+        rightBinaryCondition.toGenericStatement(params, builder);
+      }
+
+      builder.append("]");
+    } else if (methodCall != null) {
+      methodCall.toGenericStatement(params, builder);
+    } else if (suffix != null) {
+      builder.append(".");
+      suffix.toGenericStatement(params, builder);
+    }
+    if (next != null) {
+      next.toGenericStatement(params, builder);
+    }
+  }
+
   public Object execute(OIdentifiable iCurrentRecord, Object result, OCommandContext ctx) {
     if (ctx.getVariable("$current") == null) {
       ctx.setVariable("$current", iCurrentRecord);

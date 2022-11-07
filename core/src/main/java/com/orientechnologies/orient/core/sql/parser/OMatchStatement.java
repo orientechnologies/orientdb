@@ -198,6 +198,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     OMatchExecutionPlanner planner = new OMatchExecutionPlanner(this);
     OInternalExecutionPlan result = planner.createExecutionPlan(ctx, enableProfiling);
     result.setStatement(originalStatement);
+    result.setGenericStatement(this.toGenericStatement());
     return result;
   }
 
@@ -1642,6 +1643,62 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     if (limit != null) {
       builder.append(" ");
       limit.toString(params, builder);
+    }
+  }
+
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append(KEYWORD_MATCH);
+    builder.append(" ");
+    boolean first = true;
+    for (OMatchExpression expr : this.matchExpressions) {
+      if (!first) {
+        builder.append(", ");
+      }
+      expr.toGenericStatement(params, builder);
+      first = false;
+    }
+    builder.append(" RETURN ");
+    if (returnDistinct) {
+      builder.append("DISTINCT ");
+    }
+    first = true;
+    int i = 0;
+    for (OExpression expr : this.returnItems) {
+      if (!first) {
+        builder.append(", ");
+      }
+      expr.toGenericStatement(params, builder);
+      if (returnNestedProjections != null
+          && i < returnNestedProjections.size()
+          && returnNestedProjections.get(i) != null) {
+        returnNestedProjections.get(i).toGenericStatement(params, builder);
+      }
+      if (returnAliases != null && i < returnAliases.size() && returnAliases.get(i) != null) {
+        builder.append(" AS ");
+        returnAliases.get(i).toGenericStatement(params, builder);
+      }
+      i++;
+      first = false;
+    }
+    if (groupBy != null) {
+      builder.append(" ");
+      groupBy.toGenericStatement(params, builder);
+    }
+    if (orderBy != null) {
+      builder.append(" ");
+      orderBy.toGenericStatement(params, builder);
+    }
+    if (unwind != null) {
+      builder.append(" ");
+      unwind.toGenericStatement(params, builder);
+    }
+    if (skip != null) {
+      builder.append(" ");
+      skip.toGenericStatement(params, builder);
+    }
+    if (limit != null) {
+      builder.append(" ");
+      limit.toGenericStatement(params, builder);
     }
   }
 

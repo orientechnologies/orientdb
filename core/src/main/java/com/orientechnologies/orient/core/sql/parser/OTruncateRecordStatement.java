@@ -82,6 +82,25 @@ public class OTruncateRecordStatement extends OSimpleExecStatement {
   }
 
   @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("TRUNCATE RECORD ");
+    if (record != null) {
+      record.toGenericStatement(params, builder);
+    } else {
+      builder.append("[");
+      boolean first = true;
+      for (ORid r : records) {
+        if (!first) {
+          builder.append(",");
+        }
+        r.toGenericStatement(params, builder);
+        first = false;
+      }
+      builder.append("]");
+    }
+  }
+
+  @Override
   public OTruncateRecordStatement copy() {
     OTruncateRecordStatement result = new OTruncateRecordStatement(-1);
     result.record = record == null ? null : record.copy();

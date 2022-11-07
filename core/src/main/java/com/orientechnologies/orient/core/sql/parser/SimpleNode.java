@@ -6,8 +6,8 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import java.util.Map;
 
-public class SimpleNode implements Node {
-
+public abstract class SimpleNode implements Node {
+  public static final String PARAMETER_PLACEHOLDER = "?";
   protected Node parent;
   protected Node[] children;
   protected int id;
@@ -134,8 +134,14 @@ public class SimpleNode implements Node {
     return ODatabaseRecordThreadLocal.instance().get();
   }
 
-  public void toString(Map<Object, Object> params, StringBuilder builder) {
-    throw new UnsupportedOperationException("not implemented in " + getClass().getSimpleName());
+  public abstract void toString(Map<Object, Object> params, StringBuilder builder);
+
+  public abstract void toGenericStatement(Map<Object, Object> params, StringBuilder builder);
+
+  public String toGenericStatement() {
+    StringBuilder builder = new StringBuilder();
+    toGenericStatement(null, builder);
+    return builder.toString();
   }
 
   public Object getValue() {

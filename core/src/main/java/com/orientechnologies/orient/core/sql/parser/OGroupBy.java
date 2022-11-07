@@ -31,6 +31,16 @@ public class OGroupBy extends SimpleNode {
     }
   }
 
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("GROUP BY ");
+    for (int i = 0; i < items.size(); i++) {
+      if (i > 0) {
+        builder.append(", ");
+      }
+      items.get(i).toGenericStatement(params, builder);
+    }
+  }
+
   public List<OExpression> getItems() {
     return items;
   }

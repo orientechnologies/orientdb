@@ -87,6 +87,22 @@ public class ODropClassStatement extends ODDLStatement {
   }
 
   @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("DROP CLASS ");
+    if (name != null) {
+      name.toGenericStatement(params, builder);
+    } else {
+      nameParam.toGenericStatement(params, builder);
+    }
+    if (ifExists) {
+      builder.append(" IF EXISTS");
+    }
+    if (unsafe) {
+      builder.append(" UNSAFE");
+    }
+  }
+
+  @Override
   public ODropClassStatement copy() {
     ODropClassStatement result = new ODropClassStatement(-1);
     result.name = name == null ? null : name.copy();

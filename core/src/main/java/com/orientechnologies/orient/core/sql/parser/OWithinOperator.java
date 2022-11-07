@@ -2,6 +2,8 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import java.util.Map;
+
 public class OWithinOperator extends SimpleNode implements OBinaryCompareOperator {
   public OWithinOperator(int id) {
     super(id);
@@ -20,6 +22,16 @@ public class OWithinOperator extends SimpleNode implements OBinaryCompareOperato
   @Override
   public String toString() {
     return "WITHIN";
+  }
+
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("WITHIN");
+  }
+
+  @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("WITHIN");
   }
 
   @Override

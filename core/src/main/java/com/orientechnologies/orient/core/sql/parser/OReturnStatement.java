@@ -63,6 +63,15 @@ public class OReturnStatement extends OSimpleExecStatement {
   }
 
   @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("RETURN");
+    if (expression != null) {
+      builder.append(" ");
+      expression.toGenericStatement(params, builder);
+    }
+  }
+
+  @Override
   public OReturnStatement copy() {
     OReturnStatement result = new OReturnStatement(-1);
     result.expression = expression == null ? null : expression.copy();

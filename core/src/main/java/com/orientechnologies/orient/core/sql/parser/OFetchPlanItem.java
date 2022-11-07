@@ -50,6 +50,31 @@ public class OFetchPlanItem extends SimpleNode {
     rightDepth.toString(params, builder);
   }
 
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    if (Boolean.TRUE.equals(star)) {
+      builder.append("*");
+    } else {
+      if (leftDepth != null) {
+        builder.append("[");
+        leftDepth.toGenericStatement(params, builder);
+        builder.append("]");
+      } else if (leftStar) {
+        builder.append("[*]");
+      }
+
+      boolean first = true;
+      for (String s : fieldChain) {
+        if (!first) {
+          builder.append(".");
+        }
+        builder.append(s);
+        first = false;
+      }
+    }
+    builder.append(":");
+    rightDepth.toGenericStatement(params, builder);
+  }
+
   public OFetchPlanItem copy() {
     OFetchPlanItem result = new OFetchPlanItem(-1);
     result.star = star;

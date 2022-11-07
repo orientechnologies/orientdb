@@ -158,6 +158,18 @@ public class OContainsAnyCondition extends OBooleanExpression {
     }
   }
 
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    left.toGenericStatement(params, builder);
+    builder.append(" CONTAINSANY ");
+    if (right != null) {
+      right.toGenericStatement(params, builder);
+    } else if (rightBlock != null) {
+      builder.append("(");
+      rightBlock.toGenericStatement(params, builder);
+      builder.append(")");
+    }
+  }
+
   public OExpression getLeft() {
     return left;
   }

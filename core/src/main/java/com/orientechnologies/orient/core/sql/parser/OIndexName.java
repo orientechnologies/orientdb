@@ -27,6 +27,11 @@ public class OIndexName extends SimpleNode {
     builder.append(getValue());
   }
 
+  @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append(getValue());
+  }
+
   public OIndexName copy() {
     OIndexName result = new OIndexName(-1);
     result.value = value;

@@ -40,6 +40,16 @@ public class ORid extends SimpleNode {
     }
   }
 
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    if (legacy || (expression == null && cluster != null && position != null)) {
+      builder.append(PARAMETER_PLACEHOLDER);
+    } else {
+      builder.append("{\"@rid\":");
+      expression.toGenericStatement(params, builder);
+      builder.append("}");
+    }
+  }
+
   public ORecordId toRecordId(OResult target, OCommandContext ctx) {
     if (legacy || (expression == null && cluster != null && position != null)) {
       return new ORecordId(cluster.value.intValue(), position.value.longValue());

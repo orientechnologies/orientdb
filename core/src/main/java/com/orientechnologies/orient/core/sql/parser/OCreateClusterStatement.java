@@ -98,6 +98,23 @@ public class OCreateClusterStatement extends ODDLStatement {
   }
 
   @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("CREATE ");
+    if (blob) {
+      builder.append("BLOB ");
+    }
+    builder.append("CLUSTER ");
+    name.toGenericStatement(params, builder);
+    if (ifNotExists) {
+      builder.append(" IF NOT EXISTS");
+    }
+    if (id != null) {
+      builder.append(" ID ");
+      id.toGenericStatement(params, builder);
+    }
+  }
+
+  @Override
   public OCreateClusterStatement copy() {
     OCreateClusterStatement result = new OCreateClusterStatement(-1);
     result.name = name == null ? null : name.copy();

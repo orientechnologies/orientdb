@@ -101,6 +101,65 @@ public class OUpdateStatement extends OStatement {
     }
   }
 
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append(getStatementType());
+    if (target != null) {
+      target.toGenericStatement(params, builder);
+    }
+
+    for (OUpdateOperations ops : this.operations) {
+      builder.append(" ");
+      ops.toGenericStatement(params, builder);
+    }
+
+    if (upsert) {
+      builder.append(" UPSERT");
+    }
+
+    if (returnBefore || returnAfter || returnCount) {
+      builder.append(" RETURN");
+      if (returnBefore) {
+        builder.append(" BEFORE");
+      } else if (returnAfter) {
+        builder.append(" AFTER");
+      } else {
+        builder.append(" COUNT");
+      }
+      if (returnProjection != null) {
+        builder.append(" ");
+        returnProjection.toGenericStatement(params, builder);
+      }
+    }
+    if (whereClause != null) {
+      builder.append(" WHERE ");
+      whereClause.toGenericStatement(params, builder);
+    }
+
+    if (lockRecord != null) {
+      builder.append(" LOCK ");
+      switch (lockRecord) {
+        case DEFAULT:
+          builder.append("DEFAULT");
+          break;
+        case EXCLUSIVE_LOCK:
+          builder.append("RECORD");
+          break;
+        case SHARED_LOCK:
+          builder.append("SHARED");
+          break;
+        case NONE:
+          builder.append("NONE");
+          break;
+      }
+    }
+    if (limit != null) {
+      limit.toGenericStatement(params, builder);
+    }
+    if (timeout != null) {
+      timeout.toGenericStatement(params, builder);
+    }
+  }
+
   protected String getStatementType() {
     return "UPDATE ";
   }
@@ -178,6 +237,7 @@ public class OUpdateStatement extends OStatement {
     OUpdateExecutionPlanner planner = new OUpdateExecutionPlanner(this);
     OUpdateExecutionPlan result = planner.createExecutionPlan(ctx, enableProfiling);
     result.setStatement(this.originalStatement);
+    result.setGenericStatement(this.toGenericStatement());
     return result;
   }
 

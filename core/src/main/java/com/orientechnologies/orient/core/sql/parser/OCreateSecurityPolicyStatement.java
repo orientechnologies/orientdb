@@ -143,6 +143,82 @@ public class OCreateSecurityPolicyStatement extends OSimpleExecStatement {
   }
 
   @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("CREATE SECURITY POLICY ");
+    name.toGenericStatement(params, builder);
+
+    boolean first = true;
+    if (create != null) {
+      if (first) {
+        builder.append(" SET ");
+      } else {
+        builder.append(", ");
+      }
+      builder.append("CREATE = (");
+      create.toGenericStatement(params, builder);
+      builder.append(")");
+      first = false;
+    }
+
+    if (read != null) {
+      if (first) {
+        builder.append(" SET ");
+      } else {
+        builder.append(", ");
+      }
+      builder.append("READ = (");
+      read.toGenericStatement(params, builder);
+      builder.append(")");
+      first = false;
+    }
+    if (beforeUpdate != null) {
+      if (first) {
+        builder.append(" SET ");
+      } else {
+        builder.append(", ");
+      }
+      builder.append("BEFORE UPDATE = (");
+      beforeUpdate.toGenericStatement(params, builder);
+      builder.append(")");
+      first = false;
+    }
+
+    if (afterUpdate != null) {
+      if (first) {
+        builder.append(" SET ");
+      } else {
+        builder.append(", ");
+      }
+      builder.append("AFTER UPDATE = (");
+      afterUpdate.toGenericStatement(params, builder);
+      builder.append(")");
+      first = false;
+    }
+    if (delete != null) {
+      if (first) {
+        builder.append(" SET ");
+      } else {
+        builder.append(", ");
+      }
+      builder.append("DELETE = (");
+      delete.toGenericStatement(params, builder);
+      builder.append(")");
+      first = false;
+    }
+    if (execute != null) {
+      if (first) {
+        builder.append(" SET ");
+      } else {
+        builder.append(", ");
+      }
+      builder.append("EXECUTE = (");
+      execute.toGenericStatement(params, builder);
+      builder.append(")");
+      first = false;
+    }
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;

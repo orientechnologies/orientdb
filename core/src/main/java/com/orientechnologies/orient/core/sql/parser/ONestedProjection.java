@@ -231,6 +231,37 @@ public class ONestedProjection extends SimpleNode {
     }
   }
 
+  @Override
+  public void toGenericStatement(Map<Object, Object> params, StringBuilder builder) {
+    builder.append(":{");
+    boolean first = true;
+    if (starItem != null) {
+      starItem.toGenericStatement(params, builder);
+      first = false;
+    }
+    for (ONestedProjectionItem item : includeItems) {
+      if (!first) {
+        builder.append(", ");
+      }
+      item.toGenericStatement(params, builder);
+      first = false;
+    }
+    for (ONestedProjectionItem item : excludeItems) {
+      if (!first) {
+        builder.append(", ");
+      }
+      item.toGenericStatement(params, builder);
+      first = false;
+    }
+
+    builder.append("}");
+    if (recursion != null) {
+      builder.append("[");
+      recursion.toGenericStatement(params, builder);
+      builder.append("]");
+    }
+  }
+
   public ONestedProjection copy() {
     ONestedProjection result = new ONestedProjection(-1);
     result.includeItems = includeItems.stream().map(x -> x.copy()).collect(Collectors.toList());
