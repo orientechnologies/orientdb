@@ -436,7 +436,7 @@ public class OEnterpriseServerImpl
                 (p -> {
                   String q = "";
                   if (p instanceof OInternalExecutionPlan) {
-                    String stm = ((OInternalExecutionPlan) p).getStatement();
+                    String stm = ((OInternalExecutionPlan) p).getGenericStatement();
                     if (stm != null) {
                       q = stm;
                     }
