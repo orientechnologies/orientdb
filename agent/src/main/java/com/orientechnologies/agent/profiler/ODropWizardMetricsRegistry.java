@@ -1,6 +1,11 @@
 package com.orientechnologies.agent.profiler;
 
-import com.codahale.metrics.*;
+import com.codahale.metrics.ConsoleReporter;
+import com.codahale.metrics.CsvReporter;
+import com.codahale.metrics.Metric;
+import com.codahale.metrics.MetricFilter;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.MetricSet;
 import com.codahale.metrics.jmx.JmxReporter;
 import com.codahale.metrics.json.MetricsModule;
 import com.codahale.metrics.jvm.CachedThreadStatesGaugeSet;
@@ -9,8 +14,23 @@ import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
-import com.orientechnologies.agent.profiler.metrics.*;
-import com.orientechnologies.agent.profiler.metrics.dropwizard.*;
+import com.orientechnologies.agent.profiler.metrics.GCMetric;
+import com.orientechnologies.agent.profiler.metrics.MemoryMetric;
+import com.orientechnologies.agent.profiler.metrics.OCounter;
+import com.orientechnologies.agent.profiler.metrics.OGauge;
+import com.orientechnologies.agent.profiler.metrics.OHistogram;
+import com.orientechnologies.agent.profiler.metrics.OMeter;
+import com.orientechnologies.agent.profiler.metrics.OMetric;
+import com.orientechnologies.agent.profiler.metrics.OMetricSet;
+import com.orientechnologies.agent.profiler.metrics.OTimer;
+import com.orientechnologies.agent.profiler.metrics.ThreadsMetric;
+import com.orientechnologies.agent.profiler.metrics.dropwizard.DropWizardCounter;
+import com.orientechnologies.agent.profiler.metrics.dropwizard.DropWizardGauge;
+import com.orientechnologies.agent.profiler.metrics.dropwizard.DropWizardGeneric;
+import com.orientechnologies.agent.profiler.metrics.dropwizard.DropWizardGenericSet;
+import com.orientechnologies.agent.profiler.metrics.dropwizard.DropWizardHistogram;
+import com.orientechnologies.agent.profiler.metrics.dropwizard.DropWizardMeter;
+import com.orientechnologies.agent.profiler.metrics.dropwizard.DropWizardTimer;
 import com.orientechnologies.agent.profiler.source.CSVAggregateReporter;
 import com.orientechnologies.agent.services.metrics.OrientDBMetricsSettings;
 import com.orientechnologies.agent.services.metrics.reporters.CSVReporter;
@@ -18,15 +38,19 @@ import com.orientechnologies.agent.services.metrics.reporters.ConsoleReporterCon
 import com.orientechnologies.agent.services.metrics.reporters.JMXReporter;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
-import com.orientechnologies.orient.core.cache.OSoftRefsHashMap;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.dropwizard.DropwizardExports;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
@@ -37,7 +61,7 @@ import java.util.function.Supplier;
 public class ODropWizardMetricsRegistry implements OMetricsRegistry {
 
   private final MetricRegistry registry;
-  private Map<String, OMetric> metrics = new OSoftRefsHashMap<>();
+  private Map<String, OMetric> metrics;
   private ConsoleReporter consoleReporter = null;
   private CsvReporter csvReporter = null;
   private JmxReporter jmxReporter = null;
@@ -55,6 +79,11 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
   public ODropWizardMetricsRegistry(OEnterpriseServer server, OrientDBMetricsSettings settings) {
     this.server = server;
     this.settings = settings;
+    this.metrics =
+        new ConcurrentLinkedHashMap.Builder<String, OMetric>()
+            .maximumWeightedCapacity(
+                OGlobalConfiguration.ENTERPRISE_METRICS_MAX.getValueAsInteger())
+            .build();
     this.registry =
         new MetricRegistry() {
           @Override
