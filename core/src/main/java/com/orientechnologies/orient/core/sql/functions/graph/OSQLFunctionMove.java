@@ -76,9 +76,13 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
       final OIdentifiable iRecord,
       final ODirection iDirection,
       final String[] iLabels) {
-    OElement rec = iRecord.getRecord();
-    if (rec != null && rec.isVertex()) {
-      return rec.asVertex().get().getVertices(iDirection, iLabels);
+    if (iRecord != null) {
+      OElement rec = iRecord.getRecord();
+      if (rec != null && rec.isVertex()) {
+        return rec.asVertex().get().getVertices(iDirection, iLabels);
+      } else {
+        return null;
+      }
     } else {
       return null;
     }
@@ -89,9 +93,13 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
       final OIdentifiable iRecord,
       final ODirection iDirection,
       final String[] iLabels) {
-    OElement rec = iRecord.getRecord();
-    if (rec != null && rec.isVertex()) {
-      return rec.asVertex().get().getEdges(iDirection, iLabels);
+    if (iRecord != null) {
+      OElement rec = iRecord.getRecord();
+      if (rec != null && rec.isVertex()) {
+        return rec.asVertex().get().getEdges(iDirection, iLabels);
+      } else {
+        return null;
+      }
     } else {
       return null;
     }
@@ -102,15 +110,19 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
       final OIdentifiable iRecord,
       final ODirection iDirection,
       final String[] iLabels) {
-    OElement rec = iRecord.getRecord();
-    if (rec.isEdge()) {
-      if (iDirection == ODirection.BOTH) {
-        List results = new ArrayList();
-        results.add(rec.asEdge().get().getVertex(ODirection.OUT));
-        results.add(rec.asEdge().get().getVertex(ODirection.IN));
-        return results;
+    if (iRecord != null) {
+      OElement rec = iRecord.getRecord();
+      if (rec.isEdge()) {
+        if (iDirection == ODirection.BOTH) {
+          List results = new ArrayList();
+          results.add(rec.asEdge().get().getVertex(ODirection.OUT));
+          results.add(rec.asEdge().get().getVertex(ODirection.IN));
+          return results;
+        }
+        return rec.asEdge().get().getVertex(iDirection);
+      } else {
+        return null;
       }
-      return rec.asEdge().get().getVertex(iDirection);
     } else {
       return null;
     }
