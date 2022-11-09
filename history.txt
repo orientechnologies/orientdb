@@ -28,6 +28,31 @@ This document contains the last changes of OrientDB Community Edition.
 
 
 -----------------------------------------------------------------------------------------------------------------------------------
+VERSION 3.2.12 - (November, 10 2022)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3212---10-November-2022
+
+# Core 
+- Add timeout check in next query page fetching
+- Updated dependencies
+- Optimized Security Policies checks
+- Optimized query engine property fetching and filtering
+- Removed not used anymore dependencies
+- Fix in truncate clusters logic
+- Improved string caching logic
+- Made the direct memory pointer soft reference to retain it and reduce the allocation overhead
+- Add a correct error message when opening a not existing database in a in memory context
+- Fix regression in sql function execution after refactor, issue #9888
+- Optimization in storage record reading
+- Fix OClass.setCustom() in ditributed setup
+
+# Console
+- Fix regression database creation, issue #9889
+
+# Enterprise
+- Limited the maximum number of metrics kept in memory
+- Made query statements metrics ognostic of values
+
+-----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.11 - (October, 19 2022)
 - Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3211---19-October-2022
 
