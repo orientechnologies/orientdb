@@ -104,7 +104,7 @@ public class OMetricCSVQueryAggregatorTest extends EEBaseServerHttpTest {
 
     Assert.assertEquals(name.getMethodName(), first[1]);
     Assert.assertEquals("sql", first[2]);
-    Assert.assertEquals("select from OUser", first[3]);
+    Assert.assertEquals("SELECT FROM OUser", first[3]);
 
     reader.close();
   }

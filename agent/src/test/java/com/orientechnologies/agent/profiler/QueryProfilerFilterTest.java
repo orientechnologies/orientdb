@@ -68,7 +68,7 @@ public class QueryProfilerFilterTest {
     OHistogram histogram =
         histograms.get(
             String.format(
-                "db.%s.query.sql.select from OUser \n where name = 'admin'",
+                "db.%s.query.sql.SELECT FROM OUser WHERE name = ?",
                 QueryProfilerFilterTest.class.getSimpleName()));
 
     Assert.assertNotNull(histogram);
