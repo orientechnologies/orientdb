@@ -11,7 +11,6 @@ import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -117,7 +116,6 @@ public class OCreateLinkStatement extends OSimpleExecStatement {
       multipleRelationship = linkType == OType.LINKSET || linkType == OType.LINKLIST;
     else multipleRelationship = false;
 
-    database.declareIntent(new OIntentMassiveInsert());
     try {
       // BROWSE ALL THE RECORDS OF THE SOURCE CLASS
       for (ODocument doc : db.browseClass(sourceClass.getName())) {
@@ -231,8 +229,6 @@ public class OCreateLinkStatement extends OSimpleExecStatement {
     } catch (Exception e) {
       throw OException.wrapException(
           new OCommandExecutionException("Error on creation of links"), e);
-    } finally {
-      database.declareIntent(null);
     }
     return total;
   }

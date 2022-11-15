@@ -394,8 +394,6 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
         db.getTransaction().setUsingLog(settings.isUseLog());
       }
     }
-
-    if (intent != null) g.declareIntent(intent.copy());
   }
 
   /**

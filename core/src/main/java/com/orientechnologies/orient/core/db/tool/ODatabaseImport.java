@@ -47,7 +47,6 @@ import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
 import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
-import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -165,8 +164,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       listener = text -> {};
     }
     jsonReader = new OJSONReader(new InputStreamReader(inputStream));
-    database.declareIntent(new OIntentMassiveInsert());
-
     input = inputStream;
   }
 
@@ -347,9 +344,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     return this;
   }
 
-  public void close() {
-    database.declareIntent(null);
-  }
+  public void close() {}
 
   public boolean isMigrateLinks() {
     return migrateLinks;

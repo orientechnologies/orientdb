@@ -173,6 +173,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    *
    * @param iIntent The intent
    */
+  @Deprecated
   boolean declareIntent(final OIntent iIntent);
 
   /**
@@ -180,6 +181,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    *
    * @return
    */
+  @Deprecated
   OIntent getActiveIntent();
 
   /**

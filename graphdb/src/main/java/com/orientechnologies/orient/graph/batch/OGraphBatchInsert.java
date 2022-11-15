@@ -8,7 +8,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -134,7 +133,6 @@ public class OGraphBatchInsert {
     }
 
     private void run(ODatabaseDocument db) {
-      db.declareIntent(new OIntentMassiveInsert());
       int clusterId = clusterIds[mod];
 
       final String outField =
@@ -148,7 +146,6 @@ public class OGraphBatchInsert {
       for (long i = nextVerticesToCreate[mod]; i <= last; i += parallel) {
         createVertex(db, i, inField, outField, clusterName, null);
       }
-      db.declareIntent(null);
     }
 
     public void createVertex(ODatabaseDocument db, long i, Map<String, Object> properties) {
@@ -327,7 +324,6 @@ public class OGraphBatchInsert {
 
     } finally {
       db.activateOnCurrentThread();
-      db.declareIntent(null);
       db.close();
     }
   }

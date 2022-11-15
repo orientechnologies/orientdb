@@ -899,7 +899,6 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
         internal = factory.open(dbName, iUserName, iUserPassword, config);
       }
       if (databaseOwner != null) internal.setDatabaseOwner(databaseOwner);
-      if (intent != null) internal.declareIntent(intent);
       if (conflictStrategy != null) internal.setConflictStrategy(conflictStrategy);
       if (serializer != null) internal.setSerializer(serializer);
       for (Entry<String, Object> pro : preopenProperties.entrySet())
@@ -975,7 +974,6 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
         }
       }
       if (databaseOwner != null) internal.setDatabaseOwner(databaseOwner);
-      if (intent != null) internal.declareIntent(intent);
       if (conflictStrategy != null) internal.setConflictStrategy(conflictStrategy);
       if (serializer != null) internal.setSerializer(serializer);
       for (Entry<String, Object> pro : preopenProperties.entrySet())

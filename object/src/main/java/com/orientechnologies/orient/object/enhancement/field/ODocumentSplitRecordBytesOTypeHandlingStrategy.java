@@ -18,7 +18,6 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
@@ -76,7 +75,6 @@ public class ODocumentSplitRecordBytesOTypeHandlingStrategy
 
     // Store new data
     if (bytes != null) {
-      database.declareIntent(new OIntentMassiveInsert());
       chunks = new ArrayList<ORID>();
       int offset = 0;
       int nextChunkLength = this.chunkSize;
@@ -105,7 +103,6 @@ public class ODocumentSplitRecordBytesOTypeHandlingStrategy
       }
 
       iRecord.field(fieldName, chunks);
-      database.declareIntent(null);
     }
 
     return iRecord;

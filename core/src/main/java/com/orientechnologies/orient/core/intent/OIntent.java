@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
+@Deprecated
 public interface OIntent {
   /**
    * Activate the intent.

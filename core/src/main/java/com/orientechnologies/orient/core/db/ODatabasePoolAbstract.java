@@ -233,10 +233,6 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extend
   }
 
   public void release(final DB iDatabase) {
-    // REMOVE ANY INTENT BEFORE. THIS RESTORE ANYTHING BEFORE THE CLOSE, LIKE THE USER NAME IN CASE
-    // OF MASSIVE INSERT
-    iDatabase.declareIntent(null);
-
     final String dbPooledName = iDatabase.getUser().getName() + "@" + iDatabase.getURL();
     final OReentrantResourcePool<String, DB> pool;
     lock();

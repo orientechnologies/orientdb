@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 
 /** Disable cache. This is helpful with operation like UPDATE/DELETE of many records. */
+@Deprecated
 public class OIntentNoCache implements OIntent {
   private boolean previousLocalCacheEnabled;
   private boolean previousRetainRecords;

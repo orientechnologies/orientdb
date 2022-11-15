@@ -36,7 +36,6 @@ import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdExceptio
 import com.orientechnologies.orient.core.exception.OManualIndexesAreProhibited;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
-import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -501,8 +500,6 @@ public abstract class OIndexAbstract implements OIndexInternal {
   public long rebuild(final OProgressListener iProgressListener) {
     long documentIndexed;
 
-    final boolean intentInstalled = getDatabase().declareIntent(new OIntentMassiveInsert());
-
     acquireExclusiveLock();
     try {
       try {
@@ -559,8 +556,6 @@ public abstract class OIndexAbstract implements OIndexInternal {
       throw OException.wrapException(
           new OIndexException("Error on rebuilding the index for clusters: " + clustersToIndex), e);
     } finally {
-      if (intentInstalled) getDatabase().declareIntent(null);
-
       releaseSharedLock();
     }
 

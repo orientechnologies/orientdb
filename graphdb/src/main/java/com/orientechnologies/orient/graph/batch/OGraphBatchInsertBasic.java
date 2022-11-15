@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OClusterDoesNotExistException;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -92,7 +91,6 @@ public class OGraphBatchInsertBasic {
       try {
         ODatabaseDocumentInternal db = new ODatabaseDocumentTx(dbUrl);
         db.open(userName, password);
-        db.declareIntent(new OIntentMassiveInsert());
         int clusterId = clusterIds[mod];
 
         final String outField =
@@ -140,7 +138,6 @@ public class OGraphBatchInsertBasic {
           runningThreads.notifyAll();
         }
         db.activateOnCurrentThread();
-        db.declareIntent(null);
         db.close();
       }
     }
@@ -245,7 +242,6 @@ public class OGraphBatchInsertBasic {
 
     } finally {
       db.activateOnCurrentThread();
-      db.declareIntent(null);
       db.close();
     }
   }
