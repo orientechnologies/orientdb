@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.core.config;
 
-import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategyFactory;
@@ -47,6 +46,7 @@ import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Versions:
@@ -74,7 +74,7 @@ import java.util.concurrent.ConcurrentMap;
 public class OStorageConfigurationImpl implements OSerializableStream, OStorageConfiguration {
   private static final ORecordId CONFIG_RID = new OImmutableRecordId(0, 0);
 
-  protected final OReadersWriterSpinLock lock = new OReadersWriterSpinLock();
+  protected final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
   private String charset;
   private final List<OStorageEntryConfiguration> properties = new ArrayList<>();
@@ -117,7 +117,7 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
 
   public OStorageConfigurationImpl(
       final OAbstractPaginatedStorage iStorage, Charset streamCharset) {
-    lock.acquireWriteLock();
+    lock.writeLock().lock();
     try {
       this.streamCharset = streamCharset;
 
@@ -126,90 +126,90 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
       initConfiguration(new OContextConfiguration());
       clear();
     } finally {
-      lock.releaseWriteLock();
+      lock.writeLock().unlock();
     }
   }
 
   public int getPageSize() {
-    lock.acquireReadLock();
+    lock.readLock().lock();
     try {
       return pageSize;
     } finally {
-      lock.releaseReadLock();
+      lock.readLock().unlock();
     }
   }
 
   public void setPageSize(int pageSize) {
-    lock.acquireWriteLock();
+    lock.writeLock().lock();
     try {
       this.pageSize = pageSize;
     } finally {
-      lock.releaseWriteLock();
+      lock.writeLock().unlock();
     }
   }
 
   public int getFreeListBoundary() {
-    lock.acquireReadLock();
+    lock.readLock().lock();
     try {
       return freeListBoundary;
     } finally {
-      lock.releaseReadLock();
+      lock.readLock().unlock();
     }
   }
 
   public void setFreeListBoundary(int freeListBoundary) {
-    lock.acquireWriteLock();
+    lock.writeLock().lock();
     try {
       this.freeListBoundary = freeListBoundary;
     } finally {
-      lock.releaseWriteLock();
+      lock.writeLock().unlock();
     }
   }
 
   public int getMaxKeySize() {
-    lock.acquireReadLock();
+    lock.readLock().lock();
     try {
       return maxKeySize;
     } finally {
-      lock.releaseReadLock();
+      lock.readLock().unlock();
     }
   }
 
   public void setMaxKeySize(int maxKeySize) {
-    lock.acquireWriteLock();
+    lock.writeLock().lock();
     try {
       this.maxKeySize = maxKeySize;
     } finally {
-      lock.releaseWriteLock();
+      lock.writeLock().unlock();
     }
   }
 
   /** Sets version of product release under which storage was created. */
   public void setCreationVersion(String version) {
-    lock.acquireWriteLock();
+    lock.writeLock().lock();
     try {
       this.createdAtVersion = version;
     } finally {
-      lock.releaseWriteLock();
+      lock.writeLock().unlock();
     }
   }
 
   /** @return version of product release under which storage was created. */
   public String getCreatedAtVersion() {
-    lock.acquireReadLock();
+    lock.readLock().lock();
     try {
       return createdAtVersion;
     } finally {
-      lock.releaseReadLock();
+      lock.readLock().unlock();
     }
   }
 
   public void initConfiguration(OContextConfiguration conf) {
-    lock.acquireWriteLock();
+    lock.writeLock().lock();
     try {
       this.configuration = conf;
     } finally {
-      lock.releaseWriteLock();
+      lock.writeLock().unlock();
     }
   }
 
@@ -262,29 +262,29 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
   }
 
   public String getConflictStrategy() {
-    lock.acquireReadLock();
+    lock.readLock().lock();
     try {
       return conflictStrategy;
     } finally {
-      lock.releaseReadLock();
+      lock.readLock().unlock();
     }
   }
 
   public void setConflictStrategy(String conflictStrategy) {
-    lock.acquireWriteLock();
+    lock.writeLock().lock();
     try {
       this.conflictStrategy = conflictStrategy;
     } finally {
-      lock.releaseWriteLock();
+      lock.writeLock().unlock();
     }
   }
 
   public OContextConfiguration getContextConfiguration() {
-    lock.acquireReadLock();
+    lock.readLock().lock();
     try {
       return configuration;
     } finally {
-      lock.releaseReadLock();
+      lock.readLock().unlock();
     }
   }
 
@@ -294,7 +294,7 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
    */
   public OStorageConfigurationImpl load(final OContextConfiguration configuration)
       throws OSerializationException {
-    lock.acquireWriteLock();
+    lock.writeLock().lock();
     try {
       initConfiguration(configuration);
 
@@ -307,14 +307,14 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
 
       fromStream(record, 0, record.length, streamCharset);
     } finally {
-      lock.releaseWriteLock();
+      lock.writeLock().unlock();
     }
 
     return this;
   }
 
   public void update() throws OSerializationException {
-    lock.acquireWriteLock();
+    lock.writeLock().lock();
     try {
       final byte[] record = toStream(streamCharset);
       storage.updateRecord(CONFIG_RID, true, record, -1, OBlob.RECORD_TYPE, 0, null);
@@ -322,18 +322,18 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
         updateListener.onUpdate(this);
       }
     } finally {
-      lock.releaseWriteLock();
+      lock.writeLock().unlock();
     }
   }
 
   public String getDirectory() {
-    lock.acquireReadLock();
+    lock.readLock().lock();
     try {
       if (fileTemplate.location != null) {
         return fileTemplate.getLocation();
       }
     } finally {
-      lock.releaseReadLock();
+      lock.readLock().unlock();
     }
 
     if (storage instanceof OLocalPaginatedStorage) {
@@ -344,7 +344,7 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
   }
 
   public Locale getLocaleInstance() {
-    lock.acquireReadLock();
+    lock.readLock().lock();
     try {
       if (localeInstance == null) {
         try {
@@ -362,12 +362,12 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
 
       return localeInstance;
     } finally {
-      lock.releaseReadLock();
+      lock.readLock().unlock();
     }
   }
 
   public SimpleDateFormat getDateFormatInstance() {
-    lock.acquireReadLock();
+    lock.readLock().lock();
     try {
       final SimpleDateFormat dateFormatInstance = new SimpleDateFormat(dateFormat);
       dateFormatInstance.setLenient(false);
@@ -375,25 +375,25 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
 
       return dateFormatInstance;
     } finally {
-      lock.releaseReadLock();
+      lock.readLock().unlock();
     }
   }
 
   public SimpleDateFormat getDateTimeFormatInstance() {
-    lock.acquireReadLock();
+    lock.readLock().lock();
     try {
       final SimpleDateFormat dateTimeFormatInstance = new SimpleDateFormat(dateTimeFormat);
       dateTimeFormatInstance.setLenient(false);
       dateTimeFormatInstance.setTimeZone(timeZone);
       return dateTimeFormatInstance;
     } finally {
-      lock.releaseReadLock();
+      lock.readLock().unlock();
     }
   }
 
   @SuppressWarnings("ConstantConditions")
   public void fromStream(final byte[] stream, int offset, int length, Charset charset) {
-    lock.acquireWriteLock();
+    lock.writeLock().lock();
     try {
       clear();
 
@@ -657,7 +657,7 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
         maxKeySize = Integer.parseInt(read(values[index++]));
       }
     } finally {
-      lock.releaseWriteLock();
+      lock.writeLock().unlock();
     }
   }
 
@@ -685,7 +685,7 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
   /** Added version used for managed Network Versioning. */
   public byte[] toStream(final int iNetworkVersion, Charset charset)
       throws OSerializationException {
-    lock.acquireReadLock();
+    lock.readLock().lock();
     try {
       final StringBuilder buffer = new StringBuilder(8192);
 
@@ -832,52 +832,52 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
 
       return buffer.toString().getBytes(charset);
     } finally {
-      lock.releaseReadLock();
+      lock.readLock().unlock();
     }
   }
 
   public void create() throws IOException {
-    lock.acquireWriteLock();
+    lock.writeLock().lock();
     try {
       storage.createRecord(CONFIG_RID, new byte[] {0, 0, 0, 0}, 0, OBlob.RECORD_TYPE, null);
     } finally {
-      lock.releaseWriteLock();
+      lock.writeLock().unlock();
     }
   }
 
   public void delete() throws IOException {
-    lock.acquireWriteLock();
+    lock.writeLock().lock();
     try {
       close();
     } finally {
-      lock.releaseWriteLock();
+      lock.writeLock().unlock();
     }
   }
 
   public void close() throws IOException {
-    lock.acquireWriteLock();
+    lock.writeLock().lock();
     try {
       clear();
       initConfiguration(new OContextConfiguration());
     } finally {
-      lock.releaseWriteLock();
+      lock.writeLock().unlock();
     }
   }
 
   public void dropCluster(final int iClusterId) {
-    lock.acquireWriteLock();
+    lock.writeLock().lock();
     try {
       if (iClusterId < clusters.size()) {
         clusters.set(iClusterId, null);
         update();
       }
     } finally {
-      lock.releaseWriteLock();
+      lock.writeLock().unlock();
     }
   }
 
   public void addCluster(OStoragePaginatedClusterConfiguration config) {
-    lock.acquireWriteLock();
+    lock.writeLock().lock();
     try {
       if (clusters.size() <= config.id) {
         final int diff = config.id - clusters.size();
@@ -899,12 +899,12 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
         clusters.set(config.id, config);
       }
     } finally {
-      lock.releaseWriteLock();
+      lock.writeLock().unlock();
     }
   }
 
   public void addIndexEngine(String name, IndexEngineData engineData) {
-    lock.acquireWriteLock();
+    lock.writeLock().lock();
     try {
       final IndexEngineData oldEngine = indexEngines.putIfAbsent(name, engineData);
 
@@ -918,163 +918,163 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
 
       update();
     } finally {
-      lock.releaseWriteLock();
+      lock.writeLock().unlock();
     }
   }
 
   public void deleteIndexEngine(String name) {
-    lock.acquireWriteLock();
+    lock.writeLock().lock();
     try {
       indexEngines.remove(name);
       update();
     } finally {
-      lock.releaseWriteLock();
+      lock.writeLock().unlock();
     }
   }
 
   public Set<String> indexEngines() {
-    lock.acquireReadLock();
+    lock.readLock().lock();
     try {
       return Collections.unmodifiableSet(indexEngines.keySet());
     } finally {
-      lock.releaseReadLock();
+      lock.readLock().unlock();
     }
   }
 
   @Override
   public IndexEngineData getIndexEngine(String name, int defaultIndexId) {
-    lock.acquireReadLock();
+    lock.readLock().lock();
     try {
       return indexEngines.get(name);
     } finally {
-      lock.releaseReadLock();
+      lock.readLock().unlock();
     }
   }
 
   public void setClusterStatus(
       final int clusterId, final OStorageClusterConfiguration.STATUS iStatus) {
-    lock.acquireWriteLock();
+    lock.writeLock().lock();
     try {
       final OStorageClusterConfiguration clusterCfg = clusters.get(clusterId);
       if (clusterCfg != null) clusterCfg.setStatus(iStatus);
       update();
     } finally {
-      lock.releaseWriteLock();
+      lock.writeLock().unlock();
     }
   }
 
   public TimeZone getTimeZone() {
-    lock.acquireReadLock();
+    lock.readLock().lock();
     try {
       return timeZone;
     } finally {
-      lock.releaseReadLock();
+      lock.readLock().unlock();
     }
   }
 
   public void setTimeZone(final TimeZone timeZone) {
-    lock.acquireWriteLock();
+    lock.writeLock().lock();
     try {
       this.timeZone = timeZone;
     } finally {
-      lock.releaseWriteLock();
+      lock.writeLock().unlock();
     }
   }
 
   public String getLocaleLanguage() {
-    lock.acquireReadLock();
+    lock.readLock().lock();
     try {
       return localeLanguage;
     } finally {
-      lock.releaseReadLock();
+      lock.readLock().unlock();
     }
   }
 
   public void setLocaleLanguage(final String iValue) {
-    lock.acquireWriteLock();
+    lock.writeLock().lock();
     try {
       localeLanguage = iValue;
       localeInstance = null;
     } finally {
-      lock.releaseWriteLock();
+      lock.writeLock().unlock();
     }
   }
 
   public String getLocaleCountry() {
-    lock.acquireReadLock();
+    lock.readLock().lock();
     try {
       return localeCountry;
     } finally {
-      lock.releaseReadLock();
+      lock.readLock().unlock();
     }
   }
 
   public void setLocaleCountry(final String iValue) {
-    lock.acquireWriteLock();
+    lock.writeLock().lock();
     try {
       localeCountry = iValue;
       localeInstance = null;
     } finally {
-      lock.releaseWriteLock();
+      lock.writeLock().unlock();
     }
   }
 
   public String getCharset() {
-    lock.acquireReadLock();
+    lock.readLock().lock();
     try {
       return charset;
     } finally {
-      lock.releaseReadLock();
+      lock.readLock().unlock();
     }
   }
 
   public void setCharset(String charset) {
-    lock.acquireWriteLock();
+    lock.writeLock().lock();
     try {
       this.charset = charset;
     } finally {
-      lock.releaseWriteLock();
+      lock.writeLock().unlock();
     }
   }
 
   public String getDateFormat() {
-    lock.acquireReadLock();
+    lock.readLock().lock();
     try {
       return dateFormat;
     } finally {
-      lock.releaseReadLock();
+      lock.readLock().unlock();
     }
   }
 
   public String getDateTimeFormat() {
-    lock.acquireReadLock();
+    lock.readLock().lock();
     try {
       return dateTimeFormat;
     } finally {
-      lock.releaseReadLock();
+      lock.readLock().unlock();
     }
   }
 
   public String getClusterSelection() {
-    lock.acquireReadLock();
+    lock.readLock().lock();
     try {
       return clusterSelection;
     } finally {
-      lock.releaseReadLock();
+      lock.readLock().unlock();
     }
   }
 
   public void setClusterSelection(final String clusterSelection) {
-    lock.acquireWriteLock();
+    lock.writeLock().lock();
     try {
       this.clusterSelection = clusterSelection;
     } finally {
-      lock.releaseWriteLock();
+      lock.writeLock().unlock();
     }
   }
 
   public int getMinimumClusters() {
-    lock.acquireReadLock();
+    lock.readLock().lock();
     try {
       final int mc =
           getContextConfiguration().getValueAsInteger(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS);
@@ -1085,54 +1085,54 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
       }
       return mc;
     } finally {
-      lock.releaseReadLock();
+      lock.readLock().unlock();
     }
   }
 
   public void setMinimumClusters(final int minimumClusters) {
-    lock.acquireWriteLock();
+    lock.writeLock().lock();
     try {
       getContextConfiguration()
           .setValue(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS, minimumClusters);
       autoInitClusters();
     } finally {
-      lock.releaseWriteLock();
+      lock.writeLock().unlock();
     }
   }
 
   public String getRecordSerializer() {
-    lock.acquireReadLock();
+    lock.readLock().lock();
     try {
       return recordSerializer;
     } finally {
-      lock.releaseReadLock();
+      lock.readLock().unlock();
     }
   }
 
   public void setRecordSerializer(String recordSerializer) {
-    lock.acquireWriteLock();
+    lock.writeLock().lock();
     try {
       this.recordSerializer = recordSerializer;
     } finally {
-      lock.releaseWriteLock();
+      lock.writeLock().unlock();
     }
   }
 
   public int getRecordSerializerVersion() {
-    lock.acquireReadLock();
+    lock.readLock().lock();
     try {
       return recordSerializerVersion;
     } finally {
-      lock.releaseReadLock();
+      lock.readLock().unlock();
     }
   }
 
   public void setRecordSerializerVersion(int recordSerializerVersion) {
-    lock.acquireWriteLock();
+    lock.writeLock().lock();
     try {
       this.recordSerializerVersion = recordSerializerVersion;
     } finally {
-      lock.releaseWriteLock();
+      lock.writeLock().unlock();
     }
   }
 
@@ -1141,16 +1141,16 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
   }
 
   public List<OStorageEntryConfiguration> getProperties() {
-    lock.acquireReadLock();
+    lock.readLock().lock();
     try {
       return Collections.unmodifiableList(properties);
     } finally {
-      lock.releaseReadLock();
+      lock.readLock().unlock();
     }
   }
 
   public void setProperty(final String iName, final String iValue) {
-    lock.acquireWriteLock();
+    lock.writeLock().lock();
     try {
 
       if ("validation".equalsIgnoreCase(iName)) validation = "true".equalsIgnoreCase(iValue);
@@ -1166,24 +1166,24 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
       // NOT FOUND: CREATE IT
       properties.add(new OStorageEntryConfiguration(iName, iValue));
     } finally {
-      lock.releaseWriteLock();
+      lock.writeLock().unlock();
     }
   }
 
   public String getProperty(final String iName) {
-    lock.acquireReadLock();
+    lock.readLock().lock();
     try {
       for (final OStorageEntryConfiguration e : properties) {
         if (e.name.equalsIgnoreCase(iName)) return e.value;
       }
       return null;
     } finally {
-      lock.releaseReadLock();
+      lock.readLock().unlock();
     }
   }
 
   public void removeProperty(final String iName) {
-    lock.acquireWriteLock();
+    lock.writeLock().lock();
     try {
       for (Iterator<OStorageEntryConfiguration> it = properties.iterator(); it.hasNext(); ) {
         final OStorageEntryConfiguration e = it.next();
@@ -1193,25 +1193,25 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
         }
       }
     } finally {
-      lock.releaseWriteLock();
+      lock.writeLock().unlock();
     }
   }
 
   public void clearProperties() {
-    lock.acquireWriteLock();
+    lock.writeLock().lock();
     try {
       properties.clear();
     } finally {
-      lock.releaseWriteLock();
+      lock.writeLock().unlock();
     }
   }
 
   public boolean isValidationEnabled() {
-    lock.acquireReadLock();
+    lock.readLock().lock();
     try {
       return validation;
     } finally {
-      lock.releaseReadLock();
+      lock.readLock().unlock();
     }
   }
 
@@ -1294,105 +1294,105 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
 
   @Override
   public String getSchemaRecordId() {
-    lock.acquireReadLock();
+    lock.readLock().lock();
     try {
       return schemaRecordId;
     } finally {
-      lock.releaseReadLock();
+      lock.readLock().unlock();
     }
   }
 
   public void setSchemaRecordId(String schemaRecordId) {
-    lock.acquireWriteLock();
+    lock.writeLock().lock();
     try {
       this.schemaRecordId = schemaRecordId;
     } finally {
-      lock.releaseWriteLock();
+      lock.writeLock().unlock();
     }
   }
 
   @Override
   public String getIndexMgrRecordId() {
-    lock.acquireReadLock();
+    lock.readLock().lock();
     try {
       return indexMgrRecordId;
     } finally {
-      lock.releaseReadLock();
+      lock.readLock().unlock();
     }
   }
 
   public void setIndexMgrRecordId(String indexMgrRecordId) {
-    lock.acquireWriteLock();
+    lock.writeLock().lock();
     try {
       this.indexMgrRecordId = indexMgrRecordId;
     } finally {
-      lock.releaseWriteLock();
+      lock.writeLock().unlock();
     }
   }
 
   public void setDateFormat(String dateFormat) {
-    lock.acquireWriteLock();
+    lock.writeLock().lock();
     try {
       this.dateFormat = dateFormat;
     } finally {
-      lock.releaseWriteLock();
+      lock.writeLock().unlock();
     }
   }
 
   public void setDateTimeFormat(String dateTimeFormat) {
-    lock.acquireWriteLock();
+    lock.writeLock().lock();
     try {
       this.dateTimeFormat = dateTimeFormat;
     } finally {
-      lock.releaseWriteLock();
+      lock.writeLock().unlock();
     }
   }
 
   @Override
   public int getBinaryFormatVersion() {
-    lock.acquireReadLock();
+    lock.readLock().lock();
     try {
       return binaryFormatVersion;
     } finally {
-      lock.releaseReadLock();
+      lock.readLock().unlock();
     }
   }
 
   @Override
   public String getName() {
-    lock.acquireReadLock();
+    lock.readLock().lock();
     try {
       return name;
     } finally {
-      lock.releaseReadLock();
+      lock.readLock().unlock();
     }
   }
 
   @Override
   public int getVersion() {
-    lock.acquireReadLock();
+    lock.readLock().lock();
     try {
       return version;
     } finally {
-      lock.releaseReadLock();
+      lock.readLock().unlock();
     }
   }
 
   public List<OStorageClusterConfiguration> getClusters() {
-    lock.acquireReadLock();
+    lock.readLock().lock();
     try {
       return Collections.unmodifiableList(clusters);
     } finally {
-      lock.releaseReadLock();
+      lock.readLock().unlock();
     }
   }
 
   public void setConfigurationUpdateListener(OStorageConfigurationUpdateListener updateListener) {
-    lock.acquireWriteLock();
+    lock.writeLock().lock();
     try {
       this.updateListener = updateListener;
     } finally {
-      lock.releaseWriteLock();
+      lock.writeLock().unlock();
     }
   }
 

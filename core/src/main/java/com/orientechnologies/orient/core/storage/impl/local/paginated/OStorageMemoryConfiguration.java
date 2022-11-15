@@ -43,7 +43,7 @@ public class OStorageMemoryConfiguration extends OStorageConfigurationImpl {
   @Override
   public OStorageConfigurationImpl load(final OContextConfiguration configuration)
       throws OSerializationException {
-    lock.acquireWriteLock();
+    lock.writeLock().lock();
     try {
       initConfiguration(configuration);
 
@@ -57,13 +57,13 @@ public class OStorageMemoryConfiguration extends OStorageConfigurationImpl {
       }
       return this;
     } finally {
-      lock.releaseWriteLock();
+      lock.writeLock().unlock();
     }
   }
 
   @Override
   public void update() throws OSerializationException {
-    lock.acquireWriteLock();
+    lock.writeLock().lock();
     try {
       try {
         serializedContent = toStream(streamCharset);
@@ -75,7 +75,7 @@ public class OStorageMemoryConfiguration extends OStorageConfigurationImpl {
         updateListener.onUpdate(this);
       }
     } finally {
-      lock.releaseWriteLock();
+      lock.writeLock().unlock();
     }
   }
 }

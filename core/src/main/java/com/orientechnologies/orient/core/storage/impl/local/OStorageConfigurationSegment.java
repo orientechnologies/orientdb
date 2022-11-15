@@ -82,13 +82,13 @@ public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
 
   @Override
   public void delete() throws IOException {
-    lock.acquireWriteLock();
+    lock.writeLock().lock();
     try {
       super.delete();
 
       clearConfigurationFiles();
     } finally {
-      lock.releaseWriteLock();
+      lock.writeLock().unlock();
     }
   }
 
@@ -107,20 +107,20 @@ public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
 
   @Override
   public void create() throws IOException {
-    lock.acquireWriteLock();
+    lock.writeLock().lock();
     try {
       clearConfigurationFiles();
 
       super.create();
     } finally {
-      lock.releaseWriteLock();
+      lock.writeLock().unlock();
     }
   }
 
   @Override
   public OStorageConfigurationImpl load(final OContextConfiguration configuration)
       throws OSerializationException {
-    lock.acquireWriteLock();
+    lock.writeLock().lock();
     try {
       initConfiguration(configuration);
 
@@ -181,13 +181,13 @@ public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
               "Cannot load database configuration. The database seems corrupted"),
           e);
     } finally {
-      lock.releaseWriteLock();
+      lock.writeLock().unlock();
     }
   }
 
   @Override
   public void update() throws OSerializationException {
-    lock.acquireWriteLock();
+    lock.writeLock().lock();
     try {
       final Charset utf8 = Charset.forName("UTF-8");
       final byte[] buffer = toStream(utf8);
@@ -224,7 +224,7 @@ public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
             new OSerializationException("Error on update storage configuration"), e);
       }
     } finally {
-      lock.releaseWriteLock();
+      lock.writeLock().unlock();
     }
   }
 
