@@ -20,16 +20,11 @@
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.listener.OProgressListener;
-import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainer;
-import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainerSBTree;
-import com.orientechnologies.orient.core.storage.ridbag.sbtree.OMixedIndexRIDContainer;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
@@ -37,7 +32,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Fast index for full-text searches.
@@ -119,58 +113,6 @@ public class OIndexFullText extends OIndexMultiValues {
     return this;
   }
 
-  private void doPutV0(final OIdentifiable singleValue, final String word) {
-    Set<OIdentifiable> refs;
-    while (true) {
-      try {
-        //noinspection unchecked
-        refs = (Set<OIdentifiable>) storage.getIndexValue(indexId, word);
-        break;
-      } catch (OInvalidIndexEngineIdException ignore) {
-        doReloadIndexEngine();
-      }
-    }
-
-    final Set<OIdentifiable> refsc = refs;
-
-    // SAVE THE INDEX ENTRY
-    while (true) {
-      try {
-        storage.updateIndexEntry(
-            indexId,
-            word,
-            (oldValue, bonsayFileId) -> {
-              Set<OIdentifiable> result;
-
-              if (refsc == null) {
-                // WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
-                if (ODefaultIndexFactory.SBTREE_BONSAI_VALUE_CONTAINER.equals(
-                    valueContainerAlgorithm)) {
-                  if (binaryFormatVersion >= 13) {
-                    result = new OMixedIndexRIDContainer(getName(), bonsayFileId);
-                  } else {
-                    result = new OIndexRIDContainer(getName(), true, bonsayFileId);
-                  }
-                } else {
-                  throw new IllegalStateException("MBRBTreeContainer is not supported any more");
-                }
-              } else {
-                result = refsc;
-              }
-
-              // ADD THE CURRENT DOCUMENT AS REF FOR THAT WORD
-              result.add(singleValue);
-
-              return OIndexUpdateAction.changed(result);
-            });
-
-        break;
-      } catch (OInvalidIndexEngineIdException ignore) {
-        doReloadIndexEngine();
-      }
-    }
-  }
-
   /**
    * Splits passed in key on several words and remove records with keys equals to any item of split
    * result and values equals to passed in value.
@@ -196,30 +138,6 @@ public class OIndexFullText extends OIndexMultiValues {
     database.commit();
 
     return true;
-  }
-
-  private void removeV0(OIdentifiable value, OModifiableBoolean removed, String word) {
-    Set<OIdentifiable> recs;
-    while (true) {
-      try {
-        //noinspection unchecked
-        recs = (Set<OIdentifiable>) storage.getIndexValue(indexId, word);
-        break;
-      } catch (OInvalidIndexEngineIdException ignore) {
-        doReloadIndexEngine();
-      }
-    }
-
-    if (recs != null && !recs.isEmpty()) {
-      while (true) {
-        try {
-          storage.updateIndexEntry(indexId, word, new EntityRemover(value, removed));
-          break;
-        } catch (OInvalidIndexEngineIdException ignore) {
-          doReloadIndexEngine();
-        }
-      }
-    }
   }
 
   @Override
@@ -336,39 +254,6 @@ public class OIndexFullText extends OIndexMultiValues {
     }
 
     return result;
-  }
-
-  private static class EntityRemover implements OIndexKeyUpdater<Object> {
-    private final OIdentifiable value;
-    private final OModifiableBoolean removed;
-
-    private EntityRemover(OIdentifiable value, OModifiableBoolean removed) {
-      this.value = value;
-      this.removed = removed;
-    }
-
-    @Override
-    public OIndexUpdateAction<Object> update(Object old, AtomicLong bonsayFileId) {
-      @SuppressWarnings("unchecked")
-      Set<OIdentifiable> recs = (Set<OIdentifiable>) old;
-      if (recs.remove(value)) {
-        removed.setValue(true);
-
-        if (recs.isEmpty()) {
-          if (recs instanceof OMixedIndexRIDContainer) {
-            ((OMixedIndexRIDContainer) recs).delete();
-          } else if (recs instanceof OIndexRIDContainerSBTree) {
-            ((OIndexRIDContainerSBTree) recs).delete();
-          }
-          //noinspection unchecked
-          return OIndexUpdateAction.remove();
-        } else {
-          return OIndexUpdateAction.changed(recs);
-        }
-      }
-
-      return OIndexUpdateAction.changed(recs);
-    }
   }
 
   private static final class FullTextIndexConfiguration extends IndexConfiguration {
