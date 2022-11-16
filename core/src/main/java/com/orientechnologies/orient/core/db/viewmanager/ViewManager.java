@@ -350,29 +350,32 @@ public class ViewManager {
       return;
     }
     lockView(view);
-    view.addClusterId(cluster);
-    for (int i : view.getClusterIds()) {
-      if (i != cluster) {
-        clustersToDrop.add(i);
-        viewCluserVisitors.put(i, new AtomicInteger(0));
-        oldClustersPerViews.put(i, view.getName());
-        view.removeClusterId(i);
+    try {
+      view.addClusterId(cluster);
+      for (int i : view.getClusterIds()) {
+        if (i != cluster) {
+          clustersToDrop.add(i);
+          viewCluserVisitors.put(i, new AtomicInteger(0));
+          oldClustersPerViews.put(i, view.getName());
+          view.removeClusterId(i);
+        }
       }
+
+      final OViewImpl viewImpl = ((OViewImpl) view);
+      viewImpl
+          .getInactiveIndexes()
+          .forEach(
+              idx -> {
+                indexesToDrop.add(idx);
+                viewIndexVisitors.put(idx, new AtomicInteger(0));
+                oldIndexesPerViews.put(idx, viewName);
+              });
+      viewImpl.inactivateIndexes();
+      viewImpl.addActiveIndexes(
+          indexes.stream().map(x -> x.getName()).collect(Collectors.toList()));
+    } finally {
+      unlockView(view);
     }
-
-    final OViewImpl viewImpl = ((OViewImpl) view);
-    viewImpl
-        .getInactiveIndexes()
-        .forEach(
-            idx -> {
-              indexesToDrop.add(idx);
-              viewIndexVisitors.put(idx, new AtomicInteger(0));
-              oldIndexesPerViews.put(idx, viewName);
-            });
-    viewImpl.inactivateIndexes();
-    viewImpl.addActiveIndexes(indexes.stream().map(x -> x.getName()).collect(Collectors.toList()));
-
-    unlockView(view);
     cleanUnusedViewIndexes(db);
     cleanUnusedViewClusters(db);
   }
