@@ -435,7 +435,7 @@ public class HelperClasses {
     OVarIntSerializer.write(bytes, pointer.getFileId());
     OVarIntSerializer.write(bytes, pointer.getRootPointer().getPageIndex());
     OVarIntSerializer.write(bytes, pointer.getRootPointer().getPageOffset());
-    OVarIntSerializer.write(bytes, ridbag.size());
+    OVarIntSerializer.write(bytes, 0);
 
     if (context != null) {
       ((OSBTreeRidBag) ridbag.getDelegate()).handleContextSBTree(context, pointer);
