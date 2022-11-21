@@ -1226,4 +1226,14 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
           e);
     }
   }
+
+  @Override
+  protected void checkBackupRunning() {
+    if (backupInProgress.get()) {
+      throw new OBackupInProgressException(
+          "You are trying to execute a DDL while a incremental backup is in progress, please wait till it will be finished",
+          getName(),
+          OErrorCode.BACKUP_IN_PROGRESS);
+    }
+  }
 }
