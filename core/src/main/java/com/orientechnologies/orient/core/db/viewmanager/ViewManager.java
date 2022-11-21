@@ -13,6 +13,7 @@ import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
+import com.orientechnologies.orient.core.exception.OBackupInProgressException;
 import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -204,11 +205,15 @@ public class ViewManager {
         toRemove.add(cluster);
       }
     }
-    for (Integer cluster : toRemove) {
-      viewCluserVisitors.remove(cluster);
-      clustersToDrop.remove(cluster);
-      oldClustersPerViews.remove(cluster);
-      db.dropCluster(cluster);
+    try {
+      for (Integer cluster : toRemove) {
+        db.dropCluster(cluster);
+        viewCluserVisitors.remove(cluster);
+        clustersToDrop.remove(cluster);
+        oldClustersPerViews.remove(cluster);
+      }
+    } catch (OBackupInProgressException e) {
+      // Ignore will finish the clean next run
     }
   }
 
@@ -220,11 +225,15 @@ public class ViewManager {
         toRemove.add(index);
       }
     }
-    for (String index : toRemove) {
-      viewIndexVisitors.remove(index);
-      indexesToDrop.remove(index);
-      oldIndexesPerViews.remove(index);
-      db.getMetadata().getIndexManagerInternal().dropIndex(db, index);
+    try {
+      for (String index : toRemove) {
+        db.getMetadata().getIndexManagerInternal().dropIndex(db, index);
+        viewIndexVisitors.remove(index);
+        indexesToDrop.remove(index);
+        oldIndexesPerViews.remove(index);
+      }
+    } catch (OBackupInProgressException e) {
+      // Ignore will finish the clean next run
     }
   }
 
@@ -317,8 +326,13 @@ public class ViewManager {
 
   public synchronized void updateView(OView view, ODatabaseDocumentInternal db) {
     lastUpdateTimestampForView.put(view.getName(), System.currentTimeMillis());
-
-    int cluster = db.addCluster(getNextClusterNameFor(view, db));
+    int cluster;
+    try {
+      cluster = db.addCluster(getNextClusterNameFor(view, db));
+    } catch (OBackupInProgressException e) {
+      // Skipping the update will retry later
+      return;
+    }
 
     String viewName = view.getName();
     String query = view.getQuery();
@@ -345,8 +359,8 @@ public class ViewManager {
     view = db.getMetadata().getSchema().getView(view.getName());
     if (view == null) {
       // the view was dropped in the meantime
-      db.dropCluster(clusterName);
-      indexes.forEach(x -> x.delete());
+      clustersToDrop.add(cluster);
+      indexes.forEach(x -> indexesToDrop.add(x.getName()));
       return;
     }
     lockView(view);
