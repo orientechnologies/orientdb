@@ -199,7 +199,6 @@ import java.util.TimeZone;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.UUID;
-import java.util.WeakHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -288,8 +287,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   protected static final String DATABASE_INSTANCE_ID = "databaseInstenceId";
 
   protected AtomicOperationsTable atomicOperationsTable;
-
-  private final Set<Thread> blockedThreads = Collections.newSetFromMap(new WeakHashMap<>());
 
   public OAbstractPaginatedStorage(
       final String name, final String filePath, final String mode, final int id) {
@@ -976,7 +973,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         try {
 
           checkOpennessAndMigration();
-          checkIfThreadIsBlocked();
 
           final long start = System.currentTimeMillis();
 
@@ -1014,7 +1010,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
 
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
 
         makeStorageDirty();
         return atomicOperationsManager.calculateInsideAtomicOperation(
@@ -1042,7 +1037,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
 
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
 
         if (requestedId < 0) {
           throw new OConfigurationException("Cluster id must be positive!");
@@ -1082,8 +1076,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
 
         checkOpennessAndMigration();
-
-        checkIfThreadIsBlocked();
 
         if (clusterId < 0 || clusterId >= clusters.size()) {
           throw new IllegalArgumentException(
@@ -1146,7 +1138,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.readLock().lock();
       try {
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
 
         checkClusterId(clusterId);
         final OCluster cluster = clusters.get(clusterId);
@@ -1175,7 +1166,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
 
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
 
         checkClusterId(clusterId);
         final OCluster cluster = clusters.get(clusterId);
@@ -1205,7 +1195,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
 
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
 
         final OCluster cluster =
             clusterMap.get(clusterName.toLowerCase(configuration.getLocaleInstance()));
@@ -1233,7 +1222,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
 
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
 
         checkClusterId(clusterId);
         final OCluster cluster = clusters.get(clusterId);
@@ -1263,7 +1251,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
 
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
 
         checkClusterId(clusterId);
         final OCluster cluster = clusters.get(clusterId);
@@ -1291,7 +1278,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
 
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
 
         checkClusterId(clusterId);
         final OCluster cluster = clusters.get(clusterId);
@@ -1319,7 +1305,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
 
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
 
         checkClusterId(clusterId);
         final OCluster cluster = clusters.get(clusterId);
@@ -1347,7 +1332,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
 
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
 
         checkClusterId(clusterId);
         final OCluster cluster = clusters.get(clusterId);
@@ -1375,7 +1359,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
 
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
 
         final int clusterId = rid.getClusterId();
         checkClusterId(clusterId);
@@ -1493,7 +1476,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
 
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
 
         final OCluster cluster = clusters.get(clusterId);
         if (cluster == null) {
@@ -1528,7 +1510,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
 
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
 
         if (clusters.get(iClusterId) != null) {
           return new long[] {
@@ -1709,7 +1690,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
 
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
 
         for (final int iClusterId : iClusterIds) {
           if (iClusterId >= clusters.size()) {
@@ -1757,8 +1737,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         checkOpennessAndMigration();
 
-        checkIfThreadIsBlocked();
-
         makeStorageDirty();
 
         return atomicOperationsManager.calculateInsideAtomicOperation(
@@ -1800,7 +1778,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         final OCluster cluster = doGetAndCheckCluster(rid.getClusterId());
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
 
         final OPhysicalPosition ppos =
             cluster.getPhysicalPosition(new OPhysicalPosition(rid.getClusterPosition()));
@@ -1840,7 +1817,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         final OCluster cluster = doGetAndCheckCluster(rid.getClusterId());
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
 
         return cluster.isDeleted(new OPhysicalPosition(rid.getClusterPosition()));
 
@@ -1867,7 +1843,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
 
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
 
         final int finalClusterId;
 
@@ -1995,13 +1970,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.readLock().lock();
       try {
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
 
         // GET THE SHARED LOCK AND GET AN EXCLUSIVE LOCK AGAINST THE RECORD
         final Lock lock = recordVersionManager.acquireExclusiveLock(rid);
         try {
           checkOpennessAndMigration();
-          checkIfThreadIsBlocked();
 
           makeStorageDirty();
 
@@ -2058,7 +2031,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
 
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
 
         final OCluster cluster = doGetAndCheckCluster(rid.getClusterId());
 
@@ -2085,7 +2057,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
 
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
 
         return Collections.unmodifiableSet(clusterMap.keySet());
       } finally {
@@ -2115,7 +2086,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
 
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
 
         // SEARCH IT BETWEEN PHYSICAL CLUSTERS
 
@@ -2163,7 +2133,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
 
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
 
         makeStorageDirty();
         atomicOperationsManager.executeInsideAtomicOperation(
@@ -2355,8 +2324,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         try {
           checkOpennessAndMigration();
 
-          checkIfThreadIsBlocked();
-
           makeStorageDirty();
 
           Throwable error = null;
@@ -2544,7 +2511,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
 
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
 
         final OBaseIndexEngine engine = indexEngineNameMap.get(name);
         if (engine == null) {
@@ -2581,7 +2547,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
 
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
 
         // this method introduced for binary compatibility only
         if (configuration.getBinaryFormatVersion() > 15) {
@@ -2686,7 +2651,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
 
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
 
         makeStorageDirty();
         return atomicOperationsManager.calculateInsideAtomicOperation(
@@ -2916,7 +2880,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
 
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
 
         checkIndexId(internalIndexId);
 
@@ -3037,7 +3000,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
 
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
 
         makeStorageDirty();
 
@@ -3083,7 +3045,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
 
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
 
         return doGetIndexValue(indexId, key);
       } finally {
@@ -3132,7 +3093,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.readLock().lock();
       try {
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
 
         return doGetIndexValues(indexId, key);
       } finally {
@@ -3171,7 +3131,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
 
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
 
         final OBaseIndexEngine engine = indexEngines.get(indexId);
         assert indexId == engine.getId();
@@ -3226,7 +3185,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
 
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
 
         if (readOperation) {
           makeStorageDirty();
@@ -3478,7 +3436,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
 
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
 
         return doIterateIndexEntriesBetween(
             indexId, rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder, transformer);
@@ -3532,7 +3489,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
 
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
 
         return doIterateIndexEntriesMajor(indexId, fromKey, isInclusive, ascSortOrder, transformer);
       } finally {
@@ -3582,7 +3538,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
 
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
 
         return doIterateIndexEntriesMinor(indexId, toKey, isInclusive, ascSortOrder, transformer);
       } finally {
@@ -3628,7 +3583,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
 
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
 
         return doGetIndexStream(indexId, valuesTransformer);
       } finally {
@@ -3670,7 +3624,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
 
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
 
         return doGetIndexDescStream(indexId, valuesTransformer);
       } finally {
@@ -3710,7 +3663,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
 
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
 
         return doGetIndexKeyStream(indexId);
       } finally {
@@ -3750,7 +3702,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
 
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
 
         return doGetIndexSize(indexId, transformer);
       } finally {
@@ -3790,7 +3741,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
 
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
 
         return doHasRangeQuerySupport(indexId);
       } finally {
@@ -3861,7 +3811,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         final long lockId = atomicOperationsManager.freezeAtomicOperations(null, null);
         try {
           checkOpennessAndMigration();
-          checkIfThreadIsBlocked();
 
           if (!isInError()) {
             for (final OBaseIndexEngine indexEngine : indexEngines) {
@@ -3914,7 +3863,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.readLock().lock();
       try {
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
 
         if (iClusterId < 0 || iClusterId >= clusters.size()) {
           return null;
@@ -3949,7 +3897,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
 
       checkOpennessAndMigration();
-      checkIfThreadIsBlocked();
 
       if (clusterId == ORID.CLUSTER_ID_INVALID) {
         clusterId = defaultClusterId;
@@ -3978,7 +3925,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         try {
 
           checkOpennessAndMigration();
-          checkIfThreadIsBlocked();
 
           for (final OCluster c : clusters) {
             if (c != null) {
@@ -4009,7 +3955,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
 
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
 
         return clusterMap.size();
       } finally {
@@ -4031,7 +3976,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
 
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
 
         final Set<OCluster> result = new HashSet<>(1024);
 
@@ -4072,7 +4016,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
 
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
 
         if (throwException) {
           atomicOperationsManager.freezeAtomicOperations(
@@ -4313,7 +4256,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
 
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
 
         final OCluster cluster = doGetAndCheckCluster(currentClusterId);
         return cluster.higherPositions(physicalPosition);
@@ -4346,7 +4288,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
 
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
 
         final OCluster cluster = doGetAndCheckCluster(clusterId);
         return cluster.ceilingPositions(physicalPosition);
@@ -4379,7 +4320,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
 
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
 
         final OCluster cluster = doGetAndCheckCluster(currentClusterId);
 
@@ -4413,8 +4353,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
 
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
-
         final OCluster cluster = doGetAndCheckCluster(clusterId);
 
         return cluster.floorPositions(physicalPosition);
@@ -4547,7 +4485,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
 
       checkOpennessAndMigration();
-      checkIfThreadIsBlocked();
 
       makeStorageDirty();
 
@@ -4663,38 +4600,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  public void rollbackOperationsFromThread(final Thread thread) {
-    try {
-      stateLock.writeLock().lock();
-      try {
-        checkOpennessAndMigration();
-        blockedThreads.add(thread);
-      } finally {
-        stateLock.writeLock().unlock();
-      }
-    } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    }
-  }
-
-  private void checkIfThreadIsBlocked() {
-    final Thread thread = Thread.currentThread();
-    if (!blockedThreads.isEmpty() && blockedThreads.contains(thread)) {
-      thread.interrupt();
-
-      OLogManager.instance().warnNoDb(this, "Execution  of thread '%s' is interrupted", thread);
-
-      throw new OStorageException(
-          "Operations on thread '"
-              + thread
-              + "' are blocked and can not be performed. Thread will be interrupted.");
-    }
-  }
-
   public final void makeFuzzyCheckpoint() {
     // check every 1 ms.
     while (true) {
@@ -4785,7 +4690,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         stateLock.writeLock().lock();
         try {
           checkOpennessAndMigration();
-          checkIfThreadIsBlocked();
 
           atomicOperationsManager.executeInsideAtomicOperation(
               null, atomicOperation -> deleteTreeRidBag(ridBag, atomicOperation));
@@ -4928,7 +4832,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       final ORawBuffer buff;
       checkOpennessAndMigration();
-      checkIfThreadIsBlocked();
 
       final OCluster cluster = doGetAndCheckCluster(rid.getClusterId());
       buff = doReadRecordIfNotLatest(cluster, rid, recordVersion);
@@ -4976,7 +4879,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     stateLock.readLock().lock();
     try {
       checkOpennessAndMigration();
-      checkIfThreadIsBlocked();
       if (readLock) {
         final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
         if (db == null
@@ -5434,7 +5336,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
 
       checkOpennessAndMigration();
-      checkIfThreadIsBlocked();
 
       if (id >= clusters.size()) {
         return false;
@@ -5472,8 +5373,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.writeLock().lock();
       try {
         checkOpennessAndMigration();
-
-        checkIfThreadIsBlocked();
 
         final OCluster cluster =
             clusterMap.get(clusterName.toLowerCase(configuration.getLocaleInstance()));
@@ -6287,7 +6186,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
 
       checkOpennessAndMigration();
-      checkIfThreadIsBlocked();
 
       ((OClusterBasedStorageConfiguration) configuration)
           .setConfigurationUpdateListener(storageConfigurationUpdateListener);
@@ -6301,7 +6199,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
 
       checkOpennessAndMigration();
-      checkIfThreadIsBlocked();
 
       ((OClusterBasedStorageConfiguration) configuration).pauseUpdateNotifications();
     } finally {
@@ -6314,8 +6211,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
 
       checkOpennessAndMigration();
-      checkIfThreadIsBlocked();
-
       ((OClusterBasedStorageConfiguration) configuration).fireUpdateNotifications();
     } finally {
       stateLock.readLock().unlock();
@@ -6582,7 +6477,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
 
       checkOpennessAndMigration();
-      checkIfThreadIsBlocked();
 
       final OClusterBasedStorageConfiguration storageConfiguration =
           (OClusterBasedStorageConfiguration) configuration;
@@ -6610,7 +6504,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
 
       checkOpennessAndMigration();
-      checkIfThreadIsBlocked();
 
       final OClusterBasedStorageConfiguration storageConfiguration =
           (OClusterBasedStorageConfiguration) configuration;
@@ -6636,7 +6529,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
 
       checkOpennessAndMigration();
-      checkIfThreadIsBlocked();
 
       final OClusterBasedStorageConfiguration storageConfiguration =
           (OClusterBasedStorageConfiguration) configuration;
@@ -6663,7 +6555,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
 
       checkOpennessAndMigration();
-      checkIfThreadIsBlocked();
 
       final OClusterBasedStorageConfiguration storageConfiguration =
           (OClusterBasedStorageConfiguration) configuration;
@@ -6689,7 +6580,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
 
       checkOpennessAndMigration();
-      checkIfThreadIsBlocked();
 
       final OClusterBasedStorageConfiguration storageConfiguration =
           (OClusterBasedStorageConfiguration) configuration;
@@ -6715,7 +6605,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
 
       checkOpennessAndMigration();
-      checkIfThreadIsBlocked();
 
       final OClusterBasedStorageConfiguration storageConfiguration =
           (OClusterBasedStorageConfiguration) configuration;
@@ -6743,7 +6632,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
 
       checkOpennessAndMigration();
-      checkIfThreadIsBlocked();
 
       final OClusterBasedStorageConfiguration storageConfiguration =
           (OClusterBasedStorageConfiguration) configuration;
@@ -6771,7 +6659,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
 
       checkOpennessAndMigration();
-      checkIfThreadIsBlocked();
 
       final OClusterBasedStorageConfiguration storageConfiguration =
           (OClusterBasedStorageConfiguration) configuration;
@@ -6798,7 +6685,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
 
       checkOpennessAndMigration();
-      checkIfThreadIsBlocked();
 
       final OClusterBasedStorageConfiguration storageConfiguration =
           (OClusterBasedStorageConfiguration) configuration;
@@ -6826,7 +6712,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
 
       checkOpennessAndMigration();
-      checkIfThreadIsBlocked();
 
       final OClusterBasedStorageConfiguration storageConfiguration =
           (OClusterBasedStorageConfiguration) configuration;
@@ -6851,7 +6736,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
 
       checkOpennessAndMigration();
-      checkIfThreadIsBlocked();
 
       final OClusterBasedStorageConfiguration storageConfiguration =
           (OClusterBasedStorageConfiguration) configuration;
@@ -6877,7 +6761,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
 
       checkOpennessAndMigration();
-      checkIfThreadIsBlocked();
 
       final OClusterBasedStorageConfiguration storageConfiguration =
           (OClusterBasedStorageConfiguration) configuration;
@@ -6903,7 +6786,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
 
       checkOpennessAndMigration();
-      checkIfThreadIsBlocked();
 
       final OClusterBasedStorageConfiguration storageConfiguration =
           (OClusterBasedStorageConfiguration) configuration;
@@ -6930,7 +6812,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
 
       checkOpennessAndMigration();
-      checkIfThreadIsBlocked();
 
       final OClusterBasedStorageConfiguration storageConfiguration =
           (OClusterBasedStorageConfiguration) configuration;
@@ -6960,7 +6841,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
 
       checkOpennessAndMigration();
-      checkIfThreadIsBlocked();
 
       final OClusterBasedStorageConfiguration storageConfiguration =
           (OClusterBasedStorageConfiguration) configuration;
@@ -7109,7 +6989,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
 
         checkOpennessAndMigration();
-        checkIfThreadIsBlocked();
         Locale locale = configuration.getLocaleInstance();
         int[] result = new int[filterClusters.size()];
         int i = 0;
