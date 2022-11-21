@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server.hazelcast;
 
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.map.IMap;
 import com.orientechnologies.common.types.OModifiableInteger;
 import com.orientechnologies.orient.server.distributed.ODistributedLockManager;
 import com.orientechnologies.orient.server.distributed.task.ODistributedLockException;
@@ -11,7 +12,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 public class OHazelcastLockManager implements ODistributedLockManager {
-  private HazelcastInstance hazelcast;
+  private IMap<String, Object> locks;
   private Set<String> lockedResurces = new HashSet<>();
 
   private static final ThreadLocal<Map<String, OModifiableInteger>> ACQUIRED_REENTRANT =
@@ -21,7 +22,7 @@ public class OHazelcastLockManager implements ODistributedLockManager {
           });
 
   public OHazelcastLockManager(HazelcastInstance hazelcast) {
-    this.hazelcast = hazelcast;
+    locks = hazelcast.getMap("lockManager");
   }
 
   @Override
@@ -34,7 +35,7 @@ public class OHazelcastLockManager implements ODistributedLockManager {
 
     if (timeout != 0) {
       try {
-        if (!hazelcast.getLock(resource).tryLock(timeout, TimeUnit.MILLISECONDS)) {
+        if (!locks.tryLock(resource, timeout, TimeUnit.MILLISECONDS)) {
           throw new ODistributedLockException(
               String.format(
                   "Timed out after %d ms attempting to obtain lock for resource '%s' on node '%s'",
@@ -48,7 +49,7 @@ public class OHazelcastLockManager implements ODistributedLockManager {
                 timeout, resource, nodeSource));
       }
     } else {
-      hazelcast.getLock(resource).lock();
+      locks.lock(resource);
     }
     synchronized (this) {
       lockedResurces.add(resource);
@@ -69,7 +70,7 @@ public class OHazelcastLockManager implements ODistributedLockManager {
     }
 
     ACQUIRED_REENTRANT.get().remove(resource);
-    hazelcast.getLock(resource).unlock();
+    locks.unlock(resource);
     synchronized (this) {
       lockedResurces.remove(resource);
     }

@@ -16,9 +16,9 @@
 package com.orientechnologies.orient.setup;
 
 import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.instance.HazelcastInstanceImpl;
-import com.hazelcast.instance.HazelcastInstanceProxy;
-import com.hazelcast.instance.Node;
+import com.hazelcast.instance.impl.HazelcastInstanceImpl;
+import com.hazelcast.instance.impl.HazelcastInstanceProxy;
+import com.hazelcast.instance.impl.Node;
 import com.hazelcast.internal.cluster.impl.ClusterServiceImpl;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -207,9 +207,9 @@ public class ServerRun {
         if (dm != null) {
           HazelcastInstance hz = dm.getHazelcastInstance();
           final Node node = getHazelcastNode(hz);
-          if (node.getNetworkingService() != null) {
-            node.getNetworkingService().shutdown();
-          }
+          //          if (node.getNetworkingService() != null) {
+          //            node.getNetworkingService().shutdown();
+          //          }
           node.shutdown(true);
           hz.getLifecycleService().terminate();
         }

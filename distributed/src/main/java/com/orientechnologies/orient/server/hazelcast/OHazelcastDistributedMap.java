@@ -22,8 +22,8 @@ package com.orientechnologies.orient.server.hazelcast;
 import com.hazelcast.core.EntryEvent;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
-import com.hazelcast.core.IMap;
-import com.hazelcast.core.MapEvent;
+import com.hazelcast.map.IMap;
+import com.hazelcast.map.MapEvent;
 import com.hazelcast.map.listener.EntryAddedListener;
 import com.hazelcast.map.listener.EntryRemovedListener;
 import com.hazelcast.map.listener.EntryUpdatedListener;
@@ -37,6 +37,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -51,7 +52,7 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object>
         EntryUpdatedListener<String, Object> {
   private final OHazelcastClusterMetadataManager dManager;
   private final IMap<String, Object> hzMap;
-  private final String membershipListenerRegistration;
+  private final UUID membershipListenerRegistration;
 
   public static final String ORIENTDB_MAP = "orientdb";
 

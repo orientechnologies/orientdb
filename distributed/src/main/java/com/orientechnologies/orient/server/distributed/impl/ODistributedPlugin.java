@@ -22,10 +22,10 @@ package com.orientechnologies.orient.server.distributed.impl;
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_MAX_STARTUP_DELAY;
 import static com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION.OUT;
 
+import com.hazelcast.cluster.Member;
 import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
-import com.hazelcast.core.Member;
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.console.OConsoleReader;
@@ -137,6 +137,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TimerTask;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
@@ -2560,7 +2561,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
   @Override
   public String getNodeUuidByName(String name) {
-    return clusterManager.getNodeUuidByName(name);
+    return clusterManager.getNodeUuidByName(name).toString();
   }
 
   @Override
@@ -2830,7 +2831,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
       Member member = clusterManager.getClusterMemberByName(rNodeName);
 
       for (int retry = 0; retry < 20; ++retry) {
-        ODocument cfg = getNodeConfigurationByUuid(member.getUuid(), false);
+        ODocument cfg = getNodeConfigurationByUuid(member.getUuid().toString(), false);
         if (cfg == null || cfg.field("listeners") == null) {
           try {
             Thread.sleep(100);
@@ -3163,7 +3164,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
   @Override
   public ODocument getNodeConfigurationByUuid(String iNode, boolean useCache) {
-    return clusterManager.getNodeConfigurationByUuid(iNode, useCache);
+    return clusterManager.getNodeConfigurationByUuid(UUID.fromString(iNode), useCache);
   }
 
   public void reloadRegisteredNodes() {

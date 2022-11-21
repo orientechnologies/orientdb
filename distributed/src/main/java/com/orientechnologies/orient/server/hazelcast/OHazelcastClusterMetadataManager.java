@@ -1,8 +1,13 @@
 package com.orientechnologies.orient.server.hazelcast;
 
+import com.hazelcast.cluster.Cluster;
+import com.hazelcast.cluster.Member;
+import com.hazelcast.cluster.MembershipEvent;
+import com.hazelcast.cluster.MembershipListener;
 import com.hazelcast.config.Config;
 import com.hazelcast.config.FileSystemXmlConfig;
 import com.hazelcast.core.*;
+import com.hazelcast.map.MapEvent;
 import com.hazelcast.spi.exception.RetryableHazelcastException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -44,8 +49,8 @@ public class OHazelcastClusterMetadataManager
 
   protected String hazelcastConfigFile = "hazelcast.xml";
   protected Config hazelcastConfig;
-  protected String membershipListenerRegistration;
-  protected String membershipListenerMapRegistration;
+  protected UUID membershipListenerRegistration;
+  protected UUID membershipListenerMapRegistration;
   protected volatile HazelcastInstance hazelcastInstance;
 
   // THIS MAP IS BACKED BY HAZELCAST EVENTS. IN THIS WAY WE AVOID TO USE HZ MAP DIRECTLY
@@ -53,8 +58,8 @@ public class OHazelcastClusterMetadataManager
   private ODistributedLockManager distributedLockManager;
 
   protected ConcurrentMap<String, Member> activeNodes = new ConcurrentHashMap<>();
-  protected ConcurrentMap<String, String> activeNodesNamesByUuid = new ConcurrentHashMap<>();
-  protected ConcurrentMap<String, String> activeNodesUuidByName = new ConcurrentHashMap<>();
+  protected ConcurrentMap<UUID, String> activeNodesNamesByUuid = new ConcurrentHashMap<>();
+  protected ConcurrentMap<String, UUID> activeNodesUuidByName = new ConcurrentHashMap<>();
   protected final List<String> registeredNodeById = new CopyOnWriteArrayList<>();
   protected final ConcurrentMap<String, Integer> registeredNodeByName = new ConcurrentHashMap<>();
   protected ConcurrentMap<String, Long> autoRemovalOfServers = new ConcurrentHashMap<>();
@@ -65,7 +70,7 @@ public class OHazelcastClusterMetadataManager
       ODistributedServerManager.NODE_STATUS.OFFLINE;
 
   protected long lastClusterChangeOn;
-  private String nodeUuid;
+  private UUID nodeUuid;
   private int nodeId = -1;
 
   private String nodeName = null;
@@ -152,7 +157,7 @@ public class OHazelcastClusterMetadataManager
     nodeCfg.field("uuid", nodeUuid);
     nodeCfg.field("name", nodeName);
     ORecordInternal.setRecordSerializer(nodeCfg, ODatabaseDocumentAbstract.getDefaultSerializer());
-    configurationMap.putNodeConfig(nodeUuid, nodeCfg);
+    configurationMap.putNodeConfig(nodeUuid.toString(), nodeCfg);
 
     // REGISTER CURRENT NODES
     for (Member m : hazelcastInstance.getCluster().getMembers()) {
@@ -197,7 +202,7 @@ public class OHazelcastClusterMetadataManager
 
     publishLocalNodeConfiguration();
 
-    if (!configurationMap.existsNode(nodeUuid)) {
+    if (!configurationMap.existsNode(nodeUuid.toString())) {
       // NODE NOT REGISTERED, FORCING SHUTTING DOWN
       ODistributedServerLog.error(
           this,
@@ -307,7 +312,7 @@ public class OHazelcastClusterMetadataManager
     final Set<Member> members = hazelcastInstance.getCluster().getMembers();
 
     for (Member m : members) {
-      final ODocument node = configurationMap.getNodeConfig(m.getUuid());
+      final ODocument node = configurationMap.getNodeConfig(m.getUuid().toString());
       if (node != null) {
         final String mName = node.field("name");
         final Integer mId = node.field("id");
@@ -405,7 +410,7 @@ public class OHazelcastClusterMetadataManager
     try {
       final ODocument cfg = distributedPlugin.getLocalNodeConfiguration();
       ORecordInternal.setRecordSerializer(cfg, ODatabaseDocumentAbstract.getDefaultSerializer());
-      configurationMap.putNodeConfig(nodeUuid, cfg);
+      configurationMap.putNodeConfig(nodeUuid.toString(), cfg);
     } catch (Exception e) {
       ODistributedServerLog.error(
           this,
@@ -571,9 +576,6 @@ public class OHazelcastClusterMetadataManager
   public OHazelcastDistributedMap getConfigurationMap() {
     return configurationMap;
   }
-
-  @Override
-  public void memberAttributeChanged(final MemberAttributeEvent memberAttributeEvent) {}
 
   public boolean updateCachedDatabaseConfiguration(
       final String databaseName, final OModifiableDistributedConfiguration cfg) {
@@ -853,12 +855,6 @@ public class OHazelcastClusterMetadataManager
   @Override
   public void entryEvicted(final EntryEvent<String, Object> iEvent) {}
 
-  @Override
-  public void mapEvicted(final MapEvent iEvent) {}
-
-  @Override
-  public void mapCleared(final MapEvent event) {}
-
   /** Removes the node map entry. */
   @Override
   public void memberRemoved(final MembershipEvent iEvent) {
@@ -935,7 +931,7 @@ public class OHazelcastClusterMetadataManager
       configurationMap.clearLocalCache();
 
       // UPDATE THE UUID
-      final String oldUuid = nodeUuid;
+      final UUID oldUuid = nodeUuid;
       nodeUuid = hazelcastInstance.getCluster().getLocalMember().getUuid();
 
       ODistributedServerLog.info(
@@ -948,7 +944,7 @@ public class OHazelcastClusterMetadataManager
           nodeUuid);
 
       activeNodesNamesByUuid.remove(oldUuid);
-      configurationMap.removeNode(oldUuid);
+      configurationMap.removeNode(oldUuid.toString());
 
       activeNodes.put(nodeName, hazelcastInstance.getCluster().getLocalMember());
       activeNodesNamesByUuid.put(nodeUuid, nodeName);
@@ -1057,16 +1053,17 @@ public class OHazelcastClusterMetadataManager
     return servers;
   }
 
-  public ODocument getNodeConfigurationByUuid(final String iNodeId, final boolean useCache) {
+  public ODocument getNodeConfigurationByUuid(final UUID iNodeId, final boolean useCache) {
     if (configurationMap == null)
       // NOT YET STARTED
       return null;
 
+    // TODO check this logic
     final ODocument doc;
     if (useCache) {
-      doc = configurationMap.getLocalCachedNodeConfig(iNodeId);
+      doc = configurationMap.getLocalCachedNodeConfig(iNodeId.toString());
     } else {
-      doc = configurationMap.getNodeConfig(iNodeId);
+      doc = configurationMap.getNodeConfig(iNodeId.toString());
     }
 
     if (doc == null)
@@ -1082,7 +1079,7 @@ public class OHazelcastClusterMetadataManager
   }
 
   public ODocument getNodeConfigurationByName(final String nodeName, final boolean useCache) {
-    String uuid = getNodeUuidByName(nodeName);
+    UUID uuid = getNodeUuidByName(nodeName);
     return getNodeConfigurationByUuid(uuid, useCache);
   }
 
@@ -1397,7 +1394,7 @@ public class OHazelcastClusterMetadataManager
     return val.intValue();
   }
 
-  public String getNodeUuidByName(final String name) {
+  public UUID getNodeUuidByName(final String name) {
     if (name == null || name.isEmpty())
       throw new IllegalArgumentException("Node name " + name + " is invalid");
 
@@ -1570,10 +1567,19 @@ public class OHazelcastClusterMetadataManager
   }
 
   public String getLocalNodeUuid() {
-    return nodeUuid;
+    return nodeUuid.toString();
   }
 
   public String getLocalNodeName() {
     return nodeName;
   }
+
+  @Override
+  public void entryExpired(EntryEvent<String, Object> event) {}
+
+  @Override
+  public void mapCleared(MapEvent event) {}
+
+  @Override
+  public void mapEvicted(MapEvent event) {}
 }

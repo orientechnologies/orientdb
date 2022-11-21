@@ -20,9 +20,9 @@
 
 package com.orientechnologies.orient.server.distributed.hz;
 
+import com.hazelcast.collection.IQueue;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.core.IQueue;
 
 /** Created by luca on 24/09/14. */
 public class HazelcastQueueThroughputTest {
