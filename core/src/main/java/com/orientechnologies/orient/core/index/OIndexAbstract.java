@@ -670,13 +670,28 @@ public abstract class OIndexAbstract implements OIndexInternal {
     while (true)
       try {
         //noinspection ObjectAllocationInLoop
-        try (final Stream<ORawPair<Object, ORID>> stream = stream()) {
-          stream.forEach((pair) -> remove(pair.first, pair.second));
+        try {
+          try (final Stream<ORawPair<Object, ORID>> stream = stream()) {
+            stream.forEach((pair) -> remove(pair.first, pair.second));
+          }
+        } catch (OIndexEngineException e) {
+          throw e;
+        } catch (RuntimeException e) {
+          OLogManager.instance().error(this, "Error Dropping Index %s", e, getName());
+          // Just log errors of removing keys while dropping and keep dropping
         }
 
-        try (Stream<ORID> stream = getRids(null)) {
-          stream.forEach((rid) -> remove(null, rid));
+        try {
+          try (Stream<ORID> stream = getRids(null)) {
+            stream.forEach((rid) -> remove(null, rid));
+          }
+        } catch (OIndexEngineException e) {
+          throw e;
+        } catch (RuntimeException e) {
+          OLogManager.instance().error(this, "Error Dropping Index %s", e, getName());
+          // Just log errors of removing keys while dropping and keep dropping
         }
+
         storage.deleteIndexEngine(indexId);
         break;
       } catch (OInvalidIndexEngineIdException ignore) {
