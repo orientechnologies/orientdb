@@ -848,4 +848,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
           new OStorageException("Error during fetching list of files"), e);
     }
   }
+
+  @Override
+  protected void checkBackupRunning() {}
 }

@@ -349,7 +349,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       }
 
       try {
-
         stateLock.writeLock().lock();
         try {
           if (status == STATUS.OPEN || isInError())
@@ -1006,6 +1005,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   @Override
   public final int addCluster(final String clusterName, final Object... parameters) {
     try {
+      checkBackupRunning();
       stateLock.writeLock().lock();
       try {
 
@@ -1033,6 +1033,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   @Override
   public final int addCluster(final String clusterName, final int requestedId) {
     try {
+      checkBackupRunning();
       stateLock.writeLock().lock();
       try {
 
@@ -1072,6 +1073,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   @Override
   public final boolean dropCluster(final int clusterId) {
     try {
+      checkBackupRunning();
       stateLock.writeLock().lock();
       try {
 
@@ -2647,6 +2649,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         throw new OIndexException("Types of indexed keys have to be provided");
       }
 
+      checkBackupRunning();
       stateLock.writeLock().lock();
       try {
 
@@ -2876,6 +2879,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     final int internalIndexId = extractInternalId(indexId);
 
     try {
+      checkBackupRunning();
       stateLock.writeLock().lock();
       try {
 
@@ -4481,6 +4485,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   @Override
   public final void setConflictStrategy(final ORecordConflictStrategy conflictResolver) {
     Objects.requireNonNull(conflictResolver);
+    checkBackupRunning();
     stateLock.writeLock().lock();
     try {
 
@@ -5321,6 +5326,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   @Override
   public boolean setClusterAttribute(
       final int id, final OCluster.ATTRIBUTES attribute, final Object value) {
+    checkBackupRunning();
     stateLock.writeLock().lock();
     try {
 
@@ -5358,7 +5364,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     Objects.requireNonNull(clusterName);
 
     try {
-
+      checkBackupRunning();
       stateLock.writeLock().lock();
       try {
         checkOpennessAndMigration();
@@ -5383,8 +5389,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throw logAndPrepareForRethrow(ee);
     } catch (final Throwable t) {
       throw logAndPrepareForRethrow(t);
-    } finally {
-
     }
   }
 
@@ -6171,6 +6175,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   @SuppressWarnings("unused")
   public void setStorageConfigurationUpdateListener(
       final OStorageConfigurationUpdateListener storageConfigurationUpdateListener) {
+    checkBackupRunning();
     stateLock.writeLock().lock();
     try {
 
@@ -6462,6 +6467,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   @Override
   public final void setSchemaRecordId(final String schemaRecordId) {
+    checkBackupRunning();
     stateLock.writeLock().lock();
     try {
 
@@ -6489,6 +6495,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   @Override
   public final void setDateFormat(final String dateFormat) {
+    checkBackupRunning();
     stateLock.writeLock().lock();
     try {
 
@@ -6514,6 +6521,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   @Override
   public final void setTimeZone(final TimeZone timeZoneValue) {
+    checkBackupRunning();
     stateLock.writeLock().lock();
     try {
 
@@ -6540,6 +6548,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   @Override
   public final void setLocaleLanguage(final String locale) {
+    checkBackupRunning();
     stateLock.writeLock().lock();
     try {
 
@@ -6565,6 +6574,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   @Override
   public final void setCharset(final String charset) {
+    checkBackupRunning();
     stateLock.writeLock().lock();
     try {
 
@@ -6590,6 +6600,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   @Override
   public final void setIndexMgrRecordId(final String indexMgrRecordId) {
+    checkBackupRunning();
     stateLock.writeLock().lock();
     try {
 
@@ -6617,6 +6628,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   @Override
   public final void setDateTimeFormat(final String dateTimeFormat) {
+    checkBackupRunning();
     stateLock.writeLock().lock();
     try {
 
@@ -6644,6 +6656,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   @Override
   public final void setLocaleCountry(final String localeCountry) {
+    checkBackupRunning();
     stateLock.writeLock().lock();
     try {
 
@@ -6670,6 +6683,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   @Override
   public final void setClusterSelection(final String clusterSelection) {
+    checkBackupRunning();
     stateLock.writeLock().lock();
     try {
 
@@ -6697,6 +6711,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   @Override
   public final void setMinimumClusters(final int minimumClusters) {
+    checkBackupRunning();
     stateLock.writeLock().lock();
     try {
 
@@ -6721,6 +6736,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   @Override
   public final void setValidation(final boolean validation) {
+    checkBackupRunning();
     stateLock.writeLock().lock();
     try {
 
@@ -6746,6 +6762,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   @Override
   public final void removeProperty(final String property) {
+    checkBackupRunning();
     stateLock.writeLock().lock();
     try {
 
@@ -6771,6 +6788,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   @Override
   public final void setProperty(final String property, final String value) {
+    checkBackupRunning();
     stateLock.writeLock().lock();
     try {
 
@@ -6797,6 +6815,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   @Override
   public final void setRecordSerializer(final String recordSerializer, final int version) {
+    checkBackupRunning();
     stateLock.writeLock().lock();
     try {
 
@@ -6826,6 +6845,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   @Override
   public final void clearProperties() {
+    checkBackupRunning();
     stateLock.writeLock().lock();
     try {
 
@@ -7011,4 +7031,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throw logAndPrepareForRethrow(t, false);
     }
   }
+
+  protected abstract void checkBackupRunning();
 }

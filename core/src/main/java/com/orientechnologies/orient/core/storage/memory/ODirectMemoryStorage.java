@@ -189,4 +189,7 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
       throw logAndPrepareForRethrow(t);
     }
   }
+
+  @Override
+  protected void checkBackupRunning() {}
 }
