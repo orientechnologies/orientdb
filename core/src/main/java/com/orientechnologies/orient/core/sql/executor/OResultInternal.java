@@ -476,7 +476,11 @@ public class OResultInternal implements OResult {
     if (element != null) {
       return element.hashCode();
     }
-    return content.hashCode();
+    if (content != null) {
+      return content.hashCode();
+    } else {
+      return super.hashCode();
+    }
   }
 
   public void bindToCache(ODatabaseDocumentInternal db) {
