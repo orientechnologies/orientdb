@@ -4686,19 +4686,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       checkOpennessAndMigration();
 
-      if (transaction.get() == null) {
-        stateLock.writeLock().lock();
-        try {
-          checkOpennessAndMigration();
-
-          atomicOperationsManager.executeInsideAtomicOperation(
-              null, atomicOperation -> deleteTreeRidBag(ridBag, atomicOperation));
-        } finally {
-          stateLock.writeLock().unlock();
-        }
-      } else {
-        deleteTreeRidBag(ridBag, atomicOperationsManager.getCurrentOperation());
-      }
+      assert transaction.get() != null;
+      deleteTreeRidBag(ridBag, atomicOperationsManager.getCurrentOperation());
     } catch (final RuntimeException ee) {
       throw logAndPrepareForRethrow(ee);
     } catch (final Error ee) {
