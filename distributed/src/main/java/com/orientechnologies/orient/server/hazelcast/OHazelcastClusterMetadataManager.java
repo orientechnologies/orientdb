@@ -137,26 +137,22 @@ public class OHazelcastClusterMetadataManager
 
     // REMOVE ANY PREVIOUS REGISTERED SERVER WITH THE SAME NODE NAME
     final Set<String> node2Remove = new HashSet<String>();
-    for (Iterator<Map.Entry<String, Object>> it =
-            configurationMap.getHazelcastMap().entrySet().iterator();
-        it.hasNext(); ) {
-      final Map.Entry<String, Object> entry = it.next();
-      if (entry.getKey().startsWith(CONFIG_NODE_PREFIX)) {
-        final ODocument nCfg = (ODocument) entry.getValue();
-        if (nodeName.equals(nCfg.field("name"))) {
-          // SAME NODE NAME: REMOVE IT
-          node2Remove.add(entry.getKey());
-        }
+
+    for (String nodeUUid : configurationMap.getNodes()) {
+      final ODocument nCfg = configurationMap.getNodeConfig(nodeUUid);
+      if (nodeName.equals(nCfg.field("name"))) {
+        // SAME NODE NAME: REMOVE IT
+        node2Remove.add(nodeUUid);
       }
     }
 
-    for (String n : node2Remove) configurationMap.getHazelcastMap().remove(n);
+    for (String n : node2Remove) configurationMap.removeNode(n);
 
     nodeCfg.field("id", nodeId);
     nodeCfg.field("uuid", nodeUuid);
     nodeCfg.field("name", nodeName);
     ORecordInternal.setRecordSerializer(nodeCfg, ODatabaseDocumentAbstract.getDefaultSerializer());
-    configurationMap.put(CONFIG_NODE_PREFIX + nodeUuid, nodeCfg);
+    configurationMap.putNodeConfig(nodeUuid, nodeCfg);
 
     // REGISTER CURRENT NODES
     for (Member m : hazelcastInstance.getCluster().getMembers()) {
@@ -201,7 +197,7 @@ public class OHazelcastClusterMetadataManager
 
     publishLocalNodeConfiguration();
 
-    if (!configurationMap.containsKey(CONFIG_NODE_PREFIX + nodeUuid)) {
+    if (!configurationMap.existsNode(nodeUuid)) {
       // NODE NOT REGISTERED, FORCING SHUTTING DOWN
       ODistributedServerLog.error(
           this,
@@ -313,7 +309,7 @@ public class OHazelcastClusterMetadataManager
     final Set<Member> members = hazelcastInstance.getCluster().getMembers();
 
     for (Member m : members) {
-      final ODocument node = (ODocument) configurationMap.get(CONFIG_NODE_PREFIX + m.getUuid());
+      final ODocument node = configurationMap.getNodeConfig(m.getUuid());
       if (node != null) {
         final String mName = node.field("name");
         final Integer mId = node.field("id");
@@ -411,7 +407,7 @@ public class OHazelcastClusterMetadataManager
     try {
       final ODocument cfg = distributedPlugin.getLocalNodeConfiguration();
       ORecordInternal.setRecordSerializer(cfg, ODatabaseDocumentAbstract.getDefaultSerializer());
-      configurationMap.put(CONFIG_NODE_PREFIX + nodeUuid, cfg);
+      configurationMap.putNodeConfig(nodeUuid, cfg);
     } catch (Exception e) {
       ODistributedServerLog.error(
           this,
@@ -516,24 +512,12 @@ public class OHazelcastClusterMetadataManager
   public Member getClusterMemberByName(final String rNodeName) {
     Member member = activeNodes.get(rNodeName);
     if (member == null) {
-      // SYNC PROBLEMS? TRY TO RETRIEVE THE SERVER INFORMATION FROM THE CLUSTER MAP
-      for (Iterator<Map.Entry<String, Object>> it =
-              getConfigurationMap().localEntrySet().iterator();
-          it.hasNext(); ) {
-        final Map.Entry<String, Object> entry = it.next();
-        if (entry.getKey().startsWith(CONFIG_NODE_PREFIX)) {
-          final ODocument nodeCfg = (ODocument) entry.getValue();
-          if (rNodeName.equals(nodeCfg.field("name"))) {
-            // FOUND: USE THIS
-            final String uuid = entry.getKey().substring(CONFIG_NODE_PREFIX.length());
-
-            for (Member m : hazelcastInstance.getCluster().getMembers()) {
-              if (m.getUuid().equals(uuid)) {
-                member = m;
-                registerNode(member, rNodeName);
-                break;
-              }
-            }
+      for (String uuid : getConfigurationMap().getNodeUuidByName(rNodeName)) {
+        for (Member m : hazelcastInstance.getCluster().getMembers()) {
+          if (m.getUuid().equals(uuid)) {
+            member = m;
+            registerNode(member, rNodeName);
+            break;
           }
         }
       }
@@ -679,7 +663,7 @@ public class OHazelcastClusterMetadataManager
         return;
 
       final String key = iEvent.getKey();
-      if (key.startsWith(CONFIG_NODE_PREFIX)) {
+      if (OHazelcastDistributedMap.isNodeConfigKey(key)) {
         if (!iEvent.getMember().equals(hazelcastInstance.getCluster().getLocalMember())) {
           final ODocument cfg = (ODocument) iEvent.getValue();
           final String joinedNodeName = cfg.field("name");
@@ -748,7 +732,7 @@ public class OHazelcastClusterMetadataManager
         // MOM ALWAYS SAYS: DON'T ACCEPT CHANGES FROM STRANGERS NODES
         return;
 
-      if (key.startsWith(CONFIG_NODE_PREFIX)) {
+      if (OHazelcastDistributedMap.isNodeConfigKey(key)) {
         ODistributedServerLog.debug(
             this,
             nodeName,
@@ -822,7 +806,7 @@ public class OHazelcastClusterMetadataManager
         // MOM ALWAYS SAYS: DON'T ACCEPT CHANGES FROM STRANGERS NODES
         return;
 
-      if (key.startsWith(CONFIG_NODE_PREFIX)) {
+      if (OHazelcastDistributedMap.isNodeConfigKey(key)) {
         if (eventNodeName != null) {
           ODistributedServerLog.debug(
               this,
@@ -967,7 +951,7 @@ public class OHazelcastClusterMetadataManager
           nodeUuid);
 
       activeNodesNamesByUuid.remove(oldUuid);
-      configurationMap.remove(CONFIG_NODE_PREFIX + oldUuid);
+      configurationMap.removeNode(oldUuid);
 
       activeNodes.put(nodeName, hazelcastInstance.getCluster().getLocalMember());
       activeNodesNamesByUuid.put(nodeUuid, nodeName);
@@ -1084,9 +1068,9 @@ public class OHazelcastClusterMetadataManager
 
     final ODocument doc;
     if (useCache) {
-      doc = (ODocument) configurationMap.getLocalCachedValue(CONFIG_NODE_PREFIX + iNodeId);
+      doc = configurationMap.getLocalCachedNodeConfig(iNodeId);
     } else {
-      doc = (ODocument) configurationMap.get(CONFIG_NODE_PREFIX + iNodeId);
+      doc = configurationMap.getNodeConfig(iNodeId);
     }
 
     if (doc == null)
@@ -1188,14 +1172,7 @@ public class OHazelcastClusterMetadataManager
   }
 
   private List<String> getRegisteredNodes() {
-    final List<String> registeredNodes = new ArrayList<String>();
-
-    for (Map.Entry entry : configurationMap.entrySet()) {
-      if (entry.getKey().toString().startsWith(CONFIG_NODE_PREFIX))
-        registeredNodes.add(entry.getKey().toString().substring(CONFIG_NODE_PREFIX.length()));
-    }
-
-    return registeredNodes;
+    return configurationMap.getNodes();
   }
 
   public void removeNodeFromConfiguration(

@@ -28,7 +28,13 @@ import com.hazelcast.map.listener.EntryAddedListener;
 import com.hazelcast.map.listener.EntryRemovedListener;
 import com.hazelcast.map.listener.EntryUpdatedListener;
 import com.hazelcast.map.listener.MapClearedListener;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -207,5 +213,63 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object>
 
   public void clearLocalCache() {
     super.clear();
+  }
+
+  public boolean existsNode(String nodeUuid) {
+    return this.containsKey(OHazelcastClusterMetadataManager.CONFIG_NODE_PREFIX + nodeUuid);
+  }
+
+  public ODocument getNodeConfig(String nodeUuid) {
+    return (ODocument) get(OHazelcastClusterMetadataManager.CONFIG_NODE_PREFIX + nodeUuid);
+  }
+
+  public void removeNode(String nodeUuid) {
+    this.remove(OHazelcastClusterMetadataManager.CONFIG_NODE_PREFIX + nodeUuid);
+  }
+
+  public ODocument getLocalCachedNodeConfig(String nodeUuid) {
+    return (ODocument)
+        getLocalCachedValue(OHazelcastClusterMetadataManager.CONFIG_NODE_PREFIX + nodeUuid);
+  }
+
+  public List<String> getNodes() {
+    final List<String> nodes = new ArrayList<String>();
+
+    for (Map.Entry entry : this.entrySet()) {
+      if (entry.getKey().toString().startsWith(OHazelcastClusterMetadataManager.CONFIG_NODE_PREFIX))
+        nodes.add(
+            entry
+                .getKey()
+                .toString()
+                .substring(OHazelcastClusterMetadataManager.CONFIG_NODE_PREFIX.length()));
+    }
+    return nodes;
+  }
+
+  public void putNodeConfig(String nodeUuid, ODocument cfg) {
+    put(OHazelcastClusterMetadataManager.CONFIG_NODE_PREFIX + nodeUuid, cfg);
+  }
+
+  public Set<String> getNodeUuidByName(String name) {
+    Set<String> uuids = new HashSet<String>();
+    for (Iterator<Map.Entry<String, Object>> it = this.localEntrySet().iterator(); it.hasNext(); ) {
+      final Map.Entry<String, Object> entry = it.next();
+      if (entry.getKey().startsWith(OHazelcastClusterMetadataManager.CONFIG_NODE_PREFIX)) {
+        final ODocument nodeCfg = (ODocument) entry.getValue();
+        if (name.equals(nodeCfg.field("name"))) {
+          // FOUND: USE THIS
+          final String uuid =
+              entry
+                  .getKey()
+                  .substring(OHazelcastClusterMetadataManager.CONFIG_NODE_PREFIX.length());
+          uuids.add(uuid);
+        }
+      }
+    }
+    return uuids;
+  }
+
+  public static boolean isNodeConfigKey(String key) {
+    return key.startsWith(OHazelcastClusterMetadataManager.CONFIG_NODE_PREFIX);
   }
 }
