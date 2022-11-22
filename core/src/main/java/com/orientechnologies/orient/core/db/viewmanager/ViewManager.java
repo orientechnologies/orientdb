@@ -345,13 +345,18 @@ public class ViewManager {
         new Callable<Object>() {
           @Override
           public Object call() {
-
+            int iterationCount = 0;
+            db.begin();
             try (OResultSet rs = db.query(query)) {
               while (rs.hasNext()) {
                 OResult item = rs.next();
                 addItemToView(item, db, originRidField, viewName, clusterName, indexes);
+                if (iterationCount % 100 == 0) {
+                  db.commit();
+                }
               }
             }
+            db.commit();
             return null;
           }
         });
