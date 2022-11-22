@@ -242,8 +242,8 @@ public class OHazelcastClusterMetadataManager
   }
 
   private void initRegisteredNodeIds() {
-    final ILock lock = hazelcastInstance.getLock("orientdb." + CONFIG_REGISTEREDNODES);
-    lock.lock();
+    distributedLockManager.acquireExclusiveLock(
+        "orientdb." + CONFIG_REGISTEREDNODES, getLocalNodeName(), 0);
     try {
       // RE-CREATE THE CFG IN LOCK
       registeredNodeById.clear();
@@ -292,7 +292,8 @@ public class OHazelcastClusterMetadataManager
       configurationMap.put(CONFIG_REGISTEREDNODES, registeredNodesFromCluster.toJSON());
 
     } finally {
-      lock.unlock();
+      distributedLockManager.releaseExclusiveLock(
+          "orientdb." + CONFIG_REGISTEREDNODES, getLocalNodeName());
     }
 
     if (nodeId == -1)
