@@ -245,12 +245,10 @@ public class OHazelcastClusterMetadataManager
       registeredNodeById.clear();
       registeredNodeByName.clear();
 
-      final ODocument registeredNodesFromCluster = new ODocument();
+      final ODocument registeredNodesFromCluster = configurationMap.getRegisteredNodes();
 
-      final String registeredNodesFromClusterAsJson =
-          (String) configurationMap.get(CONFIG_REGISTEREDNODES);
-      if (registeredNodesFromClusterAsJson != null) {
-        registeredNodesFromCluster.fromJSON(registeredNodesFromClusterAsJson);
+      if (registeredNodesFromCluster.hasProperty("ids")
+          && registeredNodesFromCluster.hasProperty("names")) {
         registeredNodeById.addAll(registeredNodesFromCluster.field("ids", OType.EMBEDDEDLIST));
         registeredNodeByName.putAll(registeredNodesFromCluster.field("names", OType.EMBEDDEDMAP));
 
@@ -285,7 +283,7 @@ public class OHazelcastClusterMetadataManager
       registeredNodesFromCluster.field("ids", registeredNodeById, OType.EMBEDDEDLIST);
       registeredNodesFromCluster.field("names", registeredNodeByName, OType.EMBEDDEDMAP);
 
-      configurationMap.put(CONFIG_REGISTEREDNODES, registeredNodesFromCluster.toJSON());
+      configurationMap.putRegisteredNodes(registeredNodesFromCluster);
 
     } finally {
       distributedLockManager.releaseExclusiveLock(
@@ -776,14 +774,14 @@ public class OHazelcastClusterMetadataManager
           distributedPlugin.onDbStatusOnline(databaseName);
         }
 
-      } else if (key.startsWith(CONFIG_REGISTEREDNODES)) {
+      } else if (OHazelcastDistributedMap.isRegisteredNodes(key)) {
         ODistributedServerLog.info(
             this,
             nodeName,
             eventNodeName,
             ODistributedServerLog.DIRECTION.IN,
             "Received updated about registered nodes");
-        reloadRegisteredNodes((String) iEvent.getValue());
+        reloadRegisteredNodes();
       }
 
     } catch (HazelcastInstanceNotActiveException | RetryableHazelcastException e) {
@@ -1150,18 +1148,13 @@ public class OHazelcastClusterMetadataManager
     return dbs;
   }
 
-  public void reloadRegisteredNodes(String registeredNodesFromClusterAsJson) {
-    final ODocument registeredNodesFromCluster = new ODocument();
+  public void reloadRegisteredNodes() {
+    final ODocument registeredNodesFromCluster = configurationMap.getRegisteredNodes();
 
-    if (registeredNodesFromClusterAsJson == null)
-      // LOAD FROM THE CLUSTER CFG
-      registeredNodesFromClusterAsJson = (String) configurationMap.get(CONFIG_REGISTEREDNODES);
-
-    if (registeredNodesFromClusterAsJson != null) {
-      registeredNodesFromCluster.fromJSON(registeredNodesFromClusterAsJson);
+    if (registeredNodesFromCluster.hasProperty("ids")
+        && registeredNodesFromCluster.hasProperty("names")) {
       registeredNodeById.clear();
       registeredNodeById.addAll(registeredNodesFromCluster.field("ids", OType.EMBEDDEDLIST));
-
       registeredNodeByName.clear();
       registeredNodeByName.putAll(registeredNodesFromCluster.field("names", OType.EMBEDDEDMAP));
     } else

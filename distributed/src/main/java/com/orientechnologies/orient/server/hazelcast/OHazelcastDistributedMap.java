@@ -272,4 +272,21 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object>
   public static boolean isNodeConfigKey(String key) {
     return key.startsWith(OHazelcastClusterMetadataManager.CONFIG_NODE_PREFIX);
   }
+
+  public ODocument getRegisteredNodes() {
+    final ODocument registeredNodes = new ODocument();
+    String jsonData = (String) this.get(OHazelcastClusterMetadataManager.CONFIG_REGISTEREDNODES);
+    if (jsonData != null) {
+      registeredNodes.fromJSON(jsonData);
+    }
+    return registeredNodes;
+  }
+
+  public void putRegisteredNodes(ODocument registeredNodes) {
+    this.put(OHazelcastClusterMetadataManager.CONFIG_REGISTEREDNODES, registeredNodes.toJSON());
+  }
+
+  public static boolean isRegisteredNodes(String key) {
+    return key.startsWith(OHazelcastClusterMetadataManager.CONFIG_REGISTEREDNODES);
+  }
 }

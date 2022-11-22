@@ -3172,8 +3172,8 @@ public class ODistributedPlugin extends OServerPluginAbstract
     return clusterManager.getNodeConfigurationByUuid(iNode, useCache);
   }
 
-  public void reloadRegisteredNodes(String registeredNodesFromClusterAsJson) {
-    clusterManager.reloadRegisteredNodes(registeredNodesFromClusterAsJson);
+  public void reloadRegisteredNodes() {
+    clusterManager.reloadRegisteredNodes();
   }
 
   public boolean removeNodeFromConfiguration(
