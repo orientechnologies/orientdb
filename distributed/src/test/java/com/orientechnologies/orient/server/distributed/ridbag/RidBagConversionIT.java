@@ -33,7 +33,7 @@ public class RidBagConversionIT {
   }
 
   @Test
-  public void testConversion() {
+  public void testConversion() throws InterruptedException {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(1);
     String server0Path = setup.getServer(server0).getServerHome();
     OrientDB orientDB =
@@ -57,6 +57,12 @@ public class RidBagConversionIT {
 
     OServer server0Instance = setup.getServer(server0).getServerInstance();
     OServer server1Instance = setup.getServer(server1).getServerInstance();
+    server1Instance
+        .getDistributedManager()
+        .waitUntilNodeOnline(server0Instance.getDistributedManager().getLocalNodeName(), "test");
+    server0Instance
+        .getDistributedManager()
+        .waitUntilNodeOnline(server1Instance.getDistributedManager().getLocalNodeName(), "test");
 
     OrientDB embOri = server0Instance.getContext();
     ODatabaseSession data = embOri.open("test", "admin", "admin");
