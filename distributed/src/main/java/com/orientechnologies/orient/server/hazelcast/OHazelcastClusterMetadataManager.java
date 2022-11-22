@@ -1389,10 +1389,11 @@ public class OHazelcastClusterMetadataManager
     final List<ODocument> members = new ArrayList<ODocument>();
     cluster.field("members", members, OType.EMBEDDEDLIST);
     for (Member member : activeNodes.values()) {
-      final ODocument memberConfig = getNodeConfigurationByUuid(member.getUuid(), true).copy();
+      ODocument memberConfig = getNodeConfigurationByUuid(member.getUuid(), true);
       if (memberConfig == null) {
         continue;
       }
+      memberConfig = memberConfig.copy();
 
       members.add(memberConfig);
 
