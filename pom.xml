@@ -554,6 +554,8 @@
                         <artifactId>jacoco-maven-plugin</artifactId>
                         <version>0.8.7</version>
                         <configuration>
+                            <destFile>${project.basedir}/../target/jacoco.exec</destFile>
+                            <dataFile>${project.basedir}/../target/jacoco.exec</dataFile>
                             <excludes>
                                 <exclude>
                                     **/*OrientSqlTokenManager*
@@ -574,6 +576,9 @@
                                     <goal>report</goal>
                                     <goal>report-aggregate</goal>
                                 </goals>
+                                <configuration>
+                                    <dataFile>${project.basedir}/../target/jacoco.exec</dataFile>
+                                </configuration>
                             </execution>
                         </executions>
                     </plugin>
