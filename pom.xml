@@ -562,9 +562,17 @@
                         </configuration>
                         <executions>
                             <execution>
+                                <id>prepare-agent</id>
                                 <goals>
                                     <goal>prepare-agent</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>report</id>
+                                <phase>test</phase>
+                                <goals>
                                     <goal>report</goal>
+                                    <goal>report-aggregate</goal>
                                 </goals>
                             </execution>
                         </executions>
