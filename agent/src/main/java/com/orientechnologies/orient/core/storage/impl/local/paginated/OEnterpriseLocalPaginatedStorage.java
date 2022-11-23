@@ -20,6 +20,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
 import com.orientechnologies.agent.Utils;
 import com.orientechnologies.common.collection.closabledictionary.OClosableLinkedContainer;
+import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OErrorCode;
 import com.orientechnologies.common.exception.OException;
@@ -69,7 +70,6 @@ import java.security.SecureRandom;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -92,7 +92,8 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
   private static final String CONF_ENTRY_NAME = "database.ocf";
   private static final String INCREMENTAL_BACKUP_DATEFORMAT = "yyyy-MM-dd-HH-mm-ss";
   private static final String CONF_UTF_8_ENTRY_NAME = "database_utf8.ocf";
-  private final AtomicBoolean backupInProgress = new AtomicBoolean(false);
+
+  private volatile int backupRunning = 0;
 
   private static final String ENCRYPTION_IV = "encryption.iv";
 
@@ -460,13 +461,14 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
     OLogSequenceNumber lastLsn;
 
     checkOpennessAndMigration();
-    if (singleThread && !backupInProgress.compareAndSet(false, true)) {
+
+    if (singleThread && checkBackup()) {
       throw new OBackupInProgressException(
           "You are trying to start incremental backup but it is in progress now, please wait till it will be finished",
           getName(),
           OErrorCode.BACKUP_IN_PROGRESS);
     }
-
+    startBackup();
     stateLock.readLock().lock();
     try {
 
@@ -593,10 +595,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
       }
     } finally {
       stateLock.readLock().unlock();
-
-      if (singleThread) {
-        backupInProgress.set(false);
-      }
+      endBackup();
     }
 
     return lastLsn;
@@ -1227,13 +1226,35 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
     }
   }
 
+  private synchronized void startBackup() {
+    this.backupRunning += 1;
+  }
+
+  private synchronized void endBackup() {
+    assert this.backupRunning > 0;
+    this.backupRunning -= 1;
+    if (this.backupRunning == 0) {
+      this.notifyAll();
+    }
+  }
+
+  private synchronized boolean checkBackup() {
+    return this.backupRunning > 0;
+  }
+
+  private synchronized void waitBackup() {
+    if (checkBackup()) {
+      try {
+        this.wait();
+      } catch (InterruptedException e) {
+        throw OException.wrapException(
+            new OInterruptedException("Interrupted wait for backup to finish"), e);
+      }
+    }
+  }
+
   @Override
   protected void checkBackupRunning() {
-    if (backupInProgress.get()) {
-      throw new OBackupInProgressException(
-          "You are trying to execute a DDL while a incremental backup is in progress, please wait till it will be finished",
-          getName(),
-          OErrorCode.BACKUP_IN_PROGRESS);
-    }
+    waitBackup();
   }
 }
