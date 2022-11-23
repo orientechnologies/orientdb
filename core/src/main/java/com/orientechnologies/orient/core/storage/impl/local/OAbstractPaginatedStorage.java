@@ -4485,8 +4485,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   @Override
   public final void setConflictStrategy(final ORecordConflictStrategy conflictResolver) {
     Objects.requireNonNull(conflictResolver);
-    checkBackupRunning();
-    stateLock.writeLock().lock();
+    stateLock.readLock().lock();
     try {
 
       checkOpennessAndMigration();
@@ -4504,7 +4503,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                   + name),
           e);
     } finally {
-      stateLock.writeLock().unlock();
+      stateLock.readLock().unlock();
     }
   }
 
@@ -6175,8 +6174,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   @SuppressWarnings("unused")
   public void setStorageConfigurationUpdateListener(
       final OStorageConfigurationUpdateListener storageConfigurationUpdateListener) {
-    checkBackupRunning();
-    stateLock.writeLock().lock();
+    stateLock.readLock().lock();
     try {
 
       checkOpennessAndMigration();
@@ -6184,7 +6182,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       ((OClusterBasedStorageConfiguration) configuration)
           .setConfigurationUpdateListener(storageConfigurationUpdateListener);
     } finally {
-      stateLock.writeLock().unlock();
+      stateLock.readLock().unlock();
     }
   }
 
@@ -6467,8 +6465,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   @Override
   public final void setSchemaRecordId(final String schemaRecordId) {
-    checkBackupRunning();
-    stateLock.writeLock().lock();
+    stateLock.readLock().lock();
     try {
 
       checkOpennessAndMigration();
@@ -6489,14 +6486,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } catch (final Throwable t) {
       throw logAndPrepareForRethrow(t);
     } finally {
-      stateLock.writeLock().unlock();
+      stateLock.readLock().unlock();
     }
   }
 
   @Override
   public final void setDateFormat(final String dateFormat) {
-    checkBackupRunning();
-    stateLock.writeLock().lock();
+    stateLock.readLock().lock();
     try {
 
       checkOpennessAndMigration();
@@ -6515,14 +6511,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } catch (final Throwable t) {
       throw logAndPrepareForRethrow(t);
     } finally {
-      stateLock.writeLock().unlock();
+      stateLock.readLock().unlock();
     }
   }
 
   @Override
   public final void setTimeZone(final TimeZone timeZoneValue) {
-    checkBackupRunning();
-    stateLock.writeLock().lock();
+    stateLock.readLock().lock();
     try {
 
       checkOpennessAndMigration();
@@ -6542,14 +6537,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } catch (final Throwable t) {
       throw logAndPrepareForRethrow(t);
     } finally {
-      stateLock.writeLock().unlock();
+      stateLock.readLock().unlock();
     }
   }
 
   @Override
   public final void setLocaleLanguage(final String locale) {
-    checkBackupRunning();
-    stateLock.writeLock().lock();
+    stateLock.readLock().lock();
     try {
 
       checkOpennessAndMigration();
@@ -6568,14 +6562,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } catch (final Throwable t) {
       throw logAndPrepareForRethrow(t);
     } finally {
-      stateLock.writeLock().unlock();
+      stateLock.readLock().unlock();
     }
   }
 
   @Override
   public final void setCharset(final String charset) {
-    checkBackupRunning();
-    stateLock.writeLock().lock();
+    stateLock.readLock().lock();
     try {
 
       checkOpennessAndMigration();
@@ -6594,14 +6587,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } catch (final Throwable t) {
       throw logAndPrepareForRethrow(t);
     } finally {
-      stateLock.writeLock().unlock();
+      stateLock.readLock().unlock();
     }
   }
 
   @Override
   public final void setIndexMgrRecordId(final String indexMgrRecordId) {
-    checkBackupRunning();
-    stateLock.writeLock().lock();
+    stateLock.readLock().lock();
     try {
 
       checkOpennessAndMigration();
@@ -6622,14 +6614,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } catch (final Throwable t) {
       throw logAndPrepareForRethrow(t);
     } finally {
-      stateLock.writeLock().unlock();
+      stateLock.readLock().unlock();
     }
   }
 
   @Override
   public final void setDateTimeFormat(final String dateTimeFormat) {
-    checkBackupRunning();
-    stateLock.writeLock().lock();
+    stateLock.readLock().lock();
     try {
 
       checkOpennessAndMigration();
@@ -6650,14 +6641,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } catch (final Throwable t) {
       throw logAndPrepareForRethrow(t);
     } finally {
-      stateLock.writeLock().unlock();
+      stateLock.readLock().unlock();
     }
   }
 
   @Override
   public final void setLocaleCountry(final String localeCountry) {
-    checkBackupRunning();
-    stateLock.writeLock().lock();
+    stateLock.readLock().lock();
     try {
 
       checkOpennessAndMigration();
@@ -6677,14 +6667,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } catch (final Throwable t) {
       throw logAndPrepareForRethrow(t);
     } finally {
-      stateLock.writeLock().unlock();
+      stateLock.readLock().unlock();
     }
   }
 
   @Override
   public final void setClusterSelection(final String clusterSelection) {
-    checkBackupRunning();
-    stateLock.writeLock().lock();
+    stateLock.readLock().lock();
     try {
 
       checkOpennessAndMigration();
@@ -6705,14 +6694,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } catch (final Throwable t) {
       throw logAndPrepareForRethrow(t);
     } finally {
-      stateLock.writeLock().unlock();
+      stateLock.readLock().unlock();
     }
   }
 
   @Override
   public final void setMinimumClusters(final int minimumClusters) {
-    checkBackupRunning();
-    stateLock.writeLock().lock();
+    stateLock.readLock().lock();
     try {
 
       checkOpennessAndMigration();
@@ -6730,14 +6718,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } catch (final Throwable t) {
       throw logAndPrepareForRethrow(t);
     } finally {
-      stateLock.writeLock().unlock();
+      stateLock.readLock().unlock();
     }
   }
 
   @Override
   public final void setValidation(final boolean validation) {
-    checkBackupRunning();
-    stateLock.writeLock().lock();
+    stateLock.readLock().lock();
     try {
 
       checkOpennessAndMigration();
@@ -6756,14 +6743,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } catch (final Throwable t) {
       throw logAndPrepareForRethrow(t);
     } finally {
-      stateLock.writeLock().unlock();
+      stateLock.readLock().unlock();
     }
   }
 
   @Override
   public final void removeProperty(final String property) {
-    checkBackupRunning();
-    stateLock.writeLock().lock();
+    stateLock.readLock().lock();
     try {
 
       checkOpennessAndMigration();
@@ -6782,14 +6768,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } catch (final Throwable t) {
       throw logAndPrepareForRethrow(t);
     } finally {
-      stateLock.writeLock().unlock();
+      stateLock.readLock().unlock();
     }
   }
 
   @Override
   public final void setProperty(final String property, final String value) {
-    checkBackupRunning();
-    stateLock.writeLock().lock();
+    stateLock.readLock().lock();
     try {
 
       checkOpennessAndMigration();
@@ -6809,14 +6794,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } catch (final Throwable t) {
       throw logAndPrepareForRethrow(t);
     } finally {
-      stateLock.writeLock().unlock();
+      stateLock.readLock().unlock();
     }
   }
 
   @Override
   public final void setRecordSerializer(final String recordSerializer, final int version) {
-    checkBackupRunning();
-    stateLock.writeLock().lock();
+    stateLock.readLock().lock();
     try {
 
       checkOpennessAndMigration();
@@ -6839,14 +6823,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } catch (final Throwable t) {
       throw logAndPrepareForRethrow(t);
     } finally {
-      stateLock.writeLock().unlock();
+      stateLock.readLock().unlock();
     }
   }
 
   @Override
   public final void clearProperties() {
-    checkBackupRunning();
-    stateLock.writeLock().lock();
+    stateLock.readLock().lock();
     try {
 
       checkOpennessAndMigration();
@@ -6865,7 +6848,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } catch (final Throwable t) {
       throw logAndPrepareForRethrow(t);
     } finally {
-      stateLock.writeLock().unlock();
+      stateLock.readLock().unlock();
     }
   }
 
