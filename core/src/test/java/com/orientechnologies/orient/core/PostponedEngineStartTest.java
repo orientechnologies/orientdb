@@ -383,12 +383,6 @@ public class PostponedEngineStartTest {
         }
 
         @Override
-        public boolean setClusterAttribute(
-            String clusterName, OCluster.ATTRIBUTES attribute, Object value) {
-          return false;
-        }
-
-        @Override
         public String getClusterRecordConflictStrategy(int clusterId) {
           return null;
         }

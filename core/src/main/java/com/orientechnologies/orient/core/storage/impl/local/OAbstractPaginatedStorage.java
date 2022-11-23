@@ -5357,40 +5357,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  @Override
-  public boolean setClusterAttribute(
-      String clusterName, OCluster.ATTRIBUTES attribute, Object value) {
-    Objects.requireNonNull(clusterName);
-
-    try {
-      checkBackupRunning();
-      stateLock.writeLock().lock();
-      try {
-        checkOpennessAndMigration();
-
-        final OCluster cluster =
-            clusterMap.get(clusterName.toLowerCase(configuration.getLocaleInstance()));
-        if (cluster == null) {
-          throwClusterDoesNotExist(clusterName);
-        }
-
-        makeStorageDirty();
-        return atomicOperationsManager.calculateInsideAtomicOperation(
-            null,
-            (atomicOperation) ->
-                doSetClusterAttributed(atomicOperation, attribute, value, cluster));
-      } finally {
-        stateLock.writeLock().unlock();
-      }
-    } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    }
-  }
-
   private boolean doSetClusterAttributed(
       final OAtomicOperation atomicOperation,
       final OCluster.ATTRIBUTES attribute,

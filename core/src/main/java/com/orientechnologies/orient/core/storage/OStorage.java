@@ -153,9 +153,6 @@ public interface OStorage extends OBackupable, OStorageInfo {
 
   long getClusterRecordsSizeByName(final String clusterName);
 
-  boolean setClusterAttribute(
-      final String clusterName, OCluster.ATTRIBUTES attribute, Object value);
-
   String getClusterRecordConflictStrategy(final int clusterId);
 
   String getClusterEncryption(final int clusterId);

@@ -1468,11 +1468,6 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
     throw new UnsupportedOperationException();
   }
 
-  public boolean setClusterAttribute(
-      String clusterName, OCluster.ATTRIBUTES attribute, Object value) {
-    throw new UnsupportedOperationException();
-  }
-
   public String getClusterRecordConflictStrategy(int clusterId) {
     throw new UnsupportedOperationException();
   }
