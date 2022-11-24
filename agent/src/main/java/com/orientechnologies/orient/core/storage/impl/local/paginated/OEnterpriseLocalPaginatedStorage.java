@@ -462,7 +462,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
 
     checkOpennessAndMigration();
 
-    if (singleThread && checkBackup()) {
+    if (singleThread && isIcrementalBackupRunning()) {
       throw new OBackupInProgressException(
           "You are trying to start incremental backup but it is in progress now, please wait till it will be finished",
           getName(),
@@ -1238,12 +1238,12 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
     }
   }
 
-  private synchronized boolean checkBackup() {
+  public synchronized boolean isIcrementalBackupRunning() {
     return this.backupRunning > 0;
   }
 
   private synchronized void waitBackup() {
-    if (checkBackup()) {
+    if (isIcrementalBackupRunning()) {
       try {
         this.wait();
       } catch (InterruptedException e) {
