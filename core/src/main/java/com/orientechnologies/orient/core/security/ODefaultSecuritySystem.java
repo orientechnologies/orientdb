@@ -759,7 +759,7 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
       }
     } else {
       initDefultAuthenticators();
-      OLogManager.instance().warn(this, "onAfterDynamicPlugins() Configuration document is empty");
+      OLogManager.instance().debug(this, "onAfterDynamicPlugins() Configuration document is empty");
     }
   }
 
@@ -909,7 +909,7 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
         }
       } else {
         OLogManager.instance()
-            .error(this, "ODefaultServerSecurity.loadSecurity() jsonConfig is null", null);
+            .debug(this, "ODefaultServerSecurity.loadSecurity() jsonConfig is null");
       }
     } catch (Exception ex) {
       OLogManager.instance().error(this, "ODefaultServerSecurity.loadSecurity()", ex);
