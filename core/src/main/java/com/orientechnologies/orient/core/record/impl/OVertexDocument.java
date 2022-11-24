@@ -35,7 +35,7 @@ public class OVertexDocument extends ODocument implements OVertex {
 
   public OVertexDocument(OClass cl) {
     super(cl);
-    if (!getSchemaClass().isVertexType()) {
+    if (!getImmutableSchemaClass().isVertexType()) {
       throw new IllegalArgumentException("" + getClassName() + " is not a vertex class");
     }
   }
@@ -50,14 +50,14 @@ public class OVertexDocument extends ODocument implements OVertex {
 
   public OVertexDocument(ODatabaseSession session, String klass) {
     super(session, klass);
-    if (!getSchemaClass().isVertexType()) {
+    if (!getImmutableSchemaClass().isVertexType()) {
       throw new IllegalArgumentException("" + getClassName() + " is not a vertex class");
     }
   }
 
   public OVertexDocument(String klass) {
     super(klass);
-    if (!getSchemaClass().isVertexType()) {
+    if (!getImmutableSchemaClass().isVertexType()) {
       throw new IllegalArgumentException("" + getClassName() + " is not a vertex class");
     }
   }
@@ -409,7 +409,7 @@ public class OVertexDocument extends ODocument implements OVertex {
       return null;
     }
 
-    OSchema schema = db.getMetadata().getSchema();
+    OSchema schema = db.getMetadata().getImmutableSchemaSnapshot();
 
     Set<String> allClassNames = new HashSet<String>();
     for (String className : iClassNames) {
@@ -530,7 +530,8 @@ public class OVertexDocument extends ODocument implements OVertex {
       // DEFAULT CLASS, TREAT IT AS NO CLASS/LABEL
       iClassNames = null;
 
-    OSchema schema = ODatabaseRecordThreadLocal.instance().get().getMetadata().getSchema();
+    OSchema schema =
+        ODatabaseRecordThreadLocal.instance().get().getMetadata().getImmutableSchemaSnapshot();
 
     if (iDirection == ODirection.OUT || iDirection == ODirection.BOTH) {
       // FIELDS THAT STARTS WITH "out_"

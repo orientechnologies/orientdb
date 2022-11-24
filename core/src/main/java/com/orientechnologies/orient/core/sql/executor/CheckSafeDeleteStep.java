@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import java.util.Map;
 import java.util.Optional;
 
@@ -48,7 +49,7 @@ public class CheckSafeDeleteStep extends AbstractExecutionStep {
             ORecord record = elem.getRecord();
             if (record instanceof ODocument) {
               ODocument doc = (ODocument) record;
-              OClass clazz = doc.getSchemaClass();
+              OClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
               if (clazz != null) {
                 if (clazz.getName().equalsIgnoreCase("V") || clazz.isSubClassOf("V")) {
                   throw new OCommandExecutionException(

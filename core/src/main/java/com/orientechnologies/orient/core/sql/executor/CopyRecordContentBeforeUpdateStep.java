@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import java.util.Map;
 import java.util.Optional;
 
@@ -46,7 +47,8 @@ public class CopyRecordContentBeforeUpdateStep extends AbstractExecutionStep {
             prevValue.setProperty("@rid", rec.getIdentity());
             prevValue.setProperty("@version", rec.getVersion());
             if (rec instanceof ODocument) {
-              prevValue.setProperty("@class", ((ODocument) rec).getSchemaClass().getName());
+              prevValue.setProperty(
+                  "@class", ODocumentInternal.getImmutableSchemaClass(((ODocument) rec)).getName());
             }
             if (!result.toElement().getIdentity().isNew()) {
               for (String propName : result.getPropertyNames()) {

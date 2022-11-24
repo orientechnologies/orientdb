@@ -1010,7 +1010,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
                     fieldName, connection.getKey(), connection.getValue()));
         }
       } else {
-        OSchema schema = getGraph().getRawGraph().getMetadata().getSchema();
+        OSchema schema = getGraph().getRawGraph().getMetadata().getImmutableSchemaSnapshot();
 
         Set<String> allClassNames = new HashSet<String>();
         for (String className : iClassNames) {

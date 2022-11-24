@@ -9,6 +9,7 @@ import com.orientechnologies.orient.core.metadata.security.jwt.OJwtPayload;
 import com.orientechnologies.orient.core.metadata.security.jwt.OTokenHeader;
 import com.orientechnologies.orient.core.metadata.security.jwt.OrientJwtHeader;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 
 /**
  * Created by emrul on 28/09/2014.
@@ -93,7 +94,7 @@ public class JsonWebToken implements OJsonWebToken, OToken {
     ORID userRid = payload.getUserRid();
     ODocument result;
     result = db.load(userRid, "roles:1");
-    if (!result.getSchemaClass().isSubClassOf(OUser.CLASS_NAME)) {
+    if (!ODocumentInternal.getImmutableSchemaClass(result).isOuser()) {
       result = null;
     }
     return new OUser(result);

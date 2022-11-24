@@ -37,6 +37,7 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.etl.OETLPipeline;
 import com.orientechnologies.orient.etl.context.OETLContext;
@@ -192,7 +193,7 @@ public class OETLOrientDBLoader extends OETLAbstractLoader {
   protected void autoCreatePropertiesOnDocument(ODatabaseDocument db, ODocument doc) {
     final OClass cls;
     if (className != null) cls = getOrCreateClass(db, className, null);
-    else cls = doc.getSchemaClass();
+    else cls = ODocumentInternal.getImmutableSchemaClass(doc);
 
     for (String f : doc.fieldNames()) {
       final String newName = transformFieldName(f);

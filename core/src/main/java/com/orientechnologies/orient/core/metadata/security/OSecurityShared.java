@@ -372,8 +372,8 @@ public class OSecurityShared implements OSecurityInternal {
   public ORole getRole(final ODatabaseSession session, final OIdentifiable iRole) {
     final ODocument doc = iRole.getRecord();
     if (doc != null) {
-      OClass clazz = doc.getSchemaClass();
-      if (clazz != null && clazz.isSubClassOf("ORole")) {
+      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
+      if (clazz != null && clazz.isOrole()) {
         return new ORole(doc);
       }
     }

@@ -6,10 +6,11 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.security.auth.OAuthenticationInfo;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.util.Collections;
 import java.util.List;
@@ -197,8 +198,8 @@ public class OSecurityRemote implements OSecurityInternal {
   public ORole getRole(final ODatabaseSession session, final OIdentifiable iRole) {
     final ODocument doc = session.load(iRole.getIdentity());
     if (doc != null) {
-      OClass clazz = doc.getSchemaClass();
-      if (clazz != null && clazz.isSubClassOf("ORole")) {
+      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
+      if (clazz != null && clazz.isOrole()) {
         return new ORole(doc);
       }
     }

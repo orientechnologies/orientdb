@@ -52,6 +52,7 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.object.db.OObjectLazyList;
@@ -600,7 +601,7 @@ public class OObjectSerializerHelper {
                   pojo,
                   linkedDocument,
                   iEntityManager,
-                  linkedDocument.getSchemaClass(),
+                  ODocumentInternal.getImmutableSchemaClass(linkedDocument),
                   iObj2RecHandler,
                   db,
                   iSaveOnlyDirty);

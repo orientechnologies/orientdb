@@ -293,7 +293,7 @@ public class ODocument extends ORecordAbstract
   @Override
   public Optional<OVertex> asVertex() {
     if (this instanceof OVertex) return Optional.of((OVertex) this);
-    OClass type = this.getSchemaClass();
+    OClass type = this.getImmutableSchemaClass();
     if (type == null) {
       return Optional.empty();
     }
@@ -306,7 +306,7 @@ public class ODocument extends ORecordAbstract
   @Override
   public Optional<OEdge> asEdge() {
     if (this instanceof OEdge) return Optional.of((OEdge) this);
-    OClass type = this.getSchemaClass();
+    OClass type = this.getImmutableSchemaClass();
     if (type == null) {
       return Optional.empty();
     }
@@ -338,7 +338,7 @@ public class ODocument extends ORecordAbstract
 
   @Override
   public Optional<OClass> getSchemaType() {
-    return Optional.ofNullable(getSchemaClass());
+    return Optional.ofNullable(getImmutableSchemaClass());
   }
 
   protected Set<String> calculatePropertyNames() {
@@ -2997,7 +2997,7 @@ public class ODocument extends ORecordAbstract
     }
     try {
       if (value instanceof ODocument) {
-        OClass docClass = ((ODocument) value).getSchemaClass();
+        OClass docClass = ((ODocument) value).getImmutableSchemaClass();
         if (docClass == null) {
           ((ODocument) value).setClass(linkedClass);
         } else if (!docClass.isSubClassOf(linkedClass)) {

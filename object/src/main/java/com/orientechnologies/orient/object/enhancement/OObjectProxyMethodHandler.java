@@ -390,7 +390,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
             final Object docValue = getDocFieldValue(self, fieldName);
             if (docValue == null) {
               if (value.getClass().isArray()) {
-                OClass schemaClass = doc.getSchemaClass();
+                OClass schemaClass = ODocumentInternal.getImmutableSchemaClass(doc);
                 OProperty schemaProperty = null;
                 if (schemaClass != null) schemaProperty = schemaClass.getProperty(fieldName);
 
@@ -445,7 +445,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
   }
 
   protected Object getDocFieldValue(final Object self, final String fieldName) {
-    final OClass cls = doc.getSchemaClass();
+    final OClass cls = ODocumentInternal.getImmutableSchemaClass(doc);
     if (cls != null && cls.existsProperty(fieldName)) return doc.field(fieldName);
     else {
       OType expected = OObjectEntitySerializer.getTypeByClass(self.getClass(), fieldName);
@@ -947,7 +947,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
                 objectOType);
           } else {
             if (valueToSet.getClass().isArray()) {
-              final OClass schemaClass = doc.getSchemaClass();
+              final OClass schemaClass = ODocumentInternal.getImmutableSchemaClass(doc);
               OProperty schemaProperty = null;
               if (schemaClass != null) schemaProperty = schemaClass.getProperty(fieldName);
 

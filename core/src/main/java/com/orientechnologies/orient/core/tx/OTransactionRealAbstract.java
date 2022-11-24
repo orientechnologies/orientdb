@@ -163,7 +163,8 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract
         if (entry.type == ORecordOperation.CREATED)
           if (entry.getRecord() != null && entry.getRecord() instanceof ODocument) {
             if (iPolymorphic) {
-              if (iClass.isSuperClassOf(((ODocument) entry.getRecord()).getSchemaClass()))
+              if (iClass.isSuperClassOf(
+                  ODocumentInternal.getImmutableSchemaClass(((ODocument) entry.getRecord()))))
                 result.add(entry);
             } else if (iClass.getName().equals(((ODocument) entry.getRecord()).getClassName()))
               result.add(entry);

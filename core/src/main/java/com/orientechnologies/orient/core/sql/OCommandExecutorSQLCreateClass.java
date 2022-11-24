@@ -117,7 +117,8 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract
                   oldPos);
             String superclassName = decodeClassName(word.toString());
 
-            if (!database.getMetadata().getSchema().existsClass(superclassName) && !newParser)
+            if (!database.getMetadata().getImmutableSchemaSnapshot().existsClass(superclassName)
+                && !newParser)
               throw new OCommandSQLParsingException(
                   "Super-class " + word + " not exists", parserText, oldPos);
             superClass = database.getMetadata().getSchema().getClass(superclassName);

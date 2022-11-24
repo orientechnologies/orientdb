@@ -739,7 +739,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph
     final ORecord rec = rid.getRecord();
     if (rec == null || !(rec instanceof ODocument)) return null;
 
-    final OClass cls = ((ODocument) rec).getSchemaClass();
+    final OClass cls = ODocumentInternal.getImmutableSchemaClass(((ODocument) rec));
     if (cls != null && cls.isEdgeType())
       throw new IllegalArgumentException(
           "Cannot retrieve a vertex with the RID " + rid + " because it is an edge");
@@ -817,7 +817,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph
   public Iterable<Vertex> getVerticesOfClass(final String iClassName, final boolean iPolymorphic) {
     makeActive();
 
-    final OClass cls = getRawGraph().getMetadata().getSchema().getClass(iClassName);
+    final OClass cls =
+        getRawGraph().getMetadata().getImmutableSchemaSnapshot().getClass(iClassName);
     if (cls == null)
       throw new IllegalArgumentException(
           "Cannot find class '" + iClassName + "' in database schema");
@@ -961,7 +962,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph
   public Iterable<Edge> getEdgesOfClass(final String iClassName, final boolean iPolymorphic) {
     makeActive();
 
-    final OClass cls = getRawGraph().getMetadata().getSchema().getClass(iClassName);
+    final OClass cls =
+        getRawGraph().getMetadata().getImmutableSchemaSnapshot().getClass(iClassName);
     if (cls == null)
       throw new IllegalArgumentException(
           "Cannot find class '" + iClassName + "' in database schema");
@@ -1053,7 +1055,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph
     final ODocument doc = rec.getRecord();
     if (doc == null) return null;
 
-    final OClass cls = doc.getSchemaClass();
+    final OClass cls = ODocumentInternal.getImmutableSchemaClass(doc);
     if (cls != null) {
       if (cls.isVertexType())
         throw new IllegalArgumentException(

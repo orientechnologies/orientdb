@@ -16,6 +16,7 @@ package com.orientechnologies.orient.object.enhancement.field;
 
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 
 /**
  * {@link ODocumentFieldHandlingStrategy} that delegates to the default {@link
@@ -61,8 +62,8 @@ public class ODocumentSimpleFieldHandlingStrategy implements ODocumentFieldHandl
   protected OType deriveFieldType(ODocument iRecord, String fieldName, OType requestedFieldType) {
 
     // Schema defined types can not be ignored
-    if (iRecord.getSchemaClass().existsProperty(fieldName)) {
-      return iRecord.getSchemaClass().getProperty(fieldName).getType();
+    if (ODocumentInternal.getImmutableSchemaClass(iRecord).existsProperty(fieldName)) {
+      return ODocumentInternal.getImmutableSchemaClass(iRecord).getProperty(fieldName).getType();
     }
 
     // New type

@@ -248,7 +248,7 @@ public abstract class OrientElement
         && !(((OIdentifiable) fieldValue).getRecord() instanceof OBlob)) {
       ODocument fieldRecord = ((OIdentifiable) fieldValue).getRecord();
       if (fieldRecord != null) {
-        final OClass schemaClass = fieldRecord.getSchemaClass();
+        final OClass schemaClass = ODocumentInternal.getImmutableSchemaClass(fieldRecord);
         if (schemaClass != null && (schemaClass.isVertexType() || schemaClass.isEdgeType())) {
           // CONVERT IT TO VERTEX/EDGE
           return (T) graph.getElement(fieldValue);

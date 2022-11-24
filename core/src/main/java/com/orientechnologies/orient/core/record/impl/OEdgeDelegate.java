@@ -206,7 +206,7 @@ public class OEdgeDelegate implements OEdge {
     if (element == null) {
       return Optional.ofNullable(lightweightEdgeType);
     }
-    return Optional.ofNullable(element.getSchemaClass());
+    return element.getSchemaType();
   }
 
   public boolean isLabeled(String[] labels) {

@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import java.util.Iterator;
@@ -100,7 +101,9 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
           if (fieldName != null) {
             Object record = iRecord.getRecord();
             if (record instanceof ODocument) {
-              OProperty property = ((ODocument) record).getSchemaClass().getProperty(fieldName);
+              OProperty property =
+                  ODocumentInternal.getImmutableSchemaClass(((ODocument) record))
+                      .getProperty(fieldName);
               if (property != null && property.getType().isMultiValue()) {
                 type = property.getLinkedType();
               }

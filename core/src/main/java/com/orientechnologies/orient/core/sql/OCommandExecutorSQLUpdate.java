@@ -418,7 +418,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
     if (iRecord == null) {
       return false;
     }
-    return (record.getSchemaClass().isSubClassOf(orientClass));
+    return (ODocumentInternal.getImmutableSchemaClass(record).isSubClassOf(orientClass));
   }
 
   /**
@@ -604,7 +604,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
       final OClass restricted =
           getDatabase().getMetadata().getSchema().getClass(OSecurity.RESTRICTED_CLASSNAME);
 
-      if (restricted != null && restricted.isSuperClassOf(record.getSchemaClass())) {
+      if (restricted != null
+          && restricted.isSuperClassOf(ODocumentInternal.getImmutableSchemaClass(record))) {
         for (OProperty prop : restricted.properties()) {
           fieldsToPreserve.field(prop.getName(), record.<Object>field(prop.getName()));
         }
@@ -768,8 +769,9 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
 
           Object value = extractValue(record, pair);
 
-          if (record.getSchemaClass() != null) {
-            final OProperty property = record.getSchemaClass().getProperty(entry.getKey());
+          if (ODocumentInternal.getImmutableSchemaClass(record) != null) {
+            final OProperty property =
+                ODocumentInternal.getImmutableSchemaClass(record).getProperty(entry.getKey());
             if (property != null
                 && property.getType().equals(OType.LINKMAP)
                 && !(value instanceof OIdentifiable)) {

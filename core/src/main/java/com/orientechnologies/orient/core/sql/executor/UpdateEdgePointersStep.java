@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
@@ -158,6 +159,6 @@ public class UpdateEdgePointersStep extends AbstractExecutionStep {
     if (iRecord == null) {
       return false;
     }
-    return (record.getSchemaClass().isSubClassOf(orientClass));
+    return (ODocumentInternal.getImmutableSchemaClass(record).isSubClassOf(orientClass));
   }
 }

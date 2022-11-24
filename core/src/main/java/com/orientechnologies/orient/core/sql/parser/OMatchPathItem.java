@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -136,7 +137,7 @@ public class OMatchPathItem extends SimpleNode {
       return false;
     }
     if (record instanceof ODocument) {
-      return ((ODocument) record).getSchemaClass().isSubClassOf(oClass);
+      return ODocumentInternal.getImmutableSchemaClass(((ODocument) record)).isSubClassOf(oClass);
     }
     return false;
   }

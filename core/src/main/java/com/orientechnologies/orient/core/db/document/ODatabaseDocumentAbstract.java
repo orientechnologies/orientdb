@@ -1135,7 +1135,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
         OVertex to = inVertex;
         OVertex from = currentVertex;
 
-        OSchema schema = getMetadata().getSchema();
+        OSchema schema = getMetadata().getImmutableSchemaSnapshot();
         final OClass edgeType = schema.getClass(iClassName);
         if (edgeType == null)
           // AUTO CREATE CLASS
@@ -1529,7 +1529,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
         if (op.type == ORecordOperation.DELETED) {
           final ORecord rec = op.getRecord();
           if (rec != null && rec instanceof ODocument) {
-            OClass schemaClass = ((ODocument) rec).getSchemaClass();
+            OClass schemaClass = ODocumentInternal.getImmutableSchemaClass(((ODocument) rec));
             if (iPolymorphic) {
               if (schemaClass.isSubClassOf(className)) deletedInTx++;
             } else {
@@ -1541,7 +1541,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
         if (op.type == ORecordOperation.CREATED) {
           final ORecord rec = op.getRecord();
           if (rec != null && rec instanceof ODocument) {
-            OClass schemaClass = ((ODocument) rec).getSchemaClass();
+            OClass schemaClass = ODocumentInternal.getImmutableSchemaClass(((ODocument) rec));
             if (schemaClass != null) {
               if (iPolymorphic) {
                 if (schemaClass.isSubClassOf(className)) addedInTx++;

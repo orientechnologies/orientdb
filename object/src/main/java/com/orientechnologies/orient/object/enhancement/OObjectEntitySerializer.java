@@ -49,6 +49,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.object.db.OObjectLazyMap;
@@ -1209,7 +1210,7 @@ public class OObjectEntitySerializer {
     OProperty schemaProperty;
 
     final Class<?> pojoClass = iPojo.getClass();
-    final OClass schemaClass = iRecord.getSchemaClass();
+    final OClass schemaClass = ODocumentInternal.getImmutableSchemaClass(iRecord);
 
     // CHECK FOR ID BINDING
     final Field idField = getIdField(pojoClass);
@@ -1307,7 +1308,7 @@ public class OObjectEntitySerializer {
         if (fieldValue != null) {
           if (isEmbeddedObject(p)) {
             // AUTO CREATE SCHEMA CLASS
-            if (iRecord.getSchemaClass() == null) {
+            if (ODocumentInternal.getImmutableSchemaClass(iRecord) == null) {
               db.getMetadata().getSchema().createClass(iPojo.getClass());
               iRecord.setClassNameIfExists(iPojo.getClass().getSimpleName());
             }

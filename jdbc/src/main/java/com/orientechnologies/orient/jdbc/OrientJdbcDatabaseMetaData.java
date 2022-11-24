@@ -816,7 +816,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
 
     final OInternalResultSet resultSet = new OInternalResultSet();
 
-    final OSchema schema = database.getMetadata().getSchema();
+    final OSchema schema = database.getMetadata().getImmutableSchemaSnapshot();
 
     for (OClass clazz : schema.getClasses()) {
       if (OrientJdbcUtils.like(clazz.getName(), tableNamePattern)) {

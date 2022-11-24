@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import java.util.Collections;
@@ -41,7 +42,7 @@ public class OInstanceofCondition extends OBooleanExpression {
       return false;
     }
     ODocument doc = (ODocument) record;
-    OClass clazz = doc.getSchemaClass();
+    OClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
     if (clazz == null) {
       return false;
     }
@@ -69,7 +70,7 @@ public class OInstanceofCondition extends OBooleanExpression {
       return false;
     }
     ODocument doc = (ODocument) record;
-    OClass clazz = doc.getSchemaClass();
+    OClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
     if (clazz == null) {
       return false;
     }

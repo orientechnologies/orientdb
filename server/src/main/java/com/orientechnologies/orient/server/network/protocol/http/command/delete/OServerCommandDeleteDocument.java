@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -67,7 +68,7 @@ public class OServerCommandDeleteDocument extends OServerCommandDocumentAbstract
           ORecordInternal.setVersion(doc, -1);
       }
 
-      final OClass cls = doc.getSchemaClass();
+      final OClass cls = ODocumentInternal.getImmutableSchemaClass(doc);
       if (cls != null) {
         if (cls.isSubClassOf("V"))
           // DELETE IT AS VERTEX

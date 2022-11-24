@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLResultsetDelegate;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
@@ -1025,7 +1026,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       return false;
     }
     if (record instanceof ODocument) {
-      OClass schemaClass = ((ODocument) record).getSchemaClass();
+      OClass schemaClass = ODocumentInternal.getImmutableSchemaClass(((ODocument) record));
       if (schemaClass == null) {
         return false;
       }

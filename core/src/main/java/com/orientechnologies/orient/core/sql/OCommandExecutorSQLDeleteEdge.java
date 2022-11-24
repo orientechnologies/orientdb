@@ -136,7 +136,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
           } else if (temp.equals(KEYWORD_WHERE)) {
             if (clazz == null)
               // ASSIGN DEFAULT CLASS
-              clazz = curDb.getMetadata().getSchema().getClass("E");
+              clazz = curDb.getMetadata().getImmutableSchemaSnapshot().getClass("E");
 
             where =
                 parserGetCurrentPosition() > -1

@@ -41,6 +41,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.parser.ODeleteStatement;
@@ -328,7 +329,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract
 
         if (!unsafe && record instanceof ODocument) {
           // CHECK IF ARE VERTICES OR EDGES
-          final OClass cls = ((ODocument) record).getSchemaClass();
+          final OClass cls = ODocumentInternal.getImmutableSchemaClass(((ODocument) record));
           if (cls != null) {
             if (cls.isSubClassOf("V"))
               // FOUND VERTEX

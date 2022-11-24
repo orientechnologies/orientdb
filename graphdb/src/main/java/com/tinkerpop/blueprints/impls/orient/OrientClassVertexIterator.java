@@ -1,6 +1,7 @@
 package com.tinkerpop.blueprints.impls.orient;
 
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.tinkerpop.blueprints.Vertex;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -14,7 +15,7 @@ public class OrientClassVertexIterator implements Iterator<Vertex> {
   public OrientClassVertexIterator(OrientBaseGraph graph, Iterator<Vertex> iterator, String klass) {
     this.iterator = iterator;
     this.graph = graph;
-    this.klass = graph.getRawGraph().getMetadata().getSchema().getClass(klass);
+    this.klass = graph.getRawGraph().getMetadata().getImmutableSchemaSnapshot().getClass(klass);
   }
 
   @Override
@@ -22,7 +23,9 @@ public class OrientClassVertexIterator implements Iterator<Vertex> {
     if (vertex == null) {
       while (iterator.hasNext()) {
         vertex = (OrientVertex) iterator.next();
-        if (vertex != null && klass.isSuperClassOf(vertex.getRecord().getSchemaClass())) {
+        if (vertex != null
+            && klass.isSuperClassOf(
+                ODocumentInternal.getImmutableSchemaClass(vertex.getRecord()))) {
           return true;
         }
       }

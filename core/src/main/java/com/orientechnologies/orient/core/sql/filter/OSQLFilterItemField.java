@@ -137,7 +137,7 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
     final Object v = stringValue == null ? doc.rawField(name) : stringValue;
 
     if (!collatePreset && doc != null) {
-      OClass schemaClass = doc.getSchemaClass();
+      OClass schemaClass = ODocumentInternal.getImmutableSchemaClass(doc);
       if (schemaClass != null) {
         collate = getCollateForField(schemaClass, name);
       }
@@ -165,7 +165,9 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
     // check for embedded objects, they have invalid ID and they are serialized with class name
     return serializer.deserializeField(
         serialized,
-        rec instanceof ODocument ? ((ODocument) rec).getSchemaClass() : null,
+        rec instanceof ODocument
+            ? ODocumentInternal.getImmutableSchemaClass(((ODocument) rec))
+            : null,
         name,
         rec.isEmbedded(),
         db.getMetadata().getImmutableSchemaSnapshot(),
@@ -267,7 +269,7 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
     if (lastDoc == null) {
       return null;
     }
-    OClass schemaClass = lastDoc.getSchemaClass();
+    OClass schemaClass = ODocumentInternal.getImmutableSchemaClass(lastDoc);
     if (schemaClass == null) {
       return null;
     }
