@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.record.impl;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.record.OElement;
 
@@ -20,6 +21,15 @@ public class OViewDocument extends ODocument {
   @Override
   public OView getSchemaClass() {
     return view;
+  }
+
+  @Override
+  protected OImmutableClass getImmutableSchemaClass() {
+    if (view instanceof OImmutableClass) {
+      return (OImmutableClass) view;
+    } else {
+      return (OImmutableClass) getImmutableSchema().getView(view.getName());
+    }
   }
 
   @Override

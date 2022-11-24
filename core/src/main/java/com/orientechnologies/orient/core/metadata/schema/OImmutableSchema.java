@@ -102,6 +102,9 @@ public class OImmutableSchema implements OSchema {
       for (int clusterId : immutableClass.getClusterIds())
         clustersToViews.put(clusterId, immutableClass);
     }
+    for (OClass cl : views.values()) {
+      ((OImmutableClass) cl).init();
+    }
   }
 
   @Override
