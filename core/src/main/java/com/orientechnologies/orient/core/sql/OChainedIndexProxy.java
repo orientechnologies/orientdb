@@ -617,12 +617,12 @@ public class OChainedIndexProxy<T> implements OIndexInternal {
   }
 
   public String getType() {
-    throw new UnsupportedOperationException("Not allowed operation");
+    return lastIndex.getType();
   }
 
   @Override
   public String getAlgorithm() {
-    throw new UnsupportedOperationException("Not allowed operation");
+    return lastIndex.getAlgorithm();
   }
 
   public boolean isAutomatic() {
