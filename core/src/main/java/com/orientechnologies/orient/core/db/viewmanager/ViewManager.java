@@ -13,7 +13,6 @@ import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
-import com.orientechnologies.orient.core.exception.OBackupInProgressException;
 import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -198,6 +197,10 @@ public class ViewManager {
   }
 
   public synchronized void cleanUnusedViewClusters(ODatabaseDocument db) {
+    if (((ODatabaseDocumentEmbedded) db).getStorage().isIcrementalBackupRunning()) {
+      // backup is running handle delete the next run
+      return;
+    }
     List<Integer> toRemove = new ArrayList<>();
     for (Integer cluster : clustersToDrop) {
       AtomicInteger visitors = viewCluserVisitors.get(cluster);
@@ -205,19 +208,21 @@ public class ViewManager {
         toRemove.add(cluster);
       }
     }
-    try {
-      for (Integer cluster : toRemove) {
-        db.dropCluster(cluster);
-        viewCluserVisitors.remove(cluster);
-        clustersToDrop.remove(cluster);
-        oldClustersPerViews.remove(cluster);
-      }
-    } catch (OBackupInProgressException e) {
-      // Ignore will finish the clean next run
+
+    for (Integer cluster : toRemove) {
+      db.dropCluster(cluster);
+      viewCluserVisitors.remove(cluster);
+      clustersToDrop.remove(cluster);
+      oldClustersPerViews.remove(cluster);
     }
   }
 
   public synchronized void cleanUnusedViewIndexes(ODatabaseDocumentInternal db) {
+    if (((ODatabaseDocumentEmbedded) db).getStorage().isIcrementalBackupRunning()) {
+      // backup is running handle delete the next run
+      return;
+    }
+
     List<String> toRemove = new ArrayList<>();
     for (String index : indexesToDrop) {
       AtomicInteger visitors = viewIndexVisitors.get(index);
@@ -225,15 +230,11 @@ public class ViewManager {
         toRemove.add(index);
       }
     }
-    try {
-      for (String index : toRemove) {
-        db.getMetadata().getIndexManagerInternal().dropIndex(db, index);
-        viewIndexVisitors.remove(index);
-        indexesToDrop.remove(index);
-        oldIndexesPerViews.remove(index);
-      }
-    } catch (OBackupInProgressException e) {
-      // Ignore will finish the clean next run
+    for (String index : toRemove) {
+      db.getMetadata().getIndexManagerInternal().dropIndex(db, index);
+      viewIndexVisitors.remove(index);
+      indexesToDrop.remove(index);
+      oldIndexesPerViews.remove(index);
     }
   }
 
@@ -325,14 +326,12 @@ public class ViewManager {
   }
 
   public synchronized void updateView(OView view, ODatabaseDocumentInternal db) {
-    lastUpdateTimestampForView.put(view.getName(), System.currentTimeMillis());
-    int cluster;
-    try {
-      cluster = db.addCluster(getNextClusterNameFor(view, db));
-    } catch (OBackupInProgressException e) {
-      // Skipping the update will retry later
+    if (((ODatabaseDocumentEmbedded) db).getStorage().isIcrementalBackupRunning()) {
+      // backup is running handle rebuild the next run
       return;
     }
+    lastUpdateTimestampForView.put(view.getName(), System.currentTimeMillis());
+    int cluster = db.addCluster(getNextClusterNameFor(view, db));
 
     String viewName = view.getName();
     String query = view.getQuery();

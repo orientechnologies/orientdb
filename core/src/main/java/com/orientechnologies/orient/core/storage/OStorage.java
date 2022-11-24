@@ -288,4 +288,8 @@ public interface OStorage extends OBackupable, OStorageInfo {
   void clearProperties();
 
   int[] getClustersIds(Set<String> filterClusters);
+
+  default boolean isIcrementalBackupRunning() {
+    return false;
+  }
 }
