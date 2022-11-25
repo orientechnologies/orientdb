@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.command.OCommandDistributedReplicateReq
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -190,7 +191,11 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract
     if (superClass.startsWith("+") || superClass.startsWith("-")) {
       superClass = superClass.substring(1);
     }
-    if (database.getMetadata().getSchema().getClass(decodeClassName(superClass)) == null) {
+    if (((ODatabaseDocumentInternal) database)
+            .getMetadata()
+            .getImmutableSchemaSnapshot()
+            .getClass(decodeClassName(superClass))
+        == null) {
       throw new OCommandExecutionException(
           "Cannot alter superClass of '"
               + targetClass

@@ -756,7 +756,7 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
 
     Set<String> classesToCheck = new HashSet<>();
     classesToCheck.add(indexClass);
-    OClass clazz = database.getClass(indexClass);
+    OClass clazz = database.getMetadata().getImmutableSchemaSnapshot().getClass(indexClass);
     if (clazz == null) {
       return;
     }

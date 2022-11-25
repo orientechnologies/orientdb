@@ -1406,7 +1406,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     allAliases.addAll(aliasClasses.keySet());
     allAliases.addAll(aliasFilters.keySet());
 
-    OSchema schema = getDatabase().getMetadata().getSchema();
+    OSchema schema = getDatabase().getMetadata().getImmutableSchemaSnapshot();
 
     Map<String, Long> result = new LinkedHashMap<String, Long>();
     for (String alias : allAliases) {

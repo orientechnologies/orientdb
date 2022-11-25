@@ -87,7 +87,7 @@ public class OCheckIndexTool extends ODatabaseTool {
   private void checkIndex(OIndex index) {
     List<String> fields = index.getDefinition().getFields();
     String className = index.getDefinition().getClassName();
-    OClass clazz = database.getMetadata().getSchema().getClass(className);
+    OClass clazz = database.getMetadata().getImmutableSchemaSnapshot().getClass(className);
     int[] clusterIds = clazz.getPolymorphicClusterIds();
     for (int clusterId : clusterIds) {
       checkCluster(clusterId, index, fields);

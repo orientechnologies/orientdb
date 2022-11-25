@@ -206,7 +206,10 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
     List<String> fields = indexDefinition.getFields();
 
     OClass aClass =
-        getDatabase().getMetadata().getSchema().getClass(indexDefinition.getClassName());
+        getDatabase()
+            .getMetadata()
+            .getImmutableSchemaSnapshot()
+            .getClass(indexDefinition.getClassName());
     for (String field : fields) {
       OProperty property = aClass.getProperty(field);
 

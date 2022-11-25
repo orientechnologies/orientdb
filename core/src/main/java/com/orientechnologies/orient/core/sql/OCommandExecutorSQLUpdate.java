@@ -602,7 +602,10 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
       final ODocument fieldsToPreserve = new ODocument();
 
       final OClass restricted =
-          getDatabase().getMetadata().getSchema().getClass(OSecurity.RESTRICTED_CLASSNAME);
+          getDatabase()
+              .getMetadata()
+              .getImmutableSchemaSnapshot()
+              .getClass(OSecurity.RESTRICTED_CLASSNAME);
 
       if (restricted != null
           && restricted.isSuperClassOf(ODocumentInternal.getImmutableSchemaClass(record))) {

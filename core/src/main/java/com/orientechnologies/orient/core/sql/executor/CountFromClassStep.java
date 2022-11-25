@@ -2,8 +2,10 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 import java.util.Map;
 import java.util.Optional;
@@ -51,9 +53,14 @@ public class CountFromClassStep extends AbstractExecutionStep {
         }
         long begin = profilingEnabled ? System.nanoTime() : 0;
         try {
-          OClass clazz = ctx.getDatabase().getClass(target.getStringValue());
+
+          OImmutableSchema schema =
+              ((ODatabaseDocumentInternal) ctx.getDatabase())
+                  .getMetadata()
+                  .getImmutableSchemaSnapshot();
+          OClass clazz = schema.getClass(target.getStringValue());
           if (clazz == null) {
-            clazz = ctx.getDatabase().getMetadata().getSchema().getView(target.getStringValue());
+            clazz = schema.getView(target.getStringValue());
           }
           if (clazz == null) {
             throw new OCommandExecutionException(

@@ -91,10 +91,10 @@ public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbs
       if (iTarget.charAt(0) == ORID.PREFIX)
         return getDatabase()
             .getMetadata()
-            .getSchema()
+            .getImmutableSchemaSnapshot()
             .getClassByClusterId(new ORecordId(iTarget).getClusterId());
 
-      return getDatabase().getMetadata().getSchema().getClass(iTarget);
+      return getDatabase().getMetadata().getImmutableSchemaSnapshot().getClass(iTarget);
     }
     // CLUSTER
     if (iTarget
@@ -111,7 +111,8 @@ public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbs
           if (clusterId < 0) {
             return null;
           }
-          OClass aClass = db.getMetadata().getSchema().getClassByClusterId(clusterId);
+          OClass aClass =
+              db.getMetadata().getImmutableSchemaSnapshot().getClassByClusterId(clusterId);
           if (aClass == null) {
             return null;
           }
@@ -127,7 +128,7 @@ public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbs
       } else {
         final int clusterId = db.getClusterIdByName(clusterName);
         if (clusterId >= 0) {
-          return db.getMetadata().getSchema().getClassByClusterId(clusterId);
+          return db.getMetadata().getImmutableSchemaSnapshot().getClassByClusterId(clusterId);
         }
       }
     }

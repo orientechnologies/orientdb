@@ -68,7 +68,7 @@ public class OMatchPathItem extends SimpleNode {
       whileCondition = this.filter.getWhileCondition();
       maxDepth = this.filter.getMaxDepth();
       String className = this.filter.getClassName(iCommandContext);
-      oClass = getDatabase().getMetadata().getSchema().getClass(className);
+      oClass = getDatabase().getMetadata().getImmutableSchemaSnapshot().getClass(className);
     }
 
     Set<OIdentifiable> result = new HashSet<OIdentifiable>();

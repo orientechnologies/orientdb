@@ -191,7 +191,8 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLAbstract {
 
     final ODatabaseDocument db = (ODatabaseDocument) database.getDatabaseOwner();
 
-    final OClass sourceClass = database.getMetadata().getSchema().getClass(sourceClassName);
+    final OClass sourceClass =
+        database.getMetadata().getImmutableSchemaSnapshot().getClass(sourceClassName);
     if (sourceClass == null)
       throw new OCommandExecutionException("Source class '" + sourceClassName + "' not found");
 

@@ -498,7 +498,11 @@ public class OSecurityShared implements OSecurityInternal {
     OSecurityResource res = OSecurityResource.getInstance(resource);
     if (res instanceof OSecurityResourceProperty) {
       String clazzName = ((OSecurityResourceProperty) res).getClassName();
-      OClass clazz = session.getClass(clazzName);
+      OClass clazz =
+          ((ODatabaseDocumentInternal) session)
+              .getMetadata()
+              .getImmutableSchemaSnapshot()
+              .getClass(clazzName);
       if (clazz == null) {
         return;
       }
@@ -1198,7 +1202,10 @@ public class OSecurityShared implements OSecurityInternal {
     Map<String, Map<String, Boolean>> result = new HashMap<>();
     Collection<OClass> allClasses = session.getMetadata().getSchema().getClasses();
 
-    if (session.getClass("ORole") == null) {
+    if (!((ODatabaseDocumentInternal) session)
+        .getMetadata()
+        .getImmutableSchemaSnapshot()
+        .existsClass("ORole")) {
       return;
     }
     synchronized (this) {
@@ -1709,7 +1716,10 @@ public class OSecurityShared implements OSecurityInternal {
   protected Set<OSecurityResourceProperty> calculateAllFilteredProperties(
       ODatabaseSession session) {
     Set<OSecurityResourceProperty> result = new HashSet<>();
-    if (session.getClass("ORole") == null) {
+    if (!((ODatabaseDocumentInternal) session)
+        .getMetadata()
+        .getImmutableSchemaSnapshot()
+        .existsClass("ORole")) {
       return Collections.emptySet();
     }
     try (OResultSet rs = session.query("select policies from ORole")) {

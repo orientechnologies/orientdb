@@ -616,9 +616,12 @@ public class OSelectExecutionPlanner {
   }
 
   private boolean securityPoliciesExistForClass(OIdentifier targetClass, OCommandContext ctx) {
-    ODatabaseInternal db = (ODatabaseInternal) ctx.getDatabase();
+    ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) ctx.getDatabase();
     OSecurityInternal security = db.getSharedContext().getSecurity();
-    OClass clazz = db.getClass(targetClass.getStringValue()); // normalize class name case
+    OClass clazz =
+        db.getMetadata()
+            .getImmutableSchemaSnapshot()
+            .getClass(targetClass.getStringValue()); // normalize class name case
     if (clazz == null) {
       return false;
     }
@@ -653,7 +656,11 @@ public class OSelectExecutionPlanner {
         || info.skip != null) {
       return false;
     }
-    OClass clazz = ctx.getDatabase().getClass(targetClass.getStringValue());
+    OClass clazz =
+        ((ODatabaseDocumentInternal) ctx.getDatabase())
+            .getMetadata()
+            .getImmutableSchemaSnapshot()
+            .getClass(targetClass.getStringValue());
     if (clazz == null) {
       return false;
     }
@@ -1261,7 +1268,10 @@ public class OSelectExecutionPlanner {
       } else if (target.getIdentifier() != null) {
         String className = target.getIdentifier().getStringValue();
         if (className.startsWith("$")
-            && !ctx.getDatabase().getMetadata().getSchema().existsClass(className)) {
+            && !((ODatabaseDocumentInternal) ctx.getDatabase())
+                .getMetadata()
+                .getImmutableSchemaSnapshot()
+                .existsClass(className)) {
           handleVariableAsTarget(shardedPlan.getValue(), info, ctx, profilingEnabled);
         } else {
           Set<String> filterClusters = info.serverToClusters.get(shardedPlan.getKey());
@@ -2961,7 +2971,11 @@ public class OSelectExecutionPlanner {
       }
       if (name != null) {
         clusterNames.add(name);
-        OClass clazz = db.getMetadata().getSchema().getClassByClusterId(clusterId);
+        OClass clazz =
+            ((ODatabaseDocumentInternal) db)
+                .getMetadata()
+                .getImmutableSchemaSnapshot()
+                .getClassByClusterId(clusterId);
         if (clazz == null) {
           tryByIndex = false;
           break;

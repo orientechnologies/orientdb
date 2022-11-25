@@ -101,7 +101,7 @@ public class OEdgeIterator extends OLazyWrapperIterator<OEdge> {
       ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
       OClass clazz = null;
       if (db != null && connection.getValue() != null) {
-        clazz = db.getMetadata().getSchema().getClass(connection.getValue());
+        clazz = db.getMetadata().getImmutableSchemaSnapshot().getClass(connection.getValue());
       }
       if (connection.getKey() == ODirection.OUT) {
         edge =

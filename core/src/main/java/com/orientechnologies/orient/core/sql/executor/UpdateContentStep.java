@@ -79,7 +79,10 @@ public class UpdateContentStep extends AbstractExecutionStep {
     final ODocument fieldsToPreserve = new ODocument();
 
     final OClass restricted =
-        ctx.getDatabase().getMetadata().getSchema().getClass(OSecurity.RESTRICTED_CLASSNAME);
+        ((ODatabaseDocumentInternal) ctx.getDatabase())
+            .getMetadata()
+            .getImmutableSchemaSnapshot()
+            .getClass(OSecurity.RESTRICTED_CLASSNAME);
 
     if (restricted != null && restricted.isSuperClassOf(record.getSchemaType().orElse(null))) {
       for (OProperty prop : restricted.properties()) {

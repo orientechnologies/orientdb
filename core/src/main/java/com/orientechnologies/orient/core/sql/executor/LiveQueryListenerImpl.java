@@ -62,7 +62,10 @@ public class LiveQueryListenerImpl implements OLiveQueryListenerV2 {
     validateStatement(statement);
     if (statement.getTarget().getItem().getIdentifier() != null) {
       this.className = statement.getTarget().getItem().getIdentifier().getStringValue();
-      if (db.getClass(className) == null) {
+      if (!((ODatabaseDocumentInternal) db)
+          .getMetadata()
+          .getImmutableSchemaSnapshot()
+          .existsClass(className)) {
         throw new OCommandExecutionException(
             "Class " + className + " not found in the schema: " + query);
       }
@@ -180,7 +183,11 @@ public class LiveQueryListenerImpl implements OLiveQueryListenerV2 {
       if (filterClass == null) {
         return false;
       } else if (!(className.equalsIgnoreCase(recordClassName))) {
-        OClass recordClass = this.execDb.getClass(recordClassName);
+        OClass recordClass =
+            ((ODatabaseDocumentInternal) this.execDb)
+                .getMetadata()
+                .getImmutableSchemaSnapshot()
+                .getClass(recordClassName);
         if (recordClass == null) {
           return false;
         }

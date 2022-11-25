@@ -1071,7 +1071,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
   @Override
   public OEdge newEdge(OVertex from, OVertex to, String type) {
-    OClass cl = getClass(type);
+    OClass cl = getMetadata().getImmutableSchemaSnapshot().getClass(type);
     if (cl == null || !cl.isEdgeType()) {
       throw new IllegalArgumentException("" + type + " is not an edge class");
     }
@@ -1965,7 +1965,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   }
 
   public OEdge newRegularEdge(String iClassName, OVertex from, OVertex to) {
-    OClass cl = getClass(iClassName);
+    OClass cl = getMetadata().getImmutableSchemaSnapshot().getClass(iClassName);
     if (cl == null || !cl.isEdgeType()) {
       throw new IllegalArgumentException("" + iClassName + " is not an edge class");
     }

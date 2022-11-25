@@ -270,7 +270,11 @@ public class ViewManager {
   }
 
   private boolean isLiveUpdate(ODatabase db, String viewName) {
-    OView view = db.getMetadata().getSchema().getView(viewName);
+    OView view =
+        ((ODatabaseDocumentInternal) db)
+            .getMetadata()
+            .getImmutableSchemaSnapshot()
+            .getView(viewName);
     return OViewConfig.UPDATE_STRATEGY_LIVE.equalsIgnoreCase(view.getUpdateStrategy());
   }
 
@@ -320,7 +324,11 @@ public class ViewManager {
     if (lastUpdate == null) {
       return true;
     }
-    OView view = db.getMetadata().getSchema().getView(viewName);
+    OView view =
+        ((ODatabaseDocumentInternal) db)
+            .getMetadata()
+            .getImmutableSchemaSnapshot()
+            .getView(viewName);
     int updateInterval = view.getUpdateIntervalSeconds();
     return lastUpdate + (updateInterval * 1000) < System.currentTimeMillis();
   }

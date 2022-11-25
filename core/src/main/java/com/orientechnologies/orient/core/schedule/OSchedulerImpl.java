@@ -149,7 +149,8 @@ public class OSchedulerImpl {
   }
 
   public void create(ODatabaseDocumentInternal database) {
-    if (database.getMetadata().getSchema().existsClass(OScheduledEvent.CLASS_NAME)) return;
+    if (database.getMetadata().getImmutableSchemaSnapshot().existsClass(OScheduledEvent.CLASS_NAME))
+      return;
     final OClass f = database.getMetadata().getSchema().createClass(OScheduledEvent.CLASS_NAME);
     f.createProperty(OScheduledEvent.PROP_NAME, OType.STRING, (OType) null, true)
         .setMandatory(true)

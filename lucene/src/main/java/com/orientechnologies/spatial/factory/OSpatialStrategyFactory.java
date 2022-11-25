@@ -42,7 +42,8 @@ public class OSpatialStrategyFactory {
       OIndexDefinition indexDefinition,
       ODocument metadata) {
 
-    OClass aClass = db.getMetadata().getSchema().getClass(indexDefinition.getClassName());
+    OClass aClass =
+        db.getMetadata().getImmutableSchemaSnapshot().getClass(indexDefinition.getClassName());
 
     OProperty property = aClass.getProperty(indexDefinition.getFields().get(0));
 

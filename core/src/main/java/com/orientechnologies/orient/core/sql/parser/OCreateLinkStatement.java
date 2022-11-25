@@ -79,13 +79,19 @@ public class OCreateLinkStatement extends OSimpleExecStatement {
     final ODatabaseDocument db = (ODatabaseDocument) database.getDatabaseOwner();
 
     final OClass sourceClass =
-        database.getMetadata().getSchema().getClass(getSourceClass().getStringValue());
+        database
+            .getMetadata()
+            .getImmutableSchemaSnapshot()
+            .getClass(getSourceClass().getStringValue());
     if (sourceClass == null)
       throw new OCommandExecutionException(
           "Source class '" + getSourceClass().getStringValue() + "' not found");
 
     final OClass destClass =
-        database.getMetadata().getSchema().getClass(getDestClass().getStringValue());
+        database
+            .getMetadata()
+            .getImmutableSchemaSnapshot()
+            .getClass(getDestClass().getStringValue());
     if (destClass == null)
       throw new OCommandExecutionException(
           "Destination class '" + getDestClass().getStringValue() + "' not found");

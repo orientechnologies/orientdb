@@ -410,7 +410,10 @@ public class OSchemaProxyObject implements OSchemaObject {
           || OReflectionHelper.isJavaType(iClass)
           || iClass.isAnonymousClass()) return;
 
-      if (!database.getMetadata().getSchema().existsClass(iClass.getSimpleName())) {
+      if (!database
+          .getMetadata()
+          .getImmutableSchemaSnapshot()
+          .existsClass(iClass.getSimpleName())) {
         database.getMetadata().getSchema().createClass(iClass.getSimpleName());
         reloadSchema = true;
       }

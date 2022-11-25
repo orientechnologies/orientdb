@@ -66,7 +66,7 @@ public class OCreateEdgeExecutionPlanner {
       } else {
         OClass clazz =
             db.getMetadata()
-                .getSchema()
+                .getImmutableSchemaSnapshot()
                 .getClassByClusterId(db.getClusterIdByName(targetClusterName.getStringValue()));
         if (clazz != null) {
           targetClass = new OIdentifier(clazz.getName());
@@ -96,7 +96,10 @@ public class OCreateEdgeExecutionPlanner {
     String uniqueIndexName = null;
     if (upsert) {
       OClass clazz =
-          ctx.getDatabase().getMetadata().getSchema().getClass(targetClass.getStringValue());
+          ((ODatabaseDocumentInternal) ctx.getDatabase())
+              .getMetadata()
+              .getImmutableSchemaSnapshot()
+              .getClass(targetClass.getStringValue());
       if (clazz == null) {
         throw new OCommandExecutionException(
             "Class " + targetClass + " not found in the db schema");

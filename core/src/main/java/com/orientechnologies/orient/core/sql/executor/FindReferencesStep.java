@@ -140,7 +140,8 @@ public class FindReferencesStep extends AbstractExecutionStep {
             targetClusterNames.add(clusterName);
           }
         }
-        OSchema schema = db.getMetadata().getSchema();
+        OSchema schema =
+            ((ODatabaseDocumentInternal) db).getMetadata().getImmutableSchemaSnapshot();
         for (OIdentifier className : this.classes) {
           OClass clazz = schema.getClass(className.getStringValue());
           if (clazz == null) {

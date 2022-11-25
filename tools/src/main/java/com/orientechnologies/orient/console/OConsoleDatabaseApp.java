@@ -2106,7 +2106,10 @@ public class OConsoleDatabaseApp extends OrientConsole
           totalElements += count;
 
           final OClass cls =
-              currentDatabase.getMetadata().getSchema().getClassByClusterId(clusterId);
+              currentDatabase
+                  .getMetadata()
+                  .getImmutableSchemaSnapshot()
+                  .getClassByClusterId(clusterId);
           final String className = Optional.ofNullable(cls).map(OClass::getName).orElse(null);
 
           row.field("NAME", clusterName);
