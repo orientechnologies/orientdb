@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import java.util.ArrayList;
@@ -104,7 +105,11 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
   }
 
   protected OClass loadClassFromSchema(String className, OCommandContext ctx) {
-    OClass clazz = ctx.getDatabase().getMetadata().getSchema().getClass(className);
+    OClass clazz =
+        ((ODatabaseDocumentInternal) ctx.getDatabase())
+            .getMetadata()
+            .getImmutableSchemaSnapshot()
+            .getClass(className);
     if (clazz == null) {
       throw new OCommandExecutionException("Class " + className + " not found");
     }

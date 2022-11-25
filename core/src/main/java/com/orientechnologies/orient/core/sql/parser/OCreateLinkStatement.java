@@ -78,7 +78,7 @@ public class OCreateLinkStatement extends OSimpleExecStatement {
 
     final ODatabaseDocument db = (ODatabaseDocument) database.getDatabaseOwner();
 
-    final OClass sourceClass =
+    OClass sourceClass =
         database
             .getMetadata()
             .getImmutableSchemaSnapshot()
@@ -87,7 +87,7 @@ public class OCreateLinkStatement extends OSimpleExecStatement {
       throw new OCommandExecutionException(
           "Source class '" + getSourceClass().getStringValue() + "' not found");
 
-    final OClass destClass =
+    OClass destClass =
         database
             .getMetadata()
             .getImmutableSchemaSnapshot()
@@ -209,6 +209,7 @@ public class OCreateLinkStatement extends OSimpleExecStatement {
         if (inverse) {
           // REMOVE THE OLD PROPERTY IF ANY
           OProperty prop = destClass.getProperty(linkName);
+          destClass = db.getMetadata().getSchema().getClass(getDestClass().getStringValue());
           if (prop != null) destClass.dropProperty(linkName);
 
           if (linkType == null) linkType = multipleRelationship ? OType.LINKSET : OType.LINK;
@@ -220,6 +221,7 @@ public class OCreateLinkStatement extends OSimpleExecStatement {
 
           // REMOVE THE OLD PROPERTY IF ANY
           OProperty prop = sourceClass.getProperty(linkName);
+          sourceClass = db.getMetadata().getSchema().getClass(getDestClass().getStringValue());
           if (prop != null) sourceClass.dropProperty(linkName);
 
           // CREATE THE PROPERTY

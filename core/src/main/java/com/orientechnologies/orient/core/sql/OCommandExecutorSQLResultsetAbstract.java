@@ -457,7 +457,9 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     final String cls = parsedTarget.getTargetClasses().keySet().iterator().next();
     target =
         searchInClasses(
-            getDatabase().getMetadata().getSchema().getClass(cls), true, iAscendentOrder);
+            getDatabase().getMetadata().getImmutableSchemaSnapshot().getClass(cls),
+            true,
+            iAscendentOrder);
   }
 
   protected Iterator<? extends OIdentifiable> searchInClasses(

@@ -482,6 +482,10 @@ public class OImmutableClass implements OClass {
 
   @Override
   public long count(boolean isPolymorphic) {
+    return getDatabase().countClass(getName(), isPolymorphic);
+  }
+
+  public long countImpl(boolean isPolymorphic) {
     if (isPolymorphic)
       return getDatabase()
           .countClusterElements(
@@ -794,7 +798,7 @@ public class OImmutableClass implements OClass {
     return name.compareTo(other.getName());
   }
 
-  private ODatabaseDocumentInternal getDatabase() {
+  protected ODatabaseDocumentInternal getDatabase() {
     return ODatabaseRecordThreadLocal.instance().get();
   }
 

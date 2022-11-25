@@ -22,7 +22,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
@@ -53,7 +53,7 @@ public abstract class OSpatialFunctionAbstractIndexable extends OSpatialFunction
   }
 
   protected OLuceneSpatialIndex searchForIndex(OFromClause target, OExpression[] args) {
-    OMetadata dbMetadata = getDb().getMetadata();
+    OMetadataInternal dbMetadata = getDb().getMetadata();
 
     OFromItem item = target.getItem();
     OIdentifier identifier = item.getIdentifier();
@@ -61,7 +61,7 @@ public abstract class OSpatialFunctionAbstractIndexable extends OSpatialFunction
 
     String className = identifier.getStringValue();
     List<OLuceneSpatialIndex> indices =
-        dbMetadata.getSchema().getClass(className).getIndexes().stream()
+        dbMetadata.getImmutableSchemaSnapshot().getClass(className).getIndexes().stream()
             .filter(idx -> idx instanceof OLuceneSpatialIndex)
             .map(idx -> (OLuceneSpatialIndex) idx)
             .filter(idx -> intersect(idx.getDefinition().getFields(), Arrays.asList(fieldName)))

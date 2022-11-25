@@ -9,7 +9,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -267,10 +267,11 @@ public class OLuceneSearchMoreLikeThisFunction extends OSQLFunctionAbstract
   }
 
   private OLuceneFullTextIndex searchForIndex(OCommandContext ctx, String className) {
-    OMetadata dbMetadata = ctx.getDatabase().activateOnCurrentThread().getMetadata();
+    OMetadataInternal dbMetadata =
+        (OMetadataInternal) ctx.getDatabase().activateOnCurrentThread().getMetadata();
 
     List<OLuceneFullTextIndex> indices =
-        dbMetadata.getSchema().getClass(className).getIndexes().stream()
+        dbMetadata.getImmutableSchemaSnapshot().getClass(className).getIndexes().stream()
             .filter(idx -> idx instanceof OLuceneFullTextIndex)
             .map(idx -> (OLuceneFullTextIndex) idx)
             .collect(Collectors.toList());

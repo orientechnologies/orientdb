@@ -191,12 +191,12 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLAbstract {
 
     final ODatabaseDocument db = (ODatabaseDocument) database.getDatabaseOwner();
 
-    final OClass sourceClass =
+    OClass sourceClass =
         database.getMetadata().getImmutableSchemaSnapshot().getClass(sourceClassName);
     if (sourceClass == null)
       throw new OCommandExecutionException("Source class '" + sourceClassName + "' not found");
 
-    final OClass destClass = database.getMetadata().getSchema().getClass(destClassName);
+    OClass destClass = database.getMetadata().getImmutableSchemaSnapshot().getClass(destClassName);
     if (destClass == null)
       throw new OCommandExecutionException("Destination class '" + destClassName + "' not found");
 
@@ -320,6 +320,7 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLAbstract {
         if (inverse) {
           // REMOVE THE OLD PROPERTY IF ANY
           OProperty prop = destClass.getProperty(linkName);
+          destClass = database.getMetadata().getSchema().getClass(destClassName);
           if (prop != null) destClass.dropProperty(linkName);
 
           if (linkType == null) linkType = multipleRelationship ? OType.LINKSET : OType.LINK;
@@ -331,6 +332,7 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLAbstract {
 
           // REMOVE THE OLD PROPERTY IF ANY
           OProperty prop = sourceClass.getProperty(linkName);
+          sourceClass = database.getMetadata().getSchema().getClass(sourceClassName);
           if (prop != null) sourceClass.dropProperty(linkName);
 
           // CREATE THE PROPERTY

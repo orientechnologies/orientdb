@@ -65,4 +65,9 @@ public class OImmutableView extends OImmutableClass implements OView {
   public String getUpdateStrategy() {
     return updateStrategy;
   }
+
+  @Override
+  public long count(boolean isPolymorphic) {
+    return getDatabase().countView(getName());
+  }
 }

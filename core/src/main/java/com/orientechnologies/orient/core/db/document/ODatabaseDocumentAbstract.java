@@ -47,6 +47,8 @@ import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableView;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OView;
@@ -1494,7 +1496,8 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
   /** Returns the number of the records of the class iClassName. */
   public long countView(final String viewName) {
-    final OView cls = getMetadata().getImmutableSchemaSnapshot().getView(viewName);
+    final OImmutableView cls =
+        (OImmutableView) getMetadata().getImmutableSchemaSnapshot().getView(viewName);
     if (cls == null) throw new IllegalArgumentException("View '" + cls + "' not found in database");
 
     return countClass(cls, false);
@@ -1510,16 +1513,17 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
    * polymorphic is true.
    */
   public long countClass(final String iClassName, final boolean iPolymorphic) {
-    final OClass cls = getMetadata().getImmutableSchemaSnapshot().getClass(iClassName);
+    final OImmutableClass cls =
+        (OImmutableClass) getMetadata().getImmutableSchemaSnapshot().getClass(iClassName);
     if (cls == null)
       throw new IllegalArgumentException("Class '" + cls + "' not found in database");
 
     return countClass(cls, iPolymorphic);
   }
 
-  protected long countClass(final OClass cls, final boolean iPolymorphic) {
+  protected long countClass(final OImmutableClass cls, final boolean iPolymorphic) {
 
-    long totalOnDb = cls.count(iPolymorphic);
+    long totalOnDb = cls.countImpl(iPolymorphic);
 
     long deletedInTx = 0;
     long addedInTx = 0;
