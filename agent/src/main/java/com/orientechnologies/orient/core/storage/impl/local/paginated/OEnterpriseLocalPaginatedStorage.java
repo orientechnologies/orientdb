@@ -94,6 +94,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
   private static final String CONF_UTF_8_ENTRY_NAME = "database_utf8.ocf";
 
   private volatile int backupRunning = 0;
+  private volatile int ddlRunning = 0;
 
   private static final String ENCRYPTION_IV = "encryption.iv";
 
@@ -1227,6 +1228,14 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
   }
 
   private synchronized void startBackup() {
+    while (isDDLRunning()) {
+      try {
+        this.wait();
+      } catch (InterruptedException e) {
+        throw OException.wrapException(
+            new OInterruptedException("Interrupted wait for backup to finish"), e);
+      }
+    }
     this.backupRunning += 1;
   }
 
@@ -1242,14 +1251,31 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
     return this.backupRunning > 0;
   }
 
+  private synchronized boolean isDDLRunning() {
+    return this.ddlRunning > 0;
+  }
+
   private synchronized void waitBackup() {
-    if (isIcrementalBackupRunning()) {
+    while (isIcrementalBackupRunning()) {
       try {
         this.wait();
       } catch (InterruptedException e) {
         throw OException.wrapException(
             new OInterruptedException("Interrupted wait for backup to finish"), e);
       }
+    }
+  }
+
+  public synchronized void startDDL() {
+    waitBackup();
+    this.ddlRunning += 1;
+  }
+
+  public synchronized void endDDL() {
+    assert this.ddlRunning > 0;
+    this.ddlRunning -= 1;
+    if (this.ddlRunning == 0) {
+      this.notifyAll();
     }
   }
 
