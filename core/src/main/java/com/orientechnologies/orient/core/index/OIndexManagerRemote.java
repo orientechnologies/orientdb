@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OMetadataUpdateListener;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -314,19 +313,20 @@ public class OIndexManagerRemote implements OIndexManagerAbstract {
   }
 
   void internalAcquireExclusiveLock() {
-    final ODatabaseDocument databaseRecord = getDatabaseIfDefined();
+    final ODatabaseDocumentInternal databaseRecord = getDatabaseIfDefined();
     if (databaseRecord != null && !databaseRecord.isClosed()) {
       final OMetadataInternal metadata = (OMetadataInternal) databaseRecord.getMetadata();
       if (metadata != null) metadata.makeThreadLocalSchemaSnapshot();
     }
-
+    databaseRecord.startEsclusiveMetadataChange();
     lock.writeLock().lock();
   }
 
   void internalReleaseExclusiveLock() {
     lock.writeLock().unlock();
 
-    final ODatabaseDocument databaseRecord = getDatabaseIfDefined();
+    final ODatabaseDocumentInternal databaseRecord = getDatabaseIfDefined();
+    databaseRecord.endEsclusiveMetadataChange();
     if (databaseRecord != null && !databaseRecord.isClosed()) {
       final OMetadata metadata = databaseRecord.getMetadata();
       if (metadata != null) ((OMetadataInternal) metadata).clearThreadLocalSchemaSnapshot();

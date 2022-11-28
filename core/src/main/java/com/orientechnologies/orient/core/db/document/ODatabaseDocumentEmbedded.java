@@ -1959,4 +1959,12 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     checkIfActive();
     return getStorage().getClustersIds(filterClusters);
   }
+
+  public void startEsclusiveMetadataChange() {
+    ((OAbstractPaginatedStorage) storage).startDDL();
+  }
+
+  public void endEsclusiveMetadataChange() {
+    ((OAbstractPaginatedStorage) storage).endDDL();
+  }
 }

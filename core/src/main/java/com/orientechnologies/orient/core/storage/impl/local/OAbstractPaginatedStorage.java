@@ -6982,4 +6982,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   protected abstract void checkBackupRunning();
+
+  public void startDDL() {}
+
+  public void endDDL() {}
 }

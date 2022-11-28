@@ -289,4 +289,8 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
   String getClusterRecordConflictStrategy(int clusterId);
 
   int[] getClustersIds(Set<String> filterClusters);
+
+  default void startEsclusiveMetadataChange() {}
+
+  default void endEsclusiveMetadataChange() {}
 }
