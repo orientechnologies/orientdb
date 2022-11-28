@@ -13,15 +13,27 @@ import com.orientechnologies.orient.core.db.viewmanager.ViewCreationListener;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.*;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.schema.OViewConfig;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import java.lang.reflect.Array;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Random;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -2405,13 +2417,12 @@ public class OSelectStatementExecutionTest {
     clazz.createProperty("name", OType.STRING);
     clazz.createProperty("surname", OType.STRING);
     db.command(
-            new OCommandSQL(
-                "create index "
-                    + className
-                    + ".name_surname on "
-                    + className
-                    + " (name, surname) NOTUNIQUE"))
-        .execute();
+            "create index "
+                + className
+                + ".name_surname on "
+                + className
+                + " (name, surname) NOTUNIQUE")
+        .close();
 
     for (int i = 0; i < 10; i++) {
       ODocument doc = db.newInstance(className);
@@ -2452,13 +2463,12 @@ public class OSelectStatementExecutionTest {
     clazz.createProperty("name", OType.STRING);
     clazz.createProperty("surname", OType.STRING);
     db.command(
-            new OCommandSQL(
-                "create index "
-                    + className
-                    + ".name_surname on "
-                    + className
-                    + " (name, surname) NOTUNIQUE"))
-        .execute();
+            "create index "
+                + className
+                + ".name_surname on "
+                + className
+                + " (name, surname) NOTUNIQUE")
+        .close();
 
     for (int i = 0; i < 10; i++) {
       ODocument doc = db.newInstance(className);
@@ -2499,13 +2509,12 @@ public class OSelectStatementExecutionTest {
     clazz.createProperty("name", OType.STRING);
     clazz.createProperty("surname", OType.STRING);
     db.command(
-            new OCommandSQL(
-                "create index "
-                    + className
-                    + ".name_surname on "
-                    + className
-                    + " (name, surname) NOTUNIQUE"))
-        .execute();
+            "create index "
+                + className
+                + ".name_surname on "
+                + className
+                + " (name, surname) NOTUNIQUE")
+        .close();
 
     for (int i = 0; i < 10; i++) {
       ODocument doc = db.newInstance(className);
@@ -2547,13 +2556,12 @@ public class OSelectStatementExecutionTest {
     clazz.createProperty("name", OType.STRING);
     clazz.createProperty("surname", OType.STRING);
     db.command(
-            new OCommandSQL(
-                "create index "
-                    + className
-                    + ".name_surname on "
-                    + className
-                    + " (name, surname) NOTUNIQUE"))
-        .execute();
+            "create index "
+                + className
+                + ".name_surname on "
+                + className
+                + " (name, surname) NOTUNIQUE")
+        .close();
 
     for (int i = 0; i < 10; i++) {
       ODocument doc = db.newInstance(className);
@@ -2596,13 +2604,12 @@ public class OSelectStatementExecutionTest {
     clazz.createProperty("surname", OType.STRING);
     clazz.createProperty("address", OType.STRING);
     db.command(
-            new OCommandSQL(
-                "create index "
-                    + className
-                    + ".name_surname on "
-                    + className
-                    + " (name, surname, address) NOTUNIQUE"))
-        .execute();
+            "create index "
+                + className
+                + ".name_surname on "
+                + className
+                + " (name, surname, address) NOTUNIQUE")
+        .close();
 
     for (int i = 0; i < 10; i++) {
       ODocument doc = db.newInstance(className);
@@ -2643,13 +2650,12 @@ public class OSelectStatementExecutionTest {
     clazz.createProperty("surname", OType.STRING);
     clazz.createProperty("address", OType.STRING);
     db.command(
-            new OCommandSQL(
-                "create index "
-                    + className
-                    + ".name_surname on "
-                    + className
-                    + " (name, surname, address) NOTUNIQUE"))
-        .execute();
+            "create index "
+                + className
+                + ".name_surname on "
+                + className
+                + " (name, surname, address) NOTUNIQUE")
+        .close();
 
     for (int i = 0; i < 10; i++) {
       ODocument doc = db.newInstance(className);
@@ -2690,13 +2696,12 @@ public class OSelectStatementExecutionTest {
     clazz.createProperty("surname", OType.STRING);
     clazz.createProperty("address", OType.STRING);
     db.command(
-            new OCommandSQL(
-                "create index "
-                    + className
-                    + ".name_surname on "
-                    + className
-                    + " (name, surname, address) NOTUNIQUE"))
-        .execute();
+            "create index "
+                + className
+                + ".name_surname on "
+                + className
+                + " (name, surname, address) NOTUNIQUE")
+        .close();
 
     for (int i = 0; i < 10; i++) {
       ODocument doc = db.newInstance(className);
@@ -2734,13 +2739,12 @@ public class OSelectStatementExecutionTest {
     clazz.createProperty("name", OType.STRING);
     clazz.createProperty("surname", OType.STRING);
     db.command(
-            new OCommandSQL(
-                "create index "
-                    + className
-                    + ".name_surname on "
-                    + className
-                    + " (name, surname) NOTUNIQUE"))
-        .execute();
+            "create index "
+                + className
+                + ".name_surname on "
+                + className
+                + " (name, surname) NOTUNIQUE")
+        .close();
 
     for (int i = 0; i < 10; i++) {
       ODocument doc = db.newInstance(className);
@@ -2779,13 +2783,12 @@ public class OSelectStatementExecutionTest {
     clazz.createProperty("name", OType.STRING);
     clazz.createProperty("surname", OType.STRING);
     db.command(
-            new OCommandSQL(
-                "create index "
-                    + className
-                    + ".name_surname on "
-                    + className
-                    + " (name, surname) NOTUNIQUE"))
-        .execute();
+            "create index "
+                + className
+                + ".name_surname on "
+                + className
+                + " (name, surname) NOTUNIQUE")
+        .close();
 
     for (int i = 0; i < 10; i++) {
       ODocument doc = db.newInstance(className);
@@ -2822,13 +2825,12 @@ public class OSelectStatementExecutionTest {
     clazz.createProperty("name", OType.STRING);
     clazz.createProperty("surname", OType.STRING);
     db.command(
-            new OCommandSQL(
-                "create index "
-                    + className
-                    + ".name_surname on "
-                    + className
-                    + " (name, surname) NOTUNIQUE"))
-        .execute();
+            "create index "
+                + className
+                + ".name_surname on "
+                + className
+                + " (name, surname) NOTUNIQUE")
+        .close();
 
     for (int i = 0; i < 10; i++) {
       ODocument doc = db.newInstance(className);
@@ -2865,13 +2867,12 @@ public class OSelectStatementExecutionTest {
     clazz.createProperty("name", OType.STRING);
     clazz.createProperty("surname", OType.STRING);
     db.command(
-            new OCommandSQL(
-                "create index "
-                    + className
-                    + ".name_surname on "
-                    + className
-                    + " (name, surname) NOTUNIQUE"))
-        .execute();
+            "create index "
+                + className
+                + ".name_surname on "
+                + className
+                + " (name, surname) NOTUNIQUE")
+        .close();
 
     for (int i = 0; i < 10; i++) {
       ODocument doc = db.newInstance(className);
@@ -2908,13 +2909,12 @@ public class OSelectStatementExecutionTest {
     clazz.createProperty("name", OType.STRING);
     clazz.createProperty("surname", OType.STRING);
     db.command(
-            new OCommandSQL(
-                "create index "
-                    + className
-                    + ".name_surname on "
-                    + className
-                    + " (name, surname) NOTUNIQUE"))
-        .execute();
+            "create index "
+                + className
+                + ".name_surname on "
+                + className
+                + " (name, surname) NOTUNIQUE")
+        .close();
 
     for (int i = 0; i < 10; i++) {
       ODocument doc = db.newInstance(className);
