@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OMixedIndexRIDContainerSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerSBTreeIndexRIDContainer;
@@ -122,14 +123,32 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
   }
 
   public OIndexMultiValues put(Object key, final OIdentifiable singleValue) {
+    final ORID rid = singleValue.getIdentity();
+
+    if (!rid.isValid()) {
+      if (singleValue instanceof ORecord) {
+        // EARLY SAVE IT
+        ((ORecord) singleValue).save();
+      } else {
+        throw new IllegalArgumentException(
+            "Cannot store non persistent RID as index value for key '" + key + "'");
+      }
+    }
+
     key = getCollatingValue(key);
 
     ODatabaseDocumentInternal database = getDatabase();
-    database.begin();
-    OTransaction singleTx = database.getTransaction();
-    singleTx.addIndexEntry(
-        this, super.getName(), OTransactionIndexChanges.OPERATION.PUT, key, singleValue);
-    database.commit();
+    if (database.getTransaction().isActive()) {
+      OTransaction singleTx = database.getTransaction();
+      singleTx.addIndexEntry(
+          this, super.getName(), OTransactionIndexChanges.OPERATION.PUT, key, singleValue);
+    } else {
+      database.begin();
+      OTransaction singleTx = database.getTransaction();
+      singleTx.addIndexEntry(
+          this, super.getName(), OTransactionIndexChanges.OPERATION.PUT, key, singleValue);
+      database.commit();
+    }
     return this;
   }
 
@@ -219,9 +238,13 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
     key = getCollatingValue(key);
 
     ODatabaseDocumentInternal database = getDatabase();
-    database.begin();
-    database.getTransaction().addIndexEntry(this, super.getName(), OPERATION.REMOVE, key, value);
-    database.commit();
+    if (database.getTransaction().isActive()) {
+      database.getTransaction().addIndexEntry(this, super.getName(), OPERATION.REMOVE, key, value);
+    } else {
+      database.begin();
+      database.getTransaction().addIndexEntry(this, super.getName(), OPERATION.REMOVE, key, value);
+      database.commit();
+    }
     return true;
   }
 

@@ -600,16 +600,30 @@ public abstract class OIndexAbstract implements OIndexInternal {
   }
 
   public boolean remove(Object key, final OIdentifiable rid) {
-    return remove(key);
+    key = getCollatingValue(key);
+
+    ODatabaseDocumentInternal database = getDatabase();
+    if (database.getTransaction().isActive()) {
+      database.getTransaction().addIndexEntry(this, getName(), OPERATION.REMOVE, key, rid);
+    } else {
+      database.begin();
+      database.getTransaction().addIndexEntry(this, getName(), OPERATION.REMOVE, key, rid);
+      database.commit();
+    }
+    return true;
   }
 
   public boolean remove(Object key) {
     key = getCollatingValue(key);
 
     ODatabaseDocumentInternal database = getDatabase();
-    database.begin();
-    database.getTransaction().addIndexEntry(this, getName(), OPERATION.REMOVE, key, null);
-    database.commit();
+    if (database.getTransaction().isActive()) {
+      database.getTransaction().addIndexEntry(this, getName(), OPERATION.REMOVE, key, null);
+    } else {
+      database.begin();
+      database.getTransaction().addIndexEntry(this, getName(), OPERATION.REMOVE, key, null);
+      database.commit();
+    }
     return true;
   }
 
@@ -627,28 +641,15 @@ public abstract class OIndexAbstract implements OIndexInternal {
   @Override
   @Deprecated
   public OIndex clear() {
-    acquireSharedLock();
-    try {
-      while (true)
-        try {
-          final boolean manualIndexesAreUsed =
-              indexDefinition == null
-                  || indexDefinition.getClassName() == null
-                  || indexDefinition.getFields() == null
-                  || indexDefinition.getFields().isEmpty();
-          if (manualIndexesAreUsed) {
-            OIndexAbstract.manualIndexesWarning();
-          }
-
-          storage.clearIndex(indexId);
-          break;
-        } catch (OInvalidIndexEngineIdException ignore) {
-          doReloadIndexEngine();
-        }
-      return this;
-    } finally {
-      releaseSharedLock();
+    ODatabaseDocumentInternal database = getDatabase();
+    if (database.getTransaction().isActive()) {
+      database.getTransaction().addIndexEntry(this, this.getName(), OPERATION.CLEAR, null, null);
+    } else {
+      database.begin();
+      database.getTransaction().addIndexEntry(this, this.getName(), OPERATION.CLEAR, null, null);
+      database.commit();
     }
+    return this;
   }
 
   public OIndexInternal delete() {

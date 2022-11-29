@@ -61,11 +61,17 @@ public class OIndexDictionary extends OIndexOneValue {
     key = getCollatingValue(key);
 
     ODatabaseDocumentInternal database = getDatabase();
-    database.begin();
-    OTransaction singleTx = database.getTransaction();
-    singleTx.addIndexEntry(
-        this, super.getName(), OTransactionIndexChanges.OPERATION.PUT, key, value.getIdentity());
-    database.commit();
+    if (database.getTransaction().isActive()) {
+      OTransaction singleTx = database.getTransaction();
+      singleTx.addIndexEntry(
+          this, super.getName(), OTransactionIndexChanges.OPERATION.PUT, key, value.getIdentity());
+    } else {
+      database.begin();
+      OTransaction singleTx = database.getTransaction();
+      singleTx.addIndexEntry(
+          this, super.getName(), OTransactionIndexChanges.OPERATION.PUT, key, value.getIdentity());
+      database.commit();
+    }
     return this;
   }
 

@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerSBTreeIndexRIDContainer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -384,7 +385,17 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
 
   @Override
   public OLuceneIndexNotUnique put(final Object key, final OIdentifiable value) {
+    final ORID rid = value.getIdentity();
 
+    if (!rid.isValid()) {
+      if (value instanceof ORecord) {
+        // EARLY SAVE IT
+        ((ORecord) value).save();
+      } else {
+        throw new IllegalArgumentException(
+            "Cannot store non persistent RID as index value for key '" + key + "'");
+      }
+    }
     if (key != null) {
       ODatabaseDocumentInternal db = getDatabase();
       OTransaction transaction = db.getTransaction();

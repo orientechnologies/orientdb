@@ -22,6 +22,8 @@ package com.orientechnologies.orient.core.index;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -96,19 +98,38 @@ public class OIndexFullText extends OIndexMultiValues {
     if (key == null) {
       return this;
     }
+    final ORID rid = value.getIdentity();
+
+    if (!rid.isValid()) {
+      if (value instanceof ORecord) {
+        // EARLY SAVE IT
+        ((ORecord) value).save();
+      } else {
+        throw new IllegalArgumentException(
+            "Cannot store non persistent RID as index value for key '" + key + "'");
+      }
+    }
 
     key = getCollatingValue(key);
 
     final Set<String> words = splitIntoWords(key.toString());
 
     ODatabaseDocumentInternal database = getDatabase();
-    database.begin();
-    OTransaction singleTx = database.getTransaction();
-    for (String word : words) {
-      singleTx.addIndexEntry(
-          this, super.getName(), OTransactionIndexChanges.OPERATION.PUT, word, value);
+    if (database.getTransaction().isActive()) {
+      OTransaction singleTx = database.getTransaction();
+      for (String word : words) {
+        singleTx.addIndexEntry(
+            this, super.getName(), OTransactionIndexChanges.OPERATION.PUT, word, value);
+      }
+    } else {
+      database.begin();
+      OTransaction singleTx = database.getTransaction();
+      for (String word : words) {
+        singleTx.addIndexEntry(
+            this, super.getName(), OTransactionIndexChanges.OPERATION.PUT, word, value);
+      }
+      database.commit();
     }
-    database.commit();
 
     return this;
   }
@@ -126,16 +147,21 @@ public class OIndexFullText extends OIndexMultiValues {
     if (key == null) {
       return false;
     }
-
     key = getCollatingValue(key);
 
     final Set<String> words = splitIntoWords(key.toString());
     ODatabaseDocumentInternal database = getDatabase();
-    database.begin();
-    for (final String word : words) {
-      database.getTransaction().addIndexEntry(this, super.getName(), OPERATION.REMOVE, word, rid);
+    if (database.getTransaction().isActive()) {
+      for (final String word : words) {
+        database.getTransaction().addIndexEntry(this, super.getName(), OPERATION.REMOVE, word, rid);
+      }
+    } else {
+      database.begin();
+      for (final String word : words) {
+        database.getTransaction().addIndexEntry(this, super.getName(), OPERATION.REMOVE, word, rid);
+      }
+      database.commit();
     }
-    database.commit();
 
     return true;
   }

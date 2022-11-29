@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -87,14 +88,32 @@ public class OIndexUnique extends OIndexOneValue {
 
   @Override
   public OIndexOneValue put(Object key, final OIdentifiable value) {
+    final ORID rid = value.getIdentity();
+
+    if (!rid.isValid()) {
+      if (value instanceof ORecord) {
+        // EARLY SAVE IT
+        ((ORecord) value).save();
+      } else {
+        throw new IllegalArgumentException(
+            "Cannot store non persistent RID as index value for key '" + key + "'");
+      }
+    }
     key = getCollatingValue(key);
 
     ODatabaseDocumentInternal database = getDatabase();
-    database.begin();
-    OTransaction singleTx = database.getTransaction();
-    singleTx.addIndexEntry(
-        this, super.getName(), OTransactionIndexChanges.OPERATION.PUT, key, value.getIdentity());
-    database.commit();
+    if (database.getTransaction().isActive()) {
+      OTransaction singleTx = database.getTransaction();
+      singleTx.addIndexEntry(
+          this, super.getName(), OTransactionIndexChanges.OPERATION.PUT, key, value.getIdentity());
+
+    } else {
+      database.begin();
+      OTransaction singleTx = database.getTransaction();
+      singleTx.addIndexEntry(
+          this, super.getName(), OTransactionIndexChanges.OPERATION.PUT, key, value.getIdentity());
+      database.commit();
+    }
     return this;
   }
 

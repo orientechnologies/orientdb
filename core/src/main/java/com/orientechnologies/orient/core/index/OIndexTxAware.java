@@ -23,9 +23,7 @@ import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import java.util.stream.Stream;
 
 /**
@@ -78,42 +76,24 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate {
 
   @Override
   public OIndexTxAware<T> put(Object key, final OIdentifiable value) {
-    checkForKeyType(key);
-    final ORID rid = value.getIdentity();
-
-    if (!rid.isValid())
-      if (value instanceof ORecord) {
-        // EARLY SAVE IT
-        ((ORecord) value).save();
-      } else {
-        throw new IllegalArgumentException(
-            "Cannot store non persistent RID as index value for key '" + key + "'");
-      }
-
-    key = getCollatingValue(key);
-
-    database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.PUT, key, value);
+    delegate.put(key, value);
     return this;
   }
 
   @Override
   public boolean remove(Object key) {
-    key = getCollatingValue(key);
-    database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, key, null);
-    return true;
+    return delegate.remove(key);
   }
 
   @Override
   public boolean remove(Object key, final OIdentifiable rid) {
-    key = getCollatingValue(key);
-    database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, key, rid);
-    return true;
+    return delegate.remove(key, rid);
   }
 
   @SuppressWarnings("deprecation")
   @Override
   public OIndexTxAware<T> clear() {
-    database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.CLEAR, null, null);
+    delegate.clear();
     return this;
   }
 
