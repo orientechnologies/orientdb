@@ -28,6 +28,28 @@ This document contains the last changes of OrientDB Community Edition.
 
 
 -----------------------------------------------------------------------------------------------------------------------------------
+VERSION 3.2.13 - (December, 1 2022)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3213---1-December-2022
+
+# Core
+- Make sure to use high level transactions in all index change cases
+- Made index rebuild batch changes in transaction
+- Fix view unlocking in case of refresh error
+- Optimized update of vertices that use ridbag trees
+- Fix regression on OResult hash code, issue #9900
+- Ignore index corrupted errors on drop
+- Batched view refreshing in transaction
+- Optimized of usage of read/write lock in storage
+- Fix check of index type also on chained indexes 
+- Reduced usage of modifiable schema to reduce contention on read/write lock
+- Fix waiting for last task in ViewManager close
+- Fix running of ddl while incremental backup is running do not block anymore other write operations.
+- Fix invalid cluster id do not make storage readonly
+
+# Distributed
+- Fix in handling of node missing on refresh
+
+-----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.12 - (November, 10 2022)
 - Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3212---10-November-2022
 
