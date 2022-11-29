@@ -30,7 +30,6 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OMetadataUpdateListener;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -424,10 +423,11 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
   }
 
   void internalAcquireExclusiveLock() {
-    final ODatabaseDocument databaseRecord = getDatabaseIfDefined();
+    final ODatabaseDocumentInternal databaseRecord = getDatabaseIfDefined();
     if (databaseRecord != null && !databaseRecord.isClosed()) {
       final OMetadataInternal metadata = (OMetadataInternal) databaseRecord.getMetadata();
       if (metadata != null) metadata.makeThreadLocalSchemaSnapshot();
+      databaseRecord.startEsclusiveMetadataChange();
     }
 
     lock.writeLock().lock();
@@ -453,8 +453,9 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
   void internalReleaseExclusiveLock() {
     lock.writeLock().unlock();
 
-    final ODatabaseDocument databaseRecord = getDatabaseIfDefined();
+    final ODatabaseDocumentInternal databaseRecord = getDatabaseIfDefined();
     if (databaseRecord != null && !databaseRecord.isClosed()) {
+      databaseRecord.endEsclusiveMetadataChange();
       final OMetadata metadata = databaseRecord.getMetadata();
       if (metadata != null) ((OMetadataInternal) metadata).clearThreadLocalSchemaSnapshot();
     }

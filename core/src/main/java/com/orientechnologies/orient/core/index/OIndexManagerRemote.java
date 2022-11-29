@@ -318,7 +318,6 @@ public class OIndexManagerRemote implements OIndexManagerAbstract {
       final OMetadataInternal metadata = (OMetadataInternal) databaseRecord.getMetadata();
       if (metadata != null) metadata.makeThreadLocalSchemaSnapshot();
     }
-    databaseRecord.startEsclusiveMetadataChange();
     lock.writeLock().lock();
   }
 
@@ -326,7 +325,6 @@ public class OIndexManagerRemote implements OIndexManagerAbstract {
     lock.writeLock().unlock();
 
     final ODatabaseDocumentInternal databaseRecord = getDatabaseIfDefined();
-    databaseRecord.endEsclusiveMetadataChange();
     if (databaseRecord != null && !databaseRecord.isClosed()) {
       final OMetadata metadata = databaseRecord.getMetadata();
       if (metadata != null) ((OMetadataInternal) metadata).clearThreadLocalSchemaSnapshot();
