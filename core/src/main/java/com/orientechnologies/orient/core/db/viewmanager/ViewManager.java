@@ -340,6 +340,7 @@ public class ViewManager {
       // backup is running handle rebuild the next run
       return;
     }
+    OLogManager.instance().info(this, "Starting refresh of view '%s'", view.getName());
     lastUpdateTimestampForView.put(view.getName(), System.currentTimeMillis());
     int cluster = db.addCluster(getNextClusterNameFor(view, db));
 
@@ -406,6 +407,7 @@ public class ViewManager {
     }
     cleanUnusedViewIndexes(db);
     cleanUnusedViewClusters(db);
+    OLogManager.instance().info(this, "Finished refresh of view '%s'", view.getName());
   }
 
   private void addItemToView(
