@@ -6346,7 +6346,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final RuntimeException runtimeException, final boolean putInReadOnlyMode) {
     if (!(runtimeException instanceof OHighLevelException
         || runtimeException instanceof ONeedRetryException
-        || runtimeException instanceof OInternalErrorException)) {
+        || runtimeException instanceof OInternalErrorException
+        || runtimeException instanceof IllegalArgumentException)) {
       if (putInReadOnlyMode) {
         setInError(runtimeException);
       }
