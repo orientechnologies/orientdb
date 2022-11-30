@@ -12,19 +12,20 @@ import java.util.Set;
 import java.util.Spliterator;
 import java.util.function.Consumer;
 
-public class PureTxBetweenIndexBackwardCursor implements Spliterator<ORawPair<Object, ORID>> {
+public class PureTxMultiValueBetweenIndexForwardSpliterator
+    implements Spliterator<ORawPair<Object, ORID>> {
   /** */
   private final OIndexTxAwareMultiValue oIndexTxAwareMultiValue;
 
   private final OTransactionIndexChanges indexChanges;
-  private Object firstKey;
+  private Object lastKey;
 
   private Object nextKey;
 
   private Iterator<OIdentifiable> valuesIterator = new OEmptyIterator<>();
   private Object key;
 
-  public PureTxBetweenIndexBackwardCursor(
+  public PureTxMultiValueBetweenIndexForwardSpliterator(
       OIndexTxAwareMultiValue oIndexTxAwareMultiValue,
       Object fromKey,
       boolean fromInclusive,
@@ -36,24 +37,21 @@ public class PureTxBetweenIndexBackwardCursor implements Spliterator<ORawPair<Ob
 
     if (fromKey != null) {
       fromKey =
-          this.oIndexTxAwareMultiValue.enhanceFromCompositeKeyBetweenDesc(fromKey, fromInclusive);
+          this.oIndexTxAwareMultiValue.enhanceFromCompositeKeyBetweenAsc(fromKey, fromInclusive);
     }
     if (toKey != null) {
-      toKey = this.oIndexTxAwareMultiValue.enhanceToCompositeKeyBetweenDesc(toKey, toInclusive);
+      toKey = this.oIndexTxAwareMultiValue.enhanceToCompositeKeyBetweenAsc(toKey, toInclusive);
     }
 
     final Object[] keys = indexChanges.firstAndLastKeys(fromKey, fromInclusive, toKey, toInclusive);
     if (keys.length == 0) {
       nextKey = null;
     } else {
-      firstKey = keys[0];
-      nextKey = keys[1];
-    }
-  }
+      Object firstKey = keys[0];
+      lastKey = keys[1];
 
-  private ORawPair<Object, ORID> nextEntryInternal() {
-    final OIdentifiable identifiable = valuesIterator.next();
-    return new ORawPair<>(key, identifiable.getIdentity());
+      nextKey = firstKey;
+    }
   }
 
   @Override
@@ -73,9 +71,9 @@ public class PureTxBetweenIndexBackwardCursor implements Spliterator<ORawPair<Ob
       result = OIndexTxAwareMultiValue.calculateTxValue(nextKey, indexChanges);
       key = nextKey;
 
-      nextKey = indexChanges.getLowerKey(nextKey);
+      nextKey = indexChanges.getHigherKey(nextKey);
 
-      if (nextKey != null && ODefaultComparator.INSTANCE.compare(nextKey, firstKey) < 0)
+      if (nextKey != null && ODefaultComparator.INSTANCE.compare(nextKey, lastKey) > 0)
         nextKey = null;
     } while ((result == null || result.isEmpty()) && nextKey != null);
 
@@ -86,7 +84,13 @@ public class PureTxBetweenIndexBackwardCursor implements Spliterator<ORawPair<Ob
     valuesIterator = result.iterator();
     final ORawPair<Object, ORID> entry = nextEntryInternal();
     action.accept(entry);
+
     return true;
+  }
+
+  private ORawPair<Object, ORID> nextEntryInternal() {
+    final OIdentifiable identifiable = valuesIterator.next();
+    return new ORawPair<>(key, identifiable.getIdentity());
   }
 
   @Override
@@ -107,6 +111,6 @@ public class PureTxBetweenIndexBackwardCursor implements Spliterator<ORawPair<Ob
   @Override
   public Comparator<? super ORawPair<Object, ORID>> getComparator() {
     return (entryOne, entryTwo) ->
-        -ODefaultComparator.INSTANCE.compare(entryOne.first, entryTwo.first);
+        ODefaultComparator.INSTANCE.compare(entryOne.first, entryTwo.first);
   }
 }

@@ -8,16 +8,16 @@ import java.util.Comparator;
 import java.util.Spliterator;
 import java.util.function.Consumer;
 
-class PureTxBetweenIndexForwardSpliterator implements Spliterator<ORawPair<Object, ORID>> {
+class PureTxBetweenIndexBackwardSpliterator implements Spliterator<ORawPair<Object, ORID>> {
   /** */
   private final OIndexTxAwareOneValue oIndexTxAwareOneValue;
 
   private final OTransactionIndexChanges indexChanges;
-  private Object lastKey;
+  private Object firstKey;
 
   private Object nextKey;
 
-  PureTxBetweenIndexForwardSpliterator(
+  PureTxBetweenIndexBackwardSpliterator(
       OIndexTxAwareOneValue oIndexTxAwareOneValue,
       Object fromKey,
       boolean fromInclusive,
@@ -29,20 +29,18 @@ class PureTxBetweenIndexForwardSpliterator implements Spliterator<ORawPair<Objec
 
     if (fromKey != null) {
       fromKey =
-          this.oIndexTxAwareOneValue.enhanceFromCompositeKeyBetweenAsc(fromKey, fromInclusive);
+          this.oIndexTxAwareOneValue.enhanceFromCompositeKeyBetweenDesc(fromKey, fromInclusive);
     }
     if (toKey != null) {
-      toKey = this.oIndexTxAwareOneValue.enhanceToCompositeKeyBetweenAsc(toKey, toInclusive);
+      toKey = this.oIndexTxAwareOneValue.enhanceToCompositeKeyBetweenDesc(toKey, toInclusive);
     }
 
     final Object[] keys = indexChanges.firstAndLastKeys(fromKey, fromInclusive, toKey, toInclusive);
     if (keys.length == 0) {
       nextKey = null;
     } else {
-      Object firstKey = keys[0];
-      lastKey = keys[1];
-
-      nextKey = firstKey;
+      firstKey = keys[0];
+      nextKey = keys[1];
     }
   }
 
@@ -53,15 +51,12 @@ class PureTxBetweenIndexForwardSpliterator implements Spliterator<ORawPair<Objec
     }
 
     ORawPair<Object, ORID> result;
-
     do {
       result = this.oIndexTxAwareOneValue.calculateTxIndexEntry(nextKey, null, indexChanges);
-      nextKey = indexChanges.getHigherKey(nextKey);
+      nextKey = indexChanges.getLowerKey(nextKey);
 
-      if (nextKey != null && ODefaultComparator.INSTANCE.compare(nextKey, lastKey) > 0) {
+      if (nextKey != null && ODefaultComparator.INSTANCE.compare(nextKey, firstKey) < 0)
         nextKey = null;
-      }
-
     } while (result == null && nextKey != null);
 
     if (result == null) {
@@ -90,6 +85,6 @@ class PureTxBetweenIndexForwardSpliterator implements Spliterator<ORawPair<Objec
   @Override
   public Comparator<? super ORawPair<Object, ORID>> getComparator() {
     return (entryOne, entryTwo) ->
-        ODefaultComparator.INSTANCE.compare(entryOne.first, entryTwo.first);
+        -ODefaultComparator.INSTANCE.compare(entryOne.first, entryTwo.first);
   }
 }

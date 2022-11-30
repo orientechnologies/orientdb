@@ -30,7 +30,6 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -41,165 +40,6 @@ import java.util.stream.StreamSupport;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
-  private class PureTxBetweenIndexForwardSpliterator
-      implements Spliterator<ORawPair<Object, ORID>> {
-    private final OTransactionIndexChanges indexChanges;
-    private Object lastKey;
-
-    private Object nextKey;
-
-    private PureTxBetweenIndexForwardSpliterator(
-        Object fromKey,
-        boolean fromInclusive,
-        Object toKey,
-        boolean toInclusive,
-        OTransactionIndexChanges indexChanges) {
-      this.indexChanges = indexChanges;
-
-      if (fromKey != null) {
-        fromKey = enhanceFromCompositeKeyBetweenAsc(fromKey, fromInclusive);
-      }
-      if (toKey != null) {
-        toKey = enhanceToCompositeKeyBetweenAsc(toKey, toInclusive);
-      }
-
-      final Object[] keys =
-          indexChanges.firstAndLastKeys(fromKey, fromInclusive, toKey, toInclusive);
-      if (keys.length == 0) {
-        nextKey = null;
-      } else {
-        Object firstKey = keys[0];
-        lastKey = keys[1];
-
-        nextKey = firstKey;
-      }
-    }
-
-    @Override
-    public boolean tryAdvance(Consumer<? super ORawPair<Object, ORID>> action) {
-      if (nextKey == null) {
-        return false;
-      }
-
-      ORawPair<Object, ORID> result;
-
-      do {
-        result = calculateTxIndexEntry(nextKey, null, indexChanges);
-        nextKey = indexChanges.getHigherKey(nextKey);
-
-        if (nextKey != null && ODefaultComparator.INSTANCE.compare(nextKey, lastKey) > 0) {
-          nextKey = null;
-        }
-
-      } while (result == null && nextKey != null);
-
-      if (result == null) {
-        return false;
-      }
-
-      action.accept(result);
-      return true;
-    }
-
-    @Override
-    public Spliterator<ORawPair<Object, ORID>> trySplit() {
-      return null;
-    }
-
-    @Override
-    public long estimateSize() {
-      return Long.MAX_VALUE;
-    }
-
-    @Override
-    public int characteristics() {
-      return NONNULL | SORTED | ORDERED;
-    }
-
-    @Override
-    public Comparator<? super ORawPair<Object, ORID>> getComparator() {
-      return (entryOne, entryTwo) ->
-          ODefaultComparator.INSTANCE.compare(entryOne.first, entryTwo.first);
-    }
-  }
-
-  private class PureTxBetweenIndexBackwardSpliterator
-      implements Spliterator<ORawPair<Object, ORID>> {
-    private final OTransactionIndexChanges indexChanges;
-    private Object firstKey;
-
-    private Object nextKey;
-
-    private PureTxBetweenIndexBackwardSpliterator(
-        Object fromKey,
-        boolean fromInclusive,
-        Object toKey,
-        boolean toInclusive,
-        OTransactionIndexChanges indexChanges) {
-      this.indexChanges = indexChanges;
-
-      if (fromKey != null) {
-        fromKey = enhanceFromCompositeKeyBetweenDesc(fromKey, fromInclusive);
-      }
-      if (toKey != null) {
-        toKey = enhanceToCompositeKeyBetweenDesc(toKey, toInclusive);
-      }
-
-      final Object[] keys =
-          indexChanges.firstAndLastKeys(fromKey, fromInclusive, toKey, toInclusive);
-      if (keys.length == 0) {
-        nextKey = null;
-      } else {
-        firstKey = keys[0];
-        nextKey = keys[1];
-      }
-    }
-
-    @Override
-    public boolean tryAdvance(Consumer<? super ORawPair<Object, ORID>> action) {
-      if (nextKey == null) {
-        return false;
-      }
-
-      ORawPair<Object, ORID> result;
-      do {
-        result = calculateTxIndexEntry(nextKey, null, indexChanges);
-        nextKey = indexChanges.getLowerKey(nextKey);
-
-        if (nextKey != null && ODefaultComparator.INSTANCE.compare(nextKey, firstKey) < 0)
-          nextKey = null;
-      } while (result == null && nextKey != null);
-
-      if (result == null) {
-        return false;
-      }
-
-      action.accept(result);
-      return true;
-    }
-
-    @Override
-    public Spliterator<ORawPair<Object, ORID>> trySplit() {
-      return null;
-    }
-
-    @Override
-    public long estimateSize() {
-      return Long.MAX_VALUE;
-    }
-
-    @Override
-    public int characteristics() {
-      return NONNULL | SORTED | ORDERED;
-    }
-
-    @Override
-    public Comparator<? super ORawPair<Object, ORID>> getComparator() {
-      return (entryOne, entryTwo) ->
-          -ODefaultComparator.INSTANCE.compare(entryOne.first, entryTwo.first);
-    }
-  }
-
   public OIndexTxAwareOneValue(
       final ODatabaseDocumentInternal database, final OIndexInternal delegate) {
     super(database, delegate);
@@ -256,7 +96,8 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
 
     final Stream<ORawPair<Object, ORID>> txStream =
         StreamSupport.stream(
-            new PureTxBetweenIndexForwardSpliterator(null, true, null, true, indexChanges), false);
+            new PureTxBetweenIndexForwardSpliterator(this, null, true, null, true, indexChanges),
+            false);
     if (indexChanges.cleared) {
       return IndexStreamSecurityDecorator.decorateStream(this, txStream);
     }
@@ -277,7 +118,8 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
 
     final Stream<ORawPair<Object, ORID>> txStream =
         StreamSupport.stream(
-            new PureTxBetweenIndexBackwardSpliterator(null, true, null, true, indexChanges), false);
+            new PureTxBetweenIndexBackwardSpliterator(this, null, true, null, true, indexChanges),
+            false);
     if (indexChanges.cleared) {
       return IndexStreamSecurityDecorator.decorateStream(this, txStream);
     }
@@ -310,14 +152,14 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
       txStream =
           StreamSupport.stream(
               new PureTxBetweenIndexForwardSpliterator(
-                  fromKey, fromInclusive, toKey, toInclusive, indexChanges),
+                  this, fromKey, fromInclusive, toKey, toInclusive, indexChanges),
               false);
     } else {
       //noinspection resource
       txStream =
           StreamSupport.stream(
               new PureTxBetweenIndexBackwardSpliterator(
-                  fromKey, fromInclusive, toKey, toInclusive, indexChanges),
+                  this, fromKey, fromInclusive, toKey, toInclusive, indexChanges),
               false);
     }
 
@@ -374,14 +216,14 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
       txStream =
           StreamSupport.stream(
               new PureTxBetweenIndexForwardSpliterator(
-                  fromKey, fromInclusive, lastKey, true, indexChanges),
+                  this, fromKey, fromInclusive, lastKey, true, indexChanges),
               false);
     } else {
       //noinspection resource
       txStream =
           StreamSupport.stream(
               new PureTxBetweenIndexBackwardSpliterator(
-                  fromKey, fromInclusive, lastKey, true, indexChanges),
+                  this, fromKey, fromInclusive, lastKey, true, indexChanges),
               false);
     }
 
@@ -415,14 +257,14 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
       txStream =
           StreamSupport.stream(
               new PureTxBetweenIndexForwardSpliterator(
-                  firstKey, true, toKey, toInclusive, indexChanges),
+                  this, firstKey, true, toKey, toInclusive, indexChanges),
               false);
     } else {
       //noinspection resource
       txStream =
           StreamSupport.stream(
               new PureTxBetweenIndexBackwardSpliterator(
-                  firstKey, true, toKey, toInclusive, indexChanges),
+                  this, firstKey, true, toKey, toInclusive, indexChanges),
               false);
     }
 
@@ -469,7 +311,7 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
         this, mergeTxAndBackedStreams(indexChanges, txStream, backedStream, ascSortOrder));
   }
 
-  private ORawPair<Object, ORID> calculateTxIndexEntry(
+  ORawPair<Object, ORID> calculateTxIndexEntry(
       Object key, final ORID backendValue, final OTransactionIndexChanges indexChanges) {
     key = getCollatingValue(key);
     ORID result = backendValue;

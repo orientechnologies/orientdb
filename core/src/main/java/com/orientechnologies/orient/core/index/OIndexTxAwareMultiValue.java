@@ -94,7 +94,8 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
 
     final Stream<ORawPair<Object, ORID>> txStream =
         StreamSupport.stream(
-            new PureTxBetweenIndexForwardSpliterator(this, null, true, null, true, indexChanges),
+            new PureTxMultiValueBetweenIndexForwardSpliterator(
+                this, null, true, null, true, indexChanges),
             false);
 
     if (indexChanges.cleared) {
@@ -117,7 +118,8 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
 
     final Stream<ORawPair<Object, ORID>> txStream =
         StreamSupport.stream(
-            new PureTxBetweenIndexBackwardCursor(this, null, true, null, true, indexChanges),
+            new PureTxMultiValueBetweenIndexBackwardSplititerator(
+                this, null, true, null, true, indexChanges),
             false);
 
     if (indexChanges.cleared) {
@@ -152,14 +154,14 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
       //noinspection resource
       txStream =
           StreamSupport.stream(
-              new PureTxBetweenIndexForwardSpliterator(
+              new PureTxMultiValueBetweenIndexForwardSpliterator(
                   this, fromKey, fromInclusive, toKey, toInclusive, indexChanges),
               false);
     } else {
       //noinspection resource
       txStream =
           StreamSupport.stream(
-              new PureTxBetweenIndexBackwardCursor(
+              new PureTxMultiValueBetweenIndexBackwardSplititerator(
                   this, fromKey, fromInclusive, toKey, toInclusive, indexChanges),
               false);
     }
@@ -215,14 +217,14 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
       //noinspection resource
       txStream =
           StreamSupport.stream(
-              new PureTxBetweenIndexForwardSpliterator(
+              new PureTxMultiValueBetweenIndexForwardSpliterator(
                   this, fromKey, fromInclusive, lastKey, true, indexChanges),
               false);
     } else {
       //noinspection resource
       txStream =
           StreamSupport.stream(
-              new PureTxBetweenIndexBackwardCursor(
+              new PureTxMultiValueBetweenIndexBackwardSplititerator(
                   this, fromKey, fromInclusive, lastKey, true, indexChanges),
               false);
     }
@@ -257,14 +259,14 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
       //noinspection resource
       txStream =
           StreamSupport.stream(
-              new PureTxBetweenIndexForwardSpliterator(
+              new PureTxMultiValueBetweenIndexForwardSpliterator(
                   this, firstKey, true, toKey, toInclusive, indexChanges),
               false);
     } else {
       //noinspection resource
       txStream =
           StreamSupport.stream(
-              new PureTxBetweenIndexBackwardCursor(
+              new PureTxMultiValueBetweenIndexBackwardSplititerator(
                   this, firstKey, true, toKey, toInclusive, indexChanges),
               false);
     }

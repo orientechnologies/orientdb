@@ -97,11 +97,12 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate {
     return this;
   }
 
-  private Object enhanceCompositeKey(Object key, PartialSearchMode partialSearchMode) {
+  private static Object enhanceCompositeKey(
+      Object key, PartialSearchMode partialSearchMode, OIndexDefinition definition) {
     if (!(key instanceof OCompositeKey)) return key;
 
     final OCompositeKey compositeKey = (OCompositeKey) key;
-    final int keySize = getDefinition().getParamCount();
+    final int keySize = definition.getParamCount();
 
     if (!(keySize == 1
         || compositeKey.getKeys().size() == keySize
@@ -127,7 +128,7 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate {
     if (toInclusive) partialSearchModeTo = PartialSearchMode.HIGHEST_BOUNDARY;
     else partialSearchModeTo = PartialSearchMode.LOWEST_BOUNDARY;
 
-    keyTo = enhanceCompositeKey(keyTo, partialSearchModeTo);
+    keyTo = enhanceCompositeKey(keyTo, partialSearchModeTo, getDefinition());
     return keyTo;
   }
 
@@ -136,7 +137,7 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate {
     if (fromInclusive) partialSearchModeFrom = PartialSearchMode.LOWEST_BOUNDARY;
     else partialSearchModeFrom = PartialSearchMode.HIGHEST_BOUNDARY;
 
-    keyFrom = enhanceCompositeKey(keyFrom, partialSearchModeFrom);
+    keyFrom = enhanceCompositeKey(keyFrom, partialSearchModeFrom, getDefinition());
     return keyFrom;
   }
 
@@ -145,7 +146,7 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate {
     if (toInclusive) partialSearchModeTo = PartialSearchMode.HIGHEST_BOUNDARY;
     else partialSearchModeTo = PartialSearchMode.LOWEST_BOUNDARY;
 
-    keyTo = enhanceCompositeKey(keyTo, partialSearchModeTo);
+    keyTo = enhanceCompositeKey(keyTo, partialSearchModeTo, getDefinition());
     return keyTo;
   }
 
@@ -154,7 +155,7 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate {
     if (fromInclusive) partialSearchModeFrom = PartialSearchMode.LOWEST_BOUNDARY;
     else partialSearchModeFrom = PartialSearchMode.HIGHEST_BOUNDARY;
 
-    keyFrom = enhanceCompositeKey(keyFrom, partialSearchModeFrom);
+    keyFrom = enhanceCompositeKey(keyFrom, partialSearchModeFrom, getDefinition());
     return keyFrom;
   }
 }
