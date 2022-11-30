@@ -742,6 +742,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
   @Override
   public void restoreFullIncrementalBackup(final InputStream stream)
       throws UnsupportedOperationException {
+    stateLock.writeLock().lock();
     try {
       final String aesKeyEncoded =
           getConfiguration()
@@ -769,6 +770,8 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
     } catch (IOException e) {
       throw OException.wrapException(
           new OStorageException("Error during restore from incremental backup"), e);
+    } finally {
+      stateLock.writeLock().unlock();
     }
   }
 
