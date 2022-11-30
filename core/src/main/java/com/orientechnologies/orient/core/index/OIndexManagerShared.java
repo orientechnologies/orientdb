@@ -171,24 +171,33 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
   }
 
   public void addClusterToIndex(final String clusterName, final String indexName) {
-    final OIndex index = indexes.get(indexName);
-    if (index == null)
-      throw new OIndexException("Index with name " + indexName + " does not exist.");
+    acquireExclusiveLock();
+    try {
+      final OIndex index = indexes.get(indexName);
+      if (index == null)
+        throw new OIndexException("Index with name " + indexName + " does not exist.");
 
-    if (index.getInternal() == null)
-      throw new OIndexException("Index with name " + indexName + " has no internal presentation.");
-    if (!index.getInternal().getClusters().contains(clusterName)) {
-      index.getInternal().addCluster(clusterName);
-      save();
+      if (index.getInternal() == null)
+        throw new OIndexException(
+            "Index with name " + indexName + " has no internal presentation.");
+      if (!index.getInternal().getClusters().contains(clusterName)) {
+        index.getInternal().addCluster(clusterName);
+      }
+    } finally {
+      releaseExclusiveLock(true);
     }
   }
 
   public void removeClusterFromIndex(final String clusterName, final String indexName) {
-    final OIndex index = indexes.get(indexName);
-    if (index == null)
-      throw new OIndexException("Index with name " + indexName + " does not exist.");
-    index.getInternal().removeCluster(clusterName);
-    save();
+    acquireExclusiveLock();
+    try {
+      final OIndex index = indexes.get(indexName);
+      if (index == null)
+        throw new OIndexException("Index with name " + indexName + " does not exist.");
+      index.getInternal().removeCluster(clusterName);
+    } finally {
+      releaseExclusiveLock(true);
+    }
   }
 
   public void create(ODatabaseDocumentInternal database) {
@@ -434,16 +443,26 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
   }
 
   protected void releaseExclusiveLock() {
+    releaseExclusiveLock(false);
+  }
+
+  protected void releaseExclusiveLock(boolean save) {
     int val = writeLockNesting.decrementAndGet();
     ODatabaseDocumentInternal database = getDatabaseIfDefined();
-    if (database != null) {
+    if (val == 0 && database != null) {
+      if (save) {
+        this.setDirty();
+        this.save();
+      }
       database
           .getSharedContext()
           .getSchema()
           .forceSnapshot(ODatabaseRecordThreadLocal.instance().get());
     }
+
     internalReleaseExclusiveLock();
     if (val == 0 && database != null) {
+
       for (OMetadataUpdateListener listener : database.getSharedContext().browseListeners()) {
         listener.onIndexManagerUpdate(database.getName(), this);
       }
@@ -542,7 +561,7 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
       OIndex idx = getIndex(database, DICTIONARY_NAME);
       return idx != null ? idx : createDictionary(database);
     } finally {
-      releaseExclusiveLock();
+      releaseExclusiveLock(true);
     }
   }
 
@@ -707,10 +726,8 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
 
       addIndexInternal(index);
 
-      setDirty();
-      save();
     } finally {
-      releaseExclusiveLock();
+      releaseExclusiveLock(true);
     }
 
     notifyInvolvedClasses(database, clusterIdsToIndex);
@@ -857,13 +874,11 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
 
         idx.delete();
         indexes.remove(iIndexName);
-        setDirty();
-        save();
 
         notifyInvolvedClasses(database, clusterIdsToIndex);
       }
     } finally {
-      releaseExclusiveLock();
+      releaseExclusiveLock(true);
     }
   }
 

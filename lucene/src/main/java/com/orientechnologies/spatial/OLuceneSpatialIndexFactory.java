@@ -168,7 +168,7 @@ public class OLuceneSpatialIndexFactory implements OIndexFactory, ODatabaseLifec
 
         if (idx.getInternal() instanceof OLuceneSpatialIndex) {
           OLogManager.instance().debug(this, "- index '%s'", idx.getName());
-          idx.delete();
+          internalDb.getMetadata().getIndexManager().dropIndex(idx.getName());
         }
       }
     } catch (Exception e) {
