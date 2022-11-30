@@ -449,18 +449,20 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
   protected void releaseExclusiveLock(boolean save) {
     int val = writeLockNesting.decrementAndGet();
     ODatabaseDocumentInternal database = getDatabaseIfDefined();
-    if (val == 0 && database != null) {
-      if (save) {
-        this.setDirty();
-        this.save();
+    try {
+      if (val == 0 && database != null) {
+        if (save) {
+          this.setDirty();
+          this.save();
+        }
+        database
+            .getSharedContext()
+            .getSchema()
+            .forceSnapshot(ODatabaseRecordThreadLocal.instance().get());
       }
-      database
-          .getSharedContext()
-          .getSchema()
-          .forceSnapshot(ODatabaseRecordThreadLocal.instance().get());
+    } finally {
+      internalReleaseExclusiveLock();
     }
-
-    internalReleaseExclusiveLock();
     if (val == 0 && database != null) {
 
       for (OMetadataUpdateListener listener : database.getSharedContext().browseListeners()) {
