@@ -6427,7 +6427,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   @Override
   public final OStorageConfiguration getConfiguration() {
-    return configuration;
+    stateLock.readLock().lock();
+    try {
+      return configuration;
+    } finally {
+      stateLock.readLock().unlock();
+    }
   }
 
   @Override
