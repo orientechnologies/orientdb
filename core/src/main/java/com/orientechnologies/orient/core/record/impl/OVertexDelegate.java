@@ -206,7 +206,6 @@ public class OVertexDelegate implements OVertex {
 
   @Override
   public OVertex delete() {
-    deleteLinks(this);
     element.delete();
     return this;
   }

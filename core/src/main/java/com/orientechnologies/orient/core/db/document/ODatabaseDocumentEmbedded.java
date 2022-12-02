@@ -92,8 +92,8 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.orientechnologies.orient.core.record.impl.OEdgeDelegate;
-import com.orientechnologies.orient.core.record.impl.OVertexDelegate;
+import com.orientechnologies.orient.core.record.impl.OEdgeDocument;
+import com.orientechnologies.orient.core.record.impl.OVertexDocument;
 import com.orientechnologies.orient.core.schedule.OScheduledEvent;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
@@ -979,9 +979,9 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
 
     if (record instanceof OElement) {
       if (((OElement) record).isVertex()) {
-        OVertexDelegate.deleteLinks(((OElement) record).asVertex().get());
+        OVertexDocument.deleteLinks(((OElement) record).asVertex().get());
       } else if (((OElement) record).isEdge()) {
-        OEdgeDelegate.deleteLinks(((OElement) record).asEdge().get());
+        OEdgeDocument.deleteLinks(((OElement) record).asEdge().get());
       }
     }
 

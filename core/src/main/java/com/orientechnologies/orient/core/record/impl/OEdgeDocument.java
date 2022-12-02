@@ -57,7 +57,6 @@ public class OEdgeDocument extends ODocument implements OEdge {
   }
 
   public OEdgeDocument delete() {
-    OEdgeDelegate.deleteLinks(this);
     super.delete();
     return this;
   }
@@ -65,5 +64,16 @@ public class OEdgeDocument extends ODocument implements OEdge {
   @Override
   public OEdgeDocument copy() {
     return (OEdgeDocument) super.copyTo(new OEdgeDocument());
+  }
+
+  public static void deleteLinks(OEdge delegate) {
+    OVertex from = delegate.getFrom();
+    if (from != null) {
+      OVertexDelegate.detachOutgointEdge(from, delegate);
+    }
+    OVertex to = delegate.getTo();
+    if (to != null) {
+      OVertexDelegate.detachIncomingEdge(to, delegate);
+    }
   }
 }

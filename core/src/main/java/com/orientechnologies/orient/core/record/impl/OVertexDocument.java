@@ -357,7 +357,6 @@ public class OVertexDocument extends ODocument implements OVertex {
 
   @Override
   public OVertexDocument delete() {
-    deleteLinks(this);
     super.delete();
     return this;
   }
