@@ -19,12 +19,8 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
-import java.util.stream.Stream;
 
 /**
  * Transactional wrapper for indexes. Stores changes locally to the transaction until tx.commit().
@@ -61,17 +57,7 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate {
 
   @Override
   public long size() {
-    long tot = delegate.size();
-
-    final OTransactionIndexChanges indexChanges =
-        database.getTransaction().getIndexChanges(delegate.getName());
-    if (indexChanges != null) {
-      try (Stream<ORawPair<Object, ORID>> stream = stream()) {
-        return stream.count();
-      }
-    }
-
-    return tot;
+    return delegate.size();
   }
 
   @Override

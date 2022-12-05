@@ -621,10 +621,12 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
 
   public long size() {
     acquireSharedLock();
+    long tot;
     try {
       while (true) {
         try {
-          return storage.getIndexSize(indexId, MultiValuesTransformer.INSTANCE);
+          tot = storage.getIndexSize(indexId, MultiValuesTransformer.INSTANCE);
+          break;
         } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
@@ -632,6 +634,17 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
     } finally {
       releaseSharedLock();
     }
+
+    ODatabaseDocumentInternal database = getDatabase();
+    final OTransactionIndexChanges indexChanges =
+        database.getTransaction().getIndexChanges(getName());
+    if (indexChanges != null) {
+      try (Stream<ORawPair<Object, ORID>> stream = stream()) {
+        return stream.count();
+      }
+    }
+
+    return tot;
   }
 
   @Override
