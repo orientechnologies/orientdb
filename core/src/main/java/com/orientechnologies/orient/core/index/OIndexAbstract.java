@@ -35,7 +35,6 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.exception.OManualIndexesAreProhibited;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OIndexTxAware.PartialSearchMode;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -1228,8 +1227,24 @@ public abstract class OIndexAbstract implements OIndexInternal {
     }
   }
 
+  /**
+   * Indicates search behavior in case of {@link
+   * com.orientechnologies.orient.core.index.OCompositeKey} keys that have less amount of internal
+   * keys are used, whether lowest or highest partially matched key should be used. Such keys is
+   * allowed to use only in
+   */
+  public enum PartialSearchMode {
+    /** Any partially matched key will be used as search result. */
+    NONE,
+    /** The biggest partially matched key will be used as search result. */
+    HIGHEST_BOUNDARY,
+
+    /** The smallest partially matched key will be used as search result. */
+    LOWEST_BOUNDARY
+  }
+
   private static Object enhanceCompositeKey(
-      Object key, PartialSearchMode partialSearchMode, OIndexDefinition definition) {
+      Object key, OIndexAbstract.PartialSearchMode partialSearchMode, OIndexDefinition definition) {
     if (!(key instanceof OCompositeKey)) return key;
 
     final OCompositeKey compositeKey = (OCompositeKey) key;
@@ -1237,12 +1252,12 @@ public abstract class OIndexAbstract implements OIndexInternal {
 
     if (!(keySize == 1
         || compositeKey.getKeys().size() == keySize
-        || partialSearchMode.equals(PartialSearchMode.NONE))) {
+        || partialSearchMode.equals(OIndexAbstract.PartialSearchMode.NONE))) {
       final OCompositeKey fullKey = new OCompositeKey(compositeKey);
       int itemsToAdd = keySize - fullKey.getKeys().size();
 
       final Comparable<?> keyItem;
-      if (partialSearchMode.equals(PartialSearchMode.HIGHEST_BOUNDARY))
+      if (partialSearchMode.equals(OIndexAbstract.PartialSearchMode.HIGHEST_BOUNDARY))
         keyItem = ALWAYS_GREATER_KEY;
       else keyItem = ALWAYS_LESS_KEY;
 
@@ -1255,36 +1270,36 @@ public abstract class OIndexAbstract implements OIndexInternal {
   }
 
   protected Object enhanceToCompositeKeyBetweenAsc(Object keyTo, boolean toInclusive) {
-    PartialSearchMode partialSearchModeTo;
-    if (toInclusive) partialSearchModeTo = PartialSearchMode.HIGHEST_BOUNDARY;
-    else partialSearchModeTo = PartialSearchMode.LOWEST_BOUNDARY;
+    OIndexAbstract.PartialSearchMode partialSearchModeTo;
+    if (toInclusive) partialSearchModeTo = OIndexAbstract.PartialSearchMode.HIGHEST_BOUNDARY;
+    else partialSearchModeTo = OIndexAbstract.PartialSearchMode.LOWEST_BOUNDARY;
 
     keyTo = enhanceCompositeKey(keyTo, partialSearchModeTo, getDefinition());
     return keyTo;
   }
 
   protected Object enhanceFromCompositeKeyBetweenAsc(Object keyFrom, boolean fromInclusive) {
-    PartialSearchMode partialSearchModeFrom;
-    if (fromInclusive) partialSearchModeFrom = PartialSearchMode.LOWEST_BOUNDARY;
-    else partialSearchModeFrom = PartialSearchMode.HIGHEST_BOUNDARY;
+    OIndexAbstract.PartialSearchMode partialSearchModeFrom;
+    if (fromInclusive) partialSearchModeFrom = OIndexAbstract.PartialSearchMode.LOWEST_BOUNDARY;
+    else partialSearchModeFrom = OIndexAbstract.PartialSearchMode.HIGHEST_BOUNDARY;
 
     keyFrom = enhanceCompositeKey(keyFrom, partialSearchModeFrom, getDefinition());
     return keyFrom;
   }
 
   protected Object enhanceToCompositeKeyBetweenDesc(Object keyTo, boolean toInclusive) {
-    PartialSearchMode partialSearchModeTo;
-    if (toInclusive) partialSearchModeTo = PartialSearchMode.HIGHEST_BOUNDARY;
-    else partialSearchModeTo = PartialSearchMode.LOWEST_BOUNDARY;
+    OIndexAbstract.PartialSearchMode partialSearchModeTo;
+    if (toInclusive) partialSearchModeTo = OIndexAbstract.PartialSearchMode.HIGHEST_BOUNDARY;
+    else partialSearchModeTo = OIndexAbstract.PartialSearchMode.LOWEST_BOUNDARY;
 
     keyTo = enhanceCompositeKey(keyTo, partialSearchModeTo, getDefinition());
     return keyTo;
   }
 
   protected Object enhanceFromCompositeKeyBetweenDesc(Object keyFrom, boolean fromInclusive) {
-    PartialSearchMode partialSearchModeFrom;
-    if (fromInclusive) partialSearchModeFrom = PartialSearchMode.LOWEST_BOUNDARY;
-    else partialSearchModeFrom = PartialSearchMode.HIGHEST_BOUNDARY;
+    OIndexAbstract.PartialSearchMode partialSearchModeFrom;
+    if (fromInclusive) partialSearchModeFrom = OIndexAbstract.PartialSearchMode.LOWEST_BOUNDARY;
+    else partialSearchModeFrom = OIndexAbstract.PartialSearchMode.HIGHEST_BOUNDARY;
 
     keyFrom = enhanceCompositeKey(keyFrom, partialSearchModeFrom, getDefinition());
     return keyFrom;
