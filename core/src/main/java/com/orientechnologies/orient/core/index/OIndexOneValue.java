@@ -21,12 +21,18 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.common.stream.Streams;
 import com.orientechnologies.common.util.ORawPair;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerRID;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -35,6 +41,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * Abstract Index implementation that allows only one value for a key.
@@ -82,10 +89,10 @@ public abstract class OIndexOneValue extends OIndexAbstract {
     key = getCollatingValue(key);
 
     acquireSharedLock();
+    Stream<ORID> stream;
     try {
       while (true)
         try {
-          final Stream<ORID> stream;
           if (apiVersion == 0) {
             final ORID rid = (ORID) storage.getIndexValue(indexId, key);
             if (rid == null) {
@@ -99,13 +106,36 @@ public abstract class OIndexOneValue extends OIndexAbstract {
           } else {
             throw new IllegalStateException("Unknown version of index API " + apiVersion);
           }
-          return IndexStreamSecurityDecorator.decorateRidStream(this, stream);
+          stream = IndexStreamSecurityDecorator.decorateRidStream(this, stream);
+          break;
         } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
     } finally {
       releaseSharedLock();
     }
+    ODatabaseDocumentInternal database = getDatabase();
+    final OTransactionIndexChanges indexChanges =
+        database.getTransaction().getIndexChangesInternal(getName());
+    if (indexChanges == null) {
+      return stream;
+    }
+
+    ORID rid;
+    if (!indexChanges.cleared) {
+      // BEGIN FROM THE UNDERLYING RESULT SET
+      //noinspection resource
+      rid = stream.findFirst().orElse(null);
+    } else {
+      rid = null;
+    }
+
+    final ORawPair<Object, ORID> txIndexEntry = calculateTxIndexEntry(key, rid, indexChanges);
+    if (txIndexEntry == null) {
+      return Stream.empty();
+    }
+
+    return IndexStreamSecurityDecorator.decorateRidStream(this, Stream.of(txIndexEntry.second));
   }
 
   @Override
@@ -119,41 +149,69 @@ public abstract class OIndexOneValue extends OIndexAbstract {
     sortedKeys.sort(comparator);
 
     //noinspection resource
-    return IndexStreamSecurityDecorator.decorateStream(
-        this,
-        sortedKeys.stream()
-            .flatMap(
-                (key) -> {
-                  final Object collatedKey = getCollatingValue(key);
+    Stream<ORawPair<Object, ORID>> stream =
+        IndexStreamSecurityDecorator.decorateStream(
+            this,
+            sortedKeys.stream()
+                .flatMap(
+                    (key) -> {
+                      final Object collatedKey = getCollatingValue(key);
 
-                  acquireSharedLock();
-                  try {
-                    while (true) {
+                      acquireSharedLock();
                       try {
-                        if (apiVersion == 0) {
-                          final ORID rid = (ORID) storage.getIndexValue(indexId, collatedKey);
-                          if (rid == null) {
-                            return Stream.empty();
+                        while (true) {
+                          try {
+                            if (apiVersion == 0) {
+                              final ORID rid = (ORID) storage.getIndexValue(indexId, collatedKey);
+                              if (rid == null) {
+                                return Stream.empty();
+                              }
+                              return Stream.of(new ORawPair<>(collatedKey, rid));
+                            } else if (apiVersion == 1) {
+                              //noinspection resource
+                              return storage
+                                  .getIndexValues(indexId, collatedKey)
+                                  .map((rid) -> new ORawPair<>(collatedKey, rid));
+                            } else {
+                              throw new IllegalStateException(
+                                  "Invalid version of index API - " + apiVersion);
+                            }
+                          } catch (OInvalidIndexEngineIdException ignore) {
+                            doReloadIndexEngine();
                           }
-                          return Stream.of(new ORawPair<>(collatedKey, rid));
-                        } else if (apiVersion == 1) {
-                          //noinspection resource
-                          return storage
-                              .getIndexValues(indexId, collatedKey)
-                              .map((rid) -> new ORawPair<>(collatedKey, rid));
-                        } else {
-                          throw new IllegalStateException(
-                              "Invalid version of index API - " + apiVersion);
                         }
-                      } catch (OInvalidIndexEngineIdException ignore) {
-                        doReloadIndexEngine();
+                      } finally {
+                        releaseSharedLock();
                       }
-                    }
-                  } finally {
-                    releaseSharedLock();
+                    })
+                .filter(Objects::nonNull));
+    ODatabaseDocumentInternal database = getDatabase();
+    final OTransactionIndexChanges indexChanges =
+        database.getTransaction().getIndexChangesInternal(getName());
+    if (indexChanges == null) {
+      return stream;
+    }
+
+    @SuppressWarnings("resource")
+    final Stream<ORawPair<Object, ORID>> txStream =
+        keys.stream()
+            .map((key) -> calculateTxIndexEntry(getCollatingValue(key), null, indexChanges))
+            .filter(Objects::nonNull)
+            .sorted(
+                (entryOne, entryTwo) -> {
+                  if (ascSortOrder) {
+                    return ODefaultComparator.INSTANCE.compare(entryOne.first, entryTwo.first);
+                  } else {
+                    return -ODefaultComparator.INSTANCE.compare(entryOne.first, entryTwo.first);
                   }
-                })
-            .filter(Objects::nonNull));
+                });
+
+    if (indexChanges.cleared) {
+      return IndexStreamSecurityDecorator.decorateStream(this, txStream);
+    }
+
+    return IndexStreamSecurityDecorator.decorateStream(
+        this, mergeTxAndBackedStreams(indexChanges, txStream, stream, ascSortOrder));
   }
 
   @Override
@@ -161,52 +219,126 @@ public abstract class OIndexOneValue extends OIndexAbstract {
       Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive, boolean ascOrder) {
     fromKey = getCollatingValue(fromKey);
     toKey = getCollatingValue(toKey);
-
+    Stream<ORawPair<Object, ORID>> stream;
     acquireSharedLock();
     try {
       while (true)
         try {
-          return IndexStreamSecurityDecorator.decorateStream(
-              this,
-              storage.iterateIndexEntriesBetween(
-                  indexId, fromKey, fromInclusive, toKey, toInclusive, ascOrder, null));
+          stream =
+              IndexStreamSecurityDecorator.decorateStream(
+                  this,
+                  storage.iterateIndexEntriesBetween(
+                      indexId, fromKey, fromInclusive, toKey, toInclusive, ascOrder, null));
+          break;
         } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
     } finally {
       releaseSharedLock();
     }
+    ODatabaseDocumentInternal database = getDatabase();
+    final OTransactionIndexChanges indexChanges =
+        database.getTransaction().getIndexChangesInternal(getName());
+    if (indexChanges == null) {
+      return stream;
+    }
+
+    final Stream<ORawPair<Object, ORID>> txStream;
+    if (ascOrder) {
+      //noinspection resource
+      txStream =
+          StreamSupport.stream(
+              new PureTxBetweenIndexForwardSpliterator(
+                  this, fromKey, fromInclusive, toKey, toInclusive, indexChanges),
+              false);
+    } else {
+      //noinspection resource
+      txStream =
+          StreamSupport.stream(
+              new PureTxBetweenIndexBackwardSpliterator(
+                  this, fromKey, fromInclusive, toKey, toInclusive, indexChanges),
+              false);
+    }
+
+    if (indexChanges.cleared) {
+      return IndexStreamSecurityDecorator.decorateStream(this, txStream);
+    }
+
+    return IndexStreamSecurityDecorator.decorateStream(
+        this, mergeTxAndBackedStreams(indexChanges, txStream, stream, ascOrder));
   }
 
   @Override
   public Stream<ORawPair<Object, ORID>> streamEntriesMajor(
       Object fromKey, boolean fromInclusive, boolean ascOrder) {
     fromKey = getCollatingValue(fromKey);
+    Stream<ORawPair<Object, ORID>> stream;
     acquireSharedLock();
     try {
       while (true)
         try {
-          return IndexStreamSecurityDecorator.decorateStream(
-              this,
-              storage.iterateIndexEntriesMajor(indexId, fromKey, fromInclusive, ascOrder, null));
+          stream =
+              IndexStreamSecurityDecorator.decorateStream(
+                  this,
+                  storage.iterateIndexEntriesMajor(
+                      indexId, fromKey, fromInclusive, ascOrder, null));
+          break;
         } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
     } finally {
       releaseSharedLock();
     }
+    ODatabaseDocumentInternal database = getDatabase();
+    final OTransactionIndexChanges indexChanges =
+        database.getTransaction().getIndexChangesInternal(getName());
+    if (indexChanges == null) {
+      return stream;
+    }
+
+    fromKey = getCollatingValue(fromKey);
+
+    final Stream<ORawPair<Object, ORID>> txStream;
+
+    final Object lastKey = indexChanges.getLastKey();
+    if (ascOrder) {
+      //noinspection resource
+      txStream =
+          StreamSupport.stream(
+              new PureTxBetweenIndexForwardSpliterator(
+                  this, fromKey, fromInclusive, lastKey, true, indexChanges),
+              false);
+    } else {
+      //noinspection resource
+      txStream =
+          StreamSupport.stream(
+              new PureTxBetweenIndexBackwardSpliterator(
+                  this, fromKey, fromInclusive, lastKey, true, indexChanges),
+              false);
+    }
+
+    if (indexChanges.cleared) {
+      return IndexStreamSecurityDecorator.decorateStream(this, txStream);
+    }
+
+    return IndexStreamSecurityDecorator.decorateStream(
+        this, mergeTxAndBackedStreams(indexChanges, txStream, stream, ascOrder));
   }
 
   @Override
   public Stream<ORawPair<Object, ORID>> streamEntriesMinor(
       Object toKey, boolean toInclusive, boolean ascOrder) {
     toKey = getCollatingValue(toKey);
+    Stream<ORawPair<Object, ORID>> stream;
     acquireSharedLock();
     try {
       while (true) {
         try {
-          return IndexStreamSecurityDecorator.decorateStream(
-              this, storage.iterateIndexEntriesMinor(indexId, toKey, toInclusive, ascOrder, null));
+          stream =
+              IndexStreamSecurityDecorator.decorateStream(
+                  this,
+                  storage.iterateIndexEntriesMinor(indexId, toKey, toInclusive, ascOrder, null));
+          break;
         } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
@@ -215,6 +347,40 @@ public abstract class OIndexOneValue extends OIndexAbstract {
     } finally {
       releaseSharedLock();
     }
+    ODatabaseDocumentInternal database = getDatabase();
+    final OTransactionIndexChanges indexChanges =
+        database.getTransaction().getIndexChangesInternal(getName());
+    if (indexChanges == null) {
+      return stream;
+    }
+
+    toKey = getCollatingValue(toKey);
+
+    final Stream<ORawPair<Object, ORID>> txStream;
+
+    final Object firstKey = indexChanges.getFirstKey();
+    if (ascOrder) {
+      //noinspection resource
+      txStream =
+          StreamSupport.stream(
+              new PureTxBetweenIndexForwardSpliterator(
+                  this, firstKey, true, toKey, toInclusive, indexChanges),
+              false);
+    } else {
+      //noinspection resource
+      txStream =
+          StreamSupport.stream(
+              new PureTxBetweenIndexBackwardSpliterator(
+                  this, firstKey, true, toKey, toInclusive, indexChanges),
+              false);
+    }
+
+    if (indexChanges.cleared) {
+      return IndexStreamSecurityDecorator.decorateStream(this, txStream);
+    }
+
+    return IndexStreamSecurityDecorator.decorateStream(
+        this, mergeTxAndBackedStreams(indexChanges, txStream, stream, ascOrder));
   }
 
   public long size() {
@@ -234,12 +400,15 @@ public abstract class OIndexOneValue extends OIndexAbstract {
 
   @Override
   public Stream<ORawPair<Object, ORID>> stream() {
+    Stream<ORawPair<Object, ORID>> stream;
     acquireSharedLock();
     try {
       while (true) {
         try {
-          return IndexStreamSecurityDecorator.decorateStream(
-              this, storage.getIndexStream(indexId, null));
+          stream =
+              IndexStreamSecurityDecorator.decorateStream(
+                  this, storage.getIndexStream(indexId, null));
+          break;
         } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
@@ -247,16 +416,36 @@ public abstract class OIndexOneValue extends OIndexAbstract {
     } finally {
       releaseSharedLock();
     }
+    ODatabaseDocumentInternal database = getDatabase();
+    final OTransactionIndexChanges indexChanges =
+        database.getTransaction().getIndexChangesInternal(getName());
+    if (indexChanges == null) {
+      return stream;
+    }
+
+    final Stream<ORawPair<Object, ORID>> txStream =
+        StreamSupport.stream(
+            new PureTxBetweenIndexForwardSpliterator(this, null, true, null, true, indexChanges),
+            false);
+    if (indexChanges.cleared) {
+      return IndexStreamSecurityDecorator.decorateStream(this, txStream);
+    }
+
+    return IndexStreamSecurityDecorator.decorateStream(
+        this, mergeTxAndBackedStreams(indexChanges, txStream, stream, true));
   }
 
   @Override
   public Stream<ORawPair<Object, ORID>> descStream() {
+    Stream<ORawPair<Object, ORID>> stream;
     acquireSharedLock();
     try {
       while (true) {
         try {
-          return IndexStreamSecurityDecorator.decorateStream(
-              this, storage.getIndexDescStream(indexId, null));
+          stream =
+              IndexStreamSecurityDecorator.decorateStream(
+                  this, storage.getIndexDescStream(indexId, null));
+          break;
         } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
@@ -264,6 +453,23 @@ public abstract class OIndexOneValue extends OIndexAbstract {
     } finally {
       releaseSharedLock();
     }
+    ODatabaseDocumentInternal database = getDatabase();
+    final OTransactionIndexChanges indexChanges =
+        database.getTransaction().getIndexChangesInternal(getName());
+    if (indexChanges == null) {
+      return stream;
+    }
+
+    final Stream<ORawPair<Object, ORID>> txStream =
+        StreamSupport.stream(
+            new PureTxBetweenIndexBackwardSpliterator(this, null, true, null, true, indexChanges),
+            false);
+    if (indexChanges.cleared) {
+      return IndexStreamSecurityDecorator.decorateStream(this, txStream);
+    }
+
+    return IndexStreamSecurityDecorator.decorateStream(
+        this, mergeTxAndBackedStreams(indexChanges, txStream, stream, false));
   }
 
   @Override
@@ -274,5 +480,52 @@ public abstract class OIndexOneValue extends OIndexAbstract {
   @Override
   protected OBinarySerializer determineValueSerializer() {
     return OStreamSerializerRID.INSTANCE;
+  }
+
+  ORawPair<Object, ORID> calculateTxIndexEntry(
+      Object key, final ORID backendValue, final OTransactionIndexChanges indexChanges) {
+    key = getCollatingValue(key);
+    ORID result = backendValue;
+    final OTransactionIndexChangesPerKey changesPerKey = indexChanges.getChangesPerKey(key);
+    if (changesPerKey.isEmpty()) {
+      if (backendValue == null) {
+        return null;
+      } else {
+        return new ORawPair<>(key, backendValue);
+      }
+    }
+
+    for (OTransactionIndexEntry entry : changesPerKey.getEntriesAsList()) {
+      if (entry.getOperation() == OPERATION.REMOVE) result = null;
+      else if (entry.getOperation() == OPERATION.PUT) result = entry.getValue().getIdentity();
+    }
+
+    if (result == null) {
+      return null;
+    }
+
+    return new ORawPair<>(key, result);
+  }
+
+  private Stream<ORawPair<Object, ORID>> mergeTxAndBackedStreams(
+      OTransactionIndexChanges indexChanges,
+      Stream<ORawPair<Object, ORID>> txStream,
+      Stream<ORawPair<Object, ORID>> backedStream,
+      boolean ascSortOrder) {
+    return Streams.mergeSortedSpliterators(
+        txStream,
+        backedStream
+            .map(
+                (entry) ->
+                    calculateTxIndexEntry(
+                        getCollatingValue(entry.first), entry.second, indexChanges))
+            .filter(Objects::nonNull),
+        (entryOne, entryTwo) -> {
+          if (ascSortOrder) {
+            return ODefaultComparator.INSTANCE.compare(entryOne.first, entryTwo.first);
+          } else {
+            return -ODefaultComparator.INSTANCE.compare(entryOne.first, entryTwo.first);
+          }
+        });
   }
 }

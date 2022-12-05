@@ -10,7 +10,7 @@ import java.util.function.Consumer;
 
 class PureTxBetweenIndexBackwardSpliterator implements Spliterator<ORawPair<Object, ORID>> {
   /** */
-  private final OIndexTxAwareOneValue oIndexTxAwareOneValue;
+  private final OIndexOneValue oIndexTxAwareOneValue;
 
   private final OTransactionIndexChanges indexChanges;
   private Object firstKey;
@@ -18,7 +18,7 @@ class PureTxBetweenIndexBackwardSpliterator implements Spliterator<ORawPair<Obje
   private Object nextKey;
 
   PureTxBetweenIndexBackwardSpliterator(
-      OIndexTxAwareOneValue oIndexTxAwareOneValue,
+      OIndexOneValue oIndexTxAwareOneValue,
       Object fromKey,
       boolean fromInclusive,
       Object toKey,
