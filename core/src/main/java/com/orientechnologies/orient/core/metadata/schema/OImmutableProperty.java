@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.metadata.schema;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.validation.ValidationBinaryComparable;
 import com.orientechnologies.orient.core.metadata.schema.validation.ValidationCollectionComparable;
 import com.orientechnologies.orient.core.metadata.schema.validation.ValidationLinkbagComparable;
@@ -34,8 +33,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -68,6 +65,8 @@ public class OImmutableProperty implements OProperty {
   private final boolean readOnly;
   private final Comparable<Object> minComparable;
   private final Comparable<Object> maxComparable;
+  private final Set<OIndex> indexes;
+  private final Collection<OIndex> allIndexes;
 
   public OImmutableProperty(OProperty property, OImmutableClass owner) {
     name = property.getName();
@@ -195,6 +194,8 @@ public class OImmutableProperty implements OProperty {
       }
     }
     this.maxComparable = maxComparable;
+    this.indexes = property.getIndexes();
+    this.allIndexes = property.getAllIndexes();
   }
 
   private <T> T safeConvert(Object value, Class<T> target, String type) {
@@ -373,26 +374,17 @@ public class OImmutableProperty implements OProperty {
 
   @Override
   public Set<OIndex> getIndexes() {
-    return owner.getInvolvedIndexes(name);
+    return indexes;
   }
 
   @Override
   public OIndex getIndex() {
-    Set<OIndex> indexes = owner.getInvolvedIndexes(name);
-    if (indexes != null && !indexes.isEmpty()) return indexes.iterator().next();
-    return null;
+    return indexes.iterator().next();
   }
 
   @Override
   public Collection<OIndex> getAllIndexes() {
-    final Set<OIndex> indexes = owner.getIndexes();
-    final List<OIndex> indexList = new LinkedList<OIndex>();
-    for (final OIndex index : indexes) {
-      final OIndexDefinition indexDefinition = index.getDefinition();
-      if (indexDefinition.getFields().contains(name)) indexList.add(index);
-    }
-
-    return indexList;
+    return this.allIndexes;
   }
 
   @Override

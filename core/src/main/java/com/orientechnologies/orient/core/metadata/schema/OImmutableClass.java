@@ -719,9 +719,7 @@ public class OImmutableClass implements OClass {
 
   @Override
   public Set<OIndex> getIndexes() {
-    final Set<OIndex> indexes = new HashSet<OIndex>();
-    getIndexes(indexes);
-    return indexes;
+    return this.indexes;
   }
 
   public Set<OIndex> getRawIndexes() {

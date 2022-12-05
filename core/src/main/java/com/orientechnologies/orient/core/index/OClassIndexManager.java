@@ -119,8 +119,7 @@ public class OClassIndexManager {
   }
 
   private static OIndex getTransactionalIndex(ODatabaseDocumentInternal database, OIndex index) {
-    return (database.getMetadata().getIndexManagerInternal())
-        .preProcessBeforeReturn(database, index);
+    return index;
   }
 
   public static void checkIndexesAfterDelete(

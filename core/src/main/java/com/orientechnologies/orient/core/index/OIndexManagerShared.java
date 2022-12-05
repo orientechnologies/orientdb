@@ -49,7 +49,6 @@ import com.orientechnologies.orient.core.sharding.auto.OAutoShardingIndexFactory
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageInfo;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -226,12 +225,7 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
   }
 
   public Collection<? extends OIndex> getIndexes(ODatabaseDocumentInternal database) {
-    final Collection<OIndex> rawResult = indexes.values();
-    final List<OIndex> result = new ArrayList<>(rawResult.size());
-    for (final OIndex index : rawResult) {
-      result.add(preProcessBeforeReturn(database, index));
-    }
-    return result;
+    return indexes.values();
   }
 
   public OIndex getRawIndex(final String iName) {
@@ -242,7 +236,7 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
   public OIndex getIndex(ODatabaseDocumentInternal database, final String iName) {
     final OIndex index = indexes.get(iName);
     if (index == null) return null;
-    return preProcessBeforeReturn(database, index);
+    return index;
   }
 
   public boolean existsIndex(final String iName) {
@@ -323,7 +317,7 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
       // ignore indexes that ignore null values on partial match
       if (fields.size() == index.getDefinition().getFields().size()
           || !index.getDefinition().isNullValuesIgnored()) {
-        transactionalResult.add(preProcessBeforeReturn(database, index));
+        transactionalResult.add(index);
       }
     }
 
@@ -364,8 +358,7 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
     if (propertyIndex == null) return;
 
     for (final Set<OIndex> propertyIndexes : propertyIndex.values())
-      for (final OIndex index : propertyIndexes)
-        indexes.add(preProcessBeforeReturn(database, index));
+      for (final OIndex index : propertyIndexes) indexes.add(index);
   }
 
   public void getClassRawIndexes(final String className, final Collection<OIndex> indexes) {
@@ -397,8 +390,7 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
     if (index != null
         && index.getDefinition() != null
         && index.getDefinition().getClassName() != null
-        && className.equals(index.getDefinition().getClassName().toLowerCase(locale)))
-      return preProcessBeforeReturn(database, index);
+        && className.equals(index.getDefinition().getClassName().toLowerCase(locale))) return index;
     return null;
   }
 
@@ -413,7 +405,7 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
           && index.getDefinition() != null
           && index.getDefinition().getClassName() != null
           && className.equals(index.getDefinition().getClassName().toLowerCase(locale)))
-        return preProcessBeforeReturn(database, index);
+        return index;
     }
     return null;
   }
@@ -734,7 +726,7 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
 
     notifyInvolvedClasses(database, clusterIdsToIndex);
 
-    return preProcessBeforeReturn(database, index);
+    return index;
   }
 
   private OIndexInternal createIndexFromMetadata(

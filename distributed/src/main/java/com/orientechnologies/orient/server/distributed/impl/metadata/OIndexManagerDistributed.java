@@ -119,7 +119,7 @@ public class OIndexManagerDistributed extends OIndexManagerShared {
 
     reload();
 
-    return super.preProcessBeforeReturn(database, super.getIndex(database, iName));
+    return super.getIndex(database, iName);
   }
 
   private boolean isDistributedCommand(ODatabaseDocumentInternal database) {
