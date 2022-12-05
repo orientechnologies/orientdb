@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.exception.OManualIndexesAreProhibited;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.OIndexTxAware.PartialSearchMode;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -75,6 +76,8 @@ import java.util.stream.Stream;
  */
 public abstract class OIndexAbstract implements OIndexInternal {
 
+  private static final OAlwaysLessKey ALWAYS_LESS_KEY = new OAlwaysLessKey();
+  private static final OAlwaysGreaterKey ALWAYS_GREATER_KEY = new OAlwaysGreaterKey();
   protected static final String CONFIG_MAP_RID = "mapRid";
   private static final String CONFIG_CLUSTERS = "clusters";
   protected final String type;
@@ -1223,5 +1226,67 @@ public abstract class OIndexAbstract implements OIndexInternal {
 
       return null;
     }
+  }
+
+  private static Object enhanceCompositeKey(
+      Object key, PartialSearchMode partialSearchMode, OIndexDefinition definition) {
+    if (!(key instanceof OCompositeKey)) return key;
+
+    final OCompositeKey compositeKey = (OCompositeKey) key;
+    final int keySize = definition.getParamCount();
+
+    if (!(keySize == 1
+        || compositeKey.getKeys().size() == keySize
+        || partialSearchMode.equals(PartialSearchMode.NONE))) {
+      final OCompositeKey fullKey = new OCompositeKey(compositeKey);
+      int itemsToAdd = keySize - fullKey.getKeys().size();
+
+      final Comparable<?> keyItem;
+      if (partialSearchMode.equals(PartialSearchMode.HIGHEST_BOUNDARY))
+        keyItem = ALWAYS_GREATER_KEY;
+      else keyItem = ALWAYS_LESS_KEY;
+
+      for (int i = 0; i < itemsToAdd; i++) fullKey.addKey(keyItem);
+
+      return fullKey;
+    }
+
+    return key;
+  }
+
+  protected Object enhanceToCompositeKeyBetweenAsc(Object keyTo, boolean toInclusive) {
+    PartialSearchMode partialSearchModeTo;
+    if (toInclusive) partialSearchModeTo = PartialSearchMode.HIGHEST_BOUNDARY;
+    else partialSearchModeTo = PartialSearchMode.LOWEST_BOUNDARY;
+
+    keyTo = enhanceCompositeKey(keyTo, partialSearchModeTo, getDefinition());
+    return keyTo;
+  }
+
+  protected Object enhanceFromCompositeKeyBetweenAsc(Object keyFrom, boolean fromInclusive) {
+    PartialSearchMode partialSearchModeFrom;
+    if (fromInclusive) partialSearchModeFrom = PartialSearchMode.LOWEST_BOUNDARY;
+    else partialSearchModeFrom = PartialSearchMode.HIGHEST_BOUNDARY;
+
+    keyFrom = enhanceCompositeKey(keyFrom, partialSearchModeFrom, getDefinition());
+    return keyFrom;
+  }
+
+  protected Object enhanceToCompositeKeyBetweenDesc(Object keyTo, boolean toInclusive) {
+    PartialSearchMode partialSearchModeTo;
+    if (toInclusive) partialSearchModeTo = PartialSearchMode.HIGHEST_BOUNDARY;
+    else partialSearchModeTo = PartialSearchMode.LOWEST_BOUNDARY;
+
+    keyTo = enhanceCompositeKey(keyTo, partialSearchModeTo, getDefinition());
+    return keyTo;
+  }
+
+  protected Object enhanceFromCompositeKeyBetweenDesc(Object keyFrom, boolean fromInclusive) {
+    PartialSearchMode partialSearchModeFrom;
+    if (fromInclusive) partialSearchModeFrom = PartialSearchMode.LOWEST_BOUNDARY;
+    else partialSearchModeFrom = PartialSearchMode.HIGHEST_BOUNDARY;
+
+    keyFrom = enhanceCompositeKey(keyFrom, partialSearchModeFrom, getDefinition());
+    return keyFrom;
   }
 }

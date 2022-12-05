@@ -15,7 +15,7 @@ import java.util.function.Consumer;
 public class PureTxMultiValueBetweenIndexForwardSpliterator
     implements Spliterator<ORawPair<Object, ORID>> {
   /** */
-  private final OIndexTxAwareMultiValue oIndexTxAwareMultiValue;
+  private final OIndexMultiValues index;
 
   private final OTransactionIndexChanges indexChanges;
   private Object lastKey;
@@ -26,21 +26,20 @@ public class PureTxMultiValueBetweenIndexForwardSpliterator
   private Object key;
 
   public PureTxMultiValueBetweenIndexForwardSpliterator(
-      OIndexTxAwareMultiValue oIndexTxAwareMultiValue,
+      OIndexMultiValues index,
       Object fromKey,
       boolean fromInclusive,
       Object toKey,
       boolean toInclusive,
       OTransactionIndexChanges indexChanges) {
-    this.oIndexTxAwareMultiValue = oIndexTxAwareMultiValue;
+    this.index = index;
     this.indexChanges = indexChanges;
 
     if (fromKey != null) {
-      fromKey =
-          this.oIndexTxAwareMultiValue.enhanceFromCompositeKeyBetweenAsc(fromKey, fromInclusive);
+      fromKey = this.index.enhanceFromCompositeKeyBetweenAsc(fromKey, fromInclusive);
     }
     if (toKey != null) {
-      toKey = this.oIndexTxAwareMultiValue.enhanceToCompositeKeyBetweenAsc(toKey, toInclusive);
+      toKey = this.index.enhanceToCompositeKeyBetweenAsc(toKey, toInclusive);
     }
 
     final Object[] keys = indexChanges.firstAndLastKeys(fromKey, fromInclusive, toKey, toInclusive);
@@ -68,7 +67,7 @@ public class PureTxMultiValueBetweenIndexForwardSpliterator
 
     Set<OIdentifiable> result;
     do {
-      result = OIndexTxAwareMultiValue.calculateTxValue(nextKey, indexChanges);
+      result = OIndexMultiValues.calculateTxValue(nextKey, indexChanges);
       key = nextKey;
 
       nextKey = indexChanges.getHigherKey(nextKey);

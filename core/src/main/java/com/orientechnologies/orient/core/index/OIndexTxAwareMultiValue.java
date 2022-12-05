@@ -32,7 +32,6 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTran
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 /**
  * Transactional wrapper for indexes. Stores changes locally to the transaction until tx.commit().
@@ -56,80 +55,32 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
     return rids;
   }
 
+  public static Set<OIdentifiable> changesForKey(
+      ODatabaseDocumentInternal database, OIndexInternal index, final Object key) {
+
+    final OTransactionIndexChanges indexChanges =
+        database.getTransaction().getIndexChangesInternal(index.getName());
+    if (indexChanges == null) {
+      return null;
+    }
+    final Object collatedKey = index.getCollatingValue(key);
+    Set<OIdentifiable> txChanges = calculateTxValue(collatedKey, indexChanges);
+    return txChanges;
+  }
+
   @Override
   public Stream<ORID> getRids(final Object key) {
-    final OTransactionIndexChanges indexChanges =
-        database.getTransaction().getIndexChangesInternal(delegate.getName());
-    if (indexChanges == null) {
-      return super.getRids(key);
-    }
-
-    final Object collatedKey = getCollatingValue(key);
-    Set<OIdentifiable> txChanges = calculateTxValue(collatedKey, indexChanges);
-
-    @SuppressWarnings("resource")
-    final Stream<ORID> backedStream = super.getRids(collatedKey);
-    if (txChanges == null) {
-      txChanges = Collections.emptySet();
-    }
-
-    //noinspection resource
-    return IndexStreamSecurityDecorator.decorateRidStream(
-        this,
-        Stream.concat(
-            backedStream
-                .map((rid) -> calculateTxIndexEntry(collatedKey, rid, indexChanges))
-                .filter(Objects::nonNull)
-                .map((pair) -> pair.second),
-            txChanges.stream().map(OIdentifiable::getIdentity)));
+    return super.getRids(key);
   }
 
   @Override
   public Stream<ORawPair<Object, ORID>> stream() {
-    final OTransactionIndexChanges indexChanges =
-        database.getTransaction().getIndexChangesInternal(delegate.getName());
-    if (indexChanges == null) {
-      return super.stream();
-    }
-
-    final Stream<ORawPair<Object, ORID>> txStream =
-        StreamSupport.stream(
-            new PureTxMultiValueBetweenIndexForwardSpliterator(
-                this, null, true, null, true, indexChanges),
-            false);
-
-    if (indexChanges.cleared) {
-      return IndexStreamSecurityDecorator.decorateStream(this, txStream);
-    }
-
-    @SuppressWarnings("resource")
-    final Stream<ORawPair<Object, ORID>> backedStream = super.stream();
-    return IndexStreamSecurityDecorator.decorateStream(
-        this, mergeTxAndBackedStreams(indexChanges, txStream, backedStream, true));
+    return super.stream();
   }
 
   @Override
   public Stream<ORawPair<Object, ORID>> descStream() {
-    final OTransactionIndexChanges indexChanges =
-        database.getTransaction().getIndexChangesInternal(delegate.getName());
-    if (indexChanges == null) {
-      return super.descStream();
-    }
-
-    final Stream<ORawPair<Object, ORID>> txStream =
-        StreamSupport.stream(
-            new PureTxMultiValueBetweenIndexBackwardSplititerator(
-                this, null, true, null, true, indexChanges),
-            false);
-
-    if (indexChanges.cleared) {
-      return IndexStreamSecurityDecorator.decorateStream(this, txStream);
-    }
-
-    @SuppressWarnings("resource")
-    final Stream<ORawPair<Object, ORID>> backedStream = super.descStream();
-    return IndexStreamSecurityDecorator.decorateStream(
-        this, mergeTxAndBackedStreams(indexChanges, txStream, backedStream, false));
+    return super.descStream();
   }
 
   @Override
@@ -139,43 +90,7 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
       Object toKey,
       final boolean toInclusive,
       final boolean ascOrder) {
-
-    final OTransactionIndexChanges indexChanges =
-        database.getTransaction().getIndexChangesInternal(delegate.getName());
-    if (indexChanges == null) {
-      return super.streamEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascOrder);
-    }
-
-    fromKey = getCollatingValue(fromKey);
-    toKey = getCollatingValue(toKey);
-
-    final Stream<ORawPair<Object, ORID>> txStream;
-    if (ascOrder) {
-      //noinspection resource
-      txStream =
-          StreamSupport.stream(
-              new PureTxMultiValueBetweenIndexForwardSpliterator(
-                  this, fromKey, fromInclusive, toKey, toInclusive, indexChanges),
-              false);
-    } else {
-      //noinspection resource
-      txStream =
-          StreamSupport.stream(
-              new PureTxMultiValueBetweenIndexBackwardSplititerator(
-                  this, fromKey, fromInclusive, toKey, toInclusive, indexChanges),
-              false);
-    }
-
-    if (indexChanges.cleared) {
-      return IndexStreamSecurityDecorator.decorateStream(this, txStream);
-    }
-
-    @SuppressWarnings("resource")
-    final Stream<ORawPair<Object, ORID>> backedStream =
-        super.streamEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascOrder);
-
-    return IndexStreamSecurityDecorator.decorateStream(
-        this, mergeTxAndBackedStreams(indexChanges, txStream, backedStream, ascOrder));
+    return super.streamEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascOrder);
   }
 
   private Stream<ORawPair<Object, ORID>> mergeTxAndBackedStreams(
@@ -202,127 +117,19 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
   @Override
   public Stream<ORawPair<Object, ORID>> streamEntriesMajor(
       Object fromKey, boolean fromInclusive, boolean ascOrder) {
-    final OTransactionIndexChanges indexChanges =
-        database.getTransaction().getIndexChangesInternal(delegate.getName());
-    if (indexChanges == null) {
-      return super.streamEntriesMajor(fromKey, fromInclusive, ascOrder);
-    }
-
-    fromKey = getCollatingValue(fromKey);
-
-    final Stream<ORawPair<Object, ORID>> txStream;
-
-    final Object lastKey = indexChanges.getLastKey();
-    if (ascOrder) {
-      //noinspection resource
-      txStream =
-          StreamSupport.stream(
-              new PureTxMultiValueBetweenIndexForwardSpliterator(
-                  this, fromKey, fromInclusive, lastKey, true, indexChanges),
-              false);
-    } else {
-      //noinspection resource
-      txStream =
-          StreamSupport.stream(
-              new PureTxMultiValueBetweenIndexBackwardSplititerator(
-                  this, fromKey, fromInclusive, lastKey, true, indexChanges),
-              false);
-    }
-
-    if (indexChanges.cleared) {
-      return IndexStreamSecurityDecorator.decorateStream(this, txStream);
-    }
-
-    @SuppressWarnings("resource")
-    final Stream<ORawPair<Object, ORID>> backedStream =
-        super.streamEntriesMajor(fromKey, fromInclusive, ascOrder);
-
-    return IndexStreamSecurityDecorator.decorateStream(
-        this, mergeTxAndBackedStreams(indexChanges, txStream, backedStream, ascOrder));
+    return super.streamEntriesMajor(fromKey, fromInclusive, ascOrder);
   }
 
   @Override
   public Stream<ORawPair<Object, ORID>> streamEntriesMinor(
       Object toKey, boolean toInclusive, boolean ascOrder) {
-    final OTransactionIndexChanges indexChanges =
-        database.getTransaction().getIndexChangesInternal(delegate.getName());
-    if (indexChanges == null) {
-      return super.streamEntriesMinor(toKey, toInclusive, ascOrder);
-    }
 
-    toKey = getCollatingValue(toKey);
-
-    final Stream<ORawPair<Object, ORID>> txStream;
-
-    final Object firstKey = indexChanges.getFirstKey();
-    if (ascOrder) {
-      //noinspection resource
-      txStream =
-          StreamSupport.stream(
-              new PureTxMultiValueBetweenIndexForwardSpliterator(
-                  this, firstKey, true, toKey, toInclusive, indexChanges),
-              false);
-    } else {
-      //noinspection resource
-      txStream =
-          StreamSupport.stream(
-              new PureTxMultiValueBetweenIndexBackwardSplititerator(
-                  this, firstKey, true, toKey, toInclusive, indexChanges),
-              false);
-    }
-
-    if (indexChanges.cleared) {
-      return IndexStreamSecurityDecorator.decorateStream(this, txStream);
-    }
-
-    @SuppressWarnings("resource")
-    final Stream<ORawPair<Object, ORID>> backedCursor =
-        super.streamEntriesMinor(toKey, toInclusive, ascOrder);
-    return IndexStreamSecurityDecorator.decorateStream(
-        this, mergeTxAndBackedStreams(indexChanges, txStream, backedCursor, ascOrder));
+    return super.streamEntriesMinor(toKey, toInclusive, ascOrder);
   }
 
   @Override
   public Stream<ORawPair<Object, ORID>> streamEntries(Collection<?> keys, boolean ascSortOrder) {
-    final OTransactionIndexChanges indexChanges =
-        database.getTransaction().getIndexChangesInternal(delegate.getName());
-    if (indexChanges == null) {
-      return super.streamEntries(keys, ascSortOrder);
-    }
-
-    @SuppressWarnings("resource")
-    final Stream<ORawPair<Object, ORID>> txStream =
-        keys.stream()
-            .flatMap(
-                (key) -> {
-                  final Set<OIdentifiable> result =
-                      calculateTxValue(getCollatingValue(key), indexChanges);
-                  if (result != null) {
-                    return result.stream()
-                        .map((rid) -> new ORawPair<>(getCollatingValue(key), rid.getIdentity()));
-                  }
-                  return null;
-                })
-            .filter(Objects::nonNull)
-            .sorted(
-                (entryOne, entryTwo) -> {
-                  if (ascSortOrder) {
-                    return ODefaultComparator.INSTANCE.compare(
-                        getCollatingValue(entryOne.first), getCollatingValue(entryTwo.first));
-                  } else {
-                    return -ODefaultComparator.INSTANCE.compare(
-                        getCollatingValue(entryOne.first), getCollatingValue(entryTwo.first));
-                  }
-                });
-
-    if (indexChanges.cleared) {
-      return IndexStreamSecurityDecorator.decorateStream(this, txStream);
-    }
-
-    @SuppressWarnings("resource")
-    final Stream<ORawPair<Object, ORID>> backedCursor = super.streamEntries(keys, ascSortOrder);
-    return IndexStreamSecurityDecorator.decorateStream(
-        this, mergeTxAndBackedStreams(indexChanges, txStream, backedCursor, ascSortOrder));
+    return super.streamEntries(keys, ascSortOrder);
   }
 
   private ORawPair<Object, ORID> calculateTxIndexEntry(
