@@ -34,7 +34,6 @@ import com.orientechnologies.orient.core.config.OStoragePaginatedClusterConfigur
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.encryption.OEncryptionFactory;
-import com.orientechnologies.orient.core.exception.NotEmptyComponentCanNotBeRemovedException;
 import com.orientechnologies.orient.core.exception.OPaginatedClusterException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -269,15 +268,6 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
         operation -> {
           acquireExclusiveLock();
           try {
-            final long entries = getEntries();
-            if (entries > 0) {
-              throw new NotEmptyComponentCanNotBeRemovedException(
-                  getName()
-                      + " : Not empty cluster can not be deleted. Cluster has "
-                      + entries
-                      + " records");
-            }
-
             deleteFile(atomicOperation, fileId);
 
             clusterPositionMap.delete(atomicOperation);

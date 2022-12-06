@@ -6303,7 +6303,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   protected final RuntimeException logAndPrepareForRethrow(
       final RuntimeException runtimeException) {
-    return logAndPrepareForRethrow(runtimeException, true);
+    return logAndPrepareForRethrow(runtimeException, false);
   }
 
   protected RuntimeException logAndPrepareForRethrow(

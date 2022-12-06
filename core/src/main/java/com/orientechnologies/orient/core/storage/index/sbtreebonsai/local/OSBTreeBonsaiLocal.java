@@ -28,7 +28,6 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.types.OModifiableInteger;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.exception.NotEmptyComponentCanNotBeRemovedException;
 import com.orientechnologies.orient.core.exception.OSBTreeBonsaiLocalException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
@@ -575,19 +574,6 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
         operation -> {
           final Lock lock = FILE_LOCK_MANAGER.acquireExclusiveLock(fileId);
           try {
-            final long size = size();
-            if (size > 0) {
-              throw new NotEmptyComponentCanNotBeRemovedException(
-                  "Ridbag "
-                      + getName()
-                      + ":"
-                      + rootBucketPointer.getPageIndex()
-                      + ":"
-                      + rootBucketPointer.getPageOffset()
-                      + " can not be removed, because it is not empty. Its size is "
-                      + size);
-            }
-
             final Queue<OBonsaiBucketPointer> subTreesToDelete = new LinkedList<>();
             subTreesToDelete.add(rootBucketPointer);
             recycleSubTrees(subTreesToDelete, atomicOperation);
@@ -613,25 +599,6 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
           final Lock lock = FILE_LOCK_MANAGER.acquireExclusiveLock(fileId);
           try {
-            final int treesCount;
-
-            try (final OCacheEntry sysCacheEntry =
-                loadPageForRead(atomicOperation, fileId, SYS_BUCKET.getPageIndex())) {
-              final OSysBucket sysBucket = new OSysBucket(sysCacheEntry);
-              treesCount = sysBucket.getTreesCount();
-            }
-
-            assert treesCount >= 0;
-
-            if (treesCount > 0) {
-              throw new NotEmptyComponentCanNotBeRemovedException(
-                  "Component "
-                      + getName()
-                      + " can not be removed because it still contains "
-                      + treesCount
-                      + " ridbags");
-            }
-
             deleteFile(atomicOperation, fileId);
           } finally {
             lock.unlock();
