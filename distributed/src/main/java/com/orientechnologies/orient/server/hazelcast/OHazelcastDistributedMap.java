@@ -289,4 +289,38 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object>
   public static boolean isRegisteredNodes(String key) {
     return key.startsWith(OHazelcastClusterMetadataManager.CONFIG_REGISTEREDNODES);
   }
+
+  public boolean existsDatabaseConfiguration(String databaseName) {
+    return this.containsKey(OHazelcastClusterMetadataManager.CONFIG_DATABASE_PREFIX + databaseName);
+  }
+
+  public void setDatabaseConfiguration(String databaseName, ODocument document) {
+    this.put(OHazelcastClusterMetadataManager.CONFIG_DATABASE_PREFIX + databaseName, document);
+  }
+
+  public ODocument getDatabaseConfiguration(String databaseName) {
+    return (ODocument)
+        this.get(OHazelcastClusterMetadataManager.CONFIG_DATABASE_PREFIX + databaseName);
+  }
+
+  // Returns name of distributed databases in the cluster.
+  public Set<String> getDatabases() {
+    final Set<String> dbs = new HashSet<>();
+    for (String key : keySet()) {
+      if (key.startsWith(OHazelcastClusterMetadataManager.CONFIG_DATABASE_PREFIX)) {
+        final String databaseName =
+            key.substring(OHazelcastClusterMetadataManager.CONFIG_DATABASE_PREFIX.length());
+        dbs.add(databaseName);
+      }
+    }
+    return dbs;
+  }
+
+  public void removeDatabaseConfiguration(String databaseName) {
+    this.remove(OHazelcastClusterMetadataManager.CONFIG_DATABASE_PREFIX + databaseName);
+  }
+
+  public static boolean isDatabaseConfiguration(String key) {
+    return key.startsWith(OHazelcastClusterMetadataManager.CONFIG_DATABASE_PREFIX);
+  }
 }

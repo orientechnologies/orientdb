@@ -296,4 +296,6 @@ public interface ODistributedServerManager {
   default void messageProcessStart(ODistributedRequest message) {}
 
   default void messageProcessEnd(ODistributedRequest iRequest, Object responsePayload) {}
+
+  ODocument getOnlineDatabaseConfiguration(String databaseName);
 }

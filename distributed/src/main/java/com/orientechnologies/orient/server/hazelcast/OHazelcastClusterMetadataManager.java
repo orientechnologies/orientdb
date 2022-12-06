@@ -575,7 +575,7 @@ public class OHazelcastClusterMetadataManager
 
     boolean updated = tryUpdatingDatabaseConfigurationLocally(databaseName, cfg);
 
-    if (!updated && !getConfigurationMap().containsKey(CONFIG_DATABASE_PREFIX + databaseName))
+    if (!updated && !getConfigurationMap().existsDatabaseConfiguration(databaseName))
       // FIRST TIME, FORCE PUBLISHING
       updated = true;
 
@@ -585,7 +585,7 @@ public class OHazelcastClusterMetadataManager
       // WRITE TO THE MAP TO BE READ BY NEW SERVERS ON JOIN
       ORecordInternal.setRecordSerializer(
           document, ODatabaseDocumentAbstract.getDefaultSerializer());
-      configurationMap.put(CONFIG_DATABASE_PREFIX + databaseName, document);
+      configurationMap.setDatabaseConfiguration(databaseName, document);
       distributedPlugin.onDbConfigUpdated(databaseName, document, updated);
 
       // SEND NEW CFG TO ALL THE CONNECTED CLIENTS
@@ -817,8 +817,7 @@ public class OHazelcastClusterMetadataManager
 
         distributedPlugin.dumpServersStatus();
 
-      } else if (key.startsWith(CONFIG_DATABASE_PREFIX)) {
-        final String dbName = key.substring(CONFIG_DATABASE_PREFIX.length());
+      } else if (OHazelcastDistributedMap.isDatabaseConfiguration(key)) {
         updateLastClusterChange();
 
       } else if (key.startsWith(CONFIG_DBSTATUS_PREFIX)) {
@@ -978,9 +977,8 @@ public class OHazelcastClusterMetadataManager
                                   "Replacing local database '%s' configuration with the most recent from the joined cluster...",
                                   databaseName);
 
-                              cfg.override(
-                                  (ODocument)
-                                      configurationMap.get(CONFIG_DATABASE_PREFIX + databaseName));
+                              cfg.override(configurationMap.getDatabaseConfiguration(databaseName));
+
                               return null;
                             }
                           });
@@ -1011,7 +1009,7 @@ public class OHazelcastClusterMetadataManager
 
   public void dropDatabaseConfiguration(final String dbName) {
     // LAST NODE HOLDING THE DATABASE, DELETE DISTRIBUTED CFG TOO
-    configurationMap.remove(CONFIG_DATABASE_PREFIX + dbName);
+    configurationMap.removeDatabaseConfiguration(dbName);
     configurationMap.remove(OSyncDatabaseTask.DEPLOYDB + dbName);
     ODistributedServerLog.info(
         this,
@@ -1134,14 +1132,7 @@ public class OHazelcastClusterMetadataManager
 
   // Returns name of distributed databases in the cluster.
   public Set<String> getDatabases() {
-    final Set<String> dbs = new HashSet<>();
-    for (String key : configurationMap.keySet()) {
-      if (key.startsWith(CONFIG_DATABASE_PREFIX)) {
-        final String databaseName = key.substring(CONFIG_DATABASE_PREFIX.length());
-        dbs.add(databaseName);
-      }
-    }
-    return dbs;
+    return configurationMap.getDatabases();
   }
 
   public void reloadRegisteredNodes() {
@@ -1531,6 +1522,10 @@ public class OHazelcastClusterMetadataManager
       serverInstance.getClientConnectionManager().pushDistribCfg2Clients(getClusterConfiguration());
     }
     return result;
+  }
+
+  public ODocument getOnlineDatabaseConfiguration(final String iDatabaseName) {
+    return configurationMap.getDatabaseConfiguration(iDatabaseName);
   }
 
   public ODistributedConfiguration getDatabaseConfiguration(final String iDatabaseName) {

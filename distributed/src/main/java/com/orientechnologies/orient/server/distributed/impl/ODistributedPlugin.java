@@ -3187,4 +3187,9 @@ public class ODistributedPlugin extends OServerPluginAbstract
   public HazelcastInstance getHazelcastInstance() {
     return clusterManager.getHazelcastInstance();
   }
+
+  @Override
+  public ODocument getOnlineDatabaseConfiguration(String databaseName) {
+    return clusterManager.getOnlineDatabaseConfiguration(databaseName);
+  }
 }
