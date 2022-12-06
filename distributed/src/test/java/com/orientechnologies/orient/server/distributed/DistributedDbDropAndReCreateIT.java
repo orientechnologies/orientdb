@@ -17,7 +17,6 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.server.hazelcast.OHazelcastClusterMetadataManager;
 import com.orientechnologies.orient.setup.ServerRun;
 import org.junit.Assert;
 import org.junit.Test;
@@ -51,25 +50,21 @@ public class DistributedDbDropAndReCreateIT extends AbstractServerClusterTxTest 
 
       Thread.sleep(2000);
 
-      Assert.assertFalse(
+      Assert.assertNull(
           server
               .getServerInstance()
               .getDistributedManager()
-              .getConfigurationMap()
-              .containsKey(
-                  OHazelcastClusterMetadataManager.CONFIG_DATABASE_PREFIX + getDatabaseName()));
+              .getOnlineDatabaseConfiguration(getDatabaseName()));
 
       server = serverInstance.get(s);
 
       banner("RE-CREATING DATABASE ON SERVER " + server.getServerId());
 
-      Assert.assertFalse(
+      Assert.assertNull(
           server
               .getServerInstance()
               .getDistributedManager()
-              .getConfigurationMap()
-              .containsKey(
-                  OHazelcastClusterMetadataManager.CONFIG_DATABASE_PREFIX + getDatabaseName()));
+              .getOnlineDatabaseConfiguration(getDatabaseName()));
 
       for (int retry = 0; retry < 10; retry++) {
         try {

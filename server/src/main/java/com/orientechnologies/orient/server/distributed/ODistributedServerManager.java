@@ -29,7 +29,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -122,8 +121,6 @@ public interface ODistributedServerManager {
   void executeOnLocalNodeFromRemote(ODistributedRequest request);
 
   ORemoteServerController getRemoteServer(String nodeName) throws IOException;
-
-  Map<String, Object> getConfigurationMap();
 
   long getLastClusterChangeOn();
 

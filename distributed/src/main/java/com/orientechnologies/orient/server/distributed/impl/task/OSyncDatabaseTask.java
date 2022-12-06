@@ -77,21 +77,6 @@ public class OSyncDatabaseTask extends OAbstractRemoteTask {
           (ODistributedDatabaseImpl) iManager.getMessageService().getDatabase(databaseName);
 
       try {
-        final Long lastDeployment =
-            (Long) iManager.getConfigurationMap().get(OSyncDatabaseTask.DEPLOYDB + databaseName);
-        if (lastDeployment != null && lastDeployment.longValue() == random) {
-          // SKIP IT
-          ODistributedServerLog.debug(
-              this,
-              iManager.getLocalNodeName(),
-              getNodeSource(),
-              DIRECTION.NONE,
-              "Skip deploying database '%s' because already executed",
-              databaseName);
-          return Boolean.FALSE;
-        }
-
-        iManager.getConfigurationMap().put(OSyncDatabaseTask.DEPLOYDB + databaseName, random);
 
         iManager.setDatabaseStatus(
             getNodeSource(), databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);

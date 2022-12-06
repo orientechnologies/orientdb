@@ -18,6 +18,7 @@ package com.orientechnologies.orient.server.distributed;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager.DB_STATUS;
 import com.orientechnologies.orient.setup.ServerRun;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.Assert;
@@ -58,13 +59,14 @@ public class HARemoveNodeFromCfgIT extends AbstractServerClusterTxTest {
             .getDatabaseConfiguration(getDatabaseName())
             .getAllConfiguredServers()
             .contains(removedServer));
-    Assert.assertTrue(
+    Assert.assertEquals(
         serverInstance
             .get(0)
             .getServerInstance()
             .getDistributedManager()
-            .getConfigurationMap()
-            .containsKey("dbstatus." + removedServer + "." + getDatabaseName()));
+            .getDatabaseStatus(removedServer, getDatabaseName()),
+        DB_STATUS.ONLINE);
+
     banner("SIMULATE SOFT SHUTDOWN OF SERVER " + (SERVERS - 1));
 
     //    ODatabaseDocument database = serverInstance.get(SERVERS -
@@ -98,8 +100,7 @@ public class HARemoveNodeFromCfgIT extends AbstractServerClusterTxTest {
             .get(0)
             .getServerInstance()
             .getDistributedManager()
-            .getConfigurationMap()
-            .get("dbstatus." + removedServer + "." + getDatabaseName()),
+            .getDatabaseStatus(removedServer, getDatabaseName()),
         ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
 
     serverInstance

@@ -15,9 +15,7 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.setup.ServerRun;
-import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -93,25 +91,9 @@ public class SplitBraiNetworkIT extends AbstractHARemoveNode {
 
     banner("TEST WITH THE ISOLATED NODE FINISHED, REJOIN THE SERVER " + (SERVERS - 1) + "...");
 
-    for (ServerRun s : serverInstance) {
-      OLogManager.instance().info(this, "MAP SERVER %s", s.getServerId());
-      for (Map.Entry<String, Object> entry :
-          s.getServerInstance().getDistributedManager().getConfigurationMap().entrySet()) {
-        OLogManager.instance().info(this, " %s=%s", entry.getKey(), entry.getValue());
-      }
-    }
-
     serverInstance.get(2).rejoin(serverInstance.get(0), serverInstance.get(1));
 
     Thread.sleep(10000);
-
-    for (ServerRun s : serverInstance) {
-      OLogManager.instance().info(this, "MAP SERVER %s", s.getServerId());
-      for (Map.Entry<String, Object> entry :
-          s.getServerInstance().getDistributedManager().getConfigurationMap().entrySet()) {
-        OLogManager.instance().info(this, " %s=%s", entry.getKey(), entry.getValue());
-      }
-    }
 
     waitForDatabaseIsOnline(0, "europe-2", getDatabaseName(), 90000);
     assertDatabaseStatusEquals(

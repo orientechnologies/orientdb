@@ -2879,11 +2879,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
   }
 
   @Override
-  public Map<String, Object> getConfigurationMap() {
-    return clusterManager.getConfigurationMap();
-  }
-
-  @Override
   public long getLastClusterChangeOn() {
     return clusterManager.getLastClusterChangeOn();
   }

@@ -92,27 +92,6 @@ public class OSyncClusterTask extends OAbstractRemoteTask {
 
       try {
 
-        final Long lastDeployment =
-            (Long)
-                iManager
-                    .getConfigurationMap()
-                    .get(DEPLOYCLUSTER + databaseName + "." + clusterName);
-        if (lastDeployment != null && lastDeployment.longValue() == random) {
-          // SKIP IT
-          ODistributedServerLog.debug(
-              this,
-              iManager.getLocalNodeName(),
-              getNodeSource(),
-              DIRECTION.NONE,
-              "Skip deploying cluster '%s' because already executed",
-              clusterName);
-          return Boolean.FALSE;
-        }
-
-        iManager
-            .getConfigurationMap()
-            .put(DEPLOYCLUSTER + databaseName + "." + clusterName, random);
-
         ODistributedServerLog.info(
             this,
             iManager.getLocalNodeName(),
