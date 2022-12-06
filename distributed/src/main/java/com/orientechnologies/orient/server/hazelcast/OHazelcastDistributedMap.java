@@ -30,6 +30,7 @@ import com.hazelcast.map.listener.EntryUpdatedListener;
 import com.hazelcast.map.listener.MapClearedListener;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -322,5 +323,36 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object>
 
   public static boolean isDatabaseConfiguration(String key) {
     return key.startsWith(OHazelcastClusterMetadataManager.CONFIG_DATABASE_PREFIX);
+  }
+
+  public void setDatabaseStatus(
+      String node, String databaseName, ODistributedServerManager.DB_STATUS status) {
+    put(
+        OHazelcastClusterMetadataManager.CONFIG_DBSTATUS_PREFIX + node + "." + databaseName,
+        status);
+  }
+
+  public void removeDatabaseStatus(String node, String databaseName) {
+    remove(OHazelcastClusterMetadataManager.CONFIG_DBSTATUS_PREFIX + node + "." + databaseName);
+  }
+
+  public ODistributedServerManager.DB_STATUS getDatabaseStatus(String node, String databaseName) {
+    return (ODistributedServerManager.DB_STATUS)
+        get(OHazelcastClusterMetadataManager.CONFIG_DBSTATUS_PREFIX + node + "." + databaseName);
+  }
+
+  public ODistributedServerManager.DB_STATUS getCachedDatabaseStatus(
+      String node, String databaseName) {
+    return (ODistributedServerManager.DB_STATUS)
+        getLocalCachedValue(
+            OHazelcastClusterMetadataManager.CONFIG_DBSTATUS_PREFIX + node + "." + databaseName);
+  }
+
+  public static boolean isDatabaseStatus(String key) {
+    return key.startsWith(OHazelcastClusterMetadataManager.CONFIG_DBSTATUS_PREFIX);
+  }
+
+  public static String getDatabaseStatusKeyValues(String key) {
+    return key.substring(OHazelcastClusterMetadataManager.CONFIG_DBSTATUS_PREFIX.length());
   }
 }

@@ -441,17 +441,24 @@ public class OHazelcastClusterMetadataManager
 
       if (hazelcastInstance != null && hazelcastInstance.getLifecycleService().isRunning())
         for (Map.Entry<String, Object> entry : configurationMap.entrySet()) {
-          if (entry.getKey().startsWith(CONFIG_DBSTATUS_PREFIX)) {
+          if (OHazelcastDistributedMap.isDatabaseStatus(entry.getKey())) {
 
-            final String nodeDb = entry.getKey().substring(CONFIG_DBSTATUS_PREFIX.length());
+            final String values =
+                OHazelcastDistributedMap.getDatabaseStatusKeyValues(entry.getKey());
+            final String nodeName = values.substring(0, values.indexOf("."));
+            final String databaseName = values.substring(values.indexOf(".") + 1);
 
-            if (nodeDb.startsWith(nodeName)) databases.add(entry.getKey());
+            if (nodeName.equals(this.nodeName)) {
+              databases.add(databaseName);
+            }
           }
         }
 
       // PUT DATABASES AS NOT_AVAILABLE
-      for (String k : databases)
-        configurationMap.put(k, ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
+      for (String k : databases) {
+        configurationMap.setDatabaseStatus(
+            this.nodeName, k, ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
+      }
 
     } catch (HazelcastInstanceNotActiveException e) {
       // HZ IS ALREADY DOWN, IGNORE IT
@@ -681,20 +688,20 @@ public class OHazelcastClusterMetadataManager
           registerNode(iEvent.getMember(), joinedNodeName);
         }
 
-      } else if (key.startsWith(CONFIG_DBSTATUS_PREFIX)) {
+      } else if (OHazelcastDistributedMap.isDatabaseStatus(key)) {
+        String values = OHazelcastDistributedMap.getDatabaseStatusKeyValues(key);
         ODistributedServerLog.info(
             this,
             nodeName,
             eventNodeName,
             ODistributedServerLog.DIRECTION.IN,
             "Received new status %s=%s",
-            key.substring(CONFIG_DBSTATUS_PREFIX.length()),
+            values,
             iEvent.getValue());
 
         // REASSIGN HIS CLUSTER
-        final String dbNode = key.substring(CONFIG_DBSTATUS_PREFIX.length());
-        final String nodeName = dbNode.substring(0, dbNode.indexOf("."));
-        final String databaseName = dbNode.substring(dbNode.indexOf(".") + 1);
+        final String nodeName = values.substring(0, values.indexOf("."));
+        final String databaseName = values.substring(values.indexOf(".") + 1);
 
         distributedPlugin.onDatabaseEvent(
             nodeName, databaseName, (ODistributedServerManager.DB_STATUS) iEvent.getValue());
@@ -745,20 +752,20 @@ public class OHazelcastClusterMetadataManager
         }
         distributedPlugin.dumpServersStatus();
 
-      } else if (key.startsWith(CONFIG_DBSTATUS_PREFIX)) {
+      } else if (OHazelcastDistributedMap.isDatabaseStatus(key)) {
+        String values = OHazelcastDistributedMap.getDatabaseStatusKeyValues(key);
         ODistributedServerLog.info(
             this,
             nodeName,
             eventNodeName,
             ODistributedServerLog.DIRECTION.IN,
             "Received updated status %s=%s",
-            key.substring(CONFIG_DBSTATUS_PREFIX.length()),
+            values,
             iEvent.getValue());
 
         // CALL DATABASE EVENT
-        final String dbNode = key.substring(CONFIG_DBSTATUS_PREFIX.length());
-        final String nodeName = dbNode.substring(0, dbNode.indexOf("."));
-        final String databaseName = dbNode.substring(dbNode.indexOf(".") + 1);
+        final String nodeName = values.substring(0, values.indexOf("."));
+        final String databaseName = values.substring(values.indexOf(".") + 1);
 
         distributedPlugin.onDatabaseEvent(
             nodeName, databaseName, (ODistributedServerManager.DB_STATUS) iEvent.getValue());
@@ -820,20 +827,20 @@ public class OHazelcastClusterMetadataManager
       } else if (OHazelcastDistributedMap.isDatabaseConfiguration(key)) {
         updateLastClusterChange();
 
-      } else if (key.startsWith(CONFIG_DBSTATUS_PREFIX)) {
+      } else if (OHazelcastDistributedMap.isDatabaseStatus(key)) {
+        String values = OHazelcastDistributedMap.getDatabaseStatusKeyValues(key);
         ODistributedServerLog.debug(
             this,
             nodeName,
             getNodeName(iEvent.getMember(), true),
             ODistributedServerLog.DIRECTION.IN,
             "Received removed status %s=%s",
-            key.substring(CONFIG_DBSTATUS_PREFIX.length()),
+            values,
             iEvent.getValue());
 
         // CALL DATABASE EVENT
-        final String dbNode = key.substring(CONFIG_DBSTATUS_PREFIX.length());
-        final String nodeName = dbNode.substring(0, dbNode.indexOf("."));
-        final String databaseName = dbNode.substring(dbNode.indexOf(".") + 1);
+        final String nodeName = values.substring(0, values.indexOf("."));
+        final String databaseName = values.substring(values.indexOf(".") + 1);
 
         distributedPlugin.onDatabaseEvent(
             nodeName, databaseName, (ODistributedServerManager.DB_STATUS) iEvent.getValue());
@@ -1003,7 +1010,7 @@ public class OHazelcastClusterMetadataManager
     final String dbName = iDatabase.getName();
 
     if (configurationMap != null) {
-      configurationMap.remove(CONFIG_DBSTATUS_PREFIX + nodeName + "." + dbName);
+      configurationMap.removeDatabaseStatus(nodeName, dbName);
     }
   }
 
@@ -1091,27 +1098,7 @@ public class OHazelcastClusterMetadataManager
     }
 
     final ODistributedServerManager.DB_STATUS status =
-        (ODistributedServerManager.DB_STATUS)
-            configurationMap.getLocalCachedValue(
-                CONFIG_DBSTATUS_PREFIX + iNode + "." + iDatabaseName);
-    return status != null ? status : ODistributedServerManager.DB_STATUS.NOT_AVAILABLE;
-  }
-
-  public ODistributedServerManager.DB_STATUS getDatabaseStatus(
-      final String iNode, final String iDatabaseName, final boolean useCache) {
-    if (OSystemDatabase.SYSTEM_DB_NAME.equals(iDatabaseName)) {
-      // CHECK THE SERVER STATUS
-      if (getActiveServers().contains(iNode)) {
-        return ODistributedServerManager.DB_STATUS.ONLINE;
-      } else {
-        return ODistributedServerManager.DB_STATUS.NOT_AVAILABLE;
-      }
-    }
-
-    final String key = CONFIG_DBSTATUS_PREFIX + iNode + "." + iDatabaseName;
-    final ODistributedServerManager.DB_STATUS status =
-        (ODistributedServerManager.DB_STATUS)
-            (useCache ? configurationMap.getLocalCachedValue(key) : configurationMap.get(key));
+        configurationMap.getCachedDatabaseStatus(iNode, iDatabaseName);
     return status != null ? status : ODistributedServerManager.DB_STATUS.NOT_AVAILABLE;
   }
 
@@ -1119,13 +1106,12 @@ public class OHazelcastClusterMetadataManager
       final String iNode,
       final String iDatabaseName,
       final ODistributedServerManager.DB_STATUS iStatus) {
-    final String key = CONFIG_DBSTATUS_PREFIX + iNode + "." + iDatabaseName;
 
     final ODistributedServerManager.DB_STATUS currStatus =
-        (ODistributedServerManager.DB_STATUS) configurationMap.get(key);
+        configurationMap.getDatabaseStatus(iNode, iDatabaseName);
 
     if (currStatus == null || currStatus != iStatus) {
-      configurationMap.put(key, iStatus);
+      configurationMap.setDatabaseStatus(iNode, iDatabaseName, iStatus);
       distributedPlugin.invokeOnDatabaseStatusChange(iNode, iDatabaseName, iStatus);
     }
   }
@@ -1284,9 +1270,8 @@ public class OHazelcastClusterMetadataManager
           getDatabaseStatus(nodeLeftName, databaseName);
       if (nodeLeftStatus != ODistributedServerManager.DB_STATUS.OFFLINE
           && nodeLeftStatus != ODistributedServerManager.DB_STATUS.NOT_AVAILABLE)
-        configurationMap.put(
-            CONFIG_DBSTATUS_PREFIX + nodeLeftName + "." + databaseName,
-            ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
+        configurationMap.setDatabaseStatus(
+            nodeLeftName, databaseName, ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
     }
 
     ODistributedServerLog.warn(
