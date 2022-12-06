@@ -149,7 +149,7 @@ public interface ODistributedServerManager {
 
   // This is always used with deployToCluster=true!
   boolean updateCachedDatabaseConfiguration(
-      String iDatabaseName, OModifiableDistributedConfiguration cfg, boolean iDeployToCluster);
+      String iDatabaseName, OModifiableDistributedConfiguration cfg);
 
   long getNextMessageIdCounter();
 

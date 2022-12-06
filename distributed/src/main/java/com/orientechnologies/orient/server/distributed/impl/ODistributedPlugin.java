@@ -2110,7 +2110,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
           public Object call(final OModifiableDistributedConfiguration cfg) {
 
             // UPDATE LAST CFG BEFORE TO MODIFY THE CLUSTERS
-            updateCachedDatabaseConfiguration(iDatabase.getName(), cfg, true);
+            updateCachedDatabaseConfiguration(iDatabase.getName(), cfg);
 
             for (Map.Entry<OClass, List<String>> entry : cluster2Create.entrySet()) {
               final OClass clazz = entry.getKey();
@@ -2177,8 +2177,8 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
   @Override
   public boolean updateCachedDatabaseConfiguration(
-      String iDatabaseName, OModifiableDistributedConfiguration cfg, boolean iDeployToCluster) {
-    return clusterManager.updateCachedDatabaseConfiguration(iDatabaseName, cfg, iDeployToCluster);
+      String iDatabaseName, OModifiableDistributedConfiguration cfg) {
+    return clusterManager.updateCachedDatabaseConfiguration(iDatabaseName, cfg);
   }
 
   public void notifyClients(String databaseName) {
@@ -3120,8 +3120,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
   }
 
   // Called when the db config has changed
-  public void onDbConfigUpdated(
-      String databaseName, ODocument config, boolean updated, boolean deployToCluster) {
+  public void onDbConfigUpdated(String databaseName, ODocument config, boolean updated) {
     // SEND A DISTRIBUTED MSG TO ALL THE SERVERS
     final Set<String> servers = new HashSet<String>(getActiveServers());
     servers.remove(nodeName);

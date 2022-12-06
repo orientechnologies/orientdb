@@ -129,7 +129,7 @@ public class TwoClientsRecordUpdateTxOnTwoServersWithQuorum2ScenarioIT
         manager.getDatabaseConfiguration(getDatabaseName()).modify();
     ODocument cfg = databaseConfiguration.getDocument();
     cfg.field("writeQuorum", quorum);
-    manager.updateCachedDatabaseConfiguration(getDatabaseName(), databaseConfiguration, true);
+    manager.updateCachedDatabaseConfiguration(getDatabaseName(), databaseConfiguration);
     Thread.sleep(100);
   }
 }

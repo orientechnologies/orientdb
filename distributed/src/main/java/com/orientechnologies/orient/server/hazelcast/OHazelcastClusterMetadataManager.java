@@ -569,9 +569,7 @@ public class OHazelcastClusterMetadataManager
   public void memberAttributeChanged(final MemberAttributeEvent memberAttributeEvent) {}
 
   public boolean updateCachedDatabaseConfiguration(
-      final String databaseName,
-      final OModifiableDistributedConfiguration cfg,
-      final boolean iDeployToCluster) {
+      final String databaseName, final OModifiableDistributedConfiguration cfg) {
     // VALIDATE THE CONFIGURATION FIRST
     distributedPlugin.getDistributedStrategy().validateConfiguration(cfg);
 
@@ -584,13 +582,11 @@ public class OHazelcastClusterMetadataManager
     final ODocument document = cfg.getDocument();
 
     if (updated) {
-      if (iDeployToCluster) {
-        // WRITE TO THE MAP TO BE READ BY NEW SERVERS ON JOIN
-        ORecordInternal.setRecordSerializer(
-            document, ODatabaseDocumentAbstract.getDefaultSerializer());
-        configurationMap.put(CONFIG_DATABASE_PREFIX + databaseName, document);
-        distributedPlugin.onDbConfigUpdated(databaseName, document, updated, iDeployToCluster);
-      } else configurationMap.putInLocalCache(CONFIG_DATABASE_PREFIX + databaseName, document);
+      // WRITE TO THE MAP TO BE READ BY NEW SERVERS ON JOIN
+      ORecordInternal.setRecordSerializer(
+          document, ODatabaseDocumentAbstract.getDefaultSerializer());
+      configurationMap.put(CONFIG_DATABASE_PREFIX + databaseName, document);
+      distributedPlugin.onDbConfigUpdated(databaseName, document, updated);
 
       // SEND NEW CFG TO ALL THE CONNECTED CLIENTS
       serverInstance.getClientConnectionManager().pushDistribCfg2Clients(getClusterConfiguration());
@@ -1518,7 +1514,7 @@ public class OHazelcastClusterMetadataManager
               lastCfg.getDocument().toJSON());
 
         // CONFIGURATION CHANGED, UPDATE IT ON THE CLUSTER AND DISK
-        updated = updateCachedDatabaseConfiguration(databaseName, lastCfg, true);
+        updated = updateCachedDatabaseConfiguration(databaseName, lastCfg);
       }
 
     } catch (RuntimeException e) {

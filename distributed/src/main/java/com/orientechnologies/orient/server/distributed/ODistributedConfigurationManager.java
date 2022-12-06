@@ -59,7 +59,7 @@ public class ODistributedConfigurationManager {
 
         // LOADED FILE, PUBLISH IT IN THE CLUSTER
         distributedManager.updateCachedDatabaseConfiguration(
-            databaseName, new OModifiableDistributedConfiguration(doc), true);
+            databaseName, new OModifiableDistributedConfiguration(doc));
       }
     }
     return distributedConfiguration;

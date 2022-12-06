@@ -115,7 +115,7 @@ public class WWConflictAndNodeInDeadlockScenarioIT extends AbstractScenarioTest 
       cfg = databaseConfiguration.getDocument();
       cfg.field("writeQuorum", 1);
       cfg.field("version", (Integer) cfg.field("version") + 1);
-      manager.updateCachedDatabaseConfiguration(getDatabaseName(), databaseConfiguration, true);
+      manager.updateCachedDatabaseConfiguration(getDatabaseName(), databaseConfiguration);
       System.out.println("\nConfiguration updated.");
 
       // deadlock on server3

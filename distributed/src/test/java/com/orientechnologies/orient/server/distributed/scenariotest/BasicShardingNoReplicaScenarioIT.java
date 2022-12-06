@@ -95,7 +95,7 @@ public class BasicShardingNoReplicaScenarioIT extends AbstractShardingScenarioTe
 
         dCfg.setServerOwner("client_" + serverName, serverName);
       }
-      manager1.updateCachedDatabaseConfiguration(this.getDatabaseName(), dCfg, true);
+      manager1.updateCachedDatabaseConfiguration(this.getDatabaseName(), dCfg);
 
       final OProperty prop = clientType.createProperty("name", OType.STRING);
       prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);

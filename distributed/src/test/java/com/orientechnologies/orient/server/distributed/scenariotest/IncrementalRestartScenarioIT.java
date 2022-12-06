@@ -140,7 +140,7 @@ public class IncrementalRestartScenarioIT extends AbstractScenarioTest {
         ODocument cfg = databaseConfiguration.getDocument();
         cfg.field("writeQuorum", 2);
         cfg.field("version", (Integer) cfg.field("version") + 1);
-        manager.updateCachedDatabaseConfiguration(getDatabaseName(), databaseConfiguration, true);
+        manager.updateCachedDatabaseConfiguration(getDatabaseName(), databaseConfiguration);
         assertEquals(2, (int) cfg.field("writeQuorum"));
 
         // network fault on server2
@@ -267,7 +267,7 @@ public class IncrementalRestartScenarioIT extends AbstractScenarioTest {
         ODocument cfg = databaseConfiguration.getDocument();
         cfg.field("writeQuorum", 1);
         cfg.field("version", (Integer) cfg.field("version") + 1);
-        manager.updateCachedDatabaseConfiguration(getDatabaseName(), databaseConfiguration, true);
+        manager.updateCachedDatabaseConfiguration(getDatabaseName(), databaseConfiguration);
         assertEquals(1, (int) cfg.field("writeQuorum"));
 
         // network fault on server2

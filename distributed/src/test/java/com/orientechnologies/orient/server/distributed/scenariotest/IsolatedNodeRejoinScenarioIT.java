@@ -79,7 +79,7 @@ public class IsolatedNodeRejoinScenarioIT extends AbstractScenarioTest {
     cfg.field("writeQuorum", 2);
     cfg.field("autoDeploy", true);
     cfg.field("version", (Integer) cfg.field("version") + 1);
-    manager.updateCachedDatabaseConfiguration(getDatabaseName(), databaseConfiguration, true);
+    manager.updateCachedDatabaseConfiguration(getDatabaseName(), databaseConfiguration);
     System.out.println("\nConfiguration updated.");
 
     // isolating server3

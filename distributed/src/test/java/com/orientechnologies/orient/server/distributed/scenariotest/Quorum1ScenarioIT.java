@@ -76,7 +76,7 @@ public class Quorum1ScenarioIT extends AbstractScenarioTest {
     cfg.field("writeQuorum", 1);
     cfg.field("autoDeploy", true);
     cfg.field("version", (Integer) cfg.field("version") + 1);
-    manager.updateCachedDatabaseConfiguration(getDatabaseName(), databaseConfiguration, true);
+    manager.updateCachedDatabaseConfiguration(getDatabaseName(), databaseConfiguration);
     System.out.println("\nConfiguration updated.");
 
     // execute writes on server1 and server2
