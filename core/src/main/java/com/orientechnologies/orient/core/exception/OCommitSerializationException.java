@@ -6,7 +6,7 @@ public class OCommitSerializationException extends OCoreException implements OHi
 
   private static final long serialVersionUID = -1157631679527219263L;
 
-  public OCommitSerializationException(OCoreException exception) {
+  public OCommitSerializationException(OCommitSerializationException exception) {
     super(exception);
   }
 
