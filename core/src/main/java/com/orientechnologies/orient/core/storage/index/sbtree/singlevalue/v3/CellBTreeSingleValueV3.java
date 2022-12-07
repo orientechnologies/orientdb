@@ -1453,8 +1453,8 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
   }
 
   private UpdateBucketSearchResult splitNonRootBucket(
-      final List<Long> path,
-      final List<Integer> itemPointers,
+      List<Long> path,
+      List<Integer> itemPointers,
       final int keyIndex,
       final long pageIndex,
       final CellBTreeSingleValueBucketV3<K> bucketToSplit,
@@ -1515,6 +1515,8 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
 
           parentIndex = bucketSearchResult.getLastPathItem();
           insertionIndex = bucketSearchResult.getItemIndex();
+          path = bucketSearchResult.getPath();
+          itemPointers = bucketSearchResult.getInsertionIndexes();
 
           if (parentIndex != parentCacheEntry.getPageIndex()) {
             parentCacheEntry.close();
