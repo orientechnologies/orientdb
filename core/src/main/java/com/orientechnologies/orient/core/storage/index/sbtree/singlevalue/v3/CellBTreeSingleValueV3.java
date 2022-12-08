@@ -236,10 +236,10 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
               key = keySerializer.preprocess(key, (Object[]) keyTypes);
               final byte[] serializedKey =
                   keySerializer.serializeNativeAsWhole(key, (Object[]) keyTypes);
-              if (keySize > MAX_KEY_SIZE) {
+              if (serializedKey.length > MAX_KEY_SIZE) {
                 throw new OTooBigIndexKeyException(
                     "Key size is more than allowed, operation was canceled. Current key size "
-                        + keySize
+                        + serializedKey.length
                         + ", allowed  "
                         + MAX_KEY_SIZE,
                     getName());
