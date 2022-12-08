@@ -1453,8 +1453,8 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
   }
 
   private UpdateBucketSearchResult splitNonRootBucket(
-      List<Long> path,
-      List<Integer> itemPointers,
+      final List<Long> path,
+      final List<Integer> itemPointers,
       final int keyIndex,
       final long pageIndex,
       final CellBTreeSingleValueBucketV3<K> bucketToSplit,
@@ -1491,7 +1491,6 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
           }
         }
       }
-
       long parentIndex = path.get(path.size() - 2);
       OCacheEntry parentCacheEntry =
           loadPageForWrite(atomicOperation, fileId, parentIndex, false, true);
@@ -1499,6 +1498,8 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
         CellBTreeSingleValueBucketV3<K> parentBucket =
             new CellBTreeSingleValueBucketV3<>(parentCacheEntry);
         int insertionIndex = itemPointers.get(itemPointers.size() - 2);
+        List<Long> currentPath = path.subList(0, path.size() - 1);
+        List<Integer> currentIndex = itemPointers.subList(0, itemPointers.size() - 1);
         while (!parentBucket.addNonLeafEntry(
             insertionIndex,
             (int) pageIndex,
@@ -1508,15 +1509,15 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
               splitBucket(
                   parentBucket,
                   parentCacheEntry,
-                  path.subList(0, path.size() - 1),
-                  itemPointers.subList(0, itemPointers.size() - 1),
+                  currentPath,
+                  currentIndex,
                   insertionIndex,
                   atomicOperation);
 
           parentIndex = bucketSearchResult.getLastPathItem();
           insertionIndex = bucketSearchResult.getItemIndex();
-          path = bucketSearchResult.getPath();
-          itemPointers = bucketSearchResult.getInsertionIndexes();
+          currentPath = bucketSearchResult.getPath();
+          currentIndex = bucketSearchResult.getInsertionIndexes();
 
           if (parentIndex != parentCacheEntry.getPageIndex()) {
             parentCacheEntry.close();
