@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.Set;
 
@@ -104,6 +105,17 @@ public class OIndexMetadata {
 
   String getValueContainerAlgorithm() {
     return valueContainerAlgorithm;
+  }
+
+  public boolean isMultivalue() {
+    String t = type.toUpperCase();
+    if (OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString().equals(t)
+        || OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(t)
+        || OClass.INDEX_TYPE.FULLTEXT.toString().equals(t)) {
+      return true;
+    } else {
+      return false;
+    }
   }
 
   public ODocument getMetadata() {

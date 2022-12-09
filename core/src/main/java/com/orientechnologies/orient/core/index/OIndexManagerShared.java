@@ -733,15 +733,7 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
   private OIndexInternal createIndexFromMetadata(
       OStorage storage, OIndexMetadata indexMetadata, OProgressListener progressListener) {
 
-    OIndexInternal index =
-        OIndexes.createIndex(
-            storage,
-            indexMetadata.getName(),
-            indexMetadata.getType(),
-            indexMetadata.getAlgorithm(),
-            indexMetadata.getValueContainerAlgorithm(),
-            indexMetadata.getMetadata(),
-            -1);
+    OIndexInternal index = OIndexes.createIndex(storage, indexMetadata, -1);
     if (progressListener == null)
       // ASSIGN DEFAULT PROGRESS LISTENER
       progressListener = new OIndexRebuildOutputListener(index);
@@ -979,15 +971,7 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
                     d.field(OIndexInternal.ALGORITHM),
                     d.field(OIndexInternal.VALUE_CONTAINER_ALGORITHM));
 
-            index =
-                OIndexes.createIndex(
-                    storage,
-                    newIndexMetadata.getName(),
-                    newIndexMetadata.getType(),
-                    newIndexMetadata.getAlgorithm(),
-                    newIndexMetadata.getValueContainerAlgorithm(),
-                    newIndexMetadata.getMetadata(),
-                    indexVersion);
+            index = OIndexes.createIndex(storage, newIndexMetadata, indexVersion);
 
             final String normalizedName = newIndexMetadata.getName();
 

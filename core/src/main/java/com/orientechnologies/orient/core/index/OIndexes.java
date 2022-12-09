@@ -21,7 +21,6 @@ import com.orientechnologies.common.util.OCollections;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashIndexFactory;
 import java.util.Collections;
@@ -143,15 +142,10 @@ public final class OIndexes {
    * @throws OConfigurationException if index creation failed
    * @throws OIndexException if index type does not exist
    */
-  public static OIndexInternal createIndex(
-      OStorage storage,
-      String name,
-      String indexType,
-      String algorithm,
-      String valueContainerAlgorithm,
-      ODocument metadata,
-      int version)
+  public static OIndexInternal createIndex(OStorage storage, OIndexMetadata metadata, int version)
       throws OConfigurationException, OIndexException {
+    String indexType = metadata.getType();
+    String algorithm = metadata.getAlgorithm();
     if (indexType.equalsIgnoreCase(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name())
         || indexType.equalsIgnoreCase(OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.name())
         || indexType.equalsIgnoreCase(OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.name())) {
@@ -162,7 +156,13 @@ public final class OIndexes {
 
     return findFactoryByAlgorithmAndType(algorithm, indexType)
         .createIndex(
-            name, storage, indexType, algorithm, valueContainerAlgorithm, metadata, version);
+            metadata.getName(),
+            storage,
+            indexType,
+            algorithm,
+            metadata.getValueContainerAlgorithm(),
+            metadata.getMetadata(),
+            version);
   }
 
   private static OIndexFactory findFactoryByAlgorithmAndType(String algorithm, String indexType) {

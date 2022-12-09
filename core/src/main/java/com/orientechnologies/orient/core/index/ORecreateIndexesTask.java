@@ -205,25 +205,17 @@ public class ORecreateIndexesTask implements Runnable {
   }
 
   private OIndexInternal createIndex(ODocument idx) {
-    final String indexName = idx.field(OIndexInternal.CONFIG_NAME);
     final String indexType = idx.field(OIndexInternal.CONFIG_TYPE);
     String algorithm = idx.field(OIndexInternal.ALGORITHM);
     String valueContainerAlgorithm = idx.field(OIndexInternal.VALUE_CONTAINER_ALGORITHM);
 
-    ODocument metadata = idx.field(OIndexInternal.METADATA);
     if (indexType == null) {
       OLogManager.instance().error(this, "Index type is null, will process other record", null);
       throw new OIndexException(
           "Index type is null, will process other record. Index configuration: " + idx.toString());
     }
-
-    return OIndexes.createIndex(
-        indexManager.storage,
-        indexName,
-        indexType,
-        algorithm,
-        valueContainerAlgorithm,
-        metadata,
-        -1);
+    OIndexMetadata m =
+        OIndexAbstract.loadMetadataInternal(idx, indexType, algorithm, valueContainerAlgorithm);
+    return OIndexes.createIndex(indexManager.storage, m, -1);
   }
 }
