@@ -62,7 +62,7 @@ public class ORestrictedAccessHook {
                 + identityType
                 + "'. Supported ones are: 'user', 'role'");
 
-      if (identity != null) {
+      if (identity != null && identity.getIdentity().isValid()) {
         for (String f : fields)
           database.getSharedContext().getSecurity().allowIdentity(database, iDocument, f, identity);
         return true;
